@@ -26,21 +26,25 @@ See [docs/personal-crm-concept.md](docs/personal-crm-concept.md) for the complet
 
 ## Planned Roadmap
 
+See [project-management/epics/](project-management/epics/) for detailed epic documents.
+
 ### Phase 1: MVP
-- Basic contact management with extended fields
-- Groups and tags for organization
-- Search functionality
-- Single-user deployment
+- [Contact Management](project-management/epics/epic-01-contact-management.md) - Extended contact fields and relationship mapping
+- [Categorization & Organization](project-management/epics/epic-04-categorization-organization.md) - Groups and tags for organization
+- [Search Functionality](project-management/epics/epic-10-search-functionality.md) - Basic search across contacts
+- [Multi-User Management](project-management/epics/epic-05-multi-user-management.md) - Authentication and single-user deployment
 
 ### Phase 2: Core Features
-- Interaction logging and timeline
-- Automated reminder system
-- Dashboard with insights
+- [Relationship Management](project-management/epics/epic-02-relationship-management.md) - Interaction logging and tracking
+- [Reminder System](project-management/epics/epic-03-reminder-system.md) - Automated reminders for contact maintenance
+- [Activity Timeline](project-management/epics/epic-08-activity-timeline.md) - Chronological view of interactions
+- [Dashboard & Insights](project-management/epics/epic-09-dashboard-insights.md) - Analytics and relationship health metrics
+- [Multi-User Management](project-management/epics/epic-05-multi-user-management.md) - Full workspace and sharing features
 
 ### Phase 3: Integration
-- CalDAV/CardDAV synchronization
-- Import/Export (vCard, CSV)
-- Performance optimization
+- [CalDAV/CardDAV Interface](project-management/epics/epic-06-caldav-carddav-interface.md) - Standards-compliant synchronization
+- [Import/Export](project-management/epics/epic-07-import-export.md) - Data portability (vCard, CSV, JSON)
+- Performance optimization and polish
 
 ## Technology Stack
 
