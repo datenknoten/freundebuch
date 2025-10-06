@@ -142,10 +142,21 @@ Create foundational tables:
   - Path aliases configured
   - Project references for monorepo
 
+- **Renovate** - Automated dependency updates
+  - Keep all dependencies up to date automatically
+  - Grouped updates for related packages
+  - Security vulnerability alerts
+  - Scheduled updates to avoid disruption
+  - Lockfile maintenance
+  - **Security policy:** All dependencies must be pinned to exact versions
+  - Manual review required before merging any dependency updates
+  - No auto-merge enabled to ensure human oversight
+
 #### Git Hooks (Husky)
 - Pre-commit: Biome check and format staged files
-- Pre-push: Run tests
+- Pre-push: Run all tests (unit + integration)
 - Commit message validation (conventional commits)
+- Ensure tests pass before pushing to main (trunk-based development)
 
 #### Environment Management
 - `.env.example` with all required variables
@@ -176,27 +187,45 @@ Create foundational tables:
 
 ### CI/CD Pipeline
 
+#### Trunk-Based Development Strategy
+
+This project follows **trunk-based development**:
+- All developers commit directly to `main` or use short-lived feature branches (< 1 day)
+- Feature flags are used to hide incomplete features in production
+- Continuous integration runs on every commit to `main`
+- Automated deployment to staging on every `main` commit
+- Production deploys happen via feature flags or quick releases
+
+**Benefits:**
+- Faster integration and feedback
+- Reduced merge conflicts
+- Simpler Git history
+- Encourages smaller, incremental changes
+- Enables true continuous delivery
+
 #### GitHub Actions Workflows
 
-**On Pull Request:**
+**On Push to Main:**
 - Lint and format check (Biome)
 - Type check (TypeScript)
 - Unit tests (Vitest)
 - Integration tests (Vitest)
 - Build verification
 - Code coverage report
-
-**On Merge to Main:**
-- All PR checks
 - Build Docker images
-- Tag with version/commit hash
+- Tag with commit hash
 - Push to container registry (optional)
-- Deploy to staging (optional)
+- Auto-deploy to staging environment
 
-**On Release Tag:**
+**On Pull Request (Optional - for collaborative review):**
+- Same checks as main branch
+- Use sparingly - prefer direct commits for small changes
+- Required only for significant architectural changes
+
+**On Production Deploy Tag:**
 - Production build
 - Create release artifacts
-- Deploy to production (optional)
+- Deploy to production
 - Generate changelog
 
 ### Docker Configuration
@@ -355,6 +384,7 @@ services:
 - **Type Validation:** ArkType
 - **Testing:** Vitest + Playwright
 - **Logging:** pino
+- **Dependency Updates:** Renovate
 - **Process Manager:** PM2 (optional for production)
 
 ### Environment Variables
@@ -422,6 +452,7 @@ ENABLE_API_DOCS=true
 - [ ] TypeScript strict mode enabled across all workspaces
 - [ ] Testing framework configured (Vitest)
 - [ ] GitHub Actions workflow created
+- [ ] Renovate configured for automated dependency updates
 - [ ] Docker Compose for development environment
 - [ ] Environment variable template (.env.example)
 - [ ] README with setup instructions
@@ -484,12 +515,15 @@ ENABLE_API_DOCS=true
 5. Configure coverage reporting
 6. Install Playwright for E2E tests
 
-### Step 7: CI/CD
-1. Create GitHub Actions workflow
+### Step 7: CI/CD (Trunk-Based Development)
+1. Create GitHub Actions workflow for main branch
 2. Configure test database for CI
-3. Set up lint/test/build jobs
+3. Set up lint/test/build jobs on every main push
 4. Configure secrets management
-5. Test workflow on sample PR
+5. Set up Renovate for automated dependency updates
+6. Configure auto-deploy to staging on main commits
+7. Set up feature flag system for hiding incomplete work
+8. Test workflow with direct commits to main
 
 ### Step 8: Docker Configuration
 1. Create Dockerfiles
@@ -522,6 +556,9 @@ All subsequent epics depend on this foundational setup.
 - Keep dependencies updated regularly (set a schedule and stick to it)
 - Security vulnerabilities get fixed immediately, no exceptions
 - Documentation evolves with the project - keep it current
+- **Trunk-based development:** Commit directly to main, use feature flags for WIP features
+- Keep commits small and focused - integrate multiple times per day
+- All code on main must be deployable (even if features are hidden behind flags)
 
 ---
 
