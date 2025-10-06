@@ -3,6 +3,7 @@
 **Status:** Planned
 **Phase:** MVP (Phase 1) - Single tenant, Full multi-user in Phase 2
 **Priority:** Medium (MVP: High for single-user auth)
+**GitHub Issue:** [#7](https://github.com/enko/freundebuch2/issues/7)
 
 ## Overview
 

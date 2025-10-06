@@ -3,6 +3,7 @@
 **Status:** Planned
 **Phase:** Core Functionality (Phase 2)
 **Priority:** Medium
+**GitHub Issue:** [#10](https://github.com/enko/freundebuch2/issues/10)
 
 ## Overview
 

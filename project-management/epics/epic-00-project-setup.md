@@ -3,6 +3,7 @@
 **Status:** Planned
 **Phase:** Pre-MVP (Phase 0)
 **Priority:** Critical
+**GitHub Issue:** [#2](https://github.com/enko/freundebuch2/issues/2)
 
 ## Overview
 

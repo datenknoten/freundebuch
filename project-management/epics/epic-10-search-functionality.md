@@ -3,6 +3,7 @@
 **Status:** Planned
 **Phase:** MVP (Phase 1 - Basic), Phase 2 (Advanced)
 **Priority:** High (Basic), Medium (Advanced)
+**GitHub Issue:** [#12](https://github.com/enko/freundebuch2/issues/12)
 
 ## Overview
 

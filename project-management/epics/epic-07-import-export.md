@@ -3,6 +3,7 @@
 **Status:** Planned
 **Phase:** Integration & Polish (Phase 3)
 **Priority:** Medium
+**GitHub Issue:** [#9](https://github.com/enko/freundebuch2/issues/9)
 
 ## Overview
 
