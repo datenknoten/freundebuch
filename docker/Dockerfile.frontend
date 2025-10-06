@@ -1,0 +1,28 @@
+# Development Dockerfile for Frontend
+FROM node:24-bookworm-slim AS base
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Copy workspace configuration
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY tsconfig.base.json ./
+
+# Copy all workspace packages
+COPY apps/frontend/package.json ./apps/frontend/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY apps/frontend ./apps/frontend
+COPY packages/shared ./packages/shared
+
+WORKDIR /app/apps/frontend
+
+EXPOSE 5173
+
+CMD ["pnpm", "run", "dev"]

@@ -235,7 +235,7 @@ This project follows **trunk-based development**:
 ```yaml
 services:
   postgres:
-    image: postgres:15
+    image: postgres:18-bookworm
     environment:
       POSTGRES_DB: personal_crm_dev
       POSTGRES_USER: crm_user
@@ -265,7 +265,7 @@ services:
 #### Production Docker Images
 - Multi-stage builds for optimization
 - Security scanning (Trivy, Snyk)
-- Minimal base images (Alpine)
+- Debian-based images (bookworm-slim)
 - Non-root user execution
 - Health check endpoints
 
@@ -369,9 +369,9 @@ services:
 ## Technical Considerations
 
 ### Technology Versions
-- Node.js: 20.x LTS
+- Node.js: 24.x LTS
 - TypeScript: 5.x
-- PostgreSQL: 15+
+- PostgreSQL: 18+
 - Hono: Latest stable
 - SvelteKit: Latest stable
 - Tailwind CSS: 3.x
@@ -430,9 +430,9 @@ ENABLE_API_DOCS=true
 ## Dependencies
 
 - Git
-- Node.js 20+
+- Node.js 24+
 - pnpm 8+ (package manager)
-- PostgreSQL 15+ (or Docker)
+- PostgreSQL 18+ (or Docker)
 - Docker & Docker Compose (optional but recommended)
 
 ## Deliverables

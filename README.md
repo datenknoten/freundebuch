@@ -1,26 +1,52 @@
-# Personal CRM - Relationship Management for Individuals
+# Personal CRM (Freundebuch)
 
-Ever feel like you're losing touch with people who matter? We get it. This self-hostable web application helps you stay connected with the people in your life through smart contact management, interaction tracking, and friendly reminders.
+A self-hostable web application for relationship management designed for individuals and families. Think of it as your relationship assistant that helps you maintain meaningful connections.
+
+**Current Status:** Development Phase (Infrastructure Complete - Epic 0 ✅)
+
+## Quick Start
+
+Get up and running in under 30 minutes:
+
+```bash
+# Prerequisites: Node.js 24+, pnpm 8+, PostgreSQL 18+ (or Docker)
+
+# 1. Clone the repository
+git clone https://github.com/enko/freundebuch2.git
+cd freundebuch2
+
+# 2. Install dependencies
+pnpm install
+
+# 3. Set up environment variables
+cp .env.example .env
+# Edit .env with your database credentials
+
+# 4. Start PostgreSQL (using Docker)
+pnpm docker:up
+
+# 5. Run database migrations
+pnpm migrate
+
+# 6. Start development servers
+pnpm dev
+```
+
+That's it! Your app is now running:
+- Frontend: http://localhost:5173
+- Backend: http://localhost:3000
+- Health check: http://localhost:3000/health
 
 ## What is it?
 
 Think of Personal CRM as your relationship assistant. It's an address book that actually helps you maintain meaningful connections:
 
-- **Smart Contact Management** - Remember not just phone numbers, but the stuff that matters: how you met, what you talked about, shared interests, and important dates
-- **Interaction Tracking** - Keep a history of your meetings, calls, and messages so you never forget where you left off
-- **Intelligent Reminders** - Get a gentle nudge when you haven't talked to someone in a while, plus birthday alerts and custom follow-ups
-- **Relationship Insights** - See the big picture of your social network and spot connections that could use some attention
-- **Multi-User Support** - Perfect for families or households who want to manage contacts together
-- **Standards-Based Sync** - Works seamlessly with your phone and calendar through CardDAV/CalDAV
-
-## Project Vision
-
-We're here to help you go from "I should really call them" to actually staying in touch with the people who matter most.
-
-## Current Status
-
-**Phase:** Planning & Design
-**Version:** Pre-alpha
+- **Smart Contact Management** - Remember not just phone numbers, but the stuff that matters
+- **Interaction Tracking** - Keep a history of your meetings and conversations
+- **Intelligent Reminders** - Get a gentle nudge when you haven't talked to someone in a while
+- **Relationship Insights** - See the big picture of your social network
+- **Multi-User Support** - Perfect for families or households
+- **Standards-Based Sync** - Works seamlessly with your phone through CardDAV/CalDAV
 
 See [docs/personal-crm-concept.md](docs/personal-crm-concept.md) for the complete concept document.
 
@@ -46,25 +72,275 @@ See [project-management/epics/](project-management/epics/) for detailed epic doc
 - [Import/Export](project-management/epics/epic-07-import-export.md) - Data portability (vCard, CSV, JSON)
 - Performance optimization and polish
 
-## Technology Stack
+## Architecture
 
-- **Frontend:** SvelteKit with Tailwind CSS, responsive/mobile-first design
+### Technology Stack
+
+- **Frontend:** SvelteKit with Tailwind CSS (responsive/mobile-first)
 - **Backend:** Node.js with Hono (lightweight RESTful API framework)
-- **Database:** PostgreSQL
-- **CalDAV/CardDAV:** Standards-compliant server integration
-- **Deployment:** Docker-based, self-hostable, with optional SaaS offering
+- **Database:** PostgreSQL with PgTyped for type-safe SQL queries
+- **Package Manager:** pnpm with workspaces (monorepo)
+- **Type System:** TypeScript 5.x (strict mode) with ArkType for runtime validation
+- **Testing:** Vitest (unit/integration) + Playwright (E2E)
+- **Code Quality:** Biome (linting + formatting)
+- **Database Migrations:** node-pg-migrate
+
+### Monorepo Structure
+
+```
+freundebuch2/
+├── apps/
+│   ├── backend/              # Hono API server
+│   └── frontend/             # SvelteKit application
+├── packages/
+│   └── shared/              # Shared types and utilities
+├── database/
+│   ├── migrations/          # SQL migration files
+│   └── seeds/              # Seed data
+└── docker/                  # Dockerfiles
+```
+
+## Development
+
+### Common Commands
+
+```bash
+# Development
+pnpm dev                    # Run all workspace dev scripts
+pnpm build                  # Build all workspaces
+
+# Testing
+pnpm test                   # Run all tests
+pnpm test:unit             # Run unit tests
+pnpm test:integration      # Run integration tests
+pnpm test:e2e              # Run E2E tests (Playwright)
+
+# Code Quality
+pnpm check                 # Run Biome check (lint + format)
+pnpm lint                  # Run Biome linter
+pnpm format                # Run Biome formatter
+pnpm type-check            # Run TypeScript compiler
+
+# Database
+pnpm migrate               # Run database migrations
+pnpm migrate:create        # Create new migration
+pnpm pgtyped               # Generate TypeScript types from SQL queries
+pnpm pgtyped:watch         # Watch and regenerate types
+pnpm seed                  # Seed database with test data
+
+# Docker
+pnpm docker:up             # Start Docker services
+pnpm docker:down           # Stop Docker services
+```
+
+### Trunk-Based Development
+
+This project follows **trunk-based development**:
+
+- Commit directly to `main` or use very short-lived feature branches (< 1 day)
+- Use **feature flags** to hide incomplete features in production
+- Keep commits small and focused - integrate multiple times per day
+- All code on `main` must be deployable (even if features are hidden)
+- CI runs on every commit to `main`
+
+### Git Hooks
+
+Husky is configured to run:
+
+- **Pre-commit:** Biome check and format on staged files
+- **Commit-msg:** Validates commit messages follow conventional commits format
+- **Pre-push:** All tests must pass before pushing to main
+
+### Commit Message Format
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+type(scope): subject
+
+optional body
+
+optional footer
+```
+
+**Available types:**
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation changes
+- `style` - Code style changes (formatting, etc.)
+- `refactor` - Code refactoring
+- `perf` - Performance improvements
+- `test` - Adding or updating tests
+- `build` - Build system or dependency changes
+- `ci` - CI/CD configuration changes
+- `chore` - Other changes that don't modify src or test files
+
+**Available scopes:**
+- `backend` - Backend/API changes
+- `frontend` - Frontend/UI changes
+- `shared` - Shared package changes
+- `database` - Database migrations/schema changes
+- `docs` - Documentation
+- `deps` - Dependency updates
+- `config` - Configuration files
+- `ci` - CI/CD configuration
+- `dx` - Developer experience
+
+**Examples:**
+```bash
+feat(backend): Add user authentication endpoint
+fix(frontend): Resolve contact list rendering issue
+docs(database): Update migration guidelines
+chore(deps): Update dependencies to latest versions
+```
+
+**Rules:**
+- Scope is required (commitlint will warn if missing)
+- Subject must be sentence case
+- Subject must not end with a period
+- Header (type + scope + subject) must be ≤100 characters
+- Body lines must be ≤100 characters
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+# Database
+DATABASE_URL=postgresql://crm_user:dev_password@localhost:5432/personal_crm_dev
+
+# Server
+PORT=3000
+FRONTEND_URL=http://localhost:5173
+
+# Authentication
+JWT_SECRET=your-secret-key-change-this-in-production
+SESSION_SECRET=your-session-secret-change-this-in-production
+```
+
+## Database
+
+### Migrations
+
+```bash
+# Create a new migration
+pnpm migrate:create add-contacts-table
+
+# Run migrations
+pnpm migrate
+
+# Rollback migration
+pnpm --filter backend run migrate:down
+```
+
+### Type-Safe SQL Queries with PgTyped
+
+1. Create a `.sql` file in `apps/backend/src/models/queries/`
+2. Write queries with PgTyped annotations:
+
+```sql
+/* @name GetUserById */
+SELECT id, email, created_at
+FROM users
+WHERE id = :id;
+```
+
+3. Run `pnpm pgtyped` to generate TypeScript types
+4. Import and use with full type safety!
+
+## Testing
+
+```bash
+# All tests
+pnpm test
+
+# Unit tests only
+pnpm test:unit
+
+# Integration tests (require database)
+pnpm test:integration
+
+# E2E tests with Playwright
+pnpm test:e2e
+
+# Watch mode
+pnpm --filter backend run test:watch
+```
+
+## Docker
+
+```bash
+# Start all services (PostgreSQL, backend, frontend)
+pnpm docker:up
+
+# Stop all services
+pnpm docker:down
+
+# View logs
+docker-compose logs -f
+
+# Just PostgreSQL
+docker-compose up -d postgres
+```
+
+## CI/CD
+
+GitHub Actions runs on every push to `main`:
+
+- Lint and format check (Biome)
+- TypeScript type checking
+- Unit and integration tests
+- Build verification
+
+## Dependencies
+
+Renovate automatically checks for updates:
+
+- Weekly updates (Mondays before 5am)
+- Security vulnerabilities get immediate PRs
+- **All updates require manual review** - no auto-merge
+- All dependencies pinned to exact versions
+
+## Design System
+
+### Colors
+
+- **Forest Green** (`#2D5016`) - Primary actions, headers
+- **Sage Green** (`#8B9D83`) - Secondary actions
+- **Warm Amber** (`#D4A574`) - Accents, highlights
+
+### Typography
+
+- **Headings:** Yanone Kaffeesatz (use `font-heading`)
+- **Body:** Merriweather (use `font-body`)
+
+### Tailwind Usage
+
+```html
+<button class="bg-forest text-white font-heading">Click me</button>
+<p class="font-body text-gray-700">Body text here</p>
+```
+
+## Security
+
+- All dependencies pinned to exact versions
+- Automated security vulnerability scanning
+- Input validation with ArkType at API boundaries
+- Type-safe SQL queries with PgTyped (prevents SQL injection)
+- Password hashing with bcrypt
+- JWT-based authentication
 
 ## Core Principles
 
 - **Privacy First** - Your relationship data is yours and yours alone
-- **Standards-Compliant** - We play nice with open standards (vCard, iCalendar, WebDAV) so you're never locked in
-- **User-Friendly** - Easy to use right from the start, no manual required
-- **Flexible Deployment** - Host it yourself or let us handle it - your choice
+- **Standards-Compliant** - Open standards (vCard, iCalendar, WebDAV) - no lock-in
+- **User-Friendly** - Easy to use right from the start
+- **Flexible Deployment** - Self-hostable or SaaS
 
 ## Contributing
 
-We're in the early planning stages and would love your input! Contributions and feedback are always welcome.
+See `CONTRIBUTING.md` for guidelines. We welcome contributions!
 
 ## License
 
-TBD
+[To be determined]
