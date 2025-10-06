@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+# Run Biome check and format on staged files
+pnpm biome check --write --staged --no-errors-on-unmatched
+
+pnpm run type-check
+pnpm run test

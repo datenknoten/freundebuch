@@ -1,0 +1,72 @@
+import { type } from 'arktype';
+
+const BooleanString = type('"true" | "false" | "TRUE" | "FALSE" | "1" | "0" | boolean').pipe(
+  (result) => result === 'true' || result === '1' || result === 'TRUE' || result === true,
+);
+
+const SecretType = type('string >= 32').and(/^(?!.*(?:change-this|your-secret|REPLACE)).*$/);
+
+/**
+ * ArkType schema for environment configuration validation
+ */
+const ConfigSchema = type({
+  // Database
+  DATABASE_URL: 'string',
+  DATABASE_POOL_MIN: 'string.integer.parse = "2"',
+  DATABASE_POOL_MAX: 'string.integer.parse = "10"',
+
+  // Server
+  ENV: '"development" | "production" | "test" = "development"',
+  PORT: 'string.integer.parse = "3000"',
+  FRONTEND_URL: 'string = "http://localhost:5173"',
+
+  // Authentication
+  JWT_SECRET: SecretType,
+  // TODO convert that later to a smart string like 7d
+  // Default expiry of 7 days
+  JWT_EXPIRY: 'string.integer.parse = "604800"',
+  SESSION_SECRET: SecretType,
+
+  // Email (optional, for later phases)
+  'SMTP_HOST?': 'string',
+  'SMTP_PORT?': 'string.integer.parse',
+  'SMTP_USER?': 'string',
+  'SMTP_PASSWORD?': 'string',
+
+  // Optional
+  LOG_LEVEL: '"trace" | "debug" | "info" | "warn" | "error" | "fatal" = "info"',
+  ENABLE_API_DOCS: BooleanString.default(false),
+  '+': 'delete',
+});
+
+export type Config = typeof ConfigSchema.infer;
+
+let cachedConfig: Config | null = null;
+
+/**
+ * Parses and validates environment variables into a typed configuration object
+ * @throws {Error} If validation fails with detailed error messages
+ * @returns Validated configuration object
+ */
+export function getConfig(): Config {
+  if (typeof cachedConfig === 'object' && cachedConfig !== null) {
+    return cachedConfig;
+  }
+
+  const result = ConfigSchema(process.env);
+
+  if (result instanceof type.errors) {
+    const errorMessage = result.summary;
+    throw new Error(`Configuration validation failed:\n${errorMessage}`);
+  }
+
+  cachedConfig = result;
+  return result;
+}
+
+/**
+ * Resets the cached configuration (useful for testing)
+ */
+export function resetConfig(): void {
+  cachedConfig = null;
+}

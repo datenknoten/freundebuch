@@ -1,0 +1,39 @@
+{
+  "name": "freundebuch2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal CRM - A self-hostable relationship management tool",
+  "scripts": {
+    "dev": "pnpm --parallel --stream run dev",
+    "build": "pnpm --recursive run build",
+    "test": "pnpm --recursive run test",
+    "test:unit": "pnpm --recursive run test:unit",
+    "test:integration": "pnpm --recursive run test:integration",
+    "test:e2e": "pnpm --recursive run test:e2e",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "biome check --write .",
+    "type-check": "pnpm --recursive run type-check",
+    "migrate": "pnpm --filter backend run migrate",
+    "migrate:create": "pnpm --filter backend run migrate:create",
+    "pgtyped": "pnpm --filter backend run pgtyped",
+    "pgtyped:watch": "pnpm --filter backend run pgtyped:watch",
+    "seed": "pnpm --filter backend run seed",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.5",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "husky": "^9.1.7",
+    "typescript": "^5.9.3"
+  }
+}

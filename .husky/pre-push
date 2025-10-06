@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+# Run all tests before push (trunk-based development requirement)
+pnpm test
+pnpm run lint
+pnpm run type-check

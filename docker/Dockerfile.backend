@@ -1,0 +1,29 @@
+# Development Dockerfile for Backend
+FROM node:24-bookworm-slim AS base
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Copy workspace configuration
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY tsconfig.base.json ./
+
+# Copy all workspace packages
+COPY apps/backend/package.json ./apps/backend/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY apps/backend ./apps/backend
+COPY packages/shared ./packages/shared
+COPY database ./database
+
+WORKDIR /app/apps/backend
+
+EXPOSE 3000
+
+CMD ["pnpm", "run", "dev"]
