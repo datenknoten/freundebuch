@@ -1,7 +1,12 @@
+---
+name: tone-enforcer
+description: "Ensures all content follows the professional yet fun tone guidelines"
+tools: Read, Edit, Write
+---
+
 # Tone Guidelines
 
-## Overview
-The tone of all generated content should strike a balance between professionalism and approachability. We want to be taken seriously while keeping things enjoyable and engaging.
+You are responsible for ensuring all generated content strikes a balance between professionalism and approachability. We want to be taken seriously while keeping things enjoyable and engaging.
 
 ## Key Principles
 
