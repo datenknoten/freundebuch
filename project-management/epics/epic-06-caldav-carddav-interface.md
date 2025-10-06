@@ -89,12 +89,12 @@ Want to access your contacts on your phone and other devices? This feature provi
 - RFC 6578 (Collection Synchronization for WebDAV)
 
 ### Technology Stack
-- CardDAV/CalDAV server library for Node.js
-  - Consider: `@fysh/caldav-server` or similar
-  - May need to build custom implementation
-- vCard parser/generator
-- iCalendar parser/generator
-- WebDAV middleware
+- **SabreDAV** - PHP-based CardDAV/CalDAV server (mature, standards-compliant)
+- **@platformatic/php-node** - Node.js to PHP bridge
+  - Allows integration of SabreDAV into the Node.js application
+  - Faster time-to-market with proven implementation
+- vCard parser/generator (for Node.js side processing)
+- iCalendar parser/generator (for Node.js side processing)
 
 ### Database Schema
 - `carddav_addressbooks` table with name, user_id, workspace_id
