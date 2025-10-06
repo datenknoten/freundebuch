@@ -22,33 +22,39 @@ Establish the foundational infrastructure, development environment, and tooling 
 
 ### Development Environment Setup
 
-#### Repository Structure
+#### Repository Structure (pnpm Workspaces Monorepo)
 ```
 freundebuch2/
-├── backend/              # Hono API server
-│   ├── src/
-│   │   ├── routes/       # API route handlers
-│   │   ├── middleware/   # Express-like middleware
-│   │   ├── models/       # Database models
-│   │   ├── services/     # Business logic
-│   │   ├── utils/        # Utility functions
-│   │   └── index.ts      # Entry point
-│   ├── tests/
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/             # SvelteKit application
-│   ├── src/
-│   │   ├── routes/       # SvelteKit routes
-│   │   ├── lib/          # Components and utilities
-│   │   │   ├── components/
-│   │   │   ├── stores/   # Svelte stores
-│   │   │   └── api/      # API client
-│   │   └── app.html
-│   ├── static/
-│   ├── tests/
-│   ├── package.json
-│   ├── svelte.config.js
-│   └── tailwind.config.js
+├── apps/
+│   ├── backend/              # Hono API server
+│   │   ├── src/
+│   │   │   ├── routes/       # API route handlers
+│   │   │   ├── middleware/   # Express-like middleware
+│   │   │   ├── models/       # Database models
+│   │   │   ├── services/     # Business logic
+│   │   │   ├── utils/        # Utility functions
+│   │   │   └── index.ts      # Entry point
+│   │   ├── tests/
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   └── frontend/             # SvelteKit application
+│       ├── src/
+│       │   ├── routes/       # SvelteKit routes
+│       │   ├── lib/          # Components and utilities
+│       │   │   ├── components/
+│       │   │   ├── stores/   # Svelte stores
+│       │   │   └── api/      # API client
+│       │   └── app.html
+│       ├── static/
+│       ├── tests/
+│       ├── package.json
+│       ├── svelte.config.js
+│       └── tailwind.config.js
+├── packages/
+│   └── shared/              # Shared types and utilities
+│       ├── src/
+│       ├── package.json
+│       └── tsconfig.json
 ├── database/
 │   ├── migrations/       # SQL migration files
 │   └── seeds/           # Seed data for development
@@ -60,18 +66,28 @@ freundebuch2/
 ├── project-management/
 ├── .github/
 │   └── workflows/       # GitHub Actions
+├── package.json         # Root package.json
+├── pnpm-workspace.yaml  # pnpm workspace configuration
+├── pnpm-lock.yaml       # pnpm lockfile
+├── biome.json          # Biome configuration
 ├── .env.example
 └── README.md
 ```
 
 #### Package Configuration
+
+- **Monorepo:**
+  - pnpm Workspaces for package management
+  - Efficient disk space usage with content-addressable storage
+  - Workspace packages: apps/backend, apps/frontend, packages/shared
+
 - **Backend:**
   - Node.js LTS (20.x or later)
   - TypeScript 5.x
   - Hono framework
-  - Database client (node-postgres or pg)
+  - Database access (PgTyped)
+  - Type validation (ArkType)
   - Authentication (JWT)
-  - Validation (Zod)
 
 - **Frontend:**
   - SvelteKit
@@ -79,6 +95,11 @@ freundebuch2/
   - TypeScript
   - Form handling
   - State management
+
+- **Shared:**
+  - TypeScript types shared across frontend/backend
+  - ArkType schemas for runtime validation
+  - Utility functions
 
 ### Database Setup
 
@@ -88,13 +109,15 @@ freundebuch2/
 - User/role setup
 - Connection pooling configuration
 - Environment-based configuration (dev/staging/prod)
+- PgTyped for type-safe SQL queries
 
 #### Migration System
-- Migration tool selection (e.g., `node-pg-migrate`, `kysely`, or `drizzle-kit`)
+- Migration tool: node-pg-migrate
 - Initial migration structure
-- Migration naming convention
+- Migration naming convention (timestamp-based)
 - Up/down migration support
 - Migration execution in CI/CD
+- PgTyped query file organization (.sql files)
 
 #### Initial Schema
 Create foundational tables:
@@ -105,23 +128,22 @@ Create foundational tables:
 ### Development Tooling
 
 #### Code Quality Tools
-- **ESLint** - JavaScript/TypeScript linting
-  - Shared config for backend and frontend
-  - Airbnb or Standard style guide
+- **Biome** - Fast all-in-one toolchain for linting and formatting
+  - Single configuration file (biome.json)
+  - Replaces ESLint + Prettier with better performance
   - Auto-fix on save
-
-- **Prettier** - Code formatting
+  - Import sorting
   - Consistent formatting rules
-  - Integration with ESLint
-  - Pre-commit hooks
+  - Shared config across all workspaces
 
 - **TypeScript** - Type checking
   - Strict mode enabled
-  - Shared types between frontend/backend
+  - Shared types via packages/shared workspace
   - Path aliases configured
+  - Project references for monorepo
 
 #### Git Hooks (Husky)
-- Pre-commit: Lint and format staged files
+- Pre-commit: Biome check and format staged files
 - Pre-push: Run tests
 - Commit message validation (conventional commits)
 
@@ -134,7 +156,7 @@ Create foundational tables:
 ### Testing Framework
 
 #### Backend Testing
-- **Test Framework:** Vitest or Jest
+- **Test Framework:** Vitest
 - **Integration Tests:** Supertest for API endpoints
 - **Database Tests:** Test database with fixtures
 - Test coverage reporting (>80% target)
@@ -157,10 +179,10 @@ Create foundational tables:
 #### GitHub Actions Workflows
 
 **On Pull Request:**
-- Lint check (ESLint, Prettier)
+- Lint and format check (Biome)
 - Type check (TypeScript)
-- Unit tests
-- Integration tests
+- Unit tests (Vitest)
+- Integration tests (Vitest)
 - Build verification
 - Code coverage report
 
@@ -233,21 +255,25 @@ services:
 
 ### Development Scripts
 
-#### Package.json Scripts
+#### Package.json Scripts (Root)
 ```json
 {
   "scripts": {
-    "dev": "Start all services for development",
-    "build": "Build production bundles",
-    "test": "Run all tests",
-    "test:unit": "Run unit tests",
-    "test:integration": "Run integration tests",
-    "test:e2e": "Run E2E tests",
-    "lint": "Run ESLint",
-    "format": "Run Prettier",
-    "type-check": "Run TypeScript compiler",
+    "dev": "Run all workspace dev scripts concurrently",
+    "build": "Build all workspaces",
+    "test": "Run all tests across workspaces",
+    "test:unit": "Run unit tests (Vitest)",
+    "test:integration": "Run integration tests (Vitest)",
+    "test:e2e": "Run E2E tests (Playwright)",
+    "lint": "Run Biome linter across all workspaces",
+    "format": "Run Biome formatter across all workspaces",
+    "format:check": "Check formatting without writing",
+    "check": "Run Biome check (lint + format)",
+    "type-check": "Run TypeScript compiler across all workspaces",
     "migrate": "Run database migrations",
     "migrate:create": "Create new migration",
+    "pgtyped": "Generate TypeScript types from SQL queries",
+    "pgtyped:watch": "Watch and regenerate types from SQL queries",
     "seed": "Seed database with test data",
     "docker:up": "Start Docker services",
     "docker:down": "Stop Docker services"
@@ -275,8 +301,8 @@ services:
 - CORS configuration
 - Helmet.js for security headers
 - Rate limiting setup
-- Input validation framework
-- SQL injection prevention
+- Input validation (ArkType)
+- SQL injection prevention (PgTyped type-safe queries)
 - XSS prevention
 
 #### Authentication Setup (Basic)
@@ -302,7 +328,7 @@ services:
 
 ## User Stories
 
-1. As a developer, I want to clone the repo and run `npm install && npm run dev` to get started quickly
+1. As a developer, I want to clone the repo and run `pnpm install && pnpm dev` to get started quickly
 2. As a developer, I want code to auto-format on save so I don't worry about style
 3. As a developer, I want tests to run automatically on PR so we catch bugs early
 4. As a developer, I want clear documentation so I understand the architecture
@@ -321,10 +347,12 @@ services:
 - Tailwind CSS: 3.x
 
 ### Development Tools
-- **Package Manager:** npm or pnpm
-- **Database Client:** pg (node-postgres)
-- **Migration Tool:** node-pg-migrate or kysely
-- **Validation:** Zod
+- **Package Manager:** pnpm (with workspaces)
+- **Monorepo:** pnpm Workspaces
+- **Linting & Formatting:** Biome
+- **Database Access:** PgTyped (type-safe SQL)
+- **Database Migrations:** node-pg-migrate
+- **Type Validation:** ArkType
 - **Testing:** Vitest + Playwright
 - **Logging:** pino
 - **Process Manager:** PM2 (optional for production)
@@ -372,6 +400,7 @@ ENABLE_API_DOCS=true
 
 - Git
 - Node.js 20+
+- pnpm 8+ (package manager)
 - PostgreSQL 15+ (or Docker)
 - Docker & Docker Compose (optional but recommended)
 
@@ -379,14 +408,18 @@ ENABLE_API_DOCS=true
 
 ### Phase 0 Completion Checklist
 
-- [ ] Repository initialized with proper structure
-- [ ] Backend package configured with Hono
-- [ ] Frontend package configured with SvelteKit + Tailwind
+- [ ] Repository initialized with monorepo structure
+- [ ] pnpm Workspaces configured (pnpm-workspace.yaml)
+- [ ] Backend workspace configured with Hono (apps/backend)
+- [ ] Frontend workspace configured with SvelteKit + Tailwind (apps/frontend)
+- [ ] Shared types workspace set up (packages/shared)
+- [ ] ArkType configured for type validation
 - [ ] PostgreSQL database running (local or Docker)
+- [ ] PgTyped configured and generating types from SQL
 - [ ] Migration system set up and tested
-- [ ] ESLint + Prettier configured
-- [ ] Git hooks (Husky) working
-- [ ] TypeScript strict mode enabled
+- [ ] Biome configured for linting and formatting
+- [ ] Git hooks (Husky) working with Biome
+- [ ] TypeScript strict mode enabled across all workspaces
 - [ ] Testing framework configured (Vitest)
 - [ ] GitHub Actions workflow created
 - [ ] Docker Compose for development environment
@@ -395,51 +428,61 @@ ENABLE_API_DOCS=true
 - [ ] Health check endpoint implemented
 - [ ] Basic authentication utilities created
 - [ ] API documentation structure
-- [ ] All dev scripts functional
+- [ ] All workspace scripts functional
 
 ## Implementation Steps
 
 ### Step 1: Repository Initialization
 1. Initialize Git repository
-2. Create directory structure
-3. Set up .gitignore
-4. Create README.md
+2. Install pnpm globally if needed
+3. Create monorepo directory structure (apps/, packages/)
+4. Set up root package.json
+5. Create pnpm-workspace.yaml with workspace configuration
+6. Set up .gitignore (include node_modules, .pnpm-store)
+7. Create README.md
 
 ### Step 2: Backend Setup
-1. Initialize Node.js project in `backend/`
+1. Initialize Node.js project in `apps/backend/`
 2. Install Hono and dependencies
-3. Configure TypeScript
+3. Configure TypeScript with project references
 4. Create basic server with health check
 5. Set up database connection
 6. Configure environment variables
 
 ### Step 3: Frontend Setup
-1. Initialize SvelteKit project in `frontend/`
+1. Initialize SvelteKit project in `apps/frontend/`
 2. Install and configure Tailwind CSS
-3. Configure TypeScript
+3. Configure TypeScript with project references
 4. Create basic layout and home page
 5. Set up API client utilities
 
 ### Step 4: Database Setup
 1. Install PostgreSQL (local or Docker)
 2. Create database
-3. Set up migration tool
-4. Create initial migrations (users, sessions)
-5. Test migration up/down
+3. Install and configure node-pg-migrate
+4. Configure PgTyped for type-safe queries
+5. Create initial migrations with node-pg-migrate (users, sessions)
+6. Run migrations
+7. Write initial SQL query files for PgTyped
+8. Generate TypeScript types from SQL
+9. Test migration up/down
 
 ### Step 5: Development Tooling
-1. Configure ESLint for both packages
-2. Configure Prettier
-3. Set up Husky git hooks
-4. Create shared TypeScript types
-5. Configure path aliases
+1. Install and configure Biome at root level
+2. Create biome.json with lint and format rules
+3. Set up Husky git hooks with Biome
+4. Create shared TypeScript types workspace (packages/shared)
+5. Configure ArkType for runtime type validation
+6. Set up shared ArkType schemas
+7. Configure path aliases and TypeScript project references
 
 ### Step 6: Testing Framework
-1. Install Vitest
-2. Create test utilities
-3. Write sample tests
-4. Configure coverage reporting
-5. Install Playwright for E2E
+1. Install Vitest across workspaces
+2. Configure Vitest in each workspace
+3. Create test utilities
+4. Write sample tests
+5. Configure coverage reporting
+6. Install Playwright for E2E tests
 
 ### Step 7: CI/CD
 1. Create GitHub Actions workflow
