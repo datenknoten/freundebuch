@@ -1,21 +1,21 @@
 # Personal CRM - Relationship Management for Individuals
 
-A self-hostable web application that helps individuals and families actively maintain their social connections through intelligent contact management, interaction tracking, and relationship reminders.
+Ever feel like you're losing touch with people who matter? We get it. This self-hostable web application helps you stay connected with the people in your life through smart contact management, interaction tracking, and friendly reminders.
 
 ## What is it?
 
-Personal CRM extends a traditional address book with features designed to help you nurture meaningful relationships:
+Think of Personal CRM as your relationship assistant. It's an address book that actually helps you maintain meaningful connections:
 
-- **Smart Contact Management** - Store not just contact details, but context: how you met, shared interests, important dates
-- **Interaction Tracking** - Log meetings, calls, and messages to maintain relationship history
-- **Intelligent Reminders** - Get notified when you haven't contacted someone in a while, upcoming birthdays, and custom follow-ups
-- **Relationship Insights** - Visualize your social network and identify connections that need attention
-- **Multi-User Support** - Share contact management within families or households
-- **Standards-Based Sync** - CardDAV/CalDAV integration for seamless synchronization with phones and calendars
+- **Smart Contact Management** - Remember not just phone numbers, but the stuff that matters: how you met, what you talked about, shared interests, and important dates
+- **Interaction Tracking** - Keep a history of your meetings, calls, and messages so you never forget where you left off
+- **Intelligent Reminders** - Get a gentle nudge when you haven't talked to someone in a while, plus birthday alerts and custom follow-ups
+- **Relationship Insights** - See the big picture of your social network and spot connections that could use some attention
+- **Multi-User Support** - Perfect for families or households who want to manage contacts together
+- **Standards-Based Sync** - Works seamlessly with your phone and calendar through CardDAV/CalDAV
 
 ## Project Vision
 
-Transform personal relationship management from reactive to proactive - helping people stay connected with the relationships that matter most.
+We're here to help you go from "I should really call them" to actually staying in touch with the people who matter most.
 
 ## Current Status
 
@@ -56,14 +56,14 @@ See [project-management/epics/](project-management/epics/) for detailed epic doc
 
 ## Core Principles
 
-- **Privacy First** - Your relationship data stays under your control
-- **Standards-Compliant** - Built on open standards (vCard, iCalendar, WebDAV)
-- **User-Friendly** - Intuitive interface with minimal learning curve
-- **Flexible Deployment** - Self-host or use managed service
+- **Privacy First** - Your relationship data is yours and yours alone
+- **Standards-Compliant** - We play nice with open standards (vCard, iCalendar, WebDAV) so you're never locked in
+- **User-Friendly** - Easy to use right from the start, no manual required
+- **Flexible Deployment** - Host it yourself or let us handle it - your choice
 
 ## Contributing
 
-This project is in early planning stages. Contributions and feedback welcome.
+We're in the early planning stages and would love your input! Contributions and feedback are always welcome.
 
 ## License
 

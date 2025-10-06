@@ -8,56 +8,58 @@
 
 ## 1. Executive Summary
 
-This document describes a personal Customer Relationship Management System (CRM) for private individuals. The application extends a classic address book with intelligent features for relationship management, contact maintenance, and reminders.
+Let's face it - keeping track of everyone in your life is hard. This document outlines a personal CRM that's actually designed for real people, not sales teams.
 
-The web application enables individuals and families to manage their social contacts in a structured way, document interactions, and actively maintain important relationships. Through CalDAV/CardDAV interfaces, the solution integrates seamlessly into existing ecosystems.
+We're building a web application that takes your basic address book and transforms it into a relationship management tool. Think of it as having a personal assistant who remembers everyone you know, when you last talked, and when you should reach out again.
+
+The app works great for individuals or families who want to stay better connected with the people in their lives. Plus, it syncs seamlessly with your phone and other devices through standard CalDAV/CardDAV interfaces.
 
 ---
 
 ## 2. Goals and Non-Goals
 
-### 2.1 Goals
+### 2.1 What We're Building
 
 **Primary Goals:**
-- Creation of an extended address book with relationship management features
-- Support for private individuals in actively maintaining social contacts
-- Multi-user capability for shared use within families
-- Standards-compliant integration via CalDAV/CardDAV
-- Self-hostable web application
+- An address book that actually helps you maintain relationships, not just store phone numbers
+- Tools to help you remember to stay in touch with the people who matter
+- Multi-user support so families can manage contacts together
+- Seamless sync with your existing devices using CalDAV/CardDAV
+- A web app you can host yourself or use our hosted version
 
 **Secondary Goals:**
-- Easy usability without learning curve
-- Data protection and data sovereignty
-- Migration capability from existing address books
-- Flexible deployment options (FOSS/SaaS)
+- Make it intuitive - you shouldn't need a tutorial to get started
+- Keep your data private and under your control
+- Easy migration from Google Contacts, Apple Contacts, or whatever you're using now
+- Flexible deployment whether you're technical or not
 
-### 2.2 Non-Goals
+### 2.2 What We're Not Building (At Least Not Yet)
 
-- Enterprise CRM features (Sales Pipeline, Lead Management, etc.)
-- Complex workflow automation
-- Integrations with business tools (CRM systems, ERP, etc.)
-- Native mobile apps (initially only responsive web app)
-- Social media integration (can be evaluated later)
+- Enterprise sales tools - this isn't for managing leads or pipelines
+- Complex automation workflows - we're keeping it simple and focused
+- Business tool integrations - this is for your personal life, not work
+- Native mobile apps - our responsive web app works great on phones for now
+- Social media integration - maybe later, but not part of the initial plan
 
 ---
 
 ## 3. Feature Overview (High-Level)
 
 ### 3.1 Core Features
-1. **Contact Management** - Extended address book with comprehensive contact information
-2. **Relationship Management** - Documentation and tracking of interactions
-3. **Reminder System** - Automatic notifications for contact maintenance
-4. **Categorization & Organization** - Flexible grouping and tagging
-5. **Multi-User Management** - Shared use within families/groups
+1. **Contact Management** - Your address book, but with all the context you actually need
+2. **Relationship Management** - Track interactions and keep the history of your relationships
+3. **Reminder System** - Never forget to reach out again
+4. **Categorization & Organization** - Organize contacts your way with groups and tags
+5. **Multi-User Management** - Share contacts with family or housemates
 
 ### 3.2 Integration Features
-6. **CalDAV/CardDAV Interface** - Standards-compliant synchronization
-7. **Import/Export** - Data portability and migration
+6. **CalDAV/CardDAV Interface** - Sync seamlessly with your phone, computer, and other devices
+7. **Import/Export** - Move your data in and out easily - no lock-in
 
 ### 3.3 Supporting Features
-8. **Activity Timeline** - Chronological overview of all interactions
-9. **Dashboard & Insights** - Overviews and statistics about contacts
-10. **Search Functionality** - Quick finding of contacts and information
+8. **Activity Timeline** - See your relationship history at a glance
+9. **Dashboard & Insights** - Get the big picture of your social network
+10. **Search Functionality** - Find anyone or anything, fast
 
 ---
 
@@ -65,25 +67,25 @@ The web application enables individuals and families to manage their social cont
 
 ### Feature 1: Contact Management
 
-**Description:**
-Central management of all contact information with extended fields beyond standard address books.
+**What it does:**
+This is your contact database on steroids. We're storing way more than just phone numbers and email addresses.
 
-**Scope:**
-- Standard contact fields (name, address, phone, email, etc.)
-- Extended fields:
-  - Profile picture/avatar
-  - Birthday & important dates (anniversaries, etc.)
-  - How/where met (date, location, context)
-  - Interests & hobbies
-  - Profession & organization
-  - Social media profiles (optional)
-  - Custom fields
-- Multiple addresses, phone numbers, emails per contact
-- Relationships between contacts (partner, children, siblings, colleagues, etc.)
-- Free-text notes with timestamp
+**What you get:**
+- All the basics (name, address, phone, email)
+- The good stuff:
+  - Profile pictures so you remember faces
+  - Birthdays and important dates (no more forgotten anniversaries!)
+  - How and where you met (was it that conference in 2019?)
+  - Their interests and hobbies (great conversation starters)
+  - What they do for work
+  - Social media profiles if you want them
+  - Custom fields for whatever else matters to you
+- Multiple addresses, phone numbers, and emails per person
+- Map relationships between contacts (partners, kids, siblings, coworkers)
+- Add notes whenever you think of something important
 
-**Differentiation from Standard Address Book:**
-Focus on personal context and relationship information, not just contact data.
+**Why it's different:**
+We care about the context and story of your relationships, not just the data points.
 
 ---
 
@@ -404,32 +406,35 @@ Powerful search across all contact data.
 
 ---
 
-## 7. Next Steps
+## 7. What's Next?
 
-### Phase 1: MVP (Minimum Viable Product)
-- Feature 1: Contact Management (basic)
-- Feature 4: Categorization (groups & tags)
-- Feature 10: Search Functionality (basic)
-- Feature 5: Multi-User (single-tenant MVP)
+### Phase 1: MVP (The Essentials)
+Let's start with the basics that make this useful:
+- Feature 1: Contact Management (the core database)
+- Feature 4: Categorization (organize with groups & tags)
+- Feature 10: Search (find what you need)
+- Feature 5: Multi-User (authentication and basic setup)
 
-### Phase 2: Core Functionality
-- Feature 2: Relationship Management
-- Feature 3: Reminder System
-- Feature 8: Activity Timeline
-- Feature 9: Dashboard (basic)
+### Phase 2: The Magic Happens
+Now we add the features that make staying in touch easier:
+- Feature 2: Relationship Management (track your interactions)
+- Feature 3: Reminder System (never forget to reach out)
+- Feature 8: Activity Timeline (see the full history)
+- Feature 9: Dashboard (get the big picture)
 
-### Phase 3: Integration & Polish
-- Feature 6: CalDAV/CardDAV
-- Feature 7: Import/Export
-- Feature 9: Dashboard (extended)
-- Performance optimization
+### Phase 3: Play Nice with Others
+Finally, let's make it work with everything else:
+- Feature 6: CalDAV/CardDAV (sync with your devices)
+- Feature 7: Import/Export (move data in and out)
+- Feature 9: Dashboard (enhanced insights)
+- Performance tuning (make it fast!)
 
-### Open Questions for Clarification
-1. Should the multi-tenant architecture be implemented from the start or later?
-2. What monetization strategy is intended for the SaaS variant?
-3. What backup strategy should be implemented?
-4. Should contacts be physically deleted or just marked as deleted?
-5. What localizations (languages) are initially planned?
+### Questions We're Still Figuring Out
+1. Multi-tenant from day one, or add it later?
+2. How should the SaaS pricing work?
+3. What's the best backup strategy?
+4. Hard delete contacts or soft delete (archive)?
+5. Which languages should we support initially?
 
 ---
 

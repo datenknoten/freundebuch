@@ -6,15 +6,15 @@
 
 ## Overview
 
-Chronological display of all interactions and events. This feature provides users with a comprehensive view of their relationship history, both for individual contacts and across their entire network.
+Ever wish you could see the whole story of your relationship with someone? This timeline feature gives you exactly that - a beautiful chronological view of all your interactions and events, whether you want to see one person's history or get the big picture across your whole network.
 
 ## Goals
 
-- Visualize interaction history in an intuitive timeline format
-- Provide both per-contact and global activity views
-- Enable quick review of recent and past interactions
-- Support multiple visualization formats
-- Allow fast entry of new interactions
+- Show your interaction history in a timeline that's easy to browse and understand
+- Let you view activity for one person or see everything across all your contacts
+- Make it quick to review what's happened recently (or way back when)
+- Offer different ways to visualize your activities - whatever helps you best
+- Keep it super fast to add new interactions on the fly
 
 ## Key Features
 
@@ -166,11 +166,11 @@ Chronological display of all interactions and events. This feature provides user
 
 ## Out of Scope
 
-- Real-time collaborative timeline (multiple users editing simultaneously)
-- AI-generated timeline summaries
-- Animated timeline transitions (keep simple for performance)
-- Export timeline as PDF (use export from Epic 7 instead)
-- Social media integration to pull posts/likes
+- Real-time collaborative timeline (no live multi-user editing for now)
+- AI-generated timeline summaries (future enhancement)
+- Animated timeline transitions (we're keeping it snappy and performant)
+- Export timeline as PDF (you can use the general export feature from Epic 7)
+- Social media integration to pull posts/likes (keeping it simple)
 
 ## Related Epics
 

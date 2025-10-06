@@ -6,14 +6,14 @@
 
 ## Overview
 
-Flexible organization of contacts according to various criteria. This feature enables users to structure their contact database in ways that make sense for their personal needs.
+Everyone organizes their contacts differently, and that's totally fine! This feature gives you flexible ways to structure your contact database however makes sense for your life - whether that's by groups, tags, or whatever system works for you.
 
 ## Goals
 
-- Provide multiple ways to organize and categorize contacts
-- Enable quick filtering and navigation
-- Support hierarchical and flat organization schemes
-- Allow flexible, user-defined categorization
+- Give you multiple ways to organize and categorize your contacts
+- Make it super easy to filter and find people
+- Support both simple lists and complex hierarchies - whatever you need
+- Let you create your own categories that match how you think
 
 ## Key Features
 
@@ -110,10 +110,10 @@ Flexible organization of contacts according to various criteria. This feature en
 
 ## Out of Scope
 
-- Smart groups (dynamic groups based on rules)
-- Group sharing between users (comes with multi-user)
+- Smart groups (dynamic groups based on rules - that's a future enhancement)
+- Group sharing between users (we'll add that with multi-user support)
 - Tag synonyms or tag relationships
-- Automated tagging suggestions
+- Automated tagging suggestions (keeping it manual for now)
 
 ## Related Epics
 

@@ -6,15 +6,15 @@
 
 ## Overview
 
-Standards-compliant interfaces for synchronization with external applications. This feature enables seamless integration with smartphones, desktop applications, and other CalDAV/CardDAV clients.
+Want to access your contacts on your phone and other devices? This feature provides standards-compliant CalDAV and CardDAV interfaces so you can seamlessly sync with smartphones, desktop apps, and all your favorite tools.
 
 ## Goals
 
-- Provide standards-compliant CardDAV server for contact synchronization
-- Provide standards-compliant CalDAV server for birthday/reminder synchronization
-- Enable bidirectional sync with popular clients (iOS, Android, Thunderbird, etc.)
-- Handle conflicts gracefully
-- Maintain data integrity across sync operations
+- Set up a standards-compliant CardDAV server so your contacts sync everywhere
+- Add a CalDAV server for birthdays and reminders to show up in your calendar
+- Make sure two-way sync works smoothly with all the popular apps you already use
+- Handle sync conflicts gracefully (because they'll happen)
+- Keep your data safe and intact across all sync operations
 
 ## Key Features
 
@@ -164,11 +164,11 @@ Standards-compliant interfaces for synchronization with external applications. T
 
 ## Out of Scope
 
-- GroupDAV protocol
+- GroupDAV protocol (sticking with the modern standards)
 - SyncML protocol
-- Proprietary sync protocols (Exchange ActiveSync, etc.)
-- Real-time push synchronization (polling only)
-- Automatic conflict resolution (requires user input)
+- Proprietary sync protocols (Exchange ActiveSync, etc. - we're open standards all the way)
+- Real-time push synchronization (we'll use polling instead, which works great)
+- Automatic conflict resolution (you'll need to decide what to keep when conflicts happen)
 
 ## Related Epics
 

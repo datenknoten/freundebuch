@@ -6,15 +6,15 @@
 
 ## Overview
 
-Easy migration from and to other systems. This feature ensures data portability, enables users to migrate from existing contact management systems, and provides backup capabilities.
+Moving from another system? No problem! This feature makes it easy to bring your contacts in from wherever they are now, and to get them back out when you need them. Data portability matters - your contacts are yours, and we want to make sure you can always access them.
 
 ## Goals
 
-- Enable easy migration from popular contact management systems
-- Provide data portability and vendor lock-in prevention
-- Support backup and restore functionality
-- Maintain data integrity during import/export operations
-- Help users clean up and deduplicate imported data
+- Make it painless to move from Google Contacts, Apple Contacts, or wherever you're coming from
+- Give you full control over your data - no vendor lock-in here!
+- Provide simple backup and restore options for peace of mind
+- Keep your data safe and intact during all import/export operations
+- Help you clean up any messy duplicates that come along for the ride
 
 ## Key Features
 
@@ -240,11 +240,11 @@ Easy migration from and to other systems. This feature ensures data portability,
 
 ## Out of Scope
 
-- Direct integration with Google/Apple APIs (file-based only)
-- Automatic continuous sync with other systems
+- Direct integration with Google/Apple APIs (we'll stick with file-based imports for now)
+- Automatic continuous sync with other systems (that's what CalDAV is for!)
 - Import from social media platforms
-- Proprietary format support (Salesforce, etc.)
-- Cloud backup storage (S3, etc.) - local only
+- Proprietary format support (Salesforce, etc. - sticking with open formats)
+- Cloud backup storage (S3, etc.) - we're keeping backups local for security
 
 ## Related Epics
 

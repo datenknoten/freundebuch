@@ -6,14 +6,14 @@
 
 ## Overview
 
-Central management of all contact information with extended fields beyond standard address books. This is the foundation of the Personal CRM system.
+Think of this as your contact database on steroids! We're building a central hub for all your contact information that goes way beyond what standard address books offer. This is the foundation of your Personal CRM system, and it's designed to capture the details that actually matter.
 
 ## Goals
 
-- Provide a comprehensive contact database that stores standard and extended information
-- Enable rich context about relationships beyond basic contact details
-- Support multiple communication channels per contact
-- Allow flexible custom fields for personalization
+- Build a comprehensive contact database that stores way more than just names and numbers
+- Capture rich context about your relationships that actually helps you remember people
+- Support all the different ways you stay in touch with folks
+- Let you add whatever custom fields make sense for how you organize your life
 
 ## Key Features
 
@@ -91,9 +91,9 @@ Central management of all contact information with extended fields beyond standa
 
 ## Out of Scope
 
-- Bulk import/export (comes in Phase 3)
-- CalDAV/CardDAV sync (comes in Phase 3)
-- Advanced search (basic search in MVP, advanced in Phase 1)
+- Bulk import/export (we'll tackle that in Phase 3)
+- CalDAV/CardDAV sync (also coming in Phase 3)
+- Advanced search (we'll start with basic search in MVP, then level up in Phase 1)
 
 ## Related Epics
 

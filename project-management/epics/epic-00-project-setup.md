@@ -6,17 +6,17 @@
 
 ## Overview
 
-Establish the foundational infrastructure, development environment, and tooling required for the Personal CRM project. This epic must be completed before any feature development can begin.
+Before we can build anything cool, we need a solid foundation! This epic is all about setting up our development environment, tooling, and infrastructure. Think of it as building the workshop before we start crafting the furniture.
 
 ## Goals
 
-- Set up a complete development environment
-- Establish coding standards and best practices
-- Configure CI/CD pipeline
-- Set up database schema management
-- Implement basic project structure
-- Configure deployment infrastructure
-- Establish testing framework
+- Create a development environment that's a joy to work with
+- Set up coding standards so our code stays clean and consistent
+- Build a CI/CD pipeline that gives us confidence to ship
+- Get database migrations working smoothly
+- Structure the project for long-term success
+- Make deployment as simple as possible
+- Set up testing so we catch bugs before users do
 
 ## Key Features
 
@@ -328,13 +328,13 @@ services:
 
 ## User Stories
 
-1. As a developer, I want to clone the repo and run `pnpm install && pnpm dev` to get started quickly
-2. As a developer, I want code to auto-format on save so I don't worry about style
-3. As a developer, I want tests to run automatically on PR so we catch bugs early
-4. As a developer, I want clear documentation so I understand the architecture
-5. As a developer, I want database migrations to run automatically so my schema stays up to date
-6. As a devops engineer, I want Docker configs so I can deploy easily
-7. As a team lead, I want CI/CD pipeline so we can deploy confidently
+1. As a developer, I want to clone the repo and run `pnpm install && pnpm dev` to be up and running in minutes
+2. As a developer, I want my code to auto-format on save so I can focus on logic, not style
+3. As a developer, I want tests to run on every PR so we catch issues before they reach production
+4. As a developer, I want clear documentation so I can understand the architecture without hunting through code
+5. As a developer, I want migrations to run automatically so my local database stays in sync
+6. As a devops engineer, I want Docker configs that just work so deployment is straightforward
+7. As a team lead, I want a solid CI/CD pipeline so we can ship with confidence
 
 ## Technical Considerations
 
@@ -388,13 +388,13 @@ ENABLE_API_DOCS=true
 
 ## Success Metrics
 
-- Developer can set up project from scratch in <30 minutes
-- All tests pass in CI
-- Linting and formatting rules are enforced
-- Documentation is complete and accurate
-- Docker containers build successfully
-- Database migrations run without errors
-- Zero security vulnerabilities in dependencies
+- A new developer can get up and running in under 30 minutes
+- All tests pass in CI every time
+- Code formatting happens automatically - no manual fixes needed
+- Documentation is clear, complete, and actually helpful
+- Docker containers build without a hitch
+- Database migrations work smoothly every time
+- Zero security vulnerabilities in our dependencies
 
 ## Dependencies
 
@@ -518,12 +518,12 @@ All subsequent epics depend on this foundational setup.
 
 ## Notes
 
-- This epic should be completed before any feature development
-- Regular dependency updates should be scheduled
-- Security vulnerabilities should be addressed immediately
-- Documentation should be kept up to date as project evolves
+- Everything else depends on this being done right - it's our foundation!
+- Keep dependencies updated regularly (set a schedule and stick to it)
+- Security vulnerabilities get fixed immediately, no exceptions
+- Documentation evolves with the project - keep it current
 
 ---
 
 **Estimated Effort:** 1-2 weeks
-**Team Size:** 1-2 developers
+**Team Size:** 1-2 developers who like building solid foundations

@@ -6,14 +6,14 @@
 
 ## Overview
 
-Documentation and tracking of relationship history with each person. This feature transforms the contact database into a true relationship management system by capturing interaction history and relationship quality metrics.
+Here's where the magic happens! This feature is all about tracking the actual story of your relationships with people. We're transforming your contact database into a genuine relationship management system by capturing your interaction history and helping you understand how your relationships are doing.
 
 ## Goals
 
-- Enable users to log and track all interactions with contacts
-- Provide visibility into relationship health (frequency, recency)
-- Support documentation of shared experiences
-- Create a comprehensive history of each relationship
+- Make it easy to log and track every interaction you have with people
+- Give you clear visibility into how healthy your relationships are
+- Help you remember and document those special shared experiences
+- Build a comprehensive story of each relationship over time
 
 ## Key Features
 
@@ -95,7 +95,7 @@ Documentation and tracking of relationship history with each person. This featur
 
 ## Out of Scope
 
-- Automatic interaction detection (e.g., email parsing)
+- Automatic interaction detection (like parsing your emails - that's for later!)
 - Social media integration
 - AI-powered interaction suggestions
 - Video/audio call recording

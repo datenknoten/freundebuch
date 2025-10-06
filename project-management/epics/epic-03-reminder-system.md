@@ -6,14 +6,14 @@
 
 ## Overview
 
-Proactive support for contact maintenance through intelligent reminders. This feature helps users stay connected by notifying them when it's time to reach out to someone.
+Let's be honest - we all need a little help remembering to stay in touch! This feature proactively helps you maintain your relationships through smart reminders that let you know when it's time to reach out to someone.
 
 ## Goals
 
-- Automate reminder generation based on contact patterns
-- Support manual reminder creation for specific follow-ups
-- Provide flexible notification channels
-- Enable users to manage and customize reminder behavior
+- Automatically suggest when to reach out based on your usual patterns with each person
+- Let you set specific reminders for important follow-ups
+- Send notifications your way - however you prefer to receive them
+- Give you full control over how reminders work for you
 
 ## Key Features
 
@@ -112,9 +112,9 @@ Proactive support for contact maintenance through intelligent reminders. This fe
 
 ## Out of Scope
 
-- SMS notifications
-- Integration with calendar apps (CalDAV comes in Phase 3)
-- AI-powered reminder suggestions
+- SMS notifications (keeping it simple for now)
+- Integration with calendar apps (we'll add CalDAV in Phase 3)
+- AI-powered reminder suggestions (future enhancement)
 - Reminder templates library
 
 ## Related Epics

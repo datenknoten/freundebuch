@@ -6,15 +6,15 @@
 
 ## Overview
 
-Powerful search across all contact data. This feature enables users to quickly find contacts, interactions, and information using various search methods and filters.
+Finding what you need should be easy! This feature gives you powerful search capabilities across all your contact data, so you can quickly locate people, past interactions, or any information you're looking for - even if you can't quite remember the exact details.
 
 ## Goals
 
-- Enable fast, intuitive search across all contact data
-- Support both simple and advanced search scenarios
-- Provide relevant, accurate results
-- Allow saving common searches for reuse
-- Handle typos and fuzzy matching gracefully
+- Make search lightning-fast and intuitive across everything in your database
+- Handle both quick searches and complex queries with ease
+- Show you the most relevant results without making you wade through junk
+- Let you save searches you use often (because who has time to rebuild filters?)
+- Be forgiving with typos - we'll figure out what you meant
 
 ## Key Features
 
@@ -244,10 +244,10 @@ Score factors:
 
 ## Out of Scope
 
-- Natural language search ("find friends in San Francisco")
-- AI-powered search suggestions
-- Search across interaction content/attachments (Phase 1)
-- OCR of uploaded images
+- Natural language search ("find friends in San Francisco" - that's future magic!)
+- AI-powered search suggestions (keeping it straightforward for now)
+- Search across interaction content/attachments (not in Phase 1)
+- OCR of uploaded images (we're not reading photos... yet)
 - Global search across all user data in multi-tenant SaaS
 
 ## Related Epics

@@ -6,15 +6,15 @@
 
 ## Overview
 
-Shared use of the contact database within families or households. This feature enables multiple users to collaborate on managing a shared contact database while maintaining personal privacy.
+Perfect for families and households who want to work together! This feature lets multiple people collaborate on a shared contact database while still keeping personal contacts private when you want them to be.
 
 ## Goals
 
-- Support multiple users accessing the same instance
-- Enable family/household collaboration on shared contacts
-- Maintain privacy for personal contacts
-- Provide role-based access control
-- Track who made what changes
+- Let multiple people use the same instance together
+- Make family collaboration on shared contacts easy and intuitive
+- Keep personal contacts private when you want them to be
+- Give different users appropriate levels of access
+- Keep track of who changed what (no mystery edits!)
 
 ## Key Features
 
@@ -171,12 +171,12 @@ Shared use of the contact database within families or households. This feature e
 
 ## Out of Scope
 
-- Social login (Google, Facebook, etc.)
-- Two-factor authentication (2FA)
+- Social login (Google, Facebook, etc. - we'll keep it simple for now)
+- Two-factor authentication (2FA - future security enhancement)
 - Single Sign-On (SSO)
-- Advanced permission matrix (custom roles)
-- Real-time collaboration indicators
-- Multi-tenancy isolation for SaaS (comes later)
+- Advanced permission matrix (we're sticking with the basic roles for now)
+- Real-time collaboration indicators (you won't see live cursors or anything fancy)
+- Multi-tenancy isolation for SaaS (that's for a future version)
 
 ## Related Epics
 

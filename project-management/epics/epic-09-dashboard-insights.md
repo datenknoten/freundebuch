@@ -6,15 +6,15 @@
 
 ## Overview
 
-Overviews and statistics for contact maintenance. This feature provides users with actionable insights about their social network, helping them understand patterns and identify relationships that need attention.
+Numbers tell stories! This dashboard gives you meaningful insights about your social network at a glance. See who needs attention, spot patterns in how you connect with people, and get actionable suggestions to help you maintain the relationships that matter most.
 
 ## Goals
 
-- Provide at-a-glance overview of contact health
-- Surface actionable insights (who to contact, upcoming events)
-- Visualize relationship patterns and trends
-- Help users maintain balanced social connections
-- Personalize dashboard based on user preferences
+- Give you a quick snapshot of how your relationships are doing
+- Surface what actually matters - who to reach out to, what's coming up
+- Show you patterns and trends in your social life through helpful visualizations
+- Help you maintain a healthy balance across all your relationships
+- Let you customize the dashboard to show what's most important to you
 
 ## Key Features
 
@@ -243,11 +243,11 @@ if today > expected_contact_date: overdue
 
 ## Out of Scope
 
-- AI-powered relationship advice
+- AI-powered relationship advice (we're not relationship counselors!)
 - Sentiment analysis of interactions
-- Predictions of relationship decay
-- Social network graph visualization (advanced)
-- Comparative analytics with other users
+- Predictions of relationship decay (no crystal balls here)
+- Social network graph visualization (we'll keep it simpler for now)
+- Comparative analytics with other users (your relationships are unique to you)
 - Export dashboard as PDF/image
 
 ## Related Epics
