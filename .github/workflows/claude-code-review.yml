@@ -50,13 +50,15 @@ jobs:
             Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
 
             IMPORTANT: Before posting your review:
-            1. First, use `gh pr view ${{ github.event.pull_request.number }} --json comments` to check for existing comments from you (look for comments from the bot user)
-            2. If you find an existing review comment from yourself, UPDATE it using `gh api --method PATCH /repos/${{ github.repository }}/issues/comments/{comment_id} -f body="YOUR_UPDATED_REVIEW"`
-            3. If no existing comment is found, create a new one using `gh pr comment ${{ github.event.pull_request.number }} --body "YOUR_REVIEW"`
+            1. Use `gh api /repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments` to list all comments on this PR
+            2. Look for an existing comment from the GitHub Actions bot (check the "user.login" field in the JSON response)
+            3. If you find your previous review comment, extract its "id" and UPDATE it using:
+              `gh api --method PATCH /repos/${{ github.repository }}/issues/comments/{comment_id} -f body="YOUR_UPDATED_REVIEW"`
+            4. If no existing comment from the bot is found, CREATE a new one using:
+              `gh pr comment ${{ github.event.pull_request.number }} --body "YOUR_REVIEW"`
 
             This ensures you maintain a single, updated review comment rather than creating multiple comments on each run.
 
-
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh api*)"'
+          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh api:*)"'
