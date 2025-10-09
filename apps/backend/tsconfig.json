@@ -4,9 +4,12 @@
     "outDir": "./dist",
     "composite": true,
     "types": ["node", "vitest/globals"],
-    "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@freundebuch/shared": ["../../packages/shared/src/index.js"]
+    }
   },
   "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "../../packages/shared" }]
 }

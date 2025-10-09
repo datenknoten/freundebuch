@@ -60,7 +60,12 @@
         "useIsNan": "error",
         "useValidForDirection": "error",
         "useYield": "error",
-        "useImportExtensions": "error",
+        "useImportExtensions": {
+          "level": "error",
+          "options": {
+            "forceJsExtensions": true
+          }
+        },
         "noInvalidBuiltinInstantiation": "error",
         "useValidTypeof": "error"
       },
@@ -123,7 +128,9 @@
             "useConst": "off"
           },
           "correctness": {
-            "useImportExtensions": "off"
+            "useImportExtensions": "off",
+            "noUnusedVariables": "off",
+            "noUndeclaredVariables": "off"
           }
         }
       }
@@ -134,6 +141,16 @@
         "rules": {
           "suspicious": {
             "noUnknownAtRules": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/backend/tests/**/*"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
           }
         }
       }

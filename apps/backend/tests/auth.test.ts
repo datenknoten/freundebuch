@@ -9,8 +9,8 @@ import {
   hashSessionToken,
   verifyPassword,
   verifyToken,
-} from '../src/utils/auth.ts';
-import { resetConfig } from '../src/utils/config.ts';
+} from '../src/utils/auth.js';
+import { resetConfig } from '../src/utils/config.js';
 
 // Mock bcrypt
 vi.mock('bcrypt', () => ({
@@ -64,7 +64,7 @@ describe('auth.ts', () => {
     });
 
     it('should accept password with exactly 9 characters', async () => {
-      const password = 'NineChars';
+      const password = 'N1neChars';
       const hashedPassword = '$2b$10$hashedPasswordExample';
 
       vi.mocked(bcrypt.hash).mockResolvedValue(hashedPassword as never);
@@ -134,6 +134,8 @@ describe('auth.ts', () => {
 
   describe('generateToken', () => {
     it('should generate JWT token with valid payload', () => {
+      const fakeTime = new Date(2025, 10, 26);
+      vi.setSystemTime(fakeTime);
       const payload = {
         userId: '123',
         email: 'test@example.com',
@@ -144,9 +146,13 @@ describe('auth.ts', () => {
 
       const token = generateToken(payload);
 
-      expect(jwt.sign).toHaveBeenCalledWith(payload, 'test-jwt-secret-test-jwt-secret-1', {
-        expiresIn: 604800,
-      });
+      expect(jwt.sign).toHaveBeenCalledWith(
+        expect.objectContaining(payload),
+        'test-jwt-secret-test-jwt-secret-1',
+        {
+          expiresIn: 604800,
+        },
+      );
       expect(token).toBe(expectedToken);
     });
 
@@ -204,9 +210,13 @@ describe('auth.ts', () => {
 
       generateToken(payload);
 
-      expect(jwt.sign).toHaveBeenCalledWith(payload, 'test-jwt-secret-test-jwt-secret-1', {
-        expiresIn: 86400,
-      });
+      expect(jwt.sign).toHaveBeenCalledWith(
+        expect.objectContaining(payload),
+        'test-jwt-secret-test-jwt-secret-1',
+        {
+          expiresIn: 86400,
+        },
+      );
     });
   });
 

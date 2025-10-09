@@ -1,8 +1,9 @@
 import crypto from 'node:crypto';
+import { PasswordSchema } from '@freundebuch/shared';
 import { type } from 'arktype';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { getConfig } from './config.ts';
+import { getConfig } from './config.js';
 
 const SALT_ROUNDS = 10;
 
@@ -13,14 +14,11 @@ const JWTPayloadSchema = type({
 
 type JWTPayload = typeof JWTPayloadSchema.infer;
 
-/**
- * For now this is OK, will expand later.
- */
-const PasswordSchema = type('string > 8');
-
 class WeakPasswordError extends Error {
-  public constructor(public reason: string) {
+  public reason: string;
+  public constructor(reason: string) {
     super();
+    this.reason = reason;
   }
 }
 
@@ -58,7 +56,10 @@ export function generateToken(payload: unknown): string {
     throw new InvalidPayloadError();
   }
 
-  return jwt.sign(content, config.JWT_SECRET, {
+  // Add jti (JWT ID) for uniqueness - ensures each token is unique even if issued in the same second
+  const jti = crypto.randomBytes(16).toString('hex');
+
+  return jwt.sign({ ...content, jti }, config.JWT_SECRET, {
     expiresIn: config.JWT_EXPIRY,
   });
 }
@@ -102,5 +103,21 @@ export function hashSessionToken(token: string): string {
 export function getSessionExpiry(): Date {
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + 7); // 7 days from now
+  return expiry;
+}
+
+/**
+ * Generate a secure random password reset token
+ */
+export function generatePasswordResetToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+/**
+ * Calculate password reset token expiry date
+ */
+export function getPasswordResetExpiry(): Date {
+  const expiry = new Date();
+  expiry.setHours(expiry.getHours() + 1); // 1 hour from now
   return expiry;
 }

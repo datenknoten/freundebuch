@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { authMiddleware, getAuthUser } from '../../src/middleware/auth.ts';
-import * as auth from '../../src/utils/auth.ts';
+import { authMiddleware, getAuthUser } from '../../src/middleware/auth.js';
+import * as auth from '../../src/utils/auth.js';
 
 // Mock the auth utility
 vi.mock('../../src/utils/auth.ts', () => ({
