@@ -15,7 +15,7 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome check --write .",
-    "type-check": "pnpm --recursive run type-check",
+    "type-check": "pnpm --filter @freundebuch/shared run build && pnpm --recursive run type-check",
     "migrate": "pnpm --filter backend run migrate",
     "migrate:create": "pnpm --filter backend run migrate:create",
     "pgtyped": "pnpm --filter backend run pgtyped",

@@ -1,5 +1,5 @@
 import type { Context, Next } from 'hono';
-import { verifyToken } from '../utils/auth.ts';
+import { verifyToken } from '../utils/auth.js';
 
 export interface AuthContext {
   userId: string;

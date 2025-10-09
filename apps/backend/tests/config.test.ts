@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getConfig, resetConfig } from '../src/utils/config.ts';
+import { getConfig, resetConfig } from '../src/utils/config.js';
 
 describe('getConfig', () => {
   beforeEach(() => {

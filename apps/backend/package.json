@@ -4,20 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch --experimental-strip-types src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc --project tsconfig.build.json",
-    "start": "node dist/index.js",
+    "start": "node --env-file=../../.env dist/index.js",
     "test": "vitest run",
     "test:unit": "vitest run --reporter=verbose",
-    "test:integration": "vitest run --reporter=verbose tests/integration",
+    "test:integration": "vitest run tests/integration",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit",
-    "migrate": "node --env-file=../../.env --experimental-strip-types node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize  --migrations-dir '../../database/migrations' up",
-    "migrate:down": "node --env-file=../../.env --experimental-strip-types node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize  --migrations-dir '../../database/migrations' down",
-    "migrate:create": "node --env-file=../../.env --experimental-strip-types node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize  --migrations-dir '../../database/migrations' create",
+    "migrate": "tsx --env-file=../../.env node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize --migrations-dir ../../database/migrations up",
+    "migrate:down": "tsx --env-file=../../.env node_modules/.bin/node-pg-migrate --decamelize --migrations-dir ../../database/migrations down",
+    "migrate:create": "tsx --env-file=../../.env node_modules/.bin/node-pg-migrate --decamelize --migrations-dir ../../database/migrations create",
     "pgtyped": "pgtyped -c pgtyped.config.json",
     "pgtyped:watch": "pgtyped -c pgtyped.config.json -w",
-    "seed": "node --experimental-strip-types src/scripts/seed.ts"
+    "seed": "tsx --env-file=../../.env src/scripts/seed.ts"
   },
   "dependencies": {
     "@hono/node-server": "1.19.5",
@@ -33,15 +33,16 @@
   },
   "devDependencies": {
     "@pgtyped/cli": "2.4.3",
-    "@testcontainers/postgresql": "^11.7.1",
+    "@testcontainers/postgresql": "11.7.2",
     "@types/bcrypt": "6.0.0",
     "@types/jsonwebtoken": "9.0.10",
     "@types/node": "24.7.0",
     "@types/pg": "8.15.5",
-    "@types/supertest": "^6.0.3",
+    "@types/supertest": "6.0.3",
     "node-pg-migrate": "8.0.3",
     "supertest": "7.1.4",
-    "testcontainers": "^11.7.1",
+    "testcontainers": "11.7.2",
+    "tsx": "4.20.6",
     "typescript": "5.9.3",
     "vitest": "3.2.4"
   }

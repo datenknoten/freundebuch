@@ -22,3 +22,10 @@ RETURNING external_id, email, created_at, updated_at;
 /* @name DeleteUser */
 DELETE FROM auth.users
 WHERE external_id = :externalId;
+
+/* @name UpdateUserPassword */
+UPDATE auth.users
+SET password_hash = :passwordHash,
+    updated_at = CURRENT_TIMESTAMP
+WHERE external_id = :externalId
+RETURNING external_id, email, created_at, updated_at;

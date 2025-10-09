@@ -1,6 +1,6 @@
 import pg from 'pg';
-import { getConfig } from './config.ts';
-import { createLogger } from './logger.ts';
+import { getConfig } from './config.js';
+import { createLogger } from './logger.js';
 
 const { Pool } = pg;
 

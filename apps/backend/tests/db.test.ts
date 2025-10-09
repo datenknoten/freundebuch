@@ -1,12 +1,12 @@
 import pg from 'pg';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetConfig } from '../src/utils/config.ts';
+import { resetConfig } from '../src/utils/config.js';
 import {
   checkDatabaseConnection,
   closePool,
   createPool,
   setupGracefulShutdown,
-} from '../src/utils/db.ts';
+} from '../src/utils/db.js';
 
 // Mock pg module
 vi.mock('pg', () => {

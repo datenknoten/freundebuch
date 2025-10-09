@@ -3,9 +3,9 @@ import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import type { Hono } from 'hono';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../../src/index.ts';
-import type { AppContext } from '../../src/types/context.ts';
-import { resetConfig } from '../../src/utils/config.ts';
+import { createApp } from '../../src/index.js';
+import type { AppContext } from '../../src/types/context.js';
+import { resetConfig } from '../../src/utils/config.js';
 
 describe('Health Endpoint Integration Tests', () => {
   let container: StartedPostgreSqlContainer;
@@ -52,7 +52,7 @@ describe('Health Endpoint Integration Tests', () => {
     }
     vi.unstubAllEnvs();
     resetConfig();
-  });
+  }, 120000);
 
   describe('GET /health', () => {
     it('should return 200 and healthy status when database is connected', async () => {

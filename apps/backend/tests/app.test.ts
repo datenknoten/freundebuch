@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../src/index.ts';
-import { resetConfig } from '../src/utils/config.ts';
-import { createPool } from '../src/utils/db.ts';
+import { createApp } from '../src/index.js';
+import { resetConfig } from '../src/utils/config.js';
+import { createPool } from '../src/utils/db.js';
 
 /**
  * Need to sikp for now as this will be reworked if a database is available

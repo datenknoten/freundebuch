@@ -163,3 +163,39 @@ const deleteUserIR: any = {"usedParamSet":{"externalId":true},"params":[{"name":
 export const deleteUser = new PreparedQuery<IDeleteUserParams,IDeleteUserResult>(deleteUserIR);
 
 
+/** 'UpdateUserPassword' parameters type */
+export interface IUpdateUserPasswordParams {
+  externalId?: string | null | void;
+  passwordHash?: string | null | void;
+}
+
+/** 'UpdateUserPassword' return type */
+export interface IUpdateUserPasswordResult {
+  created_at: Date;
+  email: string;
+  /** Public UUID for API exposure (always use this in APIs) */
+  external_id: string;
+  updated_at: Date;
+}
+
+/** 'UpdateUserPassword' query type */
+export interface IUpdateUserPasswordQuery {
+  params: IUpdateUserPasswordParams;
+  result: IUpdateUserPasswordResult;
+}
+
+const updateUserPasswordIR: any = {"usedParamSet":{"passwordHash":true,"externalId":true},"params":[{"name":"passwordHash","required":false,"transform":{"type":"scalar"},"locs":[{"a":38,"b":50}]},{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":108,"b":118}]}],"statement":"UPDATE auth.users\nSET password_hash = :passwordHash,\n    updated_at = CURRENT_TIMESTAMP\nWHERE external_id = :externalId\nRETURNING external_id, email, created_at, updated_at"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * UPDATE auth.users
+ * SET password_hash = :passwordHash,
+ *     updated_at = CURRENT_TIMESTAMP
+ * WHERE external_id = :externalId
+ * RETURNING external_id, email, created_at, updated_at
+ * ```
+ */
+export const updateUserPassword = new PreparedQuery<IUpdateUserPasswordParams,IUpdateUserPasswordResult>(updateUserPasswordIR);
+
+

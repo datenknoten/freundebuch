@@ -4,11 +4,13 @@ import { cors } from 'hono/cors';
 import { logger as honoLogger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import type pg from 'pg';
-import healthRoutes from './routes/health.ts';
-import type { AppContext } from './types/context.ts';
-import { getConfig } from './utils/config.ts';
-import { checkDatabaseConnection, createPool } from './utils/db.ts';
-import { createLogger } from './utils/logger.ts';
+import authRoutes from './routes/auth.js';
+import healthRoutes from './routes/health.js';
+import usersRoutes from './routes/users.js';
+import type { AppContext } from './types/context.js';
+import { getConfig } from './utils/config.js';
+import { checkDatabaseConnection, createPool } from './utils/db.js';
+import { createLogger } from './utils/logger.js';
 
 Error.stackTraceLimit = 100;
 
@@ -43,6 +45,8 @@ export async function createApp(pool: pg.Pool) {
 
   // Routes
   app.route('/health', healthRoutes);
+  app.route('/api/auth', authRoutes);
+  app.route('/api/users', usersRoutes);
 
   // Error handling
   app.onError((err, c) => {
@@ -73,7 +77,7 @@ export async function startServer() {
   const pinoLogger = createLogger();
 
   // Import setupGracefulShutdown lazily to avoid side effects
-  import('./utils/db.ts').then(({ setupGracefulShutdown }) => {
+  import('./utils/db.js').then(({ setupGracefulShutdown }) => {
     setupGracefulShutdown(pool);
   });
 
