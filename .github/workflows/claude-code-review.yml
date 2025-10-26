@@ -30,12 +30,9 @@ jobs:
         with:
           node-version-file: '.tool-versions'
 
-      - name: Run Review Script
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          npm install --global @anthropic-ai/claude-code@2.0.27
-          chmod +x .github/scripts/review-pr.sh
-          .github/scripts/review-pr.sh ${{ github.event.pull_request.number }}
-
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude-api-key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github-token: ${{ github.token }}
+          prompt-file: .github/prompts/code-review-prompt.md
+          mode: review
