@@ -40,7 +40,6 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         with:
-          claude-api-key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github-token: ${{ github.token }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
           prompt: ${{ env.REVIEW_PROMPT }}
-          mode: review
