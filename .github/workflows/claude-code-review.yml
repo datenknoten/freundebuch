@@ -30,9 +30,17 @@ jobs:
         with:
           node-version-file: '.tool-versions'
 
+      - name: Load Review Prompt
+        run: |
+          {
+            echo 'REVIEW_PROMPT<<PROMPT_EOF'
+            cat .github/prompts/code-review-prompt.md
+            echo PROMPT_EOF
+          } >> $GITHUB_ENV
+
       - uses: anthropics/claude-code-action@v1
         with:
           claude-api-key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github-token: ${{ github.token }}
-          prompt-file: .github/prompts/code-review-prompt.md
+          prompt: ${{ env.REVIEW_PROMPT }}
           mode: review
