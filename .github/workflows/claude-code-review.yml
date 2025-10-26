@@ -33,6 +33,7 @@ jobs:
       - name: Run Review Script
         env:
           ANTHROPIC_API_KEY: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           chmod +x .github/scripts/review-pr.sh
           .github/scripts/review-pr.sh ${{ github.event.pull_request.number }}
