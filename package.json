@@ -23,7 +23,7 @@
     "seed": "pnpm --filter backend run seed",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "prepare": "husky"
+    "prepare": "husky && pnpm --filter frontend run sync"
   },
   "engines": {
     "node": ">=24.0.0",
