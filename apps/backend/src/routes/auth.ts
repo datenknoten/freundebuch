@@ -6,12 +6,13 @@ import {
   RefreshRequestSchema,
   RegisterRequestSchema,
   ResetPasswordRequestSchema,
-} from '@freundebuch/shared';
+} from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
 import { AuthService } from '../services/auth.service.js';
 import type { AppContext } from '../types/context.js';
+import { getConfig } from '../utils/config.js';
 
 const app = new Hono<AppContext>();
 
@@ -277,11 +278,17 @@ app.post('/forgot-password', async (c) => {
     logger.info({ email: validated.email }, 'Password reset requested');
 
     // Always return success to prevent user enumeration
-    return c.json({
+    // Only include resetToken in non-production environments for testing
+    const config = getConfig();
+    const response: { message: string; resetToken?: string } = {
       message: 'If the email exists, a password reset link has been sent',
-      // REMOVE THIS IN PRODUCTION - only for testing
-      resetToken,
-    });
+    };
+
+    if (config.ENV !== 'production') {
+      response.resetToken = resetToken;
+    }
+
+    return c.json(response);
   } catch (error) {
     logger.error({ error }, 'Forgot password failed');
     return c.json<ErrorResponse>({ error: 'Failed to process request' }, 500);

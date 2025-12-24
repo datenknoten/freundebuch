@@ -1,12 +1,8 @@
-import path from 'node:path';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@freundebuch/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts'),
-    },
-  },
+  plugins: [tsconfigPaths()],
   test: {
     globals: true,
     environment: 'node',
