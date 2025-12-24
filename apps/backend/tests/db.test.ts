@@ -8,9 +8,11 @@ import {
   setupGracefulShutdown,
 } from '../src/utils/db.js';
 
-// Mock pg module
+// Mock pg module - use regular function to allow constructor usage
 vi.mock('pg', () => {
-  const mockPool = vi.fn();
+  // biome-ignore lint/complexity/useArrowFunction: must be regular function for constructor mock
+  // biome-ignore lint/suspicious/noEmptyBlockStatements: empty function is intentional for mock
+  const mockPool = vi.fn(function () {});
   return {
     default: {
       Pool: mockPool,
@@ -50,7 +52,10 @@ describe('db.ts', () => {
       };
 
       // @ts-expect-error - Mock implementation
-      pg.Pool.mockImplementation(() => mockPoolInstance);
+      // biome-ignore lint/complexity/useArrowFunction: must be regular function for constructor mock
+      pg.Pool.mockImplementation(function () {
+        return mockPoolInstance;
+      });
 
       const pool = createPool();
 
@@ -74,7 +79,10 @@ describe('db.ts', () => {
       };
 
       // @ts-expect-error - Mock implementation
-      pg.Pool.mockImplementation(() => mockPoolInstance);
+      // biome-ignore lint/complexity/useArrowFunction: must be regular function for constructor mock
+      pg.Pool.mockImplementation(function () {
+        return mockPoolInstance;
+      });
 
       createPool();
 

@@ -20,9 +20,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "arktype": "2.1.22"
+    "arktype": "2.1.29"
   },
   "devDependencies": {
-    "typescript": "5.7.2"
+    "typescript": "5.9.3"
   }
 }
