@@ -15,8 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write
+      issues: write
+      checks: read
       id-token: write
 
     steps:
@@ -43,4 +44,4 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ github.token }}
           prompt: ${{ env.REVIEW_PROMPT }}
-          claude_args: '--allowedTools "Bash(gh:*),Bash(cat:*),Bash(find:*),Bash(env:*),Bash(grep:*),Bash(head:*),Bash(tail:*),Bash(echo:*),Bash(jq:*)"'
+          claude_args: '--allowedTools "Bash(gh:*),Bash(cat:*),Bash(find:*),Bash(env:*),Bash(grep:*),Bash(head:*),Bash(tail:*),Bash(echo:*),Bash(jq:*),Bash(wc:*)"'
