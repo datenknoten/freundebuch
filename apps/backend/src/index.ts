@@ -11,6 +11,7 @@ import type { AppContext } from './types/context.js';
 import { getConfig } from './utils/config.js';
 import { checkDatabaseConnection, createPool } from './utils/db.js';
 import { createLogger } from './utils/logger.js';
+import { setupCleanupScheduler } from './utils/scheduler.js';
 
 Error.stackTraceLimit = 100;
 
@@ -80,6 +81,9 @@ export async function startServer() {
   import('./utils/db.js').then(({ setupGracefulShutdown }) => {
     setupGracefulShutdown(pool);
   });
+
+  // Setup cleanup scheduler for expired sessions and tokens
+  setupCleanupScheduler(pool, pinoLogger);
 
   pinoLogger.info(`Starting server on port ${port}`);
 
