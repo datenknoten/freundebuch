@@ -1,4 +1,8 @@
-import { type ErrorResponse, UpdateProfileRequestSchema, type User } from '@freundebuch/shared';
+import {
+  type ErrorResponse,
+  UpdateProfileRequestSchema,
+  type User,
+} from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';

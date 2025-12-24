@@ -6,5 +6,6 @@ onlyBuiltDependencies:
   - '@sveltejs/kit'
   - bcrypt
   - cpu-features
+  - esbuild
   - protobufjs
   - ssh2
