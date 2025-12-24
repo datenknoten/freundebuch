@@ -1,6 +1,17 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Custom colors */
+  --color-forest: #2d5016;
+  --color-forest-light: #3a6b1e;
+  --color-forest-dark: #1f3810;
+  --color-sage: #8b9d83;
+  --color-amber-warm: #d4a574;
+
+  /* Custom fonts */
+  --font-heading: "Yanone Kaffeesatz", sans-serif;
+  --font-body: Merriweather, serif;
+}
 
 @layer base {
   body {
