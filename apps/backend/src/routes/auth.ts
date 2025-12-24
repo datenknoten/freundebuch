@@ -10,6 +10,10 @@ import {
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
+import {
+  authRateLimitMiddleware,
+  passwordResetRateLimitMiddleware,
+} from '../middleware/rate-limit.js';
 import { AuthService } from '../services/auth.service.js';
 import type { AppContext } from '../types/context.js';
 import { getClearCookieOptions, getSessionCookieOptions } from '../utils/auth.js';
@@ -21,7 +25,7 @@ const app = new Hono<AppContext>();
  * POST /api/auth/register
  * Register a new user
  */
-app.post('/register', async (c) => {
+app.post('/register', authRateLimitMiddleware, async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
 
@@ -82,7 +86,7 @@ app.post('/register', async (c) => {
  * POST /api/auth/login
  * Login an existing user
  */
-app.post('/login', async (c) => {
+app.post('/login', authRateLimitMiddleware, async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
 
@@ -221,7 +225,7 @@ app.post('/refresh', async (c) => {
  * POST /api/auth/forgot-password
  * Request a password reset token
  */
-app.post('/forgot-password', async (c) => {
+app.post('/forgot-password', passwordResetRateLimitMiddleware, async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
 
@@ -276,7 +280,7 @@ app.post('/forgot-password', async (c) => {
  * POST /api/auth/reset-password
  * Reset password using a valid reset token
  */
-app.post('/reset-password', async (c) => {
+app.post('/reset-password', passwordResetRateLimitMiddleware, async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
 

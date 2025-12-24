@@ -5,8 +5,9 @@ import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import type { Hono } from 'hono';
 import { runner } from 'node-pg-migrate';
 import pg from 'pg';
-import { afterAll, beforeAll } from 'vitest';
+import { afterAll, beforeAll, beforeEach } from 'vitest';
 import { createApp } from '../../src/index.js';
+import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
 import { resetConfig } from '../../src/utils/config.js';
 
@@ -227,6 +228,11 @@ export function setupAuthTestSuite() {
 
     context = await setupAuthTests();
   }, 120000); // 120 second timeout for container startup
+
+  beforeEach(() => {
+    // Reset rate limiters before each test to avoid test interference
+    resetRateLimiters();
+  });
 
   afterAll(async () => {
     await teardownAuthTests(context);
