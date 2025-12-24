@@ -1,0 +1,95 @@
+import type { Context, Next } from 'hono';
+import { RateLimiterMemory, type RateLimiterRes } from 'rate-limiter-flexible';
+
+// Use higher limits in test environment to allow concurrent operation tests
+const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+
+// Rate limiter for authentication endpoints (login, register)
+// 5 attempts per minute in production, 100 in test
+let authLimiter = new RateLimiterMemory({
+  points: isTestEnv ? 100 : 5,
+  duration: 60,
+  blockDuration: isTestEnv ? 1 : 300,
+});
+
+// Rate limiter for password reset endpoints
+// 3 attempts per hour in production, 100 in test
+let passwordResetLimiter = new RateLimiterMemory({
+  points: isTestEnv ? 100 : 3,
+  duration: 3600,
+  blockDuration: isTestEnv ? 1 : 3600,
+});
+
+/**
+ * Reset all rate limiters (for testing purposes)
+ */
+export function resetRateLimiters(): void {
+  authLimiter = new RateLimiterMemory({
+    points: isTestEnv ? 100 : 5,
+    duration: 60,
+    blockDuration: isTestEnv ? 1 : 300,
+  });
+  passwordResetLimiter = new RateLimiterMemory({
+    points: isTestEnv ? 100 : 3,
+    duration: 3600,
+    blockDuration: isTestEnv ? 1 : 3600,
+  });
+}
+
+/**
+ * Get client identifier from request headers
+ * Uses X-Forwarded-For if behind proxy, otherwise X-Real-IP
+ */
+function getClientIdentifier(c: Context): string {
+  const forwarded = c.req.header('X-Forwarded-For');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return c.req.header('X-Real-IP') || 'unknown';
+}
+
+/**
+ * Rate limiting middleware for authentication endpoints
+ * Limits: 5 attempts per minute, 5 minute block after exceeding
+ */
+export async function authRateLimitMiddleware(c: Context, next: Next) {
+  const clientId = getClientIdentifier(c);
+  const logger = c.get('logger');
+
+  try {
+    await authLimiter.consume(clientId);
+    return next();
+  } catch (error) {
+    const rateLimiterRes = error as RateLimiterRes;
+    const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
+
+    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on auth endpoint');
+
+    return c.json({ error: 'Too many requests. Please try again later.' }, 429, {
+      'Retry-After': String(retryAfter),
+    });
+  }
+}
+
+/**
+ * Rate limiting middleware for password reset endpoints
+ * Limits: 3 attempts per hour, 1 hour block after exceeding
+ */
+export async function passwordResetRateLimitMiddleware(c: Context, next: Next) {
+  const clientId = getClientIdentifier(c);
+  const logger = c.get('logger');
+
+  try {
+    await passwordResetLimiter.consume(clientId);
+    return next();
+  } catch (error) {
+    const rateLimiterRes = error as RateLimiterRes;
+    const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
+
+    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on password reset endpoint');
+
+    return c.json({ error: 'Too many password reset attempts. Please try again later.' }, 429, {
+      'Retry-After': String(retryAfter),
+    });
+  }
+}
