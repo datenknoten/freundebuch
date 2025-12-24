@@ -105,7 +105,7 @@ freundebuch2/
 ### Database Setup
 
 #### PostgreSQL Configuration
-- PostgreSQL 15+ installation/Docker image
+- PostgreSQL 18+ installation/Docker image
 - Database creation scripts
 - User/role setup
 - Connection pooling configuration
@@ -369,7 +369,7 @@ services:
 ## Technical Considerations
 
 ### Technology Versions
-- Node.js: 24.x LTS
+- Node.js: 24.x
 - TypeScript: 5.x
 - PostgreSQL: 18+
 - Hono: Latest stable
@@ -561,7 +561,3 @@ All subsequent epics depend on this foundational setup.
 - Keep commits small and focused - integrate multiple times per day
 - All code on main must be deployable (even if features are hidden behind flags)
 
----
-
-**Estimated Effort:** 1-2 weeks
-**Team Size:** 1-2 developers who like building solid foundations
