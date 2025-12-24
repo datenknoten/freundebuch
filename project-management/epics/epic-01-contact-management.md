@@ -94,7 +94,7 @@ Think of this as your contact database on steroids! We're building a central hub
 
 - Bulk import/export (we'll tackle that in Phase 3)
 - CalDAV/CardDAV sync (also coming in Phase 3)
-- Advanced search (we'll start with basic search in MVP, then level up in Phase 1)
+- Advanced search (we'll start with basic search in MVP, then level up in Phase 2)
 
 ## Related Epics
 
