@@ -43,3 +43,4 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ github.token }}
           prompt: ${{ env.REVIEW_PROMPT }}
+          claude_args: '--allowedTools "Bash(gh pr:*),Bash(gh api:*),Bash(cat:*),Bash(find:*)"'
