@@ -26,6 +26,8 @@ const ConfigSchema = type({
   // Default expiry of 7 days
   JWT_EXPIRY: 'string.integer.parse = "604800"',
   SESSION_SECRET: SecretType,
+  SESSION_EXPIRY_DAYS: 'string.integer.parse = "7"',
+  PASSWORD_RESET_EXPIRY_HOURS: 'string.integer.parse = "1"',
 
   // Email (optional, for later phases)
   'SMTP_HOST?': 'string',
