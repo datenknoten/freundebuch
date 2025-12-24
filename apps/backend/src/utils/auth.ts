@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
-import { PasswordSchema } from '@freundebuch/shared';
+import { PasswordSchema } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import bcrypt from 'bcrypt';
+import type { CookieOptions } from 'hono/utils/cookie';
 import jwt from 'jsonwebtoken';
 import { getConfig } from './config.js';
 
@@ -98,11 +99,12 @@ export function hashSessionToken(token: string): string {
 }
 
 /**
- * Calculate session expiry date
+ * Calculate session expiry date (uses config)
  */
 export function getSessionExpiry(): Date {
+  const config = getConfig();
   const expiry = new Date();
-  expiry.setDate(expiry.getDate() + 7); // 7 days from now
+  expiry.setDate(expiry.getDate() + config.SESSION_EXPIRY_DAYS);
   return expiry;
 }
 
@@ -114,10 +116,39 @@ export function generatePasswordResetToken(): string {
 }
 
 /**
- * Calculate password reset token expiry date
+ * Calculate password reset token expiry date (uses config)
  */
 export function getPasswordResetExpiry(): Date {
+  const config = getConfig();
   const expiry = new Date();
-  expiry.setHours(expiry.getHours() + 1); // 1 hour from now
+  expiry.setHours(expiry.getHours() + config.PASSWORD_RESET_EXPIRY_HOURS);
   return expiry;
+}
+
+/**
+ * Get standard session cookie options
+ */
+export function getSessionCookieOptions(): CookieOptions {
+  const config = getConfig();
+  return {
+    httpOnly: true,
+    secure: config.ENV === 'production',
+    sameSite: 'Lax',
+    maxAge: config.SESSION_EXPIRY_DAYS * 24 * 60 * 60, // Convert days to seconds
+    path: '/',
+  };
+}
+
+/**
+ * Get cookie options for clearing a session cookie
+ */
+export function getClearCookieOptions(): CookieOptions {
+  const config = getConfig();
+  return {
+    httpOnly: true,
+    secure: config.ENV === 'production',
+    sameSite: 'Lax',
+    maxAge: 0,
+    path: '/',
+  };
 }

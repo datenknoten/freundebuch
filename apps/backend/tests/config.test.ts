@@ -356,6 +356,8 @@ describe('getConfig', () => {
         JWT_SECRET: 'super-secret-jwt-key-00000000000',
         JWT_EXPIRY: 1209600,
         SESSION_SECRET: 'super-secret-session-key-super-secret-session-key',
+        SESSION_EXPIRY_DAYS: 7,
+        PASSWORD_RESET_EXPIRY_HOURS: 1,
         SMTP_HOST: 'smtp.gmail.com',
         SMTP_PORT: 587,
         SMTP_USER: 'user@gmail.com',

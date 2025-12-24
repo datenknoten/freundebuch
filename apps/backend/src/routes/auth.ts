@@ -12,6 +12,7 @@ import { Hono } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
 import { AuthService } from '../services/auth.service.js';
 import type { AppContext } from '../types/context.js';
+import { getClearCookieOptions, getSessionCookieOptions } from '../utils/auth.js';
 import { getConfig } from '../utils/config.js';
 
 const app = new Hono<AppContext>();
@@ -50,13 +51,7 @@ app.post('/register', async (c) => {
     const result = await authService.register(validated);
 
     // Set session cookie (HTTP-only)
-    setCookie(c, 'session_token', result.sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    });
+    setCookie(c, 'session_token', result.sessionToken, getSessionCookieOptions());
 
     logger.info({ userId: result.user.externalId }, 'User registered successfully');
 
@@ -117,13 +112,7 @@ app.post('/login', async (c) => {
     const result = await authService.login(validated);
 
     // Set session cookie (HTTP-only)
-    setCookie(c, 'session_token', result.sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    });
+    setCookie(c, 'session_token', result.sessionToken, getSessionCookieOptions());
 
     logger.info({ userId: result.user.externalId }, 'User logged in successfully');
 
@@ -157,13 +146,7 @@ app.post('/logout', async (c) => {
     await authService.logout(sessionToken);
 
     // Clear session cookie
-    setCookie(c, 'session_token', '', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
-      maxAge: 0,
-      path: '/',
-    });
+    setCookie(c, 'session_token', '', getClearCookieOptions());
 
     logger.info('User logged out successfully');
 
@@ -224,13 +207,7 @@ app.post('/refresh', async (c) => {
   } catch (error) {
     if (error instanceof Error && error.message === 'Invalid or expired session') {
       // Clear invalid session cookie
-      setCookie(c, 'session_token', '', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'Lax',
-        maxAge: 0,
-        path: '/',
-      });
+      setCookie(c, 'session_token', '', getClearCookieOptions());
 
       return c.json<ErrorResponse>({ error: 'Invalid or expired session' }, 401);
     }
