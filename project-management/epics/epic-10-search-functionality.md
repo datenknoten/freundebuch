@@ -302,7 +302,7 @@ Score factors:
 ### Advanced
 - Group: "Friends" AND Tag: "Hiking" AND Last contacted: ">90 days ago"
 - Birthday in next 7 days AND Group: "Family"
-- Not contacted since 2024-01-01 AND NOT Archived
+- Not contacted since [date] AND NOT Archived
 - Created in last 30 days AND Favorites
 
 ### Fuzzy
