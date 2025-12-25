@@ -17,6 +17,7 @@ Welcome to the epic planning documents for Personal CRM! Each epic represents a 
 | [Epic 8](epic-08-activity-timeline.md) | Activity Timeline | Phase 2 | Medium | Planned |
 | [Epic 9](epic-09-dashboard-insights.md) | Dashboard & Insights | Phase 2 (basic), Phase 3 (extended) | Medium | Planned |
 | [Epic 10](epic-10-search-functionality.md) | Search Functionality | Phase 1 (basic), Phase 2 (advanced) | High/Medium | Planned |
+| [Epic 11](epic-11-custom-fields.md) | Custom Fields | Phase 2 | Low | Planned |
 
 ## Implementation Phases
 
@@ -64,6 +65,7 @@ Welcome to the epic planning documents for Personal CRM! Each epic represents a 
 - Epic 8: Activity Timeline (see your history)
 - Epic 9: Dashboard & Insights (the big picture)
 - Epic 10: Search Functionality (advanced filters)
+- Epic 11: Custom Fields (make it truly yours)
 
 **What you'll be able to do:**
 - Keep a history of all your interactions
@@ -72,6 +74,7 @@ Welcome to the epic planning documents for Personal CRM! Each epic represents a 
 - See a timeline of your relationship history
 - Get insights into your social network
 - Use powerful search filters and save them
+- Add your own custom fields to contacts
 
 ---
 
@@ -103,6 +106,7 @@ graph TD
     E1 --> E2[Epic 2: Relationship Management]
     E1 --> E4
     E1 --> E10
+    E1 --> E11[Epic 11: Custom Fields]
     E2 --> E3[Epic 3: Reminders]
     E2 --> E8[Epic 8: Timeline]
     E2 --> E9[Epic 9: Dashboard]

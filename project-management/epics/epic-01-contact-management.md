@@ -19,9 +19,10 @@ This epic is divided into sub-epics to allow incremental delivery:
 | [1B](#epic-1b-extended-contact-fields) | Extended Contact Fields | High | Rich context: dates, profession, social profiles |
 | [1C](#epic-1c-contact-notes) | Contact Notes | High | Timestamped notes system |
 | [1D](#epic-1d-contact-relationships) | Contact Relationships | Medium | Links between contacts |
-| [1E](#epic-1e-custom-fields) | Custom Fields | Low (consider Phase 2) | User-defined fields |
 
-**Recommended Implementation Order:** 1A → 1B → 1C → 1D → 1E
+**Recommended Implementation Order:** 1A → 1B → 1C → 1D
+
+> **Note:** Custom fields have been extracted to [Epic 11: Custom Fields](epic-11-custom-fields.md) for Phase 2.
 
 ---
 
@@ -726,125 +727,6 @@ CREATE INDEX idx_contact_relationships_related ON contact_relationships(related_
 
 ---
 
-# Epic 1E: Custom Fields
-
-**Priority:** Low - Consider deferring to Phase 2
-**Depends on:** Epic 1A
-
-## Features
-
-### Custom Field Definitions
-- Users can define their own fields
-- Field types:
-  - Text (single line)
-  - Text (multi-line)
-  - Number
-  - Date
-  - Yes/No (boolean)
-  - Single select (dropdown)
-  - URL
-- Fields have:
-  - Name/label
-  - Type
-  - Options (for single select)
-  - Default value (optional)
-  - Sort order
-
-### Custom Field Values
-- Values stored per contact
-- Displayed in contact detail view
-- Editable in contact form
-
-### Limitations for MVP
-- No multi-select fields (deferred)
-- No conditional fields (deferred)
-- No field groups/sections (deferred)
-
-## User Stories
-
-1. As a user, I want to create a custom "Preferred pronouns" text field
-2. As a user, I want to create a "VIP" yes/no field to mark important contacts
-3. As a user, I want to create a "Priority level" dropdown with High/Medium/Low options
-4. As a user, I want to fill in custom fields when editing a contact
-
-## Database Schema
-
-```sql
--- Custom field definitions
-CREATE TABLE custom_field_definitions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-
-    field_name VARCHAR(100) NOT NULL,
-    field_type VARCHAR(20) NOT NULL,
-    options JSONB,  -- For single_select: ["Option 1", "Option 2"]
-    default_value TEXT,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    CONSTRAINT valid_field_type CHECK (field_type IN ('text', 'textarea', 'number', 'date', 'boolean', 'single_select', 'url')),
-    CONSTRAINT unique_field_name_per_user UNIQUE (user_id, field_name)
-);
-
-CREATE INDEX idx_custom_field_definitions_user ON custom_field_definitions(user_id);
-
--- Custom field values
-CREATE TABLE custom_field_values (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
-    field_definition_id UUID NOT NULL REFERENCES custom_field_definitions(id) ON DELETE CASCADE,
-
-    value_text TEXT,
-    value_number NUMERIC,
-    value_date DATE,
-    value_boolean BOOLEAN,
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    CONSTRAINT unique_value_per_contact_field UNIQUE (contact_id, field_definition_id)
-);
-
-CREATE INDEX idx_custom_field_values_contact ON custom_field_values(contact_id);
-CREATE INDEX idx_custom_field_values_field ON custom_field_values(field_definition_id);
-```
-
-## API Endpoints
-
-### Field Definitions
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/custom-fields` | List user's custom field definitions |
-| POST | `/api/custom-fields` | Create new custom field |
-| PUT | `/api/custom-fields/:id` | Update custom field |
-| DELETE | `/api/custom-fields/:id` | Delete custom field (and all values!) |
-
-### Field Values
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/contacts/:id/custom-fields` | Get custom field values for contact |
-| PUT | `/api/contacts/:id/custom-fields` | Set/update custom field values |
-
-## Frontend Components
-
-| Component | Description |
-|-----------|-------------|
-| `CustomFieldManager` | List/create/edit field definitions |
-| `CustomFieldDefinitionForm` | Form for creating/editing field definition |
-| `CustomFieldInput` | Dynamic input based on field type |
-| `CustomFieldsSection` | Display custom fields in contact detail |
-| `CustomFieldsFormSection` | Custom fields in contact form |
-
-## Success Metrics
-
-- Custom field definitions CRUD works correctly
-- All field types render and save properly
-- Custom fields appear in contact form dynamically
-
----
-
 ## Dependencies
 
 - **Epic 0:** Project setup complete (database, API framework, frontend)
@@ -855,6 +737,7 @@ CREATE INDEX idx_custom_field_values_field ON custom_field_values(field_definiti
 
 | Feature | Epic |
 |---------|------|
+| Custom Fields | Epic 11: Custom Fields (Phase 2) |
 | Groups & Tags | Epic 4: Categorization & Organization |
 | Favorites | Epic 4: Categorization & Organization |
 | Archiving | Epic 4: Categorization & Organization |
@@ -871,6 +754,7 @@ CREATE INDEX idx_custom_field_values_field ON custom_field_values(field_definiti
 - **Epic 6:** CalDAV/CardDAV - sync with external systems
 - **Epic 7:** Import/Export - bulk data operations
 - **Epic 10:** Search - finding contacts
+- **Epic 11:** Custom Fields - user-defined contact fields (Phase 2)
 
 ## Testing Strategy
 
