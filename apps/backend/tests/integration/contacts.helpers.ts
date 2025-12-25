@@ -46,7 +46,7 @@ export async function createTestContact(
   displayName: string,
 ): Promise<string> {
   const result = await pool.query(
-    `INSERT INTO contacts (user_id, display_name)
+    `INSERT INTO contacts.contacts (user_id, display_name)
      SELECT u.id, $2
      FROM auth.users u
      WHERE u.external_id = $1
@@ -65,7 +65,7 @@ export async function getTestContact(
   contactExternalId: string,
 ): Promise<{ displayName: string; deletedAt: Date | null } | null> {
   const result = await pool.query(
-    'SELECT display_name, deleted_at FROM contacts WHERE external_id = $1',
+    'SELECT display_name, deleted_at FROM contacts.contacts WHERE external_id = $1',
     [contactExternalId],
   );
 
@@ -84,7 +84,7 @@ export async function getTestContact(
  */
 export async function countUserContacts(pool: pg.Pool, userExternalId: string): Promise<number> {
   const result = await pool.query(
-    `SELECT COUNT(*) FROM contacts c
+    `SELECT COUNT(*) FROM contacts.contacts c
      JOIN auth.users u ON c.user_id = u.id
      WHERE u.external_id = $1 AND c.deleted_at IS NULL`,
     [userExternalId],
@@ -107,11 +107,11 @@ export function authHeaders(accessToken: string): Record<string, string> {
  * Clean up contacts between tests
  */
 export async function cleanupContacts(pool: pg.Pool): Promise<void> {
-  await pool.query('DELETE FROM contact_urls');
-  await pool.query('DELETE FROM contact_addresses');
-  await pool.query('DELETE FROM contact_emails');
-  await pool.query('DELETE FROM contact_phones');
-  await pool.query('DELETE FROM contacts');
+  await pool.query('DELETE FROM contacts.contact_urls');
+  await pool.query('DELETE FROM contacts.contact_addresses');
+  await pool.query('DELETE FROM contacts.contact_emails');
+  await pool.query('DELETE FROM contacts.contact_phones');
+  await pool.query('DELETE FROM contacts.contacts');
 }
 
 /**

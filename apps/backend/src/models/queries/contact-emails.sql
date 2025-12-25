@@ -6,8 +6,8 @@ SELECT
     e.label,
     e.is_primary,
     e.created_at
-FROM contact_emails e
-INNER JOIN contacts c ON e.contact_id = c.id
+FROM contacts.contact_emails e
+INNER JOIN contacts.contacts c ON e.contact_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :contactExternalId
   AND u.external_id = :userExternalId
@@ -22,8 +22,8 @@ SELECT
     e.label,
     e.is_primary,
     e.created_at
-FROM contact_emails e
-INNER JOIN contacts c ON e.contact_id = c.id
+FROM contacts.contact_emails e
+INNER JOIN contacts.contacts c ON e.contact_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE e.external_id = :emailExternalId
   AND c.external_id = :contactExternalId
@@ -31,7 +31,7 @@ WHERE e.external_id = :emailExternalId
   AND c.deleted_at IS NULL;
 
 /* @name CreateEmail */
-INSERT INTO contact_emails (
+INSERT INTO contacts.contact_emails (
     contact_id,
     email_address,
     email_type,
@@ -44,7 +44,7 @@ SELECT
     :emailType,
     :label,
     :isPrimary
-FROM contacts c
+FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :contactExternalId
   AND u.external_id = :userExternalId
@@ -58,13 +58,13 @@ RETURNING
     created_at;
 
 /* @name UpdateEmail */
-UPDATE contact_emails e
+UPDATE contacts.contact_emails e
 SET
     email_address = :emailAddress,
     email_type = :emailType,
     label = :label,
     is_primary = :isPrimary
-FROM contacts c
+FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE e.external_id = :emailExternalId
   AND e.contact_id = c.id
@@ -80,8 +80,8 @@ RETURNING
     e.created_at;
 
 /* @name DeleteEmail */
-DELETE FROM contact_emails e
-USING contacts c, auth.users u
+DELETE FROM contacts.contact_emails e
+USING contacts.contacts c, auth.users u
 WHERE e.external_id = :emailExternalId
   AND e.contact_id = c.id
   AND c.user_id = u.id
@@ -91,9 +91,9 @@ WHERE e.external_id = :emailExternalId
 RETURNING e.external_id;
 
 /* @name ClearPrimaryEmail */
-UPDATE contact_emails e
+UPDATE contacts.contact_emails e
 SET is_primary = false
-FROM contacts c
+FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE e.contact_id = c.id
   AND c.external_id = :contactExternalId

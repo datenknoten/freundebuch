@@ -25,7 +25,7 @@ export interface IGetUrlsByContactIdQuery {
   result: IGetUrlsByContactIdResult;
 }
 
-const getUrlsByContactIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":218,"b":235}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":261,"b":275}]}],"statement":"SELECT\n    u.external_id,\n    u.url,\n    u.url_type,\n    u.label,\n    u.created_at\nFROM contact_urls u\nINNER JOIN contacts c ON u.contact_id = c.id\nINNER JOIN auth.users usr ON c.user_id = usr.id\nWHERE c.external_id = :contactExternalId\n  AND usr.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY u.created_at ASC"};
+const getUrlsByContactIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":236,"b":253}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":279,"b":293}]}],"statement":"SELECT\n    u.external_id,\n    u.url,\n    u.url_type,\n    u.label,\n    u.created_at\nFROM contacts.contact_urls u\nINNER JOIN contacts.contacts c ON u.contact_id = c.id\nINNER JOIN auth.users usr ON c.user_id = usr.id\nWHERE c.external_id = :contactExternalId\n  AND usr.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY u.created_at ASC"};
 
 /**
  * Query generated from SQL:
@@ -36,8 +36,8 @@ const getUrlsByContactIdIR: any = {"usedParamSet":{"contactExternalId":true,"use
  *     u.url_type,
  *     u.label,
  *     u.created_at
- * FROM contact_urls u
- * INNER JOIN contacts c ON u.contact_id = c.id
+ * FROM contacts.contact_urls u
+ * INNER JOIN contacts.contacts c ON u.contact_id = c.id
  * INNER JOIN auth.users usr ON c.user_id = usr.id
  * WHERE c.external_id = :contactExternalId
  *   AND usr.external_id = :userExternalId
@@ -73,7 +73,7 @@ export interface IGetUrlByIdQuery {
   result: IGetUrlByIdResult;
 }
 
-const getUrlByIdIR: any = {"usedParamSet":{"urlExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"urlExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":218,"b":231}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":255,"b":272}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":298,"b":312}]}],"statement":"SELECT\n    u.external_id,\n    u.url,\n    u.url_type,\n    u.label,\n    u.created_at\nFROM contact_urls u\nINNER JOIN contacts c ON u.contact_id = c.id\nINNER JOIN auth.users usr ON c.user_id = usr.id\nWHERE u.external_id = :urlExternalId\n  AND c.external_id = :contactExternalId\n  AND usr.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
+const getUrlByIdIR: any = {"usedParamSet":{"urlExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"urlExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":236,"b":249}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":273,"b":290}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":316,"b":330}]}],"statement":"SELECT\n    u.external_id,\n    u.url,\n    u.url_type,\n    u.label,\n    u.created_at\nFROM contacts.contact_urls u\nINNER JOIN contacts.contacts c ON u.contact_id = c.id\nINNER JOIN auth.users usr ON c.user_id = usr.id\nWHERE u.external_id = :urlExternalId\n  AND c.external_id = :contactExternalId\n  AND usr.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
 
 /**
  * Query generated from SQL:
@@ -84,8 +84,8 @@ const getUrlByIdIR: any = {"usedParamSet":{"urlExternalId":true,"contactExternal
  *     u.url_type,
  *     u.label,
  *     u.created_at
- * FROM contact_urls u
- * INNER JOIN contacts c ON u.contact_id = c.id
+ * FROM contacts.contact_urls u
+ * INNER JOIN contacts.contacts c ON u.contact_id = c.id
  * INNER JOIN auth.users usr ON c.user_id = usr.id
  * WHERE u.external_id = :urlExternalId
  *   AND c.external_id = :contactExternalId
@@ -123,12 +123,12 @@ export interface ICreateUrlQuery {
   result: ICreateUrlResult;
 }
 
-const createUrlIR: any = {"usedParamSet":{"url":true,"urlType":true,"label":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"url","required":false,"transform":{"type":"scalar"},"locs":[{"a":99,"b":102}]},{"name":"urlType","required":false,"transform":{"type":"scalar"},"locs":[{"a":109,"b":116}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":123,"b":128}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":216,"b":233}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":259,"b":273}]}],"statement":"INSERT INTO contact_urls (\n    contact_id,\n    url,\n    url_type,\n    label\n)\nSELECT\n    c.id,\n    :url,\n    :urlType,\n    :label\nFROM contacts c\nINNER JOIN auth.users usr ON c.user_id = usr.id\nWHERE c.external_id = :contactExternalId\n  AND usr.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    external_id,\n    url,\n    url_type,\n    label,\n    created_at"};
+const createUrlIR: any = {"usedParamSet":{"url":true,"urlType":true,"label":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"url","required":false,"transform":{"type":"scalar"},"locs":[{"a":108,"b":111}]},{"name":"urlType","required":false,"transform":{"type":"scalar"},"locs":[{"a":118,"b":125}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":132,"b":137}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":234,"b":251}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":277,"b":291}]}],"statement":"INSERT INTO contacts.contact_urls (\n    contact_id,\n    url,\n    url_type,\n    label\n)\nSELECT\n    c.id,\n    :url,\n    :urlType,\n    :label\nFROM contacts.contacts c\nINNER JOIN auth.users usr ON c.user_id = usr.id\nWHERE c.external_id = :contactExternalId\n  AND usr.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    external_id,\n    url,\n    url_type,\n    label,\n    created_at"};
 
 /**
  * Query generated from SQL:
  * ```
- * INSERT INTO contact_urls (
+ * INSERT INTO contacts.contact_urls (
  *     contact_id,
  *     url,
  *     url_type,
@@ -139,7 +139,7 @@ const createUrlIR: any = {"usedParamSet":{"url":true,"urlType":true,"label":true
  *     :url,
  *     :urlType,
  *     :label
- * FROM contacts c
+ * FROM contacts.contacts c
  * INNER JOIN auth.users usr ON c.user_id = usr.id
  * WHERE c.external_id = :contactExternalId
  *   AND usr.external_id = :userExternalId
@@ -183,17 +183,17 @@ export interface IUpdateUrlQuery {
   result: IUpdateUrlResult;
 }
 
-const updateUrlIR: any = {"usedParamSet":{"url":true,"urlType":true,"label":true,"urlExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"url","required":false,"transform":{"type":"scalar"},"locs":[{"a":36,"b":39}]},{"name":"urlType","required":false,"transform":{"type":"scalar"},"locs":[{"a":57,"b":64}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":79,"b":84}]},{"name":"urlExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":172,"b":185}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":235,"b":252}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":278,"b":292}]}],"statement":"UPDATE contact_urls u\nSET\n    url = :url,\n    url_type = :urlType,\n    label = :label\nFROM contacts c\nINNER JOIN auth.users usr ON c.user_id = usr.id\nWHERE u.external_id = :urlExternalId\n  AND u.contact_id = c.id\n  AND c.external_id = :contactExternalId\n  AND usr.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    u.external_id,\n    u.url,\n    u.url_type,\n    u.label,\n    u.created_at"};
+const updateUrlIR: any = {"usedParamSet":{"url":true,"urlType":true,"label":true,"urlExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"url","required":false,"transform":{"type":"scalar"},"locs":[{"a":45,"b":48}]},{"name":"urlType","required":false,"transform":{"type":"scalar"},"locs":[{"a":66,"b":73}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":88,"b":93}]},{"name":"urlExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":190,"b":203}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":253,"b":270}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":296,"b":310}]}],"statement":"UPDATE contacts.contact_urls u\nSET\n    url = :url,\n    url_type = :urlType,\n    label = :label\nFROM contacts.contacts c\nINNER JOIN auth.users usr ON c.user_id = usr.id\nWHERE u.external_id = :urlExternalId\n  AND u.contact_id = c.id\n  AND c.external_id = :contactExternalId\n  AND usr.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    u.external_id,\n    u.url,\n    u.url_type,\n    u.label,\n    u.created_at"};
 
 /**
  * Query generated from SQL:
  * ```
- * UPDATE contact_urls u
+ * UPDATE contacts.contact_urls u
  * SET
  *     url = :url,
  *     url_type = :urlType,
  *     label = :label
- * FROM contacts c
+ * FROM contacts.contacts c
  * INNER JOIN auth.users usr ON c.user_id = usr.id
  * WHERE u.external_id = :urlExternalId
  *   AND u.contact_id = c.id
@@ -230,13 +230,13 @@ export interface IDeleteUrlQuery {
   result: IDeleteUrlResult;
 }
 
-const deleteUrlIR: any = {"usedParamSet":{"urlExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"urlExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":82,"b":95}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":170,"b":187}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":213,"b":227}]}],"statement":"DELETE FROM contact_urls u\nUSING contacts c, auth.users usr\nWHERE u.external_id = :urlExternalId\n  AND u.contact_id = c.id\n  AND c.user_id = usr.id\n  AND c.external_id = :contactExternalId\n  AND usr.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING u.external_id"};
+const deleteUrlIR: any = {"usedParamSet":{"urlExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"urlExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":100,"b":113}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":188,"b":205}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":231,"b":245}]}],"statement":"DELETE FROM contacts.contact_urls u\nUSING contacts.contacts c, auth.users usr\nWHERE u.external_id = :urlExternalId\n  AND u.contact_id = c.id\n  AND c.user_id = usr.id\n  AND c.external_id = :contactExternalId\n  AND usr.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING u.external_id"};
 
 /**
  * Query generated from SQL:
  * ```
- * DELETE FROM contact_urls u
- * USING contacts c, auth.users usr
+ * DELETE FROM contacts.contact_urls u
+ * USING contacts.contacts c, auth.users usr
  * WHERE u.external_id = :urlExternalId
  *   AND u.contact_id = c.id
  *   AND c.user_id = usr.id

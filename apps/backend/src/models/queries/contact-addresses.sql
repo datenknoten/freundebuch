@@ -11,8 +11,8 @@ SELECT
     a.label,
     a.is_primary,
     a.created_at
-FROM contact_addresses a
-INNER JOIN contacts c ON a.contact_id = c.id
+FROM contacts.contact_addresses a
+INNER JOIN contacts.contacts c ON a.contact_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :contactExternalId
   AND u.external_id = :userExternalId
@@ -32,8 +32,8 @@ SELECT
     a.label,
     a.is_primary,
     a.created_at
-FROM contact_addresses a
-INNER JOIN contacts c ON a.contact_id = c.id
+FROM contacts.contact_addresses a
+INNER JOIN contacts.contacts c ON a.contact_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE a.external_id = :addressExternalId
   AND c.external_id = :contactExternalId
@@ -41,7 +41,7 @@ WHERE a.external_id = :addressExternalId
   AND c.deleted_at IS NULL;
 
 /* @name CreateAddress */
-INSERT INTO contact_addresses (
+INSERT INTO contacts.contact_addresses (
     contact_id,
     street_line1,
     street_line2,
@@ -64,7 +64,7 @@ SELECT
     :addressType,
     :label,
     :isPrimary
-FROM contacts c
+FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :contactExternalId
   AND u.external_id = :userExternalId
@@ -83,7 +83,7 @@ RETURNING
     created_at;
 
 /* @name UpdateAddress */
-UPDATE contact_addresses a
+UPDATE contacts.contact_addresses a
 SET
     street_line1 = :streetLine1,
     street_line2 = :streetLine2,
@@ -94,7 +94,7 @@ SET
     address_type = :addressType,
     label = :label,
     is_primary = :isPrimary
-FROM contacts c
+FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE a.external_id = :addressExternalId
   AND a.contact_id = c.id
@@ -115,8 +115,8 @@ RETURNING
     a.created_at;
 
 /* @name DeleteAddress */
-DELETE FROM contact_addresses a
-USING contacts c, auth.users u
+DELETE FROM contacts.contact_addresses a
+USING contacts.contacts c, auth.users u
 WHERE a.external_id = :addressExternalId
   AND a.contact_id = c.id
   AND c.user_id = u.id
@@ -126,9 +126,9 @@ WHERE a.external_id = :addressExternalId
 RETURNING a.external_id;
 
 /* @name ClearPrimaryAddress */
-UPDATE contact_addresses a
+UPDATE contacts.contact_addresses a
 SET is_primary = false
-FROM contacts c
+FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE a.contact_id = c.id
   AND c.external_id = :contactExternalId

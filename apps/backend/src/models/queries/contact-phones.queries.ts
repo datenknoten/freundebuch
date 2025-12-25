@@ -27,7 +27,7 @@ export interface IGetPhonesByContactIdQuery {
   result: IGetPhonesByContactIdResult;
 }
 
-const getPhonesByContactIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":245,"b":262}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":286,"b":300}]}],"statement":"SELECT\n    p.external_id,\n    p.phone_number,\n    p.phone_type,\n    p.label,\n    p.is_primary,\n    p.created_at\nFROM contact_phones p\nINNER JOIN contacts c ON p.contact_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY p.is_primary DESC, p.created_at ASC"};
+const getPhonesByContactIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":263,"b":280}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":304,"b":318}]}],"statement":"SELECT\n    p.external_id,\n    p.phone_number,\n    p.phone_type,\n    p.label,\n    p.is_primary,\n    p.created_at\nFROM contacts.contact_phones p\nINNER JOIN contacts.contacts c ON p.contact_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY p.is_primary DESC, p.created_at ASC"};
 
 /**
  * Query generated from SQL:
@@ -39,8 +39,8 @@ const getPhonesByContactIdIR: any = {"usedParamSet":{"contactExternalId":true,"u
  *     p.label,
  *     p.is_primary,
  *     p.created_at
- * FROM contact_phones p
- * INNER JOIN contacts c ON p.contact_id = c.id
+ * FROM contacts.contact_phones p
+ * INNER JOIN contacts.contacts c ON p.contact_id = c.id
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE c.external_id = :contactExternalId
  *   AND u.external_id = :userExternalId
@@ -78,7 +78,7 @@ export interface IGetPhoneByIdQuery {
   result: IGetPhoneByIdResult;
 }
 
-const getPhoneByIdIR: any = {"usedParamSet":{"phoneExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"phoneExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":245,"b":260}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":284,"b":301}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":325,"b":339}]}],"statement":"SELECT\n    p.external_id,\n    p.phone_number,\n    p.phone_type,\n    p.label,\n    p.is_primary,\n    p.created_at\nFROM contact_phones p\nINNER JOIN contacts c ON p.contact_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE p.external_id = :phoneExternalId\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
+const getPhoneByIdIR: any = {"usedParamSet":{"phoneExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"phoneExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":263,"b":278}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":302,"b":319}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":343,"b":357}]}],"statement":"SELECT\n    p.external_id,\n    p.phone_number,\n    p.phone_type,\n    p.label,\n    p.is_primary,\n    p.created_at\nFROM contacts.contact_phones p\nINNER JOIN contacts.contacts c ON p.contact_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE p.external_id = :phoneExternalId\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
 
 /**
  * Query generated from SQL:
@@ -90,8 +90,8 @@ const getPhoneByIdIR: any = {"usedParamSet":{"phoneExternalId":true,"contactExte
  *     p.label,
  *     p.is_primary,
  *     p.created_at
- * FROM contact_phones p
- * INNER JOIN contacts c ON p.contact_id = c.id
+ * FROM contacts.contact_phones p
+ * INNER JOIN contacts.contacts c ON p.contact_id = c.id
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE p.external_id = :phoneExternalId
  *   AND c.external_id = :contactExternalId
@@ -132,12 +132,12 @@ export interface ICreatePhoneQuery {
   result: ICreatePhoneResult;
 }
 
-const createPhoneIR: any = {"usedParamSet":{"phoneNumber":true,"phoneType":true,"label":true,"isPrimary":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"phoneNumber","required":false,"transform":{"type":"scalar"},"locs":[{"a":128,"b":139}]},{"name":"phoneType","required":false,"transform":{"type":"scalar"},"locs":[{"a":146,"b":155}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":162,"b":167}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":174,"b":183}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":267,"b":284}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":308,"b":322}]}],"statement":"INSERT INTO contact_phones (\n    contact_id,\n    phone_number,\n    phone_type,\n    label,\n    is_primary\n)\nSELECT\n    c.id,\n    :phoneNumber,\n    :phoneType,\n    :label,\n    :isPrimary\nFROM contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    external_id,\n    phone_number,\n    phone_type,\n    label,\n    is_primary,\n    created_at"};
+const createPhoneIR: any = {"usedParamSet":{"phoneNumber":true,"phoneType":true,"label":true,"isPrimary":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"phoneNumber","required":false,"transform":{"type":"scalar"},"locs":[{"a":137,"b":148}]},{"name":"phoneType","required":false,"transform":{"type":"scalar"},"locs":[{"a":155,"b":164}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":171,"b":176}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":183,"b":192}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":285,"b":302}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":326,"b":340}]}],"statement":"INSERT INTO contacts.contact_phones (\n    contact_id,\n    phone_number,\n    phone_type,\n    label,\n    is_primary\n)\nSELECT\n    c.id,\n    :phoneNumber,\n    :phoneType,\n    :label,\n    :isPrimary\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    external_id,\n    phone_number,\n    phone_type,\n    label,\n    is_primary,\n    created_at"};
 
 /**
  * Query generated from SQL:
  * ```
- * INSERT INTO contact_phones (
+ * INSERT INTO contacts.contact_phones (
  *     contact_id,
  *     phone_number,
  *     phone_type,
@@ -150,7 +150,7 @@ const createPhoneIR: any = {"usedParamSet":{"phoneNumber":true,"phoneType":true,
  *     :phoneType,
  *     :label,
  *     :isPrimary
- * FROM contacts c
+ * FROM contacts.contacts c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE c.external_id = :contactExternalId
  *   AND u.external_id = :userExternalId
@@ -198,18 +198,18 @@ export interface IUpdatePhoneQuery {
   result: IUpdatePhoneResult;
 }
 
-const updatePhoneIR: any = {"usedParamSet":{"phoneNumber":true,"phoneType":true,"label":true,"isPrimary":true,"phoneExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"phoneNumber","required":false,"transform":{"type":"scalar"},"locs":[{"a":47,"b":58}]},{"name":"phoneType","required":false,"transform":{"type":"scalar"},"locs":[{"a":78,"b":87}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":102,"b":107}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":127,"b":136}]},{"name":"phoneExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":220,"b":235}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":285,"b":302}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":326,"b":340}]}],"statement":"UPDATE contact_phones p\nSET\n    phone_number = :phoneNumber,\n    phone_type = :phoneType,\n    label = :label,\n    is_primary = :isPrimary\nFROM contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE p.external_id = :phoneExternalId\n  AND p.contact_id = c.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    p.external_id,\n    p.phone_number,\n    p.phone_type,\n    p.label,\n    p.is_primary,\n    p.created_at"};
+const updatePhoneIR: any = {"usedParamSet":{"phoneNumber":true,"phoneType":true,"label":true,"isPrimary":true,"phoneExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"phoneNumber","required":false,"transform":{"type":"scalar"},"locs":[{"a":56,"b":67}]},{"name":"phoneType","required":false,"transform":{"type":"scalar"},"locs":[{"a":87,"b":96}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":111,"b":116}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":136,"b":145}]},{"name":"phoneExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":238,"b":253}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":303,"b":320}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":344,"b":358}]}],"statement":"UPDATE contacts.contact_phones p\nSET\n    phone_number = :phoneNumber,\n    phone_type = :phoneType,\n    label = :label,\n    is_primary = :isPrimary\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE p.external_id = :phoneExternalId\n  AND p.contact_id = c.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    p.external_id,\n    p.phone_number,\n    p.phone_type,\n    p.label,\n    p.is_primary,\n    p.created_at"};
 
 /**
  * Query generated from SQL:
  * ```
- * UPDATE contact_phones p
+ * UPDATE contacts.contact_phones p
  * SET
  *     phone_number = :phoneNumber,
  *     phone_type = :phoneType,
  *     label = :label,
  *     is_primary = :isPrimary
- * FROM contacts c
+ * FROM contacts.contacts c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE p.external_id = :phoneExternalId
  *   AND p.contact_id = c.id
@@ -247,13 +247,13 @@ export interface IDeletePhoneQuery {
   result: IDeletePhoneResult;
 }
 
-const deletePhoneIR: any = {"usedParamSet":{"phoneExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"phoneExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":82,"b":97}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":170,"b":187}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":211,"b":225}]}],"statement":"DELETE FROM contact_phones p\nUSING contacts c, auth.users u\nWHERE p.external_id = :phoneExternalId\n  AND p.contact_id = c.id\n  AND c.user_id = u.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING p.external_id"};
+const deletePhoneIR: any = {"usedParamSet":{"phoneExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"phoneExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":100,"b":115}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":188,"b":205}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":229,"b":243}]}],"statement":"DELETE FROM contacts.contact_phones p\nUSING contacts.contacts c, auth.users u\nWHERE p.external_id = :phoneExternalId\n  AND p.contact_id = c.id\n  AND c.user_id = u.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING p.external_id"};
 
 /**
  * Query generated from SQL:
  * ```
- * DELETE FROM contact_phones p
- * USING contacts c, auth.users u
+ * DELETE FROM contacts.contact_phones p
+ * USING contacts.contacts c, auth.users u
  * WHERE p.external_id = :phoneExternalId
  *   AND p.contact_id = c.id
  *   AND c.user_id = u.id
@@ -281,14 +281,14 @@ export interface IClearPrimaryPhoneQuery {
   result: IClearPrimaryPhoneResult;
 }
 
-const clearPrimaryPhoneIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":155,"b":172}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":196,"b":210}]}],"statement":"UPDATE contact_phones p\nSET is_primary = false\nFROM contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE p.contact_id = c.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\n  AND p.is_primary = true"};
+const clearPrimaryPhoneIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":173,"b":190}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":214,"b":228}]}],"statement":"UPDATE contacts.contact_phones p\nSET is_primary = false\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE p.contact_id = c.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\n  AND p.is_primary = true"};
 
 /**
  * Query generated from SQL:
  * ```
- * UPDATE contact_phones p
+ * UPDATE contacts.contact_phones p
  * SET is_primary = false
- * FROM contacts c
+ * FROM contacts.contacts c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE p.contact_id = c.id
  *   AND c.external_id = :contactExternalId
