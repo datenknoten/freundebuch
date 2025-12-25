@@ -5,6 +5,7 @@ import { logger as honoLogger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import type pg from 'pg';
 import authRoutes from './routes/auth.js';
+import contactsRoutes from './routes/contacts.js';
 import healthRoutes from './routes/health.js';
 import usersRoutes from './routes/users.js';
 import type { AppContext } from './types/context.js';
@@ -48,6 +49,7 @@ export async function createApp(pool: pg.Pool) {
   app.route('/health', healthRoutes);
   app.route('/api/auth', authRoutes);
   app.route('/api/users', usersRoutes);
+  app.route('/api/contacts', contactsRoutes);
 
   // Error handling
   app.onError((err, c) => {
