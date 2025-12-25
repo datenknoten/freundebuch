@@ -1,12 +1,15 @@
 <script lang="ts">
 import { page } from '$app/stores';
-import { onMount } from 'svelte';
-import { contacts, currentContact, isContactsLoading } from '$lib/stores/contacts';
 import ContactForm from '$lib/components/contacts/ContactForm.svelte';
+import { isAuthInitialized } from '$lib/stores/auth';
+import { contacts, currentContact, isContactsLoading } from '$lib/stores/contacts';
 
-onMount(async () => {
+// Load contact when auth is ready and page params change
+$effect(() => {
   const id = $page.params.id;
-  await contacts.loadContact(id);
+  if ($isAuthInitialized && id) {
+    contacts.loadContact(id);
+  }
 });
 </script>
 

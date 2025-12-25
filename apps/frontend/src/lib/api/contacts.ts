@@ -1,4 +1,6 @@
+import { get } from 'svelte/store';
 import type {
+  Address,
   AddressInput,
   Contact,
   ContactCreateInput,
@@ -10,24 +12,39 @@ import type {
   PhoneInput,
   Url,
   UrlInput,
-  Address,
 } from '$shared';
-import { ApiError } from './auth';
+import { auth } from '../stores/auth.js';
+import { ApiError } from './auth.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 /**
- * Helper function to make API requests with proper error handling
+ * Get the current access token from the auth store
+ */
+function getAccessToken(): string | null {
+  const authState = get(auth);
+  return authState.accessToken;
+}
+
+/**
+ * Helper function to make authenticated API requests
  */
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
+  const accessToken = getAccessToken();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
 
   const response = await fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
     credentials: 'include',
   });
 
@@ -280,10 +297,17 @@ export async function uploadPhoto(contactId: string, file: File): Promise<PhotoU
   formData.append('photo', file);
 
   const url = `${API_BASE_URL}/api/contacts/${contactId}/photo`;
+  const accessToken = getAccessToken();
+
+  const headers: Record<string, string> = {};
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
 
   const response = await fetch(url, {
     method: 'POST',
     body: formData,
+    headers,
     credentials: 'include',
   });
 

@@ -10,6 +10,7 @@ interface AuthState {
   accessToken: string | null;
   sessionToken: string | null;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
 }
 
@@ -21,6 +22,7 @@ const initialState: AuthState = {
   accessToken: null,
   sessionToken: null,
   isLoading: false,
+  isInitialized: false,
   error: null,
 };
 
@@ -170,6 +172,7 @@ function createAuthStore() {
           accessToken: result.accessToken,
           sessionToken: result.sessionToken,
           isLoading: false,
+          isInitialized: true,
           error: null,
         }));
 
@@ -179,6 +182,7 @@ function createAuthStore() {
         update((state) => ({
           ...state,
           isLoading: false,
+          isInitialized: true,
           error: null,
         }));
 
@@ -209,3 +213,23 @@ export const isAuthenticated = derived(auth, ($auth) => $auth.user !== null);
  * Derived store for current user
  */
 export const currentUser = derived(auth, ($auth) => $auth.user);
+
+/**
+ * Derived store for initialization state
+ */
+export const isAuthInitialized = derived(auth, ($auth) => $auth.isInitialized);
+
+/**
+ * Helper to wait for auth initialization
+ * Returns a promise that resolves when auth is initialized
+ */
+export function waitForAuthInit(): Promise<void> {
+  return new Promise((resolve) => {
+    const unsubscribe = auth.subscribe((state) => {
+      if (state.isInitialized) {
+        unsubscribe();
+        resolve();
+      }
+    });
+  });
+}

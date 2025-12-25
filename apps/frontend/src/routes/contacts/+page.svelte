@@ -1,10 +1,16 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-import { contacts } from '$lib/stores/contacts';
 import ContactList from '$lib/components/contacts/ContactList.svelte';
+import { isAuthInitialized } from '$lib/stores/auth';
+import { contacts } from '$lib/stores/contacts';
 
-onMount(async () => {
-  await contacts.loadContacts();
+let hasLoaded = $state(false);
+
+// Load contacts when auth is ready
+$effect(() => {
+  if ($isAuthInitialized && !hasLoaded) {
+    hasLoaded = true;
+    contacts.loadContacts();
+  }
 });
 </script>
 
