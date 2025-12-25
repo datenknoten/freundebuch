@@ -24,8 +24,15 @@ async function handleLogout() {
 			<div class="flex items-center gap-4">
 				{#if $isAuthenticated && $currentUser}
 					<a
+						href="/contacts"
+						data-sveltekit-preload-data="tap"
+						class="text-gray-700 hover:text-forest font-body font-semibold transition-colors"
+					>
+						Contacts
+					</a>
+					<a
 						href="/profile"
-                        data-sveltekit-preload-data="tap"
+						data-sveltekit-preload-data="tap"
 						class="text-gray-700 hover:text-forest font-body font-semibold transition-colors"
 					>
 						Profile
