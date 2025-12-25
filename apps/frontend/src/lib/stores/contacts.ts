@@ -1,20 +1,20 @@
 import { derived, writable } from 'svelte/store';
 import type {
+  Address,
+  AddressInput,
   Contact,
   ContactCreateInput,
-  ContactUpdateInput,
   ContactListItem,
-  Phone,
+  ContactUpdateInput,
   Email,
-  Address,
-  Url,
-  PhoneInput,
   EmailInput,
-  AddressInput,
+  Phone,
+  PhoneInput,
+  Url,
   UrlInput,
 } from '$shared';
-import * as contactsApi from '../api/contacts.js';
 import { ApiError } from '../api/auth.js';
+import * as contactsApi from '../api/contacts.js';
 
 /**
  * Contacts state interface
@@ -75,8 +75,7 @@ function createContactsStore() {
 
         return result;
       } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to load contacts';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to load contacts';
 
         update((state) => ({
           ...state,
@@ -106,8 +105,7 @@ function createContactsStore() {
 
         return contact;
       } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to load contact';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to load contact';
 
         update((state) => ({
           ...state,
@@ -138,8 +136,7 @@ function createContactsStore() {
 
         return contact;
       } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to create contact';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to create contact';
 
         update((state) => ({
           ...state,
@@ -169,8 +166,7 @@ function createContactsStore() {
 
         return contact;
       } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to update contact';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to update contact';
 
         update((state) => ({
           ...state,
@@ -200,8 +196,7 @@ function createContactsStore() {
           error: null,
         }));
       } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to delete contact';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to delete contact';
 
         update((state) => ({
           ...state,
@@ -408,8 +403,7 @@ function createContactsStore() {
           error: null,
         }));
       } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to delete address';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to delete address';
 
         update((state) => ({
           ...state,

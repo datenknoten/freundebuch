@@ -1,7 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
-import type { Contact } from '$shared';
 import { contacts } from '$lib/stores/contacts';
+import type { Contact } from '$shared';
 import ContactAvatar from './ContactAvatar.svelte';
 
 interface Props {

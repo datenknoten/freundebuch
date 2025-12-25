@@ -1,5 +1,5 @@
 <script lang="ts">
-import { contacts, contactList, isContactsLoading } from '$lib/stores/contacts';
+import { contactList, contacts, isContactsLoading } from '$lib/stores/contacts';
 import ContactListItem from './ContactListItem.svelte';
 
 let sortBy = $state<'display_name' | 'created_at' | 'updated_at'>('display_name');
