@@ -234,9 +234,9 @@ describe('Contacts API - Integration Tests', () => {
 
       // Add phone directly in database
       await pool.query(
-        `INSERT INTO contact_phones (contact_id, phone_number, phone_type, is_primary)
+        `INSERT INTO contacts.contact_phones (contact_id, phone_number, phone_type, is_primary)
          SELECT c.id, '+1234567890', 'mobile', true
-         FROM contacts c WHERE c.external_id = $1`,
+         FROM contacts.contacts c WHERE c.external_id = $1`,
         [contactId],
       );
 
@@ -302,7 +302,7 @@ describe('Contacts API - Integration Tests', () => {
 
       // Create contact with name parts
       const contactId = await createTestContact(pool, testUser.externalId, 'Dr. John Smith');
-      await pool.query("UPDATE contacts SET name_prefix = 'Dr.' WHERE external_id = $1", [
+      await pool.query("UPDATE contacts.contacts SET name_prefix = 'Dr.' WHERE external_id = $1", [
         contactId,
       ]);
 

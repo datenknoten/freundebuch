@@ -26,7 +26,7 @@ export interface IGetEmailsByContactIdQuery {
   result: IGetEmailsByContactIdResult;
 }
 
-const getEmailsByContactIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":246,"b":263}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":287,"b":301}]}],"statement":"SELECT\n    e.external_id,\n    e.email_address,\n    e.email_type,\n    e.label,\n    e.is_primary,\n    e.created_at\nFROM contact_emails e\nINNER JOIN contacts c ON e.contact_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY e.is_primary DESC, e.created_at ASC"};
+const getEmailsByContactIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":264,"b":281}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":305,"b":319}]}],"statement":"SELECT\n    e.external_id,\n    e.email_address,\n    e.email_type,\n    e.label,\n    e.is_primary,\n    e.created_at\nFROM contacts.contact_emails e\nINNER JOIN contacts.contacts c ON e.contact_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY e.is_primary DESC, e.created_at ASC"};
 
 /**
  * Query generated from SQL:
@@ -38,8 +38,8 @@ const getEmailsByContactIdIR: any = {"usedParamSet":{"contactExternalId":true,"u
  *     e.label,
  *     e.is_primary,
  *     e.created_at
- * FROM contact_emails e
- * INNER JOIN contacts c ON e.contact_id = c.id
+ * FROM contacts.contact_emails e
+ * INNER JOIN contacts.contacts c ON e.contact_id = c.id
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE c.external_id = :contactExternalId
  *   AND u.external_id = :userExternalId
@@ -76,7 +76,7 @@ export interface IGetEmailByIdQuery {
   result: IGetEmailByIdResult;
 }
 
-const getEmailByIdIR: any = {"usedParamSet":{"emailExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"emailExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":246,"b":261}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":285,"b":302}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":326,"b":340}]}],"statement":"SELECT\n    e.external_id,\n    e.email_address,\n    e.email_type,\n    e.label,\n    e.is_primary,\n    e.created_at\nFROM contact_emails e\nINNER JOIN contacts c ON e.contact_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE e.external_id = :emailExternalId\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
+const getEmailByIdIR: any = {"usedParamSet":{"emailExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"emailExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":264,"b":279}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":303,"b":320}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":344,"b":358}]}],"statement":"SELECT\n    e.external_id,\n    e.email_address,\n    e.email_type,\n    e.label,\n    e.is_primary,\n    e.created_at\nFROM contacts.contact_emails e\nINNER JOIN contacts.contacts c ON e.contact_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE e.external_id = :emailExternalId\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
 
 /**
  * Query generated from SQL:
@@ -88,8 +88,8 @@ const getEmailByIdIR: any = {"usedParamSet":{"emailExternalId":true,"contactExte
  *     e.label,
  *     e.is_primary,
  *     e.created_at
- * FROM contact_emails e
- * INNER JOIN contacts c ON e.contact_id = c.id
+ * FROM contacts.contact_emails e
+ * INNER JOIN contacts.contacts c ON e.contact_id = c.id
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE e.external_id = :emailExternalId
  *   AND c.external_id = :contactExternalId
@@ -129,12 +129,12 @@ export interface ICreateEmailQuery {
   result: ICreateEmailResult;
 }
 
-const createEmailIR: any = {"usedParamSet":{"emailAddress":true,"emailType":true,"label":true,"isPrimary":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"emailAddress","required":false,"transform":{"type":"scalar"},"locs":[{"a":129,"b":141}]},{"name":"emailType","required":false,"transform":{"type":"scalar"},"locs":[{"a":148,"b":157}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":164,"b":169}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":176,"b":185}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":269,"b":286}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":310,"b":324}]}],"statement":"INSERT INTO contact_emails (\n    contact_id,\n    email_address,\n    email_type,\n    label,\n    is_primary\n)\nSELECT\n    c.id,\n    :emailAddress,\n    :emailType,\n    :label,\n    :isPrimary\nFROM contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    external_id,\n    email_address,\n    email_type,\n    label,\n    is_primary,\n    created_at"};
+const createEmailIR: any = {"usedParamSet":{"emailAddress":true,"emailType":true,"label":true,"isPrimary":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"emailAddress","required":false,"transform":{"type":"scalar"},"locs":[{"a":138,"b":150}]},{"name":"emailType","required":false,"transform":{"type":"scalar"},"locs":[{"a":157,"b":166}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":173,"b":178}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":185,"b":194}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":287,"b":304}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":328,"b":342}]}],"statement":"INSERT INTO contacts.contact_emails (\n    contact_id,\n    email_address,\n    email_type,\n    label,\n    is_primary\n)\nSELECT\n    c.id,\n    :emailAddress,\n    :emailType,\n    :label,\n    :isPrimary\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    external_id,\n    email_address,\n    email_type,\n    label,\n    is_primary,\n    created_at"};
 
 /**
  * Query generated from SQL:
  * ```
- * INSERT INTO contact_emails (
+ * INSERT INTO contacts.contact_emails (
  *     contact_id,
  *     email_address,
  *     email_type,
@@ -147,7 +147,7 @@ const createEmailIR: any = {"usedParamSet":{"emailAddress":true,"emailType":true
  *     :emailType,
  *     :label,
  *     :isPrimary
- * FROM contacts c
+ * FROM contacts.contacts c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE c.external_id = :contactExternalId
  *   AND u.external_id = :userExternalId
@@ -194,18 +194,18 @@ export interface IUpdateEmailQuery {
   result: IUpdateEmailResult;
 }
 
-const updateEmailIR: any = {"usedParamSet":{"emailAddress":true,"emailType":true,"label":true,"isPrimary":true,"emailExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"emailAddress","required":false,"transform":{"type":"scalar"},"locs":[{"a":48,"b":60}]},{"name":"emailType","required":false,"transform":{"type":"scalar"},"locs":[{"a":80,"b":89}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":104,"b":109}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":129,"b":138}]},{"name":"emailExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":222,"b":237}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":287,"b":304}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":328,"b":342}]}],"statement":"UPDATE contact_emails e\nSET\n    email_address = :emailAddress,\n    email_type = :emailType,\n    label = :label,\n    is_primary = :isPrimary\nFROM contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE e.external_id = :emailExternalId\n  AND e.contact_id = c.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    e.external_id,\n    e.email_address,\n    e.email_type,\n    e.label,\n    e.is_primary,\n    e.created_at"};
+const updateEmailIR: any = {"usedParamSet":{"emailAddress":true,"emailType":true,"label":true,"isPrimary":true,"emailExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"emailAddress","required":false,"transform":{"type":"scalar"},"locs":[{"a":57,"b":69}]},{"name":"emailType","required":false,"transform":{"type":"scalar"},"locs":[{"a":89,"b":98}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":113,"b":118}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":138,"b":147}]},{"name":"emailExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":240,"b":255}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":305,"b":322}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":346,"b":360}]}],"statement":"UPDATE contacts.contact_emails e\nSET\n    email_address = :emailAddress,\n    email_type = :emailType,\n    label = :label,\n    is_primary = :isPrimary\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE e.external_id = :emailExternalId\n  AND e.contact_id = c.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    e.external_id,\n    e.email_address,\n    e.email_type,\n    e.label,\n    e.is_primary,\n    e.created_at"};
 
 /**
  * Query generated from SQL:
  * ```
- * UPDATE contact_emails e
+ * UPDATE contacts.contact_emails e
  * SET
  *     email_address = :emailAddress,
  *     email_type = :emailType,
  *     label = :label,
  *     is_primary = :isPrimary
- * FROM contacts c
+ * FROM contacts.contacts c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE e.external_id = :emailExternalId
  *   AND e.contact_id = c.id
@@ -243,13 +243,13 @@ export interface IDeleteEmailQuery {
   result: IDeleteEmailResult;
 }
 
-const deleteEmailIR: any = {"usedParamSet":{"emailExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"emailExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":82,"b":97}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":170,"b":187}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":211,"b":225}]}],"statement":"DELETE FROM contact_emails e\nUSING contacts c, auth.users u\nWHERE e.external_id = :emailExternalId\n  AND e.contact_id = c.id\n  AND c.user_id = u.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING e.external_id"};
+const deleteEmailIR: any = {"usedParamSet":{"emailExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"emailExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":100,"b":115}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":188,"b":205}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":229,"b":243}]}],"statement":"DELETE FROM contacts.contact_emails e\nUSING contacts.contacts c, auth.users u\nWHERE e.external_id = :emailExternalId\n  AND e.contact_id = c.id\n  AND c.user_id = u.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING e.external_id"};
 
 /**
  * Query generated from SQL:
  * ```
- * DELETE FROM contact_emails e
- * USING contacts c, auth.users u
+ * DELETE FROM contacts.contact_emails e
+ * USING contacts.contacts c, auth.users u
  * WHERE e.external_id = :emailExternalId
  *   AND e.contact_id = c.id
  *   AND c.user_id = u.id
@@ -277,14 +277,14 @@ export interface IClearPrimaryEmailQuery {
   result: IClearPrimaryEmailResult;
 }
 
-const clearPrimaryEmailIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":155,"b":172}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":196,"b":210}]}],"statement":"UPDATE contact_emails e\nSET is_primary = false\nFROM contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE e.contact_id = c.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\n  AND e.is_primary = true"};
+const clearPrimaryEmailIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":173,"b":190}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":214,"b":228}]}],"statement":"UPDATE contacts.contact_emails e\nSET is_primary = false\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE e.contact_id = c.id\n  AND c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\n  AND e.is_primary = true"};
 
 /**
  * Query generated from SQL:
  * ```
- * UPDATE contact_emails e
+ * UPDATE contacts.contact_emails e
  * SET is_primary = false
- * FROM contacts c
+ * FROM contacts.contacts c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE e.contact_id = c.id
  *   AND c.external_id = :contactExternalId

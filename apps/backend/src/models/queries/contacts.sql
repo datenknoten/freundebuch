@@ -11,7 +11,7 @@ SELECT
     c.photo_thumbnail_url,
     c.created_at,
     c.updated_at
-FROM contacts c
+FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :contactExternalId
   AND u.external_id = :userExternalId
@@ -19,7 +19,7 @@ WHERE c.external_id = :contactExternalId
 
 /* @name GetContactInternalId */
 SELECT c.id
-FROM contacts c
+FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :contactExternalId
   AND u.external_id = :userExternalId
@@ -32,9 +32,9 @@ SELECT
     c.photo_thumbnail_url,
     c.created_at,
     c.updated_at,
-    (SELECT e.email_address FROM contact_emails e WHERE e.contact_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,
-    (SELECT p.phone_number FROM contact_phones p WHERE p.contact_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone
-FROM contacts c
+    (SELECT e.email_address FROM contacts.contact_emails e WHERE e.contact_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,
+    (SELECT p.phone_number FROM contacts.contact_phones p WHERE p.contact_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone
+FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE u.external_id = :userExternalId
   AND c.deleted_at IS NULL
@@ -50,13 +50,13 @@ OFFSET :offset;
 
 /* @name CountContactsByUserId */
 SELECT COUNT(*)::int as count
-FROM contacts c
+FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE u.external_id = :userExternalId
   AND c.deleted_at IS NULL;
 
 /* @name CreateContact */
-INSERT INTO contacts (
+INSERT INTO contacts.contacts (
     user_id,
     display_name,
     name_prefix,
@@ -89,7 +89,7 @@ RETURNING
     updated_at;
 
 /* @name UpdateContact */
-UPDATE contacts c
+UPDATE contacts.contacts c
 SET
     display_name = COALESCE(:displayName, c.display_name),
     name_prefix = CASE WHEN :updateNamePrefix THEN :namePrefix ELSE c.name_prefix END,
@@ -116,7 +116,7 @@ RETURNING
     c.updated_at;
 
 /* @name SoftDeleteContact */
-UPDATE contacts c
+UPDATE contacts.contacts c
 SET deleted_at = CURRENT_TIMESTAMP
 FROM auth.users u
 WHERE c.external_id = :contactExternalId
@@ -126,7 +126,7 @@ WHERE c.external_id = :contactExternalId
 RETURNING c.external_id;
 
 /* @name UpdateContactPhoto */
-UPDATE contacts c
+UPDATE contacts.contacts c
 SET
     photo_url = :photoUrl,
     photo_thumbnail_url = :photoThumbnailUrl
