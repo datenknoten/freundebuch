@@ -652,12 +652,24 @@ app.post('/:id/photo', async (c) => {
     const result = await photoService.uploadPhoto(contactId, file);
 
     // Update contact with photo URLs
-    await contactsService.updatePhoto(
-      user.userId,
-      contactId,
-      result.photoUrl,
-      result.photoThumbnailUrl,
-    );
+    // If DB update fails, clean up the uploaded files to prevent orphaned files
+    try {
+      await contactsService.updatePhoto(
+        user.userId,
+        contactId,
+        result.photoUrl,
+        result.photoThumbnailUrl,
+      );
+    } catch (dbError) {
+      // Clean up uploaded files since DB update failed
+      logger.warn({ contactId }, 'DB update failed, cleaning up uploaded photo');
+      try {
+        await photoService.deletePhoto(contactId);
+      } catch (cleanupError) {
+        logger.error({ cleanupError, contactId }, 'Failed to clean up photo after DB error');
+      }
+      throw dbError;
+    }
 
     return c.json(result, 201);
   } catch (error) {

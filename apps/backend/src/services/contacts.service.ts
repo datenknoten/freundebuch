@@ -1,6 +1,7 @@
 import type {
   Address,
   AddressInput,
+  AddressType,
   Contact,
   ContactCreateInput,
   ContactListItem,
@@ -8,38 +9,47 @@ import type {
   ContactUpdateInput,
   Email,
   EmailInput,
+  EmailType,
   PaginatedContactList,
   Phone,
   PhoneInput,
+  PhoneType,
   Url,
   UrlInput,
+  UrlType,
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
+  type IGetAddressesByContactIdResult,
   clearPrimaryAddress,
   createAddress,
   deleteAddress,
   updateAddress,
 } from '../models/queries/contact-addresses.queries.js';
 import {
+  type IGetEmailsByContactIdResult,
   clearPrimaryEmail,
   createEmail,
   deleteEmail,
   updateEmail,
 } from '../models/queries/contact-emails.queries.js';
 import {
+  type IGetPhonesByContactIdResult,
   clearPrimaryPhone,
   createPhone,
   deletePhone,
   updatePhone,
 } from '../models/queries/contact-phones.queries.js';
 import {
+  type IGetUrlsByContactIdResult,
   createUrl,
   deleteUrl,
   updateUrl,
 } from '../models/queries/contact-urls.queries.js';
 import {
+  type IGetContactByIdResult,
+  type IGetContactsByUserIdResult,
   createContact,
   getContactById,
   getContactsByUserId,
@@ -648,8 +658,7 @@ export class ContactsService {
     return results;
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
-  private mapContactListItem(row: any): ContactListItem {
+  private mapContactListItem(row: IGetContactsByUserIdResult): ContactListItem {
     return {
       id: row.external_id,
       displayName: row.display_name,
@@ -661,32 +670,29 @@ export class ContactsService {
     };
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
-  private mapPhone(row: any): Phone {
+  private mapPhone(row: IGetPhonesByContactIdResult): Phone {
     return {
       id: row.external_id,
       phoneNumber: row.phone_number,
-      phoneType: row.phone_type,
+      phoneType: row.phone_type as PhoneType,
       label: row.label ?? undefined,
       isPrimary: row.is_primary,
       createdAt: row.created_at.toISOString(),
     };
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
-  private mapEmail(row: any): Email {
+  private mapEmail(row: IGetEmailsByContactIdResult): Email {
     return {
       id: row.external_id,
       emailAddress: row.email_address,
-      emailType: row.email_type,
+      emailType: row.email_type as EmailType,
       label: row.label ?? undefined,
       isPrimary: row.is_primary,
       createdAt: row.created_at.toISOString(),
     };
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
-  private mapAddress(row: any): Address {
+  private mapAddress(row: IGetAddressesByContactIdResult): Address {
     return {
       id: row.external_id,
       streetLine1: row.street_line1 ?? undefined,
@@ -695,19 +701,18 @@ export class ContactsService {
       stateProvince: row.state_province ?? undefined,
       postalCode: row.postal_code ?? undefined,
       country: row.country ?? undefined,
-      addressType: row.address_type,
+      addressType: row.address_type as AddressType,
       label: row.label ?? undefined,
       isPrimary: row.is_primary,
       createdAt: row.created_at.toISOString(),
     };
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
-  private mapUrl(row: any): Url {
+  private mapUrl(row: IGetUrlsByContactIdResult): Url {
     return {
       id: row.external_id,
       url: row.url,
-      urlType: row.url_type,
+      urlType: row.url_type as UrlType,
       label: row.label ?? undefined,
       createdAt: row.created_at.toISOString(),
     };
@@ -717,27 +722,7 @@ export class ContactsService {
    * Maps a contact row with embedded JSON arrays for related data
    * Used by the optimized getContactById query
    */
-  private mapContactWithEmbeddedRelations(contact: {
-    external_id: string;
-    display_name: string;
-    name_prefix: string | null;
-    name_first: string | null;
-    name_middle: string | null;
-    name_last: string | null;
-    name_suffix: string | null;
-    photo_url: string | null;
-    photo_thumbnail_url: string | null;
-    created_at: Date;
-    updated_at: Date;
-    // biome-ignore lint/suspicious/noExplicitAny: JSON from PostgreSQL
-    phones: any;
-    // biome-ignore lint/suspicious/noExplicitAny: JSON from PostgreSQL
-    emails: any;
-    // biome-ignore lint/suspicious/noExplicitAny: JSON from PostgreSQL
-    addresses: any;
-    // biome-ignore lint/suspicious/noExplicitAny: JSON from PostgreSQL
-    urls: any;
-  }): Contact {
+  private mapContactWithEmbeddedRelations(contact: IGetContactByIdResult): Contact {
     // Parse JSON arrays (PostgreSQL returns them as parsed objects when using node-pg)
     const phones = (contact.phones || []) as Array<{
       external_id: string;
