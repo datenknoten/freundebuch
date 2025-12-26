@@ -17,6 +17,7 @@ import { contactsRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { ContactsService } from '../services/contacts.service.js';
 import { PhotoService, PhotoUploadError } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
+import { isValidUuid } from '../utils/security.js';
 
 const app = new Hono<AppContext>();
 
@@ -625,6 +626,11 @@ app.post('/:id/photo', async (c) => {
   const user = getAuthUser(c);
   const contactId = c.req.param('id');
 
+  // Validate contactId is a valid UUID to prevent path traversal
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
+
   try {
     const formData = await c.req.formData();
     const file = formData.get('photo');
@@ -673,6 +679,11 @@ app.delete('/:id/photo', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const contactId = c.req.param('id');
+
+  // Validate contactId is a valid UUID to prevent path traversal
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
 
   try {
     const contactsService = new ContactsService(db, logger);
