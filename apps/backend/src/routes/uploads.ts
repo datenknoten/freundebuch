@@ -5,6 +5,7 @@ import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { ContactsService } from '../services/contacts.service.js';
 import { PhotoService } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
+import { isValidUuid } from '../utils/security.js';
 
 const app = new Hono<AppContext>();
 
@@ -21,6 +22,11 @@ app.get('/contacts/:contactId/:filename', async (c) => {
   const user = getAuthUser(c);
   const contactId = c.req.param('contactId');
   const filename = c.req.param('filename');
+
+  // Validate contactId is a valid UUID to prevent path traversal
+  if (!isValidUuid(contactId)) {
+    return c.json({ error: 'Invalid contact ID' }, 400);
+  }
 
   // Verify the user owns this contact
   const contactsService = new ContactsService(db, logger);

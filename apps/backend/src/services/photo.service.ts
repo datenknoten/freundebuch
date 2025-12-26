@@ -11,6 +11,7 @@ import { type } from 'arktype';
 import type { Logger } from 'pino';
 import sharp from 'sharp';
 import { getConfig } from '../utils/config.js';
+import { isPathWithinBase, isValidUuid } from '../utils/security.js';
 
 export class PhotoService {
   private logger: Logger;
@@ -31,6 +32,18 @@ export class PhotoService {
   async uploadPhoto(contactExternalId: string, file: File): Promise<PhotoUploadResult> {
     this.logger.debug({ contactExternalId, fileName: file.name }, 'Processing photo upload');
 
+    // Defense-in-depth: Validate contactExternalId is a valid UUID
+    if (!isValidUuid(contactExternalId)) {
+      throw new PhotoUploadError('Invalid contact ID', 'INVALID_CONTACT_ID');
+    }
+
+    // Defense-in-depth: Verify path stays within upload directory
+    const contactDir = path.join(this.uploadDir, contactExternalId);
+    if (!isPathWithinBase(this.uploadDir, contactExternalId)) {
+      this.logger.warn({ contactExternalId }, 'Path traversal attempt detected');
+      throw new PhotoUploadError('Invalid contact ID', 'INVALID_CONTACT_ID');
+    }
+
     // Validate file type using ArkType schema
     const mimeTypeResult = PhotoMimeTypeSchema(file.type);
     if (mimeTypeResult instanceof type.errors) {
@@ -43,7 +56,6 @@ export class PhotoService {
     }
 
     // Create directory for contact photos
-    const contactDir = path.join(this.uploadDir, contactExternalId);
     await mkdir(contactDir, { recursive: true });
 
     // Get file extension based on mime type
@@ -97,6 +109,17 @@ export class PhotoService {
    */
   async deletePhoto(contactExternalId: string): Promise<void> {
     this.logger.debug({ contactExternalId }, 'Deleting contact photos');
+
+    // Defense-in-depth: Validate contactExternalId is a valid UUID
+    if (!isValidUuid(contactExternalId)) {
+      throw new PhotoUploadError('Invalid contact ID', 'INVALID_CONTACT_ID');
+    }
+
+    // Defense-in-depth: Verify path stays within upload directory
+    if (!isPathWithinBase(this.uploadDir, contactExternalId)) {
+      this.logger.warn({ contactExternalId }, 'Path traversal attempt detected');
+      throw new PhotoUploadError('Invalid contact ID', 'INVALID_CONTACT_ID');
+    }
 
     const contactDir = path.join(this.uploadDir, contactExternalId);
 
