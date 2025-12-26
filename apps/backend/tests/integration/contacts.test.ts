@@ -561,4 +561,191 @@ describe('Contacts API - Integration Tests', () => {
       expect(response.status).toBe(404); // Not found because it belongs to another user
     });
   });
+
+  describe('Multiple Primary Validation', () => {
+    it('should reject contact creation with multiple primary phones', async () => {
+      const { app, testUser } = getContext();
+
+      const request = new Request('http://localhost/api/contacts', {
+        method: 'POST',
+        headers: authHeaders(testUser.accessToken),
+        body: JSON.stringify({
+          display_name: 'Test Contact',
+          phones: [
+            { phone_number: '+1111111111', phone_type: 'mobile', is_primary: true },
+            { phone_number: '+2222222222', phone_type: 'work', is_primary: true },
+          ],
+        }),
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(400);
+    });
+
+    it('should reject contact creation with multiple primary emails', async () => {
+      const { app, testUser } = getContext();
+
+      const request = new Request('http://localhost/api/contacts', {
+        method: 'POST',
+        headers: authHeaders(testUser.accessToken),
+        body: JSON.stringify({
+          display_name: 'Test Contact',
+          emails: [
+            { email_address: 'test1@example.com', email_type: 'personal', is_primary: true },
+            { email_address: 'test2@example.com', email_type: 'work', is_primary: true },
+          ],
+        }),
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(400);
+    });
+
+    it('should reject contact creation with multiple primary addresses', async () => {
+      const { app, testUser } = getContext();
+
+      const request = new Request('http://localhost/api/contacts', {
+        method: 'POST',
+        headers: authHeaders(testUser.accessToken),
+        body: JSON.stringify({
+          display_name: 'Test Contact',
+          addresses: [
+            { street_line1: '123 Main St', address_type: 'home', is_primary: true },
+            { street_line1: '456 Oak Ave', address_type: 'work', is_primary: true },
+          ],
+        }),
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(400);
+    });
+
+    it('should allow contact creation with one primary per type', async () => {
+      const { app, testUser } = getContext();
+
+      const request = new Request('http://localhost/api/contacts', {
+        method: 'POST',
+        headers: authHeaders(testUser.accessToken),
+        body: JSON.stringify({
+          display_name: 'Valid Contact',
+          phones: [
+            { phone_number: '+1111111111', phone_type: 'mobile', is_primary: true },
+            { phone_number: '+2222222222', phone_type: 'work', is_primary: false },
+          ],
+          emails: [
+            { email_address: 'primary@example.com', email_type: 'personal', is_primary: true },
+            { email_address: 'secondary@example.com', email_type: 'work' },
+          ],
+        }),
+      });
+
+      const response = await app.fetch(request);
+      const body: any = await response.json();
+
+      expect(response.status).toBe(201);
+      expect(body.phones.length).toBe(2);
+      expect(body.emails.length).toBe(2);
+    });
+  });
+
+  describe('Photo Routes', () => {
+    it('should return 400 for missing photo file', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const contactId = await createTestContact(pool, testUser.externalId, 'Photo Test');
+
+      const formData = new FormData();
+      // No photo attached
+
+      const request = new Request(`http://localhost/api/contacts/${contactId}/photo`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${testUser.accessToken}`,
+        },
+        body: formData,
+      });
+
+      const response = await app.fetch(request);
+      const body: any = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(body.error).toBe('No photo file provided');
+    });
+
+    it('should return 404 for photo upload to non-existent contact', async () => {
+      const { app, testUser } = getContext();
+
+      const formData = new FormData();
+      const mockImageBlob = new Blob(['fake image data'], { type: 'image/jpeg' });
+      formData.append('photo', mockImageBlob, 'test.jpg');
+
+      const request = new Request(
+        'http://localhost/api/contacts/00000000-0000-0000-0000-000000000000/photo',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${testUser.accessToken}`,
+          },
+          body: formData,
+        },
+      );
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should require authentication for photo upload', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const contactId = await createTestContact(pool, testUser.externalId, 'Photo Test');
+
+      const formData = new FormData();
+      const mockImageBlob = new Blob(['fake image data'], { type: 'image/jpeg' });
+      formData.append('photo', mockImageBlob, 'test.jpg');
+
+      const request = new Request(`http://localhost/api/contacts/${contactId}/photo`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should delete photo for existing contact', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const contactId = await createTestContact(pool, testUser.externalId, 'Photo Delete Test');
+
+      const request = new Request(`http://localhost/api/contacts/${contactId}/photo`, {
+        method: 'DELETE',
+        headers: authHeaders(testUser.accessToken),
+      });
+
+      const response = await app.fetch(request);
+      const body: any = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(body.message).toBe('Photo deleted successfully');
+    });
+
+    it('should require authentication for photo delete', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const contactId = await createTestContact(pool, testUser.externalId, 'Photo Delete Test');
+
+      const request = new Request(`http://localhost/api/contacts/${contactId}/photo`, {
+        method: 'DELETE',
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(401);
+    });
+  });
 });
