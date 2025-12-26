@@ -9,7 +9,7 @@ const config = {
     adapter: adapter(),
     alias: {
       $lib: './src/lib',
-      $shared: '../../packages/shared',
+      $shared: '../../packages/shared/dist/src/index.js',
     },
   },
 };
