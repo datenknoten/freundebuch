@@ -20,6 +20,14 @@ let passwordResetLimiter = new RateLimiterMemory({
   blockDuration: isTestEnv ? 1 : 3600,
 });
 
+// Rate limiter for contacts API endpoints
+// 100 requests per minute in production, 500 in test
+let contactsLimiter = new RateLimiterMemory({
+  points: isTestEnv ? 500 : 100,
+  duration: 60,
+  blockDuration: isTestEnv ? 1 : 60,
+});
+
 /**
  * Reset all rate limiters (for testing purposes)
  */
@@ -33,6 +41,11 @@ export function resetRateLimiters(): void {
     points: isTestEnv ? 100 : 3,
     duration: 3600,
     blockDuration: isTestEnv ? 1 : 3600,
+  });
+  contactsLimiter = new RateLimiterMemory({
+    points: isTestEnv ? 500 : 100,
+    duration: 60,
+    blockDuration: isTestEnv ? 1 : 60,
   });
 }
 
@@ -89,6 +102,29 @@ export async function passwordResetRateLimitMiddleware(c: Context, next: Next) {
     logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on password reset endpoint');
 
     return c.json({ error: 'Too many password reset attempts. Please try again later.' }, 429, {
+      'Retry-After': String(retryAfter),
+    });
+  }
+}
+
+/**
+ * Rate limiting middleware for contacts API endpoints
+ * Limits: 100 requests per minute, 1 minute block after exceeding
+ */
+export async function contactsRateLimitMiddleware(c: Context, next: Next) {
+  const clientId = getClientIdentifier(c);
+  const logger = c.get('logger');
+
+  try {
+    await contactsLimiter.consume(clientId);
+    return next();
+  } catch (error) {
+    const rateLimiterRes = error as RateLimiterRes;
+    const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
+
+    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on contacts endpoint');
+
+    return c.json({ error: 'Too many requests. Please try again later.' }, 429, {
       'Retry-After': String(retryAfter),
     });
   }

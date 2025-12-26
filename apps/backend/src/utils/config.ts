@@ -19,6 +19,7 @@ const ConfigSchema = type({
   ENV: '"development" | "production" | "test" = "development"',
   PORT: 'string.integer.parse = "3000"',
   FRONTEND_URL: 'string = "http://localhost:5173"',
+  BACKEND_URL: 'string = "http://localhost:3000"',
 
   // Authentication
   JWT_SECRET: SecretType,

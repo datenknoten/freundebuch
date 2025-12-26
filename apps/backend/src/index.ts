@@ -7,6 +7,7 @@ import type pg from 'pg';
 import authRoutes from './routes/auth.js';
 import contactsRoutes from './routes/contacts.js';
 import healthRoutes from './routes/health.js';
+import uploadsRoutes from './routes/uploads.js';
 import usersRoutes from './routes/users.js';
 import type { AppContext } from './types/context.js';
 import { getConfig } from './utils/config.js';
@@ -50,6 +51,7 @@ export async function createApp(pool: pg.Pool) {
   app.route('/api/auth', authRoutes);
   app.route('/api/users', usersRoutes);
   app.route('/api/contacts', contactsRoutes);
+  app.route('/api/uploads', uploadsRoutes);
 
   // Error handling
   app.onError((err, c) => {
