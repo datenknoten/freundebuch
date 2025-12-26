@@ -37,7 +37,13 @@ export async function createApp(pool: pg.Pool) {
 
   // Middleware
   app.use('*', honoLogger());
-  app.use('*', secureHeaders());
+  app.use(
+    '*',
+    secureHeaders({
+      // Allow cross-origin resource loading (needed for frontend to load images from backend)
+      crossOriginResourcePolicy: 'cross-origin',
+    }),
+  );
   app.use(
     '*',
     cors({
