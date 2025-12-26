@@ -6,12 +6,14 @@ import {
   EmailInputSchema,
   type ErrorResponse,
   PhoneInputSchema,
+  PhotoValidationErrors,
   parseContactListQuery,
   UrlInputSchema,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
+import { contactsRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { ContactsService } from '../services/contacts.service.js';
 import { PhotoService, PhotoUploadError } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
@@ -20,6 +22,8 @@ const app = new Hono<AppContext>();
 
 // Apply auth middleware to all contact routes
 app.use('*', authMiddleware);
+// Apply rate limiting to all contact routes
+app.use('*', contactsRateLimitMiddleware);
 
 // ============================================================================
 // Contact CRUD Routes
@@ -626,7 +630,7 @@ app.post('/:id/photo', async (c) => {
     const file = formData.get('photo');
 
     if (!file || !(file instanceof File)) {
-      return c.json<ErrorResponse>({ error: 'No photo file provided' }, 400);
+      return c.json<ErrorResponse>({ error: PhotoValidationErrors.NO_FILE_PROVIDED }, 400);
     }
 
     // Verify contact exists and belongs to user

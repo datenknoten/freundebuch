@@ -1,17 +1,16 @@
 import { mkdir, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
+import {
+  MAX_FILE_SIZE,
+  PhotoMimeTypeSchema,
+  type PhotoUploadResult,
+  PhotoValidationErrors,
+  THUMBNAIL_SIZE,
+} from '@freundebuch/shared/index.js';
+import { type } from 'arktype';
 import type { Logger } from 'pino';
 import sharp from 'sharp';
 import { getConfig } from '../utils/config.js';
-
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const THUMBNAIL_SIZE = 200;
-
-export interface PhotoUploadResult {
-  photoUrl: string;
-  photoThumbnailUrl: string;
-}
 
 export class PhotoService {
   private logger: Logger;
@@ -23,7 +22,7 @@ export class PhotoService {
     const config = getConfig();
     // Use environment variable or default to local uploads directory
     this.uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'contacts');
-    this.baseUrl = `${config.FRONTEND_URL}/api/uploads/contacts`;
+    this.baseUrl = `${config.BACKEND_URL}/api/uploads/contacts`;
   }
 
   /**
@@ -32,20 +31,15 @@ export class PhotoService {
   async uploadPhoto(contactExternalId: string, file: File): Promise<PhotoUploadResult> {
     this.logger.debug({ contactExternalId, fileName: file.name }, 'Processing photo upload');
 
-    // Validate file type
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-      throw new PhotoUploadError(
-        `Invalid file type. Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}`,
-        'INVALID_FILE_TYPE',
-      );
+    // Validate file type using ArkType schema
+    const mimeTypeResult = PhotoMimeTypeSchema(file.type);
+    if (mimeTypeResult instanceof type.errors) {
+      throw new PhotoUploadError(PhotoValidationErrors.INVALID_FILE_TYPE, 'INVALID_FILE_TYPE');
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      throw new PhotoUploadError(
-        `File too large. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`,
-        'FILE_TOO_LARGE',
-      );
+      throw new PhotoUploadError(PhotoValidationErrors.FILE_TOO_LARGE, 'FILE_TOO_LARGE');
     }
 
     // Create directory for contact photos
@@ -65,7 +59,7 @@ export class PhotoService {
       image = sharp(buffer);
       await image.metadata();
     } catch {
-      throw new PhotoUploadError('Invalid image file', 'INVALID_IMAGE');
+      throw new PhotoUploadError(PhotoValidationErrors.INVALID_IMAGE, 'INVALID_IMAGE');
     }
 
     // Generate filenames
