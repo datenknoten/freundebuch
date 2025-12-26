@@ -82,8 +82,6 @@ app.get('/contacts/:contactId/:filename', async (c) => {
     c.header('Content-Type', contentType);
     c.header('Cache-Control', 'private, max-age=86400'); // 1 day cache, browser only
     c.header('Content-Length', fileBuffer.length.toString());
-    // Allow cross-origin image loading (frontend may be on different port in dev)
-    c.header('Cross-Origin-Resource-Policy', 'cross-origin');
 
     return c.body(fileBuffer);
   } catch (error) {
