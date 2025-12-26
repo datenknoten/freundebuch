@@ -2,6 +2,7 @@
 import { goto } from '$app/navigation';
 import { contacts } from '$lib/stores/contacts';
 import type { AddressType, Contact, EmailType, PhoneType, UrlType } from '$shared';
+import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
 import ContactAvatar from './ContactAvatar.svelte';
 
 interface Props {
@@ -11,6 +12,14 @@ interface Props {
 let { contact }: Props = $props();
 
 const isEditing = $derived(!!contact);
+
+// Photo state
+let photoUrl = $state(contact?.photoUrl);
+let photoPreview = $state<string | null>(null);
+let photoFile = $state<File | null>(null);
+let photoError = $state('');
+let isUploadingPhoto = $state(false);
+let fileInput: HTMLInputElement;
 
 // Track if user has manually edited the display name
 let displayNameManuallyEdited = $state(false);
@@ -107,6 +116,81 @@ function removeUrl(index: number) {
   urls = urls.filter((_, i) => i !== index);
 }
 
+// Photo handling
+function triggerPhotoUpload() {
+  fileInput?.click();
+}
+
+async function handlePhotoSelect(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  photoError = '';
+
+  if (!file) return;
+
+  // Validate file type
+  if (!ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number])) {
+    photoError = `Invalid file type. Allowed: ${ALLOWED_MIME_TYPES.map((t) => t.replace('image/', '')).join(', ')}`;
+    return;
+  }
+
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    photoError = `File too large. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`;
+    return;
+  }
+
+  photoFile = file;
+
+  // Create preview
+  const reader = new FileReader();
+  reader.onload = () => {
+    photoPreview = reader.result as string;
+  };
+  reader.readAsDataURL(file);
+
+  // If editing, upload immediately
+  if (isEditing && contact) {
+    await uploadPhoto();
+  }
+}
+
+async function uploadPhoto() {
+  if (!photoFile || !contact) return;
+
+  isUploadingPhoto = true;
+  photoError = '';
+
+  try {
+    const result = await contacts.uploadPhoto(contact.id, photoFile);
+    photoUrl = result.photoUrl;
+    photoPreview = null;
+    photoFile = null;
+  } catch (err) {
+    photoError = (err as Error)?.message || 'Failed to upload photo';
+  } finally {
+    isUploadingPhoto = false;
+  }
+}
+
+async function handleDeletePhoto() {
+  if (!contact) return;
+
+  isUploadingPhoto = true;
+  photoError = '';
+
+  try {
+    await contacts.deletePhoto(contact.id);
+    photoUrl = undefined;
+    photoPreview = null;
+    photoFile = null;
+  } catch (err) {
+    photoError = (err as Error)?.message || 'Failed to delete photo';
+  } finally {
+    isUploadingPhoto = false;
+  }
+}
+
 async function handleSubmit(e: Event) {
   e.preventDefault();
   error = '';
@@ -185,13 +269,75 @@ async function handleSubmit(e: Event) {
     </div>
   {/if}
 
-  <!-- Avatar preview -->
-  <div class="flex justify-center">
-    <ContactAvatar
-      displayName={displayName || 'New Contact'}
-      photoUrl={contact?.photoUrl}
-      size="lg"
+  <!-- Avatar with photo upload -->
+  <div class="flex flex-col items-center gap-3">
+    <input
+      type="file"
+      accept={ALLOWED_MIME_TYPES.join(',')}
+      class="hidden"
+      bind:this={fileInput}
+      onchange={handlePhotoSelect}
+      disabled={isLoading || isUploadingPhoto}
     />
+
+    <button
+      type="button"
+      onclick={triggerPhotoUpload}
+      disabled={isLoading || isUploadingPhoto || !isEditing}
+      class="relative group rounded-full focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 disabled:cursor-not-allowed"
+      title={isEditing ? 'Click to upload photo' : 'Save contact first to upload photo'}
+    >
+      {#if photoPreview}
+        <img
+          src={photoPreview}
+          alt="Preview"
+          class="w-24 h-24 rounded-full object-cover"
+        />
+      {:else}
+        <ContactAvatar
+          displayName={displayName || 'New Contact'}
+          photoUrl={photoUrl}
+          size="lg"
+        />
+      {/if}
+
+      {#if isUploadingPhoto}
+        <div class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+          <div class="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+        </div>
+      {:else if isEditing}
+        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-full flex items-center justify-center transition-all">
+          <svg
+            class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+      {/if}
+    </button>
+
+    {#if isEditing && photoUrl}
+      <button
+        type="button"
+        onclick={handleDeletePhoto}
+        disabled={isLoading || isUploadingPhoto}
+        class="text-sm text-red-600 hover:text-red-700 font-body disabled:opacity-50"
+      >
+        Remove photo
+      </button>
+    {:else if !isEditing}
+      <p class="text-xs text-gray-500 font-body">Save contact to upload photo</p>
+    {:else}
+      <p class="text-xs text-gray-500 font-body">Click to upload photo (max 5MB)</p>
+    {/if}
+
+    {#if photoError}
+      <p class="text-sm text-red-600 font-body">{photoError}</p>
+    {/if}
   </div>
 
   <!-- Name Parts -->
