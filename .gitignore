@@ -52,3 +52,6 @@ pnpm-debug.log*
 
 # TypeScript artefacts
 *.tsbuildinfo
+
+# upload assets
+apps/backend/uploads/
