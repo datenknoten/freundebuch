@@ -21,38 +21,38 @@ import type {
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
-  type IGetAddressesByContactIdResult,
   clearPrimaryAddress,
   createAddress,
   deleteAddress,
+  type IGetAddressesByContactIdResult,
   updateAddress,
 } from '../models/queries/contact-addresses.queries.js';
 import {
-  type IGetEmailsByContactIdResult,
   clearPrimaryEmail,
   createEmail,
   deleteEmail,
+  type IGetEmailsByContactIdResult,
   updateEmail,
 } from '../models/queries/contact-emails.queries.js';
 import {
-  type IGetPhonesByContactIdResult,
   clearPrimaryPhone,
   createPhone,
   deletePhone,
+  type IGetPhonesByContactIdResult,
   updatePhone,
 } from '../models/queries/contact-phones.queries.js';
 import {
-  type IGetUrlsByContactIdResult,
   createUrl,
   deleteUrl,
+  type IGetUrlsByContactIdResult,
   updateUrl,
 } from '../models/queries/contact-urls.queries.js';
 import {
-  type IGetContactByIdResult,
-  type IGetContactsByUserIdResult,
   createContact,
   getContactById,
   getContactsByUserId,
+  type IGetContactByIdResult,
+  type IGetContactsByUserIdResult,
   softDeleteContact,
   updateContact,
   updateContactPhoto,
