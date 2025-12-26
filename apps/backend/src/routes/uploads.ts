@@ -2,8 +2,8 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
-import { PhotoService } from '../services/photo.service.js';
 import { ContactsService } from '../services/contacts.service.js';
+import { PhotoService } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
 
 const app = new Hono<AppContext>();
@@ -36,7 +36,14 @@ app.get('/contacts/:contactId/:filename', async (c) => {
   }
 
   // Only allow specific filenames
-  const allowedFilenames = ['photo.jpg', 'photo.png', 'photo.webp', 'photo_thumb.jpg', 'photo_thumb.png', 'photo_thumb.webp'];
+  const allowedFilenames = [
+    'photo.jpg',
+    'photo.png',
+    'photo.webp',
+    'photo_thumb.jpg',
+    'photo_thumb.png',
+    'photo_thumb.webp',
+  ];
   if (!allowedFilenames.includes(filename)) {
     return c.json({ error: 'Invalid filename' }, 400);
   }

@@ -11,7 +11,16 @@ $effect(() => {
     contacts.loadContact(id);
   }
 });
+
+// Dynamic page title based on contact name
+const pageTitle = $derived(
+  $currentContact ? `${$currentContact.displayName} | Personal CRM` : 'Contact | Personal CRM',
+);
 </script>
+
+<svelte:head>
+  <title>{pageTitle}</title>
+</svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">
   <div class="max-w-3xl mx-auto mt-8">
