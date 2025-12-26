@@ -1,6 +1,8 @@
 /** Types generated for queries found in "src/models/queries/contacts.sql" */
 import { PreparedQuery } from '@pgtyped/runtime';
 
+export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
+
 export type NumberOrString = number | string;
 
 /** 'GetContactById' parameters type */
@@ -11,9 +13,11 @@ export interface IGetContactByIdParams {
 
 /** 'GetContactById' return type */
 export interface IGetContactByIdResult {
+  addresses: Json | null;
   created_at: Date;
   /** Primary name shown in lists */
   display_name: string;
+  emails: Json | null;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
   /** First/given name */
@@ -26,11 +30,13 @@ export interface IGetContactByIdResult {
   name_prefix: string | null;
   /** Jr., Sr., III, PhD, etc. */
   name_suffix: string | null;
+  phones: Json | null;
   /** URL to 200x200 thumbnail */
   photo_thumbnail_url: string | null;
   /** URL to original profile picture */
   photo_url: string | null;
   updated_at: Date;
+  urls: Json | null;
 }
 
 /** 'GetContactById' query type */
@@ -39,7 +45,7 @@ export interface IGetContactByIdQuery {
   result: IGetContactByIdResult;
 }
 
-const getContactByIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":308,"b":325}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":349,"b":363}]}],"statement":"SELECT\n    c.external_id,\n    c.display_name,\n    c.name_prefix,\n    c.name_first,\n    c.name_middle,\n    c.name_last,\n    c.name_suffix,\n    c.photo_url,\n    c.photo_thumbnail_url,\n    c.created_at,\n    c.updated_at\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
+const getContactByIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":2239,"b":2256}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":2280,"b":2294}]}],"statement":"SELECT\n    c.external_id,\n    c.display_name,\n    c.name_prefix,\n    c.name_first,\n    c.name_middle,\n    c.name_last,\n    c.name_suffix,\n    c.photo_url,\n    c.photo_thumbnail_url,\n    c.created_at,\n    c.updated_at,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', p.external_id,\n            'phone_number', p.phone_number,\n            'phone_type', p.phone_type,\n            'label', p.label,\n            'is_primary', p.is_primary,\n            'created_at', p.created_at\n        ) ORDER BY p.is_primary DESC, p.created_at ASC), '[]'::json)\n        FROM contacts.contact_phones p\n        WHERE p.contact_id = c.id\n    ) as phones,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', e.external_id,\n            'email_address', e.email_address,\n            'email_type', e.email_type,\n            'label', e.label,\n            'is_primary', e.is_primary,\n            'created_at', e.created_at\n        ) ORDER BY e.is_primary DESC, e.created_at ASC), '[]'::json)\n        FROM contacts.contact_emails e\n        WHERE e.contact_id = c.id\n    ) as emails,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', a.external_id,\n            'street_line1', a.street_line1,\n            'street_line2', a.street_line2,\n            'city', a.city,\n            'state_province', a.state_province,\n            'postal_code', a.postal_code,\n            'country', a.country,\n            'address_type', a.address_type,\n            'label', a.label,\n            'is_primary', a.is_primary,\n            'created_at', a.created_at\n        ) ORDER BY a.is_primary DESC, a.created_at ASC), '[]'::json)\n        FROM contacts.contact_addresses a\n        WHERE a.contact_id = c.id\n    ) as addresses,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', u.external_id,\n            'url', u.url,\n            'url_type', u.url_type,\n            'label', u.label,\n            'created_at', u.created_at\n        ) ORDER BY u.created_at ASC), '[]'::json)\n        FROM contacts.contact_urls u\n        WHERE u.contact_id = c.id\n    ) as urls\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
 
 /**
  * Query generated from SQL:
@@ -55,7 +61,59 @@ const getContactByIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExt
  *     c.photo_url,
  *     c.photo_thumbnail_url,
  *     c.created_at,
- *     c.updated_at
+ *     c.updated_at,
+ *     (
+ *         SELECT COALESCE(json_agg(json_build_object(
+ *             'external_id', p.external_id,
+ *             'phone_number', p.phone_number,
+ *             'phone_type', p.phone_type,
+ *             'label', p.label,
+ *             'is_primary', p.is_primary,
+ *             'created_at', p.created_at
+ *         ) ORDER BY p.is_primary DESC, p.created_at ASC), '[]'::json)
+ *         FROM contacts.contact_phones p
+ *         WHERE p.contact_id = c.id
+ *     ) as phones,
+ *     (
+ *         SELECT COALESCE(json_agg(json_build_object(
+ *             'external_id', e.external_id,
+ *             'email_address', e.email_address,
+ *             'email_type', e.email_type,
+ *             'label', e.label,
+ *             'is_primary', e.is_primary,
+ *             'created_at', e.created_at
+ *         ) ORDER BY e.is_primary DESC, e.created_at ASC), '[]'::json)
+ *         FROM contacts.contact_emails e
+ *         WHERE e.contact_id = c.id
+ *     ) as emails,
+ *     (
+ *         SELECT COALESCE(json_agg(json_build_object(
+ *             'external_id', a.external_id,
+ *             'street_line1', a.street_line1,
+ *             'street_line2', a.street_line2,
+ *             'city', a.city,
+ *             'state_province', a.state_province,
+ *             'postal_code', a.postal_code,
+ *             'country', a.country,
+ *             'address_type', a.address_type,
+ *             'label', a.label,
+ *             'is_primary', a.is_primary,
+ *             'created_at', a.created_at
+ *         ) ORDER BY a.is_primary DESC, a.created_at ASC), '[]'::json)
+ *         FROM contacts.contact_addresses a
+ *         WHERE a.contact_id = c.id
+ *     ) as addresses,
+ *     (
+ *         SELECT COALESCE(json_agg(json_build_object(
+ *             'external_id', u.external_id,
+ *             'url', u.url,
+ *             'url_type', u.url_type,
+ *             'label', u.label,
+ *             'created_at', u.created_at
+ *         ) ORDER BY u.created_at ASC), '[]'::json)
+ *         FROM contacts.contact_urls u
+ *         WHERE u.contact_id = c.id
+ *     ) as urls
  * FROM contacts.contacts c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE c.external_id = :contactExternalId
@@ -120,6 +178,7 @@ export interface IGetContactsByUserIdResult {
   photo_thumbnail_url: string | null;
   primary_email: string | null;
   primary_phone: string | null;
+  total_count: number | null;
   updated_at: Date;
 }
 
@@ -129,66 +188,50 @@ export interface IGetContactsByUserIdQuery {
   result: IGetContactsByUserIdResult;
 }
 
-const getContactsByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":470,"b":484}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":536,"b":542},{"a":627,"b":633},{"a":720,"b":726},{"a":807,"b":813},{"a":896,"b":902},{"a":983,"b":989}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":565,"b":574},{"a":656,"b":665},{"a":747,"b":756},{"a":834,"b":843},{"a":923,"b":932},{"a":1010,"b":1019}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":1063,"b":1071}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":1080,"b":1086}]}],"statement":"SELECT\n    c.external_id,\n    c.display_name,\n    c.photo_thumbnail_url,\n    c.created_at,\n    c.updated_at,\n    (SELECT e.email_address FROM contacts.contact_emails e WHERE e.contact_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,\n    (SELECT p.phone_number FROM contacts.contact_phones p WHERE p.contact_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY\n    CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN c.display_name END ASC,\n    CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN c.display_name END DESC,\n    CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN c.created_at END ASC,\n    CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN c.created_at END DESC,\n    CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN c.updated_at END ASC,\n    CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN c.updated_at END DESC\nLIMIT :pageSize\nOFFSET :offset"};
+const getContactsByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":272,"b":286}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":861,"b":867},{"a":953,"b":959},{"a":1047,"b":1053},{"a":1135,"b":1141},{"a":1225,"b":1231},{"a":1313,"b":1319}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":890,"b":899},{"a":982,"b":991},{"a":1074,"b":1083},{"a":1162,"b":1171},{"a":1252,"b":1261},{"a":1340,"b":1349}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":1394,"b":1402}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":1411,"b":1417}]}],"statement":"WITH contact_list AS (\n    SELECT\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        c.created_at,\n        c.updated_at\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n),\ntotal AS (\n    SELECT COUNT(*)::int as total_count FROM contact_list\n)\nSELECT\n    cl.external_id,\n    cl.display_name,\n    cl.photo_thumbnail_url,\n    cl.created_at,\n    cl.updated_at,\n    (SELECT e.email_address FROM contacts.contact_emails e WHERE e.contact_id = cl.id AND e.is_primary = true LIMIT 1) as primary_email,\n    (SELECT p.phone_number FROM contacts.contact_phones p WHERE p.contact_id = cl.id AND p.is_primary = true LIMIT 1) as primary_phone,\n    t.total_count\nFROM contact_list cl\nCROSS JOIN total t\nORDER BY\n    CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN cl.display_name END ASC,\n    CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN cl.display_name END DESC,\n    CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN cl.created_at END ASC,\n    CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN cl.created_at END DESC,\n    CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN cl.updated_at END ASC,\n    CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN cl.updated_at END DESC\nLIMIT :pageSize\nOFFSET :offset"};
 
 /**
  * Query generated from SQL:
  * ```
+ * WITH contact_list AS (
+ *     SELECT
+ *         c.id,
+ *         c.external_id,
+ *         c.display_name,
+ *         c.photo_thumbnail_url,
+ *         c.created_at,
+ *         c.updated_at
+ *     FROM contacts.contacts c
+ *     INNER JOIN auth.users u ON c.user_id = u.id
+ *     WHERE u.external_id = :userExternalId
+ *       AND c.deleted_at IS NULL
+ * ),
+ * total AS (
+ *     SELECT COUNT(*)::int as total_count FROM contact_list
+ * )
  * SELECT
- *     c.external_id,
- *     c.display_name,
- *     c.photo_thumbnail_url,
- *     c.created_at,
- *     c.updated_at,
- *     (SELECT e.email_address FROM contacts.contact_emails e WHERE e.contact_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,
- *     (SELECT p.phone_number FROM contacts.contact_phones p WHERE p.contact_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone
- * FROM contacts.contacts c
- * INNER JOIN auth.users u ON c.user_id = u.id
- * WHERE u.external_id = :userExternalId
- *   AND c.deleted_at IS NULL
+ *     cl.external_id,
+ *     cl.display_name,
+ *     cl.photo_thumbnail_url,
+ *     cl.created_at,
+ *     cl.updated_at,
+ *     (SELECT e.email_address FROM contacts.contact_emails e WHERE e.contact_id = cl.id AND e.is_primary = true LIMIT 1) as primary_email,
+ *     (SELECT p.phone_number FROM contacts.contact_phones p WHERE p.contact_id = cl.id AND p.is_primary = true LIMIT 1) as primary_phone,
+ *     t.total_count
+ * FROM contact_list cl
+ * CROSS JOIN total t
  * ORDER BY
- *     CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN c.display_name END ASC,
- *     CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN c.display_name END DESC,
- *     CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN c.created_at END ASC,
- *     CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN c.created_at END DESC,
- *     CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN c.updated_at END ASC,
- *     CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN c.updated_at END DESC
+ *     CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN cl.display_name END ASC,
+ *     CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN cl.display_name END DESC,
+ *     CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN cl.created_at END ASC,
+ *     CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN cl.created_at END DESC,
+ *     CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN cl.updated_at END ASC,
+ *     CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN cl.updated_at END DESC
  * LIMIT :pageSize
  * OFFSET :offset
  * ```
  */
 export const getContactsByUserId = new PreparedQuery<IGetContactsByUserIdParams,IGetContactsByUserIdResult>(getContactsByUserIdIR);
-
-
-/** 'CountContactsByUserId' parameters type */
-export interface ICountContactsByUserIdParams {
-  userExternalId?: string | null | void;
-}
-
-/** 'CountContactsByUserId' return type */
-export interface ICountContactsByUserIdResult {
-  count: number | null;
-}
-
-/** 'CountContactsByUserId' query type */
-export interface ICountContactsByUserIdQuery {
-  params: ICountContactsByUserIdParams;
-  result: ICountContactsByUserIdResult;
-}
-
-const countContactsByUserIdIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":121,"b":135}]}],"statement":"SELECT COUNT(*)::int as count\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
-
-/**
- * Query generated from SQL:
- * ```
- * SELECT COUNT(*)::int as count
- * FROM contacts.contacts c
- * INNER JOIN auth.users u ON c.user_id = u.id
- * WHERE u.external_id = :userExternalId
- *   AND c.deleted_at IS NULL
- * ```
- */
-export const countContactsByUserId = new PreparedQuery<ICountContactsByUserIdParams,ICountContactsByUserIdResult>(countContactsByUserIdIR);
 
 
 /** 'CreateContact' parameters type */
