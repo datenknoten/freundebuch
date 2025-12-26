@@ -6,7 +6,7 @@
   "description": "Personal CRM - A self-hostable relationship management tool",
   "scripts": {
     "dev": "pnpm --parallel --stream run dev",
-    "build": "pnpm --recursive run build",
+    "build": "pnpm --filter @freundebuch/shared run build && pnpm --filter !@freundebuch/shared --recursive run build",
     "test": "pnpm --recursive run test",
     "test:unit": "pnpm --recursive run test:unit",
     "test:integration": "pnpm --recursive run test:integration",
