@@ -80,6 +80,32 @@ export const ContactCreateSchema = type({
   'emails?': EmailInputSchema.array(),
   'addresses?': AddressInputSchema.array(),
   'urls?': UrlInputSchema.array(),
+}).narrow((data, ctx) => {
+  // Validate only one primary phone
+  if (data.phones) {
+    const primaryCount = data.phones.filter((p) => p.is_primary === true).length;
+    if (primaryCount > 1) {
+      ctx.mustBe('a contact with at most one primary phone');
+      return false;
+    }
+  }
+  // Validate only one primary email
+  if (data.emails) {
+    const primaryCount = data.emails.filter((e) => e.is_primary === true).length;
+    if (primaryCount > 1) {
+      ctx.mustBe('a contact with at most one primary email');
+      return false;
+    }
+  }
+  // Validate only one primary address
+  if (data.addresses) {
+    const primaryCount = data.addresses.filter((a) => a.is_primary === true).length;
+    if (primaryCount > 1) {
+      ctx.mustBe('a contact with at most one primary address');
+      return false;
+    }
+  }
+  return true;
 });
 export type ContactCreateInput = typeof ContactCreateSchema.infer;
 
