@@ -1,18 +1,40 @@
 <script lang="ts">
 import '../app.css';
 import { onMount } from 'svelte';
+import { page } from '$app/stores';
+import KeyboardShortcuts from '$lib/components/KeyboardShortcuts.svelte';
 import NavBar from '$lib/components/NavBar.svelte';
-import { auth } from '$lib/stores/auth';
+import { auth, isAuthenticated } from '$lib/stores/auth';
 
 // Initialize auth state on app load
 onMount(async () => {
   await auth.initialize();
 });
+
+// Hide FAB on new contact page
+const showFab = $derived($isAuthenticated && !$page.url.pathname.includes('/contacts/new'));
 </script>
+
+<KeyboardShortcuts />
 
 <div class="min-h-screen flex flex-col">
 	<NavBar />
 	<main class="flex-1">
 		<slot />
 	</main>
+
+	<!-- Floating Action Button for mobile -->
+	{#if showFab}
+		<a
+			href="/contacts/new"
+			data-sveltekit-preload-data="tap"
+			class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white rounded-full shadow-lg hover:bg-forest-light transition-colors flex items-center justify-center z-50"
+			title="Add new contact"
+			aria-label="Add new contact"
+		>
+			<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+			</svg>
+		</a>
+	{/if}
 </div>
