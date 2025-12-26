@@ -2,13 +2,17 @@
 import * as authApi from '$lib/api/auth';
 import { currentUser } from '$lib/stores/auth';
 
+const pageTitle = $derived(
+  $currentUser?.email ? `${$currentUser.email} | Personal CRM` : 'Profile | Personal CRM',
+);
+
 let isEditing = $state(false);
 let email = $state($currentUser?.email || '');
 let isLoading = $state(false);
 let error = $state('');
 let success = $state(false);
 
-async function handleSubmit(event) {
+async function handleSubmit(event: SubmitEvent) {
   event.preventDefault();
   error = '';
   success = false;
@@ -36,6 +40,10 @@ function handleCancel() {
   error = '';
 }
 </script>
+
+<svelte:head>
+	<title>{pageTitle}</title>
+</svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">
 	<div class="max-w-2xl mx-auto mt-8">

@@ -2,6 +2,10 @@
 import ContactForm from '$lib/components/contacts/ContactForm.svelte';
 </script>
 
+<svelte:head>
+  <title>New Contact | Personal CRM</title>
+</svelte:head>
+
 <div class="min-h-screen bg-gray-50 p-4">
   <div class="max-w-2xl mx-auto mt-8">
     <div class="bg-white rounded-xl shadow-lg p-8">

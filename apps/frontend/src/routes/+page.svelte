@@ -2,6 +2,10 @@
 import { currentUser, isAuthenticated } from '$lib/stores/auth';
 </script>
 
+<svelte:head>
+	<title>Home | Personal CRM</title>
+</svelte:head>
+
 <div class="bg-gray-50 flex items-center justify-center p-4 py-16">
 	<div class="text-center max-w-4xl">
 		<h1 class="text-6xl font-heading text-forest mb-4">Personal CRM</h1>
