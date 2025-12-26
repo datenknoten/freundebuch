@@ -353,6 +353,7 @@ describe('getConfig', () => {
         ENV: 'production',
         PORT: 8080,
         FRONTEND_URL: 'https://app.example.com',
+        BACKEND_URL: 'http://localhost:3000',
         JWT_SECRET: 'super-secret-jwt-key-00000000000',
         JWT_EXPIRY: 1209600,
         SESSION_SECRET: 'super-secret-session-key-super-secret-session-key',
