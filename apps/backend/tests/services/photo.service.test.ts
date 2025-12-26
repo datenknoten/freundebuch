@@ -23,6 +23,7 @@ vi.mock('node:fs/promises', () => ({
 vi.mock('../../src/utils/config.js', () => ({
   getConfig: vi.fn(() => ({
     FRONTEND_URL: 'http://localhost:5173',
+    BACKEND_URL: 'http://localhost:3000',
   })),
 }));
 
@@ -157,10 +158,10 @@ describe('PhotoService', () => {
       const result = await photoService.uploadPhoto('contact-456', mockFile);
 
       expect(result.photoUrl).toBe(
-        'http://localhost:5173/api/uploads/contacts/contact-456/photo.jpg',
+        'http://localhost:3000/api/uploads/contacts/contact-456/photo.jpg',
       );
       expect(result.photoThumbnailUrl).toBe(
-        'http://localhost:5173/api/uploads/contacts/contact-456/photo_thumb.jpg',
+        'http://localhost:3000/api/uploads/contacts/contact-456/photo_thumb.jpg',
       );
     });
   });
