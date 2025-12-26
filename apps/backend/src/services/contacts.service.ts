@@ -20,31 +20,26 @@ import {
   clearPrimaryAddress,
   createAddress,
   deleteAddress,
-  getAddressesByContactId,
   updateAddress,
 } from '../models/queries/contact-addresses.queries.js';
 import {
   clearPrimaryEmail,
   createEmail,
   deleteEmail,
-  getEmailsByContactId,
   updateEmail,
 } from '../models/queries/contact-emails.queries.js';
 import {
   clearPrimaryPhone,
   createPhone,
   deletePhone,
-  getPhonesByContactId,
   updatePhone,
 } from '../models/queries/contact-phones.queries.js';
 import {
   createUrl,
   deleteUrl,
-  getUrlsByContactId,
   updateUrl,
 } from '../models/queries/contact-urls.queries.js';
 import {
-  countContactsByUserId,
   createContact,
   getContactById,
   getContactsByUserId,
@@ -64,6 +59,7 @@ export class ContactsService {
 
   /**
    * List contacts for a user with pagination and sorting
+   * Uses a single query with CTE to get both data and total count
    */
   async listContacts(
     userExternalId: string,
@@ -73,21 +69,19 @@ export class ContactsService {
 
     const offset = (options.page - 1) * options.pageSize;
 
-    const [contacts, countResult] = await Promise.all([
-      getContactsByUserId.run(
-        {
-          userExternalId,
-          sortBy: options.sortBy,
-          sortOrder: options.sortOrder,
-          pageSize: options.pageSize,
-          offset,
-        },
-        this.db,
-      ),
-      countContactsByUserId.run({ userExternalId }, this.db),
-    ]);
+    const contacts = await getContactsByUserId.run(
+      {
+        userExternalId,
+        sortBy: options.sortBy,
+        sortOrder: options.sortOrder,
+        pageSize: options.pageSize,
+        offset,
+      },
+      this.db,
+    );
 
-    const total = countResult[0]?.count ?? 0;
+    // Total count is included in each row via CROSS JOIN with the count CTE
+    const total = contacts[0]?.total_count ?? 0;
 
     return {
       contacts: contacts.map((c) => this.mapContactListItem(c)),
@@ -100,6 +94,7 @@ export class ContactsService {
 
   /**
    * Get a single contact by ID with all related data
+   * Uses a single query with json_agg subqueries for efficiency
    */
   async getContactById(userExternalId: string, contactExternalId: string): Promise<Contact | null> {
     this.logger.debug({ userExternalId, contactExternalId }, 'Getting contact');
@@ -110,14 +105,7 @@ export class ContactsService {
       return null;
     }
 
-    const [phones, emails, addresses, urls] = await Promise.all([
-      getPhonesByContactId.run({ userExternalId, contactExternalId }, this.db),
-      getEmailsByContactId.run({ userExternalId, contactExternalId }, this.db),
-      getAddressesByContactId.run({ userExternalId, contactExternalId }, this.db),
-      getUrlsByContactId.run({ userExternalId, contactExternalId }, this.db),
-    ]);
-
-    return this.mapContact(contact, phones, emails, addresses, urls);
+    return this.mapContactWithEmbeddedRelations(contact);
   }
 
   /**
@@ -211,17 +199,10 @@ export class ContactsService {
       return null;
     }
 
-    // Fetch related data
-    const [phones, emails, addresses, urls] = await Promise.all([
-      getPhonesByContactId.run({ userExternalId, contactExternalId }, this.db),
-      getEmailsByContactId.run({ userExternalId, contactExternalId }, this.db),
-      getAddressesByContactId.run({ userExternalId, contactExternalId }, this.db),
-      getUrlsByContactId.run({ userExternalId, contactExternalId }, this.db),
-    ]);
-
     this.logger.info({ contactExternalId }, 'Contact updated successfully');
 
-    return this.mapContact(updated, phones, emails, addresses, urls);
+    // Fetch the full contact with related data using the optimized query
+    return this.getContactById(userExternalId, contactExternalId);
   }
 
   /**
@@ -680,37 +661,6 @@ export class ContactsService {
     };
   }
 
-  private mapContact(
-    // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
-    contact: any,
-    // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
-    phones: any[],
-    // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
-    emails: any[],
-    // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
-    addresses: any[],
-    // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
-    urls: any[],
-  ): Contact {
-    return {
-      id: contact.external_id,
-      displayName: contact.display_name,
-      namePrefix: contact.name_prefix ?? undefined,
-      nameFirst: contact.name_first ?? undefined,
-      nameMiddle: contact.name_middle ?? undefined,
-      nameLast: contact.name_last ?? undefined,
-      nameSuffix: contact.name_suffix ?? undefined,
-      photoUrl: contact.photo_url ?? undefined,
-      photoThumbnailUrl: contact.photo_thumbnail_url ?? undefined,
-      phones: phones.map((p) => this.mapPhone(p)),
-      emails: emails.map((e) => this.mapEmail(e)),
-      addresses: addresses.map((a) => this.mapAddress(a)),
-      urls: urls.map((u) => this.mapUrl(u)),
-      createdAt: contact.created_at.toISOString(),
-      updatedAt: contact.updated_at.toISOString(),
-    };
-  }
-
   // biome-ignore lint/suspicious/noExplicitAny: PgTyped generated types
   private mapPhone(row: any): Phone {
     return {
@@ -760,6 +710,123 @@ export class ContactsService {
       urlType: row.url_type,
       label: row.label ?? undefined,
       createdAt: row.created_at.toISOString(),
+    };
+  }
+
+  /**
+   * Maps a contact row with embedded JSON arrays for related data
+   * Used by the optimized getContactById query
+   */
+  private mapContactWithEmbeddedRelations(contact: {
+    external_id: string;
+    display_name: string;
+    name_prefix: string | null;
+    name_first: string | null;
+    name_middle: string | null;
+    name_last: string | null;
+    name_suffix: string | null;
+    photo_url: string | null;
+    photo_thumbnail_url: string | null;
+    created_at: Date;
+    updated_at: Date;
+    // biome-ignore lint/suspicious/noExplicitAny: JSON from PostgreSQL
+    phones: any;
+    // biome-ignore lint/suspicious/noExplicitAny: JSON from PostgreSQL
+    emails: any;
+    // biome-ignore lint/suspicious/noExplicitAny: JSON from PostgreSQL
+    addresses: any;
+    // biome-ignore lint/suspicious/noExplicitAny: JSON from PostgreSQL
+    urls: any;
+  }): Contact {
+    // Parse JSON arrays (PostgreSQL returns them as parsed objects when using node-pg)
+    const phones = (contact.phones || []) as Array<{
+      external_id: string;
+      phone_number: string;
+      phone_type: string;
+      label: string | null;
+      is_primary: boolean;
+      created_at: string;
+    }>;
+
+    const emails = (contact.emails || []) as Array<{
+      external_id: string;
+      email_address: string;
+      email_type: string;
+      label: string | null;
+      is_primary: boolean;
+      created_at: string;
+    }>;
+
+    const addresses = (contact.addresses || []) as Array<{
+      external_id: string;
+      street_line1: string | null;
+      street_line2: string | null;
+      city: string | null;
+      state_province: string | null;
+      postal_code: string | null;
+      country: string | null;
+      address_type: string;
+      label: string | null;
+      is_primary: boolean;
+      created_at: string;
+    }>;
+
+    const urls = (contact.urls || []) as Array<{
+      external_id: string;
+      url: string;
+      url_type: string;
+      label: string | null;
+      created_at: string;
+    }>;
+
+    return {
+      id: contact.external_id,
+      displayName: contact.display_name,
+      namePrefix: contact.name_prefix ?? undefined,
+      nameFirst: contact.name_first ?? undefined,
+      nameMiddle: contact.name_middle ?? undefined,
+      nameLast: contact.name_last ?? undefined,
+      nameSuffix: contact.name_suffix ?? undefined,
+      photoUrl: contact.photo_url ?? undefined,
+      photoThumbnailUrl: contact.photo_thumbnail_url ?? undefined,
+      phones: phones.map((p) => ({
+        id: p.external_id,
+        phoneNumber: p.phone_number,
+        phoneType: p.phone_type as Phone['phoneType'],
+        label: p.label ?? undefined,
+        isPrimary: p.is_primary,
+        createdAt: p.created_at,
+      })),
+      emails: emails.map((e) => ({
+        id: e.external_id,
+        emailAddress: e.email_address,
+        emailType: e.email_type as Email['emailType'],
+        label: e.label ?? undefined,
+        isPrimary: e.is_primary,
+        createdAt: e.created_at,
+      })),
+      addresses: addresses.map((a) => ({
+        id: a.external_id,
+        streetLine1: a.street_line1 ?? undefined,
+        streetLine2: a.street_line2 ?? undefined,
+        city: a.city ?? undefined,
+        stateProvince: a.state_province ?? undefined,
+        postalCode: a.postal_code ?? undefined,
+        country: a.country ?? undefined,
+        addressType: a.address_type as Address['addressType'],
+        label: a.label ?? undefined,
+        isPrimary: a.is_primary,
+        createdAt: a.created_at,
+      })),
+      urls: urls.map((u) => ({
+        id: u.external_id,
+        url: u.url,
+        urlType: u.url_type as Url['urlType'],
+        label: u.label ?? undefined,
+        createdAt: u.created_at,
+      })),
+      createdAt: contact.created_at.toISOString(),
+      updatedAt: contact.updated_at.toISOString(),
     };
   }
 }
