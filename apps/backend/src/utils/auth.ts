@@ -152,3 +152,19 @@ export function getClearCookieOptions(): CookieOptions {
     path: '/',
   };
 }
+
+/**
+ * Get cookie options for the auth token (JWT) cookie
+ * This cookie is used as a fallback for browser requests that can't set headers
+ * (e.g., <img> tags loading authenticated images)
+ */
+export function getAuthTokenCookieOptions(): CookieOptions {
+  const config = getConfig();
+  return {
+    httpOnly: true,
+    secure: config.ENV === 'production',
+    sameSite: 'Lax',
+    maxAge: config.JWT_EXPIRY, // Match JWT expiry (in seconds)
+    path: '/',
+  };
+}

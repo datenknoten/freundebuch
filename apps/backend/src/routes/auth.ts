@@ -10,13 +10,18 @@ import {
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
+import { AUTH_TOKEN_COOKIE } from '../middleware/auth.js';
 import {
   authRateLimitMiddleware,
   passwordResetRateLimitMiddleware,
 } from '../middleware/rate-limit.js';
 import { AuthService } from '../services/auth.service.js';
 import type { AppContext } from '../types/context.js';
-import { getClearCookieOptions, getSessionCookieOptions } from '../utils/auth.js';
+import {
+  getAuthTokenCookieOptions,
+  getClearCookieOptions,
+  getSessionCookieOptions,
+} from '../utils/auth.js';
 import { getConfig } from '../utils/config.js';
 
 const app = new Hono<AppContext>();
@@ -56,6 +61,8 @@ app.post('/register', authRateLimitMiddleware, async (c) => {
 
     // Set session cookie (HTTP-only)
     setCookie(c, 'session_token', result.sessionToken, getSessionCookieOptions());
+    // Set auth token cookie for browser requests (e.g., image loading)
+    setCookie(c, AUTH_TOKEN_COOKIE, result.accessToken, getAuthTokenCookieOptions());
 
     logger.info({ userId: result.user.externalId }, 'User registered successfully');
 
@@ -117,6 +124,8 @@ app.post('/login', authRateLimitMiddleware, async (c) => {
 
     // Set session cookie (HTTP-only)
     setCookie(c, 'session_token', result.sessionToken, getSessionCookieOptions());
+    // Set auth token cookie for browser requests (e.g., image loading)
+    setCookie(c, AUTH_TOKEN_COOKIE, result.accessToken, getAuthTokenCookieOptions());
 
     logger.info({ userId: result.user.externalId }, 'User logged in successfully');
 
@@ -151,6 +160,8 @@ app.post('/logout', async (c) => {
 
     // Clear session cookie
     setCookie(c, 'session_token', '', getClearCookieOptions());
+    // Clear auth token cookie
+    setCookie(c, AUTH_TOKEN_COOKIE, '', getClearCookieOptions());
 
     logger.info('User logged out successfully');
 
@@ -205,13 +216,17 @@ app.post('/refresh', async (c) => {
     const authService = new AuthService(db, logger);
     const result = await authService.refresh(sessionToken);
 
+    // Update auth token cookie with refreshed token
+    setCookie(c, AUTH_TOKEN_COOKIE, result.accessToken, getAuthTokenCookieOptions());
+
     logger.info({ userId: result.user.externalId }, 'Access token refreshed successfully');
 
     return c.json<AuthResponse>(result);
   } catch (error) {
     if (error instanceof Error && error.message === 'Invalid or expired session') {
-      // Clear invalid session cookie
+      // Clear invalid session and auth cookies
       setCookie(c, 'session_token', '', getClearCookieOptions());
+      setCookie(c, AUTH_TOKEN_COOKIE, '', getClearCookieOptions());
 
       return c.json<ErrorResponse>({ error: 'Invalid or expired session' }, 401);
     }
