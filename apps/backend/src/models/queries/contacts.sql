@@ -9,8 +9,15 @@ SELECT
     c.name_suffix,
     c.photo_url,
     c.photo_thumbnail_url,
+    -- Epic 1B: Professional fields
+    c.job_title,
+    c.organization,
+    c.department,
+    c.work_notes,
+    c.interests,
     c.created_at,
     c.updated_at,
+    -- Epic 1A: Sub-resources
     (
         SELECT COALESCE(json_agg(json_build_object(
             'external_id', p.external_id,
@@ -54,15 +61,51 @@ SELECT
     ) as addresses,
     (
         SELECT COALESCE(json_agg(json_build_object(
-            'external_id', u.external_id,
-            'url', u.url,
-            'url_type', u.url_type,
-            'label', u.label,
-            'created_at', u.created_at
-        ) ORDER BY u.created_at ASC), '[]'::json)
-        FROM contacts.contact_urls u
-        WHERE u.contact_id = c.id
-    ) as urls
+            'external_id', url.external_id,
+            'url', url.url,
+            'url_type', url.url_type,
+            'label', url.label,
+            'created_at', url.created_at
+        ) ORDER BY url.created_at ASC), '[]'::json)
+        FROM contacts.contact_urls url
+        WHERE url.contact_id = c.id
+    ) as urls,
+    -- Epic 1B: Extended sub-resources
+    (
+        SELECT COALESCE(json_agg(json_build_object(
+            'external_id', d.external_id,
+            'date_value', d.date_value,
+            'year_known', d.year_known,
+            'date_type', d.date_type,
+            'label', d.label,
+            'created_at', d.created_at
+        ) ORDER BY d.date_type ASC, d.created_at ASC), '[]'::json)
+        FROM contacts.contact_dates d
+        WHERE d.contact_id = c.id
+    ) as dates,
+    (
+        SELECT json_build_object(
+            'external_id', m.external_id,
+            'met_date', m.met_date,
+            'met_location', m.met_location,
+            'met_context', m.met_context,
+            'created_at', m.created_at,
+            'updated_at', m.updated_at
+        )
+        FROM contacts.contact_met_info m
+        WHERE m.contact_id = c.id
+    ) as met_info,
+    (
+        SELECT COALESCE(json_agg(json_build_object(
+            'external_id', sp.external_id,
+            'platform', sp.platform,
+            'profile_url', sp.profile_url,
+            'username', sp.username,
+            'created_at', sp.created_at
+        ) ORDER BY sp.platform ASC, sp.created_at ASC), '[]'::json)
+        FROM contacts.contact_social_profiles sp
+        WHERE sp.contact_id = c.id
+    ) as social_profiles
 FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :contactExternalId
@@ -123,7 +166,13 @@ INSERT INTO contacts.contacts (
     name_first,
     name_middle,
     name_last,
-    name_suffix
+    name_suffix,
+    -- Epic 1B: Professional fields
+    job_title,
+    organization,
+    department,
+    work_notes,
+    interests
 )
 SELECT
     u.id,
@@ -132,7 +181,12 @@ SELECT
     :nameFirst,
     :nameMiddle,
     :nameLast,
-    :nameSuffix
+    :nameSuffix,
+    :jobTitle,
+    :organization,
+    :department,
+    :workNotes,
+    :interests
 FROM auth.users u
 WHERE u.external_id = :userExternalId
 RETURNING
@@ -145,6 +199,11 @@ RETURNING
     name_suffix,
     photo_url,
     photo_thumbnail_url,
+    job_title,
+    organization,
+    department,
+    work_notes,
+    interests,
     created_at,
     updated_at;
 
@@ -156,7 +215,13 @@ SET
     name_first = CASE WHEN :updateNameFirst THEN :nameFirst ELSE c.name_first END,
     name_middle = CASE WHEN :updateNameMiddle THEN :nameMiddle ELSE c.name_middle END,
     name_last = CASE WHEN :updateNameLast THEN :nameLast ELSE c.name_last END,
-    name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END
+    name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END,
+    -- Epic 1B: Professional fields
+    job_title = CASE WHEN :updateJobTitle THEN :jobTitle ELSE c.job_title END,
+    organization = CASE WHEN :updateOrganization THEN :organization ELSE c.organization END,
+    department = CASE WHEN :updateDepartment THEN :department ELSE c.department END,
+    work_notes = CASE WHEN :updateWorkNotes THEN :workNotes ELSE c.work_notes END,
+    interests = CASE WHEN :updateInterests THEN :interests ELSE c.interests END
 FROM auth.users u
 WHERE c.external_id = :contactExternalId
   AND c.user_id = u.id
@@ -172,6 +237,11 @@ RETURNING
     c.name_suffix,
     c.photo_url,
     c.photo_thumbnail_url,
+    c.job_title,
+    c.organization,
+    c.department,
+    c.work_notes,
+    c.interests,
     c.created_at,
     c.updated_at;
 
