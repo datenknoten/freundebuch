@@ -15,11 +15,19 @@ export interface IGetContactByIdParams {
 export interface IGetContactByIdResult {
   addresses: Json | null;
   created_at: Date;
+  dates: Json | null;
+  /** Department within organization */
+  department: string | null;
   /** Primary name shown in lists */
   display_name: string;
   emails: Json | null;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
+  /** Interests and hobbies (free-form text) */
+  interests: string | null;
+  /** Job title / position */
+  job_title: string | null;
+  met_info: Json | null;
   /** First/given name */
   name_first: string | null;
   /** Last/family name */
@@ -30,13 +38,18 @@ export interface IGetContactByIdResult {
   name_prefix: string | null;
   /** Jr., Sr., III, PhD, etc. */
   name_suffix: string | null;
+  /** Company / organization name */
+  organization: string | null;
   phones: Json | null;
   /** URL to 200x200 thumbnail */
   photo_thumbnail_url: string | null;
   /** URL to original profile picture */
   photo_url: string | null;
+  social_profiles: Json | null;
   updated_at: Date;
   urls: Json | null;
+  /** Notes about professional context */
+  work_notes: string | null;
 }
 
 /** 'GetContactById' query type */
@@ -45,7 +58,7 @@ export interface IGetContactByIdQuery {
   result: IGetContactByIdResult;
 }
 
-const getContactByIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":2239,"b":2256}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":2280,"b":2294}]}],"statement":"SELECT\n    c.external_id,\n    c.display_name,\n    c.name_prefix,\n    c.name_first,\n    c.name_middle,\n    c.name_last,\n    c.name_suffix,\n    c.photo_url,\n    c.photo_thumbnail_url,\n    c.created_at,\n    c.updated_at,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', p.external_id,\n            'phone_number', p.phone_number,\n            'phone_type', p.phone_type,\n            'label', p.label,\n            'is_primary', p.is_primary,\n            'created_at', p.created_at\n        ) ORDER BY p.is_primary DESC, p.created_at ASC), '[]'::json)\n        FROM contacts.contact_phones p\n        WHERE p.contact_id = c.id\n    ) as phones,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', e.external_id,\n            'email_address', e.email_address,\n            'email_type', e.email_type,\n            'label', e.label,\n            'is_primary', e.is_primary,\n            'created_at', e.created_at\n        ) ORDER BY e.is_primary DESC, e.created_at ASC), '[]'::json)\n        FROM contacts.contact_emails e\n        WHERE e.contact_id = c.id\n    ) as emails,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', a.external_id,\n            'street_line1', a.street_line1,\n            'street_line2', a.street_line2,\n            'city', a.city,\n            'state_province', a.state_province,\n            'postal_code', a.postal_code,\n            'country', a.country,\n            'address_type', a.address_type,\n            'label', a.label,\n            'is_primary', a.is_primary,\n            'created_at', a.created_at\n        ) ORDER BY a.is_primary DESC, a.created_at ASC), '[]'::json)\n        FROM contacts.contact_addresses a\n        WHERE a.contact_id = c.id\n    ) as addresses,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', u.external_id,\n            'url', u.url,\n            'url_type', u.url_type,\n            'label', u.label,\n            'created_at', u.created_at\n        ) ORDER BY u.created_at ASC), '[]'::json)\n        FROM contacts.contact_urls u\n        WHERE u.contact_id = c.id\n    ) as urls\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
+const getContactByIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExternalId":true},"params":[{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":3715,"b":3732}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":3756,"b":3770}]}],"statement":"SELECT\n    c.external_id,\n    c.display_name,\n    c.name_prefix,\n    c.name_first,\n    c.name_middle,\n    c.name_last,\n    c.name_suffix,\n    c.photo_url,\n    c.photo_thumbnail_url,\n    -- Epic 1B: Professional fields\n    c.job_title,\n    c.organization,\n    c.department,\n    c.work_notes,\n    c.interests,\n    c.created_at,\n    c.updated_at,\n    -- Epic 1A: Sub-resources\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', p.external_id,\n            'phone_number', p.phone_number,\n            'phone_type', p.phone_type,\n            'label', p.label,\n            'is_primary', p.is_primary,\n            'created_at', p.created_at\n        ) ORDER BY p.is_primary DESC, p.created_at ASC), '[]'::json)\n        FROM contacts.contact_phones p\n        WHERE p.contact_id = c.id\n    ) as phones,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', e.external_id,\n            'email_address', e.email_address,\n            'email_type', e.email_type,\n            'label', e.label,\n            'is_primary', e.is_primary,\n            'created_at', e.created_at\n        ) ORDER BY e.is_primary DESC, e.created_at ASC), '[]'::json)\n        FROM contacts.contact_emails e\n        WHERE e.contact_id = c.id\n    ) as emails,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', a.external_id,\n            'street_line1', a.street_line1,\n            'street_line2', a.street_line2,\n            'city', a.city,\n            'state_province', a.state_province,\n            'postal_code', a.postal_code,\n            'country', a.country,\n            'address_type', a.address_type,\n            'label', a.label,\n            'is_primary', a.is_primary,\n            'created_at', a.created_at\n        ) ORDER BY a.is_primary DESC, a.created_at ASC), '[]'::json)\n        FROM contacts.contact_addresses a\n        WHERE a.contact_id = c.id\n    ) as addresses,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', url.external_id,\n            'url', url.url,\n            'url_type', url.url_type,\n            'label', url.label,\n            'created_at', url.created_at\n        ) ORDER BY url.created_at ASC), '[]'::json)\n        FROM contacts.contact_urls url\n        WHERE url.contact_id = c.id\n    ) as urls,\n    -- Epic 1B: Extended sub-resources\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', d.external_id,\n            'date_value', d.date_value,\n            'year_known', d.year_known,\n            'date_type', d.date_type,\n            'label', d.label,\n            'created_at', d.created_at\n        ) ORDER BY d.date_type ASC, d.created_at ASC), '[]'::json)\n        FROM contacts.contact_dates d\n        WHERE d.contact_id = c.id\n    ) as dates,\n    (\n        SELECT json_build_object(\n            'external_id', m.external_id,\n            'met_date', m.met_date,\n            'met_location', m.met_location,\n            'met_context', m.met_context,\n            'created_at', m.created_at,\n            'updated_at', m.updated_at\n        )\n        FROM contacts.contact_met_info m\n        WHERE m.contact_id = c.id\n    ) as met_info,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', sp.external_id,\n            'platform', sp.platform,\n            'profile_url', sp.profile_url,\n            'username', sp.username,\n            'created_at', sp.created_at\n        ) ORDER BY sp.platform ASC, sp.created_at ASC), '[]'::json)\n        FROM contacts.contact_social_profiles sp\n        WHERE sp.contact_id = c.id\n    ) as social_profiles\nFROM contacts.contacts c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :contactExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
 
 /**
  * Query generated from SQL:
@@ -60,8 +73,15 @@ const getContactByIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExt
  *     c.name_suffix,
  *     c.photo_url,
  *     c.photo_thumbnail_url,
+ *     -- Epic 1B: Professional fields
+ *     c.job_title,
+ *     c.organization,
+ *     c.department,
+ *     c.work_notes,
+ *     c.interests,
  *     c.created_at,
  *     c.updated_at,
+ *     -- Epic 1A: Sub-resources
  *     (
  *         SELECT COALESCE(json_agg(json_build_object(
  *             'external_id', p.external_id,
@@ -105,15 +125,51 @@ const getContactByIdIR: any = {"usedParamSet":{"contactExternalId":true,"userExt
  *     ) as addresses,
  *     (
  *         SELECT COALESCE(json_agg(json_build_object(
- *             'external_id', u.external_id,
- *             'url', u.url,
- *             'url_type', u.url_type,
- *             'label', u.label,
- *             'created_at', u.created_at
- *         ) ORDER BY u.created_at ASC), '[]'::json)
- *         FROM contacts.contact_urls u
- *         WHERE u.contact_id = c.id
- *     ) as urls
+ *             'external_id', url.external_id,
+ *             'url', url.url,
+ *             'url_type', url.url_type,
+ *             'label', url.label,
+ *             'created_at', url.created_at
+ *         ) ORDER BY url.created_at ASC), '[]'::json)
+ *         FROM contacts.contact_urls url
+ *         WHERE url.contact_id = c.id
+ *     ) as urls,
+ *     -- Epic 1B: Extended sub-resources
+ *     (
+ *         SELECT COALESCE(json_agg(json_build_object(
+ *             'external_id', d.external_id,
+ *             'date_value', d.date_value,
+ *             'year_known', d.year_known,
+ *             'date_type', d.date_type,
+ *             'label', d.label,
+ *             'created_at', d.created_at
+ *         ) ORDER BY d.date_type ASC, d.created_at ASC), '[]'::json)
+ *         FROM contacts.contact_dates d
+ *         WHERE d.contact_id = c.id
+ *     ) as dates,
+ *     (
+ *         SELECT json_build_object(
+ *             'external_id', m.external_id,
+ *             'met_date', m.met_date,
+ *             'met_location', m.met_location,
+ *             'met_context', m.met_context,
+ *             'created_at', m.created_at,
+ *             'updated_at', m.updated_at
+ *         )
+ *         FROM contacts.contact_met_info m
+ *         WHERE m.contact_id = c.id
+ *     ) as met_info,
+ *     (
+ *         SELECT COALESCE(json_agg(json_build_object(
+ *             'external_id', sp.external_id,
+ *             'platform', sp.platform,
+ *             'profile_url', sp.profile_url,
+ *             'username', sp.username,
+ *             'created_at', sp.created_at
+ *         ) ORDER BY sp.platform ASC, sp.created_at ASC), '[]'::json)
+ *         FROM contacts.contact_social_profiles sp
+ *         WHERE sp.contact_id = c.id
+ *     ) as social_profiles
  * FROM contacts.contacts c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE c.external_id = :contactExternalId
@@ -236,22 +292,33 @@ export const getContactsByUserId = new PreparedQuery<IGetContactsByUserIdParams,
 
 /** 'CreateContact' parameters type */
 export interface ICreateContactParams {
+  department?: string | null | void;
   displayName?: string | null | void;
+  interests?: string | null | void;
+  jobTitle?: string | null | void;
   nameFirst?: string | null | void;
   nameLast?: string | null | void;
   nameMiddle?: string | null | void;
   namePrefix?: string | null | void;
   nameSuffix?: string | null | void;
+  organization?: string | null | void;
   userExternalId?: string | null | void;
+  workNotes?: string | null | void;
 }
 
 /** 'CreateContact' return type */
 export interface ICreateContactResult {
   created_at: Date;
+  /** Department within organization */
+  department: string | null;
   /** Primary name shown in lists */
   display_name: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
+  /** Interests and hobbies (free-form text) */
+  interests: string | null;
+  /** Job title / position */
+  job_title: string | null;
   /** First/given name */
   name_first: string | null;
   /** Last/family name */
@@ -262,11 +329,15 @@ export interface ICreateContactResult {
   name_prefix: string | null;
   /** Jr., Sr., III, PhD, etc. */
   name_suffix: string | null;
+  /** Company / organization name */
+  organization: string | null;
   /** URL to 200x200 thumbnail */
   photo_thumbnail_url: string | null;
   /** URL to original profile picture */
   photo_url: string | null;
   updated_at: Date;
+  /** Notes about professional context */
+  work_notes: string | null;
 }
 
 /** 'CreateContact' query type */
@@ -275,7 +346,7 @@ export interface ICreateContactQuery {
   result: ICreateContactResult;
 }
 
-const createContactIR: any = {"usedParamSet":{"displayName":true,"namePrefix":true,"nameFirst":true,"nameMiddle":true,"nameLast":true,"nameSuffix":true,"userExternalId":true},"params":[{"name":"displayName","required":false,"transform":{"type":"scalar"},"locs":[{"a":167,"b":178}]},{"name":"namePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":185,"b":195}]},{"name":"nameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":202,"b":211}]},{"name":"nameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":218,"b":228}]},{"name":"nameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":235,"b":243}]},{"name":"nameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":250,"b":260}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":302,"b":316}]}],"statement":"INSERT INTO contacts.contacts (\n    user_id,\n    display_name,\n    name_prefix,\n    name_first,\n    name_middle,\n    name_last,\n    name_suffix\n)\nSELECT\n    u.id,\n    :displayName,\n    :namePrefix,\n    :nameFirst,\n    :nameMiddle,\n    :nameLast,\n    :nameSuffix\nFROM auth.users u\nWHERE u.external_id = :userExternalId\nRETURNING\n    external_id,\n    display_name,\n    name_prefix,\n    name_first,\n    name_middle,\n    name_last,\n    name_suffix,\n    photo_url,\n    photo_thumbnail_url,\n    created_at,\n    updated_at"};
+const createContactIR: any = {"usedParamSet":{"displayName":true,"namePrefix":true,"nameFirst":true,"nameMiddle":true,"nameLast":true,"nameSuffix":true,"jobTitle":true,"organization":true,"department":true,"workNotes":true,"interests":true,"userExternalId":true},"params":[{"name":"displayName","required":false,"transform":{"type":"scalar"},"locs":[{"a":283,"b":294}]},{"name":"namePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":301,"b":311}]},{"name":"nameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":318,"b":327}]},{"name":"nameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":334,"b":344}]},{"name":"nameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":351,"b":359}]},{"name":"nameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":366,"b":376}]},{"name":"jobTitle","required":false,"transform":{"type":"scalar"},"locs":[{"a":383,"b":391}]},{"name":"organization","required":false,"transform":{"type":"scalar"},"locs":[{"a":398,"b":410}]},{"name":"department","required":false,"transform":{"type":"scalar"},"locs":[{"a":417,"b":427}]},{"name":"workNotes","required":false,"transform":{"type":"scalar"},"locs":[{"a":434,"b":443}]},{"name":"interests","required":false,"transform":{"type":"scalar"},"locs":[{"a":450,"b":459}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":501,"b":515}]}],"statement":"INSERT INTO contacts.contacts (\n    user_id,\n    display_name,\n    name_prefix,\n    name_first,\n    name_middle,\n    name_last,\n    name_suffix,\n    -- Epic 1B: Professional fields\n    job_title,\n    organization,\n    department,\n    work_notes,\n    interests\n)\nSELECT\n    u.id,\n    :displayName,\n    :namePrefix,\n    :nameFirst,\n    :nameMiddle,\n    :nameLast,\n    :nameSuffix,\n    :jobTitle,\n    :organization,\n    :department,\n    :workNotes,\n    :interests\nFROM auth.users u\nWHERE u.external_id = :userExternalId\nRETURNING\n    external_id,\n    display_name,\n    name_prefix,\n    name_first,\n    name_middle,\n    name_last,\n    name_suffix,\n    photo_url,\n    photo_thumbnail_url,\n    job_title,\n    organization,\n    department,\n    work_notes,\n    interests,\n    created_at,\n    updated_at"};
 
 /**
  * Query generated from SQL:
@@ -287,7 +358,13 @@ const createContactIR: any = {"usedParamSet":{"displayName":true,"namePrefix":tr
  *     name_first,
  *     name_middle,
  *     name_last,
- *     name_suffix
+ *     name_suffix,
+ *     -- Epic 1B: Professional fields
+ *     job_title,
+ *     organization,
+ *     department,
+ *     work_notes,
+ *     interests
  * )
  * SELECT
  *     u.id,
@@ -296,7 +373,12 @@ const createContactIR: any = {"usedParamSet":{"displayName":true,"namePrefix":tr
  *     :nameFirst,
  *     :nameMiddle,
  *     :nameLast,
- *     :nameSuffix
+ *     :nameSuffix,
+ *     :jobTitle,
+ *     :organization,
+ *     :department,
+ *     :workNotes,
+ *     :interests
  * FROM auth.users u
  * WHERE u.external_id = :userExternalId
  * RETURNING
@@ -309,6 +391,11 @@ const createContactIR: any = {"usedParamSet":{"displayName":true,"namePrefix":tr
  *     name_suffix,
  *     photo_url,
  *     photo_thumbnail_url,
+ *     job_title,
+ *     organization,
+ *     department,
+ *     work_notes,
+ *     interests,
  *     created_at,
  *     updated_at
  * ```
@@ -319,27 +406,43 @@ export const createContact = new PreparedQuery<ICreateContactParams,ICreateConta
 /** 'UpdateContact' parameters type */
 export interface IUpdateContactParams {
   contactExternalId?: string | null | void;
+  department?: string | null | void;
   displayName?: string | null | void;
+  interests?: string | null | void;
+  jobTitle?: string | null | void;
   nameFirst?: string | null | void;
   nameLast?: string | null | void;
   nameMiddle?: string | null | void;
   namePrefix?: string | null | void;
   nameSuffix?: string | null | void;
+  organization?: string | null | void;
+  updateDepartment?: boolean | null | void;
+  updateInterests?: boolean | null | void;
+  updateJobTitle?: boolean | null | void;
   updateNameFirst?: boolean | null | void;
   updateNameLast?: boolean | null | void;
   updateNameMiddle?: boolean | null | void;
   updateNamePrefix?: boolean | null | void;
   updateNameSuffix?: boolean | null | void;
+  updateOrganization?: boolean | null | void;
+  updateWorkNotes?: boolean | null | void;
   userExternalId?: string | null | void;
+  workNotes?: string | null | void;
 }
 
 /** 'UpdateContact' return type */
 export interface IUpdateContactResult {
   created_at: Date;
+  /** Department within organization */
+  department: string | null;
   /** Primary name shown in lists */
   display_name: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
+  /** Interests and hobbies (free-form text) */
+  interests: string | null;
+  /** Job title / position */
+  job_title: string | null;
   /** First/given name */
   name_first: string | null;
   /** Last/family name */
@@ -350,11 +453,15 @@ export interface IUpdateContactResult {
   name_prefix: string | null;
   /** Jr., Sr., III, PhD, etc. */
   name_suffix: string | null;
+  /** Company / organization name */
+  organization: string | null;
   /** URL to 200x200 thumbnail */
   photo_thumbnail_url: string | null;
   /** URL to original profile picture */
   photo_url: string | null;
   updated_at: Date;
+  /** Notes about professional context */
+  work_notes: string | null;
 }
 
 /** 'UpdateContact' query type */
@@ -363,7 +470,7 @@ export interface IUpdateContactQuery {
   result: IUpdateContactResult;
 }
 
-const updateContactIR: any = {"usedParamSet":{"displayName":true,"updateNamePrefix":true,"namePrefix":true,"updateNameFirst":true,"nameFirst":true,"updateNameMiddle":true,"nameMiddle":true,"updateNameLast":true,"nameLast":true,"updateNameSuffix":true,"nameSuffix":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"displayName","required":false,"transform":{"type":"scalar"},"locs":[{"a":59,"b":70}]},{"name":"updateNamePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":118,"b":134}]},{"name":"namePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":141,"b":151}]},{"name":"updateNameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":204,"b":219}]},{"name":"nameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":226,"b":235}]},{"name":"updateNameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":288,"b":304}]},{"name":"nameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":311,"b":321}]},{"name":"updateNameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":373,"b":387}]},{"name":"nameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":394,"b":402}]},{"name":"updateNameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":454,"b":470}]},{"name":"nameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":477,"b":487}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":552,"b":569}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":616,"b":630}]}],"statement":"UPDATE contacts.contacts c\nSET\n    display_name = COALESCE(:displayName, c.display_name),\n    name_prefix = CASE WHEN :updateNamePrefix THEN :namePrefix ELSE c.name_prefix END,\n    name_first = CASE WHEN :updateNameFirst THEN :nameFirst ELSE c.name_first END,\n    name_middle = CASE WHEN :updateNameMiddle THEN :nameMiddle ELSE c.name_middle END,\n    name_last = CASE WHEN :updateNameLast THEN :nameLast ELSE c.name_last END,\n    name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END\nFROM auth.users u\nWHERE c.external_id = :contactExternalId\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    c.external_id,\n    c.display_name,\n    c.name_prefix,\n    c.name_first,\n    c.name_middle,\n    c.name_last,\n    c.name_suffix,\n    c.photo_url,\n    c.photo_thumbnail_url,\n    c.created_at,\n    c.updated_at"};
+const updateContactIR: any = {"usedParamSet":{"displayName":true,"updateNamePrefix":true,"namePrefix":true,"updateNameFirst":true,"nameFirst":true,"updateNameMiddle":true,"nameMiddle":true,"updateNameLast":true,"nameLast":true,"updateNameSuffix":true,"nameSuffix":true,"updateJobTitle":true,"jobTitle":true,"updateOrganization":true,"organization":true,"updateDepartment":true,"department":true,"updateWorkNotes":true,"workNotes":true,"updateInterests":true,"interests":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"displayName","required":false,"transform":{"type":"scalar"},"locs":[{"a":59,"b":70}]},{"name":"updateNamePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":118,"b":134}]},{"name":"namePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":141,"b":151}]},{"name":"updateNameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":204,"b":219}]},{"name":"nameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":226,"b":235}]},{"name":"updateNameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":288,"b":304}]},{"name":"nameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":311,"b":321}]},{"name":"updateNameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":373,"b":387}]},{"name":"nameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":394,"b":402}]},{"name":"updateNameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":454,"b":470}]},{"name":"nameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":477,"b":487}]},{"name":"updateJobTitle","required":false,"transform":{"type":"scalar"},"locs":[{"a":575,"b":589}]},{"name":"jobTitle","required":false,"transform":{"type":"scalar"},"locs":[{"a":596,"b":604}]},{"name":"updateOrganization","required":false,"transform":{"type":"scalar"},"locs":[{"a":657,"b":675}]},{"name":"organization","required":false,"transform":{"type":"scalar"},"locs":[{"a":682,"b":694}]},{"name":"updateDepartment","required":false,"transform":{"type":"scalar"},"locs":[{"a":748,"b":764}]},{"name":"department","required":false,"transform":{"type":"scalar"},"locs":[{"a":771,"b":781}]},{"name":"updateWorkNotes","required":false,"transform":{"type":"scalar"},"locs":[{"a":833,"b":848}]},{"name":"workNotes","required":false,"transform":{"type":"scalar"},"locs":[{"a":855,"b":864}]},{"name":"updateInterests","required":false,"transform":{"type":"scalar"},"locs":[{"a":915,"b":930}]},{"name":"interests","required":false,"transform":{"type":"scalar"},"locs":[{"a":937,"b":946}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":1009,"b":1026}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":1073,"b":1087}]}],"statement":"UPDATE contacts.contacts c\nSET\n    display_name = COALESCE(:displayName, c.display_name),\n    name_prefix = CASE WHEN :updateNamePrefix THEN :namePrefix ELSE c.name_prefix END,\n    name_first = CASE WHEN :updateNameFirst THEN :nameFirst ELSE c.name_first END,\n    name_middle = CASE WHEN :updateNameMiddle THEN :nameMiddle ELSE c.name_middle END,\n    name_last = CASE WHEN :updateNameLast THEN :nameLast ELSE c.name_last END,\n    name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END,\n    -- Epic 1B: Professional fields\n    job_title = CASE WHEN :updateJobTitle THEN :jobTitle ELSE c.job_title END,\n    organization = CASE WHEN :updateOrganization THEN :organization ELSE c.organization END,\n    department = CASE WHEN :updateDepartment THEN :department ELSE c.department END,\n    work_notes = CASE WHEN :updateWorkNotes THEN :workNotes ELSE c.work_notes END,\n    interests = CASE WHEN :updateInterests THEN :interests ELSE c.interests END\nFROM auth.users u\nWHERE c.external_id = :contactExternalId\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    c.external_id,\n    c.display_name,\n    c.name_prefix,\n    c.name_first,\n    c.name_middle,\n    c.name_last,\n    c.name_suffix,\n    c.photo_url,\n    c.photo_thumbnail_url,\n    c.job_title,\n    c.organization,\n    c.department,\n    c.work_notes,\n    c.interests,\n    c.created_at,\n    c.updated_at"};
 
 /**
  * Query generated from SQL:
@@ -375,7 +482,13 @@ const updateContactIR: any = {"usedParamSet":{"displayName":true,"updateNamePref
  *     name_first = CASE WHEN :updateNameFirst THEN :nameFirst ELSE c.name_first END,
  *     name_middle = CASE WHEN :updateNameMiddle THEN :nameMiddle ELSE c.name_middle END,
  *     name_last = CASE WHEN :updateNameLast THEN :nameLast ELSE c.name_last END,
- *     name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END
+ *     name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END,
+ *     -- Epic 1B: Professional fields
+ *     job_title = CASE WHEN :updateJobTitle THEN :jobTitle ELSE c.job_title END,
+ *     organization = CASE WHEN :updateOrganization THEN :organization ELSE c.organization END,
+ *     department = CASE WHEN :updateDepartment THEN :department ELSE c.department END,
+ *     work_notes = CASE WHEN :updateWorkNotes THEN :workNotes ELSE c.work_notes END,
+ *     interests = CASE WHEN :updateInterests THEN :interests ELSE c.interests END
  * FROM auth.users u
  * WHERE c.external_id = :contactExternalId
  *   AND c.user_id = u.id
@@ -391,6 +504,11 @@ const updateContactIR: any = {"usedParamSet":{"displayName":true,"updateNamePref
  *     c.name_suffix,
  *     c.photo_url,
  *     c.photo_thumbnail_url,
+ *     c.job_title,
+ *     c.organization,
+ *     c.department,
+ *     c.work_notes,
+ *     c.interests,
  *     c.created_at,
  *     c.updated_at
  * ```
