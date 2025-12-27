@@ -97,11 +97,18 @@ let department = $state(contact?.department ?? '');
 let workNotes = $state(contact?.workNotes ?? '');
 let interests = $state(contact?.interests ?? '');
 
-// Epic 1B: Important dates
+// Epic 1B: Important dates (id is set for existing dates, undefined for new ones)
 let dates = $state<
-  Array<{ date_value: string; year_known: boolean; date_type: DateType; label: string }>
+  Array<{
+    id?: string;
+    date_value: string;
+    year_known: boolean;
+    date_type: DateType;
+    label: string;
+  }>
 >(
   contact?.dates?.map((d) => ({
+    id: d.id,
     date_value: d.dateValue,
     year_known: d.yearKnown,
     date_type: d.dateType,
@@ -114,11 +121,12 @@ let metDate = $state(contact?.metInfo?.metDate ?? '');
 let metLocation = $state(contact?.metInfo?.metLocation ?? '');
 let metContext = $state(contact?.metInfo?.metContext ?? '');
 
-// Epic 1B: Social profiles
+// Epic 1B: Social profiles (id is set for existing profiles, undefined for new ones)
 let socialProfiles = $state<
-  Array<{ platform: SocialPlatform; profile_url: string; username: string }>
+  Array<{ id?: string; platform: SocialPlatform; profile_url: string; username: string }>
 >(
   contact?.socialProfiles?.map((sp) => ({
+    id: sp.id,
     platform: sp.platform,
     profile_url: sp.profileUrl ?? '',
     username: sp.username ?? '',
@@ -317,11 +325,24 @@ async function handleSubmit(e: Event) {
         }
       }
 
-      // Epic 1B: Handle dates - add new ones
-      const existingDates = new Set(contact.dates?.map((d) => d.dateValue) ?? []);
+      // Epic 1B: Handle dates - update existing, add new
       for (const date of validDates) {
-        if (!existingDates.has(date.date_value)) {
-          await contacts.addDate(contact.id, date);
+        if (date.id) {
+          // Update existing date
+          await contacts.updateDate(contact.id, date.id, {
+            date_value: date.date_value,
+            year_known: date.year_known,
+            date_type: date.date_type,
+            label: date.label,
+          });
+        } else {
+          // Add new date
+          await contacts.addDate(contact.id, {
+            date_value: date.date_value,
+            year_known: date.year_known,
+            date_type: date.date_type,
+            label: date.label,
+          });
         }
       }
 
@@ -330,14 +351,22 @@ async function handleSubmit(e: Event) {
         await contacts.setMetInfo(contact.id, metInfo);
       }
 
-      // Epic 1B: Handle social profiles - add new ones
-      const existingProfiles = new Set(
-        contact.socialProfiles?.map((sp) => `${sp.platform}:${sp.profileUrl || sp.username}`) ?? [],
-      );
+      // Epic 1B: Handle social profiles - update existing, add new
       for (const profile of validSocialProfiles) {
-        const key = `${profile.platform}:${profile.profile_url || profile.username}`;
-        if (!existingProfiles.has(key)) {
-          await contacts.addSocialProfile(contact.id, profile);
+        if (profile.id) {
+          // Update existing profile
+          await contacts.updateSocialProfile(contact.id, profile.id, {
+            platform: profile.platform,
+            profile_url: profile.profile_url || undefined,
+            username: profile.username || undefined,
+          });
+        } else {
+          // Add new profile
+          await contacts.addSocialProfile(contact.id, {
+            platform: profile.platform,
+            profile_url: profile.profile_url || undefined,
+            username: profile.username || undefined,
+          });
         }
       }
 
