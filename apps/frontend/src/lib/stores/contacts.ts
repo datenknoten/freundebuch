@@ -618,9 +618,7 @@ function createContactsStore() {
           currentContact: state.currentContact
             ? {
                 ...state.currentContact,
-                dates: (state.currentContact.dates ?? []).map((d) =>
-                  d.id === dateId ? date : d,
-                ),
+                dates: (state.currentContact.dates ?? []).map((d) => (d.id === dateId ? date : d)),
               }
             : null,
           isLoading: false,
@@ -689,9 +687,7 @@ function createContactsStore() {
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
-            ? { ...state.currentContact, metInfo }
-            : null,
+          currentContact: state.currentContact ? { ...state.currentContact, metInfo } : null,
           isLoading: false,
           error: null,
         }));
