@@ -4,16 +4,24 @@ import type {
   AddressType,
   Contact,
   ContactCreateInput,
+  ContactDate,
   ContactListItem,
   ContactListOptions,
   ContactUpdateInput,
+  DateInput,
+  DateType,
   Email,
   EmailInput,
   EmailType,
+  MetInfo,
+  MetInfoInput,
   PaginatedContactList,
   Phone,
   PhoneInput,
   PhoneType,
+  SocialPlatform,
+  SocialProfile,
+  SocialProfileInput,
   Url,
   UrlInput,
   UrlType,
@@ -28,6 +36,13 @@ import {
   updateAddress,
 } from '../models/queries/contact-addresses.queries.js';
 import {
+  countBirthdaysForContact,
+  createDate,
+  deleteDate,
+  type IGetDatesByContactIdResult,
+  updateDate,
+} from '../models/queries/contact-dates.queries.js';
+import {
   clearPrimaryEmail,
   createEmail,
   deleteEmail,
@@ -35,12 +50,23 @@ import {
   updateEmail,
 } from '../models/queries/contact-emails.queries.js';
 import {
+  deleteMetInfo,
+  type IGetMetInfoByContactIdResult,
+  upsertMetInfo,
+} from '../models/queries/contact-met-info.queries.js';
+import {
   clearPrimaryPhone,
   createPhone,
   deletePhone,
   type IGetPhonesByContactIdResult,
   updatePhone,
 } from '../models/queries/contact-phones.queries.js';
+import {
+  createSocialProfile,
+  deleteSocialProfile,
+  type IGetSocialProfilesByContactIdResult,
+  updateSocialProfile,
+} from '../models/queries/contact-social-profiles.queries.js';
 import {
   createUrl,
   deleteUrl,
@@ -119,7 +145,7 @@ export class ContactsService {
   }
 
   /**
-   * Create a new contact with optional phones, emails, addresses, and URLs
+   * Create a new contact with optional phones, emails, addresses, URLs, dates, met info, and social profiles
    */
   async createContact(userExternalId: string, data: ContactCreateInput): Promise<Contact> {
     this.logger.info({ userExternalId, displayName: data.display_name }, 'Creating contact');
@@ -133,6 +159,12 @@ export class ContactsService {
         nameMiddle: data.name_middle ?? null,
         nameLast: data.name_last ?? null,
         nameSuffix: data.name_suffix ?? null,
+        // Epic 1B: Professional fields
+        jobTitle: data.job_title ?? null,
+        organization: data.organization ?? null,
+        department: data.department ?? null,
+        workNotes: data.work_notes ?? null,
+        interests: data.interests ?? null,
       },
       this.db,
     );
@@ -144,13 +176,22 @@ export class ContactsService {
 
     const contactExternalId = contact.external_id;
 
-    // Create sub-resources in parallel
-    const [phones, emails, addresses, urls] = await Promise.all([
+    // Create sub-resources in parallel (Epic 1A + 1B)
+    const [phones, emails, addresses, urls, dates, socialProfiles] = await Promise.all([
       this.createPhones(userExternalId, contactExternalId, data.phones ?? []),
       this.createEmails(userExternalId, contactExternalId, data.emails ?? []),
       this.createAddresses(userExternalId, contactExternalId, data.addresses ?? []),
       this.createUrls(userExternalId, contactExternalId, data.urls ?? []),
+      this.createDates(userExternalId, contactExternalId, data.dates ?? []),
+      this.createSocialProfiles(userExternalId, contactExternalId, data.social_profiles ?? []),
     ]);
+
+    // Create met info if provided (single record)
+    let metInfo: MetInfo | undefined;
+    if (data.met_info) {
+      metInfo =
+        (await this.setMetInfo(userExternalId, contactExternalId, data.met_info)) ?? undefined;
+    }
 
     this.logger.info(
       { contactExternalId, displayName: data.display_name },
@@ -167,10 +208,19 @@ export class ContactsService {
       nameSuffix: contact.name_suffix ?? undefined,
       photoUrl: contact.photo_url ?? undefined,
       photoThumbnailUrl: contact.photo_thumbnail_url ?? undefined,
+      // Epic 1B: Professional fields
+      jobTitle: contact.job_title ?? undefined,
+      organization: contact.organization ?? undefined,
+      department: contact.department ?? undefined,
+      workNotes: contact.work_notes ?? undefined,
+      interests: contact.interests ?? undefined,
       phones,
       emails,
       addresses,
       urls,
+      dates,
+      metInfo,
+      socialProfiles,
       createdAt: contact.created_at.toISOString(),
       updatedAt: contact.updated_at.toISOString(),
     };
@@ -201,6 +251,17 @@ export class ContactsService {
         nameLast: data.name_last ?? null,
         updateNameSuffix: 'name_suffix' in data,
         nameSuffix: data.name_suffix ?? null,
+        // Epic 1B: Professional fields
+        updateJobTitle: 'job_title' in data,
+        jobTitle: data.job_title ?? null,
+        updateOrganization: 'organization' in data,
+        organization: data.organization ?? null,
+        updateDepartment: 'department' in data,
+        department: data.department ?? null,
+        updateWorkNotes: 'work_notes' in data,
+        workNotes: data.work_notes ?? null,
+        updateInterests: 'interests' in data,
+        interests: data.interests ?? null,
       },
       this.db,
     );
@@ -587,6 +648,198 @@ export class ContactsService {
   }
 
   // ============================================================================
+  // Date Methods (Epic 1B)
+  // ============================================================================
+
+  async addDate(
+    userExternalId: string,
+    contactExternalId: string,
+    data: DateInput,
+  ): Promise<ContactDate | null> {
+    this.logger.debug({ contactExternalId }, 'Adding date');
+
+    // Check birthday limit (only one birthday allowed per contact)
+    if (data.date_type === 'birthday') {
+      const [countResult] = await countBirthdaysForContact.run(
+        { userExternalId, contactExternalId },
+        this.db,
+      );
+      if (countResult && (countResult.count ?? 0) > 0) {
+        throw new Error('Contact already has a birthday date');
+      }
+    }
+
+    const [date] = await createDate.run(
+      {
+        userExternalId,
+        contactExternalId,
+        dateValue: data.date_value,
+        yearKnown: data.year_known ?? true,
+        dateType: data.date_type,
+        label: data.label ?? null,
+      },
+      this.db,
+    );
+
+    if (!date) {
+      return null;
+    }
+
+    return this.mapDate(date);
+  }
+
+  async updateDate(
+    userExternalId: string,
+    contactExternalId: string,
+    dateExternalId: string,
+    data: DateInput,
+  ): Promise<ContactDate | null> {
+    this.logger.debug({ contactExternalId, dateExternalId }, 'Updating date');
+
+    const [date] = await updateDate.run(
+      {
+        userExternalId,
+        contactExternalId,
+        dateExternalId,
+        dateValue: data.date_value,
+        yearKnown: data.year_known ?? true,
+        dateType: data.date_type,
+        label: data.label ?? null,
+      },
+      this.db,
+    );
+
+    if (!date) {
+      return null;
+    }
+
+    return this.mapDate(date);
+  }
+
+  async deleteDate(
+    userExternalId: string,
+    contactExternalId: string,
+    dateExternalId: string,
+  ): Promise<boolean> {
+    this.logger.debug({ contactExternalId, dateExternalId }, 'Deleting date');
+
+    const result = await deleteDate.run(
+      { userExternalId, contactExternalId, dateExternalId },
+      this.db,
+    );
+
+    return result.length > 0;
+  }
+
+  // ============================================================================
+  // Met Info Methods (Epic 1B)
+  // ============================================================================
+
+  async setMetInfo(
+    userExternalId: string,
+    contactExternalId: string,
+    data: MetInfoInput,
+  ): Promise<MetInfo | null> {
+    this.logger.debug({ contactExternalId }, 'Setting met info');
+
+    const [metInfo] = await upsertMetInfo.run(
+      {
+        userExternalId,
+        contactExternalId,
+        metDate: data.met_date ?? null,
+        metLocation: data.met_location ?? null,
+        metContext: data.met_context ?? null,
+      },
+      this.db,
+    );
+
+    if (!metInfo) {
+      return null;
+    }
+
+    return this.mapMetInfo(metInfo);
+  }
+
+  async deleteMetInfo(userExternalId: string, contactExternalId: string): Promise<boolean> {
+    this.logger.debug({ contactExternalId }, 'Deleting met info');
+
+    const result = await deleteMetInfo.run({ userExternalId, contactExternalId }, this.db);
+
+    return result.length > 0;
+  }
+
+  // ============================================================================
+  // Social Profile Methods (Epic 1B)
+  // ============================================================================
+
+  async addSocialProfile(
+    userExternalId: string,
+    contactExternalId: string,
+    data: SocialProfileInput,
+  ): Promise<SocialProfile | null> {
+    this.logger.debug({ contactExternalId }, 'Adding social profile');
+
+    const [profile] = await createSocialProfile.run(
+      {
+        userExternalId,
+        contactExternalId,
+        platform: data.platform,
+        profileUrl: data.profile_url ?? null,
+        username: data.username ?? null,
+      },
+      this.db,
+    );
+
+    if (!profile) {
+      return null;
+    }
+
+    return this.mapSocialProfile(profile);
+  }
+
+  async updateSocialProfile(
+    userExternalId: string,
+    contactExternalId: string,
+    profileExternalId: string,
+    data: SocialProfileInput,
+  ): Promise<SocialProfile | null> {
+    this.logger.debug({ contactExternalId, profileExternalId }, 'Updating social profile');
+
+    const [profile] = await updateSocialProfile.run(
+      {
+        userExternalId,
+        contactExternalId,
+        profileExternalId,
+        platform: data.platform,
+        profileUrl: data.profile_url ?? null,
+        username: data.username ?? null,
+      },
+      this.db,
+    );
+
+    if (!profile) {
+      return null;
+    }
+
+    return this.mapSocialProfile(profile);
+  }
+
+  async deleteSocialProfile(
+    userExternalId: string,
+    contactExternalId: string,
+    profileExternalId: string,
+  ): Promise<boolean> {
+    this.logger.debug({ contactExternalId, profileExternalId }, 'Deleting social profile');
+
+    const result = await deleteSocialProfile.run(
+      { userExternalId, contactExternalId, profileExternalId },
+      this.db,
+    );
+
+    return result.length > 0;
+  }
+
+  // ============================================================================
   // Private Helper Methods
   // ============================================================================
 
@@ -658,6 +911,40 @@ export class ContactsService {
     return results;
   }
 
+  private async createDates(
+    userExternalId: string,
+    contactExternalId: string,
+    dates: DateInput[],
+  ): Promise<ContactDate[]> {
+    const results: ContactDate[] = [];
+
+    for (const date of dates) {
+      const created = await this.addDate(userExternalId, contactExternalId, date);
+      if (created) {
+        results.push(created);
+      }
+    }
+
+    return results;
+  }
+
+  private async createSocialProfiles(
+    userExternalId: string,
+    contactExternalId: string,
+    profiles: SocialProfileInput[],
+  ): Promise<SocialProfile[]> {
+    const results: SocialProfile[] = [];
+
+    for (const profile of profiles) {
+      const created = await this.addSocialProfile(userExternalId, contactExternalId, profile);
+      if (created) {
+        results.push(created);
+      }
+    }
+
+    return results;
+  }
+
   private mapContactListItem(row: IGetContactsByUserIdResult): ContactListItem {
     return {
       id: row.external_id,
@@ -718,6 +1005,46 @@ export class ContactsService {
     };
   }
 
+  private mapDate(row: IGetDatesByContactIdResult): ContactDate {
+    // date_value comes as a Date object from PostgreSQL
+    const dateValue =
+      row.date_value instanceof Date ? row.date_value.toISOString().split('T')[0] : row.date_value;
+    return {
+      id: row.external_id,
+      dateValue,
+      yearKnown: row.year_known,
+      dateType: row.date_type as DateType,
+      label: row.label ?? undefined,
+      createdAt: row.created_at.toISOString(),
+    };
+  }
+
+  private mapMetInfo(row: IGetMetInfoByContactIdResult): MetInfo {
+    // met_date comes as a Date object from PostgreSQL
+    const metDate =
+      row.met_date instanceof Date
+        ? row.met_date.toISOString().split('T')[0]
+        : (row.met_date ?? undefined);
+    return {
+      id: row.external_id,
+      metDate,
+      metLocation: row.met_location ?? undefined,
+      metContext: row.met_context ?? undefined,
+      createdAt: row.created_at.toISOString(),
+      updatedAt: row.updated_at.toISOString(),
+    };
+  }
+
+  private mapSocialProfile(row: IGetSocialProfilesByContactIdResult): SocialProfile {
+    return {
+      id: row.external_id,
+      platform: row.platform as SocialPlatform,
+      profileUrl: row.profile_url ?? undefined,
+      username: row.username ?? undefined,
+      createdAt: row.created_at.toISOString(),
+    };
+  }
+
   /**
    * Maps a contact row with embedded JSON arrays for related data
    * Used by the optimized getContactById query
@@ -764,6 +1091,33 @@ export class ContactsService {
       created_at: string;
     }>;
 
+    // Epic 1B: Parse new sub-resources
+    const dates = (contact.dates || []) as Array<{
+      external_id: string;
+      date_value: string;
+      year_known: boolean;
+      date_type: string;
+      label: string | null;
+      created_at: string;
+    }>;
+
+    const metInfoRaw = contact.met_info as {
+      external_id: string;
+      met_date: string | null;
+      met_location: string | null;
+      met_context: string | null;
+      created_at: string;
+      updated_at: string;
+    } | null;
+
+    const socialProfiles = (contact.social_profiles || []) as Array<{
+      external_id: string;
+      platform: string;
+      profile_url: string | null;
+      username: string | null;
+      created_at: string;
+    }>;
+
     return {
       id: contact.external_id,
       displayName: contact.display_name,
@@ -774,6 +1128,12 @@ export class ContactsService {
       nameSuffix: contact.name_suffix ?? undefined,
       photoUrl: contact.photo_url ?? undefined,
       photoThumbnailUrl: contact.photo_thumbnail_url ?? undefined,
+      // Epic 1B: Professional fields
+      jobTitle: contact.job_title ?? undefined,
+      organization: contact.organization ?? undefined,
+      department: contact.department ?? undefined,
+      workNotes: contact.work_notes ?? undefined,
+      interests: contact.interests ?? undefined,
       phones: phones.map((p) => ({
         id: p.external_id,
         phoneNumber: p.phone_number,
@@ -809,6 +1169,32 @@ export class ContactsService {
         urlType: u.url_type as Url['urlType'],
         label: u.label ?? undefined,
         createdAt: u.created_at,
+      })),
+      // Epic 1B: New sub-resources
+      dates: dates.map((d) => ({
+        id: d.external_id,
+        dateValue: d.date_value,
+        yearKnown: d.year_known,
+        dateType: d.date_type as DateType,
+        label: d.label ?? undefined,
+        createdAt: d.created_at,
+      })),
+      metInfo: metInfoRaw
+        ? {
+            id: metInfoRaw.external_id,
+            metDate: metInfoRaw.met_date ?? undefined,
+            metLocation: metInfoRaw.met_location ?? undefined,
+            metContext: metInfoRaw.met_context ?? undefined,
+            createdAt: metInfoRaw.created_at,
+            updatedAt: metInfoRaw.updated_at,
+          }
+        : undefined,
+      socialProfiles: socialProfiles.map((sp) => ({
+        id: sp.external_id,
+        platform: sp.platform as SocialPlatform,
+        profileUrl: sp.profile_url ?? undefined,
+        username: sp.username ?? undefined,
+        createdAt: sp.created_at,
       })),
       createdAt: contact.created_at.toISOString(),
       updatedAt: contact.updated_at.toISOString(),
