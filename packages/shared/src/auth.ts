@@ -4,10 +4,6 @@ import { type } from 'arktype';
  * Request/Response types for authentication endpoints
  */
 
-// Email regex pattern - RFC 5322 simplified
-// Allows alphanumeric, dots, hyphens, underscores, plus signs, but not < > or other special HTML chars
-const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
 export const PasswordSchema = type('string >= 8').narrow((password): password is string => {
   const hasLowercase = /[a-z]/.test(password);
   const hasUppercase = /[A-Z]/.test(password);
@@ -15,13 +11,8 @@ export const PasswordSchema = type('string >= 8').narrow((password): password is
   return hasLowercase && hasUppercase && hasDigit;
 });
 
-// Email type with validation
-const emailType = type('string>0').narrow((s): s is string => {
-  if (!emailPattern.test(s)) {
-    return false;
-  }
-  return true;
-});
+// Email type with validation using ArkType's built-in string.email
+const emailType = type('string.email');
 
 // Register request schema
 export const RegisterRequestSchema = type({
