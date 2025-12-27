@@ -4,12 +4,18 @@ import type {
   AddressInput,
   Contact,
   ContactCreateInput,
+  ContactDate,
   ContactUpdateInput,
+  DateInput,
   Email,
   EmailInput,
+  MetInfo,
+  MetInfoInput,
   PaginatedContactList,
   Phone,
   PhoneInput,
+  SocialProfile,
+  SocialProfileInput,
   Url,
   UrlInput,
 } from '$shared';
@@ -327,6 +333,109 @@ export async function uploadPhoto(contactId: string, file: File): Promise<PhotoU
  */
 export async function deletePhoto(contactId: string): Promise<{ message: string }> {
   return apiRequest(`/api/contacts/${contactId}/photo`, {
+    method: 'DELETE',
+  });
+}
+
+// ============================================================================
+// Date Operations (Epic 1B)
+// ============================================================================
+
+/**
+ * Add an important date to a contact
+ */
+export async function addDate(contactId: string, data: DateInput): Promise<ContactDate> {
+  return apiRequest<ContactDate>(`/api/contacts/${contactId}/dates`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update an important date
+ */
+export async function updateDate(
+  contactId: string,
+  dateId: string,
+  data: DateInput,
+): Promise<ContactDate> {
+  return apiRequest<ContactDate>(`/api/contacts/${contactId}/dates/${dateId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete an important date
+ */
+export async function deleteDate(contactId: string, dateId: string): Promise<{ message: string }> {
+  return apiRequest(`/api/contacts/${contactId}/dates/${dateId}`, {
+    method: 'DELETE',
+  });
+}
+
+// ============================================================================
+// Met Info Operations (Epic 1B)
+// ============================================================================
+
+/**
+ * Set or update how/where met information (upsert)
+ */
+export async function setMetInfo(contactId: string, data: MetInfoInput): Promise<MetInfo> {
+  return apiRequest<MetInfo>(`/api/contacts/${contactId}/met-info`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete how/where met information
+ */
+export async function deleteMetInfo(contactId: string): Promise<{ message: string }> {
+  return apiRequest(`/api/contacts/${contactId}/met-info`, {
+    method: 'DELETE',
+  });
+}
+
+// ============================================================================
+// Social Profile Operations (Epic 1B)
+// ============================================================================
+
+/**
+ * Add a social profile to a contact
+ */
+export async function addSocialProfile(
+  contactId: string,
+  data: SocialProfileInput,
+): Promise<SocialProfile> {
+  return apiRequest<SocialProfile>(`/api/contacts/${contactId}/social-profiles`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update a social profile
+ */
+export async function updateSocialProfile(
+  contactId: string,
+  profileId: string,
+  data: SocialProfileInput,
+): Promise<SocialProfile> {
+  return apiRequest<SocialProfile>(`/api/contacts/${contactId}/social-profiles/${profileId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete a social profile
+ */
+export async function deleteSocialProfile(
+  contactId: string,
+  profileId: string,
+): Promise<{ message: string }> {
+  return apiRequest(`/api/contacts/${contactId}/social-profiles/${profileId}`, {
     method: 'DELETE',
   });
 }
