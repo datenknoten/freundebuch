@@ -255,7 +255,9 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 
 export async function down(pgm: MigrationBuilder): Promise<void> {
   // Drop trigger first
-  pgm.sql('DROP TRIGGER IF EXISTS update_contact_met_info_updated_at ON contacts.contact_met_info;');
+  pgm.sql(
+    'DROP TRIGGER IF EXISTS update_contact_met_info_updated_at ON contacts.contact_met_info;',
+  );
 
   // Drop tables in reverse order
   pgm.dropTable({ schema: 'contacts', name: 'contact_social_profiles' }, { cascade: true });

@@ -3,11 +3,14 @@ import {
   ContactCreateSchema,
   ContactListQuerySchema,
   ContactUpdateSchema,
+  DateInputSchema,
   EmailInputSchema,
   type ErrorResponse,
+  MetInfoInputSchema,
   PhoneInputSchema,
   PhotoValidationErrors,
   parseContactListQuery,
+  SocialProfileInputSchema,
   UrlInputSchema,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
@@ -772,6 +775,327 @@ app.delete('/:id/photo', async (c) => {
   } catch (error) {
     logger.error({ error, contactId }, 'Failed to delete photo');
     return c.json<ErrorResponse>({ error: 'Failed to delete photo' }, 500);
+  }
+});
+
+// ============================================================================
+// Date Routes (Epic 1B)
+// ============================================================================
+
+/**
+ * POST /api/contacts/:id/dates
+ * Add an important date to a contact
+ */
+app.post('/:id/dates', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
+
+  try {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
+    }
+
+    const validated = DateInputSchema(body);
+
+    if (validated instanceof type.errors) {
+      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
+    }
+
+    const contactsService = new ContactsService(db, logger);
+    const date = await contactsService.addDate(user.userId, contactId, validated);
+
+    if (!date) {
+      return c.json<ErrorResponse>({ error: 'Contact not found' }, 404);
+    }
+
+    return c.json(date, 201);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Contact already has a birthday date') {
+      return c.json<ErrorResponse>({ error: error.message }, 400);
+    }
+    logger.error({ error, contactId }, 'Failed to add date');
+    return c.json<ErrorResponse>({ error: 'Failed to add date' }, 500);
+  }
+});
+
+/**
+ * PUT /api/contacts/:id/dates/:dateId
+ * Update an important date
+ */
+app.put('/:id/dates/:dateId', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+  const dateId = c.req.param('dateId');
+
+  if (!isValidUuid(contactId) || !isValidUuid(dateId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
+  try {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
+    }
+
+    const validated = DateInputSchema(body);
+
+    if (validated instanceof type.errors) {
+      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
+    }
+
+    const contactsService = new ContactsService(db, logger);
+    const date = await contactsService.updateDate(user.userId, contactId, dateId, validated);
+
+    if (!date) {
+      return c.json<ErrorResponse>({ error: 'Date not found' }, 404);
+    }
+
+    return c.json(date);
+  } catch (error) {
+    logger.error({ error, contactId, dateId }, 'Failed to update date');
+    return c.json<ErrorResponse>({ error: 'Failed to update date' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/contacts/:id/dates/:dateId
+ * Delete an important date
+ */
+app.delete('/:id/dates/:dateId', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+  const dateId = c.req.param('dateId');
+
+  if (!isValidUuid(contactId) || !isValidUuid(dateId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    const deleted = await contactsService.deleteDate(user.userId, contactId, dateId);
+
+    if (!deleted) {
+      return c.json<ErrorResponse>({ error: 'Date not found' }, 404);
+    }
+
+    return c.json({ message: 'Date deleted successfully' });
+  } catch (error) {
+    logger.error({ error, contactId, dateId }, 'Failed to delete date');
+    return c.json<ErrorResponse>({ error: 'Failed to delete date' }, 500);
+  }
+});
+
+// ============================================================================
+// Met Info Routes (Epic 1B)
+// ============================================================================
+
+/**
+ * PUT /api/contacts/:id/met-info
+ * Set or update how/where met information (upsert)
+ */
+app.put('/:id/met-info', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
+
+  try {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
+    }
+
+    const validated = MetInfoInputSchema(body);
+
+    if (validated instanceof type.errors) {
+      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
+    }
+
+    const contactsService = new ContactsService(db, logger);
+    const metInfo = await contactsService.setMetInfo(user.userId, contactId, validated);
+
+    if (!metInfo) {
+      return c.json<ErrorResponse>({ error: 'Contact not found' }, 404);
+    }
+
+    return c.json(metInfo);
+  } catch (error) {
+    logger.error({ error, contactId }, 'Failed to set met info');
+    return c.json<ErrorResponse>({ error: 'Failed to set met info' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/contacts/:id/met-info
+ * Delete how/where met information
+ */
+app.delete('/:id/met-info', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    const deleted = await contactsService.deleteMetInfo(user.userId, contactId);
+
+    if (!deleted) {
+      return c.json<ErrorResponse>({ error: 'Met info not found' }, 404);
+    }
+
+    return c.json({ message: 'Met info deleted successfully' });
+  } catch (error) {
+    logger.error({ error, contactId }, 'Failed to delete met info');
+    return c.json<ErrorResponse>({ error: 'Failed to delete met info' }, 500);
+  }
+});
+
+// ============================================================================
+// Social Profile Routes (Epic 1B)
+// ============================================================================
+
+/**
+ * POST /api/contacts/:id/social-profiles
+ * Add a social profile to a contact
+ */
+app.post('/:id/social-profiles', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
+
+  try {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
+    }
+
+    const validated = SocialProfileInputSchema(body);
+
+    if (validated instanceof type.errors) {
+      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
+    }
+
+    const contactsService = new ContactsService(db, logger);
+    const profile = await contactsService.addSocialProfile(user.userId, contactId, validated);
+
+    if (!profile) {
+      return c.json<ErrorResponse>({ error: 'Contact not found' }, 404);
+    }
+
+    return c.json(profile, 201);
+  } catch (error) {
+    logger.error({ error, contactId }, 'Failed to add social profile');
+    return c.json<ErrorResponse>({ error: 'Failed to add social profile' }, 500);
+  }
+});
+
+/**
+ * PUT /api/contacts/:id/social-profiles/:profileId
+ * Update a social profile
+ */
+app.put('/:id/social-profiles/:profileId', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+  const profileId = c.req.param('profileId');
+
+  if (!isValidUuid(contactId) || !isValidUuid(profileId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
+  try {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
+    }
+
+    const validated = SocialProfileInputSchema(body);
+
+    if (validated instanceof type.errors) {
+      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
+    }
+
+    const contactsService = new ContactsService(db, logger);
+    const profile = await contactsService.updateSocialProfile(
+      user.userId,
+      contactId,
+      profileId,
+      validated,
+    );
+
+    if (!profile) {
+      return c.json<ErrorResponse>({ error: 'Social profile not found' }, 404);
+    }
+
+    return c.json(profile);
+  } catch (error) {
+    logger.error({ error, contactId, profileId }, 'Failed to update social profile');
+    return c.json<ErrorResponse>({ error: 'Failed to update social profile' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/contacts/:id/social-profiles/:profileId
+ * Delete a social profile
+ */
+app.delete('/:id/social-profiles/:profileId', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+  const profileId = c.req.param('profileId');
+
+  if (!isValidUuid(contactId) || !isValidUuid(profileId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    const deleted = await contactsService.deleteSocialProfile(user.userId, contactId, profileId);
+
+    if (!deleted) {
+      return c.json<ErrorResponse>({ error: 'Social profile not found' }, 404);
+    }
+
+    return c.json({ message: 'Social profile deleted successfully' });
+  } catch (error) {
+    logger.error({ error, contactId, profileId }, 'Failed to delete social profile');
+    return c.json<ErrorResponse>({ error: 'Failed to delete social profile' }, 500);
   }
 });
 
