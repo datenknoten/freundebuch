@@ -1,4 +1,5 @@
 import { type } from 'arktype';
+import { isValidPhoneNumber } from 'libphonenumber-js';
 
 /**
  * Contact types and validation schemas for Epic 1A: Core Contact CRUD
@@ -30,12 +31,18 @@ export const PhoneInputSchema = type({
   phone_type: PhoneTypeSchema,
   'label?': 'string',
   'is_primary?': 'boolean',
+}).narrow((data, ctx) => {
+  if (!isValidPhoneNumber(data.phone_number)) {
+    ctx.mustBe('a valid phone number');
+    return false;
+  }
+  return true;
 });
 export type PhoneInput = typeof PhoneInputSchema.infer;
 
 /** Schema for creating/updating an email address */
 export const EmailInputSchema = type({
-  email_address: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
+  email_address: 'string.email',
   email_type: EmailTypeSchema,
   'label?': 'string',
   'is_primary?': 'boolean',
@@ -58,7 +65,7 @@ export type AddressInput = typeof AddressInputSchema.infer;
 
 /** Schema for creating/updating a URL */
 export const UrlInputSchema = type({
-  url: /^https?:\/\/.+/,
+  url: 'string.url',
   url_type: UrlTypeSchema,
   'label?': 'string',
 });
@@ -68,6 +75,9 @@ export type UrlInput = typeof UrlInputSchema.infer;
 // Contact Request Schemas
 // ============================================================================
 
+/** Maximum number of sub-resources per contact (DoS prevention) */
+const MAX_SUB_RESOURCES = 30;
+
 /** Schema for creating a new contact */
 export const ContactCreateSchema = type({
   display_name: 'string > 0',
@@ -76,10 +86,10 @@ export const ContactCreateSchema = type({
   'name_middle?': 'string',
   'name_last?': 'string',
   'name_suffix?': 'string',
-  'phones?': PhoneInputSchema.array(),
-  'emails?': EmailInputSchema.array(),
-  'addresses?': AddressInputSchema.array(),
-  'urls?': UrlInputSchema.array(),
+  'phones?': PhoneInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
+  'emails?': EmailInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
+  'addresses?': AddressInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
+  'urls?': UrlInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
 }).narrow((data, ctx) => {
   // Validate only one primary phone
   if (data.phones) {

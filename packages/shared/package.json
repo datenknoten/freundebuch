@@ -20,7 +20,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "arktype": "2.1.29"
+    "arktype": "2.1.29",
+    "libphonenumber-js": "1.12.33"
   },
   "devDependencies": {
     "typescript": "5.9.3"
