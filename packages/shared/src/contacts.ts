@@ -2,7 +2,7 @@ import { type } from 'arktype';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 
 /**
- * Contact types and validation schemas for Epic 1A: Core Contact CRUD
+ * Contact types and validation schemas for Epic 1A & 1B: Contact CRUD & Extended Fields
  */
 
 // ============================================================================
@@ -20,6 +20,15 @@ export type AddressType = typeof AddressTypeSchema.infer;
 
 export const UrlTypeSchema = type('"personal" | "work" | "blog" | "other"');
 export type UrlType = typeof UrlTypeSchema.infer;
+
+// Epic 1B: Extended field type enums
+export const DateTypeSchema = type('"birthday" | "anniversary" | "other"');
+export type DateType = typeof DateTypeSchema.infer;
+
+export const SocialPlatformSchema = type(
+  '"linkedin" | "twitter" | "facebook" | "instagram" | "github" | "other"',
+);
+export type SocialPlatform = typeof SocialPlatformSchema.infer;
 
 // ============================================================================
 // Sub-resource Request Schemas
@@ -71,6 +80,40 @@ export const UrlInputSchema = type({
 });
 export type UrlInput = typeof UrlInputSchema.infer;
 
+// Epic 1B: Extended field input schemas
+
+/** Schema for creating/updating an important date */
+export const DateInputSchema = type({
+  date_value: 'string', // ISO date string YYYY-MM-DD
+  'year_known?': 'boolean',
+  date_type: DateTypeSchema,
+  'label?': 'string',
+});
+export type DateInput = typeof DateInputSchema.infer;
+
+/** Schema for creating/updating met information */
+export const MetInfoInputSchema = type({
+  'met_date?': 'string | null', // ISO date string or null
+  'met_location?': 'string | null',
+  'met_context?': 'string | null',
+});
+export type MetInfoInput = typeof MetInfoInputSchema.infer;
+
+/** Schema for creating/updating a social profile */
+export const SocialProfileInputSchema = type({
+  platform: SocialPlatformSchema,
+  'profile_url?': 'string.url | null',
+  'username?': 'string | null',
+}).narrow((data, ctx) => {
+  // At least one of profile_url or username must be provided
+  if (!data.profile_url && !data.username) {
+    ctx.mustBe('a social profile with either profile_url or username');
+    return false;
+  }
+  return true;
+});
+export type SocialProfileInput = typeof SocialProfileInputSchema.infer;
+
 // ============================================================================
 // Contact Request Schemas
 // ============================================================================
@@ -86,10 +129,21 @@ export const ContactCreateSchema = type({
   'name_middle?': 'string',
   'name_last?': 'string',
   'name_suffix?': 'string',
+  // Epic 1A sub-resources
   'phones?': PhoneInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
   'emails?': EmailInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
   'addresses?': AddressInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
   'urls?': UrlInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
+  // Epic 1B: Professional fields
+  'job_title?': 'string',
+  'organization?': 'string',
+  'department?': 'string',
+  'work_notes?': 'string',
+  'interests?': 'string',
+  // Epic 1B: Extended sub-resources
+  'dates?': DateInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
+  'met_info?': MetInfoInputSchema,
+  'social_profiles?': SocialProfileInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
 }).narrow((data, ctx) => {
   // Validate only one primary phone
   if (data.phones) {
@@ -115,6 +169,14 @@ export const ContactCreateSchema = type({
       return false;
     }
   }
+  // Validate only one birthday date
+  if (data.dates) {
+    const birthdayCount = data.dates.filter((d) => d.date_type === 'birthday').length;
+    if (birthdayCount > 1) {
+      ctx.mustBe('a contact with at most one birthday');
+      return false;
+    }
+  }
   return true;
 });
 export type ContactCreateInput = typeof ContactCreateSchema.infer;
@@ -127,6 +189,12 @@ export const ContactUpdateSchema = type({
   'name_middle?': 'string | null',
   'name_last?': 'string | null',
   'name_suffix?': 'string | null',
+  // Epic 1B: Professional fields (nullable to allow clearing)
+  'job_title?': 'string | null',
+  'organization?': 'string | null',
+  'department?': 'string | null',
+  'work_notes?': 'string | null',
+  'interests?': 'string | null',
 });
 export type ContactUpdateInput = typeof ContactUpdateSchema.infer;
 
@@ -191,6 +259,37 @@ export interface Url {
   createdAt: string;
 }
 
+// Epic 1B: Extended field response interfaces
+
+/** Important date in API responses */
+export interface ContactDate {
+  id: string;
+  dateValue: string;
+  yearKnown: boolean;
+  dateType: DateType;
+  label?: string;
+  createdAt: string;
+}
+
+/** Met information in API responses */
+export interface MetInfo {
+  id: string;
+  metDate?: string;
+  metLocation?: string;
+  metContext?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Social profile in API responses */
+export interface SocialProfile {
+  id: string;
+  platform: SocialPlatform;
+  profileUrl?: string;
+  username?: string;
+  createdAt: string;
+}
+
 /** Full contact with all sub-resources */
 export interface Contact {
   id: string;
@@ -202,10 +301,22 @@ export interface Contact {
   nameSuffix?: string;
   photoUrl?: string;
   photoThumbnailUrl?: string;
+  // Epic 1A sub-resources
   phones: Phone[];
   emails: Email[];
   addresses: Address[];
   urls: Url[];
+  // Epic 1B: Professional fields
+  jobTitle?: string;
+  organization?: string;
+  department?: string;
+  workNotes?: string;
+  interests?: string;
+  // Epic 1B: Extended sub-resources (optional for backwards compatibility)
+  dates?: ContactDate[];
+  metInfo?: MetInfo;
+  socialProfiles?: SocialProfile[];
+  // Timestamps
   createdAt: string;
   updatedAt: string;
 }
