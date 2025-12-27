@@ -158,8 +158,8 @@ describe('Contacts API - Integration Tests', () => {
         body: JSON.stringify({
           display_name: 'Full Contact',
           phones: [
-            { phone_number: '+1234567890', phone_type: 'mobile', is_primary: true },
-            { phone_number: '+0987654321', phone_type: 'work', label: 'Office' },
+            { phone_number: '+12125551234', phone_type: 'mobile', is_primary: true },
+            { phone_number: '+16505551234', phone_type: 'work', label: 'Office' },
           ],
           emails: [{ email_address: 'test@example.com', email_type: 'personal', is_primary: true }],
           addresses: [
@@ -182,7 +182,7 @@ describe('Contacts API - Integration Tests', () => {
 
       expect(response.status).toBe(201);
       expect(body.phones.length).toBe(2);
-      expect(body.phones[0].phoneNumber).toBe('+1234567890');
+      expect(body.phones[0].phoneNumber).toBe('+12125551234');
       expect(body.phones[0].isPrimary).toBe(true);
       expect(body.emails.length).toBe(1);
       expect(body.emails[0].emailAddress).toBe('test@example.com');
@@ -235,7 +235,7 @@ describe('Contacts API - Integration Tests', () => {
       // Add phone directly in database
       await pool.query(
         `INSERT INTO contacts.contact_phones (contact_id, phone_number, phone_type, is_primary)
-         SELECT c.id, '+1234567890', 'mobile', true
+         SELECT c.id, '+12125551234', 'mobile', true
          FROM contacts.contacts c WHERE c.external_id = $1`,
         [contactId],
       );
@@ -252,7 +252,7 @@ describe('Contacts API - Integration Tests', () => {
       expect(body.id).toBe(contactId);
       expect(body.displayName).toBe('John Doe');
       expect(body.phones.length).toBe(1);
-      expect(body.phones[0].phoneNumber).toBe('+1234567890');
+      expect(body.phones[0].phoneNumber).toBe('+12125551234');
     });
 
     it('should return 404 for non-existent contact', async () => {
@@ -399,7 +399,7 @@ describe('Contacts API - Integration Tests', () => {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
-          phone_number: '+1234567890',
+          phone_number: '+12125551234',
           phone_type: 'mobile',
           is_primary: true,
         }),
@@ -410,7 +410,7 @@ describe('Contacts API - Integration Tests', () => {
 
       expect(response.status).toBe(201);
       expect(body).toHaveProperty('id');
-      expect(body.phoneNumber).toBe('+1234567890');
+      expect(body.phoneNumber).toBe('+12125551234');
       expect(body.phoneType).toBe('mobile');
       expect(body.isPrimary).toBe(true);
     });
@@ -425,7 +425,7 @@ describe('Contacts API - Integration Tests', () => {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
-          phone_number: '+1234567890',
+          phone_number: '+12125551234',
           phone_type: 'mobile',
         }),
       });
@@ -572,8 +572,8 @@ describe('Contacts API - Integration Tests', () => {
         body: JSON.stringify({
           display_name: 'Test Contact',
           phones: [
-            { phone_number: '+1111111111', phone_type: 'mobile', is_primary: true },
-            { phone_number: '+2222222222', phone_type: 'work', is_primary: true },
+            { phone_number: '+14155551234', phone_type: 'mobile', is_primary: true },
+            { phone_number: '+13105551234', phone_type: 'work', is_primary: true },
           ],
         }),
       });
@@ -632,8 +632,8 @@ describe('Contacts API - Integration Tests', () => {
         body: JSON.stringify({
           display_name: 'Valid Contact',
           phones: [
-            { phone_number: '+1111111111', phone_type: 'mobile', is_primary: true },
-            { phone_number: '+2222222222', phone_type: 'work', is_primary: false },
+            { phone_number: '+14155551234', phone_type: 'mobile', is_primary: true },
+            { phone_number: '+13105551234', phone_type: 'work', is_primary: false },
           ],
           emails: [
             { email_address: 'primary@example.com', email_type: 'personal', is_primary: true },
@@ -648,6 +648,100 @@ describe('Contacts API - Integration Tests', () => {
       expect(response.status).toBe(201);
       expect(body.phones.length).toBe(2);
       expect(body.emails.length).toBe(2);
+    });
+  });
+
+  describe('Sub-resource Limit Validation', () => {
+    it('should reject contact creation with more than 30 phones', async () => {
+      const { app, testUser } = getContext();
+
+      // Generate 31 valid phone numbers
+      const phones = Array.from({ length: 31 }, (_, i) => ({
+        phone_number: `+1212555${String(1000 + i).padStart(4, '0')}`,
+        phone_type: 'mobile' as const,
+      }));
+
+      const request = new Request('http://localhost/api/contacts', {
+        method: 'POST',
+        headers: authHeaders(testUser.accessToken),
+        body: JSON.stringify({
+          display_name: 'Too Many Phones',
+          phones,
+        }),
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(400);
+    });
+
+    it('should reject contact creation with more than 30 emails', async () => {
+      const { app, testUser } = getContext();
+
+      // Generate 31 emails
+      const emails = Array.from({ length: 31 }, (_, i) => ({
+        email_address: `test${i}@example.com`,
+        email_type: 'personal' as const,
+      }));
+
+      const request = new Request('http://localhost/api/contacts', {
+        method: 'POST',
+        headers: authHeaders(testUser.accessToken),
+        body: JSON.stringify({
+          display_name: 'Too Many Emails',
+          emails,
+        }),
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(400);
+    });
+
+    it('should reject contact creation with more than 30 urls', async () => {
+      const { app, testUser } = getContext();
+
+      // Generate 31 URLs
+      const urls = Array.from({ length: 31 }, (_, i) => ({
+        url: `https://example${i}.com`,
+        url_type: 'personal' as const,
+      }));
+
+      const request = new Request('http://localhost/api/contacts', {
+        method: 'POST',
+        headers: authHeaders(testUser.accessToken),
+        body: JSON.stringify({
+          display_name: 'Too Many URLs',
+          urls,
+        }),
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(400);
+    });
+
+    it('should allow contact creation with exactly 30 phones', async () => {
+      const { app, testUser } = getContext();
+
+      // Generate exactly 30 valid phone numbers
+      const phones = Array.from({ length: 30 }, (_, i) => ({
+        phone_number: `+1212555${String(1000 + i).padStart(4, '0')}`,
+        phone_type: 'mobile' as const,
+      }));
+
+      const request = new Request('http://localhost/api/contacts', {
+        method: 'POST',
+        headers: authHeaders(testUser.accessToken),
+        body: JSON.stringify({
+          display_name: 'Max Phones Contact',
+          phones,
+        }),
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(201);
     });
   });
 
