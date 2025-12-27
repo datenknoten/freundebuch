@@ -1,7 +1,15 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { contacts } from '$lib/stores/contacts';
-import type { AddressType, Contact, EmailType, PhoneType, UrlType } from '$shared';
+import type {
+  AddressType,
+  Contact,
+  DateType,
+  EmailType,
+  PhoneType,
+  SocialPlatform,
+  UrlType,
+} from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
 import ContactAvatar from './ContactAvatar.svelte';
 
@@ -82,6 +90,41 @@ let urls = $state<Array<{ url: string; url_type: UrlType; label: string }>>(
   })) ?? [],
 );
 
+// Epic 1B: Professional fields
+let jobTitle = $state(contact?.jobTitle ?? '');
+let organization = $state(contact?.organization ?? '');
+let department = $state(contact?.department ?? '');
+let workNotes = $state(contact?.workNotes ?? '');
+let interests = $state(contact?.interests ?? '');
+
+// Epic 1B: Important dates
+let dates = $state<
+  Array<{ date_value: string; year_known: boolean; date_type: DateType; label: string }>
+>(
+  contact?.dates?.map((d) => ({
+    date_value: d.dateValue,
+    year_known: d.yearKnown,
+    date_type: d.dateType,
+    label: d.label ?? '',
+  })) ?? [],
+);
+
+// Epic 1B: How/where met
+let metDate = $state(contact?.metInfo?.metDate ?? '');
+let metLocation = $state(contact?.metInfo?.metLocation ?? '');
+let metContext = $state(contact?.metInfo?.metContext ?? '');
+
+// Epic 1B: Social profiles
+let socialProfiles = $state<
+  Array<{ platform: SocialPlatform; profile_url: string; username: string }>
+>(
+  contact?.socialProfiles?.map((sp) => ({
+    platform: sp.platform,
+    profile_url: sp.profileUrl ?? '',
+    username: sp.username ?? '',
+  })) ?? [],
+);
+
 let isLoading = $state(false);
 let error = $state('');
 
@@ -114,6 +157,24 @@ function addUrl() {
 
 function removeUrl(index: number) {
   urls = urls.filter((_, i) => i !== index);
+}
+
+// Epic 1B: Date functions
+function addDate() {
+  dates = [...dates, { date_value: '', year_known: true, date_type: 'birthday', label: '' }];
+}
+
+function removeDate(index: number) {
+  dates = dates.filter((_, i) => i !== index);
+}
+
+// Epic 1B: Social profile functions
+function addSocialProfile() {
+  socialProfiles = [...socialProfiles, { platform: 'linkedin', profile_url: '', username: '' }];
+}
+
+function removeSocialProfile(index: number) {
+  socialProfiles = socialProfiles.filter((_, i) => i !== index);
 }
 
 // Photo handling
@@ -200,9 +261,23 @@ async function handleSubmit(e: Event) {
     const validPhones = phones.filter((p) => p.phone_number.trim());
     const validEmails = emails.filter((e) => e.email_address.trim());
     const validUrls = urls.filter((u) => u.url.trim());
+    const validDates = dates.filter((d) => d.date_value.trim());
+    const validSocialProfiles = socialProfiles.filter(
+      (sp) => sp.profile_url.trim() || sp.username.trim(),
+    );
+
+    // Build met_info if any field is filled
+    const metInfo =
+      metDate || metLocation || metContext
+        ? {
+            met_date: metDate || undefined,
+            met_location: metLocation || undefined,
+            met_context: metContext || undefined,
+          }
+        : undefined;
 
     if (isEditing && contact) {
-      // Update existing contact - first update basic info
+      // Update existing contact - first update basic info including Epic 1B fields
       await contacts.updateContact(contact.id, {
         display_name: displayName,
         name_prefix: namePrefix || null,
@@ -210,6 +285,12 @@ async function handleSubmit(e: Event) {
         name_middle: nameMiddle || null,
         name_last: nameLast || null,
         name_suffix: nameSuffix || null,
+        // Epic 1B: Professional fields
+        job_title: jobTitle || null,
+        organization: organization || null,
+        department: department || null,
+        work_notes: workNotes || null,
+        interests: interests || null,
       });
 
       // Handle phones - add new ones, keep existing
@@ -236,6 +317,30 @@ async function handleSubmit(e: Event) {
         }
       }
 
+      // Epic 1B: Handle dates - add new ones
+      const existingDates = new Set(contact.dates?.map((d) => d.dateValue) ?? []);
+      for (const date of validDates) {
+        if (!existingDates.has(date.date_value)) {
+          await contacts.addDate(contact.id, date);
+        }
+      }
+
+      // Epic 1B: Handle met info - set if any field is filled
+      if (metInfo) {
+        await contacts.setMetInfo(contact.id, metInfo);
+      }
+
+      // Epic 1B: Handle social profiles - add new ones
+      const existingProfiles = new Set(
+        contact.socialProfiles?.map((sp) => `${sp.platform}:${sp.profileUrl || sp.username}`) ?? [],
+      );
+      for (const profile of validSocialProfiles) {
+        const key = `${profile.platform}:${profile.profile_url || profile.username}`;
+        if (!existingProfiles.has(key)) {
+          await contacts.addSocialProfile(contact.id, profile);
+        }
+      }
+
       goto(`/contacts/${contact.id}`);
     } else {
       // Create new contact with sub-resources
@@ -246,9 +351,20 @@ async function handleSubmit(e: Event) {
         name_middle: nameMiddle || undefined,
         name_last: nameLast || undefined,
         name_suffix: nameSuffix || undefined,
+        // Epic 1B: Professional fields
+        job_title: jobTitle || undefined,
+        organization: organization || undefined,
+        department: department || undefined,
+        work_notes: workNotes || undefined,
+        interests: interests || undefined,
+        // Sub-resources
         phones: validPhones.length > 0 ? validPhones : undefined,
         emails: validEmails.length > 0 ? validEmails : undefined,
         urls: validUrls.length > 0 ? validUrls : undefined,
+        // Epic 1B: New sub-resources
+        dates: validDates.length > 0 ? validDates : undefined,
+        met_info: metInfo,
+        social_profiles: validSocialProfiles.length > 0 ? validSocialProfiles : undefined,
       });
       goto(`/contacts/${newContact.id}`);
     }
@@ -525,6 +641,196 @@ async function handleSubmit(e: Event) {
           onclick={() => removeUrl(index)}
           class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
           aria-label="Remove website"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    {/each}
+  </div>
+
+  <!-- Epic 1B: Professional Information -->
+  <div class="space-y-2">
+    <h3 class="text-lg font-heading text-gray-900">Professional Information</h3>
+    <input
+      type="text"
+      bind:value={jobTitle}
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+      placeholder="Job Title"
+      disabled={isLoading}
+    />
+    <input
+      type="text"
+      bind:value={organization}
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+      placeholder="Organization / Company"
+      disabled={isLoading}
+    />
+    <input
+      type="text"
+      bind:value={department}
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+      placeholder="Department"
+      disabled={isLoading}
+    />
+    <textarea
+      bind:value={workNotes}
+      rows="2"
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none"
+      placeholder="Work notes (e.g., how you know them professionally)"
+      disabled={isLoading}
+    ></textarea>
+  </div>
+
+  <!-- Epic 1B: Interests -->
+  <div class="space-y-2">
+    <h3 class="text-lg font-heading text-gray-900">Interests & Hobbies</h3>
+    <textarea
+      bind:value={interests}
+      rows="2"
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none"
+      placeholder="Interests, hobbies, topics they enjoy discussing..."
+      disabled={isLoading}
+    ></textarea>
+  </div>
+
+  <!-- Epic 1B: Important Dates -->
+  <div class="space-y-2">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-heading text-gray-900">Important Dates</h3>
+      <button
+        type="button"
+        onclick={addDate}
+        class="text-sm text-forest font-body font-semibold hover:text-forest-light"
+      >
+        + Add
+      </button>
+    </div>
+
+    {#each dates as date, index}
+      <div class="flex gap-2 items-center bg-gray-50 p-2 rounded-lg">
+        <div class="flex-1 space-y-1">
+          <div class="flex gap-2">
+            <input
+              type="date"
+              bind:value={date.date_value}
+              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+            />
+            <select
+              bind:value={date.date_type}
+              class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+            >
+              <option value="birthday">Birthday</option>
+              <option value="anniversary">Anniversary</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="flex gap-2 items-center">
+            <label class="flex items-center gap-2 text-sm text-gray-600 font-body">
+              <input
+                type="checkbox"
+                bind:checked={date.year_known}
+                class="rounded border-gray-300 text-forest focus:ring-forest"
+              />
+              Year known
+            </label>
+            {#if date.date_type === 'other'}
+              <input
+                type="text"
+                bind:value={date.label}
+                placeholder="Label (e.g., Graduation)"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+              />
+            {/if}
+          </div>
+        </div>
+        <button
+          type="button"
+          onclick={() => removeDate(index)}
+          class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          aria-label="Remove date"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    {/each}
+  </div>
+
+  <!-- Epic 1B: How/Where Met -->
+  <div class="space-y-2">
+    <h3 class="text-lg font-heading text-gray-900">How We Met</h3>
+    <div class="flex gap-2">
+      <input
+        type="date"
+        bind:value={metDate}
+        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+        disabled={isLoading}
+      />
+      <input
+        type="text"
+        bind:value={metLocation}
+        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+        placeholder="Location (e.g., Conference, Coffee shop)"
+        disabled={isLoading}
+      />
+    </div>
+    <textarea
+      bind:value={metContext}
+      rows="2"
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none"
+      placeholder="Context or story of how you met..."
+      disabled={isLoading}
+    ></textarea>
+  </div>
+
+  <!-- Epic 1B: Social Profiles -->
+  <div class="space-y-2">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-heading text-gray-900">Social Profiles</h3>
+      <button
+        type="button"
+        onclick={addSocialProfile}
+        class="text-sm text-forest font-body font-semibold hover:text-forest-light"
+      >
+        + Add
+      </button>
+    </div>
+
+    {#each socialProfiles as profile, index}
+      <div class="flex gap-2 items-center bg-gray-50 p-2 rounded-lg">
+        <div class="flex-1 space-y-1">
+          <select
+            bind:value={profile.platform}
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+          >
+            <option value="linkedin">LinkedIn</option>
+            <option value="twitter">Twitter / X</option>
+            <option value="facebook">Facebook</option>
+            <option value="instagram">Instagram</option>
+            <option value="github">GitHub</option>
+            <option value="other">Other</option>
+          </select>
+          <input
+            type="url"
+            bind:value={profile.profile_url}
+            placeholder="Profile URL"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+          />
+          <input
+            type="text"
+            bind:value={profile.username}
+            placeholder="Username (optional if URL provided)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+          />
+        </div>
+        <button
+          type="button"
+          onclick={() => removeSocialProfile(index)}
+          class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+          aria-label="Remove social profile"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
