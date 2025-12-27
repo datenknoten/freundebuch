@@ -156,7 +156,7 @@ app.put('/:id', async (c) => {
 
 /**
  * DELETE /api/contacts/:id
- * Soft delete a contact
+ * Soft delete a contact and remove associated photo files
  */
 app.delete('/:id', async (c) => {
   const logger = c.get('logger');
@@ -170,6 +170,14 @@ app.delete('/:id', async (c) => {
 
     if (!deleted) {
       return c.json<ErrorResponse>({ error: 'Contact not found' }, 404);
+    }
+
+    // Delete photo files from disk (best effort - don't fail if photos don't exist)
+    try {
+      const photoService = new PhotoService(logger);
+      await photoService.deletePhoto(contactId);
+    } catch (photoError) {
+      logger.warn({ error: photoError, contactId }, 'Failed to delete contact photos');
     }
 
     return c.json({ message: 'Contact deleted successfully' });
@@ -192,6 +200,10 @@ app.post('/:id/phones', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const contactId = c.req.param('id');
+
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
 
   try {
     let body: unknown;
@@ -232,6 +244,10 @@ app.put('/:id/phones/:phoneId', async (c) => {
   const contactId = c.req.param('id');
   const phoneId = c.req.param('phoneId');
 
+  if (!isValidUuid(contactId) || !isValidUuid(phoneId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
   try {
     let body: unknown;
     try {
@@ -271,6 +287,10 @@ app.delete('/:id/phones/:phoneId', async (c) => {
   const contactId = c.req.param('id');
   const phoneId = c.req.param('phoneId');
 
+  if (!isValidUuid(contactId) || !isValidUuid(phoneId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
   try {
     const contactsService = new ContactsService(db, logger);
     const deleted = await contactsService.deletePhone(user.userId, contactId, phoneId);
@@ -299,6 +319,10 @@ app.post('/:id/emails', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const contactId = c.req.param('id');
+
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
 
   try {
     let body: unknown;
@@ -339,6 +363,10 @@ app.put('/:id/emails/:emailId', async (c) => {
   const contactId = c.req.param('id');
   const emailId = c.req.param('emailId');
 
+  if (!isValidUuid(contactId) || !isValidUuid(emailId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
   try {
     let body: unknown;
     try {
@@ -378,6 +406,10 @@ app.delete('/:id/emails/:emailId', async (c) => {
   const contactId = c.req.param('id');
   const emailId = c.req.param('emailId');
 
+  if (!isValidUuid(contactId) || !isValidUuid(emailId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
   try {
     const contactsService = new ContactsService(db, logger);
     const deleted = await contactsService.deleteEmail(user.userId, contactId, emailId);
@@ -406,6 +438,10 @@ app.post('/:id/addresses', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const contactId = c.req.param('id');
+
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
 
   try {
     let body: unknown;
@@ -445,6 +481,10 @@ app.put('/:id/addresses/:addressId', async (c) => {
   const user = getAuthUser(c);
   const contactId = c.req.param('id');
   const addressId = c.req.param('addressId');
+
+  if (!isValidUuid(contactId) || !isValidUuid(addressId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
 
   try {
     let body: unknown;
@@ -490,6 +530,10 @@ app.delete('/:id/addresses/:addressId', async (c) => {
   const contactId = c.req.param('id');
   const addressId = c.req.param('addressId');
 
+  if (!isValidUuid(contactId) || !isValidUuid(addressId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
   try {
     const contactsService = new ContactsService(db, logger);
     const deleted = await contactsService.deleteAddress(user.userId, contactId, addressId);
@@ -518,6 +562,10 @@ app.post('/:id/urls', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const contactId = c.req.param('id');
+
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
 
   try {
     let body: unknown;
@@ -558,6 +606,10 @@ app.put('/:id/urls/:urlId', async (c) => {
   const contactId = c.req.param('id');
   const urlId = c.req.param('urlId');
 
+  if (!isValidUuid(contactId) || !isValidUuid(urlId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
   try {
     let body: unknown;
     try {
@@ -596,6 +648,10 @@ app.delete('/:id/urls/:urlId', async (c) => {
   const user = getAuthUser(c);
   const contactId = c.req.param('id');
   const urlId = c.req.param('urlId');
+
+  if (!isValidUuid(contactId) || !isValidUuid(urlId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
 
   try {
     const contactsService = new ContactsService(db, logger);
