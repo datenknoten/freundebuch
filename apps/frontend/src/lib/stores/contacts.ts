@@ -4,12 +4,18 @@ import type {
   AddressInput,
   Contact,
   ContactCreateInput,
+  ContactDate,
   ContactListItem,
   ContactUpdateInput,
+  DateInput,
   Email,
   EmailInput,
+  MetInfo,
+  MetInfoInput,
   Phone,
   PhoneInput,
+  SocialProfile,
+  SocialProfileInput,
   Url,
   UrlInput,
 } from '$shared';
@@ -547,6 +553,304 @@ function createContactsStore() {
         }));
       } catch (error) {
         const errorMessage = error instanceof ApiError ? error.message : 'Failed to delete photo';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    // =========================================================================
+    // Date Operations (Epic 1B)
+    // =========================================================================
+
+    /**
+     * Add an important date to the current contact
+     */
+    addDate: async (contactId: string, data: DateInput): Promise<ContactDate> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const date = await contactsApi.addDate(contactId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? { ...state.currentContact, dates: [...(state.currentContact.dates ?? []), date] }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return date;
+      } catch (error) {
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to add date';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Update an important date
+     */
+    updateDate: async (
+      contactId: string,
+      dateId: string,
+      data: DateInput,
+    ): Promise<ContactDate> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const date = await contactsApi.updateDate(contactId, dateId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                dates: (state.currentContact.dates ?? []).map((d) =>
+                  d.id === dateId ? date : d,
+                ),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return date;
+      } catch (error) {
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to update date';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Delete an important date from the current contact
+     */
+    deleteDate: async (contactId: string, dateId: string) => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        await contactsApi.deleteDate(contactId, dateId);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                dates: (state.currentContact.dates ?? []).filter((d) => d.id !== dateId),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+      } catch (error) {
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to delete date';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    // =========================================================================
+    // Met Info Operations (Epic 1B)
+    // =========================================================================
+
+    /**
+     * Set or update how/where met information for the current contact
+     */
+    setMetInfo: async (contactId: string, data: MetInfoInput): Promise<MetInfo> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const metInfo = await contactsApi.setMetInfo(contactId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? { ...state.currentContact, metInfo }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return metInfo;
+      } catch (error) {
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to set met info';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Delete how/where met information from the current contact
+     */
+    deleteMetInfo: async (contactId: string) => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        await contactsApi.deleteMetInfo(contactId);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? { ...state.currentContact, metInfo: undefined }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to delete met info';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    // =========================================================================
+    // Social Profile Operations (Epic 1B)
+    // =========================================================================
+
+    /**
+     * Add a social profile to the current contact
+     */
+    addSocialProfile: async (
+      contactId: string,
+      data: SocialProfileInput,
+    ): Promise<SocialProfile> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const profile = await contactsApi.addSocialProfile(contactId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                socialProfiles: [...(state.currentContact.socialProfiles ?? []), profile],
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return profile;
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to add social profile';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Update a social profile
+     */
+    updateSocialProfile: async (
+      contactId: string,
+      profileId: string,
+      data: SocialProfileInput,
+    ): Promise<SocialProfile> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const profile = await contactsApi.updateSocialProfile(contactId, profileId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                socialProfiles: (state.currentContact.socialProfiles ?? []).map((p) =>
+                  p.id === profileId ? profile : p,
+                ),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return profile;
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to update social profile';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Delete a social profile from the current contact
+     */
+    deleteSocialProfile: async (contactId: string, profileId: string) => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        await contactsApi.deleteSocialProfile(contactId, profileId);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                socialProfiles: (state.currentContact.socialProfiles ?? []).filter(
+                  (p) => p.id !== profileId,
+                ),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to delete social profile';
 
         update((state) => ({
           ...state,
