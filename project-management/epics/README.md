@@ -18,6 +18,7 @@ Welcome to the epic planning documents for Personal CRM! Each epic represents a 
 | [Epic 9](epic-09-dashboard-insights.md) | Dashboard & Insights | Phase 2 (basic), Phase 3 (extended) | Medium | Planned |
 | [Epic 10](epic-10-search-functionality.md) | Search Functionality | Phase 1 (basic), Phase 2 (advanced) | High/Medium | Planned |
 | [Epic 11](epic-11-custom-fields.md) | Custom Fields | Phase 2 | Low | Planned |
+| [Epic 12](epic-12-collectives.md) | Collectives | Phase 2 | Medium | Planned |
 
 ## Implementation Phases
 
@@ -66,6 +67,7 @@ Welcome to the epic planning documents for Personal CRM! Each epic represents a 
 - Epic 9: Dashboard & Insights (the big picture)
 - Epic 10: Search Functionality (advanced filters)
 - Epic 11: Custom Fields (make it truly yours)
+- Epic 12: Collectives (families, companies, and groups with auto-relationships)
 
 **What you'll be able to do:**
 - Keep a history of all your interactions
@@ -75,6 +77,7 @@ Welcome to the epic planning documents for Personal CRM! Each epic represents a 
 - Get insights into your social network
 - Use powerful search filters and save them
 - Add your own custom fields to contacts
+- Group contacts into families, companies, or clubs with automatic relationship creation
 
 ---
 
@@ -107,6 +110,7 @@ graph TD
     E1 --> E4
     E1 --> E10
     E1 --> E11[Epic 11: Custom Fields]
+    E1 --> E12[Epic 12: Collectives]
     E2 --> E3[Epic 3: Reminders]
     E2 --> E8[Epic 8: Timeline]
     E2 --> E9[Epic 9: Dashboard]
@@ -153,4 +157,4 @@ Got questions or ideas about these epics? We'd love to hear from you:
 
 ---
 
-**Last Updated:** 2025-12-24
+**Last Updated:** 2025-12-28
