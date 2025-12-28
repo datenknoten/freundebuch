@@ -30,6 +30,15 @@ export const SocialPlatformSchema = type(
 );
 export type SocialPlatform = typeof SocialPlatformSchema.infer;
 
+// Epic 1D: Relationship type enums
+export const RelationshipCategorySchema = type('"family" | "professional" | "social"');
+export type RelationshipCategory = typeof RelationshipCategorySchema.infer;
+
+export const RelationshipTypeIdSchema = type(
+  '"spouse" | "parent" | "child" | "sibling" | "grandparent" | "grandchild" | "cousin" | "in_law" | "other_family" | "colleague" | "manager" | "report" | "mentor" | "mentee" | "client" | "other_professional" | "friend" | "neighbor" | "acquaintance" | "other_social"',
+);
+export type RelationshipTypeId = typeof RelationshipTypeIdSchema.infer;
+
 // ============================================================================
 // Sub-resource Request Schemas
 // ============================================================================
@@ -126,6 +135,22 @@ export const SocialProfileInputSchema = type({
   return true;
 });
 export type SocialProfileInput = typeof SocialProfileInputSchema.infer;
+
+// Epic 1D: Relationship input schemas
+
+/** Schema for creating a relationship */
+export const RelationshipInputSchema = type({
+  related_contact_id: 'string > 0', // UUID of the related contact
+  relationship_type_id: RelationshipTypeIdSchema,
+  'notes?': 'string',
+});
+export type RelationshipInput = typeof RelationshipInputSchema.infer;
+
+/** Schema for updating a relationship (only notes can be updated) */
+export const RelationshipUpdateSchema = type({
+  'notes?': 'string | null',
+});
+export type RelationshipUpdateInput = typeof RelationshipUpdateSchema.infer;
 
 // ============================================================================
 // Contact Request Schemas
@@ -303,6 +328,36 @@ export interface SocialProfile {
   createdAt: string;
 }
 
+// Epic 1D: Relationship response interfaces
+
+/** Relationship type definition */
+export interface RelationshipType {
+  id: RelationshipTypeId;
+  category: RelationshipCategory;
+  label: string;
+  inverseTypeId: RelationshipTypeId;
+}
+
+/** Relationship types grouped by category */
+export interface RelationshipTypesGrouped {
+  family: RelationshipType[];
+  professional: RelationshipType[];
+  social: RelationshipType[];
+}
+
+/** Relationship in API responses */
+export interface Relationship {
+  id: string;
+  relatedContactId: string;
+  relatedContactDisplayName: string;
+  relatedContactPhotoThumbnailUrl?: string;
+  relationshipTypeId: RelationshipTypeId;
+  relationshipTypeLabel: string;
+  relationshipCategory: RelationshipCategory;
+  notes?: string;
+  createdAt: string;
+}
+
 /** Full contact with all sub-resources */
 export interface Contact {
   id: string;
@@ -329,6 +384,8 @@ export interface Contact {
   dates?: ContactDate[];
   metInfo?: MetInfo;
   socialProfiles?: SocialProfile[];
+  // Epic 1D: Relationships
+  relationships?: Relationship[];
   // Timestamps
   createdAt: string;
   updatedAt: string;
@@ -343,6 +400,13 @@ export interface ContactListItem {
   primaryPhone?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Contact search result for autocomplete */
+export interface ContactSearchResult {
+  id: string;
+  displayName: string;
+  photoThumbnailUrl?: string;
 }
 
 /** Paginated contact list response */
