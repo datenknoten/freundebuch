@@ -6,6 +6,7 @@ import type {
   ContactCreateInput,
   ContactDate,
   ContactListItem,
+  ContactSearchResult,
   ContactUpdateInput,
   DateInput,
   Email,
@@ -14,6 +15,10 @@ import type {
   MetInfoInput,
   Phone,
   PhoneInput,
+  Relationship,
+  RelationshipInput,
+  RelationshipTypesGrouped,
+  RelationshipUpdateInput,
   SocialProfile,
   SocialProfileInput,
   Url,
@@ -32,6 +37,7 @@ interface ContactsState {
   pageSize: number;
   totalPages: number;
   currentContact: Contact | null;
+  relationshipTypes: RelationshipTypesGrouped | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -46,6 +52,7 @@ const initialState: ContactsState = {
   pageSize: 25,
   totalPages: 0,
   currentContact: null,
+  relationshipTypes: null,
   isLoading: false,
   error: null,
 };
@@ -859,6 +866,184 @@ function createContactsStore() {
     },
 
     // =========================================================================
+    // Relationship Operations (Epic 1D)
+    // =========================================================================
+
+    /**
+     * Load relationship types (cached in store)
+     */
+    loadRelationshipTypes: async (): Promise<RelationshipTypesGrouped> => {
+      // Return cached types if available
+      let cachedTypes: RelationshipTypesGrouped | null = null;
+      update((state) => {
+        cachedTypes = state.relationshipTypes;
+        return state;
+      });
+
+      if (cachedTypes) {
+        return cachedTypes;
+      }
+
+      try {
+        const types = await contactsApi.getRelationshipTypes();
+
+        update((state) => ({
+          ...state,
+          relationshipTypes: types,
+        }));
+
+        return types;
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to load relationship types';
+
+        update((state) => ({
+          ...state,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Search contacts by name (for autocomplete)
+     */
+    searchContacts: async (
+      query: string,
+      exclude?: string,
+      limit?: number,
+    ): Promise<ContactSearchResult[]> => {
+      try {
+        return await contactsApi.searchContacts(query, exclude, limit);
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to search contacts';
+
+        update((state) => ({
+          ...state,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Add a relationship to the current contact
+     */
+    addRelationship: async (contactId: string, data: RelationshipInput): Promise<Relationship> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const relationship = await contactsApi.addRelationship(contactId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                relationships: [...(state.currentContact.relationships ?? []), relationship],
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return relationship;
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to add relationship';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Update a relationship
+     */
+    updateRelationship: async (
+      contactId: string,
+      relationshipId: string,
+      data: RelationshipUpdateInput,
+    ): Promise<Relationship> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const relationship = await contactsApi.updateRelationship(contactId, relationshipId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                relationships: (state.currentContact.relationships ?? []).map((r) =>
+                  r.id === relationshipId ? relationship : r,
+                ),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return relationship;
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to update relationship';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Delete a relationship from the current contact
+     */
+    deleteRelationship: async (contactId: string, relationshipId: string) => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        await contactsApi.deleteRelationship(contactId, relationshipId);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                relationships: (state.currentContact.relationships ?? []).filter(
+                  (r) => r.id !== relationshipId,
+                ),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to delete relationship';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    // =========================================================================
     // Utility Methods
     // =========================================================================
 
@@ -904,3 +1089,8 @@ export const currentContact = derived(contacts, ($contacts) => $contacts.current
  * Derived store for contact list
  */
 export const contactList = derived(contacts, ($contacts) => $contacts.contacts);
+
+/**
+ * Derived store for relationship types
+ */
+export const relationshipTypes = derived(contacts, ($contacts) => $contacts.relationshipTypes);

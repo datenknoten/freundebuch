@@ -5,6 +5,7 @@ import type {
   Contact,
   ContactCreateInput,
   ContactDate,
+  ContactSearchResult,
   ContactUpdateInput,
   DateInput,
   Email,
@@ -14,6 +15,10 @@ import type {
   PaginatedContactList,
   Phone,
   PhoneInput,
+  Relationship,
+  RelationshipInput,
+  RelationshipTypesGrouped,
+  RelationshipUpdateInput,
   SocialProfile,
   SocialProfileInput,
   Url,
@@ -436,6 +441,72 @@ export async function deleteSocialProfile(
   profileId: string,
 ): Promise<{ message: string }> {
   return apiRequest(`/api/contacts/${contactId}/social-profiles/${profileId}`, {
+    method: 'DELETE',
+  });
+}
+
+// ============================================================================
+// Relationship Operations (Epic 1D)
+// ============================================================================
+
+/**
+ * Get all relationship types grouped by category
+ */
+export async function getRelationshipTypes(): Promise<RelationshipTypesGrouped> {
+  return apiRequest<RelationshipTypesGrouped>('/api/contacts/relationship-types');
+}
+
+/**
+ * Search contacts by name (for autocomplete in relationship picker)
+ */
+export async function searchContacts(
+  query: string,
+  exclude?: string,
+  limit?: number,
+): Promise<ContactSearchResult[]> {
+  const searchParams = new URLSearchParams();
+  searchParams.set('q', query);
+  if (exclude) searchParams.set('exclude', exclude);
+  if (limit) searchParams.set('limit', limit.toString());
+
+  return apiRequest<ContactSearchResult[]>(`/api/contacts/search?${searchParams.toString()}`);
+}
+
+/**
+ * Add a relationship to a contact
+ */
+export async function addRelationship(
+  contactId: string,
+  data: RelationshipInput,
+): Promise<Relationship> {
+  return apiRequest<Relationship>(`/api/contacts/${contactId}/relationships`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update a relationship
+ */
+export async function updateRelationship(
+  contactId: string,
+  relationshipId: string,
+  data: RelationshipUpdateInput,
+): Promise<Relationship> {
+  return apiRequest<Relationship>(`/api/contacts/${contactId}/relationships/${relationshipId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete a relationship
+ */
+export async function deleteRelationship(
+  contactId: string,
+  relationshipId: string,
+): Promise<{ message: string }> {
+  return apiRequest(`/api/contacts/${contactId}/relationships/${relationshipId}`, {
     method: 'DELETE',
   });
 }
