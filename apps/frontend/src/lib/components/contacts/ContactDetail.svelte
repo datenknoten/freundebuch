@@ -3,6 +3,7 @@ import { goto } from '$app/navigation';
 import { contacts } from '$lib/stores/contacts';
 import type { Contact } from '$shared';
 import ContactAvatar from './ContactAvatar.svelte';
+import RelationshipsSection from './RelationshipsSection.svelte';
 
 interface Props {
   contact: Contact;
@@ -370,6 +371,14 @@ function formatDate(dateStr: string, yearKnown: boolean): string {
       </div>
     </section>
   {/if}
+
+  <!-- Epic 1D: Relationships -->
+  <section class="space-y-3">
+    <RelationshipsSection
+      contactId={contact.id}
+      relationships={contact.relationships ?? []}
+    />
+  </section>
 
   <!-- Metadata -->
   <section class="pt-6 border-t border-gray-200 text-sm text-gray-500 font-body">

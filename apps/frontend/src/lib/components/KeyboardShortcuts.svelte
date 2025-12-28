@@ -3,6 +3,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { isAuthenticated } from '$lib/stores/auth';
 import { currentContact } from '$lib/stores/contacts';
+import { isModalOpen } from '$lib/stores/ui';
 
 let showHelp = $state(false);
 let pendingKey = $state<string | null>(null);
@@ -35,6 +36,17 @@ function handleKeydown(e: KeyboardEvent) {
 
   // Don't handle shortcuts if not authenticated (except ?)
   if (!$isAuthenticated && e.key !== '?') {
+    return;
+  }
+
+  // When a modal/form is open, only allow Escape to close it
+  if ($isModalOpen) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      isModalOpen.set(false);
+      // Dispatch event to close any open forms
+      window.dispatchEvent(new CustomEvent('shortcut:close-modal'));
+    }
     return;
   }
 
@@ -94,6 +106,14 @@ function handleKeydown(e: KeyboardEvent) {
       if ($currentContact && $page.url.pathname.match(/^\/contacts\/[^/]+$/)) {
         e.preventDefault();
         goto(`/contacts/${$currentContact.id}/edit`);
+      }
+      break;
+
+    case 'r':
+      // Add relationship if on contact detail page
+      if ($currentContact && $page.url.pathname.match(/^\/contacts\/[^/]+$/)) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('shortcut:add-relationship'));
       }
       break;
 
@@ -198,6 +218,10 @@ function closeHelp() {
               <div class="flex justify-between items-center">
                 <span class="text-gray-700">Edit Contact</span>
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Relationship</span>
+                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">r</kbd>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-gray-700">Focus Search</span>
