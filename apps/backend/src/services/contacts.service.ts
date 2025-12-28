@@ -7,6 +7,7 @@ import type {
   ContactDate,
   ContactListItem,
   ContactListOptions,
+  ContactSearchResult,
   ContactUpdateInput,
   DateInput,
   DateType,
@@ -19,6 +20,13 @@ import type {
   Phone,
   PhoneInput,
   PhoneType,
+  Relationship,
+  RelationshipCategory,
+  RelationshipInput,
+  RelationshipType,
+  RelationshipTypeId,
+  RelationshipTypesGrouped,
+  RelationshipUpdateInput,
   SocialPlatform,
   SocialProfile,
   SocialProfileInput,
@@ -61,6 +69,17 @@ import {
   type IGetPhonesByContactIdResult,
   updatePhone,
 } from '../models/queries/contact-phones.queries.js';
+import {
+  createInverseRelationship,
+  createRelationship,
+  deleteInverseRelationship,
+  deleteRelationship,
+  getAllRelationshipTypes,
+  getRelationshipById,
+  type IGetRelationshipsByContactIdResult,
+  searchContacts,
+  updateRelationship,
+} from '../models/queries/contact-relationships.queries.js';
 import {
   createSocialProfile,
   deleteSocialProfile,
@@ -840,6 +859,221 @@ export class ContactsService {
   }
 
   // ============================================================================
+  // Relationship Methods (Epic 1D)
+  // ============================================================================
+
+  /**
+   * Get all relationship types grouped by category
+   */
+  async getRelationshipTypes(): Promise<RelationshipTypesGrouped> {
+    this.logger.debug('Getting relationship types');
+
+    const types = await getAllRelationshipTypes.run(undefined, this.db);
+
+    const grouped: RelationshipTypesGrouped = {
+      family: [],
+      professional: [],
+      social: [],
+    };
+
+    for (const t of types) {
+      const relationshipType: RelationshipType = {
+        id: t.id as RelationshipTypeId,
+        category: t.category as RelationshipCategory,
+        label: t.label,
+        inverseTypeId: (t.inverse_type_id ?? t.id) as RelationshipTypeId,
+      };
+
+      if (t.category === 'family') {
+        grouped.family.push(relationshipType);
+      } else if (t.category === 'professional') {
+        grouped.professional.push(relationshipType);
+      } else if (t.category === 'social') {
+        grouped.social.push(relationshipType);
+      }
+    }
+
+    return grouped;
+  }
+
+  /**
+   * Add a relationship between two contacts (creates inverse automatically)
+   */
+  async addRelationship(
+    userExternalId: string,
+    contactExternalId: string,
+    data: RelationshipInput,
+  ): Promise<Relationship | null> {
+    this.logger.debug(
+      { contactExternalId, relatedContactExternalId: data.related_contact_id },
+      'Adding relationship',
+    );
+
+    // Create the primary relationship
+    const [relationship] = await createRelationship.run(
+      {
+        userExternalId,
+        contactExternalId,
+        relatedContactExternalId: data.related_contact_id,
+        relationshipTypeId: data.relationship_type_id,
+        notes: data.notes ?? null,
+      },
+      this.db,
+    );
+
+    if (!relationship) {
+      return null;
+    }
+
+    // Create the inverse relationship (if inverse type exists)
+    await createInverseRelationship.run(
+      {
+        userExternalId,
+        contactExternalId,
+        relatedContactExternalId: data.related_contact_id,
+        relationshipTypeId: data.relationship_type_id,
+        notes: data.notes ?? null,
+      },
+      this.db,
+    );
+
+    // Fetch the full relationship with related contact info
+    const [fullRelationship] = await getRelationshipById.run(
+      {
+        userExternalId,
+        contactExternalId,
+        relationshipExternalId: relationship.external_id,
+      },
+      this.db,
+    );
+
+    if (!fullRelationship) {
+      return null;
+    }
+
+    this.logger.info(
+      {
+        contactExternalId,
+        relatedContactExternalId: data.related_contact_id,
+        relationshipType: data.relationship_type_id,
+      },
+      'Relationship created successfully',
+    );
+
+    return this.mapRelationship(fullRelationship);
+  }
+
+  /**
+   * Update a relationship's notes
+   */
+  async updateRelationship(
+    userExternalId: string,
+    contactExternalId: string,
+    relationshipExternalId: string,
+    data: RelationshipUpdateInput,
+  ): Promise<Relationship | null> {
+    this.logger.debug({ contactExternalId, relationshipExternalId }, 'Updating relationship');
+
+    const [updated] = await updateRelationship.run(
+      {
+        userExternalId,
+        contactExternalId,
+        relationshipExternalId,
+        notes: data.notes ?? null,
+      },
+      this.db,
+    );
+
+    if (!updated) {
+      return null;
+    }
+
+    // Fetch the full relationship with related contact info
+    const [fullRelationship] = await getRelationshipById.run(
+      {
+        userExternalId,
+        contactExternalId,
+        relationshipExternalId,
+      },
+      this.db,
+    );
+
+    if (!fullRelationship) {
+      return null;
+    }
+
+    this.logger.info({ contactExternalId, relationshipExternalId }, 'Relationship updated');
+
+    return this.mapRelationship(fullRelationship);
+  }
+
+  /**
+   * Delete a relationship (and its inverse)
+   */
+  async deleteRelationship(
+    userExternalId: string,
+    contactExternalId: string,
+    relationshipExternalId: string,
+  ): Promise<boolean> {
+    this.logger.debug({ contactExternalId, relationshipExternalId }, 'Deleting relationship');
+
+    // Delete the primary relationship and get related contact ID
+    const [deleted] = await deleteRelationship.run(
+      { userExternalId, contactExternalId, relationshipExternalId },
+      this.db,
+    );
+
+    if (!deleted) {
+      return false;
+    }
+
+    // Delete the inverse relationship
+    await deleteInverseRelationship.run(
+      {
+        userExternalId,
+        contactExternalId,
+        relatedContactId: deleted.related_contact_id,
+        relationshipTypeId: deleted.relationship_type_id,
+      },
+      this.db,
+    );
+
+    this.logger.info({ contactExternalId, relationshipExternalId }, 'Relationship deleted');
+
+    return true;
+  }
+
+  /**
+   * Search contacts by name (for autocomplete)
+   */
+  async searchContacts(
+    userExternalId: string,
+    query: string,
+    excludeContactExternalId?: string,
+    limit = 10,
+  ): Promise<ContactSearchResult[]> {
+    this.logger.debug({ query, excludeContactExternalId }, 'Searching contacts');
+
+    const searchPattern = `%${query}%`;
+
+    const results = await searchContacts.run(
+      {
+        userExternalId,
+        searchPattern,
+        excludeContactExternalId: excludeContactExternalId ?? null,
+        limit,
+      },
+      this.db,
+    );
+
+    return results.map((r) => ({
+      id: r.external_id,
+      displayName: r.display_name,
+      photoThumbnailUrl: r.photo_thumbnail_url ?? undefined,
+    }));
+  }
+
+  // ============================================================================
   // Private Helper Methods
   // ============================================================================
 
@@ -1045,6 +1279,20 @@ export class ContactsService {
     };
   }
 
+  private mapRelationship(row: IGetRelationshipsByContactIdResult): Relationship {
+    return {
+      id: row.external_id,
+      relatedContactId: row.related_contact_external_id,
+      relatedContactDisplayName: row.related_contact_display_name,
+      relatedContactPhotoThumbnailUrl: row.related_contact_photo_thumbnail_url ?? undefined,
+      relationshipTypeId: row.relationship_type_id as RelationshipTypeId,
+      relationshipTypeLabel: row.relationship_type_label,
+      relationshipCategory: row.relationship_category as RelationshipCategory,
+      notes: row.notes ?? undefined,
+      createdAt: row.created_at.toISOString(),
+    };
+  }
+
   /**
    * Maps a contact row with embedded JSON arrays for related data
    * Used by the optimized getContactById query
@@ -1115,6 +1363,19 @@ export class ContactsService {
       platform: string;
       profile_url: string | null;
       username: string | null;
+      created_at: string;
+    }>;
+
+    // Epic 1D: Relationships
+    const relationships = (contact.relationships || []) as Array<{
+      external_id: string;
+      related_contact_external_id: string;
+      related_contact_display_name: string;
+      related_contact_photo_thumbnail_url: string | null;
+      relationship_type_id: string;
+      relationship_type_label: string;
+      relationship_category: string;
+      notes: string | null;
       created_at: string;
     }>;
 
@@ -1195,6 +1456,18 @@ export class ContactsService {
         profileUrl: sp.profile_url ?? undefined,
         username: sp.username ?? undefined,
         createdAt: sp.created_at,
+      })),
+      // Epic 1D: Relationships
+      relationships: relationships.map((r) => ({
+        id: r.external_id,
+        relatedContactId: r.related_contact_external_id,
+        relatedContactDisplayName: r.related_contact_display_name,
+        relatedContactPhotoThumbnailUrl: r.related_contact_photo_thumbnail_url ?? undefined,
+        relationshipTypeId: r.relationship_type_id as RelationshipTypeId,
+        relationshipTypeLabel: r.relationship_type_label,
+        relationshipCategory: r.relationship_category as RelationshipCategory,
+        notes: r.notes ?? undefined,
+        createdAt: r.created_at,
       })),
       createdAt: contact.created_at.toISOString(),
       updatedAt: contact.updated_at.toISOString(),

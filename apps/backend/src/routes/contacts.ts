@@ -10,6 +10,8 @@ import {
   PhoneInputSchema,
   PhotoValidationErrors,
   parseContactListQuery,
+  RelationshipInputSchema,
+  RelationshipUpdateSchema,
   SocialProfileInputSchema,
   UrlInputSchema,
 } from '@freundebuch/shared/index.js';
@@ -58,6 +60,61 @@ app.get('/', async (c) => {
   } catch (error) {
     logger.error({ error }, 'Failed to list contacts');
     return c.json<ErrorResponse>({ error: 'Failed to list contacts' }, 500);
+  }
+});
+
+/**
+ * GET /api/contacts/search
+ * Search contacts by name (for autocomplete)
+ * NOTE: This must be defined before /:id to avoid being caught by the wildcard
+ */
+app.get('/search', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+
+  const query = c.req.query('q');
+  const exclude = c.req.query('exclude');
+  const limitParam = c.req.query('limit');
+
+  if (!query || query.trim().length === 0) {
+    return c.json<ErrorResponse>({ error: 'Query parameter "q" is required' }, 400);
+  }
+
+  if (exclude && !isValidUuid(exclude)) {
+    return c.json<ErrorResponse>({ error: 'Invalid exclude parameter' }, 400);
+  }
+
+  const limit = limitParam ? Math.min(50, Math.max(1, Number.parseInt(limitParam, 10) || 10)) : 10;
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    const results = await contactsService.searchContacts(user.userId, query.trim(), exclude, limit);
+
+    return c.json(results);
+  } catch (error) {
+    logger.error({ error, query }, 'Failed to search contacts');
+    return c.json<ErrorResponse>({ error: 'Failed to search contacts' }, 500);
+  }
+});
+
+/**
+ * GET /api/contacts/relationship-types
+ * Get all relationship types grouped by category
+ * NOTE: This must be defined before /:id to avoid being caught by the wildcard
+ */
+app.get('/relationship-types', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    const types = await contactsService.getRelationshipTypes();
+
+    return c.json(types);
+  } catch (error) {
+    logger.error({ error }, 'Failed to get relationship types');
+    return c.json<ErrorResponse>({ error: 'Failed to get relationship types' }, 500);
   }
 });
 
@@ -1096,6 +1153,148 @@ app.delete('/:id/social-profiles/:profileId', async (c) => {
   } catch (error) {
     logger.error({ error, contactId, profileId }, 'Failed to delete social profile');
     return c.json<ErrorResponse>({ error: 'Failed to delete social profile' }, 500);
+  }
+});
+
+// ============================================================================
+// Relationship Routes (Epic 1D)
+// ============================================================================
+
+/**
+ * POST /api/contacts/:id/relationships
+ * Add a relationship to a contact (creates inverse automatically)
+ */
+app.post('/:id/relationships', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+
+  if (!isValidUuid(contactId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid contact ID' }, 400);
+  }
+
+  try {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
+    }
+
+    const validated = RelationshipInputSchema(body);
+
+    if (validated instanceof type.errors) {
+      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
+    }
+
+    // Validate related_contact_id is a valid UUID
+    if (!isValidUuid(validated.related_contact_id)) {
+      return c.json<ErrorResponse>({ error: 'Invalid related contact ID' }, 400);
+    }
+
+    // Prevent self-relationships
+    if (validated.related_contact_id === contactId) {
+      return c.json<ErrorResponse>({ error: 'Cannot create relationship with self' }, 400);
+    }
+
+    const contactsService = new ContactsService(db, logger);
+    const relationship = await contactsService.addRelationship(user.userId, contactId, validated);
+
+    if (!relationship) {
+      return c.json<ErrorResponse>({ error: 'Contact not found' }, 404);
+    }
+
+    return c.json(relationship, 201);
+  } catch (error) {
+    // Handle unique constraint violation (duplicate relationship)
+    if (error instanceof Error && error.message.includes('unique_relationship')) {
+      return c.json<ErrorResponse>({ error: 'Relationship already exists' }, 409);
+    }
+    logger.error({ error, contactId }, 'Failed to add relationship');
+    return c.json<ErrorResponse>({ error: 'Failed to add relationship' }, 500);
+  }
+});
+
+/**
+ * PUT /api/contacts/:id/relationships/:relationshipId
+ * Update a relationship's notes
+ */
+app.put('/:id/relationships/:relationshipId', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+  const relationshipId = c.req.param('relationshipId');
+
+  if (!isValidUuid(contactId) || !isValidUuid(relationshipId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
+  try {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
+    }
+
+    const validated = RelationshipUpdateSchema(body);
+
+    if (validated instanceof type.errors) {
+      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
+    }
+
+    const contactsService = new ContactsService(db, logger);
+    const relationship = await contactsService.updateRelationship(
+      user.userId,
+      contactId,
+      relationshipId,
+      validated,
+    );
+
+    if (!relationship) {
+      return c.json<ErrorResponse>({ error: 'Relationship not found' }, 404);
+    }
+
+    return c.json(relationship);
+  } catch (error) {
+    logger.error({ error, contactId, relationshipId }, 'Failed to update relationship');
+    return c.json<ErrorResponse>({ error: 'Failed to update relationship' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/contacts/:id/relationships/:relationshipId
+ * Delete a relationship (and its inverse)
+ */
+app.delete('/:id/relationships/:relationshipId', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const contactId = c.req.param('id');
+  const relationshipId = c.req.param('relationshipId');
+
+  if (!isValidUuid(contactId) || !isValidUuid(relationshipId)) {
+    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+  }
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    const deleted = await contactsService.deleteRelationship(
+      user.userId,
+      contactId,
+      relationshipId,
+    );
+
+    if (!deleted) {
+      return c.json<ErrorResponse>({ error: 'Relationship not found' }, 404);
+    }
+
+    return c.json({ message: 'Relationship deleted successfully' });
+  } catch (error) {
+    logger.error({ error, contactId, relationshipId }, 'Failed to delete relationship');
+    return c.json<ErrorResponse>({ error: 'Failed to delete relationship' }, 500);
   }
 });
 
