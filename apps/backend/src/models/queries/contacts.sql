@@ -105,7 +105,25 @@ SELECT
         ) ORDER BY sp.platform ASC, sp.created_at ASC), '[]'::json)
         FROM contacts.contact_social_profiles sp
         WHERE sp.contact_id = c.id
-    ) as social_profiles
+    ) as social_profiles,
+    -- Epic 1D: Relationships
+    (
+        SELECT COALESCE(json_agg(json_build_object(
+            'external_id', r.external_id,
+            'related_contact_external_id', rc.external_id,
+            'related_contact_display_name', rc.display_name,
+            'related_contact_photo_thumbnail_url', rc.photo_thumbnail_url,
+            'relationship_type_id', r.relationship_type_id,
+            'relationship_type_label', rt.label,
+            'relationship_category', rt.category,
+            'notes', r.notes,
+            'created_at', r.created_at
+        ) ORDER BY rt.category ASC, rt.label ASC, rc.display_name ASC), '[]'::json)
+        FROM contacts.contact_relationships r
+        INNER JOIN contacts.contacts rc ON r.related_contact_id = rc.id AND rc.deleted_at IS NULL
+        INNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id
+        WHERE r.contact_id = c.id
+    ) as relationships
 FROM contacts.contacts c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :contactExternalId
