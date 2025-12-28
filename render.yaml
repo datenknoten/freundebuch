@@ -1,0 +1,87 @@
+# Render Blueprint for Freundebuch Personal CRM
+# https://render.com/docs/blueprint-spec
+
+databases:
+  - name: freundebuch-db
+    databaseName: personal_crm
+    user: crm_user
+    region: frankfurt
+    plan: free
+    postgresMajorVersion: "18"
+    ipAllowList: [] # Only allow internal connections
+
+services:
+  # Backend API (Hono)
+  - type: web
+    name: freundebuch-api
+    runtime: node
+    region: frankfurt
+    plan: free
+    rootDir: apps/backend
+    buildCommand: |
+      cd ../.. && \
+      corepack enable && \
+      pnpm install --frozen-lockfile && \
+      pnpm --filter @freundebuch/shared build && \
+      pnpm --filter @freundebuch/backend build && \
+      pnpm --filter @freundebuch/backend migrate
+    startCommand: node dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: freundebuch-db
+          property: connectionString
+      - key: DATABASE_POOL_MIN
+        value: "2"
+      - key: DATABASE_POOL_MAX
+        value: "10"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: JWT_EXPIRY
+        value: "604800"
+      - key: FRONTEND_URL
+        fromService:
+          name: freundebuch-frontend
+          type: web
+          property: host
+      - key: LOG_LEVEL
+        value: info
+      - key: ENABLE_API_DOCS
+        value: "false"
+
+  # Frontend (SvelteKit)
+  - type: web
+    name: freundebuch-frontend
+    runtime: node
+    region: frankfurt
+    plan: free
+    rootDir: apps/frontend
+    buildCommand: |
+      cd ../.. && \
+      corepack enable && \
+      pnpm install --frozen-lockfile && \
+      pnpm --filter @freundebuch/shared build && \
+      pnpm --filter @freundebuch/frontend build
+    startCommand: node build/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: PUBLIC_API_URL
+        fromService:
+          name: freundebuch-api
+          type: web
+          property: host
+      - key: ORIGIN
+        fromService:
+          name: freundebuch-frontend
+          type: web
+          property: host
