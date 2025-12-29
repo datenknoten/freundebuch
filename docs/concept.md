@@ -1,18 +1,20 @@
-# Concept Document: Personal CRM for Private Individuals
+# Concept Document: Freundebuch
 
-**Version:** 1.0
+**Version:** 1.1
 **Date:** 04.10.2025
-**Status:** Initial Draft
+**Status:** Active
 
 ---
 
 ## 1. Executive Summary
 
-Let's face it - keeping track of everyone in your life is hard. This document outlines a personal CRM that's actually designed for real people, not sales teams.
+Let's face it - keeping track of everyone in your life is hard. This document outlines Freundebuch, a digital friendship book designed for real people, not sales teams.
 
 We're building a web application that takes your basic address book and transforms it into a relationship management tool. Think of it as having a personal assistant who remembers everyone you know, when you last talked, and when you should reach out again.
 
 The app works great for individuals or families who want to stay better connected with the people in their lives. Plus, it syncs seamlessly with your phone and other devices through standard CalDAV/CardDAV interfaces.
+
+See [brand.md](./brand.md) for our brand guidelines and terminology.
 
 ---
 
@@ -49,7 +51,7 @@ The app works great for individuals or families who want to stay better connecte
 1. **Contact Management** - Your address book, but with all the context you actually need
 2. **Relationship Management** - Track interactions and keep the history of your relationships
 3. **Reminder System** - Never forget to reach out again
-4. **Categorization & Organization** - Organize contacts your way with groups and tags
+4. **Categorization & Organization** - Organize contacts your way with circles and tags
 5. **Multi-User Management** - Share contacts with family or housemates
 
 ### 3.2 Integration Features
@@ -119,7 +121,7 @@ Proactive support for contact maintenance through intelligent reminders.
 **Scope:**
 - **Automatic Reminders:**
   - "Person X not contacted for Y days/weeks"
-  - Configurable thresholds per contact or group
+  - Configurable thresholds per contact or circle
   - Birthday reminders (configurable lead time)
 - **Manual Reminders:**
   - "Contact X again on [date]"
@@ -139,11 +141,11 @@ Proactive support for contact maintenance through intelligent reminders.
 Flexible organization of contacts according to various criteria.
 
 **Scope:**
-- **Groups:**
-  - Predefined groups (family, friends, work, club, neighbors)
-  - Custom groups
-  - Hierarchical groups (e.g., Friends > School Friends)
-  - One contact can belong to multiple groups
+- **Circles:**
+  - Predefined circles (family, friends, work, club, neighbors)
+  - Custom circles
+  - Hierarchical circles (e.g., Friends > School Friends)
+  - One contact can belong to multiple circles
 - **Tags:**
   - Free tag assignment (e.g., #Hiking, #Cooking, #Tech)
   - Tag cloud for quick navigation
@@ -222,7 +224,7 @@ Easy migration from and to other systems.
   - Deduplication assistant after import
 - **Export:**
   - Full export as vCard
-  - Selective export (individual contacts, groups)
+  - Selective export (individual contacts, circles)
   - CSV export for further processing
   - Backup function (complete data export incl. metadata)
 - **Data Cleansing:**
@@ -271,7 +273,7 @@ Overviews and statistics for contact maintenance.
   - Top contacts (by interaction frequency)
 - **Insights:**
   - Contact frequency analysis
-  - Group distribution (pie chart)
+  - Circle distribution (pie chart)
   - Interaction trends (temporal development)
   - Identify "neglected" contacts
 - **Personalization:**
@@ -288,11 +290,11 @@ Powerful search across all contact data.
 
 **Scope:**
 - **Full-Text Search:**
-  - Search across name, notes, tags, groups
+  - Search across name, notes, tags, circles
   - Fuzzy search (typo-tolerant)
   - Autocomplete during input
 - **Advanced Filters:**
-  - Combined filters (group + tag + time period)
+  - Combined filters (circle + tag + time period)
   - Saved searches/filters
   - "Last contacted" filter
   - Birthday time period
@@ -377,19 +379,19 @@ Powerful search across all contact data.
 - `/api/contacts` - CRUD for contacts
 - `/api/interactions` - interaction tracking
 - `/api/reminders` - reminder management
-- `/api/groups` - group management
+- `/api/circles` - circle management
 - `/api/users` - user management
 - `/caldav/` - CalDAV endpoint
 - `/carddav/` - CardDAV endpoint
 
 **Data Model Relationships:**
 - User → Contacts (1:n)
-- User → Groups (1:n)
+- User → Circles (1:n)
 - Contact → Interactions (1:n)
 - Contact → Reminders (1:n)
-- Contact → Groups (n:m)
+- Contact → Circles (n:m)
 - Contact → Tags (n:m)
-- Group → Users (n:m) - for multi-user
+- Circle → Users (n:m) - for multi-user
 
 ### 6.3 Data Interfaces
 
@@ -411,7 +413,7 @@ Powerful search across all contact data.
 ### Phase 1: MVP (The Essentials)
 Let's start with the basics that make this useful:
 - Feature 1: Contact Management (the core database)
-- Feature 4: Categorization (organize with groups & tags)
+- Feature 4: Categorization (organize with circles & tags)
 - Feature 10: Search (find what you need)
 - Feature 5: Multi-User (authentication and basic setup)
 
@@ -429,6 +431,11 @@ Finally, let's make it work with everything else:
 - Feature 9: Dashboard (enhanced insights)
 - Performance tuning (make it fast!)
 
+### Phase 4: Full Circle
+Bring back the original Freundebuch experience:
+- Self-Service Friend Pages (let friends fill out their own pages)
+- See [Epic 13](../project-management/epics/epic-13-self-service-pages.md) for details
+
 ### Questions We're Still Figuring Out
 1. Multi-tenant from day one, or add it later?
 2. How should the SaaS pricing work?
@@ -442,9 +449,11 @@ Finally, let's make it work with everything else:
 
 - **CalDAV**: Calendaring Extensions to WebDAV - protocol for calendar synchronization
 - **CardDAV**: vCard Extensions to WebDAV - protocol for contact synchronization
-- **CRM**: Customer Relationship Management
+- **Circle**: A way to organize friends in Freundebuch (replaces traditional "groups")
 - **FOSS**: Free and Open Source Software
+- **Freundebuch**: German for "Friendship Book" - a childhood tradition digitized for adults
 - **MVP**: Minimum Viable Product
+- **Page**: A friend's profile in your Freundebuch
 - **PWA**: Progressive Web App
 - **SaaS**: Software as a Service
 - **vCard**: Electronic business card format
