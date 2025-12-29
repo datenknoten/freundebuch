@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/enko/freundebuch2/compare/v1.1.0...v1.1.1) (2025-12-29)
+
+### Bug Fixes
+
+* **backend:** Fix TypeScript build output structure ([67833da](https://github.com/enko/freundebuch2/commit/67833da0bd2a31d167a17c1826023a222c85da3e))
+
 ## [1.1.0](https://github.com/enko/freundebuch2/compare/v1.0.0...v1.1.0) (2025-12-29)
 
 ### Features
