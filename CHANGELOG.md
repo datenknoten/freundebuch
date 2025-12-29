@@ -1,3 +1,23 @@
+## [2.0.0](https://github.com/enko/freundebuch2/compare/v1.1.1...v2.0.0) (2025-12-29)
+
+### ⚠ BREAKING CHANGES
+
+* **config:** Existing databases need to be recreated with new names.
+Run: pnpm docker:down && docker volume rm freundebuch2_postgres_data
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+
+### Features
+
+* **docs:** Add Epic 13 for self-service friend pages ([43c0ac1](https://github.com/enko/freundebuch2/commit/43c0ac1caea105b036fe215d67b53939eaa1e8e3))
+* **frontend:** Rebrand UI from Personal CRM to Freundebuch ([dd3c1a0](https://github.com/enko/freundebuch2/commit/dd3c1a0a03785c70951db4de59e17db2f74b9db8))
+
+### Miscellaneous Chores
+
+* **config:** Rename database from personal_crm to freundebuch ([cbac65b](https://github.com/enko/freundebuch2/commit/cbac65beb94f760ae645b08fd4d3398895660695))
+
 ## [1.1.1](https://github.com/enko/freundebuch2/compare/v1.1.0...v1.1.1) (2025-12-29)
 
 ### Bug Fixes
