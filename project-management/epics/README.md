@@ -1,6 +1,6 @@
 # Epics Overview
 
-Welcome to the epic planning documents for Personal CRM! Each epic represents a major feature area that we've broken down into bite-sized, manageable phases.
+Welcome to the epic planning documents for Freundebuch! Each epic represents a major feature area that we've broken down into bite-sized, manageable phases.
 
 ## Epic List
 
@@ -19,6 +19,7 @@ Welcome to the epic planning documents for Personal CRM! Each epic represents a 
 | [Epic 10](epic-10-search-functionality.md) | Search Functionality | Phase 1 (basic), Phase 2 (advanced) | High/Medium | Planned |
 | [Epic 11](epic-11-custom-fields.md) | Custom Fields | Phase 2 | Low | Planned |
 | [Epic 12](epic-12-collectives.md) | Collectives | Phase 2 | Medium | Planned |
+| [Epic 13](epic-13-self-service-pages.md) | Self-Service Friend Pages | Phase 4 | Low | Future |
 
 ## Implementation Phases
 
@@ -98,6 +99,21 @@ Welcome to the epic planning documents for Personal CRM! Each epic represents a 
 
 ---
 
+### Phase 4: The Full Circle
+**Goal:** Bring back the original Freundebuch experience
+
+**Epics:**
+- Epic 13: Self-Service Friend Pages
+
+**What you'll be able to do:**
+- Send a link to friends so they can fill out their own pages
+- Customize what information you want them to share
+- Get notified when friends complete their pages
+- Let friends update their info over time
+- Just like passing around a Freundebuch, but digital!
+
+---
+
 ## Epic Dependencies
 
 ```mermaid
@@ -118,6 +134,8 @@ graph TD
     E1 --> E6[Epic 6: CalDAV/CardDAV]
     E1 --> E7[Epic 7: Import/Export]
     E4 --> E10
+    E1 --> E13[Epic 13: Self-Service Pages]
+    E5 --> E13
 ```
 
 ## How to Use This Directory
