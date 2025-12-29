@@ -57,15 +57,15 @@ services:
     container_name: freundebuch-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-personal_crm}
-      POSTGRES_USER: ${POSTGRES_USER:-crm_user}
+      POSTGRES_DB: ${POSTGRES_DB:-freundebuch}
+      POSTGRES_USER: ${POSTGRES_USER:-freundebuch}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm_user} -d ${POSTGRES_DB:-personal_crm}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-freundebuch} -d ${POSTGRES_DB:-freundebuch}"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -9,5 +9,5 @@
   "srcDir": "./src/",
   "failOnError": false,
   "camelCaseColumnNames": false,
-  "dbUrl": "postgresql://crm_user:dev_password@localhost:5432/personal_crm_dev"
+  "dbUrl": "postgresql://freundebuch:dev_password@localhost:5432/freundebuch_dev"
 }

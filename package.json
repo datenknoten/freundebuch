@@ -3,7 +3,7 @@
   "version": "1.1.1",
   "private": true,
   "type": "module",
-  "description": "Personal CRM - A self-hostable relationship management tool",
+  "description": "Freundebuch - A digital friendship book for adults",
   "scripts": {
     "dev": "pnpm --parallel --stream run dev",
     "build": "pnpm --filter @freundebuch/shared run build && pnpm --filter !@freundebuch/shared --recursive run build",

@@ -74,7 +74,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     },
   });
 
-  pgm.sql(`COMMENT ON TABLE contacts IS 'Contact entries for Personal CRM'`);
+  pgm.sql(`COMMENT ON TABLE contacts IS 'Contact entries for Freundebuch'`);
 
   // Add constraint for non-empty display_name
   pgm.addConstraint('contacts', 'contacts_display_name_not_empty', {
