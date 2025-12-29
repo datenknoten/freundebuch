@@ -32,6 +32,7 @@ export default {
         'config', // Configuration files
         'ci', // CI/CD configuration
         'dx', // Developer experience
+        'release', // Semantic-release automated commits
       ],
     ],
     'scope-empty': [1, 'never'], // Warn if scope is missing (but don't fail)
@@ -40,7 +41,7 @@ export default {
     'subject-full-stop': [2, 'never', '.'], // No period at end of subject
     'header-max-length': [2, 'always', 100], // Max 100 chars for header
     'body-leading-blank': [2, 'always'], // Blank line before body
-    'body-max-line-length': [2, 'always', 100], // Max 100 chars per line in body
-    'footer-leading-blank': [2, 'always'], // Blank line before footer
+    'body-max-line-length': [0, 'always', 100], // Disabled: auto-generated changelogs have long lines
+    'footer-leading-blank': [0, 'always'], // Disabled: auto-generated changelogs don't follow this
   },
 };
