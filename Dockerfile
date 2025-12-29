@@ -31,12 +31,14 @@ COPY packages/shared ./packages/shared
 RUN pnpm --filter @freundebuch/shared run build
 
 # ============================================
-# Stage 4: Build backend
+# Stage 4: Build backend and migrations
 # ============================================
 FROM shared-builder AS backend-builder
 
 COPY apps/backend ./apps/backend
-RUN pnpm --filter @freundebuch/backend run build
+COPY database ./database
+RUN pnpm --filter @freundebuch/backend run build && \
+    pnpm run migrate:build
 
 # ============================================
 # Stage 5: Build frontend (static)
@@ -77,8 +79,8 @@ COPY --from=shared-builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=backend-builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=frontend-builder /app/apps/frontend/build ./apps/frontend/build
 
-# Copy database migrations
-COPY database ./database
+# Copy compiled database migrations
+COPY --from=backend-builder /app/database/dist ./database/dist
 
 # Copy nginx configuration
 COPY docker/nginx.prod.conf /etc/nginx/nginx.conf

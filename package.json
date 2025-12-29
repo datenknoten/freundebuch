@@ -17,6 +17,8 @@
     "check": "biome check --write .",
     "type-check": "pnpm --filter @freundebuch/shared run build && pnpm --recursive run type-check",
     "migrate": "pnpm --filter backend run migrate",
+    "migrate:build": "tsc --project database/tsconfig.json",
+    "migrate:prod": "node node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize --migrations-dir database/dist up",
     "migrate:create": "pnpm --filter backend run migrate:create",
     "pgtyped": "pnpm --filter backend run pgtyped",
     "pgtyped:watch": "pnpm --filter backend run pgtyped:watch",
@@ -31,6 +33,9 @@
     "node": ">=24.0.0",
     "pnpm": ">=8.0.0"
   },
+  "dependencies": {
+    "node-pg-migrate": "8.0.4"
+  },
   "devDependencies": {
     "@biomejs/biome": "2.3.10",
     "@commitlint/cli": "20.2.0",
@@ -38,8 +43,10 @@
     "@semantic-release/changelog": "6.0.3",
     "@semantic-release/exec": "7.0.3",
     "@semantic-release/git": "10.0.1",
+    "@types/pg": "8.16.0",
     "conventional-changelog-conventionalcommits": "8.0.0",
     "husky": "9.1.7",
+    "pg": "8.16.3",
     "semantic-release": "24.2.5",
     "typescript": "5.9.3"
   }
