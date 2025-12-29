@@ -4,7 +4,7 @@ This file provides guidance for AI coding assistants working with this codebase.
 
 ## Project Summary
 
-**Personal CRM** - A self-hostable web application for relationship management. See [docs/architecture.md](docs/architecture.md) for full details.
+**Freundebuch** - A self-hostable web application for relationship management (a digital friendship book for adults). See [docs/architecture.md](docs/architecture.md) for full details and [docs/brand.md](docs/brand.md) for brand guidelines.
 
 ## Documentation
 

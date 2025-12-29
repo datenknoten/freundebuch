@@ -237,8 +237,8 @@ services:
   postgres:
     image: postgres:18-bookworm
     environment:
-      POSTGRES_DB: personal_crm_dev
-      POSTGRES_USER: crm_user
+      POSTGRES_DB: freundebuch_dev
+      POSTGRES_USER: freundebuch
       POSTGRES_PASSWORD: dev_password
     ports:
       - "5432:5432"
@@ -252,7 +252,7 @@ services:
     depends_on:
       - postgres
     environment:
-      DATABASE_URL: postgres://crm_user:dev_password@postgres:5432/personal_crm_dev
+      DATABASE_URL: postgres://freundebuch:dev_password@postgres:5432/freundebuch_dev
 
   frontend:
     build: ./frontend
@@ -392,7 +392,7 @@ services:
 
 ```bash
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/personal_crm
+DATABASE_URL=postgresql://user:password@localhost:5432/freundebuch
 DATABASE_POOL_MIN=2
 DATABASE_POOL_MAX=10
 

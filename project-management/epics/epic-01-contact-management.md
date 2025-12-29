@@ -7,7 +7,7 @@
 
 ## Overview
 
-This is the foundation of your Personal CRM - a comprehensive contact database that goes beyond what standard address books offer. We're building a central hub for all your contact information, designed to capture the details that actually matter for maintaining meaningful relationships.
+This is the foundation of your Freundebuch - a comprehensive contact database that goes beyond what standard address books offer. We're building a central hub for all your contact information, designed to capture the details that actually matter for maintaining meaningful relationships.
 
 ## Sub-Epic Structure
 

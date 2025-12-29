@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a **Personal CRM** - a self-hostable web application for relationship management designed for individuals and families. Think of it as an address book that helps you maintain meaningful connections by tracking interactions, setting reminders, and providing insights into your relationships.
+**Freundebuch** is a self-hostable web application for relationship management designed for individuals and families. Think of it as your digital friendship book that helps you maintain meaningful connections by tracking interactions, setting reminders, and providing insights into your relationships.
 
 **Important:** This is a personal relationship tool, not a business/sales CRM.
 

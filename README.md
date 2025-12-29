@@ -1,4 +1,4 @@
-# Personal CRM (Freundebuch)
+# Freundebuch
 
 A self-hostable web application for relationship management designed for individuals and families. Think of it as your relationship assistant that helps you maintain meaningful connections.
 
@@ -39,7 +39,7 @@ That's it! Your app is now running:
 
 ## What is it?
 
-Think of Personal CRM as your relationship assistant. It's an address book that actually helps you maintain meaningful connections:
+Think of Freundebuch as your digital friendship book. It's an address book that actually helps you maintain meaningful connections:
 
 - **Smart Contact Management** - Remember not just phone numbers, but the stuff that matters
 - **Interaction Tracking** - Keep a history of your meetings and conversations
@@ -48,7 +48,7 @@ Think of Personal CRM as your relationship assistant. It's an address book that 
 - **Multi-User Support** - Perfect for families or households
 - **Standards-Based Sync** - Works seamlessly with your phone through CardDAV/CalDAV
 
-See [docs/personal-crm-concept.md](docs/personal-crm-concept.md) for the complete concept document.
+See [docs/concept.md](docs/concept.md) for the complete concept document, and [docs/brand.md](docs/brand.md) for our brand guidelines.
 
 ## Planned Roadmap
 
@@ -207,7 +207,7 @@ Copy `.env.example` to `.env` and configure:
 
 ```bash
 # Database
-DATABASE_URL=postgresql://crm_user:dev_password@localhost:5432/personal_crm_dev
+DATABASE_URL=postgresql://freundebuch:dev_password@localhost:5432/freundebuch_dev
 
 # Server
 PORT=3000

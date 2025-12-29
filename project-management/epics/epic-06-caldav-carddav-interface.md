@@ -26,8 +26,8 @@ Want to access your contacts on your phone and other devices? This feature provi
   - Desktop applications (Thunderbird, Outlook, macOS Contacts)
   - Other CardDAV clients
 - Bidirectional synchronization
-  - Changes in Personal CRM sync to clients
-  - Changes in clients sync to Personal CRM
+  - Changes in Freundebuch sync to clients
+  - Changes in clients sync to Freundebuch
 - Conflict detection and resolution
 - Incremental sync (only changed contacts)
 - Multiple address book support (e.g., personal, shared)
@@ -71,7 +71,7 @@ Want to access your contacts on your phone and other devices? This feature provi
 ## User Stories
 
 1. As a user, I want to sync my contacts to my iPhone so I can access them natively
-2. As a user, I want changes I make on my phone to sync back to Personal CRM
+2. As a user, I want changes I make on my phone to sync back to Freundebuch
 3. As a user, I want my contact birthdays to appear in my calendar app automatically
 4. As a user, I want to sync reminders to my todo app so I can manage them there
 5. As a user, I want multiple devices to stay in sync without conflicts

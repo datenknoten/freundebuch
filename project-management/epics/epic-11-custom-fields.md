@@ -7,7 +7,7 @@
 
 ## Overview
 
-Give users the power to extend their contact database with custom fields tailored to their specific needs. Whether it's tracking preferred pronouns, VIP status, or any other information that matters to them, custom fields make the Personal CRM truly personal.
+Give users the power to extend their contact database with custom fields tailored to their specific needs. Whether it's tracking preferred pronouns, VIP status, or any other information that matters to them, custom fields make Freundebuch truly yours.
 
 ## Goals
 

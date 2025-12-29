@@ -140,7 +140,7 @@ Moving from another system? No problem! This feature makes it easy to bring your
 
 ## User Stories
 
-1. As a user, I want to import my Google Contacts so I can start using Personal CRM with my existing data
+1. As a user, I want to import my Google Contacts so I can start using Freundebuch with my existing data
 2. As a user, I want to export my contacts as vCard so I can back them up
 3. As a user, I want to detect duplicates after import so I don't have messy data
 4. As a user, I want to merge duplicate contacts so I have a clean database

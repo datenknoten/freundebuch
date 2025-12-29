@@ -1,6 +1,6 @@
 # Database Conventions & System Prompt
 
-This document defines the database design conventions and best practices for the Personal CRM application.
+This document defines the database design conventions and best practices for Freundebuch.
 
 ## Schema Organization
 
