@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/enko/freundebuch2/compare/v1.0.0...v1.1.0) (2025-12-29)
+
+### Features
+
+* **database:** Add production-ready migration workflow ([6e0599a](https://github.com/enko/freundebuch2/commit/6e0599a7b6eaaa87ff9e32816f2d724cf4eb0ef8))
+
 ## 1.0.0 (2025-12-29)
 
 ### Features
