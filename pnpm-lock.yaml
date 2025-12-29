@@ -51,6 +51,9 @@ importers:
 
   apps/backend:
     dependencies:
+      '@freundebuch/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@hono/node-server':
         specifier: 1.19.7
         version: 1.19.7(hono@4.11.1)

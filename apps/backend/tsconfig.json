@@ -6,8 +6,8 @@
     "types": ["node", "vitest/globals"],
     "noEmit": true,
     "paths": {
-      "@freundebuch/shared": ["../../packages/shared/src/index.js"],
-      "@freundebuch/shared/index.js": ["../../packages/shared/src/index.js"]
+      "@freundebuch/shared": ["../../packages/shared/src/index.ts"],
+      "@freundebuch/shared/index.js": ["../../packages/shared/src/index.ts"]
     }
   },
   "include": ["src/**/*", "tests/**/*"],

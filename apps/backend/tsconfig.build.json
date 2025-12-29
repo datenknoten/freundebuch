@@ -5,10 +5,8 @@
     "composite": false,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "paths": {
-      "@freundebuch/shared": ["../../packages/shared/src/index.ts"],
-      "@freundebuch/shared/index.js": ["../../packages/shared/src/index.ts"]
-    }
+    "rootDir": "./src",
+    "paths": {}
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests/**/*"]

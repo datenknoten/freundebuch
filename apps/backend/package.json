@@ -20,6 +20,7 @@
     "seed": "tsx --env-file=../../.env src/scripts/seed.ts"
   },
   "dependencies": {
+    "@freundebuch/shared": "workspace:*",
     "@hono/node-server": "1.19.7",
     "@pgtyped/runtime": "2.4.2",
     "arktype": "2.1.29",
