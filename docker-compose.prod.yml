@@ -1,0 +1,81 @@
+services:
+  freundebuch:
+    image: ghcr.io/enko/freundebuch2:latest
+    container_name: freundebuch
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_POOL_MIN: ${DATABASE_POOL_MIN:-2}
+      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-10}
+
+      # Server
+      NODE_ENV: production
+      PORT: 3000
+      FRONTEND_URL: https://freundebuch.schumacher.im
+      BACKEND_URL: https://freundebuch.schumacher.im
+
+      # Authentication (set these in .env or as secrets)
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRY: ${JWT_EXPIRY:-604800}
+      SESSION_SECRET: ${SESSION_SECRET}
+      SESSION_EXPIRY_DAYS: ${SESSION_EXPIRY_DAYS:-7}
+      PASSWORD_RESET_EXPIRY_HOURS: ${PASSWORD_RESET_EXPIRY_HOURS:-1}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - freundebuch_uploads:/app/uploads
+    networks:
+      - traefik
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.freundebuch.rule=Host(`freundebuch.schumacher.im`)"
+      - "traefik.http.routers.freundebuch.entrypoints=websecure"
+      - "traefik.http.routers.freundebuch.tls=true"
+      - "traefik.http.routers.freundebuch.tls.certresolver=letsencrypt"
+      - "traefik.http.services.freundebuch.loadbalancer.server.port=80"
+      # HTTP to HTTPS redirect
+      - "traefik.http.routers.freundebuch-http.rule=Host(`freundebuch.schumacher.im`)"
+      - "traefik.http.routers.freundebuch-http.entrypoints=web"
+      - "traefik.http.routers.freundebuch-http.middlewares=https-redirect"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18-bookworm
+    container_name: freundebuch-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-personal_crm}
+      POSTGRES_USER: ${POSTGRES_USER:-crm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm_user} -d ${POSTGRES_DB:-personal_crm}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  traefik:
+    external: true
+  internal:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  freundebuch_uploads:
