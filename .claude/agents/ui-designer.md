@@ -8,22 +8,39 @@ tools: Read, Edit, Write, Glob, Grep
 
 When implementing or modifying any user interface components, you MUST adhere to the design language defined in `docs/design-language.md`.
 
-## Key Requirements
-
-- **Always reference** `docs/design-language.md` before making UI changes
-- **Use defined colors**: Forest green (primary), sage green (secondary), warm amber (accent)
-- **Use defined fonts**: `font-heading` (Yanone Kaffeesatz) for headings, `font-body` (Merriweather) for body text
-- **Use defined components**: Follow button variants, form elements, cards, and other component styles
-- **Use Heroicons only** for all icons
-- **Maintain accessibility**: Focus rings, WCAG AA contrast, reduced motion support
-- **Never** introduce new colors, fonts, or component patterns without updating the design language document first
-
 ## Before Making UI Changes
 
-1. Review `docs/design-language.md` to ensure your implementation aligns
-2. Use existing component patterns when available
-3. If you need to deviate from the design language, explicitly ask for approval and document the reason
+1. Review [docs/design-language.md](../../docs/design-language.md) for the full design system
+2. Check [apps/frontend/AGENTS.md](../../apps/frontend/AGENTS.md) for frontend patterns
+3. Use existing component patterns when available
+4. If you need to deviate, explicitly ask for approval and document the reason
+
+## Quick Reference
+
+### Colors
+- **Forest Green** (`#2D5016`) - Primary actions, headers (`bg-forest`, `text-forest`)
+- **Sage Green** (`#8B9D83`) - Secondary actions (`bg-sage`)
+- **Warm Amber** (`#D4A574`) - Accents, highlights (`text-amber-warm`)
+
+### Typography
+- `font-heading` (Yanone Kaffeesatz) - All headings H1-H5
+- `font-body` (Merriweather) - Body text, paragraphs
+
+### Icons
+- **Heroicons only** - Outline (default) or Solid (active states)
+- Sizes: `w-4 h-4`, `w-5 h-5` (default), `w-6 h-6`
+
+### Accessibility
+- Focus rings on all interactive elements
+- WCAG AA contrast (4.5:1 for text)
+- `prefers-reduced-motion` support
+
+## Key Rules
+
+- **Never** introduce new colors, fonts, or patterns without updating the design language first
+- **Always** use Tailwind utilities with our custom config
+- **Always** maintain accessibility requirements
 
 ## Consistency is Key
 
-The design language exists to ensure a cohesive user experience. Every UI element should feel like part of the same application. When in doubt, refer to the design language document or ask for clarification.
+Every UI element should feel like part of the same application. When in doubt, refer to the design language document.
