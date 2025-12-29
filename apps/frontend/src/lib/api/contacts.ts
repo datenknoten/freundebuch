@@ -52,7 +52,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
   };
 
   if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
+    headers.Authorization = `Bearer ${accessToken}`;
   }
 
   const response = await fetch(url, {
@@ -314,7 +314,7 @@ export async function uploadPhoto(contactId: string, file: File): Promise<PhotoU
 
   const headers: Record<string, string> = {};
   if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
+    headers.Authorization = `Bearer ${accessToken}`;
   }
 
   const response = await fetch(url, {
