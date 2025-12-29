@@ -3,7 +3,7 @@ import ContactForm from '$lib/components/contacts/ContactForm.svelte';
 </script>
 
 <svelte:head>
-  <title>New Contact | Personal CRM</title>
+  <title>New Contact | Freundebuch</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">

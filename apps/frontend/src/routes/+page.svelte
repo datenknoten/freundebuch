@@ -3,12 +3,12 @@ import { currentUser, isAuthenticated } from '$lib/stores/auth';
 </script>
 
 <svelte:head>
-	<title>Home | Personal CRM</title>
+	<title>Home | Freundebuch</title>
 </svelte:head>
 
 <div class="bg-gray-50 flex items-center justify-center p-4 py-16">
 	<div class="text-center max-w-4xl">
-		<h1 class="text-6xl font-heading text-forest mb-4">Personal CRM</h1>
+		<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>
 
 		{#if $isAuthenticated && $currentUser}
 			<p class="text-2xl font-body text-gray-700 mb-8">
@@ -42,7 +42,7 @@ import { currentUser, isAuthenticated } from '$lib/stores/auth';
 			</p>
 			<div class="bg-white rounded-xl shadow-lg p-8 mb-8 text-left">
 				<h2 class="text-3xl font-heading text-gray-800 mb-6 text-center">
-					What is Personal CRM?
+					What is Freundebuch?
 				</h2>
 				<div class="space-y-4 font-body text-gray-700">
 					<p>

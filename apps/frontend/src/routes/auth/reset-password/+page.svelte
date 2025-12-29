@@ -7,7 +7,7 @@ const token = $derived($page.url.searchParams.get('token') || '');
 </script>
 
 <svelte:head>
-	<title>Reset Password | Personal CRM</title>
+	<title>Reset Password | Freundebuch</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">

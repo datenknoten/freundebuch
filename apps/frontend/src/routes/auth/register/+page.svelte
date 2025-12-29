@@ -3,7 +3,7 @@ import RegisterForm from '$lib/components/RegisterForm.svelte';
 </script>
 
 <svelte:head>
-	<title>Sign Up | Personal CRM</title>
+	<title>Sign Up | Freundebuch</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">

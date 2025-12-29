@@ -3,7 +3,7 @@ import * as authApi from '$lib/api/auth';
 import { currentUser } from '$lib/stores/auth';
 
 const pageTitle = $derived(
-  $currentUser?.email ? `${$currentUser.email} | Personal CRM` : 'Profile | Personal CRM',
+  $currentUser?.email ? `${$currentUser.email} | Freundebuch` : 'Profile | Freundebuch',
 );
 
 let isEditing = $state(false);

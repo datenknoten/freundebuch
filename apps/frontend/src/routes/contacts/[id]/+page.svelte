@@ -14,7 +14,7 @@ $effect(() => {
 
 // Dynamic page title based on contact name
 const pageTitle = $derived(
-  $currentContact ? `${$currentContact.displayName} | Personal CRM` : 'Contact | Personal CRM',
+  $currentContact ? `${$currentContact.displayName} | Freundebuch` : 'Contact | Freundebuch',
 );
 </script>
 

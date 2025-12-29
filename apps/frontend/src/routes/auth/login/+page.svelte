@@ -3,7 +3,7 @@ import LoginForm from '$lib/components/LoginForm.svelte';
 </script>
 
 <svelte:head>
-	<title>Sign In | Personal CRM</title>
+	<title>Sign In | Freundebuch</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">

@@ -15,7 +15,7 @@ $effect(() => {
 </script>
 
 <svelte:head>
-  <title>Contacts | Personal CRM</title>
+  <title>Contacts | Freundebuch</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">

@@ -141,10 +141,10 @@ test.describe('Navigation Bar', () => {
     await expect(navbar.getByRole('button', { name: 'Logout' })).not.toBeVisible();
   });
 
-  test('should have Personal CRM logo/link', async ({ page }) => {
+  test('should have Freundebuch logo/link', async ({ page }) => {
     await page.goto('/');
 
-    const logo = page.locator('nav').getByRole('link', { name: 'Personal CRM' });
+    const logo = page.locator('nav').getByRole('link', { name: 'Freundebuch' });
     await expect(logo).toBeVisible();
 
     // Clicking logo should go to home

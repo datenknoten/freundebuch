@@ -17,7 +17,7 @@ async function handleLogout() {
 		<div class="flex justify-between items-center h-16">
 			<div class="flex items-center">
 				<a href="/" class="text-2xl font-heading text-forest">
-					Personal CRM
+					Freundebuch
 				</a>
 			</div>
 
