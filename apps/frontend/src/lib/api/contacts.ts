@@ -27,7 +27,9 @@ import type {
 import { auth } from '../stores/auth.js';
 import { ApiError } from './auth.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// In production with single-domain deployment, use empty string for same-origin requests.
+// In development, VITE_API_URL can point to the backend server if needed.
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 /**
  * Get the current access token from the auth store
