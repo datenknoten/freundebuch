@@ -1,3 +1,13 @@
+## [2.2.0](https://github.com/enko/freundebuch2/compare/v2.1.0...v2.2.0) (2025-12-30)
+
+### Features
+
+* **ci:** Add automated deployment to production server ([246232b](https://github.com/enko/freundebuch2/commit/246232be03cc0b2902f5e9918089ad974e3c8daf))
+
+### Bug Fixes
+
+* **ci:** Address code review issues for deployment script ([0b9b858](https://github.com/enko/freundebuch2/commit/0b9b858e42aeaf9c9de204e0a10a389be098c982))
+
 ## [2.1.0](https://github.com/enko/freundebuch2/compare/v2.0.0...v2.1.0) (2025-12-30)
 
 ### Features
