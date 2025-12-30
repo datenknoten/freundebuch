@@ -1,3 +1,9 @@
+## [2.3.0](https://github.com/enko/freundebuch2/compare/v2.2.2...v2.3.0) (2025-12-30)
+
+### Features
+
+* **ci:** Add supply chain protection with provenance attestations ([d0d193e](https://github.com/enko/freundebuch2/commit/d0d193e7731cb3532da538a973234f45ad17aa71))
+
 ## [2.2.2](https://github.com/enko/freundebuch2/compare/v2.2.1...v2.2.2) (2025-12-30)
 
 ### Code Refactoring
