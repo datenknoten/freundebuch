@@ -1,3 +1,13 @@
+## [2.1.0](https://github.com/enko/freundebuch2/compare/v2.0.0...v2.1.0) (2025-12-30)
+
+### Features
+
+* **frontend:** Add mobile-friendly hamburger menu to navbar ([d1286c2](https://github.com/enko/freundebuch2/commit/d1286c216094f08ee5c23322f2cea59e086ed79e))
+
+### Bug Fixes
+
+* **frontend:** Address code review issues in mobile navbar ([4c155d1](https://github.com/enko/freundebuch2/commit/4c155d1aa2311509e0010062ca17048afa1d81e7))
+
 ## [2.0.0](https://github.com/enko/freundebuch2/compare/v1.1.1...v2.0.0) (2025-12-29)
 
 ### ⚠ BREAKING CHANGES
