@@ -179,3 +179,18 @@ jobs:
         with:
           tag_name: v${{ needs.release.outputs.new_release_version }}
           files: frontend-${{ needs.release.outputs.new_release_version }}.tar.gz
+
+  # Job 5: Deploy to production server
+  deploy:
+    name: Deploy to Production
+    needs: [release, docker]
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: node4.datenknoten.me
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: /home/deploy-freundebuch/deploy.sh
