@@ -1,12 +1,13 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
+import { fade } from 'svelte/transition';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 
 let mobileMenuOpen = $state(false);
 
 // Derive page title from current route
-const pageTitle = $derived(() => {
+const pageTitle = $derived.by(() => {
   const pathname = $page.url.pathname;
   if (pathname === '/' || pathname === '/contacts') return 'Friends';
   if (pathname === '/contacts/new') return 'Add Friend';
@@ -30,14 +31,77 @@ async function handleLogout() {
 function closeMobileMenu() {
   mobileMenuOpen = false;
 }
+
+let menuElement: HTMLDivElement;
+
+// Prevent body scroll when mobile menu is open
+$effect(() => {
+  if (mobileMenuOpen) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+
+  return () => {
+    document.body.style.overflow = '';
+  };
+});
+
+// Focus trap for mobile menu
+$effect(() => {
+  if (mobileMenuOpen && menuElement) {
+    const focusableElements = menuElement.querySelectorAll<HTMLElement>(
+      'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstFocusable = focusableElements[0];
+    const lastFocusable = focusableElements[focusableElements.length - 1];
+
+    function handleTabKey(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstFocusable) {
+          e.preventDefault();
+          lastFocusable?.focus();
+        }
+      } else {
+        if (document.activeElement === lastFocusable) {
+          e.preventDefault();
+          firstFocusable?.focus();
+        }
+      }
+    }
+
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        closeMobileMenu();
+      }
+    }
+
+    menuElement.addEventListener('keydown', handleTabKey);
+    document.addEventListener('keydown', handleEscape);
+    firstFocusable?.focus();
+
+    return () => {
+      menuElement.removeEventListener('keydown', handleTabKey);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }
+});
 </script>
 
 <!-- Mobile menu overlay -->
 {#if mobileMenuOpen}
   <div
+    transition:fade={{ duration: 200 }}
     class="fixed inset-0 bg-gray-900/50 z-40 sm:hidden"
     onclick={closeMobileMenu}
-    onkeydown={(e) => e.key === 'Escape' && closeMobileMenu()}
+    onkeydown={(e) => {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        closeMobileMenu();
+      }
+    }}
     role="button"
     tabindex="0"
     aria-label="Close menu"
@@ -46,6 +110,7 @@ function closeMobileMenu() {
 
 <!-- Mobile slide-out menu -->
 <div
+  bind:this={menuElement}
   class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-200 ease-in-out sm:hidden {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
 >
   <div class="p-4 border-b border-gray-200">
@@ -54,7 +119,7 @@ function closeMobileMenu() {
     </a>
   </div>
 
-  <nav class="p-4">
+  <nav class="p-4" aria-label="Mobile navigation menu">
     {#if $isAuthenticated && $currentUser}
       <div class="space-y-2">
         <a
@@ -135,6 +200,7 @@ function closeMobileMenu() {
         class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
         onclick={() => mobileMenuOpen = !mobileMenuOpen}
         aria-label="Toggle menu"
+        aria-expanded={mobileMenuOpen}
       >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           {#if mobileMenuOpen}
@@ -154,7 +220,7 @@ function closeMobileMenu() {
 
       <!-- Mobile: Page title (centered) -->
       <div class="sm:hidden flex-1 text-center">
-        <span class="text-lg font-heading text-forest">{pageTitle()}</span>
+        <span class="text-lg font-heading text-forest">{pageTitle}</span>
       </div>
 
       <!-- Mobile: Spacer for symmetry -->
