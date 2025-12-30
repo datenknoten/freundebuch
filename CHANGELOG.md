@@ -1,3 +1,9 @@
+## [2.3.2](https://github.com/enko/freundebuch2/compare/v2.3.1...v2.3.2) (2025-12-30)
+
+### Bug Fixes
+
+* **navbar:** make navbar fixed at top for mobile and desktop ([d87293c](https://github.com/enko/freundebuch2/commit/d87293ca1a9e8ac4a62026676a087233cf53b9ff))
+
 ## [2.3.1](https://github.com/enko/freundebuch2/compare/v2.3.0...v2.3.1) (2025-12-30)
 
 ### Bug Fixes
