@@ -129,6 +129,7 @@ jobs:
           sbom: true
 
       - name: Attest Docker image
+        if: ${{ github.event.repository.visibility == 'public' }}
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/${{ github.repository }}
@@ -187,6 +188,7 @@ jobs:
           tar -czvf "../../frontend-${VERSION}.tar.gz" build/
 
       - name: Attest frontend assets
+        if: ${{ github.event.repository.visibility == 'public' }}
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: frontend-${{ needs.release.outputs.new_release_version }}.tar.gz
