@@ -24,6 +24,7 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 | [Epic 15](epic-15-planned-contact-notes.md) | Contact Notes | MVP (Phase 1) | High | Planned |
 | [Epic 16](epic-16-planned-multi-user-workspaces.md) | Multi-User Workspaces | Phase 2 | Medium | Planned |
 | [Epic 17](epic-17-planned-advanced-search.md) | Advanced Search | Phase 2 | Medium | Planned |
+| [Epic 18](epic-18-planned-better-auth-migration.md) | Better Auth Migration | Phase 1.5 | High | Planned |
 
 ## Implementation Phases
 
@@ -65,6 +66,19 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 **Still to come:**
 - Organize contacts into groups and tag them (Epic 4)
 - Contact notes (Epic 15)
+
+---
+
+### Phase 1.5: Post-MVP Enhancement
+**Goal:** Improve the foundation before expanding features
+
+**Epics:**
+- Epic 18: Better Auth Migration - Planned
+
+**What we'll do:**
+- Replace custom auth with Better Auth library
+- Reduce maintenance burden
+- Enable future auth features (2FA, social login, passkeys)
 
 ---
 
@@ -151,6 +165,8 @@ graph TD
     E1 --> E13[Epic 13: Self-Service Pages]
     E5 --> E13
     E5 --> E16[Epic 16: Multi-User Workspaces]
+    E5 --> E18[Epic 18: Better Auth Migration]
+    E18 --> E16
     E1 --> E14[Epic 14: Inline Editing ✅]
 ```
 
@@ -191,4 +207,4 @@ Got questions or ideas about these epics? We'd love to hear from you:
 
 ---
 
-**Last Updated:** 2026-01-08
+**Last Updated:** 2026-01-10
