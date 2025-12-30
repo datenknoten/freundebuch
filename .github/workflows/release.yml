@@ -15,6 +15,8 @@ permissions:
   packages: write
   issues: write
   pull-requests: write
+  id-token: write
+  attestations: write
 
 jobs:
   # Job 1: Run all CI checks first
@@ -112,6 +114,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push Docker image
+        id: push
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -122,6 +125,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
+          provenance: mode=max
+          sbom: true
+
+      - name: Attest Docker image
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
   # Job 4: Build and attach frontend assets
   assets:
@@ -173,6 +185,11 @@ jobs:
         run: |
           cd apps/frontend
           tar -czvf "../../frontend-${VERSION}.tar.gz" build/
+
+      - name: Attest frontend assets
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: frontend-${{ needs.release.outputs.new_release_version }}.tar.gz
 
       - name: Upload frontend assets to release
         uses: softprops/action-gh-release@v2
