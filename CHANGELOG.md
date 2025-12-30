@@ -1,3 +1,9 @@
+## [2.2.1](https://github.com/enko/freundebuch2/compare/v2.2.0...v2.2.1) (2025-12-30)
+
+### Bug Fixes
+
+* **all:** Trigger build ([da47bab](https://github.com/enko/freundebuch2/commit/da47babdb1988b5eba092bc9d31fb650c6516d82))
+
 ## [2.2.0](https://github.com/enko/freundebuch2/compare/v2.1.0...v2.2.0) (2025-12-30)
 
 ### Features
