@@ -3,6 +3,13 @@
 ### Bug Fixes
 
 * **ci:** make attestation steps conditional on public visibility ([d29f8fb](https://github.com/enko/freundebuch2/commit/d29f8fb9874879af379dd5afe60a936d59a78ba6))
+* **mobile:** lock viewport and prevent horizontal overflow ([b82148b](https://github.com/enko/freundebuch2/commit/b82148bbe422e932b9b39eb3228f384d02bd584c))
+
+## [2.3.1](https://github.com/enko/freundebuch2/compare/v2.3.0...v2.3.1) (2025-12-30)
+
+### Bug Fixes
+
+* **ci:** make attestation steps conditional on public visibility ([d29f8fb](https://github.com/enko/freundebuch2/commit/d29f8fb9874879af379dd5afe60a936d59a78ba6))
 
 ## [2.3.0](https://github.com/enko/freundebuch2/compare/v2.2.2...v2.3.0) (2025-12-30)
 
