@@ -1,3 +1,9 @@
+## [2.2.2](https://github.com/enko/freundebuch2/compare/v2.2.1...v2.2.2) (2025-12-30)
+
+### Code Refactoring
+
+* **ci:** replace ssh-action with script-based deployment ([af052e1](https://github.com/enko/freundebuch2/commit/af052e137f242204b551c6271c6882d9b894b3a0))
+
 ## [2.2.1](https://github.com/enko/freundebuch2/compare/v2.2.0...v2.2.1) (2025-12-30)
 
 ### Bug Fixes
