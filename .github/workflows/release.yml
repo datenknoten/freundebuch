@@ -187,11 +187,20 @@ jobs:
     if: needs.release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.2
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          host: node4.datenknoten.me
-          port: 820
-          username: ${{ secrets.DEPLOY_SSH_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: /home/deploy-freundebuch/deploy.sh
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add host key to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "[node4.datenknoten.me]:820 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILOtQWdKnvQYP0gA5tnyYrTt+uGJDek3YGWSHi2M6f35" >> ~/.ssh/known_hosts
+
+      - name: Deploy via SSH
+        env:
+          DEPLOY_HOST: node4.datenknoten.me
+          DEPLOY_PORT: 820
+          DEPLOY_USER: ${{ secrets.DEPLOY_SSH_USER }}
+        run: |
+          ssh -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" /home/deploy-freundebuch/deploy.sh
