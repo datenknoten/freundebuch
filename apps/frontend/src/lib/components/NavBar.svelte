@@ -8,10 +8,10 @@ let mobileMenuOpen = $state(false);
 // Derive page title from current route
 const pageTitle = $derived(() => {
   const pathname = $page.url.pathname;
-  if (pathname === '/' || pathname === '/contacts') return 'Contacts';
-  if (pathname === '/contacts/new') return 'New Contact';
-  if (pathname.startsWith('/contacts/') && pathname.endsWith('/edit')) return 'Edit Contact';
-  if (pathname.startsWith('/contacts/')) return 'Contact';
+  if (pathname === '/' || pathname === '/contacts') return 'Friends';
+  if (pathname === '/contacts/new') return 'Add Friend';
+  if (pathname.startsWith('/contacts/') && pathname.endsWith('/edit')) return 'Edit';
+  if (pathname.startsWith('/contacts/')) return 'Friend';
   if (pathname === '/profile') return 'Profile';
   if (pathname.startsWith('/auth/')) return 'Freundebuch';
   return 'Freundebuch';
@@ -66,7 +66,7 @@ function closeMobileMenu() {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          New Contact
+          Add Friend
         </a>
         <a
           href="/contacts"
@@ -77,7 +77,7 @@ function closeMobileMenu() {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
-          Contacts
+          Friends
         </a>
         <a
           href="/profile"
@@ -167,7 +167,7 @@ function closeMobileMenu() {
             href="/contacts/new"
             data-sveltekit-preload-data="tap"
             class="inline-flex items-center gap-1 bg-forest text-white px-3 py-1.5 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200 text-sm"
-            title="Add new contact (n)"
+            title="Add a friend (n)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -179,7 +179,7 @@ function closeMobileMenu() {
             data-sveltekit-preload-data="tap"
             class="text-gray-700 hover:text-forest font-body font-medium transition-colors duration-200"
           >
-            Contacts
+            Friends
           </a>
           <a
             href="/profile"
