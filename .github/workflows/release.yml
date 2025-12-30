@@ -191,6 +191,7 @@ jobs:
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: node4.datenknoten.me
+          port: 820
           username: ${{ secrets.DEPLOY_SSH_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: /home/deploy-freundebuch/deploy.sh
