@@ -1,3 +1,9 @@
+## [2.4.0](https://github.com/enko/freundebuch2/compare/v2.3.2...v2.4.0) (2025-12-31)
+
+### Features
+
+* **all:** Add nickname field to contact model ([2652393](https://github.com/enko/freundebuch2/commit/2652393dbf5aa6f943bcdd0b6d5c299a4ab07817))
+
 ## [2.3.2](https://github.com/enko/freundebuch2/compare/v2.3.1...v2.3.2) (2025-12-30)
 
 ### Bug Fixes
