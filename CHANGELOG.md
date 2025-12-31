@@ -1,3 +1,9 @@
+## [2.5.0](https://github.com/enko/freundebuch2/compare/v2.4.0...v2.5.0) (2025-12-31)
+
+### Features
+
+* **frontend:** add cache buster for static assets ([c9cd0c9](https://github.com/enko/freundebuch2/commit/c9cd0c90d1eb5926647254ae2eecd9398ec8af89))
+
 ## [2.4.0](https://github.com/enko/freundebuch2/compare/v2.3.2...v2.4.0) (2025-12-31)
 
 ### Features
