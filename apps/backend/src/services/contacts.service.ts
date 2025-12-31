@@ -173,6 +173,7 @@ export class ContactsService {
       {
         userExternalId,
         displayName: data.display_name,
+        nickname: data.nickname ?? null,
         namePrefix: data.name_prefix ?? null,
         nameFirst: data.name_first ?? null,
         nameMiddle: data.name_middle ?? null,
@@ -220,6 +221,7 @@ export class ContactsService {
     return {
       id: contact.external_id,
       displayName: contact.display_name,
+      nickname: contact.nickname ?? undefined,
       namePrefix: contact.name_prefix ?? undefined,
       nameFirst: contact.name_first ?? undefined,
       nameMiddle: contact.name_middle ?? undefined,
@@ -260,6 +262,8 @@ export class ContactsService {
         userExternalId,
         contactExternalId,
         displayName: data.display_name ?? null,
+        updateNickname: 'nickname' in data,
+        nickname: data.nickname ?? null,
         updateNamePrefix: 'name_prefix' in data,
         namePrefix: data.name_prefix ?? null,
         updateNameFirst: 'name_first' in data,
@@ -1382,6 +1386,7 @@ export class ContactsService {
     return {
       id: contact.external_id,
       displayName: contact.display_name,
+      nickname: contact.nickname ?? undefined,
       namePrefix: contact.name_prefix ?? undefined,
       nameFirst: contact.name_first ?? undefined,
       nameMiddle: contact.name_middle ?? undefined,

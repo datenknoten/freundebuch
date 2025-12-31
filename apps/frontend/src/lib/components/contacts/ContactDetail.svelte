@@ -78,6 +78,9 @@ function formatDate(dateStr: string, yearKnown: boolean): string {
             .join(' ')}
         </p>
       {/if}
+      {#if contact.nickname}
+        <p class="text-gray-500 font-body text-sm mt-1">"{contact.nickname}"</p>
+      {/if}
     </div>
 
     <div class="flex gap-2">

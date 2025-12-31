@@ -38,6 +38,8 @@ export interface IGetContactByIdResult {
   name_prefix: string | null;
   /** Jr., Sr., III, PhD, etc. */
   name_suffix: string | null;
+  /** Informal name or nickname for the contact */
+  nickname: string | null;
   /** Company / organization name */
   organization: string | null;
   phones: Json | null;
@@ -320,6 +322,7 @@ export interface ICreateContactParams {
   nameMiddle?: string | null | void;
   namePrefix?: string | null | void;
   nameSuffix?: string | null | void;
+  nickname?: string | null | void;
   organization?: string | null | void;
   userExternalId?: string | null | void;
   workNotes?: string | null | void;
@@ -348,6 +351,8 @@ export interface ICreateContactResult {
   name_prefix: string | null;
   /** Jr., Sr., III, PhD, etc. */
   name_suffix: string | null;
+  /** Informal name or nickname for the contact */
+  nickname: string | null;
   /** Company / organization name */
   organization: string | null;
   /** URL to 200x200 thumbnail */
@@ -434,6 +439,7 @@ export interface IUpdateContactParams {
   nameMiddle?: string | null | void;
   namePrefix?: string | null | void;
   nameSuffix?: string | null | void;
+  nickname?: string | null | void;
   organization?: string | null | void;
   updateDepartment?: boolean | null | void;
   updateInterests?: boolean | null | void;
@@ -443,6 +449,7 @@ export interface IUpdateContactParams {
   updateNameMiddle?: boolean | null | void;
   updateNamePrefix?: boolean | null | void;
   updateNameSuffix?: boolean | null | void;
+  updateNickname?: boolean | null | void;
   updateOrganization?: boolean | null | void;
   updateWorkNotes?: boolean | null | void;
   userExternalId?: string | null | void;
@@ -472,6 +479,8 @@ export interface IUpdateContactResult {
   name_prefix: string | null;
   /** Jr., Sr., III, PhD, etc. */
   name_suffix: string | null;
+  /** Informal name or nickname for the contact */
+  nickname: string | null;
   /** Company / organization name */
   organization: string | null;
   /** URL to 200x200 thumbnail */

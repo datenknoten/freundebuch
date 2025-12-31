@@ -2,6 +2,7 @@
 SELECT
     c.external_id,
     c.display_name,
+    c.nickname,
     c.name_prefix,
     c.name_first,
     c.name_middle,
@@ -180,6 +181,7 @@ OFFSET :offset;
 INSERT INTO contacts.contacts (
     user_id,
     display_name,
+    nickname,
     name_prefix,
     name_first,
     name_middle,
@@ -195,6 +197,7 @@ INSERT INTO contacts.contacts (
 SELECT
     u.id,
     :displayName,
+    :nickname,
     :namePrefix,
     :nameFirst,
     :nameMiddle,
@@ -210,6 +213,7 @@ WHERE u.external_id = :userExternalId
 RETURNING
     external_id,
     display_name,
+    nickname,
     name_prefix,
     name_first,
     name_middle,
@@ -229,6 +233,7 @@ RETURNING
 UPDATE contacts.contacts c
 SET
     display_name = COALESCE(:displayName, c.display_name),
+    nickname = CASE WHEN :updateNickname THEN :nickname ELSE c.nickname END,
     name_prefix = CASE WHEN :updateNamePrefix THEN :namePrefix ELSE c.name_prefix END,
     name_first = CASE WHEN :updateNameFirst THEN :nameFirst ELSE c.name_first END,
     name_middle = CASE WHEN :updateNameMiddle THEN :nameMiddle ELSE c.name_middle END,
@@ -248,6 +253,7 @@ WHERE c.external_id = :contactExternalId
 RETURNING
     c.external_id,
     c.display_name,
+    c.nickname,
     c.name_prefix,
     c.name_first,
     c.name_middle,

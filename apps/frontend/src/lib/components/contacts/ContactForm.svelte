@@ -34,6 +34,7 @@ let displayNameManuallyEdited = $state(false);
 
 // Form state
 let displayName = $state(contact?.displayName ?? '');
+let nickname = $state(contact?.nickname ?? '');
 let namePrefix = $state(contact?.namePrefix ?? '');
 let nameFirst = $state(contact?.nameFirst ?? '');
 let nameMiddle = $state(contact?.nameMiddle ?? '');
@@ -288,6 +289,7 @@ async function handleSubmit(e: Event) {
       // Update existing contact - first update basic info including Epic 1B fields
       await contacts.updateContact(contact.id, {
         display_name: displayName,
+        nickname: nickname || null,
         name_prefix: namePrefix || null,
         name_first: nameFirst || null,
         name_middle: nameMiddle || null,
@@ -375,6 +377,7 @@ async function handleSubmit(e: Event) {
       // Create new contact with sub-resources
       const newContact = await contacts.createContact({
         display_name: displayName,
+        nickname: nickname || undefined,
         name_prefix: namePrefix || undefined,
         name_first: nameFirst || undefined,
         name_middle: nameMiddle || undefined,
@@ -537,6 +540,13 @@ async function handleSubmit(e: Event) {
       required
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
       placeholder="Display Name *"
+      disabled={isLoading}
+    />
+    <input
+      type="text"
+      bind:value={nickname}
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+      placeholder="Nickname"
       disabled={isLoading}
     />
   </div>

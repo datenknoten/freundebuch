@@ -162,6 +162,7 @@ const MAX_SUB_RESOURCES = 30;
 /** Schema for creating a new contact */
 export const ContactCreateSchema = type({
   display_name: 'string > 0',
+  'nickname?': 'string',
   'name_prefix?': 'string',
   'name_first?': 'string',
   'name_middle?': 'string',
@@ -222,6 +223,7 @@ export type ContactCreateInput = typeof ContactCreateSchema.infer;
 /** Schema for updating an existing contact */
 export const ContactUpdateSchema = type({
   'display_name?': 'string > 0',
+  'nickname?': 'string | null',
   'name_prefix?': 'string | null',
   'name_first?': 'string | null',
   'name_middle?': 'string | null',
@@ -362,6 +364,7 @@ export interface Relationship {
 export interface Contact {
   id: string;
   displayName: string;
+  nickname?: string;
   namePrefix?: string;
   nameFirst?: string;
   nameMiddle?: string;
