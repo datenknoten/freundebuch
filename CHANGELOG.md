@@ -1,3 +1,9 @@
+## [2.7.0](https://github.com/enko/freundebuch2/compare/v2.6.1...v2.7.0) (2026-01-01)
+
+### Features
+
+* **frontend:** Display app version in footer and mobile menu ([f3e4481](https://github.com/enko/freundebuch2/commit/f3e448166a465557d37a2ec30e2b8ebb6705ae8f))
+
 ## [2.6.1](https://github.com/enko/freundebuch2/compare/v2.6.0...v2.6.1) (2026-01-01)
 
 ### Bug Fixes
