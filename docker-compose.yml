@@ -54,6 +54,7 @@ services:
       - backend
     environment:
       PUBLIC_API_URL: http://localhost:3000
+      INTERNAL_API_URL: http://backend:3000
     ports:
       - "5173:5173"
     volumes:
@@ -63,6 +64,40 @@ services:
       - /app/packages/shared/node_modules
       - /app/node_modules
     command: pnpm --filter frontend run dev
+
+  sabredav:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.sabredav
+    container_name: freundebuch-sabredav
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://freundebuch:dev_password@postgres:5432/freundebuch_dev
+    volumes:
+      - ./apps/sabredav:/app
+    healthcheck:
+      test: ["CMD-SHELL", "pidof php-fpm > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  nginx:
+    image: nginx:alpine
+    container_name: freundebuch-nginx
+    depends_on:
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
+      sabredav:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker/nginx.dev.conf:/etc/nginx/nginx.conf:ro
 
 volumes:
   postgres_data:
