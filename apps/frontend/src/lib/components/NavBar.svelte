@@ -1,7 +1,7 @@
 <script lang="ts">
+import { fade } from 'svelte/transition';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-import { fade } from 'svelte/transition';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 
 let mobileMenuOpen = $state(false);
@@ -51,7 +51,7 @@ $effect(() => {
 $effect(() => {
   if (mobileMenuOpen && menuElement) {
     const focusableElements = menuElement.querySelectorAll<HTMLElement>(
-      'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
+      'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])',
     );
     const firstFocusable = focusableElements[0];
     const lastFocusable = focusableElements[focusableElements.length - 1];
