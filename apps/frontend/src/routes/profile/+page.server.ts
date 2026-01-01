@@ -1,20 +1,21 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:3000';
+// For SSR, use INTERNAL_API_URL (Docker internal) or fall back to localhost
+const API_BASE_URL = process.env.INTERNAL_API_URL || 'http://localhost:3000';
 
-export const load: PageServerLoad = async ({ locals, cookies }) => {
-  const sessionToken = locals.sessionToken || cookies.get('session_token');
+export const load: PageServerLoad = async ({ cookies }) => {
+  const authToken = cookies.get('auth_token');
 
-  if (!sessionToken) {
+  if (!authToken) {
     throw error(401, 'Not authenticated');
   }
 
   try {
-    // Fetch user data from the API using the session token
+    // Fetch user data from the API using the auth token
     const response = await fetch(`${API_BASE_URL}/api/users/me`, {
       headers: {
-        Cookie: `session_token=${sessionToken}`,
+        Authorization: `Bearer ${authToken}`,
       },
     });
 

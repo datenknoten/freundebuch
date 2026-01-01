@@ -1,5 +1,7 @@
 <script lang="ts">
 import * as authApi from '$lib/api/auth';
+import AppPasswordManager from '$lib/components/AppPasswordManager.svelte';
+import CardDAVSetupGuide from '$lib/components/CardDAVSetupGuide.svelte';
 import { currentUser } from '$lib/stores/auth';
 
 const pageTitle = $derived(
@@ -143,10 +145,19 @@ function handleCancel() {
 			</form>
 
 			<div class="mt-8 pt-8 border-t border-gray-200">
-				<h2 class="text-xl font-heading text-gray-800 mb-4">Security</h2>
+				<h2 class="text-xl font-heading text-gray-800 mb-2">App Passwords</h2>
 				<p class="text-sm font-body text-gray-600 mb-4">
-					Password management and security settings coming soon!
+					Create app-specific passwords to sync your contacts with mobile devices and desktop apps.
 				</p>
+				<AppPasswordManager />
+			</div>
+
+			<div class="mt-8 pt-8 border-t border-gray-200">
+				<h2 class="text-xl font-heading text-gray-800 mb-2">CardDAV Setup</h2>
+				<p class="text-sm font-body text-gray-600 mb-4">
+					Sync your contacts with iOS, macOS, Thunderbird, and other CardDAV-compatible apps.
+				</p>
+				<CardDAVSetupGuide />
 			</div>
 		</div>
 	</div>
