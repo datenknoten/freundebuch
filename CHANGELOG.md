@@ -1,3 +1,20 @@
+## [2.6.0](https://github.com/enko/freundebuch2/compare/v2.5.0...v2.6.0) (2026-01-01)
+
+### Features
+
+* **all:** Add SabreDAV CardDAV server ([dd3fd74](https://github.com/enko/freundebuch2/commit/dd3fd748d6ba457dcb81ba781902deea739aeea3))
+* **backend:** Add app password management API ([22c1452](https://github.com/enko/freundebuch2/commit/22c14524b420db6b87e025ff51f1b7329fd44ff3))
+* **config:** Add Docker development infrastructure for CardDAV ([466d4d0](https://github.com/enko/freundebuch2/commit/466d4d0a395068922e6a667a421df2c6ae6cdb4a))
+* **config:** Add production Docker config for CardDAV ([dfcf01a](https://github.com/enko/freundebuch2/commit/dfcf01a68a3ed527e04f989c1d88c0baeab3a73d))
+* **database:** Add CardDAV support schema ([97a8639](https://github.com/enko/freundebuch2/commit/97a86390ce88537cd0df1f1eac4391002f03fccd))
+* **frontend:** Add app password management UI ([0515a99](https://github.com/enko/freundebuch2/commit/0515a99a6446243aac7a56adce1f592da6e9e2d5))
+
+### Bug Fixes
+
+* **all:** Address code review security and data integrity issues ([7cbeee2](https://github.com/enko/freundebuch2/commit/7cbeee2ff9bc51f951422e83d5895e8b8cf6e8be))
+* **backend:** Make password length assertion more flexible ([a74b23a](https://github.com/enko/freundebuch2/commit/a74b23a9559df3195bc1acf0a08b00c4b150a509))
+* **frontend:** Formating ([ca9b5ca](https://github.com/enko/freundebuch2/commit/ca9b5cab1a95ecd779862a4728eaa0213cf46b7f))
+
 ## [2.5.0](https://github.com/enko/freundebuch2/compare/v2.4.0...v2.5.0) (2025-12-31)
 
 ### Features
