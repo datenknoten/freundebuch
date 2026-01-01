@@ -16,6 +16,7 @@
     "check": "pnpm run sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
+    "@sentry/sveltekit": "^10.32.1",
     "arktype": "2.1.29"
   },
   "devDependencies": {

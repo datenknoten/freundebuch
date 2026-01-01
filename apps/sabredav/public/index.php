@@ -29,6 +29,15 @@ if (file_exists($localConfigPath)) {
     $config = array_merge($config, $localConfig);
 }
 
+// Initialize Sentry if DSN is configured
+if (!empty($config['sentry_dsn'])) {
+    \Sentry\init([
+        'dsn' => $config['sentry_dsn'],
+        'environment' => $config['environment'],
+        'traces_sample_rate' => $config['environment'] === 'production' ? 0.1 : 1.0,
+    ]);
+}
+
 // Create PDO connection
 try {
     $pdo = new PDO(
@@ -42,6 +51,9 @@ try {
     );
 } catch (PDOException $e) {
     error_log('Database connection failed: ' . $e->getMessage());
+    if (!empty($config['sentry_dsn'])) {
+        \Sentry\captureException($e);
+    }
     http_response_code(503);
     echo 'Service Unavailable';
     exit(1);

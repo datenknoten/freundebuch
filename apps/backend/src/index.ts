@@ -1,4 +1,5 @@
 import { serve } from '@hono/node-server';
+import * as Sentry from '@sentry/node';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger as honoLogger } from 'hono/logger';
@@ -17,6 +18,21 @@ import { createLogger } from './utils/logger.js';
 import { setupCleanupScheduler } from './utils/scheduler.js';
 
 Error.stackTraceLimit = 100;
+
+// Initialize Sentry early, before any other code runs
+const sentryConfig = getConfig();
+if (sentryConfig.SENTRY_DSN) {
+  Sentry.init({
+    dsn: sentryConfig.SENTRY_DSN,
+    environment: sentryConfig.ENV,
+
+    // Performance monitoring
+    tracesSampleRate: sentryConfig.ENV === 'production' ? 0.1 : 1.0,
+
+    // Set sampling rate for profiling
+    profilesSampleRate: sentryConfig.ENV === 'production' ? 0.1 : 1.0,
+  });
+}
 
 export async function createApp(pool: pg.Pool) {
   const config = getConfig();
@@ -65,6 +81,15 @@ export async function createApp(pool: pg.Pool) {
   app.onError((err, c) => {
     const pinoLogger = c.get('logger');
     pinoLogger.error({ err }, 'Unhandled error');
+
+    // Report error to Sentry
+    Sentry.captureException(err, {
+      extra: {
+        path: c.req.path,
+        method: c.req.method,
+      },
+    });
+
     return c.json(
       {
         status: 500,
