@@ -1,4 +1,12 @@
 # ============================================
+# Stage 0: SabreDAV PHP dependencies
+# ============================================
+FROM composer:2 AS sabredav-deps
+WORKDIR /app
+COPY apps/sabredav/composer.json apps/sabredav/composer.lock* ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# ============================================
 # Stage 1: Base with pnpm
 # ============================================
 FROM node:24-bookworm-slim AS base
@@ -55,11 +63,17 @@ RUN pnpm --filter @freundebuch/frontend run build
 # ============================================
 FROM node:24-bookworm-slim AS production
 
-# Install nginx, supervisor, and curl for healthchecks
+# Install nginx, supervisor, curl, and PHP-FPM with PostgreSQL extension
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends nginx supervisor curl && \
+    apt-get install -y --no-install-recommends \
+        nginx supervisor curl \
+        php8.2-fpm php8.2-pgsql php8.2-xml && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    # Configure PHP-FPM to listen on TCP socket instead of Unix socket
+    sed -i 's|listen = /run/php/php8.2-fpm.sock|listen = 127.0.0.1:9000|' /etc/php/8.2/fpm/pool.d/www.conf && \
+    # Ensure PHP-FPM directory exists
+    mkdir -p /run/php
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -81,6 +95,12 @@ COPY --from=frontend-builder /app/apps/frontend/build ./apps/frontend/build
 
 # Copy compiled database migrations
 COPY --from=backend-builder /app/database/dist ./database/dist
+
+# Copy SabreDAV application
+COPY --from=sabredav-deps /app/vendor ./apps/sabredav/vendor
+COPY apps/sabredav/config ./apps/sabredav/config
+COPY apps/sabredav/public ./apps/sabredav/public
+COPY apps/sabredav/src ./apps/sabredav/src
 
 # Copy nginx configuration
 COPY docker/nginx.prod.conf /etc/nginx/nginx.conf
