@@ -6,6 +6,8 @@ import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 
 let mobileMenuOpen = $state(false);
 
+const version = __APP_VERSION__;
+
 // Derive page title from current route
 const pageTitle = $derived.by(() => {
   const pathname = $page.url.pathname;
@@ -190,6 +192,10 @@ $effect(() => {
       </div>
     {/if}
   </nav>
+
+  <div class="absolute bottom-4 left-0 right-0 px-4">
+    <p class="text-center text-gray-400 text-xs font-body">v{version}</p>
+  </div>
 </div>
 
 <nav class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30">
