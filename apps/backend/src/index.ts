@@ -9,6 +9,7 @@ import appPasswordsRoutes from './routes/app-passwords.js';
 import authRoutes from './routes/auth.js';
 import contactsRoutes from './routes/contacts.js';
 import healthRoutes from './routes/health.js';
+import sentryTunnelRoutes from './routes/sentry-tunnel.js';
 import uploadsRoutes from './routes/uploads.js';
 import usersRoutes from './routes/users.js';
 import type { AppContext } from './types/context.js';
@@ -20,17 +21,20 @@ import { setupCleanupScheduler } from './utils/scheduler.js';
 Error.stackTraceLimit = 100;
 
 // Initialize Sentry early, before any other code runs
-const sentryConfig = getConfig();
-if (sentryConfig.SENTRY_DSN) {
+// Read directly from process.env to avoid config validation during tests
+const SENTRY_DSN = process.env.SENTRY_DSN;
+const NODE_ENV = process.env.ENV || 'development';
+
+if (SENTRY_DSN) {
   Sentry.init({
-    dsn: sentryConfig.SENTRY_DSN,
-    environment: sentryConfig.ENV,
+    dsn: SENTRY_DSN,
+    environment: NODE_ENV,
 
     // Performance monitoring
-    tracesSampleRate: sentryConfig.ENV === 'production' ? 0.1 : 1.0,
+    tracesSampleRate: NODE_ENV === 'production' ? 0.1 : 1.0,
 
     // Set sampling rate for profiling
-    profilesSampleRate: sentryConfig.ENV === 'production' ? 0.1 : 1.0,
+    profilesSampleRate: NODE_ENV === 'production' ? 0.1 : 1.0,
   });
 }
 
@@ -76,6 +80,7 @@ export async function createApp(pool: pg.Pool) {
   app.route('/api/contacts', contactsRoutes);
   app.route('/api/uploads', uploadsRoutes);
   app.route('/api/app-passwords', appPasswordsRoutes);
+  app.route('/api/sentry-tunnel', sentryTunnelRoutes);
 
   // Error handling
   app.onError((err, c) => {
