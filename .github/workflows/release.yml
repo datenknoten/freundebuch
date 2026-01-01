@@ -127,6 +127,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           provenance: mode=max
           sbom: true
+          build-args: |
+            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
 
       - name: Attest Docker image
         if: ${{ github.event.repository.visibility == 'public' }}
@@ -176,6 +178,8 @@ jobs:
       - name: Build frontend
         env:
           VITE_API_URL: ""
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
           pnpm --filter @freundebuch/shared run build
           pnpm --filter @freundebuch/frontend run build
