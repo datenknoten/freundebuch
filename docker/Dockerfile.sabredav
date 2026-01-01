@@ -1,0 +1,36 @@
+# SabreDAV PHP-FPM container for CardDAV/CalDAV
+FROM php:8.3-fpm-bookworm
+
+# Install PostgreSQL PDO extension
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    unzip \
+    && docker-php-ext-install pdo pdo_pgsql \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+# Copy composer files first for dependency caching
+COPY apps/sabredav/composer.json apps/sabredav/composer.lock* ./
+
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Copy source code
+COPY apps/sabredav/ ./
+
+# Configure PHP-FPM for better performance and fix permissions for dev
+RUN echo "pm.max_children = 20" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.start_servers = 5" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.min_spare_servers = 2" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.max_spare_servers = 10" >> /usr/local/etc/php-fpm.d/www.conf
+
+# PHP-FPM listens on port 9000
+EXPOSE 9000
+
+# Use -R flag to allow running as root (for dev with volume mounts)
+CMD ["php-fpm", "-R"]
