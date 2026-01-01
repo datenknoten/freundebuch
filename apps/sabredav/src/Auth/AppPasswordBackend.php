@@ -12,6 +12,14 @@ use Sabre\DAV\Auth\Backend\AbstractBasic;
  *
  * This backend validates credentials against the auth.app_passwords table.
  * Users authenticate with their email and an app-specific password.
+ *
+ * SECURITY NOTE: Brute force protection should be implemented at the
+ * infrastructure level (nginx, WAF, or load balancer) using:
+ * - Rate limiting per IP address (e.g., 10 attempts per minute)
+ * - Automatic IP blocking after repeated failures
+ * - CAPTCHA after N failed attempts
+ *
+ * This backend logs failed authentication attempts for monitoring and alerting.
  */
 class AppPasswordBackend extends AbstractBasic
 {
@@ -45,6 +53,7 @@ class AppPasswordBackend extends AbstractBasic
         $user = $stmt->fetch();
 
         if (!$user) {
+            $this->logFailedAttempt($username, 'user_not_found');
             return false;
         }
 
@@ -78,6 +87,28 @@ class AppPasswordBackend extends AbstractBasic
             }
         }
 
+        $this->logFailedAttempt($username, 'invalid_password');
         return false;
+    }
+
+    /**
+     * Log a failed authentication attempt for security monitoring.
+     *
+     * @param string $username The attempted username
+     * @param string $reason The reason for failure
+     */
+    private function logFailedAttempt(string $username, string $reason): void
+    {
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+
+        // Log to PHP error log for monitoring/alerting
+        error_log(sprintf(
+            '[AUTH_FAILED] email=%s reason=%s ip=%s user_agent=%s',
+            $username,
+            $reason,
+            $clientIp,
+            substr($userAgent, 0, 100)
+        ));
     }
 }

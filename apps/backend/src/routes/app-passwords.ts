@@ -6,8 +6,12 @@ import {
   type AppPassword,
   AppPasswordsService,
   type AppPasswordWithSecret,
+  MaxAppPasswordsExceededError,
 } from '../services/app-passwords.service.js';
 import type { AppContext } from '../types/context.js';
+
+// UUID v4 format regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const app = new Hono<AppContext>();
 
@@ -68,6 +72,12 @@ app.post('/', async (c) => {
 
     return c.json<AppPasswordWithSecret>(result, 201);
   } catch (error) {
+    if (error instanceof MaxAppPasswordsExceededError) {
+      return c.json<ErrorResponse>(
+        { error: 'Maximum number of app passwords (20) reached. Please revoke unused ones.' },
+        429,
+      );
+    }
     logger.error({ error }, 'Failed to create app password');
     return c.json<ErrorResponse>({ error: 'Failed to create app password' }, 500);
   }
@@ -84,6 +94,11 @@ app.delete('/:id', async (c) => {
   try {
     const authUser = getAuthUser(c);
     const appPasswordId = c.req.param('id');
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(appPasswordId)) {
+      return c.json<ErrorResponse>({ error: 'Invalid app password ID format' }, 400);
+    }
 
     const service = new AppPasswordsService(db, logger);
     const success = await service.revokeAppPassword(authUser.userId, appPasswordId);
