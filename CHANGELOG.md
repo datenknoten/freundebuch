@@ -1,3 +1,15 @@
+## [2.8.0](https://github.com/enko/freundebuch2/compare/v2.7.0...v2.8.0) (2026-01-01)
+
+### Features
+
+* **all:** Add Sentry tunnel to proxy frontend requests through backend ([3639349](https://github.com/enko/freundebuch2/commit/3639349131eb1470f759a499b1c2e9af91756a46))
+* **all:** Integrate Sentry error tracking across all layers ([1da1bf1](https://github.com/enko/freundebuch2/commit/1da1bf192c304fa505a52dd74c92613f5bb881c6))
+
+### Bug Fixes
+
+* **backend:** Fix flaky app-passwords test for passwordPrefix assertion ([380f1b8](https://github.com/enko/freundebuch2/commit/380f1b8d81968f6faa90ca0986b870268894ebc5))
+* **ci:** Pass Sentry env vars during frontend build ([7934434](https://github.com/enko/freundebuch2/commit/793443449e2bf1f54008fca8b5719292dbf2660c))
+
 ## [2.7.0](https://github.com/enko/freundebuch2/compare/v2.6.1...v2.7.0) (2026-01-01)
 
 ### Features
