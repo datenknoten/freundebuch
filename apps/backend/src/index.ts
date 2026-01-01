@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { logger as honoLogger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import type pg from 'pg';
+import appPasswordsRoutes from './routes/app-passwords.js';
 import authRoutes from './routes/auth.js';
 import contactsRoutes from './routes/contacts.js';
 import healthRoutes from './routes/health.js';
@@ -58,6 +59,7 @@ export async function createApp(pool: pg.Pool) {
   app.route('/api/users', usersRoutes);
   app.route('/api/contacts', contactsRoutes);
   app.route('/api/uploads', uploadsRoutes);
+  app.route('/api/app-passwords', appPasswordsRoutes);
 
   // Error handling
   app.onError((err, c) => {

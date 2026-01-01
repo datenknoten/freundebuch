@@ -12,9 +12,9 @@
     "test:integration": "vitest run tests/integration",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit",
-    "migrate": "tsx --env-file=../../.env node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize --migrations-dir ../../database/migrations up",
-    "migrate:down": "tsx --env-file=../../.env node_modules/.bin/node-pg-migrate --decamelize --migrations-dir ../../database/migrations down",
-    "migrate:create": "tsx --env-file=../../.env node_modules/.bin/node-pg-migrate --decamelize --migrations-dir ../../database/migrations create",
+    "migrate": "tsx --env-file=../../.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize --migrations-dir ../../database/migrations up",
+    "migrate:down": "tsx --env-file=../../.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize --migrations-dir ../../database/migrations down",
+    "migrate:create": "tsx --env-file=../../.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize --migrations-dir ../../database/migrations create",
     "pgtyped": "pgtyped -c pgtyped.config.json",
     "pgtyped:watch": "pgtyped -c pgtyped.config.json -w",
     "seed": "tsx --env-file=../../.env src/scripts/seed.ts"
