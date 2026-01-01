@@ -8,10 +8,21 @@
     "ext-pdo": "*",
     "ext-pdo_pgsql": "*"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^11.0"
+  },
   "autoload": {
     "psr-4": {
       "Freundebuch\\DAV\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Freundebuch\\DAV\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit"
   },
   "config": {
     "optimize-autoloader": true

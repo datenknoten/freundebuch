@@ -13,5 +13,8 @@ return array(
     'Sabre\\Event\\' => array($vendorDir . '/sabre/event/lib'),
     'Sabre\\' => array($vendorDir . '/sabre/dav/lib'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log/src'),
+    'PhpParser\\' => array($vendorDir . '/nikic/php-parser/lib/PhpParser'),
+    'Freundebuch\\DAV\\Tests\\' => array($baseDir . '/tests'),
     'Freundebuch\\DAV\\' => array($baseDir . '/src'),
+    'DeepCopy\\' => array($vendorDir . '/myclabs/deep-copy/src/DeepCopy'),
 );
