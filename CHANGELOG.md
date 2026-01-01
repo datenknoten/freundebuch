@@ -1,3 +1,9 @@
+## [2.6.1](https://github.com/enko/freundebuch2/compare/v2.6.0...v2.6.1) (2026-01-01)
+
+### Bug Fixes
+
+* **config:** Add --ignore-platform-reqs to composer install ([1fa4ff1](https://github.com/enko/freundebuch2/commit/1fa4ff1655b64dbc48c7c7cd7d62a4c893106fdc))
+
 ## [2.6.0](https://github.com/enko/freundebuch2/compare/v2.5.0...v2.6.0) (2026-01-01)
 
 ### Features
