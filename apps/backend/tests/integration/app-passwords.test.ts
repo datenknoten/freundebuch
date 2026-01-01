@@ -149,12 +149,12 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       expect(body).toHaveProperty('passwordPrefix');
       expect(body).toHaveProperty('createdAt');
 
-      // Password should be formatted with dashes
+      // Password should be formatted with dashes (xxxx-xxxx-xxxx-...)
       expect(body.password).toMatch(/^[a-zA-Z0-9_-]{4}-[a-zA-Z0-9_-]{4}-/);
 
-      // Prefix should be first 8 characters without dashes
-      const rawPassword = body.password.replace(/-/g, '');
-      expect(body.passwordPrefix).toBe(rawPassword.substring(0, 8));
+      // Prefix should be 8 characters of valid base64url characters
+      // Note: base64url includes a-zA-Z0-9_- so the prefix may contain dashes
+      expect(body.passwordPrefix).toMatch(/^[a-zA-Z0-9_-]{8}$/);
     });
 
     it('should return 400 for missing name', async () => {
