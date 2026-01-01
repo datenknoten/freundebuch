@@ -186,51 +186,60 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $externalId = str_replace('.vcf', '', $cardUri);
         $contactData = $this->mapper->vcardToContact($cardData, $externalId);
 
-        // Insert main contact
-        $stmt = $this->pdo->prepare('
-            INSERT INTO contacts.contacts (
-                user_id, external_id, display_name, name_prefix, name_first,
-                name_middle, name_last, name_suffix, nickname, photo_url,
-                job_title, organization, department, interests, work_notes
-            ) VALUES (
-                :user_id, :external_id, :display_name, :name_prefix, :name_first,
-                :name_middle, :name_last, :name_suffix, :nickname, :photo_url,
-                :job_title, :organization, :department, :interests, :work_notes
-            )
-            RETURNING id, updated_at
-        ');
-        $stmt->execute([
-            'user_id' => $addressBookId,
-            'external_id' => $externalId,
-            'display_name' => $contactData['display_name'],
-            'name_prefix' => $contactData['name_prefix'] ?? null,
-            'name_first' => $contactData['name_first'] ?? null,
-            'name_middle' => $contactData['name_middle'] ?? null,
-            'name_last' => $contactData['name_last'] ?? null,
-            'name_suffix' => $contactData['name_suffix'] ?? null,
-            'nickname' => $contactData['nickname'] ?? null,
-            'photo_url' => $contactData['photo_url'] ?? null,
-            'job_title' => $contactData['job_title'] ?? null,
-            'organization' => $contactData['organization'] ?? null,
-            'department' => $contactData['department'] ?? null,
-            'interests' => $contactData['interests'] ?? null,
-            'work_notes' => $contactData['work_notes'] ?? null,
-        ]);
-        $result = $stmt->fetch();
-        $contactId = (int) $result['id'];
+        $this->pdo->beginTransaction();
 
-        // Insert sub-resources
-        $this->insertPhones($contactId, $contactData['phones'] ?? []);
-        $this->insertEmails($contactId, $contactData['emails'] ?? []);
-        $this->insertAddresses($contactId, $contactData['addresses'] ?? []);
-        $this->insertUrls($contactId, $contactData['urls'] ?? []);
-        $this->insertDates($contactId, $contactData['dates'] ?? []);
-        $this->insertSocialProfiles($contactId, $contactData['social_profiles'] ?? []);
-        if (!empty($contactData['met_info'])) {
-            $this->insertMetInfo($contactId, $contactData['met_info']);
+        try {
+            // Insert main contact
+            $stmt = $this->pdo->prepare('
+                INSERT INTO contacts.contacts (
+                    user_id, external_id, display_name, name_prefix, name_first,
+                    name_middle, name_last, name_suffix, nickname, photo_url,
+                    job_title, organization, department, interests, work_notes
+                ) VALUES (
+                    :user_id, :external_id, :display_name, :name_prefix, :name_first,
+                    :name_middle, :name_last, :name_suffix, :nickname, :photo_url,
+                    :job_title, :organization, :department, :interests, :work_notes
+                )
+                RETURNING id, updated_at
+            ');
+            $stmt->execute([
+                'user_id' => $addressBookId,
+                'external_id' => $externalId,
+                'display_name' => $contactData['display_name'],
+                'name_prefix' => $contactData['name_prefix'] ?? null,
+                'name_first' => $contactData['name_first'] ?? null,
+                'name_middle' => $contactData['name_middle'] ?? null,
+                'name_last' => $contactData['name_last'] ?? null,
+                'name_suffix' => $contactData['name_suffix'] ?? null,
+                'nickname' => $contactData['nickname'] ?? null,
+                'photo_url' => $contactData['photo_url'] ?? null,
+                'job_title' => $contactData['job_title'] ?? null,
+                'organization' => $contactData['organization'] ?? null,
+                'department' => $contactData['department'] ?? null,
+                'interests' => $contactData['interests'] ?? null,
+                'work_notes' => $contactData['work_notes'] ?? null,
+            ]);
+            $result = $stmt->fetch();
+            $contactId = (int) $result['id'];
+
+            // Insert sub-resources
+            $this->insertPhones($contactId, $contactData['phones'] ?? []);
+            $this->insertEmails($contactId, $contactData['emails'] ?? []);
+            $this->insertAddresses($contactId, $contactData['addresses'] ?? []);
+            $this->insertUrls($contactId, $contactData['urls'] ?? []);
+            $this->insertDates($contactId, $contactData['dates'] ?? []);
+            $this->insertSocialProfiles($contactId, $contactData['social_profiles'] ?? []);
+            if (!empty($contactData['met_info'])) {
+                $this->insertMetInfo($contactId, $contactData['met_info']);
+            }
+
+            $this->pdo->commit();
+
+            return '"' . md5($externalId . $result['updated_at']) . '"';
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
         }
-
-        return '"' . md5($externalId . $result['updated_at']) . '"';
     }
 
     /**
@@ -246,7 +255,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $externalId = str_replace('.vcf', '', $cardUri);
         $contactData = $this->mapper->vcardToContact($cardData, $externalId);
 
-        // Get existing contact ID
+        // Get existing contact ID (before transaction - read only)
         $stmt = $this->pdo->prepare('
             SELECT id FROM contacts.contacts
             WHERE user_id = :user_id
@@ -262,56 +271,65 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
 
         $contactId = (int) $existing['id'];
 
-        // Update main contact
-        $stmt = $this->pdo->prepare('
-            UPDATE contacts.contacts SET
-                display_name = :display_name,
-                name_prefix = :name_prefix,
-                name_first = :name_first,
-                name_middle = :name_middle,
-                name_last = :name_last,
-                name_suffix = :name_suffix,
-                nickname = :nickname,
-                photo_url = :photo_url,
-                job_title = :job_title,
-                organization = :organization,
-                department = :department,
-                interests = :interests,
-                work_notes = :work_notes
-            WHERE id = :id
-            RETURNING updated_at
-        ');
-        $stmt->execute([
-            'id' => $contactId,
-            'display_name' => $contactData['display_name'],
-            'name_prefix' => $contactData['name_prefix'] ?? null,
-            'name_first' => $contactData['name_first'] ?? null,
-            'name_middle' => $contactData['name_middle'] ?? null,
-            'name_last' => $contactData['name_last'] ?? null,
-            'name_suffix' => $contactData['name_suffix'] ?? null,
-            'nickname' => $contactData['nickname'] ?? null,
-            'photo_url' => $contactData['photo_url'] ?? null,
-            'job_title' => $contactData['job_title'] ?? null,
-            'organization' => $contactData['organization'] ?? null,
-            'department' => $contactData['department'] ?? null,
-            'interests' => $contactData['interests'] ?? null,
-            'work_notes' => $contactData['work_notes'] ?? null,
-        ]);
-        $result = $stmt->fetch();
+        $this->pdo->beginTransaction();
 
-        // Replace sub-resources (delete and re-insert)
-        $this->deleteSubResources($contactId);
-        $this->insertPhones($contactId, $contactData['phones'] ?? []);
-        $this->insertEmails($contactId, $contactData['emails'] ?? []);
-        $this->insertAddresses($contactId, $contactData['addresses'] ?? []);
-        $this->insertUrls($contactId, $contactData['urls'] ?? []);
-        $this->insertDates($contactId, $contactData['dates'] ?? []);
-        $this->insertSocialProfiles($contactId, $contactData['social_profiles'] ?? []);
-        if (!empty($contactData['met_info'])) {
-            $this->insertMetInfo($contactId, $contactData['met_info']);
+        try {
+            // Update main contact
+            $stmt = $this->pdo->prepare('
+                UPDATE contacts.contacts SET
+                    display_name = :display_name,
+                    name_prefix = :name_prefix,
+                    name_first = :name_first,
+                    name_middle = :name_middle,
+                    name_last = :name_last,
+                    name_suffix = :name_suffix,
+                    nickname = :nickname,
+                    photo_url = :photo_url,
+                    job_title = :job_title,
+                    organization = :organization,
+                    department = :department,
+                    interests = :interests,
+                    work_notes = :work_notes
+                WHERE id = :id
+                RETURNING updated_at
+            ');
+            $stmt->execute([
+                'id' => $contactId,
+                'display_name' => $contactData['display_name'],
+                'name_prefix' => $contactData['name_prefix'] ?? null,
+                'name_first' => $contactData['name_first'] ?? null,
+                'name_middle' => $contactData['name_middle'] ?? null,
+                'name_last' => $contactData['name_last'] ?? null,
+                'name_suffix' => $contactData['name_suffix'] ?? null,
+                'nickname' => $contactData['nickname'] ?? null,
+                'photo_url' => $contactData['photo_url'] ?? null,
+                'job_title' => $contactData['job_title'] ?? null,
+                'organization' => $contactData['organization'] ?? null,
+                'department' => $contactData['department'] ?? null,
+                'interests' => $contactData['interests'] ?? null,
+                'work_notes' => $contactData['work_notes'] ?? null,
+            ]);
+            $result = $stmt->fetch();
+
+            // Replace sub-resources (delete and re-insert)
+            $this->deleteSubResources($contactId);
+            $this->insertPhones($contactId, $contactData['phones'] ?? []);
+            $this->insertEmails($contactId, $contactData['emails'] ?? []);
+            $this->insertAddresses($contactId, $contactData['addresses'] ?? []);
+            $this->insertUrls($contactId, $contactData['urls'] ?? []);
+            $this->insertDates($contactId, $contactData['dates'] ?? []);
+            $this->insertSocialProfiles($contactId, $contactData['social_profiles'] ?? []);
+            if (!empty($contactData['met_info'])) {
+                $this->insertMetInfo($contactId, $contactData['met_info']);
+            }
+
+            $this->pdo->commit();
+
+            return '"' . md5($externalId . $result['updated_at']) . '"';
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
         }
-
-        return '"' . md5($externalId . $result['updated_at']) . '"';
     }
 
     /**
@@ -436,20 +454,21 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
 
     private function deleteSubResources(int $contactId): void
     {
-        $tables = [
-            'contact_phones',
-            'contact_emails',
-            'contact_addresses',
-            'contact_urls',
-            'contact_dates',
-            'contact_social_profiles',
-            'contact_met_info',
-        ];
-
-        foreach ($tables as $table) {
-            $stmt = $this->pdo->prepare("DELETE FROM contacts.{$table} WHERE contact_id = :id");
-            $stmt->execute(['id' => $contactId]);
-        }
+        // Use explicit DELETE queries for each table to avoid string concatenation
+        $this->pdo->prepare('DELETE FROM contacts.contact_phones WHERE contact_id = :id')
+            ->execute(['id' => $contactId]);
+        $this->pdo->prepare('DELETE FROM contacts.contact_emails WHERE contact_id = :id')
+            ->execute(['id' => $contactId]);
+        $this->pdo->prepare('DELETE FROM contacts.contact_addresses WHERE contact_id = :id')
+            ->execute(['id' => $contactId]);
+        $this->pdo->prepare('DELETE FROM contacts.contact_urls WHERE contact_id = :id')
+            ->execute(['id' => $contactId]);
+        $this->pdo->prepare('DELETE FROM contacts.contact_dates WHERE contact_id = :id')
+            ->execute(['id' => $contactId]);
+        $this->pdo->prepare('DELETE FROM contacts.contact_social_profiles WHERE contact_id = :id')
+            ->execute(['id' => $contactId]);
+        $this->pdo->prepare('DELETE FROM contacts.contact_met_info WHERE contact_id = :id')
+            ->execute(['id' => $contactId]);
     }
 
     private function insertPhones(int $contactId, array $phones): void

@@ -174,6 +174,41 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
 
       expect(response.status).toBe(400);
     });
+
+    it('should return 429 when max passwords limit reached', async () => {
+      const { app } = getContext();
+      const { tokens } = await createUserAndLogin('apppw-limit@test.com', 'TestPassword123');
+
+      // Create 20 passwords (the max limit)
+      for (let i = 0; i < 20; i++) {
+        await app.fetch(
+          new Request('http://localhost/api/app-passwords', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${tokens.accessToken}`,
+            },
+            body: JSON.stringify({ name: `Password ${i + 1}` }),
+          }),
+        );
+      }
+
+      // Try to create one more - should fail
+      const response = await app.fetch(
+        new Request('http://localhost/api/app-passwords', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tokens.accessToken}`,
+          },
+          body: JSON.stringify({ name: 'One Too Many' }),
+        }),
+      );
+
+      expect(response.status).toBe(429);
+      const body: any = await response.json();
+      expect(body.error).toContain('Maximum');
+    });
   });
 
   describe('DELETE /api/app-passwords/:id', () => {
@@ -239,8 +274,9 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       const { app } = getContext();
       const { tokens } = await createUserAndLogin('apppw-404@test.com', 'TestPassword123');
 
+      // Use a valid UUID v4 format that doesn't exist in the database
       const response = await app.fetch(
-        new Request('http://localhost/api/app-passwords/00000000-0000-0000-0000-000000000000', {
+        new Request('http://localhost/api/app-passwords/00000000-0000-4000-8000-000000000000', {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${tokens.accessToken}`,
@@ -249,6 +285,22 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       );
 
       expect(response.status).toBe(404);
+    });
+
+    it('should return 400 for invalid UUID format', async () => {
+      const { app } = getContext();
+      const { tokens } = await createUserAndLogin('apppw-invalid-uuid@test.com', 'TestPassword123');
+
+      const response = await app.fetch(
+        new Request('http://localhost/api/app-passwords/not-a-valid-uuid', {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${tokens.accessToken}`,
+          },
+        }),
+      );
+
+      expect(response.status).toBe(400);
     });
 
     it('should not allow revoking another user password', async () => {

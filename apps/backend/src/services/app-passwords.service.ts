@@ -13,6 +13,14 @@ import {
 
 const SALT_ROUNDS = 10;
 const PASSWORD_LENGTH = 24; // 24 bytes = 32 chars in base64url
+const MAX_APP_PASSWORDS_PER_USER = 20;
+
+export class MaxAppPasswordsExceededError extends Error {
+  constructor() {
+    super(`Maximum number of app passwords (${MAX_APP_PASSWORDS_PER_USER}) exceeded`);
+    this.name = 'MaxAppPasswordsExceededError';
+  }
+}
 
 export interface AppPassword {
   externalId: string;
@@ -73,9 +81,20 @@ export class AppPasswordsService {
   /**
    * Create a new app password
    * Returns the password only once - it cannot be retrieved later
+   * @throws MaxAppPasswordsExceededError if user has too many app passwords
    */
   async createAppPassword(userExternalId: string, name: string): Promise<AppPasswordWithSecret> {
     this.logger.info({ userId: userExternalId, name }, 'Creating app password');
+
+    // Check if user has reached the maximum number of app passwords
+    const existingPasswords = await this.listAppPasswords(userExternalId);
+    if (existingPasswords.length >= MAX_APP_PASSWORDS_PER_USER) {
+      this.logger.warn(
+        { userId: userExternalId, count: existingPasswords.length },
+        'User has reached maximum app passwords limit',
+      );
+      throw new MaxAppPasswordsExceededError();
+    }
 
     // Generate a random password
     const rawPassword = crypto.randomBytes(PASSWORD_LENGTH).toString('base64url');
