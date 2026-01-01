@@ -8,19 +8,24 @@ class ComposerStaticInitf0e04926db0e8eaae17a4266be7badad
 {
     public static $files = array (
         '383eaff206634a77a1be54e64e6459c7' => __DIR__ . '/..' . '/sabre/uri/lib/functions.php',
+        '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         '2b9d0f43f9552984cfa82fee95491826' => __DIR__ . '/..' . '/sabre/event/lib/coroutine.php',
         'd81bab31d3feb45bfe2f283ea3c8fdf7' => __DIR__ . '/..' . '/sabre/event/lib/Loop/functions.php',
         'a1cce3d26cc15c00fcd0b3354bd72c88' => __DIR__ . '/..' . '/sabre/event/lib/Promise/functions.php',
         '3569eecfeed3bcf0bad3c998a494ecb8' => __DIR__ . '/..' . '/sabre/xml/lib/Deserializer/functions.php',
         '93aa591bc4ca510c520999e34229ee79' => __DIR__ . '/..' . '/sabre/xml/lib/Serializer/functions.php',
+        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         '6124b4c8570aa390c21fafd04a26c69f' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
         'ebdb698ed4152ae445614b69b5e4bb6a' => __DIR__ . '/..' . '/sabre/http/lib/functions.php',
+        'fb4ca2d97fe7ba6af750497425204e70' => __DIR__ . '/..' . '/sentry/sentry/src/functions.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
     );
 
     public static $prefixLengthsPsr4 = array (
-        'S' =>
+        'S' => 
         array (
+            'Symfony\\Component\\OptionsResolver\\' => 34,
+            'Sentry\\' => 7,
             'Sabre\\Xml\\' => 10,
             'Sabre\\VObject\\' => 14,
             'Sabre\\Uri\\' => 10,
@@ -28,64 +33,94 @@ class ComposerStaticInitf0e04926db0e8eaae17a4266be7badad
             'Sabre\\Event\\' => 12,
             'Sabre\\' => 6,
         ),
-        'P' =>
+        'P' => 
         array (
             'Psr\\Log\\' => 8,
+            'Psr\\Http\\Message\\' => 17,
             'PhpParser\\' => 10,
         ),
-        'F' =>
+        'J' => 
+        array (
+            'Jean85\\' => 7,
+        ),
+        'G' => 
+        array (
+            'GuzzleHttp\\Psr7\\' => 16,
+        ),
+        'F' => 
         array (
             'Freundebuch\\DAV\\Tests\\' => 22,
             'Freundebuch\\DAV\\' => 16,
         ),
-        'D' =>
+        'D' => 
         array (
             'DeepCopy\\' => 9,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Sabre\\Xml\\' =>
+        'Symfony\\Component\\OptionsResolver\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/options-resolver',
+        ),
+        'Sentry\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/sentry/sentry/src',
+        ),
+        'Sabre\\Xml\\' => 
         array (
             0 => __DIR__ . '/..' . '/sabre/xml/lib',
         ),
-        'Sabre\\VObject\\' =>
+        'Sabre\\VObject\\' => 
         array (
             0 => __DIR__ . '/..' . '/sabre/vobject/lib',
         ),
-        'Sabre\\Uri\\' =>
+        'Sabre\\Uri\\' => 
         array (
             0 => __DIR__ . '/..' . '/sabre/uri/lib',
         ),
-        'Sabre\\HTTP\\' =>
+        'Sabre\\HTTP\\' => 
         array (
             0 => __DIR__ . '/..' . '/sabre/http/lib',
         ),
-        'Sabre\\Event\\' =>
+        'Sabre\\Event\\' => 
         array (
             0 => __DIR__ . '/..' . '/sabre/event/lib',
         ),
-        'Sabre\\' =>
+        'Sabre\\' => 
         array (
             0 => __DIR__ . '/..' . '/sabre/dav/lib',
         ),
-        'Psr\\Log\\' =>
+        'Psr\\Log\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
         ),
-        'PhpParser\\' =>
+        'Psr\\Http\\Message\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
+        'PhpParser\\' => 
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
         ),
-        'Freundebuch\\DAV\\Tests\\' =>
+        'Jean85\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/jean85/pretty-package-versions/src',
+        ),
+        'GuzzleHttp\\Psr7\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
+        ),
+        'Freundebuch\\DAV\\Tests\\' => 
         array (
             0 => __DIR__ . '/../..' . '/tests',
         ),
-        'Freundebuch\\DAV\\' =>
+        'Freundebuch\\DAV\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),
-        'DeepCopy\\' =>
+        'DeepCopy\\' => 
         array (
             0 => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy',
         ),
@@ -125,6 +160,42 @@ class ComposerStaticInitf0e04926db0e8eaae17a4266be7badad
         'Freundebuch\\DAV\\Tests\\Auth\\AppPasswordBackendTest' => __DIR__ . '/../..' . '/tests/Auth/AppPasswordBackendTest.php',
         'Freundebuch\\DAV\\Tests\\VCard\\MapperTest' => __DIR__ . '/../..' . '/tests/VCard/MapperTest.php',
         'Freundebuch\\DAV\\VCard\\Mapper' => __DIR__ . '/../..' . '/src/VCard/Mapper.php',
+        'GuzzleHttp\\Psr7\\AppendStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/AppendStream.php',
+        'GuzzleHttp\\Psr7\\BufferStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/BufferStream.php',
+        'GuzzleHttp\\Psr7\\CachingStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/CachingStream.php',
+        'GuzzleHttp\\Psr7\\DroppingStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/DroppingStream.php',
+        'GuzzleHttp\\Psr7\\Exception\\MalformedUriException' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Exception/MalformedUriException.php',
+        'GuzzleHttp\\Psr7\\FnStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/FnStream.php',
+        'GuzzleHttp\\Psr7\\Header' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Header.php',
+        'GuzzleHttp\\Psr7\\HttpFactory' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/HttpFactory.php',
+        'GuzzleHttp\\Psr7\\InflateStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/InflateStream.php',
+        'GuzzleHttp\\Psr7\\LazyOpenStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/LazyOpenStream.php',
+        'GuzzleHttp\\Psr7\\LimitStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/LimitStream.php',
+        'GuzzleHttp\\Psr7\\Message' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Message.php',
+        'GuzzleHttp\\Psr7\\MessageTrait' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/MessageTrait.php',
+        'GuzzleHttp\\Psr7\\MimeType' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/MimeType.php',
+        'GuzzleHttp\\Psr7\\MultipartStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/MultipartStream.php',
+        'GuzzleHttp\\Psr7\\NoSeekStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/NoSeekStream.php',
+        'GuzzleHttp\\Psr7\\PumpStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/PumpStream.php',
+        'GuzzleHttp\\Psr7\\Query' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Query.php',
+        'GuzzleHttp\\Psr7\\Request' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Request.php',
+        'GuzzleHttp\\Psr7\\Response' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Response.php',
+        'GuzzleHttp\\Psr7\\Rfc7230' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Rfc7230.php',
+        'GuzzleHttp\\Psr7\\ServerRequest' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/ServerRequest.php',
+        'GuzzleHttp\\Psr7\\Stream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Stream.php',
+        'GuzzleHttp\\Psr7\\StreamDecoratorTrait' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/StreamDecoratorTrait.php',
+        'GuzzleHttp\\Psr7\\StreamWrapper' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/StreamWrapper.php',
+        'GuzzleHttp\\Psr7\\UploadedFile' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/UploadedFile.php',
+        'GuzzleHttp\\Psr7\\Uri' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Uri.php',
+        'GuzzleHttp\\Psr7\\UriComparator' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/UriComparator.php',
+        'GuzzleHttp\\Psr7\\UriNormalizer' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/UriNormalizer.php',
+        'GuzzleHttp\\Psr7\\UriResolver' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/UriResolver.php',
+        'GuzzleHttp\\Psr7\\Utils' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Utils.php',
+        'Jean85\\Exception\\ProvidedPackageException' => __DIR__ . '/..' . '/jean85/pretty-package-versions/src/Exception/ProvidedPackageException.php',
+        'Jean85\\Exception\\ReplacedPackageException' => __DIR__ . '/..' . '/jean85/pretty-package-versions/src/Exception/ReplacedPackageException.php',
+        'Jean85\\Exception\\VersionMissingExceptionInterface' => __DIR__ . '/..' . '/jean85/pretty-package-versions/src/Exception/VersionMissingExceptionInterface.php',
+        'Jean85\\PrettyVersions' => __DIR__ . '/..' . '/jean85/pretty-package-versions/src/PrettyVersions.php',
+        'Jean85\\Version' => __DIR__ . '/..' . '/jean85/pretty-package-versions/src/Version.php',
         'PHPUnit\\Event\\Application\\Finished' => __DIR__ . '/..' . '/phpunit/phpunit/src/Event/Events/Application/Finished.php',
         'PHPUnit\\Event\\Application\\FinishedSubscriber' => __DIR__ . '/..' . '/phpunit/phpunit/src/Event/Events/Application/FinishedSubscriber.php',
         'PHPUnit\\Event\\Application\\Started' => __DIR__ . '/..' . '/phpunit/phpunit/src/Event/Events/Application/Started.php',
@@ -1404,6 +1475,19 @@ class ComposerStaticInitf0e04926db0e8eaae17a4266be7badad
         'PhpParser\\PrettyPrinterAbstract' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php',
         'PhpParser\\PrettyPrinter\\Standard' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php',
         'PhpParser\\Token' => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser/Token.php',
+        'Psr\\Http\\Message\\MessageInterface' => __DIR__ . '/..' . '/psr/http-message/src/MessageInterface.php',
+        'Psr\\Http\\Message\\RequestFactoryInterface' => __DIR__ . '/..' . '/psr/http-factory/src/RequestFactoryInterface.php',
+        'Psr\\Http\\Message\\RequestInterface' => __DIR__ . '/..' . '/psr/http-message/src/RequestInterface.php',
+        'Psr\\Http\\Message\\ResponseFactoryInterface' => __DIR__ . '/..' . '/psr/http-factory/src/ResponseFactoryInterface.php',
+        'Psr\\Http\\Message\\ResponseInterface' => __DIR__ . '/..' . '/psr/http-message/src/ResponseInterface.php',
+        'Psr\\Http\\Message\\ServerRequestFactoryInterface' => __DIR__ . '/..' . '/psr/http-factory/src/ServerRequestFactoryInterface.php',
+        'Psr\\Http\\Message\\ServerRequestInterface' => __DIR__ . '/..' . '/psr/http-message/src/ServerRequestInterface.php',
+        'Psr\\Http\\Message\\StreamFactoryInterface' => __DIR__ . '/..' . '/psr/http-factory/src/StreamFactoryInterface.php',
+        'Psr\\Http\\Message\\StreamInterface' => __DIR__ . '/..' . '/psr/http-message/src/StreamInterface.php',
+        'Psr\\Http\\Message\\UploadedFileFactoryInterface' => __DIR__ . '/..' . '/psr/http-factory/src/UploadedFileFactoryInterface.php',
+        'Psr\\Http\\Message\\UploadedFileInterface' => __DIR__ . '/..' . '/psr/http-message/src/UploadedFileInterface.php',
+        'Psr\\Http\\Message\\UriFactoryInterface' => __DIR__ . '/..' . '/psr/http-factory/src/UriFactoryInterface.php',
+        'Psr\\Http\\Message\\UriInterface' => __DIR__ . '/..' . '/psr/http-message/src/UriInterface.php',
         'Psr\\Log\\AbstractLogger' => __DIR__ . '/..' . '/psr/log/src/AbstractLogger.php',
         'Psr\\Log\\InvalidArgumentException' => __DIR__ . '/..' . '/psr/log/src/InvalidArgumentException.php',
         'Psr\\Log\\LogLevel' => __DIR__ . '/..' . '/psr/log/src/LogLevel.php',
@@ -1970,6 +2054,145 @@ class ComposerStaticInitf0e04926db0e8eaae17a4266be7badad
         'SebastianBergmann\\Type\\UnknownType' => __DIR__ . '/..' . '/sebastian/type/src/type/UnknownType.php',
         'SebastianBergmann\\Type\\VoidType' => __DIR__ . '/..' . '/sebastian/type/src/type/VoidType.php',
         'SebastianBergmann\\Version' => __DIR__ . '/..' . '/sebastian/version/src/Version.php',
+        'Sentry\\Attributes\\Attribute' => __DIR__ . '/..' . '/sentry/sentry/src/Attributes/Attribute.php',
+        'Sentry\\Attributes\\AttributeBag' => __DIR__ . '/..' . '/sentry/sentry/src/Attributes/AttributeBag.php',
+        'Sentry\\Breadcrumb' => __DIR__ . '/..' . '/sentry/sentry/src/Breadcrumb.php',
+        'Sentry\\CheckIn' => __DIR__ . '/..' . '/sentry/sentry/src/CheckIn.php',
+        'Sentry\\CheckInStatus' => __DIR__ . '/..' . '/sentry/sentry/src/CheckInStatus.php',
+        'Sentry\\Client' => __DIR__ . '/..' . '/sentry/sentry/src/Client.php',
+        'Sentry\\ClientBuilder' => __DIR__ . '/..' . '/sentry/sentry/src/ClientBuilder.php',
+        'Sentry\\ClientInterface' => __DIR__ . '/..' . '/sentry/sentry/src/ClientInterface.php',
+        'Sentry\\Context\\OsContext' => __DIR__ . '/..' . '/sentry/sentry/src/Context/OsContext.php',
+        'Sentry\\Context\\RuntimeContext' => __DIR__ . '/..' . '/sentry/sentry/src/Context/RuntimeContext.php',
+        'Sentry\\Dsn' => __DIR__ . '/..' . '/sentry/sentry/src/Dsn.php',
+        'Sentry\\ErrorHandler' => __DIR__ . '/..' . '/sentry/sentry/src/ErrorHandler.php',
+        'Sentry\\Event' => __DIR__ . '/..' . '/sentry/sentry/src/Event.php',
+        'Sentry\\EventHint' => __DIR__ . '/..' . '/sentry/sentry/src/EventHint.php',
+        'Sentry\\EventId' => __DIR__ . '/..' . '/sentry/sentry/src/EventId.php',
+        'Sentry\\EventType' => __DIR__ . '/..' . '/sentry/sentry/src/EventType.php',
+        'Sentry\\ExceptionDataBag' => __DIR__ . '/..' . '/sentry/sentry/src/ExceptionDataBag.php',
+        'Sentry\\ExceptionMechanism' => __DIR__ . '/..' . '/sentry/sentry/src/ExceptionMechanism.php',
+        'Sentry\\Exception\\EventCreationException' => __DIR__ . '/..' . '/sentry/sentry/src/Exception/EventCreationException.php',
+        'Sentry\\Exception\\FatalErrorException' => __DIR__ . '/..' . '/sentry/sentry/src/Exception/FatalErrorException.php',
+        'Sentry\\Exception\\JsonException' => __DIR__ . '/..' . '/sentry/sentry/src/Exception/JsonException.php',
+        'Sentry\\Exception\\SilencedErrorException' => __DIR__ . '/..' . '/sentry/sentry/src/Exception/SilencedErrorException.php',
+        'Sentry\\Frame' => __DIR__ . '/..' . '/sentry/sentry/src/Frame.php',
+        'Sentry\\FrameBuilder' => __DIR__ . '/..' . '/sentry/sentry/src/FrameBuilder.php',
+        'Sentry\\HttpClient\\HttpClient' => __DIR__ . '/..' . '/sentry/sentry/src/HttpClient/HttpClient.php',
+        'Sentry\\HttpClient\\HttpClientInterface' => __DIR__ . '/..' . '/sentry/sentry/src/HttpClient/HttpClientInterface.php',
+        'Sentry\\HttpClient\\Request' => __DIR__ . '/..' . '/sentry/sentry/src/HttpClient/Request.php',
+        'Sentry\\HttpClient\\Response' => __DIR__ . '/..' . '/sentry/sentry/src/HttpClient/Response.php',
+        'Sentry\\Integration\\AbstractErrorListenerIntegration' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/AbstractErrorListenerIntegration.php',
+        'Sentry\\Integration\\EnvironmentIntegration' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/EnvironmentIntegration.php',
+        'Sentry\\Integration\\ErrorListenerIntegration' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/ErrorListenerIntegration.php',
+        'Sentry\\Integration\\ExceptionListenerIntegration' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/ExceptionListenerIntegration.php',
+        'Sentry\\Integration\\FatalErrorListenerIntegration' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/FatalErrorListenerIntegration.php',
+        'Sentry\\Integration\\FrameContextifierIntegration' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/FrameContextifierIntegration.php',
+        'Sentry\\Integration\\IntegrationInterface' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/IntegrationInterface.php',
+        'Sentry\\Integration\\IntegrationRegistry' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/IntegrationRegistry.php',
+        'Sentry\\Integration\\ModulesIntegration' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/ModulesIntegration.php',
+        'Sentry\\Integration\\OptionAwareIntegrationInterface' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/OptionAwareIntegrationInterface.php',
+        'Sentry\\Integration\\RequestFetcher' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/RequestFetcher.php',
+        'Sentry\\Integration\\RequestFetcherInterface' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/RequestFetcherInterface.php',
+        'Sentry\\Integration\\RequestIntegration' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/RequestIntegration.php',
+        'Sentry\\Integration\\TransactionIntegration' => __DIR__ . '/..' . '/sentry/sentry/src/Integration/TransactionIntegration.php',
+        'Sentry\\Logger\\DebugFileLogger' => __DIR__ . '/..' . '/sentry/sentry/src/Logger/DebugFileLogger.php',
+        'Sentry\\Logger\\DebugLogger' => __DIR__ . '/..' . '/sentry/sentry/src/Logger/DebugLogger.php',
+        'Sentry\\Logger\\DebugStdOutLogger' => __DIR__ . '/..' . '/sentry/sentry/src/Logger/DebugStdOutLogger.php',
+        'Sentry\\Logs\\Log' => __DIR__ . '/..' . '/sentry/sentry/src/Logs/Log.php',
+        'Sentry\\Logs\\LogLevel' => __DIR__ . '/..' . '/sentry/sentry/src/Logs/LogLevel.php',
+        'Sentry\\Logs\\Logs' => __DIR__ . '/..' . '/sentry/sentry/src/Logs/Logs.php',
+        'Sentry\\Logs\\LogsAggregator' => __DIR__ . '/..' . '/sentry/sentry/src/Logs/LogsAggregator.php',
+        'Sentry\\Metrics\\Metrics' => __DIR__ . '/..' . '/sentry/sentry/src/Metrics/Metrics.php',
+        'Sentry\\Metrics\\MetricsAggregator' => __DIR__ . '/..' . '/sentry/sentry/src/Metrics/MetricsAggregator.php',
+        'Sentry\\Metrics\\TraceMetrics' => __DIR__ . '/..' . '/sentry/sentry/src/Metrics/TraceMetrics.php',
+        'Sentry\\Metrics\\Types\\CounterMetric' => __DIR__ . '/..' . '/sentry/sentry/src/Metrics/Types/CounterMetric.php',
+        'Sentry\\Metrics\\Types\\DistributionMetric' => __DIR__ . '/..' . '/sentry/sentry/src/Metrics/Types/DistributionMetric.php',
+        'Sentry\\Metrics\\Types\\GaugeMetric' => __DIR__ . '/..' . '/sentry/sentry/src/Metrics/Types/GaugeMetric.php',
+        'Sentry\\Metrics\\Types\\Metric' => __DIR__ . '/..' . '/sentry/sentry/src/Metrics/Types/Metric.php',
+        'Sentry\\MonitorConfig' => __DIR__ . '/..' . '/sentry/sentry/src/MonitorConfig.php',
+        'Sentry\\MonitorSchedule' => __DIR__ . '/..' . '/sentry/sentry/src/MonitorSchedule.php',
+        'Sentry\\MonitorScheduleUnit' => __DIR__ . '/..' . '/sentry/sentry/src/MonitorScheduleUnit.php',
+        'Sentry\\Monolog\\BreadcrumbHandler' => __DIR__ . '/..' . '/sentry/sentry/src/Monolog/BreadcrumbHandler.php',
+        'Sentry\\Monolog\\CompatibilityLogLevelTrait' => __DIR__ . '/..' . '/sentry/sentry/src/Monolog/CompatibilityLogLevelTrait.php',
+        'Sentry\\Monolog\\CompatibilityProcessingHandlerTrait' => __DIR__ . '/..' . '/sentry/sentry/src/Monolog/CompatibilityProcessingHandlerTrait.php',
+        'Sentry\\Monolog\\Handler' => __DIR__ . '/..' . '/sentry/sentry/src/Monolog/Handler.php',
+        'Sentry\\Monolog\\LogsHandler' => __DIR__ . '/..' . '/sentry/sentry/src/Monolog/LogsHandler.php',
+        'Sentry\\Options' => __DIR__ . '/..' . '/sentry/sentry/src/Options.php',
+        'Sentry\\Profiling\\Profile' => __DIR__ . '/..' . '/sentry/sentry/src/Profiling/Profile.php',
+        'Sentry\\Profiling\\Profiler' => __DIR__ . '/..' . '/sentry/sentry/src/Profiling/Profiler.php',
+        'Sentry\\SentrySdk' => __DIR__ . '/..' . '/sentry/sentry/src/SentrySdk.php',
+        'Sentry\\Serializer\\AbstractSerializer' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/AbstractSerializer.php',
+        'Sentry\\Serializer\\EnvelopItems\\CheckInItem' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/EnvelopItems/CheckInItem.php',
+        'Sentry\\Serializer\\EnvelopItems\\EnvelopeItemInterface' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/EnvelopItems/EnvelopeItemInterface.php',
+        'Sentry\\Serializer\\EnvelopItems\\EventItem' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/EnvelopItems/EventItem.php',
+        'Sentry\\Serializer\\EnvelopItems\\LogsItem' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/EnvelopItems/LogsItem.php',
+        'Sentry\\Serializer\\EnvelopItems\\MetricsItem' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/EnvelopItems/MetricsItem.php',
+        'Sentry\\Serializer\\EnvelopItems\\ProfileItem' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/EnvelopItems/ProfileItem.php',
+        'Sentry\\Serializer\\EnvelopItems\\TransactionItem' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/EnvelopItems/TransactionItem.php',
+        'Sentry\\Serializer\\PayloadSerializer' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/PayloadSerializer.php',
+        'Sentry\\Serializer\\PayloadSerializerInterface' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/PayloadSerializerInterface.php',
+        'Sentry\\Serializer\\RepresentationSerializer' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/RepresentationSerializer.php',
+        'Sentry\\Serializer\\RepresentationSerializerInterface' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/RepresentationSerializerInterface.php',
+        'Sentry\\Serializer\\SerializableInterface' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/SerializableInterface.php',
+        'Sentry\\Serializer\\Serializer' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/Serializer.php',
+        'Sentry\\Serializer\\SerializerInterface' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/SerializerInterface.php',
+        'Sentry\\Serializer\\Traits\\BreadcrumbSeralizerTrait' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/Traits/BreadcrumbSeralizerTrait.php',
+        'Sentry\\Serializer\\Traits\\StacktraceFrameSeralizerTrait' => __DIR__ . '/..' . '/sentry/sentry/src/Serializer/Traits/StacktraceFrameSeralizerTrait.php',
+        'Sentry\\Severity' => __DIR__ . '/..' . '/sentry/sentry/src/Severity.php',
+        'Sentry\\Spotlight\\SpotlightClient' => __DIR__ . '/..' . '/sentry/sentry/src/Spotlight/SpotlightClient.php',
+        'Sentry\\Stacktrace' => __DIR__ . '/..' . '/sentry/sentry/src/Stacktrace.php',
+        'Sentry\\StacktraceBuilder' => __DIR__ . '/..' . '/sentry/sentry/src/StacktraceBuilder.php',
+        'Sentry\\State\\Hub' => __DIR__ . '/..' . '/sentry/sentry/src/State/Hub.php',
+        'Sentry\\State\\HubAdapter' => __DIR__ . '/..' . '/sentry/sentry/src/State/HubAdapter.php',
+        'Sentry\\State\\HubInterface' => __DIR__ . '/..' . '/sentry/sentry/src/State/HubInterface.php',
+        'Sentry\\State\\Layer' => __DIR__ . '/..' . '/sentry/sentry/src/State/Layer.php',
+        'Sentry\\State\\Scope' => __DIR__ . '/..' . '/sentry/sentry/src/State/Scope.php',
+        'Sentry\\Tracing\\DynamicSamplingContext' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/DynamicSamplingContext.php',
+        'Sentry\\Tracing\\GuzzleTracingMiddleware' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/GuzzleTracingMiddleware.php',
+        'Sentry\\Tracing\\PropagationContext' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/PropagationContext.php',
+        'Sentry\\Tracing\\SamplingContext' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/SamplingContext.php',
+        'Sentry\\Tracing\\Span' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/Span.php',
+        'Sentry\\Tracing\\SpanContext' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/SpanContext.php',
+        'Sentry\\Tracing\\SpanId' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/SpanId.php',
+        'Sentry\\Tracing\\SpanRecorder' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/SpanRecorder.php',
+        'Sentry\\Tracing\\SpanStatus' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/SpanStatus.php',
+        'Sentry\\Tracing\\TraceId' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/TraceId.php',
+        'Sentry\\Tracing\\Traits\\TraceHeaderParserTrait' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/Traits/TraceHeaderParserTrait.php',
+        'Sentry\\Tracing\\Transaction' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/Transaction.php',
+        'Sentry\\Tracing\\TransactionContext' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/TransactionContext.php',
+        'Sentry\\Tracing\\TransactionMetadata' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/TransactionMetadata.php',
+        'Sentry\\Tracing\\TransactionSource' => __DIR__ . '/..' . '/sentry/sentry/src/Tracing/TransactionSource.php',
+        'Sentry\\Transport\\HttpTransport' => __DIR__ . '/..' . '/sentry/sentry/src/Transport/HttpTransport.php',
+        'Sentry\\Transport\\RateLimiter' => __DIR__ . '/..' . '/sentry/sentry/src/Transport/RateLimiter.php',
+        'Sentry\\Transport\\Result' => __DIR__ . '/..' . '/sentry/sentry/src/Transport/Result.php',
+        'Sentry\\Transport\\ResultStatus' => __DIR__ . '/..' . '/sentry/sentry/src/Transport/ResultStatus.php',
+        'Sentry\\Transport\\TransportInterface' => __DIR__ . '/..' . '/sentry/sentry/src/Transport/TransportInterface.php',
+        'Sentry\\Unit' => __DIR__ . '/..' . '/sentry/sentry/src/Unit.php',
+        'Sentry\\UserDataBag' => __DIR__ . '/..' . '/sentry/sentry/src/UserDataBag.php',
+        'Sentry\\Util\\Arr' => __DIR__ . '/..' . '/sentry/sentry/src/Util/Arr.php',
+        'Sentry\\Util\\ClockMock' => __DIR__ . '/..' . '/sentry/sentry/src/Util/ClockMock.php',
+        'Sentry\\Util\\Http' => __DIR__ . '/..' . '/sentry/sentry/src/Util/Http.php',
+        'Sentry\\Util\\JSON' => __DIR__ . '/..' . '/sentry/sentry/src/Util/JSON.php',
+        'Sentry\\Util\\PHPConfiguration' => __DIR__ . '/..' . '/sentry/sentry/src/Util/PHPConfiguration.php',
+        'Sentry\\Util\\PHPVersion' => __DIR__ . '/..' . '/sentry/sentry/src/Util/PHPVersion.php',
+        'Sentry\\Util\\PrefixStripper' => __DIR__ . '/..' . '/sentry/sentry/src/Util/PrefixStripper.php',
+        'Sentry\\Util\\RingBuffer' => __DIR__ . '/..' . '/sentry/sentry/src/Util/RingBuffer.php',
+        'Sentry\\Util\\SentryUid' => __DIR__ . '/..' . '/sentry/sentry/src/Util/SentryUid.php',
+        'Sentry\\Util\\Str' => __DIR__ . '/..' . '/sentry/sentry/src/Util/Str.php',
+        'Symfony\\Component\\OptionsResolver\\Debug\\OptionsResolverIntrospector' => __DIR__ . '/..' . '/symfony/options-resolver/Debug/OptionsResolverIntrospector.php',
+        'Symfony\\Component\\OptionsResolver\\Exception\\AccessException' => __DIR__ . '/..' . '/symfony/options-resolver/Exception/AccessException.php',
+        'Symfony\\Component\\OptionsResolver\\Exception\\ExceptionInterface' => __DIR__ . '/..' . '/symfony/options-resolver/Exception/ExceptionInterface.php',
+        'Symfony\\Component\\OptionsResolver\\Exception\\InvalidArgumentException' => __DIR__ . '/..' . '/symfony/options-resolver/Exception/InvalidArgumentException.php',
+        'Symfony\\Component\\OptionsResolver\\Exception\\InvalidOptionsException' => __DIR__ . '/..' . '/symfony/options-resolver/Exception/InvalidOptionsException.php',
+        'Symfony\\Component\\OptionsResolver\\Exception\\MissingOptionsException' => __DIR__ . '/..' . '/symfony/options-resolver/Exception/MissingOptionsException.php',
+        'Symfony\\Component\\OptionsResolver\\Exception\\NoConfigurationException' => __DIR__ . '/..' . '/symfony/options-resolver/Exception/NoConfigurationException.php',
+        'Symfony\\Component\\OptionsResolver\\Exception\\NoSuchOptionException' => __DIR__ . '/..' . '/symfony/options-resolver/Exception/NoSuchOptionException.php',
+        'Symfony\\Component\\OptionsResolver\\Exception\\OptionDefinitionException' => __DIR__ . '/..' . '/symfony/options-resolver/Exception/OptionDefinitionException.php',
+        'Symfony\\Component\\OptionsResolver\\Exception\\UndefinedOptionsException' => __DIR__ . '/..' . '/symfony/options-resolver/Exception/UndefinedOptionsException.php',
+        'Symfony\\Component\\OptionsResolver\\OptionConfigurator' => __DIR__ . '/..' . '/symfony/options-resolver/OptionConfigurator.php',
+        'Symfony\\Component\\OptionsResolver\\Options' => __DIR__ . '/..' . '/symfony/options-resolver/Options.php',
+        'Symfony\\Component\\OptionsResolver\\OptionsResolver' => __DIR__ . '/..' . '/symfony/options-resolver/OptionsResolver.php',
         'TheSeer\\Tokenizer\\Exception' => __DIR__ . '/..' . '/theseer/tokenizer/src/Exception.php',
         'TheSeer\\Tokenizer\\NamespaceUri' => __DIR__ . '/..' . '/theseer/tokenizer/src/NamespaceUri.php',
         'TheSeer\\Tokenizer\\NamespaceUriException' => __DIR__ . '/..' . '/theseer/tokenizer/src/NamespaceUriException.php',

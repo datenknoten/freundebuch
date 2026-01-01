@@ -36,4 +36,6 @@ return [
     'realm' => 'Freundebuch CardDAV',
     'base_uri' => '/carddav/',
     'log_level' => getenv('LOG_LEVEL') ?: 'info',
+    'sentry_dsn' => getenv('SENTRY_DSN') ?: '',
+    'environment' => getenv('ENV') ?: 'development',
 ];

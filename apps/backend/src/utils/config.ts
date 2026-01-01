@@ -39,6 +39,9 @@ const ConfigSchema = type({
   // Optional
   LOG_LEVEL: '"trace" | "debug" | "info" | "warn" | "error" | "fatal" = "info"',
   ENABLE_API_DOCS: BooleanString.default(false),
+
+  // Sentry (optional)
+  'SENTRY_DSN?': 'string',
   '+': 'delete',
 });
 

@@ -1,11 +1,18 @@
-import { sveltekit } from '@sveltejs/kit/vite';
 import { readFileSync } from 'node:fs';
+import { sentrySvelteKit } from '@sentry/sveltekit';
+import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 export default defineConfig({
-  plugins: [sveltekit()],
+  plugins: [
+    sentrySvelteKit({
+      autoUploadSourceMaps: !!process.env.SENTRY_AUTH_TOKEN,
+      adapter: 'other', // Using static adapter
+    }),
+    sveltekit(),
+  ],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },

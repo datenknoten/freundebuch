@@ -23,6 +23,7 @@
     "@freundebuch/shared": "workspace:*",
     "@hono/node-server": "1.19.7",
     "@pgtyped/runtime": "2.4.2",
+    "@sentry/node": "^10.32.1",
     "arktype": "2.1.29",
     "bcrypt": "6.0.0",
     "hono": "4.11.1",
