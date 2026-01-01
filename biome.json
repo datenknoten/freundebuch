@@ -15,7 +15,8 @@
       "!**/.svelte-kit",
       "!**/coverage",
       "!**/*.types.ts",
-      "!**/*.queries.ts"
+      "!**/*.queries.ts",
+      "!**/vendor"
     ]
   },
   "formatter": {

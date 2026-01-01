@@ -1,0 +1,19 @@
+{
+  "name": "freundebuch/sabredav",
+  "description": "CardDAV/CalDAV server for Freundebuch",
+  "type": "project",
+  "require": {
+    "php": ">=8.2",
+    "sabre/dav": "^4.6",
+    "ext-pdo": "*",
+    "ext-pdo_pgsql": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Freundebuch\\DAV\\": "src/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true
+  }
+}
