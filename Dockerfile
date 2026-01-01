@@ -4,7 +4,9 @@
 FROM composer:2 AS sabredav-deps
 WORKDIR /app
 COPY apps/sabredav/composer.json apps/sabredav/composer.lock* ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Use --ignore-platform-reqs because the composer image doesn't have pdo_pgsql
+# but the production runtime image does
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # ============================================
 # Stage 1: Base with pnpm
