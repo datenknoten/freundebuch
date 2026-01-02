@@ -1,3 +1,9 @@
+## [2.10.1](https://github.com/enko/freundebuch2/compare/v2.10.0...v2.10.1) (2026-01-02)
+
+### Performance Improvements
+
+* **docker:** Optimize build with BuildKit cache and .dockerignore ([457dc77](https://github.com/enko/freundebuch2/commit/457dc7797ac1721a2bd9d9e31855214f8a5ba7ec))
+
 ## [2.10.0](https://github.com/enko/freundebuch2/compare/v2.9.2...v2.10.0) (2026-01-02)
 
 ### Features
