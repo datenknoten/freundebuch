@@ -1,3 +1,9 @@
+## [2.8.3](https://github.com/enko/freundebuch2/compare/v2.8.2...v2.8.3) (2026-01-02)
+
+### Bug Fixes
+
+* **frontend:** Remove +page.server.ts incompatible with static adapter ([2ae031d](https://github.com/enko/freundebuch2/commit/2ae031d7f897b2aaa9bea2da0537046a37c0a7fa))
+
 ## [2.8.2](https://github.com/enko/freundebuch2/compare/v2.8.1...v2.8.2) (2026-01-02)
 
 ### Bug Fixes
