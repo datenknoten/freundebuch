@@ -1,3 +1,9 @@
+## [2.9.2](https://github.com/enko/freundebuch2/compare/v2.9.1...v2.9.2) (2026-01-02)
+
+### Bug Fixes
+
+* Enable production logging for PHP and use Pino for HTTP requests ([77e5e0e](https://github.com/enko/freundebuch2/commit/77e5e0e0ea2e8127beb94592af59a21fe83f1ede))
+
 ## [2.9.1](https://github.com/enko/freundebuch2/compare/v2.9.0...v2.9.1) (2026-01-02)
 
 ### Bug Fixes
