@@ -114,6 +114,24 @@ $logger->debug('CardDAV request received', [
     'path' => $path,
 ]);
 
+// Debug: Log raw Authorization header to diagnose truncation issues
+$authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null;
+if ($authHeader && strpos(strtolower($authHeader), 'basic ') === 0) {
+    $encoded = substr($authHeader, 6);
+    $decoded = base64_decode($encoded);
+    $colonPos = strpos($decoded, ':');
+    if ($colonPos !== false) {
+        $username = substr($decoded, 0, $colonPos);
+        error_log(sprintf(
+            '[AUTH_DEBUG] Raw auth header: encoded_len=%d decoded_len=%d username_len=%d username=%s',
+            strlen($encoded),
+            strlen($decoded),
+            strlen($username),
+            $username
+        ));
+    }
+}
+
 // Handle the incoming request
 $server->start();
 
