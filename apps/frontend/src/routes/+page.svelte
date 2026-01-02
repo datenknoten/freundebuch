@@ -8,9 +8,8 @@ import { currentUser, isAuthenticated } from '$lib/stores/auth';
 
 <div class="bg-gray-50 flex items-center justify-center p-4 py-16">
 	<div class="text-center max-w-4xl">
-		<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>
-
 		{#if $isAuthenticated && $currentUser}
+			<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>
 			<p class="text-2xl font-body text-gray-700 mb-8">
 				Welcome back, {$currentUser.email}!
 			</p>
@@ -37,25 +36,60 @@ import { currentUser, isAuthenticated } from '$lib/stores/auth';
 				</div>
 			</div>
 		{:else}
-			<p class="text-xl font-body text-gray-700 mb-8">
-				Your relationship assistant - never forget to reach out again
+			<!-- Logo -->
+			<div class="mb-6">
+				<img
+					src="/logo.png"
+					alt="Freundebuch - An open book with memories"
+					class="w-48 h-48 mx-auto"
+				/>
+			</div>
+
+			<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>
+			<p class="text-xl font-body text-gray-700 mb-10">
+				Your personal memory book for the people who matter most
 			</p>
+
 			<div class="bg-white rounded-xl shadow-lg p-8 mb-8 text-left">
 				<h2 class="text-3xl font-heading text-gray-800 mb-6 text-center">
-					What is Freundebuch?
+					Keep Your Connections Alive
 				</h2>
 				<div class="space-y-4 font-body text-gray-700">
 					<p>
-						Think of this as your relationship assistant - a self-hostable web application
-						designed to help individuals and families maintain meaningful connections.
+						Life gets busy, but friendships shouldn't fade away. Freundebuch is your
+						personal space to cherish relationships, remember the little details, and
+						never miss an opportunity to connect with the people you care about.
 					</p>
-					<ul class="list-disc list-inside space-y-2 ml-4">
-						<li>Track interactions with friends, family, and colleagues</li>
-						<li>Set reminders to stay in touch with the people who matter</li>
-						<li>Organize contacts with groups and tags</li>
-						<li>Get insights into your relationship health</li>
-						<li>Sync with your devices using CalDAV/CardDAV</li>
-					</ul>
+					<div class="grid md:grid-cols-2 gap-4 mt-6">
+						<div class="flex items-start gap-3">
+							<span class="text-forest text-xl">&#9829;</span>
+							<div>
+								<h3 class="font-semibold text-gray-800">Remember What Matters</h3>
+								<p class="text-sm text-gray-600">Store birthdays, anniversaries, and personal notes about your loved ones</p>
+							</div>
+						</div>
+						<div class="flex items-start gap-3">
+							<span class="text-forest text-xl">&#9734;</span>
+							<div>
+								<h3 class="font-semibold text-gray-800">Stay in Touch</h3>
+								<p class="text-sm text-gray-600">Get gentle reminders when it's time to reach out to friends and family</p>
+							</div>
+						</div>
+						<div class="flex items-start gap-3">
+							<span class="text-forest text-xl">&#9825;</span>
+							<div>
+								<h3 class="font-semibold text-gray-800">Nurture Relationships</h3>
+								<p class="text-sm text-gray-600">Track your interactions and see how your connections grow over time</p>
+							</div>
+						</div>
+						<div class="flex items-start gap-3">
+							<span class="text-forest text-xl">&#10022;</span>
+							<div>
+								<h3 class="font-semibold text-gray-800">Your Data, Your Control</h3>
+								<p class="text-sm text-gray-600">Self-hosted and private - sync across devices with CalDAV/CardDAV</p>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 			<div class="flex gap-4 justify-center">
@@ -63,7 +97,7 @@ import { currentUser, isAuthenticated } from '$lib/stores/auth';
 					href="/auth/register"
 					class="bg-forest text-white px-8 py-3 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors text-lg"
 				>
-					Get Started
+					Start Your Book
 				</a>
 				<a
 					href="/auth/login"
