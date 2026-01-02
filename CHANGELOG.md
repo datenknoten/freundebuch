@@ -1,3 +1,9 @@
+## [2.9.0](https://github.com/enko/freundebuch2/compare/v2.8.3...v2.9.0) (2026-01-02)
+
+### Features
+
+* Add distributed tracing between frontend and backend via Sentry ([de209a9](https://github.com/enko/freundebuch2/commit/de209a924d8dd5ac0f54b7fc65a7f51b6518b3e7))
+
 ## [2.8.3](https://github.com/enko/freundebuch2/compare/v2.8.2...v2.8.3) (2026-01-02)
 
 ### Bug Fixes
