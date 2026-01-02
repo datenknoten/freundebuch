@@ -31,8 +31,8 @@ if (SENTRY_DSN) {
     dsn: SENTRY_DSN,
     environment: NODE_ENV,
 
-    // Performance monitoring - enables distributed tracing
-    tracesSampleRate: NODE_ENV === 'production' ? 0.1 : 1.0,
+    // Performance monitoring - 100% sampling for MVP phase
+    tracesSampleRate: 1.0,
 
     // Enable sending of default PII (useful for debugging but disable in prod if needed)
     sendDefaultPii: NODE_ENV !== 'production',

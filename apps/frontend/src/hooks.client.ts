@@ -12,8 +12,8 @@ if (SENTRY_DSN) {
     // and keep the DSN hidden from client-side code inspection
     tunnel: '/api/sentry-tunnel',
 
-    // Performance monitoring
-    tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
+    // Performance monitoring - 100% sampling for MVP phase
+    tracesSampleRate: 1.0,
 
     // Session replay for debugging user issues
     replaysSessionSampleRate: 0.1,
