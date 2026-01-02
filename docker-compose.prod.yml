@@ -24,6 +24,8 @@ services:
 
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      NGINX_ACCESS_LOG: ${NGINX_ACCESS_LOG:-off}
+      NGINX_ERROR_LOG_LEVEL: ${NGINX_ERROR_LOG_LEVEL:-warn}
     volumes:
       - freundebuch_uploads:/app/uploads
     networks:
