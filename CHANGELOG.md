@@ -1,3 +1,14 @@
+## [2.10.3](https://github.com/enko/freundebuch2/compare/v2.10.2...v2.10.3) (2026-01-02)
+
+### Bug Fixes
+
+* **docker:** Add php8.2-mbstring extension for SabreDAV ([7a4b18a](https://github.com/enko/freundebuch2/commit/7a4b18a9696897048e62a3d3b5f7208c3e7eafc7))
+* **docker:** Run database migrations on container startup ([f97bc78](https://github.com/enko/freundebuch2/commit/f97bc786e72188b04902f7763f191b14683deae4))
+
+### Reverts
+
+* Remove automatic migrations from entrypoint ([52b9112](https://github.com/enko/freundebuch2/commit/52b9112e40417e9deb8fc828ddc2989616c96994))
+
 ## [2.10.2](https://github.com/enko/freundebuch2/compare/v2.10.1...v2.10.2) (2026-01-02)
 
 ### Bug Fixes
