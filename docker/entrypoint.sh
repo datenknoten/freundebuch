@@ -16,10 +16,5 @@ fi
 # Generate nginx config from template
 envsubst '${NGINX_ACCESS_LOG_LINE} ${NGINX_ERROR_LOG_LEVEL}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
-# Run database migrations
-echo "Running database migrations..."
-cd /app && node node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize --migrations-dir database/dist up
-echo "Database migrations completed."
-
 # Start supervisord
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
