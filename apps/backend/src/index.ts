@@ -5,6 +5,7 @@ import { cors } from 'hono/cors';
 import { logger as honoLogger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import type pg from 'pg';
+import { sentryTracingMiddleware } from './middleware/sentry.js';
 import appPasswordsRoutes from './routes/app-passwords.js';
 import authRoutes from './routes/auth.js';
 import contactsRoutes from './routes/contacts.js';
@@ -30,11 +31,11 @@ if (SENTRY_DSN) {
     dsn: SENTRY_DSN,
     environment: NODE_ENV,
 
-    // Performance monitoring
+    // Performance monitoring - enables distributed tracing
     tracesSampleRate: NODE_ENV === 'production' ? 0.1 : 1.0,
 
-    // Set sampling rate for profiling
-    profilesSampleRate: NODE_ENV === 'production' ? 0.1 : 1.0,
+    // Enable sending of default PII (useful for debugging but disable in prod if needed)
+    sendDefaultPii: NODE_ENV !== 'production',
   });
 }
 
@@ -70,8 +71,15 @@ export async function createApp(pool: pg.Pool) {
     cors({
       origin: config.FRONTEND_URL,
       credentials: true,
+      // Allow Sentry tracing headers for distributed tracing
+      allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage'],
+      exposeHeaders: ['sentry-trace', 'baggage'],
     }),
   );
+
+  // Sentry tracing middleware - must come after CORS to access headers
+  // This continues traces from the frontend for distributed tracing
+  app.use('*', sentryTracingMiddleware);
 
   // Routes
   app.route('/health', healthRoutes);
