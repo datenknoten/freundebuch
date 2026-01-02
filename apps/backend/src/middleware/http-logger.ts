@@ -16,7 +16,7 @@ export const httpLoggerMiddleware: MiddlewareHandler<AppContext> = async (c, nex
   const status = c.res.status;
   const logger = c.get('logger');
 
-  logger.info(
+  logger.debug(
     {
       method,
       path,

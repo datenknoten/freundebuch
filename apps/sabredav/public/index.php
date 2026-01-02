@@ -18,6 +18,7 @@ use Sabre\DAVACL;
 use Freundebuch\DAV\Auth\AppPasswordBackend;
 use Freundebuch\DAV\Principal\FreundebuchPrincipalBackend;
 use Freundebuch\DAV\CardDAV\FreundebuchCardDAVBackend;
+use Freundebuch\DAV\Logging\Logger;
 
 // Load configuration
 $config = require __DIR__ . '/../config/config.php';
@@ -28,6 +29,10 @@ if (file_exists($localConfigPath)) {
     $localConfig = require $localConfigPath;
     $config = array_merge($config, $localConfig);
 }
+
+// Initialize logger
+$logger = new Logger($config['log_level']);
+$requestStart = microtime(true);
 
 // Initialize Sentry if DSN is configured
 if (!empty($config['sentry_dsn'])) {
@@ -50,7 +55,7 @@ try {
         ]
     );
 } catch (PDOException $e) {
-    error_log('Database connection failed: ' . $e->getMessage());
+    $logger->error('Database connection failed', ['error' => $e->getMessage()]);
     if (!empty($config['sentry_dsn'])) {
         \Sentry\captureException($e);
     }
@@ -58,6 +63,8 @@ try {
     echo 'Service Unavailable';
     exit(1);
 }
+
+$logger->debug('Database connection established');
 
 // Authentication backend (app passwords)
 $authBackend = new AppPasswordBackend($pdo);
@@ -99,5 +106,23 @@ if ($config['log_level'] === 'debug') {
     $server->addPlugin($browserPlugin);
 }
 
+// Log incoming request
+$method = $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN';
+$path = $_SERVER['REQUEST_URI'] ?? '/';
+$logger->debug('CardDAV request received', [
+    'method' => $method,
+    'path' => $path,
+]);
+
 // Handle the incoming request
 $server->start();
+
+// Log request completion
+$duration = round((microtime(true) - $requestStart) * 1000);
+$statusCode = http_response_code();
+$logger->info('CardDAV request completed', [
+    'method' => $method,
+    'path' => $path,
+    'status' => $statusCode,
+    'duration' => $duration,
+]);

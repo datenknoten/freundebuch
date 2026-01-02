@@ -68,10 +68,10 @@ RUN pnpm --filter @freundebuch/frontend run build
 # ============================================
 FROM node:24-bookworm-slim AS production
 
-# Install nginx, supervisor, curl, and PHP-FPM with PostgreSQL extension
+# Install nginx, supervisor, curl, gettext (for envsubst), and PHP-FPM with PostgreSQL extension
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        nginx supervisor curl \
+        nginx supervisor curl gettext-base \
         php8.2-fpm php8.2-pgsql php8.2-xml && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
@@ -110,8 +110,12 @@ COPY apps/sabredav/config ./apps/sabredav/config
 COPY apps/sabredav/public ./apps/sabredav/public
 COPY apps/sabredav/src ./apps/sabredav/src
 
-# Copy nginx configuration
-COPY docker/nginx.prod.conf /etc/nginx/nginx.conf
+# Copy nginx configuration template (will be processed by entrypoint)
+COPY docker/nginx.conf.template /etc/nginx/nginx.conf.template
+
+# Copy entrypoint script
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Copy supervisor configuration
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -126,5 +130,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost/health || exit 1
 
-# Start supervisor (manages nginx + node)
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start via entrypoint (generates nginx config from template, then starts supervisord)
+CMD ["/entrypoint.sh"]
