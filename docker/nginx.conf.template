@@ -16,7 +16,7 @@ http {
 
     # Access log: configurable via environment variable
     # Use "off" to disable, or "/dev/stdout" to enable
-    access_log ${NGINX_ACCESS_LOG} main;
+    access_log ${NGINX_ACCESS_LOG_LINE};
 
     sendfile on;
     tcp_nopush on;
