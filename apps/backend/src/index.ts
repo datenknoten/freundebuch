@@ -2,9 +2,9 @@ import { serve } from '@hono/node-server';
 import * as Sentry from '@sentry/node';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { logger as honoLogger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import type pg from 'pg';
+import { httpLoggerMiddleware } from './middleware/http-logger.js';
 import { sentryTracingMiddleware } from './middleware/sentry.js';
 import appPasswordsRoutes from './routes/app-passwords.js';
 import authRoutes from './routes/auth.js';
@@ -58,7 +58,7 @@ export async function createApp(pool: pg.Pool) {
   });
 
   // Middleware
-  app.use('*', honoLogger());
+  app.use('*', httpLoggerMiddleware);
   app.use(
     '*',
     secureHeaders({
