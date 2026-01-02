@@ -10,6 +10,9 @@ export default defineConfig({
     sentrySvelteKit({
       autoUploadSourceMaps: !!process.env.SENTRY_AUTH_TOKEN,
       adapter: 'other', // Using static adapter
+      sourceMapsUploadOptions: {
+        project: 'freundebuch',
+      },
     }),
     sveltekit(),
   ],
