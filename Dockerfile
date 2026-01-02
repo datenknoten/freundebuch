@@ -1,22 +1,52 @@
+# syntax=docker/dockerfile:1.4
 # ============================================
-# Stage 0: SabreDAV PHP dependencies
+# Optimized multi-stage build for production
+# Requires Docker BuildKit (DOCKER_BUILDKIT=1)
+# ============================================
+
+# ============================================
+# Stage: Runtime base with system dependencies
+# This stage is cached and reused across builds
+# Can be pre-built: docker build --target runtime-base -t freundebuch-runtime-base .
+# ============================================
+FROM node:24-bookworm-slim AS runtime-base
+
+# Install nginx, supervisor, curl, gettext (for envsubst), and PHP-FPM with PostgreSQL extension
+# Combined into single layer for caching
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        nginx supervisor curl gettext-base \
+        php8.2-fpm php8.2-pgsql php8.2-xml && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    # Configure PHP-FPM to listen on TCP socket instead of Unix socket
+    sed -i 's|listen = /run/php/php8.2-fpm.sock|listen = 127.0.0.1:9000|' /etc/php/8.2/fpm/pool.d/www.conf && \
+    # Ensure PHP-FPM directory exists
+    mkdir -p /run/php && \
+    # Enable corepack for pnpm
+    corepack enable && corepack prepare pnpm@latest --activate
+
+# ============================================
+# Stage: SabreDAV PHP dependencies
+# Runs in parallel with Node stages
 # ============================================
 FROM composer:2 AS sabredav-deps
 WORKDIR /app
 COPY apps/sabredav/composer.json apps/sabredav/composer.lock* ./
-# Use --ignore-platform-reqs because the composer image doesn't have pdo_pgsql
-# but the production runtime image does
-RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+# Use cache mount for composer and ignore platform reqs (pdo_pgsql is in runtime image)
+RUN --mount=type=cache,id=composer,target=/root/.composer/cache \
+    composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # ============================================
-# Stage 1: Base with pnpm
+# Stage: Node base with pnpm
 # ============================================
 FROM node:24-bookworm-slim AS base
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 # ============================================
-# Stage 2: Install dependencies
+# Stage: Install dependencies
+# Uses cache mount for pnpm store - major speedup on rebuilds
 # ============================================
 FROM base AS deps
 
@@ -29,11 +59,12 @@ COPY apps/backend/package.json ./apps/backend/
 COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install all dependencies (including devDependencies for building)
-RUN pnpm install --frozen-lockfile
+# Install all dependencies with cache mount for pnpm store
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # ============================================
-# Stage 3: Build shared package
+# Stage: Build shared package
 # ============================================
 FROM deps AS shared-builder
 
@@ -41,7 +72,8 @@ COPY packages/shared ./packages/shared
 RUN pnpm --filter @freundebuch/shared run build
 
 # ============================================
-# Stage 4: Build backend and migrations
+# Stage: Build backend and migrations
+# Runs in parallel with frontend-builder (both depend on shared-builder)
 # ============================================
 FROM shared-builder AS backend-builder
 
@@ -51,7 +83,8 @@ RUN pnpm --filter @freundebuch/backend run build && \
     pnpm run migrate:build
 
 # ============================================
-# Stage 5: Build frontend (static)
+# Stage: Build frontend (static)
+# Runs in parallel with backend-builder (both depend on shared-builder)
 # ============================================
 FROM shared-builder AS frontend-builder
 
@@ -64,39 +97,26 @@ ENV VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
 RUN pnpm --filter @freundebuch/frontend run build
 
 # ============================================
-# Stage 6: Production runtime
+# Stage: Production runtime
+# Based on runtime-base with all system deps pre-installed
 # ============================================
-FROM node:24-bookworm-slim AS production
+FROM runtime-base AS production
 
-# Install nginx, supervisor, curl, gettext (for envsubst), and PHP-FPM with PostgreSQL extension
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        nginx supervisor curl gettext-base \
-        php8.2-fpm php8.2-pgsql php8.2-xml && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    # Configure PHP-FPM to listen on TCP socket instead of Unix socket
-    sed -i 's|listen = /run/php/php8.2-fpm.sock|listen = 127.0.0.1:9000|' /etc/php/8.2/fpm/pool.d/www.conf && \
-    # Ensure PHP-FPM directory exists
-    mkdir -p /run/php
+WORKDIR /app
 
 # Copy PHP-FPM pool configuration for logging
 COPY docker/php-fpm-pool.conf /etc/php/8.2/fpm/pool.d/zz-logging.conf
-
-# Enable corepack for pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-WORKDIR /app
 
 # Copy workspace configuration for production dependencies
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install production dependencies only (ignore prepare scripts)
-RUN pnpm install --frozen-lockfile --prod --ignore-scripts
+# Install production dependencies only with cache mount
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --prod --ignore-scripts
 
-# Copy built artifacts
+# Copy built artifacts from parallel build stages
 COPY --from=shared-builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=backend-builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=frontend-builder /app/apps/frontend/build ./apps/frontend/build
@@ -113,15 +133,11 @@ COPY apps/sabredav/src ./apps/sabredav/src
 # Copy nginx configuration template (will be processed by entrypoint)
 COPY docker/nginx.conf.template /etc/nginx/nginx.conf.template
 
-# Copy entrypoint script
+# Copy entrypoint script and supervisor configuration
 COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Copy supervisor configuration
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Create required directories
-RUN mkdir -p /var/log/supervisor /app/uploads
+RUN chmod +x /entrypoint.sh && \
+    mkdir -p /var/log/supervisor /app/uploads
 
 # Expose port 80 (nginx)
 EXPOSE 80
