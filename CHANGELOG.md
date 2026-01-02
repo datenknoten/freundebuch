@@ -1,3 +1,9 @@
+## [2.9.1](https://github.com/enko/freundebuch2/compare/v2.9.0...v2.9.1) (2026-01-02)
+
+### Bug Fixes
+
+* **carddav:** Pass original request URI to SabreDAV ([f8391ba](https://github.com/enko/freundebuch2/commit/f8391baa5a021bcff41994b81a9c7b60b18fc836))
+
 ## [2.9.0](https://github.com/enko/freundebuch2/compare/v2.8.3...v2.9.0) (2026-01-02)
 
 ### Features
