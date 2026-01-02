@@ -1,0 +1,98 @@
+# ===========================================
+# Docker build context exclusions
+# Reduces context size and improves build speed
+# ===========================================
+
+# Git
+.git/
+.gitignore
+
+# GitHub workflows and configs
+.github/
+
+# Claude/AI tooling
+.claude/
+AGENTS.md
+
+# Development tooling
+.husky/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation (not needed for build)
+docs/
+project-management/
+*.md
+!apps/frontend/README.md
+
+# CI/CD and release configs
+.releaserc.json
+renovate.json
+commitlint.config.mjs
+.tool-versions
+
+# Environment files (secrets - never include)
+.env
+.env.local
+.env.*.local
+.env.example
+
+# Dependencies (will be installed fresh in container)
+node_modules/
+.pnpm-store/
+
+# Build outputs (will be built fresh in container)
+dist/
+build/
+.svelte-kit/
+.output/
+
+# Testing artifacts
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+**/*.test.ts
+**/*.spec.ts
+**/tests/
+**/test/
+**/__tests__/
+**/vitest.config.ts
+**/playwright.config.ts
+
+# TypeScript build artifacts
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Temporary files
+*.tmp
+.temp/
+
+# Database files
+*.db
+*.sqlite
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files not needed in context
+docker-compose*.yml
+.docker/
+
+# Upload assets (runtime data)
+apps/backend/uploads/
+
+# Scripts (development helpers)
+scripts/
+
+# Linter config (not needed for production build)
+biome.json
