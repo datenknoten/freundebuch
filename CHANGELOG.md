@@ -1,3 +1,9 @@
+## [2.10.2](https://github.com/enko/freundebuch2/compare/v2.10.1...v2.10.2) (2026-01-02)
+
+### Bug Fixes
+
+* **nginx:** Fix invalid 'access_log off main' syntax ([2aad082](https://github.com/enko/freundebuch2/commit/2aad0821ffa2277bc8a71e9cafa2d263de161c7e))
+
 ## [2.10.1](https://github.com/enko/freundebuch2/compare/v2.10.0...v2.10.1) (2026-01-02)
 
 ### Performance Improvements
