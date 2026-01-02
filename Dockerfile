@@ -80,6 +80,9 @@ RUN apt-get update && \
     # Ensure PHP-FPM directory exists
     mkdir -p /run/php
 
+# Copy PHP-FPM pool configuration for logging
+COPY docker/php-fpm-pool.conf /etc/php/8.2/fpm/pool.d/zz-logging.conf
+
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
