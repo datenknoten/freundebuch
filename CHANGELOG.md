@@ -1,3 +1,9 @@
+## [2.11.0](https://github.com/enko/freundebuch2/compare/v2.10.3...v2.11.0) (2026-01-02)
+
+### Features
+
+* **landing:** Reword landing page and add logo placeholder ([0eeb423](https://github.com/enko/freundebuch2/commit/0eeb42327b31b002976ff93f7ebaea9ce78e39f1))
+
 ## [2.10.3](https://github.com/enko/freundebuch2/compare/v2.10.2...v2.10.3) (2026-01-02)
 
 ### Bug Fixes
