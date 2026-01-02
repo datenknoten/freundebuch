@@ -1,3 +1,9 @@
+## [2.8.1](https://github.com/enko/freundebuch2/compare/v2.8.0...v2.8.1) (2026-01-02)
+
+### Bug Fixes
+
+* **ci:** Skip git hooks during semantic-release ([e8c3761](https://github.com/enko/freundebuch2/commit/e8c3761f1a6cba0c2c5c61f23293c180d1c87d5b))
+
 ## [2.8.0](https://github.com/enko/freundebuch2/compare/v2.7.0...v2.8.0) (2026-01-01)
 
 ### Features
