@@ -77,6 +77,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     # Configure PHP-FPM to listen on TCP socket instead of Unix socket
     sed -i 's|listen = /run/php/php8.2-fpm.sock|listen = 127.0.0.1:9000|' /etc/php/8.2/fpm/pool.d/www.conf && \
+    # Allow environment variables to be passed to PHP-FPM workers (needed for DATABASE_URL, SENTRY_DSN, etc.)
+    sed -i 's|;clear_env = no|clear_env = no|' /etc/php/8.2/fpm/pool.d/www.conf && \
     # Ensure PHP-FPM directory exists
     mkdir -p /run/php
 
