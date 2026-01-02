@@ -1,3 +1,9 @@
+## [2.8.2](https://github.com/enko/freundebuch2/compare/v2.8.1...v2.8.2) (2026-01-02)
+
+### Bug Fixes
+
+* **frontend:** Add Sentry project slug to Vite config ([ff1b594](https://github.com/enko/freundebuch2/commit/ff1b59421c118ea2befda0aa98caaa532140c9da))
+
 ## [2.8.1](https://github.com/enko/freundebuch2/compare/v2.8.0...v2.8.1) (2026-01-02)
 
 ### Bug Fixes
