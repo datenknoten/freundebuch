@@ -43,6 +43,14 @@ class AppPasswordBackend extends AbstractBasic
         $rawPassword = str_replace('-', '', $password);
         $prefix = substr($rawPassword, 0, 8);
 
+        error_log(sprintf(
+            '[AUTH_DEBUG] Attempting auth: email=%s password_length=%d raw_length=%d prefix=%s',
+            $username,
+            strlen($password),
+            strlen($rawPassword),
+            $prefix
+        ));
+
         // Find user by email
         $stmt = $this->pdo->prepare('
             SELECT id, external_id, email
@@ -57,9 +65,15 @@ class AppPasswordBackend extends AbstractBasic
             return false;
         }
 
+        error_log(sprintf(
+            '[AUTH_DEBUG] User found: id=%s external_id=%s',
+            $user['id'],
+            $user['external_id']
+        ));
+
         // Find matching app passwords by prefix
         $stmt = $this->pdo->prepare('
-            SELECT id, password_hash
+            SELECT id, password_hash, password_prefix
             FROM auth.app_passwords
             WHERE user_id = :user_id
               AND password_prefix = :prefix
@@ -70,11 +84,20 @@ class AppPasswordBackend extends AbstractBasic
             'prefix' => $prefix,
         ]);
 
+        $passwordsFound = 0;
         // Try each matching password
         while ($row = $stmt->fetch()) {
+            $passwordsFound++;
+            error_log(sprintf(
+                '[AUTH_DEBUG] Testing app_password id=%s stored_prefix=%s',
+                $row['id'],
+                $row['password_prefix']
+            ));
+
             // Node.js bcrypt uses $2b$ prefix, PHP uses $2y$ - they are compatible
             $hash = str_replace('$2b$', '$2y$', $row['password_hash']);
             if (password_verify($rawPassword, $hash)) {
+                error_log('[AUTH_DEBUG] Password verified successfully');
                 // Update last_used_at
                 $updateStmt = $this->pdo->prepare('
                     UPDATE auth.app_passwords
@@ -84,9 +107,12 @@ class AppPasswordBackend extends AbstractBasic
                 $updateStmt->execute(['id' => $row['id']]);
 
                 return true;
+            } else {
+                error_log('[AUTH_DEBUG] Password hash mismatch');
             }
         }
 
+        error_log(sprintf('[AUTH_DEBUG] No matching passwords found (tested %d)', $passwordsFound));
         $this->logFailedAttempt($username, 'invalid_password');
         return false;
     }
