@@ -12,6 +12,7 @@ import type {
 } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
 import ContactAvatar from './ContactAvatar.svelte';
+import HierarchicalAddressInput from './HierarchicalAddressInput.svelte';
 
 interface Props {
   contact?: Contact;
@@ -91,6 +92,60 @@ let urls = $state<Array<{ url: string; url_type: UrlType; label: string }>>(
   })) ?? [],
 );
 
+// Addresses (with hierarchical input data)
+interface AddressFormData {
+  id?: string;
+  country_code: string;
+  country: string;
+  postal_code: string;
+  city: string;
+  state_province?: string;
+  street: string;
+  house_number: string;
+  street_line2?: string;
+  address_type: AddressType;
+  is_primary: boolean;
+}
+
+let addresses = $state<AddressFormData[]>(
+  contact?.addresses?.map((a) => {
+    // Parse street and house number from street_line1 if possible
+    // Simple heuristic: last word that starts with a digit is the house number
+    const parts = a.streetLine1?.split(' ') ?? [];
+    let street = a.streetLine1 ?? '';
+    let houseNumber = '';
+
+    // Try to extract house number from the end
+    if (parts.length > 1) {
+      const lastPart = parts[parts.length - 1];
+      if (/^\d/.test(lastPart)) {
+        houseNumber = lastPart;
+        street = parts.slice(0, -1).join(' ');
+      }
+    }
+
+    return {
+      id: a.id,
+      country_code: '', // We don't store the code, will need to be re-selected
+      country: a.country ?? '',
+      postal_code: a.postalCode ?? '',
+      city: a.city ?? '',
+      state_province: a.stateProvince,
+      street,
+      house_number: houseNumber,
+      street_line2: a.streetLine2,
+      address_type: a.addressType,
+      is_primary: a.isPrimary,
+    };
+  }) ?? [],
+);
+
+// Track deleted address IDs for removal on save
+let deletedAddressIds = $state<string[]>([]);
+
+// Element refs for address type selects (for focus management)
+let addressTypeRefs: HTMLSelectElement[] = [];
+
 // Epic 1B: Professional fields
 let jobTitle = $state(contact?.jobTitle ?? '');
 let organization = $state(contact?.organization ?? '');
@@ -166,6 +221,78 @@ function addUrl() {
 
 function removeUrl(index: number) {
   urls = urls.filter((_, i) => i !== index);
+}
+
+// Address functions
+function addAddress() {
+  addresses = [
+    ...addresses,
+    {
+      country_code: '',
+      country: '',
+      postal_code: '',
+      city: '',
+      state_province: undefined,
+      street: '',
+      house_number: '',
+      street_line2: undefined,
+      address_type: 'home',
+      is_primary: addresses.length === 0,
+    },
+  ];
+
+  // Focus the type select of the newly added address
+  requestAnimationFrame(() => {
+    const newIndex = addresses.length - 1;
+    addressTypeRefs[newIndex]?.focus();
+  });
+}
+
+function removeAddress(index: number) {
+  const addressToRemove = addresses[index];
+  // Track the ID if it's an existing address (has an ID)
+  if (addressToRemove?.id) {
+    deletedAddressIds = [...deletedAddressIds, addressToRemove.id];
+  }
+  addresses = addresses.filter((_, i) => i !== index);
+}
+
+function handleAddressChange(
+  index: number,
+  data: {
+    country: string;
+    postal_code: string;
+    city: string;
+    state_province?: string;
+    street_line1: string;
+    street_line2?: string;
+    address_type: AddressType;
+  },
+) {
+  // Parse street and house number from street_line1
+  const parts = data.street_line1.split(' ');
+  let street = data.street_line1;
+  let houseNumber = '';
+
+  if (parts.length > 1) {
+    const lastPart = parts[parts.length - 1];
+    if (/^\d/.test(lastPart)) {
+      houseNumber = lastPart;
+      street = parts.slice(0, -1).join(' ');
+    }
+  }
+
+  addresses[index] = {
+    ...addresses[index],
+    country: data.country,
+    postal_code: data.postal_code,
+    city: data.city,
+    state_province: data.state_province,
+    street,
+    house_number: houseNumber,
+    street_line2: data.street_line2,
+    address_type: data.address_type,
+  };
 }
 
 // Epic 1B: Date functions
@@ -270,6 +397,18 @@ async function handleSubmit(e: Event) {
     const validPhones = phones.filter((p) => p.phone_number.trim());
     const validEmails = emails.filter((e) => e.email_address.trim());
     const validUrls = urls.filter((u) => u.url.trim());
+    const validAddresses = addresses
+      .filter((a) => a.country && a.postal_code && a.city && a.street && a.house_number)
+      .map((a) => ({
+        street_line1: `${a.street} ${a.house_number}`.trim(),
+        street_line2: a.street_line2 || undefined,
+        city: a.city,
+        state_province: a.state_province || undefined,
+        postal_code: a.postal_code,
+        country: a.country,
+        address_type: a.address_type,
+        is_primary: a.is_primary,
+      }));
     const validDates = dates.filter((d) => d.date_value.trim());
     const validSocialProfiles = socialProfiles.filter(
       (sp) => sp.profile_url.trim() || sp.username.trim(),
@@ -372,6 +511,43 @@ async function handleSubmit(e: Event) {
         }
       }
 
+      // Handle addresses - delete removed, update existing, add new
+      for (const addressId of deletedAddressIds) {
+        await contacts.deleteAddress(contact.id, addressId);
+      }
+
+      for (const addr of addresses) {
+        // Skip invalid addresses
+        if (
+          !addr.country ||
+          !addr.postal_code ||
+          !addr.city ||
+          !addr.street ||
+          !addr.house_number
+        ) {
+          continue;
+        }
+
+        const addressData = {
+          street_line1: `${addr.street} ${addr.house_number}`.trim(),
+          street_line2: addr.street_line2 || undefined,
+          city: addr.city,
+          state_province: addr.state_province || undefined,
+          postal_code: addr.postal_code,
+          country: addr.country,
+          address_type: addr.address_type,
+          is_primary: addr.is_primary,
+        };
+
+        if (addr.id) {
+          // Update existing address
+          await contacts.updateAddress(contact.id, addr.id, addressData);
+        } else {
+          // Add new address
+          await contacts.addAddress(contact.id, addressData);
+        }
+      }
+
       goto(`/contacts/${contact.id}`);
     } else {
       // Create new contact with sub-resources
@@ -393,6 +569,7 @@ async function handleSubmit(e: Event) {
         phones: validPhones.length > 0 ? validPhones : undefined,
         emails: validEmails.length > 0 ? validEmails : undefined,
         urls: validUrls.length > 0 ? validUrls : undefined,
+        addresses: validAddresses.length > 0 ? validAddresses : undefined,
         // Epic 1B: New sub-resources
         dates: validDates.length > 0 ? validDates : undefined,
         met_info: metInfo,
@@ -685,6 +862,71 @@ async function handleSubmit(e: Event) {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
+      </div>
+    {/each}
+  </div>
+
+  <!-- Addresses -->
+  <div class="space-y-2">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-heading text-gray-900">Addresses</h3>
+      <button
+        type="button"
+        onclick={addAddress}
+        class="text-sm text-forest font-body font-semibold hover:text-forest-light"
+      >
+        + Add
+      </button>
+    </div>
+
+    {#each addresses as address, index}
+      <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+        <div class="flex justify-between items-start">
+          <select
+            bind:this={addressTypeRefs[index]}
+            bind:value={address.address_type}
+            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+          >
+            <option value="home">Home</option>
+            <option value="work">Work</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <HierarchicalAddressInput
+          initialCountryCode={address.country_code}
+          initialCountryName={address.country}
+          initialPostalCode={address.postal_code}
+          initialCity={address.city}
+          initialState={address.state_province}
+          initialStreet={address.street}
+          initialHouseNumber={address.house_number}
+          initialStreetLine2={address.street_line2}
+          addressType={address.address_type}
+          disabled={isLoading}
+          onChange={(data) => handleAddressChange(index, data)}
+        />
+
+        <div class="flex items-center justify-between">
+          <label class="flex items-center gap-2 text-sm text-gray-600 font-body">
+            <input
+              type="checkbox"
+              bind:checked={address.is_primary}
+              class="rounded border-gray-300 text-forest focus:ring-forest"
+            />
+            Primary address
+          </label>
+          <button
+            type="button"
+            onclick={() => removeAddress(index)}
+            class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+            aria-label="Remove address"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
     {/each}
   </div>

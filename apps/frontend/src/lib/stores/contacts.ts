@@ -396,6 +396,47 @@ function createContactsStore() {
     },
 
     /**
+     * Update an address for the current contact
+     */
+    updateAddress: async (
+      contactId: string,
+      addressId: string,
+      data: Partial<AddressInput>,
+    ): Promise<Address> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const address = await contactsApi.updateAddress(contactId, addressId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                addresses: state.currentContact.addresses.map((a) =>
+                  a.id === addressId ? address : a,
+                ),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return address;
+      } catch (error) {
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to update address';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
      * Delete an address from the current contact
      */
     deleteAddress: async (contactId: string, addressId: string) => {
