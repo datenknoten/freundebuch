@@ -42,6 +42,12 @@ const ConfigSchema = type({
 
   // Sentry (optional)
   'SENTRY_DSN?': 'string',
+
+  // Address Lookup APIs
+  'ZIPCODEBASE_API_KEY?': 'string',
+  OVERPASS_API_URL: 'string = "https://overpass-api.de/api/interpreter"',
+  OVERPASS_FALLBACK_URL: 'string = "https://overpass.kumi.systems/api/interpreter"',
+  ADDRESS_CACHE_TTL_HOURS: 'string.integer.parse = "24"',
   '+': 'delete',
 });
 

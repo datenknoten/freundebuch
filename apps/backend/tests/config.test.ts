@@ -365,6 +365,9 @@ describe('getConfig', () => {
         SMTP_PASSWORD: 'app-password',
         LOG_LEVEL: 'warn',
         ENABLE_API_DOCS: false,
+        OVERPASS_API_URL: 'https://overpass-api.de/api/interpreter',
+        OVERPASS_FALLBACK_URL: 'https://overpass.kumi.systems/api/interpreter',
+        ADDRESS_CACHE_TTL_HOURS: 24,
       });
     });
   });
