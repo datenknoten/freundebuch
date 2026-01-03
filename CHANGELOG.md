@@ -1,3 +1,9 @@
+## [2.12.0](https://github.com/datenknoten/freundebuch/compare/v2.11.0...v2.12.0) (2026-01-03)
+
+### Features
+
+* **all:** Use depot runner ([cfbd063](https://github.com/datenknoten/freundebuch/commit/cfbd063a82f2f9b150aa45fedd883bce898f1a79))
+
 ## [2.11.0](https://github.com/enko/freundebuch2/compare/v2.10.3...v2.11.0) (2026-01-02)
 
 ### Features
