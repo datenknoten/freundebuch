@@ -6,6 +6,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import type pg from 'pg';
 import { httpLoggerMiddleware } from './middleware/http-logger.js';
 import { sentryTracingMiddleware } from './middleware/sentry.js';
+import addressLookupRoutes from './routes/address-lookup.js';
 import appPasswordsRoutes from './routes/app-passwords.js';
 import authRoutes from './routes/auth.js';
 import contactsRoutes from './routes/contacts.js';
@@ -89,6 +90,7 @@ export async function createApp(pool: pg.Pool) {
   app.route('/api/uploads', uploadsRoutes);
   app.route('/api/app-passwords', appPasswordsRoutes);
   app.route('/api/sentry-tunnel', sentryTunnelRoutes);
+  app.route('/api/address-lookup', addressLookupRoutes);
 
   // Error handling
   app.onError((err, c) => {
