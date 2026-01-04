@@ -15,6 +15,7 @@ import sentryTunnelRoutes from './routes/sentry-tunnel.js';
 import uploadsRoutes from './routes/uploads.js';
 import usersRoutes from './routes/users.js';
 import type { AppContext } from './types/context.js';
+import { initializeAddressCaches } from './utils/cache.js';
 import { getConfig } from './utils/config.js';
 import { checkDatabaseConnection, createPool } from './utils/db.js';
 import { createLogger } from './utils/logger.js';
@@ -134,7 +135,15 @@ export async function startServer() {
     setupGracefulShutdown(pool);
   });
 
-  // Setup cleanup scheduler for expired sessions and tokens
+  // Initialize address caches with database pool for persistence
+  initializeAddressCaches(pool);
+
+  // Validate optional API keys at startup
+  if (!config.ZIPCODEBASE_API_KEY) {
+    pinoLogger.warn('ZIPCODEBASE_API_KEY not configured - address lookup will be disabled');
+  }
+
+  // Setup cleanup scheduler for expired sessions, tokens, and cache
   setupCleanupScheduler(pool, pinoLogger);
 
   pinoLogger.info(`Starting server on port ${port}`);

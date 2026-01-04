@@ -1,5 +1,5 @@
 import type { Logger } from 'pino';
-import { SimpleCache } from '../../utils/cache.js';
+import { type AddressCache, getCitiesCache } from '../../utils/cache.js';
 
 export interface Country {
   code: string; // ISO 3166-1 alpha-2
@@ -212,7 +212,7 @@ export const SUPPORTED_COUNTRIES: Country[] = [
 export class ZipcodeBaseClient {
   private apiKey: string;
   private baseUrl = 'https://app.zipcodebase.com/api/v1';
-  private zipcodeCache: SimpleCache<ZipcodeResult[]>;
+  private zipcodeCache: AddressCache<ZipcodeResult[]>;
 
   constructor(
     apiKey: string,
@@ -220,7 +220,7 @@ export class ZipcodeBaseClient {
     private logger: Logger,
   ) {
     this.apiKey = apiKey;
-    this.zipcodeCache = new SimpleCache(cacheTtlHours);
+    this.zipcodeCache = getCitiesCache<ZipcodeResult[]>(cacheTtlHours);
   }
 
   /**
@@ -236,13 +236,14 @@ export class ZipcodeBaseClient {
    */
   async searchByPostalCode(postalCode: string, countryCode: string): Promise<ZipcodeResult[]> {
     const cacheKey = `zipcode:${countryCode}:${postalCode}`;
-    const cached = this.zipcodeCache.get(cacheKey);
+    const cached = await this.zipcodeCache.get(cacheKey);
     if (cached) {
       this.logger.debug({ postalCode, countryCode }, 'ZipcodeBase cache hit');
       return cached;
     }
 
-    this.logger.debug({ postalCode, countryCode }, 'ZipcodeBase API request');
+    // Log without exposing API key
+    this.logger.debug({ postalCode, countryCode, endpoint: '/search' }, 'ZipcodeBase API request');
 
     const url = new URL(`${this.baseUrl}/search`);
     url.searchParams.set('apikey', this.apiKey);
@@ -253,7 +254,11 @@ export class ZipcodeBaseClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      this.logger.error({ status: response.status, error: errorText }, 'ZipcodeBase API error');
+      // Log error without URL (which contains API key)
+      this.logger.error(
+        { status: response.status, error: errorText, endpoint: '/search', postalCode, countryCode },
+        'ZipcodeBase API error',
+      );
       throw new Error(`ZipcodeBase API error: ${response.status}`);
     }
 
@@ -276,7 +281,7 @@ export class ZipcodeBaseClient {
       }
     }
 
-    this.zipcodeCache.set(cacheKey, results);
+    await this.zipcodeCache.set(cacheKey, results);
     return results;
   }
 }
