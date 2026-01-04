@@ -1,3 +1,4 @@
+import { type } from 'arktype';
 import { LRUCache } from 'lru-cache';
 import type pg from 'pg';
 import type { Logger } from 'pino';
@@ -10,6 +11,81 @@ import {
 // Global logger for cache operations, set during initialization
 let cacheLogger: Logger | null = null;
 
+// ============================================================================
+// Arktype schemas for cached data validation
+// ============================================================================
+
+/**
+ * Schema for ZipcodeResult from ZipcodeBase API
+ */
+const ZipcodeResultSchema = type({
+  postal_code: 'string',
+  city: 'string',
+  'state?': 'string',
+  'state_code?': 'string',
+  'province?': 'string',
+  country_code: 'string',
+  'latitude?': 'string',
+  'longitude?': 'string',
+});
+
+const ZipcodeResultArraySchema = type(ZipcodeResultSchema, '[]');
+
+/**
+ * Schema for Street from Overpass API
+ */
+const StreetSchema = type({
+  name: 'string',
+  'type?': 'string',
+});
+
+const StreetArraySchema = type(StreetSchema, '[]');
+
+/**
+ * Schema for HouseNumber from Overpass API
+ */
+const HouseNumberSchema = type({
+  number: 'string',
+  'street?': 'string',
+});
+
+const HouseNumberArraySchema = type(HouseNumberSchema, '[]');
+
+// Type aliases for the validated types
+export type ZipcodeResultCached = typeof ZipcodeResultSchema.infer;
+export type StreetCached = typeof StreetSchema.infer;
+export type HouseNumberCached = typeof HouseNumberSchema.infer;
+
+// Validator function type
+type Validator<T> = (data: unknown) => T | undefined;
+
+/**
+ * Create a validator function from an arktype schema
+ */
+function createValidator<T>(
+  schema: { assert: (data: unknown) => T },
+  typeName: string,
+): Validator<T> {
+  return (data: unknown): T | undefined => {
+    try {
+      return schema.assert(data);
+    } catch (error) {
+      cacheLogger?.warn(
+        { error, typeName },
+        'Cache value failed schema validation, discarding invalid entry',
+      );
+      return undefined;
+    }
+  };
+}
+
+// Pre-built validators for each cache type
+const validators = {
+  cities: createValidator(ZipcodeResultArraySchema, 'ZipcodeResult[]'),
+  streets: createValidator(StreetArraySchema, 'Street[]'),
+  houseNumbers: createValidator(HouseNumberArraySchema, 'HouseNumber[]'),
+};
+
 /**
  * Persistent cache with LRU eviction and database backing.
  * Uses in-memory LRU cache for fast access with database persistence
@@ -19,14 +95,17 @@ export class AddressCache<T extends object> {
   private memoryCache: LRUCache<string, T>;
   private ttlMs: number;
   private pool: pg.Pool | null = null;
+  private validator: Validator<T> | null;
 
   /**
    * Create a new cache instance
    * @param ttlHours Time-to-live in hours for cache entries
    * @param maxSize Maximum number of entries to keep in memory (default: 1000)
+   * @param validator Optional arktype validator for deserializing from database
    */
-  constructor(ttlHours: number, maxSize = 1000) {
+  constructor(ttlHours: number, maxSize = 1000, validator: Validator<T> | null = null) {
     this.ttlMs = ttlHours * 60 * 60 * 1000;
+    this.validator = validator;
     this.memoryCache = new LRUCache<string, T>({
       max: maxSize,
       ttl: this.ttlMs,
@@ -60,7 +139,19 @@ export class AddressCache<T extends object> {
         if (result.length > 0) {
           const rawValue = result[0].cache_value;
 
-          // Type safety: validate that cached value is an object
+          // Validate with arktype if validator is available
+          if (this.validator) {
+            const validated = this.validator(rawValue);
+            if (validated === undefined) {
+              // Validation failed, log already happened in validator
+              return undefined;
+            }
+            // Populate memory cache with validated value
+            this.memoryCache.set(key, validated);
+            return validated;
+          }
+
+          // Fallback: basic type check if no validator
           if (typeof rawValue !== 'object' || rawValue === null) {
             cacheLogger?.warn(
               { key, actualType: typeof rawValue },
@@ -70,15 +161,11 @@ export class AddressCache<T extends object> {
           }
 
           const value = rawValue as T;
-          // Populate memory cache
           this.memoryCache.set(key, value);
           return value;
         }
       } catch (error) {
-        cacheLogger?.error(
-          { error, cacheKey: key },
-          'Failed to read from address cache database',
-        );
+        cacheLogger?.error({ error, cacheKey: key }, 'Failed to read from address cache database');
       }
     }
 
@@ -105,10 +192,7 @@ export class AddressCache<T extends object> {
           this.pool,
         );
       } catch (error) {
-        cacheLogger?.error(
-          { error, cacheKey: key },
-          'Failed to persist to address cache database',
-        );
+        cacheLogger?.error({ error, cacheKey: key }, 'Failed to persist to address cache database');
       }
     }
   }
@@ -170,50 +254,62 @@ const CACHE_CONFIG = {
 
 // Singleton instances for different cache types
 let countriesCache: AddressCache<object> | null = null;
-let citiesCache: AddressCache<object> | null = null;
-let streetsCache: AddressCache<object> | null = null;
-let houseNumbersCache: AddressCache<object> | null = null;
+let citiesCache: AddressCache<ZipcodeResultCached[]> | null = null;
+let streetsCache: AddressCache<StreetCached[]> | null = null;
+let houseNumbersCache: AddressCache<HouseNumberCached[]> | null = null;
 
 /**
  * Get the countries cache (must be initialized first)
+ * Note: Countries use a static list, no validation needed
  */
 export function getCountriesCache<T extends object>(): AddressCache<T> {
   if (!countriesCache) {
-    // Create with default config if not initialized
-    countriesCache = new AddressCache<object>(CACHE_CONFIG.countries.ttlHours, CACHE_CONFIG.countries.maxSize);
+    countriesCache = new AddressCache<object>(
+      CACHE_CONFIG.countries.ttlHours,
+      CACHE_CONFIG.countries.maxSize,
+    );
   }
   return countriesCache as unknown as AddressCache<T>;
 }
 
 /**
- * Get the cities cache (must be initialized first)
+ * Get the cities cache with arktype validation
  */
 export function getCitiesCache<T extends object>(): AddressCache<T> {
   if (!citiesCache) {
-    // Create with default config if not initialized
-    citiesCache = new AddressCache<object>(CACHE_CONFIG.cities.ttlHours, CACHE_CONFIG.cities.maxSize);
+    citiesCache = new AddressCache<ZipcodeResultCached[]>(
+      CACHE_CONFIG.cities.ttlHours,
+      CACHE_CONFIG.cities.maxSize,
+      validators.cities,
+    );
   }
   return citiesCache as unknown as AddressCache<T>;
 }
 
 /**
- * Get the streets cache (must be initialized first)
+ * Get the streets cache with arktype validation
  */
 export function getStreetsCache<T extends object>(): AddressCache<T> {
   if (!streetsCache) {
-    // Create with default config if not initialized
-    streetsCache = new AddressCache<object>(CACHE_CONFIG.streets.ttlHours, CACHE_CONFIG.streets.maxSize);
+    streetsCache = new AddressCache<StreetCached[]>(
+      CACHE_CONFIG.streets.ttlHours,
+      CACHE_CONFIG.streets.maxSize,
+      validators.streets,
+    );
   }
   return streetsCache as unknown as AddressCache<T>;
 }
 
 /**
- * Get the house numbers cache (must be initialized first)
+ * Get the house numbers cache with arktype validation
  */
 export function getHouseNumbersCache<T extends object>(): AddressCache<T> {
   if (!houseNumbersCache) {
-    // Create with default config if not initialized
-    houseNumbersCache = new AddressCache<object>(CACHE_CONFIG.houseNumbers.ttlHours, CACHE_CONFIG.houseNumbers.maxSize);
+    houseNumbersCache = new AddressCache<HouseNumberCached[]>(
+      CACHE_CONFIG.houseNumbers.ttlHours,
+      CACHE_CONFIG.houseNumbers.maxSize,
+      validators.houseNumbers,
+    );
   }
   return houseNumbersCache as unknown as AddressCache<T>;
 }
@@ -226,18 +322,33 @@ export function getHouseNumbersCache<T extends object>(): AddressCache<T> {
 export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
   cacheLogger = logger;
 
-  // Eagerly create all caches to ensure they get the pool
+  // Eagerly create all caches with validators to ensure they get the pool
   if (!countriesCache) {
-    countriesCache = new AddressCache<object>(CACHE_CONFIG.countries.ttlHours, CACHE_CONFIG.countries.maxSize);
+    countriesCache = new AddressCache<object>(
+      CACHE_CONFIG.countries.ttlHours,
+      CACHE_CONFIG.countries.maxSize,
+    );
   }
   if (!citiesCache) {
-    citiesCache = new AddressCache<object>(CACHE_CONFIG.cities.ttlHours, CACHE_CONFIG.cities.maxSize);
+    citiesCache = new AddressCache<ZipcodeResultCached[]>(
+      CACHE_CONFIG.cities.ttlHours,
+      CACHE_CONFIG.cities.maxSize,
+      validators.cities,
+    );
   }
   if (!streetsCache) {
-    streetsCache = new AddressCache<object>(CACHE_CONFIG.streets.ttlHours, CACHE_CONFIG.streets.maxSize);
+    streetsCache = new AddressCache<StreetCached[]>(
+      CACHE_CONFIG.streets.ttlHours,
+      CACHE_CONFIG.streets.maxSize,
+      validators.streets,
+    );
   }
   if (!houseNumbersCache) {
-    houseNumbersCache = new AddressCache<object>(CACHE_CONFIG.houseNumbers.ttlHours, CACHE_CONFIG.houseNumbers.maxSize);
+    houseNumbersCache = new AddressCache<HouseNumberCached[]>(
+      CACHE_CONFIG.houseNumbers.ttlHours,
+      CACHE_CONFIG.houseNumbers.maxSize,
+      validators.houseNumbers,
+    );
   }
 
   // Set database pool on all caches
@@ -246,7 +357,7 @@ export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
   streetsCache.setPool(pool);
   houseNumbersCache.setPool(pool);
 
-  logger.debug('Address caches initialized with database pool');
+  logger.debug('Address caches initialized with database pool and arktype validators');
 }
 
 /**
