@@ -258,6 +258,45 @@ function createContactsStore() {
     },
 
     /**
+     * Update a phone for the current contact
+     */
+    updatePhone: async (
+      contactId: string,
+      phoneId: string,
+      data: Partial<PhoneInput>,
+    ): Promise<Phone> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const phone = await contactsApi.updatePhone(contactId, phoneId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                phones: state.currentContact.phones.map((p) => (p.id === phoneId ? phone : p)),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return phone;
+      } catch (error) {
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to update phone';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
      * Delete a phone from the current contact
      */
     deletePhone: async (contactId: string, phoneId: string) => {
@@ -315,6 +354,45 @@ function createContactsStore() {
         return email;
       } catch (error) {
         const errorMessage = error instanceof ApiError ? error.message : 'Failed to add email';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Update an email for the current contact
+     */
+    updateEmail: async (
+      contactId: string,
+      emailId: string,
+      data: Partial<EmailInput>,
+    ): Promise<Email> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const email = await contactsApi.updateEmail(contactId, emailId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                emails: state.currentContact.emails.map((e) => (e.id === emailId ? email : e)),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return email;
+      } catch (error) {
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to update email';
 
         update((state) => ({
           ...state,
@@ -494,6 +572,41 @@ function createContactsStore() {
         return url;
       } catch (error) {
         const errorMessage = error instanceof ApiError ? error.message : 'Failed to add URL';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Update a URL for the current contact
+     */
+    updateUrl: async (contactId: string, urlId: string, data: Partial<UrlInput>): Promise<Url> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const url = await contactsApi.updateUrl(contactId, urlId, data);
+
+        update((state) => ({
+          ...state,
+          currentContact: state.currentContact
+            ? {
+                ...state.currentContact,
+                urls: state.currentContact.urls.map((u) => (u.id === urlId ? url : u)),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return url;
+      } catch (error) {
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to update URL';
 
         update((state) => ({
           ...state,

@@ -86,10 +86,52 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
+  // Handle two-key sequences (a+...) for adding details - only on contact detail page
+  if (pendingKey === 'a') {
+    clearPending();
+
+    // Only work on contact detail pages
+    if (!$currentContact || !$page.url.pathname.match(/^\/contacts\/[^/]+$/)) {
+      return;
+    }
+
+    e.preventDefault();
+
+    switch (e.key) {
+      case 'p':
+        window.dispatchEvent(new CustomEvent('shortcut:add-phone'));
+        break;
+      case 'e':
+        window.dispatchEvent(new CustomEvent('shortcut:add-email'));
+        break;
+      case 'a':
+        window.dispatchEvent(new CustomEvent('shortcut:add-address'));
+        break;
+      case 'u':
+        window.dispatchEvent(new CustomEvent('shortcut:add-url'));
+        break;
+      case 'd':
+        window.dispatchEvent(new CustomEvent('shortcut:add-date'));
+        break;
+      case 's':
+        window.dispatchEvent(new CustomEvent('shortcut:add-social'));
+        break;
+    }
+    return;
+  }
+
   // Start two-key sequence
   if (e.key === 'g') {
     e.preventDefault();
     pendingKey = 'g';
+    pendingTimeout = setTimeout(clearPending, 1000);
+    return;
+  }
+
+  // Start add detail sequence (only on contact detail page)
+  if (e.key === 'a' && $currentContact && $page.url.pathname.match(/^\/contacts\/[^/]+$/)) {
+    e.preventDefault();
+    pendingKey = 'a';
     pendingTimeout = setTimeout(clearPending, 1000);
     return;
   }
@@ -226,6 +268,63 @@ function closeHelp() {
               <div class="flex justify-between items-center">
                 <span class="text-gray-700">Focus Search</span>
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">/</kbd>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Details (on contact page) -->
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Add Details <span class="text-xs font-normal normal-case">(on contact page)</span>
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Phone</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">p</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Email</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Address</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add URL</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">u</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Date</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">d</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Social Profile</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">s</kbd>
+                </div>
               </div>
             </div>
           </div>
