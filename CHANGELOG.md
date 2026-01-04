@@ -1,3 +1,13 @@
+## [2.14.0](https://github.com/datenknoten/freundebuch/compare/v2.13.0...v2.14.0) (2026-01-04)
+
+### Features
+
+* **frontend:** Add inline subresource editing on contact detail page ([4d1f8da](https://github.com/datenknoten/freundebuch/commit/4d1f8da524569656ef558da8140ce387b74b3c51))
+
+### Code Refactoring
+
+* **frontend:** Reorganize contact detail page layout for clarity ([42213fa](https://github.com/datenknoten/freundebuch/commit/42213fad4e4ae1416471d701be8bccb7ab940786))
+
 ## [2.13.0](https://github.com/datenknoten/freundebuch/compare/v2.12.0...v2.13.0) (2026-01-04)
 
 ### Features
