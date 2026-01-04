@@ -1,18 +1,9 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { contacts } from '$lib/stores/contacts';
-import type {
-  AddressType,
-  Contact,
-  DateType,
-  EmailType,
-  PhoneType,
-  SocialPlatform,
-  UrlType,
-} from '$shared';
+import type { Contact } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
 import ContactAvatar from './ContactAvatar.svelte';
-import HierarchicalAddressInput from './HierarchicalAddressInput.svelte';
 
 interface Props {
   contact?: Contact;
@@ -63,89 +54,6 @@ function onDisplayNameInput() {
   displayNameManuallyEdited = true;
 }
 
-// Sub-resources for contact creation/editing
-let phones = $state<
-  Array<{ phone_number: string; phone_type: PhoneType; label: string; is_primary: boolean }>
->(
-  contact?.phones.map((p) => ({
-    phone_number: p.phoneNumber,
-    phone_type: p.phoneType,
-    label: p.label ?? '',
-    is_primary: p.isPrimary,
-  })) ?? [],
-);
-let emails = $state<
-  Array<{ email_address: string; email_type: EmailType; label: string; is_primary: boolean }>
->(
-  contact?.emails.map((e) => ({
-    email_address: e.emailAddress,
-    email_type: e.emailType,
-    label: e.label ?? '',
-    is_primary: e.isPrimary,
-  })) ?? [],
-);
-let urls = $state<Array<{ url: string; url_type: UrlType; label: string }>>(
-  contact?.urls.map((u) => ({
-    url: u.url,
-    url_type: u.urlType,
-    label: u.label ?? '',
-  })) ?? [],
-);
-
-// Addresses (with hierarchical input data)
-interface AddressFormData {
-  id?: string;
-  country_code: string;
-  country: string;
-  postal_code: string;
-  city: string;
-  state_province?: string;
-  street: string;
-  house_number: string;
-  street_line2?: string;
-  address_type: AddressType;
-  is_primary: boolean;
-}
-
-let addresses = $state<AddressFormData[]>(
-  contact?.addresses?.map((a) => {
-    // Parse street and house number from street_line1 if possible
-    // Simple heuristic: last word that starts with a digit is the house number
-    const parts = a.streetLine1?.split(' ') ?? [];
-    let street = a.streetLine1 ?? '';
-    let houseNumber = '';
-
-    // Try to extract house number from the end
-    if (parts.length > 1) {
-      const lastPart = parts[parts.length - 1];
-      if (/^\d/.test(lastPart)) {
-        houseNumber = lastPart;
-        street = parts.slice(0, -1).join(' ');
-      }
-    }
-
-    return {
-      id: a.id,
-      country_code: '', // We don't store the code, will need to be re-selected
-      country: a.country ?? '',
-      postal_code: a.postalCode ?? '',
-      city: a.city ?? '',
-      state_province: a.stateProvince,
-      street,
-      house_number: houseNumber,
-      street_line2: a.streetLine2,
-      address_type: a.addressType,
-      is_primary: a.isPrimary,
-    };
-  }) ?? [],
-);
-
-// Track deleted address IDs for removal on save
-let deletedAddressIds = $state<string[]>([]);
-
-// Element refs for address type selects (for focus management)
-let addressTypeRefs: HTMLSelectElement[] = [];
-
 // Epic 1B: Professional fields
 let jobTitle = $state(contact?.jobTitle ?? '');
 let organization = $state(contact?.organization ?? '');
@@ -153,165 +61,13 @@ let department = $state(contact?.department ?? '');
 let workNotes = $state(contact?.workNotes ?? '');
 let interests = $state(contact?.interests ?? '');
 
-// Epic 1B: Important dates (id is set for existing dates, undefined for new ones)
-let dates = $state<
-  Array<{
-    id?: string;
-    date_value: string;
-    year_known: boolean;
-    date_type: DateType;
-    label: string;
-  }>
->(
-  contact?.dates?.map((d) => ({
-    id: d.id,
-    date_value: d.dateValue,
-    year_known: d.yearKnown,
-    date_type: d.dateType,
-    label: d.label ?? '',
-  })) ?? [],
-);
-
 // Epic 1B: How/where met
 let metDate = $state(contact?.metInfo?.metDate ?? '');
 let metLocation = $state(contact?.metInfo?.metLocation ?? '');
 let metContext = $state(contact?.metInfo?.metContext ?? '');
 
-// Epic 1B: Social profiles (id is set for existing profiles, undefined for new ones)
-let socialProfiles = $state<
-  Array<{ id?: string; platform: SocialPlatform; profile_url: string; username: string }>
->(
-  contact?.socialProfiles?.map((sp) => ({
-    id: sp.id,
-    platform: sp.platform,
-    profile_url: sp.profileUrl ?? '',
-    username: sp.username ?? '',
-  })) ?? [],
-);
-
 let isLoading = $state(false);
 let error = $state('');
-
-// Add functions for sub-resources
-function addPhone() {
-  phones = [
-    ...phones,
-    { phone_number: '', phone_type: 'mobile', label: '', is_primary: phones.length === 0 },
-  ];
-}
-
-function removePhone(index: number) {
-  phones = phones.filter((_, i) => i !== index);
-}
-
-function addEmail() {
-  emails = [
-    ...emails,
-    { email_address: '', email_type: 'personal', label: '', is_primary: emails.length === 0 },
-  ];
-}
-
-function removeEmail(index: number) {
-  emails = emails.filter((_, i) => i !== index);
-}
-
-function addUrl() {
-  urls = [...urls, { url: '', url_type: 'personal', label: '' }];
-}
-
-function removeUrl(index: number) {
-  urls = urls.filter((_, i) => i !== index);
-}
-
-// Address functions
-function addAddress() {
-  addresses = [
-    ...addresses,
-    {
-      country_code: '',
-      country: '',
-      postal_code: '',
-      city: '',
-      state_province: undefined,
-      street: '',
-      house_number: '',
-      street_line2: undefined,
-      address_type: 'home',
-      is_primary: addresses.length === 0,
-    },
-  ];
-
-  // Focus the type select of the newly added address
-  requestAnimationFrame(() => {
-    const newIndex = addresses.length - 1;
-    addressTypeRefs[newIndex]?.focus();
-  });
-}
-
-function removeAddress(index: number) {
-  const addressToRemove = addresses[index];
-  // Track the ID if it's an existing address (has an ID)
-  if (addressToRemove?.id) {
-    deletedAddressIds = [...deletedAddressIds, addressToRemove.id];
-  }
-  addresses = addresses.filter((_, i) => i !== index);
-}
-
-function handleAddressChange(
-  index: number,
-  data: {
-    country: string;
-    postal_code: string;
-    city: string;
-    state_province?: string;
-    street_line1: string;
-    street_line2?: string;
-    address_type: AddressType;
-  },
-) {
-  // Parse street and house number from street_line1
-  const parts = data.street_line1.split(' ');
-  let street = data.street_line1;
-  let houseNumber = '';
-
-  if (parts.length > 1) {
-    const lastPart = parts[parts.length - 1];
-    if (/^\d/.test(lastPart)) {
-      houseNumber = lastPart;
-      street = parts.slice(0, -1).join(' ');
-    }
-  }
-
-  addresses[index] = {
-    ...addresses[index],
-    country: data.country,
-    postal_code: data.postal_code,
-    city: data.city,
-    state_province: data.state_province,
-    street,
-    house_number: houseNumber,
-    street_line2: data.street_line2,
-    address_type: data.address_type,
-  };
-}
-
-// Epic 1B: Date functions
-function addDate() {
-  dates = [...dates, { date_value: '', year_known: true, date_type: 'birthday', label: '' }];
-}
-
-function removeDate(index: number) {
-  dates = dates.filter((_, i) => i !== index);
-}
-
-// Epic 1B: Social profile functions
-function addSocialProfile() {
-  socialProfiles = [...socialProfiles, { platform: 'linkedin', profile_url: '', username: '' }];
-}
-
-function removeSocialProfile(index: number) {
-  socialProfiles = socialProfiles.filter((_, i) => i !== index);
-}
 
 // Photo handling
 function triggerPhotoUpload() {
@@ -394,26 +150,6 @@ async function handleSubmit(e: Event) {
   isLoading = true;
 
   try {
-    const validPhones = phones.filter((p) => p.phone_number.trim());
-    const validEmails = emails.filter((e) => e.email_address.trim());
-    const validUrls = urls.filter((u) => u.url.trim());
-    const validAddresses = addresses
-      .filter((a) => a.country && a.postal_code && a.city && a.street && a.house_number)
-      .map((a) => ({
-        street_line1: `${a.street} ${a.house_number}`.trim(),
-        street_line2: a.street_line2 || undefined,
-        city: a.city,
-        state_province: a.state_province || undefined,
-        postal_code: a.postal_code,
-        country: a.country,
-        address_type: a.address_type,
-        is_primary: a.is_primary,
-      }));
-    const validDates = dates.filter((d) => d.date_value.trim());
-    const validSocialProfiles = socialProfiles.filter(
-      (sp) => sp.profile_url.trim() || sp.username.trim(),
-    );
-
     // Build met_info if any field is filled
     const metInfo =
       metDate || metLocation || metContext
@@ -425,7 +161,8 @@ async function handleSubmit(e: Event) {
         : undefined;
 
     if (isEditing && contact) {
-      // Update existing contact - first update basic info including Epic 1B fields
+      // Update existing contact - core fields only
+      // Subresources (phones, emails, etc.) are edited inline on the detail page
       await contacts.updateContact(contact.id, {
         display_name: displayName,
         nickname: nickname || null,
@@ -434,7 +171,6 @@ async function handleSubmit(e: Event) {
         name_middle: nameMiddle || null,
         name_last: nameLast || null,
         name_suffix: nameSuffix || null,
-        // Epic 1B: Professional fields
         job_title: jobTitle || null,
         organization: organization || null,
         department: department || null,
@@ -442,115 +178,15 @@ async function handleSubmit(e: Event) {
         interests: interests || null,
       });
 
-      // Handle phones - add new ones, keep existing
-      const existingPhoneNumbers = new Set(contact.phones.map((p) => p.phoneNumber));
-      for (const phone of validPhones) {
-        if (!existingPhoneNumbers.has(phone.phone_number)) {
-          await contacts.addPhone(contact.id, phone);
-        }
-      }
-
-      // Handle emails - add new ones
-      const existingEmailAddresses = new Set(contact.emails.map((e) => e.emailAddress));
-      for (const email of validEmails) {
-        if (!existingEmailAddresses.has(email.email_address)) {
-          await contacts.addEmail(contact.id, email);
-        }
-      }
-
-      // Handle urls - add new ones
-      const existingUrls = new Set(contact.urls.map((u) => u.url));
-      for (const url of validUrls) {
-        if (!existingUrls.has(url.url)) {
-          await contacts.addUrl(contact.id, url);
-        }
-      }
-
-      // Epic 1B: Handle dates - update existing, add new
-      for (const date of validDates) {
-        if (date.id) {
-          // Update existing date
-          await contacts.updateDate(contact.id, date.id, {
-            date_value: date.date_value,
-            year_known: date.year_known,
-            date_type: date.date_type,
-            label: date.label,
-          });
-        } else {
-          // Add new date
-          await contacts.addDate(contact.id, {
-            date_value: date.date_value,
-            year_known: date.year_known,
-            date_type: date.date_type,
-            label: date.label,
-          });
-        }
-      }
-
-      // Epic 1B: Handle met info - set if any field is filled
+      // Handle met info - set if any field is filled
       if (metInfo) {
         await contacts.setMetInfo(contact.id, metInfo);
       }
 
-      // Epic 1B: Handle social profiles - update existing, add new
-      for (const profile of validSocialProfiles) {
-        if (profile.id) {
-          // Update existing profile
-          await contacts.updateSocialProfile(contact.id, profile.id, {
-            platform: profile.platform,
-            profile_url: profile.profile_url || undefined,
-            username: profile.username || undefined,
-          });
-        } else {
-          // Add new profile
-          await contacts.addSocialProfile(contact.id, {
-            platform: profile.platform,
-            profile_url: profile.profile_url || undefined,
-            username: profile.username || undefined,
-          });
-        }
-      }
-
-      // Handle addresses - delete removed, update existing, add new
-      for (const addressId of deletedAddressIds) {
-        await contacts.deleteAddress(contact.id, addressId);
-      }
-
-      for (const addr of addresses) {
-        // Skip invalid addresses
-        if (
-          !addr.country ||
-          !addr.postal_code ||
-          !addr.city ||
-          !addr.street ||
-          !addr.house_number
-        ) {
-          continue;
-        }
-
-        const addressData = {
-          street_line1: `${addr.street} ${addr.house_number}`.trim(),
-          street_line2: addr.street_line2 || undefined,
-          city: addr.city,
-          state_province: addr.state_province || undefined,
-          postal_code: addr.postal_code,
-          country: addr.country,
-          address_type: addr.address_type,
-          is_primary: addr.is_primary,
-        };
-
-        if (addr.id) {
-          // Update existing address
-          await contacts.updateAddress(contact.id, addr.id, addressData);
-        } else {
-          // Add new address
-          await contacts.addAddress(contact.id, addressData);
-        }
-      }
-
       goto(`/contacts/${contact.id}`);
     } else {
-      // Create new contact with sub-resources
+      // Create new contact - core fields only
+      // Subresources can be added inline on the detail page after creation
       const newContact = await contacts.createContact({
         display_name: displayName,
         nickname: nickname || undefined,
@@ -559,21 +195,12 @@ async function handleSubmit(e: Event) {
         name_middle: nameMiddle || undefined,
         name_last: nameLast || undefined,
         name_suffix: nameSuffix || undefined,
-        // Epic 1B: Professional fields
         job_title: jobTitle || undefined,
         organization: organization || undefined,
         department: department || undefined,
         work_notes: workNotes || undefined,
         interests: interests || undefined,
-        // Sub-resources
-        phones: validPhones.length > 0 ? validPhones : undefined,
-        emails: validEmails.length > 0 ? validEmails : undefined,
-        urls: validUrls.length > 0 ? validUrls : undefined,
-        addresses: validAddresses.length > 0 ? validAddresses : undefined,
-        // Epic 1B: New sub-resources
-        dates: validDates.length > 0 ? validDates : undefined,
         met_info: metInfo,
-        social_profiles: validSocialProfiles.length > 0 ? validSocialProfiles : undefined,
       });
       goto(`/contacts/${newContact.id}`);
     }
@@ -728,209 +355,6 @@ async function handleSubmit(e: Event) {
     />
   </div>
 
-  <!-- Phone Numbers -->
-  <div class="space-y-2">
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-heading text-gray-900">Phone Numbers</h3>
-      <button
-        type="button"
-        onclick={addPhone}
-        class="text-sm text-forest font-body font-semibold hover:text-forest-light"
-      >
-        + Add
-      </button>
-    </div>
-
-    {#each phones as phone, index}
-      <div class="flex gap-2 items-center bg-gray-50 p-2 rounded-lg">
-        <div class="flex-1 space-y-1">
-          <input
-            type="tel"
-            bind:value={phone.phone_number}
-            placeholder="Phone number"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          />
-          <select
-            bind:value={phone.phone_type}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          >
-            <option value="mobile">Mobile</option>
-            <option value="home">Home</option>
-            <option value="work">Work</option>
-            <option value="fax">Fax</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <button
-          type="button"
-          onclick={() => removePhone(index)}
-          class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-          aria-label="Remove phone"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    {/each}
-  </div>
-
-  <!-- Email Addresses -->
-  <div class="space-y-2">
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-heading text-gray-900">Email Addresses</h3>
-      <button
-        type="button"
-        onclick={addEmail}
-        class="text-sm text-forest font-body font-semibold hover:text-forest-light"
-      >
-        + Add
-      </button>
-    </div>
-
-    {#each emails as email, index}
-      <div class="flex gap-2 items-center bg-gray-50 p-2 rounded-lg">
-        <div class="flex-1 space-y-1">
-          <input
-            type="email"
-            bind:value={email.email_address}
-            placeholder="Email address"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          />
-          <select
-            bind:value={email.email_type}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          >
-            <option value="personal">Personal</option>
-            <option value="work">Work</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <button
-          type="button"
-          onclick={() => removeEmail(index)}
-          class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-          aria-label="Remove email"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    {/each}
-  </div>
-
-  <!-- URLs -->
-  <div class="space-y-2">
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-heading text-gray-900">Websites</h3>
-      <button
-        type="button"
-        onclick={addUrl}
-        class="text-sm text-forest font-body font-semibold hover:text-forest-light"
-      >
-        + Add
-      </button>
-    </div>
-
-    {#each urls as url, index}
-      <div class="flex gap-2 items-center bg-gray-50 p-2 rounded-lg">
-        <div class="flex-1 space-y-1">
-          <input
-            type="url"
-            bind:value={url.url}
-            placeholder="https://example.com"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          />
-          <select
-            bind:value={url.url_type}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          >
-            <option value="personal">Personal</option>
-            <option value="work">Work</option>
-            <option value="blog">Blog</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <button
-          type="button"
-          onclick={() => removeUrl(index)}
-          class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-          aria-label="Remove website"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    {/each}
-  </div>
-
-  <!-- Addresses -->
-  <div class="space-y-2">
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-heading text-gray-900">Addresses</h3>
-      <button
-        type="button"
-        onclick={addAddress}
-        class="text-sm text-forest font-body font-semibold hover:text-forest-light"
-      >
-        + Add
-      </button>
-    </div>
-
-    {#each addresses as address, index}
-      <div class="bg-gray-50 p-4 rounded-lg space-y-3">
-        <div class="flex justify-between items-start">
-          <select
-            bind:this={addressTypeRefs[index]}
-            bind:value={address.address_type}
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          >
-            <option value="home">Home</option>
-            <option value="work">Work</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-
-        <HierarchicalAddressInput
-          initialCountryCode={address.country_code}
-          initialCountryName={address.country}
-          initialPostalCode={address.postal_code}
-          initialCity={address.city}
-          initialState={address.state_province}
-          initialStreet={address.street}
-          initialHouseNumber={address.house_number}
-          initialStreetLine2={address.street_line2}
-          addressType={address.address_type}
-          disabled={isLoading}
-          onChange={(data) => handleAddressChange(index, data)}
-        />
-
-        <div class="flex items-center justify-between">
-          <label class="flex items-center gap-2 text-sm text-gray-600 font-body">
-            <input
-              type="checkbox"
-              bind:checked={address.is_primary}
-              class="rounded border-gray-300 text-forest focus:ring-forest"
-            />
-            Primary address
-          </label>
-          <button
-            type="button"
-            onclick={() => removeAddress(index)}
-            class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-            aria-label="Remove address"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    {/each}
-  </div>
-
   <!-- Epic 1B: Professional Information -->
   <div class="space-y-2">
     <h3 class="text-lg font-heading text-gray-900">Professional Information</h3>
@@ -976,70 +400,6 @@ async function handleSubmit(e: Event) {
     ></textarea>
   </div>
 
-  <!-- Epic 1B: Important Dates -->
-  <div class="space-y-2">
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-heading text-gray-900">Important Dates</h3>
-      <button
-        type="button"
-        onclick={addDate}
-        class="text-sm text-forest font-body font-semibold hover:text-forest-light"
-      >
-        + Add
-      </button>
-    </div>
-
-    {#each dates as date, index}
-      <div class="flex gap-2 items-center bg-gray-50 p-2 rounded-lg">
-        <div class="flex-1 space-y-1">
-          <div class="flex gap-2">
-            <input
-              type="date"
-              bind:value={date.date_value}
-              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-            />
-            <select
-              bind:value={date.date_type}
-              class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-            >
-              <option value="birthday">Birthday</option>
-              <option value="anniversary">Anniversary</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="flex gap-2 items-center">
-            <label class="flex items-center gap-2 text-sm text-gray-600 font-body">
-              <input
-                type="checkbox"
-                bind:checked={date.year_known}
-                class="rounded border-gray-300 text-forest focus:ring-forest"
-              />
-              Year known
-            </label>
-            {#if date.date_type === 'other'}
-              <input
-                type="text"
-                bind:value={date.label}
-                placeholder="Label (e.g., Graduation)"
-                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-              />
-            {/if}
-          </div>
-        </div>
-        <button
-          type="button"
-          onclick={() => removeDate(index)}
-          class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-          aria-label="Remove date"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    {/each}
-  </div>
-
   <!-- Epic 1B: How/Where Met -->
   <div class="space-y-2">
     <h3 class="text-lg font-heading text-gray-900">How We Met</h3>
@@ -1065,60 +425,6 @@ async function handleSubmit(e: Event) {
       placeholder="Context or story of how you met..."
       disabled={isLoading}
     ></textarea>
-  </div>
-
-  <!-- Epic 1B: Social Profiles -->
-  <div class="space-y-2">
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-heading text-gray-900">Social Profiles</h3>
-      <button
-        type="button"
-        onclick={addSocialProfile}
-        class="text-sm text-forest font-body font-semibold hover:text-forest-light"
-      >
-        + Add
-      </button>
-    </div>
-
-    {#each socialProfiles as profile, index}
-      <div class="flex gap-2 items-center bg-gray-50 p-2 rounded-lg">
-        <div class="flex-1 space-y-1">
-          <select
-            bind:value={profile.platform}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          >
-            <option value="linkedin">LinkedIn</option>
-            <option value="twitter">Twitter / X</option>
-            <option value="facebook">Facebook</option>
-            <option value="instagram">Instagram</option>
-            <option value="github">GitHub</option>
-            <option value="other">Other</option>
-          </select>
-          <input
-            type="url"
-            bind:value={profile.profile_url}
-            placeholder="Profile URL"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          />
-          <input
-            type="text"
-            bind:value={profile.username}
-            placeholder="Username (optional if URL provided)"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          />
-        </div>
-        <button
-          type="button"
-          onclick={() => removeSocialProfile(index)}
-          class="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-          aria-label="Remove social profile"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    {/each}
   </div>
 
   <!-- Form Actions -->
