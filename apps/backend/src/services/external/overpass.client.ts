@@ -1,5 +1,5 @@
 import type { Logger } from 'pino';
-import { SimpleCache } from '../../utils/cache.js';
+import { type AddressCache, getHouseNumbersCache, getStreetsCache } from '../../utils/cache.js';
 
 export interface Street {
   name: string;
@@ -23,9 +23,15 @@ interface OverpassResponse {
   elements: OverpassElement[];
 }
 
+// Collator for natural sorting of house numbers
+const naturalCollator = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+});
+
 export class OverpassClient {
-  private streetCache: SimpleCache<Street[]>;
-  private houseNumberCache: SimpleCache<HouseNumber[]>;
+  private streetCache: AddressCache<Street[]>;
+  private houseNumberCache: AddressCache<HouseNumber[]>;
 
   constructor(
     private primaryUrl: string,
@@ -33,8 +39,8 @@ export class OverpassClient {
     cacheTtlHours: number,
     private logger: Logger,
   ) {
-    this.streetCache = new SimpleCache(cacheTtlHours);
-    this.houseNumberCache = new SimpleCache(cacheTtlHours);
+    this.streetCache = getStreetsCache<Street[]>(cacheTtlHours);
+    this.houseNumberCache = getHouseNumbersCache<HouseNumber[]>(cacheTtlHours);
   }
 
   /**
@@ -42,7 +48,7 @@ export class OverpassClient {
    */
   async getStreets(countryCode: string, city: string, postalCode: string): Promise<Street[]> {
     const cacheKey = `streets:${countryCode}:${postalCode}:${city}`;
-    const cached = this.streetCache.get(cacheKey);
+    const cached = await this.streetCache.get(cacheKey);
     if (cached) {
       this.logger.debug({ countryCode, city, postalCode }, 'Overpass streets cache hit');
       return cached;
@@ -68,7 +74,7 @@ export class OverpassClient {
     // Sort streets alphabetically
     streetsWithType.sort((a, b) => a.name.localeCompare(b.name));
 
-    this.streetCache.set(cacheKey, streetsWithType);
+    await this.streetCache.set(cacheKey, streetsWithType);
     return streetsWithType;
   }
 
@@ -82,7 +88,7 @@ export class OverpassClient {
     street: string,
   ): Promise<HouseNumber[]> {
     const cacheKey = `housenumbers:${countryCode}:${postalCode}:${city}:${street}`;
-    const cached = this.houseNumberCache.get(cacheKey);
+    const cached = await this.houseNumberCache.get(cacheKey);
     if (cached) {
       this.logger.debug(
         { countryCode, city, postalCode, street },
@@ -110,10 +116,10 @@ export class OverpassClient {
       }
     }
 
-    // Sort house numbers naturally (1, 2, 10, 10a, 11, etc.)
-    houseNumbers.sort((a, b) => this.naturalSort(a.number, b.number));
+    // Sort house numbers naturally using Intl.Collator (handles 1, 2, 10, 10a, 10/1, etc.)
+    houseNumbers.sort((a, b) => naturalCollator.compare(a.number, b.number));
 
-    this.houseNumberCache.set(cacheKey, houseNumbers);
+    await this.houseNumberCache.set(cacheKey, houseNumbers);
     return houseNumbers;
   }
 
@@ -215,34 +221,18 @@ out tags;
   }
 
   /**
-   * Escape special characters for Overpass QL strings
+   * Escape special characters for Overpass QL strings.
+   * Handles backslashes, quotes, newlines, and other control characters.
    */
   private escapeOverpassString(str: string): string {
-    return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
-  }
-
-  /**
-   * Natural sort comparison for house numbers (1, 2, 10, 10a, 11)
-   */
-  private naturalSort(a: string, b: string): number {
-    const aParts = a.match(/(\d+)|(\D+)/g) || [];
-    const bParts = b.match(/(\d+)|(\D+)/g) || [];
-
-    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-      const aPart = aParts[i] || '';
-      const bPart = bParts[i] || '';
-
-      const aNum = Number.parseInt(aPart, 10);
-      const bNum = Number.parseInt(bPart, 10);
-
-      if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
-        if (aNum !== bNum) return aNum - bNum;
-      } else {
-        const cmp = aPart.localeCompare(bPart);
-        if (cmp !== 0) return cmp;
-      }
-    }
-
-    return 0;
+    // First, remove control characters (ASCII 0-31 except tab, newline, carriage return)
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: intentionally matching control chars
+    const withoutControlChars = str.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+    return withoutControlChars
+      .replace(/\\/g, '\\\\') // Backslashes first
+      .replace(/"/g, '\\"') // Double quotes
+      .replace(/\n/g, '\\n') // Newlines
+      .replace(/\r/g, '\\r') // Carriage returns
+      .replace(/\t/g, '\\t'); // Tabs
   }
 }
