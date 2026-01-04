@@ -9,14 +9,24 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
+  // Create system schema if it doesn't exist
+  pgm.createSchema('system', { ifNotExists: true });
+
   // Create address_cache table for persistent caching of external API responses
   pgm.createTable(
-    { schema: 'public', name: 'address_cache' },
+    { schema: 'system', name: 'address_cache' },
     {
       id: {
         type: 'serial',
         primaryKey: true,
-        comment: 'Internal sequential ID',
+        comment: 'Internal sequential ID (never expose in API)',
+      },
+      external_id: {
+        type: 'uuid',
+        notNull: true,
+        unique: true,
+        default: pgm.func('gen_random_uuid()'),
+        comment: 'Public UUID for API exposure',
       },
       cache_key: {
         type: 'text',
@@ -49,16 +59,27 @@ export const up = (pgm) => {
 
   // Add table comment
   pgm.sql(
-    `COMMENT ON TABLE public.address_cache IS 'Persistent cache for address lookup API responses (ZipcodeBase, Overpass)'`,
+    `COMMENT ON TABLE system.address_cache IS 'Persistent cache for address lookup API responses (ZipcodeBase, Overpass)'`,
   );
 
   // Create indexes
-  pgm.createIndex({ schema: 'public', name: 'address_cache' }, 'cache_key', {
+  pgm.createIndex({ schema: 'system', name: 'address_cache' }, 'external_id', {
+    name: 'idx_address_cache_external_id',
+  });
+  pgm.createIndex({ schema: 'system', name: 'address_cache' }, 'cache_key', {
     name: 'idx_address_cache_key',
   });
-  pgm.createIndex({ schema: 'public', name: 'address_cache' }, 'expires_at', {
+  pgm.createIndex({ schema: 'system', name: 'address_cache' }, 'expires_at', {
     name: 'idx_address_cache_expires_at',
   });
+
+  // Create updated_at trigger
+  pgm.sql(`
+    CREATE TRIGGER update_address_cache_updated_at
+      BEFORE UPDATE ON system.address_cache
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+  `);
 };
 
 /**
@@ -67,5 +88,6 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-  pgm.dropTable({ schema: 'public', name: 'address_cache' }, { cascade: true });
+  pgm.sql('DROP TRIGGER IF EXISTS update_address_cache_updated_at ON system.address_cache');
+  pgm.dropTable({ schema: 'system', name: 'address_cache' }, { cascade: true });
 };
