@@ -136,7 +136,7 @@ export async function startServer() {
   });
 
   // Initialize address caches with database pool for persistence
-  initializeAddressCaches(pool);
+  initializeAddressCaches(pool, pinoLogger);
 
   // Validate optional API keys at startup
   if (!config.ZIPCODEBASE_API_KEY) {

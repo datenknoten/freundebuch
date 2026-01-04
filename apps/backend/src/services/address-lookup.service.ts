@@ -18,14 +18,12 @@ export class AddressLookupService {
     zipcodeApiKey: string,
     overpassPrimaryUrl: string,
     overpassFallbackUrl: string,
-    cacheTtlHours: number,
     private logger: Logger,
   ) {
-    this.zipcodeClient = new ZipcodeBaseClient(zipcodeApiKey, cacheTtlHours, logger);
+    this.zipcodeClient = new ZipcodeBaseClient(zipcodeApiKey, logger);
     this.overpassClient = new OverpassClient(
       overpassPrimaryUrl,
       overpassFallbackUrl,
-      cacheTtlHours,
       logger,
     );
   }

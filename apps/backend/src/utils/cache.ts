@@ -1,10 +1,14 @@
 import { LRUCache } from 'lru-cache';
 import type pg from 'pg';
+import type { Logger } from 'pino';
 import {
   deleteExpiredAddressCacheEntries,
   getAddressCacheEntry,
   upsertAddressCacheEntry,
 } from '../models/queries/address-cache.queries.js';
+
+// Global logger for cache operations, set during initialization
+let cacheLogger: Logger | null = null;
 
 /**
  * Persistent cache with LRU eviction and database backing.
@@ -54,14 +58,27 @@ export class AddressCache<T extends object> {
       try {
         const result = await getAddressCacheEntry.run({ cacheKey: key }, this.pool);
         if (result.length > 0) {
-          const value = result[0].cache_value as T;
+          const rawValue = result[0].cache_value;
+
+          // Type safety: validate that cached value is an object
+          if (typeof rawValue !== 'object' || rawValue === null) {
+            cacheLogger?.warn(
+              { key, actualType: typeof rawValue },
+              'Invalid cache value type, expected object',
+            );
+            return undefined;
+          }
+
+          const value = rawValue as T;
           // Populate memory cache
           this.memoryCache.set(key, value);
           return value;
         }
       } catch (error) {
-        // Log but don't fail - cache miss is acceptable
-        console.error('Failed to read from address cache database:', error);
+        cacheLogger?.error(
+          { error, cacheKey: key },
+          'Failed to read from address cache database',
+        );
       }
     }
 
@@ -88,8 +105,10 @@ export class AddressCache<T extends object> {
           this.pool,
         );
       } catch (error) {
-        // Log but don't fail - memory cache is primary
-        console.error('Failed to persist to address cache database:', error);
+        cacheLogger?.error(
+          { error, cacheKey: key },
+          'Failed to persist to address cache database',
+        );
       }
     }
   }
@@ -128,7 +147,7 @@ export class AddressCache<T extends object> {
       const result = await deleteExpiredAddressCacheEntries.run(undefined, this.pool);
       return result.length;
     } catch (error) {
-      console.error('Failed to cleanup expired address cache entries:', error);
+      cacheLogger?.error({ error }, 'Failed to cleanup expired address cache entries');
       return 0;
     }
   }
@@ -141,6 +160,14 @@ export class AddressCache<T extends object> {
   }
 }
 
+// Cache configuration constants
+const CACHE_CONFIG = {
+  countries: { ttlHours: 24 * 7, maxSize: 10 }, // Countries rarely change, cache 7 days
+  cities: { ttlHours: 24, maxSize: 500 },
+  streets: { ttlHours: 24, maxSize: 1000 },
+  houseNumbers: { ttlHours: 24, maxSize: 2000 },
+};
+
 // Singleton instances for different cache types
 let countriesCache: AddressCache<object> | null = null;
 let citiesCache: AddressCache<object> | null = null;
@@ -148,54 +175,78 @@ let streetsCache: AddressCache<object> | null = null;
 let houseNumbersCache: AddressCache<object> | null = null;
 
 /**
- * Get or create the countries cache
+ * Get the countries cache (must be initialized first)
  */
-export function getCountriesCache<T extends object>(ttlHours: number): AddressCache<T> {
+export function getCountriesCache<T extends object>(): AddressCache<T> {
   if (!countriesCache) {
-    // Countries change rarely, cache for 7 days
-    countriesCache = new AddressCache<object>(ttlHours * 7, 10);
+    // Create with default config if not initialized
+    countriesCache = new AddressCache<object>(CACHE_CONFIG.countries.ttlHours, CACHE_CONFIG.countries.maxSize);
   }
   return countriesCache as unknown as AddressCache<T>;
 }
 
 /**
- * Get or create the cities cache
+ * Get the cities cache (must be initialized first)
  */
-export function getCitiesCache<T extends object>(ttlHours: number): AddressCache<T> {
+export function getCitiesCache<T extends object>(): AddressCache<T> {
   if (!citiesCache) {
-    citiesCache = new AddressCache<object>(ttlHours, 500);
+    // Create with default config if not initialized
+    citiesCache = new AddressCache<object>(CACHE_CONFIG.cities.ttlHours, CACHE_CONFIG.cities.maxSize);
   }
   return citiesCache as unknown as AddressCache<T>;
 }
 
 /**
- * Get or create the streets cache
+ * Get the streets cache (must be initialized first)
  */
-export function getStreetsCache<T extends object>(ttlHours: number): AddressCache<T> {
+export function getStreetsCache<T extends object>(): AddressCache<T> {
   if (!streetsCache) {
-    streetsCache = new AddressCache<object>(ttlHours, 1000);
+    // Create with default config if not initialized
+    streetsCache = new AddressCache<object>(CACHE_CONFIG.streets.ttlHours, CACHE_CONFIG.streets.maxSize);
   }
   return streetsCache as unknown as AddressCache<T>;
 }
 
 /**
- * Get or create the house numbers cache
+ * Get the house numbers cache (must be initialized first)
  */
-export function getHouseNumbersCache<T extends object>(ttlHours: number): AddressCache<T> {
+export function getHouseNumbersCache<T extends object>(): AddressCache<T> {
   if (!houseNumbersCache) {
-    houseNumbersCache = new AddressCache<object>(ttlHours, 2000);
+    // Create with default config if not initialized
+    houseNumbersCache = new AddressCache<object>(CACHE_CONFIG.houseNumbers.ttlHours, CACHE_CONFIG.houseNumbers.maxSize);
   }
   return houseNumbersCache as unknown as AddressCache<T>;
 }
 
 /**
- * Initialize all caches with database pool
+ * Initialize all caches with database pool and logger.
+ * This must be called at application startup to enable database persistence.
+ * Caches are created eagerly to ensure they receive the pool.
  */
-export function initializeAddressCaches(pool: pg.Pool): void {
-  countriesCache?.setPool(pool);
-  citiesCache?.setPool(pool);
-  streetsCache?.setPool(pool);
-  houseNumbersCache?.setPool(pool);
+export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
+  cacheLogger = logger;
+
+  // Eagerly create all caches to ensure they get the pool
+  if (!countriesCache) {
+    countriesCache = new AddressCache<object>(CACHE_CONFIG.countries.ttlHours, CACHE_CONFIG.countries.maxSize);
+  }
+  if (!citiesCache) {
+    citiesCache = new AddressCache<object>(CACHE_CONFIG.cities.ttlHours, CACHE_CONFIG.cities.maxSize);
+  }
+  if (!streetsCache) {
+    streetsCache = new AddressCache<object>(CACHE_CONFIG.streets.ttlHours, CACHE_CONFIG.streets.maxSize);
+  }
+  if (!houseNumbersCache) {
+    houseNumbersCache = new AddressCache<object>(CACHE_CONFIG.houseNumbers.ttlHours, CACHE_CONFIG.houseNumbers.maxSize);
+  }
+
+  // Set database pool on all caches
+  countriesCache.setPool(pool);
+  citiesCache.setPool(pool);
+  streetsCache.setPool(pool);
+  houseNumbersCache.setPool(pool);
+
+  logger.debug('Address caches initialized with database pool');
 }
 
 /**
