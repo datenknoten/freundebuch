@@ -1,5 +1,5 @@
 # SabreDAV PHP-FPM container for CardDAV/CalDAV
-FROM php:8.3-fpm-bookworm
+FROM php:8.4-fpm-bookworm
 
 # Install PostgreSQL PDO extension
 RUN apt-get update && apt-get install -y --no-install-recommends \
