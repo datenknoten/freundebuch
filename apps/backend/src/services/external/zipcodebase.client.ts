@@ -216,11 +216,10 @@ export class ZipcodeBaseClient {
 
   constructor(
     apiKey: string,
-    cacheTtlHours: number,
     private logger: Logger,
   ) {
     this.apiKey = apiKey;
-    this.zipcodeCache = getCitiesCache<ZipcodeResult[]>(cacheTtlHours);
+    this.zipcodeCache = getCitiesCache<ZipcodeResult[]>();
   }
 
   /**

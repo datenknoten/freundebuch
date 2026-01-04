@@ -26,7 +26,6 @@ function getAddressService(logger: Logger): AddressLookupService {
       config.ZIPCODEBASE_API_KEY,
       config.OVERPASS_API_URL,
       config.OVERPASS_FALLBACK_URL,
-      config.ADDRESS_CACHE_TTL_HOURS,
       logger,
     );
   }

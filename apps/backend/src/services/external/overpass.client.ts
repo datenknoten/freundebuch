@@ -36,11 +36,10 @@ export class OverpassClient {
   constructor(
     private primaryUrl: string,
     private fallbackUrl: string,
-    cacheTtlHours: number,
     private logger: Logger,
   ) {
-    this.streetCache = getStreetsCache<Street[]>(cacheTtlHours);
-    this.houseNumberCache = getHouseNumbersCache<HouseNumber[]>(cacheTtlHours);
+    this.streetCache = getStreetsCache<Street[]>();
+    this.houseNumberCache = getHouseNumbersCache<HouseNumber[]>();
   }
 
   /**
