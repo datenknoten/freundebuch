@@ -1,3 +1,22 @@
+## [2.13.0](https://github.com/datenknoten/freundebuch/compare/v2.12.0...v2.13.0) (2026-01-04)
+
+### Features
+
+* **backend:** Add address lookup service and routes ([d2dd241](https://github.com/datenknoten/freundebuch/commit/d2dd241ce07a41449e3f2d9db84c6eafdb962385))
+* **backend:** Add arktype validation for cache deserialization ([18e422f](https://github.com/datenknoten/freundebuch/commit/18e422f4b9a2cbe1064de27a0c67a92ff6c9bf41))
+* **backend:** Add cache utility and address API configuration ([8e5043f](https://github.com/datenknoten/freundebuch/commit/8e5043fccba00fac9f4fe0edf521d79766819239))
+* **backend:** Add external API clients for address lookup ([996f3b9](https://github.com/datenknoten/freundebuch/commit/996f3b94b0ee9bff3c72bbf5e2bfed91354061a0))
+* **frontend:** Add address lookup API client ([9a0e5a6](https://github.com/datenknoten/freundebuch/commit/9a0e5a669d958602cc6eeb4c8627891da77928ce))
+* **frontend:** Add hierarchical address input components ([500cb6c](https://github.com/datenknoten/freundebuch/commit/500cb6cd4ab68eb42d26096d4c52963771f5d6df))
+* **frontend:** Integrate hierarchical address input in ContactForm ([b29f14d](https://github.com/datenknoten/freundebuch/commit/b29f14d5a843dfd728d3afeccb455af0828f0e6d))
+* **shared:** Add address lookup types ([8683ddf](https://github.com/datenknoten/freundebuch/commit/8683ddfe8efedd124ad4fed22175ce5769957168))
+
+### Bug Fixes
+
+* **backend:** Address code review issues for address lookup ([d896393](https://github.com/datenknoten/freundebuch/commit/d89639365f73d998b1f25f51941547998a260ffb))
+* **backend:** Address follow-up code review issues for address caching ([45fd4a6](https://github.com/datenknoten/freundebuch/commit/45fd4a6b41fce88a1f8bc209e474b62417a3aa36))
+* **backend:** Use system schema for address_cache table and add integration tests ([fadf202](https://github.com/datenknoten/freundebuch/commit/fadf20285aa2880bf1b393fd9ca5662127d15684))
+
 ## [2.12.0](https://github.com/datenknoten/freundebuch/compare/v2.11.0...v2.12.0) (2026-01-03)
 
 ### Features
