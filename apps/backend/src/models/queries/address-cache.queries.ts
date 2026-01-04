@@ -26,13 +26,13 @@ export interface IGetAddressCacheEntryQuery {
   result: IGetAddressCacheEntryResult;
 }
 
-const getAddressCacheEntryIR: any = {"usedParamSet":{"cacheKey":true},"params":[{"name":"cacheKey","required":true,"transform":{"type":"scalar"},"locs":[{"a":86,"b":95}]}],"statement":"SELECT cache_key, cache_value, expires_at\nFROM public.address_cache\nWHERE cache_key = :cacheKey!\n  AND expires_at > NOW()"};
+const getAddressCacheEntryIR: any = {"usedParamSet":{"cacheKey":true},"params":[{"name":"cacheKey","required":true,"transform":{"type":"scalar"},"locs":[{"a":86,"b":95}]}],"statement":"SELECT cache_key, cache_value, expires_at\nFROM system.address_cache\nWHERE cache_key = :cacheKey!\n  AND expires_at > NOW()"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT cache_key, cache_value, expires_at
- * FROM public.address_cache
+ * FROM system.address_cache
  * WHERE cache_key = :cacheKey!
  *   AND expires_at > NOW()
  * ```
@@ -56,18 +56,17 @@ export interface IUpsertAddressCacheEntryQuery {
   result: IUpsertAddressCacheEntryResult;
 }
 
-const upsertAddressCacheEntryIR: any = {"usedParamSet":{"cacheKey":true,"cacheValue":true,"expiresAt":true},"params":[{"name":"cacheKey","required":true,"transform":{"type":"scalar"},"locs":[{"a":90,"b":99}]},{"name":"cacheValue","required":true,"transform":{"type":"scalar"},"locs":[{"a":102,"b":113}]},{"name":"expiresAt","required":true,"transform":{"type":"scalar"},"locs":[{"a":116,"b":126}]}],"statement":"INSERT INTO public.address_cache (cache_key, cache_value, expires_at, updated_at)\nVALUES (:cacheKey!, :cacheValue!, :expiresAt!, NOW())\nON CONFLICT (cache_key)\nDO UPDATE SET\n  cache_value = EXCLUDED.cache_value,\n  expires_at = EXCLUDED.expires_at,\n  updated_at = NOW()"};
+const upsertAddressCacheEntryIR: any = {"usedParamSet":{"cacheKey":true,"cacheValue":true,"expiresAt":true},"params":[{"name":"cacheKey","required":true,"transform":{"type":"scalar"},"locs":[{"a":78,"b":87}]},{"name":"cacheValue","required":true,"transform":{"type":"scalar"},"locs":[{"a":90,"b":101}]},{"name":"expiresAt","required":true,"transform":{"type":"scalar"},"locs":[{"a":104,"b":114}]}],"statement":"INSERT INTO system.address_cache (cache_key, cache_value, expires_at)\nVALUES (:cacheKey!, :cacheValue!, :expiresAt!)\nON CONFLICT (cache_key)\nDO UPDATE SET\n  cache_value = EXCLUDED.cache_value,\n  expires_at = EXCLUDED.expires_at"};
 
 /**
  * Query generated from SQL:
  * ```
- * INSERT INTO public.address_cache (cache_key, cache_value, expires_at, updated_at)
- * VALUES (:cacheKey!, :cacheValue!, :expiresAt!, NOW())
+ * INSERT INTO system.address_cache (cache_key, cache_value, expires_at)
+ * VALUES (:cacheKey!, :cacheValue!, :expiresAt!)
  * ON CONFLICT (cache_key)
  * DO UPDATE SET
  *   cache_value = EXCLUDED.cache_value,
- *   expires_at = EXCLUDED.expires_at,
- *   updated_at = NOW()
+ *   expires_at = EXCLUDED.expires_at
  * ```
  */
 export const upsertAddressCacheEntry = new PreparedQuery<IUpsertAddressCacheEntryParams,IUpsertAddressCacheEntryResult>(upsertAddressCacheEntryIR);
@@ -85,12 +84,12 @@ export interface IDeleteExpiredAddressCacheEntriesQuery {
   result: IDeleteExpiredAddressCacheEntriesResult;
 }
 
-const deleteExpiredAddressCacheEntriesIR: any = {"usedParamSet":{},"params":[],"statement":"DELETE FROM public.address_cache\nWHERE expires_at < NOW()"};
+const deleteExpiredAddressCacheEntriesIR: any = {"usedParamSet":{},"params":[],"statement":"DELETE FROM system.address_cache\nWHERE expires_at < NOW()"};
 
 /**
  * Query generated from SQL:
  * ```
- * DELETE FROM public.address_cache
+ * DELETE FROM system.address_cache
  * WHERE expires_at < NOW()
  * ```
  */
@@ -109,12 +108,12 @@ export interface IClearAddressCacheQuery {
   result: IClearAddressCacheResult;
 }
 
-const clearAddressCacheIR: any = {"usedParamSet":{},"params":[],"statement":"DELETE FROM public.address_cache"};
+const clearAddressCacheIR: any = {"usedParamSet":{},"params":[],"statement":"DELETE FROM system.address_cache"};
 
 /**
  * Query generated from SQL:
  * ```
- * DELETE FROM public.address_cache
+ * DELETE FROM system.address_cache
  * ```
  */
 export const clearAddressCache = new PreparedQuery<IClearAddressCacheParams,IClearAddressCacheResult>(clearAddressCacheIR);
