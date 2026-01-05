@@ -1,3 +1,9 @@
+## [2.16.0](https://github.com/datenknoten/freundebuch/compare/v2.15.1...v2.16.0) (2026-01-05)
+
+### Features
+
+* **dx:** Add lint-staged for efficient pre-commit checks ([93c45dc](https://github.com/datenknoten/freundebuch/commit/93c45dced803553ef30ff5058d7e9a03db71e62e))
+
 ## [2.15.1](https://github.com/datenknoten/freundebuch/compare/v2.15.0...v2.15.1) (2026-01-05)
 
 ### Bug Fixes
