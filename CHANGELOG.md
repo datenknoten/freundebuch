@@ -1,3 +1,9 @@
+## [2.16.4](https://github.com/datenknoten/freundebuch/compare/v2.16.3...v2.16.4) (2026-01-05)
+
+### Bug Fixes
+
+* **backend:** convert migration to typescript ([65cc327](https://github.com/datenknoten/freundebuch/commit/65cc327b31837bc00baeb49ffd9b319977ef5d10))
+
 ## [2.16.3](https://github.com/datenknoten/freundebuch/compare/v2.16.2...v2.16.3) (2026-01-05)
 
 ### Reverts
