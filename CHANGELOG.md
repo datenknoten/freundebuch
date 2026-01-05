@@ -1,3 +1,9 @@
+## [2.16.3](https://github.com/datenknoten/freundebuch/compare/v2.16.2...v2.16.3) (2026-01-05)
+
+### Reverts
+
+* **backend:** Remove sentry debug code ([fc21b13](https://github.com/datenknoten/freundebuch/commit/fc21b138a531f2567766f159c447c808d417297c))
+
 ## [2.16.2](https://github.com/datenknoten/freundebuch/compare/v2.16.1...v2.16.2) (2026-01-05)
 
 ### Bug Fixes
