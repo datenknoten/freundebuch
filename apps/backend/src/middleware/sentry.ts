@@ -3,7 +3,7 @@ import type { MiddlewareHandler } from 'hono';
 import type { AppContext } from '../types/context.js';
 
 // Routes that should not be traced to avoid noise and recursive tracing
-const EXCLUDED_TRACE_PATHS = ['/api/sentry-tunnel'];
+const EXCLUDED_TRACE_PATHS = ['/api/sentry-tunnel', '/health'];
 
 /**
  * Sentry tracing middleware for Hono
