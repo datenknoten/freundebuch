@@ -1,14 +1,6 @@
-/**
- * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
- */
-export const shorthands = undefined;
+import type { MigrationBuilder } from 'node-pg-migrate';
 
-/**
- * @param pgm {import('node-pg-migrate').MigrationBuilder}
- * @param run {() => void | undefined}
- * @returns {Promise<void> | void}
- */
-export const up = (pgm) => {
+export async function up(pgm: MigrationBuilder): Promise<void> {
   // Create password_reset_tokens table
   pgm.createTable(
     { schema: 'auth', name: 'password_reset_tokens' },
@@ -74,11 +66,6 @@ export const up = (pgm) => {
   });
 };
 
-/**
- * @param pgm {import('node-pg-migrate').MigrationBuilder}
- * @param run {() => void | undefined}
- * @returns {Promise<void> | void}
- */
-export const down = (pgm) => {
+export async function down(pgm: MigrationBuilder): Promise<void> {
   pgm.dropTable({ schema: 'auth', name: 'password_reset_tokens' }, { cascade: true });
 };
