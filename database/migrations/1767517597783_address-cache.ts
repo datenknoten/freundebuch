@@ -1,14 +1,6 @@
-/**
- * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
- */
-export const shorthands = undefined;
+import type { MigrationBuilder } from 'node-pg-migrate';
 
-/**
- * @param pgm {import('node-pg-migrate').MigrationBuilder}
- * @param run {() => void | undefined}
- * @returns {Promise<void> | void}
- */
-export const up = (pgm) => {
+export async function up(pgm: MigrationBuilder): Promise<void> {
   // Create system schema if it doesn't exist
   pgm.createSchema('system', { ifNotExists: true });
 
@@ -80,14 +72,9 @@ export const up = (pgm) => {
       FOR EACH ROW
       EXECUTE FUNCTION update_updated_at_column();
   `);
-};
+}
 
-/**
- * @param pgm {import('node-pg-migrate').MigrationBuilder}
- * @param run {() => void | undefined}
- * @returns {Promise<void> | void}
- */
-export const down = (pgm) => {
+export async function down(pgm: MigrationBuilder): Promise<void> {
   pgm.sql('DROP TRIGGER IF EXISTS update_address_cache_updated_at ON system.address_cache');
   pgm.dropTable({ schema: 'system', name: 'address_cache' }, { cascade: true });
-};
+}

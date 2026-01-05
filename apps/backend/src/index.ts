@@ -44,6 +44,7 @@ if (SENTRY_DSN) {
       Sentry.pinoIntegration({ log: { levels: ['info', 'warn', 'error'] } }),
       Sentry.postgresIntegration(),
     ],
+    enableLogs: true,
   });
 }
 
