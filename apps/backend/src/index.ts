@@ -28,8 +28,6 @@ Error.stackTraceLimit = 100;
 const SENTRY_DSN = process.env.SENTRY_DSN;
 const NODE_ENV = process.env.ENV || 'development';
 
-console.dir({ SENTRY_DSN, 'message': 'Sentry available?' });
-
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
@@ -47,7 +45,6 @@ if (SENTRY_DSN) {
       Sentry.postgresIntegration(),
     ],
     enableLogs: true,
-    debug: true,
   });
 }
 
