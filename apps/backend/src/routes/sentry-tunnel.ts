@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import { Hono } from 'hono';
 import type { AppContext } from '../types/context.js';
 
@@ -34,7 +35,9 @@ sentryTunnelRoutes.post('/', async (c) => {
 
     return c.json({ success: true }, response.status as 200 | 400 | 500);
   } catch (error) {
-    logger.error({ error }, 'Sentry tunnel error');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Sentry tunnel error');
+    Sentry.captureException(err);
     return c.json({ error: 'Failed to tunnel Sentry request' }, 500);
   }
 });

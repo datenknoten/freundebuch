@@ -7,6 +7,7 @@ import {
   RegisterRequestSchema,
   ResetPasswordRequestSchema,
 } from '@freundebuch/shared/index.js';
+import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
@@ -84,7 +85,9 @@ app.post('/register', authRateLimitMiddleware, async (c) => {
       return c.json<ErrorResponse>({ error: 'User already exists' }, 409);
     }
 
-    logger.error({ error }, 'Registration failed');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Registration failed');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Registration failed' }, 500);
   }
 });
@@ -135,7 +138,9 @@ app.post('/login', authRateLimitMiddleware, async (c) => {
       return c.json<ErrorResponse>({ error: 'Invalid credentials' }, 401);
     }
 
-    logger.error({ error }, 'Login failed');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Login failed');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Login failed' }, 500);
   }
 });
@@ -167,7 +172,9 @@ app.post('/logout', async (c) => {
 
     return c.json({ message: 'Logged out successfully' });
   } catch (error) {
-    logger.error({ error }, 'Logout failed');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Logout failed');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Logout failed' }, 500);
   }
 });
@@ -231,7 +238,9 @@ app.post('/refresh', async (c) => {
       return c.json<ErrorResponse>({ error: 'Invalid or expired session' }, 401);
     }
 
-    logger.error({ error }, 'Token refresh failed');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Token refresh failed');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Token refresh failed' }, 500);
   }
 });
@@ -286,7 +295,9 @@ app.post('/forgot-password', passwordResetRateLimitMiddleware, async (c) => {
 
     return c.json(response);
   } catch (error) {
-    logger.error({ error }, 'Forgot password failed');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Forgot password failed');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to process request' }, 500);
   }
 });
@@ -332,7 +343,9 @@ app.post('/reset-password', passwordResetRateLimitMiddleware, async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, 400);
     }
 
-    logger.error({ error }, 'Password reset failed');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Password reset failed');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Password reset failed' }, 500);
   }
 });

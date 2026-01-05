@@ -1,4 +1,5 @@
 import type { ErrorResponse } from '@freundebuch/shared/index.js';
+import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import type { Logger } from 'pino';
@@ -85,10 +86,12 @@ app.get('/cities', async (c) => {
     const cities = await service.getCitiesByPostalCode(validated.country, validated.postal_code);
     return c.json(cities);
   } catch (error) {
-    logger.error({ error }, 'Failed to get cities');
-    if (error instanceof Error && error.message.includes('not configured')) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get cities');
+    if (err.message.includes('not configured')) {
       return c.json<ErrorResponse>({ error: 'Address lookup service not configured' }, 503);
     }
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to load cities' }, 500);
   }
 });
@@ -115,10 +118,12 @@ app.get('/streets', async (c) => {
     );
     return c.json(streets);
   } catch (error) {
-    logger.error({ error }, 'Failed to get streets');
-    if (error instanceof Error && error.message.includes('not configured')) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get streets');
+    if (err.message.includes('not configured')) {
       return c.json<ErrorResponse>({ error: 'Address lookup service not configured' }, 503);
     }
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to load streets' }, 500);
   }
 });
@@ -146,10 +151,12 @@ app.get('/house-numbers', async (c) => {
     );
     return c.json(houseNumbers);
   } catch (error) {
-    logger.error({ error }, 'Failed to get house numbers');
-    if (error instanceof Error && error.message.includes('not configured')) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get house numbers');
+    if (err.message.includes('not configured')) {
       return c.json<ErrorResponse>({ error: 'Address lookup service not configured' }, 503);
     }
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to load house numbers' }, 500);
   }
 });

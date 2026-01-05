@@ -38,6 +38,12 @@ if (SENTRY_DSN) {
 
     // Enable sending of default PII (useful for debugging but disable in prod if needed)
     sendDefaultPii: NODE_ENV !== 'production',
+
+    // Capture pino log messages as breadcrumbs and errors, and trace postgres queries
+    integrations: [
+      Sentry.pinoIntegration({ log: { levels: ['info', 'warn', 'error'] } }),
+      Sentry.postgresIntegration(),
+    ],
   });
 }
 

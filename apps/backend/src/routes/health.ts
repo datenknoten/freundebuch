@@ -13,7 +13,8 @@ health.get('/', async (c) => {
     await client.query('SELECT 1');
     dbHealthy = true;
   } catch (error) {
-    logger.error({ error }, 'Database connection check failed');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Database connection check failed');
     dbHealthy = false;
   } finally {
     client.release();

@@ -27,7 +27,8 @@ export async function checkDatabaseConnection(dbPool: pg.Pool): Promise<boolean>
     return true;
   } catch (error) {
     const logger = createLogger();
-    logger.error({ error }, 'Database connection check failed');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Database connection check failed');
     return false;
   }
 }

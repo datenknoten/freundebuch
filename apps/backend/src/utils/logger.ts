@@ -21,6 +21,7 @@ export function createLogger() {
             target: 'pino-pretty',
             options: {
               colorize: true,
+              translateTime: "yyyy-mm-dd'T'HH:MM:ss.l'Z'",
             },
           }
         : undefined,

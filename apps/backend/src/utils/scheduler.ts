@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import cron from 'node-cron';
 import type pg from 'pg';
 import type { Logger } from 'pino';
@@ -19,21 +20,27 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): void {
       await deleteExpiredSessions.run(undefined, pool);
       logger.info('Expired sessions cleaned up successfully');
     } catch (error) {
-      logger.error({ error }, 'Failed to clean up expired sessions');
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error({ err }, 'Failed to clean up expired sessions');
+      Sentry.captureException(err);
     }
 
     try {
       await deleteExpiredPasswordResetTokens.run(undefined, pool);
       logger.info('Expired password reset tokens cleaned up successfully');
     } catch (error) {
-      logger.error({ error }, 'Failed to clean up expired password reset tokens');
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error({ err }, 'Failed to clean up expired password reset tokens');
+      Sentry.captureException(err);
     }
 
     try {
       await deleteExpiredAddressCacheEntries.run(undefined, pool);
       logger.info('Expired address cache entries cleaned up successfully');
     } catch (error) {
-      logger.error({ error }, 'Failed to clean up expired address cache entries');
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error({ err }, 'Failed to clean up expired address cache entries');
+      Sentry.captureException(err);
     }
   });
 

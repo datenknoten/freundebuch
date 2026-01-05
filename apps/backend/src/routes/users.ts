@@ -3,6 +3,7 @@ import {
   UpdateProfileRequestSchema,
   type User,
 } from '@freundebuch/shared/index.js';
+import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
@@ -44,7 +45,9 @@ app.get('/me', async (c) => {
       updatedAt: user.updated_at.toISOString(),
     });
   } catch (error) {
-    logger.error({ error }, 'Failed to get user profile');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get user profile');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to get user profile' }, 500);
   }
 });
@@ -113,7 +116,9 @@ app.put('/me', async (c) => {
       updatedAt: updatedUser.updated_at.toISOString(),
     });
   } catch (error) {
-    logger.error({ error }, 'Failed to update user profile');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to update user profile');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update user profile' }, 500);
   }
 });

@@ -1,4 +1,5 @@
 import type { ErrorResponse } from '@freundebuch/shared/index.js';
+import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
@@ -38,7 +39,9 @@ app.get('/', async (c) => {
 
     return c.json<AppPassword[]>(passwords);
   } catch (error) {
-    logger.error({ error }, 'Failed to list app passwords');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to list app passwords');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to list app passwords' }, 500);
   }
 });
@@ -78,7 +81,9 @@ app.post('/', async (c) => {
         429,
       );
     }
-    logger.error({ error }, 'Failed to create app password');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to create app password');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to create app password' }, 500);
   }
 });
@@ -109,7 +114,9 @@ app.delete('/:id', async (c) => {
 
     return c.json({ success: true });
   } catch (error) {
-    logger.error({ error }, 'Failed to revoke app password');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to revoke app password');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to revoke app password' }, 500);
   }
 });

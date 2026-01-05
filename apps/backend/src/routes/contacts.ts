@@ -15,6 +15,7 @@ import {
   SocialProfileInputSchema,
   UrlInputSchema,
 } from '@freundebuch/shared/index.js';
+import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
@@ -58,7 +59,9 @@ app.get('/', async (c) => {
 
     return c.json(result);
   } catch (error) {
-    logger.error({ error }, 'Failed to list contacts');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to list contacts');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to list contacts' }, 500);
   }
 });
@@ -93,7 +96,9 @@ app.get('/search', async (c) => {
 
     return c.json(results);
   } catch (error) {
-    logger.error({ error, query }, 'Failed to search contacts');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, query }, 'Failed to search contacts');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to search contacts' }, 500);
   }
 });
@@ -113,7 +118,9 @@ app.get('/relationship-types', async (c) => {
 
     return c.json(types);
   } catch (error) {
-    logger.error({ error }, 'Failed to get relationship types');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get relationship types');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to get relationship types' }, 500);
   }
 });
@@ -138,7 +145,9 @@ app.get('/:id', async (c) => {
 
     return c.json(contact);
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to get contact');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to get contact');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to get contact' }, 500);
   }
 });
@@ -171,7 +180,9 @@ app.post('/', async (c) => {
 
     return c.json(contact, 201);
   } catch (error) {
-    logger.error({ error }, 'Failed to create contact');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to create contact');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to create contact' }, 500);
   }
 });
@@ -209,7 +220,9 @@ app.put('/:id', async (c) => {
 
     return c.json(contact);
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to update contact');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to update contact');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update contact' }, 500);
   }
 });
@@ -242,7 +255,9 @@ app.delete('/:id', async (c) => {
 
     return c.json({ message: 'Contact deleted successfully' });
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to delete contact');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to delete contact');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to delete contact' }, 500);
   }
 });
@@ -288,7 +303,9 @@ app.post('/:id/phones', async (c) => {
 
     return c.json(phone, 201);
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to add phone');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to add phone');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to add phone' }, 500);
   }
 });
@@ -331,7 +348,9 @@ app.put('/:id/phones/:phoneId', async (c) => {
 
     return c.json(phone);
   } catch (error) {
-    logger.error({ error, contactId, phoneId }, 'Failed to update phone');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, phoneId }, 'Failed to update phone');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update phone' }, 500);
   }
 });
@@ -361,7 +380,9 @@ app.delete('/:id/phones/:phoneId', async (c) => {
 
     return c.json({ message: 'Phone deleted successfully' });
   } catch (error) {
-    logger.error({ error, contactId, phoneId }, 'Failed to delete phone');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, phoneId }, 'Failed to delete phone');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to delete phone' }, 500);
   }
 });
@@ -407,7 +428,9 @@ app.post('/:id/emails', async (c) => {
 
     return c.json(email, 201);
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to add email');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to add email');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to add email' }, 500);
   }
 });
@@ -450,7 +473,9 @@ app.put('/:id/emails/:emailId', async (c) => {
 
     return c.json(email);
   } catch (error) {
-    logger.error({ error, contactId, emailId }, 'Failed to update email');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, emailId }, 'Failed to update email');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update email' }, 500);
   }
 });
@@ -480,7 +505,9 @@ app.delete('/:id/emails/:emailId', async (c) => {
 
     return c.json({ message: 'Email deleted successfully' });
   } catch (error) {
-    logger.error({ error, contactId, emailId }, 'Failed to delete email');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, emailId }, 'Failed to delete email');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to delete email' }, 500);
   }
 });
@@ -526,7 +553,9 @@ app.post('/:id/addresses', async (c) => {
 
     return c.json(address, 201);
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to add address');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to add address');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to add address' }, 500);
   }
 });
@@ -574,7 +603,9 @@ app.put('/:id/addresses/:addressId', async (c) => {
 
     return c.json(address);
   } catch (error) {
-    logger.error({ error, contactId, addressId }, 'Failed to update address');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, addressId }, 'Failed to update address');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update address' }, 500);
   }
 });
@@ -604,7 +635,9 @@ app.delete('/:id/addresses/:addressId', async (c) => {
 
     return c.json({ message: 'Address deleted successfully' });
   } catch (error) {
-    logger.error({ error, contactId, addressId }, 'Failed to delete address');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, addressId }, 'Failed to delete address');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to delete address' }, 500);
   }
 });
@@ -650,7 +683,9 @@ app.post('/:id/urls', async (c) => {
 
     return c.json(url, 201);
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to add URL');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to add URL');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to add URL' }, 500);
   }
 });
@@ -693,7 +728,9 @@ app.put('/:id/urls/:urlId', async (c) => {
 
     return c.json(url);
   } catch (error) {
-    logger.error({ error, contactId, urlId }, 'Failed to update URL');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, urlId }, 'Failed to update URL');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update URL' }, 500);
   }
 });
@@ -723,7 +760,9 @@ app.delete('/:id/urls/:urlId', async (c) => {
 
     return c.json({ message: 'URL deleted successfully' });
   } catch (error) {
-    logger.error({ error, contactId, urlId }, 'Failed to delete URL');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, urlId }, 'Failed to delete URL');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to delete URL' }, 500);
   }
 });
@@ -793,7 +832,9 @@ app.post('/:id/photo', async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, 400);
     }
 
-    logger.error({ error, contactId }, 'Failed to upload photo');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to upload photo');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to upload photo' }, 500);
   }
 });
@@ -830,7 +871,9 @@ app.delete('/:id/photo', async (c) => {
 
     return c.json({ message: 'Photo deleted successfully' });
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to delete photo');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to delete photo');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to delete photo' }, 500);
   }
 });
@@ -879,7 +922,9 @@ app.post('/:id/dates', async (c) => {
     if (error instanceof Error && error.message === 'Contact already has a birthday date') {
       return c.json<ErrorResponse>({ error: error.message }, 400);
     }
-    logger.error({ error, contactId }, 'Failed to add date');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to add date');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to add date' }, 500);
   }
 });
@@ -922,7 +967,9 @@ app.put('/:id/dates/:dateId', async (c) => {
 
     return c.json(date);
   } catch (error) {
-    logger.error({ error, contactId, dateId }, 'Failed to update date');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, dateId }, 'Failed to update date');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update date' }, 500);
   }
 });
@@ -952,7 +999,9 @@ app.delete('/:id/dates/:dateId', async (c) => {
 
     return c.json({ message: 'Date deleted successfully' });
   } catch (error) {
-    logger.error({ error, contactId, dateId }, 'Failed to delete date');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, dateId }, 'Failed to delete date');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to delete date' }, 500);
   }
 });
@@ -998,7 +1047,9 @@ app.put('/:id/met-info', async (c) => {
 
     return c.json(metInfo);
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to set met info');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to set met info');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to set met info' }, 500);
   }
 });
@@ -1027,7 +1078,9 @@ app.delete('/:id/met-info', async (c) => {
 
     return c.json({ message: 'Met info deleted successfully' });
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to delete met info');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to delete met info');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to delete met info' }, 500);
   }
 });
@@ -1073,7 +1126,9 @@ app.post('/:id/social-profiles', async (c) => {
 
     return c.json(profile, 201);
   } catch (error) {
-    logger.error({ error, contactId }, 'Failed to add social profile');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to add social profile');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to add social profile' }, 500);
   }
 });
@@ -1121,7 +1176,9 @@ app.put('/:id/social-profiles/:profileId', async (c) => {
 
     return c.json(profile);
   } catch (error) {
-    logger.error({ error, contactId, profileId }, 'Failed to update social profile');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, profileId }, 'Failed to update social profile');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update social profile' }, 500);
   }
 });
@@ -1151,7 +1208,9 @@ app.delete('/:id/social-profiles/:profileId', async (c) => {
 
     return c.json({ message: 'Social profile deleted successfully' });
   } catch (error) {
-    logger.error({ error, contactId, profileId }, 'Failed to delete social profile');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, profileId }, 'Failed to delete social profile');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to delete social profile' }, 500);
   }
 });
@@ -1211,7 +1270,9 @@ app.post('/:id/relationships', async (c) => {
     if (error instanceof Error && error.message.includes('unique_relationship')) {
       return c.json<ErrorResponse>({ error: 'Relationship already exists' }, 409);
     }
-    logger.error({ error, contactId }, 'Failed to add relationship');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId }, 'Failed to add relationship');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to add relationship' }, 500);
   }
 });
@@ -1259,7 +1320,9 @@ app.put('/:id/relationships/:relationshipId', async (c) => {
 
     return c.json(relationship);
   } catch (error) {
-    logger.error({ error, contactId, relationshipId }, 'Failed to update relationship');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, relationshipId }, 'Failed to update relationship');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update relationship' }, 500);
   }
 });
@@ -1293,7 +1356,9 @@ app.delete('/:id/relationships/:relationshipId', async (c) => {
 
     return c.json({ message: 'Relationship deleted successfully' });
   } catch (error) {
-    logger.error({ error, contactId, relationshipId }, 'Failed to delete relationship');
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, contactId, relationshipId }, 'Failed to delete relationship');
+    Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to delete relationship' }, 500);
   }
 });
