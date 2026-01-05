@@ -1,5 +1,5 @@
 <script lang="ts">
-import { currentUser, isAuthenticated } from '$lib/stores/auth';
+import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
 </script>
 
 <svelte:head>
@@ -8,7 +8,17 @@ import { currentUser, isAuthenticated } from '$lib/stores/auth';
 
 <div class="bg-gray-50 flex items-center justify-center p-4 py-16">
 	<div class="text-center max-w-4xl">
-		{#if $isAuthenticated && $currentUser}
+		{#if !$isAuthInitialized}
+			<!-- Loading state while auth initializes - prevents flash of unauthenticated content -->
+			<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>
+			<div class="animate-pulse">
+				<div class="h-8 bg-gray-200 rounded w-64 mx-auto mb-8"></div>
+				<div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+					<div class="h-10 bg-gray-200 rounded w-48 mx-auto mb-4"></div>
+					<div class="h-6 bg-gray-200 rounded w-72 mx-auto"></div>
+				</div>
+			</div>
+		{:else if $isAuthenticated && $currentUser}
 			<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>
 			<p class="text-2xl font-body text-gray-700 mb-8">
 				Welcome back, {$currentUser.email}!
