@@ -1,3 +1,9 @@
+## [2.16.2](https://github.com/datenknoten/freundebuch/compare/v2.16.1...v2.16.2) (2026-01-05)
+
+### Bug Fixes
+
+* **backend:** Add sentry debug code ([d2e1f95](https://github.com/datenknoten/freundebuch/commit/d2e1f95b9cec587537333a84d703f0fafe9585b2))
+
 ## [2.16.1](https://github.com/datenknoten/freundebuch/compare/v2.16.0...v2.16.1) (2026-01-05)
 
 ### Bug Fixes
