@@ -1,3 +1,9 @@
+## [2.15.0](https://github.com/datenknoten/freundebuch/compare/v2.14.0...v2.15.0) (2026-01-05)
+
+### Features
+
+* **ci:** Pass explicit version to deploy script ([af1c0d5](https://github.com/datenknoten/freundebuch/commit/af1c0d5c8de412c6972db4cd3f194a6c7ace93e6))
+
 ## [2.14.0](https://github.com/datenknoten/freundebuch/compare/v2.13.0...v2.14.0) (2026-01-04)
 
 ### Features
