@@ -6,8 +6,8 @@
 set -euo pipefail
 
 # Configuration
-COMPOSE_DIR="/home/deploy-freundebuch"
-COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.prod.yml"
+COMPOSE_DIR="/srv/freundebuch.schumacher.im"
+COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
 IMAGE="ghcr.io/enko/freundebuch2:latest"
 SERVICE_NAME="freundebuch"
 
