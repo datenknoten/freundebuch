@@ -8,4 +8,5 @@ onlyBuiltDependencies:
   - cpu-features
   - esbuild
   - protobufjs
+  - sharp
   - ssh2
