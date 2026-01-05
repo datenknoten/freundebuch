@@ -2,6 +2,9 @@ import * as Sentry from '@sentry/node';
 import type { MiddlewareHandler } from 'hono';
 import type { AppContext } from '../types/context.js';
 
+// Routes that should not be traced to avoid noise and recursive tracing
+const EXCLUDED_TRACE_PATHS = ['/api/sentry-tunnel'];
+
 /**
  * Sentry tracing middleware for Hono
  *
@@ -12,6 +15,11 @@ import type { AppContext } from '../types/context.js';
  * 4. Captures any errors and associates them with the trace
  */
 export const sentryTracingMiddleware: MiddlewareHandler<AppContext> = async (c, next) => {
+  // Skip tracing for excluded paths (e.g., sentry-tunnel to avoid recursive traces)
+  if (EXCLUDED_TRACE_PATHS.includes(c.req.path)) {
+    return next();
+  }
+
   const sentryTraceHeader = c.req.header('sentry-trace') || '';
   const baggageHeader = c.req.header('baggage') || '';
 
