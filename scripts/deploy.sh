@@ -1,29 +1,41 @@
 #!/bin/bash
 # Freundebuch deployment script
 # This script is designed to be placed at /home/deploy-freundebuch/deploy.sh on the server
-# It pulls the latest Docker image, runs migrations, and restarts the service
+# It pulls the specified Docker image version, updates .env, runs migrations, and restarts the service
+# Usage: ./deploy.sh <version>  (e.g., ./deploy.sh 2.14.0)
 
 set -euo pipefail
+
+# Colors for output (defined early for usage validation)
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Check for version argument
+if [ -z "${1:-}" ]; then
+    echo -e "${RED}[ERROR]${NC} Version argument required. Usage: $0 <version>"
+    echo -e "${RED}[ERROR]${NC} Example: $0 2.14.0"
+    exit 1
+fi
+
+VERSION="$1"
 
 # Configuration
 COMPOSE_DIR="/srv/freundebuch.schumacher.im"
 COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
-IMAGE="ghcr.io/enko/freundebuch2:latest"
+IMAGE="ghcr.io/enko/freundebuch2:${VERSION}"
 SERVICE_NAME="freundebuch"
 
 # Retry configuration
 MAX_PULL_RETRIES=5
 INITIAL_RETRY_DELAY=5
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
 # Rollback state
-PREVIOUS_IMAGE_ID=""
+PREVIOUS_VERSION=""
 DEPLOYMENT_STARTED=false
+IMAGE_BASE="ghcr.io/enko/freundebuch2"
+ENV_FILE="${COMPOSE_DIR}/.env"
 
 log_info() {
     echo -e "${GREEN}[INFO]${NC} $1"
@@ -40,6 +52,32 @@ log_error() {
 # Get the container name from docker compose
 get_container_name() {
     docker compose -f "${COMPOSE_FILE}" ps -q "${SERVICE_NAME}" 2>/dev/null | head -1 | xargs -I{} docker inspect --format='{{.Name}}' {} 2>/dev/null | sed 's/^\///' || echo ""
+}
+
+# Get the version from .env file
+get_env_version() {
+    if [ -f "$ENV_FILE" ]; then
+        grep -E "^IMAGE_TAG=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 || echo ""
+    else
+        echo ""
+    fi
+}
+
+# Update version in .env file
+set_env_version() {
+    local new_version="$1"
+    if [ -f "$ENV_FILE" ]; then
+        if grep -q "^IMAGE_TAG=" "$ENV_FILE"; then
+            # Update existing IMAGE_TAG
+            sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${new_version}/" "$ENV_FILE"
+        else
+            # Append IMAGE_TAG
+            echo "IMAGE_TAG=${new_version}" >> "$ENV_FILE"
+        fi
+    else
+        # Create .env with IMAGE_TAG
+        echo "IMAGE_TAG=${new_version}" > "$ENV_FILE"
+    fi
 }
 
 # Pull image with retry and exponential backoff
@@ -66,22 +104,28 @@ pull_image_with_retry() {
     return 1
 }
 
-# Rollback to previous image
+# Rollback to previous version
 rollback() {
     log_error "Deployment failed! Initiating rollback..."
 
-    if [ -n "$PREVIOUS_IMAGE_ID" ]; then
-        log_info "Rolling back to previous image: ${PREVIOUS_IMAGE_ID}"
+    if [ -n "$PREVIOUS_VERSION" ]; then
+        log_info "Rolling back to previous version: ${PREVIOUS_VERSION}"
 
-        # Tag the previous image back as latest
-        docker tag "${PREVIOUS_IMAGE_ID}" "${IMAGE}" || true
+        local previous_image="${IMAGE_BASE}:${PREVIOUS_VERSION}"
 
-        # Restart the service with the old image
-        docker compose -f "${COMPOSE_FILE}" up -d "${SERVICE_NAME}" || true
+        # Restore previous version in .env
+        set_env_version "$PREVIOUS_VERSION"
 
-        log_warn "Rollback completed. Service restored to previous version."
+        # Pull the previous version (should be cached locally)
+        if docker pull "$previous_image"; then
+            docker compose -f "${COMPOSE_FILE}" up -d "${SERVICE_NAME}" || true
+            log_warn "Rollback completed. Service restored to version ${PREVIOUS_VERSION}."
+        else
+            log_error "Failed to pull previous image. Attempting restart with current image..."
+            docker compose -f "${COMPOSE_FILE}" up -d "${SERVICE_NAME}" || true
+        fi
     else
-        log_error "No previous image available for rollback."
+        log_error "No previous version available for rollback."
         log_error "Attempting to restart service with current image..."
         docker compose -f "${COMPOSE_FILE}" up -d "${SERVICE_NAME}" || true
     fi
@@ -97,21 +141,25 @@ cd "${COMPOSE_DIR}"
 
 log_info "Starting Freundebuch deployment..."
 
-# Step 1: Save the current image ID for potential rollback
-log_info "Saving current image ID for potential rollback..."
-PREVIOUS_IMAGE_ID=$(docker images --format "{{.ID}}" "${IMAGE}" 2>/dev/null | head -1 || echo "")
-if [ -n "$PREVIOUS_IMAGE_ID" ]; then
-    log_info "Current image ID: ${PREVIOUS_IMAGE_ID}"
+# Step 1: Save the current version from .env for potential rollback
+log_info "Reading current version from .env for potential rollback..."
+PREVIOUS_VERSION=$(get_env_version)
+if [ -n "$PREVIOUS_VERSION" ]; then
+    log_info "Current version in .env: ${PREVIOUS_VERSION}"
 else
-    log_warn "No previous image found (first deployment?)"
+    log_warn "No IMAGE_TAG found in .env (first deployment?)"
 fi
 
-# Step 2: Pull the latest Docker image with retry logic
-log_info "Pulling latest Docker image: ${IMAGE}"
+# Step 2: Pull the Docker image with retry logic
+log_info "Pulling Docker image: ${IMAGE}"
 if ! pull_image_with_retry; then
     log_error "Failed to pull new image. Aborting deployment."
     exit 1
 fi
+
+# Update .env with new version for docker-compose
+log_info "Updating .env with IMAGE_TAG=${VERSION}"
+set_env_version "$VERSION"
 
 # Mark deployment as started (enables rollback on failure)
 DEPLOYMENT_STARTED=true
