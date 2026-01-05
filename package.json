@@ -37,6 +37,23 @@
   "dependencies": {
     "node-pg-migrate": "8.0.4"
   },
+  "lint-staged": {
+    "*.{js,ts,tsx,jsx,svelte,css,json,jsonc}": [
+      "biome check --write --no-errors-on-unmatched"
+    ],
+    "apps/frontend/**/*.{ts,js,svelte}": [
+      "pnpm --filter frontend run type-check",
+      "pnpm --filter frontend run build"
+    ],
+    "apps/backend/**/*.{ts,js}": [
+      "pnpm --filter backend run type-check",
+      "pnpm --filter backend run build"
+    ],
+    "packages/shared/**/*.{ts,js}": [
+      "pnpm --filter @freundebuch/shared run build",
+      "pnpm run type-check"
+    ]
+  },
   "devDependencies": {
     "@biomejs/biome": "2.3.10",
     "@commitlint/cli": "20.2.0",
@@ -47,6 +64,7 @@
     "@types/pg": "8.16.0",
     "conventional-changelog-conventionalcommits": "8.0.0",
     "husky": "9.1.7",
+    "lint-staged": "^16.2.7",
     "pg": "8.16.3",
     "semantic-release": "24.2.5",
     "typescript": "5.9.3"
