@@ -21,11 +21,7 @@ export class AddressLookupService {
     private logger: Logger,
   ) {
     this.zipcodeClient = new ZipcodeBaseClient(zipcodeApiKey, logger);
-    this.overpassClient = new OverpassClient(
-      overpassPrimaryUrl,
-      overpassFallbackUrl,
-      logger,
-    );
+    this.overpassClient = new OverpassClient(overpassPrimaryUrl, overpassFallbackUrl, logger);
   }
 
   /**
