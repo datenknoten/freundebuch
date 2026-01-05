@@ -1,3 +1,9 @@
+## [2.16.1](https://github.com/datenknoten/freundebuch/compare/v2.16.0...v2.16.1) (2026-01-05)
+
+### Bug Fixes
+
+* **frontend:** Prevent landing page flash for authenticated users ([847cdf3](https://github.com/datenknoten/freundebuch/commit/847cdf35fd615a6ff40180ae7813dcc83bdc9499))
+
 ## [2.16.0](https://github.com/datenknoten/freundebuch/compare/v2.15.1...v2.16.0) (2026-01-05)
 
 ### Features
