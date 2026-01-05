@@ -3,7 +3,6 @@ import cron from 'node-cron';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { deleteExpiredAddressCacheEntries } from '../models/queries/address-cache.queries.js';
-import { deleteExpiredPasswordResetTokens } from '../models/queries/password-reset-tokens.queries.js';
 import { deleteExpiredSessions } from '../models/queries/sessions.queries.js';
 
 /**
@@ -22,15 +21,6 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): void {
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error({ err }, 'Failed to clean up expired sessions');
-      Sentry.captureException(err);
-    }
-
-    try {
-      await deleteExpiredPasswordResetTokens.run(undefined, pool);
-      logger.info('Expired password reset tokens cleaned up successfully');
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error({ err }, 'Failed to clean up expired password reset tokens');
       Sentry.captureException(err);
     }
 
@@ -54,7 +44,6 @@ export async function runCleanupNow(pool: pg.Pool, logger: Logger): Promise<void
   logger.info('Running immediate cleanup of expired sessions, tokens, and cache');
 
   await deleteExpiredSessions.run(undefined, pool);
-  await deleteExpiredPasswordResetTokens.run(undefined, pool);
   await deleteExpiredAddressCacheEntries.run(undefined, pool);
 
   logger.info('Immediate cleanup completed');
