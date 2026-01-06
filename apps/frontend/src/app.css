@@ -1,5 +1,46 @@
 @import "tailwindcss";
 
+/* Local fonts - self-hosted */
+@font-face {
+  font-family: "Merriweather";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300;
+  src: url("/fonts/merriweather-latin-300-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Merriweather";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("/fonts/merriweather-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Merriweather";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url("/fonts/merriweather-latin-700-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Yanone Kaffeesatz";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("/fonts/yanone-kaffeesatz-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Yanone Kaffeesatz";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url("/fonts/yanone-kaffeesatz-latin-700-normal.woff2") format("woff2");
+}
+
 @theme {
   /* Custom colors */
   --color-forest: #2d5016;
