@@ -3,6 +3,10 @@ import { fade } from 'svelte/transition';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
+import { search } from '$lib/stores/search';
+
+// Detect platform for keyboard shortcut hint
+const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
 let mobileMenuOpen = $state(false);
 
@@ -246,6 +250,19 @@ $effect(() => {
             </svg>
             New
           </a>
+          <button
+            onclick={() => search.open()}
+            class="inline-flex items-center gap-2 px-3 py-1.5 text-gray-500 hover:text-forest border border-gray-200 rounded-md transition-colors duration-200"
+            title="Search ({isMac ? 'Cmd' : 'Ctrl'}+K)"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span class="text-sm font-body">Search</span>
+            <kbd class="hidden lg:inline-block px-1.5 py-0.5 text-xs bg-gray-100 border border-gray-200 rounded font-mono">
+              {isMac ? '⌘' : 'Ctrl'}K
+            </kbd>
+          </button>
           <a
             href="/contacts"
             data-sveltekit-preload-data="tap"

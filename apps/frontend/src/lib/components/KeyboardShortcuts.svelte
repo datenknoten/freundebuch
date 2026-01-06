@@ -3,6 +3,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { isAuthenticated } from '$lib/stores/auth';
 import { currentContact } from '$lib/stores/contacts';
+import { isSearchOpen, search } from '$lib/stores/search';
 import { isModalOpen } from '$lib/stores/ui';
 
 let showHelp = $state(false);
@@ -19,6 +20,20 @@ function clearPending() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
+  // Handle Cmd/Ctrl+K to open global search (works even in inputs)
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    if ($isAuthenticated) {
+      search.toggle();
+    }
+    return;
+  }
+
+  // Don't handle other shortcuts if global search is open
+  if ($isSearchOpen) {
+    return;
+  }
+
   // Ignore if user is typing in an input, textarea, or contenteditable
   const target = e.target as HTMLElement;
   if (
@@ -253,6 +268,14 @@ function closeHelp() {
               Actions
             </h3>
             <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Global Search</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">Cmd</kbd>
+                  <span class="text-gray-400">+</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">K</kbd>
+                </div>
+              </div>
               <div class="flex justify-between items-center">
                 <span class="text-gray-700">New Contact</span>
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>

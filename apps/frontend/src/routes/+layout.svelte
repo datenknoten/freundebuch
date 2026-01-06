@@ -3,6 +3,7 @@ import '../app.css';
 import { onMount } from 'svelte';
 import { page } from '$app/stores';
 import Footer from '$lib/components/Footer.svelte';
+import GlobalSearch from '$lib/components/GlobalSearch.svelte';
 import KeyboardShortcuts from '$lib/components/KeyboardShortcuts.svelte';
 import NavBar from '$lib/components/NavBar.svelte';
 import { auth, isAuthenticated } from '$lib/stores/auth';
@@ -17,6 +18,7 @@ const showFab = $derived($isAuthenticated && !$page.url.pathname.includes('/cont
 </script>
 
 <KeyboardShortcuts />
+<GlobalSearch />
 
 <div class="min-h-screen flex flex-col">
 	<NavBar />

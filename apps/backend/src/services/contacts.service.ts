@@ -14,6 +14,7 @@ import type {
   Email,
   EmailInput,
   EmailType,
+  GlobalSearchResult,
   MetInfo,
   MetInfoInput,
   PaginatedContactList,
@@ -102,6 +103,14 @@ import {
   updateContact,
   updateContactPhoto,
 } from '../models/queries/contacts.queries.js';
+import {
+  addRecentSearch,
+  clearRecentSearches,
+  deleteRecentSearch,
+  fullTextSearchContacts,
+  getRecentSearches,
+  type IFullTextSearchContactsResult,
+} from '../models/queries/search.queries.js';
 
 export class ContactsService {
   private db: pg.Pool;
@@ -1078,8 +1087,92 @@ export class ContactsService {
   }
 
   // ============================================================================
+  // Full-Text Search Methods (Epic 10)
+  // ============================================================================
+
+  /**
+   * Full-text search across contacts with relevance ranking
+   * Searches: names, organization, job title, work notes, emails, phones,
+   * relationship notes, and met context
+   */
+  async fullTextSearch(
+    userExternalId: string,
+    query: string,
+    limit = 10,
+  ): Promise<GlobalSearchResult[]> {
+    this.logger.debug({ query, limit }, 'Full-text searching contacts');
+
+    const results = await fullTextSearchContacts.run(
+      {
+        userExternalId,
+        query,
+        limit,
+      },
+      this.db,
+    );
+
+    return results.map((r) => this.mapGlobalSearchResult(r));
+  }
+
+  /**
+   * Get user's recent search queries
+   */
+  async getRecentSearches(userExternalId: string, limit = 10): Promise<string[]> {
+    this.logger.debug({ limit }, 'Getting recent searches');
+
+    const results = await getRecentSearches.run({ userExternalId, limit }, this.db);
+
+    return results.map((r) => r.query);
+  }
+
+  /**
+   * Add or update a recent search query
+   * If the query already exists, updates the searched_at timestamp
+   */
+  async addRecentSearch(userExternalId: string, query: string): Promise<void> {
+    this.logger.debug({ query }, 'Adding recent search');
+
+    await addRecentSearch.run({ userExternalId, query }, this.db);
+  }
+
+  /**
+   * Delete a specific recent search query
+   */
+  async deleteRecentSearch(userExternalId: string, query: string): Promise<boolean> {
+    this.logger.debug({ query }, 'Deleting recent search');
+
+    const result = await deleteRecentSearch.run({ userExternalId, query }, this.db);
+
+    return result.length > 0;
+  }
+
+  /**
+   * Clear all recent searches for a user
+   */
+  async clearRecentSearches(userExternalId: string): Promise<void> {
+    this.logger.debug('Clearing all recent searches');
+
+    await clearRecentSearches.run({ userExternalId }, this.db);
+  }
+
+  // ============================================================================
   // Private Helper Methods
   // ============================================================================
+
+  private mapGlobalSearchResult(row: IFullTextSearchContactsResult): GlobalSearchResult {
+    return {
+      id: row.external_id,
+      displayName: row.display_name,
+      photoThumbnailUrl: row.photo_thumbnail_url ?? undefined,
+      organization: row.organization ?? undefined,
+      jobTitle: row.job_title ?? undefined,
+      primaryEmail: row.primary_email ?? undefined,
+      primaryPhone: row.primary_phone ?? undefined,
+      rank: row.rank ?? 0,
+      headline: row.headline ?? '',
+      matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
+    };
+  }
 
   private async createPhones(
     userExternalId: string,
