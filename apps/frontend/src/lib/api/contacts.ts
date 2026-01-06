@@ -10,6 +10,7 @@ import type {
   DateInput,
   Email,
   EmailInput,
+  GlobalSearchResult,
   MetInfo,
   MetInfoInput,
   PaginatedContactList,
@@ -509,6 +510,67 @@ export async function deleteRelationship(
   relationshipId: string,
 ): Promise<{ message: string }> {
   return apiRequest(`/api/contacts/${contactId}/relationships/${relationshipId}`, {
+    method: 'DELETE',
+  });
+}
+
+// ============================================================================
+// Full-Text Search Operations (Epic 10)
+// ============================================================================
+
+/**
+ * Full-text search across contacts with relevance ranking
+ * Searches: names, organization, job title, work notes, emails, phones,
+ * relationship notes, and met context
+ */
+export async function fullTextSearch(query: string, limit?: number): Promise<GlobalSearchResult[]> {
+  const searchParams = new URLSearchParams();
+  searchParams.set('q', query);
+  if (limit) searchParams.set('limit', limit.toString());
+
+  return apiRequest<GlobalSearchResult[]>(`/api/contacts/search/full?${searchParams.toString()}`);
+}
+
+/**
+ * Get user's recent search queries
+ */
+export async function getRecentSearches(limit?: number): Promise<string[]> {
+  const searchParams = new URLSearchParams();
+  if (limit) searchParams.set('limit', limit.toString());
+
+  const query = searchParams.toString();
+  const endpoint = `/api/contacts/search/recent${query ? `?${query}` : ''}`;
+
+  return apiRequest<string[]>(endpoint);
+}
+
+/**
+ * Add or update a recent search query
+ */
+export async function addRecentSearch(query: string): Promise<void> {
+  await apiRequest<{ success: boolean }>('/api/contacts/search/recent', {
+    method: 'POST',
+    body: JSON.stringify({ query }),
+  });
+}
+
+/**
+ * Delete a specific recent search
+ */
+export async function deleteRecentSearch(query: string): Promise<void> {
+  await apiRequest<{ success: boolean }>(
+    `/api/contacts/search/recent/${encodeURIComponent(query)}`,
+    {
+      method: 'DELETE',
+    },
+  );
+}
+
+/**
+ * Clear all recent searches
+ */
+export async function clearRecentSearches(): Promise<void> {
+  await apiRequest<{ success: boolean }>('/api/contacts/search/recent', {
     method: 'DELETE',
   });
 }

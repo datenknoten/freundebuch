@@ -103,6 +103,155 @@ app.get('/search', async (c) => {
   }
 });
 
+// ============================================================================
+// Epic 10: Full-Text Search Routes
+// ============================================================================
+
+/**
+ * GET /api/contacts/search/full
+ * Full-text search across contacts with relevance ranking
+ * Searches: names, organization, job title, work notes, emails, phones,
+ * relationship notes, and met context
+ */
+app.get('/search/full', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+
+  const query = c.req.query('q');
+  const limitParam = c.req.query('limit');
+
+  if (!query || query.trim().length === 0) {
+    return c.json<ErrorResponse>({ error: 'Query parameter "q" is required' }, 400);
+  }
+
+  // Minimum query length for performance
+  if (query.trim().length < 2) {
+    return c.json<ErrorResponse>({ error: 'Query must be at least 2 characters' }, 400);
+  }
+
+  const limit = limitParam ? Math.min(50, Math.max(1, Number.parseInt(limitParam, 10) || 10)) : 10;
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    const results = await contactsService.fullTextSearch(user.userId, query.trim(), limit);
+
+    return c.json(results);
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, query }, 'Failed to search contacts');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to search contacts' }, 500);
+  }
+});
+
+/**
+ * GET /api/contacts/search/recent
+ * Get user's recent search queries
+ */
+app.get('/search/recent', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+
+  const limitParam = c.req.query('limit');
+  const limit = limitParam ? Math.min(20, Math.max(1, Number.parseInt(limitParam, 10) || 10)) : 10;
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    const recentSearches = await contactsService.getRecentSearches(user.userId, limit);
+
+    return c.json(recentSearches);
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get recent searches');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to get recent searches' }, 500);
+  }
+});
+
+/**
+ * POST /api/contacts/search/recent
+ * Add or update a recent search query
+ */
+app.post('/search/recent', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+
+  try {
+    const body = await c.req.json();
+    const query = body?.query;
+
+    if (!query || typeof query !== 'string' || query.trim().length === 0) {
+      return c.json<ErrorResponse>({ error: 'Query is required' }, 400);
+    }
+
+    if (query.trim().length < 2) {
+      return c.json<ErrorResponse>({ error: 'Query must be at least 2 characters' }, 400);
+    }
+
+    const contactsService = new ContactsService(db, logger);
+    await contactsService.addRecentSearch(user.userId, query.trim());
+
+    return c.json({ success: true }, 201);
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to add recent search');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to add recent search' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/contacts/search/recent/:query
+ * Delete a specific recent search
+ */
+app.delete('/search/recent/:query', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+  const query = decodeURIComponent(c.req.param('query'));
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    const deleted = await contactsService.deleteRecentSearch(user.userId, query);
+
+    if (!deleted) {
+      return c.json<ErrorResponse>({ error: 'Search query not found' }, 404);
+    }
+
+    return c.json({ success: true });
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err, query }, 'Failed to delete recent search');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to delete recent search' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/contacts/search/recent
+ * Clear all recent searches
+ */
+app.delete('/search/recent', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    await contactsService.clearRecentSearches(user.userId);
+
+    return c.json({ success: true });
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to clear recent searches');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to clear recent searches' }, 500);
+  }
+});
+
 /**
  * GET /api/contacts/relationship-types
  * Get all relationship types grouped by category

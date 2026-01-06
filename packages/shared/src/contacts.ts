@@ -412,6 +412,23 @@ export interface ContactSearchResult {
   photoThumbnailUrl?: string;
 }
 
+/** Global search result with relevance ranking and context (Epic 10) */
+export interface GlobalSearchResult {
+  id: string;
+  displayName: string;
+  photoThumbnailUrl?: string;
+  organization?: string;
+  jobTitle?: string;
+  primaryEmail?: string;
+  primaryPhone?: string;
+  /** Relevance score from full-text search */
+  rank: number;
+  /** HTML snippet with <mark> tags highlighting matched terms */
+  headline: string;
+  /** Where the match was found: contact fields, email, phone, or notes */
+  matchSource: 'contact' | 'email' | 'phone' | 'notes' | null;
+}
+
 /** Paginated contact list response */
 export interface PaginatedContactList {
   contacts: ContactListItem[];
