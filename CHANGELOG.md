@@ -1,3 +1,9 @@
+## [2.17.0](https://github.com/datenknoten/freundebuch/compare/v2.16.5...v2.17.0) (2026-01-06)
+
+### Features
+
+* **frontend:** Embed fonts locally instead of using Google Fonts ([79fea40](https://github.com/datenknoten/freundebuch/commit/79fea4082ef3ca128d1c34d148bfc995f995890c))
+
 ## [2.16.5](https://github.com/datenknoten/freundebuch/compare/v2.16.4...v2.16.5) (2026-01-06)
 
 ### Bug Fixes
