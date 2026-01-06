@@ -64,8 +64,8 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   pgm.createIndex({ schema: 'auth', name: 'password_reset_tokens' }, 'expires_at', {
     name: 'idx_password_reset_tokens_expires_at',
   });
-};
+}
 
 export async function down(pgm: MigrationBuilder): Promise<void> {
   pgm.dropTable({ schema: 'auth', name: 'password_reset_tokens' }, { cascade: true });
-};
+}
