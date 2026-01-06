@@ -1,3 +1,10 @@
+## [2.16.5](https://github.com/datenknoten/freundebuch/compare/v2.16.4...v2.16.5) (2026-01-06)
+
+### Bug Fixes
+
+* **backend:** Also exclude /health endpoint from Sentry tracing ([3c257ba](https://github.com/datenknoten/freundebuch/commit/3c257ba61a6483b8c4e60beada8d5a3aa5f447ad))
+* **backend:** Exclude sentry-tunnel route from Sentry tracing ([d52d0c8](https://github.com/datenknoten/freundebuch/commit/d52d0c8630e3856cc706bb9c471c3697e460d615))
+
 ## [2.16.4](https://github.com/datenknoten/freundebuch/compare/v2.16.3...v2.16.4) (2026-01-05)
 
 ### Bug Fixes
