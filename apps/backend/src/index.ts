@@ -1,3 +1,7 @@
+// IMPORTANT: Import Sentry instrumentation first, before any other modules
+// This ensures pg and other modules are properly instrumented
+import './instrument.js';
+
 import { serve } from '@hono/node-server';
 import * as Sentry from '@sentry/node';
 import { Hono } from 'hono';
@@ -22,31 +26,6 @@ import { createLogger } from './utils/logger.js';
 import { setupCleanupScheduler } from './utils/scheduler.js';
 
 Error.stackTraceLimit = 100;
-
-// Initialize Sentry early, before any other code runs
-// Read directly from process.env to avoid config validation during tests
-const SENTRY_DSN = process.env.SENTRY_DSN;
-const NODE_ENV = process.env.ENV || 'development';
-
-if (SENTRY_DSN) {
-  Sentry.init({
-    dsn: SENTRY_DSN,
-    environment: NODE_ENV,
-
-    // Performance monitoring - 100% sampling for MVP phase
-    tracesSampleRate: 1.0,
-
-    // Enable sending of default PII (useful for debugging but disable in prod if needed)
-    sendDefaultPii: NODE_ENV !== 'production',
-
-    // Capture pino log messages as breadcrumbs and errors, and trace postgres queries
-    integrations: [
-      Sentry.pinoIntegration({ log: { levels: ['info', 'warn', 'error'] } }),
-      Sentry.postgresIntegration(),
-    ],
-    enableLogs: true,
-  });
-}
 
 export async function createApp(pool: pg.Pool) {
   const config = getConfig();
