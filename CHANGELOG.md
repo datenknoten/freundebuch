@@ -1,3 +1,9 @@
+## [2.17.1](https://github.com/datenknoten/freundebuch/compare/v2.17.0...v2.17.1) (2026-01-06)
+
+### Bug Fixes
+
+* **backend:** Fix Sentry Postgres integration and add release version ([c80ae66](https://github.com/datenknoten/freundebuch/commit/c80ae661de7a1d463a401b1eb9c815e414b7ba5a))
+
 ## [2.17.0](https://github.com/datenknoten/freundebuch/compare/v2.16.5...v2.17.0) (2026-01-06)
 
 ### Features
