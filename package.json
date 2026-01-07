@@ -43,16 +43,16 @@
       "biome check --write --no-errors-on-unmatched"
     ],
     "apps/frontend/**/*.{ts,js,svelte}": [
-      "pnpm --filter frontend run type-check",
-      "pnpm --filter frontend run build"
+      "bash -c 'pnpm --filter frontend run type-check'",
+      "bash -c 'pnpm --filter frontend run build'"
     ],
     "apps/backend/**/*.{ts,js}": [
-      "pnpm --filter backend run type-check",
-      "pnpm --filter backend run build"
+      "bash -c 'pnpm --filter backend run type-check'",
+      "bash -c 'pnpm --filter backend run build'"
     ],
     "packages/shared/**/*.{ts,js}": [
-      "pnpm --filter @freundebuch/shared run build",
-      "pnpm run type-check"
+      "bash -c 'pnpm --filter @freundebuch/shared run build'",
+      "bash -c 'pnpm run type-check'"
     ]
   },
   "devDependencies": {
