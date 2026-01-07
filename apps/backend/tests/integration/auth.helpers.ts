@@ -43,6 +43,11 @@ export async function setupAuthTests(): Promise<AuthTestContext> {
     max: 10,
   });
 
+  // Suppress pool errors during container shutdown (e.g., "terminating connection due to administrator command")
+  pool.on('error', () => {
+    // Ignore - expected during test teardown when container stops
+  });
+
   // Run migrations
   await runMigrations(pool);
 
