@@ -1,3 +1,12 @@
+## [2.18.0](https://github.com/datenknoten/freundebuch/compare/v2.17.1...v2.18.0) (2026-01-07)
+
+### Features
+
+* **frontend:** Add search filter to friends list ([129b9c4](https://github.com/datenknoten/freundebuch/commit/129b9c47bf36f5e1edbde2a5928e41e24acacb7c))
+* **frontend:** Enhance global search dialog ([b12c8f7](https://github.com/datenknoten/freundebuch/commit/b12c8f77b5edc476b8f9b66ed92f432a02e71524))
+* **frontend:** Redesign header with user avatar dropdown ([049ed20](https://github.com/datenknoten/freundebuch/commit/049ed20b4510d03381a29ec46644c97ba727c32e))
+* **search:** Add full-text search functionality (Epic 10 Phase 1) ([ba168e4](https://github.com/datenknoten/freundebuch/commit/ba168e4eb0b543632c7dc554f6e07692c101375e))
+
 ## [2.17.1](https://github.com/datenknoten/freundebuch/compare/v2.17.0...v2.17.1) (2026-01-06)
 
 ### Bug Fixes
