@@ -1,3 +1,9 @@
+## [2.20.5](https://github.com/datenknoten/freundebuch/compare/v2.20.4...v2.20.5) (2026-01-07)
+
+### Bug Fixes
+
+* **backend:** Remove AUTH_DEBUG logging from SabreDAV AppPasswordBackend ([3d6ec65](https://github.com/datenknoten/freundebuch/commit/3d6ec657443e9890e329be060be0aaec7da4879b))
+
 ## [2.20.4](https://github.com/datenknoten/freundebuch/compare/v2.20.3...v2.20.4) (2026-01-07)
 
 ### Bug Fixes
