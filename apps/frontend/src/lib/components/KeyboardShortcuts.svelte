@@ -127,6 +127,9 @@ function handleKeydown(e: KeyboardEvent) {
       case 's':
         window.dispatchEvent(new CustomEvent('shortcut:add-social'));
         break;
+      case 'r':
+        window.dispatchEvent(new CustomEvent('shortcut:add-relationship'));
+        break;
     }
     return;
   }
@@ -183,14 +186,6 @@ function handleKeydown(e: KeyboardEvent) {
       if ($currentContact && $page.url.pathname.match(/^\/contacts\/[^/]+$/)) {
         e.preventDefault();
         goto(`/contacts/${$currentContact.id}/edit`);
-      }
-      break;
-
-    case 'r':
-      // Add relationship if on contact detail page
-      if ($currentContact && $page.url.pathname.match(/^\/contacts\/[^/]+$/)) {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent('shortcut:add-relationship'));
       }
       break;
 
@@ -306,10 +301,6 @@ function closeHelp() {
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-700">Add Relationship</span>
-                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">r</kbd>
-              </div>
-              <div class="flex justify-between items-center">
                 <span class="text-gray-700">Focus Search</span>
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">/</kbd>
               </div>
@@ -376,6 +367,14 @@ function closeHelp() {
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
                   <span class="text-gray-400">then</span>
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">s</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Relationship</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">r</kbd>
                 </div>
               </div>
             </div>
@@ -461,6 +460,10 @@ function closeHelp() {
       <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
         <span class="text-gray-700">Social Profile</span>
         <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">s</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Relationship</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">r</kbd>
       </div>
     </div>
   </div>
