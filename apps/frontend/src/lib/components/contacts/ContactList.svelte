@@ -1,6 +1,7 @@
 <script lang="ts">
 import * as contactsApi from '$lib/api/contacts';
 import { contactList, contacts, isContactsLoading } from '$lib/stores/contacts';
+import { visibleContactIds } from '$lib/stores/ui';
 import type { GlobalSearchResult } from '$shared';
 import ContactListItem from './ContactListItem.svelte';
 import SearchResultItem from './SearchResultItem.svelte';
@@ -97,6 +98,21 @@ $effect(() => {
     handleSearchInput(initialQuery);
   }
 });
+
+// Update visible contact IDs for keyboard navigation (first 9 items)
+$effect(() => {
+  if (!isSearchMode) {
+    // Normal list mode - use contact list
+    const ids = $contactList.slice(0, 9).map((c) => c.id);
+    visibleContactIds.set(ids);
+  } else if (searchResults.length > 0) {
+    // Search mode - use search results
+    const ids = searchResults.slice(0, 9).map((r) => r.id);
+    visibleContactIds.set(ids);
+  } else {
+    visibleContactIds.set([]);
+  }
+});
 </script>
 
 <div class="space-y-4">
@@ -123,6 +139,7 @@ $effect(() => {
       placeholder="Search friends by name, email, phone, or notes..."
       class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
       autocomplete="off"
+      data-search-input
     />
     {#if isSearching}
       <div class="absolute right-4 top-1/2 -translate-y-1/2">
@@ -183,8 +200,8 @@ $effect(() => {
         {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{searchQuery}"
       </div>
       <div class="space-y-2">
-        {#each searchResults as result (result.id)}
-          <SearchResultItem {result} />
+        {#each searchResults as result, index (result.id)}
+          <SearchResultItem {result} {index} />
         {/each}
       </div>
     {/if}
@@ -265,8 +282,8 @@ $effect(() => {
     {:else}
       <!-- Contact list -->
       <div class="space-y-2">
-        {#each $contactList as contact (contact.id)}
-          <ContactListItem {contact} />
+        {#each $contactList as contact, index (contact.id)}
+          <ContactListItem {contact} {index} />
         {/each}
       </div>
 

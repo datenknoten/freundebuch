@@ -1,19 +1,32 @@
 <script lang="ts">
+import { isOpenModeActive } from '$lib/stores/ui';
 import type { GlobalSearchResult } from '$shared';
 import ContactAvatar from './ContactAvatar.svelte';
 
 interface Props {
   result: GlobalSearchResult;
+  /** Index in the list (0-based), used for keyboard shortcut indicator */
+  index?: number;
 }
 
-let { result }: Props = $props();
+let { result, index }: Props = $props();
+
+// Only show keyboard hint for first 9 items (keys 1-9)
+let showKeyHint = $derived(index !== undefined && index < 9 && $isOpenModeActive);
+let keyNumber = $derived(index !== undefined ? index + 1 : null);
 </script>
 
 <a
   href="/contacts/{result.id}"
-  class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all"
+  class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all relative"
   data-sveltekit-preload-data="tap"
 >
+  {#if showKeyHint && keyNumber}
+    <div class="absolute -left-1 -top-1 w-6 h-6 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">
+      {keyNumber}
+    </div>
+  {/if}
+
   <ContactAvatar
     displayName={result.displayName}
     photoUrl={result.photoThumbnailUrl}

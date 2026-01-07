@@ -4,19 +4,15 @@ import { page } from '$app/stores';
 import { isAuthenticated } from '$lib/stores/auth';
 import { currentContact } from '$lib/stores/contacts';
 import { isSearchOpen, search } from '$lib/stores/search';
-import { isModalOpen } from '$lib/stores/ui';
+import { isModalOpen, isOpenModeActive, visibleContactIds } from '$lib/stores/ui';
 
 let showHelp = $state(false);
 let pendingKey = $state<string | null>(null);
-let pendingTimeout: ReturnType<typeof setTimeout> | null = null;
 
-// Clear pending key after a delay
+// Clear pending key (used when action completes or Escape is pressed)
 function clearPending() {
-  if (pendingTimeout) {
-    clearTimeout(pendingTimeout);
-    pendingTimeout = null;
-  }
   pendingKey = null;
+  isOpenModeActive.set(false);
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -135,11 +131,28 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // Start two-key sequence
+  // Handle two-key sequences (o+...) for opening contacts from list
+  if (pendingKey === 'o') {
+    const keyNum = parseInt(e.key, 10);
+    if (keyNum >= 1 && keyNum <= 9) {
+      e.preventDefault();
+      const contactIds = $visibleContactIds;
+      const index = keyNum - 1;
+      if (index < contactIds.length) {
+        clearPending();
+        goto(`/contacts/${contactIds[index]}`);
+      }
+    } else {
+      // Invalid key, clear pending state
+      clearPending();
+    }
+    return;
+  }
+
+  // Start two-key sequence (no timeout - panel stays until action or Escape)
   if (e.key === 'g') {
     e.preventDefault();
     pendingKey = 'g';
-    pendingTimeout = setTimeout(clearPending, 1000);
     return;
   }
 
@@ -147,7 +160,14 @@ function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'a' && $currentContact && $page.url.pathname.match(/^\/contacts\/[^/]+$/)) {
     e.preventDefault();
     pendingKey = 'a';
-    pendingTimeout = setTimeout(clearPending, 1000);
+    return;
+  }
+
+  // Start open contact sequence (only on contacts list page)
+  if (e.key === 'o' && $page.url.pathname === '/contacts') {
+    e.preventDefault();
+    pendingKey = 'o';
+    isOpenModeActive.set(true);
     return;
   }
 
@@ -292,6 +312,14 @@ function closeHelp() {
                 <span class="text-gray-700">Focus Search</span>
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">/</kbd>
               </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Open Contact</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -380,9 +408,69 @@ function closeHelp() {
   </div>
 {/if}
 
-<!-- Pending key indicator -->
-{#if pendingKey}
-  <div class="fixed bottom-6 left-6 bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg font-mono text-sm z-50">
-    {pendingKey} ...
+<!-- Pending key options panel -->
+{#if pendingKey === 'g'}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">Go to...</span>
+      <span class="text-xs text-gray-500 ml-2">Press key or Esc to cancel</span>
+    </div>
+    <div class="p-2 space-y-1 font-body text-sm">
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Home</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">h</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Contacts</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">c</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Profile</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">p</kbd>
+      </div>
+    </div>
+  </div>
+{:else if pendingKey === 'a'}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">Add...</span>
+      <span class="text-xs text-gray-500 ml-2">Press key or Esc to cancel</span>
+    </div>
+    <div class="p-2 space-y-1 font-body text-sm">
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Phone</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">p</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Email</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">e</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Address</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">a</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">URL</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">u</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Date</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">d</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Social Profile</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">s</kbd>
+      </div>
+    </div>
+  </div>
+{:else if pendingKey === 'o'}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">Open contact...</span>
+      <span class="text-xs text-gray-500 ml-2">Press 1-9 or Esc to cancel</span>
+    </div>
+    <div class="p-3 font-body text-sm text-gray-600">
+      Press the number shown on a contact to open it
+    </div>
   </div>
 {/if}
