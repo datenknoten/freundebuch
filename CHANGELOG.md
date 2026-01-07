@@ -1,3 +1,10 @@
+## [2.20.2](https://github.com/datenknoten/freundebuch/compare/v2.20.1...v2.20.2) (2026-01-07)
+
+### Bug Fixes
+
+* **backend:** Add silent log level for test environments ([f897d48](https://github.com/datenknoten/freundebuch/commit/f897d48522e3660af3a397812c20fbbc6b1ffb1b))
+* **backend:** Silence noisy output during integration tests ([001ea0e](https://github.com/datenknoten/freundebuch/commit/001ea0ec76365b4a802e113434467a15c92c5b61))
+
 ## [2.20.1](https://github.com/datenknoten/freundebuch/compare/v2.20.0...v2.20.1) (2026-01-07)
 
 ### Bug Fixes
