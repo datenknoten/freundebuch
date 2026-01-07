@@ -1,3 +1,9 @@
+## [2.20.3](https://github.com/datenknoten/freundebuch/compare/v2.20.2...v2.20.3) (2026-01-07)
+
+### Bug Fixes
+
+* **frontend:** Streamline Add Relationship to match other subresources ([23da4db](https://github.com/datenknoten/freundebuch/commit/23da4dbedacd059b0821fc5ed117b701d79eaa02))
+
 ## [2.20.2](https://github.com/datenknoten/freundebuch/compare/v2.20.1...v2.20.2) (2026-01-07)
 
 ### Bug Fixes
