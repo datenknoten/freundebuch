@@ -1,3 +1,9 @@
+## [2.19.0](https://github.com/datenknoten/freundebuch/compare/v2.18.0...v2.19.0) (2026-01-07)
+
+### Features
+
+* **frontend:** integrate logo across favicon, navbar, and landing page ([934fdaf](https://github.com/datenknoten/freundebuch/commit/934fdafb6e29125a89ca3cbb0bccd52c0b7cdb54))
+
 ## [2.18.0](https://github.com/datenknoten/freundebuch/compare/v2.17.1...v2.18.0) (2026-01-07)
 
 ### Features
