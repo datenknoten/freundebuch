@@ -1,9 +1,28 @@
 <script lang="ts">
+import { goto } from '$app/navigation';
+import { page } from '$app/stores';
 import ContactList from '$lib/components/contacts/ContactList.svelte';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { contacts } from '$lib/stores/contacts';
 
 let hasLoaded = $state(false);
+
+// Get initial query from URL
+let initialQuery = $derived($page.url.searchParams.get('q') ?? '');
+
+// Handle query changes from the ContactList component
+function handleQueryChange(query: string) {
+  const url = new URL($page.url);
+
+  if (query.trim()) {
+    url.searchParams.set('q', query.trim());
+  } else {
+    url.searchParams.delete('q');
+  }
+
+  // Update URL without navigation (replaceState)
+  goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
+}
 
 // Load contacts when auth is ready
 $effect(() => {
@@ -15,7 +34,7 @@ $effect(() => {
 </script>
 
 <svelte:head>
-  <title>Contacts | Freundebuch</title>
+  <title>{initialQuery ? `Search: ${initialQuery}` : 'Contacts'} | Freundebuch</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">
@@ -23,7 +42,7 @@ $effect(() => {
     <div class="bg-white rounded-xl shadow-lg p-8">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 class="text-3xl font-heading text-forest">Contacts</h1>
+          <h1 class="text-3xl font-heading text-forest">Friends</h1>
           <p class="text-gray-600 font-body mt-1">Manage your personal and professional contacts</p>
         </div>
         <a
@@ -37,7 +56,7 @@ $effect(() => {
         </a>
       </div>
 
-      <ContactList />
+      <ContactList {initialQuery} onQueryChange={handleQueryChange} />
     </div>
   </div>
 </div>
