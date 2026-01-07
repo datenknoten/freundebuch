@@ -5,6 +5,7 @@ import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import type { Hono } from 'hono';
 import { runner } from 'node-pg-migrate';
 import pg from 'pg';
+import { Wait } from 'testcontainers';
 import { afterAll, beforeAll, beforeEach } from 'vitest';
 import { createApp } from '../../src/index.js';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
@@ -24,12 +25,14 @@ export interface AuthTestContext {
  * Set up test environment with PostgreSQL container and app
  */
 export async function setupAuthTests(): Promise<AuthTestContext> {
-  // Start PostgreSQL container
+  // Start PostgreSQL container with health check wait strategy
+  // The default log-based wait strategy doesn't work reliably with postgres:18
   const container = await new PostgreSqlContainer('postgres:18-bookworm')
     .withDatabase('test')
     .withUsername('test')
     .withPassword('test')
     .withStartupTimeout(120000)
+    .withWaitStrategy(Wait.forHealthCheck())
     .start();
 
   // Set DATABASE_URL from the container

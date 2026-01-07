@@ -2,6 +2,7 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import type { Hono } from 'hono';
 import pg from 'pg';
+import { Wait } from 'testcontainers';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../../src/index.js';
 import type { AppContext } from '../../src/types/context.js';
@@ -18,13 +19,15 @@ describe('Health Endpoint Integration Tests', () => {
     vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
     vi.stubEnv('JWT_EXPIRY', '604800');
     vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
+    vi.stubEnv('LOG_LEVEL', 'silent');
 
-    // Start PostgreSQL container
+    // Start PostgreSQL container with health check wait strategy
     container = await new PostgreSqlContainer('postgres:18-bookworm')
       .withDatabase('test')
       .withUsername('test')
       .withPassword('test')
       .withStartupTimeout(120000)
+      .withWaitStrategy(Wait.forHealthCheck())
       .start();
 
     // Set DATABASE_URL from the container
@@ -36,6 +39,11 @@ describe('Health Endpoint Integration Tests', () => {
       connectionString: container.getConnectionUri(),
       min: 2,
       max: 10,
+    });
+
+    // Suppress pool errors during container shutdown
+    pool.on('error', () => {
+      // Ignore - expected during test teardown when container stops
     });
 
     // Create the Hono app
