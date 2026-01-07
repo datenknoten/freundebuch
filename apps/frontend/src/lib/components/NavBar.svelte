@@ -4,6 +4,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 import { search } from '$lib/stores/search';
+import UserMenu from './UserMenu.svelte';
 
 // Detect platform for keyboard shortcut hint
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
@@ -204,7 +205,7 @@ $effect(() => {
 
 <nav class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center h-16">
+    <div class="flex items-center h-16 gap-4">
       <!-- Mobile: Hamburger menu button -->
       <button
         class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
@@ -222,7 +223,7 @@ $effect(() => {
       </button>
 
       <!-- Desktop: Logo -->
-      <div class="hidden sm:flex items-center">
+      <div class="hidden sm:flex items-center shrink-0">
         <a href="/" class="text-2xl font-heading text-forest">
           Freundebuch
         </a>
@@ -233,57 +234,55 @@ $effect(() => {
         <span class="text-lg font-heading text-forest">{pageTitle}</span>
       </div>
 
-      <!-- Mobile: Spacer for symmetry -->
-      <div class="sm:hidden w-10"></div>
+      <!-- Mobile: Search button (authenticated) or spacer -->
+      {#if $isAuthenticated && $currentUser}
+        <button
+          class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+          onclick={() => search.open()}
+          aria-label="Search"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+      {:else}
+        <div class="sm:hidden w-10"></div>
+      {/if}
 
-      <!-- Desktop: Navigation items -->
-      <div class="hidden sm:flex items-center gap-4">
+      <!-- Desktop: Centered search bar (authenticated only) -->
+      {#if $isAuthenticated && $currentUser}
+        <div class="hidden sm:flex flex-1 justify-center px-4">
+          <button
+            onclick={() => search.open()}
+            class="w-full max-w-md flex items-center gap-3 px-4 py-2 text-gray-400 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors duration-200 cursor-text"
+            title="Search ({isMac ? 'Cmd' : 'Ctrl'}+K)"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span class="flex-1 text-left font-body text-sm">Search friends...</span>
+            <kbd class="hidden md:inline-block px-2 py-1 text-xs bg-white border border-gray-200 rounded font-mono text-gray-400">
+              {isMac ? '⌘' : 'Ctrl'}K
+            </kbd>
+          </button>
+        </div>
+      {/if}
+
+      <!-- Desktop: Right side actions -->
+      <div class="hidden sm:flex items-center gap-3 shrink-0">
         {#if $isAuthenticated && $currentUser}
           <a
             href="/contacts/new"
             data-sveltekit-preload-data="tap"
-            class="inline-flex items-center gap-1 bg-forest text-white px-3 py-1.5 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200 text-sm"
+            class="inline-flex items-center gap-1.5 bg-forest text-white px-3 py-1.5 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200 text-sm"
             title="Add a friend (n)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            New
+            <span class="hidden md:inline">New</span>
           </a>
-          <button
-            onclick={() => search.open()}
-            class="inline-flex items-center gap-2 px-3 py-1.5 text-gray-500 hover:text-forest border border-gray-200 rounded-md transition-colors duration-200"
-            title="Search ({isMac ? 'Cmd' : 'Ctrl'}+K)"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <span class="text-sm font-body">Search</span>
-            <kbd class="hidden lg:inline-block px-1.5 py-0.5 text-xs bg-gray-100 border border-gray-200 rounded font-mono">
-              {isMac ? '⌘' : 'Ctrl'}K
-            </kbd>
-          </button>
-          <a
-            href="/contacts"
-            data-sveltekit-preload-data="tap"
-            class="text-gray-700 hover:text-forest font-body font-medium transition-colors duration-200"
-          >
-            Friends
-          </a>
-          <a
-            href="/profile"
-            data-sveltekit-preload-data="tap"
-            class="text-gray-700 hover:text-forest font-body font-medium transition-colors duration-200"
-          >
-            Profile
-          </a>
-          <span class="text-gray-500 font-body text-sm">{$currentUser.email}</span>
-          <button
-            onclick={handleLogout}
-            class="bg-forest text-white px-4 py-2 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200"
-          >
-            Logout
-          </button>
+          <UserMenu />
         {:else}
           <a
             href="/auth/login"
