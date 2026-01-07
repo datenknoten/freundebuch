@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "@sentry/sveltekit": "^10.32.1",
-    "arktype": "2.1.29"
+    "arktype": "2.1.29",
+    "svelte-easy-crop": "^5.0.0"
   },
   "devDependencies": {
     "@playwright/test": "1.57.0",

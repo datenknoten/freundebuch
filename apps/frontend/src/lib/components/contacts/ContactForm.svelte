@@ -4,6 +4,7 @@ import { contacts } from '$lib/stores/contacts';
 import type { Contact } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
 import ContactAvatar from './ContactAvatar.svelte';
+import ImageCropModal from './ImageCropModal.svelte';
 
 interface Props {
   contact?: Contact;
@@ -20,6 +21,10 @@ let photoFile = $state<File | null>(null);
 let photoError = $state('');
 let isUploadingPhoto = $state(false);
 let fileInput: HTMLInputElement;
+
+// Crop modal state
+let showCropModal = $state(false);
+let cropImageUrl = $state<string | null>(null);
 
 // Track if user has manually edited the display name
 let displayNameManuallyEdited = $state(false);
@@ -93,19 +98,38 @@ async function handlePhotoSelect(e: Event) {
     return;
   }
 
-  photoFile = file;
-
-  // Create preview
+  // Create data URL for crop modal
   const reader = new FileReader();
   reader.onload = () => {
-    photoPreview = reader.result as string;
+    cropImageUrl = reader.result as string;
+    showCropModal = true;
   };
   reader.readAsDataURL(file);
+
+  // Reset file input so the same file can be selected again
+  input.value = '';
+}
+
+async function handleCropComplete(croppedBlob: Blob) {
+  showCropModal = false;
+  cropImageUrl = null;
+
+  // Create a File from the Blob
+  const croppedFile = new File([croppedBlob], 'avatar.jpg', { type: 'image/jpeg' });
+  photoFile = croppedFile;
+
+  // Create preview from cropped blob
+  photoPreview = URL.createObjectURL(croppedBlob);
 
   // If editing, upload immediately
   if (isEditing && contact) {
     await uploadPhoto();
   }
+}
+
+function handleCropCancel() {
+  showCropModal = false;
+  cropImageUrl = null;
 }
 
 async function uploadPhoto() {
@@ -445,3 +469,12 @@ async function handleSubmit(e: Event) {
     </a>
   </div>
 </form>
+
+<!-- Image Crop Modal -->
+{#if showCropModal && cropImageUrl}
+  <ImageCropModal
+    imageUrl={cropImageUrl}
+    onCrop={handleCropComplete}
+    onClose={handleCropCancel}
+  />
+{/if}
