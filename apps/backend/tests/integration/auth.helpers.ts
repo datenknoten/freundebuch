@@ -61,6 +61,9 @@ export async function setupAuthTests(): Promise<AuthTestContext> {
  * Tear down test environment
  */
 export async function teardownAuthTests(context: AuthTestContext): Promise<void> {
+  if (!context) {
+    return;
+  }
   if (context.pool) {
     await context.pool.end();
   }
