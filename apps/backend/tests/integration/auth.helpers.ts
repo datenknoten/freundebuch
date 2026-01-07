@@ -65,6 +65,16 @@ export async function teardownAuthTests(context: AuthTestContext): Promise<void>
 }
 
 /**
+ * Silent logger for migrations during tests - suppresses migration output
+ */
+const silentLogger = {
+  info: () => undefined,
+  warn: () => undefined,
+  error: () => undefined,
+  debug: () => undefined,
+};
+
+/**
  * Run database migrations using node-pg-migrate
  */
 async function runMigrations(pool: pg.Pool): Promise<void> {
@@ -80,6 +90,7 @@ async function runMigrations(pool: pg.Pool): Promise<void> {
       direction: 'up',
       count: Infinity,
       decamelize: true,
+      logger: silentLogger,
     });
   } finally {
     client.release();
@@ -225,6 +236,7 @@ export function setupAuthTestSuite() {
     process.env.SESSION_SECRET = 'test-session-secret-test-session-secret-1';
     process.env.JWT_EXPIRY = '604800';
     process.env.FRONTEND_URL = 'http://localhost:5173';
+    process.env.LOG_LEVEL = 'silent';
 
     context = await setupAuthTests();
   }, 120000); // 120 second timeout for container startup
@@ -241,6 +253,7 @@ export function setupAuthTestSuite() {
     delete process.env.JWT_EXPIRY;
     delete process.env.FRONTEND_URL;
     delete process.env.DATABASE_URL;
+    delete process.env.LOG_LEVEL;
     resetConfig();
   }, 120000);
 
