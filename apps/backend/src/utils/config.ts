@@ -37,7 +37,7 @@ const ConfigSchema = type({
   'SMTP_PASSWORD?': 'string',
 
   // Optional
-  LOG_LEVEL: '"trace" | "debug" | "info" | "warn" | "error" | "fatal" = "info"',
+  LOG_LEVEL: '"trace" | "debug" | "info" | "warn" | "error" | "fatal" | "silent" = "info"',
   ENABLE_API_DOCS: BooleanString.default(false),
 
   // Sentry (optional)
