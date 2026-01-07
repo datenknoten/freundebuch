@@ -146,6 +146,7 @@ function handleFocus() {
       autocomplete="off"
       role="combobox"
       aria-expanded={showDropdown}
+      aria-controls="contact-search-listbox"
       aria-haspopup="listbox"
       aria-autocomplete="list"
     />
@@ -168,6 +169,7 @@ function handleFocus() {
 
   {#if showDropdown}
     <ul
+      id="contact-search-listbox"
       class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       role="listbox"
     >

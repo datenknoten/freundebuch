@@ -9,10 +9,10 @@ interface Props {
 
 let { initialData, disabled = false, onchange }: Props = $props();
 
-// Form state
-let platform = $state<SocialPlatform>(initialData?.platform ?? 'linkedin');
-let profileUrl = $state(initialData?.profileUrl ?? '');
-let username = $state(initialData?.username ?? '');
+// Form state - initialize with functions to capture initial values
+let platform = $state<SocialPlatform>((() => initialData?.platform ?? 'linkedin')());
+let profileUrl = $state((() => initialData?.profileUrl ?? '')());
+let username = $state((() => initialData?.username ?? '')());
 
 // Skip initial effect run
 let initialized = false;

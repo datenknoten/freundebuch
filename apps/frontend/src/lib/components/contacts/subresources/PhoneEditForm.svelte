@@ -9,11 +9,11 @@ interface Props {
 
 let { initialData, disabled = false, onchange }: Props = $props();
 
-// Form state
-let phoneNumber = $state(initialData?.phoneNumber ?? '');
-let phoneType = $state<PhoneType>(initialData?.phoneType ?? 'mobile');
-let label = $state(initialData?.label ?? '');
-let isPrimary = $state(initialData?.isPrimary ?? false);
+// Form state - initialize with functions to capture initial values
+let phoneNumber = $state((() => initialData?.phoneNumber ?? '')());
+let phoneType = $state<PhoneType>((() => initialData?.phoneType ?? 'mobile')());
+let label = $state((() => initialData?.label ?? '')());
+let isPrimary = $state((() => initialData?.isPrimary ?? false)());
 
 // Skip initial effect run
 let initialized = false;

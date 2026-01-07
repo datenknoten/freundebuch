@@ -16,7 +16,8 @@ interface Props {
 
 let { cities, value, freeTextMode = false, disabled = false, onSelect }: Props = $props();
 
-let freeTextValue = $state(value);
+// Initialize with function to capture initial value
+let freeTextValue = $state((() => value)());
 
 function handleChange(e: Event) {
   const target = e.target as HTMLSelectElement;
@@ -56,11 +57,12 @@ function formatCityDisplay(city: CityInfo): string {
 </script>
 
 <div class="relative">
-  <label class="block text-sm font-medium text-gray-700 font-body mb-1">City</label>
+  <label for="city-input" class="block text-sm font-medium text-gray-700 font-body mb-1">City</label>
 
   {#if freeTextMode || cities.length === 0}
     <!-- Free text input when no cities available -->
     <input
+      id="city-input"
       type="text"
       value={freeTextValue}
       oninput={handleFreeTextInput}
@@ -80,6 +82,7 @@ function formatCityDisplay(city: CityInfo): string {
   {:else}
     <!-- Multiple cities - show dropdown -->
     <select
+      id="city-input"
       {value}
       onchange={handleChange}
       {disabled}

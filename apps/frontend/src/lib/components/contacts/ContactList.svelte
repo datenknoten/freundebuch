@@ -16,8 +16,8 @@ let { initialQuery = '', onQueryChange }: Props = $props();
 let sortBy = $state<'display_name' | 'created_at' | 'updated_at'>('display_name');
 let sortOrder = $state<'asc' | 'desc'>('asc');
 
-// Search state
-let searchQuery = $state(initialQuery);
+// Search state - initialize with function to capture initial value
+let searchQuery = $state((() => initialQuery)());
 let searchResults = $state<GlobalSearchResult[]>([]);
 let isSearching = $state(false);
 let searchError = $state<string | null>(null);

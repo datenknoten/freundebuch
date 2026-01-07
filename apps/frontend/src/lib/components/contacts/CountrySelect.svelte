@@ -19,7 +19,7 @@ let { countries, value, isLoading = false, disabled = false, onSelect }: Props =
 let query = $state('');
 let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
-let inputElement: HTMLInputElement;
+let inputElement = $state<HTMLInputElement | undefined>(undefined);
 
 // Filter countries based on query
 const filteredCountries = $derived(() => {
@@ -117,7 +117,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
 </script>
 
 <div class="relative">
-  <label class="block text-sm font-medium text-gray-700 font-body mb-1">Country</label>
+  <label for="country-input" class="block text-sm font-medium text-gray-700 font-body mb-1">Country</label>
 
   <div class="relative">
     {#if value && !showDropdown}
@@ -141,6 +141,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
       <!-- Show search input -->
       <div class="relative">
         <input
+          id="country-input"
           type="text"
           bind:this={inputElement}
           bind:value={query}
@@ -154,6 +155,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
           autocomplete="off"
           role="combobox"
           aria-expanded={showDropdown}
+          aria-controls="country-select-listbox"
           aria-haspopup="listbox"
           aria-autocomplete="list"
         />
@@ -202,6 +204,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
 
   {#if showDropdown && !isLoading}
     <ul
+      id="country-select-listbox"
       class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       role="listbox"
     >

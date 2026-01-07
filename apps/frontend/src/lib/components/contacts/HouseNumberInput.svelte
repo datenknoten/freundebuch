@@ -29,7 +29,7 @@ let {
 let query = $state(value || '');
 let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
-let inputElement: HTMLInputElement;
+let inputElement = $state<HTMLInputElement | undefined>(undefined);
 let manualEntry = $state(false);
 
 // Filter house numbers based on query
@@ -152,7 +152,7 @@ function enableManualEntry() {
 </script>
 
 <div class="relative">
-  <label class="block text-sm font-medium text-gray-700 font-body mb-1">House Number</label>
+  <label for="house-number-input" class="block text-sm font-medium text-gray-700 font-body mb-1">House Number</label>
 
   <div class="relative">
     {#if value && !showDropdown && !manualEntry && houseNumbers.length > 0 && !freeTextMode}
@@ -185,6 +185,7 @@ function enableManualEntry() {
       <!-- Show text input -->
       <div class="relative">
         <input
+          id="house-number-input"
           type="text"
           bind:this={inputElement}
           bind:value={query}

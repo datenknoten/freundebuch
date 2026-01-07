@@ -1,5 +1,6 @@
 <script lang="ts">
 import '../app.css';
+import type { Snippet } from 'svelte';
 import { onMount } from 'svelte';
 import { page } from '$app/stores';
 import Footer from '$lib/components/Footer.svelte';
@@ -7,6 +8,12 @@ import GlobalSearch from '$lib/components/GlobalSearch.svelte';
 import KeyboardShortcuts from '$lib/components/KeyboardShortcuts.svelte';
 import NavBar from '$lib/components/NavBar.svelte';
 import { auth, isAuthenticated } from '$lib/stores/auth';
+
+interface Props {
+  children: Snippet;
+}
+
+let { children }: Props = $props();
 
 // Initialize auth state on app load
 onMount(async () => {
@@ -23,7 +30,7 @@ const showFab = $derived($isAuthenticated && !$page.url.pathname.includes('/cont
 <div class="min-h-screen flex flex-col">
 	<NavBar />
 	<main class="flex-1">
-		<slot />
+		{@render children()}
 	</main>
 	<Footer />
 

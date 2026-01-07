@@ -9,10 +9,10 @@ interface Props {
 
 let { initialData, disabled = false, onchange }: Props = $props();
 
-// Form state
-let url = $state(initialData?.url ?? '');
-let urlType = $state<UrlType>(initialData?.urlType ?? 'personal');
-let label = $state(initialData?.label ?? '');
+// Form state - initialize with functions to capture initial values
+let url = $state((() => initialData?.url ?? '')());
+let urlType = $state<UrlType>((() => initialData?.urlType ?? 'personal')());
+let label = $state((() => initialData?.label ?? '')());
 
 // Skip initial effect run
 let initialized = false;

@@ -13,8 +13,8 @@ let { contact }: Props = $props();
 
 const isEditing = $derived(!!contact);
 
-// Photo state
-let photoUrl = $state(contact?.photoUrl);
+// Photo state - initialize with functions to capture initial values
+let photoUrl = $state((() => contact?.photoUrl)());
 let photoPreview = $state<string | null>(null);
 let photoFile = $state<File | null>(null);
 let photoError = $state('');
@@ -24,14 +24,14 @@ let fileInput: HTMLInputElement;
 // Track if user has manually edited the display name
 let displayNameManuallyEdited = $state(false);
 
-// Form state
-let displayName = $state(contact?.displayName ?? '');
-let nickname = $state(contact?.nickname ?? '');
-let namePrefix = $state(contact?.namePrefix ?? '');
-let nameFirst = $state(contact?.nameFirst ?? '');
-let nameMiddle = $state(contact?.nameMiddle ?? '');
-let nameLast = $state(contact?.nameLast ?? '');
-let nameSuffix = $state(contact?.nameSuffix ?? '');
+// Form state - initialize with functions to capture initial values
+let displayName = $state((() => contact?.displayName ?? '')());
+let nickname = $state((() => contact?.nickname ?? '')());
+let namePrefix = $state((() => contact?.namePrefix ?? '')());
+let nameFirst = $state((() => contact?.nameFirst ?? '')());
+let nameMiddle = $state((() => contact?.nameMiddle ?? '')());
+let nameLast = $state((() => contact?.nameLast ?? '')());
+let nameSuffix = $state((() => contact?.nameSuffix ?? '')());
 
 // Auto-generate display name from parts
 function generateDisplayName(): string {
@@ -54,17 +54,17 @@ function onDisplayNameInput() {
   displayNameManuallyEdited = true;
 }
 
-// Epic 1B: Professional fields
-let jobTitle = $state(contact?.jobTitle ?? '');
-let organization = $state(contact?.organization ?? '');
-let department = $state(contact?.department ?? '');
-let workNotes = $state(contact?.workNotes ?? '');
-let interests = $state(contact?.interests ?? '');
+// Epic 1B: Professional fields - initialize with functions to capture initial values
+let jobTitle = $state((() => contact?.jobTitle ?? '')());
+let organization = $state((() => contact?.organization ?? '')());
+let department = $state((() => contact?.department ?? '')());
+let workNotes = $state((() => contact?.workNotes ?? '')());
+let interests = $state((() => contact?.interests ?? '')());
 
-// Epic 1B: How/where met
-let metDate = $state(contact?.metInfo?.metDate ?? '');
-let metLocation = $state(contact?.metInfo?.metLocation ?? '');
-let metContext = $state(contact?.metInfo?.metContext ?? '');
+// Epic 1B: How/where met - initialize with functions to capture initial values
+let metDate = $state((() => contact?.metInfo?.metDate ?? '')());
+let metLocation = $state((() => contact?.metInfo?.metLocation ?? '')());
+let metContext = $state((() => contact?.metInfo?.metContext ?? '')());
 
 let isLoading = $state(false);
 let error = $state('');

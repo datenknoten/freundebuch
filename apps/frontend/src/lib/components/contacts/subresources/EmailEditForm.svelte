@@ -9,11 +9,11 @@ interface Props {
 
 let { initialData, disabled = false, onchange }: Props = $props();
 
-// Form state
-let emailAddress = $state(initialData?.emailAddress ?? '');
-let emailType = $state<EmailType>(initialData?.emailType ?? 'personal');
-let label = $state(initialData?.label ?? '');
-let isPrimary = $state(initialData?.isPrimary ?? false);
+// Form state - initialize with functions to capture initial values
+let emailAddress = $state((() => initialData?.emailAddress ?? '')());
+let emailType = $state<EmailType>((() => initialData?.emailType ?? 'personal')());
+let label = $state((() => initialData?.label ?? '')());
+let isPrimary = $state((() => initialData?.isPrimary ?? false)());
 
 // Skip initial effect run
 let initialized = false;

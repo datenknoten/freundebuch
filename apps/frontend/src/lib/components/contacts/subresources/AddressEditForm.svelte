@@ -10,10 +10,10 @@ interface Props {
 
 let { initialData, disabled = false, onchange }: Props = $props();
 
-// Form state for fields not in HierarchicalAddressInput
-let addressType = $state<AddressType>(initialData?.addressType ?? 'home');
-let label = $state(initialData?.label ?? '');
-let isPrimary = $state(initialData?.isPrimary ?? false);
+// Form state for fields not in HierarchicalAddressInput - initialize with functions to capture initial values
+let addressType = $state<AddressType>((() => initialData?.addressType ?? 'home')());
+let label = $state((() => initialData?.label ?? '')());
+let isPrimary = $state((() => initialData?.isPrimary ?? false)());
 
 // Address data from HierarchicalAddressInput
 let addressData = $state<{
@@ -85,7 +85,7 @@ function parseStreetLine1(streetLine1?: string): { street: string; houseNumber: 
   return { street: streetLine1, houseNumber: '' };
 }
 
-const parsedStreet = parseStreetLine1(initialData?.streetLine1);
+const parsedStreet = (() => parseStreetLine1(initialData?.streetLine1))();
 </script>
 
 <div class="space-y-4">

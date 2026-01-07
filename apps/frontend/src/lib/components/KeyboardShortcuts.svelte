@@ -226,10 +226,11 @@ function closeHelp() {
     aria-labelledby="shortcuts-title"
     tabindex="-1"
   >
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div
       class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto"
       onclick={(e) => e.stopPropagation()}
-      onkeydown={() => {}}
+      onkeydown={(e) => e.stopPropagation()}
       role="document"
     >
       <div class="p-6">

@@ -27,10 +27,11 @@ export function focus() {
 </script>
 
 <div class="relative">
-  <label class="block text-sm font-medium text-gray-700 font-body mb-1">Postal Code</label>
+  <label for="postal-code-input" class="block text-sm font-medium text-gray-700 font-body mb-1">Postal Code</label>
 
   <div class="relative">
     <input
+      id="postal-code-input"
       type="text"
       bind:this={inputElement}
       {value}

@@ -57,15 +57,15 @@ let {
   onChange,
 }: Props = $props();
 
-// State for each step
-let selectedCountryCode = $state(initialCountryCode);
-let selectedCountryName = $state(initialCountryName);
-let postalCode = $state(initialPostalCode);
-let selectedCity = $state(initialCity);
-let selectedState = $state(initialState);
-let selectedStreet = $state(initialStreet);
-let houseNumber = $state(initialHouseNumber);
-let streetLine2 = $state(initialStreetLine2);
+// State for each step - initialize with functions to capture initial values
+let selectedCountryCode = $state((() => initialCountryCode)());
+let selectedCountryName = $state((() => initialCountryName)());
+let postalCode = $state((() => initialPostalCode)());
+let selectedCity = $state((() => initialCity)());
+let selectedState = $state((() => initialState)());
+let selectedStreet = $state((() => initialStreet)());
+let houseNumber = $state((() => initialHouseNumber)());
+let streetLine2 = $state((() => initialStreetLine2)());
 
 // Data from APIs
 let countries = $state<CountryInfo[]>([]);
@@ -407,10 +407,11 @@ function emitChange() {
 
   <!-- Street Line 2 (always available) -->
   <div class="relative">
-    <label class="block text-sm font-medium text-gray-700 font-body mb-1">
+    <label for="street-line-2-input" class="block text-sm font-medium text-gray-700 font-body mb-1">
       Additional Address Info (optional)
     </label>
     <input
+      id="street-line-2-input"
       type="text"
       value={streetLine2}
       oninput={handleStreetLine2Change}

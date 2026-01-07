@@ -20,7 +20,7 @@ let { relationshipTypes, value, disabled = false, autofocus = false, onSelect }:
 let query = $state('');
 let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
-let inputElement: HTMLInputElement;
+let inputElement = $state<HTMLInputElement | undefined>(undefined);
 
 // Category labels and colors
 const categoryConfig: Record<string, { label: string; bgColor: string; textColor: string }> = {
@@ -200,6 +200,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
         autocomplete="off"
         role="combobox"
         aria-expanded={showDropdown}
+        aria-controls="relationship-type-listbox"
         aria-haspopup="listbox"
         aria-autocomplete="list"
       />
@@ -217,6 +218,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
 
   {#if showDropdown}
     <ul
+      id="relationship-type-listbox"
       class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       role="listbox"
     >

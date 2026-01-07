@@ -26,10 +26,10 @@ let {
 }: Props = $props();
 
 // Initialize query with value if we have one (for editing existing addresses)
-let query = $state(value || '');
+let query = $state((() => value || '')());
 let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
-let inputElement: HTMLInputElement;
+let inputElement = $state<HTMLInputElement | undefined>(undefined);
 let manualEntry = $state(false);
 
 // Filter streets based on query
@@ -151,7 +151,7 @@ function enableManualEntry() {
 </script>
 
 <div class="relative">
-  <label class="block text-sm font-medium text-gray-700 font-body mb-1">Street</label>
+  <label for="street-input" class="block text-sm font-medium text-gray-700 font-body mb-1">Street</label>
 
   <div class="relative">
     {#if value && !showDropdown && !manualEntry && streets.length > 0 && !freeTextMode}
@@ -184,6 +184,7 @@ function enableManualEntry() {
       <!-- Show search/text input -->
       <div class="relative">
         <input
+          id="street-input"
           type="text"
           bind:this={inputElement}
           bind:value={query}

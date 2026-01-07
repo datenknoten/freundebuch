@@ -98,9 +98,9 @@ async function handleSubmit(e: Event) {
 
   <!-- Contact Selection -->
   <div class="space-y-2">
-    <label class="block text-sm font-body font-medium text-gray-700">
+    <span id="contact-selection-label" class="block text-sm font-body font-medium text-gray-700">
       Related Contact
-    </label>
+    </span>
 
     {#if selectedContact}
       <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
@@ -129,9 +129,9 @@ async function handleSubmit(e: Event) {
 
   <!-- Relationship Type -->
   <div class="space-y-2">
-    <label class="block text-sm font-body font-medium text-gray-700">
+    <span id="relationship-type-label" class="block text-sm font-body font-medium text-gray-700">
       Relationship Type
-    </label>
+    </span>
 
     <div bind:this={relationshipTypeContainer}>
       {#if relationshipTypes}

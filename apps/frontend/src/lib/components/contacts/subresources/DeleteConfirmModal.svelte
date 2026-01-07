@@ -47,6 +47,7 @@ function handleBackdropClick(e: MouseEvent) {
 
 <svelte:window onkeydown={handleKeydown} />
 
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- Modal backdrop -->
 <div
   class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
@@ -54,6 +55,7 @@ function handleBackdropClick(e: MouseEvent) {
   role="dialog"
   aria-modal="true"
   aria-labelledby="delete-modal-title"
+  tabindex="-1"
 >
   <!-- Modal content -->
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
