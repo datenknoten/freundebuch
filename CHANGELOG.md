@@ -1,3 +1,10 @@
+## [2.20.1](https://github.com/datenknoten/freundebuch/compare/v2.20.0...v2.20.1) (2026-01-07)
+
+### Bug Fixes
+
+* **config:** Prevent lint-staged from passing file args to build commands ([69db1c3](https://github.com/datenknoten/freundebuch/commit/69db1c37cf63c9fe2eb1c7d70013f16efe2ded39))
+* **frontend:** resolve Svelte 5 build warnings ([eda5688](https://github.com/datenknoten/freundebuch/commit/eda56884285dced1502dd00c2ba93e76a02d65bb))
+
 ## [2.20.0](https://github.com/datenknoten/freundebuch/compare/v2.19.0...v2.20.0) (2026-01-07)
 
 ### Features
