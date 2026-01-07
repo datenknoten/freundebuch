@@ -47,7 +47,15 @@ function handleKeydown(e: KeyboardEvent) {
       break;
     case 'Enter':
       e.preventDefault();
-      handleSelect();
+      if (e.altKey) {
+        // Alt/Option+Enter: Create new contact
+        navigateToNewContact();
+      } else if (e.metaKey || e.ctrlKey) {
+        // Cmd/Ctrl+Enter: Navigate to friends list with search
+        navigateToFriendsList();
+      } else {
+        handleSelect();
+      }
       break;
   }
 }
@@ -80,6 +88,28 @@ async function navigateToContact(contactId: string) {
   await goto(`/contacts/${contactId}`);
 }
 
+// Navigate to friends list with search query
+async function navigateToFriendsList() {
+  if (state.query.trim().length >= 2) {
+    search.addRecentSearch(state.query.trim());
+  }
+  search.close();
+  await goto(
+    state.query.trim().length >= 2
+      ? `/contacts?q=${encodeURIComponent(state.query.trim())}`
+      : '/contacts',
+  );
+}
+
+// Navigate to create new contact
+async function navigateToNewContact() {
+  search.close();
+  await goto('/contacts/new');
+}
+
+// Detect platform for keyboard shortcut hint
+const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+
 // Handle clicking on a recent search
 function handleRecentSearchClick(query: string) {
   search.setQuery(query);
@@ -92,7 +122,7 @@ function handleDeleteRecentSearch(e: MouseEvent, query: string) {
 }
 
 // Determine what to show in the list
-let showResults = $derived(state.query.trim().length >= 2);
+let showResults = $derived(state.query.trim().length >= 2 && state.results.length > 0);
 let showRecentSearches = $derived(state.query.trim().length < 2 && state.recentSearches.length > 0);
 let showEmptyState = $derived(
   state.query.trim().length >= 2 && !state.isSearching && state.results.length === 0,
@@ -145,7 +175,7 @@ onMount(() => {
           type="text"
           value={state.query}
           oninput={(e) => search.setQuery(e.currentTarget.value)}
-          placeholder="Search contacts..."
+          placeholder="Search friends..."
           class="w-full pl-12 pr-4 py-4 text-lg font-body text-gray-900 placeholder-gray-400 focus:outline-none"
           autocomplete="off"
           role="combobox"
@@ -265,16 +295,26 @@ onMount(() => {
           </ul>
         {:else if showEmptyState}
           <!-- No results -->
-          <div class="p-8 text-center">
+          <div class="p-6 text-center">
             <svg class="mx-auto w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p class="mt-2 font-body text-sm text-gray-500">
-              No contacts found for "{state.query}"
+            <p class="mt-3 font-body text-sm text-gray-600">
+              Hmm, no one matches "{state.query}"
             </p>
             <p class="mt-1 font-body text-xs text-gray-400">
-              Try a different search term
+              Try different keywords or add them to your Freundebuch
             </p>
+            <button
+              type="button"
+              onclick={navigateToNewContact}
+              class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-forest text-white rounded-lg font-body text-sm font-medium hover:bg-forest-light transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Add new friend
+            </button>
           </div>
         {:else if state.query.trim().length < 2 && state.recentSearches.length === 0}
           <!-- Initial state with no recent searches -->
@@ -283,7 +323,7 @@ onMount(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <p class="mt-2 font-body text-sm text-gray-500">
-              Search for contacts by name, email, phone, or notes
+              Find friends by name, email, phone, or notes
             </p>
             <p class="mt-1 font-body text-xs text-gray-400">
               Type at least 2 characters to search
@@ -292,8 +332,42 @@ onMount(() => {
         {/if}
       </div>
 
-      <!-- Footer with keyboard hints -->
-      <div class="border-t border-gray-200 px-4 py-2 flex items-center justify-between text-xs text-gray-400">
+      <!-- Footer: Mobile action buttons -->
+      <div class="sm:hidden border-t border-gray-200 p-2 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onclick={() => search.close()}
+          class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-body text-sm transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Close
+        </button>
+        <button
+          type="button"
+          onclick={navigateToNewContact}
+          class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-forest hover:bg-gray-100 rounded-lg font-body text-sm font-medium transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          New
+        </button>
+        <button
+          type="button"
+          onclick={navigateToFriendsList}
+          class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-forest hover:bg-gray-100 rounded-lg font-body text-sm font-medium transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          Friends
+        </button>
+      </div>
+
+      <!-- Footer: Desktop keyboard hints -->
+      <div class="hidden sm:flex border-t border-gray-200 px-4 py-2 items-center justify-between text-xs text-gray-400">
         <div class="flex items-center gap-4">
           <span class="flex items-center gap-1">
             <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">↑</kbd>
@@ -308,6 +382,28 @@ onMount(() => {
             <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">Esc</kbd>
             <span>Close</span>
           </span>
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            onclick={navigateToNewContact}
+            class="flex items-center gap-1.5 text-gray-500 hover:text-forest font-body transition-colors"
+          >
+            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">
+              {isMac ? '⌥' : 'Alt'}↵
+            </kbd>
+            <span>New contact</span>
+          </button>
+          <button
+            type="button"
+            onclick={navigateToFriendsList}
+            class="flex items-center gap-1.5 text-gray-500 hover:text-forest font-body transition-colors"
+          >
+            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">
+              {isMac ? '⌘' : 'Ctrl'}↵
+            </kbd>
+            <span>Friends list</span>
+          </button>
         </div>
       </div>
     </div>
