@@ -1,3 +1,9 @@
+## [2.20.0](https://github.com/datenknoten/freundebuch/compare/v2.19.0...v2.20.0) (2026-01-07)
+
+### Features
+
+* **frontend:** improve keyboard shortcuts with persistent panels and quick open ([903114f](https://github.com/datenknoten/freundebuch/commit/903114f081f411519c76681a333ad36e5839351b))
+
 ## [2.19.0](https://github.com/datenknoten/freundebuch/compare/v2.18.0...v2.19.0) (2026-01-07)
 
 ### Features
