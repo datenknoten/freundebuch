@@ -51,7 +51,7 @@ import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/aut
 				<img
 					src="/logo.png"
 					alt="Freundebuch - An open book with memories"
-					class="w-48 h-48 mx-auto"
+					class="max-w-md w-full h-auto mx-auto"
 				/>
 			</div>
 

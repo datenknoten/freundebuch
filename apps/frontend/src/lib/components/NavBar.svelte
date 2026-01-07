@@ -121,8 +121,8 @@ $effect(() => {
   class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-200 ease-in-out sm:hidden {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
 >
   <div class="p-4 border-b border-gray-200">
-    <a href="/" class="text-2xl font-heading text-forest" onclick={closeMobileMenu}>
-      Freundebuch
+    <a href="/" onclick={closeMobileMenu}>
+      <img src="/logo-navbar.png" alt="Freundebuch" class="h-8" />
     </a>
   </div>
 
@@ -224,8 +224,8 @@ $effect(() => {
 
       <!-- Desktop: Logo -->
       <div class="hidden sm:flex items-center shrink-0">
-        <a href="/" class="text-2xl font-heading text-forest">
-          Freundebuch
+        <a href="/">
+          <img src="/logo-navbar.png" alt="Freundebuch" class="h-9" />
         </a>
       </div>
 

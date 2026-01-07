@@ -48,6 +48,9 @@ importers:
       semantic-release:
         specifier: 24.2.5
         version: 24.2.5(typescript@5.9.3)
+      sharp:
+        specifier: 0.34.5
+        version: 0.34.5
       typescript:
         specifier: 5.9.3
         version: 5.9.3
