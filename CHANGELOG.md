@@ -1,3 +1,11 @@
+## [2.20.4](https://github.com/datenknoten/freundebuch/compare/v2.20.3...v2.20.4) (2026-01-07)
+
+### Bug Fixes
+
+* **backend:** Handle undefined context in test teardown ([955efcf](https://github.com/datenknoten/freundebuch/commit/955efcf74d4ba8fd45929ed33f059aa0fff604dc))
+* **backend:** Suppress pool errors during test container shutdown ([d9d36ec](https://github.com/datenknoten/freundebuch/commit/d9d36ec1d63896b570fffa080677a59358f272b0))
+* **backend:** Use health check wait strategy for PostgreSQL testcontainers ([f3d5d28](https://github.com/datenknoten/freundebuch/commit/f3d5d2842727c81990c2596fc46a1eef2e283692))
+
 ## [2.20.3](https://github.com/datenknoten/freundebuch/compare/v2.20.2...v2.20.3) (2026-01-07)
 
 ### Bug Fixes
