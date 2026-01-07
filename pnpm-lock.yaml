@@ -160,6 +160,9 @@ importers:
       arktype:
         specifier: 2.1.29
         version: 2.1.29
+      svelte-easy-crop:
+        specifier: ^5.0.0
+        version: 5.0.0(svelte@5.46.1)
     devDependencies:
       '@playwright/test':
         specifier: 1.57.0
@@ -4209,6 +4212,11 @@ packages:
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
+
+  svelte-easy-crop@5.0.0:
+    resolution: {integrity: sha512-niWtner+qYVas6ypIOQ277NKNACVz9qz6wfpEW7t+x5Lhv6nOjpv3S1WhEPO+SnDaW3VZv+0bmm6jVDHK2GMAg==}
+    peerDependencies:
+      svelte: ^5.0.0
 
   svelte@5.46.1:
     resolution: {integrity: sha512-ynjfCHD3nP2el70kN5Pmg37sSi0EjOm9FgHYQdC4giWG/hzO3AatzXXJJgP305uIhGQxSufJLuYWtkY8uK/8RA==}
@@ -8704,6 +8712,10 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - picomatch
+
+  svelte-easy-crop@5.0.0(svelte@5.46.1):
+    dependencies:
+      svelte: 5.46.1
 
   svelte@5.46.1:
     dependencies:
