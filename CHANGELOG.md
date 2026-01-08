@@ -1,3 +1,9 @@
+## [2.21.1](https://github.com/datenknoten/freundebuch/compare/v2.21.0...v2.21.1) (2026-01-08)
+
+### Bug Fixes
+
+* **config:** Ensure API routes take precedence over static file regex in nginx ([edda76e](https://github.com/datenknoten/freundebuch/commit/edda76ef06b25a9b7b524420debb6ecb4465b186))
+
 ## [2.21.0](https://github.com/datenknoten/freundebuch/compare/v2.20.5...v2.21.0) (2026-01-08)
 
 ### Features
