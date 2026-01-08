@@ -1,3 +1,9 @@
+## [2.23.1](https://github.com/datenknoten/freundebuch/compare/v2.23.0...v2.23.1) (2026-01-08)
+
+### Bug Fixes
+
+* **frontend:** Standardize page widths to max-w-7xl ([ad4c61d](https://github.com/datenknoten/freundebuch/commit/ad4c61d7191dfd69154d17b4bc5179bb772bae5b))
+
 ## [2.23.0](https://github.com/datenknoten/freundebuch/compare/v2.22.0...v2.23.0) (2026-01-08)
 
 ### Features
