@@ -1,3 +1,9 @@
+## [2.21.0](https://github.com/datenknoten/freundebuch/compare/v2.20.5...v2.21.0) (2026-01-08)
+
+### Features
+
+* **frontend:** Add image cropping for avatar uploads ([73d21ed](https://github.com/datenknoten/freundebuch/commit/73d21ed2681e70d039533187f3243eb831151788))
+
 ## [2.20.5](https://github.com/datenknoten/freundebuch/compare/v2.20.4...v2.20.5) (2026-01-07)
 
 ### Bug Fixes
