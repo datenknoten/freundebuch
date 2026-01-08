@@ -1,3 +1,9 @@
+## [2.23.0](https://github.com/datenknoten/freundebuch/compare/v2.22.0...v2.23.0) (2026-01-08)
+
+### Features
+
+* **frontend:** Add table view for contacts list on desktop ([d58f793](https://github.com/datenknoten/freundebuch/commit/d58f793f774e704440dd065a374770ec8db8e0a7))
+
 ## [2.22.0](https://github.com/datenknoten/freundebuch/compare/v2.21.1...v2.22.0) (2026-01-08)
 
 ### Features
