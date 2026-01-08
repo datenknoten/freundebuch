@@ -1,3 +1,10 @@
+## [2.23.2](https://github.com/datenknoten/freundebuch/compare/v2.23.1...v2.23.2) (2026-01-08)
+
+### Bug Fixes
+
+* **backend:** Prevent SSRF in Sentry tunnel and XSS in search headlines ([7912678](https://github.com/datenknoten/freundebuch/commit/7912678f655cc2d1bfcbc3ccd74f60b055ae0971))
+* **frontend:** Prevent keyboard hint badges from being clipped in table view ([bc5eeda](https://github.com/datenknoten/freundebuch/commit/bc5eedac5bf11ed8302d5c322bb0587678c605a9))
+
 ## [2.23.1](https://github.com/datenknoten/freundebuch/compare/v2.23.0...v2.23.1) (2026-01-08)
 
 ### Bug Fixes
