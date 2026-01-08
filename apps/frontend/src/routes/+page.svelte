@@ -7,7 +7,7 @@ import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/aut
 </svelte:head>
 
 <div class="bg-gray-50 flex items-center justify-center p-4 py-16">
-	<div class="text-center max-w-4xl">
+	<div class="text-center max-w-7xl mx-auto">
 		{#if !$isAuthInitialized}
 			<!-- Loading state while auth initializes - prevents flash of unauthenticated content -->
 			<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>

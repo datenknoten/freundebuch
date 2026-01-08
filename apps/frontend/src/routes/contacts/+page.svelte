@@ -60,7 +60,7 @@ onMount(() => {
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">
-  <div class="max-w-4xl mx-auto mt-8">
+  <div class="max-w-7xl mx-auto mt-8">
     <div class="bg-white rounded-xl shadow-lg p-8">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>

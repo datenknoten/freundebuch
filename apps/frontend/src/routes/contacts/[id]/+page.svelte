@@ -23,7 +23,7 @@ const pageTitle = $derived(
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">
-  <div class="max-w-3xl mx-auto mt-8">
+  <div class="max-w-7xl mx-auto mt-8">
     <div class="bg-white rounded-xl shadow-lg p-8">
       <a
         href="/contacts"
