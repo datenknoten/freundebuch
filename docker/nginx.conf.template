@@ -101,7 +101,8 @@ http {
         }
 
         # API routes - proxy to Node.js backend
-        location /api/ {
+        # ^~ ensures this takes precedence over regex locations (like static file caching)
+        location ^~ /api/ {
             proxy_pass http://backend;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
