@@ -248,6 +248,24 @@ function handleKeydown(e: KeyboardEvent) {
       }
       break;
     }
+
+    case '<':
+    case ',':
+      // Previous page (Shift+Comma = <)
+      if (e.shiftKey && $page.url.pathname === '/contacts') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('shortcut:previous-page'));
+      }
+      break;
+
+    case '>':
+    case '.':
+      // Next page (Shift+Period = >)
+      if (e.shiftKey && $page.url.pathname === '/contacts') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('shortcut:next-page'));
+      }
+      break;
   }
 }
 
@@ -369,6 +387,14 @@ function closeHelp() {
                   <span class="text-gray-400">then</span>
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
                 </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Previous Page</span>
+                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">&lt;</kbd>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Next Page</span>
+                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">&gt;</kbd>
               </div>
             </div>
           </div>

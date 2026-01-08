@@ -15,7 +15,9 @@ import {
   createUser,
   getUserByEmail,
   getUserByExternalId,
+  getUserWithPreferences,
   updateUserPassword,
+  updateUserPreferences,
 } from '../models/queries/users.queries.js';
 import {
   generatePasswordResetToken,
@@ -38,10 +40,15 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface UserPreferences {
+  contactsPageSize?: 10 | 25 | 50 | 100;
+}
+
 export interface AuthResult {
   user: {
     externalId: string;
     email: string;
+    preferences?: UserPreferences;
   };
   accessToken: string;
   sessionToken: string;
@@ -217,8 +224,11 @@ export class AuthService {
       throw new Error('Invalid or expired session');
     }
 
-    // Get fresh user data by external ID
-    const users = await getUserByExternalId.run({ externalId: session.user_external_id }, this.db);
+    // Get fresh user data with preferences by external ID
+    const users = await getUserWithPreferences.run(
+      { externalId: session.user_external_id },
+      this.db,
+    );
 
     if (users.length === 0) {
       this.logger.error('User not found for valid session');
@@ -243,6 +253,7 @@ export class AuthService {
       user: {
         externalId: user.external_id,
         email: user.email,
+        preferences: user.preferences as UserPreferences,
       },
       accessToken,
       sessionToken, // Return the same session token
@@ -357,5 +368,77 @@ export class AuthService {
     await deleteUserSessions.run({ userExternalId: user.external_id }, this.db);
 
     this.logger.info({ userId: user.external_id }, 'Password reset successfully');
+  }
+
+  /**
+   * Get user with preferences by external ID
+   */
+  async getUserWithPreferences(userExternalId: string): Promise<{
+    externalId: string;
+    email: string;
+    preferences: UserPreferences;
+  } | null> {
+    const users = await getUserWithPreferences.run({ externalId: userExternalId }, this.db);
+
+    if (users.length === 0) {
+      return null;
+    }
+
+    const user = users[0];
+    if (!user) {
+      return null;
+    }
+
+    return {
+      externalId: user.external_id,
+      email: user.email,
+      preferences: user.preferences as UserPreferences,
+    };
+  }
+
+  /**
+   * Update user preferences
+   */
+  async updatePreferences(
+    userExternalId: string,
+    preferences: Partial<UserPreferences>,
+  ): Promise<UserPreferences> {
+    this.logger.info({ userId: userExternalId }, 'Updating user preferences');
+
+    // First get current preferences
+    const users = await getUserWithPreferences.run({ externalId: userExternalId }, this.db);
+
+    if (users.length === 0) {
+      throw new Error('User not found');
+    }
+
+    const user = users[0];
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Merge with existing preferences
+    const currentPreferences = (user.preferences || {}) as UserPreferences;
+    const newPreferences: UserPreferences = {
+      ...currentPreferences,
+      ...preferences,
+    };
+
+    // Update in database
+    const result = await updateUserPreferences.run(
+      {
+        externalId: userExternalId,
+        preferences: newPreferences as Record<string, unknown>,
+      },
+      this.db,
+    );
+
+    if (result.length === 0) {
+      throw new Error('Failed to update preferences');
+    }
+
+    this.logger.info({ userId: userExternalId }, 'User preferences updated successfully');
+
+    return result[0]?.preferences as UserPreferences;
   }
 }

@@ -429,6 +429,59 @@ export interface GlobalSearchResult {
   matchSource: 'contact' | 'email' | 'phone' | 'notes' | null;
 }
 
+/** Sort options for search results */
+export const SearchSortBySchema = type(
+  '"relevance" | "display_name" | "created_at" | "updated_at"',
+);
+export type SearchSortBy = typeof SearchSortBySchema.infer;
+
+/** Schema for search query parameters */
+export const SearchQuerySchema = type({
+  q: 'string > 0',
+  'page?': 'string',
+  'pageSize?': 'string',
+  'sortBy?': SearchSortBySchema,
+  'sortOrder?': '"asc" | "desc"',
+});
+export type SearchQuery = typeof SearchQuerySchema.infer;
+
+/** Parsed search options */
+export interface SearchOptions {
+  query: string;
+  page: number;
+  pageSize: number;
+  sortBy: SearchSortBy;
+  sortOrder: 'asc' | 'desc';
+}
+
+/**
+ * Parse and validate search query parameters
+ */
+export function parseSearchQuery(query: SearchQuery): SearchOptions {
+  const sortBy = query.sortBy || 'relevance';
+  return {
+    query: query.q.trim(),
+    page: query.page ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1,
+    pageSize: query.pageSize
+      ? Math.min(100, Math.max(1, Number.parseInt(query.pageSize, 10) || 25))
+      : 25,
+    sortBy,
+    // Default sort order: desc for relevance (best first), asc for name
+    sortOrder:
+      query.sortOrder ||
+      (sortBy === 'relevance' ? 'desc' : sortBy === 'display_name' ? 'asc' : 'desc'),
+  };
+}
+
+/** Paginated search response */
+export interface PaginatedSearchResponse {
+  results: GlobalSearchResult[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 /** Paginated contact list response */
 export interface PaginatedContactList {
   contacts: ContactListItem[];

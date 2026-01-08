@@ -6,7 +6,9 @@ import type {
   RefreshRequest,
   RegisterRequest,
   ResetPasswordRequest,
+  UpdatePreferencesRequest,
   User,
+  UserPreferences,
 } from '$shared';
 
 // In production with single-domain deployment, use empty string for same-origin requests.
@@ -130,6 +132,30 @@ export async function getCurrentUser(): Promise<User> {
 export async function updateCurrentUser(data: Partial<User>): Promise<User> {
   return apiRequest<User>('/api/users/me', {
     method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Get the current user with preferences
+ */
+export async function getUserWithPreferences(): Promise<{
+  user: User;
+  preferences: UserPreferences;
+}> {
+  return apiRequest('/api/auth/me', {
+    method: 'GET',
+  });
+}
+
+/**
+ * Update user preferences
+ */
+export async function updatePreferences(
+  data: UpdatePreferencesRequest,
+): Promise<{ preferences: UserPreferences }> {
+  return apiRequest('/api/auth/preferences', {
+    method: 'PATCH',
     body: JSON.stringify(data),
   });
 }

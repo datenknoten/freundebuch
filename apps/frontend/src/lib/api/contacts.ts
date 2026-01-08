@@ -14,12 +14,14 @@ import type {
   MetInfo,
   MetInfoInput,
   PaginatedContactList,
+  PaginatedSearchResponse,
   Phone,
   PhoneInput,
   Relationship,
   RelationshipInput,
   RelationshipTypesGrouped,
   RelationshipUpdateInput,
+  SearchSortBy,
   SocialProfile,
   SocialProfileInput,
   Url,
@@ -529,6 +531,33 @@ export async function fullTextSearch(query: string, limit?: number): Promise<Glo
   if (limit) searchParams.set('limit', limit.toString());
 
   return apiRequest<GlobalSearchResult[]>(`/api/contacts/search/full?${searchParams.toString()}`);
+}
+
+export interface PaginatedSearchParams {
+  query: string;
+  page?: number;
+  pageSize?: number;
+  sortBy?: SearchSortBy;
+  sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Paginated full-text search with sorting options
+ * Used by in-page search for contacts list
+ */
+export async function paginatedSearch(
+  params: PaginatedSearchParams,
+): Promise<PaginatedSearchResponse> {
+  const searchParams = new URLSearchParams();
+  searchParams.set('q', params.query);
+  if (params.page) searchParams.set('page', params.page.toString());
+  if (params.pageSize) searchParams.set('pageSize', params.pageSize.toString());
+  if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+  if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+
+  return apiRequest<PaginatedSearchResponse>(
+    `/api/contacts/search/paginated?${searchParams.toString()}`,
+  );
 }
 
 /**

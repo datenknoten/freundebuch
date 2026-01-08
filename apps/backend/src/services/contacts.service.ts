@@ -18,6 +18,7 @@ import type {
   MetInfo,
   MetInfoInput,
   PaginatedContactList,
+  PaginatedSearchResponse,
   Phone,
   PhoneInput,
   PhoneType,
@@ -28,6 +29,7 @@ import type {
   RelationshipTypeId,
   RelationshipTypesGrouped,
   RelationshipUpdateInput,
+  SearchOptions,
   SocialPlatform,
   SocialProfile,
   SocialProfileInput,
@@ -110,6 +112,8 @@ import {
   fullTextSearchContacts,
   getRecentSearches,
   type IFullTextSearchContactsResult,
+  type IPaginatedFullTextSearchResult,
+  paginatedFullTextSearch,
 } from '../models/queries/search.queries.js';
 
 export class ContactsService {
@@ -1115,6 +1119,42 @@ export class ContactsService {
   }
 
   /**
+   * Paginated full-text search with sorting options
+   * Used by in-page search for contacts list
+   */
+  async paginatedSearch(
+    userExternalId: string,
+    options: SearchOptions,
+  ): Promise<PaginatedSearchResponse> {
+    const { query, page, pageSize, sortBy, sortOrder } = options;
+    const offset = (page - 1) * pageSize;
+
+    this.logger.debug({ query, page, pageSize, sortBy, sortOrder }, 'Paginated search');
+
+    const results = await paginatedFullTextSearch.run(
+      {
+        userExternalId,
+        query,
+        sortBy,
+        sortOrder,
+        pageSize,
+        offset,
+      },
+      this.db,
+    );
+
+    const total = results[0]?.total_count ?? 0;
+
+    return {
+      results: results.map((r) => this.mapPaginatedSearchResult(r)),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  /**
    * Get user's recent search queries
    */
   async getRecentSearches(userExternalId: string, limit = 10): Promise<string[]> {
@@ -1160,6 +1200,21 @@ export class ContactsService {
   // ============================================================================
 
   private mapGlobalSearchResult(row: IFullTextSearchContactsResult): GlobalSearchResult {
+    return {
+      id: row.external_id,
+      displayName: row.display_name,
+      photoThumbnailUrl: row.photo_thumbnail_url ?? undefined,
+      organization: row.organization ?? undefined,
+      jobTitle: row.job_title ?? undefined,
+      primaryEmail: row.primary_email ?? undefined,
+      primaryPhone: row.primary_phone ?? undefined,
+      rank: row.rank ?? 0,
+      headline: row.headline ?? '',
+      matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
+    };
+  }
+
+  private mapPaginatedSearchResult(row: IPaginatedFullTextSearchResult): GlobalSearchResult {
     return {
       id: row.external_id,
       displayName: row.display_name,

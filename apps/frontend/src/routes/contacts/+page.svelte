@@ -1,11 +1,14 @@
 <script lang="ts">
+import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
+// biome-ignore lint/style/useImportType: ContactList is used both as type and value (bind:this)
 import ContactList from '$lib/components/contacts/ContactList.svelte';
-import { isAuthInitialized } from '$lib/stores/auth';
+import { contactsPageSize, isAuthInitialized } from '$lib/stores/auth';
 import { contacts } from '$lib/stores/contacts';
 
 let hasLoaded = $state(false);
+let contactListRef = $state<ContactList | null>(null);
 
 // Get initial query from URL
 let initialQuery = $derived($page.url.searchParams.get('q') ?? '');
@@ -28,8 +31,27 @@ function handleQueryChange(query: string) {
 $effect(() => {
   if ($isAuthInitialized && !hasLoaded) {
     hasLoaded = true;
-    contacts.loadContacts();
+    contacts.loadContacts({ pageSize: $contactsPageSize });
   }
+});
+
+// Listen for keyboard shortcuts for pagination
+onMount(() => {
+  function handlePreviousPage() {
+    contactListRef?.goToPreviousPage();
+  }
+
+  function handleNextPage() {
+    contactListRef?.goToNextPage();
+  }
+
+  window.addEventListener('shortcut:previous-page', handlePreviousPage);
+  window.addEventListener('shortcut:next-page', handleNextPage);
+
+  return () => {
+    window.removeEventListener('shortcut:previous-page', handlePreviousPage);
+    window.removeEventListener('shortcut:next-page', handleNextPage);
+  };
 });
 </script>
 
@@ -56,7 +78,7 @@ $effect(() => {
         </a>
       </div>
 
-      <ContactList {initialQuery} onQueryChange={handleQueryChange} />
+      <ContactList bind:this={contactListRef} {initialQuery} onQueryChange={handleQueryChange} />
     </div>
   </div>
 </div>

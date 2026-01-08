@@ -10,8 +10,10 @@ import {
   PhoneInputSchema,
   PhotoValidationErrors,
   parseContactListQuery,
+  parseSearchQuery,
   RelationshipInputSchema,
   RelationshipUpdateSchema,
+  SearchQuerySchema,
   SocialProfileInputSchema,
   UrlInputSchema,
 } from '@freundebuch/shared/index.js';
@@ -140,6 +142,42 @@ app.get('/search/full', async (c) => {
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error({ err, query }, 'Failed to search contacts');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to search contacts' }, 500);
+  }
+});
+
+/**
+ * GET /api/contacts/search/paginated
+ * Paginated full-text search with sorting options
+ * Used by in-page search for contacts list
+ */
+app.get('/search/paginated', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+
+  try {
+    const queryParams = c.req.query();
+    const validated = SearchQuerySchema(queryParams);
+
+    if (validated instanceof type.errors) {
+      return c.json<ErrorResponse>({ error: 'Invalid query parameters', details: validated }, 400);
+    }
+
+    // Minimum query length for performance
+    if (validated.q.trim().length < 2) {
+      return c.json<ErrorResponse>({ error: 'Query must be at least 2 characters' }, 400);
+    }
+
+    const options = parseSearchQuery(validated);
+    const contactsService = new ContactsService(db, logger);
+    const results = await contactsService.paginatedSearch(user.userId, options);
+
+    return c.json(results);
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to search contacts');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to search contacts' }, 500);
   }

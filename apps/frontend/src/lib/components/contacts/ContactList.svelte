@@ -1,8 +1,9 @@
 <script lang="ts">
 import * as contactsApi from '$lib/api/contacts';
+import { auth, contactsPageSize } from '$lib/stores/auth';
 import { contactList, contacts, isContactsLoading } from '$lib/stores/contacts';
 import { visibleContactIds } from '$lib/stores/ui';
-import type { GlobalSearchResult } from '$shared';
+import type { GlobalSearchResult, PageSize, SearchSortBy } from '$shared';
 import ContactListItem from './ContactListItem.svelte';
 import SearchResultItem from './SearchResultItem.svelte';
 
@@ -13,12 +14,18 @@ interface Props {
 
 let { initialQuery = '', onQueryChange }: Props = $props();
 
+// List mode state
 let sortBy = $state<'display_name' | 'created_at' | 'updated_at'>('display_name');
 let sortOrder = $state<'asc' | 'desc'>('asc');
 
-// Search state - initialize with function to capture initial value
+// Search mode state
 let searchQuery = $state((() => initialQuery)());
 let searchResults = $state<GlobalSearchResult[]>([]);
+let searchTotal = $state(0);
+let searchPage = $state(1);
+let searchTotalPages = $state(0);
+let searchSortBy = $state<SearchSortBy>('relevance');
+let searchSortOrder = $state<'asc' | 'desc'>('desc');
 let isSearching = $state(false);
 let searchError = $state<string | null>(null);
 let inputElement = $state<HTMLInputElement | null>(null);
@@ -26,6 +33,7 @@ let inputElement = $state<HTMLInputElement | null>(null);
 // Derived state
 let isSearchMode = $derived(searchQuery.trim().length >= 2);
 let showNoResults = $derived(isSearchMode && !isSearching && searchResults.length === 0);
+let currentPageSize = $derived($contactsPageSize);
 
 // Debounce timer
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -34,6 +42,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 function handleSearchInput(value: string) {
   searchQuery = value;
   searchError = null;
+  searchPage = 1; // Reset to first page on new search
 
   // Notify parent of query change
   onQueryChange?.(value);
@@ -45,6 +54,8 @@ function handleSearchInput(value: string) {
 
   if (value.trim().length < 2) {
     searchResults = [];
+    searchTotal = 0;
+    searchTotalPages = 0;
     isSearching = false;
     return;
   }
@@ -52,44 +63,115 @@ function handleSearchInput(value: string) {
   isSearching = true;
 
   debounceTimer = setTimeout(async () => {
-    try {
-      const results = await contactsApi.fullTextSearch(value.trim(), 50);
-      searchResults = results;
-    } catch (error) {
-      console.error('Search failed:', error);
-      searchError = 'Search failed. Please try again.';
-      searchResults = [];
-    } finally {
-      isSearching = false;
-    }
+    await performSearch();
   }, 300);
+}
+
+async function performSearch() {
+  if (searchQuery.trim().length < 2) return;
+
+  isSearching = true;
+  try {
+    const result = await contactsApi.paginatedSearch({
+      query: searchQuery.trim(),
+      page: searchPage,
+      pageSize: currentPageSize,
+      sortBy: searchSortBy,
+      sortOrder: searchSortOrder,
+    });
+    searchResults = result.results;
+    searchTotal = result.total;
+    searchTotalPages = result.totalPages;
+  } catch (error) {
+    console.error('Search failed:', error);
+    searchError = 'Search failed. Please try again.';
+    searchResults = [];
+    searchTotal = 0;
+    searchTotalPages = 0;
+  } finally {
+    isSearching = false;
+  }
 }
 
 function clearSearch() {
   searchQuery = '';
   searchResults = [];
+  searchTotal = 0;
+  searchPage = 1;
+  searchTotalPages = 0;
   isSearching = false;
   searchError = null;
+  searchSortBy = 'relevance';
+  searchSortOrder = 'desc';
   onQueryChange?.('');
   inputElement?.focus();
 }
 
 async function loadPage(page: number) {
-  await contacts.loadContacts({
-    page,
-    pageSize: $contacts.pageSize,
-    sortBy,
-    sortOrder,
-  });
+  if (isSearchMode) {
+    searchPage = page;
+    await performSearch();
+  } else {
+    await contacts.loadContacts({
+      page,
+      pageSize: currentPageSize,
+      sortBy,
+      sortOrder,
+    });
+  }
 }
 
 async function handleSortChange() {
-  await loadPage(1);
+  if (isSearchMode) {
+    searchPage = 1;
+    await performSearch();
+  } else {
+    await loadPage(1);
+  }
 }
 
 function toggleSortOrder() {
-  sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+  if (isSearchMode) {
+    searchSortOrder = searchSortOrder === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+  }
   handleSortChange();
+}
+
+async function handlePageSizeChange(newSize: PageSize) {
+  // Update user preferences (optimistic update with retry)
+  auth.updatePreferences({ contactsPageSize: newSize });
+
+  // Reload with new page size, reset to page 1
+  if (isSearchMode) {
+    searchPage = 1;
+    await performSearch();
+  } else {
+    await contacts.loadContacts({
+      page: 1,
+      pageSize: newSize,
+      sortBy,
+      sortOrder,
+    });
+  }
+}
+
+// Navigate to previous page (for keyboard shortcut)
+export function goToPreviousPage() {
+  const currentPage = isSearchMode ? searchPage : $contacts.page;
+  if (currentPage > 1) {
+    loadPage(currentPage - 1);
+  }
+}
+
+// Navigate to next page (for keyboard shortcut)
+export function goToNextPage() {
+  const totalPages = isSearchMode ? searchTotalPages : $contacts.totalPages;
+  const currentPage = isSearchMode ? searchPage : $contacts.page;
+  if (currentPage < totalPages) {
+    loadPage(currentPage + 1);
+  }
 }
 
 // Initialize search if there's an initial query
@@ -100,20 +182,24 @@ $effect(() => {
 });
 
 // Update visible contact IDs for keyboard navigation
-// Supports up to 234 items (26 letters × 9 numbers)
 $effect(() => {
   if (!isSearchMode) {
-    // Normal list mode - use contact list
     const ids = $contactList.map((c) => c.id);
     visibleContactIds.set(ids);
   } else if (searchResults.length > 0) {
-    // Search mode - use search results
     const ids = searchResults.map((r) => r.id);
     visibleContactIds.set(ids);
   } else {
     visibleContactIds.set([]);
   }
 });
+
+// Computed values for display
+let displayTotal = $derived(isSearchMode ? searchTotal : $contacts.total);
+let displayPage = $derived(isSearchMode ? searchPage : $contacts.page);
+let displayTotalPages = $derived(isSearchMode ? searchTotalPages : $contacts.totalPages);
+let currentSortBy = $derived(isSearchMode ? searchSortBy : sortBy);
+let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
 </script>
 
 <div class="space-y-4">
@@ -124,6 +210,7 @@ $effect(() => {
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
+      aria-hidden="true"
     >
       <path
         stroke-linecap="round"
@@ -141,10 +228,13 @@ $effect(() => {
       class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
       autocomplete="off"
       data-search-input
+      aria-label="Search contacts"
     />
     {#if isSearching}
-      <div class="absolute right-4 top-1/2 -translate-y-1/2">
-        <div class="animate-spin rounded-full h-5 w-5 border-2 border-forest border-t-transparent"></div>
+      <div class="absolute right-4 top-1/2 -translate-y-1/2" aria-live="polite">
+        <div class="animate-spin rounded-full h-5 w-5 border-2 border-forest border-t-transparent" role="status">
+          <span class="sr-only">Searching...</span>
+        </div>
       </div>
     {:else if searchQuery}
       <button
@@ -153,7 +243,7 @@ $effect(() => {
         class="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
         aria-label="Clear search"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
@@ -161,21 +251,130 @@ $effect(() => {
   </div>
 
   {#if searchError}
-    <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-body">
+    <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-body" role="alert">
       {searchError}
     </div>
   {/if}
 
+  <!-- Unified Control Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-2 border-b border-gray-200">
+    <!-- Left: Result count -->
+    <div class="text-sm text-gray-600 font-body" aria-live="polite">
+      {#if isSearchMode}
+        {displayTotal} result{displayTotal !== 1 ? 's' : ''} for "{searchQuery}"
+      {:else}
+        {displayTotal} contact{displayTotal !== 1 ? 's' : ''}
+      {/if}
+    </div>
+
+    <!-- Right: Controls -->
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Page size selector -->
+      <div class="flex items-center gap-2">
+        <label for="page-size" class="text-sm text-gray-600 font-body whitespace-nowrap">Show:</label>
+        <select
+          id="page-size"
+          value={currentPageSize}
+          onchange={(e) => handlePageSizeChange(Number(e.currentTarget.value) as PageSize)}
+          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
+          aria-label="Items per page"
+        >
+          <option value={10}>10</option>
+          <option value={25}>25</option>
+          <option value={50}>50</option>
+          <option value={100}>100</option>
+        </select>
+      </div>
+
+      <!-- Sort controls -->
+      <div class="flex items-center gap-2">
+        <label for="sort-by" class="text-sm text-gray-600 font-body whitespace-nowrap">Sort:</label>
+        <select
+          id="sort-by"
+          value={currentSortBy}
+          onchange={(e) => {
+            if (isSearchMode) {
+              searchSortBy = e.currentTarget.value as SearchSortBy;
+            } else {
+              sortBy = e.currentTarget.value as 'display_name' | 'created_at' | 'updated_at';
+            }
+            handleSortChange();
+          }}
+          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
+          aria-label="Sort by"
+        >
+          {#if isSearchMode}
+            <option value="relevance">Relevance</option>
+          {/if}
+          <option value="display_name">Name</option>
+          <option value="created_at">Date Added</option>
+          <option value="updated_at">Last Updated</option>
+        </select>
+
+        <button
+          onclick={toggleSortOrder}
+          class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+          title={currentSortOrder === 'asc' ? 'Ascending order' : 'Descending order'}
+          aria-label={currentSortOrder === 'asc' ? 'Sort ascending' : 'Sort descending'}
+        >
+          {#if currentSortOrder === 'asc'}
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+            </svg>
+          {:else}
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+            </svg>
+          {/if}
+        </button>
+      </div>
+
+      <!-- Pagination controls (inline) -->
+      {#if displayTotalPages > 1}
+        <div class="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200">
+          <button
+            onclick={() => loadPage(displayPage - 1)}
+            disabled={displayPage <= 1}
+            class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="Previous page (Shift+,)"
+            aria-label="Previous page"
+          >
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <span class="text-sm text-gray-600 font-body px-2 whitespace-nowrap">
+            {displayPage} / {displayTotalPages}
+          </span>
+          <button
+            onclick={() => loadPage(displayPage + 1)}
+            disabled={displayPage >= displayTotalPages}
+            class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="Next page (Shift+.)"
+            aria-label="Next page"
+          >
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      {/if}
+    </div>
+  </div>
+
+  <!-- Content area -->
   {#if isSearchMode}
     <!-- Search mode: show search results -->
-    {#if isSearching}
-      <div class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+    {#if isSearching && searchResults.length === 0}
+      <div class="flex justify-center py-12" aria-live="polite">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
+          <span class="sr-only">Loading search results...</span>
+        </div>
       </div>
     {:else if showNoResults}
       <!-- No search results -->
       <div class="text-center py-12 bg-gray-50 rounded-lg">
-        <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <h3 class="mt-4 text-lg font-heading text-gray-900">No friends found</h3>
@@ -189,7 +388,7 @@ $effect(() => {
           onclick={clearSearch}
           class="mt-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
           Clear search
@@ -197,10 +396,7 @@ $effect(() => {
       </div>
     {:else}
       <!-- Search results list -->
-      <div class="text-sm text-gray-600 font-body">
-        {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{searchQuery}"
-      </div>
-      <div class="space-y-2">
+      <div class="space-y-2" role="list" aria-label="Search results">
         {#each searchResults as result, index (result.id)}
           <SearchResultItem {result} {index} />
         {/each}
@@ -208,47 +404,11 @@ $effect(() => {
     {/if}
   {:else}
     <!-- Normal mode: show paginated contact list -->
-    <!-- Header with sorting controls -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div class="text-sm text-gray-600 font-body">
-        {$contacts.total} contact{$contacts.total !== 1 ? 's' : ''}
-      </div>
-
-      <div class="flex items-center gap-2">
-        <label for="sort-by" class="text-sm text-gray-600 font-body">Sort by:</label>
-        <select
-          id="sort-by"
-          bind:value={sortBy}
-          onchange={handleSortChange}
-          class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
-        >
-          <option value="display_name">Name</option>
-          <option value="created_at">Date Added</option>
-          <option value="updated_at">Last Updated</option>
-        </select>
-
-        <button
-          onclick={toggleSortOrder}
-          class="p-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-        >
-          {#if sortOrder === 'asc'}
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-            </svg>
-          {:else}
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
-            </svg>
-          {/if}
-        </button>
-      </div>
-    </div>
-
-    <!-- Loading state -->
     {#if $isContactsLoading}
-      <div class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+      <div class="flex justify-center py-12" aria-live="polite">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
+          <span class="sr-only">Loading contacts...</span>
+        </div>
       </div>
     {:else if $contactList.length === 0}
       <!-- Empty state -->
@@ -258,6 +418,7 @@ $effect(() => {
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <path
             stroke-linecap="round"
@@ -274,7 +435,7 @@ $effect(() => {
           href="/contacts/new"
           class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
           Add Contact
@@ -282,37 +443,11 @@ $effect(() => {
       </div>
     {:else}
       <!-- Contact list -->
-      <div class="space-y-2">
+      <div class="space-y-2" role="list" aria-label="Contacts">
         {#each $contactList as contact, index (contact.id)}
           <ContactListItem {contact} {index} />
         {/each}
       </div>
-
-      <!-- Pagination -->
-      {#if $contacts.totalPages > 1}
-        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-          <div class="text-sm text-gray-600 font-body">
-            Page {$contacts.page} of {$contacts.totalPages}
-          </div>
-
-          <div class="flex gap-2">
-            <button
-              onclick={() => loadPage($contacts.page - 1)}
-              disabled={$contacts.page <= 1}
-              class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-body hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Previous
-            </button>
-            <button
-              onclick={() => loadPage($contacts.page + 1)}
-              disabled={$contacts.page >= $contacts.totalPages}
-              class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-body hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      {/if}
     {/if}
   {/if}
 </div>

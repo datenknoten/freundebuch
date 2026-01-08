@@ -6,12 +6,15 @@ import {
   RefreshRequestSchema,
   RegisterRequestSchema,
   ResetPasswordRequestSchema,
+  UpdatePreferencesRequestSchema,
+  type User,
+  type UserPreferences,
 } from '@freundebuch/shared/index.js';
 import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
-import { AUTH_TOKEN_COOKIE } from '../middleware/auth.js';
+import { AUTH_TOKEN_COOKIE, authMiddleware, getAuthUser } from '../middleware/auth.js';
 import {
   authRateLimitMiddleware,
   passwordResetRateLimitMiddleware,
@@ -347,6 +350,87 @@ app.post('/reset-password', passwordResetRateLimitMiddleware, async (c) => {
     logger.error({ err }, 'Password reset failed');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Password reset failed' }, 500);
+  }
+});
+
+/**
+ * GET /api/auth/me
+ * Get the current authenticated user with preferences
+ */
+app.get('/me', authMiddleware, async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+
+  try {
+    const authUser = getAuthUser(c);
+
+    const authService = new AuthService(db, logger);
+    const userWithPrefs = await authService.getUserWithPreferences(authUser.userId);
+
+    if (!userWithPrefs) {
+      return c.json<ErrorResponse>({ error: 'User not found' }, 404);
+    }
+
+    const response: { user: User; preferences: UserPreferences } = {
+      user: {
+        externalId: userWithPrefs.externalId,
+        email: userWithPrefs.email,
+      },
+      preferences: userWithPrefs.preferences,
+    };
+
+    return c.json(response);
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get user');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to get user' }, 500);
+  }
+});
+
+/**
+ * PATCH /api/auth/preferences
+ * Update user preferences
+ */
+app.patch('/preferences', authMiddleware, async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+
+  try {
+    const authUser = getAuthUser(c);
+
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch (jsonError) {
+      logger.warn({ error: jsonError }, 'Malformed JSON in preferences update request');
+      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
+    }
+
+    const validated = UpdatePreferencesRequestSchema(body);
+
+    if (validated instanceof type.errors) {
+      logger.warn({ body, errors: validated }, 'Invalid preferences update request');
+      return c.json<ErrorResponse>(
+        {
+          error: 'Invalid request',
+          details: validated,
+        },
+        400,
+      );
+    }
+
+    const authService = new AuthService(db, logger);
+    const updatedPreferences = await authService.updatePreferences(authUser.userId, validated);
+
+    logger.info({ userId: authUser.userId }, 'User preferences updated');
+
+    return c.json<{ preferences: UserPreferences }>({ preferences: updatedPreferences });
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to update preferences');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to update preferences' }, 500);
   }
 });
 

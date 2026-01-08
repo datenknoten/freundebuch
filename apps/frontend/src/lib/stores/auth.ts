@@ -1,12 +1,19 @@
 import { derived, writable } from 'svelte/store';
-import type { User } from '$shared';
+import type { User, UserPreferences } from '$shared';
 import * as authApi from '../api/auth.js';
+import { retryWithBackoff } from '../utils/retry.js';
+
+/** Default user preferences */
+const DEFAULT_PREFERENCES: UserPreferences = {
+  contactsPageSize: 25,
+};
 
 /**
  * Auth state interface
  */
 interface AuthState {
   user: User | null;
+  preferences: UserPreferences;
   accessToken: string | null;
   sessionToken: string | null;
   isLoading: boolean;
@@ -19,6 +26,7 @@ interface AuthState {
  */
 const initialState: AuthState = {
   user: null,
+  preferences: DEFAULT_PREFERENCES,
   accessToken: null,
   sessionToken: null,
   isLoading: false,
@@ -135,6 +143,7 @@ function createAuthStore() {
         update((state) => ({
           ...state,
           user: result.user,
+          preferences: { ...DEFAULT_PREFERENCES, ...result.user.preferences },
           accessToken: result.accessToken,
           sessionToken: result.sessionToken,
           isLoading: false,
@@ -169,6 +178,7 @@ function createAuthStore() {
         update((state) => ({
           ...state,
           user: result.user,
+          preferences: { ...DEFAULT_PREFERENCES, ...result.user.preferences },
           accessToken: result.accessToken,
           sessionToken: result.sessionToken,
           isLoading: false,
@@ -196,6 +206,55 @@ function createAuthStore() {
     clearError: () => {
       update((state) => ({ ...state, error: null }));
     },
+
+    /**
+     * Update user preferences
+     * Uses exponential backoff retry, fails silently after max attempts
+     */
+    updatePreferences: async (newPreferences: Partial<UserPreferences>) => {
+      // Optimistically update the store immediately
+      update((state) => ({
+        ...state,
+        preferences: { ...state.preferences, ...newPreferences },
+      }));
+
+      // Persist to server with retry
+      await retryWithBackoff(
+        async () => {
+          const result = await authApi.updatePreferences(newPreferences);
+          // Update with server response (in case of any transformations)
+          update((state) => ({
+            ...state,
+            preferences: { ...DEFAULT_PREFERENCES, ...result.preferences },
+          }));
+          return result;
+        },
+        {
+          maxAttempts: 5,
+          initialDelay: 1000,
+          onRetry: (attempt, error) => {
+            console.warn(`Preferences update failed (attempt ${attempt}):`, error.message);
+          },
+        },
+      );
+    },
+
+    /**
+     * Load preferences from server
+     * Called during initialization after auth is confirmed
+     */
+    loadPreferences: async () => {
+      try {
+        const result = await authApi.getUserWithPreferences();
+        update((state) => ({
+          ...state,
+          preferences: { ...DEFAULT_PREFERENCES, ...result.preferences },
+        }));
+      } catch (error) {
+        // Silently fail - use defaults
+        console.warn('Failed to load preferences:', error);
+      }
+    },
   };
 }
 
@@ -218,6 +277,16 @@ export const currentUser = derived(auth, ($auth) => $auth.user);
  * Derived store for initialization state
  */
 export const isAuthInitialized = derived(auth, ($auth) => $auth.isInitialized);
+
+/**
+ * Derived store for user preferences
+ */
+export const userPreferences = derived(auth, ($auth) => $auth.preferences);
+
+/**
+ * Derived store for contacts page size
+ */
+export const contactsPageSize = derived(auth, ($auth) => $auth.preferences.contactsPageSize ?? 25);
 
 /**
  * Helper to wait for auth initialization

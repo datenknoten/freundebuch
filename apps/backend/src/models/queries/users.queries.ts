@@ -199,3 +199,64 @@ const updateUserPasswordIR: any = {"usedParamSet":{"passwordHash":true,"external
 export const updateUserPassword = new PreparedQuery<IUpdateUserPasswordParams,IUpdateUserPasswordResult>(updateUserPasswordIR);
 
 
+/** 'GetUserWithPreferences' parameters type */
+export interface IGetUserWithPreferencesParams {
+  externalId?: string | null | void;
+}
+
+/** 'GetUserWithPreferences' return type */
+export interface IGetUserWithPreferencesResult {
+  created_at: Date;
+  email: string;
+  /** Public UUID for API exposure (always use this in APIs) */
+  external_id: string;
+  /** User preferences stored as JSONB */
+  preferences: Record<string, unknown> | null;
+  updated_at: Date;
+}
+
+const getUserWithPreferencesIR: any = {"usedParamSet":{"externalId":true},"params":[{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":99,"b":109}]}],"statement":"SELECT external_id, email, preferences, created_at, updated_at\nFROM auth.users\nWHERE external_id = :externalId"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT external_id, email, preferences, created_at, updated_at
+ * FROM auth.users
+ * WHERE external_id = :externalId
+ * ```
+ */
+export const getUserWithPreferences = new PreparedQuery<IGetUserWithPreferencesParams,IGetUserWithPreferencesResult>(getUserWithPreferencesIR);
+
+
+/** 'UpdateUserPreferences' parameters type */
+export interface IUpdateUserPreferencesParams {
+  externalId?: string | null | void;
+  preferences?: Record<string, unknown> | null | void;
+}
+
+/** 'UpdateUserPreferences' return type */
+export interface IUpdateUserPreferencesResult {
+  created_at: Date;
+  email: string;
+  /** Public UUID for API exposure (always use this in APIs) */
+  external_id: string;
+  /** User preferences stored as JSONB */
+  preferences: Record<string, unknown> | null;
+  updated_at: Date;
+}
+
+const updateUserPreferencesIR: any = {"usedParamSet":{"preferences":true,"externalId":true},"params":[{"name":"preferences","required":false,"transform":{"type":"scalar"},"locs":[{"a":36,"b":47}]},{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":105,"b":115}]}],"statement":"UPDATE auth.users\nSET preferences = :preferences,\n    updated_at = CURRENT_TIMESTAMP\nWHERE external_id = :externalId\nRETURNING external_id, email, preferences, created_at, updated_at"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * UPDATE auth.users
+ * SET preferences = :preferences,
+ *     updated_at = CURRENT_TIMESTAMP
+ * WHERE external_id = :externalId
+ * RETURNING external_id, email, preferences, created_at, updated_at
+ * ```
+ */
+export const updateUserPreferences = new PreparedQuery<IUpdateUserPreferencesParams,IUpdateUserPreferencesResult>(updateUserPreferencesIR);
+
+

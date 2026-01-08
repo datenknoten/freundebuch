@@ -30,10 +30,25 @@ export const LoginRequestSchema = type({
 
 export type LoginRequest = typeof LoginRequestSchema.infer;
 
+// User preferences schema and type
+export const PageSizeSchema = type('10 | 25 | 50 | 100');
+export type PageSize = typeof PageSizeSchema.infer;
+
+export const UserPreferencesSchema = type({
+  'contactsPageSize?': PageSizeSchema,
+});
+export type UserPreferences = typeof UserPreferencesSchema.infer;
+
+export const UpdatePreferencesRequestSchema = type({
+  'contactsPageSize?': PageSizeSchema,
+});
+export type UpdatePreferencesRequest = typeof UpdatePreferencesRequestSchema.infer;
+
 // User type
 export interface User {
   externalId: string;
   email: string;
+  preferences?: UserPreferences;
   createdAt?: string;
   updatedAt?: string;
 }
