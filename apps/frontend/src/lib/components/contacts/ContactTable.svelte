@@ -57,12 +57,12 @@ function shouldShowKeyHint(index: number): boolean {
 }
 </script>
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto pl-6">
   <table class="w-full">
     <thead>
       <tr class="border-b border-gray-200">
-        <!-- Avatar column - no header -->
-        <th class="w-12 py-3 px-2"></th>
+        <!-- Avatar column - no header, extra padding for keyboard hints -->
+        <th class="w-14 py-3 px-2"></th>
 
         <!-- Name column - sortable -->
         <th class="py-3 px-3 text-left">
@@ -110,7 +110,7 @@ function shouldShowKeyHint(index: number): boolean {
           <!-- Avatar -->
           <td class="py-2 px-2 relative">
             {#if showHint && keyHint}
-              <div class="absolute -left-1 -top-0 min-w-5 h-5 px-1 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">
+              <div class="absolute -left-6 top-1/2 -translate-y-1/2 min-w-5 h-5 px-1 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">
                 {keyHint}
               </div>
             {/if}
