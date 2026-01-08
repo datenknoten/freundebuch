@@ -4,7 +4,14 @@ import { page } from '$app/stores';
 import { isAuthenticated } from '$lib/stores/auth';
 import { currentContact } from '$lib/stores/contacts';
 import { isSearchOpen, search } from '$lib/stores/search';
-import { isModalOpen, isOpenModeActive, visibleContactIds } from '$lib/stores/ui';
+import {
+  getIndexFromHint,
+  ITEMS_PER_GROUP,
+  isModalOpen,
+  isOpenModeActive,
+  openModePrefix,
+  visibleContactIds,
+} from '$lib/stores/ui';
 
 let showHelp = $state(false);
 let pendingKey = $state<string | null>(null);
@@ -13,6 +20,7 @@ let pendingKey = $state<string | null>(null);
 function clearPending() {
   pendingKey = null;
   isOpenModeActive.set(false);
+  openModePrefix.set(null);
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -134,21 +142,61 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // Handle two-key sequences (o+...) for opening contacts from list
+  // Handle two/three-key sequences (o+...) for opening contacts from list
+  // Supports: o+1-9 for items 1-9, o+a+1-9 for items 10-18, o+b+1-9 for items 19-27, etc.
   if (pendingKey === 'o') {
+    const contactIds = $visibleContactIds;
+    const currentPrefix = $openModePrefix;
     const keyNum = parseInt(e.key, 10);
+    const keyLower = e.key.toLowerCase();
+
+    // If we already have a letter prefix, we're waiting for a number
+    if (currentPrefix) {
+      if (keyNum >= 1 && keyNum <= 9) {
+        e.preventDefault();
+        const index = getIndexFromHint(`${currentPrefix}${keyNum}`);
+        if (index >= 0 && index < contactIds.length) {
+          clearPending();
+          goto(`/contacts/${contactIds[index]}`);
+        } else {
+          // Index out of range, clear pending state
+          clearPending();
+        }
+      } else {
+        // Invalid key after letter prefix, clear pending state
+        clearPending();
+      }
+      return;
+    }
+
+    // No prefix yet - check if it's a number (1-9) or letter (a-z)
     if (keyNum >= 1 && keyNum <= 9) {
+      // Direct number: open item 1-9
       e.preventDefault();
-      const contactIds = $visibleContactIds;
       const index = keyNum - 1;
       if (index < contactIds.length) {
         clearPending();
         goto(`/contacts/${contactIds[index]}`);
       }
-    } else {
-      // Invalid key, clear pending state
-      clearPending();
+      return;
     }
+
+    // Check if it's a letter for extended navigation
+    if (keyLower >= 'a' && keyLower <= 'z') {
+      // Calculate the starting index for this letter group
+      const letterIndex = keyLower.charCodeAt(0) - 97; // 'a' = 0, 'b' = 1, etc.
+      const groupStartIndex = (letterIndex + 1) * ITEMS_PER_GROUP;
+
+      // Only accept the letter if there are items in this group
+      if (groupStartIndex < contactIds.length) {
+        e.preventDefault();
+        openModePrefix.set(keyLower);
+        return;
+      }
+    }
+
+    // Invalid key, clear pending state
+    clearPending();
     return;
   }
 
@@ -305,9 +353,19 @@ function closeHelp() {
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">/</kbd>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-700">Open Contact</span>
+                <span class="text-gray-700">Open Contact (1-9)</span>
                 <div class="flex gap-1">
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Open Contact (10+)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
                   <span class="text-gray-400">then</span>
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
                 </div>
@@ -470,11 +528,23 @@ function closeHelp() {
 {:else if pendingKey === 'o'}
   <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
     <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
-      <span class="text-sm font-medium text-gray-700">Open contact...</span>
-      <span class="text-xs text-gray-500 ml-2">Press 1-9 or Esc to cancel</span>
+      <span class="text-sm font-medium text-gray-700">
+        Open contact{$openModePrefix ? ` (${$openModePrefix}...)` : '...'}
+      </span>
+      <span class="text-xs text-gray-500 ml-2">
+        {#if $openModePrefix}
+          Press 1-9 or Esc to cancel
+        {:else}
+          Press 1-9, a-z, or Esc to cancel
+        {/if}
+      </span>
     </div>
     <div class="p-3 font-body text-sm text-gray-600">
-      Press the number shown on a contact to open it
+      {#if $openModePrefix}
+        Press the number to complete: {$openModePrefix}1, {$openModePrefix}2, ...
+      {:else}
+        Press the key shown on a contact to open it
+      {/if}
     </div>
   </div>
 {/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { isOpenModeActive } from '$lib/stores/ui';
+import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
 import type { ContactListItem } from '$shared';
 import ContactAvatar from './ContactAvatar.svelte';
 
@@ -11,9 +11,24 @@ interface Props {
 
 let { contact, index }: Props = $props();
 
-// Only show keyboard hint for first 9 items (keys 1-9)
-let showKeyHint = $derived(index !== undefined && index < 9 && $isOpenModeActive);
-let keyNumber = $derived(index !== undefined ? index + 1 : null);
+// Get the keyboard hint for this item
+let keyHint = $derived(index !== undefined ? getKeyboardHint(index) : null);
+
+// Determine if we should show the hint based on current open mode state
+let showKeyHint = $derived(() => {
+  if (index === undefined || !$isOpenModeActive || !keyHint) return false;
+
+  const prefix = $openModePrefix;
+
+  if (prefix === null) {
+    // No prefix selected yet - show all hints
+    return true;
+  }
+
+  // Prefix selected - only show hints that match this prefix
+  // e.g., if prefix is 'a', only show a1, a2, ... a9
+  return keyHint.length === 2 && keyHint[0] === prefix;
+});
 </script>
 
 <a
@@ -21,9 +36,9 @@ let keyNumber = $derived(index !== undefined ? index + 1 : null);
   class="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all relative"
   data-sveltekit-preload-data="tap"
 >
-  {#if showKeyHint && keyNumber}
-    <div class="absolute -left-1 -top-1 w-6 h-6 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">
-      {keyNumber}
+  {#if showKeyHint() && keyHint}
+    <div class="absolute -left-1 -top-1 min-w-6 h-6 px-1 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">
+      {keyHint}
     </div>
   {/if}
 

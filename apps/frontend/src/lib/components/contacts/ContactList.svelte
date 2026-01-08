@@ -99,15 +99,16 @@ $effect(() => {
   }
 });
 
-// Update visible contact IDs for keyboard navigation (first 9 items)
+// Update visible contact IDs for keyboard navigation
+// Supports up to 234 items (26 letters × 9 numbers)
 $effect(() => {
   if (!isSearchMode) {
     // Normal list mode - use contact list
-    const ids = $contactList.slice(0, 9).map((c) => c.id);
+    const ids = $contactList.map((c) => c.id);
     visibleContactIds.set(ids);
   } else if (searchResults.length > 0) {
     // Search mode - use search results
-    const ids = searchResults.slice(0, 9).map((r) => r.id);
+    const ids = searchResults.map((r) => r.id);
     visibleContactIds.set(ids);
   } else {
     visibleContactIds.set([]);
