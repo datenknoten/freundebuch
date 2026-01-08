@@ -5,6 +5,7 @@ import { contactList, contacts, isContactsLoading } from '$lib/stores/contacts';
 import { visibleContactIds } from '$lib/stores/ui';
 import type { GlobalSearchResult, PageSize, SearchSortBy } from '$shared';
 import ContactListItem from './ContactListItem.svelte';
+import ContactTable from './ContactTable.svelte';
 import SearchResultItem from './SearchResultItem.svelte';
 
 interface Props {
@@ -136,6 +137,16 @@ function toggleSortOrder() {
   } else {
     sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
   }
+  handleSortChange();
+}
+
+// Handle sort changes from table header clicks
+function handleTableSortChange(
+  newSortBy: 'display_name' | 'created_at' | 'updated_at',
+  newSortOrder: 'asc' | 'desc',
+) {
+  sortBy = newSortBy;
+  sortOrder = newSortOrder;
   handleSortChange();
 }
 
@@ -442,8 +453,19 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
         </a>
       </div>
     {:else}
-      <!-- Contact list -->
-      <div class="space-y-2" role="list" aria-label="Contacts">
+      <!-- Contact list - Table on desktop, cards on mobile -->
+      <!-- Desktop: Table view -->
+      <div class="hidden md:block">
+        <ContactTable
+          contacts={$contactList}
+          {sortBy}
+          {sortOrder}
+          onSortChange={handleTableSortChange}
+        />
+      </div>
+
+      <!-- Mobile: Card view -->
+      <div class="md:hidden space-y-2" role="list" aria-label="Contacts">
         {#each $contactList as contact, index (contact.id)}
           <ContactListItem {contact} {index} />
         {/each}
