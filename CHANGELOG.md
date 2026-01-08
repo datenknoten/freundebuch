@@ -1,3 +1,10 @@
+## [2.22.0](https://github.com/datenknoten/freundebuch/compare/v2.21.1...v2.22.0) (2026-01-08)
+
+### Features
+
+* Add pagination controls with user preferences ([3c32d72](https://github.com/datenknoten/freundebuch/commit/3c32d7253459c7a0f94ea4109ea4d99b1e6fb5bf))
+* **frontend:** Extend keyboard navigation to support more than 9 contacts ([6d1803b](https://github.com/datenknoten/freundebuch/commit/6d1803b9f7e0326fe24648fee4dc6a37bea51fa3))
+
 ## [2.21.1](https://github.com/datenknoten/freundebuch/compare/v2.21.0...v2.21.1) (2026-01-08)
 
 ### Bug Fixes
