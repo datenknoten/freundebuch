@@ -115,6 +115,7 @@ import {
   type IPaginatedFullTextSearchResult,
   paginatedFullTextSearch,
 } from '../models/queries/search.queries.js';
+import { sanitizeSearchHeadline } from '../utils/security.js';
 
 export class ContactsService {
   private db: pg.Pool;
@@ -1209,7 +1210,8 @@ export class ContactsService {
       primaryEmail: row.primary_email ?? undefined,
       primaryPhone: row.primary_phone ?? undefined,
       rank: row.rank ?? 0,
-      headline: row.headline ?? '',
+      // Sanitize headline to prevent XSS - only allow <mark> tags from ts_headline
+      headline: sanitizeSearchHeadline(row.headline),
       matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
     };
   }
@@ -1224,7 +1226,8 @@ export class ContactsService {
       primaryEmail: row.primary_email ?? undefined,
       primaryPhone: row.primary_phone ?? undefined,
       rank: row.rank ?? 0,
-      headline: row.headline ?? '',
+      // Sanitize headline to prevent XSS - only allow <mark> tags from ts_headline
+      headline: sanitizeSearchHeadline(row.headline),
       matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
     };
   }
