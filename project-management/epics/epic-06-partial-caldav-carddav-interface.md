@@ -1,6 +1,6 @@
 # Epic 6: CardDAV/CalDAV Interface
 
-**Status:** Planned
+**Status:** Partial (6A Done, 6B Planned)
 **Phase:** Integration & Polish (Phase 3)
 **Priority:** High
 **GitHub Issue:** [#8](https://github.com/enko/freundebuch2/issues/8)
@@ -13,10 +13,10 @@ Want to access your contacts on your phone and other devices? This feature provi
 
 This epic is divided into sub-epics to allow incremental delivery:
 
-| Sub-Epic | Title | Priority | Description |
-|----------|-------|----------|-------------|
-| [6A](#epic-6a-carddav-contact-sync) | CardDAV Contact Sync | Critical | Bidirectional contact synchronization |
-| [6B](#epic-6b-caldav-birthdays-calendar) | CalDAV Birthdays Calendar | High | Birthday events in calendar apps |
+| Sub-Epic | Title | Priority | Description | Status |
+|----------|-------|----------|-------------|--------|
+| [6A](#epic-6a-carddav-contact-sync) | CardDAV Contact Sync | Critical | Bidirectional contact synchronization | **Done** |
+| [6B](#epic-6b-caldav-birthdays-calendar) | CalDAV Birthdays Calendar | High | Birthday events in calendar apps | Planned |
 
 **Recommended Implementation Order:** 6A → 6B
 
@@ -37,6 +37,7 @@ This epic is divided into sub-epics to allow incremental delivery:
 # Epic 6A: CardDAV Contact Sync
 
 **Priority:** Critical - Must be completed first
+**Status:** Done
 
 ## Features
 
@@ -462,23 +463,23 @@ These features may be added after the core implementation:
 
 ## Implementation Checklist
 
-### Epic 6A: CardDAV
-- [ ] Set up PHP runtime and SabreDAV
-- [ ] Implement Node.js ↔ PHP bridge
-- [ ] Create app_passwords table and API
-- [ ] Implement HTTP Basic Auth with app passwords
-- [ ] Configure SabreDAV PDO backend for PostgreSQL
-- [ ] Implement contact → vCard mapping
-- [ ] Implement vCard → contact mapping
-- [ ] Set up change tracking triggers
-- [ ] Implement sync tokens
-- [ ] Add `/.well-known/carddav` endpoint
-- [ ] Test with Thunderbird CardBook
-- [ ] Test with iOS Contacts
-- [ ] Document setup procedures
-- [ ] Build frontend for app password management
+### Epic 6A: CardDAV - DONE
+- [x] Set up PHP runtime and SabreDAV (`docker/Dockerfile.sabredav`, `apps/sabredav/`)
+- [x] Implement Node.js ↔ PHP bridge (via nginx routing in `docker/nginx.*.conf`)
+- [x] Create app_passwords table and API (`database/migrations/1767200000000_carddav-support.ts`)
+- [x] Implement HTTP Basic Auth with app passwords (`apps/sabredav/src/Auth/AppPasswordBackend.php`)
+- [x] Configure SabreDAV PDO backend for PostgreSQL (`apps/sabredav/src/CardDAV/FreundebuchCardDAVBackend.php`)
+- [x] Implement contact → vCard mapping (`apps/sabredav/src/VCard/Mapper.php`)
+- [x] Implement vCard → contact mapping (`apps/sabredav/src/VCard/Mapper.php`)
+- [x] Set up change tracking triggers (`database/migrations/1767200000000_carddav-support.ts`)
+- [x] Implement sync tokens (RFC 6578 SyncSupport in CardDAV backend)
+- [x] Add `/.well-known/carddav` endpoint (`docker/nginx.*.conf`)
+- [ ] Test with Thunderbird CardBook (manual testing needed)
+- [ ] Test with iOS Contacts (manual testing needed)
+- [x] Document setup procedures (`apps/frontend/src/lib/components/CardDAVSetupGuide.svelte`)
+- [x] Build frontend for app password management (`apps/frontend/src/lib/components/AppPasswordManager.svelte`)
 
-### Epic 6B: CalDAV Birthdays
+### Epic 6B: CalDAV Birthdays - Planned
 - [ ] Extend SabreDAV config for CalDAV
 - [ ] Implement birthday → VEVENT mapping
 - [ ] Create read-only calendar backend

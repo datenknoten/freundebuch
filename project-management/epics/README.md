@@ -6,30 +6,34 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 
 | Epic | Title | Phase | Priority | Status |
 |------|-------|-------|----------|--------|
-| [Epic 0](epic-00-project-setup.md) | Project Setup & Infrastructure | Pre-MVP (Phase 0) | Critical | Planned |
-| [Epic 1](epic-01-contact-management.md) | Contact Management | MVP (Phase 1) | High | Planned |
-| [Epic 2](epic-02-relationship-management.md) | Relationship Management | Phase 2 | High | Planned |
-| [Epic 3](epic-03-reminder-system.md) | Reminder System | Phase 2 | High | Planned |
-| [Epic 4](epic-04-categorization-organization.md) | Categorization & Organization | MVP (Phase 1) | High | Planned |
-| [Epic 5](epic-05-multi-user-management.md) | Multi-User Management | Phase 1 (auth), Phase 2 (full) | High/Medium | Planned |
-| [Epic 6](epic-06-caldav-carddav-interface.md) | CalDAV/CardDAV Interface | Phase 3 | Medium | Planned |
-| [Epic 7](epic-07-import-export.md) | Import/Export | Phase 3 | Medium | Planned |
-| [Epic 8](epic-08-activity-timeline.md) | Activity Timeline | Phase 2 | Medium | Planned |
-| [Epic 9](epic-09-dashboard-insights.md) | Dashboard & Insights | Phase 2 (basic), Phase 3 (extended) | Medium | Planned |
-| [Epic 10](epic-10-search-functionality.md) | Search Functionality | Phase 1 (basic), Phase 2 (advanced) | High/Medium | Planned |
-| [Epic 11](epic-11-custom-fields.md) | Custom Fields | Phase 2 | Low | Planned |
-| [Epic 12](epic-12-collectives.md) | Collectives | Phase 2 | Medium | Planned |
-| [Epic 13](epic-13-self-service-pages.md) | Self-Service Friend Pages | Phase 4 | Low | Future |
+| [Epic 0](epic-00-done-project-setup.md) | Project Setup & Infrastructure | Pre-MVP (Phase 0) | Critical | **Done** |
+| [Epic 1](epic-01-done-contact-management.md) | Contact Management | MVP (Phase 1) | High | **Done** |
+| [Epic 2](epic-02-planned-relationship-management.md) | Relationship Management | Phase 2 | High | Planned |
+| [Epic 3](epic-03-planned-reminder-system.md) | Reminder System | Phase 2 | High | Planned |
+| [Epic 4](epic-04-planned-categorization-organization.md) | Categorization & Organization | MVP (Phase 1) | High | Planned |
+| [Epic 5](epic-05-done-multi-user-management.md) | Multi-User Management (Auth) | MVP (Phase 1) | High | **Done** |
+| [Epic 6](epic-06-partial-caldav-carddav-interface.md) | CalDAV/CardDAV Interface | Phase 3 | Medium | **Partial** (6A Done) |
+| [Epic 7](epic-07-planned-import-export.md) | Import/Export | Phase 3 | Medium | Planned |
+| [Epic 8](epic-08-planned-activity-timeline.md) | Activity Timeline | Phase 2 | Medium | Planned |
+| [Epic 9](epic-09-planned-dashboard-insights.md) | Dashboard & Insights | Phase 2 (basic), Phase 3 (extended) | Medium | Planned |
+| [Epic 10](epic-10-done-search-functionality.md) | Search Functionality (Basic) | MVP (Phase 1) | High | **Done** |
+| [Epic 11](epic-11-planned-custom-fields.md) | Custom Fields | Phase 2 | Low | Planned |
+| [Epic 12](epic-12-planned-collectives.md) | Collectives | Phase 2 | Medium | Planned |
+| [Epic 13](epic-13-future-self-service-pages.md) | Self-Service Friend Pages | Phase 4 | Low | Future |
+| [Epic 14](epic-14-done-subresource-inline-editing.md) | Subresource Inline Editing | Enhancement | High | **Done** |
+| [Epic 15](epic-15-planned-contact-notes.md) | Contact Notes | MVP (Phase 1) | High | Planned |
+| [Epic 16](epic-16-planned-multi-user-workspaces.md) | Multi-User Workspaces | Phase 2 | Medium | Planned |
+| [Epic 17](epic-17-planned-advanced-search.md) | Advanced Search | Phase 2 | Medium | Planned |
 
 ## Implementation Phases
 
-### Phase 0: Project Setup
+### Phase 0: Project Setup - COMPLETE
 **Goal:** Get our development foundation rock-solid
 
 **Epics:**
-- Epic 0: Project Setup & Infrastructure
+- Epic 0: Project Setup & Infrastructure - **Done**
 
-**What we're building:**
+**What we built:**
 - A smooth development environment that just works
 - CI/CD pipeline so we can ship with confidence
 - Database setup with migrations
@@ -39,21 +43,28 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 
 ---
 
-### Phase 1: MVP (Minimum Viable Product)
+### Phase 1: MVP (Minimum Viable Product) - IN PROGRESS
 **Goal:** Build something useful people can actually start using
 
 **Epics:**
-- Epic 1: Contact Management (the complete package)
-- Epic 4: Categorization & Organization (groups & tags)
-- Epic 5: Multi-User Management (authentication to get started)
-- Epic 10: Search Functionality (find what you need)
+- Epic 1: Contact Management - **Done** (1A, 1B, 1D complete)
+- Epic 4: Categorization & Organization (groups & tags) - Planned
+- Epic 5: Multi-User Management (authentication) - **Done**
+- Epic 10: Search Functionality (basic) - **Done**
+- Epic 14: Subresource Inline Editing - **Done**
+- Epic 15: Contact Notes - Planned (extracted from Epic 1C)
 
-**What you'll be able to do:**
+**What you can do now:**
 - Create, edit, and manage your contacts
-- Organize contacts into groups and tag them
+- Add phones, emails, addresses, URLs, dates, social profiles inline
+- Define relationships between contacts
 - Search to find anyone quickly
-- Log in securely (single-user for now)
+- Log in securely (single-user)
 - Use it on any device (responsive design!)
+
+**Still to come:**
+- Organize contacts into groups and tag them (Epic 4)
+- Contact notes (Epic 15)
 
 ---
 
@@ -61,14 +72,14 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 **Goal:** Add the features that make staying in touch easier
 
 **Epics:**
-- Epic 2: Relationship Management (track your interactions)
-- Epic 3: Reminder System (never forget to reach out)
-- Epic 5: Multi-User Management (full sharing capabilities)
-- Epic 8: Activity Timeline (see your history)
-- Epic 9: Dashboard & Insights (the big picture)
-- Epic 10: Search Functionality (advanced filters)
-- Epic 11: Custom Fields (make it truly yours)
-- Epic 12: Collectives (families, companies, and groups with auto-relationships)
+- Epic 2: Relationship Management (track your interactions) - Planned
+- Epic 3: Reminder System (never forget to reach out) - Planned
+- Epic 8: Activity Timeline (see your history) - Planned
+- Epic 9: Dashboard & Insights (the big picture) - Planned
+- Epic 11: Custom Fields (make it truly yours) - Planned
+- Epic 12: Collectives (families, companies, and groups with auto-relationships) - Planned
+- Epic 16: Multi-User Workspaces (sharing capabilities) - Planned (extracted from Epic 5)
+- Epic 17: Advanced Search (filters, fuzzy search, saved searches) - Planned (extracted from Epic 10)
 
 **What you'll be able to do:**
 - Keep a history of all your interactions
@@ -118,24 +129,29 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 
 ```mermaid
 graph TD
-    E0[Epic 0: Project Setup] --> E1[Epic 1: Contact Management]
+    E0[Epic 0: Project Setup ✅] --> E1[Epic 1: Contact Management ✅]
     E0 --> E4[Epic 4: Categorization]
-    E0 --> E5[Epic 5: Multi-User Auth]
-    E0 --> E10[Epic 10: Search]
+    E0 --> E5[Epic 5: Multi-User Auth ✅]
+    E0 --> E10[Epic 10: Search ✅]
     E1 --> E2[Epic 2: Relationship Management]
     E1 --> E4
     E1 --> E10
     E1 --> E11[Epic 11: Custom Fields]
     E1 --> E12[Epic 12: Collectives]
+    E1 --> E15[Epic 15: Contact Notes]
     E2 --> E3[Epic 3: Reminders]
     E2 --> E8[Epic 8: Timeline]
     E2 --> E9[Epic 9: Dashboard]
     E3 --> E9
-    E1 --> E6[Epic 6: CalDAV/CardDAV]
+    E1 --> E6[Epic 6: CalDAV/CardDAV 🔶]
     E1 --> E7[Epic 7: Import/Export]
     E4 --> E10
+    E4 --> E17[Epic 17: Advanced Search]
+    E10 --> E17
     E1 --> E13[Epic 13: Self-Service Pages]
     E5 --> E13
+    E5 --> E16[Epic 16: Multi-User Workspaces]
+    E1 --> E14[Epic 14: Inline Editing ✅]
 ```
 
 ## How to Use This Directory
@@ -175,4 +191,4 @@ Got questions or ideas about these epics? We'd love to hear from you:
 
 ---
 
-**Last Updated:** 2025-12-28
+**Last Updated:** 2026-01-08

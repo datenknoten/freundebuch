@@ -1,6 +1,6 @@
 # Epic 14: Edit Details Right on the Page
 
-**Status:** Planned
+**Status:** Done
 **Phase:** Enhancement
 **Priority:** High
 

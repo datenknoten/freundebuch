@@ -1,6 +1,6 @@
 # Epic 1: Contact Management
 
-**Status:** Planned
+**Status:** Done
 **Phase:** MVP (Phase 1)
 **Priority:** Critical
 **GitHub Issue:** [#3](https://github.com/enko/freundebuch2/issues/3)
@@ -13,16 +13,17 @@ This is the foundation of your Freundebuch - a comprehensive contact database th
 
 This epic is divided into sub-epics to allow incremental delivery:
 
-| Sub-Epic | Title | MVP Priority | Description |
-|----------|-------|--------------|-------------|
-| [1A](#epic-1a-core-contact-crud) | Core Contact CRUD | Critical | Basic contact management - the foundation |
-| [1B](#epic-1b-extended-contact-fields) | Extended Contact Fields | High | Rich context: dates, profession, social profiles |
-| [1C](#epic-1c-contact-notes) | Contact Notes | High | Timestamped notes system |
-| [1D](#epic-1d-contact-relationships) | Contact Relationships | Medium | Links between contacts |
+| Sub-Epic | Title | MVP Priority | Description | Status |
+|----------|-------|--------------|-------------|--------|
+| [1A](#epic-1a-core-contact-crud) | Core Contact CRUD | Critical | Basic contact management - the foundation | Done |
+| [1B](#epic-1b-extended-contact-fields) | Extended Contact Fields | High | Rich context: dates, profession, social profiles | Done |
+| 1C | Contact Notes | High | Timestamped notes system | Extracted to [Epic 15](epic-15-planned-contact-notes.md) |
+| [1D](#epic-1d-contact-relationships) | Contact Relationships | Medium | Links between contacts | Done |
 
 **Recommended Implementation Order:** 1A → 1B → 1C → 1D
 
-> **Note:** Custom fields have been extracted to [Epic 11: Custom Fields](epic-11-custom-fields.md) for Phase 2.
+> **Note:** Custom fields have been extracted to [Epic 11: Custom Fields](epic-11-planned-custom-fields.md) for Phase 2.
+> **Note:** Contact Notes (1C) has been extracted to [Epic 15: Contact Notes](epic-15-planned-contact-notes.md).
 
 ---
 
@@ -536,76 +537,9 @@ CREATE INDEX idx_contact_social_profiles_contact_id ON contact_social_profiles(c
 
 ---
 
-# Epic 1C: Contact Notes
+---
 
-**Priority:** High
-**Depends on:** Epic 1A
-
-## Features
-
-### Notes System
-- Add timestamped notes to any contact
-- Plain text (rich text deferred to future enhancement)
-- Edit existing notes
-- Delete notes
-- Notes displayed in reverse chronological order (newest first)
-- Notes are searchable (basic substring search for MVP)
-
-## User Stories
-
-1. As a user, I want to add notes about a contact so I can remember important details
-2. As a user, I want to see when I added each note so I have temporal context
-3. As a user, I want to edit a note if I made a mistake
-4. As a user, I want to delete a note I no longer need
-5. As a user, I want to see notes in chronological order so I can follow the history
-
-## Database Schema
-
-```sql
-CREATE TABLE contact_notes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,  -- Who wrote the note
-
-    content TEXT NOT NULL,
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    CONSTRAINT notes_content_not_empty CHECK (LENGTH(TRIM(content)) > 0)
-);
-
-CREATE INDEX idx_contact_notes_contact_id ON contact_notes(contact_id);
-CREATE INDEX idx_contact_notes_created_at ON contact_notes(contact_id, created_at DESC);
-
--- Full-text search index for notes (basic search)
-CREATE INDEX idx_contact_notes_content_search ON contact_notes
-    USING GIN (to_tsvector('english', content));
-```
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/contacts/:id/notes` | List notes for contact (paginated) |
-| POST | `/api/contacts/:id/notes` | Add new note |
-| PUT | `/api/contacts/:id/notes/:noteId` | Update note |
-| DELETE | `/api/contacts/:id/notes/:noteId` | Delete note |
-
-## Frontend Components
-
-| Component | Description |
-|-----------|-------------|
-| `NotesList` | Chronological list of notes with timestamps |
-| `NoteItem` | Single note display with edit/delete actions |
-| `NoteForm` | Text area for adding/editing notes |
-| `NotesSection` | Container for notes in contact detail view |
-
-## Success Metrics
-
-- Notes list loads in <200ms for 100 notes
-- Note creation in <100ms
-- Notes search returns results in <300ms
+> **Note:** Epic 1C (Contact Notes) has been extracted to [Epic 15: Contact Notes](epic-15-planned-contact-notes.md).
 
 ---
 

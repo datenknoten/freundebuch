@@ -1,6 +1,6 @@
 # Epic 0: Project Setup & Infrastructure
 
-**Status:** Planned
+**Status:** Done
 **Phase:** Pre-MVP (Phase 0)
 **Priority:** Critical
 **GitHub Issue:** [#2](https://github.com/enko/freundebuch2/issues/2)
