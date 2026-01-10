@@ -1,3 +1,9 @@
+## [2.23.3](https://github.com/datenknoten/freundebuch/compare/v2.23.2...v2.23.3) (2026-01-10)
+
+### Bug Fixes
+
+* **sabredav:** Embed contact photos as base64 in vCards for iOS compatibility ([bb2c488](https://github.com/datenknoten/freundebuch/commit/bb2c48854941424e2d8a68295fdad4e83a3b048f))
+
 ## [2.23.2](https://github.com/datenknoten/freundebuch/compare/v2.23.1...v2.23.2) (2026-01-08)
 
 ### Bug Fixes
