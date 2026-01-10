@@ -1,3 +1,14 @@
+## [2.25.0](https://github.com/datenknoten/freundebuch/compare/v2.24.1...v2.25.0) (2026-01-10)
+
+### Features
+
+* **frontend:** add privacy policy page and navigation links ([2a42007](https://github.com/datenknoten/freundebuch/commit/2a420075aaf2edf6338d289ad60f0429695f91b2))
+* **frontend:** enhance privacy policy with GDPR compliance and Sentry disclosure ([e1704f5](https://github.com/datenknoten/freundebuch/commit/e1704f5c94ed8196a8da78c31716e585d7426639))
+
+### Bug Fixes
+
+* **frontend:** address PR review comments on privacy policy ([2d24c98](https://github.com/datenknoten/freundebuch/commit/2d24c98f57fffaa4e61ecebb28562d78ab35e579))
+
 ## [2.24.1](https://github.com/datenknoten/freundebuch/compare/v2.24.0...v2.24.1) (2026-01-10)
 
 ### Bug Fixes
