@@ -34,9 +34,10 @@ jobs:
       - name: Load Review Prompt
         run: |
           {
-            echo 'REVIEW_PROMPT<<PROMPT_EOF'
+            echo 'REVIEW_PROMPT<<GHADELIMITER7x9k2m'
             cat .github/prompts/code-review-prompt.md
-            echo PROMPT_EOF
+            echo ''
+            echo 'GHADELIMITER7x9k2m'
           } >> $GITHUB_ENV
 
       - uses: anthropics/claude-code-action@v1
