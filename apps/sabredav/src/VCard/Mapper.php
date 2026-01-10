@@ -16,6 +16,12 @@ class Mapper
 {
     private PDO $pdo;
 
+    /**
+     * Cache for fetched images to avoid repeated HTTP requests
+     * @var array<string, array{data: string, mediatype: string}|null>
+     */
+    private array $imageCache = [];
+
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
@@ -112,9 +118,13 @@ class Mapper
             }
         }
 
-        // Photo
+        // Photo - embed as base64 data URI for iOS/CardDAV client compatibility
         if (!empty($contact['photo_url'])) {
-            $lines[] = 'PHOTO:' . $contact['photo_url'];
+            $photoData = $this->fetchAndEncodeImage($contact['photo_url']);
+            if ($photoData !== null) {
+                // vCard 4.0 format: PHOTO:data:image/jpeg;base64,<data>
+                $lines[] = 'PHOTO:data:' . $photoData['mediatype'] . ';base64,' . $photoData['data'];
+            }
         }
 
         // Social profiles
@@ -419,6 +429,136 @@ class Mapper
         ');
         $stmt->execute(['contact_id' => $contactId]);
         return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * Fetches an image from a URL and returns it as base64-encoded data.
+     *
+     * @param string $url The image URL to fetch
+     * @return array{data: string, mediatype: string}|null Base64 data and media type, or null on failure
+     */
+    private function fetchAndEncodeImage(string $url): ?array
+    {
+        // Check cache first
+        if (array_key_exists($url, $this->imageCache)) {
+            return $this->imageCache[$url];
+        }
+
+        // Validate URL
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            $this->imageCache[$url] = null;
+            return null;
+        }
+
+        // Only allow http and https schemes
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            $this->imageCache[$url] = null;
+            return null;
+        }
+
+        $ch = curl_init();
+        if ($ch === false) {
+            $this->imageCache[$url] = null;
+            return null;
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 3,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_USERAGENT => 'Freundebuch-CardDAV/1.0',
+            // Security: prevent SSRF to internal networks
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+        ]);
+
+        $imageData = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        // Check for errors
+        if ($imageData === false || $httpCode !== 200 || empty($imageData)) {
+            error_log(sprintf(
+                '[PHOTO_FETCH] Failed to fetch image from %s: HTTP %d, error: %s',
+                $url,
+                $httpCode,
+                $error
+            ));
+            $this->imageCache[$url] = null;
+            return null;
+        }
+
+        // Determine media type from content-type header or magic bytes
+        $mediaType = $this->detectImageMediaType($imageData, $contentType);
+        if ($mediaType === null) {
+            error_log(sprintf(
+                '[PHOTO_FETCH] Invalid image type from %s: %s',
+                $url,
+                $contentType ?? 'unknown'
+            ));
+            $this->imageCache[$url] = null;
+            return null;
+        }
+
+        $result = [
+            'data' => base64_encode($imageData),
+            'mediatype' => $mediaType,
+        ];
+
+        $this->imageCache[$url] = $result;
+        return $result;
+    }
+
+    /**
+     * Detects the media type of an image from its content and/or Content-Type header.
+     *
+     * @param string $data Raw image data
+     * @param string|null $contentType Content-Type header value
+     * @return string|null Media type (e.g., 'image/jpeg') or null if not a valid image
+     */
+    private function detectImageMediaType(string $data, ?string $contentType): ?string
+    {
+        // Check magic bytes first (more reliable than Content-Type)
+        $magicBytes = substr($data, 0, 12);
+
+        // JPEG: starts with FF D8 FF
+        if (str_starts_with($magicBytes, "\xFF\xD8\xFF")) {
+            return 'image/jpeg';
+        }
+
+        // PNG: starts with 89 50 4E 47 0D 0A 1A 0A
+        if (str_starts_with($magicBytes, "\x89PNG\r\n\x1A\n")) {
+            return 'image/png';
+        }
+
+        // GIF: starts with GIF87a or GIF89a
+        if (str_starts_with($magicBytes, 'GIF87a') || str_starts_with($magicBytes, 'GIF89a')) {
+            return 'image/gif';
+        }
+
+        // WebP: starts with RIFF....WEBP
+        if (str_starts_with($magicBytes, 'RIFF') && substr($data, 8, 4) === 'WEBP') {
+            return 'image/webp';
+        }
+
+        // Fallback to Content-Type header if magic bytes don't match
+        if ($contentType !== null) {
+            // Extract media type from Content-Type (may include charset)
+            $parts = explode(';', $contentType);
+            $mediaType = trim($parts[0]);
+
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (in_array($mediaType, $allowedTypes, true)) {
+                return $mediaType;
+            }
+        }
+
+        return null;
     }
 
     // vCard formatting helpers
