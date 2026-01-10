@@ -10,6 +10,8 @@ import type {
   DateInput,
   Email,
   EmailInput,
+  FacetedSearchResponse,
+  FacetFilters,
   GlobalSearchResult,
   MetInfo,
   MetInfoInput,
@@ -557,6 +559,51 @@ export async function paginatedSearch(
 
   return apiRequest<PaginatedSearchResponse>(
     `/api/contacts/search/paginated?${searchParams.toString()}`,
+  );
+}
+
+/** Parameters for faceted search */
+export interface FacetedSearchParams extends PaginatedSearchParams {
+  filters?: FacetFilters;
+  includeFacets?: boolean;
+}
+
+/**
+ * Faceted full-text search with filter support
+ * Supports filtering by location, professional, and relationship facets
+ */
+export async function facetedSearch(params: FacetedSearchParams): Promise<FacetedSearchResponse> {
+  const searchParams = new URLSearchParams();
+  searchParams.set('q', params.query);
+
+  if (params.page) searchParams.set('page', params.page.toString());
+  if (params.pageSize) searchParams.set('pageSize', params.pageSize.toString());
+  if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+  if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+  if (params.includeFacets) searchParams.set('includeFacets', 'true');
+
+  // Add filter parameters (comma-separated values)
+  if (params.filters?.country?.length) {
+    searchParams.set('country', params.filters.country.join(','));
+  }
+  if (params.filters?.city?.length) {
+    searchParams.set('city', params.filters.city.join(','));
+  }
+  if (params.filters?.organization?.length) {
+    searchParams.set('organization', params.filters.organization.join(','));
+  }
+  if (params.filters?.job_title?.length) {
+    searchParams.set('job_title', params.filters.job_title.join(','));
+  }
+  if (params.filters?.department?.length) {
+    searchParams.set('department', params.filters.department.join(','));
+  }
+  if (params.filters?.relationship_category?.length) {
+    searchParams.set('relationship_category', params.filters.relationship_category.join(','));
+  }
+
+  return apiRequest<FacetedSearchResponse>(
+    `/api/contacts/search/faceted?${searchParams.toString()}`,
   );
 }
 

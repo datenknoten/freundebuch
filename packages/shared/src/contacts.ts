@@ -512,3 +512,99 @@ export function parseContactListQuery(query: ContactListQuery): ContactListOptio
     sortOrder: query.sortOrder || 'asc',
   };
 }
+
+// ============================================================================
+// Faceted Search Types (Epic 10 Enhancement)
+// ============================================================================
+
+/** Active facet filter selections */
+export interface FacetFilters {
+  country?: string[];
+  city?: string[];
+  organization?: string[];
+  job_title?: string[];
+  department?: string[];
+  relationship_category?: RelationshipCategory[];
+}
+
+/** Single facet value with count of matching contacts */
+export interface FacetValue {
+  value: string;
+  count: number;
+}
+
+/** Collection of facet values for a specific field */
+export interface FacetGroup {
+  field: keyof FacetFilters;
+  label: string;
+  values: FacetValue[];
+}
+
+/** Facets organized by category */
+export interface FacetGroups {
+  location: FacetGroup[];
+  professional: FacetGroup[];
+  relationship: FacetGroup[];
+}
+
+/** Paginated search response with optional facet data */
+export interface FacetedSearchResponse extends PaginatedSearchResponse {
+  facets?: FacetGroups;
+}
+
+/** Schema for faceted search query parameters */
+export const FacetedSearchQuerySchema = type({
+  q: 'string > 0',
+  'page?': 'string',
+  'pageSize?': 'string',
+  'sortBy?': SearchSortBySchema,
+  'sortOrder?': '"asc" | "desc"',
+  // Facet filters (comma-separated values)
+  'country?': 'string',
+  'city?': 'string',
+  'organization?': 'string',
+  'job_title?': 'string',
+  'department?': 'string',
+  'relationship_category?': 'string',
+  // Whether to include facet counts in response
+  'includeFacets?': 'string',
+});
+export type FacetedSearchQuery = typeof FacetedSearchQuerySchema.infer;
+
+/** Parsed faceted search options */
+export interface FacetedSearchOptions extends SearchOptions {
+  filters: FacetFilters;
+  includeFacets: boolean;
+}
+
+/**
+ * Parse and validate faceted search query parameters
+ */
+export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearchOptions {
+  const base = parseSearchQuery(query);
+
+  // Parse comma-separated filter values
+  const parseFilterArray = (value: string | undefined): string[] | undefined => {
+    if (!value) return undefined;
+    const values = value
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+    return values.length > 0 ? values : undefined;
+  };
+
+  return {
+    ...base,
+    filters: {
+      country: parseFilterArray(query.country),
+      city: parseFilterArray(query.city),
+      organization: parseFilterArray(query.organization),
+      job_title: parseFilterArray(query.job_title),
+      department: parseFilterArray(query.department),
+      relationship_category: parseFilterArray(query.relationship_category) as
+        | RelationshipCategory[]
+        | undefined,
+    },
+    includeFacets: query.includeFacets === 'true',
+  };
+}

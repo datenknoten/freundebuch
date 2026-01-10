@@ -428,7 +428,7 @@ export class AuthService {
     const result = await updateUserPreferences.run(
       {
         externalId: userExternalId,
-        preferences: newPreferences as Record<string, unknown>,
+        preferences: newPreferences as unknown as import('../models/queries/users.queries.js').Json,
       },
       this.db,
     );

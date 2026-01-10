@@ -1,6 +1,8 @@
 /** Types generated for queries found in "src/models/queries/users.sql" */
 import { PreparedQuery } from '@pgtyped/runtime';
 
+export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
+
 /** 'GetUserByExternalId' parameters type */
 export interface IGetUserByExternalIdParams {
   externalId?: string | null | void;
@@ -210,9 +212,15 @@ export interface IGetUserWithPreferencesResult {
   email: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
-  /** User preferences stored as JSONB */
-  preferences: Record<string, unknown> | null;
+  /** User preferences stored as JSONB. Structure: { contactsPageSize?: 10 | 25 | 50 | 100 } */
+  preferences: Json;
   updated_at: Date;
+}
+
+/** 'GetUserWithPreferences' query type */
+export interface IGetUserWithPreferencesQuery {
+  params: IGetUserWithPreferencesParams;
+  result: IGetUserWithPreferencesResult;
 }
 
 const getUserWithPreferencesIR: any = {"usedParamSet":{"externalId":true},"params":[{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":99,"b":109}]}],"statement":"SELECT external_id, email, preferences, created_at, updated_at\nFROM auth.users\nWHERE external_id = :externalId"};
@@ -231,7 +239,7 @@ export const getUserWithPreferences = new PreparedQuery<IGetUserWithPreferencesP
 /** 'UpdateUserPreferences' parameters type */
 export interface IUpdateUserPreferencesParams {
   externalId?: string | null | void;
-  preferences?: Record<string, unknown> | null | void;
+  preferences?: Json | null | void;
 }
 
 /** 'UpdateUserPreferences' return type */
@@ -240,9 +248,15 @@ export interface IUpdateUserPreferencesResult {
   email: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
-  /** User preferences stored as JSONB */
-  preferences: Record<string, unknown> | null;
+  /** User preferences stored as JSONB. Structure: { contactsPageSize?: 10 | 25 | 50 | 100 } */
+  preferences: Json;
   updated_at: Date;
+}
+
+/** 'UpdateUserPreferences' query type */
+export interface IUpdateUserPreferencesQuery {
+  params: IUpdateUserPreferencesParams;
+  result: IUpdateUserPreferencesResult;
 }
 
 const updateUserPreferencesIR: any = {"usedParamSet":{"preferences":true,"externalId":true},"params":[{"name":"preferences","required":false,"transform":{"type":"scalar"},"locs":[{"a":36,"b":47}]},{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":105,"b":115}]}],"statement":"UPDATE auth.users\nSET preferences = :preferences,\n    updated_at = CURRENT_TIMESTAMP\nWHERE external_id = :externalId\nRETURNING external_id, email, preferences, created_at, updated_at"};

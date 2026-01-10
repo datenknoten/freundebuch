@@ -1,14 +1,26 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
-import { isSearchOpen, search } from '$lib/stores/search';
+import {
+  hasActiveFilters,
+  isFacetsLoading,
+  isSearchOpen,
+  search,
+  searchFacets,
+} from '$lib/stores/search';
+import type { FacetFilters } from '$shared';
 import ContactAvatar from './contacts/ContactAvatar.svelte';
+import FacetChips from './search/FacetChips.svelte';
+import FacetDropdown from './search/FacetDropdown.svelte';
 
 let inputElement = $state<HTMLInputElement | undefined>(undefined);
 let containerElement = $state<HTMLDivElement | undefined>(undefined);
 
 // Get store values reactively
 let searchState = $derived($search);
+let facets = $derived($searchFacets);
+let facetsLoading = $derived($isFacetsLoading);
+let showFilters = $derived($hasActiveFilters);
 
 // Focus input when modal opens
 $effect(() => {
@@ -182,7 +194,7 @@ onMount(() => {
           bind:this={inputElement}
           type="text"
           value={searchState.query}
-          oninput={(e) => search.setQuery(e.currentTarget.value)}
+          oninput={(e) => search.setQuery(e.currentTarget.value, { loadFacets: true })}
           placeholder="Search friends..."
           class="w-full pl-12 pr-4 py-4 text-lg font-body text-gray-900 placeholder-gray-400 focus:outline-none"
           autocomplete="off"
@@ -198,6 +210,23 @@ onMount(() => {
           </div>
         {/if}
       </div>
+
+      <!-- Facet filters bar (shown when query has results or filters are active) -->
+      {#if (showResults || showFilters) && searchState.query.trim().length >= 2}
+        <div class="border-b border-gray-200 px-4 py-2 flex flex-wrap items-center gap-2">
+          <FacetDropdown
+            facets={facets}
+            activeFilters={searchState.filters}
+            onFilterChange={(filters: FacetFilters) => search.setFilters(filters)}
+            isLoading={facetsLoading}
+          />
+          <FacetChips
+            filters={searchState.filters}
+            onRemove={(field: keyof FacetFilters, value: string) => search.removeFilter(field, value)}
+            onClearAll={() => search.clearFilters()}
+          />
+        </div>
+      {/if}
 
       <!-- Results area -->
       <div class="max-h-[60vh] overflow-y-auto">
