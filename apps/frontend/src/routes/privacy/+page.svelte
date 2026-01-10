@@ -1,6 +1,3 @@
-<script lang="ts">
-</script>
-
 <svelte:head>
 	<title>Privacy Policy | Freundebuch</title>
 </svelte:head>
@@ -241,9 +238,12 @@
 			<div class="mt-10 pt-6 border-t border-gray-200">
 				<a
 					href="/"
-					class="text-forest hover:text-forest-light font-body font-medium transition-colors duration-200"
+					class="text-sm text-gray-500 hover:text-forest font-body flex items-center gap-1"
 				>
-					&larr; Back to Home
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+					</svg>
+					Back to Home
 				</a>
 			</div>
 		</div>
