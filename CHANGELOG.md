@@ -1,3 +1,9 @@
+## [2.28.0](https://github.com/datenknoten/freundebuch/compare/v2.27.0...v2.28.0) (2026-01-10)
+
+### Features
+
+* **frontend:** Auto-focus firstname field when friend form opens ([6c5d385](https://github.com/datenknoten/freundebuch/commit/6c5d38507649d1251e1ca4cac7f4c6dacd661f3a))
+
 ## [2.27.0](https://github.com/datenknoten/freundebuch/compare/v2.26.0...v2.27.0) (2026-01-10)
 
 ### Features
