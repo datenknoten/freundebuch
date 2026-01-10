@@ -352,12 +352,18 @@ WITH base_matches AS (
         ON p.contact_id = c.id
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+    LEFT JOIN contacts.contact_relationships r
+        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
+    LEFT JOIN contacts.contact_met_info m
+        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
           c.search_vector @@ websearch_to_tsquery('english', :query)
           OR e.id IS NOT NULL
           OR p.id IS NOT NULL
+          OR r.id IS NOT NULL
+          OR m.id IS NOT NULL
       )
 )
 -- Country facet
