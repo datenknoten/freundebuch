@@ -185,6 +185,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     {
         $externalId = str_replace('.vcf', '', $cardUri);
         $contactData = $this->mapper->vcardToContact($cardData, $externalId);
+        $vcardJson = $this->mapper->vcardToJson($cardData);
 
         $this->pdo->beginTransaction();
 
@@ -194,11 +195,13 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 INSERT INTO contacts.contacts (
                     user_id, external_id, display_name, name_prefix, name_first,
                     name_middle, name_last, name_suffix, nickname, photo_url,
-                    job_title, organization, department, interests, work_notes
+                    job_title, organization, department, interests, work_notes,
+                    vcard_raw_json
                 ) VALUES (
                     :user_id, :external_id, :display_name, :name_prefix, :name_first,
                     :name_middle, :name_last, :name_suffix, :nickname, :photo_url,
-                    :job_title, :organization, :department, :interests, :work_notes
+                    :job_title, :organization, :department, :interests, :work_notes,
+                    :vcard_raw_json
                 )
                 RETURNING id, updated_at
             ');
@@ -218,6 +221,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'department' => $contactData['department'] ?? null,
                 'interests' => $contactData['interests'] ?? null,
                 'work_notes' => $contactData['work_notes'] ?? null,
+                'vcard_raw_json' => json_encode($vcardJson),
             ]);
             $result = $stmt->fetch();
             $contactId = (int) $result['id'];
@@ -254,6 +258,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     {
         $externalId = str_replace('.vcf', '', $cardUri);
         $contactData = $this->mapper->vcardToContact($cardData, $externalId);
+        $vcardJson = $this->mapper->vcardToJson($cardData);
 
         // Get existing contact ID (before transaction - read only)
         $stmt = $this->pdo->prepare('
@@ -289,7 +294,8 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                     organization = :organization,
                     department = :department,
                     interests = :interests,
-                    work_notes = :work_notes
+                    work_notes = :work_notes,
+                    vcard_raw_json = :vcard_raw_json
                 WHERE id = :id
                 RETURNING updated_at
             ');
@@ -308,6 +314,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'department' => $contactData['department'] ?? null,
                 'interests' => $contactData['interests'] ?? null,
                 'work_notes' => $contactData['work_notes'] ?? null,
+                'vcard_raw_json' => json_encode($vcardJson),
             ]);
             $result = $stmt->fetch();
 

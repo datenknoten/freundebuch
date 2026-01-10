@@ -724,4 +724,60 @@ class Mapper
         }
         return 'other';
     }
+
+    /**
+     * Converts a vCard string to a JSON-friendly array structure.
+     *
+     * This method preserves ALL vCard properties, including ones we don't
+     * specifically handle, for debugging and feature discovery purposes.
+     *
+     * @param string $vcard The raw vCard string
+     * @return array Complete vCard data as a JSON-serializable array
+     */
+    public function vcardToJson(string $vcard): array
+    {
+        $lines = $this->unfoldVCard($vcard);
+        $properties = [];
+
+        foreach ($lines as $line) {
+            $parsed = $this->parseLine($line);
+            if (!$parsed) {
+                continue;
+            }
+
+            [$property, $params, $value] = $parsed;
+            $propertyUpper = strtoupper($property);
+
+            // Skip BEGIN/END markers
+            if ($propertyUpper === 'BEGIN' || $propertyUpper === 'END') {
+                continue;
+            }
+
+            $entry = [
+                'value' => $value,
+            ];
+
+            // Include parameters if present
+            if (!empty($params)) {
+                $entry['params'] = $params;
+            }
+
+            // Group properties that can appear multiple times
+            if (isset($properties[$propertyUpper])) {
+                // Convert to array if not already
+                if (!isset($properties[$propertyUpper][0])) {
+                    $properties[$propertyUpper] = [$properties[$propertyUpper]];
+                }
+                $properties[$propertyUpper][] = $entry;
+            } else {
+                $properties[$propertyUpper] = $entry;
+            }
+        }
+
+        return [
+            'raw' => $vcard,
+            'properties' => $properties,
+            'parsed_at' => date('c'),
+        ];
+    }
 }
