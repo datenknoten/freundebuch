@@ -1,4 +1,5 @@
 import { type } from 'arktype';
+import { ConfigurationError } from './errors.js';
 
 const BooleanString = type('"true" | "false" | "TRUE" | "FALSE" | "1" | "0" | boolean').pipe(
   (result) => result === 'true' || result === '1' || result === 'TRUE' || result === true,
@@ -69,7 +70,7 @@ export function getConfig(): Config {
 
   if (result instanceof type.errors) {
     const errorMessage = result.summary;
-    throw new Error(`Configuration validation failed:\n${errorMessage}`);
+    throw new ConfigurationError(`Configuration validation failed:\n${errorMessage}`);
   }
 
   cachedConfig = result;

@@ -1,5 +1,6 @@
 import type { Logger } from 'pino';
 import { type AddressCache, getHouseNumbersCache, getStreetsCache } from '../../utils/cache.js';
+import { OverpassApiError } from '../../utils/errors.js';
 
 export interface Street {
   name: string;
@@ -189,7 +190,7 @@ out tags;
         return await this.fetchOverpass(this.fallbackUrl, query);
       } catch (fallbackError) {
         this.logger.error({ primaryError, fallbackError }, 'Both Overpass endpoints failed');
-        throw new Error('Overpass API unavailable');
+        throw new OverpassApiError();
       }
     }
   }
@@ -208,7 +209,10 @@ out tags;
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Overpass API error ${response.status}: ${errorText}`);
+      throw new OverpassApiError(
+        `Overpass API error ${response.status}: ${errorText}`,
+        response.status,
+      );
     }
 
     const data = (await response.json()) as OverpassResponse;

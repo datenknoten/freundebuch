@@ -1,90 +1,5 @@
 import type pg from 'pg';
 import type { Logger } from 'pino';
-
-// ============================================================================
-// Auth Error Classes
-// ============================================================================
-
-/**
- * Base error class for auth-related errors
- */
-export class AuthError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'AuthError';
-  }
-}
-
-/**
- * Thrown when a user already exists during registration
- */
-export class UserAlreadyExistsError extends AuthError {
-  constructor() {
-    super('User already exists');
-    this.name = 'UserAlreadyExistsError';
-  }
-}
-
-/**
- * Thrown when user creation fails
- */
-export class UserCreationFailedError extends AuthError {
-  constructor() {
-    super('Failed to create user');
-    this.name = 'UserCreationFailedError';
-  }
-}
-
-/**
- * Thrown when credentials are invalid during login
- */
-export class InvalidCredentialsError extends AuthError {
-  constructor() {
-    super('Invalid credentials');
-    this.name = 'InvalidCredentialsError';
-  }
-}
-
-/**
- * Thrown when a session is invalid or expired
- */
-export class InvalidSessionError extends AuthError {
-  constructor() {
-    super('Invalid or expired session');
-    this.name = 'InvalidSessionError';
-  }
-}
-
-/**
- * Thrown when a user is not found
- */
-export class UserNotFoundError extends AuthError {
-  constructor() {
-    super('User not found');
-    this.name = 'UserNotFoundError';
-  }
-}
-
-/**
- * Thrown when a password reset token is invalid or expired
- */
-export class InvalidPasswordResetTokenError extends AuthError {
-  constructor() {
-    super('Invalid or expired password reset token');
-    this.name = 'InvalidPasswordResetTokenError';
-  }
-}
-
-/**
- * Thrown when preferences update fails
- */
-export class PreferencesUpdateFailedError extends AuthError {
-  constructor() {
-    super('Failed to update preferences');
-    this.name = 'PreferencesUpdateFailedError';
-  }
-}
-
 import {
   createPasswordResetToken,
   getPasswordResetToken,
@@ -102,6 +17,7 @@ import {
   getUserByExternalId,
   getUserSelfContact,
   getUserWithPreferences,
+  type Json,
   updateUserPassword,
   updateUserPreferences,
 } from '../models/queries/users.queries.js';
@@ -115,6 +31,15 @@ import {
   hashSessionToken,
   verifyPassword,
 } from '../utils/auth.js';
+import {
+  AuthenticationError,
+  InvalidSessionError,
+  InvalidTokenError,
+  PreferencesUpdateError,
+  UserAlreadyExistsError,
+  UserCreationError,
+  UserNotFoundError,
+} from '../utils/errors.js';
 
 export interface RegisterRequest {
   email: string;
@@ -179,7 +104,7 @@ export class AuthService {
 
     if (!newUser) {
       this.logger.error({ email: data.email }, 'Failed to create user');
-      throw new UserCreationFailedError();
+      throw new UserCreationError();
     }
 
     this.logger.info(
@@ -230,13 +155,13 @@ export class AuthService {
 
     if (users.length === 0) {
       this.logger.warn({ email: data.email }, 'User not found');
-      throw new InvalidCredentialsError();
+      throw new AuthenticationError();
     }
 
     const user = users[0];
 
     if (!user) {
-      throw new InvalidCredentialsError();
+      throw new AuthenticationError();
     }
 
     // Verify password
@@ -244,7 +169,7 @@ export class AuthService {
 
     if (!isValid) {
       this.logger.warn({ email: data.email }, 'Invalid password');
-      throw new InvalidCredentialsError();
+      throw new AuthenticationError();
     }
 
     this.logger.info(
@@ -435,13 +360,13 @@ export class AuthService {
 
     if (tokens.length === 0) {
       this.logger.warn('Invalid or expired password reset token');
-      throw new InvalidPasswordResetTokenError();
+      throw new InvalidTokenError('Invalid or expired password reset token');
     }
 
     const resetToken = tokens[0];
 
     if (!resetToken) {
-      throw new InvalidPasswordResetTokenError();
+      throw new InvalidTokenError('Invalid or expired password reset token');
     }
 
     // Hash new password
@@ -547,13 +472,13 @@ export class AuthService {
     const result = await updateUserPreferences.run(
       {
         externalId: userExternalId,
-        preferences: newPreferences as unknown as import('../models/queries/users.queries.js').Json,
+        preferences: newPreferences as unknown as Json,
       },
       this.db,
     );
 
     if (result.length === 0) {
-      throw new PreferencesUpdateFailedError();
+      throw new PreferencesUpdateError();
     }
 
     this.logger.info({ userId: userExternalId }, 'User preferences updated successfully');

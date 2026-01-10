@@ -22,6 +22,7 @@ import type { AppContext } from './types/context.js';
 import { initializeAddressCaches } from './utils/cache.js';
 import { getConfig } from './utils/config.js';
 import { checkDatabaseConnection, createPool } from './utils/db.js';
+import { DatabaseConnectionError } from './utils/errors.js';
 import { createLogger } from './utils/logger.js';
 import { setupCleanupScheduler } from './utils/scheduler.js';
 
@@ -35,7 +36,7 @@ export async function createApp(pool: pg.Pool) {
   const dbConnected = await checkDatabaseConnection(pool);
 
   if (dbConnected === false) {
-    throw new Error('No Database Connection');
+    throw new DatabaseConnectionError();
   }
 
   // Global context middleware - inject db and logger

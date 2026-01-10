@@ -1,5 +1,6 @@
 import type { Logger } from 'pino';
 import { type AddressCache, getCitiesCache } from '../../utils/cache.js';
+import { ZipcodeBaseApiError } from '../../utils/errors.js';
 
 export interface Country {
   code: string; // ISO 3166-1 alpha-2
@@ -258,7 +259,7 @@ export class ZipcodeBaseClient {
         { status: response.status, error: errorText, endpoint: '/search', postalCode, countryCode },
         'ZipcodeBase API error',
       );
-      throw new Error(`ZipcodeBase API error: ${response.status}`);
+      throw new ZipcodeBaseApiError(`ZipcodeBase API error: ${response.status}`, response.status);
     }
 
     const data = (await response.json()) as ZipcodeBaseSearchResponse;
