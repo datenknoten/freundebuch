@@ -731,8 +731,12 @@ class Mapper
      * This method preserves ALL vCard properties, including ones we don't
      * specifically handle, for debugging and feature discovery purposes.
      *
+     * Property grouping behavior:
+     * - Single occurrence: stored as object {"value": "...", "params": {...}}
+     * - Multiple occurrences: stored as array [{"value": "...", "params": {...}}, ...]
+     *
      * @param string $vcard The raw vCard string
-     * @return array Complete vCard data as a JSON-serializable array
+     * @return array{raw: string, properties: array, parsed_at: string} Complete vCard data
      */
     public function vcardToJson(string $vcard): array
     {

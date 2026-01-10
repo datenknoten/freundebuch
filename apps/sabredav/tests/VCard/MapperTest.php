@@ -541,4 +541,149 @@ VCARD;
         $this->assertCount(1, $parsed['emails']);
         $this->assertEquals($originalContact['emails'][0]['email_address'], $parsed['emails'][0]['email_address']);
     }
+
+    #[Test]
+    public function vcardToJsonParsesSimpleVCard(): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:test-uuid-123
+FN:Jane Smith
+END:VCARD
+VCARD;
+
+        $json = $this->mapper->vcardToJson($vcard);
+
+        $this->assertArrayHasKey('raw', $json);
+        $this->assertArrayHasKey('properties', $json);
+        $this->assertArrayHasKey('parsed_at', $json);
+        $this->assertEquals($vcard, $json['raw']);
+        $this->assertEquals('4.0', $json['properties']['VERSION']['value']);
+        $this->assertEquals('test-uuid-123', $json['properties']['UID']['value']);
+        $this->assertEquals('Jane Smith', $json['properties']['FN']['value']);
+    }
+
+    #[Test]
+    public function vcardToJsonGroupsMultiplePropertiesOfSameType(): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:test-uuid
+FN:Jane Smith
+TEL;TYPE=cell:+1-555-111-1111
+TEL;TYPE=work:+1-555-222-2222
+TEL;TYPE=home:+1-555-333-3333
+END:VCARD
+VCARD;
+
+        $json = $this->mapper->vcardToJson($vcard);
+
+        // Multiple TEL properties should be grouped into an array
+        $this->assertIsArray($json['properties']['TEL']);
+        $this->assertCount(3, $json['properties']['TEL']);
+        $this->assertEquals('+1-555-111-1111', $json['properties']['TEL'][0]['value']);
+        $this->assertEquals('+1-555-222-2222', $json['properties']['TEL'][1]['value']);
+        $this->assertEquals('+1-555-333-3333', $json['properties']['TEL'][2]['value']);
+    }
+
+    #[Test]
+    public function vcardToJsonPreservesPropertyParameters(): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:test-uuid
+FN:Jane Smith
+TEL;TYPE=cell;PREF=1:+1-555-123-4567
+EMAIL;TYPE=work:jane@work.com
+END:VCARD
+VCARD;
+
+        $json = $this->mapper->vcardToJson($vcard);
+
+        // TEL should have TYPE and PREF params
+        $this->assertArrayHasKey('params', $json['properties']['TEL']);
+        $this->assertEquals('cell', $json['properties']['TEL']['params']['TYPE']);
+        $this->assertEquals('1', $json['properties']['TEL']['params']['PREF']);
+
+        // EMAIL should have TYPE param
+        $this->assertArrayHasKey('params', $json['properties']['EMAIL']);
+        $this->assertEquals('work', $json['properties']['EMAIL']['params']['TYPE']);
+    }
+
+    #[Test]
+    public function vcardToJsonPreservesRawVCard(): void
+    {
+        $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:test\r\nFN:Test\r\nEND:VCARD";
+
+        $json = $this->mapper->vcardToJson($vcard);
+
+        // The raw vCard should be preserved exactly as provided
+        $this->assertEquals($vcard, $json['raw']);
+    }
+
+    #[Test]
+    public function vcardToJsonPreservesUnknownProperties(): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:test-uuid
+FN:Jane Smith
+X-CUSTOM-PROPERTY:Custom Value
+X-ANOTHER-PROP;TYPE=special:Another Value
+END:VCARD
+VCARD;
+
+        $json = $this->mapper->vcardToJson($vcard);
+
+        // Unknown X- properties should be preserved
+        $this->assertArrayHasKey('X-CUSTOM-PROPERTY', $json['properties']);
+        $this->assertEquals('Custom Value', $json['properties']['X-CUSTOM-PROPERTY']['value']);
+        $this->assertArrayHasKey('X-ANOTHER-PROP', $json['properties']);
+        $this->assertEquals('Another Value', $json['properties']['X-ANOTHER-PROP']['value']);
+        $this->assertEquals('special', $json['properties']['X-ANOTHER-PROP']['params']['TYPE']);
+    }
+
+    #[Test]
+    public function vcardToJsonExcludesBeginEndMarkers(): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:test-uuid
+FN:Jane Smith
+END:VCARD
+VCARD;
+
+        $json = $this->mapper->vcardToJson($vcard);
+
+        // BEGIN and END should not appear in properties
+        $this->assertArrayNotHasKey('BEGIN', $json['properties']);
+        $this->assertArrayNotHasKey('END', $json['properties']);
+    }
+
+    #[Test]
+    public function vcardToJsonIncludesParsedAtTimestamp(): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:test-uuid
+FN:Jane Smith
+END:VCARD
+VCARD;
+
+        $before = date('c');
+        $json = $this->mapper->vcardToJson($vcard);
+        $after = date('c');
+
+        // parsed_at should be a valid ISO 8601 timestamp
+        $this->assertArrayHasKey('parsed_at', $json);
+        $parsedAt = strtotime($json['parsed_at']);
+        $this->assertGreaterThanOrEqual(strtotime($before), $parsedAt);
+        $this->assertLessThanOrEqual(strtotime($after), $parsedAt);
+    }
 }

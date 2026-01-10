@@ -221,7 +221,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'department' => $contactData['department'] ?? null,
                 'interests' => $contactData['interests'] ?? null,
                 'work_notes' => $contactData['work_notes'] ?? null,
-                'vcard_raw_json' => json_encode($vcardJson),
+                'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
             ]);
             $result = $stmt->fetch();
             $contactId = (int) $result['id'];
@@ -314,7 +314,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'department' => $contactData['department'] ?? null,
                 'interests' => $contactData['interests'] ?? null,
                 'work_notes' => $contactData['work_notes'] ?? null,
-                'vcard_raw_json' => json_encode($vcardJson),
+                'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
             ]);
             $result = $stmt->fetch();
 
