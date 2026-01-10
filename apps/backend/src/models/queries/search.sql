@@ -12,6 +12,7 @@ WITH matching_contacts AS (
         c.photo_thumbnail_url,
         c.organization,
         c.job_title,
+        c.work_notes,
         -- Calculate relevance score from full-text search
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
         -- Determine match source (using joined tables for efficiency)
@@ -60,7 +61,7 @@ SELECT
         'english',
         COALESCE(mc.display_name, '') || ' ' ||
         COALESCE(mc.organization, '') || ' ' ||
-        COALESCE((SELECT c2.work_notes FROM contacts.contacts c2 WHERE c2.id = mc.id), ''),
+        COALESCE(mc.work_notes, ''),
         websearch_to_tsquery('english', :query),
         'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
     ) as headline,
@@ -84,6 +85,7 @@ WITH matching_contacts AS (
         c.photo_thumbnail_url,
         c.organization,
         c.job_title,
+        c.work_notes,
         c.created_at,
         c.updated_at,
         -- Calculate relevance score from full-text search
@@ -132,7 +134,7 @@ sorted_results AS (
             'english',
             COALESCE(mc.display_name, '') || ' ' ||
             COALESCE(mc.organization, '') || ' ' ||
-            COALESCE((SELECT c2.work_notes FROM contacts.contacts c2 WHERE c2.id = mc.id), ''),
+            COALESCE(mc.work_notes, ''),
             websearch_to_tsquery('english', :query),
             'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
         ) as headline,
@@ -272,6 +274,7 @@ matching_contacts AS (
         c.photo_thumbnail_url,
         c.organization,
         c.job_title,
+        c.work_notes,
         c.created_at,
         c.updated_at,
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
@@ -301,7 +304,7 @@ sorted_results AS (
             'english',
             COALESCE(mc.display_name, '') || ' ' ||
             COALESCE(mc.organization, '') || ' ' ||
-            COALESCE((SELECT c2.work_notes FROM contacts.contacts c2 WHERE c2.id = mc.id), ''),
+            COALESCE(mc.work_notes, ''),
             websearch_to_tsquery('english', :query),
             'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
         ) as headline,
