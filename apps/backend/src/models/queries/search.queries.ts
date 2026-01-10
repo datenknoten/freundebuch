@@ -38,7 +38,7 @@ export interface IFullTextSearchContactsQuery {
   result: IFullTextSearchContactsResult;
 }
 
-const fullTextSearchContactsIR: any = {"usedParamSet":{"query":true,"wildcardQuery":true,"userExternalId":true,"limit":true},"params":[{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":328,"b":333},{"a":469,"b":474},{"a":941,"b":946},{"a":1738,"b":1743},{"a":2268,"b":2273},{"a":3248,"b":3253}]},{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":658,"b":671},{"a":1167,"b":1180},{"a":1375,"b":1388},{"a":1951,"b":1964},{"a":2513,"b":2526},{"a":2733,"b":2746}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":1570,"b":1584}]},{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":3775,"b":3780}]}],"statement":"WITH matching_contacts AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        c.organization,\n        c.job_title,\n        -- Calculate relevance score from full-text search\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,\n        -- Determine match source\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'\n            WHEN EXISTS (\n                SELECT 1 FROM contacts.contact_emails e\n                WHERE e.contact_id = c.id\n                AND e.email_address ILIKE :wildcardQuery\n            ) THEN 'email'\n            WHEN EXISTS (\n                SELECT 1 FROM contacts.contact_phones p\n                WHERE p.contact_id = c.id\n                AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n                    LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n            ) THEN 'phone'\n            WHEN EXISTS (\n                SELECT 1 FROM contacts.contact_relationships r\n                WHERE r.contact_id = c.id\n                AND r.notes ILIKE :wildcardQuery\n            ) THEN 'notes'\n            WHEN EXISTS (\n                SELECT 1 FROM contacts.contact_met_info m\n                WHERE m.contact_id = c.id\n                AND m.met_context ILIKE :wildcardQuery\n            ) THEN 'notes'\n            ELSE NULL\n        END as match_source\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          -- Full-text search on contact fields\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          -- OR partial match on email addresses\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_emails e\n              WHERE e.contact_id = c.id\n              AND e.email_address ILIKE :wildcardQuery\n          )\n          -- OR partial match on phone numbers (digits only)\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_phones p\n              WHERE p.contact_id = c.id\n              AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n                  LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n          )\n          -- OR match on relationship notes\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_relationships r\n              WHERE r.contact_id = c.id\n              AND r.notes ILIKE :wildcardQuery\n          )\n          -- OR match on met_context\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_met_info m\n              WHERE m.contact_id = c.id\n              AND m.met_context ILIKE :wildcardQuery\n          )\n      )\n)\nSELECT\n    mc.external_id,\n    mc.display_name,\n    mc.photo_thumbnail_url,\n    mc.organization,\n    mc.job_title,\n    mc.fts_rank as rank,\n    mc.match_source,\n    -- Generate headline/snippet for matched content\n    ts_headline(\n        'english',\n        COALESCE(mc.display_name, '') || ' ' ||\n        COALESCE(mc.organization, '') || ' ' ||\n        COALESCE((SELECT c2.work_notes FROM contacts.contacts c2 WHERE c2.id = mc.id), ''),\n        websearch_to_tsquery('english', :query),\n        'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n    ) as headline,\n    -- Get primary email\n    (SELECT e.email_address FROM contacts.contact_emails e\n     WHERE e.contact_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,\n    -- Get primary phone\n    (SELECT p.phone_number FROM contacts.contact_phones p\n     WHERE p.contact_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone\nFROM matching_contacts mc\nORDER BY mc.fts_rank DESC, mc.display_name ASC\nLIMIT :limit"};
+const fullTextSearchContactsIR: any = {"usedParamSet":{"query":true,"wildcardQuery":true,"userExternalId":true,"limit":true},"params":[{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":328,"b":333},{"a":506,"b":511},{"a":1173,"b":1178},{"a":1624,"b":1629},{"a":2283,"b":2288}]},{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":986,"b":999},{"a":1303,"b":1316},{"a":1415,"b":1428}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":1456,"b":1470}]},{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":2810,"b":2815}]}],"statement":"WITH matching_contacts AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        c.organization,\n        c.job_title,\n        -- Calculate relevance score from full-text search\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,\n        -- Determine match source (using joined tables for efficiency)\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'\n            WHEN e.id IS NOT NULL THEN 'email'\n            WHEN p.id IS NOT NULL THEN 'phone'\n            WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'\n            ELSE NULL\n        END as match_source\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    -- LEFT JOINs for efficient matching (avoids correlated subqueries)\n    LEFT JOIN contacts.contact_emails e\n        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN contacts.contact_phones p\n        ON p.contact_id = c.id\n        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN contacts.contact_relationships r\n        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN contacts.contact_met_info m\n        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          -- Full-text search on contact fields\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          -- OR matches from joined tables\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n)\nSELECT\n    mc.external_id,\n    mc.display_name,\n    mc.photo_thumbnail_url,\n    mc.organization,\n    mc.job_title,\n    mc.fts_rank as rank,\n    mc.match_source,\n    -- Generate headline/snippet for matched content\n    ts_headline(\n        'english',\n        COALESCE(mc.display_name, '') || ' ' ||\n        COALESCE(mc.organization, '') || ' ' ||\n        COALESCE((SELECT c2.work_notes FROM contacts.contacts c2 WHERE c2.id = mc.id), ''),\n        websearch_to_tsquery('english', :query),\n        'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n    ) as headline,\n    -- Get primary email\n    (SELECT e.email_address FROM contacts.contact_emails e\n     WHERE e.contact_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,\n    -- Get primary phone\n    (SELECT p.phone_number FROM contacts.contact_phones p\n     WHERE p.contact_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone\nFROM matching_contacts mc\nORDER BY mc.fts_rank DESC, mc.display_name ASC\nLIMIT :limit"};
 
 /**
  * Query generated from SQL:
@@ -53,64 +53,37 @@ const fullTextSearchContactsIR: any = {"usedParamSet":{"query":true,"wildcardQue
  *         c.job_title,
  *         -- Calculate relevance score from full-text search
  *         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
- *         -- Determine match source
+ *         -- Determine match source (using joined tables for efficiency)
  *         CASE
  *             WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'
- *             WHEN EXISTS (
- *                 SELECT 1 FROM contacts.contact_emails e
- *                 WHERE e.contact_id = c.id
- *                 AND e.email_address ILIKE :wildcardQuery
- *             ) THEN 'email'
- *             WHEN EXISTS (
- *                 SELECT 1 FROM contacts.contact_phones p
- *                 WHERE p.contact_id = c.id
- *                 AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *                     LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
- *             ) THEN 'phone'
- *             WHEN EXISTS (
- *                 SELECT 1 FROM contacts.contact_relationships r
- *                 WHERE r.contact_id = c.id
- *                 AND r.notes ILIKE :wildcardQuery
- *             ) THEN 'notes'
- *             WHEN EXISTS (
- *                 SELECT 1 FROM contacts.contact_met_info m
- *                 WHERE m.contact_id = c.id
- *                 AND m.met_context ILIKE :wildcardQuery
- *             ) THEN 'notes'
+ *             WHEN e.id IS NOT NULL THEN 'email'
+ *             WHEN p.id IS NOT NULL THEN 'phone'
+ *             WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
  *             ELSE NULL
  *         END as match_source
  *     FROM contacts.contacts c
  *     INNER JOIN auth.users u ON c.user_id = u.id
+ *     -- LEFT JOINs for efficient matching (avoids correlated subqueries)
+ *     LEFT JOIN contacts.contact_emails e
+ *         ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
+ *     LEFT JOIN contacts.contact_phones p
+ *         ON p.contact_id = c.id
+ *         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
+ *             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+ *     LEFT JOIN contacts.contact_relationships r
+ *         ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
+ *     LEFT JOIN contacts.contact_met_info m
+ *         ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
  *     WHERE u.external_id = :userExternalId
  *       AND c.deleted_at IS NULL
  *       AND (
  *           -- Full-text search on contact fields
  *           c.search_vector @@ websearch_to_tsquery('english', :query)
- *           -- OR partial match on email addresses
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_emails e
- *               WHERE e.contact_id = c.id
- *               AND e.email_address ILIKE :wildcardQuery
- *           )
- *           -- OR partial match on phone numbers (digits only)
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_phones p
- *               WHERE p.contact_id = c.id
- *               AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *                   LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
- *           )
- *           -- OR match on relationship notes
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_relationships r
- *               WHERE r.contact_id = c.id
- *               AND r.notes ILIKE :wildcardQuery
- *           )
- *           -- OR match on met_context
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_met_info m
- *               WHERE m.contact_id = c.id
- *               AND m.met_context ILIKE :wildcardQuery
- *           )
+ *           -- OR matches from joined tables
+ *           OR e.id IS NOT NULL
+ *           OR p.id IS NOT NULL
+ *           OR r.id IS NOT NULL
+ *           OR m.id IS NOT NULL
  *       )
  * )
  * SELECT
@@ -181,7 +154,7 @@ export interface IPaginatedFullTextSearchQuery {
   result: IPaginatedFullTextSearchResult;
 }
 
-const paginatedFullTextSearchIR: any = {"usedParamSet":{"query":true,"wildcardQuery":true,"userExternalId":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":372,"b":377},{"a":513,"b":518},{"a":985,"b":990},{"a":1782,"b":1787},{"a":2312,"b":2317},{"a":3282,"b":3287}]},{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":702,"b":715},{"a":1211,"b":1224},{"a":1419,"b":1432},{"a":1995,"b":2008},{"a":2557,"b":2570},{"a":2777,"b":2790}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":1614,"b":1628}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":3823,"b":3829},{"a":3914,"b":3920},{"a":4003,"b":4009},{"a":4099,"b":4105},{"a":4197,"b":4203},{"a":4291,"b":4297},{"a":4383,"b":4389},{"a":4477,"b":4483}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":3849,"b":3858},{"a":3940,"b":3949},{"a":4032,"b":4041},{"a":4128,"b":4137},{"a":4224,"b":4233},{"a":4318,"b":4327},{"a":4410,"b":4419},{"a":4504,"b":4513}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":4589,"b":4597}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":4610,"b":4616}]}],"statement":"WITH matching_contacts AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        c.organization,\n        c.job_title,\n        c.created_at,\n        c.updated_at,\n        -- Calculate relevance score from full-text search\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,\n        -- Determine match source\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'\n            WHEN EXISTS (\n                SELECT 1 FROM contacts.contact_emails e\n                WHERE e.contact_id = c.id\n                AND e.email_address ILIKE :wildcardQuery\n            ) THEN 'email'\n            WHEN EXISTS (\n                SELECT 1 FROM contacts.contact_phones p\n                WHERE p.contact_id = c.id\n                AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n                    LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n            ) THEN 'phone'\n            WHEN EXISTS (\n                SELECT 1 FROM contacts.contact_relationships r\n                WHERE r.contact_id = c.id\n                AND r.notes ILIKE :wildcardQuery\n            ) THEN 'notes'\n            WHEN EXISTS (\n                SELECT 1 FROM contacts.contact_met_info m\n                WHERE m.contact_id = c.id\n                AND m.met_context ILIKE :wildcardQuery\n            ) THEN 'notes'\n            ELSE NULL\n        END as match_source\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          -- Full-text search on contact fields\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          -- OR partial match on email addresses\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_emails e\n              WHERE e.contact_id = c.id\n              AND e.email_address ILIKE :wildcardQuery\n          )\n          -- OR partial match on phone numbers (digits only)\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_phones p\n              WHERE p.contact_id = c.id\n              AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n                  LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n          )\n          -- OR match on relationship notes\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_relationships r\n              WHERE r.contact_id = c.id\n              AND r.notes ILIKE :wildcardQuery\n          )\n          -- OR match on met_context\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_met_info m\n              WHERE m.contact_id = c.id\n              AND m.met_context ILIKE :wildcardQuery\n          )\n      )\n),\ntotal_count AS (\n    SELECT COUNT(*)::int as count FROM matching_contacts\n),\nsorted_results AS (\n    SELECT\n        mc.*,\n        -- Generate headline/snippet for matched content\n        ts_headline(\n            'english',\n            COALESCE(mc.display_name, '') || ' ' ||\n            COALESCE(mc.organization, '') || ' ' ||\n            COALESCE((SELECT c2.work_notes FROM contacts.contacts c2 WHERE c2.id = mc.id), ''),\n            websearch_to_tsquery('english', :query),\n            'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n        ) as headline,\n        -- Get primary email\n        (SELECT e.email_address FROM contacts.contact_emails e\n         WHERE e.contact_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,\n        -- Get primary phone\n        (SELECT p.phone_number FROM contacts.contact_phones p\n         WHERE p.contact_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone\n    FROM matching_contacts mc\n    ORDER BY\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,\n        mc.display_name ASC\n    LIMIT :pageSize\n    OFFSET :offset\n)\nSELECT\n    sr.external_id,\n    sr.display_name,\n    sr.photo_thumbnail_url,\n    sr.organization,\n    sr.job_title,\n    sr.fts_rank as rank,\n    sr.match_source,\n    sr.headline,\n    sr.primary_email,\n    sr.primary_phone,\n    tc.count as total_count\nFROM sorted_results sr\nCROSS JOIN total_count tc"};
+const paginatedFullTextSearchIR: any = {"usedParamSet":{"query":true,"wildcardQuery":true,"userExternalId":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":372,"b":377},{"a":550,"b":555},{"a":1217,"b":1222},{"a":1668,"b":1673},{"a":2317,"b":2322}]},{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":1030,"b":1043},{"a":1347,"b":1360},{"a":1459,"b":1472}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":1500,"b":1514}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":2858,"b":2864},{"a":2949,"b":2955},{"a":3038,"b":3044},{"a":3134,"b":3140},{"a":3232,"b":3238},{"a":3326,"b":3332},{"a":3418,"b":3424},{"a":3512,"b":3518}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":2884,"b":2893},{"a":2975,"b":2984},{"a":3067,"b":3076},{"a":3163,"b":3172},{"a":3259,"b":3268},{"a":3353,"b":3362},{"a":3445,"b":3454},{"a":3539,"b":3548}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":3624,"b":3632}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":3645,"b":3651}]}],"statement":"WITH matching_contacts AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        c.organization,\n        c.job_title,\n        c.created_at,\n        c.updated_at,\n        -- Calculate relevance score from full-text search\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,\n        -- Determine match source (using joined tables for efficiency)\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'\n            WHEN e.id IS NOT NULL THEN 'email'\n            WHEN p.id IS NOT NULL THEN 'phone'\n            WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'\n            ELSE NULL\n        END as match_source\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    -- LEFT JOINs for efficient matching (avoids correlated subqueries)\n    LEFT JOIN contacts.contact_emails e\n        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN contacts.contact_phones p\n        ON p.contact_id = c.id\n        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN contacts.contact_relationships r\n        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN contacts.contact_met_info m\n        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          -- Full-text search on contact fields\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          -- OR matches from joined tables\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n),\ntotal_count AS (\n    SELECT COUNT(*)::int as count FROM matching_contacts\n),\nsorted_results AS (\n    SELECT\n        mc.*,\n        -- Generate headline/snippet for matched content\n        ts_headline(\n            'english',\n            COALESCE(mc.display_name, '') || ' ' ||\n            COALESCE(mc.organization, '') || ' ' ||\n            COALESCE((SELECT c2.work_notes FROM contacts.contacts c2 WHERE c2.id = mc.id), ''),\n            websearch_to_tsquery('english', :query),\n            'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n        ) as headline,\n        -- Get primary email\n        (SELECT e.email_address FROM contacts.contact_emails e\n         WHERE e.contact_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,\n        -- Get primary phone\n        (SELECT p.phone_number FROM contacts.contact_phones p\n         WHERE p.contact_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone\n    FROM matching_contacts mc\n    ORDER BY\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,\n        mc.display_name ASC\n    LIMIT :pageSize\n    OFFSET :offset\n)\nSELECT\n    sr.external_id,\n    sr.display_name,\n    sr.photo_thumbnail_url,\n    sr.organization,\n    sr.job_title,\n    sr.fts_rank as rank,\n    sr.match_source,\n    sr.headline,\n    sr.primary_email,\n    sr.primary_phone,\n    tc.count as total_count\nFROM sorted_results sr\nCROSS JOIN total_count tc"};
 
 /**
  * Query generated from SQL:
@@ -198,64 +171,37 @@ const paginatedFullTextSearchIR: any = {"usedParamSet":{"query":true,"wildcardQu
  *         c.updated_at,
  *         -- Calculate relevance score from full-text search
  *         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
- *         -- Determine match source
+ *         -- Determine match source (using joined tables for efficiency)
  *         CASE
  *             WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'
- *             WHEN EXISTS (
- *                 SELECT 1 FROM contacts.contact_emails e
- *                 WHERE e.contact_id = c.id
- *                 AND e.email_address ILIKE :wildcardQuery
- *             ) THEN 'email'
- *             WHEN EXISTS (
- *                 SELECT 1 FROM contacts.contact_phones p
- *                 WHERE p.contact_id = c.id
- *                 AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *                     LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
- *             ) THEN 'phone'
- *             WHEN EXISTS (
- *                 SELECT 1 FROM contacts.contact_relationships r
- *                 WHERE r.contact_id = c.id
- *                 AND r.notes ILIKE :wildcardQuery
- *             ) THEN 'notes'
- *             WHEN EXISTS (
- *                 SELECT 1 FROM contacts.contact_met_info m
- *                 WHERE m.contact_id = c.id
- *                 AND m.met_context ILIKE :wildcardQuery
- *             ) THEN 'notes'
+ *             WHEN e.id IS NOT NULL THEN 'email'
+ *             WHEN p.id IS NOT NULL THEN 'phone'
+ *             WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
  *             ELSE NULL
  *         END as match_source
  *     FROM contacts.contacts c
  *     INNER JOIN auth.users u ON c.user_id = u.id
+ *     -- LEFT JOINs for efficient matching (avoids correlated subqueries)
+ *     LEFT JOIN contacts.contact_emails e
+ *         ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
+ *     LEFT JOIN contacts.contact_phones p
+ *         ON p.contact_id = c.id
+ *         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
+ *             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+ *     LEFT JOIN contacts.contact_relationships r
+ *         ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
+ *     LEFT JOIN contacts.contact_met_info m
+ *         ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
  *     WHERE u.external_id = :userExternalId
  *       AND c.deleted_at IS NULL
  *       AND (
  *           -- Full-text search on contact fields
  *           c.search_vector @@ websearch_to_tsquery('english', :query)
- *           -- OR partial match on email addresses
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_emails e
- *               WHERE e.contact_id = c.id
- *               AND e.email_address ILIKE :wildcardQuery
- *           )
- *           -- OR partial match on phone numbers (digits only)
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_phones p
- *               WHERE p.contact_id = c.id
- *               AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *                   LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
- *           )
- *           -- OR match on relationship notes
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_relationships r
- *               WHERE r.contact_id = c.id
- *               AND r.notes ILIKE :wildcardQuery
- *           )
- *           -- OR match on met_context
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_met_info m
- *               WHERE m.contact_id = c.id
- *               AND m.met_context ILIKE :wildcardQuery
- *           )
+ *           -- OR matches from joined tables
+ *           OR e.id IS NOT NULL
+ *           OR p.id IS NOT NULL
+ *           OR r.id IS NOT NULL
+ *           OR m.id IS NOT NULL
  *       )
  * ),
  * total_count AS (
@@ -496,41 +442,35 @@ export interface IFacetedSearchQuery {
   result: IFacetedSearchResult;
 }
 
-const facetedSearchIR: any = {"usedParamSet":{"userExternalId":true,"query":true,"wildcardQuery":true,"filterCountry":true,"filterCity":true,"filterOrganization":true,"filterJobTitle":true,"filterDepartment":true,"filterRelationshipCategory":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":220,"b":234}]},{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":340,"b":345},{"a":760,"b":765},{"a":2830,"b":2835},{"a":2937,"b":2942},{"a":3278,"b":3283},{"a":3872,"b":3877}]},{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":504,"b":517},{"a":961,"b":974},{"a":1144,"b":1157},{"a":3077,"b":3090}]},{"name":"filterCountry","required":false,"transform":{"type":"scalar"},"locs":[{"a":1414,"b":1427},{"a":1570,"b":1583}]},{"name":"filterCity","required":false,"transform":{"type":"scalar"},"locs":[{"a":1633,"b":1643},{"a":1783,"b":1793}]},{"name":"filterOrganization","required":false,"transform":{"type":"scalar"},"locs":[{"a":1851,"b":1869},{"a":1911,"b":1929}]},{"name":"filterJobTitle","required":false,"transform":{"type":"scalar"},"locs":[{"a":1974,"b":1988},{"a":2027,"b":2041}]},{"name":"filterDepartment","required":false,"transform":{"type":"scalar"},"locs":[{"a":2087,"b":2103},{"a":2143,"b":2159}]},{"name":"filterRelationshipCategory","required":false,"transform":{"type":"scalar"},"locs":[{"a":2216,"b":2242},{"a":2479,"b":2505}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":4355,"b":4361},{"a":4446,"b":4452},{"a":4535,"b":4541},{"a":4631,"b":4637},{"a":4729,"b":4735},{"a":4823,"b":4829},{"a":4915,"b":4921},{"a":5009,"b":5015}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":4381,"b":4390},{"a":4472,"b":4481},{"a":4564,"b":4573},{"a":4660,"b":4669},{"a":4756,"b":4765},{"a":4850,"b":4859},{"a":4942,"b":4951},{"a":5036,"b":5045}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":5121,"b":5129}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":5142,"b":5148}]}],"statement":"WITH base_matches AS (\n    -- Base query matching contacts via FTS and other search methods\n    SELECT DISTINCT c.id\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_emails e\n              WHERE e.contact_id = c.id\n              AND e.email_address ILIKE :wildcardQuery\n          )\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_phones p\n              WHERE p.contact_id = c.id\n              AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n                  LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n          )\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_relationships r\n              WHERE r.contact_id = c.id\n              AND r.notes ILIKE :wildcardQuery\n          )\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_met_info m\n              WHERE m.contact_id = c.id\n              AND m.met_context ILIKE :wildcardQuery\n          )\n      )\n),\nfiltered_matches AS (\n    -- Apply facet filters to base matches\n    SELECT bm.id\n    FROM base_matches bm\n    INNER JOIN contacts.contacts c ON c.id = bm.id\n    WHERE\n        -- Country filter (NULL array means no filter)\n        (:filterCountry::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM contacts.contact_addresses a\n            WHERE a.contact_id = c.id AND a.country = ANY(:filterCountry)\n        ))\n        -- City filter\n        AND (:filterCity::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM contacts.contact_addresses a\n            WHERE a.contact_id = c.id AND a.city = ANY(:filterCity)\n        ))\n        -- Organization filter\n        AND (:filterOrganization::text[] IS NULL OR c.organization = ANY(:filterOrganization))\n        -- Job title filter\n        AND (:filterJobTitle::text[] IS NULL OR c.job_title = ANY(:filterJobTitle))\n        -- Department filter\n        AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))\n        -- Relationship category filter\n        AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM contacts.contact_relationships r\n            INNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id\n            WHERE r.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)\n        ))\n),\nmatching_contacts AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        c.organization,\n        c.job_title,\n        c.created_at,\n        c.updated_at,\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'\n            WHEN EXISTS (SELECT 1 FROM contacts.contact_emails e WHERE e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery) THEN 'email'\n            WHEN EXISTS (SELECT 1 FROM contacts.contact_phones p WHERE p.contact_id = c.id AND regexp_replace(p.phone_number, '[^0-9]', '', 'g') LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%') THEN 'phone'\n            ELSE 'notes'\n        END as match_source\n    FROM filtered_matches fm\n    INNER JOIN contacts.contacts c ON c.id = fm.id\n),\ntotal_count AS (\n    SELECT COUNT(*)::int as count FROM matching_contacts\n),\nsorted_results AS (\n    SELECT\n        mc.*,\n        ts_headline(\n            'english',\n            COALESCE(mc.display_name, '') || ' ' ||\n            COALESCE(mc.organization, '') || ' ' ||\n            COALESCE((SELECT c2.work_notes FROM contacts.contacts c2 WHERE c2.id = mc.id), ''),\n            websearch_to_tsquery('english', :query),\n            'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n        ) as headline,\n        (SELECT e.email_address FROM contacts.contact_emails e\n         WHERE e.contact_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,\n        (SELECT p.phone_number FROM contacts.contact_phones p\n         WHERE p.contact_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone\n    FROM matching_contacts mc\n    ORDER BY\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,\n        mc.display_name ASC\n    LIMIT :pageSize\n    OFFSET :offset\n)\nSELECT\n    sr.external_id,\n    sr.display_name,\n    sr.photo_thumbnail_url,\n    sr.organization,\n    sr.job_title,\n    sr.fts_rank as rank,\n    sr.match_source,\n    sr.headline,\n    sr.primary_email,\n    sr.primary_phone,\n    tc.count as total_count\nFROM sorted_results sr\nCROSS JOIN total_count tc"};
+const facetedSearchIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,"userExternalId":true,"filterCountry":true,"filterCity":true,"filterOrganization":true,"filterJobTitle":true,"filterDepartment":true,"filterRelationshipCategory":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":368,"b":381},{"a":685,"b":698},{"a":797,"b":810},{"a":3251,"b":3264}]},{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":555,"b":560},{"a":958,"b":963},{"a":2751,"b":2756},{"a":2858,"b":2863},{"a":3438,"b":3443},{"a":3885,"b":3890}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":838,"b":852}]},{"name":"filterCountry","required":false,"transform":{"type":"scalar"},"locs":[{"a":1329,"b":1342},{"a":1485,"b":1498}]},{"name":"filterCity","required":false,"transform":{"type":"scalar"},"locs":[{"a":1548,"b":1558},{"a":1698,"b":1708}]},{"name":"filterOrganization","required":false,"transform":{"type":"scalar"},"locs":[{"a":1766,"b":1784},{"a":1826,"b":1844}]},{"name":"filterJobTitle","required":false,"transform":{"type":"scalar"},"locs":[{"a":1889,"b":1903},{"a":1942,"b":1956}]},{"name":"filterDepartment","required":false,"transform":{"type":"scalar"},"locs":[{"a":2002,"b":2018},{"a":2058,"b":2074}]},{"name":"filterRelationshipCategory","required":false,"transform":{"type":"scalar"},"locs":[{"a":2131,"b":2157},{"a":2400,"b":2426}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":4368,"b":4374},{"a":4459,"b":4465},{"a":4548,"b":4554},{"a":4644,"b":4650},{"a":4742,"b":4748},{"a":4836,"b":4842},{"a":4928,"b":4934},{"a":5022,"b":5028}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":4394,"b":4403},{"a":4485,"b":4494},{"a":4577,"b":4586},{"a":4673,"b":4682},{"a":4769,"b":4778},{"a":4863,"b":4872},{"a":4955,"b":4964},{"a":5049,"b":5058}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":5134,"b":5142}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":5155,"b":5161}]}],"statement":"WITH base_matches AS (\n    -- Base query matching contacts via FTS and other search methods\n    -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)\n    SELECT DISTINCT c.id\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    LEFT JOIN contacts.contact_emails e\n        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN contacts.contact_phones p\n        ON p.contact_id = c.id\n        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN contacts.contact_relationships r\n        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN contacts.contact_met_info m\n        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n),\nfiltered_matches AS (\n    -- Apply facet filters to base matches\n    SELECT bm.id\n    FROM base_matches bm\n    INNER JOIN contacts.contacts c ON c.id = bm.id\n    WHERE\n        -- Country filter (NULL array means no filter)\n        (:filterCountry::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM contacts.contact_addresses a\n            WHERE a.contact_id = c.id AND a.country = ANY(:filterCountry)\n        ))\n        -- City filter\n        AND (:filterCity::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM contacts.contact_addresses a\n            WHERE a.contact_id = c.id AND a.city = ANY(:filterCity)\n        ))\n        -- Organization filter\n        AND (:filterOrganization::text[] IS NULL OR c.organization = ANY(:filterOrganization))\n        -- Job title filter\n        AND (:filterJobTitle::text[] IS NULL OR c.job_title = ANY(:filterJobTitle))\n        -- Department filter\n        AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))\n        -- Relationship category filter\n        AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM contacts.contact_relationships rel\n            INNER JOIN contacts.relationship_types rt ON rel.relationship_type_id = rt.id\n            WHERE rel.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)\n        ))\n),\nmatching_contacts AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        c.organization,\n        c.job_title,\n        c.created_at,\n        c.updated_at,\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'\n            WHEN e.id IS NOT NULL THEN 'email'\n            WHEN p.id IS NOT NULL THEN 'phone'\n            ELSE 'notes'\n        END as match_source\n    FROM filtered_matches fm\n    INNER JOIN contacts.contacts c ON c.id = fm.id\n    -- Re-join for match_source determination\n    LEFT JOIN contacts.contact_emails e\n        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN contacts.contact_phones p\n        ON p.contact_id = c.id\n        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n),\ntotal_count AS (\n    SELECT COUNT(*)::int as count FROM matching_contacts\n),\nsorted_results AS (\n    SELECT\n        mc.*,\n        ts_headline(\n            'english',\n            COALESCE(mc.display_name, '') || ' ' ||\n            COALESCE(mc.organization, '') || ' ' ||\n            COALESCE((SELECT c2.work_notes FROM contacts.contacts c2 WHERE c2.id = mc.id), ''),\n            websearch_to_tsquery('english', :query),\n            'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n        ) as headline,\n        (SELECT e.email_address FROM contacts.contact_emails e\n         WHERE e.contact_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,\n        (SELECT p.phone_number FROM contacts.contact_phones p\n         WHERE p.contact_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone\n    FROM matching_contacts mc\n    ORDER BY\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,\n        mc.display_name ASC\n    LIMIT :pageSize\n    OFFSET :offset\n)\nSELECT\n    sr.external_id,\n    sr.display_name,\n    sr.photo_thumbnail_url,\n    sr.organization,\n    sr.job_title,\n    sr.fts_rank as rank,\n    sr.match_source,\n    sr.headline,\n    sr.primary_email,\n    sr.primary_phone,\n    tc.count as total_count\nFROM sorted_results sr\nCROSS JOIN total_count tc"};
 
 /**
  * Query generated from SQL:
  * ```
  * WITH base_matches AS (
  *     -- Base query matching contacts via FTS and other search methods
+ *     -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)
  *     SELECT DISTINCT c.id
  *     FROM contacts.contacts c
  *     INNER JOIN auth.users u ON c.user_id = u.id
+ *     LEFT JOIN contacts.contact_emails e
+ *         ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
+ *     LEFT JOIN contacts.contact_phones p
+ *         ON p.contact_id = c.id
+ *         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
+ *             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+ *     LEFT JOIN contacts.contact_relationships r
+ *         ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
+ *     LEFT JOIN contacts.contact_met_info m
+ *         ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
  *     WHERE u.external_id = :userExternalId
  *       AND c.deleted_at IS NULL
  *       AND (
  *           c.search_vector @@ websearch_to_tsquery('english', :query)
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_emails e
- *               WHERE e.contact_id = c.id
- *               AND e.email_address ILIKE :wildcardQuery
- *           )
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_phones p
- *               WHERE p.contact_id = c.id
- *               AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *                   LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
- *           )
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_relationships r
- *               WHERE r.contact_id = c.id
- *               AND r.notes ILIKE :wildcardQuery
- *           )
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_met_info m
- *               WHERE m.contact_id = c.id
- *               AND m.met_context ILIKE :wildcardQuery
- *           )
+ *           OR e.id IS NOT NULL
+ *           OR p.id IS NOT NULL
+ *           OR r.id IS NOT NULL
+ *           OR m.id IS NOT NULL
  *       )
  * ),
  * filtered_matches AS (
@@ -557,9 +497,9 @@ const facetedSearchIR: any = {"usedParamSet":{"userExternalId":true,"query":true
  *         AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))
  *         -- Relationship category filter
  *         AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (
- *             SELECT 1 FROM contacts.contact_relationships r
- *             INNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id
- *             WHERE r.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
+ *             SELECT 1 FROM contacts.contact_relationships rel
+ *             INNER JOIN contacts.relationship_types rt ON rel.relationship_type_id = rt.id
+ *             WHERE rel.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
  *         ))
  * ),
  * matching_contacts AS (
@@ -575,12 +515,19 @@ const facetedSearchIR: any = {"usedParamSet":{"userExternalId":true,"query":true
  *         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
  *         CASE
  *             WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'
- *             WHEN EXISTS (SELECT 1 FROM contacts.contact_emails e WHERE e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery) THEN 'email'
- *             WHEN EXISTS (SELECT 1 FROM contacts.contact_phones p WHERE p.contact_id = c.id AND regexp_replace(p.phone_number, '[^0-9]', '', 'g') LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%') THEN 'phone'
+ *             WHEN e.id IS NOT NULL THEN 'email'
+ *             WHEN p.id IS NOT NULL THEN 'phone'
  *             ELSE 'notes'
  *         END as match_source
  *     FROM filtered_matches fm
  *     INNER JOIN contacts.contacts c ON c.id = fm.id
+ *     -- Re-join for match_source determination
+ *     LEFT JOIN contacts.contact_emails e
+ *         ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
+ *     LEFT JOIN contacts.contact_phones p
+ *         ON p.contact_id = c.id
+ *         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
+ *             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
  * ),
  * total_count AS (
  *     SELECT COUNT(*)::int as count FROM matching_contacts
@@ -653,31 +600,29 @@ export interface IGetFacetCountsQuery {
   result: IGetFacetCountsResult;
 }
 
-const getFacetCountsIR: any = {"usedParamSet":{"userExternalId":true,"query":true,"wildcardQuery":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":210,"b":224}]},{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":330,"b":335},{"a":750,"b":755}]},{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":494,"b":507}]}],"statement":"WITH base_matches AS (\n    -- Base query matching contacts via FTS (same as FacetedSearch)\n    SELECT c.id\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_emails e\n              WHERE e.contact_id = c.id\n              AND e.email_address ILIKE :wildcardQuery\n          )\n          OR EXISTS (\n              SELECT 1 FROM contacts.contact_phones p\n              WHERE p.contact_id = c.id\n              AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n                  LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n          )\n      )\n)\n-- Country facet\nSELECT\n    'country' as facet_field,\n    a.country as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contact_addresses a ON a.contact_id = bm.id\nWHERE a.country IS NOT NULL\nGROUP BY a.country\n\nUNION ALL\n\n-- City facet\nSELECT\n    'city' as facet_field,\n    a.city as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contact_addresses a ON a.contact_id = bm.id\nWHERE a.city IS NOT NULL\nGROUP BY a.city\n\nUNION ALL\n\n-- Organization facet\nSELECT\n    'organization' as facet_field,\n    c.organization as facet_value,\n    COUNT(*)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contacts c ON c.id = bm.id\nWHERE c.organization IS NOT NULL\nGROUP BY c.organization\n\nUNION ALL\n\n-- Job title facet\nSELECT\n    'job_title' as facet_field,\n    c.job_title as facet_value,\n    COUNT(*)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contacts c ON c.id = bm.id\nWHERE c.job_title IS NOT NULL\nGROUP BY c.job_title\n\nUNION ALL\n\n-- Department facet\nSELECT\n    'department' as facet_field,\n    c.department as facet_value,\n    COUNT(*)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contacts c ON c.id = bm.id\nWHERE c.department IS NOT NULL\nGROUP BY c.department\n\nUNION ALL\n\n-- Relationship category facet\nSELECT\n    'relationship_category' as facet_field,\n    rt.category as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contact_relationships r ON r.contact_id = bm.id\nINNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id\nGROUP BY rt.category\n\nORDER BY facet_field, count DESC, facet_value"};
+const getFacetCountsIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,"userExternalId":true},"params":[{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":367,"b":380}]},{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":554,"b":559},{"a":734,"b":739}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":614,"b":628}]}],"statement":"WITH base_matches AS (\n    -- Base query matching contacts via FTS (same as FacetedSearch)\n    -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)\n    SELECT DISTINCT c.id\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    LEFT JOIN contacts.contact_emails e\n        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN contacts.contact_phones p\n        ON p.contact_id = c.id\n        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n      )\n)\n-- Country facet\nSELECT\n    'country' as facet_field,\n    a.country as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contact_addresses a ON a.contact_id = bm.id\nWHERE a.country IS NOT NULL\nGROUP BY a.country\n\nUNION ALL\n\n-- City facet\nSELECT\n    'city' as facet_field,\n    a.city as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contact_addresses a ON a.contact_id = bm.id\nWHERE a.city IS NOT NULL\nGROUP BY a.city\n\nUNION ALL\n\n-- Organization facet\nSELECT\n    'organization' as facet_field,\n    c.organization as facet_value,\n    COUNT(*)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contacts c ON c.id = bm.id\nWHERE c.organization IS NOT NULL\nGROUP BY c.organization\n\nUNION ALL\n\n-- Job title facet\nSELECT\n    'job_title' as facet_field,\n    c.job_title as facet_value,\n    COUNT(*)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contacts c ON c.id = bm.id\nWHERE c.job_title IS NOT NULL\nGROUP BY c.job_title\n\nUNION ALL\n\n-- Department facet\nSELECT\n    'department' as facet_field,\n    c.department as facet_value,\n    COUNT(*)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contacts c ON c.id = bm.id\nWHERE c.department IS NOT NULL\nGROUP BY c.department\n\nUNION ALL\n\n-- Relationship category facet\nSELECT\n    'relationship_category' as facet_field,\n    rt.category as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN contacts.contact_relationships r ON r.contact_id = bm.id\nINNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id\nGROUP BY rt.category\n\nORDER BY facet_field, count DESC, facet_value"};
 
 /**
  * Query generated from SQL:
  * ```
  * WITH base_matches AS (
  *     -- Base query matching contacts via FTS (same as FacetedSearch)
- *     SELECT c.id
+ *     -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)
+ *     SELECT DISTINCT c.id
  *     FROM contacts.contacts c
  *     INNER JOIN auth.users u ON c.user_id = u.id
+ *     LEFT JOIN contacts.contact_emails e
+ *         ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
+ *     LEFT JOIN contacts.contact_phones p
+ *         ON p.contact_id = c.id
+ *         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
+ *             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
  *     WHERE u.external_id = :userExternalId
  *       AND c.deleted_at IS NULL
  *       AND (
  *           c.search_vector @@ websearch_to_tsquery('english', :query)
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_emails e
- *               WHERE e.contact_id = c.id
- *               AND e.email_address ILIKE :wildcardQuery
- *           )
- *           OR EXISTS (
- *               SELECT 1 FROM contacts.contact_phones p
- *               WHERE p.contact_id = c.id
- *               AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *                   LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
- *           )
+ *           OR e.id IS NOT NULL
+ *           OR p.id IS NOT NULL
  *       )
  * )
  * -- Country facet

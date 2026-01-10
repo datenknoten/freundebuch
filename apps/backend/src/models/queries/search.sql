@@ -14,64 +14,37 @@ WITH matching_contacts AS (
         c.job_title,
         -- Calculate relevance score from full-text search
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
-        -- Determine match source
+        -- Determine match source (using joined tables for efficiency)
         CASE
             WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'
-            WHEN EXISTS (
-                SELECT 1 FROM contacts.contact_emails e
-                WHERE e.contact_id = c.id
-                AND e.email_address ILIKE :wildcardQuery
-            ) THEN 'email'
-            WHEN EXISTS (
-                SELECT 1 FROM contacts.contact_phones p
-                WHERE p.contact_id = c.id
-                AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-                    LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
-            ) THEN 'phone'
-            WHEN EXISTS (
-                SELECT 1 FROM contacts.contact_relationships r
-                WHERE r.contact_id = c.id
-                AND r.notes ILIKE :wildcardQuery
-            ) THEN 'notes'
-            WHEN EXISTS (
-                SELECT 1 FROM contacts.contact_met_info m
-                WHERE m.contact_id = c.id
-                AND m.met_context ILIKE :wildcardQuery
-            ) THEN 'notes'
+            WHEN e.id IS NOT NULL THEN 'email'
+            WHEN p.id IS NOT NULL THEN 'phone'
+            WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
             ELSE NULL
         END as match_source
     FROM contacts.contacts c
     INNER JOIN auth.users u ON c.user_id = u.id
+    -- LEFT JOINs for efficient matching (avoids correlated subqueries)
+    LEFT JOIN contacts.contact_emails e
+        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
+    LEFT JOIN contacts.contact_phones p
+        ON p.contact_id = c.id
+        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
+            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+    LEFT JOIN contacts.contact_relationships r
+        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
+    LEFT JOIN contacts.contact_met_info m
+        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
           -- Full-text search on contact fields
           c.search_vector @@ websearch_to_tsquery('english', :query)
-          -- OR partial match on email addresses
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_emails e
-              WHERE e.contact_id = c.id
-              AND e.email_address ILIKE :wildcardQuery
-          )
-          -- OR partial match on phone numbers (digits only)
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_phones p
-              WHERE p.contact_id = c.id
-              AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-                  LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
-          )
-          -- OR match on relationship notes
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_relationships r
-              WHERE r.contact_id = c.id
-              AND r.notes ILIKE :wildcardQuery
-          )
-          -- OR match on met_context
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_met_info m
-              WHERE m.contact_id = c.id
-              AND m.met_context ILIKE :wildcardQuery
-          )
+          -- OR matches from joined tables
+          OR e.id IS NOT NULL
+          OR p.id IS NOT NULL
+          OR r.id IS NOT NULL
+          OR m.id IS NOT NULL
       )
 )
 SELECT
@@ -115,64 +88,37 @@ WITH matching_contacts AS (
         c.updated_at,
         -- Calculate relevance score from full-text search
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
-        -- Determine match source
+        -- Determine match source (using joined tables for efficiency)
         CASE
             WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'
-            WHEN EXISTS (
-                SELECT 1 FROM contacts.contact_emails e
-                WHERE e.contact_id = c.id
-                AND e.email_address ILIKE :wildcardQuery
-            ) THEN 'email'
-            WHEN EXISTS (
-                SELECT 1 FROM contacts.contact_phones p
-                WHERE p.contact_id = c.id
-                AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-                    LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
-            ) THEN 'phone'
-            WHEN EXISTS (
-                SELECT 1 FROM contacts.contact_relationships r
-                WHERE r.contact_id = c.id
-                AND r.notes ILIKE :wildcardQuery
-            ) THEN 'notes'
-            WHEN EXISTS (
-                SELECT 1 FROM contacts.contact_met_info m
-                WHERE m.contact_id = c.id
-                AND m.met_context ILIKE :wildcardQuery
-            ) THEN 'notes'
+            WHEN e.id IS NOT NULL THEN 'email'
+            WHEN p.id IS NOT NULL THEN 'phone'
+            WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
             ELSE NULL
         END as match_source
     FROM contacts.contacts c
     INNER JOIN auth.users u ON c.user_id = u.id
+    -- LEFT JOINs for efficient matching (avoids correlated subqueries)
+    LEFT JOIN contacts.contact_emails e
+        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
+    LEFT JOIN contacts.contact_phones p
+        ON p.contact_id = c.id
+        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
+            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+    LEFT JOIN contacts.contact_relationships r
+        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
+    LEFT JOIN contacts.contact_met_info m
+        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
           -- Full-text search on contact fields
           c.search_vector @@ websearch_to_tsquery('english', :query)
-          -- OR partial match on email addresses
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_emails e
-              WHERE e.contact_id = c.id
-              AND e.email_address ILIKE :wildcardQuery
-          )
-          -- OR partial match on phone numbers (digits only)
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_phones p
-              WHERE p.contact_id = c.id
-              AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-                  LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
-          )
-          -- OR match on relationship notes
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_relationships r
-              WHERE r.contact_id = c.id
-              AND r.notes ILIKE :wildcardQuery
-          )
-          -- OR match on met_context
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_met_info m
-              WHERE m.contact_id = c.id
-              AND m.met_context ILIKE :wildcardQuery
-          )
+          -- OR matches from joined tables
+          OR e.id IS NOT NULL
+          OR p.id IS NOT NULL
+          OR r.id IS NOT NULL
+          OR m.id IS NOT NULL
       )
 ),
 total_count AS (
@@ -265,34 +211,28 @@ RETURNING sh.id;
 /* @name FacetedSearch */
 WITH base_matches AS (
     -- Base query matching contacts via FTS and other search methods
+    -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)
     SELECT DISTINCT c.id
     FROM contacts.contacts c
     INNER JOIN auth.users u ON c.user_id = u.id
+    LEFT JOIN contacts.contact_emails e
+        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
+    LEFT JOIN contacts.contact_phones p
+        ON p.contact_id = c.id
+        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
+            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+    LEFT JOIN contacts.contact_relationships r
+        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
+    LEFT JOIN contacts.contact_met_info m
+        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
           c.search_vector @@ websearch_to_tsquery('english', :query)
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_emails e
-              WHERE e.contact_id = c.id
-              AND e.email_address ILIKE :wildcardQuery
-          )
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_phones p
-              WHERE p.contact_id = c.id
-              AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-                  LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
-          )
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_relationships r
-              WHERE r.contact_id = c.id
-              AND r.notes ILIKE :wildcardQuery
-          )
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_met_info m
-              WHERE m.contact_id = c.id
-              AND m.met_context ILIKE :wildcardQuery
-          )
+          OR e.id IS NOT NULL
+          OR p.id IS NOT NULL
+          OR r.id IS NOT NULL
+          OR m.id IS NOT NULL
       )
 ),
 filtered_matches AS (
@@ -319,9 +259,9 @@ filtered_matches AS (
         AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))
         -- Relationship category filter
         AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (
-            SELECT 1 FROM contacts.contact_relationships r
-            INNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id
-            WHERE r.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
+            SELECT 1 FROM contacts.contact_relationships rel
+            INNER JOIN contacts.relationship_types rt ON rel.relationship_type_id = rt.id
+            WHERE rel.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
         ))
 ),
 matching_contacts AS (
@@ -337,12 +277,19 @@ matching_contacts AS (
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
         CASE
             WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'
-            WHEN EXISTS (SELECT 1 FROM contacts.contact_emails e WHERE e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery) THEN 'email'
-            WHEN EXISTS (SELECT 1 FROM contacts.contact_phones p WHERE p.contact_id = c.id AND regexp_replace(p.phone_number, '[^0-9]', '', 'g') LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%') THEN 'phone'
+            WHEN e.id IS NOT NULL THEN 'email'
+            WHEN p.id IS NOT NULL THEN 'phone'
             ELSE 'notes'
         END as match_source
     FROM filtered_matches fm
     INNER JOIN contacts.contacts c ON c.id = fm.id
+    -- Re-join for match_source determination
+    LEFT JOIN contacts.contact_emails e
+        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
+    LEFT JOIN contacts.contact_phones p
+        ON p.contact_id = c.id
+        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
+            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
 ),
 total_count AS (
     SELECT COUNT(*)::int as count FROM matching_contacts
@@ -395,24 +342,22 @@ CROSS JOIN total_count tc;
 /* @name GetFacetCounts */
 WITH base_matches AS (
     -- Base query matching contacts via FTS (same as FacetedSearch)
-    SELECT c.id
+    -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)
+    SELECT DISTINCT c.id
     FROM contacts.contacts c
     INNER JOIN auth.users u ON c.user_id = u.id
+    LEFT JOIN contacts.contact_emails e
+        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
+    LEFT JOIN contacts.contact_phones p
+        ON p.contact_id = c.id
+        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
+            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
           c.search_vector @@ websearch_to_tsquery('english', :query)
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_emails e
-              WHERE e.contact_id = c.id
-              AND e.email_address ILIKE :wildcardQuery
-          )
-          OR EXISTS (
-              SELECT 1 FROM contacts.contact_phones p
-              WHERE p.contact_id = c.id
-              AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-                  LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
-          )
+          OR e.id IS NOT NULL
+          OR p.id IS NOT NULL
       )
 )
 -- Country facet
