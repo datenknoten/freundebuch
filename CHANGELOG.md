@@ -1,3 +1,9 @@
+## [2.24.1](https://github.com/datenknoten/freundebuch/compare/v2.24.0...v2.24.1) (2026-01-10)
+
+### Bug Fixes
+
+* **ci:** resolve heredoc delimiter issue in code review workflow ([0d2bf11](https://github.com/datenknoten/freundebuch/commit/0d2bf1168ff55f731fc11f68569728256800e9ec))
+
 ## [2.24.0](https://github.com/datenknoten/freundebuch/compare/v2.23.3...v2.24.0) (2026-01-10)
 
 ### Features
