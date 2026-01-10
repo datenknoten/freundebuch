@@ -125,6 +125,22 @@ import {
 } from '../models/queries/search.queries.js';
 import { sanitizeSearchHeadline } from '../utils/security.js';
 
+/**
+ * Escape special characters for PostgreSQL LIKE/ILIKE patterns.
+ * Prevents SQL injection by escaping %, _, and \ characters.
+ */
+function escapeLikePattern(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
+/**
+ * Create a wildcard query for ILIKE patterns.
+ * Escapes special characters and wraps with % for partial matching.
+ */
+function createWildcardQuery(query: string): string {
+  return `%${escapeLikePattern(query)}%`;
+}
+
 export class ContactsService {
   private db: pg.Pool;
   private logger: Logger;
@@ -1080,7 +1096,7 @@ export class ContactsService {
   ): Promise<ContactSearchResult[]> {
     this.logger.debug({ query, excludeContactExternalId }, 'Searching contacts');
 
-    const searchPattern = `%${query}%`;
+    const searchPattern = createWildcardQuery(query);
 
     const results = await searchContacts.run(
       {
@@ -1119,6 +1135,7 @@ export class ContactsService {
       {
         userExternalId,
         query,
+        wildcardQuery: createWildcardQuery(query),
         limit,
       },
       this.db,
@@ -1144,6 +1161,7 @@ export class ContactsService {
       {
         userExternalId,
         query,
+        wildcardQuery: createWildcardQuery(query),
         sortBy,
         sortOrder,
         pageSize,
@@ -1173,6 +1191,7 @@ export class ContactsService {
   ): Promise<FacetedSearchResponse> {
     const { query, page, pageSize, sortBy, sortOrder, filters, includeFacets } = options;
     const offset = (page - 1) * pageSize;
+    const wildcardQuery = createWildcardQuery(query);
 
     this.logger.debug(
       { query, page, pageSize, sortBy, sortOrder, filters, includeFacets },
@@ -1184,6 +1203,7 @@ export class ContactsService {
       {
         userExternalId,
         query,
+        wildcardQuery,
         sortBy,
         sortOrder,
         pageSize,
@@ -1210,7 +1230,7 @@ export class ContactsService {
 
     // Fetch facet counts if requested
     if (includeFacets) {
-      const facetRows = await getFacetCounts.run({ userExternalId, query }, this.db);
+      const facetRows = await getFacetCounts.run({ userExternalId, query, wildcardQuery }, this.db);
       response.facets = this.aggregateFacets(facetRows);
     }
 
