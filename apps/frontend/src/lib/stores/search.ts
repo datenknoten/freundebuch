@@ -1,5 +1,5 @@
-import { derived, writable } from 'svelte/store';
-import type { GlobalSearchResult } from '$shared';
+import { derived, get, writable } from 'svelte/store';
+import type { FacetFilters, FacetGroups, GlobalSearchResult } from '$shared';
 import * as contactsApi from '../api/contacts.js';
 
 /**
@@ -13,6 +13,10 @@ interface SearchState {
   isOpen: boolean;
   error: string | null;
   selectedIndex: number;
+  // Faceted search state
+  filters: FacetFilters;
+  facets: FacetGroups | null;
+  facetsLoading: boolean;
 }
 
 /**
@@ -26,6 +30,10 @@ const initialState: SearchState = {
   isOpen: false,
   error: null,
   selectedIndex: 0,
+  // Faceted search state
+  filters: {},
+  facets: null,
+  facetsLoading: false,
 };
 
 /**
@@ -45,7 +53,7 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number):
 function createSearchStore() {
   const { subscribe, set, update } = writable<SearchState>(initialState);
 
-  // Debounced search function
+  // Debounced search function (for simple search without filters)
   const debouncedSearch = debounce(async (query: string) => {
     if (!query.trim() || query.trim().length < 2) {
       update((state) => ({ ...state, results: [], isSearching: false }));
@@ -70,6 +78,81 @@ function createSearchStore() {
     }
   }, 300);
 
+  // Debounced faceted search function
+  const debouncedFacetedSearch = debounce(async (query: string, filters: FacetFilters) => {
+    if (!query.trim() || query.trim().length < 2) {
+      update((state) => ({ ...state, results: [], isSearching: false }));
+      return;
+    }
+
+    try {
+      // Check if any filters are active
+      const hasFilters = Object.values(filters).some((arr) => arr && arr.length > 0);
+
+      if (hasFilters) {
+        // Use faceted search when filters are active
+        const response = await contactsApi.facetedSearch({
+          query,
+          filters,
+          includeFacets: true,
+          pageSize: 10,
+        });
+        update((state) => ({
+          ...state,
+          results: response.results,
+          facets: response.facets ?? null,
+          isSearching: false,
+          facetsLoading: false,
+          selectedIndex: 0,
+        }));
+      } else {
+        // Use simple search when no filters (faster)
+        const results = await contactsApi.fullTextSearch(query, 10);
+        update((state) => ({
+          ...state,
+          results,
+          isSearching: false,
+          selectedIndex: 0,
+        }));
+      }
+    } catch {
+      update((state) => ({
+        ...state,
+        results: [],
+        isSearching: false,
+        facetsLoading: false,
+        error: 'Search failed',
+      }));
+    }
+  }, 300);
+
+  // Load facets for the current query (called separately for progressive loading)
+  const loadFacets = debounce(async (query: string) => {
+    if (!query.trim() || query.trim().length < 2) {
+      return;
+    }
+
+    update((state) => ({ ...state, facetsLoading: true }));
+
+    try {
+      const response = await contactsApi.facetedSearch({
+        query,
+        includeFacets: true,
+        pageSize: 1, // Minimal results, we just want facets
+      });
+      update((state) => ({
+        ...state,
+        facets: response.facets ?? null,
+        facetsLoading: false,
+      }));
+    } catch {
+      update((state) => ({
+        ...state,
+        facetsLoading: false,
+      }));
+    }
+  }, 500);
+
   return {
     subscribe,
 
@@ -91,6 +174,9 @@ function createSearchStore() {
         results: [],
         selectedIndex: 0,
         error: null,
+        filters: {},
+        facets: null,
+        facetsLoading: false,
       }));
     },
 
@@ -107,6 +193,9 @@ function createSearchStore() {
             results: [],
             selectedIndex: 0,
             error: null,
+            filters: {},
+            facets: null,
+            facetsLoading: false,
           };
         }
         return { ...state, isOpen: true };
@@ -115,8 +204,9 @@ function createSearchStore() {
 
     /**
      * Set the search query and trigger search
+     * Optionally loads facets for progressive enhancement
      */
-    setQuery: (query: string) => {
+    setQuery: (query: string, options?: { loadFacets?: boolean }) => {
       update((state) => ({
         ...state,
         query,
@@ -124,7 +214,22 @@ function createSearchStore() {
         error: null,
       }));
 
-      debouncedSearch(query);
+      // Check if filters are active
+      const state = get({ subscribe });
+      const hasFilters = Object.values(state.filters).some((arr) => arr && arr.length > 0);
+
+      if (hasFilters) {
+        // Use faceted search when filters are active
+        debouncedFacetedSearch(query, state.filters);
+      } else {
+        // Use simple search (faster)
+        debouncedSearch(query);
+      }
+
+      // Optionally load facets in background
+      if (options?.loadFacets && query.trim().length >= 2) {
+        loadFacets(query);
+      }
     },
 
     /**
@@ -221,6 +326,58 @@ function createSearchStore() {
     },
 
     /**
+     * Set facet filters and trigger new search
+     */
+    setFilters: (filters: FacetFilters) => {
+      update((state) => ({ ...state, filters, isSearching: true }));
+      // Re-run the search with new filters
+      const state = get({ subscribe });
+      if (state.query.trim().length >= 2) {
+        debouncedFacetedSearch(state.query, filters);
+      }
+    },
+
+    /**
+     * Remove a single filter value
+     */
+    removeFilter: (field: keyof FacetFilters, value: string) => {
+      update((state) => {
+        const current = state.filters[field] ?? [];
+        const updated = current.filter((v) => v !== value);
+        const newFilters = {
+          ...state.filters,
+          [field]: updated.length > 0 ? updated : undefined,
+        };
+        return { ...state, filters: newFilters, isSearching: true };
+      });
+      // Re-run the search with updated filters
+      const state = get({ subscribe });
+      if (state.query.trim().length >= 2) {
+        debouncedFacetedSearch(state.query, state.filters);
+      }
+    },
+
+    /**
+     * Clear all filters
+     */
+    clearFilters: () => {
+      update((state) => ({ ...state, filters: {}, isSearching: true }));
+      // Re-run the search without filters
+      const state = get({ subscribe });
+      if (state.query.trim().length >= 2) {
+        debouncedFacetedSearch(state.query, {});
+      }
+    },
+
+    /**
+     * Check if any filters are active
+     */
+    hasActiveFilters: (): boolean => {
+      const state = get({ subscribe });
+      return Object.values(state.filters).some((arr) => arr && arr.length > 0);
+    },
+
+    /**
      * Reset the store to initial state
      */
     reset: () => set(initialState),
@@ -235,3 +392,11 @@ export const searchResults = derived(search, ($search) => $search.results);
 export const isSearching = derived(search, ($search) => $search.isSearching);
 export const searchQuery = derived(search, ($search) => $search.query);
 export const recentSearches = derived(search, ($search) => $search.recentSearches);
+
+// Faceted search derived stores
+export const searchFilters = derived(search, ($search) => $search.filters);
+export const searchFacets = derived(search, ($search) => $search.facets);
+export const isFacetsLoading = derived(search, ($search) => $search.facetsLoading);
+export const hasActiveFilters = derived(search, ($search) =>
+  Object.values($search.filters).some((arr) => arr && arr.length > 0),
+);

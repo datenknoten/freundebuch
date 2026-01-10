@@ -14,6 +14,10 @@ import type {
   Email,
   EmailInput,
   EmailType,
+  FacetedSearchOptions,
+  FacetedSearchResponse,
+  FacetGroups,
+  FacetValue,
   GlobalSearchResult,
   MetInfo,
   MetInfoInput,
@@ -109,9 +113,13 @@ import {
   addRecentSearch,
   clearRecentSearches,
   deleteRecentSearch,
+  facetedSearch,
   fullTextSearchContacts,
+  getFacetCounts,
   getRecentSearches,
+  type IFacetedSearchResult,
   type IFullTextSearchContactsResult,
+  type IGetFacetCountsResult,
   type IPaginatedFullTextSearchResult,
   paginatedFullTextSearch,
 } from '../models/queries/search.queries.js';
@@ -1156,6 +1164,60 @@ export class ContactsService {
   }
 
   /**
+   * Faceted full-text search with filter support and optional facet aggregation
+   * Supports filtering by location, professional, and relationship facets
+   */
+  async facetedSearch(
+    userExternalId: string,
+    options: FacetedSearchOptions,
+  ): Promise<FacetedSearchResponse> {
+    const { query, page, pageSize, sortBy, sortOrder, filters, includeFacets } = options;
+    const offset = (page - 1) * pageSize;
+
+    this.logger.debug(
+      { query, page, pageSize, sortBy, sortOrder, filters, includeFacets },
+      'Faceted search',
+    );
+
+    // Execute main search with filters
+    const results = await facetedSearch.run(
+      {
+        userExternalId,
+        query,
+        sortBy,
+        sortOrder,
+        pageSize,
+        offset,
+        filterCountry: filters.country ?? null,
+        filterCity: filters.city ?? null,
+        filterOrganization: filters.organization ?? null,
+        filterJobTitle: filters.job_title ?? null,
+        filterDepartment: filters.department ?? null,
+        filterRelationshipCategory: filters.relationship_category ?? null,
+      },
+      this.db,
+    );
+
+    const total = results[0]?.total_count ?? 0;
+
+    const response: FacetedSearchResponse = {
+      results: results.map((r) => this.mapFacetedSearchResult(r)),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+
+    // Fetch facet counts if requested
+    if (includeFacets) {
+      const facetRows = await getFacetCounts.run({ userExternalId, query }, this.db);
+      response.facets = this.aggregateFacets(facetRows);
+    }
+
+    return response;
+  }
+
+  /**
    * Get user's recent search queries
    */
   async getRecentSearches(userExternalId: string, limit = 10): Promise<string[]> {
@@ -1230,6 +1292,91 @@ export class ContactsService {
       headline: sanitizeSearchHeadline(row.headline),
       matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
     };
+  }
+
+  private mapFacetedSearchResult(row: IFacetedSearchResult): GlobalSearchResult {
+    return {
+      id: row.external_id,
+      displayName: row.display_name,
+      photoThumbnailUrl: row.photo_thumbnail_url ?? undefined,
+      organization: row.organization ?? undefined,
+      jobTitle: row.job_title ?? undefined,
+      primaryEmail: row.primary_email ?? undefined,
+      primaryPhone: row.primary_phone ?? undefined,
+      rank: row.rank ?? 0,
+      // Sanitize headline to prevent XSS - only allow <mark> tags from ts_headline
+      headline: sanitizeSearchHeadline(row.headline),
+      matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
+    };
+  }
+
+  /**
+   * Aggregate raw facet count rows into grouped facet structure
+   */
+  private aggregateFacets(rows: IGetFacetCountsResult[]): FacetGroups {
+    const facets: FacetGroups = {
+      location: [],
+      professional: [],
+      relationship: [],
+    };
+
+    // Group rows by facet_field
+    const groupedByField = new Map<string, FacetValue[]>();
+
+    for (const row of rows) {
+      if (!row.facet_field || !row.facet_value || row.count === null) continue;
+
+      if (!groupedByField.has(row.facet_field)) {
+        groupedByField.set(row.facet_field, []);
+      }
+      groupedByField.get(row.facet_field)!.push({
+        value: row.facet_value,
+        count: row.count,
+      });
+    }
+
+    // Map field labels
+    const fieldLabels: Record<string, string> = {
+      country: 'Country',
+      city: 'City',
+      organization: 'Organization',
+      job_title: 'Job Title',
+      department: 'Department',
+      relationship_category: 'Relationship',
+    };
+
+    // Build location facets
+    for (const field of ['country', 'city'] as const) {
+      if (groupedByField.has(field)) {
+        facets.location.push({
+          field,
+          label: fieldLabels[field],
+          values: groupedByField.get(field)!,
+        });
+      }
+    }
+
+    // Build professional facets
+    for (const field of ['organization', 'job_title', 'department'] as const) {
+      if (groupedByField.has(field)) {
+        facets.professional.push({
+          field,
+          label: fieldLabels[field],
+          values: groupedByField.get(field)!,
+        });
+      }
+    }
+
+    // Build relationship facets
+    if (groupedByField.has('relationship_category')) {
+      facets.relationship.push({
+        field: 'relationship_category',
+        label: fieldLabels['relationship_category'],
+        values: groupedByField.get('relationship_category')!,
+      });
+    }
+
+    return facets;
   }
 
   private async createPhones(

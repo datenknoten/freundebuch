@@ -6,10 +6,12 @@ import {
   DateInputSchema,
   EmailInputSchema,
   type ErrorResponse,
+  FacetedSearchQuerySchema,
   MetInfoInputSchema,
   PhoneInputSchema,
   PhotoValidationErrors,
   parseContactListQuery,
+  parseFacetedSearchQuery,
   parseSearchQuery,
   RelationshipInputSchema,
   RelationshipUpdateSchema,
@@ -180,6 +182,42 @@ app.get('/search/paginated', async (c) => {
     logger.error({ err }, 'Failed to search contacts');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to search contacts' }, 500);
+  }
+});
+
+/**
+ * GET /api/contacts/search/faceted
+ * Faceted full-text search with filter support and optional facet aggregation
+ * Supports filtering by location, professional, and relationship facets
+ */
+app.get('/search/faceted', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+
+  try {
+    const queryParams = c.req.query();
+    const validated = FacetedSearchQuerySchema(queryParams);
+
+    if (validated instanceof type.errors) {
+      return c.json<ErrorResponse>({ error: 'Invalid query parameters', details: validated }, 400);
+    }
+
+    // Minimum query length for performance
+    if (validated.q.trim().length < 2) {
+      return c.json<ErrorResponse>({ error: 'Query must be at least 2 characters' }, 400);
+    }
+
+    const options = parseFacetedSearchQuery(validated);
+    const contactsService = new ContactsService(db, logger);
+    const results = await contactsService.facetedSearch(user.userId, options);
+
+    return c.json(results);
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to perform faceted search');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to perform faceted search' }, 500);
   }
 });
 
