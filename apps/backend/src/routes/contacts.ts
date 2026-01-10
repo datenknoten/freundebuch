@@ -28,6 +28,7 @@ import { contactsRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { ContactsService, DuplicateBirthdayError } from '../services/contacts.service.js';
 import { PhotoService, PhotoUploadError } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
+import { isAppError } from '../utils/errors.js';
 import { isValidUuid } from '../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -66,6 +67,12 @@ app.get('/', async (c) => {
 
     return c.json(result);
   } catch (error) {
+    // Handle AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Failed to list contacts');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
+    }
+
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error({ err }, 'Failed to list contacts');
     Sentry.captureException(err);

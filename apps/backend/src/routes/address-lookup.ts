@@ -9,6 +9,7 @@ import { AddressLookupService } from '../services/address-lookup.service.js';
 import { SUPPORTED_COUNTRIES } from '../services/external/zipcodebase.client.js';
 import type { AppContext } from '../types/context.js';
 import { getConfig } from '../utils/config.js';
+import { ConfigurationError, isAppError } from '../utils/errors.js';
 
 const app = new Hono<AppContext>();
 
@@ -24,7 +25,7 @@ function getAddressService(logger: Logger): AddressLookupService {
   if (!addressService) {
     const config = getConfig();
     if (!config.ZIPCODEBASE_API_KEY) {
-      throw new Error('ZIPCODEBASE_API_KEY is not configured');
+      throw new ConfigurationError('ZIPCODEBASE_API_KEY is not configured');
     }
     addressService = new AddressLookupService(
       config.ZIPCODEBASE_API_KEY,
@@ -89,11 +90,19 @@ app.get('/cities', async (c) => {
     const cities = await service.getCitiesByPostalCode(validated.country, validated.postal_code);
     return c.json(cities);
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    logger.error({ err }, 'Failed to get cities');
-    if (err.message.includes('not configured')) {
+    // Handle configuration errors
+    if (error instanceof ConfigurationError) {
       return c.json<ErrorResponse>({ error: 'Address lookup service not configured' }, 503);
     }
+
+    // Handle AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Failed to get cities');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
+    }
+
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get cities');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to load cities' }, 500);
   }
@@ -121,11 +130,19 @@ app.get('/streets', async (c) => {
     );
     return c.json(streets);
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    logger.error({ err }, 'Failed to get streets');
-    if (err.message.includes('not configured')) {
+    // Handle configuration errors
+    if (error instanceof ConfigurationError) {
       return c.json<ErrorResponse>({ error: 'Address lookup service not configured' }, 503);
     }
+
+    // Handle AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Failed to get streets');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
+    }
+
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get streets');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to load streets' }, 500);
   }
@@ -154,11 +171,19 @@ app.get('/house-numbers', async (c) => {
     );
     return c.json(houseNumbers);
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    logger.error({ err }, 'Failed to get house numbers');
-    if (err.message.includes('not configured')) {
+    // Handle configuration errors
+    if (error instanceof ConfigurationError) {
       return c.json<ErrorResponse>({ error: 'Address lookup service not configured' }, 503);
     }
+
+    // Handle AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Failed to get house numbers');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
+    }
+
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get house numbers');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to load house numbers' }, 500);
   }

@@ -19,13 +19,7 @@ import {
   authRateLimitMiddleware,
   passwordResetRateLimitMiddleware,
 } from '../middleware/rate-limit.js';
-import {
-  AuthService,
-  InvalidCredentialsError,
-  InvalidPasswordResetTokenError,
-  InvalidSessionError,
-  UserAlreadyExistsError,
-} from '../services/auth.service.js';
+import { AuthService } from '../services/auth.service.js';
 import type { AppContext } from '../types/context.js';
 import {
   getAuthTokenCookieOptions,
@@ -33,6 +27,13 @@ import {
   getSessionCookieOptions,
 } from '../utils/auth.js';
 import { getConfig } from '../utils/config.js';
+import {
+  AuthenticationError,
+  InvalidSessionError,
+  InvalidTokenError,
+  isAppError,
+  UserAlreadyExistsError,
+} from '../utils/errors.js';
 
 const app = new Hono<AppContext>();
 
@@ -80,7 +81,7 @@ app.post('/register', authRateLimitMiddleware, async (c) => {
   } catch (error) {
     // Check for application-level duplicate user error
     if (error instanceof UserAlreadyExistsError) {
-      return c.json<ErrorResponse>({ error: error.message }, 409);
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
     // Check for database-level unique constraint violation (concurrent requests)
@@ -92,6 +93,12 @@ app.post('/register', authRateLimitMiddleware, async (c) => {
     ) {
       logger.warn({ error }, 'Duplicate user registration (database constraint)');
       return c.json<ErrorResponse>({ error: 'User already exists' }, 409);
+    }
+
+    // Handle other AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Registration failed');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
     const err = error instanceof Error ? error : new Error(String(error));
@@ -143,8 +150,14 @@ app.post('/login', authRateLimitMiddleware, async (c) => {
 
     return c.json<AuthResponse>(result);
   } catch (error) {
-    if (error instanceof InvalidCredentialsError) {
-      return c.json<ErrorResponse>({ error: 'Invalid credentials' }, 401);
+    if (error instanceof AuthenticationError) {
+      return c.json<ErrorResponse>({ error: 'Invalid credentials' }, error.statusCode);
+    }
+
+    // Handle other AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Login failed');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
     const err = error instanceof Error ? error : new Error(String(error));
@@ -181,6 +194,12 @@ app.post('/logout', async (c) => {
 
     return c.json({ message: 'Logged out successfully' });
   } catch (error) {
+    // Handle AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Logout failed');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
+    }
+
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error({ err }, 'Logout failed');
     Sentry.captureException(err);
@@ -244,7 +263,13 @@ app.post('/refresh', async (c) => {
       setCookie(c, 'session_token', '', getClearCookieOptions());
       setCookie(c, AUTH_TOKEN_COOKIE, '', getClearCookieOptions());
 
-      return c.json<ErrorResponse>({ error: 'Invalid or expired session' }, 401);
+      return c.json<ErrorResponse>({ error: 'Invalid or expired session' }, error.statusCode);
+    }
+
+    // Handle other AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Token refresh failed');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
     const err = error instanceof Error ? error : new Error(String(error));
@@ -304,6 +329,12 @@ app.post('/forgot-password', passwordResetRateLimitMiddleware, async (c) => {
 
     return c.json(response);
   } catch (error) {
+    // Handle AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Forgot password failed');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
+    }
+
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error({ err }, 'Forgot password failed');
     Sentry.captureException(err);
@@ -348,8 +379,14 @@ app.post('/reset-password', passwordResetRateLimitMiddleware, async (c) => {
 
     return c.json({ message: 'Password reset successfully' });
   } catch (error) {
-    if (error instanceof InvalidPasswordResetTokenError) {
+    if (error instanceof InvalidTokenError) {
       return c.json<ErrorResponse>({ error: error.message }, 400);
+    }
+
+    // Handle other AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Password reset failed');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
     const err = error instanceof Error ? error : new Error(String(error));
@@ -389,6 +426,12 @@ app.get('/me', authMiddleware, async (c) => {
 
     return c.json(response);
   } catch (error) {
+    // Handle AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Failed to get user');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
+    }
+
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error({ err }, 'Failed to get user');
     Sentry.captureException(err);
@@ -435,6 +478,12 @@ app.patch('/preferences', authMiddleware, async (c) => {
 
     return c.json<{ preferences: UserPreferences }>({ preferences: updatedPreferences });
   } catch (error) {
+    // Handle AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Failed to update preferences');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
+    }
+
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error({ err }, 'Failed to update preferences');
     Sentry.captureException(err);

@@ -10,6 +10,7 @@ import {
   revokeAppPassword,
   updateAppPasswordLastUsed,
 } from '../models/queries/app-passwords.queries.js';
+import { AppPasswordCreationError } from '../utils/errors.js';
 
 const SALT_ROUNDS = 10;
 const PASSWORD_LENGTH = 24; // 24 bytes = 32 chars in base64url
@@ -115,7 +116,7 @@ export class AppPasswordsService {
     const row = results[0];
     if (!row) {
       this.logger.error({ userId: userExternalId }, 'Failed to create app password');
-      throw new Error('Failed to create app password');
+      throw new AppPasswordCreationError();
     }
 
     this.logger.info(

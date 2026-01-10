@@ -129,6 +129,7 @@ import {
   type IPaginatedFullTextSearchResult,
   paginatedFullTextSearch,
 } from '../models/queries/search.queries.js';
+import { BirthdayAlreadyExistsError, ContactCreationError } from '../utils/errors.js';
 import { sanitizeSearchHeadline } from '../utils/security.js';
 
 /**
@@ -249,7 +250,7 @@ export class ContactsService {
 
     if (!contact) {
       this.logger.error({ userExternalId }, 'Failed to create contact');
-      throw new Error('Failed to create contact');
+      throw new ContactCreationError();
     }
 
     const contactExternalId = contact.external_id;
@@ -746,7 +747,7 @@ export class ContactsService {
         this.db,
       );
       if (countResult && (countResult.count ?? 0) > 0) {
-        throw new DuplicateBirthdayError();
+        throw new BirthdayAlreadyExistsError();
       }
     }
 
