@@ -1,3 +1,13 @@
+## [2.24.0](https://github.com/datenknoten/freundebuch/compare/v2.23.3...v2.24.0) (2026-01-10)
+
+### Features
+
+* **sabredav:** Save raw vCard as JSON blob for debugging ([f043b5f](https://github.com/datenknoten/freundebuch/commit/f043b5fdd2ac14fdcc7299d0e29b76e7bb9acc44))
+
+### Bug Fixes
+
+* **sabredav:** Address PR review feedback for vCard JSON blob ([cd8f1c2](https://github.com/datenknoten/freundebuch/commit/cd8f1c2a425794bd84b1af8cff68e9659faf5e3a))
+
 ## [2.23.3](https://github.com/datenknoten/freundebuch/compare/v2.23.2...v2.23.3) (2026-01-10)
 
 ### Bug Fixes
