@@ -1,3 +1,23 @@
+## [2.27.0](https://github.com/datenknoten/freundebuch/compare/v2.26.0...v2.27.0) (2026-01-10)
+
+### Features
+
+* **all:** Add faceted search to global search modal ([086070d](https://github.com/datenknoten/freundebuch/commit/086070d7d07c07326789b8d359a7800c1774ff66))
+
+### Bug Fixes
+
+* **backend:** Prevent SQL injection in ILIKE search patterns ([e69ec1f](https://github.com/datenknoten/freundebuch/commit/e69ec1f1b3a32f0a1b896d29f1015fd86fcc8f0c))
+
+### Performance Improvements
+
+* **backend:** Add trigram indexes and fix GetFacetCounts consistency ([21870ce](https://github.com/datenknoten/freundebuch/commit/21870ce3e96a2a8f53776fdf1ab9ffd22caea2db))
+* **backend:** Eliminate correlated subquery for work_notes in ts_headline ([0c951c0](https://github.com/datenknoten/freundebuch/commit/0c951c068ee05d3783189da788c8457c64a1647c))
+* **backend:** Replace EXISTS subqueries with LEFT JOINs in search ([bce5253](https://github.com/datenknoten/freundebuch/commit/bce52534ea2c916ced24d5219ca3e412ccacb14c))
+
+### Code Refactoring
+
+* **frontend:** Simplify store access pattern in search store ([230debf](https://github.com/datenknoten/freundebuch/commit/230debf5d6f3bcc0257842203a9e60146b3298bf))
+
 ## [2.26.0](https://github.com/datenknoten/freundebuch/compare/v2.25.0...v2.26.0) (2026-01-10)
 
 ### Features
