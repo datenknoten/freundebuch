@@ -1,3 +1,9 @@
+## [2.26.0](https://github.com/datenknoten/freundebuch/compare/v2.25.0...v2.26.0) (2026-01-10)
+
+### Features
+
+* **frontend:** add terms of service page and navigation links ([3ac814d](https://github.com/datenknoten/freundebuch/commit/3ac814d30c932ed203982e6ed9d5fbd746c537a9))
+
 ## [2.25.0](https://github.com/datenknoten/freundebuch/compare/v2.24.1...v2.25.0) (2026-01-10)
 
 ### Features
