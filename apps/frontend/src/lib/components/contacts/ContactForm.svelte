@@ -1,5 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import { onMount } from 'svelte';
 import { contacts } from '$lib/stores/contacts';
 import type { Contact } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
@@ -21,6 +22,7 @@ let photoFile = $state<File | null>(null);
 let photoError = $state('');
 let isUploadingPhoto = $state(false);
 let fileInput: HTMLInputElement;
+let firstNameInput: HTMLInputElement;
 
 // Crop modal state
 let showCropModal = $state(false);
@@ -73,6 +75,11 @@ let metContext = $state((() => contact?.metInfo?.metContext ?? '')());
 
 let isLoading = $state(false);
 let error = $state('');
+
+// Focus firstname input when form opens
+onMount(() => {
+  firstNameInput?.focus();
+});
 
 // Photo handling
 function triggerPhotoUpload() {
@@ -331,6 +338,7 @@ async function handleSubmit(e: Event) {
     <input
       type="text"
       bind:value={nameFirst}
+      bind:this={firstNameInput}
       oninput={updateDisplayNameFromParts}
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
       placeholder="First Name"
