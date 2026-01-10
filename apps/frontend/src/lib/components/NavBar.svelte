@@ -199,13 +199,23 @@ $effect(() => {
   </nav>
 
   <div class="absolute bottom-4 left-0 right-0 px-4">
-    <a
-      href="/privacy"
-      onclick={closeMobileMenu}
-      class="block text-center text-gray-400 hover:text-forest text-xs font-body mb-2 transition-colors duration-200"
-    >
-      Privacy Policy
-    </a>
+    <div class="flex justify-center gap-3 mb-2">
+      <a
+        href="/privacy"
+        onclick={closeMobileMenu}
+        class="text-gray-400 hover:text-forest text-xs font-body transition-colors duration-200"
+      >
+        Privacy Policy
+      </a>
+      <span class="text-gray-300">|</span>
+      <a
+        href="/terms"
+        onclick={closeMobileMenu}
+        class="text-gray-400 hover:text-forest text-xs font-body transition-colors duration-200"
+      >
+        Terms of Service
+      </a>
+    </div>
     <p class="text-center text-gray-400 text-xs font-body">v{version}</p>
   </div>
 </div>

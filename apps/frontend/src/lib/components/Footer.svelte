@@ -8,6 +8,8 @@ const version = __APP_VERSION__;
       <span class="text-gray-500">Freundebuch v{version}</span>
       <span class="text-gray-300">|</span>
       <a href="/privacy" class="text-gray-500 hover:text-forest transition-colors duration-200">Privacy Policy</a>
+      <span class="text-gray-300">|</span>
+      <a href="/terms" class="text-gray-500 hover:text-forest transition-colors duration-200">Terms of Service</a>
     </div>
   </div>
 </footer>
