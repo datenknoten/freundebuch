@@ -20,7 +20,7 @@ WITH matching_contacts AS (
             WHEN EXISTS (
                 SELECT 1 FROM contacts.contact_emails e
                 WHERE e.contact_id = c.id
-                AND e.email_address ILIKE '%' || :query || '%'
+                AND e.email_address ILIKE :wildcardQuery
             ) THEN 'email'
             WHEN EXISTS (
                 SELECT 1 FROM contacts.contact_phones p
@@ -31,12 +31,12 @@ WITH matching_contacts AS (
             WHEN EXISTS (
                 SELECT 1 FROM contacts.contact_relationships r
                 WHERE r.contact_id = c.id
-                AND r.notes ILIKE '%' || :query || '%'
+                AND r.notes ILIKE :wildcardQuery
             ) THEN 'notes'
             WHEN EXISTS (
                 SELECT 1 FROM contacts.contact_met_info m
                 WHERE m.contact_id = c.id
-                AND m.met_context ILIKE '%' || :query || '%'
+                AND m.met_context ILIKE :wildcardQuery
             ) THEN 'notes'
             ELSE NULL
         END as match_source
@@ -51,7 +51,7 @@ WITH matching_contacts AS (
           OR EXISTS (
               SELECT 1 FROM contacts.contact_emails e
               WHERE e.contact_id = c.id
-              AND e.email_address ILIKE '%' || :query || '%'
+              AND e.email_address ILIKE :wildcardQuery
           )
           -- OR partial match on phone numbers (digits only)
           OR EXISTS (
@@ -64,13 +64,13 @@ WITH matching_contacts AS (
           OR EXISTS (
               SELECT 1 FROM contacts.contact_relationships r
               WHERE r.contact_id = c.id
-              AND r.notes ILIKE '%' || :query || '%'
+              AND r.notes ILIKE :wildcardQuery
           )
           -- OR match on met_context
           OR EXISTS (
               SELECT 1 FROM contacts.contact_met_info m
               WHERE m.contact_id = c.id
-              AND m.met_context ILIKE '%' || :query || '%'
+              AND m.met_context ILIKE :wildcardQuery
           )
       )
 )
@@ -121,7 +121,7 @@ WITH matching_contacts AS (
             WHEN EXISTS (
                 SELECT 1 FROM contacts.contact_emails e
                 WHERE e.contact_id = c.id
-                AND e.email_address ILIKE '%' || :query || '%'
+                AND e.email_address ILIKE :wildcardQuery
             ) THEN 'email'
             WHEN EXISTS (
                 SELECT 1 FROM contacts.contact_phones p
@@ -132,12 +132,12 @@ WITH matching_contacts AS (
             WHEN EXISTS (
                 SELECT 1 FROM contacts.contact_relationships r
                 WHERE r.contact_id = c.id
-                AND r.notes ILIKE '%' || :query || '%'
+                AND r.notes ILIKE :wildcardQuery
             ) THEN 'notes'
             WHEN EXISTS (
                 SELECT 1 FROM contacts.contact_met_info m
                 WHERE m.contact_id = c.id
-                AND m.met_context ILIKE '%' || :query || '%'
+                AND m.met_context ILIKE :wildcardQuery
             ) THEN 'notes'
             ELSE NULL
         END as match_source
@@ -152,7 +152,7 @@ WITH matching_contacts AS (
           OR EXISTS (
               SELECT 1 FROM contacts.contact_emails e
               WHERE e.contact_id = c.id
-              AND e.email_address ILIKE '%' || :query || '%'
+              AND e.email_address ILIKE :wildcardQuery
           )
           -- OR partial match on phone numbers (digits only)
           OR EXISTS (
@@ -165,13 +165,13 @@ WITH matching_contacts AS (
           OR EXISTS (
               SELECT 1 FROM contacts.contact_relationships r
               WHERE r.contact_id = c.id
-              AND r.notes ILIKE '%' || :query || '%'
+              AND r.notes ILIKE :wildcardQuery
           )
           -- OR match on met_context
           OR EXISTS (
               SELECT 1 FROM contacts.contact_met_info m
               WHERE m.contact_id = c.id
-              AND m.met_context ILIKE '%' || :query || '%'
+              AND m.met_context ILIKE :wildcardQuery
           )
       )
 ),
@@ -275,7 +275,7 @@ WITH base_matches AS (
           OR EXISTS (
               SELECT 1 FROM contacts.contact_emails e
               WHERE e.contact_id = c.id
-              AND e.email_address ILIKE '%' || :query || '%'
+              AND e.email_address ILIKE :wildcardQuery
           )
           OR EXISTS (
               SELECT 1 FROM contacts.contact_phones p
@@ -286,12 +286,12 @@ WITH base_matches AS (
           OR EXISTS (
               SELECT 1 FROM contacts.contact_relationships r
               WHERE r.contact_id = c.id
-              AND r.notes ILIKE '%' || :query || '%'
+              AND r.notes ILIKE :wildcardQuery
           )
           OR EXISTS (
               SELECT 1 FROM contacts.contact_met_info m
               WHERE m.contact_id = c.id
-              AND m.met_context ILIKE '%' || :query || '%'
+              AND m.met_context ILIKE :wildcardQuery
           )
       )
 ),
@@ -337,7 +337,7 @@ matching_contacts AS (
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
         CASE
             WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'
-            WHEN EXISTS (SELECT 1 FROM contacts.contact_emails e WHERE e.contact_id = c.id AND e.email_address ILIKE '%' || :query || '%') THEN 'email'
+            WHEN EXISTS (SELECT 1 FROM contacts.contact_emails e WHERE e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery) THEN 'email'
             WHEN EXISTS (SELECT 1 FROM contacts.contact_phones p WHERE p.contact_id = c.id AND regexp_replace(p.phone_number, '[^0-9]', '', 'g') LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%') THEN 'phone'
             ELSE 'notes'
         END as match_source
@@ -405,7 +405,7 @@ WITH base_matches AS (
           OR EXISTS (
               SELECT 1 FROM contacts.contact_emails e
               WHERE e.contact_id = c.id
-              AND e.email_address ILIKE '%' || :query || '%'
+              AND e.email_address ILIKE :wildcardQuery
           )
           OR EXISTS (
               SELECT 1 FROM contacts.contact_phones p
