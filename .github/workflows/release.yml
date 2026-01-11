@@ -229,3 +229,14 @@ jobs:
           VERSION: ${{ needs.release.outputs.new_release_version }}
         run: |
           ssh -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" /home/deploy-freundebuch/deploy.sh "${VERSION}"
+
+      - name: Send deployment notification
+        if: success()
+        env:
+          WEBHOOK_URL: ${{ secrets.DEPLOYMENT_NOTIFICATION }}
+          VERSION: ${{ needs.release.outputs.new_release_version }}
+          REPO: ${{ github.repository }}
+        run: |
+          curl -X POST "${WEBHOOK_URL}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"✅ **Deployment successful**\n\n**Version:** v${VERSION}\n**Repository:** ${REPO}\n**Release:** https://github.com/${REPO}/releases/tag/v${VERSION}\"}"
