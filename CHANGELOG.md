@@ -1,3 +1,14 @@
+## [2.31.0](https://github.com/datenknoten/freundebuch/compare/v2.30.1...v2.31.0) (2026-01-11)
+
+### Features
+
+* Add upcoming dates dashboard element ([29af97b](https://github.com/datenknoten/freundebuch/commit/29af97b82d9ce38bc6ab73b1c57573eda4d52223))
+
+### Bug Fixes
+
+* **frontend:** Address PR review comments ([b97d369](https://github.com/datenknoten/freundebuch/commit/b97d3693b97b57c3b44eb5c507fa81519518aaa2))
+* Handle Feb 29 birthdays in non-leap years ([161a733](https://github.com/datenknoten/freundebuch/commit/161a733a635481a679c4a7c30597b314c92f58fe))
+
 ## [2.30.1](https://github.com/datenknoten/freundebuch/compare/v2.30.0...v2.30.1) (2026-01-11)
 
 ### Bug Fixes
