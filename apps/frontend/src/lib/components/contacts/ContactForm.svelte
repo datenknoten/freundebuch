@@ -92,8 +92,12 @@ const isLoading = $derived(externalIsLoading ?? internalIsLoading);
 let error = $state('');
 
 // Focus firstname input when form opens
+// Use requestAnimationFrame to ensure the browser has completed layout
+// before focusing, which is required for mobile keyboards to open reliably
 onMount(() => {
-  firstNameInput?.focus();
+  requestAnimationFrame(() => {
+    firstNameInput?.focus();
+  });
 });
 
 // Photo handling
