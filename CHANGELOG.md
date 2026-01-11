@@ -1,3 +1,10 @@
+## [2.31.2](https://github.com/datenknoten/freundebuch/compare/v2.31.1...v2.31.2) (2026-01-11)
+
+### Bug Fixes
+
+* **frontend:** Improve effect dependency tracking for display name fetch ([38c7614](https://github.com/datenknoten/freundebuch/commit/38c7614f75e4951d00560ff5ddf2b84d000c0cb9))
+* **frontend:** Prevent excessive API requests on dashboard ([652e4cb](https://github.com/datenknoten/freundebuch/commit/652e4cb37629d41a33bf62f8c7e1cd4fa6f46bb2))
+
 ## [2.31.1](https://github.com/datenknoten/freundebuch/compare/v2.31.0...v2.31.1) (2026-01-11)
 
 ### Bug Fixes
