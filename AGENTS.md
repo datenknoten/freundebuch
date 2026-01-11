@@ -25,6 +25,37 @@ Each workspace has its own AGENTS.md with specific guidance:
 - [apps/backend/AGENTS.md](apps/backend/AGENTS.md) - Hono, routes, database, auth
 - [packages/shared/AGENTS.md](packages/shared/AGENTS.md) - Types, schemas, utilities
 
+## GitHub
+
+Use the `gh` CLI to interact with issues and PRs:
+
+```bash
+gh issue list                 # List open issues
+gh issue view <number>        # View issue details
+gh pr list                    # List open PRs
+gh pr view <number>           # View PR details
+```
+
+## Quick Commands
+
+See [docs/development.md](docs/development.md) for full list.
+
+```bash
+# Database (run from root)
+pnpm migrate:create <name>    # Create new migration
+pnpm migrate                  # Run pending migrations
+pnpm pgtyped                  # Generate types from SQL
+
+# Development
+pnpm dev                      # Run all dev servers
+pnpm check                    # Lint + format
+pnpm test                     # Run all tests
+
+# Docker
+pnpm docker:up                # Start database
+pnpm docker:down              # Stop database
+```
+
 ## Quick Reference
 
 ### Type Safety

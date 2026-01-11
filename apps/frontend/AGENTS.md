@@ -56,6 +56,21 @@ src/
 - Semantic HTML elements
 - ARIA labels where needed
 
+## Commands
+
+```bash
+# From monorepo root
+pnpm --filter frontend dev          # Run dev server
+pnpm --filter frontend build        # Build for production
+pnpm --filter frontend test         # Run tests
+pnpm --filter frontend type-check   # Check types
+
+# Or from apps/frontend/
+pnpm dev
+pnpm build
+pnpm test
+```
+
 ## Related Epics
 
 - Epic 1: Contact Management UI

@@ -13,9 +13,8 @@ Hono API server with PostgreSQL. See root [AGENTS.md](../../AGENTS.md) for gener
 - Use `TEXT` for strings, never `VARCHAR(n)`
 - Always include `created_at` and `updated_at`
 
-### PgTyped
+### PgTyped Queries
 - All queries in `.sql` files for type generation
-- Run `pnpm pgtyped` after schema changes
 - Queries organized by schema: `queries/auth/`, `queries/contacts/`
 
 ## Hono Patterns
@@ -65,10 +64,25 @@ src/
 { data: T[], pagination: { page, limit, total, totalPages } }
 ```
 
-## Migrations
+## Commands
 
 ```bash
-pnpm migrate:create <name>   # Create new migration
+# From monorepo root
+pnpm --filter backend dev           # Run dev server
+pnpm --filter backend build         # Build for production
+pnpm --filter backend test          # Run tests
+pnpm --filter backend type-check    # Check types
+
+# Or from apps/backend/
+pnpm dev
+pnpm build
+pnpm test
+```
+
+### Migrations
+
+```bash
+pnpm migrate:create <name>    # Create new migration
 pnpm migrate                  # Run pending migrations
 pnpm migrate:down             # Rollback last migration
 ```
@@ -76,6 +90,17 @@ pnpm migrate:down             # Rollback last migration
 - Always implement `down()` for rollback
 - Make migrations idempotent (`IF NOT EXISTS`)
 - Run in dependency order
+
+### PgTyped
+
+```bash
+pnpm pgtyped                  # Generate types from SQL (one-time)
+pnpm pgtyped:watch            # Watch mode for development
+```
+
+Run `pnpm pgtyped` after:
+- Creating/modifying `.sql` query files
+- Running migrations that change schema
 
 ## Related Epics
 

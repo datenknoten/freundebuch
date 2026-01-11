@@ -56,10 +56,16 @@ export type Contact = typeof ContactSchema.infer;
 - Define explicit types for all exports
 - Leverage TypeScript's type inference where clear
 
-## Build
+## Commands
 
 ```bash
-pnpm --filter @freundebuch/shared build
+# From monorepo root
+pnpm --filter @freundebuch/shared build       # Build the package
+pnpm --filter @freundebuch/shared type-check  # Check types
+
+# Or from packages/shared/
+pnpm build
+pnpm type-check
 ```
 
-The package must be built before frontend or backend can use it. The monorepo scripts handle this automatically.
+**Important:** The shared package must be built before frontend or backend can use it. The monorepo root commands (`pnpm build`, `pnpm dev`) handle this automatically.
