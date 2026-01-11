@@ -1,3 +1,9 @@
+## [2.30.1](https://github.com/datenknoten/freundebuch/compare/v2.30.0...v2.30.1) (2026-01-11)
+
+### Bug Fixes
+
+* **frontend:** Redirect existing users to onboarding when required ([6b47090](https://github.com/datenknoten/freundebuch/commit/6b47090484de26f63a9607adc00f2602a2a1eab5))
+
 ## [2.30.0](https://github.com/datenknoten/freundebuch/compare/v2.29.0...v2.30.0) (2026-01-11)
 
 ### Features
