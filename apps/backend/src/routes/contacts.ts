@@ -216,11 +216,8 @@ app.get('/search/faceted', async (c) => {
       validated.department ||
       validated.relationship_category;
 
-    // Check if we're just requesting facets (for initial facet loading)
-    const justFacets = validated.includeFacets === 'true' && !hasQuery && !hasFilters;
-
-    // Require at least a query, filters, or facet request
-    if (!hasQuery && !hasFilters && !justFacets) {
+    // Require at least a query, filters, or includeFacets
+    if (!hasQuery && !hasFilters && validated.includeFacets !== 'true') {
       return c.json<ErrorResponse>(
         {
           error:
