@@ -1,3 +1,13 @@
+## [2.29.0](https://github.com/datenknoten/freundebuch/compare/v2.28.0...v2.29.0) (2026-01-11)
+
+### Features
+
+* **frontend:** Add faceted search to friends list ([d1fd8a7](https://github.com/datenknoten/freundebuch/commit/d1fd8a70dd6e284cf4099b6b3d2212994f9f7445))
+
+### Bug Fixes
+
+* Address code review feedback for faceted search ([4dfeb04](https://github.com/datenknoten/freundebuch/commit/4dfeb047ca776f6934f26aaa9a318b4c1deae072))
+
 ## [2.28.0](https://github.com/datenknoten/freundebuch/compare/v2.27.0...v2.28.0) (2026-01-10)
 
 ### Features
