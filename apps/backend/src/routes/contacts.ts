@@ -189,6 +189,7 @@ app.get('/search/paginated', async (c) => {
  * GET /api/contacts/search/faceted
  * Faceted full-text search with filter support and optional facet aggregation
  * Supports filtering by location, professional, and relationship facets
+ * Can be used with a search query, filters, or both
  */
 app.get('/search/faceted', async (c) => {
   const logger = c.get('logger');
@@ -203,14 +204,40 @@ app.get('/search/faceted', async (c) => {
       return c.json<ErrorResponse>({ error: 'Invalid query parameters', details: validated }, 400);
     }
 
-    // Minimum query length for performance
-    if (validated.q.trim().length < 2) {
-      return c.json<ErrorResponse>({ error: 'Query must be at least 2 characters' }, 400);
+    // Check if we have a valid search query
+    const hasQuery = validated.q && validated.q.trim().length >= 2;
+
+    // Check if we have any active filters
+    const hasFilters =
+      validated.country ||
+      validated.city ||
+      validated.organization ||
+      validated.job_title ||
+      validated.department ||
+      validated.relationship_category;
+
+    // Check if we're just requesting facets (for initial facet loading)
+    const justFacets = validated.includeFacets === 'true' && !hasQuery && !hasFilters;
+
+    // Require at least a query, filters, or facet request
+    if (!hasQuery && !hasFilters && !justFacets) {
+      return c.json<ErrorResponse>(
+        {
+          error:
+            'Either a search query (2+ characters), filters, or includeFacets=true is required',
+        },
+        400,
+      );
     }
 
     const options = parseFacetedSearchQuery(validated);
     const contactsService = new ContactsService(db, logger);
-    const results = await contactsService.facetedSearch(user.userId, options);
+
+    // Use appropriate method based on whether query is present
+    // filterOnlyList handles both filter-only and facets-only requests
+    const results = hasQuery
+      ? await contactsService.facetedSearch(user.userId, options)
+      : await contactsService.filterOnlyList(user.userId, options);
 
     return c.json(results);
   } catch (error) {

@@ -710,3 +710,227 @@ const getFacetCountsIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true
 export const getFacetCounts = new PreparedQuery<IGetFacetCountsParams,IGetFacetCountsResult>(getFacetCountsIR);
 
 
+/** 'FilterOnlyList' parameters type */
+export interface IFilterOnlyListParams {
+  filterCity?: stringArray | null | void;
+  filterCountry?: stringArray | null | void;
+  filterDepartment?: stringArray | null | void;
+  filterJobTitle?: stringArray | null | void;
+  filterOrganization?: stringArray | null | void;
+  filterRelationshipCategory?: stringArray | null | void;
+  offset?: NumberOrString | null | void;
+  pageSize?: NumberOrString | null | void;
+  sortBy?: string | null | void;
+  sortOrder?: string | null | void;
+  userExternalId?: string | null | void;
+}
+
+/** 'FilterOnlyList' return type */
+export interface IFilterOnlyListResult {
+  /** Primary name shown in lists */
+  display_name: string;
+  /** Public UUID for API exposure (always use this in APIs) */
+  external_id: string;
+  /** Job title / position */
+  job_title: string | null;
+  /** Company / organization name */
+  organization: string | null;
+  /** URL to 200x200 thumbnail */
+  photo_thumbnail_url: string | null;
+  primary_email: string | null;
+  primary_phone: string | null;
+  total_count: number | null;
+}
+
+/** 'FilterOnlyList' query type */
+export interface IFilterOnlyListQuery {
+  params: IFilterOnlyListParams;
+  result: IFilterOnlyListResult;
+}
+
+const filterOnlyListIR: any = {"usedParamSet":{"userExternalId":true,"filterCountry":true,"filterCity":true,"filterOrganization":true,"filterJobTitle":true,"filterDepartment":true,"filterRelationshipCategory":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":205,"b":219}]},{"name":"filterCountry","required":false,"transform":{"type":"scalar"},"locs":[{"a":316,"b":329},{"a":468,"b":481}]},{"name":"filterCity","required":false,"transform":{"type":"scalar"},"locs":[{"a":525,"b":535},{"a":671,"b":681}]},{"name":"filterOrganization","required":false,"transform":{"type":"scalar"},"locs":[{"a":733,"b":751},{"a":793,"b":811}]},{"name":"filterJobTitle","required":false,"transform":{"type":"scalar"},"locs":[{"a":852,"b":866},{"a":905,"b":919}]},{"name":"filterDepartment","required":false,"transform":{"type":"scalar"},"locs":[{"a":961,"b":977},{"a":1017,"b":1033}]},{"name":"filterRelationshipCategory","required":false,"transform":{"type":"scalar"},"locs":[{"a":1086,"b":1112},{"a":1349,"b":1375}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":2043,"b":2049},{"a":2138,"b":2144},{"a":2235,"b":2241},{"a":2328,"b":2334},{"a":2419,"b":2425},{"a":2512,"b":2518}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":2072,"b":2081},{"a":2167,"b":2176},{"a":2262,"b":2271},{"a":2355,"b":2364},{"a":2446,"b":2455},{"a":2539,"b":2548}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":2622,"b":2630}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":2643,"b":2649}]}],"statement":"-- Lists contacts with filter support but no search query\nWITH filtered_contacts AS (\n    SELECT c.id\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      -- Country filter (NULL array means no filter)\n      AND (:filterCountry::text[] IS NULL OR EXISTS (\n          SELECT 1 FROM contacts.contact_addresses a\n          WHERE a.contact_id = c.id AND a.country = ANY(:filterCountry)\n      ))\n      -- City filter\n      AND (:filterCity::text[] IS NULL OR EXISTS (\n          SELECT 1 FROM contacts.contact_addresses a\n          WHERE a.contact_id = c.id AND a.city = ANY(:filterCity)\n      ))\n      -- Organization filter\n      AND (:filterOrganization::text[] IS NULL OR c.organization = ANY(:filterOrganization))\n      -- Job title filter\n      AND (:filterJobTitle::text[] IS NULL OR c.job_title = ANY(:filterJobTitle))\n      -- Department filter\n      AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))\n      -- Relationship category filter\n      AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (\n          SELECT 1 FROM contacts.contact_relationships rel\n          INNER JOIN contacts.relationship_types rt ON rel.relationship_type_id = rt.id\n          WHERE rel.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)\n      ))\n),\ntotal_count AS (\n    SELECT COUNT(*)::int as count FROM filtered_contacts\n),\nsorted_results AS (\n    SELECT\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        c.organization,\n        c.job_title,\n        (SELECT e.email_address FROM contacts.contact_emails e\n         WHERE e.contact_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,\n        (SELECT p.phone_number FROM contacts.contact_phones p\n         WHERE p.contact_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone\n    FROM filtered_contacts fc\n    INNER JOIN contacts.contacts c ON c.id = fc.id\n    ORDER BY\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN c.display_name END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN c.display_name END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN c.created_at END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN c.created_at END ASC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN c.updated_at END DESC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN c.updated_at END ASC,\n        c.display_name ASC\n    LIMIT :pageSize\n    OFFSET :offset\n)\nSELECT\n    sr.external_id,\n    sr.display_name,\n    sr.photo_thumbnail_url,\n    sr.organization,\n    sr.job_title,\n    sr.primary_email,\n    sr.primary_phone,\n    tc.count as total_count\nFROM sorted_results sr\nCROSS JOIN total_count tc"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * -- Lists contacts with filter support but no search query
+ * WITH filtered_contacts AS (
+ *     SELECT c.id
+ *     FROM contacts.contacts c
+ *     INNER JOIN auth.users u ON c.user_id = u.id
+ *     WHERE u.external_id = :userExternalId
+ *       AND c.deleted_at IS NULL
+ *       -- Country filter (NULL array means no filter)
+ *       AND (:filterCountry::text[] IS NULL OR EXISTS (
+ *           SELECT 1 FROM contacts.contact_addresses a
+ *           WHERE a.contact_id = c.id AND a.country = ANY(:filterCountry)
+ *       ))
+ *       -- City filter
+ *       AND (:filterCity::text[] IS NULL OR EXISTS (
+ *           SELECT 1 FROM contacts.contact_addresses a
+ *           WHERE a.contact_id = c.id AND a.city = ANY(:filterCity)
+ *       ))
+ *       -- Organization filter
+ *       AND (:filterOrganization::text[] IS NULL OR c.organization = ANY(:filterOrganization))
+ *       -- Job title filter
+ *       AND (:filterJobTitle::text[] IS NULL OR c.job_title = ANY(:filterJobTitle))
+ *       -- Department filter
+ *       AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))
+ *       -- Relationship category filter
+ *       AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (
+ *           SELECT 1 FROM contacts.contact_relationships rel
+ *           INNER JOIN contacts.relationship_types rt ON rel.relationship_type_id = rt.id
+ *           WHERE rel.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
+ *       ))
+ * ),
+ * total_count AS (
+ *     SELECT COUNT(*)::int as count FROM filtered_contacts
+ * ),
+ * sorted_results AS (
+ *     SELECT
+ *         c.id,
+ *         c.external_id,
+ *         c.display_name,
+ *         c.photo_thumbnail_url,
+ *         c.organization,
+ *         c.job_title,
+ *         (SELECT e.email_address FROM contacts.contact_emails e
+ *          WHERE e.contact_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,
+ *         (SELECT p.phone_number FROM contacts.contact_phones p
+ *          WHERE p.contact_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone
+ *     FROM filtered_contacts fc
+ *     INNER JOIN contacts.contacts c ON c.id = fc.id
+ *     ORDER BY
+ *         CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN c.display_name END ASC,
+ *         CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN c.display_name END DESC,
+ *         CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN c.created_at END DESC,
+ *         CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN c.created_at END ASC,
+ *         CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN c.updated_at END DESC,
+ *         CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN c.updated_at END ASC,
+ *         c.display_name ASC
+ *     LIMIT :pageSize
+ *     OFFSET :offset
+ * )
+ * SELECT
+ *     sr.external_id,
+ *     sr.display_name,
+ *     sr.photo_thumbnail_url,
+ *     sr.organization,
+ *     sr.job_title,
+ *     sr.primary_email,
+ *     sr.primary_phone,
+ *     tc.count as total_count
+ * FROM sorted_results sr
+ * CROSS JOIN total_count tc
+ * ```
+ */
+export const filterOnlyList = new PreparedQuery<IFilterOnlyListParams,IFilterOnlyListResult>(filterOnlyListIR);
+
+
+/** 'GetAllFacetCounts' parameters type */
+export interface IGetAllFacetCountsParams {
+  userExternalId?: string | null | void;
+}
+
+/** 'GetAllFacetCounts' return type */
+export interface IGetAllFacetCountsResult {
+  count: number | null;
+  facet_field: string | null;
+  facet_value: string | null;
+}
+
+/** 'GetAllFacetCounts' query type */
+export interface IGetAllFacetCountsQuery {
+  params: IGetAllFacetCountsParams;
+  result: IGetAllFacetCountsResult;
+}
+
+const getAllFacetCountsIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":199,"b":213}]}],"statement":"-- Gets facet counts for all contacts (no search filter)\nWITH all_contacts AS (\n    SELECT c.id\n    FROM contacts.contacts c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n)\n-- Country facet\nSELECT\n    'country' as facet_field,\n    a.country as facet_value,\n    COUNT(DISTINCT ac.id)::int as count\nFROM all_contacts ac\nINNER JOIN contacts.contact_addresses a ON a.contact_id = ac.id\nWHERE a.country IS NOT NULL\nGROUP BY a.country\n\nUNION ALL\n\n-- City facet\nSELECT\n    'city' as facet_field,\n    a.city as facet_value,\n    COUNT(DISTINCT ac.id)::int as count\nFROM all_contacts ac\nINNER JOIN contacts.contact_addresses a ON a.contact_id = ac.id\nWHERE a.city IS NOT NULL\nGROUP BY a.city\n\nUNION ALL\n\n-- Organization facet\nSELECT\n    'organization' as facet_field,\n    c.organization as facet_value,\n    COUNT(*)::int as count\nFROM all_contacts ac\nINNER JOIN contacts.contacts c ON c.id = ac.id\nWHERE c.organization IS NOT NULL\nGROUP BY c.organization\n\nUNION ALL\n\n-- Job title facet\nSELECT\n    'job_title' as facet_field,\n    c.job_title as facet_value,\n    COUNT(*)::int as count\nFROM all_contacts ac\nINNER JOIN contacts.contacts c ON c.id = ac.id\nWHERE c.job_title IS NOT NULL\nGROUP BY c.job_title\n\nUNION ALL\n\n-- Department facet\nSELECT\n    'department' as facet_field,\n    c.department as facet_value,\n    COUNT(*)::int as count\nFROM all_contacts ac\nINNER JOIN contacts.contacts c ON c.id = ac.id\nWHERE c.department IS NOT NULL\nGROUP BY c.department\n\nUNION ALL\n\n-- Relationship category facet\nSELECT\n    'relationship_category' as facet_field,\n    rt.category as facet_value,\n    COUNT(DISTINCT ac.id)::int as count\nFROM all_contacts ac\nINNER JOIN contacts.contact_relationships r ON r.contact_id = ac.id\nINNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id\nGROUP BY rt.category\n\nORDER BY facet_field, count DESC, facet_value"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * -- Gets facet counts for all contacts (no search filter)
+ * WITH all_contacts AS (
+ *     SELECT c.id
+ *     FROM contacts.contacts c
+ *     INNER JOIN auth.users u ON c.user_id = u.id
+ *     WHERE u.external_id = :userExternalId
+ *       AND c.deleted_at IS NULL
+ * )
+ * -- Country facet
+ * SELECT
+ *     'country' as facet_field,
+ *     a.country as facet_value,
+ *     COUNT(DISTINCT ac.id)::int as count
+ * FROM all_contacts ac
+ * INNER JOIN contacts.contact_addresses a ON a.contact_id = ac.id
+ * WHERE a.country IS NOT NULL
+ * GROUP BY a.country
+ * 
+ * UNION ALL
+ * 
+ * -- City facet
+ * SELECT
+ *     'city' as facet_field,
+ *     a.city as facet_value,
+ *     COUNT(DISTINCT ac.id)::int as count
+ * FROM all_contacts ac
+ * INNER JOIN contacts.contact_addresses a ON a.contact_id = ac.id
+ * WHERE a.city IS NOT NULL
+ * GROUP BY a.city
+ * 
+ * UNION ALL
+ * 
+ * -- Organization facet
+ * SELECT
+ *     'organization' as facet_field,
+ *     c.organization as facet_value,
+ *     COUNT(*)::int as count
+ * FROM all_contacts ac
+ * INNER JOIN contacts.contacts c ON c.id = ac.id
+ * WHERE c.organization IS NOT NULL
+ * GROUP BY c.organization
+ * 
+ * UNION ALL
+ * 
+ * -- Job title facet
+ * SELECT
+ *     'job_title' as facet_field,
+ *     c.job_title as facet_value,
+ *     COUNT(*)::int as count
+ * FROM all_contacts ac
+ * INNER JOIN contacts.contacts c ON c.id = ac.id
+ * WHERE c.job_title IS NOT NULL
+ * GROUP BY c.job_title
+ * 
+ * UNION ALL
+ * 
+ * -- Department facet
+ * SELECT
+ *     'department' as facet_field,
+ *     c.department as facet_value,
+ *     COUNT(*)::int as count
+ * FROM all_contacts ac
+ * INNER JOIN contacts.contacts c ON c.id = ac.id
+ * WHERE c.department IS NOT NULL
+ * GROUP BY c.department
+ * 
+ * UNION ALL
+ * 
+ * -- Relationship category facet
+ * SELECT
+ *     'relationship_category' as facet_field,
+ *     rt.category as facet_value,
+ *     COUNT(DISTINCT ac.id)::int as count
+ * FROM all_contacts ac
+ * INNER JOIN contacts.contact_relationships r ON r.contact_id = ac.id
+ * INNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id
+ * GROUP BY rt.category
+ * 
+ * ORDER BY facet_field, count DESC, facet_value
+ * ```
+ */
+export const getAllFacetCounts = new PreparedQuery<IGetAllFacetCountsParams,IGetAllFacetCountsResult>(getAllFacetCountsIR);
+
+

@@ -3,7 +3,15 @@ import * as contactsApi from '$lib/api/contacts';
 import { auth, contactsPageSize } from '$lib/stores/auth';
 import { contactList, contacts, isContactsLoading } from '$lib/stores/contacts';
 import { visibleContactIds } from '$lib/stores/ui';
-import type { GlobalSearchResult, PageSize, SearchSortBy } from '$shared';
+import type {
+  FacetFilters,
+  FacetGroups,
+  GlobalSearchResult,
+  PageSize,
+  SearchSortBy,
+} from '$shared';
+import FacetChips from '../search/FacetChips.svelte';
+import FacetDropdown from '../search/FacetDropdown.svelte';
 import ContactListItem from './ContactListItem.svelte';
 import ContactTable from './ContactTable.svelte';
 import SearchResultItem from './SearchResultItem.svelte';
@@ -31,9 +39,18 @@ let isSearching = $state(false);
 let searchError = $state<string | null>(null);
 let inputElement = $state<HTMLInputElement | null>(null);
 
+// Facet state
+let activeFilters = $state<FacetFilters>({});
+let facets = $state<FacetGroups | null>(null);
+let isFacetsLoading = $state(false);
+
 // Derived state
 let isSearchMode = $derived(searchQuery.trim().length >= 2);
-let showNoResults = $derived(isSearchMode && !isSearching && searchResults.length === 0);
+let hasActiveFilters = $derived(Object.values(activeFilters).some((arr) => arr && arr.length > 0));
+let isFilterMode = $derived(hasActiveFilters && !isSearchMode);
+let showNoResults = $derived(
+  (isSearchMode || isFilterMode) && !isSearching && searchResults.length === 0,
+);
 let currentPageSize = $derived($contactsPageSize);
 
 // Debounce timer
@@ -53,7 +70,10 @@ function handleSearchInput(value: string) {
     clearTimeout(debounceTimer);
   }
 
-  if (value.trim().length < 2) {
+  const hasQuery = value.trim().length >= 2;
+
+  // If no query and no active filters, clear results
+  if (!hasQuery && !hasActiveFilters) {
     searchResults = [];
     searchTotal = 0;
     searchTotalPages = 0;
@@ -69,26 +89,33 @@ function handleSearchInput(value: string) {
 }
 
 async function performSearch() {
-  if (searchQuery.trim().length < 2) return;
+  const hasQuery = searchQuery.trim().length >= 2;
+
+  // Need either a query or active filters
+  if (!hasQuery && !hasActiveFilters) return;
 
   isSearching = true;
   try {
-    const result = await contactsApi.paginatedSearch({
-      query: searchQuery.trim(),
+    const result = await contactsApi.facetedSearch({
+      query: hasQuery ? searchQuery.trim() : undefined,
       page: searchPage,
       pageSize: currentPageSize,
-      sortBy: searchSortBy,
-      sortOrder: searchSortOrder,
+      sortBy: hasQuery ? searchSortBy : sortBy,
+      sortOrder: hasQuery ? searchSortOrder : sortOrder,
+      filters: activeFilters,
+      includeFacets: true,
     });
     searchResults = result.results;
     searchTotal = result.total;
     searchTotalPages = result.totalPages;
+    facets = result.facets ?? null;
   } catch (error) {
     console.error('Search failed:', error);
     searchError = 'Search failed. Please try again.';
     searchResults = [];
     searchTotal = 0;
     searchTotalPages = 0;
+    facets = null;
   } finally {
     isSearching = false;
   }
@@ -104,12 +131,71 @@ function clearSearch() {
   searchError = null;
   searchSortBy = 'relevance';
   searchSortOrder = 'desc';
+  activeFilters = {};
   onQueryChange?.('');
   inputElement?.focus();
 }
 
+// Filter handlers
+function handleFilterChange(newFilters: FacetFilters) {
+  activeFilters = newFilters;
+  searchPage = 1;
+  performSearch();
+}
+
+function handleRemoveFilter(field: keyof FacetFilters, value: string) {
+  const current = activeFilters[field] ?? [];
+  const updated = current.filter((v) => v !== value);
+  activeFilters = {
+    ...activeFilters,
+    [field]: updated.length > 0 ? updated : undefined,
+  };
+  searchPage = 1;
+
+  // If no more filters and no search query, just reload the facets
+  if (!hasActiveFilters && !isSearchMode) {
+    searchResults = [];
+    searchTotal = 0;
+    searchTotalPages = 0;
+    loadFacets();
+  } else {
+    performSearch();
+  }
+}
+
+function handleClearAllFilters() {
+  activeFilters = {};
+  searchPage = 1;
+
+  // If no search query, clear results and just reload facets
+  if (!isSearchMode) {
+    searchResults = [];
+    searchTotal = 0;
+    searchTotalPages = 0;
+    loadFacets();
+  } else {
+    performSearch();
+  }
+}
+
+// Load facets without search query (for initial state)
+async function loadFacets() {
+  isFacetsLoading = true;
+  try {
+    const result = await contactsApi.facetedSearch({
+      pageSize: 1,
+      includeFacets: true,
+    });
+    facets = result.facets ?? null;
+  } catch (error) {
+    console.error('Failed to load facets:', error);
+  } finally {
+    isFacetsLoading = false;
+  }
+}
+
 async function loadPage(page: number) {
-  if (isSearchMode) {
+  if (isSearchMode || isFilterMode) {
     searchPage = page;
     await performSearch();
   } else {
@@ -192,9 +278,16 @@ $effect(() => {
   }
 });
 
+// Load facets on mount (when auth is initialized)
+$effect(() => {
+  if ($auth.isInitialized && !facets) {
+    loadFacets();
+  }
+});
+
 // Update visible contact IDs for keyboard navigation
 $effect(() => {
-  if (!isSearchMode) {
+  if (!isSearchMode && !isFilterMode) {
     const ids = $contactList.map((c) => c.id);
     visibleContactIds.set(ids);
   } else if (searchResults.length > 0) {
@@ -206,9 +299,11 @@ $effect(() => {
 });
 
 // Computed values for display
-let displayTotal = $derived(isSearchMode ? searchTotal : $contacts.total);
-let displayPage = $derived(isSearchMode ? searchPage : $contacts.page);
-let displayTotalPages = $derived(isSearchMode ? searchTotalPages : $contacts.totalPages);
+let displayTotal = $derived(isSearchMode || isFilterMode ? searchTotal : $contacts.total);
+let displayPage = $derived(isSearchMode || isFilterMode ? searchPage : $contacts.page);
+let displayTotalPages = $derived(
+  isSearchMode || isFilterMode ? searchTotalPages : $contacts.totalPages,
+);
 let currentSortBy = $derived(isSearchMode ? searchSortBy : sortBy);
 let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
 </script>
@@ -267,12 +362,32 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
     </div>
   {/if}
 
+  <!-- Facet filters bar (always visible) -->
+  <div class="flex flex-wrap items-center gap-2 py-2">
+    <FacetDropdown
+      {facets}
+      {activeFilters}
+      onFilterChange={handleFilterChange}
+      isLoading={isFacetsLoading}
+    />
+    <FacetChips
+      filters={activeFilters}
+      onRemove={handleRemoveFilter}
+      onClearAll={handleClearAllFilters}
+    />
+  </div>
+
   <!-- Unified Control Bar -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-2 border-b border-gray-200">
     <!-- Left: Result count -->
     <div class="text-sm text-gray-600 font-body" aria-live="polite">
       {#if isSearchMode}
         {displayTotal} result{displayTotal !== 1 ? 's' : ''} for "{searchQuery}"
+        {#if hasActiveFilters}
+          <span class="text-forest">(filtered)</span>
+        {/if}
+      {:else if isFilterMode}
+        {displayTotal} contact{displayTotal !== 1 ? 's' : ''} <span class="text-forest">(filtered)</span>
       {:else}
         {displayTotal} contact{displayTotal !== 1 ? 's' : ''}
       {/if}
@@ -374,40 +489,58 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
   </div>
 
   <!-- Content area -->
-  {#if isSearchMode}
-    <!-- Search mode: show search results -->
+  {#if isSearchMode || isFilterMode}
+    <!-- Search/Filter mode: show results -->
     {#if isSearching && searchResults.length === 0}
       <div class="flex justify-center py-12" aria-live="polite">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
-          <span class="sr-only">Loading search results...</span>
+          <span class="sr-only">Loading results...</span>
         </div>
       </div>
     {:else if showNoResults}
-      <!-- No search results -->
+      <!-- No results -->
       <div class="text-center py-12 bg-gray-50 rounded-lg">
         <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <h3 class="mt-4 text-lg font-heading text-gray-900">No friends found</h3>
         <p class="mt-2 text-sm text-gray-600 font-body">
-          No results for "{searchQuery}"
+          {#if isSearchMode}
+            No results for "{searchQuery}"{#if hasActiveFilters} with current filters{/if}
+          {:else}
+            No contacts match the current filters
+          {/if}
         </p>
         <p class="mt-1 text-xs text-gray-400 font-body">
-          Try a different search term or check your spelling
+          {#if isSearchMode}
+            Try a different search term or check your spelling
+          {:else}
+            Try adjusting or clearing the filters
+          {/if}
         </p>
-        <button
-          onclick={clearSearch}
-          class="mt-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Clear search
-        </button>
+        {#if hasActiveFilters}
+          <button
+            onclick={handleClearAllFilters}
+            class="mt-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
+          >
+            Clear filters
+          </button>
+        {/if}
+        {#if isSearchMode}
+          <button
+            onclick={clearSearch}
+            class="mt-4 ml-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear search
+          </button>
+        {/if}
       </div>
     {:else}
-      <!-- Search results list -->
-      <div class="space-y-2" role="list" aria-label="Search results">
+      <!-- Results list -->
+      <div class="space-y-2" role="list" aria-label={isSearchMode ? "Search results" : "Filtered contacts"}>
         {#each searchResults as result, index (result.id)}
           <SearchResultItem {result} {index} />
         {/each}
