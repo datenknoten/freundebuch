@@ -1,13 +1,32 @@
 <script lang="ts">
 import UpcomingDates from '$lib/components/dashboard/UpcomingDates.svelte';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
+import { getContact } from '$lib/api/contacts';
+
+let displayName: string | null = null;
+
+$: userDisplayName = displayName || $currentUser?.email || '';
+
+$: if ($currentUser?.selfContactId) {
+	fetchDisplayName($currentUser.selfContactId);
+}
+
+async function fetchDisplayName(selfContactId: string) {
+	try {
+		const contact = await getContact(selfContactId);
+		displayName = contact.displayName;
+	} catch {
+		// Fall back to email if we can't fetch the self-contact
+		displayName = null;
+	}
+}
 </script>
 
 <svelte:head>
 	<title>Home | Freundebuch</title>
 </svelte:head>
 
-<div class="bg-gray-50 flex items-center justify-center p-4 py-16">
+<div class="bg-gray-50 flex items-center justify-center px-6 py-16">
 	<div class="text-center max-w-7xl mx-auto">
 		{#if !$isAuthInitialized}
 			<!-- Loading state while auth initializes - prevents flash of unauthenticated content -->
@@ -22,7 +41,7 @@ import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/aut
 		{:else if $isAuthenticated && $currentUser}
 			<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>
 			<p class="text-2xl font-body text-gray-700 mb-8">
-				Welcome back, {$currentUser.email}!
+				Welcome back, {userDisplayName}!
 			</p>
 			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left max-w-4xl mx-auto">
 				<UpcomingDates days={30} limit={10} />
