@@ -1,3 +1,14 @@
+## [2.31.1](https://github.com/datenknoten/freundebuch/compare/v2.31.0...v2.31.1) (2026-01-11)
+
+### Bug Fixes
+
+* **frontend:** Add padding and show display name on dashboard ([31aed74](https://github.com/datenknoten/freundebuch/commit/31aed74d78375f9c960648425c34852297001ece))
+* **frontend:** Use responsive padding and prevent race conditions ([d97c67f](https://github.com/datenknoten/freundebuch/commit/d97c67f0c8672bf168bdf8222080dbf242364201))
+
+### Code Refactoring
+
+* **frontend:** Use Svelte 5 runes for dashboard state management ([f245ad0](https://github.com/datenknoten/freundebuch/commit/f245ad0159382b1cf271803dff54d5e1983322a9))
+
 ## [2.31.0](https://github.com/datenknoten/freundebuch/compare/v2.30.1...v2.31.0) (2026-01-11)
 
 ### Features
