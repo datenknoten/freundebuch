@@ -255,6 +255,25 @@ function createAuthStore() {
         console.warn('Failed to load preferences:', error);
       }
     },
+
+    /**
+     * Refresh user data from server
+     * Used after onboarding completion to update hasCompletedOnboarding
+     */
+    refreshUserData: async () => {
+      try {
+        const user = await authApi.getCurrentUser();
+        update((state) => ({
+          ...state,
+          user,
+          preferences: { ...DEFAULT_PREFERENCES, ...user.preferences },
+        }));
+        return user;
+      } catch (error) {
+        console.warn('Failed to refresh user data:', error);
+        throw error;
+      }
+    },
   };
 }
 
@@ -302,3 +321,20 @@ export function waitForAuthInit(): Promise<void> {
     });
   });
 }
+
+/**
+ * Convenience function to refresh user data
+ * Used after onboarding completion
+ */
+export async function refreshUserData() {
+  return auth.refreshUserData();
+}
+
+/**
+ * Derived store for onboarding status
+ * Returns true if user needs to complete onboarding
+ */
+export const needsOnboarding = derived(
+  auth,
+  ($auth) => $auth.user !== null && !$auth.user.hasCompletedOnboarding,
+);

@@ -144,6 +144,20 @@ function createWildcardQuery(query: string): string {
   return `%${escapeLikePattern(query)}%`;
 }
 
+// ============================================================================
+// Contacts Error Classes
+// ============================================================================
+
+/**
+ * Thrown when trying to add a birthday date to a contact that already has one
+ */
+export class DuplicateBirthdayError extends Error {
+  constructor() {
+    super('Contact already has a birthday date');
+    this.name = 'DuplicateBirthdayError';
+  }
+}
+
 export class ContactsService {
   private db: pg.Pool;
   private logger: Logger;
@@ -729,7 +743,7 @@ export class ContactsService {
         this.db,
       );
       if (countResult && (countResult.count ?? 0) > 0) {
-        throw new Error('Contact already has a birthday date');
+        throw new DuplicateBirthdayError();
       }
     }
 
@@ -1425,13 +1439,12 @@ export class ContactsService {
     for (const row of rows) {
       if (!row.facet_field || !row.facet_value || row.count === null) continue;
 
-      if (!groupedByField.has(row.facet_field)) {
-        groupedByField.set(row.facet_field, []);
+      const existing = groupedByField.get(row.facet_field);
+      if (existing) {
+        existing.push({ value: row.facet_value, count: row.count });
+      } else {
+        groupedByField.set(row.facet_field, [{ value: row.facet_value, count: row.count }]);
       }
-      groupedByField.get(row.facet_field)!.push({
-        value: row.facet_value,
-        count: row.count,
-      });
     }
 
     // Map field labels
@@ -1446,32 +1459,27 @@ export class ContactsService {
 
     // Build location facets
     for (const field of ['country', 'city'] as const) {
-      if (groupedByField.has(field)) {
-        facets.location.push({
-          field,
-          label: fieldLabels[field],
-          values: groupedByField.get(field)!,
-        });
+      const values = groupedByField.get(field);
+      if (values) {
+        facets.location.push({ field, label: fieldLabels[field], values });
       }
     }
 
     // Build professional facets
     for (const field of ['organization', 'job_title', 'department'] as const) {
-      if (groupedByField.has(field)) {
-        facets.professional.push({
-          field,
-          label: fieldLabels[field],
-          values: groupedByField.get(field)!,
-        });
+      const values = groupedByField.get(field);
+      if (values) {
+        facets.professional.push({ field, label: fieldLabels[field], values });
       }
     }
 
     // Build relationship facets
-    if (groupedByField.has('relationship_category')) {
+    const relationshipValues = groupedByField.get('relationship_category');
+    if (relationshipValues) {
       facets.relationship.push({
         field: 'relationship_category',
-        label: fieldLabels['relationship_category'],
-        values: groupedByField.get('relationship_category')!,
+        label: fieldLabels.relationship_category,
+        values: relationshipValues,
       });
     }
 

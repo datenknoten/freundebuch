@@ -4,6 +4,7 @@ import { type } from 'arktype';
 import { Hono } from 'hono';
 import type { Logger } from 'pino';
 import { authMiddleware } from '../middleware/auth.js';
+import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { AddressLookupService } from '../services/address-lookup.service.js';
 import { SUPPORTED_COUNTRIES } from '../services/external/zipcodebase.client.js';
 import type { AppContext } from '../types/context.js';
@@ -13,6 +14,8 @@ const app = new Hono<AppContext>();
 
 // Apply auth middleware to all address-lookup routes
 app.use('*', authMiddleware);
+// Apply onboarding middleware to require self-contact
+app.use('*', onboardingMiddleware);
 
 // Singleton service instance (lazy init)
 let addressService: AddressLookupService | null = null;

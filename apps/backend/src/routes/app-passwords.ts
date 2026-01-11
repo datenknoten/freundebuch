@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
+import { onboardingMiddleware } from '../middleware/onboarding.js';
 import {
   type AppPassword,
   AppPasswordsService,
@@ -18,6 +19,8 @@ const app = new Hono<AppContext>();
 
 // Apply auth middleware to all routes
 app.use('*', authMiddleware);
+// Apply onboarding middleware to require self-contact
+app.use('*', onboardingMiddleware);
 
 // Validation schema for creating an app password
 const CreateAppPasswordSchema = type({

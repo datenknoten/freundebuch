@@ -23,8 +23,9 @@ import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
+import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { contactsRateLimitMiddleware } from '../middleware/rate-limit.js';
-import { ContactsService } from '../services/contacts.service.js';
+import { ContactsService, DuplicateBirthdayError } from '../services/contacts.service.js';
 import { PhotoService, PhotoUploadError } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
 import { isValidUuid } from '../utils/security.js';
@@ -33,6 +34,8 @@ const app = new Hono<AppContext>();
 
 // Apply auth middleware to all contact routes
 app.use('*', authMiddleware);
+// Apply onboarding middleware to require self-contact before using contacts
+app.use('*', onboardingMiddleware);
 // Apply rate limiting to all contact routes
 app.use('*', contactsRateLimitMiddleware);
 
@@ -1168,7 +1171,7 @@ app.post('/:id/dates', async (c) => {
 
     return c.json(date, 201);
   } catch (error) {
-    if (error instanceof Error && error.message === 'Contact already has a birthday date') {
+    if (error instanceof DuplicateBirthdayError) {
       return c.json<ErrorResponse>({ error: error.message }, 400);
     }
     const err = error instanceof Error ? error : new Error(String(error));

@@ -19,7 +19,13 @@ import {
   authRateLimitMiddleware,
   passwordResetRateLimitMiddleware,
 } from '../middleware/rate-limit.js';
-import { AuthService } from '../services/auth.service.js';
+import {
+  AuthService,
+  InvalidCredentialsError,
+  InvalidPasswordResetTokenError,
+  InvalidSessionError,
+  UserAlreadyExistsError,
+} from '../services/auth.service.js';
 import type { AppContext } from '../types/context.js';
 import {
   getAuthTokenCookieOptions,
@@ -73,7 +79,7 @@ app.post('/register', authRateLimitMiddleware, async (c) => {
     return c.json<AuthResponse>(result, 201);
   } catch (error) {
     // Check for application-level duplicate user error
-    if (error instanceof Error && error.message === 'User already exists') {
+    if (error instanceof UserAlreadyExistsError) {
       return c.json<ErrorResponse>({ error: error.message }, 409);
     }
 
@@ -137,7 +143,7 @@ app.post('/login', authRateLimitMiddleware, async (c) => {
 
     return c.json<AuthResponse>(result);
   } catch (error) {
-    if (error instanceof Error && error.message === 'Invalid credentials') {
+    if (error instanceof InvalidCredentialsError) {
       return c.json<ErrorResponse>({ error: 'Invalid credentials' }, 401);
     }
 
@@ -233,7 +239,7 @@ app.post('/refresh', async (c) => {
 
     return c.json<AuthResponse>(result);
   } catch (error) {
-    if (error instanceof Error && error.message === 'Invalid or expired session') {
+    if (error instanceof InvalidSessionError) {
       // Clear invalid session and auth cookies
       setCookie(c, 'session_token', '', getClearCookieOptions());
       setCookie(c, AUTH_TOKEN_COOKIE, '', getClearCookieOptions());
@@ -342,7 +348,7 @@ app.post('/reset-password', passwordResetRateLimitMiddleware, async (c) => {
 
     return c.json({ message: 'Password reset successfully' });
   } catch (error) {
-    if (error instanceof Error && error.message === 'Invalid or expired password reset token') {
+    if (error instanceof InvalidPasswordResetTokenError) {
       return c.json<ErrorResponse>({ error: error.message }, 400);
     }
 
@@ -375,6 +381,8 @@ app.get('/me', authMiddleware, async (c) => {
       user: {
         externalId: userWithPrefs.externalId,
         email: userWithPrefs.email,
+        selfContactId: userWithPrefs.selfContactId,
+        hasCompletedOnboarding: userWithPrefs.hasCompletedOnboarding,
       },
       preferences: userWithPrefs.preferences,
     };

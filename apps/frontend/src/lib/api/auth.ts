@@ -1,5 +1,7 @@
 import type {
   AuthResponse,
+  Contact,
+  ContactCreateInput,
   ErrorResponse,
   ForgotPasswordRequest,
   LoginRequest,
@@ -156,6 +158,40 @@ export async function updatePreferences(
 ): Promise<{ preferences: UserPreferences }> {
   return apiRequest('/api/auth/preferences', {
     method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+// ============================================================================
+// Self-Contact (Onboarding)
+// ============================================================================
+
+/**
+ * Get the current user's self-contact ID
+ */
+export async function getSelfContact(): Promise<{ selfContactId: string | null }> {
+  return apiRequest('/api/users/me/self-contact', {
+    method: 'GET',
+  });
+}
+
+/**
+ * Set an existing contact as the user's self-contact
+ */
+export async function setSelfContact(contactId: string): Promise<{ selfContactId: string }> {
+  return apiRequest('/api/users/me/self-contact', {
+    method: 'PUT',
+    body: JSON.stringify({ contactId }),
+  });
+}
+
+/**
+ * Create a new contact and set it as the user's self-contact
+ * Used during onboarding
+ */
+export async function createSelfContact(data: ContactCreateInput): Promise<Contact> {
+  return apiRequest<Contact>('/api/users/me/self-contact', {
+    method: 'POST',
     body: JSON.stringify(data),
   });
 }

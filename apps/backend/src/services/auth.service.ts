@@ -1,5 +1,90 @@
 import type pg from 'pg';
 import type { Logger } from 'pino';
+
+// ============================================================================
+// Auth Error Classes
+// ============================================================================
+
+/**
+ * Base error class for auth-related errors
+ */
+export class AuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthError';
+  }
+}
+
+/**
+ * Thrown when a user already exists during registration
+ */
+export class UserAlreadyExistsError extends AuthError {
+  constructor() {
+    super('User already exists');
+    this.name = 'UserAlreadyExistsError';
+  }
+}
+
+/**
+ * Thrown when user creation fails
+ */
+export class UserCreationFailedError extends AuthError {
+  constructor() {
+    super('Failed to create user');
+    this.name = 'UserCreationFailedError';
+  }
+}
+
+/**
+ * Thrown when credentials are invalid during login
+ */
+export class InvalidCredentialsError extends AuthError {
+  constructor() {
+    super('Invalid credentials');
+    this.name = 'InvalidCredentialsError';
+  }
+}
+
+/**
+ * Thrown when a session is invalid or expired
+ */
+export class InvalidSessionError extends AuthError {
+  constructor() {
+    super('Invalid or expired session');
+    this.name = 'InvalidSessionError';
+  }
+}
+
+/**
+ * Thrown when a user is not found
+ */
+export class UserNotFoundError extends AuthError {
+  constructor() {
+    super('User not found');
+    this.name = 'UserNotFoundError';
+  }
+}
+
+/**
+ * Thrown when a password reset token is invalid or expired
+ */
+export class InvalidPasswordResetTokenError extends AuthError {
+  constructor() {
+    super('Invalid or expired password reset token');
+    this.name = 'InvalidPasswordResetTokenError';
+  }
+}
+
+/**
+ * Thrown when preferences update fails
+ */
+export class PreferencesUpdateFailedError extends AuthError {
+  constructor() {
+    super('Failed to update preferences');
+    this.name = 'PreferencesUpdateFailedError';
+  }
+}
+
 import {
   createPasswordResetToken,
   getPasswordResetToken,
@@ -15,6 +100,7 @@ import {
   createUser,
   getUserByEmail,
   getUserByExternalId,
+  getUserSelfContact,
   getUserWithPreferences,
   updateUserPassword,
   updateUserPreferences,
@@ -49,6 +135,8 @@ export interface AuthResult {
     externalId: string;
     email: string;
     preferences?: UserPreferences;
+    selfContactId?: string;
+    hasCompletedOnboarding: boolean;
   };
   accessToken: string;
   sessionToken: string;
@@ -74,7 +162,7 @@ export class AuthService {
 
     if (existingUser.length > 0) {
       this.logger.warn({ email: data.email }, 'User already exists');
-      throw new Error('User already exists');
+      throw new UserAlreadyExistsError();
     }
 
     // Hash password
@@ -91,7 +179,7 @@ export class AuthService {
 
     if (!newUser) {
       this.logger.error({ email: data.email }, 'Failed to create user');
-      throw new Error('Failed to create user');
+      throw new UserCreationFailedError();
     }
 
     this.logger.info(
@@ -119,10 +207,12 @@ export class AuthService {
       this.db,
     );
 
+    // New users haven't completed onboarding yet
     return {
       user: {
         externalId: newUser.external_id,
         email: newUser.email,
+        hasCompletedOnboarding: false,
       },
       accessToken,
       sessionToken,
@@ -140,13 +230,13 @@ export class AuthService {
 
     if (users.length === 0) {
       this.logger.warn({ email: data.email }, 'User not found');
-      throw new Error('Invalid credentials');
+      throw new InvalidCredentialsError();
     }
 
     const user = users[0];
 
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new InvalidCredentialsError();
     }
 
     // Verify password
@@ -154,7 +244,7 @@ export class AuthService {
 
     if (!isValid) {
       this.logger.warn({ email: data.email }, 'Invalid password');
-      throw new Error('Invalid credentials');
+      throw new InvalidCredentialsError();
     }
 
     this.logger.info(
@@ -182,10 +272,19 @@ export class AuthService {
       this.db,
     );
 
+    // Check onboarding status
+    const selfContactResult = await getUserSelfContact.run(
+      { userExternalId: user.external_id },
+      this.db,
+    );
+    const selfContactExternalId = selfContactResult[0]?.self_contact_external_id ?? null;
+
     return {
       user: {
         externalId: user.external_id,
         email: user.email,
+        selfContactId: selfContactExternalId ?? undefined,
+        hasCompletedOnboarding: selfContactExternalId !== null,
       },
       accessToken,
       sessionToken,
@@ -215,13 +314,13 @@ export class AuthService {
 
     if (sessions.length === 0) {
       this.logger.warn('Invalid or expired session');
-      throw new Error('Invalid or expired session');
+      throw new InvalidSessionError();
     }
 
     const session = sessions[0];
 
     if (!session) {
-      throw new Error('Invalid or expired session');
+      throw new InvalidSessionError();
     }
 
     // Get fresh user data with preferences by external ID
@@ -232,13 +331,13 @@ export class AuthService {
 
     if (users.length === 0) {
       this.logger.error('User not found for valid session');
-      throw new Error('User not found');
+      throw new UserNotFoundError();
     }
 
     const user = users[0];
 
     if (!user) {
-      throw new Error('User not found');
+      throw new UserNotFoundError();
     }
 
     // Generate new JWT token
@@ -247,6 +346,13 @@ export class AuthService {
       email: user.email,
     });
 
+    // Check onboarding status
+    const selfContactResult = await getUserSelfContact.run(
+      { userExternalId: user.external_id },
+      this.db,
+    );
+    const selfContactExternalId = selfContactResult[0]?.self_contact_external_id ?? null;
+
     this.logger.info({ userId: user.external_id }, 'Access token refreshed successfully');
 
     return {
@@ -254,6 +360,8 @@ export class AuthService {
         externalId: user.external_id,
         email: user.email,
         preferences: user.preferences as UserPreferences,
+        selfContactId: selfContactExternalId ?? undefined,
+        hasCompletedOnboarding: selfContactExternalId !== null,
       },
       accessToken,
       sessionToken, // Return the same session token
@@ -327,13 +435,13 @@ export class AuthService {
 
     if (tokens.length === 0) {
       this.logger.warn('Invalid or expired password reset token');
-      throw new Error('Invalid or expired password reset token');
+      throw new InvalidPasswordResetTokenError();
     }
 
     const resetToken = tokens[0];
 
     if (!resetToken) {
-      throw new Error('Invalid or expired password reset token');
+      throw new InvalidPasswordResetTokenError();
     }
 
     // Hash new password
@@ -346,13 +454,13 @@ export class AuthService {
     );
 
     if (userResult.length === 0) {
-      throw new Error('User not found');
+      throw new UserNotFoundError();
     }
 
     const user = userResult[0];
 
     if (!user) {
-      throw new Error('User not found');
+      throw new UserNotFoundError();
     }
 
     // Update password
@@ -377,6 +485,8 @@ export class AuthService {
     externalId: string;
     email: string;
     preferences: UserPreferences;
+    selfContactId?: string;
+    hasCompletedOnboarding: boolean;
   } | null> {
     const users = await getUserWithPreferences.run({ externalId: userExternalId }, this.db);
 
@@ -389,10 +499,19 @@ export class AuthService {
       return null;
     }
 
+    // Check onboarding status
+    const selfContactResult = await getUserSelfContact.run(
+      { userExternalId: user.external_id },
+      this.db,
+    );
+    const selfContactExternalId = selfContactResult[0]?.self_contact_external_id ?? null;
+
     return {
       externalId: user.external_id,
       email: user.email,
       preferences: user.preferences as UserPreferences,
+      selfContactId: selfContactExternalId ?? undefined,
+      hasCompletedOnboarding: selfContactExternalId !== null,
     };
   }
 
@@ -409,12 +528,12 @@ export class AuthService {
     const users = await getUserWithPreferences.run({ externalId: userExternalId }, this.db);
 
     if (users.length === 0) {
-      throw new Error('User not found');
+      throw new UserNotFoundError();
     }
 
     const user = users[0];
     if (!user) {
-      throw new Error('User not found');
+      throw new UserNotFoundError();
     }
 
     // Merge with existing preferences
@@ -434,7 +553,7 @@ export class AuthService {
     );
 
     if (result.length === 0) {
-      throw new Error('Failed to update preferences');
+      throw new PreferencesUpdateFailedError();
     }
 
     this.logger.info({ userId: userExternalId }, 'User preferences updated successfully');
