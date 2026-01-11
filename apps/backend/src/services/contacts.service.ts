@@ -114,10 +114,13 @@ import {
   clearRecentSearches,
   deleteRecentSearch,
   facetedSearch,
+  filterOnlyList,
   fullTextSearchContacts,
+  getAllFacetCounts,
   getFacetCounts,
   getRecentSearches,
   type IFacetedSearchResult,
+  type IFilterOnlyListResult,
   type IFullTextSearchContactsResult,
   type IGetFacetCountsResult,
   type IPaginatedFullTextSearchResult,
@@ -1190,6 +1193,14 @@ export class ContactsService {
     options: FacetedSearchOptions,
   ): Promise<FacetedSearchResponse> {
     const { query, page, pageSize, sortBy, sortOrder, filters, includeFacets } = options;
+
+    // This method requires a query - use filterOnlyList for filter-only searches
+    if (!query) {
+      throw new Error(
+        'facetedSearch requires a query - use filterOnlyList for filter-only searches',
+      );
+    }
+
     const offset = (page - 1) * pageSize;
     const wildcardQuery = createWildcardQuery(query);
 
@@ -1231,6 +1242,59 @@ export class ContactsService {
     // Fetch facet counts if requested
     if (includeFacets) {
       const facetRows = await getFacetCounts.run({ userExternalId, query, wildcardQuery }, this.db);
+      response.facets = this.aggregateFacets(facetRows);
+    }
+
+    return response;
+  }
+
+  /**
+   * Filter-only list with optional facet aggregation
+   * Used when no search query is provided but filters may be applied
+   */
+  async filterOnlyList(
+    userExternalId: string,
+    options: FacetedSearchOptions,
+  ): Promise<FacetedSearchResponse> {
+    const { page, pageSize, sortBy, sortOrder, filters, includeFacets } = options;
+    const offset = (page - 1) * pageSize;
+
+    this.logger.debug(
+      { page, pageSize, sortBy, sortOrder, filters, includeFacets },
+      'Filter-only list',
+    );
+
+    // Execute filter-only query
+    const results = await filterOnlyList.run(
+      {
+        userExternalId,
+        sortBy,
+        sortOrder,
+        pageSize,
+        offset,
+        filterCountry: filters.country ?? null,
+        filterCity: filters.city ?? null,
+        filterOrganization: filters.organization ?? null,
+        filterJobTitle: filters.job_title ?? null,
+        filterDepartment: filters.department ?? null,
+        filterRelationshipCategory: filters.relationship_category ?? null,
+      },
+      this.db,
+    );
+
+    const total = results[0]?.total_count ?? 0;
+
+    const response: FacetedSearchResponse = {
+      results: results.map((r) => this.mapFilterOnlyResult(r)),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+
+    // Fetch facet counts if requested (uses all contacts, not search-filtered)
+    if (includeFacets) {
+      const facetRows = await getAllFacetCounts.run({ userExternalId }, this.db);
       response.facets = this.aggregateFacets(facetRows);
     }
 
@@ -1327,6 +1391,21 @@ export class ContactsService {
       // Sanitize headline to prevent XSS - only allow <mark> tags from ts_headline
       headline: sanitizeSearchHeadline(row.headline),
       matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
+    };
+  }
+
+  private mapFilterOnlyResult(row: IFilterOnlyListResult): GlobalSearchResult {
+    return {
+      id: row.external_id,
+      displayName: row.display_name,
+      photoThumbnailUrl: row.photo_thumbnail_url ?? undefined,
+      organization: row.organization ?? undefined,
+      jobTitle: row.job_title ?? undefined,
+      primaryEmail: row.primary_email ?? undefined,
+      primaryPhone: row.primary_phone ?? undefined,
+      rank: 0, // No ranking for filter-only results
+      headline: '', // No headline for filter-only results (empty string)
+      matchSource: null, // No match source for filter-only results
     };
   }
 

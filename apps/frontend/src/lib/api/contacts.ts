@@ -563,7 +563,12 @@ export async function paginatedSearch(
 }
 
 /** Parameters for faceted search */
-export interface FacetedSearchParams extends PaginatedSearchParams {
+export interface FacetedSearchParams {
+  query?: string; // Optional - can search with query, filters, or both
+  page?: number;
+  pageSize?: number;
+  sortBy?: SearchSortBy;
+  sortOrder?: 'asc' | 'desc';
   filters?: FacetFilters;
   includeFacets?: boolean;
 }
@@ -571,11 +576,13 @@ export interface FacetedSearchParams extends PaginatedSearchParams {
 /**
  * Faceted full-text search with filter support
  * Supports filtering by location, professional, and relationship facets
+ * Can be used with a search query, filters, or both
  */
 export async function facetedSearch(params: FacetedSearchParams): Promise<FacetedSearchResponse> {
   const searchParams = new URLSearchParams();
-  searchParams.set('q', params.query);
 
+  // Query is optional - can search with query, filters, or just get facets
+  if (params.query) searchParams.set('q', params.query);
   if (params.page) searchParams.set('page', params.page.toString());
   if (params.pageSize) searchParams.set('pageSize', params.pageSize.toString());
   if (params.sortBy) searchParams.set('sortBy', params.sortBy);

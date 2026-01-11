@@ -554,7 +554,7 @@ export interface FacetedSearchResponse extends PaginatedSearchResponse {
 
 /** Schema for faceted search query parameters */
 export const FacetedSearchQuerySchema = type({
-  q: 'string > 0',
+  'q?': 'string', // Optional - can search with query OR filter-only
   'page?': 'string',
   'pageSize?': 'string',
   'sortBy?': SearchSortBySchema,
@@ -572,7 +572,12 @@ export const FacetedSearchQuerySchema = type({
 export type FacetedSearchQuery = typeof FacetedSearchQuerySchema.infer;
 
 /** Parsed faceted search options */
-export interface FacetedSearchOptions extends SearchOptions {
+export interface FacetedSearchOptions {
+  query?: string; // Optional - can search with query OR filter-only
+  page: number;
+  pageSize: number;
+  sortBy: SearchSortBy;
+  sortOrder: 'asc' | 'desc';
   filters: FacetFilters;
   includeFacets: boolean;
 }
@@ -581,7 +586,7 @@ export interface FacetedSearchOptions extends SearchOptions {
  * Parse and validate faceted search query parameters
  */
 export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearchOptions {
-  const base = parseSearchQuery(query);
+  const sortBy = query.sortBy || (query.q ? 'relevance' : 'display_name');
 
   // Parse comma-separated filter values
   const parseFilterArray = (value: string | undefined): string[] | undefined => {
@@ -594,7 +599,15 @@ export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearc
   };
 
   return {
-    ...base,
+    query: query.q?.trim(), // Optional query
+    page: query.page ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1,
+    pageSize: query.pageSize
+      ? Math.min(100, Math.max(1, Number.parseInt(query.pageSize, 10) || 25))
+      : 25,
+    sortBy,
+    sortOrder:
+      query.sortOrder ||
+      (sortBy === 'relevance' ? 'desc' : sortBy === 'display_name' ? 'asc' : 'desc'),
     filters: {
       country: parseFilterArray(query.country),
       city: parseFilterArray(query.city),

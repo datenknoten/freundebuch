@@ -440,3 +440,157 @@ INNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id
 GROUP BY rt.category
 
 ORDER BY facet_field, count DESC, facet_value;
+
+
+/* @name FilterOnlyList */
+-- Lists contacts with filter support but no search query
+WITH filtered_contacts AS (
+    SELECT c.id
+    FROM contacts.contacts c
+    INNER JOIN auth.users u ON c.user_id = u.id
+    WHERE u.external_id = :userExternalId
+      AND c.deleted_at IS NULL
+      -- Country filter (NULL array means no filter)
+      AND (:filterCountry::text[] IS NULL OR EXISTS (
+          SELECT 1 FROM contacts.contact_addresses a
+          WHERE a.contact_id = c.id AND a.country = ANY(:filterCountry)
+      ))
+      -- City filter
+      AND (:filterCity::text[] IS NULL OR EXISTS (
+          SELECT 1 FROM contacts.contact_addresses a
+          WHERE a.contact_id = c.id AND a.city = ANY(:filterCity)
+      ))
+      -- Organization filter
+      AND (:filterOrganization::text[] IS NULL OR c.organization = ANY(:filterOrganization))
+      -- Job title filter
+      AND (:filterJobTitle::text[] IS NULL OR c.job_title = ANY(:filterJobTitle))
+      -- Department filter
+      AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))
+      -- Relationship category filter
+      AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (
+          SELECT 1 FROM contacts.contact_relationships rel
+          INNER JOIN contacts.relationship_types rt ON rel.relationship_type_id = rt.id
+          WHERE rel.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
+      ))
+),
+total_count AS (
+    SELECT COUNT(*)::int as count FROM filtered_contacts
+),
+sorted_results AS (
+    SELECT
+        c.id,
+        c.external_id,
+        c.display_name,
+        c.photo_thumbnail_url,
+        c.organization,
+        c.job_title,
+        (SELECT e.email_address FROM contacts.contact_emails e
+         WHERE e.contact_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,
+        (SELECT p.phone_number FROM contacts.contact_phones p
+         WHERE p.contact_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone
+    FROM filtered_contacts fc
+    INNER JOIN contacts.contacts c ON c.id = fc.id
+    ORDER BY
+        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN c.display_name END ASC,
+        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN c.display_name END DESC,
+        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN c.created_at END DESC,
+        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN c.created_at END ASC,
+        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN c.updated_at END DESC,
+        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN c.updated_at END ASC,
+        c.display_name ASC
+    LIMIT :pageSize
+    OFFSET :offset
+)
+SELECT
+    sr.external_id,
+    sr.display_name,
+    sr.photo_thumbnail_url,
+    sr.organization,
+    sr.job_title,
+    sr.primary_email,
+    sr.primary_phone,
+    tc.count as total_count
+FROM sorted_results sr
+CROSS JOIN total_count tc;
+
+
+/* @name GetAllFacetCounts */
+-- Gets facet counts for all contacts (no search filter)
+WITH all_contacts AS (
+    SELECT c.id
+    FROM contacts.contacts c
+    INNER JOIN auth.users u ON c.user_id = u.id
+    WHERE u.external_id = :userExternalId
+      AND c.deleted_at IS NULL
+)
+-- Country facet
+SELECT
+    'country' as facet_field,
+    a.country as facet_value,
+    COUNT(DISTINCT ac.id)::int as count
+FROM all_contacts ac
+INNER JOIN contacts.contact_addresses a ON a.contact_id = ac.id
+WHERE a.country IS NOT NULL
+GROUP BY a.country
+
+UNION ALL
+
+-- City facet
+SELECT
+    'city' as facet_field,
+    a.city as facet_value,
+    COUNT(DISTINCT ac.id)::int as count
+FROM all_contacts ac
+INNER JOIN contacts.contact_addresses a ON a.contact_id = ac.id
+WHERE a.city IS NOT NULL
+GROUP BY a.city
+
+UNION ALL
+
+-- Organization facet
+SELECT
+    'organization' as facet_field,
+    c.organization as facet_value,
+    COUNT(*)::int as count
+FROM all_contacts ac
+INNER JOIN contacts.contacts c ON c.id = ac.id
+WHERE c.organization IS NOT NULL
+GROUP BY c.organization
+
+UNION ALL
+
+-- Job title facet
+SELECT
+    'job_title' as facet_field,
+    c.job_title as facet_value,
+    COUNT(*)::int as count
+FROM all_contacts ac
+INNER JOIN contacts.contacts c ON c.id = ac.id
+WHERE c.job_title IS NOT NULL
+GROUP BY c.job_title
+
+UNION ALL
+
+-- Department facet
+SELECT
+    'department' as facet_field,
+    c.department as facet_value,
+    COUNT(*)::int as count
+FROM all_contacts ac
+INNER JOIN contacts.contacts c ON c.id = ac.id
+WHERE c.department IS NOT NULL
+GROUP BY c.department
+
+UNION ALL
+
+-- Relationship category facet
+SELECT
+    'relationship_category' as facet_field,
+    rt.category as facet_value,
+    COUNT(DISTINCT ac.id)::int as count
+FROM all_contacts ac
+INNER JOIN contacts.contact_relationships r ON r.contact_id = ac.id
+INNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id
+GROUP BY rt.category
+
+ORDER BY facet_field, count DESC, facet_value;
