@@ -1,3 +1,9 @@
+## [2.32.0](https://github.com/datenknoten/freundebuch/compare/v2.31.2...v2.32.0) (2026-01-11)
+
+### Features
+
+* **ci:** Add Matrix webhook notification on successful deployment ([c2948b0](https://github.com/datenknoten/freundebuch/commit/c2948b05ca5e1c1051a4f3499ffb41b675836955))
+
 ## [2.31.2](https://github.com/datenknoten/freundebuch/compare/v2.31.1...v2.31.2) (2026-01-11)
 
 ### Bug Fixes
