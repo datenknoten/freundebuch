@@ -1404,7 +1404,7 @@ export class ContactsService {
       primaryEmail: row.primary_email ?? undefined,
       primaryPhone: row.primary_phone ?? undefined,
       rank: 0, // No ranking for filter-only results
-      headline: '', // No headline for filter-only results (empty string)
+      headline: null, // No headline for filter-only results
       matchSource: null, // No match source for filter-only results
     };
   }

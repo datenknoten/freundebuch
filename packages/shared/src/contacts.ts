@@ -423,8 +423,8 @@ export interface GlobalSearchResult {
   primaryPhone?: string;
   /** Relevance score from full-text search */
   rank: number;
-  /** HTML snippet with <mark> tags highlighting matched terms */
-  headline: string;
+  /** HTML snippet with <mark> tags highlighting matched terms, null for filter-only results */
+  headline: string | null;
   /** Where the match was found: contact fields, email, phone, or notes */
   matchSource: 'contact' | 'email' | 'phone' | 'notes' | null;
 }
