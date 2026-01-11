@@ -1,3 +1,9 @@
+## [2.32.1](https://github.com/datenknoten/freundebuch/compare/v2.32.0...v2.32.1) (2026-01-11)
+
+### Bug Fixes
+
+* **frontend:** Use requestAnimationFrame for input focus to open mobile keyboard ([765b8b8](https://github.com/datenknoten/freundebuch/commit/765b8b800d7c776c73cdb75938b134241cd4c574))
+
 ## [2.32.0](https://github.com/datenknoten/freundebuch/compare/v2.31.2...v2.32.0) (2026-01-11)
 
 ### Features
