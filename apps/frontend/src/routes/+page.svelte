@@ -4,22 +4,26 @@ import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/aut
 import { getContact } from '$lib/api/contacts';
 
 let displayName = $state<string | null>(null);
+let loading = $state(false);
 let userDisplayName = $derived(displayName || $currentUser?.email || '');
 
 $effect(() => {
 	const selfContactId = $currentUser?.selfContactId;
-	if (selfContactId) {
+	if (selfContactId && !loading) {
 		fetchDisplayName(selfContactId);
 	}
 });
 
 async function fetchDisplayName(selfContactId: string) {
+	loading = true;
 	try {
 		const contact = await getContact(selfContactId);
 		displayName = contact.displayName;
 	} catch (error) {
 		console.warn('Failed to fetch self-contact for display name:', error);
 		displayName = null;
+	} finally {
+		loading = false;
 	}
 }
 </script>
@@ -28,7 +32,7 @@ async function fetchDisplayName(selfContactId: string) {
 	<title>Home | Freundebuch</title>
 </svelte:head>
 
-<div class="bg-gray-50 flex items-center justify-center px-6 py-16">
+<div class="bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16">
 	<div class="text-center max-w-7xl mx-auto">
 		{#if !$isAuthInitialized}
 			<!-- Loading state while auth initializes - prevents flash of unauthenticated content -->
