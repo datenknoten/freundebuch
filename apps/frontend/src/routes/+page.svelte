@@ -1,32 +1,29 @@
 <script lang="ts">
-import { untrack } from 'svelte';
 import { getContact } from '$lib/api/contacts';
 import UpcomingDates from '$lib/components/dashboard/UpcomingDates.svelte';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
 
 let displayName = $state<string | null>(null);
-let loading = $state(false);
+let lastFetchedId = $state<string | null>(null);
 let userDisplayName = $derived(displayName || $currentUser?.email || '');
 
 $effect(() => {
   const selfContactId = $currentUser?.selfContactId;
-  // Use untrack for loading to prevent re-triggering when loading state changes
-  // This prevents an infinite loop: effect runs -> sets loading=true -> loading changes -> effect re-runs
-  if (selfContactId && untrack(() => !loading)) {
+  // Only fetch when selfContactId changes to a new value
+  // This prevents duplicate fetches and handles user switching properly
+  if (selfContactId && selfContactId !== lastFetchedId) {
+    lastFetchedId = selfContactId;
     fetchDisplayName(selfContactId);
   }
 });
 
 async function fetchDisplayName(selfContactId: string) {
-  loading = true;
   try {
     const contact = await getContact(selfContactId);
     displayName = contact.displayName;
   } catch (error) {
     console.warn('Failed to fetch self-contact for display name:', error);
     displayName = null;
-  } finally {
-    loading = false;
   }
 }
 </script>
