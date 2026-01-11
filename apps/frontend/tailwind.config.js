@@ -11,6 +11,7 @@ export default {
         },
         sage: {
           DEFAULT: '#8B9D83',
+          light: '#B8C4B0',
         },
         amber: {
           warm: '#D4A574',

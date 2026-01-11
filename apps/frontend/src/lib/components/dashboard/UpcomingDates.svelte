@@ -39,20 +39,13 @@ function formatDateType(type: DateType): string {
   return typeLabels[type] || type;
 }
 
-function formatDate(dateValue: string, yearKnown: boolean): string {
+function formatDate(dateValue: string): string {
   try {
     const d = new Date(dateValue);
-    if (yearKnown) {
-      return d.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-      });
-    } else {
-      return d.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-      });
-    }
+    return d.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
   } catch {
     return dateValue;
   }
@@ -131,7 +124,7 @@ function getDaysUntilClass(daysUntil: number): string {
               {formatDateType(date.dateType)}
               {#if date.label} - {date.label}{/if}
               <span class="mx-1">&#183;</span>
-              {formatDate(date.dateValue, date.yearKnown)}
+              {formatDate(date.dateValue)}
             </div>
           </div>
         </a>
