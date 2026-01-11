@@ -1,4 +1,5 @@
 <script lang="ts">
+import UpcomingDates from '$lib/components/dashboard/UpcomingDates.svelte';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
 </script>
 
@@ -23,25 +24,25 @@ import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/aut
 			<p class="text-2xl font-body text-gray-700 mb-8">
 				Welcome back, {$currentUser.email}!
 			</p>
-			<div class="bg-white rounded-xl shadow-lg p-8 mb-8">
-				<h2 class="text-3xl font-heading text-gray-800 mb-4">
-					Your Relationship Dashboard
-				</h2>
-				<p class="text-lg font-body text-gray-600 mb-6">
-					Contact management features coming soon!
-				</p>
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-					<div class="p-6 bg-gray-50 rounded-lg">
-						<div class="text-4xl font-heading text-forest mb-2">0</div>
-						<div class="text-sm font-body text-gray-600">Contacts</div>
-					</div>
-					<div class="p-6 bg-gray-50 rounded-lg">
-						<div class="text-4xl font-heading text-forest mb-2">0</div>
-						<div class="text-sm font-body text-gray-600">Recent Interactions</div>
-					</div>
-					<div class="p-6 bg-gray-50 rounded-lg">
-						<div class="text-4xl font-heading text-forest mb-2">0</div>
-						<div class="text-sm font-body text-gray-600">Upcoming Reminders</div>
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left max-w-4xl mx-auto">
+				<UpcomingDates days={30} limit={10} />
+				<div class="bg-white rounded-xl shadow-lg p-6">
+					<h3 class="text-xl font-heading text-gray-800 mb-4">Quick Actions</h3>
+					<div class="space-y-3">
+						<a
+							href="/contacts/new"
+							class="flex items-center gap-3 p-3 rounded-lg bg-forest text-white hover:bg-forest-light transition-colors"
+						>
+							<span class="text-xl">+</span>
+							<span class="font-body font-medium">Add New Contact</span>
+						</a>
+						<a
+							href="/contacts"
+							class="flex items-center gap-3 p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+						>
+							<span class="text-xl">&#128101;</span>
+							<span class="font-body font-medium">View All Contacts</span>
+						</a>
 					</div>
 				</div>
 			</div>

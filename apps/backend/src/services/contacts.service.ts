@@ -37,6 +37,7 @@ import type {
   SocialPlatform,
   SocialProfile,
   SocialProfileInput,
+  UpcomingDate,
   Url,
   UrlInput,
   UrlType,
@@ -54,7 +55,9 @@ import {
   countBirthdaysForContact,
   createDate,
   deleteDate,
+  getUpcomingDates,
   type IGetDatesByContactIdResult,
+  type IGetUpcomingDatesResult,
   updateDate,
 } from '../models/queries/contact-dates.queries.js';
 import {
@@ -807,6 +810,25 @@ export class ContactsService {
     );
 
     return result.length > 0;
+  }
+
+  async getUpcomingDates(
+    userExternalId: string,
+    options: { days?: number; limit?: number } = {},
+  ): Promise<UpcomingDate[]> {
+    const { days = 30, limit = 10 } = options;
+    this.logger.debug({ days, limit }, 'Getting upcoming dates');
+
+    const results = await getUpcomingDates.run(
+      {
+        userExternalId,
+        maxDays: days,
+        limitCount: limit,
+      },
+      this.db,
+    );
+
+    return results.map((row) => this.mapUpcomingDate(row));
   }
 
   // ============================================================================
@@ -1659,6 +1681,25 @@ export class ContactsService {
       dateType: row.date_type as DateType,
       label: row.label ?? undefined,
       createdAt: row.created_at.toISOString(),
+    };
+  }
+
+  private mapUpcomingDate(row: IGetUpcomingDatesResult): UpcomingDate {
+    // date_value comes as a Date object from PostgreSQL
+    const dateValue =
+      row.date_value instanceof Date ? row.date_value.toISOString().split('T')[0] : row.date_value;
+    return {
+      id: row.date_external_id,
+      dateValue,
+      yearKnown: row.year_known,
+      dateType: row.date_type as DateType,
+      label: row.label ?? undefined,
+      daysUntil: row.days_until ?? 0,
+      contact: {
+        id: row.contact_external_id,
+        displayName: row.contact_display_name,
+        photoThumbnailUrl: row.contact_photo_thumbnail_url ?? undefined,
+      },
     };
   }
 

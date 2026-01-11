@@ -355,6 +355,40 @@ app.delete('/search/recent', async (c) => {
   }
 });
 
+// ============================================================================
+// Dashboard Routes
+// ============================================================================
+
+/**
+ * GET /api/contacts/dates/upcoming
+ * Get upcoming important dates across all contacts
+ * Query params: days (default 30), limit (default 10)
+ * NOTE: This must be defined before /:id to avoid being caught by the wildcard
+ */
+app.get('/dates/upcoming', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+
+  const daysParam = c.req.query('days');
+  const limitParam = c.req.query('limit');
+
+  const days = daysParam ? Math.min(365, Math.max(1, Number.parseInt(daysParam, 10) || 30)) : 30;
+  const limit = limitParam ? Math.min(50, Math.max(1, Number.parseInt(limitParam, 10) || 10)) : 10;
+
+  try {
+    const contactsService = new ContactsService(db, logger);
+    const upcomingDates = await contactsService.getUpcomingDates(user.userId, { days, limit });
+
+    return c.json(upcomingDates);
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error({ err }, 'Failed to get upcoming dates');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to get upcoming dates' }, 500);
+  }
+});
+
 /**
  * GET /api/contacts/relationship-types
  * Get all relationship types grouped by category
