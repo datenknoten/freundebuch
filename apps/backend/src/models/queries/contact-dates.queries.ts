@@ -3,6 +3,8 @@ import { PreparedQuery } from '@pgtyped/runtime';
 
 export type DateOrString = Date | string;
 
+export type NumberOrString = number | string;
+
 /** 'GetDatesByContactId' parameters type */
 export interface IGetDatesByContactIdParams {
   contactExternalId?: string | null | void;
@@ -305,5 +307,75 @@ const countBirthdaysForContactIR: any = {"usedParamSet":{"contactExternalId":tru
  * ```
  */
 export const countBirthdaysForContact = new PreparedQuery<ICountBirthdaysForContactParams,ICountBirthdaysForContactResult>(countBirthdaysForContactIR);
+
+
+/** 'GetUpcomingDates' parameters type */
+export interface IGetUpcomingDatesParams {
+  limitCount?: NumberOrString | null | void;
+  maxDays?: number | null | void;
+  userExternalId?: string | null | void;
+}
+
+/** 'GetUpcomingDates' return type */
+export interface IGetUpcomingDatesResult {
+  /** Primary name shown in lists */
+  contact_display_name: string;
+  /** Public UUID for API exposure (always use this in APIs) */
+  contact_external_id: string;
+  /** URL to 200x200 thumbnail */
+  contact_photo_thumbnail_url: string | null;
+  /** Public UUID for API exposure */
+  date_external_id: string;
+  /** birthday, anniversary, or other */
+  date_type: string;
+  /** The date value */
+  date_value: Date;
+  days_until: number | null;
+  /** User-defined label (especially for "other" type) */
+  label: string | null;
+  /** Whether the year is known (false = only month/day) */
+  year_known: boolean;
+}
+
+/** 'GetUpcomingDates' query type */
+export interface IGetUpcomingDatesQuery {
+  params: IGetUpcomingDatesParams;
+  result: IGetUpcomingDatesResult;
+}
+
+const getUpcomingDatesIR: any = {"usedParamSet":{"userExternalId":true,"maxDays":true,"limitCount":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":898,"b":912}]},{"name":"maxDays","required":false,"transform":{"type":"scalar"},"locs":[{"a":1426,"b":1433}]},{"name":"limitCount","required":false,"transform":{"type":"scalar"},"locs":[{"a":1485,"b":1495}]}],"statement":"SELECT\n    d.external_id AS date_external_id,\n    d.date_value,\n    d.year_known,\n    d.date_type,\n    d.label,\n    c.external_id AS contact_external_id,\n    c.display_name AS contact_display_name,\n    c.photo_thumbnail_url AS contact_photo_thumbnail_url,\n    CASE\n        WHEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) >= CURRENT_DATE\n        THEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE\n        ELSE MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int + 1, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE\n    END AS days_until\nFROM contacts.contact_dates d\nINNER JOIN contacts.contacts c ON d.contact_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\n  AND CASE\n        WHEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) >= CURRENT_DATE\n        THEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE\n        ELSE MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int + 1, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE\n      END <= :maxDays\nORDER BY days_until ASC, c.display_name ASC\nLIMIT :limitCount"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT
+ *     d.external_id AS date_external_id,
+ *     d.date_value,
+ *     d.year_known,
+ *     d.date_type,
+ *     d.label,
+ *     c.external_id AS contact_external_id,
+ *     c.display_name AS contact_display_name,
+ *     c.photo_thumbnail_url AS contact_photo_thumbnail_url,
+ *     CASE
+ *         WHEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) >= CURRENT_DATE
+ *         THEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE
+ *         ELSE MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int + 1, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE
+ *     END AS days_until
+ * FROM contacts.contact_dates d
+ * INNER JOIN contacts.contacts c ON d.contact_id = c.id
+ * INNER JOIN auth.users u ON c.user_id = u.id
+ * WHERE u.external_id = :userExternalId
+ *   AND c.deleted_at IS NULL
+ *   AND CASE
+ *         WHEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) >= CURRENT_DATE
+ *         THEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE
+ *         ELSE MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int + 1, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE
+ *       END <= :maxDays
+ * ORDER BY days_until ASC, c.display_name ASC
+ * LIMIT :limitCount
+ * ```
+ */
+export const getUpcomingDates = new PreparedQuery<IGetUpcomingDatesParams,IGetUpcomingDatesResult>(getUpcomingDatesIR);
 
 

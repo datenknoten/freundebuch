@@ -311,6 +311,21 @@ export interface ContactDate {
   createdAt: string;
 }
 
+/** Upcoming date with contact info for dashboard */
+export interface UpcomingDate {
+  id: string;
+  dateValue: string;
+  yearKnown: boolean;
+  dateType: DateType;
+  label?: string;
+  daysUntil: number;
+  contact: {
+    id: string;
+    displayName: string;
+    photoThumbnailUrl?: string;
+  };
+}
+
 /** Met information in API responses */
 export interface MetInfo {
   id: string;

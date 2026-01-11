@@ -27,6 +27,7 @@ import type {
   SearchSortBy,
   SocialProfile,
   SocialProfileInput,
+  UpcomingDate,
   Url,
   UrlInput,
 } from '$shared';
@@ -385,6 +386,21 @@ export async function deleteDate(contactId: string, dateId: string): Promise<{ m
   return apiRequest(`/api/contacts/${contactId}/dates/${dateId}`, {
     method: 'DELETE',
   });
+}
+
+/**
+ * Get upcoming important dates across all contacts
+ */
+export async function getUpcomingDates(options?: {
+  days?: number;
+  limit?: number;
+}): Promise<UpcomingDate[]> {
+  const searchParams = new URLSearchParams();
+  if (options?.days) searchParams.set('days', options.days.toString());
+  if (options?.limit) searchParams.set('limit', options.limit.toString());
+  const queryString = searchParams.toString();
+  const endpoint = `/api/contacts/dates/upcoming${queryString ? `?${queryString}` : ''}`;
+  return apiRequest<UpcomingDate[]>(endpoint);
 }
 
 // ============================================================================
