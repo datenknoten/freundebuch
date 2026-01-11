@@ -5,6 +5,7 @@ import { generateToken, hashPassword } from '../../src/utils/auth.js';
 import { resetConfig } from '../../src/utils/config.js';
 import {
   type AuthTestContext,
+  completeTestUserOnboarding,
   createTestUser,
   setupAuthTests,
   teardownAuthTests,
@@ -104,14 +105,49 @@ export function authHeaders(accessToken: string): Record<string, string> {
 }
 
 /**
- * Clean up contacts between tests
+ * Clean up contacts between tests (preserves self-contacts used for onboarding)
  */
 export async function cleanupContacts(pool: pg.Pool): Promise<void> {
-  await pool.query('DELETE FROM contacts.contact_urls');
-  await pool.query('DELETE FROM contacts.contact_addresses');
-  await pool.query('DELETE FROM contacts.contact_emails');
-  await pool.query('DELETE FROM contacts.contact_phones');
-  await pool.query('DELETE FROM contacts.contacts');
+  // Delete sub-resources for non-self contacts only
+  await pool.query(`
+    DELETE FROM contacts.contact_urls
+    WHERE contact_id IN (
+      SELECT c.id FROM contacts.contacts c
+      LEFT JOIN auth.users u ON u.self_contact_id = c.id
+      WHERE u.self_contact_id IS NULL
+    )
+  `);
+  await pool.query(`
+    DELETE FROM contacts.contact_addresses
+    WHERE contact_id IN (
+      SELECT c.id FROM contacts.contacts c
+      LEFT JOIN auth.users u ON u.self_contact_id = c.id
+      WHERE u.self_contact_id IS NULL
+    )
+  `);
+  await pool.query(`
+    DELETE FROM contacts.contact_emails
+    WHERE contact_id IN (
+      SELECT c.id FROM contacts.contacts c
+      LEFT JOIN auth.users u ON u.self_contact_id = c.id
+      WHERE u.self_contact_id IS NULL
+    )
+  `);
+  await pool.query(`
+    DELETE FROM contacts.contact_phones
+    WHERE contact_id IN (
+      SELECT c.id FROM contacts.contacts c
+      LEFT JOIN auth.users u ON u.self_contact_id = c.id
+      WHERE u.self_contact_id IS NULL
+    )
+  `);
+  // Delete contacts that are NOT self-contacts
+  await pool.query(`
+    DELETE FROM contacts.contacts c
+    WHERE NOT EXISTS (
+      SELECT 1 FROM auth.users u WHERE u.self_contact_id = c.id
+    )
+  `);
 }
 
 /**
@@ -136,6 +172,9 @@ export function setupContactsTestSuite() {
       'contacts-test@example.com',
       'SecurePassword123',
     );
+
+    // Complete onboarding for the test user (required by onboarding middleware)
+    await completeTestUserOnboarding(authContext.pool, testUser.externalId);
 
     context = {
       ...authContext,

@@ -51,7 +51,14 @@ export interface User {
   preferences?: UserPreferences;
   createdAt?: string;
   updatedAt?: string;
+  /** External ID of the user's self-contact (if set) */
+  selfContactId?: string;
+  /** Whether the user has completed onboarding (has a self-contact) */
+  hasCompletedOnboarding: boolean;
 }
+
+/** Error code returned when user hasn't completed onboarding */
+export const ONBOARDING_REQUIRED_CODE = 'ONBOARDING_REQUIRED';
 
 // Auth response (for login/register/refresh)
 export interface AuthResponse {

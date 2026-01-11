@@ -1,19 +1,33 @@
 <script lang="ts">
-import { goto } from '$app/navigation';
 import { onMount } from 'svelte';
+import { goto } from '$app/navigation';
 import { contacts } from '$lib/stores/contacts';
-import type { Contact } from '$shared';
+import type { Contact, ContactCreateInput } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
 import ContactAvatar from './ContactAvatar.svelte';
 import ImageCropModal from './ImageCropModal.svelte';
 
 interface Props {
   contact?: Contact;
+  /** Onboarding mode - for creating the user's self-contact */
+  isOnboarding?: boolean;
+  /** Custom submit handler (used in onboarding mode) */
+  onSubmit?: (data: ContactCreateInput) => Promise<void>;
+  /** Custom submit button label */
+  submitLabel?: string;
+  /** External loading state (used in onboarding mode) */
+  isLoading?: boolean;
 }
 
-let { contact }: Props = $props();
+let {
+  contact,
+  isOnboarding = false,
+  onSubmit: onSubmitProp,
+  submitLabel,
+  isLoading: externalIsLoading,
+}: Props = $props();
 
-const isEditing = $derived(!!contact);
+const isEditing = $derived(!!contact && !isOnboarding);
 
 // Photo state - initialize with functions to capture initial values
 let photoUrl = $state((() => contact?.photoUrl)());
@@ -73,7 +87,8 @@ let metDate = $state((() => contact?.metInfo?.metDate ?? '')());
 let metLocation = $state((() => contact?.metInfo?.metLocation ?? '')());
 let metContext = $state((() => contact?.metInfo?.metContext ?? '')());
 
-let isLoading = $state(false);
+let internalIsLoading = $state(false);
+const isLoading = $derived(externalIsLoading ?? internalIsLoading);
 let error = $state('');
 
 // Focus firstname input when form opens
@@ -178,7 +193,7 @@ async function handleDeletePhoto() {
 async function handleSubmit(e: Event) {
   e.preventDefault();
   error = '';
-  isLoading = true;
+  internalIsLoading = true;
 
   try {
     // Build met_info if any field is filled
@@ -190,6 +205,29 @@ async function handleSubmit(e: Event) {
             met_context: metContext || undefined,
           }
         : undefined;
+
+    // Build the contact data for creating/onboarding
+    const contactData: ContactCreateInput = {
+      display_name: displayName,
+      nickname: nickname || undefined,
+      name_prefix: namePrefix || undefined,
+      name_first: nameFirst || undefined,
+      name_middle: nameMiddle || undefined,
+      name_last: nameLast || undefined,
+      name_suffix: nameSuffix || undefined,
+      job_title: jobTitle || undefined,
+      organization: organization || undefined,
+      department: department || undefined,
+      work_notes: workNotes || undefined,
+      interests: interests || undefined,
+      met_info: metInfo,
+    };
+
+    // Onboarding mode - call the custom submit handler
+    if (isOnboarding && onSubmitProp) {
+      await onSubmitProp(contactData);
+      return; // Parent handles navigation
+    }
 
     if (isEditing && contact) {
       // Update existing contact - core fields only
@@ -218,26 +256,12 @@ async function handleSubmit(e: Event) {
     } else {
       // Create new contact - core fields only
       // Subresources can be added inline on the detail page after creation
-      const newContact = await contacts.createContact({
-        display_name: displayName,
-        nickname: nickname || undefined,
-        name_prefix: namePrefix || undefined,
-        name_first: nameFirst || undefined,
-        name_middle: nameMiddle || undefined,
-        name_last: nameLast || undefined,
-        name_suffix: nameSuffix || undefined,
-        job_title: jobTitle || undefined,
-        organization: organization || undefined,
-        department: department || undefined,
-        work_notes: workNotes || undefined,
-        interests: interests || undefined,
-        met_info: metInfo,
-      });
+      const newContact = await contacts.createContact(contactData);
       goto(`/contacts/${newContact.id}`);
     }
   } catch (err) {
     error = (err as Error)?.message || 'Failed to save contact';
-    isLoading = false;
+    internalIsLoading = false;
   }
 }
 </script>
@@ -466,15 +490,25 @@ async function handleSubmit(e: Event) {
       disabled={isLoading || !displayName.trim()}
       class="flex-1 bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {isLoading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Contact'}
+      {#if isLoading}
+        Saving...
+      {:else if submitLabel}
+        {submitLabel}
+      {:else if isEditing}
+        Save Changes
+      {:else}
+        Create Contact
+      {/if}
     </button>
 
-    <a
-      href={isEditing && contact ? `/contacts/${contact.id}` : '/contacts'}
-      class="px-6 py-3 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors text-center"
-    >
-      Cancel
-    </a>
+    {#if !isOnboarding}
+      <a
+        href={isEditing && contact ? `/contacts/${contact.id}` : '/contacts'}
+        class="px-6 py-3 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors text-center"
+      >
+        Cancel
+      </a>
+    {/if}
   </div>
 </form>
 

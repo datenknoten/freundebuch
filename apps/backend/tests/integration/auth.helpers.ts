@@ -236,6 +236,39 @@ export async function sessionExists(pool: pg.Pool, tokenHash: string): Promise<b
 }
 
 /**
+ * Helper to complete onboarding for a test user by creating a self-contact
+ * This is required for the user to pass the onboarding middleware
+ */
+export async function completeTestUserOnboarding(
+  pool: pg.Pool,
+  userExternalId: string,
+): Promise<string> {
+  // Create a self-contact for the user
+  const contactResult = await pool.query(
+    `INSERT INTO contacts.contacts (user_id, display_name)
+     SELECT u.id, 'Test User (Self)'
+     FROM auth.users u
+     WHERE u.external_id = $1
+     RETURNING external_id`,
+    [userExternalId],
+  );
+
+  const contactId = contactResult.rows[0].external_id;
+
+  // Set it as the user's self-contact
+  await pool.query(
+    `UPDATE auth.users u
+     SET self_contact_id = c.id
+     FROM contacts.contacts c
+     WHERE u.external_id = $1
+       AND c.external_id = $2`,
+    [userExternalId, contactId],
+  );
+
+  return contactId;
+}
+
+/**
  * Setup function for beforeAll in test files
  */
 export function setupAuthTestSuite() {

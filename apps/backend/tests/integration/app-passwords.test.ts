@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { describe, expect, it } from 'vitest';
-import { createTestUser, setupAuthTestSuite } from './auth.helpers.js';
+import { completeTestUserOnboarding, createTestUser, setupAuthTestSuite } from './auth.helpers.js';
 
 describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
   const { getContext } = setupAuthTestSuite();
@@ -37,6 +37,8 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
     const { pool } = getContext();
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createTestUser(pool, email, passwordHash);
+    // Complete onboarding (required by onboarding middleware)
+    await completeTestUserOnboarding(pool, user.externalId);
     const tokens = await getAuthTokens(email, password);
     return { user, tokens };
   }

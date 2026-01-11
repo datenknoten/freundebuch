@@ -11,7 +11,7 @@ describe('Contacts API - Integration Tests', () => {
   const { getContext } = setupContactsTestSuite();
 
   describe('GET /api/contacts', () => {
-    it('should return empty list when no contacts exist', async () => {
+    it('should return only self-contact when no other contacts exist', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request('http://localhost/api/contacts', {
@@ -23,17 +23,19 @@ describe('Contacts API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.contacts).toEqual([]);
-      expect(body.total).toBe(0);
+      // Self-contact is always present (created during onboarding)
+      expect(body.contacts.length).toBe(1);
+      expect(body.contacts[0].displayName).toBe('Test User (Self)');
+      expect(body.total).toBe(1);
       expect(body.page).toBe(1);
       expect(body.pageSize).toBe(25);
-      expect(body.totalPages).toBe(0);
+      expect(body.totalPages).toBe(1);
     });
 
     it('should return paginated contacts list', async () => {
       const { app, pool, testUser } = getContext();
 
-      // Create test contacts
+      // Create test contacts (self-contact already exists from onboarding)
       await createTestContact(pool, testUser.externalId, 'Alice');
       await createTestContact(pool, testUser.externalId, 'Bob');
       await createTestContact(pool, testUser.externalId, 'Charlie');
@@ -48,7 +50,8 @@ describe('Contacts API - Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(body.contacts.length).toBe(2);
-      expect(body.total).toBe(3);
+      // Total includes self-contact + 3 created contacts
+      expect(body.total).toBe(4);
       expect(body.page).toBe(1);
       expect(body.pageSize).toBe(2);
       expect(body.totalPages).toBe(2);
@@ -116,9 +119,9 @@ describe('Contacts API - Integration Tests', () => {
       expect(body).toHaveProperty('createdAt');
       expect(body).toHaveProperty('updatedAt');
 
-      // Verify in database
+      // Verify in database (includes self-contact + new contact)
       const count = await countUserContacts(pool, testUser.externalId);
-      expect(count).toBe(1);
+      expect(count).toBe(2);
     });
 
     it('should create a contact with full name parts', async () => {
@@ -360,7 +363,7 @@ describe('Contacts API - Integration Tests', () => {
       const contact = await getTestContact(pool, contactId);
       expect(contact?.deletedAt).not.toBeNull();
 
-      // Should not appear in list
+      // Should not appear in list (only self-contact remains)
       const listRequest = new Request('http://localhost/api/contacts', {
         method: 'GET',
         headers: authHeaders(testUser.accessToken),
@@ -369,7 +372,8 @@ describe('Contacts API - Integration Tests', () => {
       const listResponse = await app.fetch(listRequest);
       const listBody: any = await listResponse.json();
 
-      expect(listBody.contacts.length).toBe(0);
+      expect(listBody.contacts.length).toBe(1);
+      expect(listBody.contacts[0].displayName).toBe('Test User (Self)');
     });
 
     it('should return 404 for non-existent contact', async () => {

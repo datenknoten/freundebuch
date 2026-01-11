@@ -2,6 +2,7 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
+import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { ContactsService } from '../services/contacts.service.js';
 import { PhotoService } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
@@ -11,6 +12,8 @@ const app = new Hono<AppContext>();
 
 // Apply auth middleware to all upload routes
 app.use('*', authMiddleware);
+// Apply onboarding middleware to require self-contact
+app.use('*', onboardingMiddleware);
 
 /**
  * GET /api/uploads/contacts/:contactId/:filename

@@ -8,6 +8,17 @@ SELECT external_id, email, password_hash, created_at, updated_at
 FROM auth.users
 WHERE email = :email;
 
+/* @name GetUserByEmailWithSelfContact */
+SELECT
+    u.external_id,
+    u.email,
+    u.created_at,
+    u.updated_at,
+    c.external_id as self_contact_external_id
+FROM auth.users u
+LEFT JOIN contacts.contacts c ON u.self_contact_id = c.id AND c.deleted_at IS NULL
+WHERE u.email = :email;
+
 /* @name CreateUser */
 INSERT INTO auth.users (email, password_hash)
 VALUES (:email, :passwordHash)
@@ -18,6 +29,17 @@ UPDATE auth.users
 SET email = :email, updated_at = CURRENT_TIMESTAMP
 WHERE external_id = :externalId
 RETURNING external_id, email, created_at, updated_at;
+
+/* @name UpdateUserReturningWithSelfContact */
+UPDATE auth.users u
+SET email = :email, updated_at = CURRENT_TIMESTAMP
+WHERE u.external_id = :externalId
+RETURNING
+    u.external_id,
+    u.email,
+    u.created_at,
+    u.updated_at,
+    (SELECT c.external_id FROM contacts.contacts c WHERE c.id = u.self_contact_id AND c.deleted_at IS NULL) as self_contact_external_id;
 
 /* @name DeleteUser */
 DELETE FROM auth.users
@@ -41,3 +63,31 @@ SET preferences = :preferences,
     updated_at = CURRENT_TIMESTAMP
 WHERE external_id = :externalId
 RETURNING external_id, email, preferences, created_at, updated_at;
+
+/* @name GetUserSelfContact */
+SELECT
+    u.self_contact_id,
+    c.external_id as self_contact_external_id
+FROM auth.users u
+LEFT JOIN contacts.contacts c ON u.self_contact_id = c.id AND c.deleted_at IS NULL
+WHERE u.external_id = :userExternalId;
+
+/* @name SetUserSelfContact */
+UPDATE auth.users u
+SET self_contact_id = c.id,
+    updated_at = CURRENT_TIMESTAMP
+FROM contacts.contacts c
+WHERE u.external_id = :userExternalId
+  AND c.external_id = :contactExternalId
+  AND c.user_id = u.id
+  AND c.deleted_at IS NULL
+RETURNING u.external_id, c.external_id as self_contact_external_id;
+
+/* @name HasSelfContact */
+SELECT
+    CASE WHEN u.self_contact_id IS NOT NULL
+         AND c.deleted_at IS NULL
+    THEN true ELSE false END as has_self_contact
+FROM auth.users u
+LEFT JOIN contacts.contacts c ON u.self_contact_id = c.id
+WHERE u.external_id = :userExternalId;

@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import { describe, expect, it } from 'vitest';
 import { SUPPORTED_COUNTRIES } from '../../src/services/external/zipcodebase.client.js';
-import { createTestUser, setupAuthTestSuite } from './auth.helpers.js';
+import { completeTestUserOnboarding, createTestUser, setupAuthTestSuite } from './auth.helpers.js';
 
 describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
   const { getContext } = setupAuthTestSuite();
@@ -38,6 +38,8 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
     const { pool } = getContext();
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createTestUser(pool, email, passwordHash);
+    // Complete onboarding (required by onboarding middleware)
+    await completeTestUserOnboarding(pool, user.externalId);
     const tokens = await getAuthTokens(email, password);
     return { user, tokens };
   }
