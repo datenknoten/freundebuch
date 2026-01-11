@@ -101,29 +101,71 @@ WHERE c.external_id = :contactExternalId
   AND d.date_type = 'birthday';
 
 /* @name GetUpcomingDates */
+WITH date_calc AS (
+    SELECT
+        d.external_id AS date_external_id,
+        d.date_value,
+        d.year_known,
+        d.date_type,
+        d.label,
+        c.external_id AS contact_external_id,
+        c.display_name AS contact_display_name,
+        c.photo_thumbnail_url AS contact_photo_thumbnail_url,
+        EXTRACT(MONTH FROM d.date_value)::int AS date_month,
+        EXTRACT(DAY FROM d.date_value)::int AS date_day,
+        EXTRACT(YEAR FROM CURRENT_DATE)::int AS current_year
+    FROM contacts.contact_dates d
+    INNER JOIN contacts.contacts c ON d.contact_id = c.id
+    INNER JOIN auth.users u ON c.user_id = u.id
+    WHERE u.external_id = :userExternalId
+      AND c.deleted_at IS NULL
+),
+safe_dates AS (
+    SELECT
+        dc.*,
+        -- Handle Feb 29 in non-leap years by using Feb 28
+        CASE
+            WHEN dc.date_month = 2 AND dc.date_day = 29
+                 AND NOT (dc.current_year % 4 = 0 AND (dc.current_year % 100 != 0 OR dc.current_year % 400 = 0))
+            THEN 28
+            ELSE dc.date_day
+        END AS safe_day_current,
+        CASE
+            WHEN dc.date_month = 2 AND dc.date_day = 29
+                 AND NOT ((dc.current_year + 1) % 4 = 0 AND ((dc.current_year + 1) % 100 != 0 OR (dc.current_year + 1) % 400 = 0))
+            THEN 28
+            ELSE dc.date_day
+        END AS safe_day_next
+    FROM date_calc dc
+),
+with_days_until AS (
+    SELECT
+        sd.date_external_id,
+        sd.date_value,
+        sd.year_known,
+        sd.date_type,
+        sd.label,
+        sd.contact_external_id,
+        sd.contact_display_name,
+        sd.contact_photo_thumbnail_url,
+        CASE
+            WHEN MAKE_DATE(sd.current_year, sd.date_month, sd.safe_day_current) >= CURRENT_DATE
+            THEN MAKE_DATE(sd.current_year, sd.date_month, sd.safe_day_current) - CURRENT_DATE
+            ELSE MAKE_DATE(sd.current_year + 1, sd.date_month, sd.safe_day_next) - CURRENT_DATE
+        END AS days_until
+    FROM safe_dates sd
+)
 SELECT
-    d.external_id AS date_external_id,
-    d.date_value,
-    d.year_known,
-    d.date_type,
-    d.label,
-    c.external_id AS contact_external_id,
-    c.display_name AS contact_display_name,
-    c.photo_thumbnail_url AS contact_photo_thumbnail_url,
-    CASE
-        WHEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) >= CURRENT_DATE
-        THEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE
-        ELSE MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int + 1, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE
-    END AS days_until
-FROM contacts.contact_dates d
-INNER JOIN contacts.contacts c ON d.contact_id = c.id
-INNER JOIN auth.users u ON c.user_id = u.id
-WHERE u.external_id = :userExternalId
-  AND c.deleted_at IS NULL
-  AND CASE
-        WHEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) >= CURRENT_DATE
-        THEN MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE
-        ELSE MAKE_DATE(EXTRACT(YEAR FROM CURRENT_DATE)::int + 1, EXTRACT(MONTH FROM d.date_value)::int, EXTRACT(DAY FROM d.date_value)::int) - CURRENT_DATE
-      END <= :maxDays
-ORDER BY days_until ASC, c.display_name ASC
+    date_external_id,
+    date_value,
+    year_known,
+    date_type,
+    label,
+    contact_external_id,
+    contact_display_name,
+    contact_photo_thumbnail_url,
+    days_until
+FROM with_days_until
+WHERE days_until <= :maxDays
+ORDER BY days_until ASC, contact_display_name ASC
 LIMIT :limitCount;
