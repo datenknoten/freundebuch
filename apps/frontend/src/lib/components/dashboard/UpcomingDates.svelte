@@ -1,4 +1,5 @@
 <script lang="ts">
+import { onMount } from 'svelte';
 import { getUpcomingDates } from '$lib/api/contacts.js';
 import ContactAvatar from '$lib/components/contacts/ContactAvatar.svelte';
 import type { DateType, UpcomingDate } from '$shared';
@@ -26,7 +27,8 @@ async function loadUpcomingDates() {
   }
 }
 
-$effect(() => {
+// Load once on mount - props are static for dashboard usage
+onMount(() => {
   loadUpcomingDates();
 });
 
