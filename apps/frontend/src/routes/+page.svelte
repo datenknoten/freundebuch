@@ -3,20 +3,22 @@ import UpcomingDates from '$lib/components/dashboard/UpcomingDates.svelte';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
 import { getContact } from '$lib/api/contacts';
 
-let displayName: string | null = null;
+let displayName = $state<string | null>(null);
+let userDisplayName = $derived(displayName || $currentUser?.email || '');
 
-$: userDisplayName = displayName || $currentUser?.email || '';
-
-$: if ($currentUser?.selfContactId) {
-	fetchDisplayName($currentUser.selfContactId);
-}
+$effect(() => {
+	const selfContactId = $currentUser?.selfContactId;
+	if (selfContactId) {
+		fetchDisplayName(selfContactId);
+	}
+});
 
 async function fetchDisplayName(selfContactId: string) {
 	try {
 		const contact = await getContact(selfContactId);
 		displayName = contact.displayName;
-	} catch {
-		// Fall back to email if we can't fetch the self-contact
+	} catch (error) {
+		console.warn('Failed to fetch self-contact for display name:', error);
 		displayName = null;
 	}
 }
