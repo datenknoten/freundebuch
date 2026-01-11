@@ -10,6 +10,7 @@ import type {
   DateInput,
   Email,
   EmailInput,
+  ErrorResponse,
   FacetedSearchResponse,
   FacetFilters,
   GlobalSearchResult,
@@ -67,11 +68,11 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({
+    const errorData: ErrorResponse = await response.json().catch(() => ({
       error: 'An unknown error occurred',
     }));
 
-    throw new ApiError(response.status, errorData.error, errorData.details);
+    throw new ApiError(response.status, errorData.error, errorData.code, errorData.details);
   }
 
   return response.json();
@@ -330,11 +331,11 @@ export async function uploadPhoto(contactId: string, file: File): Promise<PhotoU
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({
+    const errorData: ErrorResponse = await response.json().catch(() => ({
       error: 'An unknown error occurred',
     }));
 
-    throw new ApiError(response.status, errorData.error, errorData.details);
+    throw new ApiError(response.status, errorData.error, errorData.code, errorData.details);
   }
 
   return response.json();

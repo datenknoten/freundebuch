@@ -1,4 +1,5 @@
 import { get } from 'svelte/store';
+import type { ErrorResponse } from '$shared';
 import { auth } from '../stores/auth.js';
 import { ApiError } from './auth.js';
 
@@ -47,11 +48,11 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({
+    const errorData: ErrorResponse = await response.json().catch(() => ({
       error: 'An unknown error occurred',
     }));
 
-    throw new ApiError(response.status, errorData.error, errorData.details);
+    throw new ApiError(response.status, errorData.error, errorData.code, errorData.details);
   }
 
   return response.json();

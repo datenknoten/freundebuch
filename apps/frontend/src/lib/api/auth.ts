@@ -24,6 +24,7 @@ export class ApiError extends Error {
   constructor(
     public statusCode: number,
     message: string,
+    public code?: string,
     public details?: unknown,
   ) {
     super(message);
@@ -51,7 +52,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
       error: 'An unknown error occurred',
     }));
 
-    throw new ApiError(response.status, errorData.error, errorData.details);
+    throw new ApiError(response.status, errorData.error, errorData.code, errorData.details);
   }
 
   return response.json();

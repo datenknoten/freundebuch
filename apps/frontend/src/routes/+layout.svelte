@@ -2,12 +2,13 @@
 import '../app.css';
 import type { Snippet } from 'svelte';
 import { onMount } from 'svelte';
+import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import Footer from '$lib/components/Footer.svelte';
 import GlobalSearch from '$lib/components/GlobalSearch.svelte';
 import KeyboardShortcuts from '$lib/components/KeyboardShortcuts.svelte';
 import NavBar from '$lib/components/NavBar.svelte';
-import { auth, isAuthenticated } from '$lib/stores/auth';
+import { auth, isAuthenticated, isAuthInitialized, needsOnboarding } from '$lib/stores/auth';
 
 interface Props {
   children: Snippet;
@@ -18,6 +19,20 @@ let { children }: Props = $props();
 // Initialize auth state on app load
 onMount(async () => {
   await auth.initialize();
+});
+
+// Routes exempt from onboarding redirect
+const onboardingExemptPaths = ['/onboarding', '/auth/'];
+
+// Redirect to onboarding if user needs to complete it
+$effect(() => {
+  if ($isAuthInitialized && $needsOnboarding) {
+    const currentPath = $page.url.pathname;
+    const isExempt = onboardingExemptPaths.some((path) => currentPath.startsWith(path));
+    if (!isExempt) {
+      goto('/onboarding');
+    }
+  }
 });
 
 // Hide FAB on new contact page
