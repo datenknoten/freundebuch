@@ -1,3 +1,9 @@
+## [2.30.0](https://github.com/datenknoten/freundebuch/compare/v2.29.0...v2.30.0) (2026-01-11)
+
+### Features
+
+* Add self-contact onboarding requirement ([5e5583a](https://github.com/datenknoten/freundebuch/commit/5e5583ae740e2d1ffefdc2ee7a6358ac0189a352))
+
 ## [2.29.0](https://github.com/datenknoten/freundebuch/compare/v2.28.0...v2.29.0) (2026-01-11)
 
 ### Features
