@@ -1,3 +1,9 @@
+## [2.32.4](https://github.com/datenknoten/freundebuch/compare/v2.32.3...v2.32.4) (2026-01-12)
+
+### Bug Fixes
+
+* **database:** Add migration to update photo URLs ([f513823](https://github.com/datenknoten/freundebuch/commit/f51382324f87fb3097b5786ffff4a6bef6ffc9c2))
+
 ## [2.32.3](https://github.com/datenknoten/freundebuch/compare/v2.32.2...v2.32.3) (2026-01-12)
 
 ### Bug Fixes
