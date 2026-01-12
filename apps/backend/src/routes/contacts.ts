@@ -25,10 +25,10 @@ import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { contactsRateLimitMiddleware } from '../middleware/rate-limit.js';
-import { ContactsService, DuplicateBirthdayError } from '../services/contacts.service.js';
+import { ContactsService } from '../services/contacts.service.js';
 import { PhotoService, PhotoUploadError } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
-import { isAppError } from '../utils/errors.js';
+import { BirthdayAlreadyExistsError, isAppError } from '../utils/errors.js';
 import { isValidUuid } from '../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -1212,8 +1212,8 @@ app.post('/:id/dates', async (c) => {
 
     return c.json(date, 201);
   } catch (error) {
-    if (error instanceof DuplicateBirthdayError) {
-      return c.json<ErrorResponse>({ error: error.message }, 400);
+    if (error instanceof BirthdayAlreadyExistsError) {
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error({ err, contactId }, 'Failed to add date');
