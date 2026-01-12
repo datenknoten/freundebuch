@@ -1,14 +1,14 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { contacts } from '$lib/stores/contacts';
-import type { ContactSearchResult, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
-import ContactSearchInput from './ContactSearchInput.svelte';
+import { friends } from '$lib/stores/friends';
+import type { FriendSearchResult, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
+import FriendSearchInput from './FriendSearchInput.svelte';
 import RelationshipTypeInput from './RelationshipTypeInput.svelte';
 
 interface Props {
-  /** Contact ID to add relationship to */
-  contactId: string;
-  /** Whether to autofocus the contact search input */
+  /** Friend ID to add relationship to */
+  friendId: string;
+  /** Whether to autofocus the friend search input */
   autofocus?: boolean;
   /** Called when form is cancelled */
   onCancel?: () => void;
@@ -16,9 +16,9 @@ interface Props {
   onSuccess?: () => void;
 }
 
-let { contactId, autofocus = false, onCancel, onSuccess }: Props = $props();
+let { friendId, autofocus = false, onCancel, onSuccess }: Props = $props();
 
-let selectedContact = $state<ContactSearchResult | null>(null);
+let selectedFriend = $state<FriendSearchResult | null>(null);
 let relationshipTypeId = $state<RelationshipTypeId>('friend');
 let notes = $state('');
 let isSubmitting = $state(false);
@@ -29,14 +29,14 @@ let notesTextarea: HTMLTextAreaElement;
 
 onMount(async () => {
   try {
-    relationshipTypes = await contacts.loadRelationshipTypes();
+    relationshipTypes = await friends.loadRelationshipTypes();
   } catch {
     error = 'Failed to load relationship types';
   }
 });
 
-function handleContactSelect(contact: ContactSearchResult, viaKeyboard: boolean) {
-  selectedContact = contact;
+function handleFriendSelect(friend: FriendSearchResult, viaKeyboard: boolean) {
+  selectedFriend = friend;
   if (viaKeyboard) {
     // Activate the relationship type input after selection via keyboard
     requestAnimationFrame(() => {
@@ -55,15 +55,15 @@ function handleRelationshipTypeSelect(typeId: RelationshipTypeId, viaKeyboard: b
   }
 }
 
-function clearSelectedContact() {
-  selectedContact = null;
+function clearSelectedFriend() {
+  selectedFriend = null;
 }
 
 async function handleSubmit(e: Event) {
   e.preventDefault();
 
-  if (!selectedContact) {
-    error = 'Please select a contact';
+  if (!selectedFriend) {
+    error = 'Please select a friend';
     return;
   }
 
@@ -71,8 +71,8 @@ async function handleSubmit(e: Event) {
   isSubmitting = true;
 
   try {
-    await contacts.addRelationship(contactId, {
-      related_contact_id: selectedContact.id,
+    await friends.addRelationship(friendId, {
+      related_friend_id: selectedFriend.id,
       relationship_type_id: relationshipTypeId,
       notes: notes.trim() || undefined,
     });
@@ -96,18 +96,18 @@ async function handleSubmit(e: Event) {
     </div>
   {/if}
 
-  <!-- Contact Selection -->
+  <!-- Friend Selection -->
   <div class="space-y-2">
-    <span id="contact-selection-label" class="block text-sm font-body font-medium text-gray-700">
-      Related Contact
+    <span id="friend-selection-label" class="block text-sm font-body font-medium text-gray-700">
+      Related Friend
     </span>
 
-    {#if selectedContact}
+    {#if selectedFriend}
       <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-        <span class="font-body text-sm text-gray-900">{selectedContact.displayName}</span>
+        <span class="font-body text-sm text-gray-900">{selectedFriend.displayName}</span>
         <button
           type="button"
-          onclick={clearSelectedContact}
+          onclick={clearSelectedFriend}
           class="text-gray-400 hover:text-gray-600"
           aria-label="Clear selection"
         >
@@ -117,12 +117,12 @@ async function handleSubmit(e: Event) {
         </button>
       </div>
     {:else}
-      <ContactSearchInput
-        placeholder="Search for a contact..."
-        excludeContactId={contactId}
+      <FriendSearchInput
+        placeholder="Search for a friend..."
+        excludeFriendId={friendId}
         disabled={isSubmitting}
         {autofocus}
-        onSelect={handleContactSelect}
+        onSelect={handleFriendSelect}
       />
     {/if}
   </div>
@@ -170,7 +170,7 @@ async function handleSubmit(e: Event) {
   <div class="flex gap-3 pt-2">
     <button
       type="submit"
-      disabled={isSubmitting || !selectedContact || !relationshipTypes}
+      disabled={isSubmitting || !selectedFriend || !relationshipTypes}
       class="flex-1 bg-forest text-white py-2 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {isSubmitting ? 'Adding...' : 'Add Relationship'}

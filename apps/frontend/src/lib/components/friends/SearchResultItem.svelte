@@ -1,7 +1,7 @@
 <script lang="ts">
 import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
 import type { GlobalSearchResult } from '$shared';
-import ContactAvatar from './ContactAvatar.svelte';
+import FriendAvatar from './FriendAvatar.svelte';
 
 interface Props {
   result: GlobalSearchResult;
@@ -32,7 +32,7 @@ let showKeyHint = $derived(() => {
 </script>
 
 <a
-  href="/contacts/{result.id}"
+  href="/friends/{result.id}"
   class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all relative"
   data-sveltekit-preload-data="tap"
 >
@@ -42,7 +42,7 @@ let showKeyHint = $derived(() => {
     </div>
   {/if}
 
-  <ContactAvatar
+  <FriendAvatar
     displayName={result.displayName}
     photoUrl={result.photoThumbnailUrl}
     size="md"
@@ -53,7 +53,7 @@ let showKeyHint = $derived(() => {
       <h3 class="font-heading text-lg text-gray-900 truncate">
         {result.displayName}
       </h3>
-      {#if result.matchSource && result.matchSource !== 'contact'}
+      {#if result.matchSource && result.matchSource !== 'friend'}
         <span class="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full {
           result.matchSource === 'email' ? 'bg-blue-100 text-blue-700' :
           result.matchSource === 'phone' ? 'bg-green-100 text-green-700' :

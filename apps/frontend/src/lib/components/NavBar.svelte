@@ -16,10 +16,10 @@ const version = __APP_VERSION__;
 // Derive page title from current route
 const pageTitle = $derived.by(() => {
   const pathname = $page.url.pathname;
-  if (pathname === '/' || pathname === '/contacts') return 'Friends';
-  if (pathname === '/contacts/new') return 'Add Friend';
-  if (pathname.startsWith('/contacts/') && pathname.endsWith('/edit')) return 'Edit';
-  if (pathname.startsWith('/contacts/')) return 'Friend';
+  if (pathname === '/' || pathname === '/friends') return 'Friends';
+  if (pathname === '/friends/new') return 'Add Friend';
+  if (pathname.startsWith('/friends/') && pathname.endsWith('/edit')) return 'Edit';
+  if (pathname.startsWith('/friends/')) return 'Friend';
   if (pathname === '/profile') return 'Profile';
   if (pathname.startsWith('/auth/')) return 'Freundebuch';
   return 'Freundebuch';
@@ -130,7 +130,7 @@ $effect(() => {
     {#if $isAuthenticated && $currentUser}
       <div class="space-y-2">
         <a
-          href="/contacts/new"
+          href="/friends/new"
           data-sveltekit-preload-data="tap"
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
@@ -141,7 +141,7 @@ $effect(() => {
           Add Friend
         </a>
         <a
-          href="/contacts"
+          href="/friends"
           data-sveltekit-preload-data="tap"
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
@@ -289,7 +289,7 @@ $effect(() => {
       <div class="hidden sm:flex items-center gap-3 shrink-0">
         {#if $isAuthenticated && $currentUser}
           <a
-            href="/contacts/new"
+            href="/friends/new"
             data-sveltekit-preload-data="tap"
             class="inline-flex items-center gap-1.5 bg-forest text-white px-3 py-1.5 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200 text-sm"
             title="Add a friend (n)"

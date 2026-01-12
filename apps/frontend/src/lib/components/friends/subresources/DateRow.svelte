@@ -1,10 +1,10 @@
 <script lang="ts">
-import type { ContactDate, DateType } from '$shared';
+import type { DateType, FriendDate } from '$shared';
 import DetailActions from './DetailActions.svelte';
 import SwipeableRow from './SwipeableRow.svelte';
 
 interface Props {
-  date: ContactDate;
+  date: FriendDate;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;

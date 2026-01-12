@@ -1,19 +1,19 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { contacts } from '$lib/stores/contacts';
+import { friends } from '$lib/stores/friends';
 import { isModalOpen } from '$lib/stores/ui';
 import type { Relationship, RelationshipCategory } from '$shared';
 import AddRelationshipForm from './AddRelationshipForm.svelte';
-import ContactAvatar from './ContactAvatar.svelte';
+import FriendAvatar from './FriendAvatar.svelte';
 
 interface Props {
-  /** Contact ID */
-  contactId: string;
+  /** Friend ID */
+  friendId: string;
   /** Array of relationships */
   relationships: Relationship[];
 }
 
-let { contactId, relationships }: Props = $props();
+let { friendId, relationships }: Props = $props();
 
 let showAddForm = $state(false);
 let autofocusForm = $state(false);
@@ -84,7 +84,7 @@ function cancelEditing() {
 async function saveNotes(relationshipId: string) {
   isSavingNotes = true;
   try {
-    await contacts.updateRelationship(contactId, relationshipId, {
+    await friends.updateRelationship(friendId, relationshipId, {
       notes: editNotes.trim() || undefined,
     });
     editingRelationshipId = null;
@@ -103,7 +103,7 @@ async function deleteRelationship(relationshipId: string) {
 
   isDeleting = relationshipId;
   try {
-    await contacts.deleteRelationship(contactId, relationshipId);
+    await friends.deleteRelationship(friendId, relationshipId);
   } catch {
     // Error is handled by the store
   } finally {
@@ -153,7 +153,7 @@ function handleBackdropClick(e: MouseEvent) {
 
   {#if relationships.length === 0}
     <p class="text-sm text-gray-500 font-body py-4">
-      No relationships yet. Add relationships to connect this contact with others.
+      No relationships yet. Add relationships to connect this friend with others.
     </p>
   {:else}
     {#each Object.entries(groupedRelationships()) as [category, rels]}
@@ -167,12 +167,12 @@ function handleBackdropClick(e: MouseEvent) {
             {#each rels as relationship}
               <div class="flex items-start gap-3 p-3 {categoryConfig[category as RelationshipCategory].bgColor} rounded-lg">
                 <a
-                  href="/contacts/{relationship.relatedContactId}"
+                  href="/friends/{relationship.relatedFriendId}"
                   class="flex-shrink-0 hover:opacity-80 transition-opacity"
                 >
-                  <ContactAvatar
-                    displayName={relationship.relatedContactDisplayName}
-                    photoUrl={relationship.relatedContactPhotoThumbnailUrl}
+                  <FriendAvatar
+                    displayName={relationship.relatedFriendDisplayName}
+                    photoUrl={relationship.relatedFriendPhotoThumbnailUrl}
                     size="sm"
                   />
                 </a>
@@ -180,10 +180,10 @@ function handleBackdropClick(e: MouseEvent) {
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <a
-                      href="/contacts/{relationship.relatedContactId}"
+                      href="/friends/{relationship.relatedFriendId}"
                       class="font-body text-sm font-medium text-gray-900 hover:text-forest transition-colors truncate"
                     >
-                      {relationship.relatedContactDisplayName}
+                      {relationship.relatedFriendDisplayName}
                     </a>
                     <span class="text-xs text-gray-500 font-body">
                       ({relationship.relationshipTypeLabel})
@@ -294,7 +294,7 @@ function handleBackdropClick(e: MouseEvent) {
       <!-- Form content -->
       <div class="p-4 overflow-y-auto flex-1">
         <AddRelationshipForm
-          {contactId}
+          {friendId}
           autofocus={autofocusForm}
           onSuccess={handleAddSuccess}
           onCancel={handleAddCancel}

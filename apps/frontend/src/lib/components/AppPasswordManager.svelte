@@ -136,7 +136,7 @@ function formatDate(dateString: string | null): string {
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
       </svg>
       <p class="text-gray-600 font-body">No app passwords yet</p>
-      <p class="text-gray-500 font-body text-sm mt-1">Create one to sync contacts with your devices</p>
+      <p class="text-gray-500 font-body text-sm mt-1">Create one to sync friends with your devices</p>
     </div>
   {:else}
     <div class="divide-y divide-gray-200 border border-gray-200 rounded-lg">

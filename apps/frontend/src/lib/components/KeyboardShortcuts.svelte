@@ -2,7 +2,7 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { isAuthenticated } from '$lib/stores/auth';
-import { currentContact } from '$lib/stores/contacts';
+import { currentFriend } from '$lib/stores/friends';
 import { isSearchOpen, search } from '$lib/stores/search';
 import {
   getIndexFromHint,
@@ -10,7 +10,7 @@ import {
   isModalOpen,
   isOpenModeActive,
   openModePrefix,
-  visibleContactIds,
+  visibleFriendIds,
 } from '$lib/stores/ui';
 
 let showHelp = $state(false);
@@ -92,8 +92,8 @@ function handleKeydown(e: KeyboardEvent) {
     e.preventDefault();
 
     switch (e.key) {
-      case 'c':
-        goto('/contacts');
+      case 'f':
+        goto('/friends');
         break;
       case 'h':
         goto('/');
@@ -105,12 +105,12 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // Handle two-key sequences (a+...) for adding details - only on contact detail page
+  // Handle two-key sequences (a+...) for adding details - only on friend detail page
   if (pendingKey === 'a') {
     clearPending();
 
-    // Only work on contact detail pages
-    if (!$currentContact || !$page.url.pathname.match(/^\/contacts\/[^/]+$/)) {
+    // Only work on friend detail pages
+    if (!$currentFriend || !$page.url.pathname.match(/^\/friends\/[^/]+$/)) {
       return;
     }
 
@@ -142,10 +142,10 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // Handle two/three-key sequences (o+...) for opening contacts from list
+  // Handle two/three-key sequences (o+...) for opening friends from list
   // Supports: o+1-9 for items 1-9, o+a+1-9 for items 10-18, o+b+1-9 for items 19-27, etc.
   if (pendingKey === 'o') {
-    const contactIds = $visibleContactIds;
+    const friendIds = $visibleFriendIds;
     const currentPrefix = $openModePrefix;
     const keyNum = parseInt(e.key, 10);
     const keyLower = e.key.toLowerCase();
@@ -155,9 +155,9 @@ function handleKeydown(e: KeyboardEvent) {
       if (keyNum >= 1 && keyNum <= 9) {
         e.preventDefault();
         const index = getIndexFromHint(`${currentPrefix}${keyNum}`);
-        if (index >= 0 && index < contactIds.length) {
+        if (index >= 0 && index < friendIds.length) {
           clearPending();
-          goto(`/contacts/${contactIds[index]}`);
+          goto(`/friends/${friendIds[index]}`);
         } else {
           // Index out of range, clear pending state
           clearPending();
@@ -174,9 +174,9 @@ function handleKeydown(e: KeyboardEvent) {
       // Direct number: open item 1-9
       e.preventDefault();
       const index = keyNum - 1;
-      if (index < contactIds.length) {
+      if (index < friendIds.length) {
         clearPending();
-        goto(`/contacts/${contactIds[index]}`);
+        goto(`/friends/${friendIds[index]}`);
       }
       return;
     }
@@ -188,7 +188,7 @@ function handleKeydown(e: KeyboardEvent) {
       const groupStartIndex = (letterIndex + 1) * ITEMS_PER_GROUP;
 
       // Only accept the letter if there are items in this group
-      if (groupStartIndex < contactIds.length) {
+      if (groupStartIndex < friendIds.length) {
         e.preventDefault();
         openModePrefix.set(keyLower);
         return;
@@ -207,15 +207,15 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // Start add detail sequence (only on contact detail page)
-  if (e.key === 'a' && $currentContact && $page.url.pathname.match(/^\/contacts\/[^/]+$/)) {
+  // Start add detail sequence (only on friend detail page)
+  if (e.key === 'a' && $currentFriend && $page.url.pathname.match(/^\/friends\/[^/]+$/)) {
     e.preventDefault();
     pendingKey = 'a';
     return;
   }
 
-  // Start open contact sequence (only on contacts list page)
-  if (e.key === 'o' && $page.url.pathname === '/contacts') {
+  // Start open friend sequence (only on friends list page)
+  if (e.key === 'o' && $page.url.pathname === '/friends') {
     e.preventDefault();
     pendingKey = 'o';
     isOpenModeActive.set(true);
@@ -226,25 +226,25 @@ function handleKeydown(e: KeyboardEvent) {
   switch (e.key) {
     case 'n':
       e.preventDefault();
-      goto('/contacts/new');
+      goto('/friends/new');
       break;
 
     case 'e':
-      // Edit current contact if on contact detail page
-      if ($currentContact && $page.url.pathname.match(/^\/contacts\/[^/]+$/)) {
+      // Edit current friend if on friend detail page
+      if ($currentFriend && $page.url.pathname.match(/^\/friends\/[^/]+$/)) {
         e.preventDefault();
-        goto(`/contacts/${$currentContact.id}/edit`);
+        goto(`/friends/${$currentFriend.id}/edit`);
       }
       break;
 
     case '/': {
       e.preventDefault();
-      // Focus search input if it exists, otherwise go to contacts
+      // Focus search input if it exists, otherwise go to friends
       const searchInput = document.querySelector<HTMLInputElement>('[data-search-input]');
       if (searchInput) {
         searchInput.focus();
       } else {
-        goto('/contacts');
+        goto('/friends');
       }
       break;
     }
@@ -252,7 +252,7 @@ function handleKeydown(e: KeyboardEvent) {
     case '<':
     case ',':
       // Previous page (Shift+Comma = <)
-      if (e.shiftKey && $page.url.pathname === '/contacts') {
+      if (e.shiftKey && $page.url.pathname === '/friends') {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('shortcut:previous-page'));
       }
@@ -261,7 +261,7 @@ function handleKeydown(e: KeyboardEvent) {
     case '>':
     case '.':
       // Next page (Shift+Period = >)
-      if (e.shiftKey && $page.url.pathname === '/contacts') {
+      if (e.shiftKey && $page.url.pathname === '/friends') {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('shortcut:next-page'));
       }
@@ -326,11 +326,11 @@ function closeHelp() {
                 </div>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-700">Go to Contacts</span>
+                <span class="text-gray-700">Go to Friends</span>
                 <div class="flex gap-1">
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">g</kbd>
                   <span class="text-gray-400">then</span>
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">c</kbd>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
                 </div>
               </div>
               <div class="flex justify-between items-center">
@@ -359,11 +359,11 @@ function closeHelp() {
                 </div>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-700">New Contact</span>
+                <span class="text-gray-700">New Friend</span>
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-700">Edit Contact</span>
+                <span class="text-gray-700">Edit Friend</span>
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
               </div>
               <div class="flex justify-between items-center">
@@ -371,7 +371,7 @@ function closeHelp() {
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">/</kbd>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-700">Open Contact (1-9)</span>
+                <span class="text-gray-700">Open Friend (1-9)</span>
                 <div class="flex gap-1">
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
                   <span class="text-gray-400">then</span>
@@ -379,7 +379,7 @@ function closeHelp() {
                 </div>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-700">Open Contact (10+)</span>
+                <span class="text-gray-700">Open Friend (10+)</span>
                 <div class="flex gap-1">
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
                   <span class="text-gray-400">then</span>
@@ -399,10 +399,10 @@ function closeHelp() {
             </div>
           </div>
 
-          <!-- Add Details (on contact page) -->
+          <!-- Add Details (on friend page) -->
           <div>
             <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Add Details <span class="text-xs font-normal normal-case">(on contact page)</span>
+              Add Details <span class="text-xs font-normal normal-case">(on friend page)</span>
             </h3>
             <div class="space-y-2">
               <div class="flex justify-between items-center">
@@ -505,8 +505,8 @@ function closeHelp() {
         <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">h</kbd>
       </div>
       <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
-        <span class="text-gray-700">Contacts</span>
-        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">c</kbd>
+        <span class="text-gray-700">Friends</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">f</kbd>
       </div>
       <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
         <span class="text-gray-700">Profile</span>
@@ -555,7 +555,7 @@ function closeHelp() {
   <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
     <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
       <span class="text-sm font-medium text-gray-700">
-        Open contact{$openModePrefix ? ` (${$openModePrefix}...)` : '...'}
+        Open friend{$openModePrefix ? ` (${$openModePrefix}...)` : '...'}
       </span>
       <span class="text-xs text-gray-500 ml-2">
         {#if $openModePrefix}
@@ -569,7 +569,7 @@ function closeHelp() {
       {#if $openModePrefix}
         Press the number to complete: {$openModePrefix}1, {$openModePrefix}2, ...
       {:else}
-        Press the key shown on a contact to open it
+        Press the key shown on a friend to open it
       {/if}
     </div>
   </div>
