@@ -64,7 +64,7 @@ This application implements open standards for interoperability:
 ## Feature Roadmap
 
 ### Phase 1: MVP
-1. Contact Management - Extended fields with relationship mapping
+1. Friend Management - Extended fields with relationship mapping
 2. Categorization - Groups and tags
 3. Search - Full-text search
 4. Multi-User - Authentication

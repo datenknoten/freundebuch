@@ -41,7 +41,7 @@ That's it! Your app is now running:
 
 Think of Freundebuch as your digital friendship book. It's an address book that actually helps you maintain meaningful connections:
 
-- **Smart Contact Management** - Remember not just phone numbers, but the stuff that matters
+- **Smart Friend Management** - Remember not just phone numbers, but the stuff that matters
 - **Interaction Tracking** - Keep a history of your meetings and conversations
 - **Intelligent Reminders** - Get a gentle nudge when you haven't talked to someone in a while
 - **Relationship Insights** - See the big picture of your social network
@@ -55,7 +55,7 @@ See [docs/concept.md](docs/concept.md) for the complete concept document, and [d
 See [project-management/epics/](project-management/epics/) for detailed epic documents.
 
 ### Phase 1: MVP
-- [Contact Management](project-management/epics/epic-01-contact-management.md) - Extended contact fields and relationship mapping
+- [Friend Management](project-management/epics/epic-01-contact-management.md) - Extended contact fields and relationship mapping
 - [Categorization & Organization](project-management/epics/epic-04-categorization-organization.md) - Groups and tags for organization
 - [Search Functionality](project-management/epics/epic-10-search-functionality.md) - Basic search across contacts
 - [Multi-User Management](project-management/epics/epic-05-multi-user-management.md) - Authentication and single-user deployment
@@ -189,7 +189,7 @@ optional footer
 **Examples:**
 ```bash
 feat(backend): Add user authentication endpoint
-fix(frontend): Resolve contact list rendering issue
+fix(frontend): Resolve friend list rendering issue
 docs(database): Update migration guidelines
 chore(deps): Update dependencies to latest versions
 ```

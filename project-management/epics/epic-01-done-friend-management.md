@@ -1,4 +1,4 @@
-# Epic 1: Contact Management
+# Epic 1: Friend Management
 
 **Status:** Done
 **Phase:** MVP (Phase 1)
@@ -7,7 +7,7 @@
 
 ## Overview
 
-This is the foundation of your Freundebuch - a comprehensive contact database that goes beyond what standard address books offer. We're building a central hub for all your contact information, designed to capture the details that actually matter for maintaining meaningful relationships.
+This is the foundation of your Freundebuch - a comprehensive friend database that goes beyond what standard address books offer. We're building a central hub for all your friend information, designed to capture the details that actually matter for maintaining meaningful relationships.
 
 ## Sub-Epic Structure
 
@@ -15,23 +15,23 @@ This epic is divided into sub-epics to allow incremental delivery:
 
 | Sub-Epic | Title | MVP Priority | Description | Status |
 |----------|-------|--------------|-------------|--------|
-| [1A](#epic-1a-core-contact-crud) | Core Contact CRUD | Critical | Basic contact management - the foundation | Done |
-| [1B](#epic-1b-extended-contact-fields) | Extended Contact Fields | High | Rich context: dates, profession, social profiles | Done |
-| 1C | Contact Notes | High | Timestamped notes system | Extracted to [Epic 15](epic-15-planned-contact-notes.md) |
-| [1D](#epic-1d-contact-relationships) | Contact Relationships | Medium | Links between contacts | Done |
+| [1A](#epic-1a-core-friend-crud) | Core Friend CRUD | Critical | Basic friend management - the foundation | Done |
+| [1B](#epic-1b-extended-friend-fields) | Extended Friend Fields | High | Rich context: dates, profession, social profiles | Done |
+| 1C | Friend Notes | High | Timestamped notes system | Extracted to [Epic 15](epic-15-planned-friend-notes.md) |
+| [1D](#epic-1d-friend-relationships) | Friend Relationships | Medium | Links between friends | Done |
 
 **Recommended Implementation Order:** 1A → 1B → 1C → 1D
 
 > **Note:** Custom fields have been extracted to [Epic 11: Custom Fields](epic-11-planned-custom-fields.md) for Phase 2.
-> **Note:** Contact Notes (1C) has been extracted to [Epic 15: Contact Notes](epic-15-planned-contact-notes.md).
+> **Note:** Friend Notes (1C) has been extracted to [Epic 15: Friend Notes](epic-15-planned-friend-notes.md).
 
 ---
 
 ## Goals
 
-- Build a comprehensive contact database that stores more than just names and numbers
+- Build a comprehensive friend database that stores more than just names and numbers
 - Capture rich context about your relationships that helps you remember people
-- Support multiple communication channels per contact
+- Support multiple communication channels per friend
 - Prepare the data model for future features (import/export, CalDAV/CardDAV sync)
 - Maintain vCard 4.0 compatibility for future interoperability
 
@@ -60,20 +60,20 @@ To ensure future compatibility with Epic 6 (CalDAV/CardDAV) and Epic 7 (Import/E
 | photo | PHOTO | |
 | notes | NOTE | |
 | categories | CATEGORIES | Maps to tags (Epic 4) |
-| related | RELATED | Contact relationships |
+| related | RELATED | Friend relationships |
 
 ---
 
-# Epic 1A: Core Contact CRUD
+# Epic 1A: Core Friend CRUD
 
 **Priority:** Critical - Must be completed first
 
 ## Features
 
-### Contact Fields (Required)
+### Friend Fields (Required)
 - **Display Name** - The primary name shown in lists (auto-generated or user-specified)
 
-### Contact Fields (Optional)
+### Friend Fields (Optional)
 - **Name Parts:**
   - Prefix (Dr., Mr., Ms., Prof., etc.)
   - First name
@@ -108,44 +108,44 @@ To ensure future compatibility with Epic 6 (CalDAV/CardDAV) and Epic 7 (Import/E
   - Max size: 5MB
   - Stored as: original + thumbnail (200x200)
 
-### Contact List View
+### Friend List View
 - Paginated list (default 25, configurable: 25/50/100)
 - Sort by: display name (A-Z, Z-A), created date, modified date
 - Show: avatar thumbnail, display name, primary email, primary phone
 - Empty state for new users
 
-### Contact Detail View
-- Full contact information display
+### Friend Detail View
+- Full friend information display
 - Edit/Delete actions
 - Tabbed or sectioned layout for different field groups
 
-### Contact Create/Edit Form
+### Friend Create/Edit Form
 - Validation with clear error messages
 - Dynamic add/remove for multi-value fields (phones, emails, etc.)
 - Unsaved changes warning
 - Profile picture upload with preview
 
 ### Soft Delete
-- Contacts are soft-deleted (marked as `deleted_at` timestamp)
-- Soft-deleted contacts are hidden from normal views
+- Friends are soft-deleted (marked as `deleted_at` timestamp)
+- Soft-deleted friends are hidden from normal views
 - Hard delete available from admin/settings (future consideration)
 
 ## User Stories
 
-1. As a user, I want to create a new contact with just a name so I can quickly add someone
+1. As a user, I want to create a new friend with just a name so I can quickly add someone
 2. As a user, I want to add multiple phone numbers with labels so I know which number to use
-3. As a user, I want to add multiple email addresses so I can reach contacts at different addresses
-4. As a user, I want to view a contact's full details on a dedicated page
-5. As a user, I want to edit any contact field after creation
-6. As a user, I want to delete a contact I no longer need
-7. As a user, I want to upload a profile picture so I can recognize contacts visually
-8. As a user, I want to see a paginated list of all my contacts
+3. As a user, I want to add multiple email addresses so I can reach friends at different addresses
+4. As a user, I want to view a friend's full details on a dedicated page
+5. As a user, I want to edit any friend field after creation
+6. As a user, I want to delete a friend I no longer need
+7. As a user, I want to upload a profile picture so I can recognize friends visually
+8. As a user, I want to see a paginated list of all my friends
 
 ## Database Schema
 
 ```sql
--- Core contacts table
-CREATE TABLE contacts (
+-- Core friends table
+CREATE TABLE friends (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
@@ -167,18 +167,18 @@ CREATE TABLE contacts (
     deleted_at TIMESTAMPTZ,  -- Soft delete
 
     -- Indexes
-    CONSTRAINT contacts_display_name_not_empty CHECK (LENGTH(TRIM(display_name)) > 0)
+    CONSTRAINT friends_display_name_not_empty CHECK (LENGTH(TRIM(display_name)) > 0)
 );
 
-CREATE INDEX idx_contacts_user_id ON contacts(user_id);
-CREATE INDEX idx_contacts_display_name ON contacts(user_id, display_name);
-CREATE INDEX idx_contacts_deleted_at ON contacts(deleted_at) WHERE deleted_at IS NULL;
-CREATE INDEX idx_contacts_created_at ON contacts(user_id, created_at DESC);
+CREATE INDEX idx_friends_user_id ON friends(user_id);
+CREATE INDEX idx_friends_display_name ON friends(user_id, display_name);
+CREATE INDEX idx_friends_deleted_at ON friends(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_friends_created_at ON friends(user_id, created_at DESC);
 
 -- Phone numbers
-CREATE TABLE contact_phones (
+CREATE TABLE friend_phones (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    friend_id UUID NOT NULL REFERENCES friends(id) ON DELETE CASCADE,
 
     phone_number VARCHAR(50) NOT NULL,  -- Stored in E.164 format
     phone_type VARCHAR(20) NOT NULL DEFAULT 'mobile',  -- mobile, home, work, fax, other
@@ -190,12 +190,12 @@ CREATE TABLE contact_phones (
     CONSTRAINT valid_phone_type CHECK (phone_type IN ('mobile', 'home', 'work', 'fax', 'other'))
 );
 
-CREATE INDEX idx_contact_phones_contact_id ON contact_phones(contact_id);
+CREATE INDEX idx_friend_phones_friend_id ON friend_phones(friend_id);
 
 -- Email addresses
-CREATE TABLE contact_emails (
+CREATE TABLE friend_emails (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    friend_id UUID NOT NULL REFERENCES friends(id) ON DELETE CASCADE,
 
     email_address VARCHAR(255) NOT NULL,
     email_type VARCHAR(20) NOT NULL DEFAULT 'personal',  -- personal, work, other
@@ -208,13 +208,13 @@ CREATE TABLE contact_emails (
     CONSTRAINT valid_email_format CHECK (email_address ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 );
 
-CREATE INDEX idx_contact_emails_contact_id ON contact_emails(contact_id);
-CREATE INDEX idx_contact_emails_address ON contact_emails(email_address);
+CREATE INDEX idx_friend_emails_friend_id ON friend_emails(friend_id);
+CREATE INDEX idx_friend_emails_address ON friend_emails(email_address);
 
 -- Postal addresses
-CREATE TABLE contact_addresses (
+CREATE TABLE friend_addresses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    friend_id UUID NOT NULL REFERENCES friends(id) ON DELETE CASCADE,
 
     street_line1 VARCHAR(255),
     street_line2 VARCHAR(255),
@@ -232,12 +232,12 @@ CREATE TABLE contact_addresses (
     CONSTRAINT valid_address_type CHECK (address_type IN ('home', 'work', 'other'))
 );
 
-CREATE INDEX idx_contact_addresses_contact_id ON contact_addresses(contact_id);
+CREATE INDEX idx_friend_addresses_friend_id ON friend_addresses(friend_id);
 
 -- URLs/Websites
-CREATE TABLE contact_urls (
+CREATE TABLE friend_urls (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    friend_id UUID NOT NULL REFERENCES friends(id) ON DELETE CASCADE,
 
     url VARCHAR(500) NOT NULL,
     url_type VARCHAR(20) NOT NULL DEFAULT 'personal',  -- personal, work, blog, other
@@ -248,53 +248,53 @@ CREATE TABLE contact_urls (
     CONSTRAINT valid_url_type CHECK (url_type IN ('personal', 'work', 'blog', 'other'))
 );
 
-CREATE INDEX idx_contact_urls_contact_id ON contact_urls(contact_id);
+CREATE INDEX idx_friend_urls_friend_id ON friend_urls(friend_id);
 ```
 
 ## API Endpoints
 
-### Contacts
+### Friends
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/contacts` | List contacts with pagination, sorting |
-| GET | `/api/contacts/:id` | Get single contact with all related data |
-| POST | `/api/contacts` | Create new contact |
-| PUT | `/api/contacts/:id` | Update contact |
-| DELETE | `/api/contacts/:id` | Soft-delete contact |
+| GET | `/api/friends` | List friends with pagination, sorting |
+| GET | `/api/friends/:id` | Get single friend with all related data |
+| POST | `/api/friends` | Create new friend |
+| PUT | `/api/friends/:id` | Update friend |
+| DELETE | `/api/friends/:id` | Soft-delete friend |
 
 ### Phone Numbers
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/contacts/:id/phones` | Add phone number |
-| PUT | `/api/contacts/:id/phones/:phoneId` | Update phone number |
-| DELETE | `/api/contacts/:id/phones/:phoneId` | Remove phone number |
+| POST | `/api/friends/:id/phones` | Add phone number |
+| PUT | `/api/friends/:id/phones/:phoneId` | Update phone number |
+| DELETE | `/api/friends/:id/phones/:phoneId` | Remove phone number |
 
 ### Email Addresses
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/contacts/:id/emails` | Add email address |
-| PUT | `/api/contacts/:id/emails/:emailId` | Update email address |
-| DELETE | `/api/contacts/:id/emails/:emailId` | Remove email address |
+| POST | `/api/friends/:id/emails` | Add email address |
+| PUT | `/api/friends/:id/emails/:emailId` | Update email address |
+| DELETE | `/api/friends/:id/emails/:emailId` | Remove email address |
 
 ### Postal Addresses
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/contacts/:id/addresses` | Add address |
-| PUT | `/api/contacts/:id/addresses/:addressId` | Update address |
-| DELETE | `/api/contacts/:id/addresses/:addressId` | Remove address |
+| POST | `/api/friends/:id/addresses` | Add address |
+| PUT | `/api/friends/:id/addresses/:addressId` | Update address |
+| DELETE | `/api/friends/:id/addresses/:addressId` | Remove address |
 
 ### URLs
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/contacts/:id/urls` | Add URL |
-| PUT | `/api/contacts/:id/urls/:urlId` | Update URL |
-| DELETE | `/api/contacts/:id/urls/:urlId` | Remove URL |
+| POST | `/api/friends/:id/urls` | Add URL |
+| PUT | `/api/friends/:id/urls/:urlId` | Update URL |
+| DELETE | `/api/friends/:id/urls/:urlId` | Remove URL |
 
 ### Profile Picture
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/contacts/:id/photo` | Upload profile picture |
-| DELETE | `/api/contacts/:id/photo` | Remove profile picture |
+| POST | `/api/friends/:id/photo` | Upload profile picture |
+| DELETE | `/api/friends/:id/photo` | Remove profile picture |
 
 ## ArkType Validation Schemas
 
@@ -337,8 +337,8 @@ export const urlSchema = type({
   'label?': 'string',
 })
 
-// Contact create schema
-export const contactCreateSchema = type({
+// Friend create schema
+export const friendCreateSchema = type({
   display_name: 'string > 0',
   'name_prefix?': 'string',
   'name_first?': 'string',
@@ -351,8 +351,8 @@ export const contactCreateSchema = type({
   'urls?': urlSchema.array(),
 })
 
-// Contact update schema (all fields optional)
-export const contactUpdateSchema = type({
+// Friend update schema (all fields optional)
+export const friendUpdateSchema = type({
   'display_name?': 'string > 0',
   'name_prefix?': 'string | null',
   'name_first?': 'string | null',
@@ -366,30 +366,30 @@ export const contactUpdateSchema = type({
 
 | Component | Description |
 |-----------|-------------|
-| `ContactList` | Paginated list with sorting, empty state |
-| `ContactListItem` | Single row/card in list (avatar, name, primary contact info) |
-| `ContactDetail` | Full contact view with all fields |
-| `ContactForm` | Create/edit form with validation |
+| `FriendList` | Paginated list with sorting, empty state |
+| `FriendListItem` | Single row/card in list (avatar, name, primary friend info) |
+| `FriendDetail` | Full friend view with all fields |
+| `FriendForm` | Create/edit form with validation |
 | `PhoneInput` | Phone number input with type selector |
 | `EmailInput` | Email input with type selector |
 | `AddressInput` | Structured address input |
 | `UrlInput` | URL input with type selector |
 | `MultiValueField` | Reusable add/remove pattern for multi-value fields |
 | `AvatarUpload` | Profile picture upload with preview and crop |
-| `ContactAvatar` | Display component with fallback initials |
+| `FriendAvatar` | Display component with fallback initials |
 
 ## Success Metrics
 
-- Contact list loads in <500ms for up to 1,000 contacts
-- Single contact API response in <100ms
-- Contact create/update API response in <200ms
+- Friend list loads in <500ms for up to 1,000 friends
+- Single friend API response in <100ms
+- Friend create/update API response in <200ms
 - Image upload completes in <3s for 5MB file
 - All forms have <100ms validation feedback
 - Test coverage >80%
 
 ---
 
-# Epic 1B: Extended Contact Fields
+# Epic 1B: Extended Friend Fields
 
 **Priority:** High
 **Depends on:** Epic 1A
@@ -434,9 +434,9 @@ export const contactUpdateSchema = type({
 
 ```sql
 -- Important dates
-CREATE TABLE contact_dates (
+CREATE TABLE friend_dates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    friend_id UUID NOT NULL REFERENCES friends(id) ON DELETE CASCADE,
 
     date_value DATE NOT NULL,
     year_known BOOLEAN NOT NULL DEFAULT TRUE,  -- FALSE if only month/day known
@@ -448,16 +448,16 @@ CREATE TABLE contact_dates (
     CONSTRAINT valid_date_type CHECK (date_type IN ('birthday', 'anniversary', 'other'))
 );
 
-CREATE INDEX idx_contact_dates_contact_id ON contact_dates(contact_id);
-CREATE INDEX idx_contact_dates_upcoming ON contact_dates(
+CREATE INDEX idx_friend_dates_friend_id ON friend_dates(friend_id);
+CREATE INDEX idx_friend_dates_upcoming ON friend_dates(
     EXTRACT(MONTH FROM date_value),
     EXTRACT(DAY FROM date_value)
 );
 
 -- How/where met
-CREATE TABLE contact_met_info (
+CREATE TABLE friend_met_info (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    friend_id UUID NOT NULL REFERENCES friends(id) ON DELETE CASCADE,
 
     met_date DATE,
     met_location VARCHAR(255),
@@ -466,22 +466,22 @@ CREATE TABLE contact_met_info (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT one_met_info_per_contact UNIQUE (contact_id)
+    CONSTRAINT one_met_info_per_friend UNIQUE (friend_id)
 );
 
--- Professional information (added to contacts table)
-ALTER TABLE contacts ADD COLUMN job_title VARCHAR(100);
-ALTER TABLE contacts ADD COLUMN organization VARCHAR(255);
-ALTER TABLE contacts ADD COLUMN department VARCHAR(100);
-ALTER TABLE contacts ADD COLUMN work_notes TEXT;
+-- Professional information (added to friends table)
+ALTER TABLE friends ADD COLUMN job_title VARCHAR(100);
+ALTER TABLE friends ADD COLUMN organization VARCHAR(255);
+ALTER TABLE friends ADD COLUMN department VARCHAR(100);
+ALTER TABLE friends ADD COLUMN work_notes TEXT;
 
 -- Interests/hobbies (simple text for now, could be normalized later)
-ALTER TABLE contacts ADD COLUMN interests TEXT;
+ALTER TABLE friends ADD COLUMN interests TEXT;
 
 -- Social media profiles
-CREATE TABLE contact_social_profiles (
+CREATE TABLE friend_social_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    friend_id UUID NOT NULL REFERENCES friends(id) ON DELETE CASCADE,
 
     platform VARCHAR(30) NOT NULL,  -- linkedin, twitter, facebook, instagram, github, other
     profile_url VARCHAR(500),
@@ -493,7 +493,7 @@ CREATE TABLE contact_social_profiles (
     CONSTRAINT url_or_username CHECK (profile_url IS NOT NULL OR username IS NOT NULL)
 );
 
-CREATE INDEX idx_contact_social_profiles_contact_id ON contact_social_profiles(contact_id);
+CREATE INDEX idx_friend_social_profiles_friend_id ON friend_social_profiles(friend_id);
 ```
 
 ## API Endpoints
@@ -501,22 +501,22 @@ CREATE INDEX idx_contact_social_profiles_contact_id ON contact_social_profiles(c
 ### Important Dates
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/contacts/:id/dates` | Add important date |
-| PUT | `/api/contacts/:id/dates/:dateId` | Update date |
-| DELETE | `/api/contacts/:id/dates/:dateId` | Remove date |
+| POST | `/api/friends/:id/dates` | Add important date |
+| PUT | `/api/friends/:id/dates/:dateId` | Update date |
+| DELETE | `/api/friends/:id/dates/:dateId` | Remove date |
 
 ### Met Information
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| PUT | `/api/contacts/:id/met-info` | Set/update met information |
-| DELETE | `/api/contacts/:id/met-info` | Remove met information |
+| PUT | `/api/friends/:id/met-info` | Set/update met information |
+| DELETE | `/api/friends/:id/met-info` | Remove met information |
 
 ### Social Profiles
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/contacts/:id/social-profiles` | Add social profile |
-| PUT | `/api/contacts/:id/social-profiles/:profileId` | Update social profile |
-| DELETE | `/api/contacts/:id/social-profiles/:profileId` | Remove social profile |
+| POST | `/api/friends/:id/social-profiles` | Add social profile |
+| PUT | `/api/friends/:id/social-profiles/:profileId` | Update social profile |
+| DELETE | `/api/friends/:id/social-profiles/:profileId` | Remove social profile |
 
 ## Frontend Components
 
@@ -539,11 +539,11 @@ CREATE INDEX idx_contact_social_profiles_contact_id ON contact_social_profiles(c
 
 ---
 
-> **Note:** Epic 1C (Contact Notes) has been extracted to [Epic 15: Contact Notes](epic-15-planned-contact-notes.md).
+> **Note:** Epic 1C (Friend Notes) has been extracted to [Epic 15: Friend Notes](epic-15-planned-friend-notes.md).
 
 ---
 
-# Epic 1D: Contact Relationships
+# Epic 1D: Friend Relationships
 
 **Priority:** Medium
 **Depends on:** Epic 1A
@@ -551,7 +551,7 @@ CREATE INDEX idx_contact_social_profiles_contact_id ON contact_social_profiles(c
 ## Features
 
 ### Relationship Definitions
-- Define relationships between two contacts
+- Define relationships between two friends
 - Relationship types:
   - Family: spouse/partner, parent, child, sibling, grandparent, grandchild, cousin, in-law, other family
   - Professional: colleague, manager, report, mentor, mentee, client, other professional
@@ -561,8 +561,8 @@ CREATE INDEX idx_contact_social_profiles_contact_id ON contact_social_profiles(c
 - Optional relationship notes
 
 ### Relationship Display
-- Show related contacts on contact detail page
-- Link to related contact's detail page
+- Show related friends on friend detail page
+- Link to related friend's detail page
 - Group by relationship type
 
 ### Deferred to Phase 2
@@ -571,10 +571,10 @@ CREATE INDEX idx_contact_social_profiles_contact_id ON contact_social_profiles(c
 
 ## User Stories
 
-1. As a user, I want to mark that two contacts are married so I remember their connection
-2. As a user, I want to see all family members of a contact grouped together
-3. As a user, I want to record that someone is a colleague of another contact
-4. As a user, I want to navigate from one contact to their related contacts
+1. As a user, I want to mark that two friends are married so I remember their connection
+2. As a user, I want to see all family members of a friend grouped together
+3. As a user, I want to record that someone is a colleague of another friend
+4. As a user, I want to navigate from one friend to their related friends
 
 ## Database Schema
 
@@ -612,12 +612,12 @@ INSERT INTO relationship_types (id, category, label, inverse_type_id) VALUES
     ('acquaintance', 'social', 'Acquaintance', 'acquaintance'),
     ('other_social', 'social', 'Other', 'other_social');
 
--- Contact relationships
-CREATE TABLE contact_relationships (
+-- Friend relationships
+CREATE TABLE friend_relationships (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
-    related_contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    friend_id UUID NOT NULL REFERENCES friends(id) ON DELETE CASCADE,
+    related_friend_id UUID NOT NULL REFERENCES friends(id) ON DELETE CASCADE,
     relationship_type_id VARCHAR(50) NOT NULL REFERENCES relationship_types(id),
 
     notes TEXT,
@@ -625,32 +625,32 @@ CREATE TABLE contact_relationships (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     -- Prevent duplicate relationships
-    CONSTRAINT unique_relationship UNIQUE (contact_id, related_contact_id, relationship_type_id),
+    CONSTRAINT unique_relationship UNIQUE (friend_id, related_friend_id, relationship_type_id),
     -- Prevent self-relationships
-    CONSTRAINT no_self_relationship CHECK (contact_id != related_contact_id)
+    CONSTRAINT no_self_relationship CHECK (friend_id != related_friend_id)
 );
 
-CREATE INDEX idx_contact_relationships_contact ON contact_relationships(contact_id);
-CREATE INDEX idx_contact_relationships_related ON contact_relationships(related_contact_id);
+CREATE INDEX idx_friend_relationships_friend ON friend_relationships(friend_id);
+CREATE INDEX idx_friend_relationships_related ON friend_relationships(related_friend_id);
 ```
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/contacts/:id/relationships` | Get all relationships for contact |
-| POST | `/api/contacts/:id/relationships` | Create relationship (auto-creates inverse) |
-| PUT | `/api/contacts/:id/relationships/:relId` | Update relationship notes |
-| DELETE | `/api/contacts/:id/relationships/:relId` | Delete relationship (and inverse) |
+| GET | `/api/friends/:id/relationships` | Get all relationships for friend |
+| POST | `/api/friends/:id/relationships` | Create relationship (auto-creates inverse) |
+| PUT | `/api/friends/:id/relationships/:relId` | Update relationship notes |
+| DELETE | `/api/friends/:id/relationships/:relId` | Delete relationship (and inverse) |
 | GET | `/api/relationship-types` | List available relationship types |
 
 ## Frontend Components
 
 | Component | Description |
 |-----------|-------------|
-| `RelationshipsList` | Grouped list of related contacts |
-| `RelationshipItem` | Single relationship with link to contact |
-| `AddRelationshipForm` | Contact picker + relationship type selector |
+| `RelationshipsList` | Grouped list of related friends |
+| `RelationshipItem` | Single relationship with link to friend |
+| `AddRelationshipForm` | Friend picker + relationship type selector |
 | `RelationshipTypeSelect` | Grouped dropdown of relationship types |
 
 ## Success Metrics
@@ -682,13 +682,13 @@ CREATE INDEX idx_contact_relationships_related ON contact_relationships(related_
 
 ## Related Epics
 
-- **Epic 2:** Relationship Management - logs interactions with contacts
+- **Epic 2:** Relationship Management - logs interactions with friends
 - **Epic 4:** Categorization & Organization - groups, tags, favorites, archiving
 - **Epic 5:** Multi-User Management - user authentication, sharing
 - **Epic 6:** CalDAV/CardDAV - sync with external systems
 - **Epic 7:** Import/Export - bulk data operations
-- **Epic 10:** Search - finding contacts
-- **Epic 11:** Custom Fields - user-defined contact fields (Phase 2)
+- **Epic 10:** Search - finding friends
+- **Epic 11:** Custom Fields - user-defined friend fields (Phase 2)
 
 ## Testing Strategy
 
@@ -703,12 +703,12 @@ CREATE INDEX idx_contact_relationships_related ON contact_relationships(related_
 - Cascade delete tests
 
 ### E2E Tests
-- Contact CRUD flow
+- Friend CRUD flow
 - Multi-value field add/remove
 - Profile picture upload
 - Form validation feedback
 
 ### Performance Tests
-- Contact list with 10,000 contacts
-- Contact with 50 phone numbers (edge case)
+- Friend list with 10,000 friends
+- Friend with 50 phone numbers (edge case)
 - Concurrent API requests
