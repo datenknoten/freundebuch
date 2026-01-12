@@ -1,3 +1,15 @@
+## [2.32.2](https://github.com/datenknoten/freundebuch/compare/v2.32.1...v2.32.2) (2026-01-12)
+
+### Bug Fixes
+
+* **backend:** Complete BirthdayAlreadyExistsError migration ([938afa1](https://github.com/datenknoten/freundebuch/commit/938afa1ecc6f22eb11fee1d438b2e376aaf89ed0))
+
+### Code Refactoring
+
+* **backend:** Add toError helper to normalize unknown errors ([7b5d5d6](https://github.com/datenknoten/freundebuch/commit/7b5d5d6b0fda666ff16d850f4a115c8c30646121))
+* **backend:** Add UnknownValueError class for toError helper ([e5de839](https://github.com/datenknoten/freundebuch/commit/e5de839ff8bfb20704ec21e0cd330e1b5036c1b1))
+* **backend:** Replace raw Error class with custom error subclasses ([b2f0ab6](https://github.com/datenknoten/freundebuch/commit/b2f0ab6772cdb81a2526d71c23bd87eac485d5e7))
+
 ## [2.32.1](https://github.com/datenknoten/freundebuch/compare/v2.32.0...v2.32.1) (2026-01-11)
 
 ### Bug Fixes
