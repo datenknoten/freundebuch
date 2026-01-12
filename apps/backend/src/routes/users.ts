@@ -17,6 +17,7 @@ import {
 } from '../models/queries/users.queries.js';
 import { ContactsService } from '../services/contacts.service.js';
 import type { AppContext } from '../types/context.js';
+import { toError } from '../utils/errors.js';
 
 const app = new Hono<AppContext>();
 
@@ -52,7 +53,7 @@ app.get('/me', async (c) => {
       hasCompletedOnboarding: selfContactExternalId !== null,
     });
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to get user profile');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to get user profile' }, 500);
@@ -130,7 +131,7 @@ app.put('/me', async (c) => {
       hasCompletedOnboarding: selfContactExternalId !== null,
     });
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to update user profile');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update user profile' }, 500);
@@ -156,7 +157,7 @@ app.get('/me/self-contact', async (c) => {
 
     return c.json({ selfContactId: selfContactExternalId });
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to get self-contact');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to get self-contact' }, 500);
@@ -201,7 +202,7 @@ app.put('/me/self-contact', async (c) => {
 
     return c.json({ selfContactId: result[0]?.self_contact_external_id });
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to set self-contact');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to set self-contact' }, 500);
@@ -264,7 +265,7 @@ app.post('/me/self-contact', async (c) => {
 
     return c.json(newContact, 201);
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to create self-contact');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to create self-contact' }, 500);

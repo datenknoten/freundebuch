@@ -1,5 +1,6 @@
 import type { Context, Next } from 'hono';
 import { hasSelfContact } from '../models/queries/users.queries.js';
+import { toError } from '../utils/errors.js';
 import { getAuthUser } from './auth.js';
 
 /**
@@ -50,7 +51,7 @@ export async function onboardingMiddleware(c: Context, next: Next) {
 
     return next();
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to check onboarding status');
     return c.json({ error: 'Internal server error' }, 500);
   }

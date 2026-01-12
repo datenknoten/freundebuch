@@ -9,7 +9,7 @@ import { AddressLookupService } from '../services/address-lookup.service.js';
 import { SUPPORTED_COUNTRIES } from '../services/external/zipcodebase.client.js';
 import type { AppContext } from '../types/context.js';
 import { getConfig } from '../utils/config.js';
-import { ConfigurationError, isAppError } from '../utils/errors.js';
+import { ConfigurationError, isAppError, toError } from '../utils/errors.js';
 
 const app = new Hono<AppContext>();
 
@@ -101,7 +101,7 @@ app.get('/cities', async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to get cities');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to load cities' }, 500);
@@ -141,7 +141,7 @@ app.get('/streets', async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to get streets');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to load streets' }, 500);
@@ -182,7 +182,7 @@ app.get('/house-numbers', async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to get house numbers');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to load house numbers' }, 500);

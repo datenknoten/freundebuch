@@ -239,3 +239,11 @@ export function getErrorStatusCode(error: unknown): ContentfulStatusCode {
   }
   return 500;
 }
+
+/**
+ * Normalize an unknown error to an Error instance.
+ * Useful in catch blocks where the error type is unknown.
+ */
+export function toError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
+}

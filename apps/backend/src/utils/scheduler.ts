@@ -5,6 +5,7 @@ import type { Logger } from 'pino';
 import { deleteExpiredAddressCacheEntries } from '../models/queries/address-cache.queries.js';
 import { deleteExpiredPasswordResetTokens } from '../models/queries/password-reset-tokens.queries.js';
 import { deleteExpiredSessions } from '../models/queries/sessions.queries.js';
+import { toError } from './errors.js';
 
 /**
  * Setup scheduled cleanup tasks for expired tokens and sessions
@@ -20,7 +21,7 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): void {
       await deleteExpiredSessions.run(undefined, pool);
       logger.info('Expired sessions cleaned up successfully');
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error({ err }, 'Failed to clean up expired sessions');
       Sentry.captureException(err);
     }
@@ -29,7 +30,7 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): void {
       await deleteExpiredPasswordResetTokens.run(undefined, pool);
       logger.info('Expired password reset tokens cleaned up successfully');
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error({ err }, 'Failed to clean up expired password reset tokens');
       Sentry.captureException(err);
     }
@@ -38,7 +39,7 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): void {
       await deleteExpiredAddressCacheEntries.run(undefined, pool);
       logger.info('Expired address cache entries cleaned up successfully');
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      const err = toError(error);
       logger.error({ err }, 'Failed to clean up expired address cache entries');
       Sentry.captureException(err);
     }
