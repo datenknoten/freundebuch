@@ -1,3 +1,21 @@
+## [2.32.3](https://github.com/datenknoten/freundebuch/compare/v2.32.2...v2.32.3) (2026-01-12)
+
+### Bug Fixes
+
+* **backend:** Complete Contact → Friend rename fixes ([0b8314f](https://github.com/datenknoten/freundebuch/commit/0b8314f5a00c3b40eb6613f16f523af7b99d72eb))
+
+### Code Refactoring
+
+* **all:** Update SabreDAV CardDAV backend for Friend rename ([43a9236](https://github.com/datenknoten/freundebuch/commit/43a9236ac3218193e51a25ee82efbff6bf39a162))
+* **backend:** Rename contact query files to friend ([26a169b](https://github.com/datenknoten/freundebuch/commit/26a169b05a494eb5e238b1f4f9aa5e6458a1cf59))
+* **backend:** Rename contact tests to friend ([58ea937](https://github.com/datenknoten/freundebuch/commit/58ea937e4a16314b74404581de34e004d92ea18b))
+* **backend:** Rename ContactsService to FriendsService ([a0247dc](https://github.com/datenknoten/freundebuch/commit/a0247dcd25eb8236ac11f9560c7d5a528d04e2b3))
+* **database:** Add migrations to rename Contact to Friend ([d810439](https://github.com/datenknoten/freundebuch/commit/d8104395ecb99928d36003ef1a54a7ae45426626))
+* **frontend:** Rename /contacts routes to /friends ([9d4b66d](https://github.com/datenknoten/freundebuch/commit/9d4b66dcb51440a687bbf960e8fc3061dae82f17))
+* **frontend:** Rename contact API and stores to friend ([1967cb2](https://github.com/datenknoten/freundebuch/commit/1967cb2189c86aa96a219c73f226acdc4d5bbb10))
+* **frontend:** Rename Contact components to Friend ([8ba48fa](https://github.com/datenknoten/freundebuch/commit/8ba48fab4c67af1337f312508e9d2b3d64d1be6b))
+* **shared:** Rename Contact types to Friend ([11afcfa](https://github.com/datenknoten/freundebuch/commit/11afcfa23352feb7cf35ee6ae889698018705c04))
+
 ## [2.32.2](https://github.com/datenknoten/freundebuch/compare/v2.32.1...v2.32.2) (2026-01-12)
 
 ### Bug Fixes
