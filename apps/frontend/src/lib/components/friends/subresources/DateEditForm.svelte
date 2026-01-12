@@ -1,8 +1,8 @@
 <script lang="ts">
-import type { ContactDate, DateInput, DateType } from '$shared';
+import type { DateInput, DateType, FriendDate } from '$shared';
 
 interface Props {
-  initialData?: ContactDate;
+  initialData?: FriendDate;
   disabled?: boolean;
   onchange?: () => void;
 }

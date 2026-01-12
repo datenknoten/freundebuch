@@ -1,15 +1,15 @@
 <script lang="ts">
 import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
-import type { ContactListItem } from '$shared';
-import ContactAvatar from './ContactAvatar.svelte';
+import type { FriendListItem } from '$shared';
+import FriendAvatar from './FriendAvatar.svelte';
 
 interface Props {
-  contact: ContactListItem;
+  friend: FriendListItem;
   /** Index in the list (0-based), used for keyboard shortcut indicator */
   index?: number;
 }
 
-let { contact, index }: Props = $props();
+let { friend, index }: Props = $props();
 
 // Get the keyboard hint for this item
 let keyHint = $derived(index !== undefined ? getKeyboardHint(index) : null);
@@ -32,7 +32,7 @@ let showKeyHint = $derived(() => {
 </script>
 
 <a
-  href="/contacts/{contact.id}"
+  href="/friends/{friend.id}"
   class="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all relative"
   data-sveltekit-preload-data="tap"
 >
@@ -42,23 +42,23 @@ let showKeyHint = $derived(() => {
     </div>
   {/if}
 
-  <ContactAvatar
-    displayName={contact.displayName}
-    photoUrl={contact.photoThumbnailUrl}
+  <FriendAvatar
+    displayName={friend.displayName}
+    photoUrl={friend.photoThumbnailUrl}
     size="md"
   />
 
   <div class="flex-1 min-w-0">
     <h3 class="font-heading text-lg text-gray-900 truncate">
-      {contact.displayName}
+      {friend.displayName}
     </h3>
 
     <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 font-body">
-      {#if contact.primaryEmail}
-        <span class="truncate">{contact.primaryEmail}</span>
+      {#if friend.primaryEmail}
+        <span class="truncate">{friend.primaryEmail}</span>
       {/if}
-      {#if contact.primaryPhone}
-        <span>{contact.primaryPhone}</span>
+      {#if friend.primaryPhone}
+        <span>{friend.primaryPhone}</span>
       {/if}
     </div>
   </div>

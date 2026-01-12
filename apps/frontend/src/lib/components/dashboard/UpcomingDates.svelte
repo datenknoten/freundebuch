@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { getUpcomingDates } from '$lib/api/contacts.js';
-import ContactAvatar from '$lib/components/contacts/ContactAvatar.svelte';
+import { getUpcomingDates } from '$lib/api/friends.js';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
 import type { DateType, UpcomingDate } from '$shared';
 
 interface Props {
@@ -99,24 +99,24 @@ function getDaysUntilClass(daysUntil: number): string {
     <div class="text-center py-6">
       <div class="text-gray-400 text-4xl mb-2">&#128197;</div>
       <p class="text-gray-500 font-body">No upcoming dates in the next {days} days</p>
-      <p class="text-gray-400 text-sm mt-1">Add birthdays and anniversaries to your contacts</p>
+      <p class="text-gray-400 text-sm mt-1">Add birthdays and anniversaries to your friends</p>
     </div>
   {:else}
     <div class="space-y-3">
       {#each upcomingDates as date (date.id)}
         <a
-          href="/contacts/{date.contact.id}"
+          href="/friends/{date.friend.id}"
           class="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-gray-50 transition-colors"
         >
-          <ContactAvatar
-            displayName={date.contact.displayName}
-            photoUrl={date.contact.photoThumbnailUrl}
+          <FriendAvatar
+            displayName={date.friend.displayName}
+            photoUrl={date.friend.photoThumbnailUrl}
             size="sm"
           />
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
               <span class="font-body font-medium text-gray-900 truncate">
-                {date.contact.displayName}
+                {date.friend.displayName}
               </span>
               <span class="text-xs px-2 py-0.5 rounded-full font-body {getDaysUntilClass(date.daysUntil)}">
                 {formatDaysUntil(date.daysUntil)}
@@ -135,8 +135,8 @@ function getDaysUntilClass(daysUntil: number): string {
 
     {#if upcomingDates.length >= limit}
       <div class="mt-4 pt-4 border-t border-gray-100 text-center">
-        <a href="/contacts" class="text-sm text-forest hover:text-forest-light font-body">
-          View all contacts
+        <a href="/friends" class="text-sm text-forest hover:text-forest-light font-body">
+          View all friends
         </a>
       </div>
     {/if}

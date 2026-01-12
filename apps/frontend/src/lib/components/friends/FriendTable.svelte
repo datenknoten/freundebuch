@@ -1,11 +1,11 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
-import type { ContactListItem } from '$shared';
-import ContactAvatar from './ContactAvatar.svelte';
+import type { FriendListItem } from '$shared';
+import FriendAvatar from './FriendAvatar.svelte';
 
 interface Props {
-  contacts: ContactListItem[];
+  friends: FriendListItem[];
   sortBy: 'display_name' | 'created_at' | 'updated_at';
   sortOrder: 'asc' | 'desc';
   onSortChange: (
@@ -14,10 +14,10 @@ interface Props {
   ) => void;
 }
 
-let { contacts, sortBy, sortOrder, onSortChange }: Props = $props();
+let { friends, sortBy, sortOrder, onSortChange }: Props = $props();
 
-function handleRowClick(contactId: string) {
-  goto(`/contacts/${contactId}`);
+function handleRowClick(friendId: string) {
+  goto(`/friends/${friendId}`);
 }
 
 function handleLinkClick(e: MouseEvent) {
@@ -96,16 +96,16 @@ function shouldShowKeyHint(index: number): boolean {
       </tr>
     </thead>
     <tbody>
-      {#each contacts as contact, index (contact.id)}
+      {#each friends as friend, index (friend.id)}
         {@const keyHint = getKeyHint(index)}
         {@const showHint = shouldShowKeyHint(index)}
         <tr
-          onclick={() => handleRowClick(contact.id)}
-          onkeydown={(e) => e.key === 'Enter' && handleRowClick(contact.id)}
+          onclick={() => handleRowClick(friend.id)}
+          onkeydown={(e) => e.key === 'Enter' && handleRowClick(friend.id)}
           class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
           tabindex="0"
           role="link"
-          aria-label="View {contact.displayName}"
+          aria-label="View {friend.displayName}"
         >
           <!-- Avatar -->
           <td class="py-2 px-2 relative">
@@ -114,40 +114,40 @@ function shouldShowKeyHint(index: number): boolean {
                 {keyHint}
               </div>
             {/if}
-            <ContactAvatar
-              displayName={contact.displayName}
-              photoUrl={contact.photoThumbnailUrl}
+            <FriendAvatar
+              displayName={friend.displayName}
+              photoUrl={friend.photoThumbnailUrl}
               size="sm"
             />
           </td>
 
           <!-- Name -->
           <td class="py-2 px-3">
-            <span class="font-body text-gray-900">{contact.displayName}</span>
+            <span class="font-body text-gray-900">{friend.displayName}</span>
           </td>
 
           <!-- Email -->
           <td class="py-2 px-3">
-            {#if contact.primaryEmail}
+            {#if friend.primaryEmail}
               <a
-                href="mailto:{contact.primaryEmail}"
+                href="mailto:{friend.primaryEmail}"
                 onclick={handleLinkClick}
                 class="font-body text-gray-600 hover:text-forest hover:underline transition-colors"
               >
-                {contact.primaryEmail}
+                {friend.primaryEmail}
               </a>
             {/if}
           </td>
 
           <!-- Phone -->
           <td class="py-2 px-3">
-            {#if contact.primaryPhone}
+            {#if friend.primaryPhone}
               <a
-                href="tel:{contact.primaryPhone}"
+                href="tel:{friend.primaryPhone}"
                 onclick={handleLinkClick}
                 class="font-body text-gray-600 hover:text-forest hover:underline transition-colors"
               >
-                {contact.primaryPhone}
+                {friend.primaryPhone}
               </a>
             {/if}
           </td>

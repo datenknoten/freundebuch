@@ -1,27 +1,27 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { contacts } from '$lib/stores/contacts';
-import type { ContactSearchResult } from '$shared';
-import ContactAvatar from './ContactAvatar.svelte';
+import { friends } from '$lib/stores/friends';
+import type { FriendSearchResult } from '$shared';
+import FriendAvatar from './FriendAvatar.svelte';
 
 interface Props {
   /** Placeholder text for the input */
   placeholder?: string;
-  /** Contact ID to exclude from search results (e.g., current contact) */
-  excludeContactId?: string;
+  /** Friend ID to exclude from search results (e.g., current friend) */
+  excludeFriendId?: string;
   /** Maximum number of results to show */
   limit?: number;
   /** Whether the input is disabled */
   disabled?: boolean;
   /** Whether to autofocus the input on mount */
   autofocus?: boolean;
-  /** Called when a contact is selected (viaKeyboard is true if Enter was used) */
-  onSelect?: (contact: ContactSearchResult, viaKeyboard: boolean) => void;
+  /** Called when a friend is selected (viaKeyboard is true if Enter was used) */
+  onSelect?: (friend: FriendSearchResult, viaKeyboard: boolean) => void;
 }
 
 let {
-  placeholder = 'Search contacts...',
-  excludeContactId,
+  placeholder = 'Search friends...',
+  excludeFriendId,
   limit = 10,
   disabled = false,
   autofocus = false,
@@ -38,7 +38,7 @@ onMount(() => {
 });
 
 let query = $state('');
-let results = $state<ContactSearchResult[]>([]);
+let results = $state<FriendSearchResult[]>([]);
 let isSearching = $state(false);
 let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
@@ -71,7 +71,7 @@ async function performSearch() {
 
   isSearching = true;
   try {
-    results = await contacts.searchContacts(query, excludeContactId, limit);
+    results = await friends.searchFriends(query, excludeFriendId, limit);
     showDropdown = results.length > 0;
     highlightedIndex = -1;
   } catch {
@@ -82,12 +82,12 @@ async function performSearch() {
   }
 }
 
-function selectContact(contact: ContactSearchResult, viaKeyboard = false) {
+function selectFriend(friend: FriendSearchResult, viaKeyboard = false) {
   query = '';
   results = [];
   showDropdown = false;
   highlightedIndex = -1;
-  onSelect?.(contact, viaKeyboard);
+  onSelect?.(friend, viaKeyboard);
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -105,7 +105,7 @@ function handleKeydown(e: KeyboardEvent) {
     case 'Enter':
       e.preventDefault();
       if (highlightedIndex >= 0 && highlightedIndex < results.length) {
-        selectContact(results[highlightedIndex], true);
+        selectFriend(results[highlightedIndex], true);
       }
       break;
     case 'Escape':
@@ -146,7 +146,7 @@ function handleFocus() {
       autocomplete="off"
       role="combobox"
       aria-expanded={showDropdown}
-      aria-controls="contact-search-listbox"
+      aria-controls="friend-search-listbox"
       aria-haspopup="listbox"
       aria-autocomplete="list"
     />
@@ -169,11 +169,11 @@ function handleFocus() {
 
   {#if showDropdown}
     <ul
-      id="contact-search-listbox"
+      id="friend-search-listbox"
       class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       role="listbox"
     >
-      {#each results as contact, index}
+      {#each results as friend, index}
         <li
           role="option"
           aria-selected={highlightedIndex === index}
@@ -181,22 +181,22 @@ function handleFocus() {
         >
           <button
             type="button"
-            onclick={() => selectContact(contact)}
+            onclick={() => selectFriend(friend)}
             class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors {highlightedIndex === index ? 'bg-gray-100' : ''}"
           >
-            <ContactAvatar
-              displayName={contact.displayName}
-              photoUrl={contact.photoThumbnailUrl}
+            <FriendAvatar
+              displayName={friend.displayName}
+              photoUrl={friend.photoThumbnailUrl}
               size="sm"
             />
-            <span class="font-body text-sm text-gray-900">{contact.displayName}</span>
+            <span class="font-body text-sm text-gray-900">{friend.displayName}</span>
           </button>
         </li>
       {/each}
 
       {#if results.length === 0 && query.trim() && !isSearching}
         <li class="px-3 py-2 text-sm text-gray-500 font-body">
-          No contacts found
+          No friends found
         </li>
       {/if}
     </ul>

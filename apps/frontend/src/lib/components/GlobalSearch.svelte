@@ -9,7 +9,7 @@ import {
   searchFacets,
 } from '$lib/stores/search';
 import type { FacetFilters } from '$shared';
-import ContactAvatar from './contacts/ContactAvatar.svelte';
+import FriendAvatar from './friends/FriendAvatar.svelte';
 import FacetChips from './search/FacetChips.svelte';
 import FacetDropdown from './search/FacetDropdown.svelte';
 
@@ -60,8 +60,8 @@ function handleKeydown(e: KeyboardEvent) {
     case 'Enter':
       e.preventDefault();
       if (e.altKey) {
-        // Alt/Option+Enter: Create new contact
-        navigateToNewContact();
+        // Alt/Option+Enter: Create new friend
+        navigateToNewFriend();
       } else if (e.metaKey || e.ctrlKey) {
         // Cmd/Ctrl+Enter: Navigate to friends list with search
         navigateToFriendsList();
@@ -88,19 +88,19 @@ function handleSelect() {
 
   // Selecting from search results
   if (searchState.results.length > 0 && searchState.selectedIndex < searchState.results.length) {
-    const contact = searchState.results[searchState.selectedIndex];
-    navigateToContact(contact.id);
+    const friend = searchState.results[searchState.selectedIndex];
+    navigateToFriend(friend.id);
   }
 }
 
-// Navigate to contact and close search
-async function navigateToContact(contactId: string) {
+// Navigate to friend and close search
+async function navigateToFriend(friendId: string) {
   // Save to recent searches
   if (searchState.query.trim().length >= 2) {
     search.addRecentSearch(searchState.query.trim());
   }
   search.close();
-  await goto(`/contacts/${contactId}`);
+  await goto(`/friends/${friendId}`);
 }
 
 // Navigate to friends list with search query
@@ -111,15 +111,15 @@ async function navigateToFriendsList() {
   search.close();
   await goto(
     searchState.query.trim().length >= 2
-      ? `/contacts?q=${encodeURIComponent(searchState.query.trim())}`
-      : '/contacts',
+      ? `/friends?q=${encodeURIComponent(searchState.query.trim())}`
+      : '/friends',
   );
 }
 
-// Navigate to create new contact
-async function navigateToNewContact() {
+// Navigate to create new friend
+async function navigateToNewFriend() {
   search.close();
-  await goto('/contacts/new');
+  await goto('/friends/new');
 }
 
 // Detect platform for keyboard shortcut hint
@@ -167,7 +167,7 @@ onMount(() => {
     onkeydown={handleKeydown}
     role="dialog"
     aria-modal="true"
-    aria-label="Search contacts"
+    aria-label="Search friends"
     tabindex="-1"
   >
     <!-- Modal container -->
@@ -276,55 +276,55 @@ onMount(() => {
         {:else if showResults}
           <!-- Search results -->
           <ul id="global-search-listbox" role="listbox" class="p-2">
-            {#each searchState.results as contact, index}
+            {#each searchState.results as friend, index}
               <li
                 role="option"
                 aria-selected={searchState.selectedIndex === index}
               >
                 <button
                   type="button"
-                  onclick={() => navigateToContact(contact.id)}
+                  onclick={() => navigateToFriend(friend.id)}
                   class="w-full flex items-start gap-3 px-3 py-3 rounded-lg transition-colors {searchState.selectedIndex === index ? 'bg-gray-100' : 'hover:bg-gray-50'}"
                 >
-                  <ContactAvatar
-                    displayName={contact.displayName}
-                    photoUrl={contact.photoThumbnailUrl}
+                  <FriendAvatar
+                    displayName={friend.displayName}
+                    photoUrl={friend.photoThumbnailUrl}
                     size="sm"
                   />
                   <div class="flex-1 min-w-0 text-left">
                     <div class="font-body text-sm font-medium text-gray-900">
-                      {contact.displayName}
+                      {friend.displayName}
                     </div>
-                    {#if contact.organization || contact.jobTitle}
+                    {#if friend.organization || friend.jobTitle}
                       <div class="font-body text-xs text-gray-500 truncate">
-                        {#if contact.jobTitle && contact.organization}
-                          {contact.jobTitle} at {contact.organization}
-                        {:else if contact.jobTitle}
-                          {contact.jobTitle}
-                        {:else if contact.organization}
-                          {contact.organization}
+                        {#if friend.jobTitle && friend.organization}
+                          {friend.jobTitle} at {friend.organization}
+                        {:else if friend.jobTitle}
+                          {friend.jobTitle}
+                        {:else if friend.organization}
+                          {friend.organization}
                         {/if}
                       </div>
                     {/if}
-                    {#if contact.primaryEmail || contact.primaryPhone}
+                    {#if friend.primaryEmail || friend.primaryPhone}
                       <div class="font-body text-xs text-gray-400 truncate">
-                        {contact.primaryEmail || contact.primaryPhone}
+                        {friend.primaryEmail || friend.primaryPhone}
                       </div>
                     {/if}
-                    {#if contact.headline && contact.matchSource}
+                    {#if friend.headline && friend.matchSource}
                       <div class="mt-1 font-body text-xs text-gray-500 line-clamp-2">
                         <!-- Using @html for highlighted content from ts_headline -->
-                        {@html contact.headline}
+                        {@html friend.headline}
                       </div>
                     {/if}
                   </div>
-                  {#if contact.matchSource && contact.matchSource !== 'contact'}
+                  {#if friend.matchSource && friend.matchSource !== 'friend'}
                     <span class="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full {
-                      contact.matchSource === 'email' ? 'bg-blue-100 text-blue-700' :
-                      contact.matchSource === 'phone' ? 'bg-green-100 text-green-700' :
+                      friend.matchSource === 'email' ? 'bg-blue-100 text-blue-700' :
+                      friend.matchSource === 'phone' ? 'bg-green-100 text-green-700' :
                       'bg-purple-100 text-purple-700'
                     }">
-                      {contact.matchSource}
+                      {friend.matchSource}
                     </span>
                   {/if}
                 </button>
@@ -345,7 +345,7 @@ onMount(() => {
             </p>
             <button
               type="button"
-              onclick={navigateToNewContact}
+              onclick={navigateToNewFriend}
               class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-forest text-white rounded-lg font-body text-sm font-medium hover:bg-forest-light transition-colors"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -384,7 +384,7 @@ onMount(() => {
         </button>
         <button
           type="button"
-          onclick={navigateToNewContact}
+          onclick={navigateToNewFriend}
           class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-forest hover:bg-gray-100 rounded-lg font-body text-sm font-medium transition-colors"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -424,13 +424,13 @@ onMount(() => {
         <div class="flex items-center gap-3">
           <button
             type="button"
-            onclick={navigateToNewContact}
+            onclick={navigateToNewFriend}
             class="flex items-center gap-1.5 text-gray-500 hover:text-forest font-body transition-colors"
           >
             <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">
               {isMac ? '⌥' : 'Alt'}↵
             </kbd>
-            <span>New contact</span>
+            <span>New friend</span>
           </button>
           <button
             type="button"

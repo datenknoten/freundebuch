@@ -1,15 +1,15 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
-import { contacts } from '$lib/stores/contacts';
+import { friends } from '$lib/stores/friends';
 import type {
   Address,
   AddressInput,
-  Contact,
-  ContactDate,
   DateInput,
   Email,
   EmailInput,
+  Friend,
+  FriendDate,
   Phone,
   PhoneInput,
   SocialProfile,
@@ -17,7 +17,7 @@ import type {
   Url,
   UrlInput,
 } from '$shared';
-import ContactAvatar from './ContactAvatar.svelte';
+import FriendAvatar from './FriendAvatar.svelte';
 import RelationshipsSection from './RelationshipsSection.svelte';
 import {
   AddressEditForm,
@@ -38,19 +38,19 @@ import {
 } from './subresources';
 
 interface Props {
-  contact: Contact;
+  friend: Friend;
 }
 
-let { contact }: Props = $props();
+let { friend }: Props = $props();
 
-// Contact deletion state
+// Friend deletion state
 let isDeleting = $state(false);
 let showDeleteConfirm = $state(false);
 
 // Subresource editing state
 let editingType = $state<SubresourceType | null>(null);
 let editingId = $state<string | null>(null); // null = add new
-let editingData = $state<Phone | Email | Address | Url | ContactDate | SocialProfile | null>(null);
+let editingData = $state<Phone | Email | Address | Url | FriendDate | SocialProfile | null>(null);
 let isEditLoading = $state(false);
 let editError = $state<string | null>(null);
 let isDirty = $state(false);
@@ -78,14 +78,14 @@ let socialFormRef = $state<{ getData: () => SocialProfileInput; isValid: () => b
   null,
 );
 
-// Contact delete handler
+// Friend delete handler
 async function handleDelete() {
   isDeleting = true;
   try {
-    await contacts.deleteContact(contact.id);
-    goto('/contacts');
+    await friends.deleteFriend(friend.id);
+    goto('/friends');
   } catch (error) {
-    console.error('Failed to delete contact:', error);
+    console.error('Failed to delete friend:', error);
     isDeleting = false;
     showDeleteConfirm = false;
   }
@@ -95,7 +95,7 @@ async function handleDelete() {
 function openEditModal(
   type: SubresourceType,
   id?: string,
-  data?: Phone | Email | Address | Url | ContactDate | SocialProfile,
+  data?: Phone | Email | Address | Url | FriendDate | SocialProfile,
 ) {
   editingType = type;
   editingId = id ?? null;
@@ -137,44 +137,44 @@ async function handleSave() {
     if (editingType === 'phone' && phoneFormRef) {
       const data = phoneFormRef.getData();
       if (editingId) {
-        await contacts.updatePhone(contact.id, editingId, data);
+        await friends.updatePhone(friend.id, editingId, data);
       } else {
-        await contacts.addPhone(contact.id, data);
+        await friends.addPhone(friend.id, data);
       }
     } else if (editingType === 'email' && emailFormRef) {
       const data = emailFormRef.getData();
       if (editingId) {
-        await contacts.updateEmail(contact.id, editingId, data);
+        await friends.updateEmail(friend.id, editingId, data);
       } else {
-        await contacts.addEmail(contact.id, data);
+        await friends.addEmail(friend.id, data);
       }
     } else if (editingType === 'address' && addressFormRef) {
       const data = addressFormRef.getData();
       if (editingId) {
-        await contacts.updateAddress(contact.id, editingId, data);
+        await friends.updateAddress(friend.id, editingId, data);
       } else {
-        await contacts.addAddress(contact.id, data);
+        await friends.addAddress(friend.id, data);
       }
     } else if (editingType === 'url' && urlFormRef) {
       const data = urlFormRef.getData();
       if (editingId) {
-        await contacts.updateUrl(contact.id, editingId, data);
+        await friends.updateUrl(friend.id, editingId, data);
       } else {
-        await contacts.addUrl(contact.id, data);
+        await friends.addUrl(friend.id, data);
       }
     } else if (editingType === 'date' && dateFormRef) {
       const data = dateFormRef.getData();
       if (editingId) {
-        await contacts.updateDate(contact.id, editingId, data);
+        await friends.updateDate(friend.id, editingId, data);
       } else {
-        await contacts.addDate(contact.id, data);
+        await friends.addDate(friend.id, data);
       }
     } else if (editingType === 'social' && socialFormRef) {
       const data = socialFormRef.getData();
       if (editingId) {
-        await contacts.updateSocialProfile(contact.id, editingId, data);
+        await friends.updateSocialProfile(friend.id, editingId, data);
       } else {
-        await contacts.addSocialProfile(contact.id, data);
+        await friends.addSocialProfile(friend.id, data);
       }
     }
 
@@ -193,27 +193,27 @@ async function handleSubresourceDelete() {
     switch (deleteType) {
       case 'phone':
         deletingPhoneId = deleteId;
-        await contacts.deletePhone(contact.id, deleteId);
+        await friends.deletePhone(friend.id, deleteId);
         break;
       case 'email':
         deletingEmailId = deleteId;
-        await contacts.deleteEmail(contact.id, deleteId);
+        await friends.deleteEmail(friend.id, deleteId);
         break;
       case 'address':
         deletingAddressId = deleteId;
-        await contacts.deleteAddress(contact.id, deleteId);
+        await friends.deleteAddress(friend.id, deleteId);
         break;
       case 'url':
         deletingUrlId = deleteId;
-        await contacts.deleteUrl(contact.id, deleteId);
+        await friends.deleteUrl(friend.id, deleteId);
         break;
       case 'date':
         deletingDateId = deleteId;
-        await contacts.deleteDate(contact.id, deleteId);
+        await friends.deleteDate(friend.id, deleteId);
         break;
       case 'social':
         deletingSocialId = deleteId;
-        await contacts.deleteSocialProfile(contact.id, deleteId);
+        await friends.deleteSocialProfile(friend.id, deleteId);
         break;
     }
   } finally {
@@ -283,30 +283,30 @@ onMount(() => {
 <div class="space-y-6">
   <!-- Header with avatar and actions -->
   <div class="flex flex-col sm:flex-row items-center gap-6">
-    <ContactAvatar
-      displayName={contact.displayName}
-      photoUrl={contact.photoUrl}
+    <FriendAvatar
+      displayName={friend.displayName}
+      photoUrl={friend.photoUrl}
       size="lg"
     />
 
     <div class="flex-1 text-center sm:text-left">
-      <h1 class="text-3xl font-heading text-gray-900">{contact.displayName}</h1>
+      <h1 class="text-3xl font-heading text-gray-900">{friend.displayName}</h1>
 
-      {#if contact.namePrefix || contact.nameFirst || contact.nameMiddle || contact.nameLast || contact.nameSuffix}
+      {#if friend.namePrefix || friend.nameFirst || friend.nameMiddle || friend.nameLast || friend.nameSuffix}
         <p class="text-gray-600 font-body mt-1">
-          {[contact.namePrefix, contact.nameFirst, contact.nameMiddle, contact.nameLast, contact.nameSuffix]
+          {[friend.namePrefix, friend.nameFirst, friend.nameMiddle, friend.nameLast, friend.nameSuffix]
             .filter(Boolean)
             .join(' ')}
         </p>
       {/if}
-      {#if contact.nickname}
-        <p class="text-gray-500 font-body text-sm mt-1">"{contact.nickname}"</p>
+      {#if friend.nickname}
+        <p class="text-gray-500 font-body text-sm mt-1">"{friend.nickname}"</p>
       {/if}
     </div>
 
     <div class="flex gap-2">
       <a
-        href="/contacts/{contact.id}/edit"
+        href="/friends/{friend.id}/edit"
         class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
       >
         Edit
@@ -321,10 +321,10 @@ onMount(() => {
   </div>
 
   <!-- ==================== ABOUT SECTION ==================== -->
-  {#if contact.jobTitle || contact.organization || contact.department || contact.workNotes || contact.interests || contact.metInfo}
+  {#if friend.jobTitle || friend.organization || friend.department || friend.workNotes || friend.interests || friend.metInfo}
     <div class="space-y-4">
       <!-- Professional Information -->
-      {#if contact.jobTitle || contact.organization || contact.department || contact.workNotes}
+      {#if friend.jobTitle || friend.organization || friend.department || friend.workNotes}
         <section class="space-y-2">
           <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,25 +333,25 @@ onMount(() => {
             Professional
           </h2>
           <div class="p-3 bg-gray-50 rounded-lg font-body space-y-1">
-            {#if contact.jobTitle}
-              <div class="font-semibold text-gray-900">{contact.jobTitle}</div>
+            {#if friend.jobTitle}
+              <div class="font-semibold text-gray-900">{friend.jobTitle}</div>
             {/if}
-            {#if contact.organization || contact.department}
+            {#if friend.organization || friend.department}
               <div class="text-gray-600">
-                {#if contact.organization}{contact.organization}{/if}
-                {#if contact.organization && contact.department} - {/if}
-                {#if contact.department}{contact.department}{/if}
+                {#if friend.organization}{friend.organization}{/if}
+                {#if friend.organization && friend.department} - {/if}
+                {#if friend.department}{friend.department}{/if}
               </div>
             {/if}
-            {#if contact.workNotes}
-              <div class="text-sm text-gray-500 italic">{contact.workNotes}</div>
+            {#if friend.workNotes}
+              <div class="text-sm text-gray-500 italic">{friend.workNotes}</div>
             {/if}
           </div>
         </section>
       {/if}
 
       <!-- Interests -->
-      {#if contact.interests}
+      {#if friend.interests}
         <section class="space-y-2">
           <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -360,13 +360,13 @@ onMount(() => {
             Interests & Hobbies
           </h2>
           <div class="p-3 bg-gray-50 rounded-lg font-body text-gray-700">
-            {contact.interests}
+            {friend.interests}
           </div>
         </section>
       {/if}
 
       <!-- How We Met -->
-      {#if contact.metInfo}
+      {#if friend.metInfo}
         <section class="space-y-2">
           <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,19 +375,19 @@ onMount(() => {
             How We Met
           </h2>
           <div class="p-3 bg-gray-50 rounded-lg font-body space-y-1">
-            {#if contact.metInfo.metDate || contact.metInfo.metLocation}
+            {#if friend.metInfo.metDate || friend.metInfo.metLocation}
               <div class="text-gray-600">
-                {#if contact.metInfo.metDate}
-                  <span>{new Date(contact.metInfo.metDate).toLocaleDateString()}</span>
+                {#if friend.metInfo.metDate}
+                  <span>{new Date(friend.metInfo.metDate).toLocaleDateString()}</span>
                 {/if}
-                {#if contact.metInfo.metDate && contact.metInfo.metLocation} at {/if}
-                {#if contact.metInfo.metLocation}
-                  <span>{contact.metInfo.metLocation}</span>
+                {#if friend.metInfo.metDate && friend.metInfo.metLocation} at {/if}
+                {#if friend.metInfo.metLocation}
+                  <span>{friend.metInfo.metLocation}</span>
                 {/if}
               </div>
             {/if}
-            {#if contact.metInfo.metContext}
-              <div class="text-gray-700">{contact.metInfo.metContext}</div>
+            {#if friend.metInfo.metContext}
+              <div class="text-gray-700">{friend.metInfo.metContext}</div>
             {/if}
           </div>
         </section>
@@ -418,9 +418,9 @@ onMount(() => {
           Add Phone
         </button>
       </div>
-      {#if contact.phones.length > 0}
+      {#if friend.phones.length > 0}
         <div class="space-y-2">
-          {#each contact.phones as phone (phone.id)}
+          {#each friend.phones as phone (phone.id)}
             <PhoneRow
               {phone}
               onEdit={() => openEditModal('phone', phone.id, phone)}
@@ -455,9 +455,9 @@ onMount(() => {
           Add Email
         </button>
       </div>
-      {#if contact.emails.length > 0}
+      {#if friend.emails.length > 0}
         <div class="space-y-2">
-          {#each contact.emails as email (email.id)}
+          {#each friend.emails as email (email.id)}
             <EmailRow
               {email}
               onEdit={() => openEditModal('email', email.id, email)}
@@ -493,9 +493,9 @@ onMount(() => {
           Add Address
         </button>
       </div>
-      {#if contact.addresses.length > 0}
+      {#if friend.addresses.length > 0}
         <div class="space-y-2">
-          {#each contact.addresses as address (address.id)}
+          {#each friend.addresses as address (address.id)}
             <AddressRow
               {address}
               onEdit={() => openEditModal('address', address.id, address)}
@@ -530,9 +530,9 @@ onMount(() => {
           Add Website
         </button>
       </div>
-      {#if contact.urls.length > 0}
+      {#if friend.urls.length > 0}
         <div class="space-y-2">
-          {#each contact.urls as url (url.id)}
+          {#each friend.urls as url (url.id)}
             <UrlRow
               {url}
               onEdit={() => openEditModal('url', url.id, url)}
@@ -567,9 +567,9 @@ onMount(() => {
           Add Social Profile
         </button>
       </div>
-      {#if contact.socialProfiles && contact.socialProfiles.length > 0}
+      {#if friend.socialProfiles && friend.socialProfiles.length > 0}
         <div class="space-y-2">
-          {#each contact.socialProfiles as profile (profile.id)}
+          {#each friend.socialProfiles as profile (profile.id)}
             <SocialProfileRow
               {profile}
               onEdit={() => openEditModal('social', profile.id, profile)}
@@ -605,9 +605,9 @@ onMount(() => {
         Add Date
       </button>
     </div>
-    {#if contact.dates && contact.dates.length > 0}
+    {#if friend.dates && friend.dates.length > 0}
       <div class="space-y-2">
-        {#each contact.dates as date (date.id)}
+        {#each friend.dates as date (date.id)}
           <DateRow
             {date}
             onEdit={() => openEditModal('date', date.id, date)}
@@ -624,27 +624,27 @@ onMount(() => {
   <!-- ==================== RELATIONSHIPS SECTION ==================== -->
   <section class="space-y-2">
     <RelationshipsSection
-      contactId={contact.id}
-      relationships={contact.relationships ?? []}
+      friendId={friend.id}
+      relationships={friend.relationships ?? []}
     />
   </section>
 
   <!-- ==================== METADATA FOOTER ==================== -->
   <section class="text-sm text-gray-500 font-body">
     <div class="flex flex-wrap gap-4">
-      <span>Created: {new Date(contact.createdAt).toLocaleDateString()}</span>
-      <span>Updated: {new Date(contact.updatedAt).toLocaleDateString()}</span>
+      <span>Created: {new Date(friend.createdAt).toLocaleDateString()}</span>
+      <span>Updated: {new Date(friend.updatedAt).toLocaleDateString()}</span>
     </div>
   </section>
 </div>
 
-<!-- Delete contact confirmation modal -->
+<!-- Delete friend confirmation modal -->
 {#if showDeleteConfirm}
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
-      <h3 class="text-xl font-heading text-gray-900 mb-2">Delete Contact</h3>
+      <h3 class="text-xl font-heading text-gray-900 mb-2">Delete Friend</h3>
       <p class="text-gray-600 font-body mb-6">
-        Are you sure you want to delete <strong>{contact.displayName}</strong>? This action cannot be undone.
+        Are you sure you want to delete <strong>{friend.displayName}</strong>? This action cannot be undone.
       </p>
       <div class="flex gap-3">
         <button
@@ -707,7 +707,7 @@ onMount(() => {
     {:else if editingType === 'date'}
       <DateEditForm
         bind:this={dateFormRef}
-        initialData={editingData as ContactDate | undefined}
+        initialData={editingData as FriendDate | undefined}
         disabled={isEditLoading}
         onchange={() => isDirty = true}
       />

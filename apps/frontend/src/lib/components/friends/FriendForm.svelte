@@ -1,18 +1,18 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
-import { contacts } from '$lib/stores/contacts';
-import type { Contact, ContactCreateInput } from '$shared';
+import { friends } from '$lib/stores/friends';
+import type { Friend, FriendCreateInput } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
-import ContactAvatar from './ContactAvatar.svelte';
+import FriendAvatar from './FriendAvatar.svelte';
 import ImageCropModal from './ImageCropModal.svelte';
 
 interface Props {
-  contact?: Contact;
-  /** Onboarding mode - for creating the user's self-contact */
+  friend?: Friend;
+  /** Onboarding mode - for creating the user's self-friend */
   isOnboarding?: boolean;
   /** Custom submit handler (used in onboarding mode) */
-  onSubmit?: (data: ContactCreateInput) => Promise<void>;
+  onSubmit?: (data: FriendCreateInput) => Promise<void>;
   /** Custom submit button label */
   submitLabel?: string;
   /** External loading state (used in onboarding mode) */
@@ -20,17 +20,17 @@ interface Props {
 }
 
 let {
-  contact,
+  friend,
   isOnboarding = false,
   onSubmit: onSubmitProp,
   submitLabel,
   isLoading: externalIsLoading,
 }: Props = $props();
 
-const isEditing = $derived(!!contact && !isOnboarding);
+const isEditing = $derived(!!friend && !isOnboarding);
 
 // Photo state - initialize with functions to capture initial values
-let photoUrl = $state((() => contact?.photoUrl)());
+let photoUrl = $state((() => friend?.photoUrl)());
 let photoPreview = $state<string | null>(null);
 let photoFile = $state<File | null>(null);
 let photoError = $state('');
@@ -46,13 +46,13 @@ let cropImageUrl = $state<string | null>(null);
 let displayNameManuallyEdited = $state(false);
 
 // Form state - initialize with functions to capture initial values
-let displayName = $state((() => contact?.displayName ?? '')());
-let nickname = $state((() => contact?.nickname ?? '')());
-let namePrefix = $state((() => contact?.namePrefix ?? '')());
-let nameFirst = $state((() => contact?.nameFirst ?? '')());
-let nameMiddle = $state((() => contact?.nameMiddle ?? '')());
-let nameLast = $state((() => contact?.nameLast ?? '')());
-let nameSuffix = $state((() => contact?.nameSuffix ?? '')());
+let displayName = $state((() => friend?.displayName ?? '')());
+let nickname = $state((() => friend?.nickname ?? '')());
+let namePrefix = $state((() => friend?.namePrefix ?? '')());
+let nameFirst = $state((() => friend?.nameFirst ?? '')());
+let nameMiddle = $state((() => friend?.nameMiddle ?? '')());
+let nameLast = $state((() => friend?.nameLast ?? '')());
+let nameSuffix = $state((() => friend?.nameSuffix ?? '')());
 
 // Auto-generate display name from parts
 function generateDisplayName(): string {
@@ -76,16 +76,16 @@ function onDisplayNameInput() {
 }
 
 // Epic 1B: Professional fields - initialize with functions to capture initial values
-let jobTitle = $state((() => contact?.jobTitle ?? '')());
-let organization = $state((() => contact?.organization ?? '')());
-let department = $state((() => contact?.department ?? '')());
-let workNotes = $state((() => contact?.workNotes ?? '')());
-let interests = $state((() => contact?.interests ?? '')());
+let jobTitle = $state((() => friend?.jobTitle ?? '')());
+let organization = $state((() => friend?.organization ?? '')());
+let department = $state((() => friend?.department ?? '')());
+let workNotes = $state((() => friend?.workNotes ?? '')());
+let interests = $state((() => friend?.interests ?? '')());
 
 // Epic 1B: How/where met - initialize with functions to capture initial values
-let metDate = $state((() => contact?.metInfo?.metDate ?? '')());
-let metLocation = $state((() => contact?.metInfo?.metLocation ?? '')());
-let metContext = $state((() => contact?.metInfo?.metContext ?? '')());
+let metDate = $state((() => friend?.metInfo?.metDate ?? '')());
+let metLocation = $state((() => friend?.metInfo?.metLocation ?? '')());
+let metContext = $state((() => friend?.metInfo?.metContext ?? '')());
 
 let internalIsLoading = $state(false);
 const isLoading = $derived(externalIsLoading ?? internalIsLoading);
@@ -148,7 +148,7 @@ async function handleCropComplete(croppedBlob: Blob) {
   photoPreview = URL.createObjectURL(croppedBlob);
 
   // If editing, upload immediately
-  if (isEditing && contact) {
+  if (isEditing && friend) {
     await uploadPhoto();
   }
 }
@@ -159,13 +159,13 @@ function handleCropCancel() {
 }
 
 async function uploadPhoto() {
-  if (!photoFile || !contact) return;
+  if (!photoFile || !friend) return;
 
   isUploadingPhoto = true;
   photoError = '';
 
   try {
-    const result = await contacts.uploadPhoto(contact.id, photoFile);
+    const result = await friends.uploadPhoto(friend.id, photoFile);
     photoUrl = result.photoUrl;
     photoPreview = null;
     photoFile = null;
@@ -177,13 +177,13 @@ async function uploadPhoto() {
 }
 
 async function handleDeletePhoto() {
-  if (!contact) return;
+  if (!friend) return;
 
   isUploadingPhoto = true;
   photoError = '';
 
   try {
-    await contacts.deletePhoto(contact.id);
+    await friends.deletePhoto(friend.id);
     photoUrl = undefined;
     photoPreview = null;
     photoFile = null;
@@ -210,8 +210,8 @@ async function handleSubmit(e: Event) {
           }
         : undefined;
 
-    // Build the contact data for creating/onboarding
-    const contactData: ContactCreateInput = {
+    // Build the friend data for creating/onboarding
+    const friendData: FriendCreateInput = {
       display_name: displayName,
       nickname: nickname || undefined,
       name_prefix: namePrefix || undefined,
@@ -229,14 +229,14 @@ async function handleSubmit(e: Event) {
 
     // Onboarding mode - call the custom submit handler
     if (isOnboarding && onSubmitProp) {
-      await onSubmitProp(contactData);
+      await onSubmitProp(friendData);
       return; // Parent handles navigation
     }
 
-    if (isEditing && contact) {
-      // Update existing contact - core fields only
+    if (isEditing && friend) {
+      // Update existing friend - core fields only
       // Subresources (phones, emails, etc.) are edited inline on the detail page
-      await contacts.updateContact(contact.id, {
+      await friends.updateFriend(friend.id, {
         display_name: displayName,
         nickname: nickname || null,
         name_prefix: namePrefix || null,
@@ -253,18 +253,18 @@ async function handleSubmit(e: Event) {
 
       // Handle met info - set if any field is filled
       if (metInfo) {
-        await contacts.setMetInfo(contact.id, metInfo);
+        await friends.setMetInfo(friend.id, metInfo);
       }
 
-      goto(`/contacts/${contact.id}`);
+      goto(`/friends/${friend.id}`);
     } else {
-      // Create new contact - core fields only
+      // Create new friend - core fields only
       // Subresources can be added inline on the detail page after creation
-      const newContact = await contacts.createContact(contactData);
-      goto(`/contacts/${newContact.id}`);
+      const newFriend = await friends.createFriend(friendData);
+      goto(`/friends/${newFriend.id}`);
     }
   } catch (err) {
-    error = (err as Error)?.message || 'Failed to save contact';
+    error = (err as Error)?.message || 'Failed to save friend';
     internalIsLoading = false;
   }
 }
@@ -296,7 +296,7 @@ async function handleSubmit(e: Event) {
       onclick={triggerPhotoUpload}
       disabled={isLoading || isUploadingPhoto || !isEditing}
       class="relative group rounded-full focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 disabled:cursor-not-allowed"
-      title={isEditing ? 'Click to upload photo' : 'Save contact first to upload photo'}
+      title={isEditing ? 'Click to upload photo' : 'Save friend first to upload photo'}
     >
       {#if photoPreview}
         <img
@@ -305,8 +305,8 @@ async function handleSubmit(e: Event) {
           class="w-24 h-24 rounded-full object-cover"
         />
       {:else}
-        <ContactAvatar
-          displayName={displayName || 'New Contact'}
+        <FriendAvatar
+          displayName={displayName || 'New Friend'}
           photoUrl={photoUrl}
           size="lg"
         />
@@ -341,7 +341,7 @@ async function handleSubmit(e: Event) {
         Remove photo
       </button>
     {:else if !isEditing}
-      <p class="text-xs text-gray-500 font-body">Save contact to upload photo</p>
+      <p class="text-xs text-gray-500 font-body">Save friend to upload photo</p>
     {:else}
       <p class="text-xs text-gray-500 font-body">Click to upload photo (max 5MB)</p>
     {/if}
@@ -501,13 +501,13 @@ async function handleSubmit(e: Event) {
       {:else if isEditing}
         Save Changes
       {:else}
-        Create Contact
+        Create Friend
       {/if}
     </button>
 
     {#if !isOnboarding}
       <a
-        href={isEditing && contact ? `/contacts/${contact.id}` : '/contacts'}
+        href={isEditing && friend ? `/friends/${friend.id}` : '/friends'}
         class="px-6 py-3 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors text-center"
       >
         Cancel

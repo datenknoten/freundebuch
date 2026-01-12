@@ -1,8 +1,8 @@
 <script lang="ts">
-import * as contactsApi from '$lib/api/contacts';
-import { auth, contactsPageSize } from '$lib/stores/auth';
-import { contactList, contacts, isContactsLoading } from '$lib/stores/contacts';
-import { visibleContactIds } from '$lib/stores/ui';
+import * as friendsApi from '$lib/api/friends';
+import { auth, friendsPageSize } from '$lib/stores/auth';
+import { friendList, friends, isFriendsLoading } from '$lib/stores/friends';
+import { visibleFriendIds } from '$lib/stores/ui';
 import type {
   FacetFilters,
   FacetGroups,
@@ -12,8 +12,8 @@ import type {
 } from '$shared';
 import FacetChips from '../search/FacetChips.svelte';
 import FacetDropdown from '../search/FacetDropdown.svelte';
-import ContactListItem from './ContactListItem.svelte';
-import ContactTable from './ContactTable.svelte';
+import FriendListItem from './FriendListItem.svelte';
+import FriendTable from './FriendTable.svelte';
 import SearchResultItem from './SearchResultItem.svelte';
 
 interface Props {
@@ -51,7 +51,7 @@ let isFilterMode = $derived(hasActiveFilters && !isSearchMode);
 let showNoResults = $derived(
   (isSearchMode || isFilterMode) && !isSearching && searchResults.length === 0,
 );
-let currentPageSize = $derived($contactsPageSize);
+let currentPageSize = $derived($friendsPageSize);
 
 // Debounce timer
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -96,7 +96,7 @@ async function performSearch() {
 
   isSearching = true;
   try {
-    const result = await contactsApi.facetedSearch({
+    const result = await friendsApi.facetedSearch({
       query: hasQuery ? searchQuery.trim() : undefined,
       page: searchPage,
       pageSize: currentPageSize,
@@ -182,7 +182,7 @@ function handleClearAllFilters() {
 async function loadFacets() {
   isFacetsLoading = true;
   try {
-    const result = await contactsApi.facetedSearch({
+    const result = await friendsApi.facetedSearch({
       pageSize: 1,
       includeFacets: true,
     });
@@ -199,7 +199,7 @@ async function loadPage(page: number) {
     searchPage = page;
     await performSearch();
   } else {
-    await contacts.loadContacts({
+    await friends.loadFriends({
       page,
       pageSize: currentPageSize,
       sortBy,
@@ -238,14 +238,14 @@ function handleTableSortChange(
 
 async function handlePageSizeChange(newSize: PageSize) {
   // Update user preferences (optimistic update with retry)
-  auth.updatePreferences({ contactsPageSize: newSize });
+  auth.updatePreferences({ friendsPageSize: newSize });
 
   // Reload with new page size, reset to page 1
   if (isSearchMode) {
     searchPage = 1;
     await performSearch();
   } else {
-    await contacts.loadContacts({
+    await friends.loadFriends({
       page: 1,
       pageSize: newSize,
       sortBy,
@@ -256,7 +256,7 @@ async function handlePageSizeChange(newSize: PageSize) {
 
 // Navigate to previous page (for keyboard shortcut)
 export function goToPreviousPage() {
-  const currentPage = isSearchMode ? searchPage : $contacts.page;
+  const currentPage = isSearchMode ? searchPage : $friends.page;
   if (currentPage > 1) {
     loadPage(currentPage - 1);
   }
@@ -264,8 +264,8 @@ export function goToPreviousPage() {
 
 // Navigate to next page (for keyboard shortcut)
 export function goToNextPage() {
-  const totalPages = isSearchMode ? searchTotalPages : $contacts.totalPages;
-  const currentPage = isSearchMode ? searchPage : $contacts.page;
+  const totalPages = isSearchMode ? searchTotalPages : $friends.totalPages;
+  const currentPage = isSearchMode ? searchPage : $friends.page;
   if (currentPage < totalPages) {
     loadPage(currentPage + 1);
   }
@@ -285,24 +285,24 @@ $effect(() => {
   }
 });
 
-// Update visible contact IDs for keyboard navigation
+// Update visible friend IDs for keyboard navigation
 $effect(() => {
   if (!isSearchMode && !isFilterMode) {
-    const ids = $contactList.map((c) => c.id);
-    visibleContactIds.set(ids);
+    const ids = $friendList.map((c) => c.id);
+    visibleFriendIds.set(ids);
   } else if (searchResults.length > 0) {
     const ids = searchResults.map((r) => r.id);
-    visibleContactIds.set(ids);
+    visibleFriendIds.set(ids);
   } else {
-    visibleContactIds.set([]);
+    visibleFriendIds.set([]);
   }
 });
 
 // Computed values for display
-let displayTotal = $derived(isSearchMode || isFilterMode ? searchTotal : $contacts.total);
-let displayPage = $derived(isSearchMode || isFilterMode ? searchPage : $contacts.page);
+let displayTotal = $derived(isSearchMode || isFilterMode ? searchTotal : $friends.total);
+let displayPage = $derived(isSearchMode || isFilterMode ? searchPage : $friends.page);
 let displayTotalPages = $derived(
-  isSearchMode || isFilterMode ? searchTotalPages : $contacts.totalPages,
+  isSearchMode || isFilterMode ? searchTotalPages : $friends.totalPages,
 );
 let currentSortBy = $derived(isSearchMode ? searchSortBy : sortBy);
 let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
@@ -334,7 +334,7 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
       class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
       autocomplete="off"
       data-search-input
-      aria-label="Search contacts"
+      aria-label="Search friends"
     />
     {#if isSearching}
       <div class="absolute right-4 top-1/2 -translate-y-1/2" aria-live="polite">
@@ -387,9 +387,9 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
           <span class="text-forest">(filtered)</span>
         {/if}
       {:else if isFilterMode}
-        {displayTotal} contact{displayTotal !== 1 ? 's' : ''} <span class="text-forest">(filtered)</span>
+        {displayTotal} friend{displayTotal !== 1 ? 's' : ''} <span class="text-forest">(filtered)</span>
       {:else}
-        {displayTotal} contact{displayTotal !== 1 ? 's' : ''}
+        {displayTotal} friend{displayTotal !== 1 ? 's' : ''}
       {/if}
     </div>
 
@@ -508,7 +508,7 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
           {#if isSearchMode}
             No results for "{searchQuery}"{#if hasActiveFilters} with current filters{/if}
           {:else}
-            No contacts match the current filters
+            No friends match the current filters
           {/if}
         </p>
         <p class="mt-1 text-xs text-gray-400 font-body">
@@ -540,21 +540,21 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
       </div>
     {:else}
       <!-- Results list -->
-      <div class="space-y-2" role="list" aria-label={isSearchMode ? "Search results" : "Filtered contacts"}>
+      <div class="space-y-2" role="list" aria-label={isSearchMode ? "Search results" : "Filtered friends"}>
         {#each searchResults as result, index (result.id)}
           <SearchResultItem {result} {index} />
         {/each}
       </div>
     {/if}
   {:else}
-    <!-- Normal mode: show paginated contact list -->
-    {#if $isContactsLoading}
+    <!-- Normal mode: show paginated friend list -->
+    {#if $isFriendsLoading}
       <div class="flex justify-center py-12" aria-live="polite">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
-          <span class="sr-only">Loading contacts...</span>
+          <span class="sr-only">Loading friends...</span>
         </div>
       </div>
-    {:else if $contactList.length === 0}
+    {:else if $friendList.length === 0}
       <!-- Empty state -->
       <div class="text-center py-12 bg-gray-50 rounded-lg">
         <svg
@@ -571,26 +571,26 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
           />
         </svg>
-        <h3 class="mt-4 text-lg font-heading text-gray-900">No contacts yet</h3>
+        <h3 class="mt-4 text-lg font-heading text-gray-900">No friends yet</h3>
         <p class="mt-2 text-sm text-gray-600 font-body">
-          Get started by adding your first contact.
+          Get started by adding your first friend.
         </p>
         <a
-          href="/contacts/new"
+          href="/friends/new"
           class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add Contact
+          Add Friend
         </a>
       </div>
     {:else}
-      <!-- Contact list - Table on desktop, cards on mobile -->
+      <!-- Friend list - Table on desktop, cards on mobile -->
       <!-- Desktop: Table view -->
       <div class="hidden md:block">
-        <ContactTable
-          contacts={$contactList}
+        <FriendTable
+          friends={$friendList}
           {sortBy}
           {sortOrder}
           onSortChange={handleTableSortChange}
@@ -598,9 +598,9 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
       </div>
 
       <!-- Mobile: Card view -->
-      <div class="md:hidden space-y-2" role="list" aria-label="Contacts">
-        {#each $contactList as contact, index (contact.id)}
-          <ContactListItem {contact} {index} />
+      <div class="md:hidden space-y-2" role="list" aria-label="Friends">
+        {#each $friendList as friend, index (friend.id)}
+          <FriendListItem {friend} {index} />
         {/each}
       </div>
     {/if}
