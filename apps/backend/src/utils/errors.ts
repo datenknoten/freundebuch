@@ -230,6 +230,20 @@ export function isAppError(error: unknown): error is AppError {
 }
 
 /**
+ * Thrown when an unknown value is caught in a catch block.
+ * Wraps non-Error values to preserve the original value for debugging.
+ */
+export class UnknownValueError extends AppError {
+  readonly statusCode = 500;
+  readonly originalValue: unknown;
+
+  constructor(value: unknown) {
+    super(String(value));
+    this.originalValue = value;
+  }
+}
+
+/**
  * Get the HTTP status code for an error.
  * Returns 500 for non-AppError errors.
  */
@@ -245,5 +259,8 @@ export function getErrorStatusCode(error: unknown): ContentfulStatusCode {
  * Useful in catch blocks where the error type is unknown.
  */
 export function toError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error));
+  if (error instanceof Error) {
+    return error;
+  }
+  return new UnknownValueError(error);
 }
