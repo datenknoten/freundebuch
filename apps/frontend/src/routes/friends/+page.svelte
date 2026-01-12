@@ -2,18 +2,18 @@
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-// biome-ignore lint/style/useImportType: ContactList is used both as type and value (bind:this)
-import ContactList from '$lib/components/contacts/ContactList.svelte';
-import { contactsPageSize, isAuthInitialized } from '$lib/stores/auth';
-import { contacts } from '$lib/stores/contacts';
+// biome-ignore lint/style/useImportType: FriendList is used both as type and value (bind:this)
+import FriendList from '$lib/components/friends/FriendList.svelte';
+import { friendsPageSize, isAuthInitialized } from '$lib/stores/auth';
+import { friends } from '$lib/stores/friends';
 
 let hasLoaded = $state(false);
-let contactListRef = $state<ContactList | null>(null);
+let friendListRef = $state<FriendList | null>(null);
 
 // Get initial query from URL
 let initialQuery = $derived($page.url.searchParams.get('q') ?? '');
 
-// Handle query changes from the ContactList component
+// Handle query changes from the FriendList component
 function handleQueryChange(query: string) {
   const url = new URL($page.url);
 
@@ -27,22 +27,22 @@ function handleQueryChange(query: string) {
   goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
 }
 
-// Load contacts when auth is ready
+// Load friends when auth is ready
 $effect(() => {
   if ($isAuthInitialized && !hasLoaded) {
     hasLoaded = true;
-    contacts.loadContacts({ pageSize: $contactsPageSize });
+    friends.loadFriends({ pageSize: $friendsPageSize });
   }
 });
 
 // Listen for keyboard shortcuts for pagination
 onMount(() => {
   function handlePreviousPage() {
-    contactListRef?.goToPreviousPage();
+    friendListRef?.goToPreviousPage();
   }
 
   function handleNextPage() {
-    contactListRef?.goToNextPage();
+    friendListRef?.goToNextPage();
   }
 
   window.addEventListener('shortcut:previous-page', handlePreviousPage);
@@ -56,7 +56,7 @@ onMount(() => {
 </script>
 
 <svelte:head>
-  <title>{initialQuery ? `Search: ${initialQuery}` : 'Contacts'} | Freundebuch</title>
+  <title>{initialQuery ? `Search: ${initialQuery}` : 'Friends'} | Freundebuch</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">
@@ -65,20 +65,20 @@ onMount(() => {
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 class="text-3xl font-heading text-forest">Friends</h1>
-          <p class="text-gray-600 font-body mt-1">Manage your personal and professional contacts</p>
+          <p class="text-gray-600 font-body mt-1">Manage your personal and professional friends</p>
         </div>
         <a
-          href="/contacts/new"
+          href="/friends/new"
           class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add Contact
+          Add Friend
         </a>
       </div>
 
-      <ContactList bind:this={contactListRef} {initialQuery} onQueryChange={handleQueryChange} />
+      <FriendList bind:this={friendListRef} {initialQuery} onQueryChange={handleQueryChange} />
     </div>
   </div>
 </div>

@@ -35,8 +35,8 @@ $effect(() => {
   }
 });
 
-// Hide FAB on new contact page
-const showFab = $derived($isAuthenticated && !$page.url.pathname.includes('/contacts/new'));
+// Hide FAB on new friend page
+const showFab = $derived($isAuthenticated && !$page.url.pathname.includes('/friends/new'));
 </script>
 
 <KeyboardShortcuts />
@@ -52,11 +52,11 @@ const showFab = $derived($isAuthenticated && !$page.url.pathname.includes('/cont
 	<!-- Floating Action Button for mobile -->
 	{#if showFab}
 		<a
-			href="/contacts/new"
+			href="/friends/new"
 			data-sveltekit-preload-data="tap"
 			class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white rounded-full shadow-lg hover:bg-forest-light transition-colors flex items-center justify-center z-50"
-			title="Add new contact"
-			aria-label="Add new contact"
+			title="Add new friend"
+			aria-label="Add new friend"
 		>
 			<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

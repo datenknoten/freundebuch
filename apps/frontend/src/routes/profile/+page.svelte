@@ -147,7 +147,7 @@ function handleCancel() {
 			<div class="mt-8 pt-8 border-t border-gray-200">
 				<h2 class="text-xl font-heading text-gray-800 mb-2">App Passwords</h2>
 				<p class="text-sm font-body text-gray-600 mb-4">
-					Create app-specific passwords to sync your contacts with mobile devices and desktop apps.
+					Create app-specific passwords to sync your friends with mobile devices and desktop apps.
 				</p>
 				<AppPasswordManager />
 			</div>
@@ -155,7 +155,7 @@ function handleCancel() {
 			<div class="mt-8 pt-8 border-t border-gray-200">
 				<h2 class="text-xl font-heading text-gray-800 mb-2">CardDAV Setup</h2>
 				<p class="text-sm font-body text-gray-600 mb-4">
-					Sync your contacts with iOS, macOS, Thunderbird, and other CardDAV-compatible apps.
+					Sync your friends with iOS, macOS, Thunderbird, and other CardDAV-compatible apps.
 				</p>
 				<CardDAVSetupGuide />
 			</div>
