@@ -7,9 +7,9 @@ namespace Freundebuch\DAV\VCard;
 use PDO;
 
 /**
- * vCard 4.0 mapper for Freundebuch contacts.
+ * vCard 4.0 mapper for Freundebuch friends.
  *
- * Handles bidirectional conversion between Freundebuch contact data
+ * Handles bidirectional conversion between Freundebuch friend data
  * and vCard 4.0 format (RFC 6350).
  */
 class Mapper
@@ -28,68 +28,68 @@ class Mapper
     }
 
     /**
-     * Converts a Freundebuch contact to vCard 4.0 format.
+     * Converts a Freundebuch friend to vCard 4.0 format.
      *
-     * @param array $contact Full contact data with all sub-resources
+     * @param array $friend Full friend data with all sub-resources
      * @return string vCard 4.0 string
      */
-    public function contactToVCard(array $contact): string
+    public function friendToVCard(array $friend): string
     {
         $lines = [
             'BEGIN:VCARD',
             'VERSION:4.0',
-            'UID:' . $contact['external_id'],
-            'FN:' . $this->escape($contact['display_name']),
+            'UID:' . $friend['external_id'],
+            'FN:' . $this->escape($friend['display_name']),
         ];
 
         // Structured name (N)
-        $hasName = !empty($contact['name_last']) || !empty($contact['name_first']) ||
-                   !empty($contact['name_middle']) || !empty($contact['name_prefix']) ||
-                   !empty($contact['name_suffix']);
+        $hasName = !empty($friend['name_last']) || !empty($friend['name_first']) ||
+                   !empty($friend['name_middle']) || !empty($friend['name_prefix']) ||
+                   !empty($friend['name_suffix']);
         if ($hasName) {
             $lines[] = 'N:' .
-                $this->escape($contact['name_last'] ?? '') . ';' .
-                $this->escape($contact['name_first'] ?? '') . ';' .
-                $this->escape($contact['name_middle'] ?? '') . ';' .
-                $this->escape($contact['name_prefix'] ?? '') . ';' .
-                $this->escape($contact['name_suffix'] ?? '');
+                $this->escape($friend['name_last'] ?? '') . ';' .
+                $this->escape($friend['name_first'] ?? '') . ';' .
+                $this->escape($friend['name_middle'] ?? '') . ';' .
+                $this->escape($friend['name_prefix'] ?? '') . ';' .
+                $this->escape($friend['name_suffix'] ?? '');
         }
 
         // Nickname
-        if (!empty($contact['nickname'])) {
-            $lines[] = 'NICKNAME:' . $this->escape($contact['nickname']);
+        if (!empty($friend['nickname'])) {
+            $lines[] = 'NICKNAME:' . $this->escape($friend['nickname']);
         }
 
         // Organization
-        if (!empty($contact['organization']) || !empty($contact['department'])) {
-            $org = $this->escape($contact['organization'] ?? '');
-            if (!empty($contact['department'])) {
-                $org .= ';' . $this->escape($contact['department']);
+        if (!empty($friend['organization']) || !empty($friend['department'])) {
+            $org = $this->escape($friend['organization'] ?? '');
+            if (!empty($friend['department'])) {
+                $org .= ';' . $this->escape($friend['department']);
             }
             $lines[] = 'ORG:' . $org;
         }
 
         // Job title
-        if (!empty($contact['job_title'])) {
-            $lines[] = 'TITLE:' . $this->escape($contact['job_title']);
+        if (!empty($friend['job_title'])) {
+            $lines[] = 'TITLE:' . $this->escape($friend['job_title']);
         }
 
         // Phone numbers
-        foreach ($contact['phones'] ?? [] as $phone) {
+        foreach ($friend['phones'] ?? [] as $phone) {
             $type = $this->mapPhoneType($phone['phone_type']);
             $pref = !empty($phone['is_primary']) ? ';PREF=1' : '';
             $lines[] = "TEL;TYPE={$type}{$pref}:" . $phone['phone_number'];
         }
 
         // Email addresses
-        foreach ($contact['emails'] ?? [] as $email) {
+        foreach ($friend['emails'] ?? [] as $email) {
             $type = $this->mapEmailType($email['email_type']);
             $pref = !empty($email['is_primary']) ? ';PREF=1' : '';
             $lines[] = "EMAIL;TYPE={$type}{$pref}:" . $email['email_address'];
         }
 
         // Addresses
-        foreach ($contact['addresses'] ?? [] as $address) {
+        foreach ($friend['addresses'] ?? [] as $address) {
             $type = $this->mapAddressType($address['address_type']);
             $pref = !empty($address['is_primary']) ? ';PREF=1' : '';
             // ADR format: PO Box;Extended;Street;City;Region;Postal;Country
@@ -103,12 +103,12 @@ class Mapper
         }
 
         // URLs
-        foreach ($contact['urls'] ?? [] as $url) {
+        foreach ($friend['urls'] ?? [] as $url) {
             $lines[] = 'URL:' . $url['url'];
         }
 
         // Dates (birthday, anniversary)
-        foreach ($contact['dates'] ?? [] as $date) {
+        foreach ($friend['dates'] ?? [] as $date) {
             if ($date['date_type'] === 'birthday') {
                 $value = $this->formatVCardDate($date['date_value'], !empty($date['year_known']));
                 $lines[] = 'BDAY:' . $value;
@@ -119,8 +119,8 @@ class Mapper
         }
 
         // Photo - embed as base64 data URI for iOS/CardDAV client compatibility
-        if (!empty($contact['photo_url'])) {
-            $photoData = $this->fetchAndEncodeImage($contact['photo_url']);
+        if (!empty($friend['photo_url'])) {
+            $photoData = $this->fetchAndEncodeImage($friend['photo_url']);
             if ($photoData !== null) {
                 // vCard 4.0 format: PHOTO:data:image/jpeg;base64,<data>
                 $lines[] = 'PHOTO:data:' . $photoData['mediatype'] . ';base64,' . $photoData['data'];
@@ -128,7 +128,7 @@ class Mapper
         }
 
         // Social profiles
-        foreach ($contact['social_profiles'] ?? [] as $profile) {
+        foreach ($friend['social_profiles'] ?? [] as $profile) {
             if (!empty($profile['profile_url'])) {
                 $platform = strtoupper($profile['platform'] ?? 'other');
                 $lines[] = "X-SOCIALPROFILE;TYPE={$platform}:" . $profile['profile_url'];
@@ -136,8 +136,8 @@ class Mapper
         }
 
         // Met info as custom properties
-        if (!empty($contact['met_info'])) {
-            $metInfo = $contact['met_info'];
+        if (!empty($friend['met_info'])) {
+            $metInfo = $friend['met_info'];
             if (!empty($metInfo['met_date'])) {
                 $lines[] = 'X-FREUNDEBUCH-MET-DATE:' . $metInfo['met_date'];
             }
@@ -150,15 +150,15 @@ class Mapper
         }
 
         // Notes (interests, work_notes)
-        if (!empty($contact['interests'])) {
-            $lines[] = 'X-FREUNDEBUCH-INTERESTS:' . $this->escape($contact['interests']);
+        if (!empty($friend['interests'])) {
+            $lines[] = 'X-FREUNDEBUCH-INTERESTS:' . $this->escape($friend['interests']);
         }
-        if (!empty($contact['work_notes'])) {
-            $lines[] = 'NOTE:' . $this->escape($contact['work_notes']);
+        if (!empty($friend['work_notes'])) {
+            $lines[] = 'NOTE:' . $this->escape($friend['work_notes']);
         }
 
         // Revision timestamp
-        $updatedAt = new \DateTime($contact['updated_at']);
+        $updatedAt = new \DateTime($friend['updated_at']);
         $lines[] = 'REV:' . $updatedAt->format('Ymd\THis\Z');
 
         $lines[] = 'END:VCARD';
@@ -167,16 +167,16 @@ class Mapper
     }
 
     /**
-     * Parses a vCard string to contact data.
+     * Parses a vCard string to friend data.
      *
      * @param string $vcard vCard 4.0 string
      * @param string|null $externalId Optional external ID to use
-     * @return array Contact data
+     * @return array Friend data
      */
-    public function vcardToContact(string $vcard, ?string $externalId = null): array
+    public function vcardToFriend(string $vcard, ?string $externalId = null): array
     {
         $lines = $this->unfoldVCard($vcard);
-        $contact = [
+        $friend = [
             'external_id' => $externalId,
             'display_name' => '',
             'phones' => [],
@@ -198,39 +198,39 @@ class Mapper
             switch (strtoupper($property)) {
                 case 'UID':
                     if (!$externalId) {
-                        $contact['external_id'] = $value;
+                        $friend['external_id'] = $value;
                     }
                     break;
 
                 case 'FN':
-                    $contact['display_name'] = $this->unescape($value);
+                    $friend['display_name'] = $this->unescape($value);
                     break;
 
                 case 'N':
                     $parts = explode(';', $value);
-                    $contact['name_last'] = $this->unescape($parts[0] ?? '') ?: null;
-                    $contact['name_first'] = $this->unescape($parts[1] ?? '') ?: null;
-                    $contact['name_middle'] = $this->unescape($parts[2] ?? '') ?: null;
-                    $contact['name_prefix'] = $this->unescape($parts[3] ?? '') ?: null;
-                    $contact['name_suffix'] = $this->unescape($parts[4] ?? '') ?: null;
+                    $friend['name_last'] = $this->unescape($parts[0] ?? '') ?: null;
+                    $friend['name_first'] = $this->unescape($parts[1] ?? '') ?: null;
+                    $friend['name_middle'] = $this->unescape($parts[2] ?? '') ?: null;
+                    $friend['name_prefix'] = $this->unescape($parts[3] ?? '') ?: null;
+                    $friend['name_suffix'] = $this->unescape($parts[4] ?? '') ?: null;
                     break;
 
                 case 'NICKNAME':
-                    $contact['nickname'] = $this->unescape($value);
+                    $friend['nickname'] = $this->unescape($value);
                     break;
 
                 case 'ORG':
                     $parts = explode(';', $value);
-                    $contact['organization'] = $this->unescape($parts[0] ?? '') ?: null;
-                    $contact['department'] = $this->unescape($parts[1] ?? '') ?: null;
+                    $friend['organization'] = $this->unescape($parts[0] ?? '') ?: null;
+                    $friend['department'] = $this->unescape($parts[1] ?? '') ?: null;
                     break;
 
                 case 'TITLE':
-                    $contact['job_title'] = $this->unescape($value);
+                    $friend['job_title'] = $this->unescape($value);
                     break;
 
                 case 'TEL':
-                    $contact['phones'][] = [
+                    $friend['phones'][] = [
                         'phone_number' => $value,
                         'phone_type' => $this->parsePhoneType($params),
                         'is_primary' => $this->hasPref($params),
@@ -238,7 +238,7 @@ class Mapper
                     break;
 
                 case 'EMAIL':
-                    $contact['emails'][] = [
+                    $friend['emails'][] = [
                         'email_address' => $value,
                         'email_type' => $this->parseEmailType($params),
                         'is_primary' => $this->hasPref($params),
@@ -247,7 +247,7 @@ class Mapper
 
                 case 'ADR':
                     $parts = explode(';', $value);
-                    $contact['addresses'][] = [
+                    $friend['addresses'][] = [
                         'street_line1' => $this->unescape($parts[2] ?? '') ?: null,
                         'city' => $this->unescape($parts[3] ?? '') ?: null,
                         'state_province' => $this->unescape($parts[4] ?? '') ?: null,
@@ -259,7 +259,7 @@ class Mapper
                     break;
 
                 case 'URL':
-                    $contact['urls'][] = [
+                    $friend['urls'][] = [
                         'url' => $value,
                         'url_type' => 'other',
                     ];
@@ -267,7 +267,7 @@ class Mapper
 
                 case 'BDAY':
                     [$dateValue, $yearKnown] = $this->parseVCardDate($value);
-                    $contact['dates'][] = [
+                    $friend['dates'][] = [
                         'date_value' => $dateValue,
                         'year_known' => $yearKnown,
                         'date_type' => 'birthday',
@@ -276,7 +276,7 @@ class Mapper
 
                 case 'ANNIVERSARY':
                     [$dateValue, $yearKnown] = $this->parseVCardDate($value);
-                    $contact['dates'][] = [
+                    $friend['dates'][] = [
                         'date_value' => $dateValue,
                         'year_known' => $yearKnown,
                         'date_type' => 'anniversary',
@@ -284,150 +284,150 @@ class Mapper
                     break;
 
                 case 'PHOTO':
-                    $contact['photo_url'] = $value;
+                    $friend['photo_url'] = $value;
                     break;
 
                 case 'X-SOCIALPROFILE':
-                    $contact['social_profiles'][] = [
+                    $friend['social_profiles'][] = [
                         'platform' => $this->parseSocialPlatform($params),
                         'profile_url' => $value,
                     ];
                     break;
 
                 case 'NOTE':
-                    $contact['work_notes'] = $this->unescape($value);
+                    $friend['work_notes'] = $this->unescape($value);
                     break;
 
                 case 'X-FREUNDEBUCH-INTERESTS':
-                    $contact['interests'] = $this->unescape($value);
+                    $friend['interests'] = $this->unescape($value);
                     break;
 
                 case 'X-FREUNDEBUCH-MET-DATE':
-                    $contact['met_info'] = $contact['met_info'] ?? [];
-                    $contact['met_info']['met_date'] = $value;
+                    $friend['met_info'] = $friend['met_info'] ?? [];
+                    $friend['met_info']['met_date'] = $value;
                     break;
 
                 case 'X-FREUNDEBUCH-MET-LOCATION':
-                    $contact['met_info'] = $contact['met_info'] ?? [];
-                    $contact['met_info']['met_location'] = $this->unescape($value);
+                    $friend['met_info'] = $friend['met_info'] ?? [];
+                    $friend['met_info']['met_location'] = $this->unescape($value);
                     break;
 
                 case 'X-FREUNDEBUCH-MET-CONTEXT':
-                    $contact['met_info'] = $contact['met_info'] ?? [];
-                    $contact['met_info']['met_context'] = $this->unescape($value);
+                    $friend['met_info'] = $friend['met_info'] ?? [];
+                    $friend['met_info']['met_context'] = $this->unescape($value);
                     break;
             }
         }
 
-        return $contact;
+        return $friend;
     }
 
     /**
-     * Gets a full contact by external ID with all sub-resources.
+     * Gets a full friend by external ID with all sub-resources.
      */
-    public function getContactByExternalId(int $userId, string $externalId): ?array
+    public function getFriendByExternalId(int $userId, string $externalId): ?array
     {
         $stmt = $this->pdo->prepare('
             SELECT *
-            FROM contacts.contacts
+            FROM friends.friends
             WHERE user_id = :user_id
               AND external_id = :external_id
               AND deleted_at IS NULL
         ');
         $stmt->execute(['user_id' => $userId, 'external_id' => $externalId]);
-        $contact = $stmt->fetch();
+        $friend = $stmt->fetch();
 
-        if (!$contact) {
+        if (!$friend) {
             return null;
         }
 
         // Load sub-resources
-        $contact['phones'] = $this->loadPhones((int) $contact['id']);
-        $contact['emails'] = $this->loadEmails((int) $contact['id']);
-        $contact['addresses'] = $this->loadAddresses((int) $contact['id']);
-        $contact['urls'] = $this->loadUrls((int) $contact['id']);
-        $contact['dates'] = $this->loadDates((int) $contact['id']);
-        $contact['social_profiles'] = $this->loadSocialProfiles((int) $contact['id']);
-        $contact['met_info'] = $this->loadMetInfo((int) $contact['id']);
+        $friend['phones'] = $this->loadPhones((int) $friend['id']);
+        $friend['emails'] = $this->loadEmails((int) $friend['id']);
+        $friend['addresses'] = $this->loadAddresses((int) $friend['id']);
+        $friend['urls'] = $this->loadUrls((int) $friend['id']);
+        $friend['dates'] = $this->loadDates((int) $friend['id']);
+        $friend['social_profiles'] = $this->loadSocialProfiles((int) $friend['id']);
+        $friend['met_info'] = $this->loadMetInfo((int) $friend['id']);
 
-        return $contact;
+        return $friend;
     }
 
     // Helper methods for loading sub-resources
 
-    private function loadPhones(int $contactId): array
+    private function loadPhones(int $friendId): array
     {
         $stmt = $this->pdo->prepare('
-            SELECT * FROM contacts.contact_phones
-            WHERE contact_id = :contact_id
+            SELECT * FROM friends.friend_phones
+            WHERE friend_id = :friend_id
             ORDER BY is_primary DESC, created_at ASC
         ');
-        $stmt->execute(['contact_id' => $contactId]);
+        $stmt->execute(['friend_id' => $friendId]);
         return $stmt->fetchAll();
     }
 
-    private function loadEmails(int $contactId): array
+    private function loadEmails(int $friendId): array
     {
         $stmt = $this->pdo->prepare('
-            SELECT * FROM contacts.contact_emails
-            WHERE contact_id = :contact_id
+            SELECT * FROM friends.friend_emails
+            WHERE friend_id = :friend_id
             ORDER BY is_primary DESC, created_at ASC
         ');
-        $stmt->execute(['contact_id' => $contactId]);
+        $stmt->execute(['friend_id' => $friendId]);
         return $stmt->fetchAll();
     }
 
-    private function loadAddresses(int $contactId): array
+    private function loadAddresses(int $friendId): array
     {
         $stmt = $this->pdo->prepare('
-            SELECT * FROM contacts.contact_addresses
-            WHERE contact_id = :contact_id
+            SELECT * FROM friends.friend_addresses
+            WHERE friend_id = :friend_id
             ORDER BY is_primary DESC, created_at ASC
         ');
-        $stmt->execute(['contact_id' => $contactId]);
+        $stmt->execute(['friend_id' => $friendId]);
         return $stmt->fetchAll();
     }
 
-    private function loadUrls(int $contactId): array
+    private function loadUrls(int $friendId): array
     {
         $stmt = $this->pdo->prepare('
-            SELECT * FROM contacts.contact_urls
-            WHERE contact_id = :contact_id
+            SELECT * FROM friends.friend_urls
+            WHERE friend_id = :friend_id
             ORDER BY created_at ASC
         ');
-        $stmt->execute(['contact_id' => $contactId]);
+        $stmt->execute(['friend_id' => $friendId]);
         return $stmt->fetchAll();
     }
 
-    private function loadDates(int $contactId): array
+    private function loadDates(int $friendId): array
     {
         $stmt = $this->pdo->prepare('
-            SELECT * FROM contacts.contact_dates
-            WHERE contact_id = :contact_id
+            SELECT * FROM friends.friend_dates
+            WHERE friend_id = :friend_id
             ORDER BY date_type ASC, created_at ASC
         ');
-        $stmt->execute(['contact_id' => $contactId]);
+        $stmt->execute(['friend_id' => $friendId]);
         return $stmt->fetchAll();
     }
 
-    private function loadSocialProfiles(int $contactId): array
+    private function loadSocialProfiles(int $friendId): array
     {
         $stmt = $this->pdo->prepare('
-            SELECT * FROM contacts.contact_social_profiles
-            WHERE contact_id = :contact_id
+            SELECT * FROM friends.friend_social_profiles
+            WHERE friend_id = :friend_id
             ORDER BY platform ASC, created_at ASC
         ');
-        $stmt->execute(['contact_id' => $contactId]);
+        $stmt->execute(['friend_id' => $friendId]);
         return $stmt->fetchAll();
     }
 
-    private function loadMetInfo(int $contactId): ?array
+    private function loadMetInfo(int $friendId): ?array
     {
         $stmt = $this->pdo->prepare('
-            SELECT * FROM contacts.contact_met_info
-            WHERE contact_id = :contact_id
+            SELECT * FROM friends.friend_met_info
+            WHERE friend_id = :friend_id
         ');
-        $stmt->execute(['contact_id' => $contactId]);
+        $stmt->execute(['friend_id' => $friendId]);
         return $stmt->fetch() ?: null;
     }
 

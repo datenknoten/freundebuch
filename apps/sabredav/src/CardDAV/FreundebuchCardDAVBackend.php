@@ -11,7 +11,7 @@ use Sabre\DAV\PropPatch;
 use Freundebuch\DAV\VCard\Mapper;
 
 /**
- * CardDAV backend for Freundebuch contacts.
+ * CardDAV backend for Freundebuch friends.
  *
  * Implements full CardDAV support including sync-collection (RFC 6578).
  */
@@ -55,11 +55,11 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         return [
             [
                 'id' => $user['id'],
-                'uri' => 'contacts',
+                'uri' => 'friends',
                 'principaluri' => $principalUri,
-                '{DAV:}displayname' => 'Freundebuch Contacts',
+                '{DAV:}displayname' => 'Freundebuch Friends',
                 '{' . \Sabre\CardDAV\Plugin::NS_CARDDAV . '}addressbook-description' =>
-                    'Contacts from Freundebuch',
+                    'Friends from Freundebuch',
                 '{http://calendarserver.org/ns/}getctag' => $syncToken,
                 '{http://sabredav.org/ns}sync-token' => $syncToken,
             ],
@@ -106,7 +106,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     {
         $stmt = $this->pdo->prepare('
             SELECT external_id, updated_at
-            FROM contacts.contacts
+            FROM friends.friends
             WHERE user_id = :user_id
               AND deleted_at IS NULL
         ');
@@ -136,20 +136,20 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     {
         $externalId = str_replace('.vcf', '', $cardUri);
 
-        $contact = $this->mapper->getContactByExternalId((int) $addressBookId, $externalId);
+        $friend = $this->mapper->getFriendByExternalId((int) $addressBookId, $externalId);
 
-        if (!$contact) {
+        if (!$friend) {
             return false;
         }
 
-        $vcardData = $this->mapper->contactToVCard($contact);
+        $vcardData = $this->mapper->friendToVCard($friend);
 
         return [
-            'id' => $contact['external_id'],
+            'id' => $friend['external_id'],
             'uri' => $cardUri,
             'carddata' => $vcardData,
-            'lastmodified' => strtotime($contact['updated_at']),
-            'etag' => '"' . md5($contact['external_id'] . $contact['updated_at']) . '"',
+            'lastmodified' => strtotime($friend['updated_at']),
+            'etag' => '"' . md5($friend['external_id'] . $friend['updated_at']) . '"',
             'size' => strlen($vcardData),
         ];
     }
@@ -184,15 +184,15 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     public function createCard($addressBookId, $cardUri, $cardData): ?string
     {
         $externalId = str_replace('.vcf', '', $cardUri);
-        $contactData = $this->mapper->vcardToContact($cardData, $externalId);
+        $friendData = $this->mapper->vcardToFriend($cardData, $externalId);
         $vcardJson = $this->mapper->vcardToJson($cardData);
 
         $this->pdo->beginTransaction();
 
         try {
-            // Insert main contact
+            // Insert main friend
             $stmt = $this->pdo->prepare('
-                INSERT INTO contacts.contacts (
+                INSERT INTO friends.friends (
                     user_id, external_id, display_name, name_prefix, name_first,
                     name_middle, name_last, name_suffix, nickname, photo_url,
                     job_title, organization, department, interests, work_notes,
@@ -208,33 +208,33 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             $stmt->execute([
                 'user_id' => $addressBookId,
                 'external_id' => $externalId,
-                'display_name' => $contactData['display_name'],
-                'name_prefix' => $contactData['name_prefix'] ?? null,
-                'name_first' => $contactData['name_first'] ?? null,
-                'name_middle' => $contactData['name_middle'] ?? null,
-                'name_last' => $contactData['name_last'] ?? null,
-                'name_suffix' => $contactData['name_suffix'] ?? null,
-                'nickname' => $contactData['nickname'] ?? null,
-                'photo_url' => $contactData['photo_url'] ?? null,
-                'job_title' => $contactData['job_title'] ?? null,
-                'organization' => $contactData['organization'] ?? null,
-                'department' => $contactData['department'] ?? null,
-                'interests' => $contactData['interests'] ?? null,
-                'work_notes' => $contactData['work_notes'] ?? null,
+                'display_name' => $friendData['display_name'],
+                'name_prefix' => $friendData['name_prefix'] ?? null,
+                'name_first' => $friendData['name_first'] ?? null,
+                'name_middle' => $friendData['name_middle'] ?? null,
+                'name_last' => $friendData['name_last'] ?? null,
+                'name_suffix' => $friendData['name_suffix'] ?? null,
+                'nickname' => $friendData['nickname'] ?? null,
+                'photo_url' => $friendData['photo_url'] ?? null,
+                'job_title' => $friendData['job_title'] ?? null,
+                'organization' => $friendData['organization'] ?? null,
+                'department' => $friendData['department'] ?? null,
+                'interests' => $friendData['interests'] ?? null,
+                'work_notes' => $friendData['work_notes'] ?? null,
                 'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
             ]);
             $result = $stmt->fetch();
-            $contactId = (int) $result['id'];
+            $friendId = (int) $result['id'];
 
             // Insert sub-resources
-            $this->insertPhones($contactId, $contactData['phones'] ?? []);
-            $this->insertEmails($contactId, $contactData['emails'] ?? []);
-            $this->insertAddresses($contactId, $contactData['addresses'] ?? []);
-            $this->insertUrls($contactId, $contactData['urls'] ?? []);
-            $this->insertDates($contactId, $contactData['dates'] ?? []);
-            $this->insertSocialProfiles($contactId, $contactData['social_profiles'] ?? []);
-            if (!empty($contactData['met_info'])) {
-                $this->insertMetInfo($contactId, $contactData['met_info']);
+            $this->insertPhones($friendId, $friendData['phones'] ?? []);
+            $this->insertEmails($friendId, $friendData['emails'] ?? []);
+            $this->insertAddresses($friendId, $friendData['addresses'] ?? []);
+            $this->insertUrls($friendId, $friendData['urls'] ?? []);
+            $this->insertDates($friendId, $friendData['dates'] ?? []);
+            $this->insertSocialProfiles($friendId, $friendData['social_profiles'] ?? []);
+            if (!empty($friendData['met_info'])) {
+                $this->insertMetInfo($friendId, $friendData['met_info']);
             }
 
             $this->pdo->commit();
@@ -257,12 +257,12 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     public function updateCard($addressBookId, $cardUri, $cardData): ?string
     {
         $externalId = str_replace('.vcf', '', $cardUri);
-        $contactData = $this->mapper->vcardToContact($cardData, $externalId);
+        $friendData = $this->mapper->vcardToFriend($cardData, $externalId);
         $vcardJson = $this->mapper->vcardToJson($cardData);
 
-        // Get existing contact ID (before transaction - read only)
+        // Get existing friend ID (before transaction - read only)
         $stmt = $this->pdo->prepare('
-            SELECT id FROM contacts.contacts
+            SELECT id FROM friends.friends
             WHERE user_id = :user_id
               AND external_id = :external_id
               AND deleted_at IS NULL
@@ -274,14 +274,14 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             return null;
         }
 
-        $contactId = (int) $existing['id'];
+        $friendId = (int) $existing['id'];
 
         $this->pdo->beginTransaction();
 
         try {
-            // Update main contact
+            // Update main friend
             $stmt = $this->pdo->prepare('
-                UPDATE contacts.contacts SET
+                UPDATE friends.friends SET
                     display_name = :display_name,
                     name_prefix = :name_prefix,
                     name_first = :name_first,
@@ -300,34 +300,34 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 RETURNING updated_at
             ');
             $stmt->execute([
-                'id' => $contactId,
-                'display_name' => $contactData['display_name'],
-                'name_prefix' => $contactData['name_prefix'] ?? null,
-                'name_first' => $contactData['name_first'] ?? null,
-                'name_middle' => $contactData['name_middle'] ?? null,
-                'name_last' => $contactData['name_last'] ?? null,
-                'name_suffix' => $contactData['name_suffix'] ?? null,
-                'nickname' => $contactData['nickname'] ?? null,
-                'photo_url' => $contactData['photo_url'] ?? null,
-                'job_title' => $contactData['job_title'] ?? null,
-                'organization' => $contactData['organization'] ?? null,
-                'department' => $contactData['department'] ?? null,
-                'interests' => $contactData['interests'] ?? null,
-                'work_notes' => $contactData['work_notes'] ?? null,
+                'id' => $friendId,
+                'display_name' => $friendData['display_name'],
+                'name_prefix' => $friendData['name_prefix'] ?? null,
+                'name_first' => $friendData['name_first'] ?? null,
+                'name_middle' => $friendData['name_middle'] ?? null,
+                'name_last' => $friendData['name_last'] ?? null,
+                'name_suffix' => $friendData['name_suffix'] ?? null,
+                'nickname' => $friendData['nickname'] ?? null,
+                'photo_url' => $friendData['photo_url'] ?? null,
+                'job_title' => $friendData['job_title'] ?? null,
+                'organization' => $friendData['organization'] ?? null,
+                'department' => $friendData['department'] ?? null,
+                'interests' => $friendData['interests'] ?? null,
+                'work_notes' => $friendData['work_notes'] ?? null,
                 'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
             ]);
             $result = $stmt->fetch();
 
             // Replace sub-resources (delete and re-insert)
-            $this->deleteSubResources($contactId);
-            $this->insertPhones($contactId, $contactData['phones'] ?? []);
-            $this->insertEmails($contactId, $contactData['emails'] ?? []);
-            $this->insertAddresses($contactId, $contactData['addresses'] ?? []);
-            $this->insertUrls($contactId, $contactData['urls'] ?? []);
-            $this->insertDates($contactId, $contactData['dates'] ?? []);
-            $this->insertSocialProfiles($contactId, $contactData['social_profiles'] ?? []);
-            if (!empty($contactData['met_info'])) {
-                $this->insertMetInfo($contactId, $contactData['met_info']);
+            $this->deleteSubResources($friendId);
+            $this->insertPhones($friendId, $friendData['phones'] ?? []);
+            $this->insertEmails($friendId, $friendData['emails'] ?? []);
+            $this->insertAddresses($friendId, $friendData['addresses'] ?? []);
+            $this->insertUrls($friendId, $friendData['urls'] ?? []);
+            $this->insertDates($friendId, $friendData['dates'] ?? []);
+            $this->insertSocialProfiles($friendId, $friendData['social_profiles'] ?? []);
+            if (!empty($friendData['met_info'])) {
+                $this->insertMetInfo($friendId, $friendData['met_info']);
             }
 
             $this->pdo->commit();
@@ -352,7 +352,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
 
         // Soft delete
         $stmt = $this->pdo->prepare('
-            UPDATE contacts.contacts
+            UPDATE friends.friends
             SET deleted_at = NOW()
             WHERE user_id = :user_id
               AND external_id = :external_id
@@ -384,8 +384,8 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         }
 
         $sql = '
-            SELECT id, contact_external_id, change_type
-            FROM contacts.contact_changes
+            SELECT id, friend_external_id, change_type
+            FROM friends.friend_changes
             WHERE user_id = :user_id
               AND id > :last_change_id
             ORDER BY id ASC
@@ -406,7 +406,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $maxId = $lastChangeId;
 
         while ($row = $stmt->fetch()) {
-            $uri = $row['contact_external_id'] . '.vcf';
+            $uri = $row['friend_external_id'] . '.vcf';
             $maxId = max($maxId, (int) $row['id']);
 
             switch ($row['change_type']) {
@@ -450,7 +450,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     {
         $stmt = $this->pdo->prepare('
             SELECT COALESCE(MAX(id), 0) as max_id
-            FROM contacts.contact_changes
+            FROM friends.friend_changes
             WHERE user_id = :user_id
         ');
         $stmt->execute(['user_id' => $userId]);
@@ -459,34 +459,34 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         return 'sync-' . ($row['max_id'] ?? 0);
     }
 
-    private function deleteSubResources(int $contactId): void
+    private function deleteSubResources(int $friendId): void
     {
         // Use explicit DELETE queries for each table to avoid string concatenation
-        $this->pdo->prepare('DELETE FROM contacts.contact_phones WHERE contact_id = :id')
-            ->execute(['id' => $contactId]);
-        $this->pdo->prepare('DELETE FROM contacts.contact_emails WHERE contact_id = :id')
-            ->execute(['id' => $contactId]);
-        $this->pdo->prepare('DELETE FROM contacts.contact_addresses WHERE contact_id = :id')
-            ->execute(['id' => $contactId]);
-        $this->pdo->prepare('DELETE FROM contacts.contact_urls WHERE contact_id = :id')
-            ->execute(['id' => $contactId]);
-        $this->pdo->prepare('DELETE FROM contacts.contact_dates WHERE contact_id = :id')
-            ->execute(['id' => $contactId]);
-        $this->pdo->prepare('DELETE FROM contacts.contact_social_profiles WHERE contact_id = :id')
-            ->execute(['id' => $contactId]);
-        $this->pdo->prepare('DELETE FROM contacts.contact_met_info WHERE contact_id = :id')
-            ->execute(['id' => $contactId]);
+        $this->pdo->prepare('DELETE FROM friends.friend_phones WHERE friend_id = :id')
+            ->execute(['id' => $friendId]);
+        $this->pdo->prepare('DELETE FROM friends.friend_emails WHERE friend_id = :id')
+            ->execute(['id' => $friendId]);
+        $this->pdo->prepare('DELETE FROM friends.friend_addresses WHERE friend_id = :id')
+            ->execute(['id' => $friendId]);
+        $this->pdo->prepare('DELETE FROM friends.friend_urls WHERE friend_id = :id')
+            ->execute(['id' => $friendId]);
+        $this->pdo->prepare('DELETE FROM friends.friend_dates WHERE friend_id = :id')
+            ->execute(['id' => $friendId]);
+        $this->pdo->prepare('DELETE FROM friends.friend_social_profiles WHERE friend_id = :id')
+            ->execute(['id' => $friendId]);
+        $this->pdo->prepare('DELETE FROM friends.friend_met_info WHERE friend_id = :id')
+            ->execute(['id' => $friendId]);
     }
 
-    private function insertPhones(int $contactId, array $phones): void
+    private function insertPhones(int $friendId, array $phones): void
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO contacts.contact_phones (contact_id, phone_number, phone_type, is_primary)
-            VALUES (:contact_id, :phone_number, :phone_type, :is_primary)
+            INSERT INTO friends.friend_phones (friend_id, phone_number, phone_type, is_primary)
+            VALUES (:friend_id, :phone_number, :phone_type, :is_primary)
         ');
         foreach ($phones as $phone) {
             $stmt->execute([
-                'contact_id' => $contactId,
+                'friend_id' => $friendId,
                 'phone_number' => $phone['phone_number'],
                 'phone_type' => $phone['phone_type'] ?? 'mobile',
                 'is_primary' => !empty($phone['is_primary']),
@@ -494,15 +494,15 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         }
     }
 
-    private function insertEmails(int $contactId, array $emails): void
+    private function insertEmails(int $friendId, array $emails): void
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO contacts.contact_emails (contact_id, email_address, email_type, is_primary)
-            VALUES (:contact_id, :email_address, :email_type, :is_primary)
+            INSERT INTO friends.friend_emails (friend_id, email_address, email_type, is_primary)
+            VALUES (:friend_id, :email_address, :email_type, :is_primary)
         ');
         foreach ($emails as $email) {
             $stmt->execute([
-                'contact_id' => $contactId,
+                'friend_id' => $friendId,
                 'email_address' => $email['email_address'],
                 'email_type' => $email['email_type'] ?? 'personal',
                 'is_primary' => !empty($email['is_primary']),
@@ -510,20 +510,20 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         }
     }
 
-    private function insertAddresses(int $contactId, array $addresses): void
+    private function insertAddresses(int $friendId, array $addresses): void
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO contacts.contact_addresses (
-                contact_id, street_line1, city, state_province,
+            INSERT INTO friends.friend_addresses (
+                friend_id, street_line1, city, state_province,
                 postal_code, country, address_type, is_primary
             ) VALUES (
-                :contact_id, :street_line1, :city, :state_province,
+                :friend_id, :street_line1, :city, :state_province,
                 :postal_code, :country, :address_type, :is_primary
             )
         ');
         foreach ($addresses as $addr) {
             $stmt->execute([
-                'contact_id' => $contactId,
+                'friend_id' => $friendId,
                 'street_line1' => $addr['street_line1'] ?? null,
                 'city' => $addr['city'] ?? null,
                 'state_province' => $addr['state_province'] ?? null,
@@ -535,30 +535,30 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         }
     }
 
-    private function insertUrls(int $contactId, array $urls): void
+    private function insertUrls(int $friendId, array $urls): void
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO contacts.contact_urls (contact_id, url, url_type)
-            VALUES (:contact_id, :url, :url_type)
+            INSERT INTO friends.friend_urls (friend_id, url, url_type)
+            VALUES (:friend_id, :url, :url_type)
         ');
         foreach ($urls as $url) {
             $stmt->execute([
-                'contact_id' => $contactId,
+                'friend_id' => $friendId,
                 'url' => $url['url'],
                 'url_type' => $url['url_type'] ?? 'other',
             ]);
         }
     }
 
-    private function insertDates(int $contactId, array $dates): void
+    private function insertDates(int $friendId, array $dates): void
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO contacts.contact_dates (contact_id, date_value, year_known, date_type)
-            VALUES (:contact_id, :date_value, :year_known, :date_type)
+            INSERT INTO friends.friend_dates (friend_id, date_value, year_known, date_type)
+            VALUES (:friend_id, :date_value, :year_known, :date_type)
         ');
         foreach ($dates as $date) {
             $stmt->execute([
-                'contact_id' => $contactId,
+                'friend_id' => $friendId,
                 'date_value' => $date['date_value'],
                 'year_known' => !empty($date['year_known']),
                 'date_type' => $date['date_type'],
@@ -566,29 +566,29 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         }
     }
 
-    private function insertSocialProfiles(int $contactId, array $profiles): void
+    private function insertSocialProfiles(int $friendId, array $profiles): void
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO contacts.contact_social_profiles (contact_id, platform, profile_url)
-            VALUES (:contact_id, :platform, :profile_url)
+            INSERT INTO friends.friend_social_profiles (friend_id, platform, profile_url)
+            VALUES (:friend_id, :platform, :profile_url)
         ');
         foreach ($profiles as $profile) {
             $stmt->execute([
-                'contact_id' => $contactId,
+                'friend_id' => $friendId,
                 'platform' => $profile['platform'] ?? 'other',
                 'profile_url' => $profile['profile_url'] ?? null,
             ]);
         }
     }
 
-    private function insertMetInfo(int $contactId, array $metInfo): void
+    private function insertMetInfo(int $friendId, array $metInfo): void
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO contacts.contact_met_info (contact_id, met_date, met_location, met_context)
-            VALUES (:contact_id, :met_date, :met_location, :met_context)
+            INSERT INTO friends.friend_met_info (friend_id, met_date, met_location, met_context)
+            VALUES (:friend_id, :met_date, :met_location, :met_context)
         ');
         $stmt->execute([
-            'contact_id' => $contactId,
+            'friend_id' => $friendId,
             'met_date' => $metInfo['met_date'] ?? null,
             'met_location' => $metInfo['met_location'] ?? null,
             'met_context' => $metInfo['met_context'] ?? null,
