@@ -1,4 +1,4 @@
-/* @name GetMetInfoByContactId */
+/* @name GetMetInfoByFriendId */
 SELECT
     m.external_id,
     m.met_date,
@@ -6,16 +6,16 @@ SELECT
     m.met_context,
     m.created_at,
     m.updated_at
-FROM contacts.contact_met_info m
-INNER JOIN contacts.contacts c ON m.contact_id = c.id
+FROM friends.friend_met_info m
+INNER JOIN friends.friends c ON m.friend_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL;
 
 /* @name UpsertMetInfo */
-INSERT INTO contacts.contact_met_info (
-    contact_id,
+INSERT INTO friends.friend_met_info (
+    friend_id,
     met_date,
     met_location,
     met_context
@@ -25,12 +25,12 @@ SELECT
     :metDate::date,
     :metLocation,
     :metContext
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
-ON CONFLICT (contact_id)
+ON CONFLICT (friend_id)
 DO UPDATE SET
     met_date = :metDate::date,
     met_location = :metLocation,
@@ -45,11 +45,11 @@ RETURNING
     updated_at;
 
 /* @name DeleteMetInfo */
-DELETE FROM contacts.contact_met_info m
-USING contacts.contacts c, auth.users u
-WHERE m.contact_id = c.id
+DELETE FROM friends.friend_met_info m
+USING friends.friends c, auth.users u
+WHERE m.friend_id = c.id
   AND c.user_id = u.id
-  AND c.external_id = :contactExternalId
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING m.external_id;

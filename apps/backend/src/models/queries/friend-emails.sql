@@ -1,4 +1,4 @@
-/* @name GetEmailsByContactId */
+/* @name GetEmailsByFriendId */
 SELECT
     e.external_id,
     e.email_address,
@@ -6,10 +6,10 @@ SELECT
     e.label,
     e.is_primary,
     e.created_at
-FROM contacts.contact_emails e
-INNER JOIN contacts.contacts c ON e.contact_id = c.id
+FROM friends.friend_emails e
+INNER JOIN friends.friends c ON e.friend_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 ORDER BY e.is_primary DESC, e.created_at ASC;
@@ -22,17 +22,17 @@ SELECT
     e.label,
     e.is_primary,
     e.created_at
-FROM contacts.contact_emails e
-INNER JOIN contacts.contacts c ON e.contact_id = c.id
+FROM friends.friend_emails e
+INNER JOIN friends.friends c ON e.friend_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE e.external_id = :emailExternalId
-  AND c.external_id = :contactExternalId
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL;
 
 /* @name CreateEmail */
-INSERT INTO contacts.contact_emails (
-    contact_id,
+INSERT INTO friends.friend_emails (
+    friend_id,
     email_address,
     email_type,
     label,
@@ -44,9 +44,9 @@ SELECT
     :emailType,
     :label,
     :isPrimary
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING
@@ -58,17 +58,17 @@ RETURNING
     created_at;
 
 /* @name UpdateEmail */
-UPDATE contacts.contact_emails e
+UPDATE friends.friend_emails e
 SET
     email_address = :emailAddress,
     email_type = :emailType,
     label = :label,
     is_primary = :isPrimary
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE e.external_id = :emailExternalId
-  AND e.contact_id = c.id
-  AND c.external_id = :contactExternalId
+  AND e.friend_id = c.id
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING
@@ -80,23 +80,23 @@ RETURNING
     e.created_at;
 
 /* @name DeleteEmail */
-DELETE FROM contacts.contact_emails e
-USING contacts.contacts c, auth.users u
+DELETE FROM friends.friend_emails e
+USING friends.friends c, auth.users u
 WHERE e.external_id = :emailExternalId
-  AND e.contact_id = c.id
+  AND e.friend_id = c.id
   AND c.user_id = u.id
-  AND c.external_id = :contactExternalId
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING e.external_id;
 
 /* @name ClearPrimaryEmail */
-UPDATE contacts.contact_emails e
+UPDATE friends.friend_emails e
 SET is_primary = false
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE e.contact_id = c.id
-  AND c.external_id = :contactExternalId
+WHERE e.friend_id = c.id
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
   AND e.is_primary = true;
