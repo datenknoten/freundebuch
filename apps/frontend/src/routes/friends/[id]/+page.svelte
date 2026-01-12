@@ -1,22 +1,20 @@
 <script lang="ts">
 import { page } from '$app/stores';
-import ContactForm from '$lib/components/contacts/ContactForm.svelte';
+import FriendDetail from '$lib/components/friends/FriendDetail.svelte';
 import { isAuthInitialized } from '$lib/stores/auth';
-import { contacts, currentContact, isContactsLoading } from '$lib/stores/contacts';
+import { currentFriend, friends, isFriendsLoading } from '$lib/stores/friends';
 
-// Load contact when auth is ready and page params change
+// Load friend when auth is ready and page params change
 $effect(() => {
   const id = $page.params.id;
   if ($isAuthInitialized && id) {
-    contacts.loadContact(id);
+    friends.loadFriend(id);
   }
 });
 
-// Dynamic page title based on contact name
+// Dynamic page title based on friend name
 const pageTitle = $derived(
-  $currentContact
-    ? `Edit ${$currentContact.displayName} | Freundebuch`
-    : 'Edit Contact | Freundebuch',
+  $currentFriend ? `${$currentFriend.displayName} | Freundebuch` : 'Friend | Freundebuch',
 );
 </script>
 
@@ -28,27 +26,22 @@ const pageTitle = $derived(
   <div class="max-w-7xl mx-auto mt-8">
     <div class="bg-white rounded-xl shadow-lg p-8">
       <a
-        href="/contacts/{$page.params.id}"
+        href="/friends"
         class="text-sm text-gray-500 hover:text-forest font-body flex items-center gap-1 mb-6"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Contact
+        Back to Friends
       </a>
 
-      {#if $isContactsLoading}
+      {#if $isFriendsLoading}
         <div class="flex justify-center py-12">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
         </div>
-      {:else if $currentContact}
-        <div class="mb-8">
-          <h1 class="text-3xl font-heading text-forest">Edit Contact</h1>
-          <p class="text-gray-600 font-body mt-1">Update {$currentContact.displayName}'s information</p>
-        </div>
-
-        <ContactForm contact={$currentContact} />
-      {:else if $contacts.error}
+      {:else if $currentFriend}
+        <FriendDetail friend={$currentFriend} />
+      {:else if $friends.error}
         <div class="text-center py-12">
           <svg
             class="mx-auto h-12 w-12 text-red-400"
@@ -63,15 +56,15 @@ const pageTitle = $derived(
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
             />
           </svg>
-          <h3 class="mt-4 text-lg font-heading text-gray-900">Contact not found</h3>
+          <h3 class="mt-4 text-lg font-heading text-gray-900">Friend not found</h3>
           <p class="mt-2 text-sm text-gray-600 font-body">
-            {$contacts.error}
+            {$friends.error}
           </p>
           <a
-            href="/contacts"
+            href="/friends"
             class="mt-4 inline-flex items-center gap-2 text-forest font-body font-semibold hover:text-forest-light"
           >
-            Return to contacts
+            Return to friends
           </a>
         </div>
       {/if}

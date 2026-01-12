@@ -1,5 +1,5 @@
 <script lang="ts">
-import { getContact } from '$lib/api/contacts';
+import { getFriend } from '$lib/api/friends';
 import UpcomingDates from '$lib/components/dashboard/UpcomingDates.svelte';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
 
@@ -8,21 +8,21 @@ let lastFetchedId = $state<string | null>(null);
 let userDisplayName = $derived(displayName || $currentUser?.email || '');
 
 $effect(() => {
-  const selfContactId = $currentUser?.selfContactId;
-  // Only fetch when selfContactId changes to a new value
+  const selfProfileId = $currentUser?.selfProfileId;
+  // Only fetch when selfProfileId changes to a new value
   // This prevents duplicate fetches and handles user switching properly
-  if (selfContactId && selfContactId !== lastFetchedId) {
-    lastFetchedId = selfContactId;
-    fetchDisplayName(selfContactId);
+  if (selfProfileId && selfProfileId !== lastFetchedId) {
+    lastFetchedId = selfProfileId;
+    fetchDisplayName(selfProfileId);
   }
 });
 
-async function fetchDisplayName(selfContactId: string) {
+async function fetchDisplayName(selfProfileId: string) {
   try {
-    const contact = await getContact(selfContactId);
-    displayName = contact.displayName;
+    const friend = await getFriend(selfProfileId);
+    displayName = friend.displayName;
   } catch (error) {
-    console.warn('Failed to fetch self-contact for display name:', error);
+    console.warn('Failed to fetch self-profile for display name:', error);
     displayName = null;
   }
 }
@@ -55,18 +55,18 @@ async function fetchDisplayName(selfContactId: string) {
 					<h3 class="text-xl font-heading text-gray-800 mb-4">Quick Actions</h3>
 					<div class="space-y-3">
 						<a
-							href="/contacts/new"
+							href="/friends/new"
 							class="flex items-center gap-3 p-3 rounded-lg bg-forest text-white hover:bg-forest-light transition-colors"
 						>
 							<span class="text-xl">+</span>
-							<span class="font-body font-medium">Add New Contact</span>
+							<span class="font-body font-medium">Add New Friend</span>
 						</a>
 						<a
-							href="/contacts"
+							href="/friends"
 							class="flex items-center gap-3 p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
 						>
 							<span class="text-xl">&#128101;</span>
-							<span class="font-body font-medium">View All Contacts</span>
+							<span class="font-body font-medium">View All Friends</span>
 						</a>
 					</div>
 				</div>
