@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PhotoService, PhotoUploadError } from '../../src/services/photo.service.js';
 
 // Valid UUID v4 for tests
-const VALID_CONTACT_ID = '550e8400-e29b-41d4-a716-446655440000';
-const VALID_CONTACT_ID_2 = '6ba7b810-9dad-41d4-80b5-ec8bdd0e9ef0';
+const VALID_FRIEND_ID = '550e8400-e29b-41d4-a716-446655440000';
+const VALID_FRIEND_ID_2 = '6ba7b810-9dad-41d4-80b5-ec8bdd0e9ef0';
 
 // Mock sharp
 vi.mock('sharp', () => ({
@@ -52,11 +52,11 @@ describe('PhotoService', () => {
     it('should reject invalid file type (GIF)', async () => {
       const mockFile = new File(['fake gif data'], 'photo.gif', { type: 'image/gif' });
 
-      await expect(photoService.uploadPhoto(VALID_CONTACT_ID, mockFile)).rejects.toThrow(
+      await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toThrow(
         PhotoUploadError,
       );
 
-      await expect(photoService.uploadPhoto(VALID_CONTACT_ID, mockFile)).rejects.toMatchObject({
+      await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toMatchObject({
         code: 'INVALID_FILE_TYPE',
         message: PhotoValidationErrors.INVALID_FILE_TYPE,
       });
@@ -65,11 +65,11 @@ describe('PhotoService', () => {
     it('should reject invalid file type (BMP)', async () => {
       const mockFile = new File(['fake bmp data'], 'photo.bmp', { type: 'image/bmp' });
 
-      await expect(photoService.uploadPhoto(VALID_CONTACT_ID, mockFile)).rejects.toThrow(
+      await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toThrow(
         PhotoUploadError,
       );
 
-      await expect(photoService.uploadPhoto(VALID_CONTACT_ID, mockFile)).rejects.toMatchObject({
+      await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toMatchObject({
         code: 'INVALID_FILE_TYPE',
       });
     });
@@ -79,11 +79,11 @@ describe('PhotoService', () => {
       // Mock the size property to be over 5MB
       Object.defineProperty(mockFile, 'size', { value: 10 * 1024 * 1024 }); // 10MB
 
-      await expect(photoService.uploadPhoto(VALID_CONTACT_ID, mockFile)).rejects.toThrow(
+      await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toThrow(
         PhotoUploadError,
       );
 
-      await expect(photoService.uploadPhoto(VALID_CONTACT_ID, mockFile)).rejects.toMatchObject({
+      await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toMatchObject({
         code: 'FILE_TOO_LARGE',
         message: PhotoValidationErrors.FILE_TOO_LARGE,
       });
@@ -94,11 +94,11 @@ describe('PhotoService', () => {
       // Mock the size property to be just over 5MB
       Object.defineProperty(mockFile, 'size', { value: 5 * 1024 * 1024 + 1 });
 
-      await expect(photoService.uploadPhoto(VALID_CONTACT_ID, mockFile)).rejects.toThrow(
+      await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toThrow(
         PhotoUploadError,
       );
 
-      await expect(photoService.uploadPhoto(VALID_CONTACT_ID, mockFile)).rejects.toMatchObject({
+      await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toMatchObject({
         code: 'FILE_TOO_LARGE',
       });
     });
@@ -107,11 +107,11 @@ describe('PhotoService', () => {
       const mockFile = new File(['fake jpeg data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 1024 * 1024 }); // 1MB
 
-      const result = await photoService.uploadPhoto(VALID_CONTACT_ID, mockFile);
+      const result = await photoService.uploadPhoto(VALID_FRIEND_ID, mockFile);
 
       expect(result).toHaveProperty('photoUrl');
       expect(result).toHaveProperty('photoThumbnailUrl');
-      expect(result.photoUrl).toContain(VALID_CONTACT_ID);
+      expect(result.photoUrl).toContain(VALID_FRIEND_ID);
       expect(result.photoUrl).toContain('.jpg');
       expect(result.photoThumbnailUrl).toContain('thumb');
     });
@@ -120,7 +120,7 @@ describe('PhotoService', () => {
       const mockFile = new File(['fake png data'], 'photo.png', { type: 'image/png' });
       Object.defineProperty(mockFile, 'size', { value: 1024 * 1024 });
 
-      const result = await photoService.uploadPhoto(VALID_CONTACT_ID, mockFile);
+      const result = await photoService.uploadPhoto(VALID_FRIEND_ID, mockFile);
 
       expect(result.photoUrl).toContain('.png');
     });
@@ -129,7 +129,7 @@ describe('PhotoService', () => {
       const mockFile = new File(['fake webp data'], 'photo.webp', { type: 'image/webp' });
       Object.defineProperty(mockFile, 'size', { value: 1024 * 1024 });
 
-      const result = await photoService.uploadPhoto(VALID_CONTACT_ID, mockFile);
+      const result = await photoService.uploadPhoto(VALID_FRIEND_ID, mockFile);
 
       expect(result.photoUrl).toContain('.webp');
     });
@@ -138,19 +138,19 @@ describe('PhotoService', () => {
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 5 * 1024 * 1024 }); // Exactly 5MB
 
-      const result = await photoService.uploadPhoto(VALID_CONTACT_ID, mockFile);
+      const result = await photoService.uploadPhoto(VALID_FRIEND_ID, mockFile);
 
       expect(result).toHaveProperty('photoUrl');
     });
 
-    it('should create directory for contact photos', async () => {
+    it('should create directory for friend photos', async () => {
       const { mkdir } = await import('node:fs/promises');
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 1024 });
 
-      await photoService.uploadPhoto(VALID_CONTACT_ID, mockFile);
+      await photoService.uploadPhoto(VALID_FRIEND_ID, mockFile);
 
-      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining(VALID_CONTACT_ID), {
+      expect(mkdir).toHaveBeenCalledWith(expect.stringContaining(VALID_FRIEND_ID), {
         recursive: true,
       });
     });
@@ -159,17 +159,17 @@ describe('PhotoService', () => {
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 1024 });
 
-      const result = await photoService.uploadPhoto(VALID_CONTACT_ID_2, mockFile);
+      const result = await photoService.uploadPhoto(VALID_FRIEND_ID_2, mockFile);
 
       expect(result.photoUrl).toBe(
-        `http://localhost:3000/api/uploads/contacts/${VALID_CONTACT_ID_2}/photo.jpg`,
+        `http://localhost:3000/api/uploads/friends/${VALID_FRIEND_ID_2}/photo.jpg`,
       );
       expect(result.photoThumbnailUrl).toBe(
-        `http://localhost:3000/api/uploads/contacts/${VALID_CONTACT_ID_2}/photo_thumb.jpg`,
+        `http://localhost:3000/api/uploads/friends/${VALID_FRIEND_ID_2}/photo_thumb.jpg`,
       );
     });
 
-    it('should reject invalid contact ID (path traversal attempt)', async () => {
+    it('should reject invalid friend ID (path traversal attempt)', async () => {
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 1024 });
 
@@ -178,11 +178,11 @@ describe('PhotoService', () => {
       );
 
       await expect(photoService.uploadPhoto('../../../etc', mockFile)).rejects.toMatchObject({
-        code: 'INVALID_CONTACT_ID',
+        code: 'INVALID_FRIEND_ID',
       });
     });
 
-    it('should reject non-UUID contact ID', async () => {
+    it('should reject non-UUID friend ID', async () => {
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 1024 });
 
@@ -191,7 +191,7 @@ describe('PhotoService', () => {
       );
 
       await expect(photoService.uploadPhoto('not-a-uuid', mockFile)).rejects.toMatchObject({
-        code: 'INVALID_CONTACT_ID',
+        code: 'INVALID_FRIEND_ID',
       });
     });
   });
@@ -201,9 +201,9 @@ describe('PhotoService', () => {
       const { stat, rm } = await import('node:fs/promises');
       vi.mocked(stat).mockResolvedValue({} as any);
 
-      await photoService.deletePhoto(VALID_CONTACT_ID);
+      await photoService.deletePhoto(VALID_FRIEND_ID);
 
-      expect(rm).toHaveBeenCalledWith(expect.stringContaining(VALID_CONTACT_ID), {
+      expect(rm).toHaveBeenCalledWith(expect.stringContaining(VALID_FRIEND_ID), {
         recursive: true,
       });
     });
@@ -212,31 +212,31 @@ describe('PhotoService', () => {
       const { stat } = await import('node:fs/promises');
       vi.mocked(stat).mockRejectedValue({ code: 'ENOENT' });
 
-      await expect(photoService.deletePhoto(VALID_CONTACT_ID_2)).resolves.not.toThrow();
+      await expect(photoService.deletePhoto(VALID_FRIEND_ID_2)).resolves.not.toThrow();
     });
 
     it('should throw on other file system errors', async () => {
       const { stat } = await import('node:fs/promises');
       vi.mocked(stat).mockRejectedValue({ code: 'EACCES' });
 
-      await expect(photoService.deletePhoto(VALID_CONTACT_ID)).rejects.toMatchObject({
+      await expect(photoService.deletePhoto(VALID_FRIEND_ID)).rejects.toMatchObject({
         code: 'EACCES',
       });
     });
 
-    it('should reject invalid contact ID (path traversal attempt)', async () => {
+    it('should reject invalid friend ID (path traversal attempt)', async () => {
       await expect(photoService.deletePhoto('../../../etc')).rejects.toThrow(PhotoUploadError);
 
       await expect(photoService.deletePhoto('../../../etc')).rejects.toMatchObject({
-        code: 'INVALID_CONTACT_ID',
+        code: 'INVALID_FRIEND_ID',
       });
     });
 
-    it('should reject non-UUID contact ID', async () => {
+    it('should reject non-UUID friend ID', async () => {
       await expect(photoService.deletePhoto('not-a-uuid')).rejects.toThrow(PhotoUploadError);
 
       await expect(photoService.deletePhoto('not-a-uuid')).rejects.toMatchObject({
-        code: 'INVALID_CONTACT_ID',
+        code: 'INVALID_FRIEND_ID',
       });
     });
   });

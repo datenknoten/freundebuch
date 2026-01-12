@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
   authHeaders,
-  countUserContacts,
-  createTestContact,
-  getTestContact,
-  setupContactsTestSuite,
-} from './contacts.helpers.js';
+  countUserFriends,
+  createTestFriend,
+  getTestFriend,
+  setupFriendsTestSuite,
+} from './friends.helpers.js';
 
-describe('Contacts API - Integration Tests', () => {
-  const { getContext } = setupContactsTestSuite();
+describe('Friends API - Integration Tests', () => {
+  const { getContext } = setupFriendsTestSuite();
 
-  describe('GET /api/contacts', () => {
-    it('should return only self-contact when no other contacts exist', async () => {
+  describe('GET /api/friends', () => {
+    it('should return only self-profile when no other friends exist', async () => {
       const { app, testUser } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'GET',
         headers: authHeaders(testUser.accessToken),
       });
@@ -23,24 +23,24 @@ describe('Contacts API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      // Self-contact is always present (created during onboarding)
-      expect(body.contacts.length).toBe(1);
-      expect(body.contacts[0].displayName).toBe('Test User (Self)');
+      // Self-profile is always present (created during onboarding)
+      expect(body.friends.length).toBe(1);
+      expect(body.friends[0].displayName).toBe('Test User (Self)');
       expect(body.total).toBe(1);
       expect(body.page).toBe(1);
       expect(body.pageSize).toBe(25);
       expect(body.totalPages).toBe(1);
     });
 
-    it('should return paginated contacts list', async () => {
+    it('should return paginated friends list', async () => {
       const { app, pool, testUser } = getContext();
 
-      // Create test contacts (self-contact already exists from onboarding)
-      await createTestContact(pool, testUser.externalId, 'Alice');
-      await createTestContact(pool, testUser.externalId, 'Bob');
-      await createTestContact(pool, testUser.externalId, 'Charlie');
+      // Create test friends (self-profile already exists from onboarding)
+      await createTestFriend(pool, testUser.externalId, 'Alice');
+      await createTestFriend(pool, testUser.externalId, 'Bob');
+      await createTestFriend(pool, testUser.externalId, 'Charlie');
 
-      const request = new Request('http://localhost/api/contacts?page=1&pageSize=2', {
+      const request = new Request('http://localhost/api/friends?page=1&pageSize=2', {
         method: 'GET',
         headers: authHeaders(testUser.accessToken),
       });
@@ -49,23 +49,23 @@ describe('Contacts API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.contacts.length).toBe(2);
-      // Total includes self-contact + 3 created contacts
+      expect(body.friends.length).toBe(2);
+      // Total includes self-profile + 3 created friends
       expect(body.total).toBe(4);
       expect(body.page).toBe(1);
       expect(body.pageSize).toBe(2);
       expect(body.totalPages).toBe(2);
     });
 
-    it('should sort contacts by display name', async () => {
+    it('should sort friends by display name', async () => {
       const { app, pool, testUser } = getContext();
 
-      await createTestContact(pool, testUser.externalId, 'Charlie');
-      await createTestContact(pool, testUser.externalId, 'Alice');
-      await createTestContact(pool, testUser.externalId, 'Bob');
+      await createTestFriend(pool, testUser.externalId, 'Charlie');
+      await createTestFriend(pool, testUser.externalId, 'Alice');
+      await createTestFriend(pool, testUser.externalId, 'Bob');
 
       const request = new Request(
-        'http://localhost/api/contacts?sortBy=display_name&sortOrder=asc',
+        'http://localhost/api/friends?sortBy=display_name&sortOrder=asc',
         {
           method: 'GET',
           headers: authHeaders(testUser.accessToken),
@@ -76,15 +76,15 @@ describe('Contacts API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.contacts[0].displayName).toBe('Alice');
-      expect(body.contacts[1].displayName).toBe('Bob');
-      expect(body.contacts[2].displayName).toBe('Charlie');
+      expect(body.friends[0].displayName).toBe('Alice');
+      expect(body.friends[1].displayName).toBe('Bob');
+      expect(body.friends[2].displayName).toBe('Charlie');
     });
 
     it('should require authentication', async () => {
       const { app } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'GET',
       });
 
@@ -94,11 +94,11 @@ describe('Contacts API - Integration Tests', () => {
     });
   });
 
-  describe('POST /api/contacts', () => {
-    it('should create a contact with just display name', async () => {
+  describe('POST /api/friends', () => {
+    it('should create a friend with just display name', async () => {
       const { app, pool, testUser } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -119,15 +119,15 @@ describe('Contacts API - Integration Tests', () => {
       expect(body).toHaveProperty('createdAt');
       expect(body).toHaveProperty('updatedAt');
 
-      // Verify in database (includes self-contact + new contact)
-      const count = await countUserContacts(pool, testUser.externalId);
+      // Verify in database (includes self-profile + new friend)
+      const count = await countUserFriends(pool, testUser.externalId);
       expect(count).toBe(2);
     });
 
-    it('should create a contact with full name parts', async () => {
+    it('should create a friend with full name parts', async () => {
       const { app, testUser } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -152,14 +152,14 @@ describe('Contacts API - Integration Tests', () => {
       expect(body.nameSuffix).toBe('Jr.');
     });
 
-    it('should create a contact with phones, emails, addresses, and urls', async () => {
+    it('should create a friend with phones, emails, addresses, and urls', async () => {
       const { app, testUser } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
-          display_name: 'Full Contact',
+          display_name: 'Full Friend',
           phones: [
             { phone_number: '+12125551234', phone_type: 'mobile', is_primary: true },
             { phone_number: '+16505551234', phone_type: 'work', label: 'Office' },
@@ -198,11 +198,11 @@ describe('Contacts API - Integration Tests', () => {
     it('should reject invalid email format', async () => {
       const { app, testUser } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
-          display_name: 'Test Contact',
+          display_name: 'Test Friend',
           emails: [{ email_address: 'invalid-email', email_type: 'personal' }],
         }),
       });
@@ -215,7 +215,7 @@ describe('Contacts API - Integration Tests', () => {
     it('should reject empty display name', async () => {
       const { app, testUser } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -229,21 +229,21 @@ describe('Contacts API - Integration Tests', () => {
     });
   });
 
-  describe('GET /api/contacts/:id', () => {
-    it('should return a contact with all related data', async () => {
+  describe('GET /api/friends/:id', () => {
+    it('should return a friend with all related data', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'John Doe');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'John Doe');
 
       // Add phone directly in database
       await pool.query(
-        `INSERT INTO contacts.contact_phones (contact_id, phone_number, phone_type, is_primary)
+        `INSERT INTO friends.friend_phones (friend_id, phone_number, phone_type, is_primary)
          SELECT c.id, '+12125551234', 'mobile', true
-         FROM contacts.contacts c WHERE c.external_id = $1`,
-        [contactId],
+         FROM friends.friends c WHERE c.external_id = $1`,
+        [friendId],
       );
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'GET',
         headers: authHeaders(testUser.accessToken),
       });
@@ -252,17 +252,17 @@ describe('Contacts API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.id).toBe(contactId);
+      expect(body.id).toBe(friendId);
       expect(body.displayName).toBe('John Doe');
       expect(body.phones.length).toBe(1);
       expect(body.phones[0].phoneNumber).toBe('+12125551234');
     });
 
-    it('should return 404 for non-existent contact', async () => {
+    it('should return 404 for non-existent friend', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request(
-        'http://localhost/api/contacts/00000000-0000-0000-0000-000000000000',
+        'http://localhost/api/friends/00000000-0000-0000-0000-000000000000',
         {
           method: 'GET',
           headers: authHeaders(testUser.accessToken),
@@ -275,13 +275,13 @@ describe('Contacts API - Integration Tests', () => {
     });
   });
 
-  describe('PUT /api/contacts/:id', () => {
-    it('should update contact display name', async () => {
+  describe('PUT /api/friends/:id', () => {
+    it('should update friend display name', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'Old Name');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Old Name');
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'PUT',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -296,20 +296,20 @@ describe('Contacts API - Integration Tests', () => {
       expect(body.displayName).toBe('New Name');
 
       // Verify in database
-      const contact = await getTestContact(pool, contactId);
-      expect(contact?.displayName).toBe('New Name');
+      const friend = await getTestFriend(pool, friendId);
+      expect(friend?.displayName).toBe('New Name');
     });
 
     it('should update name parts to null', async () => {
       const { app, pool, testUser } = getContext();
 
-      // Create contact with name parts
-      const contactId = await createTestContact(pool, testUser.externalId, 'Dr. John Smith');
-      await pool.query("UPDATE contacts.contacts SET name_prefix = 'Dr.' WHERE external_id = $1", [
-        contactId,
+      // Create friend with name parts
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Dr. John Smith');
+      await pool.query("UPDATE friends.friends SET name_prefix = 'Dr.' WHERE external_id = $1", [
+        friendId,
       ]);
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'PUT',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -324,11 +324,11 @@ describe('Contacts API - Integration Tests', () => {
       expect(body.namePrefix).toBeUndefined();
     });
 
-    it('should return 404 for non-existent contact', async () => {
+    it('should return 404 for non-existent friend', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request(
-        'http://localhost/api/contacts/00000000-0000-0000-0000-000000000000',
+        'http://localhost/api/friends/00000000-0000-0000-0000-000000000000',
         {
           method: 'PUT',
           headers: authHeaders(testUser.accessToken),
@@ -342,13 +342,13 @@ describe('Contacts API - Integration Tests', () => {
     });
   });
 
-  describe('DELETE /api/contacts/:id', () => {
-    it('should soft delete a contact', async () => {
+  describe('DELETE /api/friends/:id', () => {
+    it('should soft delete a friend', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'To Be Deleted');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'To Be Deleted');
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'DELETE',
         headers: authHeaders(testUser.accessToken),
       });
@@ -357,14 +357,14 @@ describe('Contacts API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.message).toBe('Contact deleted successfully');
+      expect(body.message).toBe('Friend deleted successfully');
 
       // Verify soft delete in database
-      const contact = await getTestContact(pool, contactId);
-      expect(contact?.deletedAt).not.toBeNull();
+      const friend = await getTestFriend(pool, friendId);
+      expect(friend?.deletedAt).not.toBeNull();
 
-      // Should not appear in list (only self-contact remains)
-      const listRequest = new Request('http://localhost/api/contacts', {
+      // Should not appear in list (only self-profile remains)
+      const listRequest = new Request('http://localhost/api/friends', {
         method: 'GET',
         headers: authHeaders(testUser.accessToken),
       });
@@ -372,15 +372,15 @@ describe('Contacts API - Integration Tests', () => {
       const listResponse = await app.fetch(listRequest);
       const listBody: any = await listResponse.json();
 
-      expect(listBody.contacts.length).toBe(1);
-      expect(listBody.contacts[0].displayName).toBe('Test User (Self)');
+      expect(listBody.friends.length).toBe(1);
+      expect(listBody.friends[0].displayName).toBe('Test User (Self)');
     });
 
-    it('should return 404 for non-existent contact', async () => {
+    it('should return 404 for non-existent friend', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request(
-        'http://localhost/api/contacts/00000000-0000-0000-0000-000000000000',
+        'http://localhost/api/friends/00000000-0000-0000-0000-000000000000',
         {
           method: 'DELETE',
           headers: authHeaders(testUser.accessToken),
@@ -394,12 +394,12 @@ describe('Contacts API - Integration Tests', () => {
   });
 
   describe('Phone Sub-resource Routes', () => {
-    it('should add a phone to a contact', async () => {
+    it('should add a phone to a friend', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'Test Contact');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}/phones`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}/phones`, {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -419,13 +419,13 @@ describe('Contacts API - Integration Tests', () => {
       expect(body.isPrimary).toBe(true);
     });
 
-    it('should delete a phone from a contact', async () => {
+    it('should delete a phone from a friend', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'Test Contact');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
 
       // Add phone
-      const addRequest = new Request(`http://localhost/api/contacts/${contactId}/phones`, {
+      const addRequest = new Request(`http://localhost/api/friends/${friendId}/phones`, {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -440,7 +440,7 @@ describe('Contacts API - Integration Tests', () => {
 
       // Delete phone
       const deleteRequest = new Request(
-        `http://localhost/api/contacts/${contactId}/phones/${phoneId}`,
+        `http://localhost/api/friends/${friendId}/phones/${phoneId}`,
         {
           method: 'DELETE',
           headers: authHeaders(testUser.accessToken),
@@ -452,7 +452,7 @@ describe('Contacts API - Integration Tests', () => {
       expect(deleteResponse.status).toBe(200);
 
       // Verify phone is gone
-      const getRequest = new Request(`http://localhost/api/contacts/${contactId}`, {
+      const getRequest = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'GET',
         headers: authHeaders(testUser.accessToken),
       });
@@ -465,12 +465,12 @@ describe('Contacts API - Integration Tests', () => {
   });
 
   describe('Email Sub-resource Routes', () => {
-    it('should add an email to a contact', async () => {
+    it('should add an email to a friend', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'Test Contact');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}/emails`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}/emails`, {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -491,12 +491,12 @@ describe('Contacts API - Integration Tests', () => {
   });
 
   describe('Address Sub-resource Routes', () => {
-    it('should add an address to a contact', async () => {
+    it('should add an address to a friend', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'Test Contact');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}/addresses`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}/addresses`, {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -520,12 +520,12 @@ describe('Contacts API - Integration Tests', () => {
   });
 
   describe('URL Sub-resource Routes', () => {
-    it('should add a URL to a contact', async () => {
+    it('should add a URL to a friend', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'Test Contact');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}/urls`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}/urls`, {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -544,18 +544,18 @@ describe('Contacts API - Integration Tests', () => {
   });
 
   describe('Authorization', () => {
-    it('should not allow accessing another user contacts', async () => {
+    it('should not allow accessing another user friends', async () => {
       const { app, pool, testUser } = getContext();
-      const { createAuthenticatedUser } = await import('./contacts.helpers.js');
+      const { createAuthenticatedUser } = await import('./friends.helpers.js');
 
       // Create another user
       const otherUser = await createAuthenticatedUser(pool, 'other@example.com', 'Password123!');
 
-      // Create contact for other user
-      const contactId = await createTestContact(pool, otherUser.externalId, 'Other User Contact');
+      // Create friend for other user
+      const friendId = await createTestFriend(pool, otherUser.externalId, 'Other User Friend');
 
       // Try to access with testUser's token
-      const request = new Request(`http://localhost/api/contacts/${contactId}`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'GET',
         headers: authHeaders(testUser.accessToken),
       });
@@ -567,14 +567,14 @@ describe('Contacts API - Integration Tests', () => {
   });
 
   describe('Multiple Primary Validation', () => {
-    it('should reject contact creation with multiple primary phones', async () => {
+    it('should reject friend creation with multiple primary phones', async () => {
       const { app, testUser } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
-          display_name: 'Test Contact',
+          display_name: 'Test Friend',
           phones: [
             { phone_number: '+14155551234', phone_type: 'mobile', is_primary: true },
             { phone_number: '+13105551234', phone_type: 'work', is_primary: true },
@@ -587,14 +587,14 @@ describe('Contacts API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should reject contact creation with multiple primary emails', async () => {
+    it('should reject friend creation with multiple primary emails', async () => {
       const { app, testUser } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
-          display_name: 'Test Contact',
+          display_name: 'Test Friend',
           emails: [
             { email_address: 'test1@example.com', email_type: 'personal', is_primary: true },
             { email_address: 'test2@example.com', email_type: 'work', is_primary: true },
@@ -607,14 +607,14 @@ describe('Contacts API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should reject contact creation with multiple primary addresses', async () => {
+    it('should reject friend creation with multiple primary addresses', async () => {
       const { app, testUser } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
-          display_name: 'Test Contact',
+          display_name: 'Test Friend',
           addresses: [
             { street_line1: '123 Main St', address_type: 'home', is_primary: true },
             { street_line1: '456 Oak Ave', address_type: 'work', is_primary: true },
@@ -627,14 +627,14 @@ describe('Contacts API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should allow contact creation with one primary per type', async () => {
+    it('should allow friend creation with one primary per type', async () => {
       const { app, testUser } = getContext();
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
-          display_name: 'Valid Contact',
+          display_name: 'Valid Friend',
           phones: [
             { phone_number: '+14155551234', phone_type: 'mobile', is_primary: true },
             { phone_number: '+13105551234', phone_type: 'work', is_primary: false },
@@ -656,7 +656,7 @@ describe('Contacts API - Integration Tests', () => {
   });
 
   describe('Sub-resource Limit Validation', () => {
-    it('should reject contact creation with more than 30 phones', async () => {
+    it('should reject friend creation with more than 30 phones', async () => {
       const { app, testUser } = getContext();
 
       // Generate 31 valid phone numbers
@@ -665,7 +665,7 @@ describe('Contacts API - Integration Tests', () => {
         phone_type: 'mobile' as const,
       }));
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -679,7 +679,7 @@ describe('Contacts API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should reject contact creation with more than 30 emails', async () => {
+    it('should reject friend creation with more than 30 emails', async () => {
       const { app, testUser } = getContext();
 
       // Generate 31 emails
@@ -688,7 +688,7 @@ describe('Contacts API - Integration Tests', () => {
         email_type: 'personal' as const,
       }));
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -702,7 +702,7 @@ describe('Contacts API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should reject contact creation with more than 30 urls', async () => {
+    it('should reject friend creation with more than 30 urls', async () => {
       const { app, testUser } = getContext();
 
       // Generate 31 URLs
@@ -711,7 +711,7 @@ describe('Contacts API - Integration Tests', () => {
         url_type: 'personal' as const,
       }));
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
@@ -725,7 +725,7 @@ describe('Contacts API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should allow contact creation with exactly 30 phones', async () => {
+    it('should allow friend creation with exactly 30 phones', async () => {
       const { app, testUser } = getContext();
 
       // Generate exactly 30 valid phone numbers
@@ -734,11 +734,11 @@ describe('Contacts API - Integration Tests', () => {
         phone_type: 'mobile' as const,
       }));
 
-      const request = new Request('http://localhost/api/contacts', {
+      const request = new Request('http://localhost/api/friends', {
         method: 'POST',
         headers: authHeaders(testUser.accessToken),
         body: JSON.stringify({
-          display_name: 'Max Phones Contact',
+          display_name: 'Max Phones Friend',
           phones,
         }),
       });
@@ -753,12 +753,12 @@ describe('Contacts API - Integration Tests', () => {
     it('should return 400 for missing photo file', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'Photo Test');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Photo Test');
 
       const formData = new FormData();
       // No photo attached
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}/photo`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}/photo`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${testUser.accessToken}`,
@@ -773,7 +773,7 @@ describe('Contacts API - Integration Tests', () => {
       expect(body.error).toBe('No photo file provided');
     });
 
-    it('should return 404 for photo upload to non-existent contact', async () => {
+    it('should return 404 for photo upload to non-existent friend', async () => {
       const { app, testUser } = getContext();
 
       const formData = new FormData();
@@ -781,7 +781,7 @@ describe('Contacts API - Integration Tests', () => {
       formData.append('photo', mockImageBlob, 'test.jpg');
 
       const request = new Request(
-        'http://localhost/api/contacts/00000000-0000-0000-0000-000000000000/photo',
+        'http://localhost/api/friends/00000000-0000-0000-0000-000000000000/photo',
         {
           method: 'POST',
           headers: {
@@ -799,13 +799,13 @@ describe('Contacts API - Integration Tests', () => {
     it('should require authentication for photo upload', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'Photo Test');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Photo Test');
 
       const formData = new FormData();
       const mockImageBlob = new Blob(['fake image data'], { type: 'image/jpeg' });
       formData.append('photo', mockImageBlob, 'test.jpg');
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}/photo`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}/photo`, {
         method: 'POST',
         body: formData,
       });
@@ -815,12 +815,12 @@ describe('Contacts API - Integration Tests', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should delete photo for existing contact', async () => {
+    it('should delete photo for existing friend', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'Photo Delete Test');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Photo Delete Test');
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}/photo`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}/photo`, {
         method: 'DELETE',
         headers: authHeaders(testUser.accessToken),
       });
@@ -835,9 +835,9 @@ describe('Contacts API - Integration Tests', () => {
     it('should require authentication for photo delete', async () => {
       const { app, pool, testUser } = getContext();
 
-      const contactId = await createTestContact(pool, testUser.externalId, 'Photo Delete Test');
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Photo Delete Test');
 
-      const request = new Request(`http://localhost/api/contacts/${contactId}/photo`, {
+      const request = new Request(`http://localhost/api/friends/${friendId}/photo`, {
         method: 'DELETE',
       });
 

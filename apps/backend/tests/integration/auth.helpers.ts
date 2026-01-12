@@ -236,16 +236,16 @@ export async function sessionExists(pool: pg.Pool, tokenHash: string): Promise<b
 }
 
 /**
- * Helper to complete onboarding for a test user by creating a self-contact
+ * Helper to complete onboarding for a test user by creating a self-profile
  * This is required for the user to pass the onboarding middleware
  */
 export async function completeTestUserOnboarding(
   pool: pg.Pool,
   userExternalId: string,
 ): Promise<string> {
-  // Create a self-contact for the user
-  const contactResult = await pool.query(
-    `INSERT INTO contacts.contacts (user_id, display_name)
+  // Create a self-profile for the user
+  const friendResult = await pool.query(
+    `INSERT INTO friends.friends (user_id, display_name)
      SELECT u.id, 'Test User (Self)'
      FROM auth.users u
      WHERE u.external_id = $1
@@ -253,19 +253,19 @@ export async function completeTestUserOnboarding(
     [userExternalId],
   );
 
-  const contactId = contactResult.rows[0].external_id;
+  const friendId = friendResult.rows[0].external_id;
 
-  // Set it as the user's self-contact
+  // Set it as the user's self-profile
   await pool.query(
     `UPDATE auth.users u
-     SET self_contact_id = c.id
-     FROM contacts.contacts c
+     SET self_profile_id = f.id
+     FROM friends.friends f
      WHERE u.external_id = $1
-       AND c.external_id = $2`,
-    [userExternalId, contactId],
+       AND f.external_id = $2`,
+    [userExternalId, friendId],
   );
 
-  return contactId;
+  return friendId;
 }
 
 /**

