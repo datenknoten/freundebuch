@@ -18,10 +18,10 @@ export const isOpenModeActive = writable(false);
 export const openModePrefix = writable<string | null>(null);
 
 /**
- * List of contact IDs currently visible in the list (for open mode navigation)
+ * List of friend IDs currently visible in the list (for open mode navigation)
  * Supports up to 234 items (26 letters × 9 numbers)
  */
-export const visibleContactIds = writable<string[]>([]);
+export const visibleFriendIds = writable<string[]>([]);
 
 /**
  * Maximum items per keyboard group (1-9)
@@ -48,7 +48,7 @@ export function getKeyboardHint(index: number): string {
 }
 
 /**
- * Get the contact index from a keyboard hint
+ * Get the friend index from a keyboard hint
  * @param hint The keyboard hint (e.g., "1", "a1", "b5")
  * @returns The 0-based index, or -1 if invalid
  */

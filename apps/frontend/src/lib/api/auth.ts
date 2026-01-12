@@ -1,9 +1,9 @@
 import type {
   AuthResponse,
-  Contact,
-  ContactCreateInput,
   ErrorResponse,
   ForgotPasswordRequest,
+  Friend,
+  FriendCreateInput,
   LoginRequest,
   RefreshRequest,
   RegisterRequest,
@@ -164,34 +164,34 @@ export async function updatePreferences(
 }
 
 // ============================================================================
-// Self-Contact (Onboarding)
+// Self-Profile (Onboarding)
 // ============================================================================
 
 /**
- * Get the current user's self-contact ID
+ * Get the current user's self-profile ID
  */
-export async function getSelfContact(): Promise<{ selfContactId: string | null }> {
-  return apiRequest('/api/users/me/self-contact', {
+export async function getSelfProfile(): Promise<{ selfProfileId: string | null }> {
+  return apiRequest('/api/users/me/self-profile', {
     method: 'GET',
   });
 }
 
 /**
- * Set an existing contact as the user's self-contact
+ * Set an existing friend as the user's self-profile
  */
-export async function setSelfContact(contactId: string): Promise<{ selfContactId: string }> {
-  return apiRequest('/api/users/me/self-contact', {
+export async function setSelfProfile(friendId: string): Promise<{ selfProfileId: string }> {
+  return apiRequest('/api/users/me/self-profile', {
     method: 'PUT',
-    body: JSON.stringify({ contactId }),
+    body: JSON.stringify({ friendId }),
   });
 }
 
 /**
- * Create a new contact and set it as the user's self-contact
+ * Create a new friend and set it as the user's self-profile
  * Used during onboarding
  */
-export async function createSelfContact(data: ContactCreateInput): Promise<Contact> {
-  return apiRequest<Contact>('/api/users/me/self-contact', {
+export async function createSelfProfile(data: FriendCreateInput): Promise<Friend> {
+  return apiRequest<Friend>('/api/users/me/self-profile', {
     method: 'POST',
     body: JSON.stringify(data),
   });
