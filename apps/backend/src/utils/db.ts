@@ -1,5 +1,6 @@
 import pg from 'pg';
 import { getConfig } from './config.js';
+import { toError } from './errors.js';
 import { createLogger } from './logger.js';
 
 const { Pool } = pg;
@@ -27,7 +28,7 @@ export async function checkDatabaseConnection(dbPool: pg.Pool): Promise<boolean>
     return true;
   } catch (error) {
     const logger = createLogger();
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Database connection check failed');
     return false;
   }

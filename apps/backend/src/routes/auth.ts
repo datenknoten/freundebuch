@@ -32,6 +32,7 @@ import {
   InvalidSessionError,
   InvalidTokenError,
   isAppError,
+  toError,
   UserAlreadyExistsError,
 } from '../utils/errors.js';
 
@@ -101,7 +102,7 @@ app.post('/register', authRateLimitMiddleware, async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Registration failed');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Registration failed' }, 500);
@@ -160,7 +161,7 @@ app.post('/login', authRateLimitMiddleware, async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Login failed');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Login failed' }, 500);
@@ -200,7 +201,7 @@ app.post('/logout', async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Logout failed');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Logout failed' }, 500);
@@ -272,7 +273,7 @@ app.post('/refresh', async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Token refresh failed');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Token refresh failed' }, 500);
@@ -335,7 +336,7 @@ app.post('/forgot-password', passwordResetRateLimitMiddleware, async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Forgot password failed');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to process request' }, 500);
@@ -389,7 +390,7 @@ app.post('/reset-password', passwordResetRateLimitMiddleware, async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Password reset failed');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Password reset failed' }, 500);
@@ -432,7 +433,7 @@ app.get('/me', authMiddleware, async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to get user');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to get user' }, 500);
@@ -484,7 +485,7 @@ app.patch('/preferences', authMiddleware, async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to update preferences');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to update preferences' }, 500);

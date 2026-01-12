@@ -11,7 +11,7 @@ import {
   MaxAppPasswordsExceededError,
 } from '../services/app-passwords.service.js';
 import type { AppContext } from '../types/context.js';
-import { isAppError } from '../utils/errors.js';
+import { isAppError, toError } from '../utils/errors.js';
 
 // UUID v4 format regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -49,7 +49,7 @@ app.get('/', async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to list app passwords');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to list app passwords' }, 500);
@@ -98,7 +98,7 @@ app.post('/', async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to create app password');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to create app password' }, 500);
@@ -137,7 +137,7 @@ app.delete('/:id', async (c) => {
       return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
     }
 
-    const err = error instanceof Error ? error : new Error(String(error));
+    const err = toError(error);
     logger.error({ err }, 'Failed to revoke app password');
     Sentry.captureException(err);
     return c.json<ErrorResponse>({ error: 'Failed to revoke app password' }, 500);
