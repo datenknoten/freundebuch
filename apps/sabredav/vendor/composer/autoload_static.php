@@ -22,8 +22,13 @@ class ComposerStaticInitf0e04926db0e8eaae17a4266be7badad
     );
 
     public static $prefixLengthsPsr4 = array (
+        'T' => 
+        array (
+            'Testcontainers\\' => 15,
+        ),
         'S' => 
         array (
+            'Symfony\\Component\\Process\\' => 26,
             'Symfony\\Component\\OptionsResolver\\' => 34,
             'Sentry\\' => 7,
             'Sabre\\Xml\\' => 10,
@@ -59,6 +64,14 @@ class ComposerStaticInitf0e04926db0e8eaae17a4266be7badad
     );
 
     public static $prefixDirsPsr4 = array (
+        'Testcontainers\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/testcontainers/testcontainers/src',
+        ),
+        'Symfony\\Component\\Process\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/process',
+        ),
         'Symfony\\Component\\OptionsResolver\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/options-resolver',
@@ -156,8 +169,13 @@ class ComposerStaticInitf0e04926db0e8eaae17a4266be7badad
         'DeepCopy\\TypeMatcher\\TypeMatcher' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/TypeMatcher/TypeMatcher.php',
         'Freundebuch\\DAV\\Auth\\AppPasswordBackend' => __DIR__ . '/../..' . '/src/Auth/AppPasswordBackend.php',
         'Freundebuch\\DAV\\CardDAV\\FreundebuchCardDAVBackend' => __DIR__ . '/../..' . '/src/CardDAV/FreundebuchCardDAVBackend.php',
+        'Freundebuch\\DAV\\Logging\\Logger' => __DIR__ . '/../..' . '/src/Logging/Logger.php',
         'Freundebuch\\DAV\\Principal\\FreundebuchPrincipalBackend' => __DIR__ . '/../..' . '/src/Principal/FreundebuchPrincipalBackend.php',
         'Freundebuch\\DAV\\Tests\\Auth\\AppPasswordBackendTest' => __DIR__ . '/../..' . '/tests/Auth/AppPasswordBackendTest.php',
+        'Freundebuch\\DAV\\Tests\\Integration\\Auth\\AppPasswordBackendIntegrationTest' => __DIR__ . '/../..' . '/tests/Integration/Auth/AppPasswordBackendIntegrationTest.php',
+        'Freundebuch\\DAV\\Tests\\Integration\\CardDAV\\FreundebuchCardDAVBackendIntegrationTest' => __DIR__ . '/../..' . '/tests/Integration/CardDAV/FreundebuchCardDAVBackendIntegrationTest.php',
+        'Freundebuch\\DAV\\Tests\\Integration\\IntegrationTestCase' => __DIR__ . '/../..' . '/tests/Integration/IntegrationTestCase.php',
+        'Freundebuch\\DAV\\Tests\\Integration\\Principal\\FreundebuchPrincipalBackendIntegrationTest' => __DIR__ . '/../..' . '/tests/Integration/Principal/FreundebuchPrincipalBackendIntegrationTest.php',
         'Freundebuch\\DAV\\Tests\\VCard\\MapperTest' => __DIR__ . '/../..' . '/tests/VCard/MapperTest.php',
         'Freundebuch\\DAV\\VCard\\Mapper' => __DIR__ . '/../..' . '/src/VCard/Mapper.php',
         'GuzzleHttp\\Psr7\\AppendStream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/AppendStream.php',
@@ -2193,6 +2211,45 @@ class ComposerStaticInitf0e04926db0e8eaae17a4266be7badad
         'Symfony\\Component\\OptionsResolver\\OptionConfigurator' => __DIR__ . '/..' . '/symfony/options-resolver/OptionConfigurator.php',
         'Symfony\\Component\\OptionsResolver\\Options' => __DIR__ . '/..' . '/symfony/options-resolver/Options.php',
         'Symfony\\Component\\OptionsResolver\\OptionsResolver' => __DIR__ . '/..' . '/symfony/options-resolver/OptionsResolver.php',
+        'Symfony\\Component\\Process\\Exception\\ExceptionInterface' => __DIR__ . '/..' . '/symfony/process/Exception/ExceptionInterface.php',
+        'Symfony\\Component\\Process\\Exception\\InvalidArgumentException' => __DIR__ . '/..' . '/symfony/process/Exception/InvalidArgumentException.php',
+        'Symfony\\Component\\Process\\Exception\\LogicException' => __DIR__ . '/..' . '/symfony/process/Exception/LogicException.php',
+        'Symfony\\Component\\Process\\Exception\\ProcessFailedException' => __DIR__ . '/..' . '/symfony/process/Exception/ProcessFailedException.php',
+        'Symfony\\Component\\Process\\Exception\\ProcessSignaledException' => __DIR__ . '/..' . '/symfony/process/Exception/ProcessSignaledException.php',
+        'Symfony\\Component\\Process\\Exception\\ProcessStartFailedException' => __DIR__ . '/..' . '/symfony/process/Exception/ProcessStartFailedException.php',
+        'Symfony\\Component\\Process\\Exception\\ProcessTimedOutException' => __DIR__ . '/..' . '/symfony/process/Exception/ProcessTimedOutException.php',
+        'Symfony\\Component\\Process\\Exception\\RunProcessFailedException' => __DIR__ . '/..' . '/symfony/process/Exception/RunProcessFailedException.php',
+        'Symfony\\Component\\Process\\Exception\\RuntimeException' => __DIR__ . '/..' . '/symfony/process/Exception/RuntimeException.php',
+        'Symfony\\Component\\Process\\ExecutableFinder' => __DIR__ . '/..' . '/symfony/process/ExecutableFinder.php',
+        'Symfony\\Component\\Process\\InputStream' => __DIR__ . '/..' . '/symfony/process/InputStream.php',
+        'Symfony\\Component\\Process\\Messenger\\RunProcessContext' => __DIR__ . '/..' . '/symfony/process/Messenger/RunProcessContext.php',
+        'Symfony\\Component\\Process\\Messenger\\RunProcessMessage' => __DIR__ . '/..' . '/symfony/process/Messenger/RunProcessMessage.php',
+        'Symfony\\Component\\Process\\Messenger\\RunProcessMessageHandler' => __DIR__ . '/..' . '/symfony/process/Messenger/RunProcessMessageHandler.php',
+        'Symfony\\Component\\Process\\PhpExecutableFinder' => __DIR__ . '/..' . '/symfony/process/PhpExecutableFinder.php',
+        'Symfony\\Component\\Process\\PhpProcess' => __DIR__ . '/..' . '/symfony/process/PhpProcess.php',
+        'Symfony\\Component\\Process\\PhpSubprocess' => __DIR__ . '/..' . '/symfony/process/PhpSubprocess.php',
+        'Symfony\\Component\\Process\\Pipes\\AbstractPipes' => __DIR__ . '/..' . '/symfony/process/Pipes/AbstractPipes.php',
+        'Symfony\\Component\\Process\\Pipes\\PipesInterface' => __DIR__ . '/..' . '/symfony/process/Pipes/PipesInterface.php',
+        'Symfony\\Component\\Process\\Pipes\\UnixPipes' => __DIR__ . '/..' . '/symfony/process/Pipes/UnixPipes.php',
+        'Symfony\\Component\\Process\\Pipes\\WindowsPipes' => __DIR__ . '/..' . '/symfony/process/Pipes/WindowsPipes.php',
+        'Symfony\\Component\\Process\\Process' => __DIR__ . '/..' . '/symfony/process/Process.php',
+        'Symfony\\Component\\Process\\ProcessUtils' => __DIR__ . '/..' . '/symfony/process/ProcessUtils.php',
+        'Testcontainers\\Container\\Container' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Container/Container.php',
+        'Testcontainers\\Container\\MariaDBContainer' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Container/MariaDBContainer.php',
+        'Testcontainers\\Container\\MySQLContainer' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Container/MySQLContainer.php',
+        'Testcontainers\\Container\\OpenSearchContainer' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Container/OpenSearchContainer.php',
+        'Testcontainers\\Container\\PostgresContainer' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Container/PostgresContainer.php',
+        'Testcontainers\\Container\\RedisContainer' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Container/RedisContainer.php',
+        'Testcontainers\\Exception\\ContainerNotReadyException' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Exception/ContainerNotReadyException.php',
+        'Testcontainers\\Registry' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Registry.php',
+        'Testcontainers\\Trait\\DockerContainerAwareTrait' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Trait/DockerContainerAwareTrait.php',
+        'Testcontainers\\Wait\\WaitForExec' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Wait/WaitForExec.php',
+        'Testcontainers\\Wait\\WaitForHealthCheck' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Wait/WaitForHealthCheck.php',
+        'Testcontainers\\Wait\\WaitForHttp' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Wait/WaitForHttp.php',
+        'Testcontainers\\Wait\\WaitForLog' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Wait/WaitForLog.php',
+        'Testcontainers\\Wait\\WaitForNothing' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Wait/WaitForNothing.php',
+        'Testcontainers\\Wait\\WaitForTcpPortOpen' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Wait/WaitForTcpPortOpen.php',
+        'Testcontainers\\Wait\\WaitInterface' => __DIR__ . '/..' . '/testcontainers/testcontainers/src/Wait/WaitInterface.php',
         'TheSeer\\Tokenizer\\Exception' => __DIR__ . '/..' . '/theseer/tokenizer/src/Exception.php',
         'TheSeer\\Tokenizer\\NamespaceUri' => __DIR__ . '/..' . '/theseer/tokenizer/src/NamespaceUri.php',
         'TheSeer\\Tokenizer\\NamespaceUriException' => __DIR__ . '/..' . '/theseer/tokenizer/src/NamespaceUriException.php',

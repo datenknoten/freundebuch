@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'freundebuch/sabredav',
-        'pretty_version' => 'dev-claude/integrate-sentry-gCxH9',
-        'version' => 'dev-claude/integrate-sentry-gCxH9',
-        'reference' => '103e696642044402578d16cbb7cb44b6caf70241',
+        'pretty_version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
+        'version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
+        'reference' => '81ad147b2bb9ae4d85ed0cd8a0a894d1385dde58',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         'freundebuch/sabredav' => array(
-            'pretty_version' => 'dev-claude/integrate-sentry-gCxH9',
-            'version' => 'dev-claude/integrate-sentry-gCxH9',
-            'reference' => '103e696642044402578d16cbb7cb44b6caf70241',
+            'pretty_version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
+            'version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
+            'reference' => '81ad147b2bb9ae4d85ed0cd8a0a894d1385dde58',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -212,9 +212,9 @@
             'dev_requirement' => false,
         ),
         'sabre/vobject' => array(
-            'pretty_version' => '4.5.7',
-            'version' => '4.5.7.0',
-            'reference' => 'ff22611a53782e90c97be0d0bc4a5f98a5c0a12c',
+            'pretty_version' => '4.5.8',
+            'version' => '4.5.8.0',
+            'reference' => 'd554eb24d64232922e1eab5896cc2f84b3b9ffb1',
             'type' => 'library',
             'install_path' => __DIR__ . '/../sabre/vobject',
             'aliases' => array(),
@@ -408,6 +408,24 @@
             'install_path' => __DIR__ . '/../symfony/options-resolver',
             'aliases' => array(),
             'dev_requirement' => false,
+        ),
+        'symfony/process' => array(
+            'pretty_version' => 'v7.4.3',
+            'version' => '7.4.3.0',
+            'reference' => '2f8e1a6cdf590ca63715da4d3a7a3327404a523f',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/process',
+            'aliases' => array(),
+            'dev_requirement' => true,
+        ),
+        'testcontainers/testcontainers' => array(
+            'pretty_version' => '0.2.0',
+            'version' => '0.2.0.0',
+            'reference' => '68a2d6d47c0116e1237b575a7f5a08864aa23f90',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../testcontainers/testcontainers',
+            'aliases' => array(),
+            'dev_requirement' => true,
         ),
         'theseer/tokenizer' => array(
             'pretty_version' => '1.3.1',

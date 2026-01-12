@@ -6,6 +6,8 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Testcontainers\\' => array($vendorDir . '/testcontainers/testcontainers/src'),
+    'Symfony\\Component\\Process\\' => array($vendorDir . '/symfony/process'),
     'Symfony\\Component\\OptionsResolver\\' => array($vendorDir . '/symfony/options-resolver'),
     'Sentry\\' => array($vendorDir . '/sentry/sentry/src'),
     'Sabre\\Xml\\' => array($vendorDir . '/sabre/xml/lib'),
