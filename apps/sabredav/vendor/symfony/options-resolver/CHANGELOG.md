@@ -1,11 +1,6 @@
 CHANGELOG
 =========
 
-8.0
----
-
-* Remove support for nested options definition via `setDefault()`, use `setOptions()` instead
-
 7.3
 ---
 
