@@ -79,12 +79,12 @@ export class UserNotFoundError extends AppError {
 }
 
 /**
- * Thrown when a contact is not found in the database.
+ * Thrown when a friend is not found in the database.
  */
-export class ContactNotFoundError extends AppError {
+export class FriendNotFoundError extends AppError {
   readonly statusCode = 404;
 
-  constructor(message = 'Contact not found') {
+  constructor(message = 'Friend not found') {
     super(message);
   }
 }
@@ -105,12 +105,12 @@ export class UserAlreadyExistsError extends AppError {
 }
 
 /**
- * Thrown when attempting to add a birthday to a contact that already has one.
+ * Thrown when attempting to add a birthday to a friend that already has one.
  */
 export class BirthdayAlreadyExistsError extends AppError {
   readonly statusCode = 409;
 
-  constructor(message = 'Contact already has a birthday date') {
+  constructor(message = 'Friend already has a birthday date') {
     super(message);
   }
 }
@@ -131,12 +131,12 @@ export class UserCreationError extends AppError {
 }
 
 /**
- * Thrown when contact creation fails unexpectedly.
+ * Thrown when friend creation fails unexpectedly.
  */
-export class ContactCreationError extends AppError {
+export class FriendCreationError extends AppError {
   readonly statusCode = 500;
 
-  constructor(message = 'Failed to create contact') {
+  constructor(message = 'Failed to create friend') {
     super(message);
   }
 }

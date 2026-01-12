@@ -15,7 +15,7 @@ import {
   createUser,
   getUserByEmail,
   getUserByExternalId,
-  getUserSelfContact,
+  getUserSelfProfile,
   getUserWithPreferences,
   type Json,
   updateUserPassword,
@@ -52,7 +52,7 @@ export interface LoginRequest {
 }
 
 export interface UserPreferences {
-  contactsPageSize?: 10 | 25 | 50 | 100;
+  friendsPageSize?: 10 | 25 | 50 | 100;
 }
 
 export interface AuthResult {
@@ -60,7 +60,7 @@ export interface AuthResult {
     externalId: string;
     email: string;
     preferences?: UserPreferences;
-    selfContactId?: string;
+    selfProfileId?: string;
     hasCompletedOnboarding: boolean;
   };
   accessToken: string;
@@ -198,18 +198,18 @@ export class AuthService {
     );
 
     // Check onboarding status
-    const selfContactResult = await getUserSelfContact.run(
+    const selfProfileResult = await getUserSelfProfile.run(
       { userExternalId: user.external_id },
       this.db,
     );
-    const selfContactExternalId = selfContactResult[0]?.self_contact_external_id ?? null;
+    const selfProfileExternalId = selfProfileResult[0]?.self_profile_external_id ?? null;
 
     return {
       user: {
         externalId: user.external_id,
         email: user.email,
-        selfContactId: selfContactExternalId ?? undefined,
-        hasCompletedOnboarding: selfContactExternalId !== null,
+        selfProfileId: selfProfileExternalId ?? undefined,
+        hasCompletedOnboarding: selfProfileExternalId !== null,
       },
       accessToken,
       sessionToken,
@@ -272,11 +272,11 @@ export class AuthService {
     });
 
     // Check onboarding status
-    const selfContactResult = await getUserSelfContact.run(
+    const selfProfileResult = await getUserSelfProfile.run(
       { userExternalId: user.external_id },
       this.db,
     );
-    const selfContactExternalId = selfContactResult[0]?.self_contact_external_id ?? null;
+    const selfProfileExternalId = selfProfileResult[0]?.self_profile_external_id ?? null;
 
     this.logger.info({ userId: user.external_id }, 'Access token refreshed successfully');
 
@@ -285,8 +285,8 @@ export class AuthService {
         externalId: user.external_id,
         email: user.email,
         preferences: user.preferences as UserPreferences,
-        selfContactId: selfContactExternalId ?? undefined,
-        hasCompletedOnboarding: selfContactExternalId !== null,
+        selfProfileId: selfProfileExternalId ?? undefined,
+        hasCompletedOnboarding: selfProfileExternalId !== null,
       },
       accessToken,
       sessionToken, // Return the same session token
@@ -410,7 +410,7 @@ export class AuthService {
     externalId: string;
     email: string;
     preferences: UserPreferences;
-    selfContactId?: string;
+    selfProfileId?: string;
     hasCompletedOnboarding: boolean;
   } | null> {
     const users = await getUserWithPreferences.run({ externalId: userExternalId }, this.db);
@@ -425,18 +425,18 @@ export class AuthService {
     }
 
     // Check onboarding status
-    const selfContactResult = await getUserSelfContact.run(
+    const selfProfileResult = await getUserSelfProfile.run(
       { userExternalId: user.external_id },
       this.db,
     );
-    const selfContactExternalId = selfContactResult[0]?.self_contact_external_id ?? null;
+    const selfProfileExternalId = selfProfileResult[0]?.self_profile_external_id ?? null;
 
     return {
       externalId: user.external_id,
       email: user.email,
       preferences: user.preferences as UserPreferences,
-      selfContactId: selfContactExternalId ?? undefined,
-      hasCompletedOnboarding: selfContactExternalId !== null,
+      selfProfileId: selfProfileExternalId ?? undefined,
+      hasCompletedOnboarding: selfProfileExternalId !== null,
     };
   }
 

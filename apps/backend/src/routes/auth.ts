@@ -419,7 +419,7 @@ app.get('/me', authMiddleware, async (c) => {
       user: {
         externalId: userWithPrefs.externalId,
         email: userWithPrefs.email,
-        selfContactId: userWithPrefs.selfContactId,
+        selfProfileId: userWithPrefs.selfProfileId,
         hasCompletedOnboarding: userWithPrefs.hasCompletedOnboarding,
       },
       preferences: userWithPrefs.preferences,

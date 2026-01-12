@@ -20,9 +20,9 @@ let passwordResetLimiter = new RateLimiterMemory({
   blockDuration: isTestEnv ? 1 : 3600,
 });
 
-// Rate limiter for contacts API endpoints
+// Rate limiter for friends API endpoints
 // 100 requests per minute in production, 500 in test
-let contactsLimiter = new RateLimiterMemory({
+let friendsLimiter = new RateLimiterMemory({
   points: isTestEnv ? 500 : 100,
   duration: 60,
   blockDuration: isTestEnv ? 1 : 60,
@@ -42,7 +42,7 @@ export function resetRateLimiters(): void {
     duration: 3600,
     blockDuration: isTestEnv ? 1 : 3600,
   });
-  contactsLimiter = new RateLimiterMemory({
+  friendsLimiter = new RateLimiterMemory({
     points: isTestEnv ? 500 : 100,
     duration: 60,
     blockDuration: isTestEnv ? 1 : 60,
@@ -108,21 +108,21 @@ export async function passwordResetRateLimitMiddleware(c: Context, next: Next) {
 }
 
 /**
- * Rate limiting middleware for contacts API endpoints
+ * Rate limiting middleware for friends API endpoints
  * Limits: 100 requests per minute, 1 minute block after exceeding
  */
-export async function contactsRateLimitMiddleware(c: Context, next: Next) {
+export async function friendsRateLimitMiddleware(c: Context, next: Next) {
   const clientId = getClientIdentifier(c);
   const logger = c.get('logger');
 
   try {
-    await contactsLimiter.consume(clientId);
+    await friendsLimiter.consume(clientId);
     return next();
   } catch (error) {
     const rateLimiterRes = error as RateLimiterRes;
     const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
 
-    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on contacts endpoint');
+    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on friends endpoint');
 
     return c.json({ error: 'Too many requests. Please try again later.' }, 429, {
       'Retry-After': String(retryAfter),

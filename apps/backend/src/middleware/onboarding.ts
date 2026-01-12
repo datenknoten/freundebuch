@@ -1,5 +1,5 @@
 import type { Context, Next } from 'hono';
-import { hasSelfContact } from '../models/queries/users.queries.js';
+import { hasSelfProfile } from '../models/queries/users.queries.js';
 import { toError } from '../utils/errors.js';
 import { getAuthUser } from './auth.js';
 
@@ -9,7 +9,7 @@ import { getAuthUser } from './auth.js';
 export const ONBOARDING_REQUIRED_CODE = 'ONBOARDING_REQUIRED';
 
 /**
- * Middleware to ensure user has completed onboarding (has a self-contact)
+ * Middleware to ensure user has completed onboarding (has a profile)
  * Apply this to routes that require onboarding to be complete.
  *
  * IMPORTANT: This middleware MUST be applied AFTER authMiddleware.
@@ -18,7 +18,7 @@ export const ONBOARDING_REQUIRED_CODE = 'ONBOARDING_REQUIRED';
  * Routes that should be EXEMPT:
  * - /api/auth/* (login, register, logout)
  * - /api/users/me (get current user info including onboarding status)
- * - /api/users/me/self-contact (used during onboarding itself)
+ * - /api/users/me/self-profile (used during onboarding itself)
  * - /health (health checks)
  */
 export async function onboardingMiddleware(c: Context, next: Next) {
@@ -35,9 +35,9 @@ export async function onboardingMiddleware(c: Context, next: Next) {
   }
 
   try {
-    const result = await hasSelfContact.run({ userExternalId: authUser.userId }, db);
+    const result = await hasSelfProfile.run({ userExternalId: authUser.userId }, db);
 
-    if (!result[0]?.has_self_contact) {
+    if (!result[0]?.has_self_profile) {
       logger.info({ userId: authUser.userId }, 'User has not completed onboarding');
       return c.json(
         {
