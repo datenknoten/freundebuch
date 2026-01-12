@@ -56,11 +56,11 @@ src/
 | `InvalidSessionError` | 401 | Invalid/expired sessions |
 | `InvalidTokenError` | 401 | Invalid/expired tokens |
 | `UserNotFoundError` | 404 | User not found |
-| `ContactNotFoundError` | 404 | Contact not found |
+| `FriendNotFoundError` | 404 | Friend not found |
 | `UserAlreadyExistsError` | 409 | Registration conflicts |
 | `BirthdayAlreadyExistsError` | 409 | Duplicate birthday |
 | `UserCreationError` | 500 | User creation failed |
-| `ContactCreationError` | 500 | Contact creation failed |
+| `FriendCreationError` | 500 | Friend creation failed |
 | `AppPasswordCreationError` | 500 | App password creation failed |
 | `PreferencesUpdateError` | 500 | Preferences update failed |
 | `DatabaseConnectionError` | 500 | No database connection |

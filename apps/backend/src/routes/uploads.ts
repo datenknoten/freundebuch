@@ -36,7 +36,7 @@ app.get('/friends/:friendId/:filename', async (c) => {
   const friend = await friendsService.getFriendById(user.userId, friendId);
 
   if (!friend) {
-    return c.json({ error: 'Contact not found' }, 404);
+    return c.json({ error: 'Friend not found' }, 404);
   }
 
   // Validate filename to prevent directory traversal

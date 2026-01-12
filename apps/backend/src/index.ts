@@ -18,6 +18,7 @@ import healthRoutes from './routes/health.js';
 import sentryTunnelRoutes from './routes/sentry-tunnel.js';
 import uploadsRoutes from './routes/uploads.js';
 import usersRoutes from './routes/users.js';
+import { PhotoService } from './services/photo.service.js';
 import type { AppContext } from './types/context.js';
 import { initializeAddressCaches } from './utils/cache.js';
 import { getConfig } from './utils/config.js';
@@ -116,6 +117,9 @@ export async function startServer() {
   const app = await createApp(pool);
   const port = config.PORT;
   const pinoLogger = createLogger();
+
+  // Migrate uploads directory from legacy 'contacts' path to 'friends'
+  await PhotoService.migrateFromLegacyPath(pinoLogger);
 
   // Import setupGracefulShutdown lazily to avoid side effects
   import('./utils/db.js').then(({ setupGracefulShutdown }) => {
