@@ -15,7 +15,7 @@ const app = new Hono<AppContext>();
 
 // Apply auth middleware to all address-lookup routes
 app.use('*', authMiddleware);
-// Apply onboarding middleware to require self-contact
+// Apply onboarding middleware to require profile
 app.use('*', onboardingMiddleware);
 
 // Singleton service instance (lazy init)

@@ -15,7 +15,7 @@ Hono API server with PostgreSQL. See root [AGENTS.md](../../AGENTS.md) for gener
 
 ### PgTyped Queries
 - All queries in `.sql` files for type generation
-- Queries organized by schema: `queries/auth/`, `queries/contacts/`
+- Queries organized by schema: `queries/auth/`, `queries/friends/`
 
 ## Hono Patterns
 
@@ -30,7 +30,7 @@ src/
 ```
 
 ### Routes
-- Group by resource: `routes/auth.ts`, `routes/contacts.ts`
+- Group by resource: `routes/auth.ts`, `routes/friends.ts`
 - Use Hono's router for path grouping
 - Apply middleware at route group level
 

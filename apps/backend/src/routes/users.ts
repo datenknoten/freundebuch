@@ -1,7 +1,7 @@
 import {
-  type ContactCreateInput,
-  ContactCreateSchema,
   type ErrorResponse,
+  type FriendCreateInput,
+  FriendCreateSchema,
   UpdateProfileRequestSchema,
   type User,
 } from '@freundebuch/shared/index.js';
@@ -10,12 +10,12 @@ import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import {
-  getUserByEmailWithSelfContact,
-  getUserSelfContact,
-  setUserSelfContact,
-  updateUserReturningWithSelfContact,
+  getUserByEmailWithSelfProfile,
+  getUserSelfProfile,
+  setUserSelfProfile,
+  updateUserReturningWithSelfProfile,
 } from '../models/queries/users.queries.js';
-import { ContactsService } from '../services/contacts.service.js';
+import { FriendsService } from '../services/friends.service.js';
 import type { AppContext } from '../types/context.js';
 import { toError } from '../utils/errors.js';
 
@@ -34,23 +34,23 @@ app.get('/me', async (c) => {
 
   try {
     const authUser = getAuthUser(c);
-    // Single query to get user with self-contact info
-    const [user] = await getUserByEmailWithSelfContact.run({ email: authUser.email }, db);
+    // Single query to get user with self-profile info
+    const [user] = await getUserByEmailWithSelfProfile.run({ email: authUser.email }, db);
 
     if (!user) {
       logger.error({ userId: authUser.userId }, 'User not found');
       return c.json<ErrorResponse>({ error: 'User not found' }, 404);
     }
 
-    const selfContactExternalId = user.self_contact_external_id;
+    const selfProfileExternalId = user.self_profile_external_id;
 
     return c.json<User>({
       externalId: user.external_id,
       email: user.email,
       createdAt: user.created_at.toISOString(),
       updatedAt: user.updated_at.toISOString(),
-      selfContactId: selfContactExternalId ?? undefined,
-      hasCompletedOnboarding: selfContactExternalId !== null,
+      selfProfileId: selfProfileExternalId ?? undefined,
+      hasCompletedOnboarding: selfProfileExternalId !== null,
     });
   } catch (error) {
     const err = toError(error);
@@ -86,26 +86,26 @@ app.put('/me', async (c) => {
 
     // If no email update, return current user (single query)
     if (!validated.email) {
-      const [user] = await getUserByEmailWithSelfContact.run({ email: authUser.email }, db);
+      const [user] = await getUserByEmailWithSelfProfile.run({ email: authUser.email }, db);
 
       if (!user) {
         return c.json<ErrorResponse>({ error: 'User not found' }, 404);
       }
 
-      const selfContactExternalId = user.self_contact_external_id;
+      const selfProfileExternalId = user.self_profile_external_id;
 
       return c.json<User>({
         externalId: user.external_id,
         email: user.email,
         createdAt: user.created_at.toISOString(),
         updatedAt: user.updated_at.toISOString(),
-        selfContactId: selfContactExternalId ?? undefined,
-        hasCompletedOnboarding: selfContactExternalId !== null,
+        selfProfileId: selfProfileExternalId ?? undefined,
+        hasCompletedOnboarding: selfProfileExternalId !== null,
       });
     }
 
-    // Update user email and return with self-contact info (single query)
-    const [updatedUser] = await updateUserReturningWithSelfContact.run(
+    // Update user email and return with self-profile info (single query)
+    const [updatedUser] = await updateUserReturningWithSelfProfile.run(
       {
         externalId: authUser.userId,
         email: validated.email,
@@ -120,15 +120,15 @@ app.put('/me', async (c) => {
 
     logger.info({ userId: authUser.userId, newEmail: validated.email }, 'User profile updated');
 
-    const selfContactExternalId = updatedUser.self_contact_external_id;
+    const selfProfileExternalId = updatedUser.self_profile_external_id;
 
     return c.json<User>({
       externalId: updatedUser.external_id,
       email: updatedUser.email,
       createdAt: updatedUser.created_at.toISOString(),
       updatedAt: updatedUser.updated_at.toISOString(),
-      selfContactId: selfContactExternalId ?? undefined,
-      hasCompletedOnboarding: selfContactExternalId !== null,
+      selfProfileId: selfProfileExternalId ?? undefined,
+      hasCompletedOnboarding: selfProfileExternalId !== null,
     });
   } catch (error) {
     const err = toError(error);
@@ -139,36 +139,36 @@ app.put('/me', async (c) => {
 });
 
 // ============================================================================
-// Self-Contact Routes (for onboarding)
+// Self-Profile Routes (for onboarding)
 // ============================================================================
 
 /**
- * GET /api/users/me/self-contact
- * Get the current user's self-contact external ID
+ * GET /api/users/me/self-profile
+ * Get the current user's self-profile external ID
  */
-app.get('/me/self-contact', async (c) => {
+app.get('/me/self-profile', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
 
   try {
     const authUser = getAuthUser(c);
-    const result = await getUserSelfContact.run({ userExternalId: authUser.userId }, db);
-    const selfContactExternalId = result[0]?.self_contact_external_id ?? null;
+    const result = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
+    const selfProfileExternalId = result[0]?.self_profile_external_id ?? null;
 
-    return c.json({ selfContactId: selfContactExternalId });
+    return c.json({ selfProfileId: selfProfileExternalId });
   } catch (error) {
     const err = toError(error);
-    logger.error({ err }, 'Failed to get self-contact');
+    logger.error({ err }, 'Failed to get self-profile');
     Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to get self-contact' }, 500);
+    return c.json<ErrorResponse>({ error: 'Failed to get self-profile' }, 500);
   }
 });
 
 /**
- * PUT /api/users/me/self-contact
- * Set an existing contact as the user's self-contact
+ * PUT /api/users/me/self-profile
+ * Set an existing friend as the user's self-profile
  */
-app.put('/me/self-contact', async (c) => {
+app.put('/me/self-profile', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
 
@@ -176,45 +176,45 @@ app.put('/me/self-contact', async (c) => {
     const authUser = getAuthUser(c);
     const body = await c.req.json();
 
-    const SetSelfContactSchema = type({ contactId: 'string.uuid' });
-    const validated = SetSelfContactSchema(body);
+    const SetSelfProfileSchema = type({ friendId: 'string.uuid' });
+    const validated = SetSelfProfileSchema(body);
 
     if (validated instanceof type.errors) {
       return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
     }
 
-    const result = await setUserSelfContact.run(
+    const result = await setUserSelfProfile.run(
       {
         userExternalId: authUser.userId,
-        contactExternalId: validated.contactId,
+        friendExternalId: validated.friendId,
       },
       db,
     );
 
     if (result.length === 0) {
-      return c.json<ErrorResponse>({ error: 'Contact not found or does not belong to user' }, 404);
+      return c.json<ErrorResponse>({ error: 'Friend not found or does not belong to user' }, 404);
     }
 
     logger.info(
-      { userId: authUser.userId, contactId: validated.contactId },
-      'Self-contact set successfully',
+      { userId: authUser.userId, friendId: validated.friendId },
+      'Self-profile set successfully',
     );
 
-    return c.json({ selfContactId: result[0]?.self_contact_external_id });
+    return c.json({ selfProfileId: result[0]?.self_profile_external_id });
   } catch (error) {
     const err = toError(error);
-    logger.error({ err }, 'Failed to set self-contact');
+    logger.error({ err }, 'Failed to set self-profile');
     Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to set self-contact' }, 500);
+    return c.json<ErrorResponse>({ error: 'Failed to set self-profile' }, 500);
   }
 });
 
 /**
- * POST /api/users/me/self-contact
- * Create a new contact and set it as the user's self-contact
+ * POST /api/users/me/self-profile
+ * Create a new friend and set it as the user's self-profile
  * Used during onboarding
  */
-app.post('/me/self-contact', async (c) => {
+app.post('/me/self-profile', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
 
@@ -222,53 +222,53 @@ app.post('/me/self-contact', async (c) => {
     const authUser = getAuthUser(c);
     const body = await c.req.json();
 
-    const validated = ContactCreateSchema(body);
+    const validated = FriendCreateSchema(body);
 
     if (validated instanceof type.errors) {
       return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
     }
 
-    // Check if user already has a self-contact
-    const existingResult = await getUserSelfContact.run({ userExternalId: authUser.userId }, db);
-    if (existingResult[0]?.self_contact_external_id) {
-      return c.json<ErrorResponse>({ error: 'Self-contact already exists' }, 409);
+    // Check if user already has a self-profile
+    const existingResult = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
+    if (existingResult[0]?.self_profile_external_id) {
+      return c.json<ErrorResponse>({ error: 'Self-profile already exists' }, 409);
     }
 
-    // Create the contact
-    const contactsService = new ContactsService(db, logger);
-    const newContact = await contactsService.createContact(
+    // Create the friend
+    const friendsService = new FriendsService(db, logger);
+    const newFriend = await friendsService.createFriend(
       authUser.userId,
-      validated as ContactCreateInput,
+      validated as FriendCreateInput,
     );
 
-    // Set it as the self-contact
-    const setResult = await setUserSelfContact.run(
+    // Set it as the self-profile
+    const setResult = await setUserSelfProfile.run(
       {
         userExternalId: authUser.userId,
-        contactExternalId: newContact.id,
+        friendExternalId: newFriend.id,
       },
       db,
     );
 
     if (setResult.length === 0) {
       logger.error(
-        { userId: authUser.userId, contactId: newContact.id },
-        'Failed to set self-contact after creation',
+        { userId: authUser.userId, friendId: newFriend.id },
+        'Failed to set self-profile after creation',
       );
-      return c.json<ErrorResponse>({ error: 'Failed to set self-contact' }, 500);
+      return c.json<ErrorResponse>({ error: 'Failed to set self-profile' }, 500);
     }
 
     logger.info(
-      { userId: authUser.userId, contactId: newContact.id },
-      'Self-contact created and set successfully',
+      { userId: authUser.userId, friendId: newFriend.id },
+      'Self-profile created and set successfully',
     );
 
-    return c.json(newContact, 201);
+    return c.json(newFriend, 201);
   } catch (error) {
     const err = toError(error);
-    logger.error({ err }, 'Failed to create self-contact');
+    logger.error({ err }, 'Failed to create self-profile');
     Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to create self-contact' }, 500);
+    return c.json<ErrorResponse>({ error: 'Failed to create self-profile' }, 500);
   }
 });
 

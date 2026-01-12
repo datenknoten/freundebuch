@@ -2,13 +2,6 @@ import type {
   Address,
   AddressInput,
   AddressType,
-  Contact,
-  ContactCreateInput,
-  ContactDate,
-  ContactListItem,
-  ContactListOptions,
-  ContactSearchResult,
-  ContactUpdateInput,
   DateInput,
   DateType,
   Email,
@@ -18,10 +11,17 @@ import type {
   FacetedSearchResponse,
   FacetGroups,
   FacetValue,
+  Friend,
+  FriendCreateInput,
+  FriendDate,
+  FriendListItem,
+  FriendListOptions,
+  FriendSearchResult,
+  FriendUpdateInput,
   GlobalSearchResult,
   MetInfo,
   MetInfoInput,
-  PaginatedContactList,
+  PaginatedFriendList,
   PaginatedSearchResponse,
   Phone,
   PhoneInput,
@@ -48,37 +48,37 @@ import {
   clearPrimaryAddress,
   createAddress,
   deleteAddress,
-  type IGetAddressesByContactIdResult,
+  type IGetAddressesByFriendIdResult,
   updateAddress,
-} from '../models/queries/contact-addresses.queries.js';
+} from '../models/queries/friend-addresses.queries.js';
 import {
-  countBirthdaysForContact,
+  countBirthdaysForFriend,
   createDate,
   deleteDate,
   getUpcomingDates,
-  type IGetDatesByContactIdResult,
+  type IGetDatesByFriendIdResult,
   type IGetUpcomingDatesResult,
   updateDate,
-} from '../models/queries/contact-dates.queries.js';
+} from '../models/queries/friend-dates.queries.js';
 import {
   clearPrimaryEmail,
   createEmail,
   deleteEmail,
-  type IGetEmailsByContactIdResult,
+  type IGetEmailsByFriendIdResult,
   updateEmail,
-} from '../models/queries/contact-emails.queries.js';
+} from '../models/queries/friend-emails.queries.js';
 import {
   deleteMetInfo,
-  type IGetMetInfoByContactIdResult,
+  type IGetMetInfoByFriendIdResult,
   upsertMetInfo,
-} from '../models/queries/contact-met-info.queries.js';
+} from '../models/queries/friend-met-info.queries.js';
 import {
   clearPrimaryPhone,
   createPhone,
   deletePhone,
-  type IGetPhonesByContactIdResult,
+  type IGetPhonesByFriendIdResult,
   updatePhone,
-} from '../models/queries/contact-phones.queries.js';
+} from '../models/queries/friend-phones.queries.js';
 import {
   createInverseRelationship,
   createRelationship,
@@ -86,50 +86,50 @@ import {
   deleteRelationship,
   getAllRelationshipTypes,
   getRelationshipById,
-  type IGetRelationshipsByContactIdResult,
-  searchContacts,
+  type IGetRelationshipsByFriendIdResult,
+  searchFriends,
   updateRelationship,
-} from '../models/queries/contact-relationships.queries.js';
+} from '../models/queries/friend-relationships.queries.js';
 import {
   createSocialProfile,
   deleteSocialProfile,
-  type IGetSocialProfilesByContactIdResult,
+  type IGetSocialProfilesByFriendIdResult,
   updateSocialProfile,
-} from '../models/queries/contact-social-profiles.queries.js';
+} from '../models/queries/friend-social-profiles.queries.js';
 import {
   createUrl,
   deleteUrl,
-  type IGetUrlsByContactIdResult,
+  type IGetUrlsByFriendIdResult,
   updateUrl,
-} from '../models/queries/contact-urls.queries.js';
+} from '../models/queries/friend-urls.queries.js';
 import {
-  createContact,
-  getContactById,
-  getContactsByUserId,
-  type IGetContactByIdResult,
-  type IGetContactsByUserIdResult,
-  softDeleteContact,
-  updateContact,
-  updateContactPhoto,
-} from '../models/queries/contacts.queries.js';
+  createFriend,
+  getFriendById,
+  getFriendsByUserId,
+  type IGetFriendByIdResult,
+  type IGetFriendsByUserIdResult,
+  softDeleteFriend,
+  updateFriend,
+  updateFriendPhoto,
+} from '../models/queries/friends.queries.js';
 import {
   addRecentSearch,
   clearRecentSearches,
   deleteRecentSearch,
   facetedSearch,
   filterOnlyList,
-  fullTextSearchContacts,
+  fullTextSearchFriends,
   getAllFacetCounts,
   getFacetCounts,
   getRecentSearches,
   type IFacetedSearchResult,
   type IFilterOnlyListResult,
-  type IFullTextSearchContactsResult,
+  type IFullTextSearchFriendsResult,
   type IGetFacetCountsResult,
   type IPaginatedFullTextSearchResult,
   paginatedFullTextSearch,
 } from '../models/queries/search.queries.js';
-import { BirthdayAlreadyExistsError, ContactCreationError } from '../utils/errors.js';
+import { BirthdayAlreadyExistsError, FriendCreationError } from '../utils/errors.js';
 import { sanitizeSearchHeadline } from '../utils/security.js';
 
 /**
@@ -148,7 +148,7 @@ function createWildcardQuery(query: string): string {
   return `%${escapeLikePattern(query)}%`;
 }
 
-export class ContactsService {
+export class FriendsService {
   private db: pg.Pool;
   private logger: Logger;
 
@@ -158,18 +158,18 @@ export class ContactsService {
   }
 
   /**
-   * List contacts for a user with pagination and sorting
+   * List friends for a user with pagination and sorting
    * Uses a single query with CTE to get both data and total count
    */
-  async listContacts(
+  async listFriends(
     userExternalId: string,
-    options: ContactListOptions,
-  ): Promise<PaginatedContactList> {
-    this.logger.debug({ userExternalId, options }, 'Listing contacts');
+    options: FriendListOptions,
+  ): Promise<PaginatedFriendList> {
+    this.logger.debug({ userExternalId, options }, 'Listing friends');
 
     const offset = (options.page - 1) * options.pageSize;
 
-    const contacts = await getContactsByUserId.run(
+    const friends = await getFriendsByUserId.run(
       {
         userExternalId,
         sortBy: options.sortBy,
@@ -181,10 +181,10 @@ export class ContactsService {
     );
 
     // Total count is included in each row via CROSS JOIN with the count CTE
-    const total = contacts[0]?.total_count ?? 0;
+    const total = friends[0]?.total_count ?? 0;
 
     return {
-      contacts: contacts.map((c) => this.mapContactListItem(c)),
+      friends: friends.map((c) => this.mapFriendListItem(c)),
       total,
       page: options.page,
       pageSize: options.pageSize,
@@ -193,28 +193,28 @@ export class ContactsService {
   }
 
   /**
-   * Get a single contact by ID with all related data
+   * Get a single friend by ID with all related data
    * Uses a single query with json_agg subqueries for efficiency
    */
-  async getContactById(userExternalId: string, contactExternalId: string): Promise<Contact | null> {
-    this.logger.debug({ userExternalId, contactExternalId }, 'Getting contact');
+  async getFriendById(userExternalId: string, friendExternalId: string): Promise<Friend | null> {
+    this.logger.debug({ userExternalId, friendExternalId }, 'Getting friend');
 
-    const [contact] = await getContactById.run({ userExternalId, contactExternalId }, this.db);
+    const [friend] = await getFriendById.run({ userExternalId, friendExternalId }, this.db);
 
-    if (!contact) {
+    if (!friend) {
       return null;
     }
 
-    return this.mapContactWithEmbeddedRelations(contact);
+    return this.mapFriendWithEmbeddedRelations(friend);
   }
 
   /**
-   * Create a new contact with optional phones, emails, addresses, URLs, dates, met info, and social profiles
+   * Create a new friend with optional phones, emails, addresses, URLs, dates, met info, and social profiles
    */
-  async createContact(userExternalId: string, data: ContactCreateInput): Promise<Contact> {
-    this.logger.info({ userExternalId, displayName: data.display_name }, 'Creating contact');
+  async createFriend(userExternalId: string, data: FriendCreateInput): Promise<Friend> {
+    this.logger.info({ userExternalId, displayName: data.display_name }, 'Creating friend');
 
-    const [contact] = await createContact.run(
+    const [friend] = await createFriend.run(
       {
         userExternalId,
         displayName: data.display_name,
@@ -234,52 +234,52 @@ export class ContactsService {
       this.db,
     );
 
-    if (!contact) {
-      this.logger.error({ userExternalId }, 'Failed to create contact');
-      throw new ContactCreationError();
+    if (!friend) {
+      this.logger.error({ userExternalId }, 'Failed to create friend');
+      throw new FriendCreationError();
     }
 
-    const contactExternalId = contact.external_id;
+    const friendExternalId = friend.external_id;
 
     // Create sub-resources in parallel (Epic 1A + 1B)
     const [phones, emails, addresses, urls, dates, socialProfiles] = await Promise.all([
-      this.createPhones(userExternalId, contactExternalId, data.phones ?? []),
-      this.createEmails(userExternalId, contactExternalId, data.emails ?? []),
-      this.createAddresses(userExternalId, contactExternalId, data.addresses ?? []),
-      this.createUrls(userExternalId, contactExternalId, data.urls ?? []),
-      this.createDates(userExternalId, contactExternalId, data.dates ?? []),
-      this.createSocialProfiles(userExternalId, contactExternalId, data.social_profiles ?? []),
+      this.createPhones(userExternalId, friendExternalId, data.phones ?? []),
+      this.createEmails(userExternalId, friendExternalId, data.emails ?? []),
+      this.createAddresses(userExternalId, friendExternalId, data.addresses ?? []),
+      this.createUrls(userExternalId, friendExternalId, data.urls ?? []),
+      this.createDates(userExternalId, friendExternalId, data.dates ?? []),
+      this.createSocialProfiles(userExternalId, friendExternalId, data.social_profiles ?? []),
     ]);
 
     // Create met info if provided (single record)
     let metInfo: MetInfo | undefined;
     if (data.met_info) {
       metInfo =
-        (await this.setMetInfo(userExternalId, contactExternalId, data.met_info)) ?? undefined;
+        (await this.setMetInfo(userExternalId, friendExternalId, data.met_info)) ?? undefined;
     }
 
     this.logger.info(
-      { contactExternalId, displayName: data.display_name },
-      'Contact created successfully',
+      { friendExternalId, displayName: data.display_name },
+      'Friend created successfully',
     );
 
     return {
-      id: contact.external_id,
-      displayName: contact.display_name,
-      nickname: contact.nickname ?? undefined,
-      namePrefix: contact.name_prefix ?? undefined,
-      nameFirst: contact.name_first ?? undefined,
-      nameMiddle: contact.name_middle ?? undefined,
-      nameLast: contact.name_last ?? undefined,
-      nameSuffix: contact.name_suffix ?? undefined,
-      photoUrl: contact.photo_url ?? undefined,
-      photoThumbnailUrl: contact.photo_thumbnail_url ?? undefined,
+      id: friend.external_id,
+      displayName: friend.display_name,
+      nickname: friend.nickname ?? undefined,
+      namePrefix: friend.name_prefix ?? undefined,
+      nameFirst: friend.name_first ?? undefined,
+      nameMiddle: friend.name_middle ?? undefined,
+      nameLast: friend.name_last ?? undefined,
+      nameSuffix: friend.name_suffix ?? undefined,
+      photoUrl: friend.photo_url ?? undefined,
+      photoThumbnailUrl: friend.photo_thumbnail_url ?? undefined,
       // Epic 1B: Professional fields
-      jobTitle: contact.job_title ?? undefined,
-      organization: contact.organization ?? undefined,
-      department: contact.department ?? undefined,
-      workNotes: contact.work_notes ?? undefined,
-      interests: contact.interests ?? undefined,
+      jobTitle: friend.job_title ?? undefined,
+      organization: friend.organization ?? undefined,
+      department: friend.department ?? undefined,
+      workNotes: friend.work_notes ?? undefined,
+      interests: friend.interests ?? undefined,
       phones,
       emails,
       addresses,
@@ -287,25 +287,25 @@ export class ContactsService {
       dates,
       metInfo,
       socialProfiles,
-      createdAt: contact.created_at.toISOString(),
-      updatedAt: contact.updated_at.toISOString(),
+      createdAt: friend.created_at.toISOString(),
+      updatedAt: friend.updated_at.toISOString(),
     };
   }
 
   /**
-   * Update an existing contact
+   * Update an existing friend
    */
-  async updateContact(
+  async updateFriend(
     userExternalId: string,
-    contactExternalId: string,
-    data: ContactUpdateInput,
-  ): Promise<Contact | null> {
-    this.logger.info({ userExternalId, contactExternalId }, 'Updating contact');
+    friendExternalId: string,
+    data: FriendUpdateInput,
+  ): Promise<Friend | null> {
+    this.logger.info({ userExternalId, friendExternalId }, 'Updating friend');
 
-    const [updated] = await updateContact.run(
+    const [updated] = await updateFriend.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         displayName: data.display_name ?? null,
         updateNickname: 'nickname' in data,
         nickname: data.nickname ?? null,
@@ -338,25 +338,25 @@ export class ContactsService {
       return null;
     }
 
-    this.logger.info({ contactExternalId }, 'Contact updated successfully');
+    this.logger.info({ friendExternalId }, 'Friend updated successfully');
 
-    // Fetch the full contact with related data using the optimized query
-    return this.getContactById(userExternalId, contactExternalId);
+    // Fetch the full friend with related data using the optimized query
+    return this.getFriendById(userExternalId, friendExternalId);
   }
 
   /**
-   * Soft delete a contact
+   * Soft delete a friend
    */
-  async deleteContact(userExternalId: string, contactExternalId: string): Promise<boolean> {
-    this.logger.info({ userExternalId, contactExternalId }, 'Deleting contact');
+  async deleteFriend(userExternalId: string, friendExternalId: string): Promise<boolean> {
+    this.logger.info({ userExternalId, friendExternalId }, 'Deleting friend');
 
-    const result = await softDeleteContact.run({ userExternalId, contactExternalId }, this.db);
+    const result = await softDeleteFriend.run({ userExternalId, friendExternalId }, this.db);
 
     if (result.length === 0) {
       return false;
     }
 
-    this.logger.info({ contactExternalId }, 'Contact deleted successfully');
+    this.logger.info({ friendExternalId }, 'Friend deleted successfully');
     return true;
   }
 
@@ -366,20 +366,20 @@ export class ContactsService {
 
   async addPhone(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     data: PhoneInput,
   ): Promise<Phone | null> {
-    this.logger.debug({ contactExternalId }, 'Adding phone');
+    this.logger.debug({ friendExternalId }, 'Adding phone');
 
     // If setting as primary, clear existing primary
     if (data.is_primary) {
-      await clearPrimaryPhone.run({ userExternalId, contactExternalId }, this.db);
+      await clearPrimaryPhone.run({ userExternalId, friendExternalId }, this.db);
     }
 
     const [phone] = await createPhone.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         phoneNumber: data.phone_number,
         phoneType: data.phone_type,
         label: data.label ?? null,
@@ -397,21 +397,21 @@ export class ContactsService {
 
   async updatePhone(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     phoneExternalId: string,
     data: PhoneInput,
   ): Promise<Phone | null> {
-    this.logger.debug({ contactExternalId, phoneExternalId }, 'Updating phone');
+    this.logger.debug({ friendExternalId, phoneExternalId }, 'Updating phone');
 
     // If setting as primary, clear existing primary
     if (data.is_primary) {
-      await clearPrimaryPhone.run({ userExternalId, contactExternalId }, this.db);
+      await clearPrimaryPhone.run({ userExternalId, friendExternalId }, this.db);
     }
 
     const [phone] = await updatePhone.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         phoneExternalId,
         phoneNumber: data.phone_number,
         phoneType: data.phone_type,
@@ -430,13 +430,13 @@ export class ContactsService {
 
   async deletePhone(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     phoneExternalId: string,
   ): Promise<boolean> {
-    this.logger.debug({ contactExternalId, phoneExternalId }, 'Deleting phone');
+    this.logger.debug({ friendExternalId, phoneExternalId }, 'Deleting phone');
 
     const result = await deletePhone.run(
-      { userExternalId, contactExternalId, phoneExternalId },
+      { userExternalId, friendExternalId, phoneExternalId },
       this.db,
     );
 
@@ -449,20 +449,20 @@ export class ContactsService {
 
   async addEmail(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     data: EmailInput,
   ): Promise<Email | null> {
-    this.logger.debug({ contactExternalId }, 'Adding email');
+    this.logger.debug({ friendExternalId }, 'Adding email');
 
     // If setting as primary, clear existing primary
     if (data.is_primary) {
-      await clearPrimaryEmail.run({ userExternalId, contactExternalId }, this.db);
+      await clearPrimaryEmail.run({ userExternalId, friendExternalId }, this.db);
     }
 
     const [email] = await createEmail.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         emailAddress: data.email_address,
         emailType: data.email_type,
         label: data.label ?? null,
@@ -480,21 +480,21 @@ export class ContactsService {
 
   async updateEmail(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     emailExternalId: string,
     data: EmailInput,
   ): Promise<Email | null> {
-    this.logger.debug({ contactExternalId, emailExternalId }, 'Updating email');
+    this.logger.debug({ friendExternalId, emailExternalId }, 'Updating email');
 
     // If setting as primary, clear existing primary
     if (data.is_primary) {
-      await clearPrimaryEmail.run({ userExternalId, contactExternalId }, this.db);
+      await clearPrimaryEmail.run({ userExternalId, friendExternalId }, this.db);
     }
 
     const [email] = await updateEmail.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         emailExternalId,
         emailAddress: data.email_address,
         emailType: data.email_type,
@@ -513,13 +513,13 @@ export class ContactsService {
 
   async deleteEmail(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     emailExternalId: string,
   ): Promise<boolean> {
-    this.logger.debug({ contactExternalId, emailExternalId }, 'Deleting email');
+    this.logger.debug({ friendExternalId, emailExternalId }, 'Deleting email');
 
     const result = await deleteEmail.run(
-      { userExternalId, contactExternalId, emailExternalId },
+      { userExternalId, friendExternalId, emailExternalId },
       this.db,
     );
 
@@ -532,20 +532,20 @@ export class ContactsService {
 
   async addAddress(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     data: AddressInput,
   ): Promise<Address | null> {
-    this.logger.debug({ contactExternalId }, 'Adding address');
+    this.logger.debug({ friendExternalId }, 'Adding address');
 
     // If setting as primary, clear existing primary
     if (data.is_primary) {
-      await clearPrimaryAddress.run({ userExternalId, contactExternalId }, this.db);
+      await clearPrimaryAddress.run({ userExternalId, friendExternalId }, this.db);
     }
 
     const [address] = await createAddress.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         streetLine1: data.street_line1 ?? null,
         streetLine2: data.street_line2 ?? null,
         city: data.city ?? null,
@@ -568,21 +568,21 @@ export class ContactsService {
 
   async updateAddress(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     addressExternalId: string,
     data: AddressInput,
   ): Promise<Address | null> {
-    this.logger.debug({ contactExternalId, addressExternalId }, 'Updating address');
+    this.logger.debug({ friendExternalId, addressExternalId }, 'Updating address');
 
     // If setting as primary, clear existing primary
     if (data.is_primary) {
-      await clearPrimaryAddress.run({ userExternalId, contactExternalId }, this.db);
+      await clearPrimaryAddress.run({ userExternalId, friendExternalId }, this.db);
     }
 
     const [address] = await updateAddress.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         addressExternalId,
         streetLine1: data.street_line1 ?? null,
         streetLine2: data.street_line2 ?? null,
@@ -606,13 +606,13 @@ export class ContactsService {
 
   async deleteAddress(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     addressExternalId: string,
   ): Promise<boolean> {
-    this.logger.debug({ contactExternalId, addressExternalId }, 'Deleting address');
+    this.logger.debug({ friendExternalId, addressExternalId }, 'Deleting address');
 
     const result = await deleteAddress.run(
-      { userExternalId, contactExternalId, addressExternalId },
+      { userExternalId, friendExternalId, addressExternalId },
       this.db,
     );
 
@@ -625,15 +625,15 @@ export class ContactsService {
 
   async addUrl(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     data: UrlInput,
   ): Promise<Url | null> {
-    this.logger.debug({ contactExternalId }, 'Adding URL');
+    this.logger.debug({ friendExternalId }, 'Adding URL');
 
     const [url] = await createUrl.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         url: data.url,
         urlType: data.url_type,
         label: data.label ?? null,
@@ -650,16 +650,16 @@ export class ContactsService {
 
   async updateUrl(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     urlExternalId: string,
     data: UrlInput,
   ): Promise<Url | null> {
-    this.logger.debug({ contactExternalId, urlExternalId }, 'Updating URL');
+    this.logger.debug({ friendExternalId, urlExternalId }, 'Updating URL');
 
     const [url] = await updateUrl.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         urlExternalId,
         url: data.url,
         urlType: data.url_type,
@@ -677,13 +677,13 @@ export class ContactsService {
 
   async deleteUrl(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     urlExternalId: string,
   ): Promise<boolean> {
-    this.logger.debug({ contactExternalId, urlExternalId }, 'Deleting URL');
+    this.logger.debug({ friendExternalId, urlExternalId }, 'Deleting URL');
 
     const result = await deleteUrl.run(
-      { userExternalId, contactExternalId, urlExternalId },
+      { userExternalId, friendExternalId, urlExternalId },
       this.db,
     );
 
@@ -696,16 +696,16 @@ export class ContactsService {
 
   async updatePhoto(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     photoUrl: string | null,
     photoThumbnailUrl: string | null,
   ): Promise<boolean> {
-    this.logger.debug({ contactExternalId }, 'Updating photo');
+    this.logger.debug({ friendExternalId }, 'Updating photo');
 
-    const result = await updateContactPhoto.run(
+    const result = await updateFriendPhoto.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         photoUrl,
         photoThumbnailUrl,
       },
@@ -721,15 +721,15 @@ export class ContactsService {
 
   async addDate(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     data: DateInput,
-  ): Promise<ContactDate | null> {
-    this.logger.debug({ contactExternalId }, 'Adding date');
+  ): Promise<FriendDate | null> {
+    this.logger.debug({ friendExternalId }, 'Adding date');
 
-    // Check birthday limit (only one birthday allowed per contact)
+    // Check birthday limit (only one birthday allowed per friend)
     if (data.date_type === 'birthday') {
-      const [countResult] = await countBirthdaysForContact.run(
-        { userExternalId, contactExternalId },
+      const [countResult] = await countBirthdaysForFriend.run(
+        { userExternalId, friendExternalId },
         this.db,
       );
       if (countResult && (countResult.count ?? 0) > 0) {
@@ -740,7 +740,7 @@ export class ContactsService {
     const [date] = await createDate.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         dateValue: data.date_value,
         yearKnown: data.year_known ?? true,
         dateType: data.date_type,
@@ -758,16 +758,16 @@ export class ContactsService {
 
   async updateDate(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     dateExternalId: string,
     data: DateInput,
-  ): Promise<ContactDate | null> {
-    this.logger.debug({ contactExternalId, dateExternalId }, 'Updating date');
+  ): Promise<FriendDate | null> {
+    this.logger.debug({ friendExternalId, dateExternalId }, 'Updating date');
 
     const [date] = await updateDate.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         dateExternalId,
         dateValue: data.date_value,
         yearKnown: data.year_known ?? true,
@@ -786,13 +786,13 @@ export class ContactsService {
 
   async deleteDate(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     dateExternalId: string,
   ): Promise<boolean> {
-    this.logger.debug({ contactExternalId, dateExternalId }, 'Deleting date');
+    this.logger.debug({ friendExternalId, dateExternalId }, 'Deleting date');
 
     const result = await deleteDate.run(
-      { userExternalId, contactExternalId, dateExternalId },
+      { userExternalId, friendExternalId, dateExternalId },
       this.db,
     );
 
@@ -824,15 +824,15 @@ export class ContactsService {
 
   async setMetInfo(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     data: MetInfoInput,
   ): Promise<MetInfo | null> {
-    this.logger.debug({ contactExternalId }, 'Setting met info');
+    this.logger.debug({ friendExternalId }, 'Setting met info');
 
     const [metInfo] = await upsertMetInfo.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         metDate: data.met_date ?? null,
         metLocation: data.met_location ?? null,
         metContext: data.met_context ?? null,
@@ -847,10 +847,10 @@ export class ContactsService {
     return this.mapMetInfo(metInfo);
   }
 
-  async deleteMetInfo(userExternalId: string, contactExternalId: string): Promise<boolean> {
-    this.logger.debug({ contactExternalId }, 'Deleting met info');
+  async deleteMetInfo(userExternalId: string, friendExternalId: string): Promise<boolean> {
+    this.logger.debug({ friendExternalId }, 'Deleting met info');
 
-    const result = await deleteMetInfo.run({ userExternalId, contactExternalId }, this.db);
+    const result = await deleteMetInfo.run({ userExternalId, friendExternalId }, this.db);
 
     return result.length > 0;
   }
@@ -861,15 +861,15 @@ export class ContactsService {
 
   async addSocialProfile(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     data: SocialProfileInput,
   ): Promise<SocialProfile | null> {
-    this.logger.debug({ contactExternalId }, 'Adding social profile');
+    this.logger.debug({ friendExternalId }, 'Adding social profile');
 
     const [profile] = await createSocialProfile.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         platform: data.platform,
         profileUrl: data.profile_url ?? null,
         username: data.username ?? null,
@@ -886,16 +886,16 @@ export class ContactsService {
 
   async updateSocialProfile(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     profileExternalId: string,
     data: SocialProfileInput,
   ): Promise<SocialProfile | null> {
-    this.logger.debug({ contactExternalId, profileExternalId }, 'Updating social profile');
+    this.logger.debug({ friendExternalId, profileExternalId }, 'Updating social profile');
 
     const [profile] = await updateSocialProfile.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         profileExternalId,
         platform: data.platform,
         profileUrl: data.profile_url ?? null,
@@ -913,13 +913,13 @@ export class ContactsService {
 
   async deleteSocialProfile(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     profileExternalId: string,
   ): Promise<boolean> {
-    this.logger.debug({ contactExternalId, profileExternalId }, 'Deleting social profile');
+    this.logger.debug({ friendExternalId, profileExternalId }, 'Deleting social profile');
 
     const result = await deleteSocialProfile.run(
-      { userExternalId, contactExternalId, profileExternalId },
+      { userExternalId, friendExternalId, profileExternalId },
       this.db,
     );
 
@@ -965,15 +965,15 @@ export class ContactsService {
   }
 
   /**
-   * Add a relationship between two contacts (creates inverse automatically)
+   * Add a relationship between two friends (creates inverse automatically)
    */
   async addRelationship(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     data: RelationshipInput,
   ): Promise<Relationship | null> {
     this.logger.debug(
-      { contactExternalId, relatedContactExternalId: data.related_contact_id },
+      { friendExternalId, relatedFriendExternalId: data.related_friend_id },
       'Adding relationship',
     );
 
@@ -981,8 +981,8 @@ export class ContactsService {
     const [relationship] = await createRelationship.run(
       {
         userExternalId,
-        contactExternalId,
-        relatedContactExternalId: data.related_contact_id,
+        friendExternalId,
+        relatedFriendExternalId: data.related_friend_id,
         relationshipTypeId: data.relationship_type_id,
         notes: data.notes ?? null,
       },
@@ -997,19 +997,19 @@ export class ContactsService {
     await createInverseRelationship.run(
       {
         userExternalId,
-        contactExternalId,
-        relatedContactExternalId: data.related_contact_id,
+        friendExternalId,
+        relatedFriendExternalId: data.related_friend_id,
         relationshipTypeId: data.relationship_type_id,
         notes: data.notes ?? null,
       },
       this.db,
     );
 
-    // Fetch the full relationship with related contact info
+    // Fetch the full relationship with related friend info
     const [fullRelationship] = await getRelationshipById.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         relationshipExternalId: relationship.external_id,
       },
       this.db,
@@ -1021,8 +1021,8 @@ export class ContactsService {
 
     this.logger.info(
       {
-        contactExternalId,
-        relatedContactExternalId: data.related_contact_id,
+        friendExternalId,
+        relatedFriendExternalId: data.related_friend_id,
         relationshipType: data.relationship_type_id,
       },
       'Relationship created successfully',
@@ -1036,16 +1036,16 @@ export class ContactsService {
    */
   async updateRelationship(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     relationshipExternalId: string,
     data: RelationshipUpdateInput,
   ): Promise<Relationship | null> {
-    this.logger.debug({ contactExternalId, relationshipExternalId }, 'Updating relationship');
+    this.logger.debug({ friendExternalId, relationshipExternalId }, 'Updating relationship');
 
     const [updated] = await updateRelationship.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         relationshipExternalId,
         notes: data.notes ?? null,
       },
@@ -1056,11 +1056,11 @@ export class ContactsService {
       return null;
     }
 
-    // Fetch the full relationship with related contact info
+    // Fetch the full relationship with related friend info
     const [fullRelationship] = await getRelationshipById.run(
       {
         userExternalId,
-        contactExternalId,
+        friendExternalId,
         relationshipExternalId,
       },
       this.db,
@@ -1070,7 +1070,7 @@ export class ContactsService {
       return null;
     }
 
-    this.logger.info({ contactExternalId, relationshipExternalId }, 'Relationship updated');
+    this.logger.info({ friendExternalId, relationshipExternalId }, 'Relationship updated');
 
     return this.mapRelationship(fullRelationship);
   }
@@ -1080,14 +1080,14 @@ export class ContactsService {
    */
   async deleteRelationship(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     relationshipExternalId: string,
   ): Promise<boolean> {
-    this.logger.debug({ contactExternalId, relationshipExternalId }, 'Deleting relationship');
+    this.logger.debug({ friendExternalId, relationshipExternalId }, 'Deleting relationship');
 
-    // Delete the primary relationship and get related contact ID
+    // Delete the primary relationship and get related friend ID
     const [deleted] = await deleteRelationship.run(
-      { userExternalId, contactExternalId, relationshipExternalId },
+      { userExternalId, friendExternalId, relationshipExternalId },
       this.db,
     );
 
@@ -1099,36 +1099,36 @@ export class ContactsService {
     await deleteInverseRelationship.run(
       {
         userExternalId,
-        contactExternalId,
-        relatedContactId: deleted.related_contact_id,
+        friendExternalId,
+        relatedFriendId: deleted.related_friend_id,
         relationshipTypeId: deleted.relationship_type_id,
       },
       this.db,
     );
 
-    this.logger.info({ contactExternalId, relationshipExternalId }, 'Relationship deleted');
+    this.logger.info({ friendExternalId, relationshipExternalId }, 'Relationship deleted');
 
     return true;
   }
 
   /**
-   * Search contacts by name (for autocomplete)
+   * Search friends by name (for autocomplete)
    */
-  async searchContacts(
+  async searchFriends(
     userExternalId: string,
     query: string,
-    excludeContactExternalId?: string,
+    excludeFriendExternalId?: string,
     limit = 10,
-  ): Promise<ContactSearchResult[]> {
-    this.logger.debug({ query, excludeContactExternalId }, 'Searching contacts');
+  ): Promise<FriendSearchResult[]> {
+    this.logger.debug({ query, excludeFriendExternalId }, 'Searching friends');
 
     const searchPattern = createWildcardQuery(query);
 
-    const results = await searchContacts.run(
+    const results = await searchFriends.run(
       {
         userExternalId,
         searchPattern,
-        excludeContactExternalId: excludeContactExternalId ?? null,
+        excludeFriendExternalId: excludeFriendExternalId ?? null,
         limit,
       },
       this.db,
@@ -1146,7 +1146,7 @@ export class ContactsService {
   // ============================================================================
 
   /**
-   * Full-text search across contacts with relevance ranking
+   * Full-text search across friends with relevance ranking
    * Searches: names, organization, job title, work notes, emails, phones,
    * relationship notes, and met context
    */
@@ -1155,9 +1155,9 @@ export class ContactsService {
     query: string,
     limit = 10,
   ): Promise<GlobalSearchResult[]> {
-    this.logger.debug({ query, limit }, 'Full-text searching contacts');
+    this.logger.debug({ query, limit }, 'Full-text searching friends');
 
-    const results = await fullTextSearchContacts.run(
+    const results = await fullTextSearchFriends.run(
       {
         userExternalId,
         query,
@@ -1172,7 +1172,7 @@ export class ContactsService {
 
   /**
    * Paginated full-text search with sorting options
-   * Used by in-page search for contacts list
+   * Used by in-page search for friends list
    */
   async paginatedSearch(
     userExternalId: string,
@@ -1315,7 +1315,7 @@ export class ContactsService {
       totalPages: Math.ceil(total / pageSize),
     };
 
-    // Fetch facet counts if requested (uses all contacts, not search-filtered)
+    // Fetch facet counts if requested (uses all friends, not search-filtered)
     if (includeFacets) {
       const facetRows = await getAllFacetCounts.run({ userExternalId }, this.db);
       response.facets = this.aggregateFacets(facetRows);
@@ -1369,7 +1369,7 @@ export class ContactsService {
   // Private Helper Methods
   // ============================================================================
 
-  private mapGlobalSearchResult(row: IFullTextSearchContactsResult): GlobalSearchResult {
+  private mapGlobalSearchResult(row: IFullTextSearchFriendsResult): GlobalSearchResult {
     return {
       id: row.external_id,
       displayName: row.display_name,
@@ -1497,13 +1497,13 @@ export class ContactsService {
 
   private async createPhones(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     phones: PhoneInput[],
   ): Promise<Phone[]> {
     const results: Phone[] = [];
 
     for (const phone of phones) {
-      const created = await this.addPhone(userExternalId, contactExternalId, phone);
+      const created = await this.addPhone(userExternalId, friendExternalId, phone);
       if (created) {
         results.push(created);
       }
@@ -1514,13 +1514,13 @@ export class ContactsService {
 
   private async createEmails(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     emails: EmailInput[],
   ): Promise<Email[]> {
     const results: Email[] = [];
 
     for (const email of emails) {
-      const created = await this.addEmail(userExternalId, contactExternalId, email);
+      const created = await this.addEmail(userExternalId, friendExternalId, email);
       if (created) {
         results.push(created);
       }
@@ -1531,13 +1531,13 @@ export class ContactsService {
 
   private async createAddresses(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     addresses: AddressInput[],
   ): Promise<Address[]> {
     const results: Address[] = [];
 
     for (const address of addresses) {
-      const created = await this.addAddress(userExternalId, contactExternalId, address);
+      const created = await this.addAddress(userExternalId, friendExternalId, address);
       if (created) {
         results.push(created);
       }
@@ -1548,13 +1548,13 @@ export class ContactsService {
 
   private async createUrls(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     urls: UrlInput[],
   ): Promise<Url[]> {
     const results: Url[] = [];
 
     for (const url of urls) {
-      const created = await this.addUrl(userExternalId, contactExternalId, url);
+      const created = await this.addUrl(userExternalId, friendExternalId, url);
       if (created) {
         results.push(created);
       }
@@ -1565,13 +1565,13 @@ export class ContactsService {
 
   private async createDates(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     dates: DateInput[],
-  ): Promise<ContactDate[]> {
-    const results: ContactDate[] = [];
+  ): Promise<FriendDate[]> {
+    const results: FriendDate[] = [];
 
     for (const date of dates) {
-      const created = await this.addDate(userExternalId, contactExternalId, date);
+      const created = await this.addDate(userExternalId, friendExternalId, date);
       if (created) {
         results.push(created);
       }
@@ -1582,13 +1582,13 @@ export class ContactsService {
 
   private async createSocialProfiles(
     userExternalId: string,
-    contactExternalId: string,
+    friendExternalId: string,
     profiles: SocialProfileInput[],
   ): Promise<SocialProfile[]> {
     const results: SocialProfile[] = [];
 
     for (const profile of profiles) {
-      const created = await this.addSocialProfile(userExternalId, contactExternalId, profile);
+      const created = await this.addSocialProfile(userExternalId, friendExternalId, profile);
       if (created) {
         results.push(created);
       }
@@ -1597,7 +1597,7 @@ export class ContactsService {
     return results;
   }
 
-  private mapContactListItem(row: IGetContactsByUserIdResult): ContactListItem {
+  private mapFriendListItem(row: IGetFriendsByUserIdResult): FriendListItem {
     return {
       id: row.external_id,
       displayName: row.display_name,
@@ -1609,7 +1609,7 @@ export class ContactsService {
     };
   }
 
-  private mapPhone(row: IGetPhonesByContactIdResult): Phone {
+  private mapPhone(row: IGetPhonesByFriendIdResult): Phone {
     return {
       id: row.external_id,
       phoneNumber: row.phone_number,
@@ -1620,7 +1620,7 @@ export class ContactsService {
     };
   }
 
-  private mapEmail(row: IGetEmailsByContactIdResult): Email {
+  private mapEmail(row: IGetEmailsByFriendIdResult): Email {
     return {
       id: row.external_id,
       emailAddress: row.email_address,
@@ -1631,7 +1631,7 @@ export class ContactsService {
     };
   }
 
-  private mapAddress(row: IGetAddressesByContactIdResult): Address {
+  private mapAddress(row: IGetAddressesByFriendIdResult): Address {
     return {
       id: row.external_id,
       streetLine1: row.street_line1 ?? undefined,
@@ -1647,7 +1647,7 @@ export class ContactsService {
     };
   }
 
-  private mapUrl(row: IGetUrlsByContactIdResult): Url {
+  private mapUrl(row: IGetUrlsByFriendIdResult): Url {
     return {
       id: row.external_id,
       url: row.url,
@@ -1657,7 +1657,7 @@ export class ContactsService {
     };
   }
 
-  private mapDate(row: IGetDatesByContactIdResult): ContactDate {
+  private mapDate(row: IGetDatesByFriendIdResult): FriendDate {
     // date_value comes as a Date object from PostgreSQL
     const dateValue =
       row.date_value instanceof Date ? row.date_value.toISOString().split('T')[0] : row.date_value;
@@ -1682,15 +1682,15 @@ export class ContactsService {
       dateType: row.date_type as DateType,
       label: row.label ?? undefined,
       daysUntil: row.days_until ?? 0,
-      contact: {
-        id: row.contact_external_id,
-        displayName: row.contact_display_name,
-        photoThumbnailUrl: row.contact_photo_thumbnail_url ?? undefined,
+      friend: {
+        id: row.friend_external_id,
+        displayName: row.friend_display_name,
+        photoThumbnailUrl: row.friend_photo_thumbnail_url ?? undefined,
       },
     };
   }
 
-  private mapMetInfo(row: IGetMetInfoByContactIdResult): MetInfo {
+  private mapMetInfo(row: IGetMetInfoByFriendIdResult): MetInfo {
     // met_date comes as a Date object from PostgreSQL
     const metDate =
       row.met_date instanceof Date
@@ -1706,7 +1706,7 @@ export class ContactsService {
     };
   }
 
-  private mapSocialProfile(row: IGetSocialProfilesByContactIdResult): SocialProfile {
+  private mapSocialProfile(row: IGetSocialProfilesByFriendIdResult): SocialProfile {
     return {
       id: row.external_id,
       platform: row.platform as SocialPlatform,
@@ -1716,12 +1716,12 @@ export class ContactsService {
     };
   }
 
-  private mapRelationship(row: IGetRelationshipsByContactIdResult): Relationship {
+  private mapRelationship(row: IGetRelationshipsByFriendIdResult): Relationship {
     return {
       id: row.external_id,
-      relatedContactId: row.related_contact_external_id,
-      relatedContactDisplayName: row.related_contact_display_name,
-      relatedContactPhotoThumbnailUrl: row.related_contact_photo_thumbnail_url ?? undefined,
+      relatedFriendId: row.related_friend_external_id,
+      relatedFriendDisplayName: row.related_friend_display_name,
+      relatedFriendPhotoThumbnailUrl: row.related_friend_photo_thumbnail_url ?? undefined,
       relationshipTypeId: row.relationship_type_id as RelationshipTypeId,
       relationshipTypeLabel: row.relationship_type_label,
       relationshipCategory: row.relationship_category as RelationshipCategory,
@@ -1731,12 +1731,12 @@ export class ContactsService {
   }
 
   /**
-   * Maps a contact row with embedded JSON arrays for related data
-   * Used by the optimized getContactById query
+   * Maps a friend row with embedded JSON arrays for related data
+   * Used by the optimized getFriendById query
    */
-  private mapContactWithEmbeddedRelations(contact: IGetContactByIdResult): Contact {
+  private mapFriendWithEmbeddedRelations(friend: IGetFriendByIdResult): Friend {
     // Parse JSON arrays (PostgreSQL returns them as parsed objects when using node-pg)
-    const phones = (contact.phones || []) as Array<{
+    const phones = (friend.phones || []) as Array<{
       external_id: string;
       phone_number: string;
       phone_type: string;
@@ -1745,7 +1745,7 @@ export class ContactsService {
       created_at: string;
     }>;
 
-    const emails = (contact.emails || []) as Array<{
+    const emails = (friend.emails || []) as Array<{
       external_id: string;
       email_address: string;
       email_type: string;
@@ -1754,7 +1754,7 @@ export class ContactsService {
       created_at: string;
     }>;
 
-    const addresses = (contact.addresses || []) as Array<{
+    const addresses = (friend.addresses || []) as Array<{
       external_id: string;
       street_line1: string | null;
       street_line2: string | null;
@@ -1768,7 +1768,7 @@ export class ContactsService {
       created_at: string;
     }>;
 
-    const urls = (contact.urls || []) as Array<{
+    const urls = (friend.urls || []) as Array<{
       external_id: string;
       url: string;
       url_type: string;
@@ -1777,7 +1777,7 @@ export class ContactsService {
     }>;
 
     // Epic 1B: Parse new sub-resources
-    const dates = (contact.dates || []) as Array<{
+    const dates = (friend.dates || []) as Array<{
       external_id: string;
       date_value: string;
       year_known: boolean;
@@ -1786,7 +1786,7 @@ export class ContactsService {
       created_at: string;
     }>;
 
-    const metInfoRaw = contact.met_info as {
+    const metInfoRaw = friend.met_info as {
       external_id: string;
       met_date: string | null;
       met_location: string | null;
@@ -1795,7 +1795,7 @@ export class ContactsService {
       updated_at: string;
     } | null;
 
-    const socialProfiles = (contact.social_profiles || []) as Array<{
+    const socialProfiles = (friend.social_profiles || []) as Array<{
       external_id: string;
       platform: string;
       profile_url: string | null;
@@ -1804,11 +1804,11 @@ export class ContactsService {
     }>;
 
     // Epic 1D: Relationships
-    const relationships = (contact.relationships || []) as Array<{
+    const relationships = (friend.relationships || []) as Array<{
       external_id: string;
-      related_contact_external_id: string;
-      related_contact_display_name: string;
-      related_contact_photo_thumbnail_url: string | null;
+      related_friend_external_id: string;
+      related_friend_display_name: string;
+      related_friend_photo_thumbnail_url: string | null;
       relationship_type_id: string;
       relationship_type_label: string;
       relationship_category: string;
@@ -1817,22 +1817,22 @@ export class ContactsService {
     }>;
 
     return {
-      id: contact.external_id,
-      displayName: contact.display_name,
-      nickname: contact.nickname ?? undefined,
-      namePrefix: contact.name_prefix ?? undefined,
-      nameFirst: contact.name_first ?? undefined,
-      nameMiddle: contact.name_middle ?? undefined,
-      nameLast: contact.name_last ?? undefined,
-      nameSuffix: contact.name_suffix ?? undefined,
-      photoUrl: contact.photo_url ?? undefined,
-      photoThumbnailUrl: contact.photo_thumbnail_url ?? undefined,
+      id: friend.external_id,
+      displayName: friend.display_name,
+      nickname: friend.nickname ?? undefined,
+      namePrefix: friend.name_prefix ?? undefined,
+      nameFirst: friend.name_first ?? undefined,
+      nameMiddle: friend.name_middle ?? undefined,
+      nameLast: friend.name_last ?? undefined,
+      nameSuffix: friend.name_suffix ?? undefined,
+      photoUrl: friend.photo_url ?? undefined,
+      photoThumbnailUrl: friend.photo_thumbnail_url ?? undefined,
       // Epic 1B: Professional fields
-      jobTitle: contact.job_title ?? undefined,
-      organization: contact.organization ?? undefined,
-      department: contact.department ?? undefined,
-      workNotes: contact.work_notes ?? undefined,
-      interests: contact.interests ?? undefined,
+      jobTitle: friend.job_title ?? undefined,
+      organization: friend.organization ?? undefined,
+      department: friend.department ?? undefined,
+      workNotes: friend.work_notes ?? undefined,
+      interests: friend.interests ?? undefined,
       phones: phones.map((p) => ({
         id: p.external_id,
         phoneNumber: p.phone_number,
@@ -1898,17 +1898,17 @@ export class ContactsService {
       // Epic 1D: Relationships
       relationships: relationships.map((r) => ({
         id: r.external_id,
-        relatedContactId: r.related_contact_external_id,
-        relatedContactDisplayName: r.related_contact_display_name,
-        relatedContactPhotoThumbnailUrl: r.related_contact_photo_thumbnail_url ?? undefined,
+        relatedFriendId: r.related_friend_external_id,
+        relatedFriendDisplayName: r.related_friend_display_name,
+        relatedFriendPhotoThumbnailUrl: r.related_friend_photo_thumbnail_url ?? undefined,
         relationshipTypeId: r.relationship_type_id as RelationshipTypeId,
         relationshipTypeLabel: r.relationship_type_label,
         relationshipCategory: r.relationship_category as RelationshipCategory,
         notes: r.notes ?? undefined,
         createdAt: r.created_at,
       })),
-      createdAt: contact.created_at.toISOString(),
-      updatedAt: contact.updated_at.toISOString(),
+      createdAt: friend.created_at.toISOString(),
+      updatedAt: friend.updated_at.toISOString(),
     };
   }
 }

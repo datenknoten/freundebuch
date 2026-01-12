@@ -38,7 +38,7 @@ export function isPathWithinBase(basePath: string, ...untrustedPath: string[]): 
  * 1. Escapes all HTML entities in the content
  * 2. Restores only the safe <mark> and </mark> tags
  *
- * This prevents stored XSS attacks where malicious content in contact fields
+ * This prevents stored XSS attacks where malicious content in friend fields
  * (display_name, organization, work_notes) could be executed when rendered.
  *
  * @param headline - The raw headline from ts_headline containing <mark> tags

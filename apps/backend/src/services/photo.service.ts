@@ -23,25 +23,25 @@ export class PhotoService {
     const config = getConfig();
     // Use environment variable or default to local uploads directory
     this.uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'contacts');
-    this.baseUrl = `${config.BACKEND_URL}/api/uploads/contacts`;
+    this.baseUrl = `${config.BACKEND_URL}/api/uploads/friends`;
   }
 
   /**
    * Validate and process an uploaded photo
    */
-  async uploadPhoto(contactExternalId: string, file: File): Promise<PhotoUploadResult> {
-    this.logger.debug({ contactExternalId, fileName: file.name }, 'Processing photo upload');
+  async uploadPhoto(friendExternalId: string, file: File): Promise<PhotoUploadResult> {
+    this.logger.debug({ friendExternalId, fileName: file.name }, 'Processing photo upload');
 
-    // Defense-in-depth: Validate contactExternalId is a valid UUID
-    if (!isValidUuid(contactExternalId)) {
-      throw new PhotoUploadError('Invalid contact ID', 'INVALID_CONTACT_ID');
+    // Defense-in-depth: Validate friendExternalId is a valid UUID
+    if (!isValidUuid(friendExternalId)) {
+      throw new PhotoUploadError('Invalid friend ID', 'INVALID_FRIEND_ID');
     }
 
     // Defense-in-depth: Verify path stays within upload directory
-    const contactDir = path.join(this.uploadDir, contactExternalId);
-    if (!isPathWithinBase(this.uploadDir, contactExternalId)) {
-      this.logger.warn({ contactExternalId }, 'Path traversal attempt detected');
-      throw new PhotoUploadError('Invalid contact ID', 'INVALID_CONTACT_ID');
+    const friendDir = path.join(this.uploadDir, friendExternalId);
+    if (!isPathWithinBase(this.uploadDir, friendExternalId)) {
+      this.logger.warn({ friendExternalId }, 'Path traversal attempt detected');
+      throw new PhotoUploadError('Invalid friend ID', 'INVALID_FRIEND_ID');
     }
 
     // Validate file type using ArkType schema
@@ -55,8 +55,8 @@ export class PhotoService {
       throw new PhotoUploadError(PhotoValidationErrors.FILE_TOO_LARGE, 'FILE_TOO_LARGE');
     }
 
-    // Create directory for contact photos
-    await mkdir(contactDir, { recursive: true });
+    // Create directory for friend photos
+    await mkdir(friendDir, { recursive: true });
 
     // Get file extension based on mime type
     const ext = this.getExtension(file.type);
@@ -77,8 +77,8 @@ export class PhotoService {
     // Generate filenames
     const originalFilename = `photo.${ext}`;
     const thumbnailFilename = `photo_thumb.${ext}`;
-    const originalPath = path.join(contactDir, originalFilename);
-    const thumbnailPath = path.join(contactDir, thumbnailFilename);
+    const originalPath = path.join(friendDir, originalFilename);
+    const thumbnailPath = path.join(friendDir, thumbnailFilename);
 
     // Save original (with reasonable max dimensions to prevent abuse)
     await image
@@ -96,37 +96,37 @@ export class PhotoService {
       })
       .toFile(thumbnailPath);
 
-    this.logger.info({ contactExternalId }, 'Photo uploaded successfully');
+    this.logger.info({ friendExternalId }, 'Photo uploaded successfully');
 
     return {
-      photoUrl: `${this.baseUrl}/${contactExternalId}/${originalFilename}`,
-      photoThumbnailUrl: `${this.baseUrl}/${contactExternalId}/${thumbnailFilename}`,
+      photoUrl: `${this.baseUrl}/${friendExternalId}/${originalFilename}`,
+      photoThumbnailUrl: `${this.baseUrl}/${friendExternalId}/${thumbnailFilename}`,
     };
   }
 
   /**
-   * Delete a contact's photos
+   * Delete a friend's photos
    */
-  async deletePhoto(contactExternalId: string): Promise<void> {
-    this.logger.debug({ contactExternalId }, 'Deleting contact photos');
+  async deletePhoto(friendExternalId: string): Promise<void> {
+    this.logger.debug({ friendExternalId }, 'Deleting friend photos');
 
-    // Defense-in-depth: Validate contactExternalId is a valid UUID
-    if (!isValidUuid(contactExternalId)) {
-      throw new PhotoUploadError('Invalid contact ID', 'INVALID_CONTACT_ID');
+    // Defense-in-depth: Validate friendExternalId is a valid UUID
+    if (!isValidUuid(friendExternalId)) {
+      throw new PhotoUploadError('Invalid friend ID', 'INVALID_FRIEND_ID');
     }
 
     // Defense-in-depth: Verify path stays within upload directory
-    if (!isPathWithinBase(this.uploadDir, contactExternalId)) {
-      this.logger.warn({ contactExternalId }, 'Path traversal attempt detected');
-      throw new PhotoUploadError('Invalid contact ID', 'INVALID_CONTACT_ID');
+    if (!isPathWithinBase(this.uploadDir, friendExternalId)) {
+      this.logger.warn({ friendExternalId }, 'Path traversal attempt detected');
+      throw new PhotoUploadError('Invalid friend ID', 'INVALID_FRIEND_ID');
     }
 
-    const contactDir = path.join(this.uploadDir, contactExternalId);
+    const friendDir = path.join(this.uploadDir, friendExternalId);
 
     try {
-      await stat(contactDir);
-      await rm(contactDir, { recursive: true });
-      this.logger.info({ contactExternalId }, 'Photos deleted successfully');
+      await stat(friendDir);
+      await rm(friendDir, { recursive: true });
+      this.logger.info({ friendExternalId }, 'Photos deleted successfully');
     } catch (error) {
       // Directory doesn't exist, that's fine
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
