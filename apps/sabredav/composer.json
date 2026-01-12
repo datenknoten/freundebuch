@@ -3,7 +3,7 @@
   "description": "CardDAV/CalDAV server for Freundebuch",
   "type": "project",
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.4",
     "sabre/dav": "^4.6",
     "ext-pdo": "*",
     "ext-pdo_pgsql": "*",
