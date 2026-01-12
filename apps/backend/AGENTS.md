@@ -44,6 +44,60 @@ src/
 - Services call database queries
 - Handle validation with ArkType schemas
 
+## Error Handling
+
+**Always use custom error classes from `utils/errors.ts` instead of raw `Error`.**
+
+### Available Error Classes
+
+| Error Class | Status Code | Use Case |
+|-------------|-------------|----------|
+| `AuthenticationError` | 401 | Invalid credentials |
+| `InvalidSessionError` | 401 | Invalid/expired sessions |
+| `InvalidTokenError` | 401 | Invalid/expired tokens |
+| `UserNotFoundError` | 404 | User not found |
+| `ContactNotFoundError` | 404 | Contact not found |
+| `UserAlreadyExistsError` | 409 | Registration conflicts |
+| `BirthdayAlreadyExistsError` | 409 | Duplicate birthday |
+| `UserCreationError` | 500 | User creation failed |
+| `ContactCreationError` | 500 | Contact creation failed |
+| `AppPasswordCreationError` | 500 | App password creation failed |
+| `PreferencesUpdateError` | 500 | Preferences update failed |
+| `DatabaseConnectionError` | 500 | No database connection |
+| `ConfigurationError` | 500 | Invalid configuration |
+| `OverpassApiError` | 502 | Overpass API errors |
+| `ZipcodeBaseApiError` | 502 | ZipcodeBase API errors |
+
+### Usage Pattern
+
+```typescript
+// In services - throw custom errors
+import { AuthenticationError, UserNotFoundError } from '../utils/errors.js';
+
+if (!user) {
+  throw new UserNotFoundError();
+}
+
+// In routes - use isAppError for type-safe handling
+import { isAppError } from '../utils/errors.js';
+
+try {
+  // ... service call
+} catch (error) {
+  if (isAppError(error)) {
+    return c.json({ error: error.message }, error.statusCode);
+  }
+  // Handle unknown errors
+}
+```
+
+### Why Custom Errors?
+
+- Type-safe error handling with `instanceof` checks
+- Consistent HTTP status codes via `statusCode` property
+- Better Sentry/logging integration
+- Improved debugging with proper stack traces
+
 ## Authentication
 
 - JWT-based with access + refresh tokens
