@@ -70,29 +70,29 @@ const getUserByEmailIR: any = {"usedParamSet":{"email":true},"params":[{"name":"
 export const getUserByEmail = new PreparedQuery<IGetUserByEmailParams,IGetUserByEmailResult>(getUserByEmailIR);
 
 
-/** 'GetUserByEmailWithSelfContact' parameters type */
-export interface IGetUserByEmailWithSelfContactParams {
+/** 'GetUserByEmailWithSelfProfile' parameters type */
+export interface IGetUserByEmailWithSelfProfileParams {
   email?: string | null | void;
 }
 
-/** 'GetUserByEmailWithSelfContact' return type */
-export interface IGetUserByEmailWithSelfContactResult {
+/** 'GetUserByEmailWithSelfProfile' return type */
+export interface IGetUserByEmailWithSelfProfileResult {
   created_at: Date;
   email: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
   /** Public UUID for API exposure (always use this in APIs) */
-  self_contact_external_id: string;
+  self_profile_external_id: string;
   updated_at: Date;
 }
 
-/** 'GetUserByEmailWithSelfContact' query type */
-export interface IGetUserByEmailWithSelfContactQuery {
-  params: IGetUserByEmailWithSelfContactParams;
-  result: IGetUserByEmailWithSelfContactResult;
+/** 'GetUserByEmailWithSelfProfile' query type */
+export interface IGetUserByEmailWithSelfProfileQuery {
+  params: IGetUserByEmailWithSelfProfileParams;
+  result: IGetUserByEmailWithSelfProfileResult;
 }
 
-const getUserByEmailWithSelfContactIR: any = {"usedParamSet":{"email":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":238,"b":243}]}],"statement":"SELECT\n    u.external_id,\n    u.email,\n    u.created_at,\n    u.updated_at,\n    c.external_id as self_contact_external_id\nFROM auth.users u\nLEFT JOIN contacts.contacts c ON u.self_contact_id = c.id AND c.deleted_at IS NULL\nWHERE u.email = :email"};
+const getUserByEmailWithSelfProfileIR: any = {"usedParamSet":{"email":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":236,"b":241}]}],"statement":"SELECT\n    u.external_id,\n    u.email,\n    u.created_at,\n    u.updated_at,\n    c.external_id as self_profile_external_id\nFROM auth.users u\nLEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL\nWHERE u.email = :email"};
 
 /**
  * Query generated from SQL:
@@ -102,13 +102,13 @@ const getUserByEmailWithSelfContactIR: any = {"usedParamSet":{"email":true},"par
  *     u.email,
  *     u.created_at,
  *     u.updated_at,
- *     c.external_id as self_contact_external_id
+ *     c.external_id as self_profile_external_id
  * FROM auth.users u
- * LEFT JOIN contacts.contacts c ON u.self_contact_id = c.id AND c.deleted_at IS NULL
+ * LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
  * WHERE u.email = :email
  * ```
  */
-export const getUserByEmailWithSelfContact = new PreparedQuery<IGetUserByEmailWithSelfContactParams,IGetUserByEmailWithSelfContactResult>(getUserByEmailWithSelfContactIR);
+export const getUserByEmailWithSelfProfile = new PreparedQuery<IGetUserByEmailWithSelfProfileParams,IGetUserByEmailWithSelfProfileResult>(getUserByEmailWithSelfProfileIR);
 
 
 /** 'CreateUser' parameters type */
@@ -180,29 +180,29 @@ const updateUserIR: any = {"usedParamSet":{"email":true,"externalId":true},"para
 export const updateUser = new PreparedQuery<IUpdateUserParams,IUpdateUserResult>(updateUserIR);
 
 
-/** 'UpdateUserReturningWithSelfContact' parameters type */
-export interface IUpdateUserReturningWithSelfContactParams {
+/** 'UpdateUserReturningWithSelfProfile' parameters type */
+export interface IUpdateUserReturningWithSelfProfileParams {
   email?: string | null | void;
   externalId?: string | null | void;
 }
 
-/** 'UpdateUserReturningWithSelfContact' return type */
-export interface IUpdateUserReturningWithSelfContactResult {
+/** 'UpdateUserReturningWithSelfProfile' return type */
+export interface IUpdateUserReturningWithSelfProfileResult {
   created_at: Date;
   email: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
-  self_contact_external_id: string | null;
+  self_profile_external_id: string | null;
   updated_at: Date;
 }
 
-/** 'UpdateUserReturningWithSelfContact' query type */
-export interface IUpdateUserReturningWithSelfContactQuery {
-  params: IUpdateUserReturningWithSelfContactParams;
-  result: IUpdateUserReturningWithSelfContactResult;
+/** 'UpdateUserReturningWithSelfProfile' query type */
+export interface IUpdateUserReturningWithSelfProfileQuery {
+  params: IUpdateUserReturningWithSelfProfileParams;
+  result: IUpdateUserReturningWithSelfProfileResult;
 }
 
-const updateUserReturningWithSelfContactIR: any = {"usedParamSet":{"email":true,"externalId":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":32,"b":37}]},{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":93,"b":103}]}],"statement":"UPDATE auth.users u\nSET email = :email, updated_at = CURRENT_TIMESTAMP\nWHERE u.external_id = :externalId\nRETURNING\n    u.external_id,\n    u.email,\n    u.created_at,\n    u.updated_at,\n    (SELECT c.external_id FROM contacts.contacts c WHERE c.id = u.self_contact_id AND c.deleted_at IS NULL) as self_contact_external_id"};
+const updateUserReturningWithSelfProfileIR: any = {"usedParamSet":{"email":true,"externalId":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":32,"b":37}]},{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":93,"b":103}]}],"statement":"UPDATE auth.users u\nSET email = :email, updated_at = CURRENT_TIMESTAMP\nWHERE u.external_id = :externalId\nRETURNING\n    u.external_id,\n    u.email,\n    u.created_at,\n    u.updated_at,\n    (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id"};
 
 /**
  * Query generated from SQL:
@@ -215,10 +215,10 @@ const updateUserReturningWithSelfContactIR: any = {"usedParamSet":{"email":true,
  *     u.email,
  *     u.created_at,
  *     u.updated_at,
- *     (SELECT c.external_id FROM contacts.contacts c WHERE c.id = u.self_contact_id AND c.deleted_at IS NULL) as self_contact_external_id
+ *     (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id
  * ```
  */
-export const updateUserReturningWithSelfContact = new PreparedQuery<IUpdateUserReturningWithSelfContactParams,IUpdateUserReturningWithSelfContactResult>(updateUserReturningWithSelfContactIR);
+export const updateUserReturningWithSelfProfile = new PreparedQuery<IUpdateUserReturningWithSelfProfileParams,IUpdateUserReturningWithSelfProfileResult>(updateUserReturningWithSelfProfileIR);
 
 
 /** 'DeleteUser' parameters type */
@@ -356,110 +356,110 @@ const updateUserPreferencesIR: any = {"usedParamSet":{"preferences":true,"extern
 export const updateUserPreferences = new PreparedQuery<IUpdateUserPreferencesParams,IUpdateUserPreferencesResult>(updateUserPreferencesIR);
 
 
-/** 'GetUserSelfContact' parameters type */
-export interface IGetUserSelfContactParams {
+/** 'GetUserSelfProfile' parameters type */
+export interface IGetUserSelfProfileParams {
   userExternalId?: string | null | void;
 }
 
-/** 'GetUserSelfContact' return type */
-export interface IGetUserSelfContactResult {
+/** 'GetUserSelfProfile' return type */
+export interface IGetUserSelfProfileResult {
   /** Public UUID for API exposure (always use this in APIs) */
-  self_contact_external_id: string;
-  /** Reference to the user's self-contact (first friendbook entry) */
-  self_contact_id: number | null;
+  self_profile_external_id: string;
+  /** Reference to the user's profile (first friendbook entry) */
+  self_profile_id: number | null;
 }
 
-/** 'GetUserSelfContact' query type */
-export interface IGetUserSelfContactQuery {
-  params: IGetUserSelfContactParams;
-  result: IGetUserSelfContactResult;
+/** 'GetUserSelfProfile' query type */
+export interface IGetUserSelfProfileQuery {
+  params: IGetUserSelfProfileParams;
+  result: IGetUserSelfProfileResult;
 }
 
-const getUserSelfContactIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":199,"b":213}]}],"statement":"SELECT\n    u.self_contact_id,\n    c.external_id as self_contact_external_id\nFROM auth.users u\nLEFT JOIN contacts.contacts c ON u.self_contact_id = c.id AND c.deleted_at IS NULL\nWHERE u.external_id = :userExternalId"};
+const getUserSelfProfileIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":197,"b":211}]}],"statement":"SELECT\n    u.self_profile_id,\n    c.external_id as self_profile_external_id\nFROM auth.users u\nLEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL\nWHERE u.external_id = :userExternalId"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT
- *     u.self_contact_id,
- *     c.external_id as self_contact_external_id
+ *     u.self_profile_id,
+ *     c.external_id as self_profile_external_id
  * FROM auth.users u
- * LEFT JOIN contacts.contacts c ON u.self_contact_id = c.id AND c.deleted_at IS NULL
+ * LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
  * WHERE u.external_id = :userExternalId
  * ```
  */
-export const getUserSelfContact = new PreparedQuery<IGetUserSelfContactParams,IGetUserSelfContactResult>(getUserSelfContactIR);
+export const getUserSelfProfile = new PreparedQuery<IGetUserSelfProfileParams,IGetUserSelfProfileResult>(getUserSelfProfileIR);
 
 
-/** 'SetUserSelfContact' parameters type */
-export interface ISetUserSelfContactParams {
-  contactExternalId?: string | null | void;
+/** 'SetUserSelfProfile' parameters type */
+export interface ISetUserSelfProfileParams {
+  friendExternalId?: string | null | void;
   userExternalId?: string | null | void;
 }
 
-/** 'SetUserSelfContact' return type */
-export interface ISetUserSelfContactResult {
+/** 'SetUserSelfProfile' return type */
+export interface ISetUserSelfProfileResult {
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
   /** Public UUID for API exposure (always use this in APIs) */
-  self_contact_external_id: string;
+  self_profile_external_id: string;
 }
 
-/** 'SetUserSelfContact' query type */
-export interface ISetUserSelfContactQuery {
-  params: ISetUserSelfContactParams;
-  result: ISetUserSelfContactResult;
+/** 'SetUserSelfProfile' query type */
+export interface ISetUserSelfProfileQuery {
+  params: ISetUserSelfProfileParams;
+  result: ISetUserSelfProfileResult;
 }
 
-const setUserSelfContactIR: any = {"usedParamSet":{"userExternalId":true,"contactExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":130,"b":144}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":168,"b":185}]}],"statement":"UPDATE auth.users u\nSET self_contact_id = c.id,\n    updated_at = CURRENT_TIMESTAMP\nFROM contacts.contacts c\nWHERE u.external_id = :userExternalId\n  AND c.external_id = :contactExternalId\n  AND c.user_id = u.id\n  AND c.deleted_at IS NULL\nRETURNING u.external_id, c.external_id as self_contact_external_id"};
+const setUserSelfProfileIR: any = {"usedParamSet":{"userExternalId":true,"friendExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":128,"b":142}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":166,"b":182}]}],"statement":"UPDATE auth.users u\nSET self_profile_id = c.id,\n    updated_at = CURRENT_TIMESTAMP\nFROM friends.friends c\nWHERE u.external_id = :userExternalId\n  AND c.external_id = :friendExternalId\n  AND c.user_id = u.id\n  AND c.deleted_at IS NULL\nRETURNING u.external_id, c.external_id as self_profile_external_id"};
 
 /**
  * Query generated from SQL:
  * ```
  * UPDATE auth.users u
- * SET self_contact_id = c.id,
+ * SET self_profile_id = c.id,
  *     updated_at = CURRENT_TIMESTAMP
- * FROM contacts.contacts c
+ * FROM friends.friends c
  * WHERE u.external_id = :userExternalId
- *   AND c.external_id = :contactExternalId
+ *   AND c.external_id = :friendExternalId
  *   AND c.user_id = u.id
  *   AND c.deleted_at IS NULL
- * RETURNING u.external_id, c.external_id as self_contact_external_id
+ * RETURNING u.external_id, c.external_id as self_profile_external_id
  * ```
  */
-export const setUserSelfContact = new PreparedQuery<ISetUserSelfContactParams,ISetUserSelfContactResult>(setUserSelfContactIR);
+export const setUserSelfProfile = new PreparedQuery<ISetUserSelfProfileParams,ISetUserSelfProfileResult>(setUserSelfProfileIR);
 
 
-/** 'HasSelfContact' parameters type */
-export interface IHasSelfContactParams {
+/** 'HasSelfProfile' parameters type */
+export interface IHasSelfProfileParams {
   userExternalId?: string | null | void;
 }
 
-/** 'HasSelfContact' return type */
-export interface IHasSelfContactResult {
-  has_self_contact: boolean | null;
+/** 'HasSelfProfile' return type */
+export interface IHasSelfProfileResult {
+  has_self_profile: boolean | null;
 }
 
-/** 'HasSelfContact' query type */
-export interface IHasSelfContactQuery {
-  params: IHasSelfContactParams;
-  result: IHasSelfContactResult;
+/** 'HasSelfProfile' query type */
+export interface IHasSelfProfileQuery {
+  params: IHasSelfProfileParams;
+  result: IHasSelfProfileResult;
 }
 
-const hasSelfContactIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":232,"b":246}]}],"statement":"SELECT\n    CASE WHEN u.self_contact_id IS NOT NULL\n         AND c.deleted_at IS NULL\n    THEN true ELSE false END as has_self_contact\nFROM auth.users u\nLEFT JOIN contacts.contacts c ON u.self_contact_id = c.id\nWHERE u.external_id = :userExternalId"};
+const hasSelfProfileIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":230,"b":244}]}],"statement":"SELECT\n    CASE WHEN u.self_profile_id IS NOT NULL\n         AND c.deleted_at IS NULL\n    THEN true ELSE false END as has_self_profile\nFROM auth.users u\nLEFT JOIN friends.friends c ON u.self_profile_id = c.id\nWHERE u.external_id = :userExternalId"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT
- *     CASE WHEN u.self_contact_id IS NOT NULL
+ *     CASE WHEN u.self_profile_id IS NOT NULL
  *          AND c.deleted_at IS NULL
- *     THEN true ELSE false END as has_self_contact
+ *     THEN true ELSE false END as has_self_profile
  * FROM auth.users u
- * LEFT JOIN contacts.contacts c ON u.self_contact_id = c.id
+ * LEFT JOIN friends.friends c ON u.self_profile_id = c.id
  * WHERE u.external_id = :userExternalId
  * ```
  */
-export const hasSelfContact = new PreparedQuery<IHasSelfContactParams,IHasSelfContactResult>(hasSelfContactIR);
+export const hasSelfProfile = new PreparedQuery<IHasSelfProfileParams,IHasSelfProfileResult>(hasSelfProfileIR);
 
 

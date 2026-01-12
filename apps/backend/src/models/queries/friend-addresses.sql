@@ -1,4 +1,4 @@
-/* @name GetAddressesByContactId */
+/* @name GetAddressesByFriendId */
 SELECT
     a.external_id,
     a.street_line1,
@@ -11,10 +11,10 @@ SELECT
     a.label,
     a.is_primary,
     a.created_at
-FROM contacts.contact_addresses a
-INNER JOIN contacts.contacts c ON a.contact_id = c.id
+FROM friends.friend_addresses a
+INNER JOIN friends.friends c ON a.friend_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 ORDER BY a.is_primary DESC, a.created_at ASC;
@@ -32,17 +32,17 @@ SELECT
     a.label,
     a.is_primary,
     a.created_at
-FROM contacts.contact_addresses a
-INNER JOIN contacts.contacts c ON a.contact_id = c.id
+FROM friends.friend_addresses a
+INNER JOIN friends.friends c ON a.friend_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE a.external_id = :addressExternalId
-  AND c.external_id = :contactExternalId
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL;
 
 /* @name CreateAddress */
-INSERT INTO contacts.contact_addresses (
-    contact_id,
+INSERT INTO friends.friend_addresses (
+    friend_id,
     street_line1,
     street_line2,
     city,
@@ -64,9 +64,9 @@ SELECT
     :addressType,
     :label,
     :isPrimary
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING
@@ -83,7 +83,7 @@ RETURNING
     created_at;
 
 /* @name UpdateAddress */
-UPDATE contacts.contact_addresses a
+UPDATE friends.friend_addresses a
 SET
     street_line1 = :streetLine1,
     street_line2 = :streetLine2,
@@ -94,11 +94,11 @@ SET
     address_type = :addressType,
     label = :label,
     is_primary = :isPrimary
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE a.external_id = :addressExternalId
-  AND a.contact_id = c.id
-  AND c.external_id = :contactExternalId
+  AND a.friend_id = c.id
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING
@@ -115,23 +115,23 @@ RETURNING
     a.created_at;
 
 /* @name DeleteAddress */
-DELETE FROM contacts.contact_addresses a
-USING contacts.contacts c, auth.users u
+DELETE FROM friends.friend_addresses a
+USING friends.friends c, auth.users u
 WHERE a.external_id = :addressExternalId
-  AND a.contact_id = c.id
+  AND a.friend_id = c.id
   AND c.user_id = u.id
-  AND c.external_id = :contactExternalId
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING a.external_id;
 
 /* @name ClearPrimaryAddress */
-UPDATE contacts.contact_addresses a
+UPDATE friends.friend_addresses a
 SET is_primary = false
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE a.contact_id = c.id
-  AND c.external_id = :contactExternalId
+WHERE a.friend_id = c.id
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
   AND a.is_primary = true;

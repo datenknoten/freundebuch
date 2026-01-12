@@ -8,15 +8,15 @@ SELECT external_id, email, password_hash, created_at, updated_at
 FROM auth.users
 WHERE email = :email;
 
-/* @name GetUserByEmailWithSelfContact */
+/* @name GetUserByEmailWithSelfProfile */
 SELECT
     u.external_id,
     u.email,
     u.created_at,
     u.updated_at,
-    c.external_id as self_contact_external_id
+    c.external_id as self_profile_external_id
 FROM auth.users u
-LEFT JOIN contacts.contacts c ON u.self_contact_id = c.id AND c.deleted_at IS NULL
+LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
 WHERE u.email = :email;
 
 /* @name CreateUser */
@@ -30,7 +30,7 @@ SET email = :email, updated_at = CURRENT_TIMESTAMP
 WHERE external_id = :externalId
 RETURNING external_id, email, created_at, updated_at;
 
-/* @name UpdateUserReturningWithSelfContact */
+/* @name UpdateUserReturningWithSelfProfile */
 UPDATE auth.users u
 SET email = :email, updated_at = CURRENT_TIMESTAMP
 WHERE u.external_id = :externalId
@@ -39,7 +39,7 @@ RETURNING
     u.email,
     u.created_at,
     u.updated_at,
-    (SELECT c.external_id FROM contacts.contacts c WHERE c.id = u.self_contact_id AND c.deleted_at IS NULL) as self_contact_external_id;
+    (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id;
 
 /* @name DeleteUser */
 DELETE FROM auth.users
@@ -64,30 +64,30 @@ SET preferences = :preferences,
 WHERE external_id = :externalId
 RETURNING external_id, email, preferences, created_at, updated_at;
 
-/* @name GetUserSelfContact */
+/* @name GetUserSelfProfile */
 SELECT
-    u.self_contact_id,
-    c.external_id as self_contact_external_id
+    u.self_profile_id,
+    c.external_id as self_profile_external_id
 FROM auth.users u
-LEFT JOIN contacts.contacts c ON u.self_contact_id = c.id AND c.deleted_at IS NULL
+LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
 WHERE u.external_id = :userExternalId;
 
-/* @name SetUserSelfContact */
+/* @name SetUserSelfProfile */
 UPDATE auth.users u
-SET self_contact_id = c.id,
+SET self_profile_id = c.id,
     updated_at = CURRENT_TIMESTAMP
-FROM contacts.contacts c
+FROM friends.friends c
 WHERE u.external_id = :userExternalId
-  AND c.external_id = :contactExternalId
+  AND c.external_id = :friendExternalId
   AND c.user_id = u.id
   AND c.deleted_at IS NULL
-RETURNING u.external_id, c.external_id as self_contact_external_id;
+RETURNING u.external_id, c.external_id as self_profile_external_id;
 
-/* @name HasSelfContact */
+/* @name HasSelfProfile */
 SELECT
-    CASE WHEN u.self_contact_id IS NOT NULL
+    CASE WHEN u.self_profile_id IS NOT NULL
          AND c.deleted_at IS NULL
-    THEN true ELSE false END as has_self_contact
+    THEN true ELSE false END as has_self_profile
 FROM auth.users u
-LEFT JOIN contacts.contacts c ON u.self_contact_id = c.id
+LEFT JOIN friends.friends c ON u.self_profile_id = c.id
 WHERE u.external_id = :userExternalId;

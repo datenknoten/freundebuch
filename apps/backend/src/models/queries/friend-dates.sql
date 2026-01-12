@@ -1,4 +1,4 @@
-/* @name GetDatesByContactId */
+/* @name GetDatesByFriendId */
 SELECT
     d.external_id,
     d.date_value,
@@ -6,10 +6,10 @@ SELECT
     d.date_type,
     d.label,
     d.created_at
-FROM contacts.contact_dates d
-INNER JOIN contacts.contacts c ON d.contact_id = c.id
+FROM friends.friend_dates d
+INNER JOIN friends.friends c ON d.friend_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 ORDER BY d.date_type ASC, d.created_at ASC;
@@ -22,17 +22,17 @@ SELECT
     d.date_type,
     d.label,
     d.created_at
-FROM contacts.contact_dates d
-INNER JOIN contacts.contacts c ON d.contact_id = c.id
+FROM friends.friend_dates d
+INNER JOIN friends.friends c ON d.friend_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE d.external_id = :dateExternalId
-  AND c.external_id = :contactExternalId
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL;
 
 /* @name CreateDate */
-INSERT INTO contacts.contact_dates (
-    contact_id,
+INSERT INTO friends.friend_dates (
+    friend_id,
     date_value,
     year_known,
     date_type,
@@ -44,9 +44,9 @@ SELECT
     :yearKnown,
     :dateType,
     :label
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING
@@ -58,17 +58,17 @@ RETURNING
     created_at;
 
 /* @name UpdateDate */
-UPDATE contacts.contact_dates d
+UPDATE friends.friend_dates d
 SET
     date_value = :dateValue::date,
     year_known = :yearKnown,
     date_type = :dateType,
     label = :label
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE d.external_id = :dateExternalId
-  AND d.contact_id = c.id
-  AND c.external_id = :contactExternalId
+  AND d.friend_id = c.id
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING
@@ -80,22 +80,22 @@ RETURNING
     d.created_at;
 
 /* @name DeleteDate */
-DELETE FROM contacts.contact_dates d
-USING contacts.contacts c, auth.users u
+DELETE FROM friends.friend_dates d
+USING friends.friends c, auth.users u
 WHERE d.external_id = :dateExternalId
-  AND d.contact_id = c.id
+  AND d.friend_id = c.id
   AND c.user_id = u.id
-  AND c.external_id = :contactExternalId
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING d.external_id;
 
-/* @name CountBirthdaysForContact */
+/* @name CountBirthdaysForFriend */
 SELECT COUNT(*)::int as count
-FROM contacts.contact_dates d
-INNER JOIN contacts.contacts c ON d.contact_id = c.id
+FROM friends.friend_dates d
+INNER JOIN friends.friends c ON d.friend_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
   AND d.date_type = 'birthday';
@@ -108,14 +108,14 @@ WITH date_calc AS (
         d.year_known,
         d.date_type,
         d.label,
-        c.external_id AS contact_external_id,
-        c.display_name AS contact_display_name,
-        c.photo_thumbnail_url AS contact_photo_thumbnail_url,
+        c.external_id AS friend_external_id,
+        c.display_name AS friend_display_name,
+        c.photo_thumbnail_url AS friend_photo_thumbnail_url,
         EXTRACT(MONTH FROM d.date_value)::int AS date_month,
         EXTRACT(DAY FROM d.date_value)::int AS date_day,
         EXTRACT(YEAR FROM CURRENT_DATE)::int AS current_year
-    FROM contacts.contact_dates d
-    INNER JOIN contacts.contacts c ON d.contact_id = c.id
+    FROM friends.friend_dates d
+    INNER JOIN friends.friends c ON d.friend_id = c.id
     INNER JOIN auth.users u ON c.user_id = u.id
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
@@ -145,9 +145,9 @@ with_days_until AS (
         sd.year_known,
         sd.date_type,
         sd.label,
-        sd.contact_external_id,
-        sd.contact_display_name,
-        sd.contact_photo_thumbnail_url,
+        sd.friend_external_id,
+        sd.friend_display_name,
+        sd.friend_photo_thumbnail_url,
         CASE
             WHEN MAKE_DATE(sd.current_year, sd.date_month, sd.safe_day_current) >= CURRENT_DATE
             THEN MAKE_DATE(sd.current_year, sd.date_month, sd.safe_day_current) - CURRENT_DATE
@@ -161,11 +161,11 @@ SELECT
     year_known,
     date_type,
     label,
-    contact_external_id,
-    contact_display_name,
-    contact_photo_thumbnail_url,
+    friend_external_id,
+    friend_display_name,
+    friend_photo_thumbnail_url,
     days_until
 FROM with_days_until
 WHERE days_until <= :maxDays
-ORDER BY days_until ASC, contact_display_name ASC
+ORDER BY days_until ASC, friend_display_name ASC
 LIMIT :limitCount;

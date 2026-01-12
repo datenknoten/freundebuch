@@ -1,4 +1,4 @@
-/* @name GetPhonesByContactId */
+/* @name GetPhonesByFriendId */
 SELECT
     p.external_id,
     p.phone_number,
@@ -6,10 +6,10 @@ SELECT
     p.label,
     p.is_primary,
     p.created_at
-FROM contacts.contact_phones p
-INNER JOIN contacts.contacts c ON p.contact_id = c.id
+FROM friends.friend_phones p
+INNER JOIN friends.friends c ON p.friend_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 ORDER BY p.is_primary DESC, p.created_at ASC;
@@ -22,17 +22,17 @@ SELECT
     p.label,
     p.is_primary,
     p.created_at
-FROM contacts.contact_phones p
-INNER JOIN contacts.contacts c ON p.contact_id = c.id
+FROM friends.friend_phones p
+INNER JOIN friends.friends c ON p.friend_id = c.id
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE p.external_id = :phoneExternalId
-  AND c.external_id = :contactExternalId
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL;
 
 /* @name CreatePhone */
-INSERT INTO contacts.contact_phones (
-    contact_id,
+INSERT INTO friends.friend_phones (
+    friend_id,
     phone_number,
     phone_type,
     label,
@@ -44,9 +44,9 @@ SELECT
     :phoneType,
     :label,
     :isPrimary
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING
@@ -58,17 +58,17 @@ RETURNING
     created_at;
 
 /* @name UpdatePhone */
-UPDATE contacts.contact_phones p
+UPDATE friends.friend_phones p
 SET
     phone_number = :phoneNumber,
     phone_type = :phoneType,
     label = :label,
     is_primary = :isPrimary
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE p.external_id = :phoneExternalId
-  AND p.contact_id = c.id
-  AND c.external_id = :contactExternalId
+  AND p.friend_id = c.id
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING
@@ -80,23 +80,23 @@ RETURNING
     p.created_at;
 
 /* @name DeletePhone */
-DELETE FROM contacts.contact_phones p
-USING contacts.contacts c, auth.users u
+DELETE FROM friends.friend_phones p
+USING friends.friends c, auth.users u
 WHERE p.external_id = :phoneExternalId
-  AND p.contact_id = c.id
+  AND p.friend_id = c.id
   AND c.user_id = u.id
-  AND c.external_id = :contactExternalId
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING p.external_id;
 
 /* @name ClearPrimaryPhone */
-UPDATE contacts.contact_phones p
+UPDATE friends.friend_phones p
 SET is_primary = false
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE p.contact_id = c.id
-  AND c.external_id = :contactExternalId
+WHERE p.friend_id = c.id
+  AND c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
   AND p.is_primary = true;

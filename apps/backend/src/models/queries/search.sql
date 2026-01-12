@@ -3,8 +3,8 @@
  * Full-text search queries and search history management
  */
 
-/* @name FullTextSearchContacts */
-WITH matching_contacts AS (
+/* @name FullTextSearchFriends */
+WITH matching_friends AS (
     SELECT DISTINCT ON (c.id)
         c.id,
         c.external_id,
@@ -17,29 +17,29 @@ WITH matching_contacts AS (
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
         -- Determine match source (using joined tables for efficiency)
         CASE
-            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'
+            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'
             WHEN e.id IS NOT NULL THEN 'email'
             WHEN p.id IS NOT NULL THEN 'phone'
             WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
             ELSE NULL
         END as match_source
-    FROM contacts.contacts c
+    FROM friends.friends c
     INNER JOIN auth.users u ON c.user_id = u.id
     -- LEFT JOINs for efficient matching (avoids correlated subqueries)
-    LEFT JOIN contacts.contact_emails e
-        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
-    LEFT JOIN contacts.contact_phones p
-        ON p.contact_id = c.id
+    LEFT JOIN friends.friend_emails e
+        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_phones p
+        ON p.friend_id = c.id
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
-    LEFT JOIN contacts.contact_relationships r
-        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
-    LEFT JOIN contacts.contact_met_info m
-        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_relationships r
+        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_met_info m
+        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
-          -- Full-text search on contact fields
+          -- Full-text search on friend fields
           c.search_vector @@ websearch_to_tsquery('english', :query)
           -- OR matches from joined tables
           OR e.id IS NOT NULL
@@ -66,18 +66,18 @@ SELECT
         'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
     ) as headline,
     -- Get primary email
-    (SELECT e.email_address FROM contacts.contact_emails e
-     WHERE e.contact_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
+    (SELECT e.email_address FROM friends.friend_emails e
+     WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
     -- Get primary phone
-    (SELECT p.phone_number FROM contacts.contact_phones p
-     WHERE p.contact_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
-FROM matching_contacts mc
+    (SELECT p.phone_number FROM friends.friend_phones p
+     WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
+FROM matching_friends mc
 ORDER BY mc.fts_rank DESC, mc.display_name ASC
 LIMIT :limit;
 
 
 /* @name PaginatedFullTextSearch */
-WITH matching_contacts AS (
+WITH matching_friends AS (
     SELECT DISTINCT ON (c.id)
         c.id,
         c.external_id,
@@ -92,29 +92,29 @@ WITH matching_contacts AS (
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
         -- Determine match source (using joined tables for efficiency)
         CASE
-            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'
+            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'
             WHEN e.id IS NOT NULL THEN 'email'
             WHEN p.id IS NOT NULL THEN 'phone'
             WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
             ELSE NULL
         END as match_source
-    FROM contacts.contacts c
+    FROM friends.friends c
     INNER JOIN auth.users u ON c.user_id = u.id
     -- LEFT JOINs for efficient matching (avoids correlated subqueries)
-    LEFT JOIN contacts.contact_emails e
-        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
-    LEFT JOIN contacts.contact_phones p
-        ON p.contact_id = c.id
+    LEFT JOIN friends.friend_emails e
+        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_phones p
+        ON p.friend_id = c.id
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
-    LEFT JOIN contacts.contact_relationships r
-        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
-    LEFT JOIN contacts.contact_met_info m
-        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_relationships r
+        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_met_info m
+        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
-          -- Full-text search on contact fields
+          -- Full-text search on friend fields
           c.search_vector @@ websearch_to_tsquery('english', :query)
           -- OR matches from joined tables
           OR e.id IS NOT NULL
@@ -124,7 +124,7 @@ WITH matching_contacts AS (
       )
 ),
 total_count AS (
-    SELECT COUNT(*)::int as count FROM matching_contacts
+    SELECT COUNT(*)::int as count FROM matching_friends
 ),
 sorted_results AS (
     SELECT
@@ -139,12 +139,12 @@ sorted_results AS (
             'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
         ) as headline,
         -- Get primary email
-        (SELECT e.email_address FROM contacts.contact_emails e
-         WHERE e.contact_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
+        (SELECT e.email_address FROM friends.friend_emails e
+         WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
         -- Get primary phone
-        (SELECT p.phone_number FROM contacts.contact_phones p
-         WHERE p.contact_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
-    FROM matching_contacts mc
+        (SELECT p.phone_number FROM friends.friend_phones p
+         WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
+    FROM matching_friends mc
     ORDER BY
         CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
         CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,
@@ -176,7 +176,7 @@ CROSS JOIN total_count tc;
 
 /* @name GetRecentSearches */
 SELECT sh.query, sh.searched_at
-FROM contacts.search_history sh
+FROM friends.search_history sh
 INNER JOIN auth.users u ON sh.user_id = u.id
 WHERE u.external_id = :userExternalId
 ORDER BY sh.searched_at DESC
@@ -184,7 +184,7 @@ LIMIT :limit;
 
 
 /* @name AddRecentSearch */
-INSERT INTO contacts.search_history (user_id, query, searched_at)
+INSERT INTO friends.search_history (user_id, query, searched_at)
 SELECT u.id, :query, CURRENT_TIMESTAMP
 FROM auth.users u
 WHERE u.external_id = :userExternalId
@@ -194,7 +194,7 @@ RETURNING id, query, searched_at;
 
 
 /* @name DeleteRecentSearch */
-DELETE FROM contacts.search_history sh
+DELETE FROM friends.search_history sh
 USING auth.users u
 WHERE sh.user_id = u.id
   AND u.external_id = :userExternalId
@@ -203,7 +203,7 @@ RETURNING sh.id;
 
 
 /* @name ClearRecentSearches */
-DELETE FROM contacts.search_history sh
+DELETE FROM friends.search_history sh
 USING auth.users u
 WHERE sh.user_id = u.id
   AND u.external_id = :userExternalId
@@ -212,21 +212,21 @@ RETURNING sh.id;
 
 /* @name FacetedSearch */
 WITH base_matches AS (
-    -- Base query matching contacts via FTS and other search methods
+    -- Base query matching friends via FTS and other search methods
     -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)
     SELECT DISTINCT c.id
-    FROM contacts.contacts c
+    FROM friends.friends c
     INNER JOIN auth.users u ON c.user_id = u.id
-    LEFT JOIN contacts.contact_emails e
-        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
-    LEFT JOIN contacts.contact_phones p
-        ON p.contact_id = c.id
+    LEFT JOIN friends.friend_emails e
+        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_phones p
+        ON p.friend_id = c.id
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
-    LEFT JOIN contacts.contact_relationships r
-        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
-    LEFT JOIN contacts.contact_met_info m
-        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_relationships r
+        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_met_info m
+        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
@@ -241,17 +241,17 @@ filtered_matches AS (
     -- Apply facet filters to base matches
     SELECT bm.id
     FROM base_matches bm
-    INNER JOIN contacts.contacts c ON c.id = bm.id
+    INNER JOIN friends.friends c ON c.id = bm.id
     WHERE
         -- Country filter (NULL array means no filter)
         (:filterCountry::text[] IS NULL OR EXISTS (
-            SELECT 1 FROM contacts.contact_addresses a
-            WHERE a.contact_id = c.id AND a.country = ANY(:filterCountry)
+            SELECT 1 FROM friends.friend_addresses a
+            WHERE a.friend_id = c.id AND a.country = ANY(:filterCountry)
         ))
         -- City filter
         AND (:filterCity::text[] IS NULL OR EXISTS (
-            SELECT 1 FROM contacts.contact_addresses a
-            WHERE a.contact_id = c.id AND a.city = ANY(:filterCity)
+            SELECT 1 FROM friends.friend_addresses a
+            WHERE a.friend_id = c.id AND a.city = ANY(:filterCity)
         ))
         -- Organization filter
         AND (:filterOrganization::text[] IS NULL OR c.organization = ANY(:filterOrganization))
@@ -261,12 +261,12 @@ filtered_matches AS (
         AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))
         -- Relationship category filter
         AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (
-            SELECT 1 FROM contacts.contact_relationships rel
-            INNER JOIN contacts.relationship_types rt ON rel.relationship_type_id = rt.id
-            WHERE rel.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
+            SELECT 1 FROM friends.friend_relationships rel
+            INNER JOIN friends.relationship_types rt ON rel.relationship_type_id = rt.id
+            WHERE rel.friend_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
         ))
 ),
-matching_contacts AS (
+matching_friends AS (
     SELECT DISTINCT ON (c.id)
         c.id,
         c.external_id,
@@ -279,23 +279,23 @@ matching_contacts AS (
         c.updated_at,
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
         CASE
-            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'contact'
+            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'
             WHEN e.id IS NOT NULL THEN 'email'
             WHEN p.id IS NOT NULL THEN 'phone'
             ELSE 'notes'
         END as match_source
     FROM filtered_matches fm
-    INNER JOIN contacts.contacts c ON c.id = fm.id
+    INNER JOIN friends.friends c ON c.id = fm.id
     -- Re-join for match_source determination
-    LEFT JOIN contacts.contact_emails e
-        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
-    LEFT JOIN contacts.contact_phones p
-        ON p.contact_id = c.id
+    LEFT JOIN friends.friend_emails e
+        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_phones p
+        ON p.friend_id = c.id
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
 ),
 total_count AS (
-    SELECT COUNT(*)::int as count FROM matching_contacts
+    SELECT COUNT(*)::int as count FROM matching_friends
 ),
 sorted_results AS (
     SELECT
@@ -308,11 +308,11 @@ sorted_results AS (
             websearch_to_tsquery('english', :query),
             'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
         ) as headline,
-        (SELECT e.email_address FROM contacts.contact_emails e
-         WHERE e.contact_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
-        (SELECT p.phone_number FROM contacts.contact_phones p
-         WHERE p.contact_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
-    FROM matching_contacts mc
+        (SELECT e.email_address FROM friends.friend_emails e
+         WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
+        (SELECT p.phone_number FROM friends.friend_phones p
+         WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
+    FROM matching_friends mc
     ORDER BY
         CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
         CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,
@@ -344,21 +344,21 @@ CROSS JOIN total_count tc;
 
 /* @name GetFacetCounts */
 WITH base_matches AS (
-    -- Base query matching contacts via FTS (same as FacetedSearch)
+    -- Base query matching friends via FTS (same as FacetedSearch)
     -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)
     SELECT DISTINCT c.id
-    FROM contacts.contacts c
+    FROM friends.friends c
     INNER JOIN auth.users u ON c.user_id = u.id
-    LEFT JOIN contacts.contact_emails e
-        ON e.contact_id = c.id AND e.email_address ILIKE :wildcardQuery
-    LEFT JOIN contacts.contact_phones p
-        ON p.contact_id = c.id
+    LEFT JOIN friends.friend_emails e
+        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_phones p
+        ON p.friend_id = c.id
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
-    LEFT JOIN contacts.contact_relationships r
-        ON r.contact_id = c.id AND r.notes ILIKE :wildcardQuery
-    LEFT JOIN contacts.contact_met_info m
-        ON m.contact_id = c.id AND m.met_context ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_relationships r
+        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_met_info m
+        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
@@ -375,7 +375,7 @@ SELECT
     a.country as facet_value,
     COUNT(DISTINCT bm.id)::int as count
 FROM base_matches bm
-INNER JOIN contacts.contact_addresses a ON a.contact_id = bm.id
+INNER JOIN friends.friend_addresses a ON a.friend_id = bm.id
 WHERE a.country IS NOT NULL
 GROUP BY a.country
 
@@ -387,7 +387,7 @@ SELECT
     a.city as facet_value,
     COUNT(DISTINCT bm.id)::int as count
 FROM base_matches bm
-INNER JOIN contacts.contact_addresses a ON a.contact_id = bm.id
+INNER JOIN friends.friend_addresses a ON a.friend_id = bm.id
 WHERE a.city IS NOT NULL
 GROUP BY a.city
 
@@ -399,7 +399,7 @@ SELECT
     c.organization as facet_value,
     COUNT(*)::int as count
 FROM base_matches bm
-INNER JOIN contacts.contacts c ON c.id = bm.id
+INNER JOIN friends.friends c ON c.id = bm.id
 WHERE c.organization IS NOT NULL
 GROUP BY c.organization
 
@@ -411,7 +411,7 @@ SELECT
     c.job_title as facet_value,
     COUNT(*)::int as count
 FROM base_matches bm
-INNER JOIN contacts.contacts c ON c.id = bm.id
+INNER JOIN friends.friends c ON c.id = bm.id
 WHERE c.job_title IS NOT NULL
 GROUP BY c.job_title
 
@@ -423,7 +423,7 @@ SELECT
     c.department as facet_value,
     COUNT(*)::int as count
 FROM base_matches bm
-INNER JOIN contacts.contacts c ON c.id = bm.id
+INNER JOIN friends.friends c ON c.id = bm.id
 WHERE c.department IS NOT NULL
 GROUP BY c.department
 
@@ -435,30 +435,30 @@ SELECT
     rt.category as facet_value,
     COUNT(DISTINCT bm.id)::int as count
 FROM base_matches bm
-INNER JOIN contacts.contact_relationships r ON r.contact_id = bm.id
-INNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id
+INNER JOIN friends.friend_relationships r ON r.friend_id = bm.id
+INNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id
 GROUP BY rt.category
 
 ORDER BY facet_field, count DESC, facet_value;
 
 
 /* @name FilterOnlyList */
--- Lists contacts with filter support but no search query
-WITH filtered_contacts AS (
+-- Lists friends with filter support but no search query
+WITH filtered_friends AS (
     SELECT c.id
-    FROM contacts.contacts c
+    FROM friends.friends c
     INNER JOIN auth.users u ON c.user_id = u.id
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       -- Country filter (NULL array means no filter)
       AND (:filterCountry::text[] IS NULL OR EXISTS (
-          SELECT 1 FROM contacts.contact_addresses a
-          WHERE a.contact_id = c.id AND a.country = ANY(:filterCountry)
+          SELECT 1 FROM friends.friend_addresses a
+          WHERE a.friend_id = c.id AND a.country = ANY(:filterCountry)
       ))
       -- City filter
       AND (:filterCity::text[] IS NULL OR EXISTS (
-          SELECT 1 FROM contacts.contact_addresses a
-          WHERE a.contact_id = c.id AND a.city = ANY(:filterCity)
+          SELECT 1 FROM friends.friend_addresses a
+          WHERE a.friend_id = c.id AND a.city = ANY(:filterCity)
       ))
       -- Organization filter
       AND (:filterOrganization::text[] IS NULL OR c.organization = ANY(:filterOrganization))
@@ -468,13 +468,13 @@ WITH filtered_contacts AS (
       AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))
       -- Relationship category filter
       AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (
-          SELECT 1 FROM contacts.contact_relationships rel
-          INNER JOIN contacts.relationship_types rt ON rel.relationship_type_id = rt.id
-          WHERE rel.contact_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
+          SELECT 1 FROM friends.friend_relationships rel
+          INNER JOIN friends.relationship_types rt ON rel.relationship_type_id = rt.id
+          WHERE rel.friend_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
       ))
 ),
 total_count AS (
-    SELECT COUNT(*)::int as count FROM filtered_contacts
+    SELECT COUNT(*)::int as count FROM filtered_friends
 ),
 sorted_results AS (
     SELECT
@@ -484,12 +484,12 @@ sorted_results AS (
         c.photo_thumbnail_url,
         c.organization,
         c.job_title,
-        (SELECT e.email_address FROM contacts.contact_emails e
-         WHERE e.contact_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,
-        (SELECT p.phone_number FROM contacts.contact_phones p
-         WHERE p.contact_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone
-    FROM filtered_contacts fc
-    INNER JOIN contacts.contacts c ON c.id = fc.id
+        (SELECT e.email_address FROM friends.friend_emails e
+         WHERE e.friend_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,
+        (SELECT p.phone_number FROM friends.friend_phones p
+         WHERE p.friend_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone
+    FROM filtered_friends fc
+    INNER JOIN friends.friends c ON c.id = fc.id
     ORDER BY
         CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN c.display_name END ASC,
         CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN c.display_name END DESC,
@@ -515,10 +515,10 @@ CROSS JOIN total_count tc;
 
 
 /* @name GetAllFacetCounts */
--- Gets facet counts for all contacts (no search filter)
-WITH all_contacts AS (
+-- Gets facet counts for all friends (no search filter)
+WITH all_friends AS (
     SELECT c.id
-    FROM contacts.contacts c
+    FROM friends.friends c
     INNER JOIN auth.users u ON c.user_id = u.id
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
@@ -528,8 +528,8 @@ SELECT
     'country' as facet_field,
     a.country as facet_value,
     COUNT(DISTINCT ac.id)::int as count
-FROM all_contacts ac
-INNER JOIN contacts.contact_addresses a ON a.contact_id = ac.id
+FROM all_friends ac
+INNER JOIN friends.friend_addresses a ON a.friend_id = ac.id
 WHERE a.country IS NOT NULL
 GROUP BY a.country
 
@@ -540,8 +540,8 @@ SELECT
     'city' as facet_field,
     a.city as facet_value,
     COUNT(DISTINCT ac.id)::int as count
-FROM all_contacts ac
-INNER JOIN contacts.contact_addresses a ON a.contact_id = ac.id
+FROM all_friends ac
+INNER JOIN friends.friend_addresses a ON a.friend_id = ac.id
 WHERE a.city IS NOT NULL
 GROUP BY a.city
 
@@ -552,8 +552,8 @@ SELECT
     'organization' as facet_field,
     c.organization as facet_value,
     COUNT(*)::int as count
-FROM all_contacts ac
-INNER JOIN contacts.contacts c ON c.id = ac.id
+FROM all_friends ac
+INNER JOIN friends.friends c ON c.id = ac.id
 WHERE c.organization IS NOT NULL
 GROUP BY c.organization
 
@@ -564,8 +564,8 @@ SELECT
     'job_title' as facet_field,
     c.job_title as facet_value,
     COUNT(*)::int as count
-FROM all_contacts ac
-INNER JOIN contacts.contacts c ON c.id = ac.id
+FROM all_friends ac
+INNER JOIN friends.friends c ON c.id = ac.id
 WHERE c.job_title IS NOT NULL
 GROUP BY c.job_title
 
@@ -576,8 +576,8 @@ SELECT
     'department' as facet_field,
     c.department as facet_value,
     COUNT(*)::int as count
-FROM all_contacts ac
-INNER JOIN contacts.contacts c ON c.id = ac.id
+FROM all_friends ac
+INNER JOIN friends.friends c ON c.id = ac.id
 WHERE c.department IS NOT NULL
 GROUP BY c.department
 
@@ -588,9 +588,9 @@ SELECT
     'relationship_category' as facet_field,
     rt.category as facet_value,
     COUNT(DISTINCT ac.id)::int as count
-FROM all_contacts ac
-INNER JOIN contacts.contact_relationships r ON r.contact_id = ac.id
-INNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id
+FROM all_friends ac
+INNER JOIN friends.friend_relationships r ON r.friend_id = ac.id
+INNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id
 GROUP BY rt.category
 
 ORDER BY facet_field, count DESC, facet_value;

@@ -1,4 +1,4 @@
-/* @name GetContactById */
+/* @name GetFriendById */
 SELECT
     c.external_id,
     c.display_name,
@@ -28,8 +28,8 @@ SELECT
             'is_primary', p.is_primary,
             'created_at', p.created_at
         ) ORDER BY p.is_primary DESC, p.created_at ASC), '[]'::json)
-        FROM contacts.contact_phones p
-        WHERE p.contact_id = c.id
+        FROM friends.friend_phones p
+        WHERE p.friend_id = c.id
     ) as phones,
     (
         SELECT COALESCE(json_agg(json_build_object(
@@ -40,8 +40,8 @@ SELECT
             'is_primary', e.is_primary,
             'created_at', e.created_at
         ) ORDER BY e.is_primary DESC, e.created_at ASC), '[]'::json)
-        FROM contacts.contact_emails e
-        WHERE e.contact_id = c.id
+        FROM friends.friend_emails e
+        WHERE e.friend_id = c.id
     ) as emails,
     (
         SELECT COALESCE(json_agg(json_build_object(
@@ -57,8 +57,8 @@ SELECT
             'is_primary', a.is_primary,
             'created_at', a.created_at
         ) ORDER BY a.is_primary DESC, a.created_at ASC), '[]'::json)
-        FROM contacts.contact_addresses a
-        WHERE a.contact_id = c.id
+        FROM friends.friend_addresses a
+        WHERE a.friend_id = c.id
     ) as addresses,
     (
         SELECT COALESCE(json_agg(json_build_object(
@@ -68,8 +68,8 @@ SELECT
             'label', url.label,
             'created_at', url.created_at
         ) ORDER BY url.created_at ASC), '[]'::json)
-        FROM contacts.contact_urls url
-        WHERE url.contact_id = c.id
+        FROM friends.friend_urls url
+        WHERE url.friend_id = c.id
     ) as urls,
     -- Epic 1B: Extended sub-resources
     (
@@ -81,8 +81,8 @@ SELECT
             'label', d.label,
             'created_at', d.created_at
         ) ORDER BY d.date_type ASC, d.created_at ASC), '[]'::json)
-        FROM contacts.contact_dates d
-        WHERE d.contact_id = c.id
+        FROM friends.friend_dates d
+        WHERE d.friend_id = c.id
     ) as dates,
     (
         SELECT json_build_object(
@@ -93,8 +93,8 @@ SELECT
             'created_at', m.created_at,
             'updated_at', m.updated_at
         )
-        FROM contacts.contact_met_info m
-        WHERE m.contact_id = c.id
+        FROM friends.friend_met_info m
+        WHERE m.friend_id = c.id
     ) as met_info,
     (
         SELECT COALESCE(json_agg(json_build_object(
@@ -104,43 +104,43 @@ SELECT
             'username', sp.username,
             'created_at', sp.created_at
         ) ORDER BY sp.platform ASC, sp.created_at ASC), '[]'::json)
-        FROM contacts.contact_social_profiles sp
-        WHERE sp.contact_id = c.id
+        FROM friends.friend_social_profiles sp
+        WHERE sp.friend_id = c.id
     ) as social_profiles,
     -- Epic 1D: Relationships
     (
         SELECT COALESCE(json_agg(json_build_object(
             'external_id', r.external_id,
-            'related_contact_external_id', rc.external_id,
-            'related_contact_display_name', rc.display_name,
-            'related_contact_photo_thumbnail_url', rc.photo_thumbnail_url,
+            'related_friend_external_id', rc.external_id,
+            'related_friend_display_name', rc.display_name,
+            'related_friend_photo_thumbnail_url', rc.photo_thumbnail_url,
             'relationship_type_id', r.relationship_type_id,
             'relationship_type_label', rt.label,
             'relationship_category', rt.category,
             'notes', r.notes,
             'created_at', r.created_at
         ) ORDER BY rt.category ASC, rt.label ASC, rc.display_name ASC), '[]'::json)
-        FROM contacts.contact_relationships r
-        INNER JOIN contacts.contacts rc ON r.related_contact_id = rc.id AND rc.deleted_at IS NULL
-        INNER JOIN contacts.relationship_types rt ON r.relationship_type_id = rt.id
-        WHERE r.contact_id = c.id
+        FROM friends.friend_relationships r
+        INNER JOIN friends.friends rc ON r.related_friend_id = rc.id AND rc.deleted_at IS NULL
+        INNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id
+        WHERE r.friend_id = c.id
     ) as relationships
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL;
 
-/* @name GetContactInternalId */
+/* @name GetFriendInternalId */
 SELECT c.id
-FROM contacts.contacts c
+FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL;
 
-/* @name GetContactsByUserId */
-WITH contact_list AS (
+/* @name GetFriendsByUserId */
+WITH friend_list AS (
     SELECT
         c.id,
         c.external_id,
@@ -148,13 +148,13 @@ WITH contact_list AS (
         c.photo_thumbnail_url,
         c.created_at,
         c.updated_at
-    FROM contacts.contacts c
+    FROM friends.friends c
     INNER JOIN auth.users u ON c.user_id = u.id
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
 ),
 total AS (
-    SELECT COUNT(*)::int as total_count FROM contact_list
+    SELECT COUNT(*)::int as total_count FROM friend_list
 )
 SELECT
     cl.external_id,
@@ -162,10 +162,10 @@ SELECT
     cl.photo_thumbnail_url,
     cl.created_at,
     cl.updated_at,
-    (SELECT e.email_address FROM contacts.contact_emails e WHERE e.contact_id = cl.id AND e.is_primary = true LIMIT 1) as primary_email,
-    (SELECT p.phone_number FROM contacts.contact_phones p WHERE p.contact_id = cl.id AND p.is_primary = true LIMIT 1) as primary_phone,
+    (SELECT e.email_address FROM friends.friend_emails e WHERE e.friend_id = cl.id AND e.is_primary = true LIMIT 1) as primary_email,
+    (SELECT p.phone_number FROM friends.friend_phones p WHERE p.friend_id = cl.id AND p.is_primary = true LIMIT 1) as primary_phone,
     t.total_count
-FROM contact_list cl
+FROM friend_list cl
 CROSS JOIN total t
 ORDER BY
     CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN cl.display_name END ASC,
@@ -177,8 +177,8 @@ ORDER BY
 LIMIT :pageSize
 OFFSET :offset;
 
-/* @name CreateContact */
-INSERT INTO contacts.contacts (
+/* @name CreateFriend */
+INSERT INTO friends.friends (
     user_id,
     display_name,
     nickname,
@@ -229,8 +229,8 @@ RETURNING
     created_at,
     updated_at;
 
-/* @name UpdateContact */
-UPDATE contacts.contacts c
+/* @name UpdateFriend */
+UPDATE friends.friends c
 SET
     display_name = COALESCE(:displayName, c.display_name),
     nickname = CASE WHEN :updateNickname THEN :nickname ELSE c.nickname END,
@@ -246,7 +246,7 @@ SET
     work_notes = CASE WHEN :updateWorkNotes THEN :workNotes ELSE c.work_notes END,
     interests = CASE WHEN :updateInterests THEN :interests ELSE c.interests END
 FROM auth.users u
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND c.user_id = u.id
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
@@ -269,23 +269,23 @@ RETURNING
     c.created_at,
     c.updated_at;
 
-/* @name SoftDeleteContact */
-UPDATE contacts.contacts c
+/* @name SoftDeleteFriend */
+UPDATE friends.friends c
 SET deleted_at = CURRENT_TIMESTAMP
 FROM auth.users u
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND c.user_id = u.id
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING c.external_id;
 
-/* @name UpdateContactPhoto */
-UPDATE contacts.contacts c
+/* @name UpdateFriendPhoto */
+UPDATE friends.friends c
 SET
     photo_url = :photoUrl,
     photo_thumbnail_url = :photoThumbnailUrl
 FROM auth.users u
-WHERE c.external_id = :contactExternalId
+WHERE c.external_id = :friendExternalId
   AND c.user_id = u.id
   AND u.external_id = :userExternalId
   AND c.deleted_at IS NULL
