@@ -148,20 +148,6 @@ function createWildcardQuery(query: string): string {
   return `%${escapeLikePattern(query)}%`;
 }
 
-// ============================================================================
-// Contacts Error Classes
-// ============================================================================
-
-/**
- * Thrown when trying to add a birthday date to a contact that already has one
- */
-export class DuplicateBirthdayError extends Error {
-  constructor() {
-    super('Contact already has a birthday date');
-    this.name = 'DuplicateBirthdayError';
-  }
-}
-
 export class ContactsService {
   private db: pg.Pool;
   private logger: Logger;
