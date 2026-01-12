@@ -72,7 +72,7 @@ $authBackend = new AppPasswordBackend($pdo);
 // Principal backend (users)
 $principalBackend = new FreundebuchPrincipalBackend($pdo);
 
-// CardDAV backend (contacts)
+// CardDAV backend (friends)
 $carddavBackend = new FreundebuchCardDAVBackend($pdo);
 
 // Build the directory tree
