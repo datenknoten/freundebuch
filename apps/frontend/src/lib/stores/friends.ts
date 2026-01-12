@@ -2,15 +2,15 @@ import { derived, writable } from 'svelte/store';
 import type {
   Address,
   AddressInput,
-  Contact,
-  ContactCreateInput,
-  ContactDate,
-  ContactListItem,
-  ContactSearchResult,
-  ContactUpdateInput,
   DateInput,
   Email,
   EmailInput,
+  Friend,
+  FriendCreateInput,
+  FriendDate,
+  FriendListItem,
+  FriendSearchResult,
+  FriendUpdateInput,
   MetInfo,
   MetInfoInput,
   Phone,
@@ -25,59 +25,59 @@ import type {
   UrlInput,
 } from '$shared';
 import { ApiError } from '../api/auth.js';
-import * as contactsApi from '../api/contacts.js';
+import * as friendsApi from '../api/friends.js';
 
 /**
- * Contacts state interface
+ * Friends state interface
  */
-interface ContactsState {
-  contacts: ContactListItem[];
+interface FriendsState {
+  friends: FriendListItem[];
   total: number;
   page: number;
   pageSize: number;
   totalPages: number;
-  currentContact: Contact | null;
+  currentFriend: Friend | null;
   relationshipTypes: RelationshipTypesGrouped | null;
   isLoading: boolean;
   error: string | null;
 }
 
 /**
- * Initial contacts state
+ * Initial friends state
  */
-const initialState: ContactsState = {
-  contacts: [],
+const initialState: FriendsState = {
+  friends: [],
   total: 0,
   page: 1,
   pageSize: 25,
   totalPages: 0,
-  currentContact: null,
+  currentFriend: null,
   relationshipTypes: null,
   isLoading: false,
   error: null,
 };
 
 /**
- * Create the contacts store
+ * Create the friends store
  */
-function createContactsStore() {
-  const { subscribe, set, update } = writable<ContactsState>(initialState);
+function createFriendsStore() {
+  const { subscribe, set, update } = writable<FriendsState>(initialState);
 
   return {
     subscribe,
 
     /**
-     * Load paginated contact list
+     * Load paginated friend list
      */
-    loadContacts: async (params: contactsApi.ContactListParams = {}) => {
+    loadFriends: async (params: friendsApi.FriendListParams = {}) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const result = await contactsApi.listContacts(params);
+        const result = await friendsApi.listFriends(params);
 
         update((state) => ({
           ...state,
-          contacts: result.contacts,
+          friends: result.friends,
           total: result.total,
           page: result.page,
           pageSize: result.pageSize,
@@ -88,7 +88,7 @@ function createContactsStore() {
 
         return result;
       } catch (error) {
-        const errorMessage = error instanceof ApiError ? error.message : 'Failed to load contacts';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to load friends';
 
         update((state) => ({
           ...state,
@@ -101,28 +101,28 @@ function createContactsStore() {
     },
 
     /**
-     * Load a single contact by ID
+     * Load a single friend by ID
      */
-    loadContact: async (id: string) => {
+    loadFriend: async (id: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const contact = await contactsApi.getContact(id);
+        const friend = await friendsApi.getFriend(id);
 
         update((state) => ({
           ...state,
-          currentContact: contact,
+          currentFriend: friend,
           isLoading: false,
           error: null,
         }));
 
-        return contact;
+        return friend;
       } catch (error) {
-        const errorMessage = error instanceof ApiError ? error.message : 'Failed to load contact';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to load friend';
 
         update((state) => ({
           ...state,
-          currentContact: null,
+          currentFriend: null,
           isLoading: false,
           error: errorMessage,
         }));
@@ -132,24 +132,24 @@ function createContactsStore() {
     },
 
     /**
-     * Create a new contact
+     * Create a new friend
      */
-    createContact: async (data: ContactCreateInput) => {
+    createFriend: async (data: FriendCreateInput) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const contact = await contactsApi.createContact(data);
+        const friend = await friendsApi.createFriend(data);
 
         update((state) => ({
           ...state,
-          currentContact: contact,
+          currentFriend: friend,
           isLoading: false,
           error: null,
         }));
 
-        return contact;
+        return friend;
       } catch (error) {
-        const errorMessage = error instanceof ApiError ? error.message : 'Failed to create contact';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to create friend';
 
         update((state) => ({
           ...state,
@@ -162,24 +162,24 @@ function createContactsStore() {
     },
 
     /**
-     * Update an existing contact
+     * Update an existing friend
      */
-    updateContact: async (id: string, data: ContactUpdateInput) => {
+    updateFriend: async (id: string, data: FriendUpdateInput) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const contact = await contactsApi.updateContact(id, data);
+        const friend = await friendsApi.updateFriend(id, data);
 
         update((state) => ({
           ...state,
-          currentContact: contact,
+          currentFriend: friend,
           isLoading: false,
           error: null,
         }));
 
-        return contact;
+        return friend;
       } catch (error) {
-        const errorMessage = error instanceof ApiError ? error.message : 'Failed to update contact';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to update friend';
 
         update((state) => ({
           ...state,
@@ -192,24 +192,24 @@ function createContactsStore() {
     },
 
     /**
-     * Delete a contact
+     * Delete a friend
      */
-    deleteContact: async (id: string) => {
+    deleteFriend: async (id: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await contactsApi.deleteContact(id);
+        await friendsApi.deleteFriend(id);
 
         update((state) => ({
           ...state,
-          contacts: state.contacts.filter((c) => c.id !== id),
-          currentContact: state.currentContact?.id === id ? null : state.currentContact,
+          friends: state.friends.filter((c) => c.id !== id),
+          currentFriend: state.currentFriend?.id === id ? null : state.currentFriend,
           total: state.total - 1,
           isLoading: false,
           error: null,
         }));
       } catch (error) {
-        const errorMessage = error instanceof ApiError ? error.message : 'Failed to delete contact';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to delete friend';
 
         update((state) => ({
           ...state,
@@ -226,18 +226,18 @@ function createContactsStore() {
     // =========================================================================
 
     /**
-     * Add a phone to the current contact
+     * Add a phone to the current friend
      */
-    addPhone: async (contactId: string, data: PhoneInput): Promise<Phone> => {
+    addPhone: async (friendId: string, data: PhoneInput): Promise<Phone> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const phone = await contactsApi.addPhone(contactId, data);
+        const phone = await friendsApi.addPhone(friendId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
-            ? { ...state.currentContact, phones: [...state.currentContact.phones, phone] }
+          currentFriend: state.currentFriend
+            ? { ...state.currentFriend, phones: [...state.currentFriend.phones, phone] }
             : null,
           isLoading: false,
           error: null,
@@ -258,24 +258,24 @@ function createContactsStore() {
     },
 
     /**
-     * Update a phone for the current contact
+     * Update a phone for the current friend
      */
     updatePhone: async (
-      contactId: string,
+      friendId: string,
       phoneId: string,
       data: Partial<PhoneInput>,
     ): Promise<Phone> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const phone = await contactsApi.updatePhone(contactId, phoneId, data);
+        const phone = await friendsApi.updatePhone(friendId, phoneId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                phones: state.currentContact.phones.map((p) => (p.id === phoneId ? phone : p)),
+                ...state.currentFriend,
+                phones: state.currentFriend.phones.map((p) => (p.id === phoneId ? phone : p)),
               }
             : null,
           isLoading: false,
@@ -297,20 +297,20 @@ function createContactsStore() {
     },
 
     /**
-     * Delete a phone from the current contact
+     * Delete a phone from the current friend
      */
-    deletePhone: async (contactId: string, phoneId: string) => {
+    deletePhone: async (friendId: string, phoneId: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await contactsApi.deletePhone(contactId, phoneId);
+        await friendsApi.deletePhone(friendId, phoneId);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                phones: state.currentContact.phones.filter((p) => p.id !== phoneId),
+                ...state.currentFriend,
+                phones: state.currentFriend.phones.filter((p) => p.id !== phoneId),
               }
             : null,
           isLoading: false,
@@ -334,18 +334,18 @@ function createContactsStore() {
     // =========================================================================
 
     /**
-     * Add an email to the current contact
+     * Add an email to the current friend
      */
-    addEmail: async (contactId: string, data: EmailInput): Promise<Email> => {
+    addEmail: async (friendId: string, data: EmailInput): Promise<Email> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const email = await contactsApi.addEmail(contactId, data);
+        const email = await friendsApi.addEmail(friendId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
-            ? { ...state.currentContact, emails: [...state.currentContact.emails, email] }
+          currentFriend: state.currentFriend
+            ? { ...state.currentFriend, emails: [...state.currentFriend.emails, email] }
             : null,
           isLoading: false,
           error: null,
@@ -366,24 +366,24 @@ function createContactsStore() {
     },
 
     /**
-     * Update an email for the current contact
+     * Update an email for the current friend
      */
     updateEmail: async (
-      contactId: string,
+      friendId: string,
       emailId: string,
       data: Partial<EmailInput>,
     ): Promise<Email> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const email = await contactsApi.updateEmail(contactId, emailId, data);
+        const email = await friendsApi.updateEmail(friendId, emailId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                emails: state.currentContact.emails.map((e) => (e.id === emailId ? email : e)),
+                ...state.currentFriend,
+                emails: state.currentFriend.emails.map((e) => (e.id === emailId ? email : e)),
               }
             : null,
           isLoading: false,
@@ -405,20 +405,20 @@ function createContactsStore() {
     },
 
     /**
-     * Delete an email from the current contact
+     * Delete an email from the current friend
      */
-    deleteEmail: async (contactId: string, emailId: string) => {
+    deleteEmail: async (friendId: string, emailId: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await contactsApi.deleteEmail(contactId, emailId);
+        await friendsApi.deleteEmail(friendId, emailId);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                emails: state.currentContact.emails.filter((e) => e.id !== emailId),
+                ...state.currentFriend,
+                emails: state.currentFriend.emails.filter((e) => e.id !== emailId),
               }
             : null,
           isLoading: false,
@@ -442,18 +442,18 @@ function createContactsStore() {
     // =========================================================================
 
     /**
-     * Add an address to the current contact
+     * Add an address to the current friend
      */
-    addAddress: async (contactId: string, data: AddressInput): Promise<Address> => {
+    addAddress: async (friendId: string, data: AddressInput): Promise<Address> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const address = await contactsApi.addAddress(contactId, data);
+        const address = await friendsApi.addAddress(friendId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
-            ? { ...state.currentContact, addresses: [...state.currentContact.addresses, address] }
+          currentFriend: state.currentFriend
+            ? { ...state.currentFriend, addresses: [...state.currentFriend.addresses, address] }
             : null,
           isLoading: false,
           error: null,
@@ -474,24 +474,24 @@ function createContactsStore() {
     },
 
     /**
-     * Update an address for the current contact
+     * Update an address for the current friend
      */
     updateAddress: async (
-      contactId: string,
+      friendId: string,
       addressId: string,
       data: Partial<AddressInput>,
     ): Promise<Address> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const address = await contactsApi.updateAddress(contactId, addressId, data);
+        const address = await friendsApi.updateAddress(friendId, addressId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                addresses: state.currentContact.addresses.map((a) =>
+                ...state.currentFriend,
+                addresses: state.currentFriend.addresses.map((a) =>
                   a.id === addressId ? address : a,
                 ),
               }
@@ -515,20 +515,20 @@ function createContactsStore() {
     },
 
     /**
-     * Delete an address from the current contact
+     * Delete an address from the current friend
      */
-    deleteAddress: async (contactId: string, addressId: string) => {
+    deleteAddress: async (friendId: string, addressId: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await contactsApi.deleteAddress(contactId, addressId);
+        await friendsApi.deleteAddress(friendId, addressId);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                addresses: state.currentContact.addresses.filter((a) => a.id !== addressId),
+                ...state.currentFriend,
+                addresses: state.currentFriend.addresses.filter((a) => a.id !== addressId),
               }
             : null,
           isLoading: false,
@@ -552,18 +552,18 @@ function createContactsStore() {
     // =========================================================================
 
     /**
-     * Add a URL to the current contact
+     * Add a URL to the current friend
      */
-    addUrl: async (contactId: string, data: UrlInput): Promise<Url> => {
+    addUrl: async (friendId: string, data: UrlInput): Promise<Url> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const url = await contactsApi.addUrl(contactId, data);
+        const url = await friendsApi.addUrl(friendId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
-            ? { ...state.currentContact, urls: [...state.currentContact.urls, url] }
+          currentFriend: state.currentFriend
+            ? { ...state.currentFriend, urls: [...state.currentFriend.urls, url] }
             : null,
           isLoading: false,
           error: null,
@@ -584,20 +584,20 @@ function createContactsStore() {
     },
 
     /**
-     * Update a URL for the current contact
+     * Update a URL for the current friend
      */
-    updateUrl: async (contactId: string, urlId: string, data: Partial<UrlInput>): Promise<Url> => {
+    updateUrl: async (friendId: string, urlId: string, data: Partial<UrlInput>): Promise<Url> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const url = await contactsApi.updateUrl(contactId, urlId, data);
+        const url = await friendsApi.updateUrl(friendId, urlId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                urls: state.currentContact.urls.map((u) => (u.id === urlId ? url : u)),
+                ...state.currentFriend,
+                urls: state.currentFriend.urls.map((u) => (u.id === urlId ? url : u)),
               }
             : null,
           isLoading: false,
@@ -619,20 +619,20 @@ function createContactsStore() {
     },
 
     /**
-     * Delete a URL from the current contact
+     * Delete a URL from the current friend
      */
-    deleteUrl: async (contactId: string, urlId: string) => {
+    deleteUrl: async (friendId: string, urlId: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await contactsApi.deleteUrl(contactId, urlId);
+        await friendsApi.deleteUrl(friendId, urlId);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                urls: state.currentContact.urls.filter((u) => u.id !== urlId),
+                ...state.currentFriend,
+                urls: state.currentFriend.urls.filter((u) => u.id !== urlId),
               }
             : null,
           isLoading: false,
@@ -656,19 +656,19 @@ function createContactsStore() {
     // =========================================================================
 
     /**
-     * Upload a photo for the current contact
+     * Upload a photo for the current friend
      */
-    uploadPhoto: async (contactId: string, file: File) => {
+    uploadPhoto: async (friendId: string, file: File) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const result = await contactsApi.uploadPhoto(contactId, file);
+        const result = await friendsApi.uploadPhoto(friendId, file);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
+                ...state.currentFriend,
                 photoUrl: result.photoUrl,
                 photoThumbnailUrl: result.photoThumbnailUrl,
               }
@@ -692,19 +692,19 @@ function createContactsStore() {
     },
 
     /**
-     * Delete the current contact's photo
+     * Delete the current friend's photo
      */
-    deletePhoto: async (contactId: string) => {
+    deletePhoto: async (friendId: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await contactsApi.deletePhoto(contactId);
+        await friendsApi.deletePhoto(friendId);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
+                ...state.currentFriend,
                 photoUrl: undefined,
                 photoThumbnailUrl: undefined,
               }
@@ -730,18 +730,18 @@ function createContactsStore() {
     // =========================================================================
 
     /**
-     * Add an important date to the current contact
+     * Add an important date to the current friend
      */
-    addDate: async (contactId: string, data: DateInput): Promise<ContactDate> => {
+    addDate: async (friendId: string, data: DateInput): Promise<FriendDate> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const date = await contactsApi.addDate(contactId, data);
+        const date = await friendsApi.addDate(friendId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
-            ? { ...state.currentContact, dates: [...(state.currentContact.dates ?? []), date] }
+          currentFriend: state.currentFriend
+            ? { ...state.currentFriend, dates: [...(state.currentFriend.dates ?? []), date] }
             : null,
           isLoading: false,
           error: null,
@@ -764,22 +764,18 @@ function createContactsStore() {
     /**
      * Update an important date
      */
-    updateDate: async (
-      contactId: string,
-      dateId: string,
-      data: DateInput,
-    ): Promise<ContactDate> => {
+    updateDate: async (friendId: string, dateId: string, data: DateInput): Promise<FriendDate> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const date = await contactsApi.updateDate(contactId, dateId, data);
+        const date = await friendsApi.updateDate(friendId, dateId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                dates: (state.currentContact.dates ?? []).map((d) => (d.id === dateId ? date : d)),
+                ...state.currentFriend,
+                dates: (state.currentFriend.dates ?? []).map((d) => (d.id === dateId ? date : d)),
               }
             : null,
           isLoading: false,
@@ -801,20 +797,20 @@ function createContactsStore() {
     },
 
     /**
-     * Delete an important date from the current contact
+     * Delete an important date from the current friend
      */
-    deleteDate: async (contactId: string, dateId: string) => {
+    deleteDate: async (friendId: string, dateId: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await contactsApi.deleteDate(contactId, dateId);
+        await friendsApi.deleteDate(friendId, dateId);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                dates: (state.currentContact.dates ?? []).filter((d) => d.id !== dateId),
+                ...state.currentFriend,
+                dates: (state.currentFriend.dates ?? []).filter((d) => d.id !== dateId),
               }
             : null,
           isLoading: false,
@@ -838,17 +834,17 @@ function createContactsStore() {
     // =========================================================================
 
     /**
-     * Set or update how/where met information for the current contact
+     * Set or update how/where met information for the current friend
      */
-    setMetInfo: async (contactId: string, data: MetInfoInput): Promise<MetInfo> => {
+    setMetInfo: async (friendId: string, data: MetInfoInput): Promise<MetInfo> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const metInfo = await contactsApi.setMetInfo(contactId, data);
+        const metInfo = await friendsApi.setMetInfo(friendId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact ? { ...state.currentContact, metInfo } : null,
+          currentFriend: state.currentFriend ? { ...state.currentFriend, metInfo } : null,
           isLoading: false,
           error: null,
         }));
@@ -868,18 +864,18 @@ function createContactsStore() {
     },
 
     /**
-     * Delete how/where met information from the current contact
+     * Delete how/where met information from the current friend
      */
-    deleteMetInfo: async (contactId: string) => {
+    deleteMetInfo: async (friendId: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await contactsApi.deleteMetInfo(contactId);
+        await friendsApi.deleteMetInfo(friendId);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
-            ? { ...state.currentContact, metInfo: undefined }
+          currentFriend: state.currentFriend
+            ? { ...state.currentFriend, metInfo: undefined }
             : null,
           isLoading: false,
           error: null,
@@ -903,23 +899,23 @@ function createContactsStore() {
     // =========================================================================
 
     /**
-     * Add a social profile to the current contact
+     * Add a social profile to the current friend
      */
     addSocialProfile: async (
-      contactId: string,
+      friendId: string,
       data: SocialProfileInput,
     ): Promise<SocialProfile> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const profile = await contactsApi.addSocialProfile(contactId, data);
+        const profile = await friendsApi.addSocialProfile(friendId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                socialProfiles: [...(state.currentContact.socialProfiles ?? []), profile],
+                ...state.currentFriend,
+                socialProfiles: [...(state.currentFriend.socialProfiles ?? []), profile],
               }
             : null,
           isLoading: false,
@@ -945,21 +941,21 @@ function createContactsStore() {
      * Update a social profile
      */
     updateSocialProfile: async (
-      contactId: string,
+      friendId: string,
       profileId: string,
       data: SocialProfileInput,
     ): Promise<SocialProfile> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const profile = await contactsApi.updateSocialProfile(contactId, profileId, data);
+        const profile = await friendsApi.updateSocialProfile(friendId, profileId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                socialProfiles: (state.currentContact.socialProfiles ?? []).map((p) =>
+                ...state.currentFriend,
+                socialProfiles: (state.currentFriend.socialProfiles ?? []).map((p) =>
                   p.id === profileId ? profile : p,
                 ),
               }
@@ -984,20 +980,20 @@ function createContactsStore() {
     },
 
     /**
-     * Delete a social profile from the current contact
+     * Delete a social profile from the current friend
      */
-    deleteSocialProfile: async (contactId: string, profileId: string) => {
+    deleteSocialProfile: async (friendId: string, profileId: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await contactsApi.deleteSocialProfile(contactId, profileId);
+        await friendsApi.deleteSocialProfile(friendId, profileId);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                socialProfiles: (state.currentContact.socialProfiles ?? []).filter(
+                ...state.currentFriend,
+                socialProfiles: (state.currentFriend.socialProfiles ?? []).filter(
                   (p) => p.id !== profileId,
                 ),
               }
@@ -1039,7 +1035,7 @@ function createContactsStore() {
       }
 
       try {
-        const types = await contactsApi.getRelationshipTypes();
+        const types = await friendsApi.getRelationshipTypes();
 
         update((state) => ({
           ...state,
@@ -1061,18 +1057,17 @@ function createContactsStore() {
     },
 
     /**
-     * Search contacts by name (for autocomplete)
+     * Search friends by name (for autocomplete)
      */
-    searchContacts: async (
+    searchFriends: async (
       query: string,
       exclude?: string,
       limit?: number,
-    ): Promise<ContactSearchResult[]> => {
+    ): Promise<FriendSearchResult[]> => {
       try {
-        return await contactsApi.searchContacts(query, exclude, limit);
+        return await friendsApi.searchFriends(query, exclude, limit);
       } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to search contacts';
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to search friends';
 
         update((state) => ({
           ...state,
@@ -1084,20 +1079,20 @@ function createContactsStore() {
     },
 
     /**
-     * Add a relationship to the current contact
+     * Add a relationship to the current friend
      */
-    addRelationship: async (contactId: string, data: RelationshipInput): Promise<Relationship> => {
+    addRelationship: async (friendId: string, data: RelationshipInput): Promise<Relationship> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const relationship = await contactsApi.addRelationship(contactId, data);
+        const relationship = await friendsApi.addRelationship(friendId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                relationships: [...(state.currentContact.relationships ?? []), relationship],
+                ...state.currentFriend,
+                relationships: [...(state.currentFriend.relationships ?? []), relationship],
               }
             : null,
           isLoading: false,
@@ -1123,21 +1118,21 @@ function createContactsStore() {
      * Update a relationship
      */
     updateRelationship: async (
-      contactId: string,
+      friendId: string,
       relationshipId: string,
       data: RelationshipUpdateInput,
     ): Promise<Relationship> => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const relationship = await contactsApi.updateRelationship(contactId, relationshipId, data);
+        const relationship = await friendsApi.updateRelationship(friendId, relationshipId, data);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                relationships: (state.currentContact.relationships ?? []).map((r) =>
+                ...state.currentFriend,
+                relationships: (state.currentFriend.relationships ?? []).map((r) =>
                   r.id === relationshipId ? relationship : r,
                 ),
               }
@@ -1162,20 +1157,20 @@ function createContactsStore() {
     },
 
     /**
-     * Delete a relationship from the current contact
+     * Delete a relationship from the current friend
      */
-    deleteRelationship: async (contactId: string, relationshipId: string) => {
+    deleteRelationship: async (friendId: string, relationshipId: string) => {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await contactsApi.deleteRelationship(contactId, relationshipId);
+        await friendsApi.deleteRelationship(friendId, relationshipId);
 
         update((state) => ({
           ...state,
-          currentContact: state.currentContact
+          currentFriend: state.currentFriend
             ? {
-                ...state.currentContact,
-                relationships: (state.currentContact.relationships ?? []).filter(
+                ...state.currentFriend,
+                relationships: (state.currentFriend.relationships ?? []).filter(
                   (r) => r.id !== relationshipId,
                 ),
               }
@@ -1202,10 +1197,10 @@ function createContactsStore() {
     // =========================================================================
 
     /**
-     * Clear the current contact
+     * Clear the current friend
      */
-    clearCurrentContact: () => {
-      update((state) => ({ ...state, currentContact: null }));
+    clearCurrentFriend: () => {
+      update((state) => ({ ...state, currentFriend: null }));
     },
 
     /**
@@ -1225,26 +1220,26 @@ function createContactsStore() {
 }
 
 /**
- * The global contacts store
+ * The global friends store
  */
-export const contacts = createContactsStore();
+export const friends = createFriendsStore();
 
 /**
  * Derived store for loading state
  */
-export const isContactsLoading = derived(contacts, ($contacts) => $contacts.isLoading);
+export const isFriendsLoading = derived(friends, ($friends) => $friends.isLoading);
 
 /**
- * Derived store for current contact
+ * Derived store for current friend
  */
-export const currentContact = derived(contacts, ($contacts) => $contacts.currentContact);
+export const currentFriend = derived(friends, ($friends) => $friends.currentFriend);
 
 /**
- * Derived store for contact list
+ * Derived store for friend list
  */
-export const contactList = derived(contacts, ($contacts) => $contacts.contacts);
+export const friendList = derived(friends, ($friends) => $friends.friends);
 
 /**
  * Derived store for relationship types
  */
-export const relationshipTypes = derived(contacts, ($contacts) => $contacts.relationshipTypes);
+export const relationshipTypes = derived(friends, ($friends) => $friends.relationshipTypes);

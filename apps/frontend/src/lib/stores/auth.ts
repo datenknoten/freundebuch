@@ -5,7 +5,7 @@ import { retryWithBackoff } from '../utils/retry.js';
 
 /** Default user preferences */
 const DEFAULT_PREFERENCES: UserPreferences = {
-  contactsPageSize: 25,
+  friendsPageSize: 25,
 };
 
 /**
@@ -303,9 +303,9 @@ export const isAuthInitialized = derived(auth, ($auth) => $auth.isInitialized);
 export const userPreferences = derived(auth, ($auth) => $auth.preferences);
 
 /**
- * Derived store for contacts page size
+ * Derived store for friends page size
  */
-export const contactsPageSize = derived(auth, ($auth) => $auth.preferences.contactsPageSize ?? 25);
+export const friendsPageSize = derived(auth, ($auth) => $auth.preferences.friendsPageSize ?? 25);
 
 /**
  * Helper to wait for auth initialization

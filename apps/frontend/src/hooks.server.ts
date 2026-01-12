@@ -66,7 +66,7 @@ const authHandle: Handle = async ({ event, resolve }) => {
   event.locals.sessionToken = sessionToken || null;
 
   // Define protected routes that require authentication
-  const protectedRoutes = ['/profile', '/contacts', '/onboarding'];
+  const protectedRoutes = ['/profile', '/friends', '/onboarding'];
 
   // Check if the current route is protected
   const isProtectedRoute = protectedRoutes.some((route) => event.url.pathname.startsWith(route));

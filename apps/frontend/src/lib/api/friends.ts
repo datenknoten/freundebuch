@@ -2,21 +2,21 @@ import { get } from 'svelte/store';
 import type {
   Address,
   AddressInput,
-  Contact,
-  ContactCreateInput,
-  ContactDate,
-  ContactSearchResult,
-  ContactUpdateInput,
   DateInput,
   Email,
   EmailInput,
   ErrorResponse,
   FacetedSearchResponse,
   FacetFilters,
+  Friend,
+  FriendCreateInput,
+  FriendDate,
+  FriendSearchResult,
+  FriendUpdateInput,
   GlobalSearchResult,
   MetInfo,
   MetInfoInput,
-  PaginatedContactList,
+  PaginatedFriendList,
   PaginatedSearchResponse,
   Phone,
   PhoneInput,
@@ -80,10 +80,10 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 }
 
 // ============================================================================
-// Contact CRUD Operations
+// Friend CRUD Operations
 // ============================================================================
 
-export interface ContactListParams {
+export interface FriendListParams {
   page?: number;
   pageSize?: number;
   sortBy?: 'display_name' | 'created_at' | 'updated_at';
@@ -91,9 +91,9 @@ export interface ContactListParams {
 }
 
 /**
- * Get paginated list of contacts
+ * Get paginated list of friends
  */
-export async function listContacts(params: ContactListParams = {}): Promise<PaginatedContactList> {
+export async function listFriends(params: FriendListParams = {}): Promise<PaginatedFriendList> {
   const searchParams = new URLSearchParams();
 
   if (params.page) searchParams.set('page', params.page.toString());
@@ -102,43 +102,43 @@ export async function listContacts(params: ContactListParams = {}): Promise<Pagi
   if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
 
   const query = searchParams.toString();
-  const endpoint = `/api/contacts${query ? `?${query}` : ''}`;
+  const endpoint = `/api/friends${query ? `?${query}` : ''}`;
 
-  return apiRequest<PaginatedContactList>(endpoint);
+  return apiRequest<PaginatedFriendList>(endpoint);
 }
 
 /**
- * Get a single contact by ID
+ * Get a single friend by ID
  */
-export async function getContact(id: string): Promise<Contact> {
-  return apiRequest<Contact>(`/api/contacts/${id}`);
+export async function getFriend(id: string): Promise<Friend> {
+  return apiRequest<Friend>(`/api/friends/${id}`);
 }
 
 /**
- * Create a new contact
+ * Create a new friend
  */
-export async function createContact(data: ContactCreateInput): Promise<Contact> {
-  return apiRequest<Contact>('/api/contacts', {
+export async function createFriend(data: FriendCreateInput): Promise<Friend> {
+  return apiRequest<Friend>('/api/friends', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
 /**
- * Update an existing contact
+ * Update an existing friend
  */
-export async function updateContact(id: string, data: ContactUpdateInput): Promise<Contact> {
-  return apiRequest<Contact>(`/api/contacts/${id}`, {
+export async function updateFriend(id: string, data: FriendUpdateInput): Promise<Friend> {
+  return apiRequest<Friend>(`/api/friends/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
 }
 
 /**
- * Delete a contact (soft delete)
+ * Delete a friend (soft delete)
  */
-export async function deleteContact(id: string): Promise<{ message: string }> {
-  return apiRequest(`/api/contacts/${id}`, {
+export async function deleteFriend(id: string): Promise<{ message: string }> {
+  return apiRequest(`/api/friends/${id}`, {
     method: 'DELETE',
   });
 }
@@ -148,10 +148,10 @@ export async function deleteContact(id: string): Promise<{ message: string }> {
 // ============================================================================
 
 /**
- * Add a phone number to a contact
+ * Add a phone number to a friend
  */
-export async function addPhone(contactId: string, data: PhoneInput): Promise<Phone> {
-  return apiRequest<Phone>(`/api/contacts/${contactId}/phones`, {
+export async function addPhone(friendId: string, data: PhoneInput): Promise<Phone> {
+  return apiRequest<Phone>(`/api/friends/${friendId}/phones`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -161,11 +161,11 @@ export async function addPhone(contactId: string, data: PhoneInput): Promise<Pho
  * Update a phone number
  */
 export async function updatePhone(
-  contactId: string,
+  friendId: string,
   phoneId: string,
   data: Partial<PhoneInput>,
 ): Promise<Phone> {
-  return apiRequest<Phone>(`/api/contacts/${contactId}/phones/${phoneId}`, {
+  return apiRequest<Phone>(`/api/friends/${friendId}/phones/${phoneId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -174,11 +174,8 @@ export async function updatePhone(
 /**
  * Delete a phone number
  */
-export async function deletePhone(
-  contactId: string,
-  phoneId: string,
-): Promise<{ message: string }> {
-  return apiRequest(`/api/contacts/${contactId}/phones/${phoneId}`, {
+export async function deletePhone(friendId: string, phoneId: string): Promise<{ message: string }> {
+  return apiRequest(`/api/friends/${friendId}/phones/${phoneId}`, {
     method: 'DELETE',
   });
 }
@@ -188,10 +185,10 @@ export async function deletePhone(
 // ============================================================================
 
 /**
- * Add an email to a contact
+ * Add an email to a friend
  */
-export async function addEmail(contactId: string, data: EmailInput): Promise<Email> {
-  return apiRequest<Email>(`/api/contacts/${contactId}/emails`, {
+export async function addEmail(friendId: string, data: EmailInput): Promise<Email> {
+  return apiRequest<Email>(`/api/friends/${friendId}/emails`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -201,11 +198,11 @@ export async function addEmail(contactId: string, data: EmailInput): Promise<Ema
  * Update an email
  */
 export async function updateEmail(
-  contactId: string,
+  friendId: string,
   emailId: string,
   data: Partial<EmailInput>,
 ): Promise<Email> {
-  return apiRequest<Email>(`/api/contacts/${contactId}/emails/${emailId}`, {
+  return apiRequest<Email>(`/api/friends/${friendId}/emails/${emailId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -214,11 +211,8 @@ export async function updateEmail(
 /**
  * Delete an email
  */
-export async function deleteEmail(
-  contactId: string,
-  emailId: string,
-): Promise<{ message: string }> {
-  return apiRequest(`/api/contacts/${contactId}/emails/${emailId}`, {
+export async function deleteEmail(friendId: string, emailId: string): Promise<{ message: string }> {
+  return apiRequest(`/api/friends/${friendId}/emails/${emailId}`, {
     method: 'DELETE',
   });
 }
@@ -228,10 +222,10 @@ export async function deleteEmail(
 // ============================================================================
 
 /**
- * Add an address to a contact
+ * Add an address to a friend
  */
-export async function addAddress(contactId: string, data: AddressInput): Promise<Address> {
-  return apiRequest<Address>(`/api/contacts/${contactId}/addresses`, {
+export async function addAddress(friendId: string, data: AddressInput): Promise<Address> {
+  return apiRequest<Address>(`/api/friends/${friendId}/addresses`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -241,11 +235,11 @@ export async function addAddress(contactId: string, data: AddressInput): Promise
  * Update an address
  */
 export async function updateAddress(
-  contactId: string,
+  friendId: string,
   addressId: string,
   data: Partial<AddressInput>,
 ): Promise<Address> {
-  return apiRequest<Address>(`/api/contacts/${contactId}/addresses/${addressId}`, {
+  return apiRequest<Address>(`/api/friends/${friendId}/addresses/${addressId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -255,10 +249,10 @@ export async function updateAddress(
  * Delete an address
  */
 export async function deleteAddress(
-  contactId: string,
+  friendId: string,
   addressId: string,
 ): Promise<{ message: string }> {
-  return apiRequest(`/api/contacts/${contactId}/addresses/${addressId}`, {
+  return apiRequest(`/api/friends/${friendId}/addresses/${addressId}`, {
     method: 'DELETE',
   });
 }
@@ -268,10 +262,10 @@ export async function deleteAddress(
 // ============================================================================
 
 /**
- * Add a URL to a contact
+ * Add a URL to a friend
  */
-export async function addUrl(contactId: string, data: UrlInput): Promise<Url> {
-  return apiRequest<Url>(`/api/contacts/${contactId}/urls`, {
+export async function addUrl(friendId: string, data: UrlInput): Promise<Url> {
+  return apiRequest<Url>(`/api/friends/${friendId}/urls`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -281,11 +275,11 @@ export async function addUrl(contactId: string, data: UrlInput): Promise<Url> {
  * Update a URL
  */
 export async function updateUrl(
-  contactId: string,
+  friendId: string,
   urlId: string,
   data: Partial<UrlInput>,
 ): Promise<Url> {
-  return apiRequest<Url>(`/api/contacts/${contactId}/urls/${urlId}`, {
+  return apiRequest<Url>(`/api/friends/${friendId}/urls/${urlId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -294,8 +288,8 @@ export async function updateUrl(
 /**
  * Delete a URL
  */
-export async function deleteUrl(contactId: string, urlId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/contacts/${contactId}/urls/${urlId}`, {
+export async function deleteUrl(friendId: string, urlId: string): Promise<{ message: string }> {
+  return apiRequest(`/api/friends/${friendId}/urls/${urlId}`, {
     method: 'DELETE',
   });
 }
@@ -310,13 +304,13 @@ export interface PhotoUploadResult {
 }
 
 /**
- * Upload a photo for a contact
+ * Upload a photo for a friend
  */
-export async function uploadPhoto(contactId: string, file: File): Promise<PhotoUploadResult> {
+export async function uploadPhoto(friendId: string, file: File): Promise<PhotoUploadResult> {
   const formData = new FormData();
   formData.append('photo', file);
 
-  const url = `${API_BASE_URL}/api/contacts/${contactId}/photo`;
+  const url = `${API_BASE_URL}/api/friends/${friendId}/photo`;
   const accessToken = getAccessToken();
 
   const headers: Record<string, string> = {};
@@ -343,10 +337,10 @@ export async function uploadPhoto(contactId: string, file: File): Promise<PhotoU
 }
 
 /**
- * Delete a contact's photo
+ * Delete a friend's photo
  */
-export async function deletePhoto(contactId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/contacts/${contactId}/photo`, {
+export async function deletePhoto(friendId: string): Promise<{ message: string }> {
+  return apiRequest(`/api/friends/${friendId}/photo`, {
     method: 'DELETE',
   });
 }
@@ -356,10 +350,10 @@ export async function deletePhoto(contactId: string): Promise<{ message: string 
 // ============================================================================
 
 /**
- * Add an important date to a contact
+ * Add an important date to a friend
  */
-export async function addDate(contactId: string, data: DateInput): Promise<ContactDate> {
-  return apiRequest<ContactDate>(`/api/contacts/${contactId}/dates`, {
+export async function addDate(friendId: string, data: DateInput): Promise<FriendDate> {
+  return apiRequest<FriendDate>(`/api/friends/${friendId}/dates`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -369,11 +363,11 @@ export async function addDate(contactId: string, data: DateInput): Promise<Conta
  * Update an important date
  */
 export async function updateDate(
-  contactId: string,
+  friendId: string,
   dateId: string,
   data: DateInput,
-): Promise<ContactDate> {
-  return apiRequest<ContactDate>(`/api/contacts/${contactId}/dates/${dateId}`, {
+): Promise<FriendDate> {
+  return apiRequest<FriendDate>(`/api/friends/${friendId}/dates/${dateId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -382,14 +376,14 @@ export async function updateDate(
 /**
  * Delete an important date
  */
-export async function deleteDate(contactId: string, dateId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/contacts/${contactId}/dates/${dateId}`, {
+export async function deleteDate(friendId: string, dateId: string): Promise<{ message: string }> {
+  return apiRequest(`/api/friends/${friendId}/dates/${dateId}`, {
     method: 'DELETE',
   });
 }
 
 /**
- * Get upcoming important dates across all contacts
+ * Get upcoming important dates across all friends
  */
 export async function getUpcomingDates(options?: {
   days?: number;
@@ -399,7 +393,7 @@ export async function getUpcomingDates(options?: {
   if (options?.days) searchParams.set('days', options.days.toString());
   if (options?.limit) searchParams.set('limit', options.limit.toString());
   const queryString = searchParams.toString();
-  const endpoint = `/api/contacts/dates/upcoming${queryString ? `?${queryString}` : ''}`;
+  const endpoint = `/api/friends/dates/upcoming${queryString ? `?${queryString}` : ''}`;
   return apiRequest<UpcomingDate[]>(endpoint);
 }
 
@@ -410,8 +404,8 @@ export async function getUpcomingDates(options?: {
 /**
  * Set or update how/where met information (upsert)
  */
-export async function setMetInfo(contactId: string, data: MetInfoInput): Promise<MetInfo> {
-  return apiRequest<MetInfo>(`/api/contacts/${contactId}/met-info`, {
+export async function setMetInfo(friendId: string, data: MetInfoInput): Promise<MetInfo> {
+  return apiRequest<MetInfo>(`/api/friends/${friendId}/met-info`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -420,8 +414,8 @@ export async function setMetInfo(contactId: string, data: MetInfoInput): Promise
 /**
  * Delete how/where met information
  */
-export async function deleteMetInfo(contactId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/contacts/${contactId}/met-info`, {
+export async function deleteMetInfo(friendId: string): Promise<{ message: string }> {
+  return apiRequest(`/api/friends/${friendId}/met-info`, {
     method: 'DELETE',
   });
 }
@@ -431,13 +425,13 @@ export async function deleteMetInfo(contactId: string): Promise<{ message: strin
 // ============================================================================
 
 /**
- * Add a social profile to a contact
+ * Add a social profile to a friend
  */
 export async function addSocialProfile(
-  contactId: string,
+  friendId: string,
   data: SocialProfileInput,
 ): Promise<SocialProfile> {
-  return apiRequest<SocialProfile>(`/api/contacts/${contactId}/social-profiles`, {
+  return apiRequest<SocialProfile>(`/api/friends/${friendId}/social-profiles`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -447,11 +441,11 @@ export async function addSocialProfile(
  * Update a social profile
  */
 export async function updateSocialProfile(
-  contactId: string,
+  friendId: string,
   profileId: string,
   data: SocialProfileInput,
 ): Promise<SocialProfile> {
-  return apiRequest<SocialProfile>(`/api/contacts/${contactId}/social-profiles/${profileId}`, {
+  return apiRequest<SocialProfile>(`/api/friends/${friendId}/social-profiles/${profileId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -461,10 +455,10 @@ export async function updateSocialProfile(
  * Delete a social profile
  */
 export async function deleteSocialProfile(
-  contactId: string,
+  friendId: string,
   profileId: string,
 ): Promise<{ message: string }> {
-  return apiRequest(`/api/contacts/${contactId}/social-profiles/${profileId}`, {
+  return apiRequest(`/api/friends/${friendId}/social-profiles/${profileId}`, {
     method: 'DELETE',
   });
 }
@@ -477,33 +471,33 @@ export async function deleteSocialProfile(
  * Get all relationship types grouped by category
  */
 export async function getRelationshipTypes(): Promise<RelationshipTypesGrouped> {
-  return apiRequest<RelationshipTypesGrouped>('/api/contacts/relationship-types');
+  return apiRequest<RelationshipTypesGrouped>('/api/friends/relationship-types');
 }
 
 /**
- * Search contacts by name (for autocomplete in relationship picker)
+ * Search friends by name (for autocomplete in relationship picker)
  */
-export async function searchContacts(
+export async function searchFriends(
   query: string,
   exclude?: string,
   limit?: number,
-): Promise<ContactSearchResult[]> {
+): Promise<FriendSearchResult[]> {
   const searchParams = new URLSearchParams();
   searchParams.set('q', query);
   if (exclude) searchParams.set('exclude', exclude);
   if (limit) searchParams.set('limit', limit.toString());
 
-  return apiRequest<ContactSearchResult[]>(`/api/contacts/search?${searchParams.toString()}`);
+  return apiRequest<FriendSearchResult[]>(`/api/friends/search?${searchParams.toString()}`);
 }
 
 /**
- * Add a relationship to a contact
+ * Add a relationship to a friend
  */
 export async function addRelationship(
-  contactId: string,
+  friendId: string,
   data: RelationshipInput,
 ): Promise<Relationship> {
-  return apiRequest<Relationship>(`/api/contacts/${contactId}/relationships`, {
+  return apiRequest<Relationship>(`/api/friends/${friendId}/relationships`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -513,11 +507,11 @@ export async function addRelationship(
  * Update a relationship
  */
 export async function updateRelationship(
-  contactId: string,
+  friendId: string,
   relationshipId: string,
   data: RelationshipUpdateInput,
 ): Promise<Relationship> {
-  return apiRequest<Relationship>(`/api/contacts/${contactId}/relationships/${relationshipId}`, {
+  return apiRequest<Relationship>(`/api/friends/${friendId}/relationships/${relationshipId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -527,10 +521,10 @@ export async function updateRelationship(
  * Delete a relationship
  */
 export async function deleteRelationship(
-  contactId: string,
+  friendId: string,
   relationshipId: string,
 ): Promise<{ message: string }> {
-  return apiRequest(`/api/contacts/${contactId}/relationships/${relationshipId}`, {
+  return apiRequest(`/api/friends/${friendId}/relationships/${relationshipId}`, {
     method: 'DELETE',
   });
 }
@@ -540,7 +534,7 @@ export async function deleteRelationship(
 // ============================================================================
 
 /**
- * Full-text search across contacts with relevance ranking
+ * Full-text search across friends with relevance ranking
  * Searches: names, organization, job title, work notes, emails, phones,
  * relationship notes, and met context
  */
@@ -549,7 +543,7 @@ export async function fullTextSearch(query: string, limit?: number): Promise<Glo
   searchParams.set('q', query);
   if (limit) searchParams.set('limit', limit.toString());
 
-  return apiRequest<GlobalSearchResult[]>(`/api/contacts/search/full?${searchParams.toString()}`);
+  return apiRequest<GlobalSearchResult[]>(`/api/friends/search/full?${searchParams.toString()}`);
 }
 
 export interface PaginatedSearchParams {
@@ -562,7 +556,7 @@ export interface PaginatedSearchParams {
 
 /**
  * Paginated full-text search with sorting options
- * Used by in-page search for contacts list
+ * Used by in-page search for friends list
  */
 export async function paginatedSearch(
   params: PaginatedSearchParams,
@@ -575,7 +569,7 @@ export async function paginatedSearch(
   if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
 
   return apiRequest<PaginatedSearchResponse>(
-    `/api/contacts/search/paginated?${searchParams.toString()}`,
+    `/api/friends/search/paginated?${searchParams.toString()}`,
   );
 }
 
@@ -627,7 +621,7 @@ export async function facetedSearch(params: FacetedSearchParams): Promise<Facete
   }
 
   return apiRequest<FacetedSearchResponse>(
-    `/api/contacts/search/faceted?${searchParams.toString()}`,
+    `/api/friends/search/faceted?${searchParams.toString()}`,
   );
 }
 
@@ -639,7 +633,7 @@ export async function getRecentSearches(limit?: number): Promise<string[]> {
   if (limit) searchParams.set('limit', limit.toString());
 
   const query = searchParams.toString();
-  const endpoint = `/api/contacts/search/recent${query ? `?${query}` : ''}`;
+  const endpoint = `/api/friends/search/recent${query ? `?${query}` : ''}`;
 
   return apiRequest<string[]>(endpoint);
 }
@@ -648,7 +642,7 @@ export async function getRecentSearches(limit?: number): Promise<string[]> {
  * Add or update a recent search query
  */
 export async function addRecentSearch(query: string): Promise<void> {
-  await apiRequest<{ success: boolean }>('/api/contacts/search/recent', {
+  await apiRequest<{ success: boolean }>('/api/friends/search/recent', {
     method: 'POST',
     body: JSON.stringify({ query }),
   });
@@ -659,7 +653,7 @@ export async function addRecentSearch(query: string): Promise<void> {
  */
 export async function deleteRecentSearch(query: string): Promise<void> {
   await apiRequest<{ success: boolean }>(
-    `/api/contacts/search/recent/${encodeURIComponent(query)}`,
+    `/api/friends/search/recent/${encodeURIComponent(query)}`,
     {
       method: 'DELETE',
     },
@@ -670,7 +664,7 @@ export async function deleteRecentSearch(query: string): Promise<void> {
  * Clear all recent searches
  */
 export async function clearRecentSearches(): Promise<void> {
-  await apiRequest<{ success: boolean }>('/api/contacts/search/recent', {
+  await apiRequest<{ success: boolean }>('/api/friends/search/recent', {
     method: 'DELETE',
   });
 }

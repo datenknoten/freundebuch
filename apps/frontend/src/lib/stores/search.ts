@@ -1,6 +1,6 @@
 import { derived, writable } from 'svelte/store';
 import type { FacetFilters, FacetGroups, GlobalSearchResult } from '$shared';
-import * as contactsApi from '../api/contacts.js';
+import * as friendsApi from '../api/friends.js';
 
 /**
  * Search state interface
@@ -61,7 +61,7 @@ function createSearchStore() {
     }
 
     try {
-      const results = await contactsApi.fullTextSearch(query, 10);
+      const results = await friendsApi.fullTextSearch(query, 10);
       update((state) => ({
         ...state,
         results,
@@ -91,7 +91,7 @@ function createSearchStore() {
 
       if (hasFilters) {
         // Use faceted search when filters are active
-        const response = await contactsApi.facetedSearch({
+        const response = await friendsApi.facetedSearch({
           query,
           filters,
           includeFacets: true,
@@ -107,7 +107,7 @@ function createSearchStore() {
         }));
       } else {
         // Use simple search when no filters (faster)
-        const results = await contactsApi.fullTextSearch(query, 10);
+        const results = await friendsApi.fullTextSearch(query, 10);
         update((state) => ({
           ...state,
           results,
@@ -135,7 +135,7 @@ function createSearchStore() {
     update((state) => ({ ...state, facetsLoading: true }));
 
     try {
-      const response = await contactsApi.facetedSearch({
+      const response = await friendsApi.facetedSearch({
         query,
         includeFacets: true,
         pageSize: 1, // Minimal results, we just want facets
@@ -271,7 +271,7 @@ function createSearchStore() {
      */
     loadRecentSearches: async () => {
       try {
-        const recentSearches = await contactsApi.getRecentSearches(10);
+        const recentSearches = await friendsApi.getRecentSearches(10);
         update((state) => ({ ...state, recentSearches }));
       } catch (error) {
         // Silently fail - recent searches are not critical
@@ -286,7 +286,7 @@ function createSearchStore() {
       if (!query.trim() || query.trim().length < 2) return;
 
       try {
-        await contactsApi.addRecentSearch(query.trim());
+        await friendsApi.addRecentSearch(query.trim());
         // Optimistically update local state
         update((state) => {
           const filtered = state.recentSearches.filter(
@@ -307,7 +307,7 @@ function createSearchStore() {
      */
     deleteRecentSearch: async (query: string) => {
       try {
-        await contactsApi.deleteRecentSearch(query);
+        await friendsApi.deleteRecentSearch(query);
         update((state) => ({
           ...state,
           recentSearches: state.recentSearches.filter((s) => s !== query),
@@ -322,7 +322,7 @@ function createSearchStore() {
      */
     clearRecentSearches: async () => {
       try {
-        await contactsApi.clearRecentSearches();
+        await friendsApi.clearRecentSearches();
         update((state) => ({ ...state, recentSearches: [] }));
       } catch (error) {
         console.error('Failed to clear recent searches:', error);
