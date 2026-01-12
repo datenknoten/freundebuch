@@ -1,4 +1,4 @@
-import { mkdir, rm, stat } from 'node:fs/promises';
+import { mkdir, rename, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import {
   MAX_FILE_SIZE,
@@ -22,8 +22,57 @@ export class PhotoService {
     this.logger = logger;
     const config = getConfig();
     // Use environment variable or default to local uploads directory
-    this.uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'contacts');
+    this.uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'friends');
     this.baseUrl = `${config.BACKEND_URL}/api/uploads/friends`;
+  }
+
+  /**
+   * Migrate uploads from legacy 'contacts' directory to 'friends' directory.
+   * Should be called once at application startup.
+   */
+  static async migrateFromLegacyPath(logger: Logger): Promise<void> {
+    // Skip migration if UPLOAD_DIR is explicitly set
+    if (process.env.UPLOAD_DIR) {
+      return;
+    }
+
+    const legacyDir = path.join(process.cwd(), 'uploads', 'contacts');
+    const newDir = path.join(process.cwd(), 'uploads', 'friends');
+
+    try {
+      // Check if legacy directory exists
+      const legacyStat = await stat(legacyDir);
+      if (!legacyStat.isDirectory()) {
+        return;
+      }
+
+      // Check if new directory already exists
+      try {
+        await stat(newDir);
+        // New directory exists - don't overwrite, log warning
+        logger.warn(
+          { legacyDir, newDir },
+          'Both legacy and new upload directories exist. Manual migration may be required.',
+        );
+        return;
+      } catch (error) {
+        // New directory doesn't exist, proceed with rename
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+          throw error;
+        }
+      }
+
+      // Rename legacy directory to new directory
+      await rename(legacyDir, newDir);
+      logger.info({ legacyDir, newDir }, 'Migrated uploads directory from legacy path');
+    } catch (error) {
+      // Legacy directory doesn't exist, nothing to migrate
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return;
+      }
+      logger.error({ error, legacyDir, newDir }, 'Failed to migrate uploads directory');
+      throw error;
+    }
   }
 
   /**
