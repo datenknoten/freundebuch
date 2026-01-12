@@ -3,7 +3,7 @@
         'name' => 'freundebuch/sabredav',
         'pretty_version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
         'version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
-        'reference' => '81ad147b2bb9ae4d85ed0cd8a0a894d1385dde58',
+        'reference' => '80943f939ba6ac2cb66e02a4609f0099b973e12a',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'freundebuch/sabredav' => array(
             'pretty_version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
             'version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
-            'reference' => '81ad147b2bb9ae4d85ed0cd8a0a894d1385dde58',
+            'reference' => '80943f939ba6ac2cb66e02a4609f0099b973e12a',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
