@@ -7,7 +7,7 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 | Epic | Title | Phase | Priority | Status |
 |------|-------|-------|----------|--------|
 | [Epic 0](epic-00-done-project-setup.md) | Project Setup & Infrastructure | Pre-MVP (Phase 0) | Critical | **Done** |
-| [Epic 1](epic-01-done-contact-management.md) | Contact Management | MVP (Phase 1) | High | **Done** |
+| [Epic 1](epic-01-done-friend-management.md) | Friend Management | MVP (Phase 1) | High | **Done** |
 | [Epic 2](epic-02-planned-relationship-management.md) | Relationship Management | Phase 2 | High | Planned |
 | [Epic 3](epic-03-planned-reminder-system.md) | Reminder System | Phase 2 | High | Planned |
 | [Epic 4](epic-04-planned-categorization-organization.md) | Categorization & Organization | MVP (Phase 1) | High | Planned |
@@ -21,7 +21,7 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 | [Epic 12](epic-12-planned-collectives.md) | Collectives | Phase 2 | Medium | Planned |
 | [Epic 13](epic-13-future-self-service-pages.md) | Self-Service Friend Pages | Phase 4 | Low | Future |
 | [Epic 14](epic-14-done-subresource-inline-editing.md) | Subresource Inline Editing | Enhancement | High | **Done** |
-| [Epic 15](epic-15-planned-contact-notes.md) | Contact Notes | MVP (Phase 1) | High | Planned |
+| [Epic 15](epic-15-planned-friend-notes.md) | Friend Notes | MVP (Phase 1) | High | Planned |
 | [Epic 16](epic-16-planned-multi-user-workspaces.md) | Multi-User Workspaces | Phase 2 | Medium | Planned |
 | [Epic 17](epic-17-planned-advanced-search.md) | Advanced Search | Phase 2 | Medium | Planned |
 | [Epic 18](epic-18-planned-better-auth-migration.md) | Better Auth Migration | Phase 1.5 | High | Planned |
@@ -48,12 +48,12 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 **Goal:** Build something useful people can actually start using
 
 **Epics:**
-- Epic 1: Contact Management - **Done** (1A, 1B, 1D complete)
+- Epic 1: Friend Management - **Done** (1A, 1B, 1D complete)
 - Epic 4: Categorization & Organization (groups & tags) - Planned
 - Epic 5: Multi-User Management (authentication) - **Done**
 - Epic 10: Search Functionality (basic) - **Done**
 - Epic 14: Subresource Inline Editing - **Done**
-- Epic 15: Contact Notes - Planned (extracted from Epic 1C)
+- Epic 15: Friend Notes - Planned (extracted from Epic 1C)
 
 **What you can do now:**
 - Create, edit, and manage your contacts
@@ -143,7 +143,7 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 
 ```mermaid
 graph TD
-    E0[Epic 0: Project Setup ✅] --> E1[Epic 1: Contact Management ✅]
+    E0[Epic 0: Project Setup ✅] --> E1[Epic 1: Friend Management ✅]
     E0 --> E4[Epic 4: Categorization]
     E0 --> E5[Epic 5: Multi-User Auth ✅]
     E0 --> E10[Epic 10: Search ✅]
@@ -152,7 +152,7 @@ graph TD
     E1 --> E10
     E1 --> E11[Epic 11: Custom Fields]
     E1 --> E12[Epic 12: Collectives]
-    E1 --> E15[Epic 15: Contact Notes]
+    E1 --> E15[Epic 15: Friend Notes]
     E2 --> E3[Epic 3: Reminders]
     E2 --> E8[Epic 8: Timeline]
     E2 --> E9[Epic 9: Dashboard]

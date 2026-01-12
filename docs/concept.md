@@ -48,7 +48,7 @@ See [brand.md](./brand.md) for our brand guidelines and terminology.
 ## 3. Feature Overview (High-Level)
 
 ### 3.1 Core Features
-1. **Contact Management** - Your address book, but with all the context you actually need
+1. **Friend Management** - Your address book, but with all the context you actually need
 2. **Relationship Management** - Track interactions and keep the history of your relationships
 3. **Reminder System** - Never forget to reach out again
 4. **Categorization & Organization** - Organize contacts your way with circles and tags
@@ -67,7 +67,7 @@ See [brand.md](./brand.md) for our brand guidelines and terminology.
 
 ## 4. Detailed Feature Descriptions
 
-### Feature 1: Contact Management
+### Feature 1: Friend Management
 
 **What it does:**
 This is your contact database on steroids. We're storing way more than just phone numbers and email addresses.
@@ -162,7 +162,7 @@ Flexible organization of contacts according to various criteria.
 ### Feature 5: Multi-User Management
 
 **Description:**
-Shared use of the contact database within families or households.
+Shared use of the friend database within families or households.
 
 **Scope:**
 - **User Accounts:**
@@ -412,7 +412,7 @@ Powerful search across all contact data.
 
 ### Phase 1: MVP (The Essentials)
 Let's start with the basics that make this useful:
-- Feature 1: Contact Management (the core database)
+- Feature 1: Friend Management (the core database)
 - Feature 4: Categorization (organize with circles & tags)
 - Feature 10: Search (find what you need)
 - Feature 5: Multi-User (authentication and basic setup)
