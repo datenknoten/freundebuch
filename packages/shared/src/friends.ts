@@ -2,7 +2,7 @@ import { type } from 'arktype';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 
 /**
- * Contact types and validation schemas for Epic 1A & 1B: Contact CRUD & Extended Fields
+ * Friend types and validation schemas for Epic 1A & 1B: Friend CRUD & Extended Fields
  */
 
 // ============================================================================
@@ -140,7 +140,7 @@ export type SocialProfileInput = typeof SocialProfileInputSchema.infer;
 
 /** Schema for creating a relationship */
 export const RelationshipInputSchema = type({
-  related_contact_id: 'string > 0', // UUID of the related contact
+  related_friend_id: 'string > 0', // UUID of the related friend
   relationship_type_id: RelationshipTypeIdSchema,
   'notes?': 'string',
 });
@@ -153,14 +153,14 @@ export const RelationshipUpdateSchema = type({
 export type RelationshipUpdateInput = typeof RelationshipUpdateSchema.infer;
 
 // ============================================================================
-// Contact Request Schemas
+// Friend Request Schemas
 // ============================================================================
 
-/** Maximum number of sub-resources per contact (DoS prevention) */
+/** Maximum number of sub-resources per friend (DoS prevention) */
 const MAX_SUB_RESOURCES = 30;
 
-/** Schema for creating a new contact */
-export const ContactCreateSchema = type({
+/** Schema for creating a new friend */
+export const FriendCreateSchema = type({
   display_name: 'string > 0',
   'nickname?': 'string',
   'name_prefix?': 'string',
@@ -188,7 +188,7 @@ export const ContactCreateSchema = type({
   if (data.phones) {
     const primaryCount = data.phones.filter((p) => p.is_primary === true).length;
     if (primaryCount > 1) {
-      ctx.mustBe('a contact with at most one primary phone');
+      ctx.mustBe('a friend with at most one primary phone');
       return false;
     }
   }
@@ -196,7 +196,7 @@ export const ContactCreateSchema = type({
   if (data.emails) {
     const primaryCount = data.emails.filter((e) => e.is_primary === true).length;
     if (primaryCount > 1) {
-      ctx.mustBe('a contact with at most one primary email');
+      ctx.mustBe('a friend with at most one primary email');
       return false;
     }
   }
@@ -204,7 +204,7 @@ export const ContactCreateSchema = type({
   if (data.addresses) {
     const primaryCount = data.addresses.filter((a) => a.is_primary === true).length;
     if (primaryCount > 1) {
-      ctx.mustBe('a contact with at most one primary address');
+      ctx.mustBe('a friend with at most one primary address');
       return false;
     }
   }
@@ -212,16 +212,16 @@ export const ContactCreateSchema = type({
   if (data.dates) {
     const birthdayCount = data.dates.filter((d) => d.date_type === 'birthday').length;
     if (birthdayCount > 1) {
-      ctx.mustBe('a contact with at most one birthday');
+      ctx.mustBe('a friend with at most one birthday');
       return false;
     }
   }
   return true;
 });
-export type ContactCreateInput = typeof ContactCreateSchema.infer;
+export type FriendCreateInput = typeof FriendCreateSchema.infer;
 
-/** Schema for updating an existing contact */
-export const ContactUpdateSchema = type({
+/** Schema for updating an existing friend */
+export const FriendUpdateSchema = type({
   'display_name?': 'string > 0',
   'nickname?': 'string | null',
   'name_prefix?': 'string | null',
@@ -236,20 +236,20 @@ export const ContactUpdateSchema = type({
   'work_notes?': 'string | null',
   'interests?': 'string | null',
 });
-export type ContactUpdateInput = typeof ContactUpdateSchema.infer;
+export type FriendUpdateInput = typeof FriendUpdateSchema.infer;
 
 // ============================================================================
 // Query Schemas
 // ============================================================================
 
-/** Schema for contact list query parameters */
-export const ContactListQuerySchema = type({
+/** Schema for friend list query parameters */
+export const FriendListQuerySchema = type({
   'page?': 'string',
   'pageSize?': 'string',
   'sortBy?': '"display_name" | "created_at" | "updated_at"',
   'sortOrder?': '"asc" | "desc"',
 });
-export type ContactListQuery = typeof ContactListQuerySchema.infer;
+export type FriendListQuery = typeof FriendListQuerySchema.infer;
 
 // ============================================================================
 // Response Interfaces
@@ -302,7 +302,7 @@ export interface Url {
 // Epic 1B: Extended field response interfaces
 
 /** Important date in API responses */
-export interface ContactDate {
+export interface FriendDate {
   id: string;
   dateValue: string;
   yearKnown: boolean;
@@ -311,7 +311,7 @@ export interface ContactDate {
   createdAt: string;
 }
 
-/** Upcoming date with contact info for dashboard */
+/** Upcoming date with friend info for dashboard */
 export interface UpcomingDate {
   id: string;
   dateValue: string;
@@ -319,7 +319,7 @@ export interface UpcomingDate {
   dateType: DateType;
   label?: string;
   daysUntil: number;
-  contact: {
+  friend: {
     id: string;
     displayName: string;
     photoThumbnailUrl?: string;
@@ -365,9 +365,9 @@ export interface RelationshipTypesGrouped {
 /** Relationship in API responses */
 export interface Relationship {
   id: string;
-  relatedContactId: string;
-  relatedContactDisplayName: string;
-  relatedContactPhotoThumbnailUrl?: string;
+  relatedFriendId: string;
+  relatedFriendDisplayName: string;
+  relatedFriendPhotoThumbnailUrl?: string;
   relationshipTypeId: RelationshipTypeId;
   relationshipTypeLabel: string;
   relationshipCategory: RelationshipCategory;
@@ -375,8 +375,8 @@ export interface Relationship {
   createdAt: string;
 }
 
-/** Full contact with all sub-resources */
-export interface Contact {
+/** Full friend with all sub-resources */
+export interface Friend {
   id: string;
   displayName: string;
   nickname?: string;
@@ -399,7 +399,7 @@ export interface Contact {
   workNotes?: string;
   interests?: string;
   // Epic 1B: Extended sub-resources (optional for backwards compatibility)
-  dates?: ContactDate[];
+  dates?: FriendDate[];
   metInfo?: MetInfo;
   socialProfiles?: SocialProfile[];
   // Epic 1D: Relationships
@@ -410,7 +410,7 @@ export interface Contact {
 }
 
 /** Contact summary for list views */
-export interface ContactListItem {
+export interface FriendListItem {
   id: string;
   displayName: string;
   photoThumbnailUrl?: string;
@@ -421,7 +421,7 @@ export interface ContactListItem {
 }
 
 /** Contact search result for autocomplete */
-export interface ContactSearchResult {
+export interface FriendSearchResult {
   id: string;
   displayName: string;
   photoThumbnailUrl?: string;
@@ -440,8 +440,8 @@ export interface GlobalSearchResult {
   rank: number;
   /** HTML snippet with <mark> tags highlighting matched terms, null for filter-only results */
   headline: string | null;
-  /** Where the match was found: contact fields, email, phone, or notes */
-  matchSource: 'contact' | 'email' | 'phone' | 'notes' | null;
+  /** Where the match was found: friend fields, email, phone, or notes */
+  matchSource: 'friend' | 'email' | 'phone' | 'notes' | null;
 }
 
 /** Sort options for search results */
@@ -497,9 +497,9 @@ export interface PaginatedSearchResponse {
   totalPages: number;
 }
 
-/** Paginated contact list response */
-export interface PaginatedContactList {
-  contacts: ContactListItem[];
+/** Paginated friend list response */
+export interface PaginatedFriendList {
+  friends: FriendListItem[];
   total: number;
   page: number;
   pageSize: number;
@@ -507,7 +507,7 @@ export interface PaginatedContactList {
 }
 
 /** Parsed query options for list endpoint */
-export interface ContactListOptions {
+export interface FriendListOptions {
   page: number;
   pageSize: number;
   sortBy: 'display_name' | 'created_at' | 'updated_at';
@@ -515,9 +515,9 @@ export interface ContactListOptions {
 }
 
 /**
- * Parse and validate contact list query parameters
+ * Parse and validate friend list query parameters
  */
-export function parseContactListQuery(query: ContactListQuery): ContactListOptions {
+export function parseFriendListQuery(query: FriendListQuery): FriendListOptions {
   return {
     page: query.page ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1,
     pageSize: query.pageSize
@@ -542,7 +542,7 @@ export interface FacetFilters {
   relationship_category?: RelationshipCategory[];
 }
 
-/** Single facet value with count of matching contacts */
+/** Single facet value with count of matching friends */
 export interface FacetValue {
   value: string;
   count: number;

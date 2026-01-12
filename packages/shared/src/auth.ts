@@ -35,12 +35,12 @@ export const PageSizeSchema = type('10 | 25 | 50 | 100');
 export type PageSize = typeof PageSizeSchema.infer;
 
 export const UserPreferencesSchema = type({
-  'contactsPageSize?': PageSizeSchema,
+  'friendsPageSize?': PageSizeSchema,
 });
 export type UserPreferences = typeof UserPreferencesSchema.infer;
 
 export const UpdatePreferencesRequestSchema = type({
-  'contactsPageSize?': PageSizeSchema,
+  'friendsPageSize?': PageSizeSchema,
 });
 export type UpdatePreferencesRequest = typeof UpdatePreferencesRequestSchema.infer;
 
@@ -51,9 +51,9 @@ export interface User {
   preferences?: UserPreferences;
   createdAt?: string;
   updatedAt?: string;
-  /** External ID of the user's self-contact (if set) */
-  selfContactId?: string;
-  /** Whether the user has completed onboarding (has a self-contact) */
+  /** External ID of the user's self-profile (if set) */
+  selfProfileId?: string;
+  /** Whether the user has completed onboarding (has a self-profile) */
   hasCompletedOnboarding: boolean;
 }
 
