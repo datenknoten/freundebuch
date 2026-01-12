@@ -11,7 +11,7 @@ import {
   teardownAuthTests,
 } from './auth.helpers.js';
 
-export interface ContactsTestContext extends AuthTestContext {
+export interface FriendsTestContext extends AuthTestContext {
   testUser: {
     externalId: string;
     email: string;
@@ -39,15 +39,15 @@ export async function createAuthenticatedUser(
 }
 
 /**
- * Helper to create a contact directly in the database
+ * Helper to create a friend directly in the database
  */
-export async function createTestContact(
+export async function createTestFriend(
   pool: pg.Pool,
   userExternalId: string,
   displayName: string,
 ): Promise<string> {
   const result = await pool.query(
-    `INSERT INTO contacts.contacts (user_id, display_name)
+    `INSERT INTO friends.friends (user_id, display_name)
      SELECT u.id, $2
      FROM auth.users u
      WHERE u.external_id = $1
@@ -59,15 +59,15 @@ export async function createTestContact(
 }
 
 /**
- * Helper to get contact from database
+ * Helper to get friend from database
  */
-export async function getTestContact(
+export async function getTestFriend(
   pool: pg.Pool,
-  contactExternalId: string,
+  friendExternalId: string,
 ): Promise<{ displayName: string; deletedAt: Date | null } | null> {
   const result = await pool.query(
-    'SELECT display_name, deleted_at FROM contacts.contacts WHERE external_id = $1',
-    [contactExternalId],
+    'SELECT display_name, deleted_at FROM friends.friends WHERE external_id = $1',
+    [friendExternalId],
   );
 
   if (result.rows.length === 0) {
@@ -81,11 +81,11 @@ export async function getTestContact(
 }
 
 /**
- * Helper to count contacts for a user
+ * Helper to count friends for a user
  */
-export async function countUserContacts(pool: pg.Pool, userExternalId: string): Promise<number> {
+export async function countUserFriends(pool: pg.Pool, userExternalId: string): Promise<number> {
   const result = await pool.query(
-    `SELECT COUNT(*) FROM contacts.contacts c
+    `SELECT COUNT(*) FROM friends.friends c
      JOIN auth.users u ON c.user_id = u.id
      WHERE u.external_id = $1 AND c.deleted_at IS NULL`,
     [userExternalId],
@@ -105,56 +105,56 @@ export function authHeaders(accessToken: string): Record<string, string> {
 }
 
 /**
- * Clean up contacts between tests (preserves self-contacts used for onboarding)
+ * Clean up friends between tests (preserves self-profiles used for onboarding)
  */
-export async function cleanupContacts(pool: pg.Pool): Promise<void> {
-  // Delete sub-resources for non-self contacts only
+export async function cleanupFriends(pool: pg.Pool): Promise<void> {
+  // Delete sub-resources for non-self-profile friends only
   await pool.query(`
-    DELETE FROM contacts.contact_urls
-    WHERE contact_id IN (
-      SELECT c.id FROM contacts.contacts c
-      LEFT JOIN auth.users u ON u.self_contact_id = c.id
-      WHERE u.self_contact_id IS NULL
+    DELETE FROM friends.friend_urls
+    WHERE friend_id IN (
+      SELECT c.id FROM friends.friends c
+      LEFT JOIN auth.users u ON u.self_profile_id = c.id
+      WHERE u.self_profile_id IS NULL
     )
   `);
   await pool.query(`
-    DELETE FROM contacts.contact_addresses
-    WHERE contact_id IN (
-      SELECT c.id FROM contacts.contacts c
-      LEFT JOIN auth.users u ON u.self_contact_id = c.id
-      WHERE u.self_contact_id IS NULL
+    DELETE FROM friends.friend_addresses
+    WHERE friend_id IN (
+      SELECT c.id FROM friends.friends c
+      LEFT JOIN auth.users u ON u.self_profile_id = c.id
+      WHERE u.self_profile_id IS NULL
     )
   `);
   await pool.query(`
-    DELETE FROM contacts.contact_emails
-    WHERE contact_id IN (
-      SELECT c.id FROM contacts.contacts c
-      LEFT JOIN auth.users u ON u.self_contact_id = c.id
-      WHERE u.self_contact_id IS NULL
+    DELETE FROM friends.friend_emails
+    WHERE friend_id IN (
+      SELECT c.id FROM friends.friends c
+      LEFT JOIN auth.users u ON u.self_profile_id = c.id
+      WHERE u.self_profile_id IS NULL
     )
   `);
   await pool.query(`
-    DELETE FROM contacts.contact_phones
-    WHERE contact_id IN (
-      SELECT c.id FROM contacts.contacts c
-      LEFT JOIN auth.users u ON u.self_contact_id = c.id
-      WHERE u.self_contact_id IS NULL
+    DELETE FROM friends.friend_phones
+    WHERE friend_id IN (
+      SELECT c.id FROM friends.friends c
+      LEFT JOIN auth.users u ON u.self_profile_id = c.id
+      WHERE u.self_profile_id IS NULL
     )
   `);
-  // Delete contacts that are NOT self-contacts
+  // Delete friends that are NOT self-profiles
   await pool.query(`
-    DELETE FROM contacts.contacts c
+    DELETE FROM friends.friends c
     WHERE NOT EXISTS (
-      SELECT 1 FROM auth.users u WHERE u.self_contact_id = c.id
+      SELECT 1 FROM auth.users u WHERE u.self_profile_id = c.id
     )
   `);
 }
 
 /**
- * Setup function for beforeAll in contacts test files
+ * Setup function for beforeAll in friends test files
  */
-export function setupContactsTestSuite() {
-  let context: ContactsTestContext;
+export function setupFriendsTestSuite() {
+  let context: FriendsTestContext;
 
   beforeAll(async () => {
     // Set required environment variables for tests
@@ -166,10 +166,10 @@ export function setupContactsTestSuite() {
 
     const authContext = await setupAuthTests();
 
-    // Create a test user for contact tests
+    // Create a test user for friend tests
     const testUser = await createAuthenticatedUser(
       authContext.pool,
-      'contacts-test@example.com',
+      'friends-test@example.com',
       'SecurePassword123',
     );
 
@@ -184,9 +184,9 @@ export function setupContactsTestSuite() {
 
   beforeEach(async () => {
     resetRateLimiters();
-    // Clean up contacts before each test
+    // Clean up friends before each test
     if (context?.pool) {
-      await cleanupContacts(context.pool);
+      await cleanupFriends(context.pool);
     }
   });
 
