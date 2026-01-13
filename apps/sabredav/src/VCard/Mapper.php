@@ -513,13 +513,13 @@ class Mapper
             return null;
         }
 
-        $ch = curl_init();
+        $ch = \curl_init();
         if ($ch === false) {
             $this->imageCache[$url] = null;
             return null;
         }
 
-        curl_setopt_array($ch, [
+        \curl_setopt_array($ch, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
@@ -531,11 +531,11 @@ class Mapper
             CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         ]);
 
-        $imageData = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-        $error = curl_error($ch);
-        curl_close($ch);
+        $imageData = \curl_exec($ch);
+        $httpCode = \curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $contentType = \curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+        $error = \curl_error($ch);
+        \curl_close($ch);
 
         // Check for errors
         if ($imageData === false || $httpCode !== 200 || empty($imageData)) {
