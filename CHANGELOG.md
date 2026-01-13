@@ -1,3 +1,9 @@
+## [2.37.2](https://github.com/datenknoten/freundebuch/compare/v2.37.1...v2.37.2) (2026-01-13)
+
+### Bug Fixes
+
+* **sabredav:** Add global namespace prefix to curl functions ([1a1e3ec](https://github.com/datenknoten/freundebuch/commit/1a1e3ec35210e2e95325e18c999336488682d270))
+
 ## [2.37.1](https://github.com/datenknoten/freundebuch/compare/v2.37.0...v2.37.1) (2026-01-13)
 
 ### Bug Fixes
