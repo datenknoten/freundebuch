@@ -89,6 +89,17 @@ export class FriendNotFoundError extends AppError {
   }
 }
 
+/**
+ * Thrown when a circle is not found in the database.
+ */
+export class CircleNotFoundError extends AppError {
+  readonly statusCode = 404;
+
+  constructor(message = 'Circle not found') {
+    super(message);
+  }
+}
+
 // ============================================================================
 // Conflict Errors (409)
 // ============================================================================
@@ -111,6 +122,17 @@ export class BirthdayAlreadyExistsError extends AppError {
   readonly statusCode = 409;
 
   constructor(message = 'Friend already has a birthday date') {
+    super(message);
+  }
+}
+
+/**
+ * Thrown when a circular reference is detected in circle hierarchy.
+ */
+export class CircularReferenceError extends AppError {
+  readonly statusCode = 409;
+
+  constructor(message = 'Circular reference detected in circle hierarchy') {
     super(message);
   }
 }

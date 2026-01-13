@@ -64,7 +64,7 @@ RETURNING
 UPDATE friends.circles c
 SET
     name = COALESCE(:name, c.name),
-    color = :color,
+    color = COALESCE(:color, c.color),
     parent_circle_id = (
         SELECT pc.id FROM friends.circles pc
         WHERE pc.external_id = :parentCircleExternalId
