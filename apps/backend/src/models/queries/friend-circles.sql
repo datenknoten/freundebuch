@@ -53,6 +53,7 @@ WHERE fc.friend_id = f.id
 
 /* @name SetFriendCircles */
 -- Adds a friend to multiple circles at once (call ClearFriendCircles first to replace all)
+-- Returns the inserted circle data to avoid an extra query
 INSERT INTO friends.friend_circles (friend_id, circle_id)
 SELECT f.id, c.id
 FROM friends.friends f
@@ -62,7 +63,11 @@ WHERE f.external_id = :friendExternalId
   AND u.external_id = :userExternalId
   AND c.external_id = ANY(:circleExternalIds::uuid[])
   AND f.deleted_at IS NULL
-ON CONFLICT (friend_id, circle_id) DO NOTHING;
+ON CONFLICT (friend_id, circle_id) DO NOTHING
+RETURNING
+    (SELECT external_id FROM friends.circles WHERE id = circle_id) AS circle_external_id,
+    (SELECT name FROM friends.circles WHERE id = circle_id) AS circle_name,
+    (SELECT color FROM friends.circles WHERE id = circle_id) AS circle_color;
 
 /* @name GetFriendIdsByCircle */
 -- Gets all friend IDs in a circle (for faceted search)

@@ -269,9 +269,10 @@ export class CirclesService {
       // Clear existing assignments
       await clearFriendCircles.run({ userExternalId, friendExternalId }, client);
 
-      // Add new assignments if any
+      // Add new assignments if any, returns the inserted circles directly
+      let results: CircleSummary[] = [];
       if (circleIds.length > 0) {
-        await setFriendCircles.run(
+        const inserted = await setFriendCircles.run(
           {
             userExternalId,
             friendExternalId,
@@ -279,12 +280,19 @@ export class CirclesService {
           },
           client,
         );
+        // Map returned data to CircleSummary (filter out nulls from ON CONFLICT DO NOTHING)
+        results = inserted
+          .filter((row) => row.circle_external_id !== null)
+          .map((row) => ({
+            id: row.circle_external_id!,
+            name: row.circle_name!,
+            color: row.circle_color,
+          }));
       }
 
       await client.query('COMMIT');
 
-      // Return the updated circles (can use pool since transaction is committed)
-      return this.getCirclesForFriend(userExternalId, friendExternalId);
+      return results;
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
