@@ -1,3 +1,9 @@
+## [2.37.0](https://github.com/datenknoten/freundebuch/compare/v2.36.0...v2.37.0) (2026-01-13)
+
+### Features
+
+* Add circle shortcuts and circle filtering in facet dropdown ([f497726](https://github.com/datenknoten/freundebuch/commit/f49772630b389324938bb0924b251aa93a672439))
+
 ## [2.36.0](https://github.com/datenknoten/freundebuch/compare/v2.35.0...v2.36.0) (2026-01-13)
 
 ### Features
