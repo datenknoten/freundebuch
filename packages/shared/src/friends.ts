@@ -1,8 +1,10 @@
 import { type } from 'arktype';
 import { isValidPhoneNumber } from 'libphonenumber-js';
+import type { CircleSummary } from './circles.js';
 
 /**
  * Friend types and validation schemas for Epic 1A & 1B: Friend CRUD & Extended Fields
+ * Extended for Epic 4: Categorization & Organization (circles, favorites, archive)
  */
 
 // ============================================================================
@@ -248,6 +250,9 @@ export const FriendListQuerySchema = type({
   'pageSize?': 'string',
   'sortBy?': '"display_name" | "created_at" | "updated_at"',
   'sortOrder?': '"asc" | "desc"',
+  // Epic 4: Categorization & Organization filters
+  'favorites?': 'string', // 'true' to show only favorites
+  'archived?': 'string', // 'true' to include archived, 'only' to show only archived
 });
 export type FriendListQuery = typeof FriendListQuerySchema.infer;
 
@@ -404,6 +409,11 @@ export interface Friend {
   socialProfiles?: SocialProfile[];
   // Epic 1D: Relationships
   relationships?: Relationship[];
+  // Epic 4: Categorization & Organization
+  circles: CircleSummary[];
+  isFavorite: boolean;
+  archivedAt?: string;
+  archiveReason?: string;
   // Timestamps
   createdAt: string;
   updatedAt: string;
@@ -416,6 +426,11 @@ export interface FriendListItem {
   photoThumbnailUrl?: string;
   primaryEmail?: string;
   primaryPhone?: string;
+  // Epic 4: Categorization & Organization
+  circles: CircleSummary[];
+  isFavorite: boolean;
+  archivedAt?: string;
+  // Timestamps
   createdAt: string;
   updatedAt: string;
 }
@@ -512,12 +527,23 @@ export interface FriendListOptions {
   pageSize: number;
   sortBy: 'display_name' | 'created_at' | 'updated_at';
   sortOrder: 'asc' | 'desc';
+  // Epic 4: Categorization & Organization filters
+  favorites?: boolean;
+  archived?: boolean | 'only'; // true = include, 'only' = only archived, undefined/false = exclude
 }
 
 /**
  * Parse and validate friend list query parameters
  */
 export function parseFriendListQuery(query: FriendListQuery): FriendListOptions {
+  // Epic 4: Parse archived filter
+  let archived: boolean | 'only' | undefined;
+  if (query.archived === 'true') {
+    archived = true;
+  } else if (query.archived === 'only') {
+    archived = 'only';
+  }
+
   return {
     page: query.page ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1,
     pageSize: query.pageSize
@@ -525,6 +551,9 @@ export function parseFriendListQuery(query: FriendListQuery): FriendListOptions 
       : 25,
     sortBy: query.sortBy || 'display_name',
     sortOrder: query.sortOrder || 'asc',
+    // Epic 4: Categorization & Organization filters
+    favorites: query.favorites === 'true',
+    archived,
   };
 }
 
@@ -540,6 +569,33 @@ export interface FacetFilters {
   job_title?: string[];
   department?: string[];
   relationship_category?: RelationshipCategory[];
+  // Epic 4: Categorization & Organization
+  circles?: string[]; // Circle external_ids
+  favorites?: boolean;
+  archived?: 'include' | 'exclude' | 'only'; // 'include' shows all, 'exclude' hides archived (default), 'only' shows only archived
+}
+
+/** Fields that are array-type filters (for facet UI components) */
+export type ArrayFacetField =
+  | 'country'
+  | 'city'
+  | 'organization'
+  | 'job_title'
+  | 'department'
+  | 'relationship_category'
+  | 'circles';
+
+/** Helper to check if a field is an array facet field */
+export function isArrayFacetField(field: keyof FacetFilters): field is ArrayFacetField {
+  return [
+    'country',
+    'city',
+    'organization',
+    'job_title',
+    'department',
+    'relationship_category',
+    'circles',
+  ].includes(field);
 }
 
 /** Single facet value with count of matching friends */
@@ -548,9 +604,9 @@ export interface FacetValue {
   count: number;
 }
 
-/** Collection of facet values for a specific field */
+/** Collection of facet values for a specific field (array-type facets only) */
 export interface FacetGroup {
-  field: keyof FacetFilters;
+  field: ArrayFacetField;
   label: string;
   values: FacetValue[];
 }
@@ -581,6 +637,10 @@ export const FacetedSearchQuerySchema = type({
   'job_title?': 'string',
   'department?': 'string',
   'relationship_category?': 'string',
+  // Epic 4: Categorization & Organization filters
+  'circles?': 'string', // Comma-separated circle external_ids
+  'favorites?': 'string', // 'true' to filter favorites only
+  'archived?': 'string', // 'include', 'exclude' (default), or 'only'
   // Whether to include facet counts in response
   'includeFacets?': 'string',
 });
@@ -613,6 +673,16 @@ export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearc
     return values.length > 0 ? values : undefined;
   };
 
+  // Parse archived filter
+  const parseArchivedFilter = (
+    value: string | undefined,
+  ): 'include' | 'exclude' | 'only' | undefined => {
+    if (value === 'include' || value === 'exclude' || value === 'only') {
+      return value;
+    }
+    return undefined; // Default to 'exclude' in the backend
+  };
+
   return {
     query: query.q?.trim(), // Optional query
     page: query.page ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1,
@@ -632,6 +702,10 @@ export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearc
       relationship_category: parseFilterArray(query.relationship_category) as
         | RelationshipCategory[]
         | undefined,
+      // Epic 4: Categorization & Organization filters
+      circles: parseFilterArray(query.circles),
+      favorites: query.favorites === 'true' ? true : undefined,
+      archived: parseArchivedFilter(query.archived),
     },
     includeFacets: query.includeFacets === 'true',
   };
