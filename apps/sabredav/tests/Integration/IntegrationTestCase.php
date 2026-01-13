@@ -30,6 +30,11 @@ abstract class IntegrationTestCase extends TestCase
             self::markTestSkipped('Docker is not available. Integration tests require Docker.');
         }
 
+        // Check if pnpm is available (needed for migrations)
+        if (!self::isPnpmAvailable()) {
+            self::markTestSkipped('pnpm is not available. Integration tests require pnpm for migrations.');
+        }
+
         try {
             // Start PostgreSQL container
             // Using static factory method: make(version, password)
@@ -51,8 +56,8 @@ abstract class IntegrationTestCase extends TestCase
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
 
-            // Load schema
-            self::loadSchema();
+            // Run Node.js migrations
+            self::runMigrations();
         } catch (\Throwable $e) {
             self::markTestSkipped('Failed to start PostgreSQL container: ' . $e->getMessage());
         }
@@ -67,6 +72,50 @@ abstract class IntegrationTestCase extends TestCase
         $exitCode = 0;
         @exec('docker info 2>/dev/null', $output, $exitCode);
         return $exitCode === 0;
+    }
+
+    /**
+     * Check if pnpm is available on the system.
+     */
+    private static function isPnpmAvailable(): bool
+    {
+        $output = [];
+        $exitCode = 0;
+        @exec('pnpm --version 2>/dev/null', $output, $exitCode);
+        return $exitCode === 0;
+    }
+
+    /**
+     * Run the Node.js database migrations.
+     */
+    private static function runMigrations(): void
+    {
+        // Build DATABASE_URL for the test container
+        $databaseUrl = sprintf(
+            'postgresql://test:test@%s:%d/test',
+            self::$container->getHost(),
+            self::$container->getFirstMappedPort()
+        );
+
+        // Get the project root directory (4 levels up from tests/Integration)
+        $projectRoot = dirname(__DIR__, 4);
+
+        // Run migrations using pnpm
+        $command = sprintf(
+            'cd %s && DATABASE_URL=%s pnpm migrate 2>&1',
+            escapeshellarg($projectRoot),
+            escapeshellarg($databaseUrl)
+        );
+
+        $output = [];
+        $exitCode = 0;
+        exec($command, $output, $exitCode);
+
+        if ($exitCode !== 0) {
+            throw new \RuntimeException(
+                "Failed to run migrations (exit code: $exitCode): " . implode("\n", $output)
+            );
+        }
     }
 
     /**
@@ -91,21 +140,6 @@ abstract class IntegrationTestCase extends TestCase
     {
         parent::setUp();
         $this->cleanupData();
-    }
-
-    /**
-     * Load the database schema.
-     */
-    protected static function loadSchema(): void
-    {
-        $schemaPath = __DIR__ . '/../fixtures/schema.sql';
-        $sql = file_get_contents($schemaPath);
-
-        if ($sql === false) {
-            throw new \RuntimeException("Failed to read schema file: {$schemaPath}");
-        }
-
-        self::$pdo->exec($sql);
     }
 
     /**
