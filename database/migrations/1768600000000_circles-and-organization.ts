@@ -96,6 +96,12 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     name: 'idx_circles_sort_order',
   });
 
+  // Unique constraint on circle name per user (case-insensitive)
+  pgm.sql(`
+    CREATE UNIQUE INDEX idx_circles_unique_name
+    ON friends.circles (user_id, LOWER(name));
+  `);
+
   // Create trigger for circles updated_at
   pgm.sql(`
     CREATE TRIGGER update_circles_updated_at
@@ -215,5 +221,6 @@ export async function down(pgm: MigrationBuilder): Promise<void> {
   // Step 3: Drop circles table
   // ============================================================================
   pgm.sql('DROP TRIGGER IF EXISTS update_circles_updated_at ON friends.circles;');
+  pgm.sql('DROP INDEX IF EXISTS friends.idx_circles_unique_name;');
   pgm.dropTable({ schema: 'friends', name: 'circles' }, { cascade: true });
 }

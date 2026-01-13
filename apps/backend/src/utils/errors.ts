@@ -137,6 +137,17 @@ export class CircularReferenceError extends AppError {
   }
 }
 
+/**
+ * Thrown when attempting to create a circle with a name that already exists for the user.
+ */
+export class CircleNameExistsError extends AppError {
+  readonly statusCode = 409;
+
+  constructor(message = 'A circle with this name already exists') {
+    super(message);
+  }
+}
+
 // ============================================================================
 // Internal Server Errors (500)
 // ============================================================================
