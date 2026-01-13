@@ -1,3 +1,22 @@
+## [2.36.0](https://github.com/datenknoten/freundebuch/compare/v2.35.0...v2.36.0) (2026-01-13)
+
+### Features
+
+* **sabredav:** Add HTTP-level CardDAV server integration tests ([d60fa49](https://github.com/datenknoten/freundebuch/commit/d60fa4985b2d9eddb6d6cb9c24b57b7fe45381eb))
+* **sabredav:** Add integration tests using testcontainers-php ([f3485a1](https://github.com/datenknoten/freundebuch/commit/f3485a1b4a3e6f33748bd51ef3da8b5875d3bcf4))
+
+### Bug Fixes
+
+* **sabredav:** Add PHP platform constraint for 8.3 compatibility ([e013611](https://github.com/datenknoten/freundebuch/commit/e01361118bd9621d234d209c98b3756b80b32b66))
+
+### Reverts
+
+* Revert "fix(sabredav): Add PHP platform constraint for 8.3 compatibility" ([cf6c477](https://github.com/datenknoten/freundebuch/commit/cf6c477b67418a3202f14111ca3ab52b621ec0f9))
+
+### Code Refactoring
+
+* **sabredav:** Use Node.js migrations instead of static SQL schema ([e33b5be](https://github.com/datenknoten/freundebuch/commit/e33b5bed5af6d91c29abb9b20dfb4d77e5a61425))
+
 ## [2.35.0](https://github.com/datenknoten/freundebuch/compare/v2.34.0...v2.35.0) (2026-01-13)
 
 ### Features
