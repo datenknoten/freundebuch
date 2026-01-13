@@ -265,6 +265,21 @@ filtered_matches AS (
             INNER JOIN friends.relationship_types rt ON rel.relationship_type_id = rt.id
             WHERE rel.friend_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
         ))
+        -- Circles filter: supports circle IDs and 'no-circle' for friends without circles
+        AND (:filterCircles::text[] IS NULL OR (
+            -- Check for 'no-circle' filter
+            ('no-circle' = ANY(:filterCircles) AND NOT EXISTS (
+                SELECT 1 FROM friends.friend_circles fc WHERE fc.friend_id = c.id
+            ))
+            OR
+            -- Check for specific circle IDs (filter out 'no-circle' from array)
+            EXISTS (
+                SELECT 1 FROM friends.friend_circles fc
+                INNER JOIN friends.circles cir ON fc.circle_id = cir.id
+                WHERE fc.friend_id = c.id
+                  AND cir.external_id = ANY(array_remove(:filterCircles, 'no-circle')::uuid[])
+            )
+        ))
 ),
 matching_friends AS (
     SELECT DISTINCT ON (c.id)
@@ -471,6 +486,21 @@ WITH filtered_friends AS (
           SELECT 1 FROM friends.friend_relationships rel
           INNER JOIN friends.relationship_types rt ON rel.relationship_type_id = rt.id
           WHERE rel.friend_id = c.id AND rt.category = ANY(:filterRelationshipCategory)
+      ))
+      -- Circles filter: supports circle IDs and 'no-circle' for friends without circles
+      AND (:filterCircles::text[] IS NULL OR (
+          -- Check for 'no-circle' filter
+          ('no-circle' = ANY(:filterCircles) AND NOT EXISTS (
+              SELECT 1 FROM friends.friend_circles fc WHERE fc.friend_id = c.id
+          ))
+          OR
+          -- Check for specific circle IDs (filter out 'no-circle' from array)
+          EXISTS (
+              SELECT 1 FROM friends.friend_circles fc
+              INNER JOIN friends.circles cir ON fc.circle_id = cir.id
+              WHERE fc.friend_id = c.id
+                AND cir.external_id = ANY(array_remove(:filterCircles, 'no-circle')::uuid[])
+          )
       ))
 ),
 total_count AS (

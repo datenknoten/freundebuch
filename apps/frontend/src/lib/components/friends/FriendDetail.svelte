@@ -278,6 +278,9 @@ onMount(() => {
   function handleAddSocial() {
     openEditModal('social');
   }
+  function handleAddCircle() {
+    openEditModal('circle');
+  }
 
   window.addEventListener('shortcut:add-phone', handleAddPhone);
   window.addEventListener('shortcut:add-email', handleAddEmail);
@@ -285,6 +288,7 @@ onMount(() => {
   window.addEventListener('shortcut:add-url', handleAddUrl);
   window.addEventListener('shortcut:add-date', handleAddDate);
   window.addEventListener('shortcut:add-social', handleAddSocial);
+  window.addEventListener('shortcut:add-circle', handleAddCircle);
 
   return () => {
     window.removeEventListener('shortcut:add-phone', handleAddPhone);
@@ -293,6 +297,7 @@ onMount(() => {
     window.removeEventListener('shortcut:add-url', handleAddUrl);
     window.removeEventListener('shortcut:add-date', handleAddDate);
     window.removeEventListener('shortcut:add-social', handleAddSocial);
+    window.removeEventListener('shortcut:add-circle', handleAddCircle);
   };
 });
 </script>

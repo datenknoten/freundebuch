@@ -611,11 +611,20 @@ export interface FacetGroup {
   values: FacetValue[];
 }
 
+/** Circle facet with color for display */
+export interface CircleFacetValue {
+  value: string; // external_id
+  label: string; // circle name
+  color: string;
+  count: number;
+}
+
 /** Facets organized by category */
 export interface FacetGroups {
   location: FacetGroup[];
   professional: FacetGroup[];
   relationship: FacetGroup[];
+  circles: CircleFacetValue[];
 }
 
 /** Paginated search response with optional facet data */

@@ -52,6 +52,10 @@ import {
   updateAddress,
 } from '../models/queries/friend-addresses.queries.js';
 import {
+  getCircleFacetCounts,
+  type IGetCircleFacetCountsResult,
+} from '../models/queries/friend-circles.queries.js';
+import {
   countBirthdaysForFriend,
   createDate,
   deleteDate,
@@ -1339,6 +1343,7 @@ export class FriendsService {
         filterJobTitle: filters.job_title ?? null,
         filterDepartment: filters.department ?? null,
         filterRelationshipCategory: filters.relationship_category ?? null,
+        filterCircles: filters.circles ?? null,
       },
       this.db,
     );
@@ -1355,8 +1360,11 @@ export class FriendsService {
 
     // Fetch facet counts if requested
     if (includeFacets) {
-      const facetRows = await getFacetCounts.run({ userExternalId, query, wildcardQuery }, this.db);
-      response.facets = this.aggregateFacets(facetRows);
+      const [facetRows, circleRows] = await Promise.all([
+        getFacetCounts.run({ userExternalId, query, wildcardQuery }, this.db),
+        getCircleFacetCounts.run({ userExternalId }, this.db),
+      ]);
+      response.facets = this.aggregateFacets(facetRows, circleRows);
     }
 
     return response;
@@ -1392,6 +1400,7 @@ export class FriendsService {
         filterJobTitle: filters.job_title ?? null,
         filterDepartment: filters.department ?? null,
         filterRelationshipCategory: filters.relationship_category ?? null,
+        filterCircles: filters.circles ?? null,
       },
       this.db,
     );
@@ -1408,8 +1417,11 @@ export class FriendsService {
 
     // Fetch facet counts if requested (uses all friends, not search-filtered)
     if (includeFacets) {
-      const facetRows = await getAllFacetCounts.run({ userExternalId }, this.db);
-      response.facets = this.aggregateFacets(facetRows);
+      const [facetRows, circleRows] = await Promise.all([
+        getAllFacetCounts.run({ userExternalId }, this.db),
+        getCircleFacetCounts.run({ userExternalId }, this.db),
+      ]);
+      response.facets = this.aggregateFacets(facetRows, circleRows);
     }
 
     return response;
@@ -1526,11 +1538,15 @@ export class FriendsService {
   /**
    * Aggregate raw facet count rows into grouped facet structure
    */
-  private aggregateFacets(rows: IGetFacetCountsResult[]): FacetGroups {
+  private aggregateFacets(
+    rows: IGetFacetCountsResult[],
+    circleRows: IGetCircleFacetCountsResult[] = [],
+  ): FacetGroups {
     const facets: FacetGroups = {
       location: [],
       professional: [],
       relationship: [],
+      circles: [],
     };
 
     // Group rows by facet_field
@@ -1582,6 +1598,16 @@ export class FriendsService {
         values: relationshipValues,
       });
     }
+
+    // Build circle facets
+    facets.circles = circleRows
+      .filter((row) => row.value && row.count !== null)
+      .map((row) => ({
+        value: row.value,
+        label: row.label,
+        color: row.color ?? '#6B7280',
+        count: row.count ?? 0,
+      }));
 
     return facets;
   }

@@ -225,7 +225,8 @@ app.get('/search/faceted', async (c) => {
       validated.organization ||
       validated.job_title ||
       validated.department ||
-      validated.relationship_category;
+      validated.relationship_category ||
+      validated.circles;
 
     // Require at least a query, filters, or includeFacets
     if (!hasQuery && !hasFilters && validated.includeFacets !== 'true') {

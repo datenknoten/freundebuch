@@ -31,7 +31,8 @@ let hasFacets = $derived(
   facets &&
     (facets.location.length > 0 ||
       facets.professional.length > 0 ||
-      facets.relationship.length > 0),
+      facets.relationship.length > 0 ||
+      facets.circles.length > 0),
 );
 
 function toggleFilter(field: ArrayFacetField, value: string) {
@@ -200,6 +201,47 @@ $effect(() => {
               {/each}
             </div>
           {/each}
+        </div>
+      {/if}
+
+      <!-- Circles Facets -->
+      {#if facets && facets.circles.length > 0}
+        <div class="pt-2 border-t border-gray-100">
+          <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            Circles
+          </h4>
+          <div class="space-y-1 max-h-32 overflow-y-auto">
+            <!-- No Circle option -->
+            <label
+              class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+            >
+              <input
+                type="checkbox"
+                checked={isFilterActive('circles', 'no-circle')}
+                onchange={() => toggleFilter('circles', 'no-circle')}
+                class="rounded border-gray-300 text-forest focus:ring-forest"
+              />
+              <span class="flex-1 italic text-gray-500">No Circle</span>
+            </label>
+            {#each facets.circles as circle}
+              <label
+                class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={isFilterActive('circles', circle.value)}
+                  onchange={() => toggleFilter('circles', circle.value)}
+                  class="rounded border-gray-300 text-forest focus:ring-forest"
+                />
+                <span
+                  class="w-3 h-3 rounded-full flex-shrink-0"
+                  style="background-color: {circle.color}"
+                ></span>
+                <span class="flex-1 truncate">{circle.label}</span>
+                <span class="text-xs text-gray-400">{circle.count}</span>
+              </label>
+            {/each}
+          </div>
         </div>
       {/if}
     </div>
