@@ -82,8 +82,11 @@ export class CirclesService {
     circleExternalId: string,
     input: Partial<CircleInput>,
   ): Promise<Circle | null> {
-    // Validate parent circle exists if provided
-    if (input.parent_circle_id !== undefined && input.parent_circle_id !== null) {
+    // Check if parent_circle_id was explicitly provided (even if null to remove parent)
+    const updateParent = 'parent_circle_id' in input;
+
+    // Validate parent circle exists if provided and not null
+    if (updateParent && input.parent_circle_id !== null && input.parent_circle_id !== undefined) {
       const parent = await this.getCircleById(userExternalId, input.parent_circle_id);
       if (!parent) {
         throw new CircleNotFoundError(`Parent circle ${input.parent_circle_id} not found`);
@@ -98,13 +101,17 @@ export class CirclesService {
       );
     }
 
+    // Use sentinel value '__KEEP__' when parent_circle_id wasn't provided in input
+    // NULL means explicitly remove the parent, actual ID means set new parent
+    const parentValue = updateParent ? (input.parent_circle_id ?? null) : '__KEEP__';
+
     const results = await updateCircle.run(
       {
         userExternalId,
         circleExternalId,
         name: input.name ?? null,
         color: input.color ?? null,
-        parentCircleExternalId: input.parent_circle_id ?? null,
+        parentCircleExternalId: parentValue,
         sortOrder: input.sort_order ?? null,
       },
       this.db,
