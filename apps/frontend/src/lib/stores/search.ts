@@ -1,5 +1,5 @@
 import { derived, writable } from 'svelte/store';
-import type { FacetFilters, FacetGroups, GlobalSearchResult } from '$shared';
+import type { ArrayFacetField, FacetFilters, FacetGroups, GlobalSearchResult } from '$shared';
 import * as friendsApi from '../api/friends.js';
 
 /**
@@ -347,9 +347,9 @@ function createSearchStore() {
     },
 
     /**
-     * Remove a single filter value
+     * Remove a single filter value (array-type facet fields only)
      */
-    removeFilter: (field: keyof FacetFilters, value: string) => {
+    removeFilter: (field: ArrayFacetField, value: string) => {
       let currentQuery = '';
       let newFilters: FacetFilters = {};
 
