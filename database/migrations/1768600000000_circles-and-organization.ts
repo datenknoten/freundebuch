@@ -37,12 +37,12 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
         comment: 'Owner of this circle',
       },
       name: {
-        type: 'varchar(100)',
+        type: 'text',
         notNull: true,
         comment: 'Circle name (e.g., "Work", "Family", "Book Club")',
       },
       color: {
-        type: 'varchar(7)',
+        type: 'text',
         comment: 'Hex color code (e.g., "#3B82F6")',
       },
       parent_circle_id: {
@@ -72,9 +72,9 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 
   pgm.sql(`COMMENT ON TABLE friends.circles IS 'Circles for organizing friends'`);
 
-  // Add constraint for non-empty name
+  // Add constraint for non-empty name with reasonable length
   pgm.addConstraint({ schema: 'friends', name: 'circles' }, 'circles_name_not_empty', {
-    check: 'LENGTH(TRIM(name)) > 0',
+    check: 'LENGTH(TRIM(name)) > 0 AND LENGTH(name) <= 100',
   });
 
   // Add constraint for valid hex color (if provided)

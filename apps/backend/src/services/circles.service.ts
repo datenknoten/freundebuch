@@ -20,6 +20,7 @@ import {
   removeFriendFromCircle,
   setFriendCircles,
 } from '../models/queries/friend-circles.queries.js';
+import { CircleNotFoundError, CircularReferenceError } from '../utils/errors.js';
 
 /**
  * Service for managing circles (categorization/organization feature)
@@ -81,6 +82,22 @@ export class CirclesService {
     circleExternalId: string,
     input: Partial<CircleInput>,
   ): Promise<Circle | null> {
+    // Validate parent circle exists if provided
+    if (input.parent_circle_id !== undefined && input.parent_circle_id !== null) {
+      const parent = await this.getCircleById(userExternalId, input.parent_circle_id);
+      if (!parent) {
+        throw new CircleNotFoundError(`Parent circle ${input.parent_circle_id} not found`);
+      }
+
+      // Check for circular reference: walk up the parent chain
+      // If we find ourselves, it's a cycle
+      await this.checkForCircularReference(
+        userExternalId,
+        circleExternalId,
+        input.parent_circle_id,
+      );
+    }
+
     const results = await updateCircle.run(
       {
         userExternalId,
@@ -102,6 +119,38 @@ export class CirclesService {
   }
 
   /**
+   * Check if setting a parent would create a circular reference
+   */
+  private async checkForCircularReference(
+    userExternalId: string,
+    circleExternalId: string,
+    newParentExternalId: string,
+  ): Promise<void> {
+    // Walk up the ancestor chain from the proposed parent
+    let currentId: string | null = newParentExternalId;
+    const visited = new Set<string>();
+
+    while (currentId) {
+      // If we find ourselves in the ancestor chain, it's a cycle
+      if (currentId === circleExternalId) {
+        throw new CircularReferenceError(
+          'Cannot set parent: would create circular reference in hierarchy',
+        );
+      }
+
+      // Prevent infinite loops from existing bad data
+      if (visited.has(currentId)) {
+        break;
+      }
+      visited.add(currentId);
+
+      // Get the parent of the current circle
+      const current = await this.getCircleById(userExternalId, currentId);
+      currentId = current?.parentCircleId ?? null;
+    }
+  }
+
+  /**
    * Delete a circle (friends remain, just unassigned from this circle)
    */
   async deleteCircle(userExternalId: string, circleExternalId: string): Promise<boolean> {
@@ -110,25 +159,32 @@ export class CirclesService {
   }
 
   /**
-   * Reorder circles by updating their sort_order
+   * Reorder circles by updating their sort_order (uses transaction for consistency)
    */
   async reorderCircles(
     userExternalId: string,
     order: { id: string; sort_order: number }[],
   ): Promise<void> {
-    // Update each circle's sort order
-    await Promise.all(
-      order.map((item) =>
-        updateCircleSortOrder.run(
+    const client = await this.db.connect();
+    try {
+      await client.query('BEGIN');
+      for (const item of order) {
+        await updateCircleSortOrder.run(
           {
             userExternalId,
             circleExternalId: item.id,
             sortOrder: item.sort_order,
           },
-          this.db,
-        ),
-      ),
-    );
+          client,
+        );
+      }
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**
