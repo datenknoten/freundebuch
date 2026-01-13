@@ -205,7 +205,7 @@ export interface IUpdateCircleQuery {
   result: IUpdateCircleResult;
 }
 
-const updateCircleIR: any = {"usedParamSet":{"name":true,"color":true,"parentCircleExternalId":true,"sortOrder":true,"circleExternalId":true,"userExternalId":true},"params":[{"name":"name","required":false,"transform":{"type":"scalar"},"locs":[{"a":49,"b":53}]},{"name":"color","required":false,"transform":{"type":"scalar"},"locs":[{"a":77,"b":82}]},{"name":"parentCircleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":186,"b":208}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":280,"b":289}]},{"name":"circleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":382,"b":398}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":445,"b":459}]}],"statement":"UPDATE friends.circles c\nSET\n    name = COALESCE(:name, c.name),\n    color = :color,\n    parent_circle_id = (\n        SELECT pc.id FROM friends.circles pc\n        WHERE pc.external_id = :parentCircleExternalId\n          AND pc.user_id = c.user_id\n    ),\n    sort_order = COALESCE(:sortOrder, c.sort_order),\n    updated_at = current_timestamp\nFROM auth.users u\nWHERE c.external_id = :circleExternalId\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId\nRETURNING\n    c.external_id,\n    c.name,\n    c.color,\n    (SELECT pc.external_id FROM friends.circles pc WHERE pc.id = c.parent_circle_id) AS parent_circle_external_id,\n    c.sort_order,\n    c.created_at,\n    c.updated_at"};
+const updateCircleIR: any = {"usedParamSet":{"name":true,"color":true,"parentCircleExternalId":true,"sortOrder":true,"circleExternalId":true,"userExternalId":true},"params":[{"name":"name","required":false,"transform":{"type":"scalar"},"locs":[{"a":49,"b":53}]},{"name":"color","required":false,"transform":{"type":"scalar"},"locs":[{"a":86,"b":91}]},{"name":"parentCircleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":205,"b":227}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":299,"b":308}]},{"name":"circleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":401,"b":417}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":464,"b":478}]}],"statement":"UPDATE friends.circles c\nSET\n    name = COALESCE(:name, c.name),\n    color = COALESCE(:color, c.color),\n    parent_circle_id = (\n        SELECT pc.id FROM friends.circles pc\n        WHERE pc.external_id = :parentCircleExternalId\n          AND pc.user_id = c.user_id\n    ),\n    sort_order = COALESCE(:sortOrder, c.sort_order),\n    updated_at = current_timestamp\nFROM auth.users u\nWHERE c.external_id = :circleExternalId\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId\nRETURNING\n    c.external_id,\n    c.name,\n    c.color,\n    (SELECT pc.external_id FROM friends.circles pc WHERE pc.id = c.parent_circle_id) AS parent_circle_external_id,\n    c.sort_order,\n    c.created_at,\n    c.updated_at"};
 
 /**
  * Query generated from SQL:
@@ -213,7 +213,7 @@ const updateCircleIR: any = {"usedParamSet":{"name":true,"color":true,"parentCir
  * UPDATE friends.circles c
  * SET
  *     name = COALESCE(:name, c.name),
- *     color = :color,
+ *     color = COALESCE(:color, c.color),
  *     parent_circle_id = (
  *         SELECT pc.id FROM friends.circles pc
  *         WHERE pc.external_id = :parentCircleExternalId

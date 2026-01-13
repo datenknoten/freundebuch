@@ -189,27 +189,46 @@ export class CirclesService {
 
   /**
    * Merge one circle into another (move all friends, then delete source)
+   * Uses transaction to ensure atomicity
    */
   async mergeCircles(
     userExternalId: string,
     targetCircleExternalId: string,
     sourceCircleExternalId: string,
   ): Promise<Circle | null> {
-    // Move all friends from source to target
-    await mergeCircles.run(
-      {
-        userExternalId,
-        targetCircleExternalId,
-        sourceCircleExternalId,
-      },
-      this.db,
-    );
+    const client = await this.db.connect();
+    try {
+      await client.query('BEGIN');
 
-    // Delete the source circle
-    await deleteCircle.run({ userExternalId, circleExternalId: sourceCircleExternalId }, this.db);
+      // Move all friends from source to target
+      await mergeCircles.run(
+        {
+          userExternalId,
+          targetCircleExternalId,
+          sourceCircleExternalId,
+        },
+        client,
+      );
 
-    // Return the updated target circle
-    return this.getCircleById(userExternalId, targetCircleExternalId);
+      // Delete the source circle
+      const deleteResult = await deleteCircle.run(
+        { userExternalId, circleExternalId: sourceCircleExternalId },
+        client,
+      );
+      if (deleteResult.length === 0) {
+        throw new CircleNotFoundError(`Source circle ${sourceCircleExternalId} not found`);
+      }
+
+      await client.query('COMMIT');
+
+      // Return the updated target circle (can use pool since transaction is committed)
+      return this.getCircleById(userExternalId, targetCircleExternalId);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   // ============================================================================
@@ -229,29 +248,42 @@ export class CirclesService {
 
   /**
    * Set circles for a friend (replaces all existing assignments)
+   * Uses transaction to ensure atomicity
    */
   async setFriendCircles(
     userExternalId: string,
     friendExternalId: string,
     circleIds: string[],
   ): Promise<CircleSummary[]> {
-    // Clear existing assignments
-    await clearFriendCircles.run({ userExternalId, friendExternalId }, this.db);
+    const client = await this.db.connect();
+    try {
+      await client.query('BEGIN');
 
-    // Add new assignments if any
-    if (circleIds.length > 0) {
-      await setFriendCircles.run(
-        {
-          userExternalId,
-          friendExternalId,
-          circleExternalIds: circleIds,
-        },
-        this.db,
-      );
+      // Clear existing assignments
+      await clearFriendCircles.run({ userExternalId, friendExternalId }, client);
+
+      // Add new assignments if any
+      if (circleIds.length > 0) {
+        await setFriendCircles.run(
+          {
+            userExternalId,
+            friendExternalId,
+            circleExternalIds: circleIds,
+          },
+          client,
+        );
+      }
+
+      await client.query('COMMIT');
+
+      // Return the updated circles (can use pool since transaction is committed)
+      return this.getCirclesForFriend(userExternalId, friendExternalId);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
-
-    // Return the updated circles
-    return this.getCirclesForFriend(userExternalId, friendExternalId);
   }
 
   /**
