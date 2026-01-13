@@ -19,19 +19,18 @@ const DEFAULT_CIRCLES = [
 
 export async function up(pgm: MigrationBuilder): Promise<void> {
   // Insert default circles for all existing users using parameterized queries
+  // Using pgm.db.query() for proper parameterized query support
   for (const circle of DEFAULT_CIRCLES) {
-    pgm.sql({
-      text: `
-          INSERT INTO friends.circles (user_id, name, color, sort_order)
-          SELECT u.id, $1, $2, $3
-          FROM auth.users u
-          WHERE NOT EXISTS (
-            SELECT 1 FROM friends.circles c
-            WHERE c.user_id = u.id AND LOWER(c.name) = LOWER($1)
-          );
-        `,
-      values: [circle.name, circle.color, circle.sort_order],
-    });
+    await pgm.db.query(
+      `INSERT INTO friends.circles (user_id, name, color, sort_order)
+       SELECT u.id, $1, $2, $3
+       FROM auth.users u
+       WHERE NOT EXISTS (
+         SELECT 1 FROM friends.circles c
+         WHERE c.user_id = u.id AND LOWER(c.name) = LOWER($1)
+       )`,
+      [circle.name, circle.color, circle.sort_order],
+    );
   }
 }
 
@@ -42,15 +41,13 @@ export async function down(pgm: MigrationBuilder): Promise<void> {
   // 2. Match the default circle names
   const defaultNames = DEFAULT_CIRCLES.map((c) => c.name.toLowerCase());
 
-  pgm.sql({
-    text: `
-        DELETE FROM friends.circles
-        WHERE LOWER(name) = ANY($1)
-        AND NOT EXISTS (
-          SELECT 1 FROM friends.friend_circles fc
-          WHERE fc.circle_id = friends.circles.id
-        );
-      `,
-    values: [defaultNames],
-  });
+  await pgm.db.query(
+    `DELETE FROM friends.circles
+     WHERE LOWER(name) = ANY($1)
+     AND NOT EXISTS (
+       SELECT 1 FROM friends.friend_circles fc
+       WHERE fc.circle_id = friends.circles.id
+     )`,
+    [defaultNames],
+  );
 }
