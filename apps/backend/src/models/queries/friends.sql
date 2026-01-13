@@ -16,6 +16,10 @@ SELECT
     c.department,
     c.work_notes,
     c.interests,
+    -- Epic 4: Categorization & Organization
+    c.is_favorite,
+    c.archived_at,
+    c.archive_reason,
     c.created_at,
     c.updated_at,
     -- Epic 1A: Sub-resources
@@ -124,7 +128,18 @@ SELECT
         INNER JOIN friends.friends rc ON r.related_friend_id = rc.id AND rc.deleted_at IS NULL
         INNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id
         WHERE r.friend_id = c.id
-    ) as relationships
+    ) as relationships,
+    -- Epic 4: Circles
+    (
+        SELECT COALESCE(json_agg(json_build_object(
+            'external_id', ci.external_id,
+            'name', ci.name,
+            'color', ci.color
+        ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)
+        FROM friends.circles ci
+        INNER JOIN friends.friend_circles fc ON fc.circle_id = ci.id
+        WHERE fc.friend_id = c.id
+    ) as circles
 FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :friendExternalId
@@ -146,12 +161,24 @@ WITH friend_list AS (
         c.external_id,
         c.display_name,
         c.photo_thumbnail_url,
+        c.is_favorite,
+        c.archived_at,
         c.created_at,
         c.updated_at
     FROM friends.friends c
     INNER JOIN auth.users u ON c.user_id = u.id
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
+      -- Epic 4: Archive filter (default excludes archived)
+      AND (
+        CASE
+          WHEN :archivedFilter = 'include' THEN true
+          WHEN :archivedFilter = 'only' THEN c.archived_at IS NOT NULL
+          ELSE c.archived_at IS NULL  -- 'exclude' or default
+        END
+      )
+      -- Epic 4: Favorites filter
+      AND (NOT :favoritesOnly OR c.is_favorite = true)
 ),
 total AS (
     SELECT COUNT(*)::int as total_count FROM friend_list
@@ -160,14 +187,29 @@ SELECT
     cl.external_id,
     cl.display_name,
     cl.photo_thumbnail_url,
+    cl.is_favorite,
+    cl.archived_at,
     cl.created_at,
     cl.updated_at,
     (SELECT e.email_address FROM friends.friend_emails e WHERE e.friend_id = cl.id AND e.is_primary = true LIMIT 1) as primary_email,
     (SELECT p.phone_number FROM friends.friend_phones p WHERE p.friend_id = cl.id AND p.is_primary = true LIMIT 1) as primary_phone,
+    -- Epic 4: Circles for each friend
+    (
+        SELECT COALESCE(json_agg(json_build_object(
+            'external_id', ci.external_id,
+            'name', ci.name,
+            'color', ci.color
+        ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)
+        FROM friends.circles ci
+        INNER JOIN friends.friend_circles fc ON fc.circle_id = ci.id
+        WHERE fc.friend_id = cl.id
+    ) as circles,
     t.total_count
 FROM friend_list cl
 CROSS JOIN total t
 ORDER BY
+    -- Favorites first when sorting by name
+    CASE WHEN :sortBy = 'display_name' THEN cl.is_favorite END DESC,
     CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN cl.display_name END ASC,
     CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN cl.display_name END DESC,
     CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN cl.created_at END ASC,
@@ -293,3 +335,53 @@ RETURNING
     c.external_id,
     c.photo_url,
     c.photo_thumbnail_url;
+
+/* ============================================================================
+   Epic 4: Categorization & Organization
+   ============================================================================ */
+
+/* @name ToggleFavorite */
+UPDATE friends.friends c
+SET is_favorite = NOT c.is_favorite
+FROM auth.users u
+WHERE c.external_id = :friendExternalId
+  AND c.user_id = u.id
+  AND u.external_id = :userExternalId
+  AND c.deleted_at IS NULL
+RETURNING c.external_id, c.is_favorite;
+
+/* @name SetFavorite */
+UPDATE friends.friends c
+SET is_favorite = :isFavorite
+FROM auth.users u
+WHERE c.external_id = :friendExternalId
+  AND c.user_id = u.id
+  AND u.external_id = :userExternalId
+  AND c.deleted_at IS NULL
+RETURNING c.external_id, c.is_favorite;
+
+/* @name ArchiveFriend */
+UPDATE friends.friends c
+SET
+    archived_at = CURRENT_TIMESTAMP,
+    archive_reason = :archiveReason
+FROM auth.users u
+WHERE c.external_id = :friendExternalId
+  AND c.user_id = u.id
+  AND u.external_id = :userExternalId
+  AND c.deleted_at IS NULL
+  AND c.archived_at IS NULL
+RETURNING c.external_id, c.archived_at, c.archive_reason;
+
+/* @name UnarchiveFriend */
+UPDATE friends.friends c
+SET
+    archived_at = NULL,
+    archive_reason = NULL
+FROM auth.users u
+WHERE c.external_id = :friendExternalId
+  AND c.user_id = u.id
+  AND u.external_id = :userExternalId
+  AND c.deleted_at IS NULL
+  AND c.archived_at IS NOT NULL
+RETURNING c.external_id;
