@@ -1,3 +1,9 @@
+## [2.37.1](https://github.com/datenknoten/freundebuch/compare/v2.37.0...v2.37.1) (2026-01-13)
+
+### Bug Fixes
+
+* **nginx:** Use absolute HTTPS URLs for CardDAV well-known redirects ([c1d1886](https://github.com/datenknoten/freundebuch/commit/c1d18866ef7b3843abe1c9d1f028fc4c8eaa6902))
+
 ## [2.37.0](https://github.com/datenknoten/freundebuch/compare/v2.36.0...v2.37.0) (2026-01-13)
 
 ### Features
