@@ -88,6 +88,9 @@ export interface FriendListParams {
   pageSize?: number;
   sortBy?: 'display_name' | 'created_at' | 'updated_at';
   sortOrder?: 'asc' | 'desc';
+  // Epic 4: Categorization & Organization filters
+  favorites?: boolean;
+  archived?: boolean | 'only'; // true = include archived, 'only' = only archived, false/undefined = exclude
 }
 
 /**
@@ -100,6 +103,10 @@ export async function listFriends(params: FriendListParams = {}): Promise<Pagina
   if (params.pageSize) searchParams.set('pageSize', params.pageSize.toString());
   if (params.sortBy) searchParams.set('sortBy', params.sortBy);
   if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+  // Epic 4: Categorization & Organization filters
+  if (params.favorites) searchParams.set('favorites', 'true');
+  if (params.archived === true) searchParams.set('archived', 'true');
+  if (params.archived === 'only') searchParams.set('archived', 'only');
 
   const query = searchParams.toString();
   const endpoint = `/api/friends${query ? `?${query}` : ''}`;
