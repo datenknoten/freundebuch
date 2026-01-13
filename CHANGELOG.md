@@ -1,3 +1,14 @@
+## [2.35.0](https://github.com/datenknoten/freundebuch/compare/v2.34.0...v2.35.0) (2026-01-13)
+
+### Features
+
+* Add Circle Admin frontend and default circles migration ([ebbecc1](https://github.com/datenknoten/freundebuch/commit/ebbecc133927f18f9d82cae03b4eb0d0f2fef0a0))
+
+### Bug Fixes
+
+* **database:** Use parameterized queries to prevent SQL injection ([5235f2f](https://github.com/datenknoten/freundebuch/commit/5235f2f82fed0fbea47881c7e690f99dd9fb0aae))
+* **database:** Use pgm.db.query() for parameterized queries ([179f57d](https://github.com/datenknoten/freundebuch/commit/179f57dd158a178700586b6f31998a27e72bbb27))
+
 ## [2.34.0](https://github.com/datenknoten/freundebuch/compare/v2.33.0...v2.34.0) (2026-01-13)
 
 ### Features
