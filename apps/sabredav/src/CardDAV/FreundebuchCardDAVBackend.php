@@ -104,11 +104,13 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
      */
     public function getCards($addressBookId): array
     {
+        // Epic 4: Filter out archived contacts (they shouldn't sync to CardDAV clients)
         $stmt = $this->pdo->prepare('
             SELECT external_id, updated_at
             FROM friends.friends
             WHERE user_id = :user_id
               AND deleted_at IS NULL
+              AND archived_at IS NULL
         ');
         $stmt->execute(['user_id' => $addressBookId]);
 
@@ -190,18 +192,18 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $this->pdo->beginTransaction();
 
         try {
-            // Insert main friend
+            // Insert main friend (Epic 4: includes is_favorite)
             $stmt = $this->pdo->prepare('
                 INSERT INTO friends.friends (
                     user_id, external_id, display_name, name_prefix, name_first,
                     name_middle, name_last, name_suffix, nickname, photo_url,
                     job_title, organization, department, interests, work_notes,
-                    vcard_raw_json
+                    vcard_raw_json, is_favorite
                 ) VALUES (
                     :user_id, :external_id, :display_name, :name_prefix, :name_first,
                     :name_middle, :name_last, :name_suffix, :nickname, :photo_url,
                     :job_title, :organization, :department, :interests, :work_notes,
-                    :vcard_raw_json
+                    :vcard_raw_json, :is_favorite
                 )
                 RETURNING id, updated_at
             ');
@@ -222,6 +224,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'interests' => $friendData['interests'] ?? null,
                 'work_notes' => $friendData['work_notes'] ?? null,
                 'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
+                'is_favorite' => !empty($friendData['is_favorite']),
             ]);
             $result = $stmt->fetch();
             $friendId = (int) $result['id'];
@@ -236,6 +239,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             if (!empty($friendData['met_info'])) {
                 $this->insertMetInfo($friendId, $friendData['met_info']);
             }
+
+            // Epic 4: Assign circles from CATEGORIES
+            $this->insertCircles((int) $addressBookId, $friendId, $friendData['categories'] ?? []);
 
             $this->pdo->commit();
 
@@ -279,7 +285,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $this->pdo->beginTransaction();
 
         try {
-            // Update main friend
+            // Update main friend (Epic 4: includes is_favorite)
             $stmt = $this->pdo->prepare('
                 UPDATE friends.friends SET
                     display_name = :display_name,
@@ -295,7 +301,8 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                     department = :department,
                     interests = :interests,
                     work_notes = :work_notes,
-                    vcard_raw_json = :vcard_raw_json
+                    vcard_raw_json = :vcard_raw_json,
+                    is_favorite = :is_favorite
                 WHERE id = :id
                 RETURNING updated_at
             ');
@@ -315,6 +322,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'interests' => $friendData['interests'] ?? null,
                 'work_notes' => $friendData['work_notes'] ?? null,
                 'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
+                'is_favorite' => !empty($friendData['is_favorite']),
             ]);
             $result = $stmt->fetch();
 
@@ -329,6 +337,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             if (!empty($friendData['met_info'])) {
                 $this->insertMetInfo($friendId, $friendData['met_info']);
             }
+
+            // Epic 4: Reassign circles from CATEGORIES
+            $this->insertCircles((int) $addressBookId, $friendId, $friendData['categories'] ?? []);
 
             $this->pdo->commit();
 
@@ -476,6 +487,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             ->execute(['id' => $friendId]);
         $this->pdo->prepare('DELETE FROM friends.friend_met_info WHERE friend_id = :id')
             ->execute(['id' => $friendId]);
+        // Epic 4: Remove circle assignments (they will be re-assigned)
+        $this->pdo->prepare('DELETE FROM friends.friend_circles WHERE friend_id = :id')
+            ->execute(['id' => $friendId]);
     }
 
     private function insertPhones(int $friendId, array $phones): void
@@ -593,5 +607,91 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             'met_location' => $metInfo['met_location'] ?? null,
             'met_context' => $metInfo['met_context'] ?? null,
         ]);
+    }
+
+    /**
+     * Epic 4: Assigns circles to a friend based on CATEGORIES from vCard.
+     *
+     * For each category name, finds an existing circle or creates a new one,
+     * then links the friend to that circle.
+     *
+     * @param int $userId The user ID (address book owner)
+     * @param int $friendId The friend's internal ID
+     * @param array $categories Circle names from vCard CATEGORIES
+     */
+    private function insertCircles(int $userId, int $friendId, array $categories): void
+    {
+        if (empty($categories)) {
+            return;
+        }
+
+        // Prepare statements for reuse
+        $findCircle = $this->pdo->prepare('
+            SELECT id FROM friends.circles
+            WHERE user_id = :user_id AND LOWER(name) = LOWER(:name)
+        ');
+
+        $createCircle = $this->pdo->prepare('
+            INSERT INTO friends.circles (user_id, external_id, name, sort_order)
+            VALUES (:user_id, :external_id, :name, :sort_order)
+            RETURNING id
+        ');
+
+        $linkCircle = $this->pdo->prepare('
+            INSERT INTO friends.friend_circles (friend_id, circle_id)
+            VALUES (:friend_id, :circle_id)
+            ON CONFLICT (friend_id, circle_id) DO NOTHING
+        ');
+
+        // Get current max sort_order for new circles
+        $maxSort = $this->pdo->prepare('
+            SELECT COALESCE(MAX(sort_order), 0) as max_sort
+            FROM friends.circles WHERE user_id = :user_id
+        ');
+        $maxSort->execute(['user_id' => $userId]);
+        $sortOrder = (int) $maxSort->fetch()['max_sort'];
+
+        foreach ($categories as $categoryName) {
+            $categoryName = trim($categoryName);
+            if (empty($categoryName)) {
+                continue;
+            }
+
+            // Try to find existing circle (case-insensitive)
+            $findCircle->execute(['user_id' => $userId, 'name' => $categoryName]);
+            $circle = $findCircle->fetch();
+
+            if ($circle) {
+                $circleId = (int) $circle['id'];
+            } else {
+                // Create new circle
+                $sortOrder++;
+                $externalId = $this->generateUuid();
+                $createCircle->execute([
+                    'user_id' => $userId,
+                    'external_id' => $externalId,
+                    'name' => $categoryName,
+                    'sort_order' => $sortOrder,
+                ]);
+                $circleId = (int) $createCircle->fetch()['id'];
+            }
+
+            // Link friend to circle
+            $linkCircle->execute([
+                'friend_id' => $friendId,
+                'circle_id' => $circleId,
+            ]);
+        }
+    }
+
+    /**
+     * Generates a UUID v4 for new circles created via CardDAV import.
+     */
+    private function generateUuid(): string
+    {
+        $data = random_bytes(16);
+        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40); // Version 4
+        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80); // Variant
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 }
