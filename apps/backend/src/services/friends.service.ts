@@ -103,12 +103,15 @@ import {
   updateUrl,
 } from '../models/queries/friend-urls.queries.js';
 import {
+  archiveFriend,
   createFriend,
   getFriendById,
   getFriendsByUserId,
   type IGetFriendByIdResult,
   type IGetFriendsByUserIdResult,
   softDeleteFriend,
+  toggleFavorite,
+  unarchiveFriend,
   updateFriend,
   updateFriendPhoto,
 } from '../models/queries/friends.queries.js';
@@ -169,6 +172,15 @@ export class FriendsService {
 
     const offset = (options.page - 1) * options.pageSize;
 
+    // Epic 4: Determine archived filter value
+    // 'exclude' (default), 'include', or 'only'
+    let archivedFilter: string = 'exclude';
+    if (options.archived === true) {
+      archivedFilter = 'include';
+    } else if (options.archived === 'only') {
+      archivedFilter = 'only';
+    }
+
     const friends = await getFriendsByUserId.run(
       {
         userExternalId,
@@ -176,6 +188,9 @@ export class FriendsService {
         sortOrder: options.sortOrder,
         pageSize: options.pageSize,
         offset,
+        // Epic 4: Archive and favorites filters
+        archivedFilter,
+        favoritesOnly: options.favorites ?? false,
       },
       this.db,
     );
@@ -287,6 +302,10 @@ export class FriendsService {
       dates,
       metInfo,
       socialProfiles,
+      relationships: [], // New friends have no relationships yet
+      // Epic 4: Organization fields (defaults for new friends)
+      isFavorite: false,
+      circles: [],
       createdAt: friend.created_at.toISOString(),
       updatedAt: friend.updated_at.toISOString(),
     };
@@ -713,6 +732,78 @@ export class FriendsService {
     );
 
     return result.length > 0;
+  }
+
+  // ============================================================================
+  // Favorites & Archive Methods (Epic 4)
+  // ============================================================================
+
+  /**
+   * Toggle the favorite status of a friend
+   * Returns the new is_favorite value
+   */
+  async toggleFavorite(userExternalId: string, friendExternalId: string): Promise<boolean | null> {
+    this.logger.debug({ friendExternalId }, 'Toggling favorite status');
+
+    const [result] = await toggleFavorite.run({ userExternalId, friendExternalId }, this.db);
+
+    if (!result) {
+      return null;
+    }
+
+    this.logger.info(
+      { friendExternalId, isFavorite: result.is_favorite },
+      'Favorite status toggled',
+    );
+
+    return result.is_favorite;
+  }
+
+  /**
+   * Archive a friend with an optional reason
+   */
+  async archiveFriend(
+    userExternalId: string,
+    friendExternalId: string,
+    reason?: string,
+  ): Promise<boolean> {
+    this.logger.debug({ friendExternalId, reason }, 'Archiving friend');
+
+    const [result] = await archiveFriend.run(
+      {
+        userExternalId,
+        friendExternalId,
+        archiveReason: reason ?? null,
+      },
+      this.db,
+    );
+
+    if (!result) {
+      // Friend not found or already archived
+      return false;
+    }
+
+    this.logger.info({ friendExternalId }, 'Friend archived');
+
+    return true;
+  }
+
+  /**
+   * Unarchive a friend (restore from archive)
+   */
+  async unarchiveFriend(userExternalId: string, friendExternalId: string): Promise<boolean> {
+    this.logger.debug({ friendExternalId }, 'Unarchiving friend');
+
+    const [result] = await unarchiveFriend.run({ userExternalId, friendExternalId }, this.db);
+
+    if (!result) {
+      // Friend not found or not archived
+      return false;
+    }
+
+    this.logger.info({ friendExternalId }, 'Friend unarchived');
+
+    return true;
   }
 
   // ============================================================================
@@ -1598,12 +1689,27 @@ export class FriendsService {
   }
 
   private mapFriendListItem(row: IGetFriendsByUserIdResult): FriendListItem {
+    // Epic 4: Parse circles from JSON
+    const circlesRaw = (row.circles || []) as Array<{
+      external_id: string;
+      name: string;
+      color: string | null;
+    }>;
+
     return {
       id: row.external_id,
       displayName: row.display_name,
       photoThumbnailUrl: row.photo_thumbnail_url ?? undefined,
       primaryEmail: row.primary_email ?? undefined,
       primaryPhone: row.primary_phone ?? undefined,
+      // Epic 4: Organization fields
+      isFavorite: row.is_favorite,
+      archivedAt: row.archived_at?.toISOString() ?? undefined,
+      circles: circlesRaw.map((c) => ({
+        id: c.external_id,
+        name: c.name,
+        color: c.color,
+      })),
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
     };
@@ -1816,6 +1922,13 @@ export class FriendsService {
       created_at: string;
     }>;
 
+    // Epic 4: Circles
+    const circles = (friend.circles || []) as Array<{
+      external_id: string;
+      name: string;
+      color: string | null;
+    }>;
+
     return {
       id: friend.external_id,
       displayName: friend.display_name,
@@ -1906,6 +2019,15 @@ export class FriendsService {
         relationshipCategory: r.relationship_category as RelationshipCategory,
         notes: r.notes ?? undefined,
         createdAt: r.created_at,
+      })),
+      // Epic 4: Organization fields
+      isFavorite: friend.is_favorite,
+      archivedAt: friend.archived_at?.toISOString() ?? undefined,
+      archiveReason: friend.archive_reason ?? undefined,
+      circles: circles.map((c) => ({
+        id: c.external_id,
+        name: c.name,
+        color: c.color,
       })),
       createdAt: friend.created_at.toISOString(),
       updatedAt: friend.updated_at.toISOString(),
