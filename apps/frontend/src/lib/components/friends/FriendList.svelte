@@ -4,6 +4,7 @@ import { auth, friendsPageSize } from '$lib/stores/auth';
 import { friendList, friends, isFriendsLoading } from '$lib/stores/friends';
 import { visibleFriendIds } from '$lib/stores/ui';
 import type {
+  ArrayFacetField,
   FacetFilters,
   FacetGroups,
   GlobalSearchResult,
@@ -143,8 +144,8 @@ function handleFilterChange(newFilters: FacetFilters) {
   performSearch();
 }
 
-function handleRemoveFilter(field: keyof FacetFilters, value: string) {
-  const current = activeFilters[field] ?? [];
+function handleRemoveFilter(field: ArrayFacetField, value: string) {
+  const current = (activeFilters[field] ?? []) as string[];
   const updated = current.filter((v) => v !== value);
   activeFilters = {
     ...activeFilters,
