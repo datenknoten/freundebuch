@@ -157,6 +157,22 @@ class Mapper
             $lines[] = 'NOTE:' . $this->escape($friend['work_notes']);
         }
 
+        // Epic 4: Circles as CATEGORIES
+        if (!empty($friend['circles'])) {
+            $circleNames = array_map(
+                fn($c) => $this->escape($c['name']),
+                $friend['circles']
+            );
+            if (count($circleNames) > 0) {
+                $lines[] = 'CATEGORIES:' . implode(',', $circleNames);
+            }
+        }
+
+        // Epic 4: Favorite status
+        if (!empty($friend['is_favorite'])) {
+            $lines[] = 'X-FREUNDEBUCH-FAVORITE:true';
+        }
+
         // Revision timestamp
         $updatedAt = new \DateTime($friend['updated_at']);
         $lines[] = 'REV:' . $updatedAt->format('Ymd\THis\Z');
@@ -185,6 +201,9 @@ class Mapper
             'urls' => [],
             'dates' => [],
             'social_profiles' => [],
+            // Epic 4: Circles and favorites
+            'categories' => [], // Circle names from CATEGORIES
+            'is_favorite' => false,
         ];
 
         foreach ($lines as $line) {
@@ -316,6 +335,23 @@ class Mapper
                     $friend['met_info'] = $friend['met_info'] ?? [];
                     $friend['met_info']['met_context'] = $this->unescape($value);
                     break;
+
+                // Epic 4: Parse CATEGORIES (circle names)
+                case 'CATEGORIES':
+                    // CATEGORIES can be comma-separated
+                    $categories = explode(',', $value);
+                    foreach ($categories as $cat) {
+                        $cat = trim($this->unescape($cat));
+                        if (!empty($cat) && !in_array($cat, $friend['categories'], true)) {
+                            $friend['categories'][] = $cat;
+                        }
+                    }
+                    break;
+
+                // Epic 4: Parse favorite status
+                case 'X-FREUNDEBUCH-FAVORITE':
+                    $friend['is_favorite'] = strtolower($value) === 'true';
+                    break;
             }
         }
 
@@ -324,6 +360,7 @@ class Mapper
 
     /**
      * Gets a full friend by external ID with all sub-resources.
+     * Epic 4: Also filters out archived contacts and loads circles.
      */
     public function getFriendByExternalId(int $userId, string $externalId): ?array
     {
@@ -333,6 +370,7 @@ class Mapper
             WHERE user_id = :user_id
               AND external_id = :external_id
               AND deleted_at IS NULL
+              AND archived_at IS NULL
         ');
         $stmt->execute(['user_id' => $userId, 'external_id' => $externalId]);
         $friend = $stmt->fetch();
@@ -349,6 +387,8 @@ class Mapper
         $friend['dates'] = $this->loadDates((int) $friend['id']);
         $friend['social_profiles'] = $this->loadSocialProfiles((int) $friend['id']);
         $friend['met_info'] = $this->loadMetInfo((int) $friend['id']);
+        // Epic 4: Load circles
+        $friend['circles'] = $this->loadCircles((int) $friend['id']);
 
         return $friend;
     }
@@ -429,6 +469,22 @@ class Mapper
         ');
         $stmt->execute(['friend_id' => $friendId]);
         return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * Epic 4: Loads circles for a friend.
+     */
+    private function loadCircles(int $friendId): array
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT c.external_id, c.name, c.color
+            FROM friends.circles c
+            INNER JOIN friends.friend_circles fc ON fc.circle_id = c.id
+            WHERE fc.friend_id = :friend_id
+            ORDER BY c.sort_order ASC, c.name ASC
+        ');
+        $stmt->execute(['friend_id' => $friendId]);
+        return $stmt->fetchAll();
     }
 
     /**
