@@ -186,39 +186,34 @@ export interface IUpdateCircleParams {
 
 /** 'UpdateCircle' return type */
 export interface IUpdateCircleResult {
-  /** Hex color code (e.g., "#3B82F6") */
   color: string | null;
   created_at: Date;
-  /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
-  /** Circle name (e.g., "Work", "Family", "Book Club") */
   name: string;
   parent_circle_external_id: string | null;
-  /** Custom sort order within parent level */
   sort_order: number;
   updated_at: Date;
 }
 
-/** 'UpdateCircle' query type */
-export interface IUpdateCircleQuery {
-  params: IUpdateCircleParams;
-  result: IUpdateCircleResult;
-}
-
-const updateCircleIR: any = {"usedParamSet":{"name":true,"color":true,"parentCircleExternalId":true,"sortOrder":true,"circleExternalId":true,"userExternalId":true},"params":[{"name":"name","required":false,"transform":{"type":"scalar"},"locs":[{"a":49,"b":53}]},{"name":"color","required":false,"transform":{"type":"scalar"},"locs":[{"a":86,"b":91}]},{"name":"parentCircleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":205,"b":227}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":299,"b":308}]},{"name":"circleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":401,"b":417}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":464,"b":478}]}],"statement":"UPDATE friends.circles c\nSET\n    name = COALESCE(:name, c.name),\n    color = COALESCE(:color, c.color),\n    parent_circle_id = (\n        SELECT pc.id FROM friends.circles pc\n        WHERE pc.external_id = :parentCircleExternalId\n          AND pc.user_id = c.user_id\n    ),\n    sort_order = COALESCE(:sortOrder, c.sort_order),\n    updated_at = current_timestamp\nFROM auth.users u\nWHERE c.external_id = :circleExternalId\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId\nRETURNING\n    c.external_id,\n    c.name,\n    c.color,\n    (SELECT pc.external_id FROM friends.circles pc WHERE pc.id = c.parent_circle_id) AS parent_circle_external_id,\n    c.sort_order,\n    c.created_at,\n    c.updated_at"};
+const updateCircleIR: any = {"usedParamSet":{"name":true,"color":true,"parentCircleExternalId":true,"sortOrder":true,"circleExternalId":true,"userExternalId":true},"params":[{"name":"name","required":false,"transform":{"type":"scalar"},"locs":[{"a":146,"b":150}]},{"name":"color","required":false,"transform":{"type":"scalar"},"locs":[{"a":183,"b":188}]},{"name":"parentCircleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":242,"b":264},{"a":316,"b":338},{"a":457,"b":479}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":567,"b":576}]},{"name":"circleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":669,"b":685}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":732,"b":746}]}],"statement":"-- Note: parentCircleExternalId = '__KEEP__' means don't change parent, NULL means remove parent\nUPDATE friends.circles c\nSET\n    name = COALESCE(:name, c.name),\n    color = COALESCE(:color, c.color),\n    parent_circle_id = CASE\n        WHEN :parentCircleExternalId = '__KEEP__' THEN c.parent_circle_id\n        WHEN :parentCircleExternalId IS NULL THEN NULL\n        ELSE (\n            SELECT pc.id FROM friends.circles pc\n            WHERE pc.external_id = :parentCircleExternalId\n              AND pc.user_id = c.user_id\n        )\n    END,\n    sort_order = COALESCE(:sortOrder, c.sort_order),\n    updated_at = current_timestamp\nFROM auth.users u\nWHERE c.external_id = :circleExternalId\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId\nRETURNING\n    c.external_id,\n    c.name,\n    c.color,\n    (SELECT pc.external_id FROM friends.circles pc WHERE pc.id = c.parent_circle_id) AS parent_circle_external_id,\n    c.sort_order,\n    c.created_at,\n    c.updated_at"};
 
 /**
  * Query generated from SQL:
  * ```
+ * -- Note: parentCircleExternalId = '__KEEP__' means don't change parent, NULL means remove parent
  * UPDATE friends.circles c
  * SET
  *     name = COALESCE(:name, c.name),
  *     color = COALESCE(:color, c.color),
- *     parent_circle_id = (
- *         SELECT pc.id FROM friends.circles pc
- *         WHERE pc.external_id = :parentCircleExternalId
- *           AND pc.user_id = c.user_id
- *     ),
+ *     parent_circle_id = CASE
+ *         WHEN :parentCircleExternalId = '__KEEP__' THEN c.parent_circle_id
+ *         WHEN :parentCircleExternalId IS NULL THEN NULL
+ *         ELSE (
+ *             SELECT pc.id FROM friends.circles pc
+ *             WHERE pc.external_id = :parentCircleExternalId
+ *               AND pc.user_id = c.user_id
+ *         )
+ *     END,
  *     sort_order = COALESCE(:sortOrder, c.sort_order),
  *     updated_at = current_timestamp
  * FROM auth.users u

@@ -61,15 +61,20 @@ RETURNING
     updated_at;
 
 /* @name UpdateCircle */
+-- Note: parentCircleExternalId = '__KEEP__' means don't change parent, NULL means remove parent
 UPDATE friends.circles c
 SET
     name = COALESCE(:name, c.name),
     color = COALESCE(:color, c.color),
-    parent_circle_id = (
-        SELECT pc.id FROM friends.circles pc
-        WHERE pc.external_id = :parentCircleExternalId
-          AND pc.user_id = c.user_id
-    ),
+    parent_circle_id = CASE
+        WHEN :parentCircleExternalId = '__KEEP__' THEN c.parent_circle_id
+        WHEN :parentCircleExternalId IS NULL THEN NULL
+        ELSE (
+            SELECT pc.id FROM friends.circles pc
+            WHERE pc.external_id = :parentCircleExternalId
+              AND pc.user_id = c.user_id
+        )
+    END,
     sort_order = COALESCE(:sortOrder, c.sort_order),
     updated_at = current_timestamp
 FROM auth.users u

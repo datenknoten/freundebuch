@@ -4,6 +4,7 @@ import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
+import { circlesRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { CirclesService } from '../services/circles.service.js';
 import type { AppContext } from '../types/context.js';
 import { isAppError, toError } from '../utils/errors.js';
@@ -13,6 +14,8 @@ const app = new Hono<AppContext>();
 
 // Apply auth middleware to all circle routes
 app.use('*', authMiddleware);
+// Apply rate limiting to prevent abuse
+app.use('*', circlesRateLimitMiddleware);
 // Apply onboarding middleware to require self-friend before using circles
 app.use('*', onboardingMiddleware);
 
