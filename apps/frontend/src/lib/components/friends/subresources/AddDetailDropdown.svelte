@@ -1,5 +1,5 @@
 <script lang="ts">
-export type SubresourceType = 'phone' | 'email' | 'address' | 'url' | 'date' | 'social';
+export type SubresourceType = 'phone' | 'email' | 'address' | 'url' | 'date' | 'social' | 'circle';
 
 interface Props {
   onAdd: (type: SubresourceType) => void;

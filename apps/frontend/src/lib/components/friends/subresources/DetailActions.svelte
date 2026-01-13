@@ -1,6 +1,6 @@
 <script lang="ts">
 interface Props {
-  onEdit: () => void;
+  onEdit?: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
   editLabel?: string;
@@ -26,26 +26,28 @@ let {
          sm:opacity-50 sm:hover:opacity-100
          transition-opacity duration-150"
 >
-  <button
-    type="button"
-    onclick={(e) => {
-      e.stopPropagation();
-      onEdit();
-    }}
-    class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-forest
-           transition-colors min-w-[28px] min-h-[28px] flex items-center justify-center
-           sm:min-w-[44px] sm:min-h-[44px]"
-    aria-label={editLabel}
-  >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-      />
-    </svg>
-  </button>
+  {#if onEdit}
+    <button
+      type="button"
+      onclick={(e) => {
+        e.stopPropagation();
+        onEdit();
+      }}
+      class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-forest
+             transition-colors min-w-[28px] min-h-[28px] flex items-center justify-center
+             sm:min-w-[44px] sm:min-h-[44px]"
+      aria-label={editLabel}
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+        />
+      </svg>
+    </button>
+  {/if}
   <button
     type="button"
     onclick={(e) => {

@@ -5,6 +5,7 @@ import { friends } from '$lib/stores/friends';
 import type {
   Address,
   AddressInput,
+  CircleSummary,
   DateInput,
   Email,
   EmailInput,
@@ -22,6 +23,8 @@ import RelationshipsSection from './RelationshipsSection.svelte';
 import {
   AddressEditForm,
   AddressRow,
+  CircleEditForm,
+  CircleRow,
   DateEditForm,
   DateRow,
   DeleteConfirmModal,
@@ -67,6 +70,7 @@ let deletingAddressId = $state<string | null>(null);
 let deletingUrlId = $state<string | null>(null);
 let deletingDateId = $state<string | null>(null);
 let deletingSocialId = $state<string | null>(null);
+let deletingCircleId = $state<string | null>(null);
 
 // Form component references
 let phoneFormRef = $state<{ getData: () => PhoneInput; isValid: () => boolean } | null>(null);
@@ -75,6 +79,9 @@ let addressFormRef = $state<{ getData: () => AddressInput; isValid: () => boolea
 let urlFormRef = $state<{ getData: () => UrlInput; isValid: () => boolean } | null>(null);
 let dateFormRef = $state<{ getData: () => DateInput; isValid: () => boolean } | null>(null);
 let socialFormRef = $state<{ getData: () => SocialProfileInput; isValid: () => boolean } | null>(
+  null,
+);
+let circleFormRef = $state<{ getData: () => { circleId: string }; isValid: () => boolean } | null>(
   null,
 );
 
@@ -176,6 +183,10 @@ async function handleSave() {
       } else {
         await friends.addSocialProfile(friend.id, data);
       }
+    } else if (editingType === 'circle' && circleFormRef) {
+      const data = circleFormRef.getData();
+      // Circles only support adding, not editing
+      await friends.addCircle(friend.id, data.circleId);
     }
 
     closeEditModal();
@@ -215,6 +226,10 @@ async function handleSubresourceDelete() {
         deletingSocialId = deleteId;
         await friends.deleteSocialProfile(friend.id, deleteId);
         break;
+      case 'circle':
+        deletingCircleId = deleteId;
+        await friends.removeCircle(friend.id, deleteId);
+        break;
     }
   } finally {
     deletingPhoneId = null;
@@ -223,6 +238,7 @@ async function handleSubresourceDelete() {
     deletingUrlId = null;
     deletingDateId = null;
     deletingSocialId = null;
+    deletingCircleId = null;
   }
 }
 
@@ -237,6 +253,7 @@ function getModalTitle(): string {
     url: 'Website/URL',
     date: 'Important Date',
     social: 'Social Profile',
+    circle: 'Circle',
   };
   return `${action} ${typeNames[editingType]}`;
 }
@@ -621,6 +638,42 @@ onMount(() => {
     {/if}
   </section>
 
+  <!-- ==================== CIRCLES SECTION ==================== -->
+  <section class="space-y-2">
+    <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+      <h2 class="text-lg font-heading flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        Circles
+      </h2>
+      <button
+        type="button"
+        onclick={() => openEditModal('circle')}
+        class="text-sm font-body font-semibold text-white/90 hover:text-white
+               flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Add Circle
+      </button>
+    </div>
+    {#if friend.circles && friend.circles.length > 0}
+      <div class="space-y-2">
+        {#each friend.circles as circle (circle.id)}
+          <CircleRow
+            {circle}
+            onDelete={() => openDeleteConfirm('circle', circle.id, circle.name)}
+            isDeleting={deletingCircleId === circle.id}
+          />
+        {/each}
+      </div>
+    {:else}
+      <p class="text-sm text-gray-500 font-body">Not assigned to any circles yet.</p>
+    {/if}
+  </section>
+
   <!-- ==================== RELATIONSHIPS SECTION ==================== -->
   <section class="space-y-2">
     <RelationshipsSection
@@ -718,6 +771,13 @@ onMount(() => {
         disabled={isEditLoading}
         onchange={() => isDirty = true}
       />
+    {:else if editingType === 'circle'}
+      <CircleEditForm
+        bind:this={circleFormRef}
+        existingCircles={friend.circles}
+        disabled={isEditLoading}
+        onchange={() => isDirty = true}
+      />
     {/if}
   </DetailEditModal>
 {/if}
@@ -725,8 +785,8 @@ onMount(() => {
 <!-- Subresource delete confirmation modal -->
 {#if deleteType && deleteId}
   <DeleteConfirmModal
-    title="Delete {deleteType === 'phone' ? 'Phone Number' : deleteType === 'email' ? 'Email Address' : deleteType === 'address' ? 'Address' : deleteType === 'url' ? 'Website' : deleteType === 'date' ? 'Date' : 'Social Profile'}"
-    description="Are you sure you want to delete this {deleteType}?"
+    title="{deleteType === 'circle' ? 'Remove from' : 'Delete'} {deleteType === 'phone' ? 'Phone Number' : deleteType === 'email' ? 'Email Address' : deleteType === 'address' ? 'Address' : deleteType === 'url' ? 'Website' : deleteType === 'date' ? 'Date' : deleteType === 'social' ? 'Social Profile' : 'Circle'}"
+    description={deleteType === 'circle' ? 'Are you sure you want to remove this friend from this circle?' : `Are you sure you want to delete this ${deleteType}?`}
     itemPreview={deleteName}
     onConfirm={handleSubresourceDelete}
     onClose={closeDeleteConfirm}

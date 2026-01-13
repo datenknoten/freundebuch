@@ -4,6 +4,8 @@
 export type { SubresourceType } from './AddDetailDropdown.svelte';
 export { default as AddressEditForm } from './AddressEditForm.svelte';
 export { default as AddressRow } from './AddressRow.svelte';
+export { default as CircleEditForm } from './CircleEditForm.svelte';
+export { default as CircleRow } from './CircleRow.svelte';
 export { default as DateEditForm } from './DateEditForm.svelte';
 export { default as DateRow } from './DateRow.svelte';
 export { default as DeleteConfirmModal } from './DeleteConfirmModal.svelte';

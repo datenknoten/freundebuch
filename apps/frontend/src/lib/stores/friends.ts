@@ -2,6 +2,7 @@ import { derived, writable } from 'svelte/store';
 import type {
   Address,
   AddressInput,
+  CircleSummary,
   DateInput,
   Email,
   EmailInput,
@@ -25,6 +26,7 @@ import type {
   UrlInput,
 } from '$shared';
 import { ApiError } from '../api/auth.js';
+import * as circlesApi from '../api/circles.js';
 import * as friendsApi from '../api/friends.js';
 
 /**
@@ -1181,6 +1183,79 @@ function createFriendsStore() {
       } catch (error) {
         const errorMessage =
           error instanceof ApiError ? error.message : 'Failed to delete relationship';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    // =========================================================================
+    // Circle Operations (Epic 4)
+    // =========================================================================
+
+    /**
+     * Add the current friend to a circle
+     */
+    addCircle: async (friendId: string, circleId: string): Promise<CircleSummary> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const circle = await circlesApi.addFriendToCircle(friendId, circleId);
+
+        update((state) => ({
+          ...state,
+          currentFriend: state.currentFriend
+            ? {
+                ...state.currentFriend,
+                circles: [...state.currentFriend.circles, circle],
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return circle;
+      } catch (error) {
+        const errorMessage = error instanceof ApiError ? error.message : 'Failed to add to circle';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Remove the current friend from a circle
+     */
+    removeCircle: async (friendId: string, circleId: string) => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        await circlesApi.removeFriendFromCircle(friendId, circleId);
+
+        update((state) => ({
+          ...state,
+          currentFriend: state.currentFriend
+            ? {
+                ...state.currentFriend,
+                circles: state.currentFriend.circles.filter((c) => c.id !== circleId),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to remove from circle';
 
         update((state) => ({
           ...state,
