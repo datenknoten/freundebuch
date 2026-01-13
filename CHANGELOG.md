@@ -1,3 +1,9 @@
+## [2.34.0](https://github.com/datenknoten/freundebuch/compare/v2.33.0...v2.34.0) (2026-01-13)
+
+### Features
+
+* **frontend:** Add circle assignment UI to friend detail page ([6036dde](https://github.com/datenknoten/freundebuch/commit/6036ddef074ac45f674c3c8592d956746d83e515))
+
 ## [2.33.0](https://github.com/datenknoten/freundebuch/compare/v2.32.4...v2.33.0) (2026-01-13)
 
 ### Features
