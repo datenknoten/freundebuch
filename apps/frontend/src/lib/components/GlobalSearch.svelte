@@ -8,7 +8,7 @@ import {
   search,
   searchFacets,
 } from '$lib/stores/search';
-import type { FacetFilters } from '$shared';
+import type { ArrayFacetField, FacetFilters } from '$shared';
 import FriendAvatar from './friends/FriendAvatar.svelte';
 import FacetChips from './search/FacetChips.svelte';
 import FacetDropdown from './search/FacetDropdown.svelte';
@@ -222,7 +222,7 @@ onMount(() => {
           />
           <FacetChips
             filters={searchState.filters}
-            onRemove={(field: keyof FacetFilters, value: string) => search.removeFilter(field, value)}
+            onRemove={(field: ArrayFacetField, value: string) => search.removeFilter(field, value)}
             onClearAll={() => search.clearFilters()}
           />
         </div>

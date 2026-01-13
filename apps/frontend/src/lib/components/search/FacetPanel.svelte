@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { FacetFilters, FacetGroups } from '$shared';
+import type { ArrayFacetField, FacetFilters, FacetGroups } from '$shared';
 
 interface Props {
   facets: FacetGroups | null;
@@ -21,7 +21,7 @@ function toggleSection(section: string) {
   expandedSections[section] = !expandedSections[section];
 }
 
-function toggleFilter(field: keyof FacetFilters, value: string) {
+function toggleFilter(field: ArrayFacetField, value: string) {
   const current = activeFilters[field] ?? [];
   const newValues = current.includes(value)
     ? current.filter((v) => v !== value)
@@ -33,7 +33,7 @@ function toggleFilter(field: keyof FacetFilters, value: string) {
   });
 }
 
-function isFilterActive(field: keyof FacetFilters, value: string): boolean {
+function isFilterActive(field: ArrayFacetField, value: string): boolean {
   return (activeFilters[field] ?? []).includes(value);
 }
 

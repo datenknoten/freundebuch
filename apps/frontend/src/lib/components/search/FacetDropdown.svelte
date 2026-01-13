@@ -1,5 +1,10 @@
 <script lang="ts">
-import type { FacetFilters, FacetGroups } from '$shared';
+import {
+  type ArrayFacetField,
+  type FacetFilters,
+  type FacetGroups,
+  isArrayFacetField,
+} from '$shared';
 
 interface Props {
   facets: FacetGroups | null;
@@ -11,9 +16,14 @@ interface Props {
 let { facets, activeFilters, onFilterChange, isLoading = false }: Props = $props();
 let isOpen = $state(false);
 
-// Count total active filters
+// Count total active filters (only array-type fields)
 let activeCount = $derived(
-  Object.values(activeFilters).reduce((sum, arr) => sum + (arr?.length ?? 0), 0),
+  Object.entries(activeFilters).reduce((sum, [field, value]) => {
+    if (isArrayFacetField(field as keyof FacetFilters) && Array.isArray(value)) {
+      return sum + value.length;
+    }
+    return sum;
+  }, 0),
 );
 
 // Check if facets are available
@@ -24,7 +34,7 @@ let hasFacets = $derived(
       facets.relationship.length > 0),
 );
 
-function toggleFilter(field: keyof FacetFilters, value: string) {
+function toggleFilter(field: ArrayFacetField, value: string) {
   const current = activeFilters[field] ?? [];
   const newValues = current.includes(value)
     ? current.filter((v) => v !== value)
@@ -36,7 +46,7 @@ function toggleFilter(field: keyof FacetFilters, value: string) {
   });
 }
 
-function isFilterActive(field: keyof FacetFilters, value: string): boolean {
+function isFilterActive(field: ArrayFacetField, value: string): boolean {
   return (activeFilters[field] ?? []).includes(value);
 }
 

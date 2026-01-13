@@ -1,35 +1,37 @@
 <script lang="ts">
-import type { FacetFilters } from '$shared';
+import { type ArrayFacetField, type FacetFilters, isArrayFacetField } from '$shared';
 
 interface Props {
   filters: FacetFilters;
-  onRemove: (field: keyof FacetFilters, value: string) => void;
+  onRemove: (field: ArrayFacetField, value: string) => void;
   onClearAll: () => void;
 }
 
 let { filters, onRemove, onClearAll }: Props = $props();
 
-// Field display labels
-const fieldLabels: Record<keyof FacetFilters, string> = {
+// Field display labels for array-type facet fields
+const fieldLabels: Record<ArrayFacetField, string> = {
   country: 'Country',
   city: 'City',
   organization: 'Organization',
   job_title: 'Job Title',
   department: 'Department',
   relationship_category: 'Relationship',
+  circles: 'Circle',
 };
 
-// Flatten filters into chip array
-function getChips(): Array<{ field: keyof FacetFilters; value: string; label: string }> {
-  const result: Array<{ field: keyof FacetFilters; value: string; label: string }> = [];
+// Flatten filters into chip array (only array-type fields)
+function getChips(): Array<{ field: ArrayFacetField; value: string; label: string }> {
+  const result: Array<{ field: ArrayFacetField; value: string; label: string }> = [];
 
   for (const [field, values] of Object.entries(filters)) {
-    if (values?.length) {
+    const facetField = field as keyof FacetFilters;
+    if (isArrayFacetField(facetField) && Array.isArray(values) && values.length > 0) {
       for (const value of values) {
         result.push({
-          field: field as keyof FacetFilters,
+          field: facetField,
           value,
-          label: `${fieldLabels[field as keyof FacetFilters]}: ${value}`,
+          label: `${fieldLabels[facetField]}: ${value}`,
         });
       }
     }

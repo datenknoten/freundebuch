@@ -1,4 +1,6 @@
 <script lang="ts">
+import CircleChips from '$lib/components/circles/CircleChips.svelte';
+import FavoriteButton from '$lib/components/circles/FavoriteButton.svelte';
 import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
 import type { FriendListItem } from '$shared';
 import FriendAvatar from './FriendAvatar.svelte';
@@ -49,9 +51,17 @@ let showKeyHint = $derived(() => {
   />
 
   <div class="flex-1 min-w-0">
-    <h3 class="font-heading text-lg text-gray-900 truncate">
-      {friend.displayName}
-    </h3>
+    <div class="flex items-center gap-2">
+      <h3 class="font-heading text-lg text-gray-900 truncate">
+        {friend.displayName}
+      </h3>
+      {#if friend.isFavorite}
+        <FavoriteButton isFavorite={true} size="sm" disabled />
+      {/if}
+      {#if friend.archivedAt}
+        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Archived</span>
+      {/if}
+    </div>
 
     <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 font-body">
       {#if friend.primaryEmail}
@@ -61,6 +71,12 @@ let showKeyHint = $derived(() => {
         <span>{friend.primaryPhone}</span>
       {/if}
     </div>
+
+    {#if friend.circles && friend.circles.length > 0}
+      <div class="mt-1">
+        <CircleChips circles={friend.circles} size="sm" maxVisible={3} />
+      </div>
+    {/if}
   </div>
 
   <svg
