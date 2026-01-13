@@ -615,6 +615,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
      * For each category name, finds an existing circle or creates a new one,
      * then links the friend to that circle.
      *
+     * Uses two-step matching: exact match first, then case-insensitive fallback.
+     * This preserves circle name casing while being flexible for imports.
+     *
      * @param int $userId The user ID (address book owner)
      * @param int $friendId The friend's internal ID
      * @param array $categories Circle names from vCard CATEGORIES
@@ -626,7 +629,14 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         }
 
         // Prepare statements for reuse
-        $findCircle = $this->pdo->prepare('
+        // Step 1: Try exact match first (preserves casing)
+        $findCircleExact = $this->pdo->prepare('
+            SELECT id FROM friends.circles
+            WHERE user_id = :user_id AND name = :name
+        ');
+
+        // Step 2: Fall back to case-insensitive if no exact match
+        $findCircleCaseInsensitive = $this->pdo->prepare('
             SELECT id FROM friends.circles
             WHERE user_id = :user_id AND LOWER(name) = LOWER(:name)
         ');
@@ -657,9 +667,15 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 continue;
             }
 
-            // Try to find existing circle (case-insensitive)
-            $findCircle->execute(['user_id' => $userId, 'name' => $categoryName]);
-            $circle = $findCircle->fetch();
+            // Step 1: Try exact match first (preserves original casing)
+            $findCircleExact->execute(['user_id' => $userId, 'name' => $categoryName]);
+            $circle = $findCircleExact->fetch();
+
+            // Step 2: Fall back to case-insensitive if no exact match
+            if (!$circle) {
+                $findCircleCaseInsensitive->execute(['user_id' => $userId, 'name' => $categoryName]);
+                $circle = $findCircleCaseInsensitive->fetch();
+            }
 
             if ($circle) {
                 $circleId = (int) $circle['id'];
