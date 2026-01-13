@@ -1,3 +1,29 @@
+## [2.33.0](https://github.com/datenknoten/freundebuch/compare/v2.32.4...v2.33.0) (2026-01-13)
+
+### Features
+
+* **backend:** Add CardDAV circles integration ([c850844](https://github.com/datenknoten/freundebuch/commit/c850844a5afc883188fb11d7bfa7fb5200ba7f73))
+* **backend:** Add circles and organization queries ([10d4eb7](https://github.com/datenknoten/freundebuch/commit/10d4eb75326817c5a80f989de0613b1b7dafe9ed))
+* **backend:** Add circles routes and extend friends routes ([abb4d10](https://github.com/datenknoten/freundebuch/commit/abb4d10297b8520741a43222d326d066aec6769c))
+* **backend:** Add circles service and extend friends service ([e7919a8](https://github.com/datenknoten/freundebuch/commit/e7919a8f138b43c33da6ad52f7486d44298029cb))
+* **database:** Add circles and organization migration ([cc3378e](https://github.com/datenknoten/freundebuch/commit/cc3378ec865aa523beec0098659b34a709ac6500))
+* **frontend:** Add circle components and update facet UI ([4a257ff](https://github.com/datenknoten/freundebuch/commit/4a257ff95f4ac197ffd50eb0f613bcda112a772b))
+* **frontend:** Add circles API and stores ([24169c8](https://github.com/datenknoten/freundebuch/commit/24169c80aab3c7f21771ec0bee2d44031d084c63))
+* **shared:** Add circles and organization types ([776b199](https://github.com/datenknoten/freundebuch/commit/776b199d34d2ceec4a2f4af5297cb505166431f4))
+
+### Bug Fixes
+
+* **backend:** Add transactions to setFriendCircles and mergeCircles ([e94f1a3](https://github.com/datenknoten/freundebuch/commit/e94f1a32c19d3018acee0b1e06ea1b18518b8914))
+* **backend:** Add unique constraint for circle names and length validation ([c642bf8](https://github.com/datenknoten/freundebuch/commit/c642bf8c608f27f52daef59a03a88b61cb578613))
+* **backend:** Address code review feedback for circles feature ([7184740](https://github.com/datenknoten/freundebuch/commit/7184740bed095d9ca2443e78e7734f09d372d840))
+* **backend:** Address PR feedback for circles feature ([8297935](https://github.com/datenknoten/freundebuch/commit/8297935ae5e3b9ffde26b8a77f703a98fdd4e38a))
+* **backend:** Use two-step circle matching in CardDAV ([b453627](https://github.com/datenknoten/freundebuch/commit/b4536276e37c8c11e01a4c852abd11c49087db8b))
+* **frontend:** Fix type assertion for ArrayFacetField indexing ([42775f9](https://github.com/datenknoten/freundebuch/commit/42775f9ea29a4390a3613d420007a2d50221bb2f))
+
+### Performance Improvements
+
+* **backend:** Optimize setFriendCircles to avoid extra query ([4139d55](https://github.com/datenknoten/freundebuch/commit/4139d556efa00293161b7d0251bf49f3fe7ebf3d))
+
 ## [2.32.4](https://github.com/datenknoten/freundebuch/compare/v2.32.3...v2.32.4) (2026-01-12)
 
 ### Bug Fixes

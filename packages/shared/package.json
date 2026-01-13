@@ -1,6 +1,6 @@
 {
   "name": "@freundebuch/shared",
-  "version": "2.32.4",
+  "version": "2.33.0",
   "private": true,
   "type": "module",
   "main": "./dist/src/index.js",
