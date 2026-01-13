@@ -662,7 +662,8 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $sortOrder = (int) $maxSort->fetch()['max_sort'];
 
         foreach ($categories as $categoryName) {
-            $categoryName = trim($categoryName);
+            // Trim and truncate to 100 chars to match database constraint
+            $categoryName = mb_substr(trim($categoryName), 0, 100);
             if (empty($categoryName)) {
                 continue;
             }

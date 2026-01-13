@@ -20,7 +20,11 @@ import {
   removeFriendFromCircle,
   setFriendCircles,
 } from '../models/queries/friend-circles.queries.js';
-import { CircleNotFoundError, CircularReferenceError } from '../utils/errors.js';
+import {
+  CircleNameExistsError,
+  CircleNotFoundError,
+  CircularReferenceError,
+} from '../utils/errors.js';
 
 /**
  * Service for managing circles (categorization/organization feature)
@@ -55,23 +59,40 @@ export class CirclesService {
    * Create a new circle
    */
   async createCircle(userExternalId: string, input: CircleInput): Promise<Circle | null> {
-    const results = await createCircle.run(
-      {
-        userExternalId,
-        name: input.name,
-        color: input.color ?? null,
-        parentCircleExternalId: input.parent_circle_id ?? null,
-        sortOrder: input.sort_order ?? 0,
-      },
-      this.db,
-    );
+    try {
+      const results = await createCircle.run(
+        {
+          userExternalId,
+          name: input.name,
+          color: input.color ?? null,
+          parentCircleExternalId: input.parent_circle_id ?? null,
+          sortOrder: input.sort_order ?? 0,
+        },
+        this.db,
+      );
 
-    if (results.length === 0) {
-      return null;
+      if (results.length === 0) {
+        return null;
+      }
+
+      // Fetch the full circle with friend count
+      return this.getCircleById(userExternalId, results[0].external_id);
+    } catch (error) {
+      // Handle unique constraint violation on circle name
+      if (this.isUniqueViolation(error)) {
+        throw new CircleNameExistsError();
+      }
+      throw error;
     }
+  }
 
-    // Fetch the full circle with friend count
-    return this.getCircleById(userExternalId, results[0].external_id);
+  /**
+   * Check if an error is a PostgreSQL unique constraint violation
+   */
+  private isUniqueViolation(error: unknown): boolean {
+    return (
+      typeof error === 'object' && error !== null && 'code' in error && error.code === '23505' // PostgreSQL unique_violation
+    );
   }
 
   /**
@@ -105,24 +126,32 @@ export class CirclesService {
     // NULL means explicitly remove the parent, actual ID means set new parent
     const parentValue = updateParent ? (input.parent_circle_id ?? null) : '__KEEP__';
 
-    const results = await updateCircle.run(
-      {
-        userExternalId,
-        circleExternalId,
-        name: input.name ?? null,
-        color: input.color ?? null,
-        parentCircleExternalId: parentValue,
-        sortOrder: input.sort_order ?? null,
-      },
-      this.db,
-    );
+    try {
+      const results = await updateCircle.run(
+        {
+          userExternalId,
+          circleExternalId,
+          name: input.name ?? null,
+          color: input.color ?? null,
+          parentCircleExternalId: parentValue,
+          sortOrder: input.sort_order ?? null,
+        },
+        this.db,
+      );
 
-    if (results.length === 0) {
-      return null;
+      if (results.length === 0) {
+        return null;
+      }
+
+      // Fetch the full circle with friend count
+      return this.getCircleById(userExternalId, results[0].external_id);
+    } catch (error) {
+      // Handle unique constraint violation on circle name
+      if (this.isUniqueViolation(error)) {
+        throw new CircleNameExistsError();
+      }
+      throw error;
     }
-
-    // Fetch the full circle with friend count
-    return this.getCircleById(userExternalId, results[0].external_id);
   }
 
   /**
