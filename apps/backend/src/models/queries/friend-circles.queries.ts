@@ -172,7 +172,11 @@ export interface ISetFriendCirclesParams {
 }
 
 /** 'SetFriendCircles' return type */
-export type ISetFriendCirclesResult = void;
+export interface ISetFriendCirclesResult {
+  circle_color: string | null;
+  circle_external_id: string | null;
+  circle_name: string | null;
+}
 
 /** 'SetFriendCircles' query type */
 export interface ISetFriendCirclesQuery {
@@ -180,12 +184,13 @@ export interface ISetFriendCirclesQuery {
   result: ISetFriendCirclesResult;
 }
 
-const setFriendCirclesIR: any = {"usedParamSet":{"friendExternalId":true,"userExternalId":true,"circleExternalIds":true},"params":[{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":306,"b":322}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":346,"b":360}]},{"name":"circleExternalIds","required":false,"transform":{"type":"scalar"},"locs":[{"a":388,"b":405}]}],"statement":"-- Adds a friend to multiple circles at once (call ClearFriendCircles first to replace all)\nINSERT INTO friends.friend_circles (friend_id, circle_id)\nSELECT f.id, c.id\nFROM friends.friends f\nINNER JOIN auth.users u ON f.user_id = u.id\nINNER JOIN friends.circles c ON c.user_id = u.id\nWHERE f.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.external_id = ANY(:circleExternalIds::uuid[])\n  AND f.deleted_at IS NULL\nON CONFLICT (friend_id, circle_id) DO NOTHING"};
+const setFriendCirclesIR: any = {"usedParamSet":{"friendExternalId":true,"userExternalId":true,"circleExternalIds":true},"params":[{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":366,"b":382}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":406,"b":420}]},{"name":"circleExternalIds","required":false,"transform":{"type":"scalar"},"locs":[{"a":448,"b":465}]}],"statement":"-- Adds a friend to multiple circles at once (call ClearFriendCircles first to replace all)\n-- Returns the inserted circle data to avoid an extra query\nINSERT INTO friends.friend_circles (friend_id, circle_id)\nSELECT f.id, c.id\nFROM friends.friends f\nINNER JOIN auth.users u ON f.user_id = u.id\nINNER JOIN friends.circles c ON c.user_id = u.id\nWHERE f.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.external_id = ANY(:circleExternalIds::uuid[])\n  AND f.deleted_at IS NULL\nON CONFLICT (friend_id, circle_id) DO NOTHING\nRETURNING\n    (SELECT external_id FROM friends.circles WHERE id = circle_id) AS circle_external_id,\n    (SELECT name FROM friends.circles WHERE id = circle_id) AS circle_name,\n    (SELECT color FROM friends.circles WHERE id = circle_id) AS circle_color"};
 
 /**
  * Query generated from SQL:
  * ```
  * -- Adds a friend to multiple circles at once (call ClearFriendCircles first to replace all)
+ * -- Returns the inserted circle data to avoid an extra query
  * INSERT INTO friends.friend_circles (friend_id, circle_id)
  * SELECT f.id, c.id
  * FROM friends.friends f
@@ -196,6 +201,10 @@ const setFriendCirclesIR: any = {"usedParamSet":{"friendExternalId":true,"userEx
  *   AND c.external_id = ANY(:circleExternalIds::uuid[])
  *   AND f.deleted_at IS NULL
  * ON CONFLICT (friend_id, circle_id) DO NOTHING
+ * RETURNING
+ *     (SELECT external_id FROM friends.circles WHERE id = circle_id) AS circle_external_id,
+ *     (SELECT name FROM friends.circles WHERE id = circle_id) AS circle_name,
+ *     (SELECT color FROM friends.circles WHERE id = circle_id) AS circle_color
  * ```
  */
 export const setFriendCircles = new PreparedQuery<ISetFriendCirclesParams,ISetFriendCirclesResult>(setFriendCirclesIR);
