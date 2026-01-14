@@ -1,6 +1,6 @@
 <script lang="ts">
-import { circlesById, getCirclePath } from '$lib/stores/circles';
-import type { CircleSummary } from '$shared';
+import { circlesById } from '$lib/stores/circles';
+import type { Circle, CircleSummary } from '$shared';
 
 interface Props {
   circle: CircleSummary;
@@ -16,8 +16,32 @@ interface Props {
 
 let { circle, size = 'sm', onclick, removable = false, onremove }: Props = $props();
 
-// Get the full path for this circle (e.g., "Family → Close Friends")
-let displayName = $derived(getCirclePath(circle.id, $circlesById) || circle.name);
+// Get the path parts for this circle (ancestors + current name)
+function getCirclePathParts(
+  circleId: string,
+  circlesMap: Map<string, Circle>,
+): { ancestors: string[]; name: string } {
+  const parts: string[] = [];
+  let currentId: string | null = circleId;
+
+  while (currentId) {
+    const c = circlesMap.get(currentId);
+    if (!c) break;
+    parts.unshift(c.name);
+    currentId = c.parentCircleId;
+  }
+
+  if (parts.length === 0) {
+    return { ancestors: [], name: circle.name };
+  }
+
+  return {
+    ancestors: parts.slice(0, -1),
+    name: parts[parts.length - 1],
+  };
+}
+
+let pathParts = $derived(getCirclePathParts(circle.id, $circlesById));
 
 // Get contrasting text color for background
 function getTextColor(hexColor: string | null): string {
@@ -39,6 +63,29 @@ let textColorClass = $derived(getTextColor(circle.color));
 let sizeClasses = $derived(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm');
 </script>
 
+{#snippet chipContent()}
+  <span class="truncate max-w-[150px]">
+    {#if pathParts.ancestors.length > 0}
+      <span class="opacity-60">{pathParts.ancestors.join(' ')}</span>{' '}
+    {/if}<span>{pathParts.name}</span>
+  </span>
+  {#if removable && onremove}
+    <button
+      type="button"
+      class="ml-1 rounded-full p-0.5 hover:bg-black/10 transition-colors"
+      onclick={(e) => {
+        e.stopPropagation();
+        onremove?.();
+      }}
+      aria-label="Remove {pathParts.ancestors.length > 0 ? pathParts.ancestors.join(' ') + ' ' : ''}{pathParts.name}"
+    >
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  {/if}
+{/snippet}
+
 {#if onclick}
   <!-- When clickable, use a span wrapper with button only for remove action -->
   <span
@@ -49,43 +96,13 @@ let sizeClasses = $derived(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 te
     onclick={onclick}
     onkeydown={(e) => e.key === 'Enter' && onclick?.()}
   >
-    <span class="truncate max-w-[120px]">{displayName}</span>
-    {#if removable && onremove}
-      <button
-        type="button"
-        class="ml-1 rounded-full p-0.5 hover:bg-black/10 transition-colors"
-        onclick={(e) => {
-          e.stopPropagation();
-          onremove?.();
-        }}
-        aria-label="Remove {displayName}"
-      >
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    {/if}
+    {@render chipContent()}
   </span>
 {:else}
   <span
     class="inline-flex items-center gap-1 rounded-full font-medium {sizeClasses} {textColorClass}"
     style:background-color={circle.color ?? '#e5e7eb'}
   >
-    <span class="truncate max-w-[120px]">{displayName}</span>
-    {#if removable && onremove}
-      <button
-        type="button"
-        class="ml-1 rounded-full p-0.5 hover:bg-black/10 transition-colors"
-        onclick={(e) => {
-          e.stopPropagation();
-          onremove?.();
-        }}
-        aria-label="Remove {displayName}"
-      >
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    {/if}
+    {@render chipContent()}
   </span>
 {/if}
