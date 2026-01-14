@@ -1,3 +1,10 @@
+## [2.37.3](https://github.com/datenknoten/freundebuch/compare/v2.37.2...v2.37.3) (2026-01-14)
+
+### Bug Fixes
+
+* **docker:** Add php8.2-curl to production image ([2b42a20](https://github.com/datenknoten/freundebuch/commit/2b42a202ad8982e24d9f764a7c1f1aa6fc678062))
+* **sabredav:** Add graceful curl fallback and improve error reporting ([784d7f8](https://github.com/datenknoten/freundebuch/commit/784d7f8c753dfba685810c8af06b4d1d6326c354))
+
 ## [2.37.2](https://github.com/datenknoten/freundebuch/compare/v2.37.1...v2.37.2) (2026-01-13)
 
 ### Bug Fixes
