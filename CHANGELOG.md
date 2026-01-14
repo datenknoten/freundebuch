@@ -1,3 +1,15 @@
+## [2.41.0](https://github.com/datenknoten/freundebuch/compare/v2.40.0...v2.41.0) (2026-01-14)
+
+### Features
+
+* **frontend:** Auto-focus first input in subresource edit forms ([97dd976](https://github.com/datenknoten/freundebuch/commit/97dd976fb63119e1d4662168cdea7514d3cd0c49))
+* **frontend:** Display circle hierarchy with scoped-label style ([4d3a72f](https://github.com/datenknoten/freundebuch/commit/4d3a72f50ab5c53b6ee543ed45c2c8ab91dd9f56))
+* **frontend:** Show circle dropdown as tree with indentation in add circle form ([0416420](https://github.com/datenknoten/freundebuch/commit/0416420b3165cd251967382c646c2f3f6852b2fd))
+
+### Bug Fixes
+
+* **frontend:** Use Svelte action for autofocus to prevent focus stealing ([0d0f872](https://github.com/datenknoten/freundebuch/commit/0d0f87286303e4eb535b1e15cfcf490d9fbac8a9))
+
 ## [2.40.0](https://github.com/datenknoten/freundebuch/compare/v2.39.0...v2.40.0) (2026-01-14)
 
 ### Features
