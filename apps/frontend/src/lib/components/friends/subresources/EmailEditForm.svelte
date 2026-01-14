@@ -15,6 +15,12 @@ let emailType = $state<EmailType>((() => initialData?.emailType ?? 'personal')()
 let label = $state((() => initialData?.label ?? '')());
 let isPrimary = $state((() => initialData?.isPrimary ?? false)());
 
+// Auto-focus the first input
+let firstInputRef = $state<HTMLInputElement | null>(null);
+$effect(() => {
+  firstInputRef?.focus();
+});
+
 // Skip initial effect run
 let initialized = false;
 
@@ -53,6 +59,7 @@ export function isValid(): boolean {
       Email Address <span class="text-red-500">*</span>
     </label>
     <input
+      bind:this={firstInputRef}
       id="email-address"
       type="email"
       bind:value={emailAddress}

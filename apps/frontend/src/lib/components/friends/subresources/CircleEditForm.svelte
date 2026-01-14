@@ -15,6 +15,12 @@ let { existingCircles = [], disabled = false, onchange }: Props = $props();
 // Form state
 let selectedCircleId = $state('');
 
+// Auto-focus the first input
+let firstInputRef = $state<HTMLSelectElement | null>(null);
+$effect(() => {
+  firstInputRef?.focus();
+});
+
 // Load circles on mount if not already loaded
 onMount(() => {
   if ($circles.circles.length === 0) {
@@ -91,6 +97,7 @@ export function getSelectedCircle(): Circle | undefined {
         Select Circle <span class="text-red-500">*</span>
       </label>
       <select
+        bind:this={firstInputRef}
         id="circle-select"
         bind:value={selectedCircleId}
         {disabled}
