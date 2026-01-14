@@ -36,11 +36,13 @@ export type PageSize = typeof PageSizeSchema.infer;
 
 export const UserPreferencesSchema = type({
   'friendsPageSize?': PageSizeSchema,
+  'friendsTableColumns?': 'string[]',
 });
 export type UserPreferences = typeof UserPreferencesSchema.infer;
 
 export const UpdatePreferencesRequestSchema = type({
   'friendsPageSize?': PageSizeSchema,
+  'friendsTableColumns?': 'string[]',
 });
 export type UpdatePreferencesRequest = typeof UpdatePreferencesRequestSchema.infer;
 

@@ -1,18 +1,21 @@
 <script lang="ts">
 import * as friendsApi from '$lib/api/friends';
-import { auth, friendsPageSize } from '$lib/stores/auth';
+import { auth, friendsPageSize, friendsTableColumns } from '$lib/stores/auth';
 import { friendList, friends, isFriendsLoading } from '$lib/stores/friends';
 import { visibleFriendIds } from '$lib/stores/ui';
-import type {
-  ArrayFacetField,
-  FacetFilters,
-  FacetGroups,
-  GlobalSearchResult,
-  PageSize,
-  SearchSortBy,
+import {
+  type ArrayFacetField,
+  type ColumnId,
+  DEFAULT_COLUMNS,
+  type FacetFilters,
+  type FacetGroups,
+  type GlobalSearchResult,
+  type PageSize,
+  type SearchSortBy,
 } from '$shared';
 import FacetChips from '../search/FacetChips.svelte';
 import FacetDropdown from '../search/FacetDropdown.svelte';
+import ColumnChooser from './ColumnChooser.svelte';
 import FriendListItem from './FriendListItem.svelte';
 import FriendTable from './FriendTable.svelte';
 import SearchResultItem from './SearchResultItem.svelte';
@@ -53,6 +56,15 @@ let showNoResults = $derived(
   (isSearchMode || isFilterMode) && !isSearching && searchResults.length === 0,
 );
 let currentPageSize = $derived($friendsPageSize);
+
+// Columns - use user preferences or defaults
+let currentColumns = $derived<ColumnId[]>(
+  ($friendsTableColumns as ColumnId[] | null) ?? [...DEFAULT_COLUMNS],
+);
+
+function handleColumnsChange(newColumns: ColumnId[]) {
+  auth.updatePreferences({ friendsTableColumns: newColumns });
+}
 
 // Debounce timer
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -396,6 +408,11 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
 
     <!-- Right: Controls -->
     <div class="flex flex-wrap items-center gap-3">
+      <!-- Column chooser (desktop only) -->
+      <div class="hidden md:block">
+        <ColumnChooser columns={currentColumns} onColumnsChange={handleColumnsChange} />
+      </div>
+
       <!-- Page size selector -->
       <div class="flex items-center gap-2">
         <label for="page-size" class="text-sm text-gray-600 font-body whitespace-nowrap">Show:</label>
@@ -592,6 +609,7 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
       <div class="hidden md:block">
         <FriendTable
           friends={$friendList}
+          columns={currentColumns}
           {sortBy}
           {sortOrder}
           onSortChange={handleTableSortChange}

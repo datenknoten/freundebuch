@@ -160,7 +160,11 @@ WITH friend_list AS (
         c.id,
         c.external_id,
         c.display_name,
+        c.nickname,
         c.photo_thumbnail_url,
+        c.job_title,
+        c.organization,
+        c.department,
         c.is_favorite,
         c.archived_at,
         c.created_at,
@@ -186,13 +190,21 @@ total AS (
 SELECT
     cl.external_id,
     cl.display_name,
+    cl.nickname,
     cl.photo_thumbnail_url,
+    cl.job_title,
+    cl.organization,
+    cl.department,
     cl.is_favorite,
     cl.archived_at,
     cl.created_at,
     cl.updated_at,
     (SELECT e.email_address FROM friends.friend_emails e WHERE e.friend_id = cl.id AND e.is_primary = true LIMIT 1) as primary_email,
     (SELECT p.phone_number FROM friends.friend_phones p WHERE p.friend_id = cl.id AND p.is_primary = true LIMIT 1) as primary_phone,
+    -- Extended fields for dynamic columns
+    (SELECT a.city FROM friends.friend_addresses a WHERE a.friend_id = cl.id AND a.is_primary = true LIMIT 1) as primary_city,
+    (SELECT a.country FROM friends.friend_addresses a WHERE a.friend_id = cl.id AND a.is_primary = true LIMIT 1) as primary_country,
+    (SELECT d.date_value FROM friends.friend_dates d WHERE d.friend_id = cl.id AND d.date_type = 'birthday' LIMIT 1) as birthday,
     -- Epic 4: Circles for each friend
     (
         SELECT COALESCE(json_agg(json_build_object(

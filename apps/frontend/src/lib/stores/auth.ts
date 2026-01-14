@@ -308,6 +308,14 @@ export const userPreferences = derived(auth, ($auth) => $auth.preferences);
 export const friendsPageSize = derived(auth, ($auth) => $auth.preferences.friendsPageSize ?? 25);
 
 /**
+ * Derived store for friends table columns
+ */
+export const friendsTableColumns = derived(
+  auth,
+  ($auth) => $auth.preferences.friendsTableColumns ?? null,
+);
+
+/**
  * Helper to wait for auth initialization
  * Returns a promise that resolves when auth is initialized
  */

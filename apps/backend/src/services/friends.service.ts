@@ -1722,12 +1722,26 @@ export class FriendsService {
       color: string | null;
     }>;
 
+    // Format birthday date if present
+    const birthday =
+      row.birthday instanceof Date
+        ? row.birthday.toISOString().split('T')[0]
+        : (row.birthday ?? undefined);
+
     return {
       id: row.external_id,
       displayName: row.display_name,
       photoThumbnailUrl: row.photo_thumbnail_url ?? undefined,
       primaryEmail: row.primary_email ?? undefined,
       primaryPhone: row.primary_phone ?? undefined,
+      // Extended fields for dynamic columns
+      nickname: row.nickname ?? undefined,
+      organization: row.organization ?? undefined,
+      jobTitle: row.job_title ?? undefined,
+      department: row.department ?? undefined,
+      primaryCity: row.primary_city ?? undefined,
+      primaryCountry: row.primary_country ?? undefined,
+      birthday,
       // Epic 4: Organization fields
       isFavorite: row.is_favorite,
       archivedAt: row.archived_at?.toISOString() ?? undefined,
