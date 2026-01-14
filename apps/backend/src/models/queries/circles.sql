@@ -12,7 +12,7 @@ FROM friends.circles c
 INNER JOIN auth.users u ON c.user_id = u.id
 LEFT JOIN friends.circles pc ON c.parent_circle_id = pc.id
 LEFT JOIN friends.friend_circles fc ON fc.circle_id = c.id
-WHERE u.external_id = :userExternalId
+WHERE u.external_id = :userExternalId::uuid
 GROUP BY c.id, c.external_id, c.name, c.color, pc.external_id, c.sort_order, c.created_at, c.updated_at
 ORDER BY c.sort_order ASC, c.name ASC;
 
@@ -30,8 +30,8 @@ FROM friends.circles c
 INNER JOIN auth.users u ON c.user_id = u.id
 LEFT JOIN friends.circles pc ON c.parent_circle_id = pc.id
 LEFT JOIN friends.friend_circles fc ON fc.circle_id = c.id
-WHERE c.external_id = :circleExternalId
-  AND u.external_id = :userExternalId
+WHERE c.external_id = :circleExternalId::uuid
+  AND u.external_id = :userExternalId::uuid
 GROUP BY c.id, c.external_id, c.name, c.color, pc.external_id, c.sort_order, c.created_at, c.updated_at;
 
 /* @name CreateCircle */
@@ -49,8 +49,8 @@ SELECT
     pc.id,
     COALESCE(:sortOrder, 0)
 FROM auth.users u
-LEFT JOIN friends.circles pc ON pc.external_id = :parentCircleExternalId AND pc.user_id = u.id
-WHERE u.external_id = :userExternalId
+LEFT JOIN friends.circles pc ON pc.external_id = :parentCircleExternalId::uuid AND pc.user_id = u.id
+WHERE u.external_id = :userExternalId::uuid
 RETURNING
     external_id,
     name,
@@ -71,16 +71,16 @@ SET
         WHEN :parentCircleExternalId IS NULL THEN NULL
         ELSE (
             SELECT pc.id FROM friends.circles pc
-            WHERE pc.external_id = :parentCircleExternalId
+            WHERE pc.external_id = NULLIF(:parentCircleExternalId, '__KEEP__')::uuid
               AND pc.user_id = c.user_id
         )
     END,
     sort_order = COALESCE(:sortOrder, c.sort_order),
     updated_at = current_timestamp
 FROM auth.users u
-WHERE c.external_id = :circleExternalId
+WHERE c.external_id = :circleExternalId::uuid
   AND c.user_id = u.id
-  AND u.external_id = :userExternalId
+  AND u.external_id = :userExternalId::uuid
 RETURNING
     c.external_id,
     c.name,
@@ -93,9 +93,9 @@ RETURNING
 /* @name DeleteCircle */
 DELETE FROM friends.circles c
 USING auth.users u
-WHERE c.external_id = :circleExternalId
+WHERE c.external_id = :circleExternalId::uuid
   AND c.user_id = u.id
-  AND u.external_id = :userExternalId
+  AND u.external_id = :userExternalId::uuid
 RETURNING c.external_id;
 
 /* @name UpdateCircleSortOrder */
@@ -104,9 +104,9 @@ SET
     sort_order = :sortOrder,
     updated_at = current_timestamp
 FROM auth.users u
-WHERE c.external_id = :circleExternalId
+WHERE c.external_id = :circleExternalId::uuid
   AND c.user_id = u.id
-  AND u.external_id = :userExternalId
+  AND u.external_id = :userExternalId::uuid
 RETURNING c.external_id;
 
 /* @name MergeCircles */
@@ -115,20 +115,20 @@ UPDATE friends.friend_circles fc
 SET circle_id = (
     SELECT tc.id FROM friends.circles tc
     INNER JOIN auth.users u ON tc.user_id = u.id
-    WHERE tc.external_id = :targetCircleExternalId
-      AND u.external_id = :userExternalId
+    WHERE tc.external_id = :targetCircleExternalId::uuid
+      AND u.external_id = :userExternalId::uuid
 )
 FROM friends.circles sc
 INNER JOIN auth.users u ON sc.user_id = u.id
 WHERE fc.circle_id = sc.id
-  AND sc.external_id = :sourceCircleExternalId
-  AND u.external_id = :userExternalId
+  AND sc.external_id = :sourceCircleExternalId::uuid
+  AND u.external_id = :userExternalId::uuid
   -- Avoid duplicates: only move if not already in target circle
   AND NOT EXISTS (
     SELECT 1 FROM friends.friend_circles existing
     INNER JOIN friends.circles tc ON existing.circle_id = tc.id
     WHERE existing.friend_id = fc.friend_id
-      AND tc.external_id = :targetCircleExternalId
+      AND tc.external_id = :targetCircleExternalId::uuid
   );
 
 /* @name GetCircleInternalId */
@@ -136,5 +136,5 @@ WHERE fc.circle_id = sc.id
 SELECT c.id
 FROM friends.circles c
 INNER JOIN auth.users u ON c.user_id = u.id
-WHERE c.external_id = :circleExternalId
-  AND u.external_id = :userExternalId;
+WHERE c.external_id = :circleExternalId::uuid
+  AND u.external_id = :userExternalId::uuid;
