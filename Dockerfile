@@ -16,7 +16,7 @@ FROM node:24-bookworm-slim AS runtime-base
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         nginx supervisor curl gettext-base \
-        php8.2-fpm php8.2-pgsql php8.2-xml php8.2-mbstring && \
+        php8.2-fpm php8.2-pgsql php8.2-xml php8.2-mbstring php8.2-curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     # Configure PHP-FPM to listen on TCP socket instead of Unix socket
