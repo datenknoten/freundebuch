@@ -93,7 +93,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: pdo, pdo_pgsql
+          extensions: pdo, pdo_pgsql, curl
           coverage: none
 
       - name: Setup Node.js
@@ -121,6 +121,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+        working-directory: apps/sabredav
 
       - name: Run unit and integration tests
         env:

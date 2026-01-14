@@ -519,4 +519,80 @@ XML;
 
         $this->assertContains($response->getStatus(), [207, 301, 302]);
     }
+
+    #[Test]
+    public function curlExtensionIsAvailable(): void
+    {
+        // This test verifies that the curl extension is available
+        // It's required for fetching photos from URLs in vCard generation
+        $this->assertTrue(
+            \Freundebuch\DAV\VCard\Mapper::isCurlAvailable(),
+            'The curl PHP extension must be available for photo URL fetching. ' .
+            'Install it with: apt-get install php-curl (Debian/Ubuntu) or enable it in php.ini'
+        );
+    }
+
+    #[Test]
+    public function getCardWithPhotoUrlGeneratesValidVCard(): void
+    {
+        // Create a friend with a photo_url
+        // This tests that the vCard generation doesn't crash when photo_url is set
+        // (even if the URL can't be fetched, it should gracefully degrade)
+        $user = $this->getPdo()->query("SELECT id FROM auth.users WHERE email = 'test@example.com'")->fetch();
+        $friend = $this->createTestFriend((int) $user['id'], [
+            'display_name' => 'Photo Test Friend',
+            'name_first' => 'Photo',
+            'name_last' => 'Test',
+            'photo_url' => 'https://example.com/nonexistent-photo.jpg',
+        ]);
+
+        $response = $this->request('GET', '/addressbooks/test@example.com/friends/' . $friend['external_id'] . '.vcf');
+
+        $this->assertEquals(200, $response->getStatus());
+        $this->assertStringContainsString('text/vcard', $response->getHeader('Content-Type'));
+
+        $vcardData = $response->getBodyAsString();
+        $this->assertStringContainsString('BEGIN:VCARD', $vcardData);
+        $this->assertStringContainsString('VERSION:4.0', $vcardData);
+        $this->assertStringContainsString('FN:Photo Test Friend', $vcardData);
+        $this->assertStringContainsString('END:VCARD', $vcardData);
+        // Note: We don't assert PHOTO is present because the URL is intentionally unreachable
+        // The important thing is that the server doesn't crash
+    }
+
+    #[Test]
+    public function reportSyncCollectionWithPhotoUrlSucceeds(): void
+    {
+        // This test specifically targets the bug where sync-collection REPORT would fail
+        // if a friend had a photo_url and curl extension was not available
+        $user = $this->getPdo()->query("SELECT id FROM auth.users WHERE email = 'test@example.com'")->fetch();
+        $this->createTestFriend((int) $user['id'], [
+            'display_name' => 'Sync Photo Test',
+            'photo_url' => 'https://example.com/test-photo.jpg',
+        ]);
+
+        $body = <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<d:sync-collection xmlns:d="DAV:">
+    <d:sync-token/>
+    <d:sync-level>1</d:sync-level>
+    <d:prop>
+        <d:getetag/>
+    </d:prop>
+</d:sync-collection>
+XML;
+
+        $response = $this->request(
+            'REPORT',
+            '/addressbooks/test@example.com/friends/',
+            $body,
+            ['Content-Type' => 'application/xml']
+        );
+
+        // The request should succeed even if photo fetching fails
+        $this->assertEquals(207, $response->getStatus());
+
+        $responseBody = $response->getBodyAsString();
+        $this->assertStringContainsString('sync-token', $responseBody);
+    }
 }
