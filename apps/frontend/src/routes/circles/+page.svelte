@@ -257,7 +257,7 @@ let hierarchicalCircles = $derived(renderCircleTree(null, 0));
               >
                 <option value={null}>None (top-level circle)</option>
                 {#each getParentOptionsTree(editingCircle?.id ?? null) as { circle: parentCircle, depth }}
-                  <option value={parentCircle.id}>{'─'.repeat(depth)}{depth > 0 ? ' ' : ''}{parentCircle.name}</option>
+                  <option value={parentCircle.id}>{'\u00A0\u00A0\u00A0'.repeat(depth)}{parentCircle.name}</option>
                 {/each}
               </select>
               <p class="mt-1 text-xs font-body text-gray-500">
