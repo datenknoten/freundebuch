@@ -15,11 +15,10 @@ let addressType = $state<AddressType>((() => initialData?.addressType ?? 'home')
 let label = $state((() => initialData?.label ?? '')());
 let isPrimary = $state((() => initialData?.isPrimary ?? false)());
 
-// Auto-focus the first input
-let firstInputRef = $state<HTMLSelectElement | null>(null);
-$effect(() => {
-  firstInputRef?.focus();
-});
+// Auto-focus action - runs only once on mount
+function autoFocus(node: HTMLElement) {
+  node.focus();
+}
 
 // Address data from HierarchicalAddressInput
 let addressData = $state<{
@@ -101,7 +100,7 @@ const parsedStreet = (() => parseStreetLine1(initialData?.streetLine1))();
       Type
     </label>
     <select
-      bind:this={firstInputRef}
+      use:autoFocus
       id="address-type"
       bind:value={addressType}
       {disabled}

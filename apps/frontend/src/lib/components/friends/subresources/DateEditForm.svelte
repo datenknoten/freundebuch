@@ -15,11 +15,10 @@ let yearKnown = $state((() => initialData?.yearKnown ?? true)());
 let dateType = $state<DateType>((() => initialData?.dateType ?? 'birthday')());
 let label = $state((() => initialData?.label ?? '')());
 
-// Auto-focus the first input
-let firstInputRef = $state<HTMLInputElement | null>(null);
-$effect(() => {
-  firstInputRef?.focus();
-});
+// Auto-focus action - runs only once on mount
+function autoFocus(node: HTMLElement) {
+  node.focus();
+}
 
 // Skip initial effect run
 let initialized = false;
@@ -58,7 +57,7 @@ export function isValid(): boolean {
       Date <span class="text-red-500">*</span>
     </label>
     <input
-      bind:this={firstInputRef}
+      use:autoFocus
       id="date-value"
       type="date"
       bind:value={dateValue}

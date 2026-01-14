@@ -15,11 +15,10 @@ let phoneType = $state<PhoneType>((() => initialData?.phoneType ?? 'mobile')());
 let label = $state((() => initialData?.label ?? '')());
 let isPrimary = $state((() => initialData?.isPrimary ?? false)());
 
-// Auto-focus the first input
-let firstInputRef = $state<HTMLInputElement | null>(null);
-$effect(() => {
-  firstInputRef?.focus();
-});
+// Auto-focus action - runs only once on mount
+function autoFocus(node: HTMLElement) {
+  node.focus();
+}
 
 // Skip initial effect run
 let initialized = false;
@@ -60,7 +59,7 @@ export function isValid(): boolean {
       Phone Number <span class="text-red-500">*</span>
     </label>
     <input
-      bind:this={firstInputRef}
+      use:autoFocus
       id="phone-number"
       type="tel"
       bind:value={phoneNumber}
