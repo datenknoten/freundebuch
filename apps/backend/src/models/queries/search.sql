@@ -268,7 +268,7 @@ filtered_matches AS (
         -- Circles filter: supports circle IDs and 'no-circle' for friends without circles
         AND (:filterCircles::text[] IS NULL OR (
             -- Check for 'no-circle' filter
-            ('no-circle' = ANY(:filterCircles) AND NOT EXISTS (
+            ('no-circle' = ANY(:filterCircles::text[]) AND NOT EXISTS (
                 SELECT 1 FROM friends.friend_circles fc WHERE fc.friend_id = c.id
             ))
             OR
@@ -277,7 +277,7 @@ filtered_matches AS (
                 SELECT 1 FROM friends.friend_circles fc
                 INNER JOIN friends.circles cir ON fc.circle_id = cir.id
                 WHERE fc.friend_id = c.id
-                  AND cir.external_id = ANY(array_remove(:filterCircles, 'no-circle')::uuid[])
+                  AND cir.external_id = ANY(array_remove(:filterCircles::text[], 'no-circle')::uuid[])
             )
         ))
 ),
@@ -490,7 +490,7 @@ WITH filtered_friends AS (
       -- Circles filter: supports circle IDs and 'no-circle' for friends without circles
       AND (:filterCircles::text[] IS NULL OR (
           -- Check for 'no-circle' filter
-          ('no-circle' = ANY(:filterCircles) AND NOT EXISTS (
+          ('no-circle' = ANY(:filterCircles::text[]) AND NOT EXISTS (
               SELECT 1 FROM friends.friend_circles fc WHERE fc.friend_id = c.id
           ))
           OR
@@ -499,7 +499,7 @@ WITH filtered_friends AS (
               SELECT 1 FROM friends.friend_circles fc
               INNER JOIN friends.circles cir ON fc.circle_id = cir.id
               WHERE fc.friend_id = c.id
-                AND cir.external_id = ANY(array_remove(:filterCircles, 'no-circle')::uuid[])
+                AND cir.external_id = ANY(array_remove(:filterCircles::text[], 'no-circle')::uuid[])
           )
       ))
 ),
