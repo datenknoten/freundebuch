@@ -1,3 +1,9 @@
+## [2.41.3](https://github.com/datenknoten/freundebuch/compare/v2.41.2...v2.41.3) (2026-01-14)
+
+### Bug Fixes
+
+* **frontend:** Load circles on app init for CircleChip hierarchy display ([7a63484](https://github.com/datenknoten/freundebuch/commit/7a634848854068e9e81cd9ba8d6769742c296f6c))
+
 ## [2.41.2](https://github.com/datenknoten/freundebuch/compare/v2.41.1...v2.41.2) (2026-01-14)
 
 ### Code Refactoring
