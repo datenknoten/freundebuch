@@ -1,3 +1,10 @@
+## [2.37.7](https://github.com/datenknoten/freundebuch/compare/v2.37.6...v2.37.7) (2026-01-14)
+
+### Bug Fixes
+
+* **backend:** Remove redundant NULLIF in UpdateCircle query ([b59e694](https://github.com/datenknoten/freundebuch/commit/b59e69419edd382cd2947893307e8d06c2bd7668))
+* **frontend:** Enable sourcemap generation and fix Sentry upload config ([57e47f8](https://github.com/datenknoten/freundebuch/commit/57e47f8f0148c812022863ba797348c8510f9a07))
+
 ## [2.37.6](https://github.com/datenknoten/freundebuch/compare/v2.37.5...v2.37.6) (2026-01-14)
 
 ### Bug Fixes
