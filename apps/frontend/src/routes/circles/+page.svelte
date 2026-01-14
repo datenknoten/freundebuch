@@ -17,6 +17,14 @@ let formColor = $state<string>(CIRCLE_COLORS[5]); // Default blue
 let formParentId = $state<string | null>(null);
 let formError = $state('');
 let isSubmitting = $state(false);
+let nameInputRef = $state<HTMLInputElement | null>(null);
+
+// Focus the name input when the form opens
+$effect(() => {
+  if ((isCreating || editingCircle) && nameInputRef) {
+    nameInputRef.focus();
+  }
+});
 
 // Load circles when auth is ready
 $effect(() => {
@@ -193,6 +201,7 @@ let hierarchicalCircles = $derived(renderCircleTree(null, 0));
                 Name
               </label>
               <input
+                bind:this={nameInputRef}
                 type="text"
                 id="circle-name"
                 bind:value={formName}
