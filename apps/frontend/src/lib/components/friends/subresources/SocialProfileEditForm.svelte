@@ -14,11 +14,10 @@ let platform = $state<SocialPlatform>((() => initialData?.platform ?? 'linkedin'
 let profileUrl = $state((() => initialData?.profileUrl ?? '')());
 let username = $state((() => initialData?.username ?? '')());
 
-// Auto-focus the first input
-let firstInputRef = $state<HTMLSelectElement | null>(null);
-$effect(() => {
-  firstInputRef?.focus();
-});
+// Auto-focus action - runs only once on mount
+function autoFocus(node: HTMLElement) {
+  node.focus();
+}
 
 // Skip initial effect run
 let initialized = false;
@@ -66,7 +65,7 @@ const platformLabels: Record<SocialPlatform, string> = {
       Platform <span class="text-red-500">*</span>
     </label>
     <select
-      bind:this={firstInputRef}
+      use:autoFocus
       id="social-platform"
       bind:value={platform}
       {disabled}
