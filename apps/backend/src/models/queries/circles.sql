@@ -71,7 +71,7 @@ SET
         WHEN :parentCircleExternalId IS NULL THEN NULL
         ELSE (
             SELECT pc.id FROM friends.circles pc
-            WHERE pc.external_id = NULLIF(:parentCircleExternalId, '__KEEP__')::uuid
+            WHERE pc.external_id = :parentCircleExternalId::uuid
               AND pc.user_id = c.user_id
         )
     END,

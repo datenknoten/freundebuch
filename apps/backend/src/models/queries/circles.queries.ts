@@ -47,7 +47,7 @@ const getCirclesByUserIdIR: any = {"usedParamSet":{"userExternalId":true},"param
  * INNER JOIN auth.users u ON c.user_id = u.id
  * LEFT JOIN friends.circles pc ON c.parent_circle_id = pc.id
  * LEFT JOIN friends.friend_circles fc ON fc.circle_id = c.id
- * WHERE u.external_id = :userExternalId
+ * WHERE u.external_id = :userExternalId::uuid
  * GROUP BY c.id, c.external_id, c.name, c.color, pc.external_id, c.sort_order, c.created_at, c.updated_at
  * ORDER BY c.sort_order ASC, c.name ASC
  * ```
@@ -102,8 +102,8 @@ const getCircleByIdIR: any = {"usedParamSet":{"circleExternalId":true,"userExter
  * INNER JOIN auth.users u ON c.user_id = u.id
  * LEFT JOIN friends.circles pc ON c.parent_circle_id = pc.id
  * LEFT JOIN friends.friend_circles fc ON fc.circle_id = c.id
- * WHERE c.external_id = :circleExternalId
- *   AND u.external_id = :userExternalId
+ * WHERE c.external_id = :circleExternalId::uuid
+ *   AND u.external_id = :userExternalId::uuid
  * GROUP BY c.id, c.external_id, c.name, c.color, pc.external_id, c.sort_order, c.created_at, c.updated_at
  * ```
  */
@@ -159,8 +159,8 @@ const createCircleIR: any = {"usedParamSet":{"name":true,"color":true,"sortOrder
  *     pc.id,
  *     COALESCE(:sortOrder, 0)
  * FROM auth.users u
- * LEFT JOIN friends.circles pc ON pc.external_id = :parentCircleExternalId AND pc.user_id = u.id
- * WHERE u.external_id = :userExternalId
+ * LEFT JOIN friends.circles pc ON pc.external_id = :parentCircleExternalId::uuid AND pc.user_id = u.id
+ * WHERE u.external_id = :userExternalId::uuid
  * RETURNING
  *     external_id,
  *     name,
@@ -186,16 +186,26 @@ export interface IUpdateCircleParams {
 
 /** 'UpdateCircle' return type */
 export interface IUpdateCircleResult {
+  /** Hex color code (e.g., "#3B82F6") */
   color: string | null;
   created_at: Date;
+  /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
+  /** Circle name (e.g., "Work", "Family", "Book Club") */
   name: string;
   parent_circle_external_id: string | null;
+  /** Custom sort order within parent level */
   sort_order: number;
   updated_at: Date;
 }
 
-const updateCircleIR: any = {"usedParamSet":{"name":true,"color":true,"parentCircleExternalId":true,"sortOrder":true,"circleExternalId":true,"userExternalId":true},"params":[{"name":"name","required":false,"transform":{"type":"scalar"},"locs":[{"a":146,"b":150}]},{"name":"color","required":false,"transform":{"type":"scalar"},"locs":[{"a":183,"b":188}]},{"name":"parentCircleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":242,"b":264},{"a":316,"b":338},{"a":464,"b":486}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":594,"b":603}]},{"name":"circleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":696,"b":712}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":765,"b":779}]}],"statement":"-- Note: parentCircleExternalId = '__KEEP__' means don't change parent, NULL means remove parent\nUPDATE friends.circles c\nSET\n    name = COALESCE(:name, c.name),\n    color = COALESCE(:color, c.color),\n    parent_circle_id = CASE\n        WHEN :parentCircleExternalId = '__KEEP__' THEN c.parent_circle_id\n        WHEN :parentCircleExternalId IS NULL THEN NULL\n        ELSE (\n            SELECT pc.id FROM friends.circles pc\n            WHERE pc.external_id = NULLIF(:parentCircleExternalId, '__KEEP__')::uuid\n              AND pc.user_id = c.user_id\n        )\n    END,\n    sort_order = COALESCE(:sortOrder, c.sort_order),\n    updated_at = current_timestamp\nFROM auth.users u\nWHERE c.external_id = :circleExternalId::uuid\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId::uuid\nRETURNING\n    c.external_id,\n    c.name,\n    c.color,\n    (SELECT pc.external_id FROM friends.circles pc WHERE pc.id = c.parent_circle_id) AS parent_circle_external_id,\n    c.sort_order,\n    c.created_at,\n    c.updated_at"};
+/** 'UpdateCircle' query type */
+export interface IUpdateCircleQuery {
+  params: IUpdateCircleParams;
+  result: IUpdateCircleResult;
+}
+
+const updateCircleIR: any = {"usedParamSet":{"name":true,"color":true,"parentCircleExternalId":true,"sortOrder":true,"circleExternalId":true,"userExternalId":true},"params":[{"name":"name","required":false,"transform":{"type":"scalar"},"locs":[{"a":146,"b":150}]},{"name":"color","required":false,"transform":{"type":"scalar"},"locs":[{"a":183,"b":188}]},{"name":"parentCircleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":242,"b":264},{"a":316,"b":338},{"a":457,"b":479}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":573,"b":582}]},{"name":"circleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":675,"b":691}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":744,"b":758}]}],"statement":"-- Note: parentCircleExternalId = '__KEEP__' means don't change parent, NULL means remove parent\nUPDATE friends.circles c\nSET\n    name = COALESCE(:name, c.name),\n    color = COALESCE(:color, c.color),\n    parent_circle_id = CASE\n        WHEN :parentCircleExternalId = '__KEEP__' THEN c.parent_circle_id\n        WHEN :parentCircleExternalId IS NULL THEN NULL\n        ELSE (\n            SELECT pc.id FROM friends.circles pc\n            WHERE pc.external_id = :parentCircleExternalId::uuid\n              AND pc.user_id = c.user_id\n        )\n    END,\n    sort_order = COALESCE(:sortOrder, c.sort_order),\n    updated_at = current_timestamp\nFROM auth.users u\nWHERE c.external_id = :circleExternalId::uuid\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId::uuid\nRETURNING\n    c.external_id,\n    c.name,\n    c.color,\n    (SELECT pc.external_id FROM friends.circles pc WHERE pc.id = c.parent_circle_id) AS parent_circle_external_id,\n    c.sort_order,\n    c.created_at,\n    c.updated_at"};
 
 /**
  * Query generated from SQL:
@@ -210,16 +220,16 @@ const updateCircleIR: any = {"usedParamSet":{"name":true,"color":true,"parentCir
  *         WHEN :parentCircleExternalId IS NULL THEN NULL
  *         ELSE (
  *             SELECT pc.id FROM friends.circles pc
- *             WHERE pc.external_id = :parentCircleExternalId
+ *             WHERE pc.external_id = :parentCircleExternalId::uuid
  *               AND pc.user_id = c.user_id
  *         )
  *     END,
  *     sort_order = COALESCE(:sortOrder, c.sort_order),
  *     updated_at = current_timestamp
  * FROM auth.users u
- * WHERE c.external_id = :circleExternalId
+ * WHERE c.external_id = :circleExternalId::uuid
  *   AND c.user_id = u.id
- *   AND u.external_id = :userExternalId
+ *   AND u.external_id = :userExternalId::uuid
  * RETURNING
  *     c.external_id,
  *     c.name,
@@ -258,9 +268,9 @@ const deleteCircleIR: any = {"usedParamSet":{"circleExternalId":true,"userExtern
  * ```
  * DELETE FROM friends.circles c
  * USING auth.users u
- * WHERE c.external_id = :circleExternalId
+ * WHERE c.external_id = :circleExternalId::uuid
  *   AND c.user_id = u.id
- *   AND u.external_id = :userExternalId
+ *   AND u.external_id = :userExternalId::uuid
  * RETURNING c.external_id
  * ```
  */
@@ -296,9 +306,9 @@ const updateCircleSortOrderIR: any = {"usedParamSet":{"sortOrder":true,"circleEx
  *     sort_order = :sortOrder,
  *     updated_at = current_timestamp
  * FROM auth.users u
- * WHERE c.external_id = :circleExternalId
+ * WHERE c.external_id = :circleExternalId::uuid
  *   AND c.user_id = u.id
- *   AND u.external_id = :userExternalId
+ *   AND u.external_id = :userExternalId::uuid
  * RETURNING c.external_id
  * ```
  */
@@ -321,7 +331,7 @@ export interface IMergeCirclesQuery {
   result: IMergeCirclesResult;
 }
 
-const mergeCirclesIR: any = {"usedParamSet":{"targetCircleExternalId":true,"userExternalId":true,"sourceCircleExternalId":true},"params":[{"name":"targetCircleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":252,"b":274},{"a":800,"b":822}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":308,"b":322},{"a":497,"b":511}]},{"name":"sourceCircleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":451,"b":473}]}],"statement":"-- Moves all friends from source circle to target circle (deletion done separately)\nUPDATE friends.friend_circles fc\nSET circle_id = (\n    SELECT tc.id FROM friends.circles tc\n    INNER JOIN auth.users u ON tc.user_id = u.id\n    WHERE tc.external_id = :targetCircleExternalId::uuid\n      AND u.external_id = :userExternalId::uuid\n)\nFROM friends.circles sc\nINNER JOIN auth.users u ON sc.user_id = u.id\nWHERE fc.circle_id = sc.id\n  AND sc.external_id = :sourceCircleExternalId::uuid\n  AND u.external_id = :userExternalId::uuid\n  -- Avoid duplicates: only move if not already in target circle\n  AND NOT EXISTS (\n    SELECT 1 FROM friends.friend_circles existing\n    INNER JOIN friends.circles tc ON existing.circle_id = tc.id\n    WHERE existing.friend_id = fc.friend_id\n      AND tc.external_id = :targetCircleExternalId::uuid\n  )"};
+const mergeCirclesIR: any = {"usedParamSet":{"targetCircleExternalId":true,"userExternalId":true,"sourceCircleExternalId":true},"params":[{"name":"targetCircleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":252,"b":274},{"a":794,"b":816}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":308,"b":322},{"a":503,"b":517}]},{"name":"sourceCircleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":451,"b":473}]}],"statement":"-- Moves all friends from source circle to target circle (deletion done separately)\nUPDATE friends.friend_circles fc\nSET circle_id = (\n    SELECT tc.id FROM friends.circles tc\n    INNER JOIN auth.users u ON tc.user_id = u.id\n    WHERE tc.external_id = :targetCircleExternalId::uuid\n      AND u.external_id = :userExternalId::uuid\n)\nFROM friends.circles sc\nINNER JOIN auth.users u ON sc.user_id = u.id\nWHERE fc.circle_id = sc.id\n  AND sc.external_id = :sourceCircleExternalId::uuid\n  AND u.external_id = :userExternalId::uuid\n  -- Avoid duplicates: only move if not already in target circle\n  AND NOT EXISTS (\n    SELECT 1 FROM friends.friend_circles existing\n    INNER JOIN friends.circles tc ON existing.circle_id = tc.id\n    WHERE existing.friend_id = fc.friend_id\n      AND tc.external_id = :targetCircleExternalId::uuid\n  )"};
 
 /**
  * Query generated from SQL:
@@ -331,20 +341,20 @@ const mergeCirclesIR: any = {"usedParamSet":{"targetCircleExternalId":true,"user
  * SET circle_id = (
  *     SELECT tc.id FROM friends.circles tc
  *     INNER JOIN auth.users u ON tc.user_id = u.id
- *     WHERE tc.external_id = :targetCircleExternalId
- *       AND u.external_id = :userExternalId
+ *     WHERE tc.external_id = :targetCircleExternalId::uuid
+ *       AND u.external_id = :userExternalId::uuid
  * )
  * FROM friends.circles sc
  * INNER JOIN auth.users u ON sc.user_id = u.id
  * WHERE fc.circle_id = sc.id
- *   AND sc.external_id = :sourceCircleExternalId
- *   AND u.external_id = :userExternalId
+ *   AND sc.external_id = :sourceCircleExternalId::uuid
+ *   AND u.external_id = :userExternalId::uuid
  *   -- Avoid duplicates: only move if not already in target circle
  *   AND NOT EXISTS (
  *     SELECT 1 FROM friends.friend_circles existing
  *     INNER JOIN friends.circles tc ON existing.circle_id = tc.id
  *     WHERE existing.friend_id = fc.friend_id
- *       AND tc.external_id = :targetCircleExternalId
+ *       AND tc.external_id = :targetCircleExternalId::uuid
  *   )
  * ```
  */
@@ -378,8 +388,8 @@ const getCircleInternalIdIR: any = {"usedParamSet":{"circleExternalId":true,"use
  * SELECT c.id
  * FROM friends.circles c
  * INNER JOIN auth.users u ON c.user_id = u.id
- * WHERE c.external_id = :circleExternalId
- *   AND u.external_id = :userExternalId
+ * WHERE c.external_id = :circleExternalId::uuid
+ *   AND u.external_id = :userExternalId::uuid
  * ```
  */
 export const getCircleInternalId = new PreparedQuery<IGetCircleInternalIdParams,IGetCircleInternalIdResult>(getCircleInternalIdIR);
