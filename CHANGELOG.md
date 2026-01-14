@@ -1,3 +1,14 @@
+## [2.40.0](https://github.com/datenknoten/freundebuch/compare/v2.39.0...v2.40.0) (2026-01-14)
+
+### Features
+
+* **frontend:** Display circles with full path (e.g., "foo → bar") ([a7dd6d0](https://github.com/datenknoten/freundebuch/commit/a7dd6d06b8492b0612e42bfb3dce308ece7b62b0))
+* **frontend:** Show parent circle dropdown as tree with indentation ([083acbc](https://github.com/datenknoten/freundebuch/commit/083acbc153b2c9f3b5d75be65085b3ba853b31cd))
+
+### Bug Fixes
+
+* **frontend:** Auto-focus name input when creating/editing circle ([30c3a04](https://github.com/datenknoten/freundebuch/commit/30c3a0449add947e40e0fa6d964c4f85e2d2ffe8))
+
 ## [2.39.0](https://github.com/datenknoten/freundebuch/compare/v2.38.1...v2.39.0) (2026-01-14)
 
 ### Features
