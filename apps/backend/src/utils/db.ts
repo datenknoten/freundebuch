@@ -18,7 +18,7 @@ function enhanceErrorWithStack(error: unknown, callSiteStack: string): Error {
   const callSiteFrames = callSiteStack
     .split('\n')
     .slice(1) // Remove the "Error" line
-    .filter((line) => !line.includes('db.ts')) // Remove our wrapper frames
+    .filter((line) => !line.includes('/db.js') && !line.includes('/db.ts')) // Remove our wrapper frames
     .join('\n');
 
   err.stack = `${originalStack}\n    --- Query initiated from ---\n${callSiteFrames}`;
