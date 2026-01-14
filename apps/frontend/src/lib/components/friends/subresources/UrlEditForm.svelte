@@ -14,6 +14,12 @@ let url = $state((() => initialData?.url ?? '')());
 let urlType = $state<UrlType>((() => initialData?.urlType ?? 'personal')());
 let label = $state((() => initialData?.label ?? '')());
 
+// Auto-focus the first input
+let firstInputRef = $state<HTMLInputElement | null>(null);
+$effect(() => {
+  firstInputRef?.focus();
+});
+
 // Skip initial effect run
 let initialized = false;
 
@@ -55,6 +61,7 @@ export function isValid(): boolean {
       URL <span class="text-red-500">*</span>
     </label>
     <input
+      bind:this={firstInputRef}
       id="url-value"
       type="url"
       bind:value={url}
