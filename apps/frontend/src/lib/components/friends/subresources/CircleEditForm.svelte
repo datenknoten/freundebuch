@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import CircleChip from '$lib/components/circles/CircleChip.svelte';
 import { circles, circlesList } from '$lib/stores/circles';
 import type { Circle, CircleSummary } from '$shared';
 
@@ -63,19 +64,6 @@ $effect(() => {
   }
 });
 
-// Get contrasting text color for background
-function getTextColor(hexColor: string | null): string {
-  if (!hexColor) return '#374151'; // gray-700
-
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? '#111827' : '#ffffff';
-}
-
 export function getData(): { circleId: string } {
   return {
     circleId: selectedCircleId,
@@ -136,13 +124,7 @@ export function getSelectedCircle(): Circle | undefined {
       {#if selectedCircle}
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-500 font-body">Preview:</span>
-          <span
-            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-            style:background-color={selectedCircle.color ?? '#e5e7eb'}
-            style:color={getTextColor(selectedCircle.color)}
-          >
-            {selectedCircle.name}
-          </span>
+          <CircleChip circle={selectedCircle} size="md" />
         </div>
       {/if}
     {/if}
