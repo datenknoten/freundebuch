@@ -1,6 +1,6 @@
 <script lang="ts">
 import * as friendsApi from '$lib/api/friends';
-import { auth, friendsPageSize, friendsTableColumns } from '$lib/stores/auth';
+import { auth, birthdayFormat, friendsPageSize, friendsTableColumns } from '$lib/stores/auth';
 import { friendList, friends, isFriendsLoading } from '$lib/stores/friends';
 import { visibleFriendIds } from '$lib/stores/ui';
 import {
@@ -612,6 +612,7 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
           columns={currentColumns}
           {sortBy}
           {sortOrder}
+          birthdayFormat={$birthdayFormat}
           onSortChange={handleTableSortChange}
         />
       </div>

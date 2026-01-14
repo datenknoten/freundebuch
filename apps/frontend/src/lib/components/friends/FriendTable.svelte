@@ -1,7 +1,12 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
-import { COLUMN_DEFINITIONS, type ColumnId, type FriendListItem } from '$shared';
+import {
+  type BirthdayFormat,
+  COLUMN_DEFINITIONS,
+  type ColumnId,
+  type FriendListItem,
+} from '$shared';
 import CircleChips from '../circles/CircleChips.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
 
@@ -10,13 +15,14 @@ interface Props {
   columns: ColumnId[];
   sortBy: 'display_name' | 'created_at' | 'updated_at';
   sortOrder: 'asc' | 'desc';
+  birthdayFormat: BirthdayFormat;
   onSortChange: (
     sortBy: 'display_name' | 'created_at' | 'updated_at',
     sortOrder: 'asc' | 'desc',
   ) => void;
 }
 
-let { friends, columns, sortBy, sortOrder, onSortChange }: Props = $props();
+let { friends, columns, sortBy, sortOrder, birthdayFormat, onSortChange }: Props = $props();
 
 function handleRowClick(friendId: string) {
   goto(`/friends/${friendId}`);
@@ -90,25 +96,40 @@ function formatDate(dateString: string): string {
   });
 }
 
-function formatBirthday(dateString: string | undefined): string {
+function formatBirthday(dateString: string | undefined, format: BirthdayFormat): string {
   if (!dateString) return '';
   // Birthday is stored as YYYY-MM-DD
-  const [, month, day] = dateString.split('-');
-  const monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return `${monthNames[parseInt(month, 10) - 1]} ${parseInt(day, 10)}`;
+  const [year, month, day] = dateString.split('-');
+  const monthNum = parseInt(month, 10);
+  const dayNum = parseInt(day, 10);
+
+  switch (format) {
+    case 'iso':
+      return dateString; // YYYY-MM-DD
+    case 'us':
+      return `${month}/${day}`; // MM/DD
+    case 'eu':
+      return `${day}.${month}.`; // DD.MM.
+    case 'long': {
+      const monthNames = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      return `${monthNames[monthNum - 1]} ${dayNum}`; // May 15
+    }
+    default:
+      return dateString;
+  }
 }
 
 function getCellValue(friend: FriendListItem, columnId: ColumnId): string | undefined {
@@ -233,7 +254,7 @@ function getCellValue(friend: FriendListItem, columnId: ColumnId): string | unde
                   </a>
                 {/if}
               {:else if columnId === 'birthday'}
-                <span class="font-body text-gray-600">{formatBirthday(friend.birthday)}</span>
+                <span class="font-body text-gray-600">{formatBirthday(friend.birthday, birthdayFormat)}</span>
               {:else if columnId === 'isFavorite'}
                 {#if friend.isFavorite}
                   <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20" aria-label="Favorite">

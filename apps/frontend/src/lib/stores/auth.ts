@@ -316,6 +316,11 @@ export const friendsTableColumns = derived(
 );
 
 /**
+ * Derived store for birthday format (default: 'iso')
+ */
+export const birthdayFormat = derived(auth, ($auth) => $auth.preferences.birthdayFormat ?? 'iso');
+
+/**
  * Helper to wait for auth initialization
  * Returns a promise that resolves when auth is initialized
  */

@@ -34,15 +34,20 @@ export type LoginRequest = typeof LoginRequestSchema.infer;
 export const PageSizeSchema = type('10 | 25 | 50 | 100');
 export type PageSize = typeof PageSizeSchema.infer;
 
+export const BirthdayFormatSchema = type("'iso' | 'us' | 'eu' | 'long'");
+export type BirthdayFormat = typeof BirthdayFormatSchema.infer;
+
 export const UserPreferencesSchema = type({
   'friendsPageSize?': PageSizeSchema,
   'friendsTableColumns?': 'string[]',
+  'birthdayFormat?': BirthdayFormatSchema,
 });
 export type UserPreferences = typeof UserPreferencesSchema.infer;
 
 export const UpdatePreferencesRequestSchema = type({
   'friendsPageSize?': PageSizeSchema,
   'friendsTableColumns?': 'string[]',
+  'birthdayFormat?': BirthdayFormatSchema,
 });
 export type UpdatePreferencesRequest = typeof UpdatePreferencesRequestSchema.infer;
 

@@ -2,7 +2,8 @@
 import * as authApi from '$lib/api/auth';
 import AppPasswordManager from '$lib/components/AppPasswordManager.svelte';
 import CardDAVSetupGuide from '$lib/components/CardDAVSetupGuide.svelte';
-import { currentUser } from '$lib/stores/auth';
+import { auth, birthdayFormat, currentUser } from '$lib/stores/auth';
+import type { BirthdayFormat } from '$shared';
 
 const pageTitle = $derived(
   $currentUser?.email ? `${$currentUser.email} | Freundebuch` : 'Profile | Freundebuch',
@@ -40,6 +41,10 @@ function handleCancel() {
   email = $currentUser?.email || '';
   isEditing = false;
   error = '';
+}
+
+function handleBirthdayFormatChange(format: BirthdayFormat) {
+  auth.updatePreferences({ birthdayFormat: format });
 }
 </script>
 
@@ -143,6 +148,35 @@ function handleCancel() {
 					</div>
 				{/if}
 			</form>
+
+			<div class="mt-8 pt-8 border-t border-gray-200">
+				<h2 class="text-xl font-heading text-gray-800 mb-2">Display Preferences</h2>
+				<p class="text-sm font-body text-gray-600 mb-4">
+					Customize how information is displayed throughout the app.
+				</p>
+
+				<div class="space-y-4">
+					<div>
+						<label for="birthday-format" class="block text-sm font-body font-semibold text-gray-700 mb-2">
+							Birthday Format
+						</label>
+						<select
+							id="birthday-format"
+							value={$birthdayFormat}
+							onchange={(e) => handleBirthdayFormatChange(e.currentTarget.value as BirthdayFormat)}
+							class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
+						>
+							<option value="iso">ISO (1990-05-15)</option>
+							<option value="us">US (05/15)</option>
+							<option value="eu">EU (15.05.)</option>
+							<option value="long">Long (May 15)</option>
+						</select>
+						<p class="mt-1 text-xs font-body text-gray-500">
+							How birthday dates are displayed in the friends table
+						</p>
+					</div>
+				</div>
+			</div>
 
 			<div class="mt-8 pt-8 border-t border-gray-200">
 				<h2 class="text-xl font-heading text-gray-800 mb-2">App Passwords</h2>
