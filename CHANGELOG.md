@@ -1,3 +1,9 @@
+## [2.41.2](https://github.com/datenknoten/freundebuch/compare/v2.41.1...v2.41.2) (2026-01-14)
+
+### Code Refactoring
+
+* **frontend:** Extract shared autoFocus action and AlertBanner component ([a08296f](https://github.com/datenknoten/freundebuch/commit/a08296f748b3ba788a391c121d383057d6943ba9))
+
 ## [2.41.1](https://github.com/datenknoten/freundebuch/compare/v2.41.0...v2.41.1) (2026-01-14)
 
 ### Code Refactoring
