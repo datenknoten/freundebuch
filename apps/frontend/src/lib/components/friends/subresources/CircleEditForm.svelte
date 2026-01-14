@@ -31,6 +31,25 @@ onMount(() => {
 let existingCircleIds = $derived(new Set(existingCircles.map((c) => c.id)));
 let availableCircles = $derived($circlesList.filter((c) => !existingCircleIds.has(c.id)));
 
+// Build tree structure for dropdown with indentation
+let availableCirclesTree = $derived.by(() => {
+  function buildTree(
+    parentId: string | null,
+    depth: number,
+  ): Array<{ circle: Circle; depth: number }> {
+    const result: Array<{ circle: Circle; depth: number }> = [];
+    const children = availableCircles.filter((c) => c.parentCircleId === parentId);
+
+    for (const child of children) {
+      result.push({ circle: child, depth });
+      result.push(...buildTree(child.id, depth + 1));
+    }
+    return result;
+  }
+
+  return buildTree(null, 0);
+});
+
 // Skip initial effect run
 let initialized = false;
 
@@ -105,8 +124,8 @@ export function getSelectedCircle(): Circle | undefined {
         required
       >
         <option value="">Choose a circle...</option>
-        {#each availableCircles as circle (circle.id)}
-          <option value={circle.id}>{circle.name}</option>
+        {#each availableCirclesTree as { circle, depth } (circle.id)}
+          <option value={circle.id}>{'\u00A0\u00A0\u00A0'.repeat(depth)}{circle.name}</option>
         {/each}
       </select>
     </div>
