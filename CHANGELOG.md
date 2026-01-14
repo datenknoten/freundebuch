@@ -1,3 +1,9 @@
+## [2.41.1](https://github.com/datenknoten/freundebuch/compare/v2.41.0...v2.41.1) (2026-01-14)
+
+### Code Refactoring
+
+* **frontend:** Use CircleChip component consistently across all views ([0d858b3](https://github.com/datenknoten/freundebuch/commit/0d858b3696c00adaee7e1f47054e5074b836587b))
+
 ## [2.41.0](https://github.com/datenknoten/freundebuch/compare/v2.40.0...v2.41.0) (2026-01-14)
 
 ### Features
