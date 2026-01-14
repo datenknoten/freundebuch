@@ -1,4 +1,5 @@
 <script lang="ts">
+import { autoFocus } from '$lib/actions/autoFocus';
 import type { Address, AddressInput, AddressType } from '$shared';
 import HierarchicalAddressInput from '../HierarchicalAddressInput.svelte';
 
@@ -14,11 +15,6 @@ let { initialData, disabled = false, onchange }: Props = $props();
 let addressType = $state<AddressType>((() => initialData?.addressType ?? 'home')());
 let label = $state((() => initialData?.label ?? '')());
 let isPrimary = $state((() => initialData?.isPrimary ?? false)());
-
-// Auto-focus action - runs only once on mount
-function autoFocus(node: HTMLElement) {
-  node.focus();
-}
 
 // Address data from HierarchicalAddressInput
 let addressData = $state<{

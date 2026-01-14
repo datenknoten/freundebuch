@@ -1,4 +1,5 @@
 <script lang="ts">
+import { autoFocus } from '$lib/actions/autoFocus';
 import type { Url, UrlInput, UrlType } from '$shared';
 
 interface Props {
@@ -13,11 +14,6 @@ let { initialData, disabled = false, onchange }: Props = $props();
 let url = $state((() => initialData?.url ?? '')());
 let urlType = $state<UrlType>((() => initialData?.urlType ?? 'personal')());
 let label = $state((() => initialData?.label ?? '')());
-
-// Auto-focus action - runs only once on mount
-function autoFocus(node: HTMLElement) {
-  node.focus();
-}
 
 // Skip initial effect run
 let initialized = false;

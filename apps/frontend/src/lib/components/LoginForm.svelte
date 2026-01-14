@@ -1,5 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
 import { auth } from '$lib/stores/auth';
 
 let email = $state('');
@@ -30,12 +31,7 @@ async function handleSubmit(e) {
 	</div>
 
 	{#if error}
-		<div
-			class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm"
-			role="alert"
-		>
-			{error}
-		</div>
+		<AlertBanner variant="error">{error}</AlertBanner>
 	{/if}
 
 	<div>

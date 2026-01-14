@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { autoFocus } from '$lib/actions/autoFocus';
 import CircleChip from '$lib/components/circles/CircleChip.svelte';
 import { circles, circlesList } from '$lib/stores/circles';
 import type { Circle, CircleSummary } from '$shared';
@@ -15,11 +16,6 @@ let { existingCircles = [], disabled = false, onchange }: Props = $props();
 
 // Form state
 let selectedCircleId = $state('');
-
-// Auto-focus action - runs only once on mount
-function autoFocus(node: HTMLElement) {
-  node.focus();
-}
 
 // Load circles on mount if not already loaded
 onMount(() => {
