@@ -7,16 +7,138 @@ const { Pool } = pg;
 
 let pool: pg.Pool | undefined;
 
+/**
+ * Enhances a database error with the original call site stack trace.
+ * This fixes the issue where async pg errors lose the application stack trace.
+ */
+function enhanceErrorWithStack(error: unknown, callSiteStack: string): Error {
+  const err = toError(error);
+  // Append the call site stack to show where the query originated
+  const originalStack = err.stack ?? '';
+  const callSiteFrames = callSiteStack
+    .split('\n')
+    .slice(1) // Remove the "Error" line
+    .filter((line) => !line.includes('db.ts')) // Remove our wrapper frames
+    .join('\n');
+
+  err.stack = `${originalStack}\n    --- Query initiated from ---\n${callSiteFrames}`;
+  return err;
+}
+
+/**
+ * Wraps a pg.PoolClient to capture stack traces for query errors
+ */
+function wrapClient(client: pg.PoolClient): pg.PoolClient {
+  const originalQuery = client.query.bind(client) as pg.PoolClient['query'];
+
+  // Override query to capture stack trace
+  const wrappedQuery = function (
+    this: pg.PoolClient,
+    // biome-ignore lint/suspicious/noExplicitAny: pg.PoolClient.query has complex overloads
+    ...args: [queryTextOrConfig: any, ...rest: any[]]
+    // biome-ignore lint/suspicious/noExplicitAny: pg.PoolClient.query has complex return types
+  ): any {
+    const callSiteError = new Error();
+    Error.captureStackTrace?.(callSiteError, wrappedQuery);
+
+    // biome-ignore lint/suspicious/noExplicitAny: matching pg's query signature
+    const result = (originalQuery as (...args: any[]) => any)(...args);
+
+    // Handle both Promise and callback patterns
+    if (result instanceof Promise) {
+      return result.catch((error: unknown) => {
+        throw enhanceErrorWithStack(error, callSiteError.stack ?? '');
+      });
+    }
+    return result;
+  };
+
+  // biome-ignore lint/suspicious/noExplicitAny: matching pg's query signature
+  client.query = wrappedQuery as any;
+
+  return client;
+}
+
+/**
+ * Wraps a pg.Pool to capture stack traces for query errors.
+ * This ensures that when database errors occur, the full application
+ * stack trace is preserved, showing which route/service initiated the query.
+ */
+function wrapPool(originalPool: pg.Pool): pg.Pool {
+  const originalQuery = originalPool.query.bind(originalPool) as pg.Pool['query'];
+  const originalConnect = originalPool.connect.bind(originalPool) as pg.Pool['connect'];
+
+  // Override query to capture stack trace at call site
+  const wrappedPoolQuery = function (
+    this: pg.Pool,
+    // biome-ignore lint/suspicious/noExplicitAny: pg.Pool.query has complex overloads
+    ...args: [queryTextOrConfig: any, ...rest: any[]]
+    // biome-ignore lint/suspicious/noExplicitAny: pg.Pool.query has complex return types
+  ): any {
+    const callSiteError = new Error();
+    Error.captureStackTrace?.(callSiteError, wrappedPoolQuery);
+
+    // biome-ignore lint/suspicious/noExplicitAny: matching pg's query signature
+    const result = (originalQuery as (...args: any[]) => any)(...args);
+
+    if (result instanceof Promise) {
+      return result.catch((error: unknown) => {
+        throw enhanceErrorWithStack(error, callSiteError.stack ?? '');
+      });
+    }
+    return result;
+  };
+
+  // biome-ignore lint/suspicious/noExplicitAny: matching pg's query signature
+  originalPool.query = wrappedPoolQuery as any;
+
+  // Override connect to wrap the returned client
+  const wrappedConnect = function (
+    this: pg.Pool,
+    // biome-ignore lint/suspicious/noExplicitAny: pg.Pool.connect has complex overloads
+    callback?: any,
+    // biome-ignore lint/suspicious/noExplicitAny: pg.Pool.connect has complex return types
+  ): any {
+    // Handle callback style
+    if (typeof callback === 'function') {
+      return originalConnect(
+        (
+          err: Error | undefined,
+          client: pg.PoolClient | undefined,
+          release: (release?: boolean) => void,
+        ) => {
+          if (err || !client) {
+            callback(err, client, release);
+          } else {
+            callback(undefined, wrapClient(client), release);
+          }
+        },
+      );
+    }
+
+    // Handle promise style
+    return (originalConnect as () => Promise<pg.PoolClient>)().then((client: pg.PoolClient) =>
+      wrapClient(client),
+    );
+  };
+
+  // biome-ignore lint/suspicious/noExplicitAny: matching pg's connect signature
+  originalPool.connect = wrappedConnect as any;
+
+  return originalPool;
+}
+
 export function createPool(): pg.Pool {
   if (pool instanceof pg.Pool) {
     return pool;
   }
   const config = getConfig();
-  pool = new Pool({
+  const rawPool = new Pool({
     connectionString: config.DATABASE_URL,
     min: config.DATABASE_POOL_MIN,
     max: config.DATABASE_POOL_MAX,
   });
+  pool = wrapPool(rawPool);
   return pool;
 }
 
