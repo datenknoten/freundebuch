@@ -1,3 +1,9 @@
+## [2.37.5](https://github.com/datenknoten/freundebuch/compare/v2.37.4...v2.37.5) (2026-01-14)
+
+### Bug Fixes
+
+* **backend:** Add explicit ::uuid casts to prevent uuid/text type mismatch in circles queries ([3d52af3](https://github.com/datenknoten/freundebuch/commit/3d52af312a41e9aa1ec236bb4009a536c2b8dcff))
+
 ## [2.37.4](https://github.com/datenknoten/freundebuch/compare/v2.37.3...v2.37.4) (2026-01-14)
 
 ### Bug Fixes
