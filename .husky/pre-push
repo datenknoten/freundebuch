@@ -6,19 +6,28 @@
 echo "🔍 Running pre-push checks (same as CI)..."
 
 echo ""
-echo "📋 Step 1/4: Biome check (lint + format)..."
+echo "📋 Step 1/5: Biome check (lint + format)..."
 pnpm run check || exit 1
 
 echo ""
-echo "📋 Step 2/4: TypeScript type check..."
+echo "📋 Step 2/5: TypeScript type check..."
 pnpm run type-check || exit 1
 
 echo ""
-echo "📋 Step 3/4: Running tests..."
-pnpm run test || exit 1
+echo "📋 Step 3/5: Running TypeScript tests..."
+pnpm --recursive run test || exit 1
 
 echo ""
-echo "📋 Step 4/4: Build verification..."
+echo "📋 Step 4/5: Running PHP tests..."
+# Ensure PHP dependencies are installed
+if [ ! -d "apps/sabredav/vendor" ]; then
+    echo "⚠️  PHP dependencies not installed. Installing..."
+    (cd apps/sabredav && composer install --no-interaction --prefer-dist --quiet) || exit 1
+fi
+pnpm run test:php || exit 1
+
+echo ""
+echo "📋 Step 5/5: Build verification..."
 pnpm run build || exit 1
 
 echo ""

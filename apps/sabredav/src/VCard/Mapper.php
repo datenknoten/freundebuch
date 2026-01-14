@@ -500,6 +500,13 @@ class Mapper
             return $this->imageCache[$url];
         }
 
+        // Check if curl extension is available
+        if (!self::isCurlAvailable()) {
+            error_log('[PHOTO_FETCH] curl extension is not available, skipping image fetch');
+            $this->imageCache[$url] = null;
+            return null;
+        }
+
         // Validate URL
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
             $this->imageCache[$url] = null;
@@ -615,6 +622,16 @@ class Mapper
         }
 
         return null;
+    }
+
+    /**
+     * Checks if the curl extension is available.
+     *
+     * @return bool True if curl functions are available
+     */
+    public static function isCurlAvailable(): bool
+    {
+        return \function_exists('curl_init');
     }
 
     // vCard formatting helpers

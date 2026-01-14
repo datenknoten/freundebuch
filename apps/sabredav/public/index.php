@@ -35,12 +35,22 @@ $logger = new Logger($config['log_level']);
 $requestStart = microtime(true);
 
 // Initialize Sentry if DSN is configured
-if (!empty($config['sentry_dsn'])) {
+$sentryEnabled = !empty($config['sentry_dsn']);
+if ($sentryEnabled) {
     \Sentry\init([
         'dsn' => $config['sentry_dsn'],
         'environment' => $config['environment'],
         'traces_sample_rate' => $config['environment'] === 'production' ? 0.1 : 1.0,
     ]);
+
+    // Register a shutdown function to capture fatal errors that might be
+    // caught by SabreDAV's internal error handler
+    register_shutdown_function(function () {
+        $error = error_get_last();
+        if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+            \Sentry\captureLastError();
+        }
+    });
 }
 
 // Create PDO connection
@@ -104,6 +114,24 @@ $server->addPlugin($syncPlugin);
 if ($config['log_level'] === 'debug') {
     $browserPlugin = new DAV\Browser\Plugin();
     $server->addPlugin($browserPlugin);
+}
+
+// Register exception handler to capture errors to Sentry
+// SabreDAV catches all Throwables internally and converts them to XML responses,
+// so we need to intercept them before they're handled
+if ($sentryEnabled) {
+    $server->on('exception', function (\Throwable $e) use ($logger) {
+        // Log the exception
+        $logger->error('CardDAV exception', [
+            'exception' => get_class($e),
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+
+        // Capture to Sentry
+        \Sentry\captureException($e);
+    });
 }
 
 // Log incoming request
