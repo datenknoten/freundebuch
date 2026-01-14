@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
 import CircleChip from '$lib/components/circles/CircleChip.svelte';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { circles, circlesList } from '$lib/stores/circles';
@@ -199,8 +200,8 @@ let hierarchicalCircles = $derived(renderCircleTree(null, 0));
           </h2>
 
           {#if formError}
-            <div class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm" role="alert">
-              {formError}
+            <div class="mb-4">
+              <AlertBanner variant="error">{formError}</AlertBanner>
             </div>
           {/if}
 
@@ -310,8 +311,8 @@ let hierarchicalCircles = $derived(renderCircleTree(null, 0));
               {/if}
             </p>
             {#if formError}
-              <div class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm" role="alert">
-                {formError}
+              <div class="mb-4">
+                <AlertBanner variant="error">{formError}</AlertBanner>
               </div>
             {/if}
             <div class="flex gap-3">
@@ -340,9 +341,7 @@ let hierarchicalCircles = $derived(renderCircleTree(null, 0));
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
         </div>
       {:else if $circles.error}
-        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm" role="alert">
-          {$circles.error}
-        </div>
+        <AlertBanner variant="error">{$circles.error}</AlertBanner>
       {:else if $circlesList.length === 0}
         <div class="text-center py-12">
           <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

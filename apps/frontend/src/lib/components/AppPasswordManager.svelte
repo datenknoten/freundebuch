@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import type { AppPassword, CreateAppPasswordResult } from '$lib/api/app-passwords';
 import * as appPasswordsApi from '$lib/api/app-passwords';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
 
 let passwords = $state<AppPassword[]>([]);
 let isLoading = $state(true);
@@ -75,12 +76,7 @@ function formatDate(dateString: string | null): string {
 
 <div class="space-y-6">
   {#if error}
-    <div
-      class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm"
-      role="alert"
-    >
-      {error}
-    </div>
+    <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
   {#if createdPassword}

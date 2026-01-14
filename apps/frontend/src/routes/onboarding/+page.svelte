@@ -1,6 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import * as authApi from '$lib/api/auth';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
 import FriendForm from '$lib/components/friends/FriendForm.svelte';
 import { auth, refreshUserData } from '$lib/stores/auth';
 import type { FriendCreateInput } from '$shared';
@@ -44,11 +45,8 @@ async function handleSubmit(data: FriendCreateInput) {
       </p>
 
       {#if error}
-        <div
-          class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6 font-body text-sm"
-          role="alert"
-        >
-          {error}
+        <div class="mb-6">
+          <AlertBanner variant="error">{error}</AlertBanner>
         </div>
       {/if}
 

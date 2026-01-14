@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
 import { friends } from '$lib/stores/friends';
 import type { Friend, FriendCreateInput } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
@@ -272,12 +273,7 @@ async function handleSubmit(e: Event) {
 
 <form onsubmit={handleSubmit} class="space-y-6">
   {#if error}
-    <div
-      class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm"
-      role="alert"
-    >
-      {error}
-    </div>
+    <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
   <!-- Avatar with photo upload -->

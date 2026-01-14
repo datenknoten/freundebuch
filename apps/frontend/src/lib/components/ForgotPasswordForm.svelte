@@ -1,5 +1,6 @@
 <script lang="ts">
 import * as authApi from '$lib/api/auth';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
 
 let email = $state('');
 let isLoading = $state(false);
@@ -33,19 +34,11 @@ async function handleSubmit(e) {
 	</div>
 
 	{#if error}
-		<div
-			class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm"
-			role="alert"
-		>
-			{error}
-		</div>
+		<AlertBanner variant="error">{error}</AlertBanner>
 	{/if}
 
 	{#if success}
-		<div
-			class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg font-body text-sm"
-			role="alert"
-		>
+		<AlertBanner variant="success">
 			<p class="font-semibold mb-2">Password reset link sent!</p>
 			<p>If the email exists, a password reset link has been sent. Please check your inbox.</p>
 
@@ -70,7 +63,7 @@ async function handleSubmit(e) {
 					</a>
 				</div>
 			{/if}
-		</div>
+		</AlertBanner>
 	{/if}
 
 	{#if !success}

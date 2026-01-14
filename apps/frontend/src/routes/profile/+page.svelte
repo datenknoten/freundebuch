@@ -1,5 +1,6 @@
 <script lang="ts">
 import * as authApi from '$lib/api/auth';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
 import AppPasswordManager from '$lib/components/AppPasswordManager.svelte';
 import CardDAVSetupGuide from '$lib/components/CardDAVSetupGuide.svelte';
 import { auth, birthdayFormat, currentUser } from '$lib/stores/auth';
@@ -71,20 +72,14 @@ function handleBirthdayFormatChange(format: BirthdayFormat) {
 			</div>
 
 			{#if error}
-				<div
-					class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm"
-					role="alert"
-				>
-					{error}
+				<div class="mb-6">
+					<AlertBanner variant="error">{error}</AlertBanner>
 				</div>
 			{/if}
 
 			{#if success}
-				<div
-					class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg font-body text-sm"
-					role="alert"
-				>
-					Profile updated successfully!
+				<div class="mb-6">
+					<AlertBanner variant="success">Profile updated successfully!</AlertBanner>
 				</div>
 			{/if}
 

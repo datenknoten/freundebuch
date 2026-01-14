@@ -1,4 +1,5 @@
 <script lang="ts">
+import { autoFocus } from '$lib/actions/autoFocus';
 import type { Email, EmailInput, EmailType } from '$shared';
 
 interface Props {
@@ -14,11 +15,6 @@ let emailAddress = $state((() => initialData?.emailAddress ?? '')());
 let emailType = $state<EmailType>((() => initialData?.emailType ?? 'personal')());
 let label = $state((() => initialData?.label ?? '')());
 let isPrimary = $state((() => initialData?.isPrimary ?? false)());
-
-// Auto-focus action - runs only once on mount
-function autoFocus(node: HTMLElement) {
-  node.focus();
-}
 
 // Skip initial effect run
 let initialized = false;

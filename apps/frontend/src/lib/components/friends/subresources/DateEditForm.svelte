@@ -1,4 +1,5 @@
 <script lang="ts">
+import { autoFocus } from '$lib/actions/autoFocus';
 import type { DateInput, DateType, FriendDate } from '$shared';
 
 interface Props {
@@ -14,11 +15,6 @@ let dateValue = $state((() => initialData?.dateValue ?? '')());
 let yearKnown = $state((() => initialData?.yearKnown ?? true)());
 let dateType = $state<DateType>((() => initialData?.dateType ?? 'birthday')());
 let label = $state((() => initialData?.label ?? '')());
-
-// Auto-focus action - runs only once on mount
-function autoFocus(node: HTMLElement) {
-  node.focus();
-}
 
 // Skip initial effect run
 let initialized = false;

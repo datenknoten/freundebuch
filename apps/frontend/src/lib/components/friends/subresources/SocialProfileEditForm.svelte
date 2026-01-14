@@ -1,4 +1,5 @@
 <script lang="ts">
+import { autoFocus } from '$lib/actions/autoFocus';
 import type { SocialPlatform, SocialProfile, SocialProfileInput } from '$shared';
 
 interface Props {
@@ -13,11 +14,6 @@ let { initialData, disabled = false, onchange }: Props = $props();
 let platform = $state<SocialPlatform>((() => initialData?.platform ?? 'linkedin')());
 let profileUrl = $state((() => initialData?.profileUrl ?? '')());
 let username = $state((() => initialData?.username ?? '')());
-
-// Auto-focus action - runs only once on mount
-function autoFocus(node: HTMLElement) {
-  node.focus();
-}
 
 // Skip initial effect run
 let initialized = false;

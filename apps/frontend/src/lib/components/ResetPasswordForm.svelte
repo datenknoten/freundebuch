@@ -1,6 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import * as authApi from '$lib/api/auth';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
 
 let { token } = $props();
 
@@ -50,22 +51,14 @@ async function handleSubmit(e) {
 	</div>
 
 	{#if error}
-		<div
-			class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm"
-			role="alert"
-		>
-			{error}
-		</div>
+		<AlertBanner variant="error">{error}</AlertBanner>
 	{/if}
 
 	{#if success}
-		<div
-			class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg font-body text-sm"
-			role="alert"
-		>
+		<AlertBanner variant="success">
 			<p class="font-semibold mb-2">Password reset successful!</p>
 			<p>Your password has been reset. Redirecting to login...</p>
-		</div>
+		</AlertBanner>
 	{:else}
 		<div>
 			<label for="password" class="block text-sm font-body font-semibold text-gray-700 mb-2">
