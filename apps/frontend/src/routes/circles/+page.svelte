@@ -105,10 +105,11 @@ async function handleDelete() {
 }
 
 // Get valid parent options (exclude the current circle and its children to prevent circular references)
-function getParentOptions(currentCircleId: string | null): Circle[] {
-  if (!currentCircleId) return $circlesList;
-
-  // Get all descendant IDs of the current circle
+// Returns circles in tree order with depth information
+function getParentOptionsTree(
+  currentCircleId: string | null,
+): Array<{ circle: Circle; depth: number }> {
+  // Get all descendant IDs of the current circle (to exclude them)
   function getDescendantIds(parentId: string): Set<string> {
     const ids = new Set<string>();
     for (const c of $circlesList) {
@@ -123,18 +124,27 @@ function getParentOptions(currentCircleId: string | null): Circle[] {
     return ids;
   }
 
-  const excludeIds = getDescendantIds(currentCircleId);
-  excludeIds.add(currentCircleId);
+  const excludeIds = currentCircleId ? getDescendantIds(currentCircleId) : new Set<string>();
+  if (currentCircleId) excludeIds.add(currentCircleId);
 
-  return $circlesList.filter((c) => !excludeIds.has(c.id));
-}
+  // Build tree structure
+  function buildTree(
+    parentId: string | null,
+    depth: number,
+  ): Array<{ circle: Circle; depth: number }> {
+    const result: Array<{ circle: Circle; depth: number }> = [];
+    const children = $circlesList.filter(
+      (c) => c.parentCircleId === parentId && !excludeIds.has(c.id),
+    );
 
-// Get display name with hierarchy indication
-function getCircleDisplayName(circle: Circle): string {
-  if (!circle.parentCircleId) return circle.name;
-  const parent = $circlesList.find((c) => c.id === circle.parentCircleId);
-  if (!parent) return circle.name;
-  return `${parent.name} → ${circle.name}`;
+    for (const child of children) {
+      result.push({ circle: child, depth });
+      result.push(...buildTree(child.id, depth + 1));
+    }
+    return result;
+  }
+
+  return buildTree(null, 0);
 }
 
 // Get child circles for a given circle
@@ -246,8 +256,8 @@ let hierarchicalCircles = $derived(renderCircleTree(null, 0));
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:bg-gray-100"
               >
                 <option value={null}>None (top-level circle)</option>
-                {#each getParentOptions(editingCircle?.id ?? null) as parentCircle}
-                  <option value={parentCircle.id}>{parentCircle.name}</option>
+                {#each getParentOptionsTree(editingCircle?.id ?? null) as { circle: parentCircle, depth }}
+                  <option value={parentCircle.id}>{'─'.repeat(depth)}{depth > 0 ? ' ' : ''}{parentCircle.name}</option>
                 {/each}
               </select>
               <p class="mt-1 text-xs font-body text-gray-500">
