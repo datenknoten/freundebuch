@@ -1,3 +1,9 @@
+## [2.38.0](https://github.com/datenknoten/freundebuch/compare/v2.37.7...v2.38.0) (2026-01-14)
+
+### Features
+
+* Add dynamic column selection to desktop friend list ([79138fd](https://github.com/datenknoten/freundebuch/commit/79138fdd8d0c85d4e0434f47e9ca7d01ac4ecb69))
+
 ## [2.37.7](https://github.com/datenknoten/freundebuch/compare/v2.37.6...v2.37.7) (2026-01-14)
 
 ### Bug Fixes
