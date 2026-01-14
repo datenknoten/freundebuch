@@ -11,7 +11,8 @@ export default defineConfig({
       autoUploadSourceMaps: !!process.env.SENTRY_AUTH_TOKEN,
       adapter: 'other', // Using static adapter
       sourceMapsUploadOptions: {
-        project: 'freundebuch',
+        org: 'datenknoten-it-nx',
+        project: 'freundebuch-frontend',
       },
     }),
     sveltekit(),
@@ -20,6 +21,8 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
   build: {
+    // Generate sourcemaps for Sentry (hidden = not referenced in JS files)
+    sourcemap: 'hidden',
     // Ensure content hashes are included in filenames for cache busting
     rollupOptions: {
       output: {
