@@ -252,6 +252,23 @@ export const circlesById = derived(
   ($circles) => new Map<string, Circle>($circles.circles.map((c) => [c.id, c])),
 );
 
+/**
+ * Get the full path for a circle (e.g., "Family → Close Friends")
+ */
+export function getCirclePath(circleId: string, circlesMap: Map<string, Circle>): string {
+  const parts: string[] = [];
+  let currentId: string | null = circleId;
+
+  while (currentId) {
+    const circle = circlesMap.get(currentId);
+    if (!circle) break;
+    parts.unshift(circle.name);
+    currentId = circle.parentCircleId;
+  }
+
+  return parts.join(' → ');
+}
+
 // ============================================================================
 // Friend-Circle Assignment Helpers
 // ============================================================================

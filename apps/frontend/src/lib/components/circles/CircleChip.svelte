@@ -1,4 +1,5 @@
 <script lang="ts">
+import { circlesById, getCirclePath } from '$lib/stores/circles';
 import type { CircleSummary } from '$shared';
 
 interface Props {
@@ -14,6 +15,9 @@ interface Props {
 }
 
 let { circle, size = 'sm', onclick, removable = false, onremove }: Props = $props();
+
+// Get the full path for this circle (e.g., "Family → Close Friends")
+let displayName = $derived(getCirclePath(circle.id, $circlesById) || circle.name);
 
 // Get contrasting text color for background
 function getTextColor(hexColor: string | null): string {
@@ -45,7 +49,7 @@ let sizeClasses = $derived(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 te
     onclick={onclick}
     onkeydown={(e) => e.key === 'Enter' && onclick?.()}
   >
-    <span class="truncate max-w-[120px]">{circle.name}</span>
+    <span class="truncate max-w-[120px]">{displayName}</span>
     {#if removable && onremove}
       <button
         type="button"
@@ -54,7 +58,7 @@ let sizeClasses = $derived(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 te
           e.stopPropagation();
           onremove?.();
         }}
-        aria-label="Remove {circle.name}"
+        aria-label="Remove {displayName}"
       >
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -67,7 +71,7 @@ let sizeClasses = $derived(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 te
     class="inline-flex items-center gap-1 rounded-full font-medium {sizeClasses} {textColorClass}"
     style:background-color={circle.color ?? '#e5e7eb'}
   >
-    <span class="truncate max-w-[120px]">{circle.name}</span>
+    <span class="truncate max-w-[120px]">{displayName}</span>
     {#if removable && onremove}
       <button
         type="button"
@@ -76,7 +80,7 @@ let sizeClasses = $derived(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 te
           e.stopPropagation();
           onremove?.();
         }}
-        aria-label="Remove {circle.name}"
+        aria-label="Remove {displayName}"
       >
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
