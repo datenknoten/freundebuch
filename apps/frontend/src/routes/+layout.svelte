@@ -9,6 +9,7 @@ import GlobalSearch from '$lib/components/GlobalSearch.svelte';
 import KeyboardShortcuts from '$lib/components/KeyboardShortcuts.svelte';
 import NavBar from '$lib/components/NavBar.svelte';
 import { auth, isAuthenticated, isAuthInitialized, needsOnboarding } from '$lib/stores/auth';
+import { circles } from '$lib/stores/circles';
 
 interface Props {
   children: Snippet;
@@ -19,6 +20,15 @@ let { children }: Props = $props();
 // Initialize auth state on app load
 onMount(async () => {
   await auth.initialize();
+});
+
+// Load circles when user is authenticated
+let circlesLoaded = false;
+$effect(() => {
+  if ($isAuthInitialized && $isAuthenticated && !circlesLoaded) {
+    circlesLoaded = true;
+    circles.loadCircles();
+  }
 });
 
 // Routes exempt from onboarding redirect
