@@ -97,6 +97,11 @@ describe('AppPasswordsService', () => {
   });
 
   describe('createAppPassword', () => {
+    beforeEach(() => {
+      // Mock listAppPasswords to return empty array (allows password creation)
+      vi.mocked(getAppPasswordsByUserExternalId.run).mockResolvedValue([]);
+    });
+
     it('should create and return password with secret', async () => {
       const createdAt = new Date('2024-01-15T12:00:00Z');
       vi.mocked(createAppPassword.run).mockResolvedValue([
