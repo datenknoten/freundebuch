@@ -1,3 +1,9 @@
+## [2.37.4](https://github.com/datenknoten/freundebuch/compare/v2.37.3...v2.37.4) (2026-01-14)
+
+### Bug Fixes
+
+* **search:** Add explicit text[] casts to filterCircles parameter ([19b76ad](https://github.com/datenknoten/freundebuch/commit/19b76add4d835f1943d04fef7af098aedc239be4))
+
 ## [2.37.3](https://github.com/datenknoten/freundebuch/compare/v2.37.2...v2.37.3) (2026-01-14)
 
 ### Bug Fixes
