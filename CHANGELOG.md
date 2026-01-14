@@ -1,3 +1,9 @@
+## [2.39.0](https://github.com/datenknoten/freundebuch/compare/v2.38.1...v2.39.0) (2026-01-14)
+
+### Features
+
+* Add configurable birthday format preference ([ff192e7](https://github.com/datenknoten/freundebuch/commit/ff192e786e70370818f6d8cede1e4fbeb333e29e))
+
 ## [2.38.1](https://github.com/datenknoten/freundebuch/compare/v2.38.0...v2.38.1) (2026-01-14)
 
 ### Bug Fixes
