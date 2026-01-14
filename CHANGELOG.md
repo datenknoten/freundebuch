@@ -1,3 +1,10 @@
+## [2.37.6](https://github.com/datenknoten/freundebuch/compare/v2.37.5...v2.37.6) (2026-01-14)
+
+### Bug Fixes
+
+* **backend:** Filter db.js frames in production stack traces ([afb07f2](https://github.com/datenknoten/freundebuch/commit/afb07f29f053c2ba8e6fa2c07a2dec70d5664ec9))
+* **backend:** Preserve full stack traces for PostgreSQL errors ([bd422a7](https://github.com/datenknoten/freundebuch/commit/bd422a724b9dc6174eb8c1719e1d4f0dafe94ed5))
+
 ## [2.37.5](https://github.com/datenknoten/freundebuch/compare/v2.37.4...v2.37.5) (2026-01-14)
 
 ### Bug Fixes
