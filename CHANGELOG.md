@@ -1,3 +1,9 @@
+## [2.38.1](https://github.com/datenknoten/freundebuch/compare/v2.38.0...v2.38.1) (2026-01-14)
+
+### Bug Fixes
+
+* **backend:** Add missing mock in app-passwords service tests ([56f9ab6](https://github.com/datenknoten/freundebuch/commit/56f9ab69c4c5d0606bf9fdae2216d5a9f6d578a7))
+
 ## [2.38.0](https://github.com/datenknoten/freundebuch/compare/v2.37.7...v2.38.0) (2026-01-14)
 
 ### Features
