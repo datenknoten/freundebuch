@@ -9,7 +9,7 @@ import type {
   RelationshipCategory,
 } from '$shared';
 
-let container: HTMLDivElement;
+let container = $state<HTMLDivElement | null>(null);
 let svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 let simulation: d3.Simulation<SimulationNode, SimulationLink>;
 
