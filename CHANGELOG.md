@@ -1,3 +1,13 @@
+## [2.44.0](https://github.com/datenknoten/freundebuch/compare/v2.43.0...v2.44.0) (2026-01-15)
+
+### Features
+
+* **frontend:** Add relationship network graph visualization ([7e94e94](https://github.com/datenknoten/freundebuch/commit/7e94e94f78c7f26848db8e6dd33d1d2419103fda))
+
+### Bug Fixes
+
+* **backend:** Use PgTyped queries and proper error handling for network graph ([3ab938e](https://github.com/datenknoten/freundebuch/commit/3ab938e7bfdc216ea793077bbec23ee63bc22013))
+
 ## [2.43.0](https://github.com/datenknoten/freundebuch/compare/v2.42.3...v2.43.0) (2026-01-15)
 
 ### Features
