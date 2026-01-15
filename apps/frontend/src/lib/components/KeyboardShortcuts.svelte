@@ -71,7 +71,8 @@ function handleKeydown(e: KeyboardEvent) {
   }
 
   // Handle ? for help (works even when not authenticated to show "login first")
-  if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+  // Requires Shift to be pressed to distinguish from '/' which focuses search
+  if (e.shiftKey && (e.key === '?' || e.key === '/')) {
     e.preventDefault();
     showHelp = !showHelp;
     return;
