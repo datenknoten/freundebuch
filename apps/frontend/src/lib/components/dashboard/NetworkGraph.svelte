@@ -256,8 +256,13 @@ $effect(() => {
 });
 
 onDestroy(() => {
+  // Stop the simulation to prevent further callbacks
   if (simulation) {
     simulation.stop();
+  }
+  // Remove all SVG elements to prevent memory leaks
+  if (container) {
+    d3.select(container).selectAll('svg').remove();
   }
 });
 </script>

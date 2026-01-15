@@ -162,3 +162,35 @@ WHERE u.external_id = :userExternalId
   AND (:excludeFriendExternalId::uuid IS NULL OR c.external_id != :excludeFriendExternalId)
 ORDER BY c.display_name ASC
 LIMIT :limit;
+
+/* @name GetNetworkGraphNodes */
+SELECT
+    f.external_id,
+    f.display_name,
+    f.photo_thumbnail_url,
+    f.is_favorite
+FROM friends.friends f
+INNER JOIN auth.users u ON f.user_id = u.id
+WHERE u.external_id = :userExternalId
+  AND f.deleted_at IS NULL
+  AND f.archived_at IS NULL
+ORDER BY f.display_name ASC;
+
+/* @name GetNetworkGraphLinks */
+SELECT DISTINCT ON (LEAST(f1.external_id, f2.external_id), GREATEST(f1.external_id, f2.external_id), r.relationship_type_id)
+    f1.external_id as source_id,
+    f2.external_id as target_id,
+    r.relationship_type_id,
+    rt.category as relationship_category,
+    rt.label as relationship_label
+FROM friends.friend_relationships r
+INNER JOIN friends.friends f1 ON r.friend_id = f1.id
+INNER JOIN friends.friends f2 ON r.related_friend_id = f2.id
+INNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id
+INNER JOIN auth.users u ON f1.user_id = u.id
+WHERE u.external_id = :userExternalId
+  AND f1.deleted_at IS NULL
+  AND f2.deleted_at IS NULL
+  AND f1.archived_at IS NULL
+  AND f2.archived_at IS NULL
+ORDER BY LEAST(f1.external_id, f2.external_id), GREATEST(f1.external_id, f2.external_id), r.relationship_type_id, r.created_at;

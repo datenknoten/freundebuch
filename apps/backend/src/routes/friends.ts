@@ -415,6 +415,12 @@ app.get('/network-graph', async (c) => {
 
     return c.json(graphData);
   } catch (error) {
+    // Handle AppErrors with their status codes
+    if (isAppError(error)) {
+      logger.error({ err: error }, 'Failed to get network graph data');
+      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
+    }
+
     const err = toError(error);
     logger.error({ err }, 'Failed to get network graph data');
     Sentry.captureException(err);
