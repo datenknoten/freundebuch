@@ -25,6 +25,8 @@ interface Props {
   birthdayFormat: BirthdayFormat;
   /** Whether we're in search mode (shows relevance sort option and match source) */
   isSearchMode?: boolean;
+  /** Current page URL path with search params (for return navigation) */
+  returnUrl?: string;
   onSortChange: (
     sortBy: 'display_name' | 'created_at' | 'updated_at',
     sortOrder: 'asc' | 'desc',
@@ -38,11 +40,20 @@ let {
   sortOrder,
   birthdayFormat,
   isSearchMode = false,
+  returnUrl,
   onSortChange,
 }: Props = $props();
 
+function getFriendDetailUrl(itemId: string): string {
+  const baseUrl = `/friends/${itemId}`;
+  if (returnUrl) {
+    return `${baseUrl}?from=${encodeURIComponent(returnUrl)}`;
+  }
+  return baseUrl;
+}
+
 function handleRowClick(itemId: string) {
-  goto(`/friends/${itemId}`);
+  goto(getFriendDetailUrl(itemId));
 }
 
 function handleLinkClick(e: MouseEvent) {
@@ -347,7 +358,7 @@ function getMatchSourceBadge(
     {@const showHint = shouldShowKeyHint(index)}
     {@const matchBadge = getMatchSourceBadge(item.matchSource)}
     <a
-      href="/friends/{item.id}"
+      href={getFriendDetailUrl(item.id)}
       class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all relative"
       data-sveltekit-preload-data="tap"
     >

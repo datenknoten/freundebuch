@@ -728,6 +728,7 @@ onMount(() => {
 {#if editingType}
   <DetailEditModal
     title={getModalTitle()}
+    subtitle={friend.displayName}
     isLoading={isEditLoading}
     error={editError}
     {isDirty}

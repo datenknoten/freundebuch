@@ -16,6 +16,16 @@ $effect(() => {
 const pageTitle = $derived(
   $currentFriend ? `${$currentFriend.displayName} | Freundebuch` : 'Friend | Freundebuch',
 );
+
+// Get return URL from query parameter (with security validation)
+const backUrl = $derived.by(() => {
+  const from = $page.url.searchParams.get('from');
+  // Only allow returning to /friends paths for security
+  if (from?.startsWith('/friends')) {
+    return from;
+  }
+  return '/friends';
+});
 </script>
 
 <svelte:head>
@@ -26,7 +36,7 @@ const pageTitle = $derived(
   <div class="max-w-7xl mx-auto mt-8">
     <div class="bg-white rounded-xl shadow-lg p-8">
       <a
-        href="/friends"
+        href={backUrl}
         class="text-sm text-gray-500 hover:text-forest font-body flex items-center gap-1 mb-6"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,7 +71,7 @@ const pageTitle = $derived(
             {$friends.error}
           </p>
           <a
-            href="/friends"
+            href={backUrl}
             class="mt-4 inline-flex items-center gap-2 text-forest font-body font-semibold hover:text-forest-light"
           >
             Return to friends

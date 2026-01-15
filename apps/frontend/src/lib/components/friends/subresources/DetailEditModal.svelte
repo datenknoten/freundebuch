@@ -4,6 +4,7 @@ import { isModalOpen } from '$lib/stores/ui';
 
 interface Props {
   title: string;
+  subtitle?: string;
   isLoading?: boolean;
   error?: string | null;
   isDirty?: boolean;
@@ -14,6 +15,7 @@ interface Props {
 
 let {
   title,
+  subtitle,
   isLoading = false,
   error = null,
   isDirty = false,
@@ -72,9 +74,14 @@ function handleSubmit(e: Event) {
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-      <h2 id="edit-modal-title" class="text-xl font-heading text-gray-900">
-        {title}
-      </h2>
+      <div>
+        <h2 id="edit-modal-title" class="text-xl font-heading text-gray-900">
+          {title}
+        </h2>
+        {#if subtitle}
+          <p class="text-sm text-gray-500 font-body">{subtitle}</p>
+        {/if}
+      </div>
       <button
         type="button"
         onclick={handleClose}

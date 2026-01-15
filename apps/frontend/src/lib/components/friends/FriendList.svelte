@@ -1,4 +1,5 @@
 <script lang="ts">
+import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
 import { auth, birthdayFormat, friendsPageSize, friendsTableColumns } from '$lib/stores/auth';
 import { friendList, friends, isFriendsLoading } from '$lib/stores/friends';
@@ -57,6 +58,9 @@ let showNoResults = $derived(
   (isSearchMode || isFilterMode) && !isSearching && searchResults.length === 0,
 );
 let currentPageSize = $derived($friendsPageSize);
+
+// Return URL for navigation back from friend detail (preserves search/filter state)
+let returnUrl = $derived($page.url.pathname + $page.url.search);
 
 // Columns - use user preferences or defaults
 let currentColumns = $derived<ColumnId[]>(
@@ -610,6 +614,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
       sortOrder={currentSortOrder}
       birthdayFormat={$birthdayFormat}
       isSearchMode={isSearchMode}
+      {returnUrl}
       onSortChange={handleTableSortChange}
     />
   {/if}
