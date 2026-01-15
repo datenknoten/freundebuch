@@ -21,6 +21,9 @@ import type {
   GlobalSearchResult,
   MetInfo,
   MetInfoInput,
+  NetworkGraphData,
+  NetworkGraphLink,
+  NetworkGraphNode,
   PaginatedFriendList,
   PaginatedSearchResponse,
   Phone,
@@ -2098,5 +2101,82 @@ export class FriendsService {
       createdAt: friend.created_at.toISOString(),
       updatedAt: friend.updated_at.toISOString(),
     };
+  }
+
+  /**
+   * Get network graph data for visualization
+   * Returns all non-archived friends as nodes and their relationships as links
+   */
+  async getNetworkGraphData(userExternalId: string): Promise<NetworkGraphData> {
+    this.logger.debug({ userExternalId }, 'Fetching network graph data');
+
+    // Query 1: Get all non-archived friends (nodes)
+    const nodesQuery = `
+      SELECT
+        f.external_id,
+        f.display_name,
+        f.photo_thumbnail_url,
+        f.is_favorite
+      FROM friends.friends f
+      INNER JOIN auth.users u ON f.user_id = u.id
+      WHERE u.external_id = $1
+        AND f.deleted_at IS NULL
+        AND f.archived_at IS NULL
+      ORDER BY f.display_name ASC
+    `;
+
+    // Query 2: Get all relationships between non-archived friends (links)
+    // Only get one direction to avoid duplicates (source < target)
+    const linksQuery = `
+      SELECT DISTINCT ON (LEAST(f1.external_id, f2.external_id), GREATEST(f1.external_id, f2.external_id), r.relationship_type_id)
+        f1.external_id as source_id,
+        f2.external_id as target_id,
+        r.relationship_type_id,
+        rt.category as relationship_category,
+        rt.label as relationship_label
+      FROM friends.friend_relationships r
+      INNER JOIN friends.friends f1 ON r.friend_id = f1.id
+      INNER JOIN friends.friends f2 ON r.related_friend_id = f2.id
+      INNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id
+      INNER JOIN auth.users u ON f1.user_id = u.id
+      WHERE u.external_id = $1
+        AND f1.deleted_at IS NULL
+        AND f2.deleted_at IS NULL
+        AND f1.archived_at IS NULL
+        AND f2.archived_at IS NULL
+      ORDER BY LEAST(f1.external_id, f2.external_id), GREATEST(f1.external_id, f2.external_id), r.relationship_type_id, r.created_at
+    `;
+
+    const [nodesResult, linksResult] = await Promise.all([
+      this.db.query(nodesQuery, [userExternalId]),
+      this.db.query(linksQuery, [userExternalId]),
+    ]);
+
+    const nodes: NetworkGraphNode[] = nodesResult.rows.map((row) => ({
+      id: row.external_id,
+      displayName: row.display_name,
+      photoThumbnailUrl: row.photo_thumbnail_url ?? undefined,
+      isFavorite: row.is_favorite,
+    }));
+
+    // Create a set of valid node IDs for filtering links
+    const nodeIds = new Set(nodes.map((n) => n.id));
+
+    const links: NetworkGraphLink[] = linksResult.rows
+      .filter((row) => nodeIds.has(row.source_id) && nodeIds.has(row.target_id))
+      .map((row) => ({
+        source: row.source_id,
+        target: row.target_id,
+        relationshipType: row.relationship_type_id as RelationshipTypeId,
+        relationshipCategory: row.relationship_category as RelationshipCategory,
+        relationshipLabel: row.relationship_label,
+      }));
+
+    this.logger.debug(
+      { nodeCount: nodes.length, linkCount: links.length },
+      'Network graph data fetched',
+    );
+
+    return { nodes, links };
   }
 }

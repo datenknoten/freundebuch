@@ -399,6 +399,30 @@ app.get('/dates/upcoming', async (c) => {
 });
 
 /**
+ * GET /api/friends/network-graph
+ * Get network graph data for visualization
+ * Returns all non-archived friends as nodes and their relationships as links
+ * NOTE: This must be defined before /:id to avoid being caught by the wildcard
+ */
+app.get('/network-graph', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+
+  try {
+    const friendsService = new FriendsService(db, logger);
+    const graphData = await friendsService.getNetworkGraphData(user.userId);
+
+    return c.json(graphData);
+  } catch (error) {
+    const err = toError(error);
+    logger.error({ err }, 'Failed to get network graph data');
+    Sentry.captureException(err);
+    return c.json<ErrorResponse>({ error: 'Failed to get network graph data' }, 500);
+  }
+});
+
+/**
  * GET /api/friends/relationship-types
  * Get all relationship types grouped by category
  * NOTE: This must be defined before /:id to avoid being caught by the wildcard

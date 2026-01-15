@@ -1,5 +1,6 @@
 <script lang="ts">
 import { getFriend } from '$lib/api/friends';
+import NetworkGraph from '$lib/components/dashboard/NetworkGraph.svelte';
 import UpcomingDates from '$lib/components/dashboard/UpcomingDates.svelte';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
 
@@ -49,7 +50,7 @@ async function fetchDisplayName(selfProfileId: string) {
 			<p class="text-2xl font-body text-gray-700 mb-8">
 				Welcome back, {userDisplayName}!
 			</p>
-			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left max-w-4xl mx-auto">
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left max-w-6xl mx-auto">
 				<UpcomingDates days={30} limit={10} />
 				<div class="bg-white rounded-xl shadow-lg p-6">
 					<h3 class="text-xl font-heading text-gray-800 mb-4">Quick Actions</h3>
@@ -69,6 +70,9 @@ async function fetchDisplayName(selfProfileId: string) {
 							<span class="font-body font-medium">View All Friends</span>
 						</a>
 					</div>
+				</div>
+				<div class="lg:col-span-2">
+					<NetworkGraph />
 				</div>
 			</div>
 		{:else}
