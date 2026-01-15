@@ -1,3 +1,13 @@
+## [2.42.1](https://github.com/datenknoten/freundebuch/compare/v2.42.0...v2.42.1) (2026-01-15)
+
+### Bug Fixes
+
+* **frontend:** Sanitize search headline HTML to prevent XSS ([1a7a035](https://github.com/datenknoten/freundebuch/commit/1a7a03594793c4ddd72f63e13a834ef3b92fbd9b))
+
+### Code Refactoring
+
+* **frontend:** Unify friend grid for search and normal listing ([6be0af2](https://github.com/datenknoten/freundebuch/commit/6be0af234966e14f0be7871dc10a10f68e73e5ba))
+
 ## [2.42.0](https://github.com/datenknoten/freundebuch/compare/v2.41.3...v2.42.0) (2026-01-15)
 
 ### Features
