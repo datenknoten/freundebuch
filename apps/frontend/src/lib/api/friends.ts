@@ -626,6 +626,9 @@ export async function facetedSearch(params: FacetedSearchParams): Promise<Facete
   if (params.filters?.relationship_category?.length) {
     searchParams.set('relationship_category', params.filters.relationship_category.join(','));
   }
+  if (params.filters?.circles?.length) {
+    searchParams.set('circles', params.filters.circles.join(','));
+  }
 
   return apiRequest<FacetedSearchResponse>(
     `/api/friends/search/faceted?${searchParams.toString()}`,
