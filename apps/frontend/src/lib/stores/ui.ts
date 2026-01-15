@@ -75,3 +75,45 @@ export function getIndexFromHint(hint: string): number {
 
   return -1;
 }
+
+// =============================================================================
+// Filter Mode State (keyboard-driven filter selection)
+// =============================================================================
+
+/**
+ * Tracks if filter mode is active for keyboard filter selection
+ * When active, user can press category keys then number keys to toggle filters
+ */
+export const isFilterModeActive = writable(false);
+
+/**
+ * The currently selected filter category in filter mode
+ * null means waiting for category selection, string means selecting values
+ */
+export const filterModeCategory = writable<string | null>(null);
+
+/**
+ * Mapping of keyboard keys to filter category field names
+ */
+export const FILTER_CATEGORY_KEYS: Record<string, string> = {
+  c: 'country',
+  i: 'city',
+  o: 'organization',
+  j: 'job_title',
+  d: 'department',
+  r: 'relationship_category',
+  l: 'circles',
+};
+
+/**
+ * Reverse mapping: filter field names to keyboard keys (for display)
+ */
+export const FILTER_CATEGORY_LABELS: Record<string, { key: string; label: string }> = {
+  country: { key: 'c', label: 'Country' },
+  city: { key: 'i', label: 'City' },
+  organization: { key: 'o', label: 'Organization' },
+  job_title: { key: 'j', label: 'Job Title' },
+  department: { key: 'd', label: 'Department' },
+  relationship_category: { key: 'r', label: 'Relationship' },
+  circles: { key: 'l', label: 'Circles' },
+};
