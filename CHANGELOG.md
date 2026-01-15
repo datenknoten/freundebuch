@@ -1,3 +1,9 @@
+## [2.43.0](https://github.com/datenknoten/freundebuch/compare/v2.42.3...v2.43.0) (2026-01-15)
+
+### Features
+
+* **frontend:** Improve UX with friend context in modals and search persistence ([dab123f](https://github.com/datenknoten/freundebuch/commit/dab123f4e1cae10dd4ac71040ff6b96023b4cce2))
+
 ## [2.42.3](https://github.com/datenknoten/freundebuch/compare/v2.42.2...v2.42.3) (2026-01-15)
 
 ### Bug Fixes
