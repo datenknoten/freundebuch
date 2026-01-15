@@ -557,8 +557,13 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
         {/if}
       </div>
     {:else}
-      <!-- Results list -->
-      <div class="space-y-2" role="list" aria-label={isSearchMode ? "Search results" : "Filtered friends"}>
+      <!-- Results list - grid on desktop, cards on mobile -->
+      <div class="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4" role="list" aria-label={isSearchMode ? "Search results" : "Filtered friends"}>
+        {#each searchResults as result, index (result.id)}
+          <SearchResultItem {result} {index} />
+        {/each}
+      </div>
+      <div class="md:hidden space-y-2" role="list" aria-label={isSearchMode ? "Search results" : "Filtered friends"}>
         {#each searchResults as result, index (result.id)}
           <SearchResultItem {result} {index} />
         {/each}
