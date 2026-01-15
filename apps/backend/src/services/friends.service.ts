@@ -1485,6 +1485,7 @@ export class FriendsService {
       // Sanitize headline to prevent XSS - only allow <mark> tags from ts_headline
       headline: sanitizeSearchHeadline(row.headline),
       matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
+      circles: [], // Circles not included in this query
     };
   }
 
@@ -1501,10 +1502,18 @@ export class FriendsService {
       // Sanitize headline to prevent XSS - only allow <mark> tags from ts_headline
       headline: sanitizeSearchHeadline(row.headline),
       matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
+      circles: [], // Circles not included in this query
     };
   }
 
   private mapFacetedSearchResult(row: IFacetedSearchResult): GlobalSearchResult {
+    // Parse circles from JSON
+    const circlesRaw = (row.circles || []) as Array<{
+      external_id: string;
+      name: string;
+      color: string | null;
+    }>;
+
     return {
       id: row.external_id,
       displayName: row.display_name,
@@ -1517,10 +1526,22 @@ export class FriendsService {
       // Sanitize headline to prevent XSS - only allow <mark> tags from ts_headline
       headline: sanitizeSearchHeadline(row.headline),
       matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
+      circles: circlesRaw.map((c) => ({
+        id: c.external_id,
+        name: c.name,
+        color: c.color,
+      })),
     };
   }
 
   private mapFilterOnlyResult(row: IFilterOnlyListResult): GlobalSearchResult {
+    // Parse circles from JSON
+    const circlesRaw = (row.circles || []) as Array<{
+      external_id: string;
+      name: string;
+      color: string | null;
+    }>;
+
     return {
       id: row.external_id,
       displayName: row.display_name,
@@ -1532,6 +1553,11 @@ export class FriendsService {
       rank: 0, // No ranking for filter-only results
       headline: null, // No headline for filter-only results
       matchSource: null, // No match source for filter-only results
+      circles: circlesRaw.map((c) => ({
+        id: c.external_id,
+        name: c.name,
+        color: c.color,
+      })),
     };
   }
 

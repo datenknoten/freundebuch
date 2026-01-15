@@ -1,6 +1,7 @@
 <script lang="ts">
 import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
 import type { GlobalSearchResult } from '$shared';
+import CircleChips from '../circles/CircleChips.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
 
 interface Props {
@@ -88,6 +89,12 @@ let showKeyHint = $derived(() => {
     {#if result.headline && result.matchSource}
       <div class="mt-2 font-body text-sm text-gray-600 line-clamp-2 search-headline">
         {@html result.headline}
+      </div>
+    {/if}
+
+    {#if result.circles && result.circles.length > 0}
+      <div class="mt-2">
+        <CircleChips circles={result.circles} size="sm" maxVisible={3} />
       </div>
     {/if}
   </div>
