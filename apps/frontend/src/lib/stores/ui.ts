@@ -93,6 +93,12 @@ export const isFilterModeActive = writable(false);
 export const filterModeCategory = writable<string | null>(null);
 
 /**
+ * Tracks the current letter prefix in filter mode (e.g., 'a', 'b', 'c')
+ * null means we're waiting for either a number (1-9) or a letter (a-z)
+ */
+export const filterModePrefix = writable<string | null>(null);
+
+/**
  * Mapping of keyboard keys to filter category field names
  */
 export const FILTER_CATEGORY_KEYS: Record<string, string> = {

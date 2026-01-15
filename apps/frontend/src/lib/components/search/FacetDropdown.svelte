@@ -24,6 +24,9 @@ let circlesWithMembers = $derived<CircleFacetValue[]>(
 );
 let isOpen = $state(false);
 
+// Maximum items to show with keyboard hints (26 letters * 9 numbers = 234 max)
+const MAX_KEYBOARD_ITEMS = 234;
+
 // Build a flat list of filter values for a given category (for keyboard navigation)
 function getCategoryValues(category: string): { field: ArrayFacetField; value: string }[] {
   if (!facets) return [];
@@ -33,35 +36,35 @@ function getCategoryValues(category: string): { field: ArrayFacetField; value: s
       return (
         facets.location
           .find((g) => g.field === 'country')
-          ?.values.slice(0, 9)
+          ?.values.slice(0, MAX_KEYBOARD_ITEMS)
           .map((v) => ({ field: 'country' as ArrayFacetField, value: v.value })) ?? []
       );
     case 'city':
       return (
         facets.location
           .find((g) => g.field === 'city')
-          ?.values.slice(0, 9)
+          ?.values.slice(0, MAX_KEYBOARD_ITEMS)
           .map((v) => ({ field: 'city' as ArrayFacetField, value: v.value })) ?? []
       );
     case 'organization':
       return (
         facets.professional
           .find((g) => g.field === 'organization')
-          ?.values.slice(0, 9)
+          ?.values.slice(0, MAX_KEYBOARD_ITEMS)
           .map((v) => ({ field: 'organization' as ArrayFacetField, value: v.value })) ?? []
       );
     case 'job_title':
       return (
         facets.professional
           .find((g) => g.field === 'job_title')
-          ?.values.slice(0, 9)
+          ?.values.slice(0, MAX_KEYBOARD_ITEMS)
           .map((v) => ({ field: 'job_title' as ArrayFacetField, value: v.value })) ?? []
       );
     case 'department':
       return (
         facets.professional
           .find((g) => g.field === 'department')
-          ?.values.slice(0, 9)
+          ?.values.slice(0, MAX_KEYBOARD_ITEMS)
           .map((v) => ({ field: 'department' as ArrayFacetField, value: v.value })) ?? []
       );
     case 'relationship_category':
@@ -77,7 +80,7 @@ function getCategoryValues(category: string): { field: ArrayFacetField; value: s
       // Include "no-circle" option plus all circles with members
       return [
         { field: 'circles' as ArrayFacetField, value: 'no-circle' },
-        ...circlesWithMembers.slice(0, 8).map((c) => ({
+        ...circlesWithMembers.slice(0, MAX_KEYBOARD_ITEMS - 1).map((c) => ({
           field: 'circles' as ArrayFacetField,
           value: c.value,
         })),
@@ -218,8 +221,8 @@ $effect(() => {
               $isFilterModeActive && $filterModeCategory === group.field}
             <div class="mb-2" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-1={isKeyboardCategory}>
               <span class="text-xs text-gray-400">{group.label}</span>
-              <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
-                {#each group.values.slice(0, 8) as facet, i}
+              <div class="mt-1 space-y-1 overflow-y-auto" class:max-h-24={!isKeyboardCategory} class:max-h-64={isKeyboardCategory}>
+                {#each group.values.slice(0, isKeyboardCategory ? 27 : 8) as facet, i}
                   <label
                     class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                   >
@@ -253,8 +256,8 @@ $effect(() => {
               $isFilterModeActive && $filterModeCategory === group.field}
             <div class="mb-2" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-1={isKeyboardCategory}>
               <span class="text-xs text-gray-400">{group.label}</span>
-              <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
-                {#each group.values.slice(0, 8) as facet, i}
+              <div class="mt-1 space-y-1 overflow-y-auto" class:max-h-24={!isKeyboardCategory} class:max-h-64={isKeyboardCategory}>
+                {#each group.values.slice(0, isKeyboardCategory ? 27 : 8) as facet, i}
                   <label
                     class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                   >
@@ -316,7 +319,7 @@ $effect(() => {
           <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Circles
           </h4>
-          <div class="space-y-1" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-1={isKeyboardCategory}>
+          <div class="space-y-1 overflow-y-auto" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-1={isKeyboardCategory} class:max-h-64={isKeyboardCategory}>
             <!-- No Circle option -->
             <label
               class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
@@ -332,7 +335,7 @@ $effect(() => {
               />
               <span class="flex-1 italic text-gray-500">No Circle</span>
             </label>
-            {#each circlesWithMembers.slice(0, 8) as circle, i}
+            {#each circlesWithMembers.slice(0, isKeyboardCategory ? 26 : 8) as circle, i}
               <label
                 class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
               >

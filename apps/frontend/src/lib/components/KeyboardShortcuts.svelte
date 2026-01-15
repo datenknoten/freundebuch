@@ -9,6 +9,7 @@ import {
   FILTER_CATEGORY_KEYS,
   FILTER_CATEGORY_LABELS,
   filterModeCategory,
+  filterModePrefix,
   getIndexFromHint,
   ITEMS_PER_GROUP,
   isFilterModeActive,
@@ -28,6 +29,7 @@ function clearPending() {
   openModePrefix.set(null);
   isFilterModeActive.set(false);
   filterModeCategory.set(null);
+  filterModePrefix.set(null);
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -245,9 +247,32 @@ function handleKeydown(e: KeyboardEvent) {
     // If in filter mode (category selected), handle number/letter selection
     if ($isFilterModeActive && $filterModeCategory) {
       const keyNum = parseInt(e.key, 10);
+      const currentPrefix = $filterModePrefix;
 
-      // Handle direct number selection (1-9)
+      // If we already have a letter prefix, we're waiting for a number
+      if (currentPrefix) {
+        if (keyNum >= 1 && keyNum <= 9) {
+          e.preventDefault();
+          const index = getIndexFromHint(`${currentPrefix}${keyNum}`);
+          if (index >= 0) {
+            window.dispatchEvent(
+              new CustomEvent('shortcut:filter-toggle', {
+                detail: { category: $filterModeCategory, index },
+              }),
+            );
+          }
+          // Clear the prefix after selection (but stay in filter mode)
+          filterModePrefix.set(null);
+        } else {
+          // Invalid key after letter prefix, clear prefix
+          filterModePrefix.set(null);
+        }
+        return;
+      }
+
+      // No prefix yet - check if it's a number (1-9) or letter (a-z)
       if (keyNum >= 1 && keyNum <= 9) {
+        // Direct number: toggle item 1-9
         e.preventDefault();
         const index = keyNum - 1;
         window.dispatchEvent(
@@ -258,11 +283,10 @@ function handleKeydown(e: KeyboardEvent) {
         return;
       }
 
-      // Handle letter prefix for extended selection (a-z)
+      // Check if it's a letter for extended navigation (not a category key)
       if (keyLower >= 'a' && keyLower <= 'z' && !FILTER_CATEGORY_KEYS[keyLower]) {
-        // This could be start of a two-char hint like 'a1'
-        // We'll need to track this similar to openModePrefix
-        // For now, just support 1-9 direct selection
+        e.preventDefault();
+        filterModePrefix.set(keyLower);
         return;
       }
     }
@@ -722,14 +746,18 @@ function closeHelp() {
     <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
       <span class="text-sm font-medium text-gray-700">
         {#if $filterModeCategory}
-          Filter: {FILTER_CATEGORY_LABELS[$filterModeCategory]?.label ?? $filterModeCategory}
+          Filter: {FILTER_CATEGORY_LABELS[$filterModeCategory]?.label ?? $filterModeCategory}{$filterModePrefix ? ` (${$filterModePrefix}...)` : ''}
         {:else}
           Filter by...
         {/if}
       </span>
       <span class="text-xs text-gray-500 ml-2">
         {#if $filterModeCategory}
-          Press 1-9 to toggle or Esc to exit
+          {#if $filterModePrefix}
+            Press 1-9 or Esc to cancel
+          {:else}
+            Press 1-9, a-z, or Esc to exit
+          {/if}
         {:else}
           Press key or Esc to cancel
         {/if}
@@ -737,7 +765,11 @@ function closeHelp() {
     </div>
     {#if $filterModeCategory}
       <div class="p-3 font-body text-sm text-gray-600">
-        Press numbers to toggle filter values
+        {#if $filterModePrefix}
+          Press the number to complete: {$filterModePrefix}1, {$filterModePrefix}2, ...
+        {:else}
+          Press key shown next to filter value (1-9 or a1, b2, ...)
+        {/if}
       </div>
     {:else}
       <div class="p-2 space-y-1 font-body text-sm">
