@@ -480,3 +480,99 @@ const searchFriendsIR: any = {"usedParamSet":{"userExternalId":true,"searchPatte
 export const searchFriends = new PreparedQuery<ISearchFriendsParams,ISearchFriendsResult>(searchFriendsIR);
 
 
+/** 'GetNetworkGraphNodes' parameters type */
+export interface IGetNetworkGraphNodesParams {
+  userExternalId?: string | null | void;
+}
+
+/** 'GetNetworkGraphNodes' return type */
+export interface IGetNetworkGraphNodesResult {
+  /** Primary name shown in lists */
+  display_name: string;
+  /** Public UUID for API exposure (always use this in APIs) */
+  external_id: string;
+  /** Whether this friend is marked as favorite */
+  is_favorite: boolean;
+  /** URL to 200x200 thumbnail */
+  photo_thumbnail_url: string | null;
+}
+
+/** 'GetNetworkGraphNodes' query type */
+export interface IGetNetworkGraphNodesQuery {
+  params: IGetNetworkGraphNodesParams;
+  result: IGetNetworkGraphNodesResult;
+}
+
+const getNetworkGraphNodesIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":143,"b":157}]}],"statement":"SELECT\n    f.external_id,\n    f.display_name,\n    f.photo_thumbnail_url,\n    f.is_favorite\nFROM friends.friends f\nINNER JOIN auth.users u ON f.user_id = u.id\nWHERE u.external_id = :userExternalId\n  AND f.deleted_at IS NULL\n  AND f.archived_at IS NULL\nORDER BY f.display_name ASC"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT
+ *     f.external_id,
+ *     f.display_name,
+ *     f.photo_thumbnail_url,
+ *     f.is_favorite
+ * FROM friends.friends f
+ * INNER JOIN auth.users u ON f.user_id = u.id
+ * WHERE u.external_id = :userExternalId
+ *   AND f.deleted_at IS NULL
+ *   AND f.archived_at IS NULL
+ * ORDER BY f.display_name ASC
+ * ```
+ */
+export const getNetworkGraphNodes = new PreparedQuery<IGetNetworkGraphNodesParams,IGetNetworkGraphNodesResult>(getNetworkGraphNodesIR);
+
+
+/** 'GetNetworkGraphLinks' parameters type */
+export interface IGetNetworkGraphLinksParams {
+  userExternalId?: string | null | void;
+}
+
+/** 'GetNetworkGraphLinks' return type */
+export interface IGetNetworkGraphLinksResult {
+  /** Category: family, professional, or social */
+  relationship_category: string;
+  /** Human-readable label for display */
+  relationship_label: string;
+  /** Type of relationship */
+  relationship_type_id: string;
+  /** Public UUID of source friend */
+  source_id: string;
+  /** Public UUID of target friend */
+  target_id: string;
+}
+
+/** 'GetNetworkGraphLinks' query type */
+export interface IGetNetworkGraphLinksQuery {
+  params: IGetNetworkGraphLinksParams;
+  result: IGetNetworkGraphLinksResult;
+}
+
+const getNetworkGraphLinksIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":449,"b":463}]}],"statement":"SELECT DISTINCT ON (LEAST(f1.external_id, f2.external_id), GREATEST(f1.external_id, f2.external_id), r.relationship_type_id)\n    f1.external_id as source_id,\n    f2.external_id as target_id,\n    r.relationship_type_id,\n    rt.category as relationship_category,\n    rt.label as relationship_label\nFROM friends.friend_relationships r\nINNER JOIN friends.friends f1 ON r.friend_id = f1.id\nINNER JOIN friends.friends f2 ON r.related_friend_id = f2.id\nINNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id\nINNER JOIN auth.users u ON f1.user_id = u.id\nWHERE u.external_id = :userExternalId\n  AND f1.deleted_at IS NULL\n  AND f2.deleted_at IS NULL\n  AND f1.archived_at IS NULL\n  AND f2.archived_at IS NULL\nORDER BY LEAST(f1.external_id, f2.external_id), GREATEST(f1.external_id, f2.external_id), r.relationship_type_id, r.created_at"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT DISTINCT ON (LEAST(f1.external_id, f2.external_id), GREATEST(f1.external_id, f2.external_id), r.relationship_type_id)
+ *     f1.external_id as source_id,
+ *     f2.external_id as target_id,
+ *     r.relationship_type_id,
+ *     rt.category as relationship_category,
+ *     rt.label as relationship_label
+ * FROM friends.friend_relationships r
+ * INNER JOIN friends.friends f1 ON r.friend_id = f1.id
+ * INNER JOIN friends.friends f2 ON r.related_friend_id = f2.id
+ * INNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id
+ * INNER JOIN auth.users u ON f1.user_id = u.id
+ * WHERE u.external_id = :userExternalId
+ *   AND f1.deleted_at IS NULL
+ *   AND f2.deleted_at IS NULL
+ *   AND f1.archived_at IS NULL
+ *   AND f2.archived_at IS NULL
+ * ORDER BY LEAST(f1.external_id, f2.external_id), GREATEST(f1.external_id, f2.external_id), r.relationship_type_id, r.created_at
+ * ```
+ */
+export const getNetworkGraphLinks = new PreparedQuery<IGetNetworkGraphLinksParams,IGetNetworkGraphLinksResult>(getNetworkGraphLinksIR);
+
+
