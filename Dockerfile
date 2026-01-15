@@ -9,18 +9,19 @@
 # This stage is cached and reused across builds
 # Can be pre-built: docker build --target runtime-base -t freundebuch-runtime-base .
 # ============================================
-FROM node:24-bookworm-slim AS runtime-base
+FROM node:24-trixie-slim AS runtime-base
 
-# Install nginx, supervisor, curl, gettext (for envsubst), and PHP-FPM with PostgreSQL extension
+# Install nginx, supervisor, curl, gettext (for envsubst), and PHP-FPM 8.4 with PostgreSQL extension
+# Debian Trixie includes PHP 8.4 natively
 # Combined into single layer for caching
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         nginx supervisor curl gettext-base \
-        php8.2-fpm php8.2-pgsql php8.2-xml php8.2-mbstring php8.2-curl && \
+        php8.4-fpm php8.4-pgsql php8.4-xml php8.4-mbstring php8.4-curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     # Configure PHP-FPM to listen on TCP socket instead of Unix socket
-    sed -i 's|listen = /run/php/php8.2-fpm.sock|listen = 127.0.0.1:9000|' /etc/php/8.2/fpm/pool.d/www.conf && \
+    sed -i 's|listen = /run/php/php8.4-fpm.sock|listen = 127.0.0.1:9000|' /etc/php/8.4/fpm/pool.d/www.conf && \
     # Ensure PHP-FPM directory exists
     mkdir -p /run/php && \
     # Enable corepack for pnpm
@@ -40,7 +41,7 @@ RUN --mount=type=cache,id=composer,target=/root/.composer/cache \
 # ============================================
 # Stage: Node base with pnpm
 # ============================================
-FROM node:24-bookworm-slim AS base
+FROM node:24-trixie-slim AS base
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
@@ -105,7 +106,7 @@ FROM runtime-base AS production
 WORKDIR /app
 
 # Copy PHP-FPM pool configuration for logging
-COPY docker/php-fpm-pool.conf /etc/php/8.2/fpm/pool.d/zz-logging.conf
+COPY docker/php-fpm-pool.conf /etc/php/8.4/fpm/pool.d/zz-logging.conf
 
 # Copy workspace configuration for production dependencies
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
