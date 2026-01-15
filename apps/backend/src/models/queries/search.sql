@@ -30,6 +30,7 @@ WITH matching_friends AS (
         ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery
     LEFT JOIN friends.friend_phones p
         ON p.friend_id = c.id
+        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
     LEFT JOIN friends.friend_relationships r
@@ -105,6 +106,7 @@ WITH matching_friends AS (
         ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery
     LEFT JOIN friends.friend_phones p
         ON p.friend_id = c.id
+        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
     LEFT JOIN friends.friend_relationships r
@@ -221,6 +223,7 @@ WITH base_matches AS (
         ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery
     LEFT JOIN friends.friend_phones p
         ON p.friend_id = c.id
+        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
     LEFT JOIN friends.friend_relationships r
@@ -306,6 +309,7 @@ matching_friends AS (
         ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery
     LEFT JOIN friends.friend_phones p
         ON p.friend_id = c.id
+        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
 ),
@@ -379,6 +383,7 @@ WITH base_matches AS (
         ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery
     LEFT JOIN friends.friend_phones p
         ON p.friend_id = c.id
+        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
     LEFT JOIN friends.friend_relationships r
