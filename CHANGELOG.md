@@ -1,3 +1,9 @@
+## [2.42.2](https://github.com/datenknoten/freundebuch/compare/v2.42.1...v2.42.2) (2026-01-15)
+
+### Bug Fixes
+
+* **backend:** Prevent phone search from matching all records when query has no digits ([1c80969](https://github.com/datenknoten/freundebuch/commit/1c8096986d1ba20ad48a59dfb5a256584abcc1f3))
+
 ## [2.42.1](https://github.com/datenknoten/freundebuch/compare/v2.42.0...v2.42.1) (2026-01-15)
 
 ### Bug Fixes
