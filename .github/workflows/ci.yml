@@ -84,7 +84,7 @@ jobs:
 
   test:
     name: Unit and Integration Tests
-    runs-on: depot-ubuntu-24.04-arm-8
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
