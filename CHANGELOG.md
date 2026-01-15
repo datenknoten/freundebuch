@@ -1,3 +1,9 @@
+## [2.42.3](https://github.com/datenknoten/freundebuch/compare/v2.42.2...v2.42.3) (2026-01-15)
+
+### Bug Fixes
+
+* **frontend:** Add missing circles filter parameter to faceted search API ([c6ffb64](https://github.com/datenknoten/freundebuch/commit/c6ffb64be17946225838c026c029986a8ce3a50e))
+
 ## [2.42.2](https://github.com/datenknoten/freundebuch/compare/v2.42.1...v2.42.2) (2026-01-15)
 
 ### Bug Fixes
