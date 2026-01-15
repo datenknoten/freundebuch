@@ -1,5 +1,7 @@
 <script lang="ts">
+import { circlesById } from '$lib/stores/circles';
 import { type ArrayFacetField, type FacetFilters, isArrayFacetField } from '$shared';
+import CircleChip from '../circles/CircleChip.svelte';
 
 interface Props {
   filters: FacetFilters;
@@ -46,21 +48,50 @@ let hasFilters = $derived(chips.length > 0);
 {#if hasFilters}
   <div class="flex flex-wrap gap-2 items-center">
     {#each chips as chip (chip.field + chip.value)}
-      <button
-        type="button"
-        onclick={() => onRemove(chip.field, chip.value)}
-        class="inline-flex items-center gap-1 px-2 py-1 bg-forest/10 text-forest text-sm rounded-full hover:bg-forest/20 transition-colors"
-      >
-        <span>{chip.label}</span>
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M6 18L18 6M6 6l12 12"
+      {#if chip.field === 'circles' && chip.value !== 'no-circle'}
+        {@const circle = $circlesById.get(chip.value)}
+        {#if circle}
+          <CircleChip
+            {circle}
+            size="sm"
+            removable
+            onremove={() => onRemove(chip.field, chip.value)}
           />
-        </svg>
-      </button>
+        {:else}
+          <!-- Fallback if circle not found in store -->
+          <button
+            type="button"
+            onclick={() => onRemove(chip.field, chip.value)}
+            class="inline-flex items-center gap-1 px-2 py-1 bg-forest/10 text-forest text-sm rounded-full hover:bg-forest/20 transition-colors"
+          >
+            <span>Circle: {chip.value}</span>
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        {/if}
+      {:else}
+        <button
+          type="button"
+          onclick={() => onRemove(chip.field, chip.value)}
+          class="inline-flex items-center gap-1 px-2 py-1 bg-forest/10 text-forest text-sm rounded-full hover:bg-forest/20 transition-colors"
+        >
+          <span>{chip.label}</span>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      {/if}
     {/each}
     <button
       type="button"
