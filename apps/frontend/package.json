@@ -18,6 +18,7 @@
   "dependencies": {
     "@sentry/sveltekit": "^10.32.1",
     "arktype": "2.1.29",
+    "d3": "^7.9.0",
     "isomorphic-dompurify": "^2.35.0",
     "svelte-easy-crop": "^5.0.0"
   },
@@ -28,6 +29,7 @@
     "@sveltejs/vite-plugin-svelte": "6.2.1",
     "@tailwindcss/postcss": "4.1.18",
     "@testing-library/svelte": "5.3.0",
+    "@types/d3": "^7.4.3",
     "autoprefixer": "10.4.23",
     "jsdom": "27.3.0",
     "postcss": "8.5.6",

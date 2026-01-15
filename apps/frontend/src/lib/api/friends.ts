@@ -16,6 +16,7 @@ import type {
   GlobalSearchResult,
   MetInfo,
   MetInfoInput,
+  NetworkGraphData,
   PaginatedFriendList,
   PaginatedSearchResponse,
   Phone,
@@ -677,4 +678,16 @@ export async function clearRecentSearches(): Promise<void> {
   await apiRequest<{ success: boolean }>('/api/friends/search/recent', {
     method: 'DELETE',
   });
+}
+
+// ============================================================================
+// Network Graph Operations (Dashboard visualization)
+// ============================================================================
+
+/**
+ * Get network graph data for visualization
+ * Returns all non-archived friends as nodes and their relationships as links
+ */
+export async function getNetworkGraphData(): Promise<NetworkGraphData> {
+  return apiRequest<NetworkGraphData>('/api/friends/network-graph');
 }
