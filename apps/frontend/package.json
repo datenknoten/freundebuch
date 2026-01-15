@@ -18,6 +18,7 @@
   "dependencies": {
     "@sentry/sveltekit": "^10.32.1",
     "arktype": "2.1.29",
+    "isomorphic-dompurify": "^2.35.0",
     "svelte-easy-crop": "^5.0.0"
   },
   "devDependencies": {

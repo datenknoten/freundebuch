@@ -1,4 +1,5 @@
 <script lang="ts">
+import DOMPurify from 'isomorphic-dompurify';
 import { goto } from '$app/navigation';
 import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
 import {
@@ -6,10 +7,15 @@ import {
   COLUMN_DEFINITIONS,
   type ColumnId,
   type FriendGridItem,
-  type SearchSortBy,
 } from '$shared';
 import CircleChips from '../circles/CircleChips.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
+
+/** Sanitize search headline HTML to only allow <mark> tags for highlighting */
+function sanitizeHeadline(html: string | null | undefined): string {
+  if (!html) return '';
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS: ['mark'] });
+}
 
 interface Props {
   items: FriendGridItem[];
@@ -324,7 +330,7 @@ function getMatchSourceBadge(
           <tr class="bg-gray-50/50">
             <td colspan={columns.length + 1} class="py-1 px-3 pl-16">
               <div class="font-body text-sm text-gray-600 line-clamp-2 search-headline">
-                {@html item.headline}
+                {@html sanitizeHeadline(item.headline)}
               </div>
             </td>
           </tr>
@@ -402,7 +408,7 @@ function getMatchSourceBadge(
 
         {#if isSearchMode && item.headline}
           <div class="mt-2 font-body text-sm text-gray-600 line-clamp-2 search-headline">
-            {@html item.headline}
+            {@html sanitizeHeadline(item.headline)}
           </div>
         {/if}
 
