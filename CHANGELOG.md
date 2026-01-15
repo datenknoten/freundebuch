@@ -1,3 +1,14 @@
+## [2.42.0](https://github.com/datenknoten/freundebuch/compare/v2.41.3...v2.42.0) (2026-01-15)
+
+### Features
+
+* Add circles to search and filter results ([cae29d3](https://github.com/datenknoten/freundebuch/commit/cae29d388e5aa575860ca63eb0fbc50de8f16b09))
+
+### Bug Fixes
+
+* **frontend:** Improve circle facet filter UI ([fe720bf](https://github.com/datenknoten/freundebuch/commit/fe720bf22b1d48854c7959a9c9d4df8d79ffd725))
+* **frontend:** Use grid layout for filtered results on desktop ([9d207cc](https://github.com/datenknoten/freundebuch/commit/9d207cc140c2d31a14820d33cdbf53fade4b1235))
+
 ## [2.41.3](https://github.com/datenknoten/freundebuch/compare/v2.41.2...v2.41.3) (2026-01-14)
 
 ### Bug Fixes
