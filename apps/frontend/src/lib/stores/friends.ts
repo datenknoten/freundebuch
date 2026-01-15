@@ -1406,7 +1406,14 @@ function createFriendListFilterStore() {
       const filters: FacetFilters = {};
 
       // Parse string array filters
-      const stringArrayKeys = ['country', 'city', 'organization', 'job_title', 'department', 'circles'] as const;
+      const stringArrayKeys = [
+        'country',
+        'city',
+        'organization',
+        'job_title',
+        'department',
+        'circles',
+      ] as const;
       for (const key of stringArrayKeys) {
         const value = params.get(key);
         if (value) {
@@ -1417,7 +1424,11 @@ function createFriendListFilterStore() {
       // Parse relationship_category with proper type
       const relationshipCategory = params.get('relationship_category');
       if (relationshipCategory) {
-        filters.relationship_category = relationshipCategory.split(',') as ('family' | 'professional' | 'social')[];
+        filters.relationship_category = relationshipCategory.split(',') as (
+          | 'family'
+          | 'professional'
+          | 'social'
+        )[];
       }
 
       return { query, filters };

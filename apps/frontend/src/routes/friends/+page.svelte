@@ -12,7 +12,14 @@ let hasLoaded = $state(false);
 let friendListRef = $state<FriendList | null>(null);
 
 // Known facet filter keys for URL parsing
-const STRING_ARRAY_KEYS = ['country', 'city', 'organization', 'job_title', 'department', 'circles'] as const;
+const STRING_ARRAY_KEYS = [
+  'country',
+  'city',
+  'organization',
+  'job_title',
+  'department',
+  'circles',
+] as const;
 const ALL_FACET_KEYS = [...STRING_ARRAY_KEYS, 'relationship_category'] as const;
 
 // Get initial query and filters from URL
@@ -31,7 +38,11 @@ let initialFilters = $derived.by<FacetFilters>(() => {
   // Parse relationship_category with proper type
   const relationshipCategory = $page.url.searchParams.get('relationship_category');
   if (relationshipCategory) {
-    filters.relationship_category = relationshipCategory.split(',') as ('family' | 'professional' | 'social')[];
+    filters.relationship_category = relationshipCategory.split(',') as (
+      | 'family'
+      | 'professional'
+      | 'social'
+    )[];
   }
 
   return filters;
