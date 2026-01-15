@@ -326,7 +326,17 @@ sorted_results AS (
         (SELECT e.email_address FROM friends.friend_emails e
          WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
         (SELECT p.phone_number FROM friends.friend_phones p
-         WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
+         WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone,
+        -- Get circles for this friend
+        (SELECT COALESCE(json_agg(json_build_object(
+            'external_id', ci.external_id,
+            'name', ci.name,
+            'color', ci.color
+        ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)
+         FROM friends.circles ci
+         INNER JOIN friends.friend_circles fci ON fci.circle_id = ci.id
+         WHERE fci.friend_id = mc.id
+        ) as circles
     FROM matching_friends mc
     ORDER BY
         CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
@@ -352,6 +362,7 @@ SELECT
     sr.headline,
     sr.primary_email,
     sr.primary_phone,
+    sr.circles,
     tc.count as total_count
 FROM sorted_results sr
 CROSS JOIN total_count tc;
@@ -517,7 +528,17 @@ sorted_results AS (
         (SELECT e.email_address FROM friends.friend_emails e
          WHERE e.friend_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,
         (SELECT p.phone_number FROM friends.friend_phones p
-         WHERE p.friend_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone
+         WHERE p.friend_id = c.id AND p.is_primary = true LIMIT 1) as primary_phone,
+        -- Get circles for this friend
+        (SELECT COALESCE(json_agg(json_build_object(
+            'external_id', ci.external_id,
+            'name', ci.name,
+            'color', ci.color
+        ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)
+         FROM friends.circles ci
+         INNER JOIN friends.friend_circles fci ON fci.circle_id = ci.id
+         WHERE fci.friend_id = c.id
+        ) as circles
     FROM filtered_friends fc
     INNER JOIN friends.friends c ON c.id = fc.id
     ORDER BY
@@ -539,6 +560,7 @@ SELECT
     sr.job_title,
     sr.primary_email,
     sr.primary_phone,
+    sr.circles,
     tc.count as total_count
 FROM sorted_results sr
 CROSS JOIN total_count tc;

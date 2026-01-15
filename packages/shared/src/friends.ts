@@ -465,6 +465,8 @@ export interface GlobalSearchResult {
   headline: string | null;
   /** Where the match was found: friend fields, email, phone, or notes */
   matchSource: 'friend' | 'email' | 'phone' | 'notes' | null;
+  /** Circles the friend belongs to */
+  circles: CircleSummary[];
 }
 
 /** Sort options for search results */
