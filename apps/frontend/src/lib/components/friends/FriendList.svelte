@@ -2,7 +2,7 @@
 import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
 import { auth, birthdayFormat, friendsPageSize, friendsTableColumns } from '$lib/stores/auth';
-import { friendList, friends, isFriendsLoading } from '$lib/stores/friends';
+import { friendList, friendListFilter, friends, isFriendsLoading } from '$lib/stores/friends';
 import { visibleFriendIds } from '$lib/stores/ui';
 import {
   type ArrayFacetField,
@@ -24,10 +24,12 @@ import FriendGrid from './FriendGrid.svelte';
 
 interface Props {
   initialQuery?: string;
+  initialFilters?: FacetFilters;
   onQueryChange?: (query: string) => void;
+  onFiltersChange?: (filters: FacetFilters) => void;
 }
 
-let { initialQuery = '', onQueryChange }: Props = $props();
+let { initialQuery = '', initialFilters = {}, onQueryChange, onFiltersChange }: Props = $props();
 
 // List mode state
 let sortBy = $state<'display_name' | 'created_at' | 'updated_at'>('display_name');
@@ -46,7 +48,7 @@ let searchError = $state<string | null>(null);
 let inputElement = $state<HTMLInputElement | null>(null);
 
 // Facet state
-let activeFilters = $state<FacetFilters>({});
+let activeFilters = $state<FacetFilters>((() => ({ ...initialFilters }))());
 let facets = $state<FacetGroups | null>(null);
 let isFacetsLoading = $state(false);
 
@@ -61,6 +63,11 @@ let currentPageSize = $derived($friendsPageSize);
 
 // Return URL for navigation back from friend detail (preserves search/filter state)
 let returnUrl = $derived($page.url.pathname + $page.url.search);
+
+// Persist filter state to store for restoration when navigating back
+$effect(() => {
+  friendListFilter.setState(searchQuery, activeFilters);
+});
 
 // Columns - use user preferences or defaults
 let currentColumns = $derived<ColumnId[]>(
@@ -158,17 +165,20 @@ function clearSearch() {
 function handleFilterChange(newFilters: FacetFilters) {
   activeFilters = newFilters;
   searchPage = 1;
+  onFiltersChange?.(newFilters);
   performSearch();
 }
 
 function handleRemoveFilter(field: ArrayFacetField, value: string) {
   const current = (activeFilters[field] ?? []) as string[];
   const updated = current.filter((v) => v !== value);
-  activeFilters = {
+  const newFilters = {
     ...activeFilters,
     [field]: updated.length > 0 ? updated : undefined,
   };
+  activeFilters = newFilters;
   searchPage = 1;
+  onFiltersChange?.(newFilters);
 
   // If no more filters and no search query, just reload the facets
   if (!hasActiveFilters && !isSearchMode) {
@@ -184,6 +194,7 @@ function handleRemoveFilter(field: ArrayFacetField, value: string) {
 function handleClearAllFilters() {
   activeFilters = {};
   searchPage = 1;
+  onFiltersChange?.({});
 
   // If no search query, clear results and just reload facets
   if (!isSearchMode) {
@@ -289,10 +300,14 @@ export function goToNextPage() {
   }
 }
 
-// Initialize search if there's an initial query
+// Initialize search if there's an initial query or filters
 $effect(() => {
+  const hasInitialFilters = Object.values(initialFilters).some((arr) => arr && arr.length > 0);
   if (initialQuery && initialQuery.trim().length >= 2) {
     handleSearchInput(initialQuery);
+  } else if (hasInitialFilters) {
+    // Filters without query - trigger filter-only search
+    performSearch();
   }
 });
 

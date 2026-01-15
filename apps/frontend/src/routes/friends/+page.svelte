@@ -5,22 +5,73 @@ import { page } from '$app/stores';
 // biome-ignore lint/style/useImportType: FriendList is used both as type and value (bind:this)
 import FriendList from '$lib/components/friends/FriendList.svelte';
 import { friendsPageSize, isAuthInitialized } from '$lib/stores/auth';
-import { friends } from '$lib/stores/friends';
+import { friendListFilter, friends } from '$lib/stores/friends';
+import type { FacetFilters } from '$shared';
 
 let hasLoaded = $state(false);
 let friendListRef = $state<FriendList | null>(null);
 
-// Get initial query from URL
+// Known facet filter keys for URL parsing
+const STRING_ARRAY_KEYS = ['country', 'city', 'organization', 'job_title', 'department', 'circles'] as const;
+const ALL_FACET_KEYS = [...STRING_ARRAY_KEYS, 'relationship_category'] as const;
+
+// Get initial query and filters from URL
 let initialQuery = $derived($page.url.searchParams.get('q') ?? '');
+let initialFilters = $derived.by<FacetFilters>(() => {
+  const filters: FacetFilters = {};
+
+  // Parse string array filters
+  for (const key of STRING_ARRAY_KEYS) {
+    const value = $page.url.searchParams.get(key);
+    if (value) {
+      filters[key] = value.split(',');
+    }
+  }
+
+  // Parse relationship_category with proper type
+  const relationshipCategory = $page.url.searchParams.get('relationship_category');
+  if (relationshipCategory) {
+    filters.relationship_category = relationshipCategory.split(',') as ('family' | 'professional' | 'social')[];
+  }
+
+  return filters;
+});
 
 // Handle query changes from the FriendList component
 function handleQueryChange(query: string) {
+  updateUrl(query, undefined);
+}
+
+// Handle filter changes from the FriendList component
+function handleFiltersChange(filters: FacetFilters) {
+  updateUrl(undefined, filters);
+}
+
+// Update URL with query and/or filters
+function updateUrl(query?: string, filters?: FacetFilters) {
   const url = new URL($page.url);
 
-  if (query.trim()) {
-    url.searchParams.set('q', query.trim());
-  } else {
-    url.searchParams.delete('q');
+  // Update query if provided
+  if (query !== undefined) {
+    if (query.trim()) {
+      url.searchParams.set('q', query.trim());
+    } else {
+      url.searchParams.delete('q');
+    }
+  }
+
+  // Update filters if provided
+  if (filters !== undefined) {
+    // Remove all existing filter params
+    for (const key of ALL_FACET_KEYS) {
+      url.searchParams.delete(key);
+    }
+    // Add new filter params
+    for (const [key, values] of Object.entries(filters)) {
+      if (values && values.length > 0) {
+        url.searchParams.set(key, values.join(','));
+      }
+    }
   }
 
   // Update URL without navigation (replaceState)
@@ -78,7 +129,13 @@ onMount(() => {
         </a>
       </div>
 
-      <FriendList bind:this={friendListRef} {initialQuery} onQueryChange={handleQueryChange} />
+      <FriendList
+        bind:this={friendListRef}
+        {initialQuery}
+        {initialFilters}
+        onQueryChange={handleQueryChange}
+        onFiltersChange={handleFiltersChange}
+      />
     </div>
   </div>
 </div>

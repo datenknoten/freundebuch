@@ -6,6 +6,7 @@ import type {
   DateInput,
   Email,
   EmailInput,
+  FacetFilters,
   Friend,
   FriendCreateInput,
   FriendDate,
@@ -1318,3 +1319,128 @@ export const friendList = derived(friends, ($friends) => $friends.friends);
  * Derived store for relationship types
  */
 export const relationshipTypes = derived(friends, ($friends) => $friends.relationshipTypes);
+
+// =============================================================================
+// Friend List Filter State (persists search/filter state across navigation)
+// =============================================================================
+
+/**
+ * Friend list filter state interface
+ */
+interface FriendListFilterState {
+  query: string;
+  filters: FacetFilters;
+}
+
+/**
+ * Initial filter state
+ */
+const initialFilterState: FriendListFilterState = {
+  query: '',
+  filters: {},
+};
+
+/**
+ * Create the friend list filter store
+ * This persists the search query and facet filters so they survive navigation
+ */
+function createFriendListFilterStore() {
+  const { subscribe, set, update } = writable<FriendListFilterState>(initialFilterState);
+
+  return {
+    subscribe,
+
+    /**
+     * Update the search query
+     */
+    setQuery: (query: string) => {
+      update((state) => ({ ...state, query }));
+    },
+
+    /**
+     * Update the facet filters
+     */
+    setFilters: (filters: FacetFilters) => {
+      update((state) => ({ ...state, filters }));
+    },
+
+    /**
+     * Update both query and filters at once
+     */
+    setState: (query: string, filters: FacetFilters) => {
+      set({ query, filters });
+    },
+
+    /**
+     * Clear all filters and query
+     */
+    clear: () => {
+      set(initialFilterState);
+    },
+
+    /**
+     * Build URL search params from current state
+     */
+    buildSearchParams: (state: FriendListFilterState): URLSearchParams => {
+      const params = new URLSearchParams();
+
+      if (state.query.trim()) {
+        params.set('q', state.query.trim());
+      }
+
+      // Add facet filters to URL
+      for (const [key, values] of Object.entries(state.filters)) {
+        if (values && values.length > 0) {
+          params.set(key, values.join(','));
+        }
+      }
+
+      return params;
+    },
+
+    /**
+     * Parse URL search params into filter state
+     */
+    parseSearchParams: (params: URLSearchParams): FriendListFilterState => {
+      const query = params.get('q') ?? '';
+      const filters: FacetFilters = {};
+
+      // Parse string array filters
+      const stringArrayKeys = ['country', 'city', 'organization', 'job_title', 'department', 'circles'] as const;
+      for (const key of stringArrayKeys) {
+        const value = params.get(key);
+        if (value) {
+          filters[key] = value.split(',');
+        }
+      }
+
+      // Parse relationship_category with proper type
+      const relationshipCategory = params.get('relationship_category');
+      if (relationshipCategory) {
+        filters.relationship_category = relationshipCategory.split(',') as ('family' | 'professional' | 'social')[];
+      }
+
+      return { query, filters };
+    },
+  };
+}
+
+/**
+ * The global friend list filter store
+ */
+export const friendListFilter = createFriendListFilterStore();
+
+/**
+ * Derived store for the current filter query
+ */
+export const friendListQuery = derived(friendListFilter, ($filter) => $filter.query);
+
+/**
+ * Derived store for checking if any filters are active
+ */
+export const hasFriendListFilters = derived(
+  friendListFilter,
+  ($filter) =>
+    $filter.query.trim().length > 0 ||
+    Object.values($filter.filters).some((arr) => arr && arr.length > 0),
+);

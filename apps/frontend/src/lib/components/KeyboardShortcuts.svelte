@@ -2,8 +2,9 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { isAuthenticated } from '$lib/stores/auth';
-import { currentFriend } from '$lib/stores/friends';
+import { currentFriend, friendListFilter } from '$lib/stores/friends';
 import { isSearchOpen, search } from '$lib/stores/search';
+import { get } from 'svelte/store';
 import {
   getIndexFromHint,
   ITEMS_PER_GROUP,
@@ -92,9 +93,14 @@ function handleKeydown(e: KeyboardEvent) {
     e.preventDefault();
 
     switch (e.key) {
-      case 'f':
-        goto('/friends');
+      case 'f': {
+        // Restore filter state from store when navigating to friends
+        const filterState = get(friendListFilter);
+        const params = friendListFilter.buildSearchParams(filterState);
+        const queryString = params.toString();
+        goto(queryString ? `/friends?${queryString}` : '/friends');
         break;
+      }
       case 'h':
         goto('/');
         break;
