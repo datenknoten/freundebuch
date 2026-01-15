@@ -9,16 +9,17 @@ import {
   DEFAULT_COLUMNS,
   type FacetFilters,
   type FacetGroups,
+  type FriendGridItem,
   type GlobalSearchResult,
   type PageSize,
   type SearchSortBy,
+  searchResultToFriendGridItem,
+  toFriendGridItem,
 } from '$shared';
 import FacetChips from '../search/FacetChips.svelte';
 import FacetDropdown from '../search/FacetDropdown.svelte';
 import ColumnChooser from './ColumnChooser.svelte';
-import FriendListItem from './FriendListItem.svelte';
-import FriendTable from './FriendTable.svelte';
-import SearchResultItem from './SearchResultItem.svelte';
+import FriendGrid from './FriendGrid.svelte';
 
 interface Props {
   initialQuery?: string;
@@ -319,6 +320,15 @@ let displayTotalPages = $derived(
 );
 let currentSortBy = $derived(isSearchMode ? searchSortBy : sortBy);
 let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
+
+// Convert items to unified FriendGridItem format
+let gridItems = $derived.by<FriendGridItem[]>(() => {
+  if (isSearchMode || isFilterMode) {
+    return searchResults.map(searchResultToFriendGridItem);
+  } else {
+    return $friendList.map(toFriendGridItem);
+  }
+});
 </script>
 
 <div class="space-y-4">
@@ -507,127 +517,100 @@ let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
   </div>
 
   <!-- Content area -->
-  {#if isSearchMode || isFilterMode}
-    <!-- Search/Filter mode: show results -->
-    {#if isSearching && searchResults.length === 0}
-      <div class="flex justify-center py-12" aria-live="polite">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
-          <span class="sr-only">Loading results...</span>
-        </div>
+  {#if (isSearchMode || isFilterMode) && isSearching && searchResults.length === 0}
+    <div class="flex justify-center py-12" aria-live="polite">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
+        <span class="sr-only">Loading results...</span>
       </div>
-    {:else if showNoResults}
-      <!-- No results -->
-      <div class="text-center py-12 bg-gray-50 rounded-lg">
-        <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <h3 class="mt-4 text-lg font-heading text-gray-900">No friends found</h3>
-        <p class="mt-2 text-sm text-gray-600 font-body">
-          {#if isSearchMode}
-            No results for "{searchQuery}"{#if hasActiveFilters} with current filters{/if}
-          {:else}
-            No friends match the current filters
-          {/if}
-        </p>
-        <p class="mt-1 text-xs text-gray-400 font-body">
-          {#if isSearchMode}
-            Try a different search term or check your spelling
-          {:else}
-            Try adjusting or clearing the filters
-          {/if}
-        </p>
-        {#if hasActiveFilters}
-          <button
-            onclick={handleClearAllFilters}
-            class="mt-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
-          >
-            Clear filters
-          </button>
-        {/if}
+    </div>
+  {:else if (isSearchMode || isFilterMode) && showNoResults}
+    <!-- No results -->
+    <div class="text-center py-12 bg-gray-50 rounded-lg">
+      <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h3 class="mt-4 text-lg font-heading text-gray-900">No friends found</h3>
+      <p class="mt-2 text-sm text-gray-600 font-body">
         {#if isSearchMode}
-          <button
-            onclick={clearSearch}
-            class="mt-4 ml-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Clear search
-          </button>
+          No results for "{searchQuery}"{#if hasActiveFilters} with current filters{/if}
+        {:else}
+          No friends match the current filters
         {/if}
-      </div>
-    {:else}
-      <!-- Results list - grid on desktop, cards on mobile -->
-      <div class="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4" role="list" aria-label={isSearchMode ? "Search results" : "Filtered friends"}>
-        {#each searchResults as result, index (result.id)}
-          <SearchResultItem {result} {index} />
-        {/each}
-      </div>
-      <div class="md:hidden space-y-2" role="list" aria-label={isSearchMode ? "Search results" : "Filtered friends"}>
-        {#each searchResults as result, index (result.id)}
-          <SearchResultItem {result} {index} />
-        {/each}
-      </div>
-    {/if}
-  {:else}
-    <!-- Normal mode: show paginated friend list -->
-    {#if $isFriendsLoading}
-      <div class="flex justify-center py-12" aria-live="polite">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
-          <span class="sr-only">Loading friends...</span>
-        </div>
-      </div>
-    {:else if $friendList.length === 0}
-      <!-- Empty state -->
-      <div class="text-center py-12 bg-gray-50 rounded-lg">
-        <svg
-          class="mx-auto h-12 w-12 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
+      </p>
+      <p class="mt-1 text-xs text-gray-400 font-body">
+        {#if isSearchMode}
+          Try a different search term or check your spelling
+        {:else}
+          Try adjusting or clearing the filters
+        {/if}
+      </p>
+      {#if hasActiveFilters}
+        <button
+          onclick={handleClearAllFilters}
+          class="mt-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-        <h3 class="mt-4 text-lg font-heading text-gray-900">No friends yet</h3>
-        <p class="mt-2 text-sm text-gray-600 font-body">
-          Get started by adding your first friend.
-        </p>
-        <a
-          href="/friends/new"
-          class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
+          Clear filters
+        </button>
+      {/if}
+      {#if isSearchMode}
+        <button
+          onclick={clearSearch}
+          class="mt-4 ml-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
-          Add Friend
-        </a>
+          Clear search
+        </button>
+      {/if}
+    </div>
+  {:else if !isSearchMode && !isFilterMode && $isFriendsLoading}
+    <div class="flex justify-center py-12" aria-live="polite">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
+        <span class="sr-only">Loading friends...</span>
       </div>
-    {:else}
-      <!-- Friend list - Table on desktop, cards on mobile -->
-      <!-- Desktop: Table view -->
-      <div class="hidden md:block">
-        <FriendTable
-          friends={$friendList}
-          columns={currentColumns}
-          {sortBy}
-          {sortOrder}
-          birthdayFormat={$birthdayFormat}
-          onSortChange={handleTableSortChange}
+    </div>
+  {:else if !isSearchMode && !isFilterMode && $friendList.length === 0}
+    <!-- Empty state -->
+    <div class="text-center py-12 bg-gray-50 rounded-lg">
+      <svg
+        class="mx-auto h-12 w-12 text-gray-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
         />
-      </div>
-
-      <!-- Mobile: Card view -->
-      <div class="md:hidden space-y-2" role="list" aria-label="Friends">
-        {#each $friendList as friend, index (friend.id)}
-          <FriendListItem {friend} {index} />
-        {/each}
-      </div>
-    {/if}
+      </svg>
+      <h3 class="mt-4 text-lg font-heading text-gray-900">No friends yet</h3>
+      <p class="mt-2 text-sm text-gray-600 font-body">
+        Get started by adding your first friend.
+      </p>
+      <a
+        href="/friends/new"
+        class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Add Friend
+      </a>
+    </div>
+  {:else if gridItems.length > 0}
+    <!-- Unified Friend Grid - same component for both normal and search modes -->
+    <FriendGrid
+      items={gridItems}
+      columns={currentColumns}
+      sortBy={currentSortBy}
+      sortOrder={currentSortOrder}
+      birthdayFormat={$birthdayFormat}
+      isSearchMode={isSearchMode}
+      onSortChange={handleTableSortChange}
+    />
   {/if}
 </div>
