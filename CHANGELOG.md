@@ -1,3 +1,16 @@
+## [2.45.0](https://github.com/datenknoten/freundebuch/compare/v2.44.1...v2.45.0) (2026-01-15)
+
+### Features
+
+* **frontend:** Add extended keyboard hints for filters (a1, b2, etc.) ([a78976e](https://github.com/datenknoten/freundebuch/commit/a78976ea0afd22530881af7043c5df34c2848e00))
+* **frontend:** Add keyboard shortcuts for filter selection ([8c9b085](https://github.com/datenknoten/freundebuch/commit/8c9b08592ccf14b767600b7d492666f4b08cc883))
+* **frontend:** Persist friend list filters across navigation ([58a438c](https://github.com/datenknoten/freundebuch/commit/58a438cde4b440068a5530aaf12a3f39a06bbbb5))
+
+### Bug Fixes
+
+* **frontend:** Require Shift for help shortcut to not conflict with / ([90fb7be](https://github.com/datenknoten/freundebuch/commit/90fb7bef5e994a8855c736bdf025aed5abd338a2))
+* **frontend:** Use $state for container ref in NetworkGraph ([b9c66b5](https://github.com/datenknoten/freundebuch/commit/b9c66b5ed486cdc76a0023ed5d5c33acee04177a))
+
 ## [2.44.1](https://github.com/datenknoten/freundebuch/compare/v2.44.0...v2.44.1) (2026-01-15)
 
 ### Bug Fixes
