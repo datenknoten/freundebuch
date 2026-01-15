@@ -1,3 +1,9 @@
+## [2.44.1](https://github.com/datenknoten/freundebuch/compare/v2.44.0...v2.44.1) (2026-01-15)
+
+### Bug Fixes
+
+* **backend:** Regenerate PgTyped queries with correct parameter positions ([bd6429d](https://github.com/datenknoten/freundebuch/commit/bd6429d1bfeab1d5b4a9c4b65b4d69ad013dff31))
+
 ## [2.44.0](https://github.com/datenknoten/freundebuch/compare/v2.43.0...v2.44.0) (2026-01-15)
 
 ### Features
