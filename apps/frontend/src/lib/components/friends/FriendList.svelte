@@ -1,9 +1,10 @@
 <script lang="ts">
+import { onMount } from 'svelte';
 import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
 import { auth, birthdayFormat, friendsPageSize, friendsTableColumns } from '$lib/stores/auth';
 import { friendList, friendListFilter, friends, isFriendsLoading } from '$lib/stores/friends';
-import { visibleFriendIds } from '$lib/stores/ui';
+import { filterModeCategory, isFilterModeActive, visibleFriendIds } from '$lib/stores/ui';
 import {
   type ArrayFacetField,
   type ColumnId,
@@ -18,9 +19,13 @@ import {
   toFriendGridItem,
 } from '$shared';
 import FacetChips from '../search/FacetChips.svelte';
+// biome-ignore lint/style/useImportType: FacetDropdown is used both as type and value (bind:this)
 import FacetDropdown from '../search/FacetDropdown.svelte';
 import ColumnChooser from './ColumnChooser.svelte';
 import FriendGrid from './FriendGrid.svelte';
+
+// Reference to FacetDropdown for keyboard filter control
+let facetDropdownRef = $state<FacetDropdown | null>(null);
 
 interface Props {
   initialQuery?: string;
@@ -331,6 +336,29 @@ $effect(() => {
   }
 });
 
+// Listen for keyboard filter shortcuts
+onMount(() => {
+  function handleFilterToggle(e: Event) {
+    const event = e as CustomEvent<{ category: string; index: number }>;
+    facetDropdownRef?.toggleFilterByIndex(event.detail.index);
+  }
+
+  function handleClearFilters() {
+    handleClearAllFilters();
+    // Reset filter mode state
+    isFilterModeActive.set(false);
+    filterModeCategory.set(null);
+  }
+
+  window.addEventListener('shortcut:filter-toggle', handleFilterToggle);
+  window.addEventListener('shortcut:clear-filters', handleClearFilters);
+
+  return () => {
+    window.removeEventListener('shortcut:filter-toggle', handleFilterToggle);
+    window.removeEventListener('shortcut:clear-filters', handleClearFilters);
+  };
+});
+
 // Computed values for display
 let displayTotal = $derived(isSearchMode || isFilterMode ? searchTotal : $friends.total);
 let displayPage = $derived(isSearchMode || isFilterMode ? searchPage : $friends.page);
@@ -407,6 +435,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
   <!-- Facet filters bar (always visible) -->
   <div class="flex flex-wrap items-center gap-2 py-2">
     <FacetDropdown
+      bind:this={facetDropdownRef}
       {facets}
       {activeFilters}
       onFilterChange={handleFilterChange}

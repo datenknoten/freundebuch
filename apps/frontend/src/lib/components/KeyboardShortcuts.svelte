@@ -1,13 +1,17 @@
 <script lang="ts">
+import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { isAuthenticated } from '$lib/stores/auth';
 import { currentFriend, friendListFilter } from '$lib/stores/friends';
 import { isSearchOpen, search } from '$lib/stores/search';
-import { get } from 'svelte/store';
 import {
+  FILTER_CATEGORY_KEYS,
+  FILTER_CATEGORY_LABELS,
+  filterModeCategory,
   getIndexFromHint,
   ITEMS_PER_GROUP,
+  isFilterModeActive,
   isModalOpen,
   isOpenModeActive,
   openModePrefix,
@@ -22,6 +26,8 @@ function clearPending() {
   pendingKey = null;
   isOpenModeActive.set(false);
   openModePrefix.set(null);
+  isFilterModeActive.set(false);
+  filterModeCategory.set(null);
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -213,6 +219,59 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
+  // Handle two-key sequences (f+...) for filter selection - only on friends page
+  if (pendingKey === 'f') {
+    const keyLower = e.key.toLowerCase();
+    const category = FILTER_CATEGORY_KEYS[keyLower];
+
+    // Handle 'x' to clear all filters
+    if (keyLower === 'x') {
+      e.preventDefault();
+      clearPending();
+      window.dispatchEvent(new CustomEvent('shortcut:clear-filters'));
+      return;
+    }
+
+    // Handle category selection
+    if (category) {
+      e.preventDefault();
+      isFilterModeActive.set(true);
+      filterModeCategory.set(category);
+      window.dispatchEvent(new CustomEvent('shortcut:filter-category', { detail: { category } }));
+      // Don't clear pending - stay in filter mode for value selection
+      return;
+    }
+
+    // If in filter mode (category selected), handle number/letter selection
+    if ($isFilterModeActive && $filterModeCategory) {
+      const keyNum = parseInt(e.key, 10);
+
+      // Handle direct number selection (1-9)
+      if (keyNum >= 1 && keyNum <= 9) {
+        e.preventDefault();
+        const index = keyNum - 1;
+        window.dispatchEvent(
+          new CustomEvent('shortcut:filter-toggle', {
+            detail: { category: $filterModeCategory, index },
+          }),
+        );
+        return;
+      }
+
+      // Handle letter prefix for extended selection (a-z)
+      if (keyLower >= 'a' && keyLower <= 'z' && !FILTER_CATEGORY_KEYS[keyLower]) {
+        // This could be start of a two-char hint like 'a1'
+        // We'll need to track this similar to openModePrefix
+        // For now, just support 1-9 direct selection
+        return;
+      }
+    }
+
+    // Invalid key, clear pending state
+    clearPending();
+    return;
+  }
+
   // Start two-key sequence (no timeout - panel stays until action or Escape)
   if (e.key === 'g') {
     e.preventDefault();
@@ -232,6 +291,13 @@ function handleKeydown(e: KeyboardEvent) {
     e.preventDefault();
     pendingKey = 'o';
     isOpenModeActive.set(true);
+    return;
+  }
+
+  // Start filter sequence (only on friends list page)
+  if (e.key === 'f' && $page.url.pathname === '/friends') {
+    e.preventDefault();
+    pendingKey = 'f';
     return;
   }
 
@@ -416,6 +482,47 @@ function closeHelp() {
               <div class="flex justify-between items-center">
                 <span class="text-gray-700">Next Page</span>
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">&gt;</kbd>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filters (on friends list) -->
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Filters <span class="text-xs font-normal normal-case">(on friends list)</span>
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Filter by Country</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">c</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Filter by City</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">i</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Filter by Organization</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Clear all filters</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">x</kbd>
+                </div>
               </div>
             </div>
           </div>
@@ -609,5 +716,66 @@ function closeHelp() {
         Press the key shown on a friend to open it
       {/if}
     </div>
+  </div>
+{:else if pendingKey === 'f'}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-64">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">
+        {#if $filterModeCategory}
+          Filter: {FILTER_CATEGORY_LABELS[$filterModeCategory]?.label ?? $filterModeCategory}
+        {:else}
+          Filter by...
+        {/if}
+      </span>
+      <span class="text-xs text-gray-500 ml-2">
+        {#if $filterModeCategory}
+          Press 1-9 to toggle or Esc to exit
+        {:else}
+          Press key or Esc to cancel
+        {/if}
+      </span>
+    </div>
+    {#if $filterModeCategory}
+      <div class="p-3 font-body text-sm text-gray-600">
+        Press numbers to toggle filter values
+      </div>
+    {:else}
+      <div class="p-2 space-y-1 font-body text-sm">
+        <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+          <span class="text-gray-700">Country</span>
+          <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">c</kbd>
+        </div>
+        <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+          <span class="text-gray-700">City</span>
+          <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">i</kbd>
+        </div>
+        <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+          <span class="text-gray-700">Organization</span>
+          <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">o</kbd>
+        </div>
+        <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+          <span class="text-gray-700">Job Title</span>
+          <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">j</kbd>
+        </div>
+        <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+          <span class="text-gray-700">Department</span>
+          <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">d</kbd>
+        </div>
+        <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+          <span class="text-gray-700">Relationship</span>
+          <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">r</kbd>
+        </div>
+        <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+          <span class="text-gray-700">Circles</span>
+          <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">l</kbd>
+        </div>
+        <div class="border-t border-gray-200 mt-2 pt-2">
+          <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-red-50">
+            <span class="text-red-600">Clear all filters</span>
+            <kbd class="px-1.5 py-0.5 bg-red-50 border border-red-200 rounded text-xs font-mono text-red-600">x</kbd>
+          </div>
+        </div>
+      </div>
+    {/if}
   </div>
 {/if}
