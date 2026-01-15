@@ -1,10 +1,12 @@
 <script lang="ts">
 import {
   type ArrayFacetField,
+  type CircleFacetValue,
   type FacetFilters,
   type FacetGroups,
   isArrayFacetField,
 } from '$shared';
+import CircleChip from '../circles/CircleChip.svelte';
 
 interface Props {
   facets: FacetGroups | null;
@@ -14,6 +16,11 @@ interface Props {
 }
 
 let { facets, activeFilters, onFilterChange, isLoading = false }: Props = $props();
+
+// Filter circles to only show those with members (count > 0)
+let circlesWithMembers = $derived<CircleFacetValue[]>(
+  facets?.circles.filter((c) => c.count > 0) ?? [],
+);
 let isOpen = $state(false);
 
 // Count total active filters (only array-type fields)
@@ -26,13 +33,13 @@ let activeCount = $derived(
   }, 0),
 );
 
-// Check if facets are available
+// Check if facets are available (use circlesWithMembers for circle check)
 let hasFacets = $derived(
   facets &&
     (facets.location.length > 0 ||
       facets.professional.length > 0 ||
       facets.relationship.length > 0 ||
-      facets.circles.length > 0),
+      circlesWithMembers.length > 0),
 );
 
 function toggleFilter(field: ArrayFacetField, value: string) {
@@ -205,12 +212,12 @@ $effect(() => {
       {/if}
 
       <!-- Circles Facets -->
-      {#if facets && facets.circles.length > 0}
+      {#if circlesWithMembers.length > 0}
         <div class="pt-2 border-t border-gray-100">
           <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Circles
           </h4>
-          <div class="space-y-1 max-h-32 overflow-y-auto">
+          <div class="space-y-1">
             <!-- No Circle option -->
             <label
               class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
@@ -223,7 +230,7 @@ $effect(() => {
               />
               <span class="flex-1 italic text-gray-500">No Circle</span>
             </label>
-            {#each facets.circles as circle}
+            {#each circlesWithMembers as circle}
               <label
                 class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
               >
@@ -233,12 +240,11 @@ $effect(() => {
                   onchange={() => toggleFilter('circles', circle.value)}
                   class="rounded border-gray-300 text-forest focus:ring-forest"
                 />
-                <span
-                  class="w-3 h-3 rounded-full flex-shrink-0"
-                  style="background-color: {circle.color}"
-                ></span>
-                <span class="flex-1 truncate">{circle.label}</span>
-                <span class="text-xs text-gray-400">{circle.count}</span>
+                <CircleChip
+                  circle={{ id: circle.value, name: circle.label, color: circle.color }}
+                  size="sm"
+                />
+                <span class="text-xs text-gray-400 ml-auto">{circle.count}</span>
               </label>
             {/each}
           </div>
