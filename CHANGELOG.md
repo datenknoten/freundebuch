@@ -1,3 +1,9 @@
+## [2.46.2](https://github.com/datenknoten/freundebuch/compare/v2.46.1...v2.46.2) (2026-01-16)
+
+### Bug Fixes
+
+* **frontend:** Fix filter modal not closing on Escape key ([68bc68b](https://github.com/datenknoten/freundebuch/commit/68bc68bd61670fee45de3bb87f065fd7a3637268))
+
 ## [2.46.1](https://github.com/datenknoten/freundebuch/compare/v2.46.0...v2.46.1) (2026-01-16)
 
 ### Bug Fixes
