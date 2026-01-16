@@ -1,5 +1,11 @@
 <script lang="ts">
-import { filterModeCategory, getKeyboardHint, isFilterModeActive } from '$lib/stores/ui';
+import { tick } from 'svelte';
+import {
+  filterModeCategory,
+  filterModePrefix,
+  getKeyboardHint,
+  isFilterModeActive,
+} from '$lib/stores/ui';
 import {
   type ArrayFacetField,
   type CircleFacetValue,
@@ -23,6 +29,13 @@ let circlesWithMembers = $derived<CircleFacetValue[]>(
   facets?.circles.filter((c) => c.count > 0) ?? [],
 );
 let isOpen = $state(false);
+
+// References for auto-scrolling to sections
+let locationSectionRef = $state<HTMLDivElement | null>(null);
+let professionalSectionRef = $state<HTMLDivElement | null>(null);
+let relationshipSectionRef = $state<HTMLDivElement | null>(null);
+let circlesSectionRef = $state<HTMLDivElement | null>(null);
+let modalContentRef = $state<HTMLDivElement | null>(null);
 
 // Maximum items to show with keyboard hints (26 letters * 9 numbers = 234 max)
 const MAX_KEYBOARD_ITEMS = 234;
@@ -95,12 +108,51 @@ let currentCategoryValues = $derived(
   $filterModeCategory ? getCategoryValues($filterModeCategory) : [],
 );
 
-// Auto-open dropdown when filter mode activates
+// Auto-open dropdown when filter mode activates and scroll to selected section
 $effect(() => {
   if ($isFilterModeActive && $filterModeCategory) {
     isOpen = true;
+
+    // Scroll to the selected category section after the modal renders
+    tick().then(() => {
+      const category = $filterModeCategory;
+      let targetRef: HTMLDivElement | null = null;
+
+      if (category === 'country' || category === 'city') {
+        targetRef = locationSectionRef;
+      } else if (
+        category === 'organization' ||
+        category === 'job_title' ||
+        category === 'department'
+      ) {
+        targetRef = professionalSectionRef;
+      } else if (category === 'relationship_category') {
+        targetRef = relationshipSectionRef;
+      } else if (category === 'circles') {
+        targetRef = circlesSectionRef;
+      }
+
+      if (targetRef && modalContentRef) {
+        targetRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
   }
 });
+
+// Close modal when filter mode is deactivated
+$effect(() => {
+  if (!$isFilterModeActive && isOpen) {
+    // Don't auto-close on mode deactivation - let user close manually or via Escape
+  }
+});
+
+// Close modal and clear filter mode
+function closeModal() {
+  isOpen = false;
+  isFilterModeActive.set(false);
+  filterModeCategory.set(null);
+  filterModePrefix.set(null);
+}
 
 // Method to toggle filter by index (called from keyboard shortcuts)
 export function toggleFilterByIndex(index: number) {
@@ -159,6 +211,17 @@ $effect(() => {
 });
 </script>
 
+<!-- Handle Escape key to close modal -->
+<svelte:window
+  onkeydown={(e) => {
+    if (e.key === 'Escape' && isOpen && $isFilterModeActive) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeModal();
+    }
+  }}
+/>
+
 <div class="relative facet-dropdown">
   <button
     type="button"
@@ -206,7 +269,187 @@ $effect(() => {
     {/if}
   </button>
 
-  {#if isOpen && hasFacets}
+  <!-- Modal overlay for keyboard mode -->
+  {#if isOpen && hasFacets && $isFilterModeActive}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_interactive_supports_focus -->
+    <div
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      onclick={closeModal}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Filter selection"
+    >
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <div
+        class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto"
+        onclick={(e) => e.stopPropagation()}
+        bind:this={modalContentRef}
+      >
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <h2 class="text-lg font-heading text-forest">Filters</h2>
+          <button
+            onclick={closeModal}
+            class="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+            aria-label="Close"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="p-4">
+          <!-- Location Facets -->
+          {#if facets && facets.location.length > 0}
+            <div class="mb-4" bind:this={locationSectionRef}>
+              <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Location
+              </h4>
+              {#each facets.location as group}
+                {@const isKeyboardCategory = $filterModeCategory === group.field}
+                <div class="mb-2" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-2={isKeyboardCategory}>
+                  <span class="text-xs text-gray-400">{group.label}</span>
+                  <div class="mt-1 space-y-1">
+                    {#each group.values.slice(0, 27) as facet, i}
+                      <label
+                        class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+                      >
+                        {#if isKeyboardCategory}
+                          <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i)}</kbd>
+                        {/if}
+                        <input
+                          type="checkbox"
+                          checked={isFilterActive(group.field, facet.value)}
+                          onchange={() => toggleFilter(group.field, facet.value)}
+                          class="rounded border-gray-300 text-forest focus:ring-forest"
+                        />
+                        <span class="flex-1 truncate">{facet.value}</span>
+                        <span class="text-xs text-gray-400">{facet.count}</span>
+                      </label>
+                    {/each}
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
+
+          <!-- Professional Facets -->
+          {#if facets && facets.professional.length > 0}
+            <div class="mb-4 pt-2 border-t border-gray-100" bind:this={professionalSectionRef}>
+              <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Professional
+              </h4>
+              {#each facets.professional as group}
+                {@const isKeyboardCategory = $filterModeCategory === group.field}
+                <div class="mb-2" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-2={isKeyboardCategory}>
+                  <span class="text-xs text-gray-400">{group.label}</span>
+                  <div class="mt-1 space-y-1">
+                    {#each group.values.slice(0, 27) as facet, i}
+                      <label
+                        class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+                      >
+                        {#if isKeyboardCategory}
+                          <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i)}</kbd>
+                        {/if}
+                        <input
+                          type="checkbox"
+                          checked={isFilterActive(group.field, facet.value)}
+                          onchange={() => toggleFilter(group.field, facet.value)}
+                          class="rounded border-gray-300 text-forest focus:ring-forest"
+                        />
+                        <span class="flex-1 truncate">{facet.value}</span>
+                        <span class="text-xs text-gray-400">{facet.count}</span>
+                      </label>
+                    {/each}
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
+
+          <!-- Relationship Facets -->
+          {#if facets && facets.relationship.length > 0}
+            <div class="pt-2 border-t border-gray-100 mb-4" bind:this={relationshipSectionRef}>
+              <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Relationship
+              </h4>
+              {#each facets.relationship as group}
+                {@const isKeyboardCategory = $filterModeCategory === group.field}
+                <div class="space-y-1" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-2={isKeyboardCategory}>
+                  {#each group.values as facet, i}
+                    <label
+                      class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+                    >
+                      {#if isKeyboardCategory}
+                        <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i)}</kbd>
+                      {/if}
+                      <input
+                        type="checkbox"
+                        checked={isFilterActive(group.field, facet.value)}
+                        onchange={() => toggleFilter(group.field, facet.value)}
+                        class="rounded border-gray-300 text-forest focus:ring-forest"
+                      />
+                      <span class="flex-1 capitalize">{facet.value}</span>
+                      <span class="text-xs text-gray-400">{facet.count}</span>
+                    </label>
+                  {/each}
+                </div>
+              {/each}
+            </div>
+          {/if}
+
+          <!-- Circles Facets -->
+          {#if circlesWithMembers.length > 0}
+            {@const isKeyboardCategory = $filterModeCategory === 'circles'}
+            <div class="pt-2 border-t border-gray-100" bind:this={circlesSectionRef}>
+              <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Circles
+              </h4>
+              <div class="space-y-1" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-2={isKeyboardCategory}>
+                <!-- No Circle option -->
+                <label
+                  class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+                >
+                  {#if isKeyboardCategory}
+                    <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">1</kbd>
+                  {/if}
+                  <input
+                    type="checkbox"
+                    checked={isFilterActive('circles', 'no-circle')}
+                    onchange={() => toggleFilter('circles', 'no-circle')}
+                    class="rounded border-gray-300 text-forest focus:ring-forest"
+                  />
+                  <span class="flex-1 italic text-gray-500">No Circle</span>
+                </label>
+                {#each circlesWithMembers.slice(0, 26) as circle, i}
+                  <label
+                    class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+                  >
+                    {#if isKeyboardCategory}
+                      <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i + 1)}</kbd>
+                    {/if}
+                    <input
+                      type="checkbox"
+                      checked={isFilterActive('circles', circle.value)}
+                      onchange={() => toggleFilter('circles', circle.value)}
+                      class="rounded border-gray-300 text-forest focus:ring-forest"
+                    />
+                    <CircleChip
+                      circle={{ id: circle.value, name: circle.label, color: circle.color }}
+                      size="sm"
+                    />
+                    <span class="text-xs text-gray-400 ml-auto">{circle.count}</span>
+                  </label>
+                {/each}
+              </div>
+            </div>
+          {/if}
+        </div>
+      </div>
+    </div>
+  <!-- Regular dropdown for non-keyboard mode -->
+  {:else if isOpen && hasFacets}
     <div
       class="absolute left-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 p-4 max-h-80 overflow-y-auto"
     >
@@ -217,18 +460,13 @@ $effect(() => {
             Location
           </h4>
           {#each facets.location as group}
-            {@const isKeyboardCategory =
-              $isFilterModeActive && $filterModeCategory === group.field}
-            <div class="mb-2" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-1={isKeyboardCategory}>
+            <div class="mb-2">
               <span class="text-xs text-gray-400">{group.label}</span>
-              <div class="mt-1 space-y-1 overflow-y-auto" class:max-h-24={!isKeyboardCategory} class:max-h-64={isKeyboardCategory}>
-                {#each group.values.slice(0, isKeyboardCategory ? 27 : 8) as facet, i}
+              <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
+                {#each group.values.slice(0, 8) as facet}
                   <label
                     class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                   >
-                    {#if isKeyboardCategory}
-                      <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i)}</kbd>
-                    {/if}
                     <input
                       type="checkbox"
                       checked={isFilterActive(group.field, facet.value)}
@@ -252,18 +490,13 @@ $effect(() => {
             Professional
           </h4>
           {#each facets.professional as group}
-            {@const isKeyboardCategory =
-              $isFilterModeActive && $filterModeCategory === group.field}
-            <div class="mb-2" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-1={isKeyboardCategory}>
+            <div class="mb-2">
               <span class="text-xs text-gray-400">{group.label}</span>
-              <div class="mt-1 space-y-1 overflow-y-auto" class:max-h-24={!isKeyboardCategory} class:max-h-64={isKeyboardCategory}>
-                {#each group.values.slice(0, isKeyboardCategory ? 27 : 8) as facet, i}
+              <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
+                {#each group.values.slice(0, 8) as facet}
                   <label
                     class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                   >
-                    {#if isKeyboardCategory}
-                      <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i)}</kbd>
-                    {/if}
                     <input
                       type="checkbox"
                       checked={isFilterActive(group.field, facet.value)}
@@ -287,16 +520,11 @@ $effect(() => {
             Relationship
           </h4>
           {#each facets.relationship as group}
-            {@const isKeyboardCategory =
-              $isFilterModeActive && $filterModeCategory === group.field}
-            <div class="space-y-1" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-1={isKeyboardCategory}>
-              {#each group.values as facet, i}
+            <div class="space-y-1">
+              {#each group.values as facet}
                 <label
                   class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                 >
-                  {#if isKeyboardCategory}
-                    <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i)}</kbd>
-                  {/if}
                   <input
                     type="checkbox"
                     checked={isFilterActive(group.field, facet.value)}
@@ -314,19 +542,15 @@ $effect(() => {
 
       <!-- Circles Facets -->
       {#if circlesWithMembers.length > 0}
-        {@const isKeyboardCategory = $isFilterModeActive && $filterModeCategory === 'circles'}
         <div class="pt-2 border-t border-gray-100">
           <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Circles
           </h4>
-          <div class="space-y-1 overflow-y-auto" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-1={isKeyboardCategory} class:max-h-64={isKeyboardCategory}>
+          <div class="space-y-1">
             <!-- No Circle option -->
             <label
               class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
             >
-              {#if isKeyboardCategory}
-                <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">1</kbd>
-              {/if}
               <input
                 type="checkbox"
                 checked={isFilterActive('circles', 'no-circle')}
@@ -335,13 +559,10 @@ $effect(() => {
               />
               <span class="flex-1 italic text-gray-500">No Circle</span>
             </label>
-            {#each circlesWithMembers.slice(0, isKeyboardCategory ? 26 : 8) as circle, i}
+            {#each circlesWithMembers.slice(0, 8) as circle}
               <label
                 class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
               >
-                {#if isKeyboardCategory}
-                  <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i + 1)}</kbd>
-                {/if}
                 <input
                   type="checkbox"
                   checked={isFilterActive('circles', circle.value)}

@@ -284,7 +284,13 @@ function handleKeydown(e: KeyboardEvent) {
       }
 
       // Check if it's a letter for extended navigation (not a category key)
-      if (keyLower >= 'a' && keyLower <= 'z' && !FILTER_CATEGORY_KEYS[keyLower]) {
+      // Must be single character to avoid capturing modifier keys like "shift"
+      if (
+        keyLower.length === 1 &&
+        keyLower >= 'a' &&
+        keyLower <= 'z' &&
+        !FILTER_CATEGORY_KEYS[keyLower]
+      ) {
         e.preventDefault();
         filterModePrefix.set(keyLower);
         return;
