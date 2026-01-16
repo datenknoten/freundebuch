@@ -1,3 +1,13 @@
+## [2.46.0](https://github.com/datenknoten/freundebuch/compare/v2.45.1...v2.46.0) (2026-01-16)
+
+### Features
+
+* **all:** Split monolithic container into multi-service architecture ([1d12282](https://github.com/datenknoten/freundebuch/commit/1d122825edb36abe136f9f94045e2a8ca4d13e75))
+
+### Bug Fixes
+
+* **ci:** Move secret reference out of matrix definition ([92bb822](https://github.com/datenknoten/freundebuch/commit/92bb82224e168d439db342de42226e23381326b4))
+
 ## [2.45.1](https://github.com/datenknoten/freundebuch/compare/v2.45.0...v2.45.1) (2026-01-16)
 
 ### Bug Fixes
