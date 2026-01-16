@@ -42,6 +42,8 @@ WITH matching_friends AS (
       AND (
           -- Full-text search on friend fields
           c.search_vector @@ websearch_to_tsquery('english', :query)
+          -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
+          OR c.display_name ILIKE :wildcardQuery
           -- OR matches from joined tables
           OR e.id IS NOT NULL
           OR p.id IS NOT NULL
@@ -118,6 +120,8 @@ WITH matching_friends AS (
       AND (
           -- Full-text search on friend fields
           c.search_vector @@ websearch_to_tsquery('english', :query)
+          -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
+          OR c.display_name ILIKE :wildcardQuery
           -- OR matches from joined tables
           OR e.id IS NOT NULL
           OR p.id IS NOT NULL
@@ -234,6 +238,8 @@ WITH base_matches AS (
       AND c.deleted_at IS NULL
       AND (
           c.search_vector @@ websearch_to_tsquery('english', :query)
+          -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
+          OR c.display_name ILIKE :wildcardQuery
           OR e.id IS NOT NULL
           OR p.id IS NOT NULL
           OR r.id IS NOT NULL
@@ -394,6 +400,8 @@ WITH base_matches AS (
       AND c.deleted_at IS NULL
       AND (
           c.search_vector @@ websearch_to_tsquery('english', :query)
+          -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
+          OR c.display_name ILIKE :wildcardQuery
           OR e.id IS NOT NULL
           OR p.id IS NOT NULL
           OR r.id IS NOT NULL
