@@ -1,33 +1,15 @@
 services:
-  freundebuch:
-    image: ghcr.io/enko/freundebuch2:latest
-    container_name: freundebuch
+  nginx:
+    image: ghcr.io/enko/freundebuch2-nginx:${VERSION:-latest}
+    container_name: freundebuch-nginx
     restart: unless-stopped
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      DATABASE_POOL_MIN: ${DATABASE_POOL_MIN:-2}
-      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-10}
-
-      # Server
-      NODE_ENV: production
-      PORT: 3000
-      FRONTEND_URL: https://freundebuch.schumacher.im
-      BACKEND_URL: https://freundebuch.schumacher.im
-
-      # Authentication (set these in .env or as secrets)
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRY: ${JWT_EXPIRY:-604800}
-      SESSION_SECRET: ${SESSION_SECRET}
-      SESSION_EXPIRY_DAYS: ${SESSION_EXPIRY_DAYS:-7}
-      PASSWORD_RESET_EXPIRY_HOURS: ${PASSWORD_RESET_EXPIRY_HOURS:-1}
-
-      # Logging
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      BACKEND_HOST: backend
+      BACKEND_PORT: 3000
+      SABREDAV_HOST: sabredav
+      SABREDAV_PORT: 9000
       NGINX_ACCESS_LOG: ${NGINX_ACCESS_LOG:-off}
       NGINX_ERROR_LOG_LEVEL: ${NGINX_ERROR_LOG_LEVEL:-warn}
-    volumes:
-      - freundebuch_uploads:/app/uploads
     networks:
       - traefik
       - internal
@@ -45,11 +27,70 @@ services:
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    depends_on:
+      backend:
+        condition: service_healthy
+      sabredav:
+        condition: service_healthy
+
+  backend:
+    image: ghcr.io/enko/freundebuch2-backend:${VERSION:-latest}
+    container_name: freundebuch-backend
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_POOL_MIN: ${DATABASE_POOL_MIN:-2}
+      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-10}
+
+      # Server
+      NODE_ENV: production
+      PORT: 3000
+      FRONTEND_URL: https://freundebuch.schumacher.im
+      BACKEND_URL: https://freundebuch.schumacher.im
+
+      # Authentication
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRY: ${JWT_EXPIRY:-604800}
+      SESSION_SECRET: ${SESSION_SECRET}
+      SESSION_EXPIRY_DAYS: ${SESSION_EXPIRY_DAYS:-7}
+      PASSWORD_RESET_EXPIRY_HOURS: ${PASSWORD_RESET_EXPIRY_HOURS:-1}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - freundebuch_uploads:/app/uploads
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  sabredav:
+    image: ghcr.io/enko/freundebuch2-sabredav:${VERSION:-latest}
+    container_name: freundebuch-sabredav
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pidof php-fpm > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy

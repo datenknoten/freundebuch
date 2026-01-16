@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1.4
+# Production Dockerfile for Nginx (frontend + reverse proxy)
+# ============================================
+
+# Stage 1: Build frontend
+FROM node:24-bookworm-slim AS builder
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+
+# Copy workspace configuration
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY tsconfig.base.json ./
+
+# Copy package.json files for dependency resolution
+COPY apps/frontend/package.json ./apps/frontend/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install dependencies with cache mount
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+# Copy source code
+COPY packages/shared ./packages/shared
+COPY apps/frontend ./apps/frontend
+
+# Build shared package and frontend
+# VITE_API_URL is empty for same-origin requests via nginx proxy
+ARG VITE_SENTRY_DSN=""
+ENV VITE_API_URL=""
+ENV VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+
+RUN pnpm --filter @freundebuch/shared run build && \
+    pnpm --filter @freundebuch/frontend run build
+
+# Stage 2: Production nginx
+FROM nginx:1.27-alpine AS production
+
+# Install envsubst for config templating
+RUN apk add --no-cache gettext
+
+# Copy built static files
+COPY --from=builder /app/apps/frontend/build /app/frontend
+
+# Copy nginx configuration template and entrypoint
+COPY docker/nginx.multiservice.conf.template /etc/nginx/nginx.conf.template
+COPY docker/nginx-entrypoint.sh /docker-entrypoint.d/40-envsubst-template.sh
+RUN chmod +x /docker-entrypoint.d/40-envsubst-template.sh
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost/index.html || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

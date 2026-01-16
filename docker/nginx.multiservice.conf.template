@@ -1,0 +1,152 @@
+worker_processes auto;
+error_log /dev/stderr ${NGINX_ERROR_LOG_LEVEL};
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+    # Access log: configurable via environment variable
+    access_log ${NGINX_ACCESS_LOG_LINE};
+
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml application/json application/javascript
+               application/xml application/xml+rss text/javascript application/x-javascript
+               image/svg+xml;
+
+    # Upstream for Node.js backend (separate container)
+    upstream backend {
+        server ${BACKEND_HOST}:${BACKEND_PORT};
+        keepalive 32;
+    }
+
+    # Upstream for PHP-FPM SabreDAV (separate container)
+    upstream sabredav {
+        server ${SABREDAV_HOST}:${SABREDAV_PORT};
+    }
+
+    server {
+        listen 80;
+        server_name _;
+
+        # Security headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+
+        # Increase client body size for vCard uploads
+        client_max_body_size 10M;
+
+        # Static frontend files
+        root /app/frontend;
+        index index.html;
+
+        # Well-known CardDAV/CalDAV discovery (RFC 6764)
+        location = /.well-known/carddav {
+            return 301 /carddav/;
+        }
+
+        location = /.well-known/caldav {
+            return 301 /caldav/;
+        }
+
+        # CardDAV/CalDAV - route to SabreDAV (PHP-FPM)
+        location ~ ^/(carddav|caldav)(/.*)?$ {
+            fastcgi_pass sabredav;
+            fastcgi_param SCRIPT_FILENAME /app/public/index.php;
+            fastcgi_param SCRIPT_NAME /index.php;
+            fastcgi_param REQUEST_URI $request_uri;
+            fastcgi_param REQUEST_METHOD $request_method;
+            fastcgi_param CONTENT_TYPE $content_type;
+            fastcgi_param CONTENT_LENGTH $content_length;
+
+            include fastcgi_params;
+
+            # WebDAV methods need longer timeouts
+            fastcgi_read_timeout 300;
+            fastcgi_send_timeout 300;
+
+            # Pass through authentication headers
+            fastcgi_param HTTP_AUTHORIZATION $http_authorization;
+        }
+
+        # Health check endpoint (directly from backend)
+        location = /health {
+            proxy_pass http://backend;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # API routes - proxy to Node.js backend
+        location ^~ /api/ {
+            proxy_pass http://backend;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # Timeouts
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 60s;
+
+            # Don't buffer for streaming
+            proxy_buffering off;
+        }
+
+        # HTML files - no caching
+        location ~* \.html$ {
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+            add_header Pragma "no-cache";
+            add_header Expires "0";
+            try_files $uri =404;
+        }
+
+        # SvelteKit immutable assets - long-term caching
+        location /_app/immutable/ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+            try_files $uri =404;
+        }
+
+        # Other static files with content hashes - long-term caching
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+            try_files $uri =404;
+        }
+
+        # SvelteKit fallback for client-side routing
+        location / {
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+            add_header Pragma "no-cache";
+            add_header Expires "0";
+            try_files $uri $uri/ /index.html;
+        }
+    }
+}

@@ -1,0 +1,49 @@
+# syntax=docker/dockerfile:1.4
+# Production Dockerfile for SabreDAV (PHP-FPM)
+# ============================================
+
+# Stage 1: Install PHP dependencies
+FROM composer:2 AS deps
+
+WORKDIR /app
+COPY apps/sabredav/composer.json apps/sabredav/composer.lock* ./
+
+# Install dependencies with cache mount (ignore platform reqs - pdo_pgsql is in runtime)
+RUN --mount=type=cache,id=composer,target=/root/.composer/cache \
+    composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+# Stage 2: Production PHP-FPM runtime
+FROM php:8.4-fpm-bookworm AS production
+
+# Install PostgreSQL PDO extension
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    libcurl4-openssl-dev \
+    && docker-php-ext-install pdo pdo_pgsql curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy vendor from deps stage
+COPY --from=deps /app/vendor ./vendor
+
+# Copy SabreDAV application code
+COPY apps/sabredav/config ./config
+COPY apps/sabredav/public ./public
+COPY apps/sabredav/src ./src
+
+# Configure PHP-FPM for production
+RUN echo "pm.max_children = 20" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.start_servers = 5" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.min_spare_servers = 2" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.max_spare_servers = 10" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "decorate_workers_output = no" >> /usr/local/etc/php-fpm.d/www.conf
+
+EXPOSE 9000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD pidof php-fpm > /dev/null || exit 1
+
+CMD ["php-fpm"]

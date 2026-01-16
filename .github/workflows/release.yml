@@ -81,12 +81,29 @@ jobs:
             echo "new_release_published=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # Job 3: Build and push Docker image
+  # Job 3: Build and push Docker images (parallel matrix)
   docker:
-    name: Build Docker Image
+    name: Build ${{ matrix.image }} Image
     needs: release
     if: needs.release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: nginx
+            dockerfile: docker/Dockerfile.nginx.prod
+            context: .
+            build-args: |
+              VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
+          - image: backend
+            dockerfile: docker/Dockerfile.backend.prod
+            context: .
+            build-args: ""
+          - image: sabredav
+            dockerfile: docker/Dockerfile.sabredav.prod
+            context: .
+            build-args: ""
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -107,7 +124,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}-${{ matrix.image }}
           tags: |
             type=semver,pattern={{version}},value=v${{ needs.release.outputs.new_release_version }}
             type=semver,pattern={{major}}.{{minor}},value=v${{ needs.release.outputs.new_release_version }}
@@ -118,24 +135,23 @@ jobs:
         id: push
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
           platforms: linux/amd64,linux/arm64
           provenance: mode=max
           sbom: true
-          build-args: |
-            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
+          build-args: ${{ matrix.build-args }}
 
       - name: Attest Docker image
         if: ${{ github.event.repository.visibility == 'public' }}
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ghcr.io/${{ github.repository }}
+          subject-name: ghcr.io/${{ github.repository }}-${{ matrix.image }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
