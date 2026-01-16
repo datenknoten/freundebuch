@@ -1,3 +1,9 @@
+## [2.46.5](https://github.com/datenknoten/freundebuch/compare/v2.46.4...v2.46.5) (2026-01-16)
+
+### Bug Fixes
+
+* **backend:** Add partial/prefix matching for display_name in search ([7673565](https://github.com/datenknoten/freundebuch/commit/76735658b73dd9909fe61e4499873dc92b0a4da2))
+
 ## [2.46.4](https://github.com/datenknoten/freundebuch/compare/v2.46.3...v2.46.4) (2026-01-16)
 
 ### Bug Fixes
