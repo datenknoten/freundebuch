@@ -1,3 +1,9 @@
+## [2.46.1](https://github.com/datenknoten/freundebuch/compare/v2.46.0...v2.46.1) (2026-01-16)
+
+### Bug Fixes
+
+* **config:** Add IPv6 listening to nginx for healthcheck compatibility ([f4370c0](https://github.com/datenknoten/freundebuch/commit/f4370c05c3bb2bcab1a92afa19f0af33e6755e5b))
+
 ## [2.46.0](https://github.com/datenknoten/freundebuch/compare/v2.45.1...v2.46.0) (2026-01-16)
 
 ### Features
