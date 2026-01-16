@@ -108,11 +108,9 @@ let currentCategoryValues = $derived(
   $filterModeCategory ? getCategoryValues($filterModeCategory) : [],
 );
 
-// Auto-open dropdown when filter mode activates and scroll to selected section
+// Auto-scroll to selected section when filter mode activates
 $effect(() => {
   if ($isFilterModeActive && $filterModeCategory) {
-    isOpen = true;
-
     // Scroll to the selected category section after the modal renders
     tick().then(() => {
       const category = $filterModeCategory;
@@ -139,19 +137,16 @@ $effect(() => {
   }
 });
 
-// Close modal when filter mode is deactivated
-$effect(() => {
-  if (!$isFilterModeActive && isOpen) {
-    // Don't auto-close on mode deactivation - let user close manually or via Escape
-  }
-});
-
-// Close modal and clear filter mode
-function closeModal() {
-  isOpen = false;
+// Close keyboard filter mode
+function closeKeyboardFilterMode() {
   isFilterModeActive.set(false);
   filterModeCategory.set(null);
   filterModePrefix.set(null);
+}
+
+// Close regular dropdown
+function closeDropdown() {
+  isOpen = false;
 }
 
 // Method to toggle filter by index (called from keyboard shortcuts)
@@ -211,13 +206,19 @@ $effect(() => {
 });
 </script>
 
-<!-- Handle Escape key to close modal -->
+<!-- Handle Escape key to close keyboard filter mode or dropdown -->
 <svelte:window
   onkeydown={(e) => {
-    if (e.key === 'Escape' && isOpen) {
-      e.preventDefault();
-      e.stopPropagation();
-      closeModal();
+    if (e.key === 'Escape') {
+      if ($isFilterModeActive) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeKeyboardFilterMode();
+      } else if (isOpen) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeDropdown();
+      }
     }
   }}
 />
@@ -269,14 +270,14 @@ $effect(() => {
     {/if}
   </button>
 
-  <!-- Modal overlay for keyboard mode -->
-  {#if isOpen && hasFacets && $isFilterModeActive}
+  <!-- Modal overlay for keyboard mode (independent of isOpen) -->
+  {#if hasFacets && $isFilterModeActive && $filterModeCategory}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_interactive_supports_focus -->
     <div
       class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-      onclick={closeModal}
+      onclick={closeKeyboardFilterMode}
       role="dialog"
       aria-modal="true"
       aria-label="Filter selection"
@@ -290,7 +291,7 @@ $effect(() => {
         <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <h2 class="text-lg font-heading text-forest">Filters</h2>
           <button
-            onclick={closeModal}
+            onclick={closeKeyboardFilterMode}
             class="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
             aria-label="Close"
           >
@@ -448,8 +449,10 @@ $effect(() => {
         </div>
       </div>
     </div>
+  {/if}
+
   <!-- Regular dropdown for non-keyboard mode -->
-  {:else if isOpen && hasFacets}
+  {#if isOpen && hasFacets && !$isFilterModeActive}
     <div
       class="absolute left-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 p-4 max-h-80 overflow-y-auto"
     >
