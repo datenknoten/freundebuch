@@ -94,16 +94,12 @@ jobs:
           - image: nginx
             dockerfile: docker/Dockerfile.nginx.prod
             context: .
-            build-args: |
-              VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
           - image: backend
             dockerfile: docker/Dockerfile.backend.prod
             context: .
-            build-args: ""
           - image: sabredav
             dockerfile: docker/Dockerfile.sabredav.prod
             context: .
-            build-args: ""
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -145,7 +141,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           provenance: mode=max
           sbom: true
-          build-args: ${{ matrix.build-args }}
+          build-args: ${{ matrix.image == 'nginx' && format('VITE_SENTRY_DSN={0}', secrets.VITE_SENTRY_DSN) || '' }}
 
       - name: Attest Docker image
         if: ${{ github.event.repository.visibility == 'public' }}
