@@ -1,3 +1,9 @@
+## [2.45.1](https://github.com/datenknoten/freundebuch/compare/v2.45.0...v2.45.1) (2026-01-16)
+
+### Bug Fixes
+
+* **frontend:** Improve keyboard filter UX with modal and auto-scroll ([eb46df9](https://github.com/datenknoten/freundebuch/commit/eb46df9aa757081692fc294e068076181f67b3b8))
+
 ## [2.45.0](https://github.com/datenknoten/freundebuch/compare/v2.44.1...v2.45.0) (2026-01-15)
 
 ### Features
