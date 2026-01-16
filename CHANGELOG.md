@@ -1,3 +1,9 @@
+## [2.46.3](https://github.com/datenknoten/freundebuch/compare/v2.46.2...v2.46.3) (2026-01-16)
+
+### Code Refactoring
+
+* **frontend:** Separate keyboard filter mode from regular dropdown ([e431588](https://github.com/datenknoten/freundebuch/commit/e43158805ea4a99187e57a5704fce4756e898baf))
+
 ## [2.46.2](https://github.com/datenknoten/freundebuch/compare/v2.46.1...v2.46.2) (2026-01-16)
 
 ### Bug Fixes
