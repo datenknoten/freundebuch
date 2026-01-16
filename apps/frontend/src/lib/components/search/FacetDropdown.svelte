@@ -214,7 +214,7 @@ $effect(() => {
 <!-- Handle Escape key to close modal -->
 <svelte:window
   onkeydown={(e) => {
-    if (e.key === 'Escape' && isOpen && $isFilterModeActive) {
+    if (e.key === 'Escape' && isOpen) {
       e.preventDefault();
       e.stopPropagation();
       closeModal();
