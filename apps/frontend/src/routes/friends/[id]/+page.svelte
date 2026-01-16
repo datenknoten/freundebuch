@@ -45,7 +45,7 @@ const backUrl = $derived.by(() => {
         Back to Friends
       </a>
 
-      {#if $isFriendsLoading}
+      {#if $isFriendsLoading && !$currentFriend}
         <div class="flex justify-center py-12">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
         </div>
