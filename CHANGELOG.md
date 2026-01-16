@@ -1,3 +1,9 @@
+## [2.46.4](https://github.com/datenknoten/freundebuch/compare/v2.46.3...v2.46.4) (2026-01-16)
+
+### Bug Fixes
+
+* **frontend:** Preserve scroll position during subresource operations ([c3f81d7](https://github.com/datenknoten/freundebuch/commit/c3f81d79949d256e7778b82bab90e7e2b6a28ef7))
+
 ## [2.46.3](https://github.com/datenknoten/freundebuch/compare/v2.46.2...v2.46.3) (2026-01-16)
 
 ### Code Refactoring
