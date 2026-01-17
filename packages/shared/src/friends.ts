@@ -216,6 +216,7 @@ export const FriendCreateSchema = type({
   'name_middle?': 'string',
   'name_last?': 'string',
   'name_suffix?': 'string',
+  'maiden_name?': 'string',
   // Epic 1A sub-resources
   'phones?': PhoneInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
   'emails?': EmailInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
@@ -283,6 +284,7 @@ export const FriendUpdateSchema = type({
   'name_middle?': 'string | null',
   'name_last?': 'string | null',
   'name_suffix?': 'string | null',
+  'maiden_name?': 'string | null',
   // Personal interests (not employment-related)
   'interests?': 'string | null',
 });
@@ -453,6 +455,7 @@ export interface Friend {
   nameMiddle?: string;
   nameLast?: string;
   nameSuffix?: string;
+  maidenName?: string;
   photoUrl?: string;
   photoThumbnailUrl?: string;
   // Epic 1A sub-resources
@@ -489,6 +492,7 @@ export interface FriendListItem {
   primaryPhone?: string;
   // Extended fields for dynamic columns
   nickname?: string;
+  maidenName?: string;
   organization?: string;
   jobTitle?: string;
   department?: string;
@@ -539,6 +543,7 @@ export interface FriendGridItem {
   primaryPhone?: string;
   // Extended fields for dynamic columns
   nickname?: string;
+  maidenName?: string;
   organization?: string;
   jobTitle?: string;
   department?: string;
@@ -567,6 +572,7 @@ export function toFriendGridItem(item: FriendListItem): FriendGridItem {
     primaryEmail: item.primaryEmail,
     primaryPhone: item.primaryPhone,
     nickname: item.nickname,
+    maidenName: item.maidenName,
     organization: item.organization,
     jobTitle: item.jobTitle,
     department: item.department,

@@ -8,6 +8,7 @@ SELECT
     c.name_middle,
     c.name_last,
     c.name_suffix,
+    c.maiden_name,
     c.photo_url,
     c.photo_thumbnail_url,
     c.interests,
@@ -174,6 +175,7 @@ WITH friend_list AS (
         c.external_id,
         c.display_name,
         c.nickname,
+        c.maiden_name,
         c.photo_thumbnail_url,
         c.is_favorite,
         c.archived_at,
@@ -201,6 +203,7 @@ SELECT
     cl.external_id,
     cl.display_name,
     cl.nickname,
+    cl.maiden_name,
     cl.photo_thumbnail_url,
     cl.is_favorite,
     cl.archived_at,
@@ -252,6 +255,7 @@ INSERT INTO friends.friends (
     name_middle,
     name_last,
     name_suffix,
+    maiden_name,
     interests
 )
 SELECT
@@ -263,6 +267,7 @@ SELECT
     :nameMiddle,
     :nameLast,
     :nameSuffix,
+    :maidenName,
     :interests
 FROM auth.users u
 WHERE u.external_id = :userExternalId
@@ -275,6 +280,7 @@ RETURNING
     name_middle,
     name_last,
     name_suffix,
+    maiden_name,
     photo_url,
     photo_thumbnail_url,
     interests,
@@ -291,6 +297,7 @@ SET
     name_middle = CASE WHEN :updateNameMiddle THEN :nameMiddle ELSE c.name_middle END,
     name_last = CASE WHEN :updateNameLast THEN :nameLast ELSE c.name_last END,
     name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END,
+    maiden_name = CASE WHEN :updateMaidenName THEN :maidenName ELSE c.maiden_name END,
     interests = CASE WHEN :updateInterests THEN :interests ELSE c.interests END
 FROM auth.users u
 WHERE c.external_id = :friendExternalId
@@ -306,6 +313,7 @@ RETURNING
     c.name_middle,
     c.name_last,
     c.name_suffix,
+    c.maiden_name,
     c.photo_url,
     c.photo_thumbnail_url,
     c.interests,
