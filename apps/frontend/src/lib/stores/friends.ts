@@ -17,6 +17,8 @@ import type {
   MetInfoInput,
   Phone,
   PhoneInput,
+  ProfessionalHistory,
+  ProfessionalHistoryInput,
   Relationship,
   RelationshipInput,
   RelationshipTypesGrouped,
@@ -1007,6 +1009,127 @@ function createFriendsStore() {
       } catch (error) {
         const errorMessage =
           error instanceof ApiError ? error.message : 'Failed to delete social profile';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    // =========================================================================
+    // Professional History Operations
+    // =========================================================================
+
+    /**
+     * Add a professional history entry to the current friend
+     */
+    addProfessionalHistory: async (
+      friendId: string,
+      data: ProfessionalHistoryInput,
+    ): Promise<ProfessionalHistory> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const history = await friendsApi.addProfessionalHistory(friendId, data);
+
+        update((state) => ({
+          ...state,
+          currentFriend: state.currentFriend
+            ? {
+                ...state.currentFriend,
+                professionalHistory: [...(state.currentFriend.professionalHistory ?? []), history],
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return history;
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to add professional history';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Update a professional history entry
+     */
+    updateProfessionalHistory: async (
+      friendId: string,
+      historyId: string,
+      data: ProfessionalHistoryInput,
+    ): Promise<ProfessionalHistory> => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        const history = await friendsApi.updateProfessionalHistory(friendId, historyId, data);
+
+        update((state) => ({
+          ...state,
+          currentFriend: state.currentFriend
+            ? {
+                ...state.currentFriend,
+                professionalHistory: (state.currentFriend.professionalHistory ?? []).map((h) =>
+                  h.id === historyId ? history : h,
+                ),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+
+        return history;
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to update professional history';
+
+        update((state) => ({
+          ...state,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        throw error;
+      }
+    },
+
+    /**
+     * Delete a professional history entry from the current friend
+     */
+    deleteProfessionalHistory: async (friendId: string, historyId: string) => {
+      update((state) => ({ ...state, isLoading: true, error: null }));
+
+      try {
+        await friendsApi.deleteProfessionalHistory(friendId, historyId);
+
+        update((state) => ({
+          ...state,
+          currentFriend: state.currentFriend
+            ? {
+                ...state.currentFriend,
+                professionalHistory: (state.currentFriend.professionalHistory ?? []).filter(
+                  (h) => h.id !== historyId,
+                ),
+              }
+            : null,
+          isLoading: false,
+          error: null,
+        }));
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiError ? error.message : 'Failed to delete professional history';
 
         update((state) => ({
           ...state,

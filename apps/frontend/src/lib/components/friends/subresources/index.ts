@@ -18,6 +18,8 @@ export { default as EmailRow } from './EmailRow.svelte';
 export { default as PhoneEditForm } from './PhoneEditForm.svelte';
 // Row Components
 export { default as PhoneRow } from './PhoneRow.svelte';
+export { default as ProfessionalHistoryEditForm } from './ProfessionalHistoryEditForm.svelte';
+export { default as ProfessionalHistoryRow } from './ProfessionalHistoryRow.svelte';
 export { default as SocialProfileEditForm } from './SocialProfileEditForm.svelte';
 export { default as SocialProfileRow } from './SocialProfileRow.svelte';
 export { default as SwipeableRow } from './SwipeableRow.svelte';

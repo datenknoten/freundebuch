@@ -21,6 +21,8 @@ import type {
   PaginatedSearchResponse,
   Phone,
   PhoneInput,
+  ProfessionalHistory,
+  ProfessionalHistoryInput,
   Relationship,
   RelationshipInput,
   RelationshipTypesGrouped,
@@ -467,6 +469,52 @@ export async function deleteSocialProfile(
   profileId: string,
 ): Promise<{ message: string }> {
   return apiRequest(`/api/friends/${friendId}/social-profiles/${profileId}`, {
+    method: 'DELETE',
+  });
+}
+
+// ============================================================================
+// Professional History Operations
+// ============================================================================
+
+/**
+ * Add a professional history entry to a friend
+ */
+export async function addProfessionalHistory(
+  friendId: string,
+  data: ProfessionalHistoryInput,
+): Promise<ProfessionalHistory> {
+  return apiRequest<ProfessionalHistory>(`/api/friends/${friendId}/professional-history`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update a professional history entry
+ */
+export async function updateProfessionalHistory(
+  friendId: string,
+  historyId: string,
+  data: ProfessionalHistoryInput,
+): Promise<ProfessionalHistory> {
+  return apiRequest<ProfessionalHistory>(
+    `/api/friends/${friendId}/professional-history/${historyId}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    },
+  );
+}
+
+/**
+ * Delete a professional history entry
+ */
+export async function deleteProfessionalHistory(
+  friendId: string,
+  historyId: string,
+): Promise<{ message: string }> {
+  return apiRequest(`/api/friends/${friendId}/professional-history/${historyId}`, {
     method: 'DELETE',
   });
 }

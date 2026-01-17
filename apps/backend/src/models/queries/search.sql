@@ -10,9 +10,10 @@ WITH matching_friends AS (
         c.external_id,
         c.display_name,
         c.photo_thumbnail_url,
-        c.organization,
-        c.job_title,
-        c.work_notes,
+        -- Get primary professional info
+        (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as organization,
+        (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,
+        (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,
         -- Calculate relevance score from full-text search
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
         -- Determine match source (using joined tables for efficiency)
@@ -86,9 +87,10 @@ WITH matching_friends AS (
         c.external_id,
         c.display_name,
         c.photo_thumbnail_url,
-        c.organization,
-        c.job_title,
-        c.work_notes,
+        -- Get primary professional info
+        (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as organization,
+        (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,
+        (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,
         c.created_at,
         c.updated_at,
         -- Calculate relevance score from full-text search
@@ -262,12 +264,21 @@ filtered_matches AS (
             SELECT 1 FROM friends.friend_addresses a
             WHERE a.friend_id = c.id AND a.city = ANY(:filterCity)
         ))
-        -- Organization filter
-        AND (:filterOrganization::text[] IS NULL OR c.organization = ANY(:filterOrganization))
-        -- Job title filter
-        AND (:filterJobTitle::text[] IS NULL OR c.job_title = ANY(:filterJobTitle))
-        -- Department filter
-        AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))
+        -- Organization filter (from professional history)
+        AND (:filterOrganization::text[] IS NULL OR EXISTS (
+            SELECT 1 FROM friends.friend_professional_history ph
+            WHERE ph.friend_id = c.id AND ph.organization = ANY(:filterOrganization)
+        ))
+        -- Job title filter (from professional history)
+        AND (:filterJobTitle::text[] IS NULL OR EXISTS (
+            SELECT 1 FROM friends.friend_professional_history ph
+            WHERE ph.friend_id = c.id AND ph.job_title = ANY(:filterJobTitle)
+        ))
+        -- Department filter (from professional history)
+        AND (:filterDepartment::text[] IS NULL OR EXISTS (
+            SELECT 1 FROM friends.friend_professional_history ph
+            WHERE ph.friend_id = c.id AND ph.department = ANY(:filterDepartment)
+        ))
         -- Relationship category filter
         AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (
             SELECT 1 FROM friends.friend_relationships rel
@@ -296,9 +307,10 @@ matching_friends AS (
         c.external_id,
         c.display_name,
         c.photo_thumbnail_url,
-        c.organization,
-        c.job_title,
-        c.work_notes,
+        -- Get primary professional info
+        (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as organization,
+        (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,
+        (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,
         c.created_at,
         c.updated_at,
         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
@@ -432,39 +444,39 @@ GROUP BY a.city
 
 UNION ALL
 
--- Organization facet
+-- Organization facet (from professional history)
 SELECT
     'organization' as facet_field,
-    c.organization as facet_value,
-    COUNT(*)::int as count
+    ph.organization as facet_value,
+    COUNT(DISTINCT bm.id)::int as count
 FROM base_matches bm
-INNER JOIN friends.friends c ON c.id = bm.id
-WHERE c.organization IS NOT NULL
-GROUP BY c.organization
+INNER JOIN friends.friend_professional_history ph ON ph.friend_id = bm.id
+WHERE ph.organization IS NOT NULL
+GROUP BY ph.organization
 
 UNION ALL
 
--- Job title facet
+-- Job title facet (from professional history)
 SELECT
     'job_title' as facet_field,
-    c.job_title as facet_value,
-    COUNT(*)::int as count
+    ph.job_title as facet_value,
+    COUNT(DISTINCT bm.id)::int as count
 FROM base_matches bm
-INNER JOIN friends.friends c ON c.id = bm.id
-WHERE c.job_title IS NOT NULL
-GROUP BY c.job_title
+INNER JOIN friends.friend_professional_history ph ON ph.friend_id = bm.id
+WHERE ph.job_title IS NOT NULL
+GROUP BY ph.job_title
 
 UNION ALL
 
--- Department facet
+-- Department facet (from professional history)
 SELECT
     'department' as facet_field,
-    c.department as facet_value,
-    COUNT(*)::int as count
+    ph.department as facet_value,
+    COUNT(DISTINCT bm.id)::int as count
 FROM base_matches bm
-INNER JOIN friends.friends c ON c.id = bm.id
-WHERE c.department IS NOT NULL
-GROUP BY c.department
+INNER JOIN friends.friend_professional_history ph ON ph.friend_id = bm.id
+WHERE ph.department IS NOT NULL
+GROUP BY ph.department
 
 UNION ALL
 
@@ -499,12 +511,21 @@ WITH filtered_friends AS (
           SELECT 1 FROM friends.friend_addresses a
           WHERE a.friend_id = c.id AND a.city = ANY(:filterCity)
       ))
-      -- Organization filter
-      AND (:filterOrganization::text[] IS NULL OR c.organization = ANY(:filterOrganization))
-      -- Job title filter
-      AND (:filterJobTitle::text[] IS NULL OR c.job_title = ANY(:filterJobTitle))
-      -- Department filter
-      AND (:filterDepartment::text[] IS NULL OR c.department = ANY(:filterDepartment))
+      -- Organization filter (from professional history)
+      AND (:filterOrganization::text[] IS NULL OR EXISTS (
+          SELECT 1 FROM friends.friend_professional_history ph
+          WHERE ph.friend_id = c.id AND ph.organization = ANY(:filterOrganization)
+      ))
+      -- Job title filter (from professional history)
+      AND (:filterJobTitle::text[] IS NULL OR EXISTS (
+          SELECT 1 FROM friends.friend_professional_history ph
+          WHERE ph.friend_id = c.id AND ph.job_title = ANY(:filterJobTitle)
+      ))
+      -- Department filter (from professional history)
+      AND (:filterDepartment::text[] IS NULL OR EXISTS (
+          SELECT 1 FROM friends.friend_professional_history ph
+          WHERE ph.friend_id = c.id AND ph.department = ANY(:filterDepartment)
+      ))
       -- Relationship category filter
       AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (
           SELECT 1 FROM friends.friend_relationships rel
@@ -536,8 +557,9 @@ sorted_results AS (
         c.external_id,
         c.display_name,
         c.photo_thumbnail_url,
-        c.organization,
-        c.job_title,
+        -- Get primary professional info
+        (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as organization,
+        (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,
         (SELECT e.email_address FROM friends.friend_emails e
          WHERE e.friend_id = c.id AND e.is_primary = true LIMIT 1) as primary_email,
         (SELECT p.phone_number FROM friends.friend_phones p
@@ -612,39 +634,39 @@ GROUP BY a.city
 
 UNION ALL
 
--- Organization facet
+-- Organization facet (from professional history)
 SELECT
     'organization' as facet_field,
-    c.organization as facet_value,
-    COUNT(*)::int as count
+    ph.organization as facet_value,
+    COUNT(DISTINCT ac.id)::int as count
 FROM all_friends ac
-INNER JOIN friends.friends c ON c.id = ac.id
-WHERE c.organization IS NOT NULL
-GROUP BY c.organization
+INNER JOIN friends.friend_professional_history ph ON ph.friend_id = ac.id
+WHERE ph.organization IS NOT NULL
+GROUP BY ph.organization
 
 UNION ALL
 
--- Job title facet
+-- Job title facet (from professional history)
 SELECT
     'job_title' as facet_field,
-    c.job_title as facet_value,
-    COUNT(*)::int as count
+    ph.job_title as facet_value,
+    COUNT(DISTINCT ac.id)::int as count
 FROM all_friends ac
-INNER JOIN friends.friends c ON c.id = ac.id
-WHERE c.job_title IS NOT NULL
-GROUP BY c.job_title
+INNER JOIN friends.friend_professional_history ph ON ph.friend_id = ac.id
+WHERE ph.job_title IS NOT NULL
+GROUP BY ph.job_title
 
 UNION ALL
 
--- Department facet
+-- Department facet (from professional history)
 SELECT
     'department' as facet_field,
-    c.department as facet_value,
-    COUNT(*)::int as count
+    ph.department as facet_value,
+    COUNT(DISTINCT ac.id)::int as count
 FROM all_friends ac
-INNER JOIN friends.friends c ON c.id = ac.id
-WHERE c.department IS NOT NULL
-GROUP BY c.department
+INNER JOIN friends.friend_professional_history ph ON ph.friend_id = ac.id
+WHERE ph.department IS NOT NULL
+GROUP BY ph.department
 
 UNION ALL
 

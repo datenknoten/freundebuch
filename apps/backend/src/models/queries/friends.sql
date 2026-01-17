@@ -10,11 +10,6 @@ SELECT
     c.name_suffix,
     c.photo_url,
     c.photo_thumbnail_url,
-    -- Epic 1B: Professional fields
-    c.job_title,
-    c.organization,
-    c.department,
-    c.work_notes,
     c.interests,
     -- Epic 4: Categorization & Organization
     c.is_favorite,
@@ -111,6 +106,24 @@ SELECT
         FROM friends.friend_social_profiles sp
         WHERE sp.friend_id = c.id
     ) as social_profiles,
+    -- Professional history (employment records with date ranges)
+    (
+        SELECT COALESCE(json_agg(json_build_object(
+            'external_id', ph.external_id,
+            'job_title', ph.job_title,
+            'organization', ph.organization,
+            'department', ph.department,
+            'notes', ph.notes,
+            'from_month', ph.from_month,
+            'from_year', ph.from_year,
+            'to_month', ph.to_month,
+            'to_year', ph.to_year,
+            'is_primary', ph.is_primary,
+            'created_at', ph.created_at
+        ) ORDER BY ph.is_primary DESC, ph.to_year IS NULL DESC, ph.from_year DESC, ph.from_month DESC), '[]'::json)
+        FROM friends.friend_professional_history ph
+        WHERE ph.friend_id = c.id
+    ) as professional_history,
     -- Epic 1D: Relationships
     (
         SELECT COALESCE(json_agg(json_build_object(
@@ -162,9 +175,6 @@ WITH friend_list AS (
         c.display_name,
         c.nickname,
         c.photo_thumbnail_url,
-        c.job_title,
-        c.organization,
-        c.department,
         c.is_favorite,
         c.archived_at,
         c.created_at,
@@ -192,15 +202,16 @@ SELECT
     cl.display_name,
     cl.nickname,
     cl.photo_thumbnail_url,
-    cl.job_title,
-    cl.organization,
-    cl.department,
     cl.is_favorite,
     cl.archived_at,
     cl.created_at,
     cl.updated_at,
     (SELECT e.email_address FROM friends.friend_emails e WHERE e.friend_id = cl.id AND e.is_primary = true LIMIT 1) as primary_email,
     (SELECT p.phone_number FROM friends.friend_phones p WHERE p.friend_id = cl.id AND p.is_primary = true LIMIT 1) as primary_phone,
+    -- Professional info from primary professional history
+    (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = cl.id AND ph.is_primary = true LIMIT 1) as job_title,
+    (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = cl.id AND ph.is_primary = true LIMIT 1) as organization,
+    (SELECT ph.department FROM friends.friend_professional_history ph WHERE ph.friend_id = cl.id AND ph.is_primary = true LIMIT 1) as department,
     -- Extended fields for dynamic columns
     (SELECT a.city FROM friends.friend_addresses a WHERE a.friend_id = cl.id AND a.is_primary = true LIMIT 1) as primary_city,
     (SELECT a.country FROM friends.friend_addresses a WHERE a.friend_id = cl.id AND a.is_primary = true LIMIT 1) as primary_country,
@@ -241,11 +252,6 @@ INSERT INTO friends.friends (
     name_middle,
     name_last,
     name_suffix,
-    -- Epic 1B: Professional fields
-    job_title,
-    organization,
-    department,
-    work_notes,
     interests
 )
 SELECT
@@ -257,10 +263,6 @@ SELECT
     :nameMiddle,
     :nameLast,
     :nameSuffix,
-    :jobTitle,
-    :organization,
-    :department,
-    :workNotes,
     :interests
 FROM auth.users u
 WHERE u.external_id = :userExternalId
@@ -275,10 +277,6 @@ RETURNING
     name_suffix,
     photo_url,
     photo_thumbnail_url,
-    job_title,
-    organization,
-    department,
-    work_notes,
     interests,
     created_at,
     updated_at;
@@ -293,11 +291,6 @@ SET
     name_middle = CASE WHEN :updateNameMiddle THEN :nameMiddle ELSE c.name_middle END,
     name_last = CASE WHEN :updateNameLast THEN :nameLast ELSE c.name_last END,
     name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END,
-    -- Epic 1B: Professional fields
-    job_title = CASE WHEN :updateJobTitle THEN :jobTitle ELSE c.job_title END,
-    organization = CASE WHEN :updateOrganization THEN :organization ELSE c.organization END,
-    department = CASE WHEN :updateDepartment THEN :department ELSE c.department END,
-    work_notes = CASE WHEN :updateWorkNotes THEN :workNotes ELSE c.work_notes END,
     interests = CASE WHEN :updateInterests THEN :interests ELSE c.interests END
 FROM auth.users u
 WHERE c.external_id = :friendExternalId
@@ -315,10 +308,6 @@ RETURNING
     c.name_suffix,
     c.photo_url,
     c.photo_thumbnail_url,
-    c.job_title,
-    c.organization,
-    c.department,
-    c.work_notes,
     c.interests,
     c.created_at,
     c.updated_at;
