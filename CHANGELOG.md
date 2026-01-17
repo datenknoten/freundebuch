@@ -1,3 +1,14 @@
+## [2.48.0](https://github.com/datenknoten/freundebuch/compare/v2.47.1...v2.48.0) (2026-01-17)
+
+### Features
+
+* Add maiden name field to friends ([6280336](https://github.com/datenknoten/freundebuch/commit/6280336e51adf25aa5c311b19d6dff95def2963e))
+
+### Bug Fixes
+
+* **backend:** Regenerate pgtyped types for maiden_name field ([20668ea](https://github.com/datenknoten/freundebuch/commit/20668ea4bb561c7943ee27465fca43f3707181b3))
+* **database:** Use TEXT instead of VARCHAR for maiden_name ([623c559](https://github.com/datenknoten/freundebuch/commit/623c559c64a937c10f7c217063d19fec38746f62))
+
 ## [2.47.1](https://github.com/datenknoten/freundebuch/compare/v2.47.0...v2.47.1) (2026-01-17)
 
 ### Bug Fixes
