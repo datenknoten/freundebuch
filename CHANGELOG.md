@@ -1,3 +1,9 @@
+## [2.47.1](https://github.com/datenknoten/freundebuch/compare/v2.47.0...v2.47.1) (2026-01-17)
+
+### Bug Fixes
+
+* **frontend:** Debounce URL updates in search to prevent pushState spam ([e708aa5](https://github.com/datenknoten/freundebuch/commit/e708aa5055265af91f051eab92b4592e093c3f81))
+
 ## [2.47.0](https://github.com/datenknoten/freundebuch/compare/v2.46.5...v2.47.0) (2026-01-17)
 
 ### Features
