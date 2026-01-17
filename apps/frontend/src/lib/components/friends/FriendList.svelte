@@ -92,9 +92,6 @@ function handleSearchInput(value: string) {
   searchError = null;
   searchPage = 1; // Reset to first page on new search
 
-  // Notify parent of query change
-  onQueryChange?.(value);
-
   // Clear any pending debounce
   if (debounceTimer) {
     clearTimeout(debounceTimer);
@@ -108,12 +105,16 @@ function handleSearchInput(value: string) {
     searchTotal = 0;
     searchTotalPages = 0;
     isSearching = false;
+    // Notify parent of query change (debounced to prevent pushState spam)
+    onQueryChange?.(value);
     return;
   }
 
   isSearching = true;
 
   debounceTimer = setTimeout(async () => {
+    // Notify parent of query change (debounced to prevent pushState spam)
+    onQueryChange?.(value);
     await performSearch();
   }, 300);
 }
