@@ -5,7 +5,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     { schema: 'friends', name: 'friends' },
     {
       maiden_name: {
-        type: 'varchar(100)',
+        type: 'text',
         comment: 'Maiden name or birth name for the friend',
       },
     },
