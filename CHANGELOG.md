@@ -1,3 +1,9 @@
+## [2.47.0](https://github.com/datenknoten/freundebuch/compare/v2.46.5...v2.47.0) (2026-01-17)
+
+### Features
+
+* Convert professional info to employment history subresource ([1c94fa6](https://github.com/datenknoten/freundebuch/commit/1c94fa60f4baea2c64e881c3616c3ab082059d6a))
+
 ## [2.46.5](https://github.com/datenknoten/freundebuch/compare/v2.46.4...v2.46.5) (2026-01-16)
 
 ### Bug Fixes
