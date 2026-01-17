@@ -54,6 +54,7 @@ let nameFirst = $state((() => friend?.nameFirst ?? '')());
 let nameMiddle = $state((() => friend?.nameMiddle ?? '')());
 let nameLast = $state((() => friend?.nameLast ?? '')());
 let nameSuffix = $state((() => friend?.nameSuffix ?? '')());
+let maidenName = $state((() => friend?.maidenName ?? '')());
 
 // Auto-generate display name from parts
 function generateDisplayName(): string {
@@ -218,6 +219,7 @@ async function handleSubmit(e: Event) {
       name_middle: nameMiddle || undefined,
       name_last: nameLast || undefined,
       name_suffix: nameSuffix || undefined,
+      maiden_name: maidenName || undefined,
       interests: interests || undefined,
       met_info: metInfo,
     };
@@ -239,6 +241,7 @@ async function handleSubmit(e: Event) {
         name_middle: nameMiddle || null,
         name_last: nameLast || null,
         name_suffix: nameSuffix || null,
+        maiden_name: maidenName || null,
         interests: interests || null,
       });
 
@@ -380,6 +383,13 @@ async function handleSubmit(e: Event) {
       oninput={updateDisplayNameFromParts}
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
       placeholder="Suffix (e.g. Jr., PhD)"
+      disabled={isLoading}
+    />
+    <input
+      type="text"
+      bind:value={maidenName}
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+      placeholder="Maiden Name"
       disabled={isLoading}
     />
     <input
