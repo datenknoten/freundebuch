@@ -21,8 +21,6 @@ export interface IGetFriendByIdResult {
   circles: Json | null;
   created_at: Date;
   dates: Json | null;
-  /** Department within organization */
-  department: string | null;
   /** Primary name shown in lists */
   display_name: string;
   emails: Json | null;
@@ -32,8 +30,6 @@ export interface IGetFriendByIdResult {
   interests: string | null;
   /** Whether this friend is marked as a favorite */
   is_favorite: boolean;
-  /** Job title / position */
-  job_title: string | null;
   /** Maiden name or birth name for the friend */
   maiden_name: string | null;
   met_info: Json | null;
@@ -49,8 +45,6 @@ export interface IGetFriendByIdResult {
   name_suffix: string | null;
   /** Informal name or nickname for the friend */
   nickname: string | null;
-  /** Company / organization name */
-  organization: string | null;
   phones: Json | null;
   /** URL to 200x200 thumbnail */
   photo_thumbnail_url: string | null;
@@ -61,8 +55,6 @@ export interface IGetFriendByIdResult {
   social_profiles: Json | null;
   updated_at: Date;
   urls: Json | null;
-  /** Notes about professional context */
-  work_notes: string | null;
 }
 
 /** 'GetFriendById' query type */
@@ -71,7 +63,7 @@ export interface IGetFriendByIdQuery {
   result: IGetFriendByIdResult;
 }
 
-const getFriendByIdIR: any = {"usedParamSet":{"friendExternalId":true,"userExternalId":true},"params":[{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":5126,"b":5142}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":5166,"b":5180}]}],"statement":"SELECT\n    c.external_id,\n    c.display_name,\n    c.nickname,\n    c.name_prefix,\n    c.name_first,\n    c.name_middle,\n    c.name_last,\n    c.name_suffix,\n    c.photo_url,\n    c.photo_thumbnail_url,\n    -- Epic 1B: Professional fields\n    c.job_title,\n    c.organization,\n    c.department,\n    c.work_notes,\n    c.interests,\n    -- Epic 4: Categorization & Organization\n    c.is_favorite,\n    c.archived_at,\n    c.archive_reason,\n    c.created_at,\n    c.updated_at,\n    -- Epic 1A: Sub-resources\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', p.external_id,\n            'phone_number', p.phone_number,\n            'phone_type', p.phone_type,\n            'label', p.label,\n            'is_primary', p.is_primary,\n            'created_at', p.created_at\n        ) ORDER BY p.is_primary DESC, p.created_at ASC), '[]'::json)\n        FROM friends.friend_phones p\n        WHERE p.friend_id = c.id\n    ) as phones,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', e.external_id,\n            'email_address', e.email_address,\n            'email_type', e.email_type,\n            'label', e.label,\n            'is_primary', e.is_primary,\n            'created_at', e.created_at\n        ) ORDER BY e.is_primary DESC, e.created_at ASC), '[]'::json)\n        FROM friends.friend_emails e\n        WHERE e.friend_id = c.id\n    ) as emails,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', a.external_id,\n            'street_line1', a.street_line1,\n            'street_line2', a.street_line2,\n            'city', a.city,\n            'state_province', a.state_province,\n            'postal_code', a.postal_code,\n            'country', a.country,\n            'address_type', a.address_type,\n            'label', a.label,\n            'is_primary', a.is_primary,\n            'created_at', a.created_at\n        ) ORDER BY a.is_primary DESC, a.created_at ASC), '[]'::json)\n        FROM friends.friend_addresses a\n        WHERE a.friend_id = c.id\n    ) as addresses,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', url.external_id,\n            'url', url.url,\n            'url_type', url.url_type,\n            'label', url.label,\n            'created_at', url.created_at\n        ) ORDER BY url.created_at ASC), '[]'::json)\n        FROM friends.friend_urls url\n        WHERE url.friend_id = c.id\n    ) as urls,\n    -- Epic 1B: Extended sub-resources\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', d.external_id,\n            'date_value', d.date_value,\n            'year_known', d.year_known,\n            'date_type', d.date_type,\n            'label', d.label,\n            'created_at', d.created_at\n        ) ORDER BY d.date_type ASC, d.created_at ASC), '[]'::json)\n        FROM friends.friend_dates d\n        WHERE d.friend_id = c.id\n    ) as dates,\n    (\n        SELECT json_build_object(\n            'external_id', m.external_id,\n            'met_date', m.met_date,\n            'met_location', m.met_location,\n            'met_context', m.met_context,\n            'created_at', m.created_at,\n            'updated_at', m.updated_at\n        )\n        FROM friends.friend_met_info m\n        WHERE m.friend_id = c.id\n    ) as met_info,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', sp.external_id,\n            'platform', sp.platform,\n            'profile_url', sp.profile_url,\n            'username', sp.username,\n            'created_at', sp.created_at\n        ) ORDER BY sp.platform ASC, sp.created_at ASC), '[]'::json)\n        FROM friends.friend_social_profiles sp\n        WHERE sp.friend_id = c.id\n    ) as social_profiles,\n    -- Epic 1D: Relationships\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', r.external_id,\n            'related_friend_external_id', rc.external_id,\n            'related_friend_display_name', rc.display_name,\n            'related_friend_photo_thumbnail_url', rc.photo_thumbnail_url,\n            'relationship_type_id', r.relationship_type_id,\n            'relationship_type_label', rt.label,\n            'relationship_category', rt.category,\n            'notes', r.notes,\n            'created_at', r.created_at\n        ) ORDER BY rt.category ASC, rt.label ASC, rc.display_name ASC), '[]'::json)\n        FROM friends.friend_relationships r\n        INNER JOIN friends.friends rc ON r.related_friend_id = rc.id AND rc.deleted_at IS NULL\n        INNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id\n        WHERE r.friend_id = c.id\n    ) as relationships,\n    -- Epic 4: Circles\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', ci.external_id,\n            'name', ci.name,\n            'color', ci.color\n        ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)\n        FROM friends.circles ci\n        INNER JOIN friends.friend_circles fc ON fc.circle_id = ci.id\n        WHERE fc.friend_id = c.id\n    ) as circles\nFROM friends.friends c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
+const getFriendByIdIR: any = {"usedParamSet":{"friendExternalId":true,"userExternalId":true},"params":[{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":5825,"b":5841}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":5865,"b":5879}]}],"statement":"SELECT\n    c.external_id,\n    c.display_name,\n    c.nickname,\n    c.name_prefix,\n    c.name_first,\n    c.name_middle,\n    c.name_last,\n    c.name_suffix,\n    c.maiden_name,\n    c.photo_url,\n    c.photo_thumbnail_url,\n    c.interests,\n    -- Epic 4: Categorization & Organization\n    c.is_favorite,\n    c.archived_at,\n    c.archive_reason,\n    c.created_at,\n    c.updated_at,\n    -- Epic 1A: Sub-resources\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', p.external_id,\n            'phone_number', p.phone_number,\n            'phone_type', p.phone_type,\n            'label', p.label,\n            'is_primary', p.is_primary,\n            'created_at', p.created_at\n        ) ORDER BY p.is_primary DESC, p.created_at ASC), '[]'::json)\n        FROM friends.friend_phones p\n        WHERE p.friend_id = c.id\n    ) as phones,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', e.external_id,\n            'email_address', e.email_address,\n            'email_type', e.email_type,\n            'label', e.label,\n            'is_primary', e.is_primary,\n            'created_at', e.created_at\n        ) ORDER BY e.is_primary DESC, e.created_at ASC), '[]'::json)\n        FROM friends.friend_emails e\n        WHERE e.friend_id = c.id\n    ) as emails,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', a.external_id,\n            'street_line1', a.street_line1,\n            'street_line2', a.street_line2,\n            'city', a.city,\n            'state_province', a.state_province,\n            'postal_code', a.postal_code,\n            'country', a.country,\n            'address_type', a.address_type,\n            'label', a.label,\n            'is_primary', a.is_primary,\n            'created_at', a.created_at\n        ) ORDER BY a.is_primary DESC, a.created_at ASC), '[]'::json)\n        FROM friends.friend_addresses a\n        WHERE a.friend_id = c.id\n    ) as addresses,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', url.external_id,\n            'url', url.url,\n            'url_type', url.url_type,\n            'label', url.label,\n            'created_at', url.created_at\n        ) ORDER BY url.created_at ASC), '[]'::json)\n        FROM friends.friend_urls url\n        WHERE url.friend_id = c.id\n    ) as urls,\n    -- Epic 1B: Extended sub-resources\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', d.external_id,\n            'date_value', d.date_value,\n            'year_known', d.year_known,\n            'date_type', d.date_type,\n            'label', d.label,\n            'created_at', d.created_at\n        ) ORDER BY d.date_type ASC, d.created_at ASC), '[]'::json)\n        FROM friends.friend_dates d\n        WHERE d.friend_id = c.id\n    ) as dates,\n    (\n        SELECT json_build_object(\n            'external_id', m.external_id,\n            'met_date', m.met_date,\n            'met_location', m.met_location,\n            'met_context', m.met_context,\n            'created_at', m.created_at,\n            'updated_at', m.updated_at\n        )\n        FROM friends.friend_met_info m\n        WHERE m.friend_id = c.id\n    ) as met_info,\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', sp.external_id,\n            'platform', sp.platform,\n            'profile_url', sp.profile_url,\n            'username', sp.username,\n            'created_at', sp.created_at\n        ) ORDER BY sp.platform ASC, sp.created_at ASC), '[]'::json)\n        FROM friends.friend_social_profiles sp\n        WHERE sp.friend_id = c.id\n    ) as social_profiles,\n    -- Professional history (employment records with date ranges)\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', ph.external_id,\n            'job_title', ph.job_title,\n            'organization', ph.organization,\n            'department', ph.department,\n            'notes', ph.notes,\n            'from_month', ph.from_month,\n            'from_year', ph.from_year,\n            'to_month', ph.to_month,\n            'to_year', ph.to_year,\n            'is_primary', ph.is_primary,\n            'created_at', ph.created_at\n        ) ORDER BY ph.is_primary DESC, ph.to_year IS NULL DESC, ph.from_year DESC, ph.from_month DESC), '[]'::json)\n        FROM friends.friend_professional_history ph\n        WHERE ph.friend_id = c.id\n    ) as professional_history,\n    -- Epic 1D: Relationships\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', r.external_id,\n            'related_friend_external_id', rc.external_id,\n            'related_friend_display_name', rc.display_name,\n            'related_friend_photo_thumbnail_url', rc.photo_thumbnail_url,\n            'relationship_type_id', r.relationship_type_id,\n            'relationship_type_label', rt.label,\n            'relationship_category', rt.category,\n            'notes', r.notes,\n            'created_at', r.created_at\n        ) ORDER BY rt.category ASC, rt.label ASC, rc.display_name ASC), '[]'::json)\n        FROM friends.friend_relationships r\n        INNER JOIN friends.friends rc ON r.related_friend_id = rc.id AND rc.deleted_at IS NULL\n        INNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id\n        WHERE r.friend_id = c.id\n    ) as relationships,\n    -- Epic 4: Circles\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', ci.external_id,\n            'name', ci.name,\n            'color', ci.color\n        ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)\n        FROM friends.circles ci\n        INNER JOIN friends.friend_circles fc ON fc.circle_id = ci.id\n        WHERE fc.friend_id = c.id\n    ) as circles\nFROM friends.friends c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
 
 /**
  * Query generated from SQL:
@@ -85,13 +77,9 @@ const getFriendByIdIR: any = {"usedParamSet":{"friendExternalId":true,"userExter
  *     c.name_middle,
  *     c.name_last,
  *     c.name_suffix,
+ *     c.maiden_name,
  *     c.photo_url,
  *     c.photo_thumbnail_url,
- *     -- Epic 1B: Professional fields
- *     c.job_title,
- *     c.organization,
- *     c.department,
- *     c.work_notes,
  *     c.interests,
  *     -- Epic 4: Categorization & Organization
  *     c.is_favorite,
@@ -188,6 +176,24 @@ const getFriendByIdIR: any = {"usedParamSet":{"friendExternalId":true,"userExter
  *         FROM friends.friend_social_profiles sp
  *         WHERE sp.friend_id = c.id
  *     ) as social_profiles,
+ *     -- Professional history (employment records with date ranges)
+ *     (
+ *         SELECT COALESCE(json_agg(json_build_object(
+ *             'external_id', ph.external_id,
+ *             'job_title', ph.job_title,
+ *             'organization', ph.organization,
+ *             'department', ph.department,
+ *             'notes', ph.notes,
+ *             'from_month', ph.from_month,
+ *             'from_year', ph.from_year,
+ *             'to_month', ph.to_month,
+ *             'to_year', ph.to_year,
+ *             'is_primary', ph.is_primary,
+ *             'created_at', ph.created_at
+ *         ) ORDER BY ph.is_primary DESC, ph.to_year IS NULL DESC, ph.from_year DESC, ph.from_month DESC), '[]'::json)
+ *         FROM friends.friend_professional_history ph
+ *         WHERE ph.friend_id = c.id
+ *     ) as professional_history,
  *     -- Epic 1D: Relationships
  *     (
  *         SELECT COALESCE(json_agg(json_build_object(
@@ -279,7 +285,6 @@ export interface IGetFriendsByUserIdResult {
   birthday: Date | null;
   circles: Json | null;
   created_at: Date;
-  /** Department within organization */
   department: string | null;
   /** Primary name shown in lists */
   display_name: string;
@@ -287,13 +292,11 @@ export interface IGetFriendsByUserIdResult {
   external_id: string;
   /** Whether this friend is marked as a favorite */
   is_favorite: boolean;
-  /** Job title / position */
   job_title: string | null;
   /** Maiden name or birth name for the friend */
   maiden_name: string | null;
   /** Informal name or nickname for the friend */
   nickname: string | null;
-  /** Company / organization name */
   organization: string | null;
   /** URL to 200x200 thumbnail */
   photo_thumbnail_url: string | null;
@@ -311,7 +314,7 @@ export interface IGetFriendsByUserIdQuery {
   result: IGetFriendsByUserIdResult;
 }
 
-const getFriendsByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"archivedFilter":true,"favoritesOnly":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":402,"b":416}]},{"name":"archivedFilter","required":false,"transform":{"type":"scalar"},"locs":[{"a":549,"b":563},{"a":602,"b":616}]},{"name":"favoritesOnly","required":false,"transform":{"type":"scalar"},"locs":[{"a":789,"b":802}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":2372,"b":2378},{"a":2441,"b":2447},{"a":2533,"b":2539},{"a":2627,"b":2633},{"a":2715,"b":2721},{"a":2805,"b":2811},{"a":2893,"b":2899}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":2470,"b":2479},{"a":2562,"b":2571},{"a":2654,"b":2663},{"a":2742,"b":2751},{"a":2832,"b":2841},{"a":2920,"b":2929}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":2974,"b":2982}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":2991,"b":2997}]}],"statement":"WITH friend_list AS (\n    SELECT\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.nickname,\n        c.photo_thumbnail_url,\n        c.job_title,\n        c.organization,\n        c.department,\n        c.is_favorite,\n        c.archived_at,\n        c.created_at,\n        c.updated_at\n    FROM friends.friends c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      -- Epic 4: Archive filter (default excludes archived)\n      AND (\n        CASE\n          WHEN :archivedFilter = 'include' THEN true\n          WHEN :archivedFilter = 'only' THEN c.archived_at IS NOT NULL\n          ELSE c.archived_at IS NULL  -- 'exclude' or default\n        END\n      )\n      -- Epic 4: Favorites filter\n      AND (NOT :favoritesOnly OR c.is_favorite = true)\n),\ntotal AS (\n    SELECT COUNT(*)::int as total_count FROM friend_list\n)\nSELECT\n    cl.external_id,\n    cl.display_name,\n    cl.nickname,\n    cl.photo_thumbnail_url,\n    cl.job_title,\n    cl.organization,\n    cl.department,\n    cl.is_favorite,\n    cl.archived_at,\n    cl.created_at,\n    cl.updated_at,\n    (SELECT e.email_address FROM friends.friend_emails e WHERE e.friend_id = cl.id AND e.is_primary = true LIMIT 1) as primary_email,\n    (SELECT p.phone_number FROM friends.friend_phones p WHERE p.friend_id = cl.id AND p.is_primary = true LIMIT 1) as primary_phone,\n    -- Extended fields for dynamic columns\n    (SELECT a.city FROM friends.friend_addresses a WHERE a.friend_id = cl.id AND a.is_primary = true LIMIT 1) as primary_city,\n    (SELECT a.country FROM friends.friend_addresses a WHERE a.friend_id = cl.id AND a.is_primary = true LIMIT 1) as primary_country,\n    (SELECT d.date_value FROM friends.friend_dates d WHERE d.friend_id = cl.id AND d.date_type = 'birthday' LIMIT 1) as birthday,\n    -- Epic 4: Circles for each friend\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', ci.external_id,\n            'name', ci.name,\n            'color', ci.color\n        ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)\n        FROM friends.circles ci\n        INNER JOIN friends.friend_circles fc ON fc.circle_id = ci.id\n        WHERE fc.friend_id = cl.id\n    ) as circles,\n    t.total_count\nFROM friend_list cl\nCROSS JOIN total t\nORDER BY\n    -- Favorites first when sorting by name\n    CASE WHEN :sortBy = 'display_name' THEN cl.is_favorite END DESC,\n    CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN cl.display_name END ASC,\n    CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN cl.display_name END DESC,\n    CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN cl.created_at END ASC,\n    CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN cl.created_at END DESC,\n    CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN cl.updated_at END ASC,\n    CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN cl.updated_at END DESC\nLIMIT :pageSize\nOFFSET :offset"};
+const getFriendsByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"archivedFilter":true,"favoritesOnly":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":358,"b":372}]},{"name":"archivedFilter","required":false,"transform":{"type":"scalar"},"locs":[{"a":505,"b":519},{"a":558,"b":572}]},{"name":"favoritesOnly","required":false,"transform":{"type":"scalar"},"locs":[{"a":745,"b":758}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":2789,"b":2795},{"a":2858,"b":2864},{"a":2950,"b":2956},{"a":3044,"b":3050},{"a":3132,"b":3138},{"a":3222,"b":3228},{"a":3310,"b":3316}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":2887,"b":2896},{"a":2979,"b":2988},{"a":3071,"b":3080},{"a":3159,"b":3168},{"a":3249,"b":3258},{"a":3337,"b":3346}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":3391,"b":3399}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":3408,"b":3414}]}],"statement":"WITH friend_list AS (\n    SELECT\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.nickname,\n        c.maiden_name,\n        c.photo_thumbnail_url,\n        c.is_favorite,\n        c.archived_at,\n        c.created_at,\n        c.updated_at\n    FROM friends.friends c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      -- Epic 4: Archive filter (default excludes archived)\n      AND (\n        CASE\n          WHEN :archivedFilter = 'include' THEN true\n          WHEN :archivedFilter = 'only' THEN c.archived_at IS NOT NULL\n          ELSE c.archived_at IS NULL  -- 'exclude' or default\n        END\n      )\n      -- Epic 4: Favorites filter\n      AND (NOT :favoritesOnly OR c.is_favorite = true)\n),\ntotal AS (\n    SELECT COUNT(*)::int as total_count FROM friend_list\n)\nSELECT\n    cl.external_id,\n    cl.display_name,\n    cl.nickname,\n    cl.maiden_name,\n    cl.photo_thumbnail_url,\n    cl.is_favorite,\n    cl.archived_at,\n    cl.created_at,\n    cl.updated_at,\n    (SELECT e.email_address FROM friends.friend_emails e WHERE e.friend_id = cl.id AND e.is_primary = true LIMIT 1) as primary_email,\n    (SELECT p.phone_number FROM friends.friend_phones p WHERE p.friend_id = cl.id AND p.is_primary = true LIMIT 1) as primary_phone,\n    -- Professional info from primary professional history\n    (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = cl.id AND ph.is_primary = true LIMIT 1) as job_title,\n    (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = cl.id AND ph.is_primary = true LIMIT 1) as organization,\n    (SELECT ph.department FROM friends.friend_professional_history ph WHERE ph.friend_id = cl.id AND ph.is_primary = true LIMIT 1) as department,\n    -- Extended fields for dynamic columns\n    (SELECT a.city FROM friends.friend_addresses a WHERE a.friend_id = cl.id AND a.is_primary = true LIMIT 1) as primary_city,\n    (SELECT a.country FROM friends.friend_addresses a WHERE a.friend_id = cl.id AND a.is_primary = true LIMIT 1) as primary_country,\n    (SELECT d.date_value FROM friends.friend_dates d WHERE d.friend_id = cl.id AND d.date_type = 'birthday' LIMIT 1) as birthday,\n    -- Epic 4: Circles for each friend\n    (\n        SELECT COALESCE(json_agg(json_build_object(\n            'external_id', ci.external_id,\n            'name', ci.name,\n            'color', ci.color\n        ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)\n        FROM friends.circles ci\n        INNER JOIN friends.friend_circles fc ON fc.circle_id = ci.id\n        WHERE fc.friend_id = cl.id\n    ) as circles,\n    t.total_count\nFROM friend_list cl\nCROSS JOIN total t\nORDER BY\n    -- Favorites first when sorting by name\n    CASE WHEN :sortBy = 'display_name' THEN cl.is_favorite END DESC,\n    CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN cl.display_name END ASC,\n    CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN cl.display_name END DESC,\n    CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN cl.created_at END ASC,\n    CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN cl.created_at END DESC,\n    CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN cl.updated_at END ASC,\n    CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN cl.updated_at END DESC\nLIMIT :pageSize\nOFFSET :offset"};
 
 /**
  * Query generated from SQL:
@@ -322,10 +325,8 @@ const getFriendsByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"archiv
  *         c.external_id,
  *         c.display_name,
  *         c.nickname,
+ *         c.maiden_name,
  *         c.photo_thumbnail_url,
- *         c.job_title,
- *         c.organization,
- *         c.department,
  *         c.is_favorite,
  *         c.archived_at,
  *         c.created_at,
@@ -352,16 +353,18 @@ const getFriendsByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"archiv
  *     cl.external_id,
  *     cl.display_name,
  *     cl.nickname,
+ *     cl.maiden_name,
  *     cl.photo_thumbnail_url,
- *     cl.job_title,
- *     cl.organization,
- *     cl.department,
  *     cl.is_favorite,
  *     cl.archived_at,
  *     cl.created_at,
  *     cl.updated_at,
  *     (SELECT e.email_address FROM friends.friend_emails e WHERE e.friend_id = cl.id AND e.is_primary = true LIMIT 1) as primary_email,
  *     (SELECT p.phone_number FROM friends.friend_phones p WHERE p.friend_id = cl.id AND p.is_primary = true LIMIT 1) as primary_phone,
+ *     -- Professional info from primary professional history
+ *     (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = cl.id AND ph.is_primary = true LIMIT 1) as job_title,
+ *     (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = cl.id AND ph.is_primary = true LIMIT 1) as organization,
+ *     (SELECT ph.department FROM friends.friend_professional_history ph WHERE ph.friend_id = cl.id AND ph.is_primary = true LIMIT 1) as department,
  *     -- Extended fields for dynamic columns
  *     (SELECT a.city FROM friends.friend_addresses a WHERE a.friend_id = cl.id AND a.is_primary = true LIMIT 1) as primary_city,
  *     (SELECT a.country FROM friends.friend_addresses a WHERE a.friend_id = cl.id AND a.is_primary = true LIMIT 1) as primary_country,
@@ -446,7 +449,7 @@ export interface ICreateFriendQuery {
   result: ICreateFriendResult;
 }
 
-const createFriendIR: any = {"usedParamSet":{"displayName":true,"nickname":true,"namePrefix":true,"nameFirst":true,"nameMiddle":true,"nameLast":true,"nameSuffix":true,"maidenName":true,"interests":true,"userExternalId":true},"params":[{"name":"displayName","required":false,"transform":{"type":"scalar"},"locs":[{"a":175,"b":186}]},{"name":"nickname","required":false,"transform":{"type":"scalar"},"locs":[{"a":193,"b":201}]},{"name":"namePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":208,"b":218}]},{"name":"nameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":225,"b":234}]},{"name":"nameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":241,"b":251}]},{"name":"nameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":258,"b":266}]},{"name":"nameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":273,"b":283}]},{"name":"maidenName","required":false,"transform":{"type":"scalar"},"locs":[{"a":290,"b":300}]},{"name":"interests","required":false,"transform":{"type":"scalar"},"locs":[{"a":307,"b":316}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":358,"b":372}]}],"statement":"INSERT INTO friends.friends (\n    user_id,\n    display_name,\n    nickname,\n    name_prefix,\n    name_first,\n    name_middle,\n    name_last,\n    name_suffix,\n    maiden_name,\n    interests\n)\nSELECT\n    u.id,\n    :displayName,\n    :nickname,\n    :namePrefix,\n    :nameFirst,\n    :nameMiddle,\n    :nameLast,\n    :nameSuffix,\n    :maidenName,\n    :interests\nFROM auth.users u\nWHERE u.external_id = :userExternalId\nRETURNING\n    external_id,\n    display_name,\n    nickname,\n    name_prefix,\n    name_first,\n    name_middle,\n    name_last,\n    name_suffix,\n    maiden_name,\n    photo_url,\n    photo_thumbnail_url,\n    interests,\n    created_at,\n    updated_at"};
+const createFriendIR: any = {"usedParamSet":{"displayName":true,"nickname":true,"namePrefix":true,"nameFirst":true,"nameMiddle":true,"nameLast":true,"nameSuffix":true,"maidenName":true,"interests":true,"userExternalId":true},"params":[{"name":"displayName","required":false,"transform":{"type":"scalar"},"locs":[{"a":211,"b":222}]},{"name":"nickname","required":false,"transform":{"type":"scalar"},"locs":[{"a":229,"b":237}]},{"name":"namePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":244,"b":254}]},{"name":"nameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":261,"b":270}]},{"name":"nameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":277,"b":287}]},{"name":"nameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":294,"b":302}]},{"name":"nameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":309,"b":319}]},{"name":"maidenName","required":false,"transform":{"type":"scalar"},"locs":[{"a":326,"b":336}]},{"name":"interests","required":false,"transform":{"type":"scalar"},"locs":[{"a":343,"b":352}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":394,"b":408}]}],"statement":"INSERT INTO friends.friends (\n    user_id,\n    display_name,\n    nickname,\n    name_prefix,\n    name_first,\n    name_middle,\n    name_last,\n    name_suffix,\n    maiden_name,\n    interests\n)\nSELECT\n    u.id,\n    :displayName,\n    :nickname,\n    :namePrefix,\n    :nameFirst,\n    :nameMiddle,\n    :nameLast,\n    :nameSuffix,\n    :maidenName,\n    :interests\nFROM auth.users u\nWHERE u.external_id = :userExternalId\nRETURNING\n    external_id,\n    display_name,\n    nickname,\n    name_prefix,\n    name_first,\n    name_middle,\n    name_last,\n    name_suffix,\n    maiden_name,\n    photo_url,\n    photo_thumbnail_url,\n    interests,\n    created_at,\n    updated_at"};
 
 /**
  * Query generated from SQL:
@@ -460,11 +463,7 @@ const createFriendIR: any = {"usedParamSet":{"displayName":true,"nickname":true,
  *     name_middle,
  *     name_last,
  *     name_suffix,
- *     -- Epic 1B: Professional fields
- *     job_title,
- *     organization,
- *     department,
- *     work_notes,
+ *     maiden_name,
  *     interests
  * )
  * SELECT
@@ -476,10 +475,7 @@ const createFriendIR: any = {"usedParamSet":{"displayName":true,"nickname":true,
  *     :nameMiddle,
  *     :nameLast,
  *     :nameSuffix,
- *     :jobTitle,
- *     :organization,
- *     :department,
- *     :workNotes,
+ *     :maidenName,
  *     :interests
  * FROM auth.users u
  * WHERE u.external_id = :userExternalId
@@ -492,12 +488,9 @@ const createFriendIR: any = {"usedParamSet":{"displayName":true,"nickname":true,
  *     name_middle,
  *     name_last,
  *     name_suffix,
+ *     maiden_name,
  *     photo_url,
  *     photo_thumbnail_url,
- *     job_title,
- *     organization,
- *     department,
- *     work_notes,
  *     interests,
  *     created_at,
  *     updated_at
@@ -565,7 +558,7 @@ export interface IUpdateFriendQuery {
   result: IUpdateFriendResult;
 }
 
-const updateFriendIR: any = {"usedParamSet":{"displayName":true,"updateNickname":true,"nickname":true,"updateNamePrefix":true,"namePrefix":true,"updateNameFirst":true,"nameFirst":true,"updateNameMiddle":true,"nameMiddle":true,"updateNameLast":true,"nameLast":true,"updateNameSuffix":true,"nameSuffix":true,"updateMaidenName":true,"maidenName":true,"updateInterests":true,"interests":true,"friendExternalId":true,"userExternalId":true},"params":[{"name":"displayName","required":false,"transform":{"type":"scalar"},"locs":[{"a":57,"b":68}]},{"name":"updateNickname","required":false,"transform":{"type":"scalar"},"locs":[{"a":113,"b":127}]},{"name":"nickname","required":false,"transform":{"type":"scalar"},"locs":[{"a":134,"b":142}]},{"name":"updateNamePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":193,"b":209}]},{"name":"namePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":216,"b":226}]},{"name":"updateNameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":279,"b":294}]},{"name":"nameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":301,"b":310}]},{"name":"updateNameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":363,"b":379}]},{"name":"nameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":386,"b":396}]},{"name":"updateNameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":448,"b":462}]},{"name":"nameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":469,"b":477}]},{"name":"updateNameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":529,"b":545}]},{"name":"nameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":552,"b":562}]},{"name":"updateMaidenName","required":false,"transform":{"type":"scalar"},"locs":[{"a":614,"b":630}]},{"name":"maidenName","required":false,"transform":{"type":"scalar"},"locs":[{"a":637,"b":647}]},{"name":"updateInterests","required":false,"transform":{"type":"scalar"},"locs":[{"a":701,"b":716}]},{"name":"interests","required":false,"transform":{"type":"scalar"},"locs":[{"a":723,"b":732}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":795,"b":811}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":858,"b":872}]}],"statement":"UPDATE friends.friends c\nSET\n    display_name = COALESCE(:displayName, c.display_name),\n    nickname = CASE WHEN :updateNickname THEN :nickname ELSE c.nickname END,\n    name_prefix = CASE WHEN :updateNamePrefix THEN :namePrefix ELSE c.name_prefix END,\n    name_first = CASE WHEN :updateNameFirst THEN :nameFirst ELSE c.name_first END,\n    name_middle = CASE WHEN :updateNameMiddle THEN :nameMiddle ELSE c.name_middle END,\n    name_last = CASE WHEN :updateNameLast THEN :nameLast ELSE c.name_last END,\n    name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END,\n    maiden_name = CASE WHEN :updateMaidenName THEN :maidenName ELSE c.maiden_name END,\n    interests = CASE WHEN :updateInterests THEN :interests ELSE c.interests END\nFROM auth.users u\nWHERE c.external_id = :friendExternalId\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    c.external_id,\n    c.display_name,\n    c.nickname,\n    c.name_prefix,\n    c.name_first,\n    c.name_middle,\n    c.name_last,\n    c.name_suffix,\n    c.maiden_name,\n    c.photo_url,\n    c.photo_thumbnail_url,\n    c.interests,\n    c.created_at,\n    c.updated_at"};
+const updateFriendIR: any = {"usedParamSet":{"displayName":true,"updateNickname":true,"nickname":true,"updateNamePrefix":true,"namePrefix":true,"updateNameFirst":true,"nameFirst":true,"updateNameMiddle":true,"nameMiddle":true,"updateNameLast":true,"nameLast":true,"updateNameSuffix":true,"nameSuffix":true,"updateMaidenName":true,"maidenName":true,"updateInterests":true,"interests":true,"friendExternalId":true,"userExternalId":true},"params":[{"name":"displayName","required":false,"transform":{"type":"scalar"},"locs":[{"a":57,"b":68}]},{"name":"updateNickname","required":false,"transform":{"type":"scalar"},"locs":[{"a":113,"b":127}]},{"name":"nickname","required":false,"transform":{"type":"scalar"},"locs":[{"a":134,"b":142}]},{"name":"updateNamePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":193,"b":209}]},{"name":"namePrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":216,"b":226}]},{"name":"updateNameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":279,"b":294}]},{"name":"nameFirst","required":false,"transform":{"type":"scalar"},"locs":[{"a":301,"b":310}]},{"name":"updateNameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":363,"b":379}]},{"name":"nameMiddle","required":false,"transform":{"type":"scalar"},"locs":[{"a":386,"b":396}]},{"name":"updateNameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":448,"b":462}]},{"name":"nameLast","required":false,"transform":{"type":"scalar"},"locs":[{"a":469,"b":477}]},{"name":"updateNameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":529,"b":545}]},{"name":"nameSuffix","required":false,"transform":{"type":"scalar"},"locs":[{"a":552,"b":562}]},{"name":"updateMaidenName","required":false,"transform":{"type":"scalar"},"locs":[{"a":616,"b":632}]},{"name":"maidenName","required":false,"transform":{"type":"scalar"},"locs":[{"a":639,"b":649}]},{"name":"updateInterests","required":false,"transform":{"type":"scalar"},"locs":[{"a":701,"b":716}]},{"name":"interests","required":false,"transform":{"type":"scalar"},"locs":[{"a":723,"b":732}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":795,"b":811}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":858,"b":872}]}],"statement":"UPDATE friends.friends c\nSET\n    display_name = COALESCE(:displayName, c.display_name),\n    nickname = CASE WHEN :updateNickname THEN :nickname ELSE c.nickname END,\n    name_prefix = CASE WHEN :updateNamePrefix THEN :namePrefix ELSE c.name_prefix END,\n    name_first = CASE WHEN :updateNameFirst THEN :nameFirst ELSE c.name_first END,\n    name_middle = CASE WHEN :updateNameMiddle THEN :nameMiddle ELSE c.name_middle END,\n    name_last = CASE WHEN :updateNameLast THEN :nameLast ELSE c.name_last END,\n    name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END,\n    maiden_name = CASE WHEN :updateMaidenName THEN :maidenName ELSE c.maiden_name END,\n    interests = CASE WHEN :updateInterests THEN :interests ELSE c.interests END\nFROM auth.users u\nWHERE c.external_id = :friendExternalId\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    c.external_id,\n    c.display_name,\n    c.nickname,\n    c.name_prefix,\n    c.name_first,\n    c.name_middle,\n    c.name_last,\n    c.name_suffix,\n    c.maiden_name,\n    c.photo_url,\n    c.photo_thumbnail_url,\n    c.interests,\n    c.created_at,\n    c.updated_at"};
 
 /**
  * Query generated from SQL:
@@ -579,11 +572,7 @@ const updateFriendIR: any = {"usedParamSet":{"displayName":true,"updateNickname"
  *     name_middle = CASE WHEN :updateNameMiddle THEN :nameMiddle ELSE c.name_middle END,
  *     name_last = CASE WHEN :updateNameLast THEN :nameLast ELSE c.name_last END,
  *     name_suffix = CASE WHEN :updateNameSuffix THEN :nameSuffix ELSE c.name_suffix END,
- *     -- Epic 1B: Professional fields
- *     job_title = CASE WHEN :updateJobTitle THEN :jobTitle ELSE c.job_title END,
- *     organization = CASE WHEN :updateOrganization THEN :organization ELSE c.organization END,
- *     department = CASE WHEN :updateDepartment THEN :department ELSE c.department END,
- *     work_notes = CASE WHEN :updateWorkNotes THEN :workNotes ELSE c.work_notes END,
+ *     maiden_name = CASE WHEN :updateMaidenName THEN :maidenName ELSE c.maiden_name END,
  *     interests = CASE WHEN :updateInterests THEN :interests ELSE c.interests END
  * FROM auth.users u
  * WHERE c.external_id = :friendExternalId
@@ -599,12 +588,9 @@ const updateFriendIR: any = {"usedParamSet":{"displayName":true,"updateNickname"
  *     c.name_middle,
  *     c.name_last,
  *     c.name_suffix,
+ *     c.maiden_name,
  *     c.photo_url,
  *     c.photo_thumbnail_url,
- *     c.job_title,
- *     c.organization,
- *     c.department,
- *     c.work_notes,
  *     c.interests,
  *     c.created_at,
  *     c.updated_at
