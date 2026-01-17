@@ -23,7 +23,7 @@ export interface SearchTestContext extends FriendsTestContext {
 }
 
 /**
- * Create a friend with organization and job title
+ * Create a friend with organization and job title (in professional history)
  */
 export async function createFriendWithOrganization(
   pool: pg.Pool,
@@ -32,16 +32,22 @@ export async function createFriendWithOrganization(
   organization: string,
   jobTitle?: string,
 ): Promise<string> {
-  const result = await pool.query(
-    `INSERT INTO friends.friends (user_id, display_name, organization, job_title)
-     SELECT u.id, $2, $3, $4
-     FROM auth.users u
-     WHERE u.external_id = $1
-     RETURNING external_id`,
-    [userExternalId, displayName, organization, jobTitle ?? null],
+  // Create the friend
+  const friendId = await createTestFriend(pool, userExternalId, displayName);
+
+  // Get internal ID for friend
+  const friendResult = await pool.query('SELECT id FROM friends.friends WHERE external_id = $1', [
+    friendId,
+  ]);
+
+  // Add professional history entry with organization
+  await pool.query(
+    `INSERT INTO friends.friend_professional_history (friend_id, organization, job_title, from_month, from_year, is_primary)
+     VALUES ($1, $2, $3, 1, 2024, true)`,
+    [friendResult.rows[0].id, organization, jobTitle ?? null],
   );
 
-  return result.rows[0].external_id;
+  return friendId;
 }
 
 /**
@@ -237,7 +243,7 @@ export async function createFriendWithFullName(
 }
 
 /**
- * Create a friend with work notes
+ * Create a friend with work notes (in professional history as notes)
  */
 export async function createFriendWithWorkNotes(
   pool: pg.Pool,
@@ -245,16 +251,22 @@ export async function createFriendWithWorkNotes(
   displayName: string,
   workNotes: string,
 ): Promise<string> {
-  const result = await pool.query(
-    `INSERT INTO friends.friends (user_id, display_name, work_notes)
-     SELECT u.id, $2, $3
-     FROM auth.users u
-     WHERE u.external_id = $1
-     RETURNING external_id`,
-    [userExternalId, displayName, workNotes],
+  // Create the friend
+  const friendId = await createTestFriend(pool, userExternalId, displayName);
+
+  // Get internal ID for friend
+  const friendResult = await pool.query('SELECT id FROM friends.friends WHERE external_id = $1', [
+    friendId,
+  ]);
+
+  // Add professional history entry with notes
+  await pool.query(
+    `INSERT INTO friends.friend_professional_history (friend_id, notes, from_month, from_year, is_primary)
+     VALUES ($1, $2, 1, 2024, true)`,
+    [friendResult.rows[0].id, workNotes],
   );
 
-  return result.rows[0].external_id;
+  return friendId;
 }
 
 /**

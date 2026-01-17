@@ -79,9 +79,11 @@ class MapperTest extends TestCase
         $friend = [
             'external_id' => 'test-uuid',
             'display_name' => 'John Doe',
-            'organization' => 'Acme Corp',
-            'department' => 'Engineering',
-            'job_title' => 'Senior Developer',
+            'primary_professional_history' => [
+                'organization' => 'Acme Corp',
+                'department' => 'Engineering',
+                'job_title' => 'Senior Developer',
+            ],
             'updated_at' => '2024-01-15T12:00:00Z',
         ];
 
@@ -280,9 +282,11 @@ VCARD;
 
         $friend = $this->mapper->vcardToFriend($vcard);
 
-        $this->assertEquals('Tech Corp', $friend['organization']);
-        $this->assertEquals('Engineering', $friend['department']);
-        $this->assertEquals('Lead Developer', $friend['job_title']);
+        // Professional data is now in professional_history array
+        $this->assertCount(1, $friend['professional_history']);
+        $this->assertEquals('Tech Corp', $friend['professional_history'][0]['organization']);
+        $this->assertEquals('Engineering', $friend['professional_history'][0]['department']);
+        $this->assertEquals('Lead Developer', $friend['professional_history'][0]['job_title']);
     }
 
     #[Test]
@@ -513,9 +517,11 @@ VCARD;
             'name_first' => 'Round',
             'name_last' => 'Trip',
             'nickname' => 'RT',
-            'organization' => 'Test Corp',
-            'department' => 'QA',
-            'job_title' => 'Tester',
+            'primary_professional_history' => [
+                'organization' => 'Test Corp',
+                'department' => 'QA',
+                'job_title' => 'Tester',
+            ],
             'phones' => [
                 ['phone_number' => '+1-555-111-2222', 'phone_type' => 'mobile', 'is_primary' => true],
             ],
@@ -533,9 +539,11 @@ VCARD;
         $this->assertEquals($originalFriend['name_first'], $parsed['name_first']);
         $this->assertEquals($originalFriend['name_last'], $parsed['name_last']);
         $this->assertEquals($originalFriend['nickname'], $parsed['nickname']);
-        $this->assertEquals($originalFriend['organization'], $parsed['organization']);
-        $this->assertEquals($originalFriend['department'], $parsed['department']);
-        $this->assertEquals($originalFriend['job_title'], $parsed['job_title']);
+        // Professional data is now in professional_history array
+        $this->assertCount(1, $parsed['professional_history']);
+        $this->assertEquals($originalFriend['primary_professional_history']['organization'], $parsed['professional_history'][0]['organization']);
+        $this->assertEquals($originalFriend['primary_professional_history']['department'], $parsed['professional_history'][0]['department']);
+        $this->assertEquals($originalFriend['primary_professional_history']['job_title'], $parsed['professional_history'][0]['job_title']);
         $this->assertCount(1, $parsed['phones']);
         $this->assertEquals($originalFriend['phones'][0]['phone_number'], $parsed['phones'][0]['phone_number']);
         $this->assertCount(1, $parsed['emails']);

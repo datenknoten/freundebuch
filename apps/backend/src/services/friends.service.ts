@@ -29,6 +29,8 @@ import type {
   Phone,
   PhoneInput,
   PhoneType,
+  ProfessionalHistory,
+  ProfessionalHistoryInput,
   Relationship,
   RelationshipCategory,
   RelationshipInput,
@@ -86,6 +88,13 @@ import {
   type IGetPhonesByFriendIdResult,
   updatePhone,
 } from '../models/queries/friend-phones.queries.js';
+import {
+  clearPrimaryProfessionalHistory,
+  createProfessionalHistory,
+  deleteProfessionalHistory,
+  type IGetProfessionalHistoryByFriendIdResult,
+  updateProfessionalHistory,
+} from '../models/queries/friend-professional-history.queries.js';
 import {
   createInverseRelationship,
   createRelationship,
@@ -248,11 +257,6 @@ export class FriendsService {
         nameMiddle: data.name_middle ?? null,
         nameLast: data.name_last ?? null,
         nameSuffix: data.name_suffix ?? null,
-        // Epic 1B: Professional fields
-        jobTitle: data.job_title ?? null,
-        organization: data.organization ?? null,
-        department: data.department ?? null,
-        workNotes: data.work_notes ?? null,
         interests: data.interests ?? null,
       },
       this.db,
@@ -266,14 +270,20 @@ export class FriendsService {
     const friendExternalId = friend.external_id;
 
     // Create sub-resources in parallel (Epic 1A + 1B)
-    const [phones, emails, addresses, urls, dates, socialProfiles] = await Promise.all([
-      this.createPhones(userExternalId, friendExternalId, data.phones ?? []),
-      this.createEmails(userExternalId, friendExternalId, data.emails ?? []),
-      this.createAddresses(userExternalId, friendExternalId, data.addresses ?? []),
-      this.createUrls(userExternalId, friendExternalId, data.urls ?? []),
-      this.createDates(userExternalId, friendExternalId, data.dates ?? []),
-      this.createSocialProfiles(userExternalId, friendExternalId, data.social_profiles ?? []),
-    ]);
+    const [phones, emails, addresses, urls, dates, socialProfiles, professionalHistory] =
+      await Promise.all([
+        this.createPhones(userExternalId, friendExternalId, data.phones ?? []),
+        this.createEmails(userExternalId, friendExternalId, data.emails ?? []),
+        this.createAddresses(userExternalId, friendExternalId, data.addresses ?? []),
+        this.createUrls(userExternalId, friendExternalId, data.urls ?? []),
+        this.createDates(userExternalId, friendExternalId, data.dates ?? []),
+        this.createSocialProfiles(userExternalId, friendExternalId, data.social_profiles ?? []),
+        this.createProfessionalHistories(
+          userExternalId,
+          friendExternalId,
+          data.professional_history ?? [],
+        ),
+      ]);
 
     // Create met info if provided (single record)
     let metInfo: MetInfo | undefined;
@@ -298,11 +308,7 @@ export class FriendsService {
       nameSuffix: friend.name_suffix ?? undefined,
       photoUrl: friend.photo_url ?? undefined,
       photoThumbnailUrl: friend.photo_thumbnail_url ?? undefined,
-      // Epic 1B: Professional fields
-      jobTitle: friend.job_title ?? undefined,
-      organization: friend.organization ?? undefined,
-      department: friend.department ?? undefined,
-      workNotes: friend.work_notes ?? undefined,
+      professionalHistory,
       interests: friend.interests ?? undefined,
       phones,
       emails,
@@ -347,15 +353,6 @@ export class FriendsService {
         nameLast: data.name_last ?? null,
         updateNameSuffix: 'name_suffix' in data,
         nameSuffix: data.name_suffix ?? null,
-        // Epic 1B: Professional fields
-        updateJobTitle: 'job_title' in data,
-        jobTitle: data.job_title ?? null,
-        updateOrganization: 'organization' in data,
-        organization: data.organization ?? null,
-        updateDepartment: 'department' in data,
-        department: data.department ?? null,
-        updateWorkNotes: 'work_notes' in data,
-        workNotes: data.work_notes ?? null,
         updateInterests: 'interests' in data,
         interests: data.interests ?? null,
       },
@@ -1020,6 +1017,99 @@ export class FriendsService {
 
     const result = await deleteSocialProfile.run(
       { userExternalId, friendExternalId, profileExternalId },
+      this.db,
+    );
+
+    return result.length > 0;
+  }
+
+  // ============================================================================
+  // Professional History Methods
+  // ============================================================================
+
+  async addProfessionalHistory(
+    userExternalId: string,
+    friendExternalId: string,
+    data: ProfessionalHistoryInput,
+  ): Promise<ProfessionalHistory | null> {
+    this.logger.debug({ friendExternalId }, 'Adding professional history');
+
+    // If setting as primary, clear existing primary first
+    if (data.is_primary) {
+      await clearPrimaryProfessionalHistory.run({ userExternalId, friendExternalId }, this.db);
+    }
+
+    const [history] = await createProfessionalHistory.run(
+      {
+        userExternalId,
+        friendExternalId,
+        jobTitle: data.job_title ?? null,
+        organization: data.organization ?? null,
+        department: data.department ?? null,
+        notes: data.notes ?? null,
+        fromMonth: data.from_month,
+        fromYear: data.from_year,
+        toMonth: data.to_month ?? null,
+        toYear: data.to_year ?? null,
+        isPrimary: data.is_primary ?? false,
+      },
+      this.db,
+    );
+
+    if (!history) {
+      return null;
+    }
+
+    return this.mapProfessionalHistory(history);
+  }
+
+  async updateProfessionalHistory(
+    userExternalId: string,
+    friendExternalId: string,
+    historyExternalId: string,
+    data: ProfessionalHistoryInput,
+  ): Promise<ProfessionalHistory | null> {
+    this.logger.debug({ friendExternalId, historyExternalId }, 'Updating professional history');
+
+    // If setting as primary, clear existing primary first
+    if (data.is_primary) {
+      await clearPrimaryProfessionalHistory.run({ userExternalId, friendExternalId }, this.db);
+    }
+
+    const [history] = await updateProfessionalHistory.run(
+      {
+        userExternalId,
+        friendExternalId,
+        historyExternalId,
+        jobTitle: data.job_title ?? null,
+        organization: data.organization ?? null,
+        department: data.department ?? null,
+        notes: data.notes ?? null,
+        fromMonth: data.from_month,
+        fromYear: data.from_year,
+        toMonth: data.to_month ?? null,
+        toYear: data.to_year ?? null,
+        isPrimary: data.is_primary ?? false,
+      },
+      this.db,
+    );
+
+    if (!history) {
+      return null;
+    }
+
+    return this.mapProfessionalHistory(history);
+  }
+
+  async deleteProfessionalHistory(
+    userExternalId: string,
+    friendExternalId: string,
+    historyExternalId: string,
+  ): Promise<boolean> {
+    this.logger.debug({ friendExternalId, historyExternalId }, 'Deleting professional history');
+
+    const result = await deleteProfessionalHistory.run(
+      { userExternalId, friendExternalId, historyExternalId },
       this.db,
     );
 
@@ -1745,6 +1835,41 @@ export class FriendsService {
     return results;
   }
 
+  private async createProfessionalHistories(
+    userExternalId: string,
+    friendExternalId: string,
+    histories: ProfessionalHistoryInput[],
+  ): Promise<ProfessionalHistory[]> {
+    const results: ProfessionalHistory[] = [];
+
+    for (const history of histories) {
+      const created = await this.addProfessionalHistory(userExternalId, friendExternalId, history);
+      if (created) {
+        results.push(created);
+      }
+    }
+
+    return results;
+  }
+
+  private mapProfessionalHistory(
+    row: IGetProfessionalHistoryByFriendIdResult,
+  ): ProfessionalHistory {
+    return {
+      id: row.external_id,
+      jobTitle: row.job_title ?? undefined,
+      organization: row.organization ?? undefined,
+      department: row.department ?? undefined,
+      notes: row.notes ?? undefined,
+      fromMonth: row.from_month,
+      fromYear: row.from_year,
+      toMonth: row.to_month ?? undefined,
+      toYear: row.to_year ?? undefined,
+      isPrimary: row.is_primary,
+      createdAt: row.created_at.toISOString(),
+    };
+  }
+
   private mapFriendListItem(row: IGetFriendsByUserIdResult): FriendListItem {
     // Epic 4: Parse circles from JSON
     const circlesRaw = (row.circles || []) as Array<{
@@ -2000,6 +2125,21 @@ export class FriendsService {
       color: string | null;
     }>;
 
+    // Professional history
+    const professionalHistory = (friend.professional_history || []) as Array<{
+      external_id: string;
+      job_title: string | null;
+      organization: string | null;
+      department: string | null;
+      notes: string | null;
+      from_month: number;
+      from_year: number;
+      to_month: number | null;
+      to_year: number | null;
+      is_primary: boolean;
+      created_at: string;
+    }>;
+
     return {
       id: friend.external_id,
       displayName: friend.display_name,
@@ -2011,12 +2151,20 @@ export class FriendsService {
       nameSuffix: friend.name_suffix ?? undefined,
       photoUrl: friend.photo_url ?? undefined,
       photoThumbnailUrl: friend.photo_thumbnail_url ?? undefined,
-      // Epic 1B: Professional fields
-      jobTitle: friend.job_title ?? undefined,
-      organization: friend.organization ?? undefined,
-      department: friend.department ?? undefined,
-      workNotes: friend.work_notes ?? undefined,
       interests: friend.interests ?? undefined,
+      professionalHistory: professionalHistory.map((ph) => ({
+        id: ph.external_id,
+        jobTitle: ph.job_title ?? undefined,
+        organization: ph.organization ?? undefined,
+        department: ph.department ?? undefined,
+        notes: ph.notes ?? undefined,
+        fromMonth: ph.from_month,
+        fromYear: ph.from_year,
+        toMonth: ph.to_month,
+        toYear: ph.to_year,
+        isPrimary: ph.is_primary,
+        createdAt: ph.created_at,
+      })),
       phones: phones.map((p) => ({
         id: p.external_id,
         phoneNumber: p.phone_number,

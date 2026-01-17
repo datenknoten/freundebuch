@@ -76,11 +76,8 @@ function onDisplayNameInput() {
   displayNameManuallyEdited = true;
 }
 
-// Epic 1B: Professional fields - initialize with functions to capture initial values
-let jobTitle = $state((() => friend?.jobTitle ?? '')());
-let organization = $state((() => friend?.organization ?? '')());
-let department = $state((() => friend?.department ?? '')());
-let workNotes = $state((() => friend?.workNotes ?? '')());
+// Epic 1B: Interests field - initialize with function to capture initial value
+// Note: Professional information (job, org, dept) is now managed in the Professional History subresource
 let interests = $state((() => friend?.interests ?? '')());
 
 // Epic 1B: How/where met - initialize with functions to capture initial values
@@ -212,6 +209,7 @@ async function handleSubmit(e: Event) {
         : undefined;
 
     // Build the friend data for creating/onboarding
+    // Note: Professional history is now managed as a subresource from the detail page
     const friendData: FriendCreateInput = {
       display_name: displayName,
       nickname: nickname || undefined,
@@ -220,10 +218,6 @@ async function handleSubmit(e: Event) {
       name_middle: nameMiddle || undefined,
       name_last: nameLast || undefined,
       name_suffix: nameSuffix || undefined,
-      job_title: jobTitle || undefined,
-      organization: organization || undefined,
-      department: department || undefined,
-      work_notes: workNotes || undefined,
       interests: interests || undefined,
       met_info: metInfo,
     };
@@ -236,7 +230,7 @@ async function handleSubmit(e: Event) {
 
     if (isEditing && friend) {
       // Update existing friend - core fields only
-      // Subresources (phones, emails, etc.) are edited inline on the detail page
+      // Subresources (phones, emails, professional history, etc.) are edited inline on the detail page
       await friends.updateFriend(friend.id, {
         display_name: displayName,
         nickname: nickname || null,
@@ -245,10 +239,6 @@ async function handleSubmit(e: Event) {
         name_middle: nameMiddle || null,
         name_last: nameLast || null,
         name_suffix: nameSuffix || null,
-        job_title: jobTitle || null,
-        organization: organization || null,
-        department: department || null,
-        work_notes: workNotes || null,
         interests: interests || null,
       });
 
@@ -409,39 +399,6 @@ async function handleSubmit(e: Event) {
       placeholder="Nickname"
       disabled={isLoading}
     />
-  </div>
-
-  <!-- Epic 1B: Professional Information -->
-  <div class="space-y-2">
-    <h3 class="text-lg font-heading text-gray-900">Professional Information</h3>
-    <input
-      type="text"
-      bind:value={jobTitle}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="Job Title"
-      disabled={isLoading}
-    />
-    <input
-      type="text"
-      bind:value={organization}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="Organization / Company"
-      disabled={isLoading}
-    />
-    <input
-      type="text"
-      bind:value={department}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="Department"
-      disabled={isLoading}
-    />
-    <textarea
-      bind:value={workNotes}
-      rows="2"
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none"
-      placeholder="Work notes (e.g., how you know them professionally)"
-      disabled={isLoading}
-    ></textarea>
   </div>
 
   <!-- Epic 1B: Interests -->

@@ -60,18 +60,19 @@ class Mapper
             $lines[] = 'NICKNAME:' . $this->escape($friend['nickname']);
         }
 
-        // Organization
-        if (!empty($friend['organization']) || !empty($friend['department'])) {
-            $org = $this->escape($friend['organization'] ?? '');
-            if (!empty($friend['department'])) {
-                $org .= ';' . $this->escape($friend['department']);
+        // Organization and Job title from primary professional history
+        $primaryJob = $friend['primary_professional_history'] ?? null;
+        if ($primaryJob) {
+            if (!empty($primaryJob['organization']) || !empty($primaryJob['department'])) {
+                $org = $this->escape($primaryJob['organization'] ?? '');
+                if (!empty($primaryJob['department'])) {
+                    $org .= ';' . $this->escape($primaryJob['department']);
+                }
+                $lines[] = 'ORG:' . $org;
             }
-            $lines[] = 'ORG:' . $org;
-        }
-
-        // Job title
-        if (!empty($friend['job_title'])) {
-            $lines[] = 'TITLE:' . $this->escape($friend['job_title']);
+            if (!empty($primaryJob['job_title'])) {
+                $lines[] = 'TITLE:' . $this->escape($primaryJob['job_title']);
+            }
         }
 
         // Phone numbers
@@ -149,12 +150,14 @@ class Mapper
             }
         }
 
-        // Notes (interests, work_notes)
+        // Notes (interests, professional history notes)
         if (!empty($friend['interests'])) {
             $lines[] = 'X-FREUNDEBUCH-INTERESTS:' . $this->escape($friend['interests']);
         }
-        if (!empty($friend['work_notes'])) {
-            $lines[] = 'NOTE:' . $this->escape($friend['work_notes']);
+        // Use notes from primary professional history entry
+        $primaryJob = $friend['primary_professional_history'] ?? null;
+        if ($primaryJob && !empty($primaryJob['notes'])) {
+            $lines[] = 'NOTE:' . $this->escape($primaryJob['notes']);
         }
 
         // Epic 4: Circles as CATEGORIES
@@ -201,9 +204,18 @@ class Mapper
             'urls' => [],
             'dates' => [],
             'social_profiles' => [],
+            'professional_history' => [], // Employment entries
             // Epic 4: Circles and favorites
             'categories' => [], // Circle names from CATEGORIES
             'is_favorite' => false,
+        ];
+
+        // Temporary storage for professional info from vCard
+        $professionalData = [
+            'job_title' => null,
+            'organization' => null,
+            'department' => null,
+            'notes' => null,
         ];
 
         foreach ($lines as $line) {
@@ -240,12 +252,12 @@ class Mapper
 
                 case 'ORG':
                     $parts = explode(';', $value);
-                    $friend['organization'] = $this->unescape($parts[0] ?? '') ?: null;
-                    $friend['department'] = $this->unescape($parts[1] ?? '') ?: null;
+                    $professionalData['organization'] = $this->unescape($parts[0] ?? '') ?: null;
+                    $professionalData['department'] = $this->unescape($parts[1] ?? '') ?: null;
                     break;
 
                 case 'TITLE':
-                    $friend['job_title'] = $this->unescape($value);
+                    $professionalData['job_title'] = $this->unescape($value);
                     break;
 
                 case 'TEL':
@@ -314,7 +326,7 @@ class Mapper
                     break;
 
                 case 'NOTE':
-                    $friend['work_notes'] = $this->unescape($value);
+                    $professionalData['notes'] = $this->unescape($value);
                     break;
 
                 case 'X-FREUNDEBUCH-INTERESTS':
@@ -355,6 +367,26 @@ class Mapper
             }
         }
 
+        // Create professional history entry if any professional data was parsed
+        $hasProfessionalData = !empty($professionalData['job_title']) ||
+                               !empty($professionalData['organization']) ||
+                               !empty($professionalData['department']) ||
+                               !empty($professionalData['notes']);
+        if ($hasProfessionalData) {
+            $currentDate = new \DateTime();
+            $friend['professional_history'][] = [
+                'job_title' => $professionalData['job_title'],
+                'organization' => $professionalData['organization'],
+                'department' => $professionalData['department'],
+                'notes' => $professionalData['notes'],
+                'from_month' => (int) $currentDate->format('n'),
+                'from_year' => (int) $currentDate->format('Y'),
+                'to_month' => null,
+                'to_year' => null,
+                'is_primary' => true,
+            ];
+        }
+
         return $friend;
     }
 
@@ -387,6 +419,8 @@ class Mapper
         $friend['dates'] = $this->loadDates((int) $friend['id']);
         $friend['social_profiles'] = $this->loadSocialProfiles((int) $friend['id']);
         $friend['met_info'] = $this->loadMetInfo((int) $friend['id']);
+        // Load primary professional history for CardDAV export
+        $friend['primary_professional_history'] = $this->loadPrimaryProfessionalHistory((int) $friend['id']);
         // Epic 4: Load circles
         $friend['circles'] = $this->loadCircles((int) $friend['id']);
 
@@ -485,6 +519,23 @@ class Mapper
         ');
         $stmt->execute(['friend_id' => $friendId]);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Loads the primary professional history entry for a friend.
+     * Returns null if no primary entry exists.
+     */
+    private function loadPrimaryProfessionalHistory(int $friendId): ?array
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT job_title, organization, department, notes,
+                   from_month, from_year, to_month, to_year
+            FROM friends.friend_professional_history
+            WHERE friend_id = :friend_id AND is_primary = true
+            LIMIT 1
+        ');
+        $stmt->execute(['friend_id' => $friendId]);
+        return $stmt->fetch() ?: null;
     }
 
     /**

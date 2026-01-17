@@ -13,6 +13,8 @@ import type {
   FriendDate,
   Phone,
   PhoneInput,
+  ProfessionalHistory,
+  ProfessionalHistoryInput,
   SocialProfile,
   SocialProfileInput,
   Url,
@@ -33,6 +35,8 @@ import {
   EmailRow,
   PhoneEditForm,
   PhoneRow,
+  ProfessionalHistoryEditForm,
+  ProfessionalHistoryRow,
   SocialProfileEditForm,
   SocialProfileRow,
   type SubresourceType,
@@ -53,7 +57,9 @@ let showDeleteConfirm = $state(false);
 // Subresource editing state
 let editingType = $state<SubresourceType | null>(null);
 let editingId = $state<string | null>(null); // null = add new
-let editingData = $state<Phone | Email | Address | Url | FriendDate | SocialProfile | null>(null);
+let editingData = $state<
+  Phone | Email | Address | Url | FriendDate | SocialProfile | ProfessionalHistory | null
+>(null);
 let isEditLoading = $state(false);
 let editError = $state<string | null>(null);
 let isDirty = $state(false);
@@ -71,6 +77,7 @@ let deletingUrlId = $state<string | null>(null);
 let deletingDateId = $state<string | null>(null);
 let deletingSocialId = $state<string | null>(null);
 let deletingCircleId = $state<string | null>(null);
+let deletingProfessionalId = $state<string | null>(null);
 
 // Form component references
 let phoneFormRef = $state<{ getData: () => PhoneInput; isValid: () => boolean } | null>(null);
@@ -84,6 +91,10 @@ let socialFormRef = $state<{ getData: () => SocialProfileInput; isValid: () => b
 let circleFormRef = $state<{ getData: () => { circleId: string }; isValid: () => boolean } | null>(
   null,
 );
+let professionalFormRef = $state<{
+  getData: () => ProfessionalHistoryInput;
+  isValid: () => boolean;
+} | null>(null);
 
 // Friend delete handler
 async function handleDelete() {
@@ -102,7 +113,7 @@ async function handleDelete() {
 function openEditModal(
   type: SubresourceType,
   id?: string,
-  data?: Phone | Email | Address | Url | FriendDate | SocialProfile,
+  data?: Phone | Email | Address | Url | FriendDate | SocialProfile | ProfessionalHistory,
 ) {
   editingType = type;
   editingId = id ?? null;
@@ -187,6 +198,13 @@ async function handleSave() {
       const data = circleFormRef.getData();
       // Circles only support adding, not editing
       await friends.addCircle(friend.id, data.circleId);
+    } else if (editingType === 'professional' && professionalFormRef) {
+      const data = professionalFormRef.getData();
+      if (editingId) {
+        await friends.updateProfessionalHistory(friend.id, editingId, data);
+      } else {
+        await friends.addProfessionalHistory(friend.id, data);
+      }
     }
 
     closeEditModal();
@@ -230,6 +248,10 @@ async function handleSubresourceDelete() {
         deletingCircleId = deleteId;
         await friends.removeCircle(friend.id, deleteId);
         break;
+      case 'professional':
+        deletingProfessionalId = deleteId;
+        await friends.deleteProfessionalHistory(friend.id, deleteId);
+        break;
     }
   } finally {
     deletingPhoneId = null;
@@ -239,6 +261,7 @@ async function handleSubresourceDelete() {
     deletingDateId = null;
     deletingSocialId = null;
     deletingCircleId = null;
+    deletingProfessionalId = null;
   }
 }
 
@@ -254,6 +277,7 @@ function getModalTitle(): string {
     date: 'Important Date',
     social: 'Social Profile',
     circle: 'Circle',
+    professional: 'Employment',
   };
   return `${action} ${typeNames[editingType]}`;
 }
@@ -343,31 +367,39 @@ onMount(() => {
   </div>
 
   <!-- ==================== ABOUT SECTION ==================== -->
-  {#if friend.jobTitle || friend.organization || friend.department || friend.workNotes || friend.interests || friend.metInfo}
+  {#if (friend.professionalHistory && friend.professionalHistory.length > 0) || friend.interests || friend.metInfo}
     <div class="space-y-4">
-      <!-- Professional Information -->
-      {#if friend.jobTitle || friend.organization || friend.department || friend.workNotes}
+      <!-- Professional History -->
+      {#if friend.professionalHistory && friend.professionalHistory.length > 0}
         <section class="space-y-2">
-          <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            Professional
-          </h2>
-          <div class="p-3 bg-gray-50 rounded-lg font-body space-y-1">
-            {#if friend.jobTitle}
-              <div class="font-semibold text-gray-900">{friend.jobTitle}</div>
-            {/if}
-            {#if friend.organization || friend.department}
-              <div class="text-gray-600">
-                {#if friend.organization}{friend.organization}{/if}
-                {#if friend.organization && friend.department} - {/if}
-                {#if friend.department}{friend.department}{/if}
-              </div>
-            {/if}
-            {#if friend.workNotes}
-              <div class="text-sm text-gray-500 italic">{friend.workNotes}</div>
-            {/if}
+          <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+            <h2 class="text-lg font-heading flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Employment History
+            </h2>
+            <button
+              type="button"
+              onclick={() => openEditModal('professional')}
+              class="text-sm font-body font-semibold text-white/90 hover:text-white
+                     flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Employment
+            </button>
+          </div>
+          <div class="space-y-2">
+            {#each friend.professionalHistory as history (history.id)}
+              <ProfessionalHistoryRow
+                {history}
+                onEdit={() => openEditModal('professional', history.id, history)}
+                onDelete={() => openDeleteConfirm('professional', history.id, history.jobTitle || history.organization || 'Employment')}
+                isDeleting={deletingProfessionalId === history.id}
+              />
+            {/each}
           </div>
         </section>
       {/if}
@@ -784,6 +816,13 @@ onMount(() => {
         disabled={isEditLoading}
         onchange={() => isDirty = true}
       />
+    {:else if editingType === 'professional'}
+      <ProfessionalHistoryEditForm
+        bind:this={professionalFormRef}
+        initialData={editingData as ProfessionalHistory | undefined}
+        disabled={isEditLoading}
+        onchange={() => isDirty = true}
+      />
     {/if}
   </DetailEditModal>
 {/if}
@@ -791,7 +830,7 @@ onMount(() => {
 <!-- Subresource delete confirmation modal -->
 {#if deleteType && deleteId}
   <DeleteConfirmModal
-    title="{deleteType === 'circle' ? 'Remove from' : 'Delete'} {deleteType === 'phone' ? 'Phone Number' : deleteType === 'email' ? 'Email Address' : deleteType === 'address' ? 'Address' : deleteType === 'url' ? 'Website' : deleteType === 'date' ? 'Date' : deleteType === 'social' ? 'Social Profile' : 'Circle'}"
+    title="{deleteType === 'circle' ? 'Remove from' : 'Delete'} {deleteType === 'phone' ? 'Phone Number' : deleteType === 'email' ? 'Email Address' : deleteType === 'address' ? 'Address' : deleteType === 'url' ? 'Website' : deleteType === 'date' ? 'Date' : deleteType === 'social' ? 'Social Profile' : deleteType === 'professional' ? 'Employment' : 'Circle'}"
     description={deleteType === 'circle' ? 'Are you sure you want to remove this friend from this circle?' : `Are you sure you want to delete this ${deleteType}?`}
     itemPreview={deleteName}
     onConfirm={handleSubresourceDelete}
