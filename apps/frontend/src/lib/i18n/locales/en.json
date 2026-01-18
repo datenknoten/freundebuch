@@ -1,0 +1,309 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "new": "New",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "optional": "optional",
+    "required": "required"
+  },
+  "nav": {
+    "home": "Home",
+    "friends": "Friends",
+    "circles": "Circles",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "search": "Search...",
+    "menu": "Menu"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "subtitle": "Welcome back! Please sign in to continue.",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign In",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Create one",
+      "error": {
+        "invalidCredentials": "Invalid email or password",
+        "generic": "Login failed. Please try again."
+      }
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Start your friendship book today!",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Create a password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Repeat your password",
+      "submit": "Create Account",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Sign in",
+      "passwordRequirements": "Password must be at least 8 characters with uppercase, lowercase, and a number",
+      "error": {
+        "emailTaken": "This email is already registered",
+        "passwordMismatch": "Passwords do not match",
+        "weakPassword": "Password does not meet requirements",
+        "generic": "Registration failed. Please try again."
+      }
+    },
+    "forgotPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your email to receive a reset link.",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "submit": "Send Reset Link",
+      "backToLogin": "Back to login",
+      "success": "If an account exists with this email, you will receive a reset link.",
+      "error": {
+        "generic": "Failed to send reset link. Please try again."
+      }
+    },
+    "resetPassword": {
+      "title": "Set New Password",
+      "subtitle": "Enter your new password below.",
+      "password": "New Password",
+      "passwordPlaceholder": "Enter new password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Repeat new password",
+      "submit": "Reset Password",
+      "success": "Password reset successfully! You can now sign in.",
+      "error": {
+        "invalidToken": "Invalid or expired reset link",
+        "generic": "Failed to reset password. Please try again."
+      }
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Keep Your Connections Alive",
+      "subtitle": "A digital friendship book to remember the people who matter most.",
+      "cta": "Start Your Book",
+      "loginCta": "Sign In"
+    },
+    "features": {
+      "title": "Why Freundebuch?",
+      "organize": {
+        "title": "Organize Friends",
+        "description": "Keep all your contacts organized with circles and custom fields."
+      },
+      "remember": {
+        "title": "Remember Details",
+        "description": "Never forget birthdays, addresses, or important notes."
+      },
+      "sync": {
+        "title": "Sync Everywhere",
+        "description": "Access your contacts on any device with CardDAV sync."
+      }
+    }
+  },
+  "friends": {
+    "title": "Friends",
+    "addNew": "Add New Friend",
+    "noFriends": "No friends yet",
+    "noFriendsSubtitle": "Start by adding your first friend!",
+    "search": "Search friends...",
+    "filters": {
+      "all": "All",
+      "favorites": "Favorites",
+      "recent": "Recent",
+      "birthday": "Upcoming Birthdays"
+    },
+    "sort": {
+      "name": "Name",
+      "dateAdded": "Date Added",
+      "birthday": "Birthday"
+    },
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "birthday": "Birthday",
+      "city": "City",
+      "actions": "Actions"
+    },
+    "card": {
+      "viewDetails": "View Details",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "detail": {
+      "editProfile": "Edit Profile",
+      "contact": "Contact",
+      "address": "Address",
+      "birthday": "Birthday",
+      "notes": "Notes",
+      "circles": "Circles",
+      "relationships": "Relationships",
+      "noRelationships": "No relationships added yet"
+    },
+    "form": {
+      "title": {
+        "new": "Add New Friend",
+        "edit": "Edit Friend"
+      },
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "nickname": "Nickname",
+      "email": "Email",
+      "phone": "Phone",
+      "birthday": "Birthday",
+      "address": "Address",
+      "street": "Street",
+      "city": "City",
+      "postalCode": "Postal Code",
+      "country": "Country",
+      "notes": "Notes",
+      "notesPlaceholder": "Add notes about this friend...",
+      "photo": "Photo",
+      "uploadPhoto": "Upload Photo",
+      "removePhoto": "Remove Photo",
+      "circles": "Add to Circles",
+      "save": "Save Friend",
+      "saving": "Saving..."
+    },
+    "delete": {
+      "title": "Delete Friend",
+      "message": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  },
+  "circles": {
+    "title": "Circles",
+    "addNew": "Add New Circle",
+    "noCircles": "No circles yet",
+    "noCirclesSubtitle": "Create circles to organize your friends!",
+    "members": "{{count}} member",
+    "members_plural": "{{count}} members",
+    "form": {
+      "title": {
+        "new": "Create Circle",
+        "edit": "Edit Circle"
+      },
+      "name": "Name",
+      "namePlaceholder": "e.g., Family, Work, School",
+      "description": "Description",
+      "descriptionPlaceholder": "What is this circle for?",
+      "color": "Color",
+      "save": "Save Circle"
+    },
+    "delete": {
+      "title": "Delete Circle",
+      "message": "Are you sure you want to delete \"{{name}}\"? Friends in this circle will not be deleted.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "email": "Email",
+    "password": "Password",
+    "changePassword": "Change Password",
+    "preferences": {
+      "title": "Preferences",
+      "language": "Language",
+      "pageSize": "Items per page",
+      "birthdayFormat": "Birthday format",
+      "birthdayFormats": {
+        "iso": "ISO (YYYY-MM-DD)",
+        "us": "US (MM/DD/YYYY)",
+        "eu": "EU (DD.MM.YYYY)",
+        "long": "Long (Month DD, YYYY)"
+      }
+    },
+    "carddav": {
+      "title": "CardDAV Sync",
+      "description": "Sync your contacts with other apps using CardDAV.",
+      "serverUrl": "Server URL",
+      "username": "Username",
+      "appPassword": "App Password",
+      "createPassword": "Create App Password",
+      "setupGuide": "Setup Guide"
+    },
+    "danger": {
+      "title": "Danger Zone",
+      "deleteAccount": "Delete Account",
+      "deleteWarning": "This will permanently delete your account and all data."
+    }
+  },
+  "onboarding": {
+    "title": "Welcome to Freundebuch!",
+    "subtitle": "Let's set up your profile",
+    "step1": {
+      "title": "About You",
+      "description": "Tell us a bit about yourself"
+    },
+    "step2": {
+      "title": "Your First Circle",
+      "description": "Create a circle to organize friends"
+    },
+    "step3": {
+      "title": "Add Friends",
+      "description": "Start adding your friends"
+    },
+    "skip": "Skip for now",
+    "complete": "Complete Setup"
+  },
+  "search": {
+    "placeholder": "Search friends, circles...",
+    "noResults": "No results found",
+    "recentSearches": "Recent Searches",
+    "clearRecent": "Clear recent"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "general": "General",
+    "navigation": "Navigation",
+    "actions": "Actions",
+    "search": "Search",
+    "close": "Close",
+    "newFriend": "New Friend",
+    "newCircle": "New Circle",
+    "goHome": "Go to Home",
+    "goFriends": "Go to Friends",
+    "goCircles": "Go to Circles",
+    "goProfile": "Go to Profile"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "notFound": "Not found",
+    "unauthorized": "Please sign in to continue",
+    "forbidden": "You don't have permission to do this",
+    "validation": "Please check your input"
+  },
+  "footer": {
+    "copyright": "Freundebuch",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  }
+}

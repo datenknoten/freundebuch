@@ -19,8 +19,11 @@
     "@sentry/sveltekit": "^10.32.1",
     "arktype": "2.1.29",
     "d3": "^7.9.0",
+    "i18next": "^25.7.4",
+    "i18next-browser-languagedetector": "^8.2.0",
     "isomorphic-dompurify": "^2.35.0",
-    "svelte-easy-crop": "^5.0.0"
+    "svelte-easy-crop": "^5.0.0",
+    "svelte-i18next": "^2.2.2"
   },
   "devDependencies": {
     "@playwright/test": "1.57.0",

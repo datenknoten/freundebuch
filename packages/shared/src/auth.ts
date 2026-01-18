@@ -37,10 +37,14 @@ export type PageSize = typeof PageSizeSchema.infer;
 export const BirthdayFormatSchema = type("'iso' | 'us' | 'eu' | 'long'");
 export type BirthdayFormat = typeof BirthdayFormatSchema.infer;
 
+export const LanguageSchema = type("'en' | 'de'");
+export type Language = typeof LanguageSchema.infer;
+
 export const UserPreferencesSchema = type({
   'friendsPageSize?': PageSizeSchema,
   'friendsTableColumns?': 'string[]',
   'birthdayFormat?': BirthdayFormatSchema,
+  'language?': LanguageSchema,
 });
 export type UserPreferences = typeof UserPreferencesSchema.infer;
 
@@ -48,6 +52,7 @@ export const UpdatePreferencesRequestSchema = type({
   'friendsPageSize?': PageSizeSchema,
   'friendsTableColumns?': 'string[]',
   'birthdayFormat?': BirthdayFormatSchema,
+  'language?': LanguageSchema,
 });
 export type UpdatePreferencesRequest = typeof UpdatePreferencesRequestSchema.infer;
 

@@ -144,6 +144,16 @@
       }
     },
     {
+      "includes": ["**/i18n/**/*.ts"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useImportExtensions": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["**/*.css"],
       "linter": {
         "rules": {

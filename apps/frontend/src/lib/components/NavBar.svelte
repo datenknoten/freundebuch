@@ -2,9 +2,13 @@
 import { fade } from 'svelte/transition';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
+import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 import { search } from '$lib/stores/search';
+import LanguageSwitcher from './LanguageSwitcher.svelte';
 import UserMenu from './UserMenu.svelte';
+
+const i18n = createI18n();
 
 // Detect platform for keyboard shortcut hint
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
@@ -16,12 +20,13 @@ const version = __APP_VERSION__;
 // Derive page title from current route
 const pageTitle = $derived.by(() => {
   const pathname = $page.url.pathname;
-  if (pathname === '/' || pathname === '/friends') return 'Friends';
-  if (pathname === '/friends/new') return 'Add Friend';
-  if (pathname.startsWith('/friends/') && pathname.endsWith('/edit')) return 'Edit';
-  if (pathname.startsWith('/friends/')) return 'Friend';
-  if (pathname === '/circles') return 'Circles';
-  if (pathname === '/profile') return 'Profile';
+  const t = $i18n.t;
+  if (pathname === '/' || pathname === '/friends') return t('nav.friends');
+  if (pathname === '/friends/new') return t('friends.addNew');
+  if (pathname.startsWith('/friends/') && pathname.endsWith('/edit')) return t('common.edit');
+  if (pathname.startsWith('/friends/')) return t('nav.friends');
+  if (pathname === '/circles') return t('nav.circles');
+  if (pathname === '/profile') return t('nav.profile');
   if (pathname.startsWith('/auth/')) return 'Freundebuch';
   return 'Freundebuch';
 });
@@ -139,7 +144,7 @@ $effect(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add Friend
+          {$i18n.t('friends.addNew')}
         </a>
         <a
           href="/friends"
@@ -150,7 +155,7 @@ $effect(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
-          Friends
+          {$i18n.t('nav.friends')}
         </a>
         <a
           href="/circles"
@@ -161,7 +166,7 @@ $effect(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
           </svg>
-          Circles
+          {$i18n.t('nav.circles')}
         </a>
         <a
           href="/profile"
@@ -172,7 +177,7 @@ $effect(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          Profile
+          {$i18n.t('nav.profile')}
         </a>
       </div>
 
@@ -187,7 +192,7 @@ $effect(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
-          Logout
+          {$i18n.t('nav.logout')}
         </button>
       </div>
     {:else}
@@ -197,27 +202,30 @@ $effect(() => {
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
-          Sign in
+          {$i18n.t('nav.login')}
         </a>
         <a
           href="/auth/register"
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md bg-forest text-white hover:bg-forest-light font-body font-medium transition-colors duration-200"
         >
-          Sign up
+          {$i18n.t('nav.register')}
         </a>
       </div>
     {/if}
   </nav>
 
   <div class="absolute bottom-4 left-0 right-0 px-4">
+    <div class="flex justify-center mb-3">
+      <LanguageSwitcher />
+    </div>
     <div class="flex justify-center gap-3 mb-2">
       <a
         href="/privacy"
         onclick={closeMobileMenu}
         class="text-gray-400 hover:text-forest text-xs font-body transition-colors duration-200"
       >
-        Privacy Policy
+        {$i18n.t('footer.privacy')}
       </a>
       <span class="text-gray-300">|</span>
       <a
@@ -225,7 +233,7 @@ $effect(() => {
         onclick={closeMobileMenu}
         class="text-gray-400 hover:text-forest text-xs font-body transition-colors duration-200"
       >
-        Terms of Service
+        {$i18n.t('footer.terms')}
       </a>
     </div>
     <p class="text-center text-gray-400 text-xs font-body">v{version}</p>
@@ -284,12 +292,12 @@ $effect(() => {
           <button
             onclick={() => search.open()}
             class="w-full max-w-md flex items-center gap-3 px-4 py-2 text-gray-400 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors duration-200 cursor-text"
-            title="Search ({isMac ? 'Cmd' : 'Ctrl'}+K)"
+            title="{$i18n.t('common.search')} ({isMac ? 'Cmd' : 'Ctrl'}+K)"
           >
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <span class="flex-1 text-left font-body text-sm">Search friends...</span>
+            <span class="flex-1 text-left font-body text-sm">{$i18n.t('friends.search')}</span>
             <kbd class="hidden md:inline-block px-2 py-1 text-xs bg-white border border-gray-200 rounded font-mono text-gray-400">
               {isMac ? '⌘' : 'Ctrl'}K
             </kbd>
@@ -304,26 +312,28 @@ $effect(() => {
             href="/friends/new"
             data-sveltekit-preload-data="tap"
             class="inline-flex items-center gap-1.5 bg-forest text-white px-3 py-1.5 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200 text-sm"
-            title="Add a friend (n)"
+            title="{$i18n.t('friends.addNew')} (n)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            <span class="hidden md:inline">New</span>
+            <span class="hidden md:inline">{$i18n.t('common.new')}</span>
           </a>
+          <LanguageSwitcher />
           <UserMenu />
         {:else}
+          <LanguageSwitcher />
           <a
             href="/auth/login"
             class="text-gray-700 hover:text-forest font-body font-medium transition-colors duration-200"
           >
-            Sign in
+            {$i18n.t('nav.login')}
           </a>
           <a
             href="/auth/register"
             class="bg-forest text-white px-4 py-2 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200"
           >
-            Sign up
+            {$i18n.t('nav.register')}
           </a>
         {/if}
       </div>
