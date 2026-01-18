@@ -1,3 +1,9 @@
+## [2.49.1](https://github.com/datenknoten/freundebuch/compare/v2.49.0...v2.49.1) (2026-01-18)
+
+### Code Refactoring
+
+* **backend:** Decompose friends service and routes into focused modules ([e700db8](https://github.com/datenknoten/freundebuch/commit/e700db8174e6273d6cf62ce74a33b197d2ac9c38))
+
 ## [2.49.0](https://github.com/datenknoten/freundebuch/compare/v2.48.0...v2.49.0) (2026-01-18)
 
 ### Features
