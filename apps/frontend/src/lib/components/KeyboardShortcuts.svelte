@@ -139,6 +139,27 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
+  // Handle two-key sequences (n+...) for creating new items
+  if (pendingKey === 'n') {
+    clearPending();
+    e.preventDefault();
+
+    switch (e.key) {
+      case 'f':
+        goto('/friends/new');
+        break;
+      case 'c':
+        // If on circles page, open the modal; otherwise navigate there
+        if ($page.url.pathname === '/circles') {
+          window.dispatchEvent(new CustomEvent('shortcut:new-circle'));
+        } else {
+          goto('/circles');
+        }
+        break;
+    }
+    return;
+  }
+
   // Handle two-key sequences (a+...) for adding details - only on friend detail page
   if (pendingKey === 'a') {
     clearPending();
@@ -435,6 +456,13 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
+  // Start new item sequence
+  if (e.key === 'n') {
+    e.preventDefault();
+    pendingKey = 'n';
+    return;
+  }
+
   // Start add detail sequence (only on friend detail page)
   if (e.key === 'a' && $currentFriend && $page.url.pathname.match(/^\/friends\/[^/]+$/)) {
     e.preventDefault();
@@ -475,16 +503,6 @@ function handleKeydown(e: KeyboardEvent) {
 
   // Single key shortcuts
   switch (e.key) {
-    case 'n':
-      e.preventDefault();
-      // On circles page, dispatch event to create new circle
-      if ($page.url.pathname === '/circles') {
-        window.dispatchEvent(new CustomEvent('shortcut:new-circle'));
-      } else {
-        goto('/friends/new');
-      }
-      break;
-
     case 'e':
       // Edit current friend if on friend detail page
       if ($currentFriend && $page.url.pathname.match(/^\/friends\/[^/]+$/)) {
@@ -622,12 +640,22 @@ function closeHelp() {
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">K</kbd>
                 </div>
               </div>
-              {#if !isOnCirclesPage}
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-700">New Friend</span>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">New Friend</span>
+                <div class="flex gap-1">
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
                 </div>
-              {/if}
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">New Circle</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">c</kbd>
+                </div>
+              </div>
               {#if isOnFriendDetailPage}
                 <div class="flex justify-between items-center">
                   <span class="text-gray-700">Edit Friend</span>
@@ -802,10 +830,6 @@ function closeHelp() {
             </h3>
             <div class="space-y-2">
               <div class="flex justify-between items-center">
-                <span class="text-gray-700">New Circle</span>
-                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
-              </div>
-              <div class="flex justify-between items-center">
                 <span class="text-gray-700">Edit Circle (1-9)</span>
                 <div class="flex gap-1">
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
@@ -895,6 +919,23 @@ function closeHelp() {
       </div>
       <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
         <span class="text-gray-700">Circles</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">c</kbd>
+      </div>
+    </div>
+  </div>
+{:else if pendingKey === 'n'}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">New...</span>
+      <span class="text-xs text-gray-500 ml-2">Press key or Esc to cancel</span>
+    </div>
+    <div class="p-2 space-y-1 font-body text-sm">
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Friend</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">f</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Circle</span>
         <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">c</kbd>
       </div>
     </div>
