@@ -7,6 +7,14 @@ import DetailActions from '$lib/components/friends/subresources/DetailActions.sv
 import SwipeableRow from '$lib/components/friends/subresources/SwipeableRow.svelte';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { circles, circlesList } from '$lib/stores/circles';
+import {
+  deleteCircleModePrefix,
+  editCircleModePrefix,
+  getKeyboardHint,
+  isDeleteCircleModeActive,
+  isEditCircleModeActive,
+  visibleCircleIds,
+} from '$lib/stores/ui';
 import type { Circle } from '$shared';
 
 let hasLoaded = $state(false);
@@ -21,6 +29,37 @@ $effect(() => {
     hasLoaded = true;
     circles.loadCircles();
   }
+});
+
+// Set up keyboard shortcut event listeners
+onMount(() => {
+  function handleNewCircle() {
+    openCreateModal();
+  }
+
+  function handleEditCircle(e: CustomEvent<{ circleId: string }>) {
+    const circle = $circlesList.find((c) => c.id === e.detail.circleId);
+    if (circle) {
+      openEditModal(circle);
+    }
+  }
+
+  function handleDeleteCircle(e: CustomEvent<{ circleId: string }>) {
+    const circle = $circlesList.find((c) => c.id === e.detail.circleId);
+    if (circle) {
+      openDeleteConfirm(circle);
+    }
+  }
+
+  window.addEventListener('shortcut:new-circle', handleNewCircle);
+  window.addEventListener('shortcut:edit-circle', handleEditCircle as EventListener);
+  window.addEventListener('shortcut:delete-circle', handleDeleteCircle as EventListener);
+
+  return () => {
+    window.removeEventListener('shortcut:new-circle', handleNewCircle);
+    window.removeEventListener('shortcut:edit-circle', handleEditCircle as EventListener);
+    window.removeEventListener('shortcut:delete-circle', handleDeleteCircle as EventListener);
+  };
 });
 
 function openCreateModal() {
@@ -74,6 +113,19 @@ function renderCircleTree(parentId: string | null = null, depth: number = 0): Ci
 }
 
 let hierarchicalCircles = $derived(renderCircleTree(null, 0));
+
+// Update visible circle IDs for keyboard navigation
+$effect(() => {
+  visibleCircleIds.set(hierarchicalCircles.map((c) => c.id));
+});
+
+// Check if keyboard hints should be shown
+let showKeyboardHints = $derived($isEditCircleModeActive || $isDeleteCircleModeActive);
+
+// Get the current prefix for keyboard hints
+let currentPrefix = $derived(
+  $isEditCircleModeActive ? $editCircleModePrefix : $deleteCircleModePrefix,
+);
 
 // Calculate actual depth for each circle
 function getActualDepth(circle: Circle): number {
@@ -156,9 +208,11 @@ function getActualDepth(circle: Circle): number {
         </div>
       {:else}
         <div class="space-y-2">
-          {#each hierarchicalCircles as circle (circle.id)}
+          {#each hierarchicalCircles as circle, index (circle.id)}
             {@const actualDepth = getActualDepth(circle)}
             {@const isDeleting = deletingCircleId === circle.id}
+            {@const keyHint = getKeyboardHint(index)}
+            {@const showHint = showKeyboardHints && (!currentPrefix || keyHint.startsWith(currentPrefix))}
 
             <!-- Mobile: Swipeable row -->
             <div class="sm:hidden" style:margin-left="{actualDepth * 16}px">
@@ -167,7 +221,17 @@ function getActualDepth(circle: Circle): number {
                 onSwipeLeft={() => openDeleteConfirm(circle)}
                 disabled={isDeleting}
               >
-                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 group">
+                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 group relative">
+                  <!-- Keyboard hint -->
+                  {#if showHint}
+                    <div
+                      class="absolute -left-6 top-1/2 -translate-y-1/2 min-w-5 h-5 px-1 rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10
+                             {$isDeleteCircleModeActive ? 'bg-red-600 text-white' : 'bg-forest text-white'}"
+                    >
+                      {keyHint}
+                    </div>
+                  {/if}
+
                   <!-- Color indicator -->
                   <div
                     class="w-4 h-4 rounded-full shrink-0"
@@ -209,8 +273,18 @@ function getActualDepth(circle: Circle): number {
             <!-- Desktop: Hover-revealed actions -->
             <div class="hidden sm:block" style:margin-left="{actualDepth * 24}px">
               <div
-                class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors group"
+                class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors group relative"
               >
+                <!-- Keyboard hint -->
+                {#if showHint}
+                  <div
+                    class="absolute -left-8 top-1/2 -translate-y-1/2 min-w-6 h-6 px-1.5 rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10
+                           {$isDeleteCircleModeActive ? 'bg-red-600 text-white' : 'bg-forest text-white'}"
+                  >
+                    {keyHint}
+                  </div>
+                {/if}
+
                 <!-- Color indicator -->
                 <div
                   class="w-4 h-4 rounded-full shrink-0"
