@@ -27,6 +27,13 @@ import {
 let showHelp = $state(false);
 let pendingKey = $state<string | null>(null);
 
+// Context-sensitive help: determine which page we're on
+let isOnCirclesPage = $derived($page.url.pathname === '/circles');
+let isOnFriendsListPage = $derived($page.url.pathname === '/friends');
+let isOnFriendDetailPage = $derived(
+  $page.url.pathname.match(/^\/friends\/[^/]+$/) && !$page.url.pathname.endsWith('/new'),
+);
+
 // Clear pending key (used when action completes or Escape is pressed)
 function clearPending() {
   pendingKey = null;
@@ -601,7 +608,7 @@ function closeHelp() {
             </div>
           </div>
 
-          <!-- Actions -->
+          <!-- Global Actions (always visible) -->
           <div>
             <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
               Actions
@@ -615,92 +622,108 @@ function closeHelp() {
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">K</kbd>
                 </div>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700">New Friend</span>
-                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700">Edit Friend</span>
-                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
-              </div>
+              {#if !isOnCirclesPage}
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-700">New Friend</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
+                </div>
+              {/if}
+              {#if isOnFriendDetailPage}
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-700">Edit Friend</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
+                </div>
+              {/if}
               <div class="flex justify-between items-center">
                 <span class="text-gray-700">Focus Search</span>
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">/</kbd>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700">Open Friend (1-9)</span>
-                <div class="flex gap-1">
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-                  <span class="text-gray-400">then</span>
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-                </div>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700">Open Friend (10+)</span>
-                <div class="flex gap-1">
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-                  <span class="text-gray-400">then</span>
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
-                  <span class="text-gray-400">then</span>
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-                </div>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700">Previous Page</span>
-                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">&lt;</kbd>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700">Next Page</span>
-                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">&gt;</kbd>
-              </div>
             </div>
           </div>
 
-          <!-- Filters (on friends list) -->
-          <div>
-            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Filters <span class="text-xs font-normal normal-case">(on friends list)</span>
-            </h3>
-            <div class="space-y-2">
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700">Filter by Country</span>
-                <div class="flex gap-1">
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
-                  <span class="text-gray-400">then</span>
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">c</kbd>
+          <!-- Friends List Actions (only on /friends) -->
+          {#if isOnFriendsListPage}
+            <div>
+              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                Friends List
+              </h3>
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-700">Open Friend (1-9)</span>
+                  <div class="flex gap-1">
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                    <span class="text-gray-400">then</span>
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                  </div>
                 </div>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700">Filter by City</span>
-                <div class="flex gap-1">
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
-                  <span class="text-gray-400">then</span>
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">i</kbd>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-700">Open Friend (10+)</span>
+                  <div class="flex gap-1">
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                    <span class="text-gray-400">then</span>
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
+                    <span class="text-gray-400">then</span>
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                  </div>
                 </div>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700">Filter by Organization</span>
-                <div class="flex gap-1">
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
-                  <span class="text-gray-400">then</span>
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-700">Previous Page</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">&lt;</kbd>
                 </div>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-700">Clear all filters</span>
-                <div class="flex gap-1">
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
-                  <span class="text-gray-400">then</span>
-                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">x</kbd>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-700">Next Page</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">&gt;</kbd>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Add Details (on friend page) -->
+            <!-- Filters (only on friends list) -->
+            <div>
+              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                Filters
+              </h3>
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-700">Filter by Country</span>
+                  <div class="flex gap-1">
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
+                    <span class="text-gray-400">then</span>
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">c</kbd>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-700">Filter by City</span>
+                  <div class="flex gap-1">
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
+                    <span class="text-gray-400">then</span>
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">i</kbd>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-700">Filter by Organization</span>
+                  <div class="flex gap-1">
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
+                    <span class="text-gray-400">then</span>
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-700">Clear all filters</span>
+                  <div class="flex gap-1">
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
+                    <span class="text-gray-400">then</span>
+                    <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">x</kbd>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {/if}
+
+          <!-- Add Details (only on friend detail page) -->
+          {#if isOnFriendDetailPage}
           <div>
             <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Add Details <span class="text-xs font-normal normal-case">(on friend page)</span>
+              Add Details
             </h3>
             <div class="space-y-2">
               <div class="flex justify-between items-center">
@@ -769,11 +792,13 @@ function closeHelp() {
               </div>
             </div>
           </div>
+          {/if}
 
-          <!-- Circles (on circles page) -->
+          <!-- Circles (only on circles page) -->
+          {#if isOnCirclesPage}
           <div>
             <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Circles <span class="text-xs font-normal normal-case">(on circles page)</span>
+              Circles
             </h3>
             <div class="space-y-2">
               <div class="flex justify-between items-center">
@@ -818,6 +843,7 @@ function closeHelp() {
               </div>
             </div>
           </div>
+          {/if}
 
           <!-- General -->
           <div>
