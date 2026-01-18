@@ -8,8 +8,17 @@ import Footer from '$lib/components/Footer.svelte';
 import GlobalSearch from '$lib/components/GlobalSearch.svelte';
 import KeyboardShortcuts from '$lib/components/KeyboardShortcuts.svelte';
 import NavBar from '$lib/components/NavBar.svelte';
-import { auth, isAuthenticated, isAuthInitialized, needsOnboarding } from '$lib/stores/auth';
+import type { SupportedLanguage } from '$lib/i18n/index.js';
+import { createI18n } from '$lib/i18n/index.js';
+import {
+  auth,
+  isAuthenticated,
+  isAuthInitialized,
+  needsOnboarding,
+  userPreferences,
+} from '$lib/stores/auth';
 import { circles } from '$lib/stores/circles';
+import { locale } from '$lib/stores/locale';
 
 interface Props {
   children: Snippet;
@@ -17,9 +26,17 @@ interface Props {
 
 let { children }: Props = $props();
 
-// Initialize auth state on app load
+// Create i18n store for reactive translations
+const i18n = createI18n();
+
+// Initialize auth state and i18n on app load
 onMount(async () => {
-  await auth.initialize();
+  // Initialize auth first to get user preferences
+  const authResult = await auth.initialize();
+
+  // Initialize locale with user's language preference if available
+  const userLanguage = authResult?.user?.preferences?.language as SupportedLanguage | undefined;
+  await locale.initialize(userLanguage);
 });
 
 // Load circles when user is authenticated
@@ -28,6 +45,14 @@ $effect(() => {
   if ($isAuthInitialized && $isAuthenticated && !circlesLoaded) {
     circlesLoaded = true;
     circles.loadCircles();
+  }
+});
+
+// Sync language when user preferences change (e.g., after login)
+$effect(() => {
+  const prefs = $userPreferences;
+  if (prefs?.language && prefs.language !== locale.getLanguage()) {
+    locale.setLanguage(prefs.language as SupportedLanguage);
   }
 });
 
@@ -65,8 +90,8 @@ const showFab = $derived($isAuthenticated && !$page.url.pathname.includes('/frie
 			href="/friends/new"
 			data-sveltekit-preload-data="tap"
 			class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white rounded-full shadow-lg hover:bg-forest-light transition-colors flex items-center justify-center z-50"
-			title="Add new friend"
-			aria-label="Add new friend"
+			title={$i18n.t('friends.addNew')}
+			aria-label={$i18n.t('friends.addNew')}
 		>
 			<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

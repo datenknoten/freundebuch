@@ -163,12 +163,21 @@ importers:
       d3:
         specifier: ^7.9.0
         version: 7.9.0
+      i18next:
+        specifier: ^25.7.4
+        version: 25.7.4(typescript@5.9.3)
+      i18next-browser-languagedetector:
+        specifier: ^8.2.0
+        version: 8.2.0
       isomorphic-dompurify:
         specifier: ^2.35.0
         version: 2.35.0
       svelte-easy-crop:
         specifier: ^5.0.0
         version: 5.0.0(svelte@5.46.1)
+      svelte-i18next:
+        specifier: ^2.2.2
+        version: 2.2.2(i18next@25.7.4(typescript@5.9.3))(svelte@5.46.1)
     devDependencies:
       '@playwright/test':
         specifier: 1.57.0
@@ -3101,6 +3110,17 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  i18next-browser-languagedetector@8.2.0:
+    resolution: {integrity: sha512-P+3zEKLnOF0qmiesW383vsLdtQVyKtCNA9cjSoKCppTKPQVfKd2W8hbVo5ZhNJKDqeM7BOcvNoKJOjpHh4Js9g==}
+
+  i18next@25.7.4:
+    resolution: {integrity: sha512-hRkpEblXXcXSNbw8mBNq9042OEetgyB/ahc/X17uV/khPwzV+uB8RHceHh3qavyrkPJvmXFKXME2Sy1E0KjAfw==}
+    peerDependencies:
+      typescript: ^5
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
@@ -4498,6 +4518,12 @@ packages:
     resolution: {integrity: sha512-niWtner+qYVas6ypIOQ277NKNACVz9qz6wfpEW7t+x5Lhv6nOjpv3S1WhEPO+SnDaW3VZv+0bmm6jVDHK2GMAg==}
     peerDependencies:
       svelte: ^5.0.0
+
+  svelte-i18next@2.2.2:
+    resolution: {integrity: sha512-IpJDZCH5cCgKfHQHgiLmGT4j9HCdg4fqsP3oP2deLu8PxmNj0Ui6khMiDoxAxedAiYEhr0xendv2xqh3Rq+uQQ==}
+    peerDependencies:
+      i18next: '*'
+      svelte: '*'
 
   svelte@5.46.1:
     resolution: {integrity: sha512-ynjfCHD3nP2el70kN5Pmg37sSi0EjOm9FgHYQdC4giWG/hzO3AatzXXJJgP305uIhGQxSufJLuYWtkY8uK/8RA==}
@@ -7969,6 +7995,16 @@ snapshots:
 
   husky@9.1.7: {}
 
+  i18next-browser-languagedetector@8.2.0:
+    dependencies:
+      '@babel/runtime': 7.28.4
+
+  i18next@25.7.4(typescript@5.9.3):
+    dependencies:
+      '@babel/runtime': 7.28.4
+    optionalDependencies:
+      typescript: 5.9.3
+
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
@@ -9333,6 +9369,11 @@ snapshots:
 
   svelte-easy-crop@5.0.0(svelte@5.46.1):
     dependencies:
+      svelte: 5.46.1
+
+  svelte-i18next@2.2.2(i18next@25.7.4(typescript@5.9.3))(svelte@5.46.1):
+    dependencies:
+      i18next: 25.7.4(typescript@5.9.3)
       svelte: 5.46.1
 
   svelte@5.46.1:

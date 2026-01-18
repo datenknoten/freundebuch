@@ -1,0 +1,309 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "confirm": "Bestätigen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "new": "Neu",
+    "submit": "Absenden",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "clear": "Leeren",
+    "yes": "Ja",
+    "no": "Nein",
+    "or": "oder",
+    "and": "und",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "warning": "Warnung",
+    "info": "Info",
+    "optional": "optional",
+    "required": "erforderlich"
+  },
+  "nav": {
+    "home": "Startseite",
+    "friends": "Freunde",
+    "circles": "Kreise",
+    "profile": "Profil",
+    "settings": "Einstellungen",
+    "logout": "Abmelden",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "search": "Suchen...",
+    "menu": "Menü"
+  },
+  "auth": {
+    "login": {
+      "title": "Anmelden",
+      "subtitle": "Willkommen zurück! Bitte melden Sie sich an.",
+      "email": "E-Mail",
+      "emailPlaceholder": "du@beispiel.de",
+      "password": "Passwort",
+      "passwordPlaceholder": "Geben Sie Ihr Passwort ein",
+      "rememberMe": "Angemeldet bleiben",
+      "forgotPassword": "Passwort vergessen?",
+      "submit": "Anmelden",
+      "noAccount": "Noch kein Konto?",
+      "registerLink": "Jetzt registrieren",
+      "error": {
+        "invalidCredentials": "Ungültige E-Mail oder Passwort",
+        "generic": "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut."
+      }
+    },
+    "register": {
+      "title": "Konto erstellen",
+      "subtitle": "Starten Sie heute Ihr Freundebuch!",
+      "email": "E-Mail",
+      "emailPlaceholder": "du@beispiel.de",
+      "password": "Passwort",
+      "passwordPlaceholder": "Erstellen Sie ein Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "confirmPasswordPlaceholder": "Passwort wiederholen",
+      "submit": "Konto erstellen",
+      "hasAccount": "Bereits ein Konto?",
+      "loginLink": "Anmelden",
+      "passwordRequirements": "Das Passwort muss mindestens 8 Zeichen mit Groß-, Kleinbuchstaben und einer Zahl enthalten",
+      "error": {
+        "emailTaken": "Diese E-Mail ist bereits registriert",
+        "passwordMismatch": "Passwörter stimmen nicht überein",
+        "weakPassword": "Passwort erfüllt nicht die Anforderungen",
+        "generic": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut."
+      }
+    },
+    "forgotPassword": {
+      "title": "Passwort zurücksetzen",
+      "subtitle": "Geben Sie Ihre E-Mail ein, um einen Reset-Link zu erhalten.",
+      "email": "E-Mail",
+      "emailPlaceholder": "du@beispiel.de",
+      "submit": "Reset-Link senden",
+      "backToLogin": "Zurück zur Anmeldung",
+      "success": "Falls ein Konto mit dieser E-Mail existiert, erhalten Sie einen Reset-Link.",
+      "error": {
+        "generic": "Reset-Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+      }
+    },
+    "resetPassword": {
+      "title": "Neues Passwort festlegen",
+      "subtitle": "Geben Sie unten Ihr neues Passwort ein.",
+      "password": "Neues Passwort",
+      "passwordPlaceholder": "Neues Passwort eingeben",
+      "confirmPassword": "Passwort bestätigen",
+      "confirmPasswordPlaceholder": "Neues Passwort wiederholen",
+      "submit": "Passwort zurücksetzen",
+      "success": "Passwort erfolgreich zurückgesetzt! Sie können sich jetzt anmelden.",
+      "error": {
+        "invalidToken": "Ungültiger oder abgelaufener Reset-Link",
+        "generic": "Passwort konnte nicht zurückgesetzt werden. Bitte versuchen Sie es erneut."
+      }
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Pflegen Sie Ihre Freundschaften",
+      "subtitle": "Ein digitales Freundebuch, um die Menschen zu erinnern, die Ihnen wichtig sind.",
+      "cta": "Jetzt starten",
+      "loginCta": "Anmelden"
+    },
+    "features": {
+      "title": "Warum Freundebuch?",
+      "organize": {
+        "title": "Freunde organisieren",
+        "description": "Behalten Sie alle Kontakte mit Kreisen und benutzerdefinierten Feldern organisiert."
+      },
+      "remember": {
+        "title": "Details merken",
+        "description": "Vergessen Sie nie Geburtstage, Adressen oder wichtige Notizen."
+      },
+      "sync": {
+        "title": "Überall synchronisieren",
+        "description": "Greifen Sie auf Ihre Kontakte auf jedem Gerät mit CardDAV-Sync zu."
+      }
+    }
+  },
+  "friends": {
+    "title": "Freunde",
+    "addNew": "Neuen Freund hinzufügen",
+    "noFriends": "Noch keine Freunde",
+    "noFriendsSubtitle": "Beginnen Sie damit, Ihren ersten Freund hinzuzufügen!",
+    "search": "Freunde suchen...",
+    "filters": {
+      "all": "Alle",
+      "favorites": "Favoriten",
+      "recent": "Zuletzt",
+      "birthday": "Anstehende Geburtstage"
+    },
+    "sort": {
+      "name": "Name",
+      "dateAdded": "Hinzugefügt am",
+      "birthday": "Geburtstag"
+    },
+    "table": {
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "birthday": "Geburtstag",
+      "city": "Stadt",
+      "actions": "Aktionen"
+    },
+    "card": {
+      "viewDetails": "Details anzeigen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen"
+    },
+    "detail": {
+      "editProfile": "Profil bearbeiten",
+      "contact": "Kontakt",
+      "address": "Adresse",
+      "birthday": "Geburtstag",
+      "notes": "Notizen",
+      "circles": "Kreise",
+      "relationships": "Beziehungen",
+      "noRelationships": "Noch keine Beziehungen hinzugefügt"
+    },
+    "form": {
+      "title": {
+        "new": "Neuen Freund hinzufügen",
+        "edit": "Freund bearbeiten"
+      },
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "nickname": "Spitzname",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "birthday": "Geburtstag",
+      "address": "Adresse",
+      "street": "Straße",
+      "city": "Stadt",
+      "postalCode": "Postleitzahl",
+      "country": "Land",
+      "notes": "Notizen",
+      "notesPlaceholder": "Notizen zu diesem Freund hinzufügen...",
+      "photo": "Foto",
+      "uploadPhoto": "Foto hochladen",
+      "removePhoto": "Foto entfernen",
+      "circles": "Zu Kreisen hinzufügen",
+      "save": "Freund speichern",
+      "saving": "Speichern..."
+    },
+    "delete": {
+      "title": "Freund löschen",
+      "message": "Sind Sie sicher, dass Sie {{name}} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirm": "Löschen",
+      "cancel": "Abbrechen"
+    }
+  },
+  "circles": {
+    "title": "Kreise",
+    "addNew": "Neuen Kreis erstellen",
+    "noCircles": "Noch keine Kreise",
+    "noCirclesSubtitle": "Erstellen Sie Kreise, um Ihre Freunde zu organisieren!",
+    "members": "{{count}} Mitglied",
+    "members_plural": "{{count}} Mitglieder",
+    "form": {
+      "title": {
+        "new": "Kreis erstellen",
+        "edit": "Kreis bearbeiten"
+      },
+      "name": "Name",
+      "namePlaceholder": "z.B. Familie, Arbeit, Schule",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Wofür ist dieser Kreis?",
+      "color": "Farbe",
+      "save": "Kreis speichern"
+    },
+    "delete": {
+      "title": "Kreis löschen",
+      "message": "Sind Sie sicher, dass Sie \"{{name}}\" löschen möchten? Freunde in diesem Kreis werden nicht gelöscht.",
+      "confirm": "Löschen",
+      "cancel": "Abbrechen"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "changePassword": "Passwort ändern",
+    "preferences": {
+      "title": "Einstellungen",
+      "language": "Sprache",
+      "pageSize": "Einträge pro Seite",
+      "birthdayFormat": "Geburtstags-Format",
+      "birthdayFormats": {
+        "iso": "ISO (JJJJ-MM-TT)",
+        "us": "US (MM/TT/JJJJ)",
+        "eu": "EU (TT.MM.JJJJ)",
+        "long": "Lang (TT. Monat JJJJ)"
+      }
+    },
+    "carddav": {
+      "title": "CardDAV-Synchronisierung",
+      "description": "Synchronisieren Sie Ihre Kontakte mit anderen Apps über CardDAV.",
+      "serverUrl": "Server-URL",
+      "username": "Benutzername",
+      "appPassword": "App-Passwort",
+      "createPassword": "App-Passwort erstellen",
+      "setupGuide": "Einrichtungsanleitung"
+    },
+    "danger": {
+      "title": "Gefahrenzone",
+      "deleteAccount": "Konto löschen",
+      "deleteWarning": "Dies wird Ihr Konto und alle Daten dauerhaft löschen."
+    }
+  },
+  "onboarding": {
+    "title": "Willkommen bei Freundebuch!",
+    "subtitle": "Lassen Sie uns Ihr Profil einrichten",
+    "step1": {
+      "title": "Über Sie",
+      "description": "Erzählen Sie uns ein bisschen über sich"
+    },
+    "step2": {
+      "title": "Ihr erster Kreis",
+      "description": "Erstellen Sie einen Kreis, um Freunde zu organisieren"
+    },
+    "step3": {
+      "title": "Freunde hinzufügen",
+      "description": "Beginnen Sie, Ihre Freunde hinzuzufügen"
+    },
+    "skip": "Vorerst überspringen",
+    "complete": "Einrichtung abschließen"
+  },
+  "search": {
+    "placeholder": "Freunde, Kreise suchen...",
+    "noResults": "Keine Ergebnisse gefunden",
+    "recentSearches": "Letzte Suchen",
+    "clearRecent": "Verlauf löschen"
+  },
+  "shortcuts": {
+    "title": "Tastenkürzel",
+    "general": "Allgemein",
+    "navigation": "Navigation",
+    "actions": "Aktionen",
+    "search": "Suchen",
+    "close": "Schließen",
+    "newFriend": "Neuer Freund",
+    "newCircle": "Neuer Kreis",
+    "goHome": "Zur Startseite",
+    "goFriends": "Zu Freunden",
+    "goCircles": "Zu Kreisen",
+    "goProfile": "Zum Profil"
+  },
+  "errors": {
+    "generic": "Etwas ist schief gelaufen. Bitte versuchen Sie es erneut.",
+    "network": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
+    "notFound": "Nicht gefunden",
+    "unauthorized": "Bitte melden Sie sich an, um fortzufahren",
+    "forbidden": "Sie haben keine Berechtigung dafür",
+    "validation": "Bitte überprüfen Sie Ihre Eingabe"
+  },
+  "footer": {
+    "copyright": "Freundebuch",
+    "privacy": "Datenschutz",
+    "terms": "Nutzungsbedingungen"
+  }
+}
