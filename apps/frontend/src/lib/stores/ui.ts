@@ -98,6 +98,37 @@ export const filterModeCategory = writable<string | null>(null);
  */
 export const filterModePrefix = writable<string | null>(null);
 
+// =============================================================================
+// Circle Mode State (keyboard-driven circle editing/deletion)
+// =============================================================================
+
+/**
+ * Tracks if "edit circle mode" is active for quick keyboard editing of circles
+ * When active, list items show keyboard hints and key sequences can edit items
+ */
+export const isEditCircleModeActive = writable(false);
+
+/**
+ * Tracks the current letter prefix in edit circle mode (e.g., 'a', 'b', 'c')
+ */
+export const editCircleModePrefix = writable<string | null>(null);
+
+/**
+ * Tracks if "delete circle mode" is active for quick keyboard deletion of circles
+ * When active, list items show keyboard hints and key sequences can delete items
+ */
+export const isDeleteCircleModeActive = writable(false);
+
+/**
+ * Tracks the current letter prefix in delete circle mode (e.g., 'a', 'b', 'c')
+ */
+export const deleteCircleModePrefix = writable<string | null>(null);
+
+/**
+ * List of circle IDs currently visible in the list (for keyboard navigation)
+ */
+export const visibleCircleIds = writable<string[]>([]);
+
 /**
  * Mapping of keyboard keys to filter category field names
  */

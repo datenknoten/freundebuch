@@ -6,16 +6,21 @@ import { isAuthenticated } from '$lib/stores/auth';
 import { currentFriend, friendListFilter } from '$lib/stores/friends';
 import { isSearchOpen, search } from '$lib/stores/search';
 import {
+  deleteCircleModePrefix,
+  editCircleModePrefix,
   FILTER_CATEGORY_KEYS,
   FILTER_CATEGORY_LABELS,
   filterModeCategory,
   filterModePrefix,
   getIndexFromHint,
   ITEMS_PER_GROUP,
+  isDeleteCircleModeActive,
+  isEditCircleModeActive,
   isFilterModeActive,
   isModalOpen,
   isOpenModeActive,
   openModePrefix,
+  visibleCircleIds,
   visibleFriendIds,
 } from '$lib/stores/ui';
 
@@ -30,6 +35,10 @@ function clearPending() {
   isFilterModeActive.set(false);
   filterModeCategory.set(null);
   filterModePrefix.set(null);
+  isEditCircleModeActive.set(false);
+  editCircleModePrefix.set(null);
+  isDeleteCircleModeActive.set(false);
+  deleteCircleModePrefix.set(null);
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -302,6 +311,116 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
+  // Handle two/three-key sequences (e+...) for editing circles - only on circles page
+  if (pendingKey === 'e' && $page.url.pathname === '/circles') {
+    const circleIds = $visibleCircleIds;
+    const currentPrefix = $editCircleModePrefix;
+    const keyNum = parseInt(e.key, 10);
+    const keyLower = e.key.toLowerCase();
+
+    // If we already have a letter prefix, we're waiting for a number
+    if (currentPrefix) {
+      if (keyNum >= 1 && keyNum <= 9) {
+        e.preventDefault();
+        const index = getIndexFromHint(`${currentPrefix}${keyNum}`);
+        if (index >= 0 && index < circleIds.length) {
+          clearPending();
+          window.dispatchEvent(
+            new CustomEvent('shortcut:edit-circle', { detail: { circleId: circleIds[index] } }),
+          );
+        } else {
+          clearPending();
+        }
+      } else {
+        clearPending();
+      }
+      return;
+    }
+
+    // No prefix yet - check if it's a number (1-9) or letter (a-z)
+    if (keyNum >= 1 && keyNum <= 9) {
+      e.preventDefault();
+      const index = keyNum - 1;
+      if (index < circleIds.length) {
+        clearPending();
+        window.dispatchEvent(
+          new CustomEvent('shortcut:edit-circle', { detail: { circleId: circleIds[index] } }),
+        );
+      }
+      return;
+    }
+
+    // Check if it's a letter for extended navigation
+    if (keyLower >= 'a' && keyLower <= 'z') {
+      const letterIndex = keyLower.charCodeAt(0) - 97;
+      const groupStartIndex = (letterIndex + 1) * ITEMS_PER_GROUP;
+
+      if (groupStartIndex < circleIds.length) {
+        e.preventDefault();
+        editCircleModePrefix.set(keyLower);
+        return;
+      }
+    }
+
+    clearPending();
+    return;
+  }
+
+  // Handle two/three-key sequences (d+...) for deleting circles - only on circles page
+  if (pendingKey === 'd' && $page.url.pathname === '/circles') {
+    const circleIds = $visibleCircleIds;
+    const currentPrefix = $deleteCircleModePrefix;
+    const keyNum = parseInt(e.key, 10);
+    const keyLower = e.key.toLowerCase();
+
+    // If we already have a letter prefix, we're waiting for a number
+    if (currentPrefix) {
+      if (keyNum >= 1 && keyNum <= 9) {
+        e.preventDefault();
+        const index = getIndexFromHint(`${currentPrefix}${keyNum}`);
+        if (index >= 0 && index < circleIds.length) {
+          clearPending();
+          window.dispatchEvent(
+            new CustomEvent('shortcut:delete-circle', { detail: { circleId: circleIds[index] } }),
+          );
+        } else {
+          clearPending();
+        }
+      } else {
+        clearPending();
+      }
+      return;
+    }
+
+    // No prefix yet - check if it's a number (1-9) or letter (a-z)
+    if (keyNum >= 1 && keyNum <= 9) {
+      e.preventDefault();
+      const index = keyNum - 1;
+      if (index < circleIds.length) {
+        clearPending();
+        window.dispatchEvent(
+          new CustomEvent('shortcut:delete-circle', { detail: { circleId: circleIds[index] } }),
+        );
+      }
+      return;
+    }
+
+    // Check if it's a letter for extended navigation
+    if (keyLower >= 'a' && keyLower <= 'z') {
+      const letterIndex = keyLower.charCodeAt(0) - 97;
+      const groupStartIndex = (letterIndex + 1) * ITEMS_PER_GROUP;
+
+      if (groupStartIndex < circleIds.length) {
+        e.preventDefault();
+        deleteCircleModePrefix.set(keyLower);
+        return;
+      }
+    }
+
+    clearPending();
+    return;
+  }
+
   // Start two-key sequence (no timeout - panel stays until action or Escape)
   if (e.key === 'g') {
     e.preventDefault();
@@ -331,11 +450,32 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
+  // Start edit circle sequence (only on circles page)
+  if (e.key === 'e' && $page.url.pathname === '/circles') {
+    e.preventDefault();
+    pendingKey = 'e';
+    isEditCircleModeActive.set(true);
+    return;
+  }
+
+  // Start delete circle sequence (only on circles page)
+  if (e.key === 'd' && $page.url.pathname === '/circles') {
+    e.preventDefault();
+    pendingKey = 'd';
+    isDeleteCircleModeActive.set(true);
+    return;
+  }
+
   // Single key shortcuts
   switch (e.key) {
     case 'n':
       e.preventDefault();
-      goto('/friends/new');
+      // On circles page, dispatch event to create new circle
+      if ($page.url.pathname === '/circles') {
+        window.dispatchEvent(new CustomEvent('shortcut:new-circle'));
+      } else {
+        goto('/friends/new');
+      }
       break;
 
     case 'e':
@@ -630,6 +770,55 @@ function closeHelp() {
             </div>
           </div>
 
+          <!-- Circles (on circles page) -->
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Circles <span class="text-xs font-normal normal-case">(on circles page)</span>
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">New Circle</span>
+                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Edit Circle (1-9)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Edit Circle (10+)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Delete Circle (1-9)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">d</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Delete Circle (10+)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">d</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- General -->
           <div>
             <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -815,5 +1004,49 @@ function closeHelp() {
         </div>
       </div>
     {/if}
+  </div>
+{:else if pendingKey === 'e' && $page.url.pathname === '/circles'}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">
+        Edit circle{$editCircleModePrefix ? ` (${$editCircleModePrefix}...)` : '...'}
+      </span>
+      <span class="text-xs text-gray-500 ml-2">
+        {#if $editCircleModePrefix}
+          Press 1-9 or Esc to cancel
+        {:else}
+          Press 1-9, a-z, or Esc to cancel
+        {/if}
+      </span>
+    </div>
+    <div class="p-3 font-body text-sm text-gray-600">
+      {#if $editCircleModePrefix}
+        Press the number to complete: {$editCircleModePrefix}1, {$editCircleModePrefix}2, ...
+      {:else}
+        Press the key shown on a circle to edit it
+      {/if}
+    </div>
+  </div>
+{:else if pendingKey === 'd' && $page.url.pathname === '/circles'}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-red-50 px-3 py-2 border-b border-red-200">
+      <span class="text-sm font-medium text-red-700">
+        Delete circle{$deleteCircleModePrefix ? ` (${$deleteCircleModePrefix}...)` : '...'}
+      </span>
+      <span class="text-xs text-red-500 ml-2">
+        {#if $deleteCircleModePrefix}
+          Press 1-9 or Esc to cancel
+        {:else}
+          Press 1-9, a-z, or Esc to cancel
+        {/if}
+      </span>
+    </div>
+    <div class="p-3 font-body text-sm text-red-600">
+      {#if $deleteCircleModePrefix}
+        Press the number to complete: {$deleteCircleModePrefix}1, {$deleteCircleModePrefix}2, ...
+      {:else}
+        Press the key shown on a circle to delete it
+      {/if}
+    </div>
   </div>
 {/if}
