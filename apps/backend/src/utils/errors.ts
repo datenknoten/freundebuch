@@ -101,6 +101,21 @@ export class CircleNotFoundError extends AppError {
 }
 
 // ============================================================================
+// Bad Request Errors (400)
+// ============================================================================
+
+/**
+ * Thrown when search parameters are invalid or missing required fields.
+ */
+export class InvalidSearchParametersError extends AppError {
+  readonly statusCode = 400;
+
+  constructor(message = 'Invalid search parameters') {
+    super(message);
+  }
+}
+
+// ============================================================================
 // Conflict Errors (409)
 // ============================================================================
 
