@@ -1,3 +1,19 @@
+## [2.49.0](https://github.com/datenknoten/freundebuch/compare/v2.48.0...v2.49.0) (2026-01-18)
+
+### Features
+
+* **frontend:** Add keyboard shortcuts for circle management ([54ed1c4](https://github.com/datenknoten/freundebuch/commit/54ed1c40bd4a96be3c010fe87cfc715f0afbbe8c))
+* **frontend:** Make keyboard shortcuts help context-sensitive ([3182c7f](https://github.com/datenknoten/freundebuch/commit/3182c7fff1dbbf6b43fbc2cfe39b29e710e406ad))
+
+### Bug Fixes
+
+* **frontend:** Improve CircleEditModal initialization and unsaved changes handling ([12ff176](https://github.com/datenknoten/freundebuch/commit/12ff1765cd076fc6fb89ff8a07b517dedbf2831f))
+
+### Code Refactoring
+
+* **frontend:** Change n to two-key sequence for new items ([4578385](https://github.com/datenknoten/freundebuch/commit/45783857a87fd5dbe225824bd78eec49a026323f))
+* **frontend:** Move circle admin to modal with swipe actions ([5602797](https://github.com/datenknoten/freundebuch/commit/5602797d23860e68d9767c5c24e4bece49b64932))
+
 ## [2.48.0](https://github.com/datenknoten/freundebuch/compare/v2.47.1...v2.48.0) (2026-01-17)
 
 ### Features
