@@ -14,22 +14,27 @@ let { circle = null, onClose }: Props = $props();
 
 const isEditing = $derived(!!circle);
 
-// Form state - initialized via effect to properly track prop changes
+// Form state
 let formName = $state('');
 let formColor = $state<string>(CIRCLE_COLORS[5]);
 let formParentId = $state<string | null>(null);
 let formError = $state('');
 let isSubmitting = $state(false);
 let nameInputRef = $state<HTMLInputElement | null>(null);
-let isInitialized = $state(false);
+let showUnsavedWarning = $state(false);
 
-// Initialize form when circle prop is available
+// Track which circle we initialized for (to detect when circle prop changes)
+let initializedForCircleId = $state<string | null | undefined>(undefined);
+
+// Initialize/re-initialize form when circle prop changes
 $effect(() => {
-  if (!isInitialized) {
+  const circleId = circle?.id ?? null;
+  if (initializedForCircleId !== circleId) {
     formName = circle?.name ?? '';
     formColor = circle?.color ?? CIRCLE_COLORS[5];
     formParentId = circle?.parentCircleId ?? null;
-    isInitialized = true;
+    formError = '';
+    initializedForCircleId = circleId;
   }
 });
 
@@ -118,27 +123,44 @@ async function handleSubmit(e: SubmitEvent) {
   }
 }
 
+// Check if form has unsaved changes
+function isDirty(): boolean {
+  if (isEditing) {
+    return (
+      formName !== circle?.name ||
+      formColor !== circle?.color ||
+      formParentId !== circle?.parentCircleId
+    );
+  }
+  return formName.trim() !== '';
+}
+
 function handleClose() {
   if (isSubmitting) return;
 
-  const isDirty = isEditing
-    ? formName !== circle?.name ||
-      formColor !== circle?.color ||
-      formParentId !== circle?.parentCircleId
-    : formName.trim() !== '';
-
-  if (isDirty) {
-    if (confirm('You have unsaved changes. Are you sure you want to close?')) {
-      onClose();
-    }
+  if (isDirty()) {
+    showUnsavedWarning = true;
   } else {
     onClose();
   }
 }
 
+function confirmClose() {
+  showUnsavedWarning = false;
+  onClose();
+}
+
+function cancelClose() {
+  showUnsavedWarning = false;
+}
+
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
-    handleClose();
+    if (showUnsavedWarning) {
+      cancelClose();
+    } else {
+      handleClose();
+    }
   }
 }
 
@@ -162,7 +184,7 @@ function handleBackdropClick(e: MouseEvent) {
   tabindex="-1"
 >
   <!-- Modal content -->
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col relative">
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
       <h2 id="circle-modal-title" class="text-xl font-heading text-gray-900">
@@ -296,5 +318,34 @@ function handleBackdropClick(e: MouseEvent) {
         </button>
       </div>
     </form>
+
+    <!-- Unsaved changes warning overlay -->
+    {#if showUnsavedWarning}
+      <div class="absolute inset-0 bg-white bg-opacity-95 rounded-xl flex items-center justify-center p-6">
+        <div class="text-center">
+          <svg class="w-12 h-12 mx-auto text-amber-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <h3 class="text-lg font-heading text-gray-900 mb-2">Unsaved Changes</h3>
+          <p class="text-gray-600 font-body mb-6">You have unsaved changes. Are you sure you want to close?</p>
+          <div class="flex gap-3 justify-center">
+            <button
+              type="button"
+              onclick={cancelClose}
+              class="px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Keep Editing
+            </button>
+            <button
+              type="button"
+              onclick={confirmClose}
+              class="px-4 py-2 bg-amber-500 text-white rounded-lg font-body font-semibold hover:bg-amber-600 transition-colors"
+            >
+              Discard Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    {/if}
   </div>
 </div>
