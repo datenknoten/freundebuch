@@ -1,3 +1,9 @@
+## [2.50.3](https://github.com/datenknoten/freundebuch/compare/v2.50.2...v2.50.3) (2026-01-19)
+
+### Performance Improvements
+
+* **ci:** Optimize Docker builds with native ARM runners and improved caching ([84719b5](https://github.com/datenknoten/freundebuch/commit/84719b5a5f2b5560effaf21f20a9955a135cb5a3))
+
 ## [2.50.2](https://github.com/datenknoten/freundebuch/compare/v2.50.1...v2.50.2) (2026-01-19)
 
 ### Bug Fixes
