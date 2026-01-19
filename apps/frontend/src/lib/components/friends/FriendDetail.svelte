@@ -5,6 +5,7 @@ import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 
 const i18n = createI18n();
+
 import type {
   Address,
   AddressInput,

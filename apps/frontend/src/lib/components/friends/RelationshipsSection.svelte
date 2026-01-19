@@ -69,9 +69,21 @@ const categoryConfig: Record<
   RelationshipCategory,
   { labelKey: string; bgColor: string; textColor: string }
 > = {
-  family: { labelKey: 'dashboard.legend.family', bgColor: 'bg-rose-50', textColor: 'text-rose-700' },
-  professional: { labelKey: 'dashboard.legend.professional', bgColor: 'bg-blue-50', textColor: 'text-blue-700' },
-  social: { labelKey: 'dashboard.legend.social', bgColor: 'bg-green-50', textColor: 'text-green-700' },
+  family: {
+    labelKey: 'dashboard.legend.family',
+    bgColor: 'bg-rose-50',
+    textColor: 'text-rose-700',
+  },
+  professional: {
+    labelKey: 'dashboard.legend.professional',
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700',
+  },
+  social: {
+    labelKey: 'dashboard.legend.social',
+    bgColor: 'bg-green-50',
+    textColor: 'text-green-700',
+  },
 };
 
 function startEditing(relationship: Relationship) {

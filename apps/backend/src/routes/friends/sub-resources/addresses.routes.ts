@@ -18,7 +18,7 @@ app.post('/', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id')!;
+  const friendId = c.req.param('id') ?? '';
 
   if (!isValidUuid(friendId)) {
     return c.json<ErrorResponse>({ error: 'Invalid friend ID' }, 400);
@@ -62,8 +62,8 @@ app.put('/:addressId', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id')!;
-  const addressId = c.req.param('addressId')!;
+  const friendId = c.req.param('id') ?? '';
+  const addressId = c.req.param('addressId') ?? '';
 
   if (!isValidUuid(friendId) || !isValidUuid(addressId)) {
     return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
@@ -107,8 +107,8 @@ app.delete('/:addressId', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id')!;
-  const addressId = c.req.param('addressId')!;
+  const friendId = c.req.param('id') ?? '';
+  const addressId = c.req.param('addressId') ?? '';
 
   if (!isValidUuid(friendId) || !isValidUuid(addressId)) {
     return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
