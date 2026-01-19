@@ -330,7 +330,7 @@ function handleBackdropClick(e: MouseEvent) {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <h3 class="text-lg font-heading text-gray-900 mb-2">{$i18n.t('circles.unsavedChanges.title')}</h3>
-          <p class="text-gray-600 font-body mb-6">{$i18n.t('circles.unsavedChanges.title')}</p>
+          <p class="text-gray-600 font-body mb-6">{$i18n.t('circles.unsavedChanges.message')}</p>
           <div class="flex gap-3 justify-center">
             <button
               type="button"
