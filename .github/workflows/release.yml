@@ -81,25 +81,52 @@ jobs:
             echo "new_release_published=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # Job 3: Build and push Docker images (parallel matrix)
-  docker:
-    name: Build ${{ matrix.image }} Image
+  # Job 3: Build Docker images per platform (native runners for speed)
+  docker-build:
+    name: Build ${{ matrix.image }} (${{ matrix.arch }})
     needs: release
     if: needs.release.outputs.new_release_published == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include:
+          # nginx - amd64
           - image: nginx
             dockerfile: docker/Dockerfile.nginx.prod
-            context: .
+            platform: linux/amd64
+            runner: ubuntu-24.04
+            arch: amd64
+          # nginx - arm64
+          - image: nginx
+            dockerfile: docker/Dockerfile.nginx.prod
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+          # backend - amd64
           - image: backend
             dockerfile: docker/Dockerfile.backend.prod
-            context: .
+            platform: linux/amd64
+            runner: ubuntu-24.04
+            arch: amd64
+          # backend - arm64
+          - image: backend
+            dockerfile: docker/Dockerfile.backend.prod
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+          # sabredav - amd64
           - image: sabredav
             dockerfile: docker/Dockerfile.sabredav.prod
-            context: .
+            platform: linux/amd64
+            runner: ubuntu-24.04
+            arch: amd64
+          # sabredav - arm64
+          - image: sabredav
+            dockerfile: docker/Dockerfile.sabredav.prod
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -122,36 +149,95 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}-${{ matrix.image }}
           tags: |
-            type=semver,pattern={{version}},value=v${{ needs.release.outputs.new_release_version }}
-            type=semver,pattern={{major}}.{{minor}},value=v${{ needs.release.outputs.new_release_version }}
-            type=semver,pattern={{major}},value=v${{ needs.release.outputs.new_release_version }}
-            type=raw,value=latest
+            type=raw,value=${{ needs.release.outputs.new_release_version }}-${{ matrix.arch }}
 
       - name: Build and push Docker image
-        id: push
+        id: build
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.context }}
+          context: .
           file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           provenance: mode=max
           sbom: true
           build-args: ${{ matrix.image == 'nginx' && format('VITE_SENTRY_DSN={0}', secrets.VITE_SENTRY_DSN) || '' }}
+          # Multi-layer caching strategy for maximum cache hits
+          cache-from: |
+            type=gha,scope=${{ matrix.image }}-${{ matrix.arch }}
+            type=registry,ref=ghcr.io/${{ github.repository }}-${{ matrix.image }}:buildcache-${{ matrix.arch }}
+          cache-to: |
+            type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.arch }}
+            type=registry,ref=ghcr.io/${{ github.repository }}-${{ matrix.image }}:buildcache-${{ matrix.arch }},mode=max
+
+  # Job 4: Create and push multi-arch manifests
+  docker-manifest:
+    name: Create ${{ matrix.image }} Manifest
+    needs: [release, docker-build]
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - nginx
+          - backend
+          - sabredav
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push manifest
+        env:
+          VERSION: ${{ needs.release.outputs.new_release_version }}
+          IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.image }}
+        run: |
+          # Create manifest for version tag
+          docker manifest create ${IMAGE}:${VERSION} \
+            ${IMAGE}:${VERSION}-amd64 \
+            ${IMAGE}:${VERSION}-arm64
+
+          # Annotate with architecture info
+          docker manifest annotate ${IMAGE}:${VERSION} ${IMAGE}:${VERSION}-amd64 --arch amd64
+          docker manifest annotate ${IMAGE}:${VERSION} ${IMAGE}:${VERSION}-arm64 --arch arm64
+
+          # Push version manifest
+          docker manifest push ${IMAGE}:${VERSION}
+
+          # Create and push additional tags
+          for TAG in "${VERSION%.*}" "${VERSION%%.*}" "latest"; do
+            docker manifest create ${IMAGE}:${TAG} \
+              ${IMAGE}:${VERSION}-amd64 \
+              ${IMAGE}:${VERSION}-arm64
+            docker manifest annotate ${IMAGE}:${TAG} ${IMAGE}:${VERSION}-amd64 --arch amd64
+            docker manifest annotate ${IMAGE}:${TAG} ${IMAGE}:${VERSION}-arm64 --arch arm64
+            docker manifest push ${IMAGE}:${TAG}
+          done
+
+      - name: Get manifest digest
+        id: digest
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.image }}
+          VERSION: ${{ needs.release.outputs.new_release_version }}
+        run: |
+          DIGEST=$(docker manifest inspect ${IMAGE}:${VERSION} -v | jq -r '.Descriptor.digest')
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
       - name: Attest Docker image
         if: ${{ github.event.repository.visibility == 'public' }}
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/${{ github.repository }}-${{ matrix.image }}
-          subject-digest: ${{ steps.push.outputs.digest }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
           push-to-registry: true
 
-  # Job 4: Build and attach frontend assets
+  # Job 5: Build and attach frontend assets
   assets:
     name: Build Frontend Assets
     needs: release
@@ -216,10 +302,10 @@ jobs:
           tag_name: v${{ needs.release.outputs.new_release_version }}
           files: frontend-${{ needs.release.outputs.new_release_version }}.tar.gz
 
-  # Job 5: Deploy to production server
+  # Job 6: Deploy to production server
   deploy:
     name: Deploy to Production
-    needs: [release, docker]
+    needs: [release, docker-manifest]
     if: needs.release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
     steps:
