@@ -1,4 +1,8 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
+
 export type SubresourceType =
   | 'phone'
   | 'email'
@@ -18,13 +22,13 @@ let isOpen = $state(false);
 let buttonRef = $state<HTMLButtonElement | null>(null);
 let menuRef = $state<HTMLDivElement | null>(null);
 
-const options: { type: SubresourceType; label: string; icon: string }[] = [
-  { type: 'phone', label: 'Phone Number', icon: 'phone' },
-  { type: 'email', label: 'Email Address', icon: 'mail' },
-  { type: 'address', label: 'Address', icon: 'map-pin' },
-  { type: 'url', label: 'Website/URL', icon: 'link' },
-  { type: 'date', label: 'Important Date', icon: 'calendar' },
-  { type: 'social', label: 'Social Profile', icon: 'share' },
+const optionConfig: { type: SubresourceType; labelKey: string; icon: string }[] = [
+  { type: 'phone', labelKey: 'subresources.dropdown.phoneNumber', icon: 'phone' },
+  { type: 'email', labelKey: 'subresources.dropdown.emailAddress', icon: 'mail' },
+  { type: 'address', labelKey: 'subresources.dropdown.address', icon: 'map-pin' },
+  { type: 'url', labelKey: 'subresources.dropdown.websiteUrl', icon: 'link' },
+  { type: 'date', labelKey: 'subresources.dropdown.importantDate', icon: 'calendar' },
+  { type: 'social', labelKey: 'subresources.dropdown.socialProfile', icon: 'share' },
 ];
 
 function handleSelect(type: SubresourceType) {
@@ -66,7 +70,7 @@ function handleClickOutside(e: MouseEvent) {
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
     </svg>
-    <span>Add</span>
+    <span>{$i18n.t('subresources.common.add')}</span>
     <svg
       class="w-3 h-3 transition-transform duration-150"
       class:rotate-180={isOpen}
@@ -86,7 +90,7 @@ function handleClickOutside(e: MouseEvent) {
       role="menu"
       aria-orientation="vertical"
     >
-      {#each options as option}
+      {#each optionConfig as option}
         <button
           type="button"
           onclick={() => handleSelect(option.type)}
@@ -120,7 +124,7 @@ function handleClickOutside(e: MouseEvent) {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
           {/if}
-          {option.label}
+          {$i18n.t(option.labelKey)}
         </button>
       {/each}
     </div>

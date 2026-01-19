@@ -1,6 +1,9 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { isModalOpen } from '$lib/stores/ui';
+
+const i18n = createI18n();
 
 interface Props {
   title: string;
@@ -32,7 +35,7 @@ $effect(() => {
 
 function handleClose() {
   if (isDirty && !isLoading) {
-    if (confirm('You have unsaved changes. Are you sure you want to close?')) {
+    if (confirm($i18n.t('subresources.common.unsavedChanges'))) {
       onClose();
     }
   } else if (!isLoading) {
@@ -88,7 +91,7 @@ function handleSubmit(e: Event) {
         disabled={isLoading}
         class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100
                disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label="Close"
+        aria-label={$i18n.t('subresources.common.close')}
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -119,7 +122,7 @@ function handleSubmit(e: Event) {
           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold
                  text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
-          Cancel
+          {$i18n.t('subresources.common.cancel')}
         </button>
         <button
           type="submit"
@@ -137,9 +140,9 @@ function handleSubmit(e: Event) {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            Saving...
+            {$i18n.t('subresources.common.saving')}
           {:else}
-            Save
+            {$i18n.t('subresources.common.save')}
           {/if}
         </button>
       </div>

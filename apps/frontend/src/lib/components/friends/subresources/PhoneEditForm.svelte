@@ -1,6 +1,9 @@
 <script lang="ts">
 import { autoFocus } from '$lib/actions/autoFocus';
+import { createI18n } from '$lib/i18n/index.js';
 import type { Phone, PhoneInput, PhoneType } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   initialData?: Phone;
@@ -52,7 +55,7 @@ export function isValid(): boolean {
   <!-- Phone Number -->
   <div>
     <label for="phone-number" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Phone Number <span class="text-red-500">*</span>
+      {$i18n.t('subresources.phone.phoneNumber')} <span class="text-red-500">*</span>
     </label>
     <input
       use:autoFocus
@@ -70,7 +73,7 @@ export function isValid(): boolean {
   <!-- Phone Type -->
   <div>
     <label for="phone-type" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Type
+      {$i18n.t('subresources.common.type')}
     </label>
     <select
       id="phone-type"
@@ -79,18 +82,18 @@ export function isValid(): boolean {
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
              font-body disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <option value="mobile">Mobile</option>
-      <option value="home">Home</option>
-      <option value="work">Work</option>
-      <option value="fax">Fax</option>
-      <option value="other">Other</option>
+      <option value="mobile">{$i18n.t('subresources.phone.types.mobile')}</option>
+      <option value="home">{$i18n.t('subresources.phone.types.home')}</option>
+      <option value="work">{$i18n.t('subresources.phone.types.work')}</option>
+      <option value="fax">{$i18n.t('subresources.phone.types.fax')}</option>
+      <option value="other">{$i18n.t('subresources.phone.types.other')}</option>
     </select>
   </div>
 
   <!-- Label (optional) -->
   <div>
     <label for="phone-label" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Label <span class="text-gray-400">(optional)</span>
+      {$i18n.t('subresources.common.label')} <span class="text-gray-400">({$i18n.t('common.optional')})</span>
     </label>
     <input
       id="phone-label"
@@ -114,7 +117,7 @@ export function isValid(): boolean {
              disabled:opacity-50 disabled:cursor-not-allowed"
     />
     <label for="phone-primary" class="text-sm font-body text-gray-700">
-      Primary phone number
+      {$i18n.t('subresources.phone.primaryPhone')}
     </label>
   </div>
 </div>

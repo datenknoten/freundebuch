@@ -253,27 +253,27 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
       class="h-4 w-4 text-forest focus:ring-forest border-gray-300 rounded disabled:opacity-50"
     />
     <label for="prof-primary" class="ml-2 block text-sm font-body text-gray-700">
-      Set as primary (shown in contact cards)
+      {$i18n.t('subresources.employment.primaryEmployment')}
     </label>
   </div>
 
   <!-- Notes -->
   <div>
     <label for="prof-notes" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Notes
+      {$i18n.t('subresources.employment.notes')}
     </label>
     <textarea
       id="prof-notes"
       bind:value={notes}
       {disabled}
       rows="2"
-      placeholder="Additional details about this position..."
+      placeholder={$i18n.t('subresources.employment.notesPlaceholder')}
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
              font-body disabled:opacity-50 disabled:cursor-not-allowed resize-none"
     ></textarea>
   </div>
 
   <p class="text-sm text-gray-500 font-body">
-    Provide at least a job title or organization.
+    {$i18n.t('subresources.employment.hint')}
   </p>
 </div>

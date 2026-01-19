@@ -610,5 +610,96 @@
     "label": "Stadt",
     "placeholder": "Stadtnamen eingeben",
     "selectCity": "Stadt auswählen"
+  },
+  "subresources": {
+    "common": {
+      "type": "Typ",
+      "label": "Bezeichnung",
+      "add": "Hinzufügen",
+      "save": "Speichern",
+      "saving": "Speichern...",
+      "cancel": "Abbrechen",
+      "delete": "Löschen",
+      "deleting": "Wird gelöscht...",
+      "close": "Schließen",
+      "failedToDelete": "Löschen fehlgeschlagen",
+      "cannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden.",
+      "unsavedChanges": "Du hast ungespeicherte Änderungen. Bist du sicher, dass du schließen möchtest?"
+    },
+    "phone": {
+      "phoneNumber": "Telefonnummer",
+      "primaryPhone": "Primäre Telefonnummer",
+      "types": {
+        "mobile": "Mobil",
+        "home": "Privat",
+        "work": "Arbeit",
+        "fax": "Fax",
+        "other": "Sonstige"
+      }
+    },
+    "email": {
+      "emailAddress": "E-Mail-Adresse",
+      "primaryEmail": "Primäre E-Mail-Adresse",
+      "types": {
+        "personal": "Privat",
+        "work": "Arbeit",
+        "other": "Sonstige"
+      }
+    },
+    "address": {
+      "address": "Adresse",
+      "primaryAddress": "Primäre Adresse",
+      "types": {
+        "home": "Privat",
+        "work": "Arbeit",
+        "other": "Sonstige"
+      }
+    },
+    "url": {
+      "url": "URL",
+      "types": {
+        "personal": "Privat",
+        "work": "Arbeit",
+        "blog": "Blog",
+        "other": "Sonstige"
+      }
+    },
+    "date": {
+      "date": "Datum",
+      "yearKnown": "Jahr ist bekannt",
+      "types": {
+        "birthday": "Geburtstag",
+        "anniversary": "Jahrestag",
+        "other": "Sonstige"
+      }
+    },
+    "social": {
+      "platform": "Plattform",
+      "username": "Benutzername",
+      "profileUrl": "Profil-URL",
+      "hint": "Gib mindestens einen Benutzernamen oder eine Profil-URL an.",
+      "platforms": {
+        "linkedin": "LinkedIn",
+        "twitter": "Twitter/X",
+        "facebook": "Facebook",
+        "instagram": "Instagram",
+        "github": "GitHub",
+        "other": "Sonstige"
+      }
+    },
+    "employment": {
+      "primaryEmployment": "Als primär festlegen (wird in Kontaktkarten angezeigt)",
+      "notes": "Notizen",
+      "notesPlaceholder": "Zusätzliche Details zu dieser Position...",
+      "hint": "Gib mindestens eine Berufsbezeichnung oder Organisation an."
+    },
+    "dropdown": {
+      "phoneNumber": "Telefonnummer",
+      "emailAddress": "E-Mail-Adresse",
+      "address": "Adresse",
+      "websiteUrl": "Webseite/URL",
+      "importantDate": "Wichtiger Termin",
+      "socialProfile": "Soziales Profil"
+    }
   }
 }

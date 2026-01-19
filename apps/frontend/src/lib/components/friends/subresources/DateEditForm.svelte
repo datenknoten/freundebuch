@@ -1,6 +1,9 @@
 <script lang="ts">
 import { autoFocus } from '$lib/actions/autoFocus';
+import { createI18n } from '$lib/i18n/index.js';
 import type { DateInput, DateType, FriendDate } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   initialData?: FriendDate;
@@ -50,7 +53,7 @@ export function isValid(): boolean {
   <!-- Date Value -->
   <div>
     <label for="date-value" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Date <span class="text-red-500">*</span>
+      {$i18n.t('subresources.date.date')} <span class="text-red-500">*</span>
     </label>
     <input
       use:autoFocus
@@ -67,7 +70,7 @@ export function isValid(): boolean {
   <!-- Date Type -->
   <div>
     <label for="date-type" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Type
+      {$i18n.t('subresources.common.type')}
     </label>
     <select
       id="date-type"
@@ -76,16 +79,16 @@ export function isValid(): boolean {
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
              font-body disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <option value="birthday">Birthday</option>
-      <option value="anniversary">Anniversary</option>
-      <option value="other">Other</option>
+      <option value="birthday">{$i18n.t('subresources.date.types.birthday')}</option>
+      <option value="anniversary">{$i18n.t('subresources.date.types.anniversary')}</option>
+      <option value="other">{$i18n.t('subresources.date.types.other')}</option>
     </select>
   </div>
 
   <!-- Label (optional) -->
   <div>
     <label for="date-label" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Label <span class="text-gray-400">(optional)</span>
+      {$i18n.t('subresources.common.label')} <span class="text-gray-400">({$i18n.t('common.optional')})</span>
     </label>
     <input
       id="date-label"
@@ -109,7 +112,7 @@ export function isValid(): boolean {
              disabled:opacity-50 disabled:cursor-not-allowed"
     />
     <label for="date-year-known" class="text-sm font-body text-gray-700">
-      Year is known
+      {$i18n.t('subresources.date.yearKnown')}
     </label>
   </div>
 </div>

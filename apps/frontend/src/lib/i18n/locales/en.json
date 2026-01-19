@@ -610,5 +610,96 @@
     "label": "City",
     "placeholder": "Enter city name",
     "selectCity": "Select a city"
+  },
+  "subresources": {
+    "common": {
+      "type": "Type",
+      "label": "Label",
+      "add": "Add",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "close": "Close",
+      "failedToDelete": "Failed to delete",
+      "cannotBeUndone": "This action cannot be undone.",
+      "unsavedChanges": "You have unsaved changes. Are you sure you want to close?"
+    },
+    "phone": {
+      "phoneNumber": "Phone Number",
+      "primaryPhone": "Primary phone number",
+      "types": {
+        "mobile": "Mobile",
+        "home": "Home",
+        "work": "Work",
+        "fax": "Fax",
+        "other": "Other"
+      }
+    },
+    "email": {
+      "emailAddress": "Email Address",
+      "primaryEmail": "Primary email address",
+      "types": {
+        "personal": "Personal",
+        "work": "Work",
+        "other": "Other"
+      }
+    },
+    "address": {
+      "address": "Address",
+      "primaryAddress": "Primary address",
+      "types": {
+        "home": "Home",
+        "work": "Work",
+        "other": "Other"
+      }
+    },
+    "url": {
+      "url": "URL",
+      "types": {
+        "personal": "Personal",
+        "work": "Work",
+        "blog": "Blog",
+        "other": "Other"
+      }
+    },
+    "date": {
+      "date": "Date",
+      "yearKnown": "Year is known",
+      "types": {
+        "birthday": "Birthday",
+        "anniversary": "Anniversary",
+        "other": "Other"
+      }
+    },
+    "social": {
+      "platform": "Platform",
+      "username": "Username",
+      "profileUrl": "Profile URL",
+      "hint": "Provide at least a username or profile URL.",
+      "platforms": {
+        "linkedin": "LinkedIn",
+        "twitter": "Twitter/X",
+        "facebook": "Facebook",
+        "instagram": "Instagram",
+        "github": "GitHub",
+        "other": "Other"
+      }
+    },
+    "employment": {
+      "primaryEmployment": "Set as primary (shown in contact cards)",
+      "notes": "Notes",
+      "notesPlaceholder": "Additional details about this position...",
+      "hint": "Provide at least a job title or organization."
+    },
+    "dropdown": {
+      "phoneNumber": "Phone Number",
+      "emailAddress": "Email Address",
+      "address": "Address",
+      "websiteUrl": "Website/URL",
+      "importantDate": "Important Date",
+      "socialProfile": "Social Profile"
+    }
   }
 }

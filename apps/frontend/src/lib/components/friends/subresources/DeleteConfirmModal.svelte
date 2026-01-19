@@ -1,5 +1,8 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import { isModalOpen } from '$lib/stores/ui';
+
+const i18n = createI18n();
 
 interface Props {
   title: string;
@@ -27,7 +30,7 @@ async function handleDelete() {
     await onConfirm();
     onClose();
   } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to delete';
+    error = err instanceof Error ? err.message : $i18n.t('subresources.common.failedToDelete');
     isDeleting = false;
   }
 }
@@ -67,7 +70,7 @@ function handleBackdropClick(e: MouseEvent) {
       {itemPreview}
     </div>
 
-    <p class="text-sm text-gray-500 font-body mb-4">This action cannot be undone.</p>
+    <p class="text-sm text-gray-500 font-body mb-4">{$i18n.t('subresources.common.cannotBeUndone')}</p>
 
     <!-- Error message -->
     {#if error}
@@ -84,7 +87,7 @@ function handleBackdropClick(e: MouseEvent) {
         class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold
                text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
       >
-        Cancel
+        {$i18n.t('subresources.common.cancel')}
       </button>
       <button
         type="button"
@@ -103,9 +106,9 @@ function handleBackdropClick(e: MouseEvent) {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             />
           </svg>
-          Deleting...
+          {$i18n.t('subresources.common.deleting')}
         {:else}
-          Delete
+          {$i18n.t('subresources.common.delete')}
         {/if}
       </button>
     </div>
