@@ -161,14 +161,15 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
   </div>
 
   <!-- From Date -->
-  <div>
-    <label class="block text-sm font-body font-medium text-gray-700 mb-1">
+  <fieldset>
+    <legend class="block text-sm font-body font-medium text-gray-700 mb-1">
       Start Date <span class="text-red-500">*</span>
-    </label>
+    </legend>
     <div class="grid grid-cols-2 gap-2">
       <select
         bind:value={fromMonth}
         {disabled}
+        aria-label="Start month"
         class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
                font-body disabled:opacity-50 disabled:cursor-not-allowed"
       >
@@ -179,6 +180,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
       <select
         bind:value={fromYear}
         {disabled}
+        aria-label="Start year"
         class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
                font-body disabled:opacity-50 disabled:cursor-not-allowed"
       >
@@ -187,7 +189,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
         {/each}
       </select>
     </div>
-  </div>
+  </fieldset>
 
   <!-- Current Position Checkbox -->
   <div class="flex items-center">
@@ -205,14 +207,15 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
 
   <!-- To Date (only shown if not current position) -->
   {#if !isCurrentPosition}
-    <div>
-      <label class="block text-sm font-body font-medium text-gray-700 mb-1">
+    <fieldset>
+      <legend class="block text-sm font-body font-medium text-gray-700 mb-1">
         End Date <span class="text-red-500">*</span>
-      </label>
+      </legend>
       <div class="grid grid-cols-2 gap-2">
         <select
           bind:value={toMonth}
           {disabled}
+          aria-label="End month"
           class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
                  font-body disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -223,6 +226,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
         <select
           bind:value={toYear}
           {disabled}
+          aria-label="End year"
           class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
                  font-body disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -231,7 +235,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
           {/each}
         </select>
       </div>
-    </div>
+    </fieldset>
   {/if}
 
   <!-- Primary Checkbox -->

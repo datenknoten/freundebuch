@@ -8,8 +8,8 @@ import {
 } from '$lib/stores/locale';
 
 let isOpen = $state(false);
-let buttonRef: HTMLButtonElement;
-let menuRef: HTMLDivElement;
+let buttonRef = $state<HTMLButtonElement | null>(null);
+let menuRef = $state<HTMLDivElement | null>(null);
 
 function toggleDropdown() {
   isOpen = !isOpen;
