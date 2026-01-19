@@ -195,6 +195,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create and push manifest
+        id: manifest
         env:
           VERSION: ${{ needs.release.outputs.new_release_version }}
           IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.image }}
@@ -208,8 +209,9 @@ jobs:
           docker manifest annotate ${IMAGE}:${VERSION} ${IMAGE}:${VERSION}-amd64 --arch amd64
           docker manifest annotate ${IMAGE}:${VERSION} ${IMAGE}:${VERSION}-arm64 --arch arm64
 
-          # Push version manifest
-          docker manifest push ${IMAGE}:${VERSION}
+          # Push version manifest and capture digest
+          DIGEST=$(docker manifest push ${IMAGE}:${VERSION})
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
           # Create and push additional tags
           for TAG in "${VERSION%.*}" "${VERSION%%.*}" "latest"; do
@@ -221,21 +223,12 @@ jobs:
             docker manifest push ${IMAGE}:${TAG}
           done
 
-      - name: Get manifest digest
-        id: digest
-        env:
-          IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.image }}
-          VERSION: ${{ needs.release.outputs.new_release_version }}
-        run: |
-          DIGEST=$(docker manifest inspect ${IMAGE}:${VERSION} -v | jq -r '.Descriptor.digest')
-          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
-
       - name: Attest Docker image
         if: ${{ github.event.repository.visibility == 'public' }}
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/${{ github.repository }}-${{ matrix.image }}
-          subject-digest: ${{ steps.digest.outputs.digest }}
+          subject-digest: ${{ steps.manifest.outputs.digest }}
           push-to-registry: true
 
   # Job 5: Build and attach frontend assets
