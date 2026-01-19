@@ -271,6 +271,7 @@
     },
     "unsavedChanges": {
       "title": "Unsaved Changes",
+      "message": "You have unsaved changes. Are you sure you want to close?",
       "keepEditing": "Keep Editing",
       "discard": "Discard Changes"
     }

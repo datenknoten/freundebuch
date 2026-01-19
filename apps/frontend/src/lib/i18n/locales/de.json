@@ -271,6 +271,7 @@
     },
     "unsavedChanges": {
       "title": "Ungespeicherte Änderungen",
+      "message": "Sie haben ungespeicherte Änderungen. Sind Sie sicher, dass Sie schließen möchten?",
       "keepEditing": "Weiter bearbeiten",
       "discard": "Änderungen verwerfen"
     }
