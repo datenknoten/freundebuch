@@ -332,3 +332,20 @@ jobs:
           curl -X POST "${WEBHOOK_URL}" \
             -H "Content-Type: application/json" \
             -d "{\"text\": \"✅ **Deployment successful**\n\n**Version:** v${VERSION}\n**Repository:** ${REPO}\n**Release:** https://github.com/${REPO}/releases/tag/v${VERSION}\"}"
+
+  # Job 7: Notify on failure
+  notify-failure:
+    name: Notify Failure
+    needs: [ci, release, docker-build, docker-manifest, assets, deploy]
+    if: always() && contains(needs.*.result, 'failure')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send failure notification
+        env:
+          WEBHOOK_URL: ${{ secrets.DEPLOYMENT_NOTIFICATION }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -X POST "${WEBHOOK_URL}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"❌ **Release workflow failed**\n\n**Repository:** ${REPO}\n**Run:** ${RUN_URL}\"}"
