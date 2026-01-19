@@ -3,8 +3,11 @@ import * as authApi from '$lib/api/auth';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import AppPasswordManager from '$lib/components/AppPasswordManager.svelte';
 import CardDAVSetupGuide from '$lib/components/CardDAVSetupGuide.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { auth, birthdayFormat, currentUser } from '$lib/stores/auth';
 import type { BirthdayFormat } from '$shared';
+
+const i18n = createI18n();
 
 const pageTitle = $derived(
   $currentUser?.email ? `${$currentUser.email} | Freundebuch` : 'Profile | Freundebuch',
@@ -58,15 +61,15 @@ function handleBirthdayFormatChange(format: BirthdayFormat) {
 		<div class="bg-white rounded-xl shadow-lg p-8">
 			<div class="flex justify-between items-start mb-6">
 				<div>
-					<h1 class="text-3xl font-heading text-forest mb-2">Your Profile</h1>
-					<p class="text-gray-600 font-body">Manage your account settings</p>
+					<h1 class="text-3xl font-heading text-forest mb-2">{$i18n.t('profile.yourProfile')}</h1>
+					<p class="text-gray-600 font-body">{$i18n.t('profile.subtitle')}</p>
 				</div>
 				{#if !isEditing}
 					<button
 						onclick={() => (isEditing = true)}
 						class="bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
 					>
-						Edit Profile
+						{$i18n.t('profile.editProfile')}
 					</button>
 				{/if}
 			</div>
@@ -79,14 +82,14 @@ function handleBirthdayFormatChange(format: BirthdayFormat) {
 
 			{#if success}
 				<div class="mb-6">
-					<AlertBanner variant="success">Profile updated successfully!</AlertBanner>
+					<AlertBanner variant="success">{$i18n.t('profile.updateSuccess')}</AlertBanner>
 				</div>
 			{/if}
 
 			<form onsubmit={handleSubmit} class="space-y-6">
 				<div>
 					<label for="user-id" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-						User ID
+						{$i18n.t('profile.userId')}
 					</label>
 					<input
 						type="text"
@@ -95,12 +98,12 @@ function handleBirthdayFormatChange(format: BirthdayFormat) {
 						disabled
 						class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 font-body text-gray-600"
 					/>
-					<p class="mt-1 text-xs font-body text-gray-500">Your unique user identifier</p>
+					<p class="mt-1 text-xs font-body text-gray-500">{$i18n.t('profile.userIdHelp')}</p>
 				</div>
 
 				<div>
 					<label for="email" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-						Email address
+						{$i18n.t('profile.emailAddress')}
 					</label>
 					<input
 						type="email"
@@ -115,10 +118,10 @@ function handleBirthdayFormatChange(format: BirthdayFormat) {
 				{#if $currentUser?.createdAt}
 					<div>
 						<p class="block text-sm font-body font-semibold text-gray-700 mb-2">
-							Member since
+							{$i18n.t('profile.memberSince')}
 						</p>
 						<p class="font-body text-gray-600">
-							{new Date($currentUser.createdAt).toLocaleDateString('en-US')}
+							{new Date($currentUser.createdAt).toLocaleDateString()}
 						</p>
 					</div>
 				{/if}
@@ -130,7 +133,7 @@ function handleBirthdayFormatChange(format: BirthdayFormat) {
 							disabled={isLoading}
 							class="flex-1 bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 						>
-							{isLoading ? 'Saving...' : 'Save Changes'}
+							{isLoading ? $i18n.t('profile.saving') : $i18n.t('profile.saveChanges')}
 						</button>
 						<button
 							type="button"
@@ -138,22 +141,22 @@ function handleBirthdayFormatChange(format: BirthdayFormat) {
 							disabled={isLoading}
 							class="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-body font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 						>
-							Cancel
+							{$i18n.t('common.cancel')}
 						</button>
 					</div>
 				{/if}
 			</form>
 
 			<div class="mt-8 pt-8 border-t border-gray-200">
-				<h2 class="text-xl font-heading text-gray-800 mb-2">Display Preferences</h2>
+				<h2 class="text-xl font-heading text-gray-800 mb-2">{$i18n.t('profile.displayPreferences.title')}</h2>
 				<p class="text-sm font-body text-gray-600 mb-4">
-					Customize how information is displayed throughout the app.
+					{$i18n.t('profile.displayPreferences.subtitle')}
 				</p>
 
 				<div class="space-y-4">
 					<div>
 						<label for="birthday-format" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-							Birthday Format
+							{$i18n.t('profile.preferences.birthdayFormat')}
 						</label>
 						<select
 							id="birthday-format"
@@ -161,30 +164,30 @@ function handleBirthdayFormatChange(format: BirthdayFormat) {
 							onchange={(e) => handleBirthdayFormatChange(e.currentTarget.value as BirthdayFormat)}
 							class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
 						>
-							<option value="iso">ISO (1990-05-15)</option>
-							<option value="us">US (05/15)</option>
-							<option value="eu">EU (15.05.)</option>
-							<option value="long">Long (May 15)</option>
+							<option value="iso">{$i18n.t('profile.preferences.birthdayFormats.iso')}</option>
+							<option value="us">{$i18n.t('profile.preferences.birthdayFormats.us')}</option>
+							<option value="eu">{$i18n.t('profile.preferences.birthdayFormats.eu')}</option>
+							<option value="long">{$i18n.t('profile.preferences.birthdayFormats.long')}</option>
 						</select>
 						<p class="mt-1 text-xs font-body text-gray-500">
-							How birthday dates are displayed in the friends table
+							{$i18n.t('profile.preferences.birthdayFormatHelp')}
 						</p>
 					</div>
 				</div>
 			</div>
 
 			<div class="mt-8 pt-8 border-t border-gray-200">
-				<h2 class="text-xl font-heading text-gray-800 mb-2">App Passwords</h2>
+				<h2 class="text-xl font-heading text-gray-800 mb-2">{$i18n.t('profile.appPasswords.title')}</h2>
 				<p class="text-sm font-body text-gray-600 mb-4">
-					Create app-specific passwords to sync your friends with mobile devices and desktop apps.
+					{$i18n.t('profile.appPasswords.subtitle')}
 				</p>
 				<AppPasswordManager />
 			</div>
 
 			<div class="mt-8 pt-8 border-t border-gray-200">
-				<h2 class="text-xl font-heading text-gray-800 mb-2">CardDAV Setup</h2>
+				<h2 class="text-xl font-heading text-gray-800 mb-2">{$i18n.t('profile.carddav.title')}</h2>
 				<p class="text-sm font-body text-gray-600 mb-4">
-					Sync your friends with iOS, macOS, Thunderbird, and other CardDAV-compatible apps.
+					{$i18n.t('profile.carddav.subtitle')}
 				</p>
 				<CardDAVSetupGuide />
 			</div>

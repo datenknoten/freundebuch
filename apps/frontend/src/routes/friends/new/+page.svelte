@@ -1,9 +1,12 @@
 <script lang="ts">
 import FriendForm from '$lib/components/friends/FriendForm.svelte';
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 </script>
 
 <svelte:head>
-  <title>New Friend | Freundebuch</title>
+  <title>{$i18n.t('friends.newFriend')} | Freundebuch</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">
@@ -17,10 +20,10 @@ import FriendForm from '$lib/components/friends/FriendForm.svelte';
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Friends
+          {$i18n.t('friends.backToFriends')}
         </a>
-        <h1 class="text-3xl font-heading text-forest">New Friend</h1>
-        <p class="text-gray-600 font-body mt-1">Add a new person to your friends</p>
+        <h1 class="text-3xl font-heading text-forest">{$i18n.t('friends.newFriend')}</h1>
+        <p class="text-gray-600 font-body mt-1">{$i18n.t('friends.newFriendSubtitle')}</p>
       </div>
 
       <FriendForm />

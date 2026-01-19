@@ -1,7 +1,10 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
+
+const i18n = createI18n();
 
 let email = $state('');
 let password = $state('');
@@ -15,12 +18,12 @@ async function handleSubmit(e) {
 
   // Client-side validation
   if (password !== confirmPassword) {
-    error = 'Passwords do not match';
+    error = $i18n.t('auth.register.error.passwordMismatch');
     return;
   }
 
   if (password.length < 8) {
-    error = 'Password must be at least 8 characters';
+    error = $i18n.t('auth.register.error.weakPassword');
     return;
   }
 
@@ -31,7 +34,7 @@ async function handleSubmit(e) {
     // Redirect to home page after successful registration
     goto('/');
   } catch (err) {
-    error = (err as Error)?.message || 'Registration failed';
+    error = (err as Error)?.message || $i18n.t('auth.register.error.generic');
     isLoading = false;
   }
 }
@@ -39,8 +42,8 @@ async function handleSubmit(e) {
 
 <form onsubmit={handleSubmit} class="space-y-6">
 	<div>
-		<h2 class="text-3xl font-heading text-forest mb-2">Create an account</h2>
-		<p class="text-gray-600 font-body">Start managing your relationships today</p>
+		<h2 class="text-3xl font-heading text-forest mb-2">{$i18n.t('auth.register.title')}</h2>
+		<p class="text-gray-600 font-body">{$i18n.t('auth.register.subtitle')}</p>
 	</div>
 
 	{#if error}
@@ -49,7 +52,7 @@ async function handleSubmit(e) {
 
 	<div>
 		<label for="email" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-			Email address
+			{$i18n.t('auth.register.emailAddress')}
 		</label>
 		<input
 			type="email"
@@ -58,14 +61,14 @@ async function handleSubmit(e) {
 			required
 			autocomplete="email"
 			class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-			placeholder="you@example.com"
+			placeholder={$i18n.t('auth.register.emailPlaceholder')}
 			disabled={isLoading}
 		/>
 	</div>
 
 	<div>
 		<label for="password" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-			Password
+			{$i18n.t('auth.register.password')}
 		</label>
 		<input
 			type="password"
@@ -79,13 +82,13 @@ async function handleSubmit(e) {
 			disabled={isLoading}
 		/>
 		<p class="mt-1 text-xs font-body text-gray-500">
-			Must be at least 8 characters long
+			{$i18n.t('auth.register.passwordHelp')}
 		</p>
 	</div>
 
 	<div>
 		<label for="confirm-password" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-			Confirm password
+			{$i18n.t('auth.register.confirmPassword')}
 		</label>
 		<input
 			type="password"
@@ -108,13 +111,13 @@ async function handleSubmit(e) {
 			class="h-4 w-4 text-forest focus:ring-forest border-gray-300 rounded mt-1"
 		/>
 		<label for="terms" class="ml-2 block text-sm font-body text-gray-700">
-			I agree to the
+			{$i18n.t('auth.register.termsAgree')}
 			<a href="/terms" class="font-semibold text-forest hover:text-forest-light">
-				Terms of Service
+				{$i18n.t('auth.register.termsOfService')}
 			</a>
-			and
+			{$i18n.t('auth.register.and')}
 			<a href="/privacy" class="font-semibold text-forest hover:text-forest-light">
-				Privacy Policy
+				{$i18n.t('auth.register.privacyPolicy')}
 			</a>
 		</label>
 	</div>
@@ -124,13 +127,13 @@ async function handleSubmit(e) {
 		disabled={isLoading}
 		class="w-full bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 	>
-		{isLoading ? 'Creating account...' : 'Create account'}
+		{isLoading ? $i18n.t('auth.register.creating') : $i18n.t('auth.register.submit')}
 	</button>
 
 	<p class="text-center text-sm font-body text-gray-600">
-		Already have an account?
+		{$i18n.t('auth.register.hasAccount')}
 		<a href="/auth/login" class="font-semibold text-forest hover:text-forest-light">
-			Sign in
+			{$i18n.t('auth.register.loginLink')}
 		</a>
 	</p>
 </form>
