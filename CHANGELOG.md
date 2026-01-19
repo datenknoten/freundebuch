@@ -1,3 +1,13 @@
+## [2.50.0](https://github.com/datenknoten/freundebuch/compare/v2.49.1...v2.50.0) (2026-01-19)
+
+### Features
+
+* **frontend:** Implement i18n with svelte-i18next ([8e48f61](https://github.com/datenknoten/freundebuch/commit/8e48f61dcfbedbd95abaa3229a78b48cd49a4ee6))
+
+### Bug Fixes
+
+* **frontend:** Fix $effect cleanup pattern in LanguageSwitcher ([4d95086](https://github.com/datenknoten/freundebuch/commit/4d95086f1c44fb3c9aecae5bb775c0c448e5cc0c))
+
 ## [2.49.1](https://github.com/datenknoten/freundebuch/compare/v2.49.0...v2.49.1) (2026-01-18)
 
 ### Code Refactoring
