@@ -81,12 +81,13 @@ jobs:
             echo "new_release_published=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # Job 3: Build Docker images per platform (native runners for speed)
+  # Job 3: Build Docker images per platform
+  # Uses native ARM runners for public repos, QEMU emulation for private repos
   docker-build:
     name: Build ${{ matrix.image }} (${{ matrix.arch }})
     needs: release
     if: needs.release.outputs.new_release_published == 'true'
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.arch == 'arm64' && github.event.repository.visibility == 'public' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
       matrix:
@@ -95,43 +96,41 @@ jobs:
           - image: nginx
             dockerfile: docker/Dockerfile.nginx.prod
             platform: linux/amd64
-            runner: ubuntu-24.04
             arch: amd64
           # nginx - arm64
           - image: nginx
             dockerfile: docker/Dockerfile.nginx.prod
             platform: linux/arm64
-            runner: ubuntu-24.04-arm
             arch: arm64
           # backend - amd64
           - image: backend
             dockerfile: docker/Dockerfile.backend.prod
             platform: linux/amd64
-            runner: ubuntu-24.04
             arch: amd64
           # backend - arm64
           - image: backend
             dockerfile: docker/Dockerfile.backend.prod
             platform: linux/arm64
-            runner: ubuntu-24.04-arm
             arch: arm64
           # sabredav - amd64
           - image: sabredav
             dockerfile: docker/Dockerfile.sabredav.prod
             platform: linux/amd64
-            runner: ubuntu-24.04
             arch: amd64
           # sabredav - arm64
           - image: sabredav
             dockerfile: docker/Dockerfile.sabredav.prod
             platform: linux/arm64
-            runner: ubuntu-24.04-arm
             arch: arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: v${{ needs.release.outputs.new_release_version }}
+
+      - name: Set up QEMU
+        if: matrix.arch == 'arm64' && github.event.repository.visibility != 'public'
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
