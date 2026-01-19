@@ -248,6 +248,7 @@
         "edit": "Kreis bearbeiten"
       },
       "name": "Name",
+      "defaultName": "Kreisname",
       "namePlaceholder": "z.B. Familie, Arbeit, Schule",
       "description": "Beschreibung",
       "descriptionPlaceholder": "Wofür ist dieser Kreis?",

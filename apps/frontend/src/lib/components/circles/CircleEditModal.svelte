@@ -276,7 +276,7 @@ function handleBackdropClick(e: MouseEvent) {
           <span class="block text-sm font-body font-semibold text-gray-700 mb-2">
             {$i18n.t('circles.form.preview')}
           </span>
-          <CircleChip circle={{ id: 'preview', name: formName || $i18n.t('circles.title'), color: formColor }} size="md" />
+          <CircleChip circle={{ id: 'preview', name: formName || $i18n.t('circles.form.defaultName'), color: formColor }} size="md" />
         </div>
 
         <!-- Error message -->
