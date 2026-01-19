@@ -1,3 +1,11 @@
+## [2.50.2](https://github.com/datenknoten/freundebuch/compare/v2.50.1...v2.50.2) (2026-01-19)
+
+### Bug Fixes
+
+* **frontend:** Complete i18n translations for remaining components ([f8236ed](https://github.com/datenknoten/freundebuch/commit/f8236edfb0926a8a015730b9b8f1b1c6b64365c3))
+* **frontend:** Fix accessibility and reactivity warnings ([5e64cf3](https://github.com/datenknoten/freundebuch/commit/5e64cf34cd2e4c7229b1744bafd06617435cf8d7))
+* Resolve Biome linting warnings ([11c72a4](https://github.com/datenknoten/freundebuch/commit/11c72a45986f14014193da2b0f2777171e227bd2))
+
 ## [2.50.1](https://github.com/datenknoten/freundebuch/compare/v2.50.0...v2.50.1) (2026-01-19)
 
 ### Bug Fixes
