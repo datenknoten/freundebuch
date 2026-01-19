@@ -1,3 +1,10 @@
+## [2.53.0](https://github.com/datenknoten/freundebuch/compare/v2.52.0...v2.53.0) (2026-01-19)
+
+### Features
+
+* **frontend:** Add friend name subtitle to relationship modal and translations ([8f98378](https://github.com/datenknoten/freundebuch/commit/8f983788fc15d1f52e3563c5d1c1d128e074197d))
+* **frontend:** Add i18n translations for subresource modals and edit forms ([a47983c](https://github.com/datenknoten/freundebuch/commit/a47983cbe562809a34b3e10727bc1df74f04ef0a))
+
 ## [2.52.0](https://github.com/datenknoten/freundebuch/compare/v2.51.0...v2.52.0) (2026-01-19)
 
 ### Features
