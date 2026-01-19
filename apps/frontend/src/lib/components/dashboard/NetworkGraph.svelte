@@ -2,12 +2,15 @@
 import * as d3 from 'd3';
 import { onDestroy, onMount } from 'svelte';
 import { getNetworkGraphData } from '$lib/api/friends.js';
+import { createI18n } from '$lib/i18n/index.js';
 import type {
   NetworkGraphData,
   NetworkGraphLink,
   NetworkGraphNode,
   RelationshipCategory,
 } from '$shared';
+
+const i18n = createI18n();
 
 let container = $state<HTMLDivElement | null>(null);
 let svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
@@ -268,7 +271,7 @@ onDestroy(() => {
 </script>
 
 <div class="bg-white rounded-xl shadow-lg p-6">
-  <h3 class="text-xl font-heading text-gray-800 mb-4">Relationship Network</h3>
+  <h3 class="text-xl font-heading text-gray-800 mb-4">{$i18n.t('dashboard.relationshipNetwork')}</h3>
 
   {#if isLoading}
     <div class="h-[400px] flex items-center justify-center">
@@ -285,16 +288,16 @@ onDestroy(() => {
     <div class="h-[400px] flex items-center justify-center">
       <div class="text-center py-6">
         <div class="text-gray-400 text-4xl mb-2">&#128279;</div>
-        <p class="text-gray-500 font-body">No relationships to display</p>
-        <p class="text-gray-400 text-sm mt-1">Add friends and create relationships between them</p>
+        <p class="text-gray-500 font-body">{$i18n.t('dashboard.noRelationships')}</p>
+        <p class="text-gray-400 text-sm mt-1">{$i18n.t('dashboard.addRelationshipsHint')}</p>
       </div>
     </div>
   {:else if graphData.links.length === 0}
     <div class="h-[400px] flex items-center justify-center">
       <div class="text-center py-6">
         <div class="text-gray-400 text-4xl mb-2">&#128279;</div>
-        <p class="text-gray-500 font-body">No connections yet</p>
-        <p class="text-gray-400 text-sm mt-1">Add relationships between your friends to see the network</p>
+        <p class="text-gray-500 font-body">{$i18n.t('dashboard.noConnections')}</p>
+        <p class="text-gray-400 text-sm mt-1">{$i18n.t('dashboard.addConnectionsHint')}</p>
       </div>
     </div>
   {:else}
@@ -305,18 +308,18 @@ onDestroy(() => {
       <div class="flex flex-wrap gap-4 text-sm font-body text-gray-600">
         <div class="flex items-center gap-2">
           <span class="w-4 h-1 rounded" style="background-color: #2D5016;"></span>
-          <span>Family</span>
+          <span>{$i18n.t('dashboard.legend.family')}</span>
         </div>
         <div class="flex items-center gap-2">
           <span class="w-4 h-1 rounded" style="background-color: #D4A574;"></span>
-          <span>Professional</span>
+          <span>{$i18n.t('dashboard.legend.professional')}</span>
         </div>
         <div class="flex items-center gap-2">
           <span class="w-4 h-1 rounded" style="background-color: #8B9D83;"></span>
-          <span>Social</span>
+          <span>{$i18n.t('dashboard.legend.social')}</span>
         </div>
         <div class="flex items-center gap-2 ml-auto">
-          <span class="text-xs text-gray-400">Drag nodes to rearrange. Click to view friend.</span>
+          <span class="text-xs text-gray-400">{$i18n.t('dashboard.networkHint')}</span>
         </div>
       </div>
     </div>

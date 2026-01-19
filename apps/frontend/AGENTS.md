@@ -48,6 +48,42 @@ src/
 - Token refresh handled automatically
 - Same-origin requests in production (empty `VITE_API_URL`)
 
+## Internationalization (i18n)
+
+**All user-facing text must use the i18n system - never hardcode strings.**
+
+### Using Translations
+```svelte
+<script>
+import { createI18n } from '$lib/i18n/index.js';
+const i18n = createI18n();
+</script>
+
+<!-- In template -->
+{$i18n.t('section.key')}
+{$i18n.t('section.keyWithParam', { name: 'value' })}
+```
+
+### Locale Files
+- `src/lib/i18n/locales/en.json` - English translations
+- `src/lib/i18n/locales/de.json` - German translations
+
+### Adding New Translations
+1. Add keys to both `en.json` and `de.json`
+2. Use nested keys: `"friendDetail.sections.phoneNumbers"`
+3. Support interpolation: `"Hello, {{name}}!"`
+4. Keep translations organized by feature/component
+
+### Common Sections
+- `common.*` - Shared buttons, labels (save, cancel, delete, etc.)
+- `nav.*` - Navigation items
+- `friends.*` - Friends feature
+- `circles.*` - Circles feature
+- `friendDetail.*` - Friend detail page sections
+- `dashboard.*` - Dashboard widgets
+- `globalSearch.*` - Search modal
+- `facets.*` - Filter/facet labels
+
 ## Accessibility
 
 - Visible focus rings on all interactive elements

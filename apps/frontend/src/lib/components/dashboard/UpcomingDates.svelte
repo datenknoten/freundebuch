@@ -2,7 +2,10 @@
 import { onMount } from 'svelte';
 import { getUpcomingDates } from '$lib/api/friends.js';
 import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import type { DateType, UpcomingDate } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   days?: number;
@@ -33,12 +36,12 @@ onMount(() => {
 });
 
 function formatDateType(type: DateType): string {
-  const typeLabels: Record<DateType, string> = {
-    birthday: 'Birthday',
-    anniversary: 'Anniversary',
-    other: 'Date',
+  const typeKeys: Record<DateType, string> = {
+    birthday: 'dashboard.dateLabels.birthday',
+    anniversary: 'dashboard.dateLabels.anniversary',
+    other: 'dashboard.dateLabels.date',
   };
-  return typeLabels[type] || type;
+  return $i18n.t(typeKeys[type]) || type;
 }
 
 function formatDate(dateValue: string): string {
@@ -55,15 +58,15 @@ function formatDate(dateValue: string): string {
 
 function formatDaysUntil(daysUntil: number): string {
   if (daysUntil === 0) {
-    return 'Today';
+    return $i18n.t('dashboard.timeLabels.today');
   } else if (daysUntil === 1) {
-    return 'Tomorrow';
+    return $i18n.t('dashboard.timeLabels.tomorrow');
   } else if (daysUntil <= 7) {
-    return `In ${daysUntil} days`;
+    return $i18n.t('dashboard.timeLabels.inDays', { count: daysUntil });
   } else if (daysUntil <= 14) {
-    return 'Next week';
+    return $i18n.t('dashboard.timeLabels.nextWeek');
   } else {
-    return `In ${daysUntil} days`;
+    return $i18n.t('dashboard.timeLabels.inDays', { count: daysUntil });
   }
 }
 
@@ -79,7 +82,7 @@ function getDaysUntilClass(daysUntil: number): string {
 </script>
 
 <div class="bg-white rounded-xl shadow-lg p-6">
-  <h3 class="text-xl font-heading text-gray-800 mb-4">Upcoming Dates</h3>
+  <h3 class="text-xl font-heading text-gray-800 mb-4">{$i18n.t('dashboard.upcomingDates')}</h3>
 
   {#if isLoading}
     <div class="animate-pulse space-y-3">
@@ -98,8 +101,8 @@ function getDaysUntilClass(daysUntil: number): string {
   {:else if upcomingDates.length === 0}
     <div class="text-center py-6">
       <div class="text-gray-400 text-4xl mb-2">&#128197;</div>
-      <p class="text-gray-500 font-body">No upcoming dates in the next {days} days</p>
-      <p class="text-gray-400 text-sm mt-1">Add birthdays and anniversaries to your friends</p>
+      <p class="text-gray-500 font-body">{$i18n.t('dashboard.noUpcomingDates', { days })}</p>
+      <p class="text-gray-400 text-sm mt-1">{$i18n.t('dashboard.addBirthdays')}</p>
     </div>
   {:else}
     <div class="space-y-3">
@@ -136,7 +139,7 @@ function getDaysUntilClass(daysUntil: number): string {
     {#if upcomingDates.length >= limit}
       <div class="mt-4 pt-4 border-t border-gray-100 text-center">
         <a href="/friends" class="text-sm text-forest hover:text-forest-light font-body">
-          View all friends
+          {$i18n.t('dashboard.viewAllFriends')}
         </a>
       </div>
     {/if}
