@@ -1,3 +1,9 @@
+## [2.50.7](https://github.com/datenknoten/freundebuch/compare/v2.50.6...v2.50.7) (2026-01-19)
+
+### Bug Fixes
+
+* **ci:** Capture manifest digest from push output ([ec4687d](https://github.com/datenknoten/freundebuch/commit/ec4687d78ecc50f19760ae44bf31d7ebac911c3d))
+
 ## [2.50.6](https://github.com/datenknoten/freundebuch/compare/v2.50.5...v2.50.6) (2026-01-19)
 
 ### Bug Fixes
