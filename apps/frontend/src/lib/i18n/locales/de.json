@@ -50,11 +50,11 @@
   "auth": {
     "login": {
       "title": "Anmelden",
-      "subtitle": "Willkommen zurück! Bitte melden Sie sich an.",
+      "subtitle": "Willkommen zurück! Bitte melde dich an.",
       "email": "E-Mail",
       "emailPlaceholder": "du@beispiel.de",
       "password": "Passwort",
-      "passwordPlaceholder": "Geben Sie Ihr Passwort ein",
+      "passwordPlaceholder": "Gib dein Passwort ein",
       "rememberMe": "Angemeldet bleiben",
       "forgotPassword": "Passwort vergessen?",
       "submit": "Anmelden",
@@ -62,17 +62,17 @@
       "registerLink": "Jetzt registrieren",
       "error": {
         "invalidCredentials": "Ungültige E-Mail oder Passwort",
-        "generic": "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut."
+        "generic": "Anmeldung fehlgeschlagen. Bitte versuche es erneut."
       }
     },
     "register": {
       "title": "Konto erstellen",
-      "subtitle": "Beginnen Sie noch heute mit der Verwaltung Ihrer Beziehungen",
+      "subtitle": "Beginne noch heute mit der Verwaltung deiner Beziehungen",
       "email": "E-Mail",
       "emailAddress": "E-Mail-Adresse",
       "emailPlaceholder": "du@beispiel.de",
       "password": "Passwort",
-      "passwordPlaceholder": "Erstellen Sie ein Passwort",
+      "passwordPlaceholder": "Erstelle ein Passwort",
       "passwordHelp": "Muss mindestens 8 Zeichen lang sein",
       "confirmPassword": "Passwort bestätigen",
       "confirmPasswordPlaceholder": "Passwort wiederholen",
@@ -89,33 +89,33 @@
         "emailTaken": "Diese E-Mail ist bereits registriert",
         "passwordMismatch": "Passwörter stimmen nicht überein",
         "weakPassword": "Das Passwort muss mindestens 8 Zeichen lang sein",
-        "generic": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut."
+        "generic": "Registrierung fehlgeschlagen. Bitte versuche es erneut."
       }
     },
     "forgotPassword": {
       "title": "Passwort zurücksetzen",
-      "subtitle": "Geben Sie Ihre E-Mail ein, um einen Reset-Link zu erhalten.",
+      "subtitle": "Gib deine E-Mail ein, um einen Reset-Link zu erhalten.",
       "email": "E-Mail",
       "emailPlaceholder": "du@beispiel.de",
       "submit": "Reset-Link senden",
       "backToLogin": "Zurück zur Anmeldung",
-      "success": "Falls ein Konto mit dieser E-Mail existiert, erhalten Sie einen Reset-Link.",
+      "success": "Falls ein Konto mit dieser E-Mail existiert, erhältst du einen Reset-Link.",
       "error": {
-        "generic": "Reset-Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+        "generic": "Reset-Link konnte nicht gesendet werden. Bitte versuche es erneut."
       }
     },
     "resetPassword": {
       "title": "Neues Passwort festlegen",
-      "subtitle": "Geben Sie unten Ihr neues Passwort ein.",
+      "subtitle": "Gib unten dein neues Passwort ein.",
       "password": "Neues Passwort",
       "passwordPlaceholder": "Neues Passwort eingeben",
       "confirmPassword": "Passwort bestätigen",
       "confirmPasswordPlaceholder": "Neues Passwort wiederholen",
       "submit": "Passwort zurücksetzen",
-      "success": "Passwort erfolgreich zurückgesetzt! Sie können sich jetzt anmelden.",
+      "success": "Passwort erfolgreich zurückgesetzt! Du kannst dich jetzt anmelden.",
       "error": {
         "invalidToken": "Ungültiger oder abgelaufener Reset-Link",
-        "generic": "Passwort konnte nicht zurückgesetzt werden. Bitte versuchen Sie es erneut."
+        "generic": "Passwort konnte nicht zurückgesetzt werden. Bitte versuche es erneut."
       }
     }
   },
@@ -124,11 +124,11 @@
     "quickActions": "Schnellaktionen",
     "addNewFriend": "Neuen Freund hinzufügen",
     "viewAllFriends": "Alle Freunde anzeigen",
-    "tagline": "Ihr persönliches Erinnerungsbuch für die Menschen, die Ihnen am wichtigsten sind",
+    "tagline": "Dein persönliches Erinnerungsbuch für die Menschen, die dir am wichtigsten sind",
     "hero": {
-      "title": "Pflegen Sie Ihre Freundschaften",
-      "subtitle": "Ein digitales Freundebuch, um die Menschen zu erinnern, die Ihnen wichtig sind.",
-      "description": "Das Leben ist hektisch, aber Freundschaften sollten nicht verblassen. Freundebuch ist Ihr persönlicher Raum, um Beziehungen zu pflegen, sich an die kleinen Details zu erinnern und keine Gelegenheit zu verpassen, mit den Menschen in Kontakt zu bleiben, die Ihnen wichtig sind.",
+      "title": "Pflege deine Freundschaften",
+      "subtitle": "Ein digitales Freundebuch, um die Menschen zu erinnern, die dir wichtig sind.",
+      "description": "Das Leben ist hektisch, aber Freundschaften sollten nicht verblassen. Freundebuch ist dein persönlicher Raum, um Beziehungen zu pflegen, dich an die kleinen Details zu erinnern und keine Gelegenheit zu verpassen, mit den Menschen in Kontakt zu bleiben, die dir wichtig sind.",
       "cta": "Jetzt starten",
       "loginCta": "Anmelden"
     },
@@ -136,42 +136,42 @@
       "title": "Warum Freundebuch?",
       "organize": {
         "title": "Freunde organisieren",
-        "description": "Behalten Sie alle Kontakte mit Kreisen und benutzerdefinierten Feldern organisiert."
+        "description": "Behalte alle Kontakte mit Kreisen und benutzerdefinierten Feldern organisiert."
       },
       "remember": {
         "title": "Das Wichtige merken",
-        "description": "Speichern Sie Geburtstage, Jahrestage und persönliche Notizen über Ihre Liebsten"
+        "description": "Speichere Geburtstage, Jahrestage und persönliche Notizen über deine Liebsten"
       },
       "stayInTouch": {
         "title": "In Kontakt bleiben",
-        "description": "Erhalten Sie sanfte Erinnerungen, wenn es Zeit ist, sich bei Freunden und Familie zu melden"
+        "description": "Erhalte sanfte Erinnerungen, wenn es Zeit ist, dich bei Freunden und Familie zu melden"
       },
       "nurture": {
         "title": "Beziehungen pflegen",
-        "description": "Verfolgen Sie Ihre Interaktionen und sehen Sie, wie Ihre Verbindungen wachsen"
+        "description": "Verfolge deine Interaktionen und sieh, wie deine Verbindungen wachsen"
       },
       "privacy": {
-        "title": "Ihre Daten, Ihre Kontrolle",
+        "title": "Deine Daten, deine Kontrolle",
         "description": "Selbst gehostet und privat - Synchronisierung über Geräte mit CalDAV/CardDAV"
       },
       "sync": {
         "title": "Überall synchronisieren",
-        "description": "Greifen Sie auf Ihre Kontakte auf jedem Gerät mit CardDAV-Sync zu."
+        "description": "Greife auf deine Kontakte auf jedem Gerät mit CardDAV-Sync zu."
       }
     }
   },
   "friends": {
     "title": "Freunde",
-    "subtitle": "Verwalten Sie Ihre persönlichen und beruflichen Freunde",
+    "subtitle": "Verwalte deine persönlichen und beruflichen Freunde",
     "addFriend": "Freund hinzufügen",
     "addNew": "Neuen Freund hinzufügen",
     "newFriend": "Neuer Freund",
-    "newFriendSubtitle": "Fügen Sie eine neue Person zu Ihren Freunden hinzu",
+    "newFriendSubtitle": "Füge eine neue Person zu deinen Freunden hinzu",
     "backToFriends": "Zurück zu Freunden",
     "friendNotFound": "Freund nicht gefunden",
     "returnToFriends": "Zurück zur Freundeliste",
     "noFriends": "Noch keine Freunde",
-    "noFriendsSubtitle": "Beginnen Sie damit, Ihren ersten Freund hinzuzufügen!",
+    "noFriendsSubtitle": "Beginne damit, deinen ersten Freund hinzuzufügen!",
     "search": "Freunde suchen...",
     "filters": {
       "all": "Alle",
@@ -234,19 +234,19 @@
     },
     "delete": {
       "title": "Freund löschen",
-      "message": "Sind Sie sicher, dass Sie {{name}} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "message": "Bist du sicher, dass du {{name}} löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
       "confirm": "Löschen",
       "cancel": "Abbrechen"
     }
   },
   "circles": {
     "title": "Kreise",
-    "subtitle": "Organisieren Sie Ihre Freunde in Kreisen",
+    "subtitle": "Organisiere deine Freunde in Kreisen",
     "addNew": "Neuen Kreis erstellen",
     "newCircle": "Neuer Kreis",
     "noCircles": "Noch keine Kreise",
-    "noCirclesSubtitle": "Erstellen Sie Kreise, um Ihre Freunde zu organisieren",
-    "createFirst": "Erstellen Sie Ihren ersten Kreis",
+    "noCirclesSubtitle": "Erstelle Kreise, um deine Freunde zu organisieren",
+    "createFirst": "Erstelle deinen ersten Kreis",
     "friend": "{{count}} Freund",
     "friend_plural": "{{count}} Freunde",
     "inCircle": "in {{name}}",
@@ -266,7 +266,7 @@
       "parentCircle": "Übergeordneter Kreis",
       "parentCircleOptional": "Übergeordneter Kreis (optional)",
       "noParent": "Keiner (oberste Ebene)",
-      "parentHelp": "Ordnen Sie diesen Kreis einem anderen unter, um eine Hierarchie zu erstellen",
+      "parentHelp": "Ordne diesen Kreis einem anderen unter, um eine Hierarchie zu erstellen",
       "preview": "Vorschau",
       "save": "Kreis speichern",
       "saving": "Speichern...",
@@ -275,26 +275,26 @@
     },
     "delete": {
       "title": "Kreis löschen",
-      "message": "Sind Sie sicher, dass Sie \"{{name}}\" löschen möchten? Freunde in diesem Kreis werden nicht gelöscht.",
-      "messageWithCount": "Sind Sie sicher, dass Sie diesen Kreis löschen möchten? {{count}} Freund(e) werden aus diesem Kreis entfernt.",
+      "message": "Bist du sicher, dass du \"{{name}}\" löschen möchtest? Freunde in diesem Kreis werden nicht gelöscht.",
+      "messageWithCount": "Bist du sicher, dass du diesen Kreis löschen möchtest? {{count}} Freund(e) werden aus diesem Kreis entfernt.",
       "confirm": "Löschen",
       "cancel": "Abbrechen"
     },
     "unsavedChanges": {
       "title": "Ungespeicherte Änderungen",
-      "message": "Sie haben ungespeicherte Änderungen. Sind Sie sicher, dass Sie schließen möchten?",
+      "message": "Du hast ungespeicherte Änderungen. Bist du sicher, dass du schließen möchtest?",
       "keepEditing": "Weiter bearbeiten",
       "discard": "Änderungen verwerfen"
     }
   },
   "profile": {
     "title": "Profil",
-    "yourProfile": "Ihr Profil",
-    "subtitle": "Verwalten Sie Ihre Kontoeinstellungen",
+    "yourProfile": "Dein Profil",
+    "subtitle": "Verwalte deine Kontoeinstellungen",
     "editProfile": "Profil bearbeiten",
     "updateSuccess": "Profil erfolgreich aktualisiert!",
     "userId": "Benutzer-ID",
-    "userIdHelp": "Ihre eindeutige Benutzerkennung",
+    "userIdHelp": "Deine eindeutige Benutzerkennung",
     "email": "E-Mail",
     "emailAddress": "E-Mail-Adresse",
     "memberSince": "Mitglied seit",
@@ -304,7 +304,7 @@
     "changePassword": "Passwort ändern",
     "displayPreferences": {
       "title": "Anzeigeeinstellungen",
-      "subtitle": "Passen Sie an, wie Informationen in der App angezeigt werden."
+      "subtitle": "Passe an, wie Informationen in der App angezeigt werden."
     },
     "preferences": {
       "title": "Einstellungen",
@@ -321,16 +321,16 @@
     },
     "appPasswords": {
       "title": "App-Passwörter",
-      "subtitle": "Erstellen Sie app-spezifische Passwörter, um Ihre Freunde mit mobilen Geräten und Desktop-Apps zu synchronisieren.",
+      "subtitle": "Erstelle app-spezifische Passwörter, um deine Freunde mit mobilen Geräten und Desktop-Apps zu synchronisieren.",
       "created": "App-Passwort erstellt",
-      "copyNow": "Kopieren Sie dieses Passwort jetzt. Sie werden es nicht wieder sehen können!",
-      "useWith": "Verwenden Sie dieses Passwort mit Ihrer E-Mail-Adresse, um sich bei CardDAV-Clients anzumelden.",
+      "copyNow": "Kopiere dieses Passwort jetzt. Du wirst es nicht wieder sehen können!",
+      "useWith": "Verwende dieses Passwort mit deiner E-Mail-Adresse, um dich bei CardDAV-Clients anzumelden.",
       "namePlaceholder": "Passwortname (z.B. Mein iPhone)",
       "creating": "Erstellen...",
       "create": "Erstellen",
       "loading": "App-Passwörter werden geladen...",
       "noPasswords": "Noch keine App-Passwörter",
-      "noPasswordsSubtitle": "Erstellen Sie eines, um Freunde mit Ihren Geräten zu synchronisieren",
+      "noPasswordsSubtitle": "Erstelle eines, um Freunde mit deinen Geräten zu synchronisieren",
       "createdAt": "Erstellt {{date}}",
       "lastUsed": "Zuletzt verwendet {{date}}",
       "revoking": "Widerrufen...",
@@ -338,8 +338,8 @@
     },
     "carddav": {
       "title": "CardDAV-Einrichtung",
-      "subtitle": "Synchronisieren Sie Ihre Freunde mit iOS, macOS, Thunderbird und anderen CardDAV-kompatiblen Apps.",
-      "description": "Synchronisieren Sie Ihre Kontakte mit anderen Apps über CardDAV.",
+      "subtitle": "Synchronisiere deine Freunde mit iOS, macOS, Thunderbird und anderen CardDAV-kompatiblen Apps.",
+      "description": "Synchronisiere deine Kontakte mit anderen Apps über CardDAV.",
       "serverUrl": "CardDAV-Server-URL",
       "copied": "Kopiert!",
       "copy": "Kopieren",
@@ -347,9 +347,9 @@
       "appPassword": "App-Passwort",
       "createPassword": "App-Passwort erstellen",
       "setupGuide": "Einrichtungsanleitung",
-      "useCredentials": "Verwenden Sie Ihre E-Mail {{email}} und ein App-Passwort zum Anmelden.",
+      "useCredentials": "Verwende deine E-Mail {{email}} und ein App-Passwort zum Anmelden.",
       "important": "Wichtig",
-      "importantNote": "Verwenden Sie immer ein App-Passwort anstelle Ihres regulären Kontopassworts für CardDAV-Clients.",
+      "importantNote": "Verwende immer ein App-Passwort anstelle deines regulären Kontopassworts für CardDAV-Clients.",
       "ios": "iOS / iPadOS",
       "macos": "macOS",
       "thunderbird": "Thunderbird"
@@ -357,23 +357,23 @@
     "danger": {
       "title": "Gefahrenzone",
       "deleteAccount": "Konto löschen",
-      "deleteWarning": "Dies wird Ihr Konto und alle Daten dauerhaft löschen."
+      "deleteWarning": "Dies wird dein Konto und alle Daten dauerhaft löschen."
     }
   },
   "onboarding": {
     "title": "Willkommen bei Freundebuch!",
-    "subtitle": "Lassen Sie uns Ihr Profil einrichten",
+    "subtitle": "Lass uns dein Profil einrichten",
     "step1": {
-      "title": "Über Sie",
-      "description": "Erzählen Sie uns ein bisschen über sich"
+      "title": "Über dich",
+      "description": "Erzähl uns ein bisschen über dich"
     },
     "step2": {
-      "title": "Ihr erster Kreis",
-      "description": "Erstellen Sie einen Kreis, um Freunde zu organisieren"
+      "title": "Dein erster Kreis",
+      "description": "Erstelle einen Kreis, um Freunde zu organisieren"
     },
     "step3": {
       "title": "Freunde hinzufügen",
-      "description": "Beginnen Sie, Ihre Freunde hinzuzufügen"
+      "description": "Beginne, deine Freunde hinzuzufügen"
     },
     "skip": "Vorerst überspringen",
     "complete": "Einrichtung abschließen"
@@ -399,12 +399,12 @@
     "goProfile": "Zum Profil"
   },
   "errors": {
-    "generic": "Etwas ist schief gelaufen. Bitte versuchen Sie es erneut.",
-    "network": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
+    "generic": "Etwas ist schief gelaufen. Bitte versuche es erneut.",
+    "network": "Netzwerkfehler. Bitte überprüfe deine Verbindung.",
     "notFound": "Nicht gefunden",
-    "unauthorized": "Bitte melden Sie sich an, um fortzufahren",
-    "forbidden": "Sie haben keine Berechtigung dafür",
-    "validation": "Bitte überprüfen Sie Ihre Eingabe"
+    "unauthorized": "Bitte melde dich an, um fortzufahren",
+    "forbidden": "Du hast keine Berechtigung dafür",
+    "validation": "Bitte überprüfe deine Eingabe"
   },
   "footer": {
     "copyright": "Freundebuch",
@@ -444,7 +444,7 @@
       "socialProfiles": "Noch keine sozialen Profile hinzugefügt.",
       "dates": "Noch keine wichtigen Termine hinzugefügt.",
       "circles": "Noch keinem Kreis zugeordnet.",
-      "relationships": "Noch keine Beziehungen. Fügen Sie Beziehungen hinzu, um diesen Freund mit anderen zu verbinden."
+      "relationships": "Noch keine Beziehungen. Füge Beziehungen hinzu, um diesen Freund mit anderen zu verbinden."
     },
     "metadata": {
       "created": "Erstellt:",
@@ -466,7 +466,7 @@
     },
     "delete": {
       "title": "Freund löschen",
-      "confirmMessage": "Sind Sie sicher, dass Sie löschen möchten",
+      "confirmMessage": "Bist du sicher, dass du löschen möchtest",
       "cannotUndo": "Diese Aktion kann nicht rückgängig gemacht werden.",
       "deleting": "Wird gelöscht..."
     },
@@ -486,7 +486,7 @@
     "recentSearches": "Letzte Suchen",
     "clearAll": "Alle löschen",
     "noMatch": "Hmm, niemand passt zu \"{{query}}\"",
-    "tryDifferent": "Versuchen Sie andere Suchbegriffe oder fügen Sie sie zu Ihrem Freundebuch hinzu",
+    "tryDifferent": "Versuche andere Suchbegriffe oder füge sie zu deinem Freundebuch hinzu",
     "addNewFriend": "Neuen Freund hinzufügen",
     "findFriends": "Freunde nach Name, E-Mail, Telefon oder Notizen suchen",
     "typeToSearch": "Mindestens 2 Zeichen eingeben",
@@ -500,12 +500,12 @@
     "upcomingDates": "Anstehende Termine",
     "relationshipNetwork": "Beziehungsnetzwerk",
     "noUpcomingDates": "Keine anstehenden Termine in den nächsten {{days}} Tagen",
-    "addBirthdays": "Fügen Sie Geburtstage und Jahrestage zu Ihren Freunden hinzu",
+    "addBirthdays": "Füge Geburtstage und Jahrestage zu deinen Freunden hinzu",
     "viewAllFriends": "Alle Freunde anzeigen",
     "noRelationships": "Keine Beziehungen anzuzeigen",
-    "addRelationshipsHint": "Fügen Sie Freunde hinzu und erstellen Sie Beziehungen zwischen ihnen",
+    "addRelationshipsHint": "Füge Freunde hinzu und erstelle Beziehungen zwischen ihnen",
     "noConnections": "Noch keine Verbindungen",
-    "addConnectionsHint": "Fügen Sie Beziehungen zwischen Ihren Freunden hinzu, um das Netzwerk zu sehen",
+    "addConnectionsHint": "Füge Beziehungen zwischen deinen Freunden hinzu, um das Netzwerk zu sehen",
     "legend": {
       "family": "Familie",
       "professional": "Beruflich",
@@ -558,18 +558,18 @@
     "noResultsFor": "Keine Ergebnisse für \"{{query}}\"",
     "noResultsWithFilters": "mit aktuellen Filtern",
     "noMatchFilters": "Keine Freunde entsprechen den aktuellen Filtern",
-    "tryDifferentTerm": "Versuchen Sie einen anderen Suchbegriff oder prüfen Sie die Rechtschreibung",
-    "tryAdjustFilters": "Versuchen Sie, die Filter anzupassen oder zu löschen",
+    "tryDifferentTerm": "Versuche einen anderen Suchbegriff oder prüfe die Rechtschreibung",
+    "tryAdjustFilters": "Versuche, die Filter anzupassen oder zu löschen",
     "clearFilters": "Filter löschen",
     "clearSearch": "Suche löschen",
     "noFriendsYet": "Noch keine Freunde",
-    "getStarted": "Beginnen Sie, indem Sie Ihren ersten Freund hinzufügen.",
+    "getStarted": "Beginne, indem du deinen ersten Freund hinzufügst.",
     "addFriend": "Freund hinzufügen"
   },
   "relationshipSection": {
     "relationships": "Beziehungen",
     "addRelationship": "Beziehung hinzufügen",
-    "confirmRemove": "Sind Sie sicher, dass Sie diese Beziehung entfernen möchten?",
+    "confirmRemove": "Bist du sicher, dass du diese Beziehung entfernen möchtest?",
     "addNotes": "Notizen hinzufügen...",
     "saving": "Speichern...",
     "save": "Speichern",
