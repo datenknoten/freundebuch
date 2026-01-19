@@ -40,15 +40,15 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 
 $effect(() => {
-  if (typeof document !== 'undefined') {
-    document.addEventListener('click', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
+  if (typeof document === 'undefined') return;
 
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }
+  document.addEventListener('click', handleClickOutside);
+  document.addEventListener('keydown', handleKeyDown);
+
+  return () => {
+    document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('keydown', handleKeyDown);
+  };
 });
 </script>
 
