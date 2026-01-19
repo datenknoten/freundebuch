@@ -1,3 +1,9 @@
+## [2.50.6](https://github.com/datenknoten/freundebuch/compare/v2.50.5...v2.50.6) (2026-01-19)
+
+### Bug Fixes
+
+* **ci:** Disable provenance/sbom for individual Docker builds ([30b37a1](https://github.com/datenknoten/freundebuch/commit/30b37a12a4461cf4191d992d77ca6ba1c7b6f642))
+
 ## [2.50.5](https://github.com/datenknoten/freundebuch/compare/v2.50.4...v2.50.5) (2026-01-19)
 
 ### Bug Fixes
