@@ -719,6 +719,7 @@ onMount(() => {
   <section class="space-y-2">
     <RelationshipsSection
       friendId={friend.id}
+      friendDisplayName={friend.displayName}
       relationships={friend.relationships ?? []}
     />
   </section>

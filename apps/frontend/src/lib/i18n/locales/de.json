@@ -573,7 +573,17 @@
     "addNotes": "Notizen hinzufügen...",
     "saving": "Speichern...",
     "save": "Speichern",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "relatedFriend": "Verknüpfter Freund",
+    "searchPlaceholder": "Nach einem Freund suchen...",
+    "relationshipType": "Beziehungstyp",
+    "loadingTypes": "Beziehungstypen werden geladen...",
+    "notesOptional": "Notizen (optional)",
+    "notesPlaceholder": "Notizen zu dieser Beziehung hinzufügen...",
+    "adding": "Wird hinzugefügt...",
+    "pleaseSelectFriend": "Bitte wähle einen Freund aus",
+    "failedToLoadTypes": "Beziehungstypen konnten nicht geladen werden",
+    "failedToAdd": "Beziehung konnte nicht hinzugefügt werden"
   },
   "employment": {
     "jobTitle": "Berufsbezeichnung",

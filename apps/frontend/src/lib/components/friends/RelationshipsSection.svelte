@@ -12,11 +12,13 @@ const i18n = createI18n();
 interface Props {
   /** Friend ID */
   friendId: string;
+  /** Friend display name for modal subtitle */
+  friendDisplayName: string;
   /** Array of relationships */
   relationships: Relationship[];
 }
 
-let { friendId, relationships }: Props = $props();
+let { friendId, friendDisplayName, relationships }: Props = $props();
 
 let showAddForm = $state(false);
 let autofocusForm = $state(false);
@@ -291,9 +293,12 @@ function handleBackdropClick(e: MouseEvent) {
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-        <h2 id="add-relationship-modal-title" class="text-xl font-heading text-gray-900">
-          {$i18n.t('relationshipSection.addRelationship')}
-        </h2>
+        <div>
+          <h2 id="add-relationship-modal-title" class="text-xl font-heading text-gray-900">
+            {$i18n.t('relationshipSection.addRelationship')}
+          </h2>
+          <p class="text-sm text-gray-500 font-body">{friendDisplayName}</p>
+        </div>
         <button
           type="button"
           onclick={handleAddCancel}

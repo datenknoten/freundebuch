@@ -573,7 +573,17 @@
     "addNotes": "Add notes...",
     "saving": "Saving...",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "relatedFriend": "Related Friend",
+    "searchPlaceholder": "Search for a friend...",
+    "relationshipType": "Relationship Type",
+    "loadingTypes": "Loading relationship types...",
+    "notesOptional": "Notes (optional)",
+    "notesPlaceholder": "Add any notes about this relationship...",
+    "adding": "Adding...",
+    "pleaseSelectFriend": "Please select a friend",
+    "failedToLoadTypes": "Failed to load relationship types",
+    "failedToAdd": "Failed to add relationship"
   },
   "employment": {
     "jobTitle": "Job Title",

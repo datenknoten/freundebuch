@@ -1,9 +1,12 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
 import FriendSearchInput from './FriendSearchInput.svelte';
 import RelationshipTypeInput from './RelationshipTypeInput.svelte';
+
+const i18n = createI18n();
 
 interface Props {
   /** Friend ID to add relationship to */
@@ -31,7 +34,7 @@ onMount(async () => {
   try {
     relationshipTypes = await friends.loadRelationshipTypes();
   } catch {
-    error = 'Failed to load relationship types';
+    error = $i18n.t('relationshipSection.failedToLoadTypes');
   }
 });
 
@@ -63,7 +66,7 @@ async function handleSubmit(e: Event) {
   e.preventDefault();
 
   if (!selectedFriend) {
-    error = 'Please select a friend';
+    error = $i18n.t('relationshipSection.pleaseSelectFriend');
     return;
   }
 
@@ -79,7 +82,7 @@ async function handleSubmit(e: Event) {
 
     onSuccess?.();
   } catch (err) {
-    error = (err as Error)?.message || 'Failed to add relationship';
+    error = (err as Error)?.message || $i18n.t('relationshipSection.failedToAdd');
   } finally {
     isSubmitting = false;
   }
@@ -99,7 +102,7 @@ async function handleSubmit(e: Event) {
   <!-- Friend Selection -->
   <div class="space-y-2">
     <span id="friend-selection-label" class="block text-sm font-body font-medium text-gray-700">
-      Related Friend
+      {$i18n.t('relationshipSection.relatedFriend')}
     </span>
 
     {#if selectedFriend}
@@ -109,7 +112,7 @@ async function handleSubmit(e: Event) {
           type="button"
           onclick={clearSelectedFriend}
           class="text-gray-400 hover:text-gray-600"
-          aria-label="Clear selection"
+          aria-label={$i18n.t('common.clear')}
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -118,7 +121,7 @@ async function handleSubmit(e: Event) {
       </div>
     {:else}
       <FriendSearchInput
-        placeholder="Search for a friend..."
+        placeholder={$i18n.t('relationshipSection.searchPlaceholder')}
         excludeFriendId={friendId}
         disabled={isSubmitting}
         {autofocus}
@@ -130,7 +133,7 @@ async function handleSubmit(e: Event) {
   <!-- Relationship Type -->
   <div class="space-y-2">
     <span id="relationship-type-label" class="block text-sm font-body font-medium text-gray-700">
-      Relationship Type
+      {$i18n.t('relationshipSection.relationshipType')}
     </span>
 
     <div bind:this={relationshipTypeContainer}>
@@ -144,7 +147,7 @@ async function handleSubmit(e: Event) {
       {:else}
         <div class="flex items-center gap-2 text-sm text-gray-500">
           <div class="animate-spin rounded-full h-4 w-4 border-2 border-forest border-t-transparent"></div>
-          <span>Loading relationship types...</span>
+          <span>{$i18n.t('relationshipSection.loadingTypes')}</span>
         </div>
       {/if}
     </div>
@@ -153,7 +156,7 @@ async function handleSubmit(e: Event) {
   <!-- Notes -->
   <div class="space-y-2">
     <label for="notes" class="block text-sm font-body font-medium text-gray-700">
-      Notes (optional)
+      {$i18n.t('relationshipSection.notesOptional')}
     </label>
     <textarea
       id="notes"
@@ -162,7 +165,7 @@ async function handleSubmit(e: Event) {
       rows="2"
       disabled={isSubmitting}
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none disabled:opacity-50"
-      placeholder="Add any notes about this relationship..."
+      placeholder={$i18n.t('relationshipSection.notesPlaceholder')}
     ></textarea>
   </div>
 
@@ -173,7 +176,7 @@ async function handleSubmit(e: Event) {
       disabled={isSubmitting || !selectedFriend || !relationshipTypes}
       class="flex-1 bg-forest text-white py-2 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {isSubmitting ? 'Adding...' : 'Add Relationship'}
+      {isSubmitting ? $i18n.t('relationshipSection.adding') : $i18n.t('relationshipSection.addRelationship')}
     </button>
 
     <button
@@ -182,7 +185,7 @@ async function handleSubmit(e: Event) {
       disabled={isSubmitting}
       class="px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
     >
-      Cancel
+      {$i18n.t('relationshipSection.cancel')}
     </button>
   </div>
 </form>
