@@ -1,10 +1,13 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import { isModalOpen } from '$lib/stores/ui';
 import type { Relationship, RelationshipCategory } from '$shared';
 import AddRelationshipForm from './AddRelationshipForm.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
+
+const i18n = createI18n();
 
 interface Props {
   /** Friend ID */
@@ -61,14 +64,14 @@ const groupedRelationships = $derived(() => {
   return groups;
 });
 
-// Category labels and colors
+// Category colors
 const categoryConfig: Record<
   RelationshipCategory,
-  { label: string; bgColor: string; textColor: string }
+  { labelKey: string; bgColor: string; textColor: string }
 > = {
-  family: { label: 'Family', bgColor: 'bg-rose-50', textColor: 'text-rose-700' },
-  professional: { label: 'Professional', bgColor: 'bg-blue-50', textColor: 'text-blue-700' },
-  social: { label: 'Social', bgColor: 'bg-green-50', textColor: 'text-green-700' },
+  family: { labelKey: 'dashboard.legend.family', bgColor: 'bg-rose-50', textColor: 'text-rose-700' },
+  professional: { labelKey: 'dashboard.legend.professional', bgColor: 'bg-blue-50', textColor: 'text-blue-700' },
+  social: { labelKey: 'dashboard.legend.social', bgColor: 'bg-green-50', textColor: 'text-green-700' },
 };
 
 function startEditing(relationship: Relationship) {
@@ -97,7 +100,7 @@ async function saveNotes(relationshipId: string) {
 }
 
 async function deleteRelationship(relationshipId: string) {
-  if (!confirm('Are you sure you want to remove this relationship?')) {
+  if (!confirm($i18n.t('relationshipSection.confirmRemove'))) {
     return;
   }
 
@@ -136,7 +139,7 @@ function handleBackdropClick(e: MouseEvent) {
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
-      Relationships
+      {$i18n.t('relationshipSection.relationships')}
     </h3>
     <button
       type="button"
@@ -147,20 +150,20 @@ function handleBackdropClick(e: MouseEvent) {
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
       </svg>
-      Add Relationship
+      {$i18n.t('relationshipSection.addRelationship')}
     </button>
   </div>
 
   {#if relationships.length === 0}
     <p class="text-sm text-gray-500 font-body py-4">
-      No relationships yet. Add relationships to connect this friend with others.
+      {$i18n.t('friendDetail.empty.relationships')}
     </p>
   {:else}
     {#each Object.entries(groupedRelationships()) as [category, rels]}
       {#if rels.length > 0}
         <div class="space-y-2">
           <h4 class="text-sm font-body font-semibold {categoryConfig[category as RelationshipCategory].textColor}">
-            {categoryConfig[category as RelationshipCategory].label}
+            {$i18n.t(categoryConfig[category as RelationshipCategory].labelKey)}
           </h4>
 
           <div class="space-y-2">
@@ -197,7 +200,7 @@ function handleBackdropClick(e: MouseEvent) {
                         rows="2"
                         disabled={isSavingNotes}
                         class="w-full px-2 py-1 border border-gray-300 rounded text-sm font-body resize-none focus:ring-2 focus:ring-forest focus:border-transparent disabled:opacity-50"
-                        placeholder="Add notes..."
+                        placeholder={$i18n.t('relationshipSection.addNotes')}
                       ></textarea>
                       <div class="flex gap-2">
                         <button
@@ -206,7 +209,7 @@ function handleBackdropClick(e: MouseEvent) {
                           disabled={isSavingNotes}
                           class="text-xs text-white bg-forest px-2 py-1 rounded font-body hover:bg-forest-light disabled:opacity-50"
                         >
-                          {isSavingNotes ? 'Saving...' : 'Save'}
+                          {isSavingNotes ? $i18n.t('relationshipSection.saving') : $i18n.t('relationshipSection.save')}
                         </button>
                         <button
                           type="button"
@@ -214,7 +217,7 @@ function handleBackdropClick(e: MouseEvent) {
                           disabled={isSavingNotes}
                           class="text-xs text-gray-600 px-2 py-1 rounded font-body hover:bg-gray-200 disabled:opacity-50"
                         >
-                          Cancel
+                          {$i18n.t('relationshipSection.cancel')}
                         </button>
                       </div>
                     </div>
@@ -277,7 +280,7 @@ function handleBackdropClick(e: MouseEvent) {
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
         <h2 id="add-relationship-modal-title" class="text-xl font-heading text-gray-900">
-          Add Relationship
+          {$i18n.t('relationshipSection.addRelationship')}
         </h2>
         <button
           type="button"

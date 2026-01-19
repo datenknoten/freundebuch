@@ -1,5 +1,8 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import type { ArrayFacetField, FacetFilters, FacetGroups } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   facets: FacetGroups | null;
@@ -66,7 +69,7 @@ let hasFacets = $derived(
           onclick={() => toggleSection('location')}
           class="flex items-center justify-between w-full text-left"
         >
-          <span class="font-medium text-gray-900">Location</span>
+          <span class="font-medium text-gray-900">{$i18n.t('facets.location')}</span>
           <svg
             class="w-4 h-4 text-gray-500 transition-transform"
             class:rotate-180={expandedSections.location}
@@ -118,7 +121,7 @@ let hasFacets = $derived(
           onclick={() => toggleSection('professional')}
           class="flex items-center justify-between w-full text-left"
         >
-          <span class="font-medium text-gray-900">Professional</span>
+          <span class="font-medium text-gray-900">{$i18n.t('facets.professional')}</span>
           <svg
             class="w-4 h-4 text-gray-500 transition-transform"
             class:rotate-180={expandedSections.professional}
@@ -170,7 +173,7 @@ let hasFacets = $derived(
           onclick={() => toggleSection('relationship')}
           class="flex items-center justify-between w-full text-left"
         >
-          <span class="font-medium text-gray-900">Relationship</span>
+          <span class="font-medium text-gray-900">{$i18n.t('facets.relationship')}</span>
           <svg
             class="w-4 h-4 text-gray-500 transition-transform"
             class:rotate-180={expandedSections.relationship}
@@ -207,6 +210,6 @@ let hasFacets = $derived(
       </div>
     {/if}
   {:else}
-    <p class="text-sm text-gray-500 italic">No filters available</p>
+    <p class="text-sm text-gray-500 italic">{$i18n.t('facets.noFilters')}</p>
   {/if}
 </div>

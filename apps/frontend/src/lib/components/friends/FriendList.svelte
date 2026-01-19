@@ -2,6 +2,9 @@
 import { onMount } from 'svelte';
 import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 import { auth, birthdayFormat, friendsPageSize, friendsTableColumns } from '$lib/stores/auth';
 import { friendList, friendListFilter, friends, isFriendsLoading } from '$lib/stores/friends';
 import { filterModeCategory, isFilterModeActive, visibleFriendIds } from '$lib/stores/ui';
@@ -401,7 +404,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
       type="text"
       value={searchQuery}
       oninput={(e) => handleSearchInput(e.currentTarget.value)}
-      placeholder="Search friends by name, email, phone, or notes..."
+      placeholder={$i18n.t('friendList.searchPlaceholder')}
       class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
       autocomplete="off"
       data-search-input
@@ -454,14 +457,14 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
     <!-- Left: Result count -->
     <div class="text-sm text-gray-600 font-body" aria-live="polite">
       {#if isSearchMode}
-        {displayTotal} result{displayTotal !== 1 ? 's' : ''} for "{searchQuery}"
+        {displayTotal === 1 ? $i18n.t('friendList.resultsFor', { count: displayTotal, query: searchQuery }) : $i18n.t('friendList.resultsForPlural', { count: displayTotal, query: searchQuery })}
         {#if hasActiveFilters}
-          <span class="text-forest">(filtered)</span>
+          <span class="text-forest">{$i18n.t('friendList.filtered')}</span>
         {/if}
       {:else if isFilterMode}
-        {displayTotal} friend{displayTotal !== 1 ? 's' : ''} <span class="text-forest">(filtered)</span>
+        {displayTotal === 1 ? $i18n.t('friendList.friendCount', { count: displayTotal }) : $i18n.t('friendList.friendCountPlural', { count: displayTotal })} <span class="text-forest">{$i18n.t('friendList.filtered')}</span>
       {:else}
-        {displayTotal} friend{displayTotal !== 1 ? 's' : ''}
+        {displayTotal === 1 ? $i18n.t('friendList.friendCount', { count: displayTotal }) : $i18n.t('friendList.friendCountPlural', { count: displayTotal })}
       {/if}
     </div>
 
@@ -474,7 +477,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
 
       <!-- Page size selector -->
       <div class="flex items-center gap-2">
-        <label for="page-size" class="text-sm text-gray-600 font-body whitespace-nowrap">Show:</label>
+        <label for="page-size" class="text-sm text-gray-600 font-body whitespace-nowrap">{$i18n.t('friendList.show')}</label>
         <select
           id="page-size"
           value={currentPageSize}
@@ -491,7 +494,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
 
       <!-- Sort controls -->
       <div class="flex items-center gap-2">
-        <label for="sort-by" class="text-sm text-gray-600 font-body whitespace-nowrap">Sort:</label>
+        <label for="sort-by" class="text-sm text-gray-600 font-body whitespace-nowrap">{$i18n.t('friendList.sortLabel')}</label>
         <select
           id="sort-by"
           value={currentSortBy}
@@ -507,11 +510,11 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
           aria-label="Sort by"
         >
           {#if isSearchMode}
-            <option value="relevance">Relevance</option>
+            <option value="relevance">{$i18n.t('friendList.relevance')}</option>
           {/if}
-          <option value="display_name">Name</option>
-          <option value="created_at">Date Added</option>
-          <option value="updated_at">Last Updated</option>
+          <option value="display_name">{$i18n.t('friendList.name')}</option>
+          <option value="created_at">{$i18n.t('friendList.dateAdded')}</option>
+          <option value="updated_at">{$i18n.t('friendList.lastUpdated')}</option>
         </select>
 
         <button
@@ -578,19 +581,19 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
       <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <h3 class="mt-4 text-lg font-heading text-gray-900">No friends found</h3>
+      <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('friendList.noFriendsFound')}</h3>
       <p class="mt-2 text-sm text-gray-600 font-body">
         {#if isSearchMode}
-          No results for "{searchQuery}"{#if hasActiveFilters} with current filters{/if}
+          {$i18n.t('friendList.noResultsFor', { query: searchQuery })}{#if hasActiveFilters} {$i18n.t('friendList.noResultsWithFilters')}{/if}
         {:else}
-          No friends match the current filters
+          {$i18n.t('friendList.noMatchFilters')}
         {/if}
       </p>
       <p class="mt-1 text-xs text-gray-400 font-body">
         {#if isSearchMode}
-          Try a different search term or check your spelling
+          {$i18n.t('friendList.tryDifferentTerm')}
         {:else}
-          Try adjusting or clearing the filters
+          {$i18n.t('friendList.tryAdjustFilters')}
         {/if}
       </p>
       {#if hasActiveFilters}
@@ -598,7 +601,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
           onclick={handleClearAllFilters}
           class="mt-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
         >
-          Clear filters
+          {$i18n.t('friendList.clearFilters')}
         </button>
       {/if}
       {#if isSearchMode}
@@ -609,7 +612,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
-          Clear search
+          {$i18n.t('friendList.clearSearch')}
         </button>
       {/if}
     </div>
@@ -636,9 +639,9 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
         />
       </svg>
-      <h3 class="mt-4 text-lg font-heading text-gray-900">No friends yet</h3>
+      <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('friendList.noFriendsYet')}</h3>
       <p class="mt-2 text-sm text-gray-600 font-body">
-        Get started by adding your first friend.
+        {$i18n.t('friendList.getStarted')}
       </p>
       <a
         href="/friends/new"
@@ -647,7 +650,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Add Friend
+        {$i18n.t('friendList.addFriend')}
       </a>
     </div>
   {:else if gridItems.length > 0}

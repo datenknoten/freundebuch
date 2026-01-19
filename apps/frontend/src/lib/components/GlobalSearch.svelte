@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
+import { createI18n } from '$lib/i18n/index.js';
 import {
   hasActiveFilters,
   isFacetsLoading,
@@ -12,6 +13,8 @@ import type { ArrayFacetField, FacetFilters } from '$shared';
 import FriendAvatar from './friends/FriendAvatar.svelte';
 import FacetChips from './search/FacetChips.svelte';
 import FacetDropdown from './search/FacetDropdown.svelte';
+
+const i18n = createI18n();
 
 let inputElement = $state<HTMLInputElement | undefined>(undefined);
 let containerElement = $state<HTMLDivElement | undefined>(undefined);
@@ -195,7 +198,7 @@ onMount(() => {
           type="text"
           value={searchState.query}
           oninput={(e) => search.setQuery(e.currentTarget.value, { loadFacets: true })}
-          placeholder="Search friends..."
+          placeholder={$i18n.t('globalSearch.placeholder')}
           class="w-full pl-12 pr-4 py-4 text-lg font-body text-gray-900 placeholder-gray-400 focus:outline-none"
           autocomplete="off"
           role="combobox"
@@ -234,13 +237,13 @@ onMount(() => {
           <!-- Recent searches -->
           <div class="p-2">
             <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center justify-between">
-              <span>Recent Searches</span>
+              <span>{$i18n.t('globalSearch.recentSearches')}</span>
               <button
                 type="button"
                 onclick={() => search.clearRecentSearches()}
                 class="text-xs text-gray-400 hover:text-gray-600 font-normal normal-case"
               >
-                Clear all
+                {$i18n.t('globalSearch.clearAll')}
               </button>
             </div>
             <ul id="global-search-listbox" role="listbox">
@@ -338,10 +341,10 @@ onMount(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p class="mt-3 font-body text-sm text-gray-600">
-              Hmm, no one matches "{searchState.query}"
+              {$i18n.t('globalSearch.noMatch', { query: searchState.query })}
             </p>
             <p class="mt-1 font-body text-xs text-gray-400">
-              Try different keywords or add them to your Freundebuch
+              {$i18n.t('globalSearch.tryDifferent')}
             </p>
             <button
               type="button"
@@ -351,7 +354,7 @@ onMount(() => {
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              Add new friend
+              {$i18n.t('globalSearch.addNewFriend')}
             </button>
           </div>
         {:else if searchState.query.trim().length < 2 && searchState.recentSearches.length === 0}
@@ -361,10 +364,10 @@ onMount(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <p class="mt-2 font-body text-sm text-gray-500">
-              Find friends by name, email, phone, or notes
+              {$i18n.t('globalSearch.findFriends')}
             </p>
             <p class="mt-1 font-body text-xs text-gray-400">
-              Type at least 2 characters to search
+              {$i18n.t('globalSearch.typeToSearch')}
             </p>
           </div>
         {/if}
@@ -380,7 +383,7 @@ onMount(() => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
-          Close
+          {$i18n.t('globalSearch.close')}
         </button>
         <button
           type="button"
@@ -390,7 +393,7 @@ onMount(() => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          New
+          {$i18n.t('common.new')}
         </button>
         <button
           type="button"
@@ -400,7 +403,7 @@ onMount(() => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
-          Friends
+          {$i18n.t('userMenu.friends')}
         </button>
       </div>
 
@@ -410,15 +413,15 @@ onMount(() => {
           <span class="flex items-center gap-1">
             <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">↑</kbd>
             <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">↓</kbd>
-            <span>Navigate</span>
+            <span>{$i18n.t('globalSearch.navigate')}</span>
           </span>
           <span class="flex items-center gap-1">
             <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">↵</kbd>
-            <span>Select</span>
+            <span>{$i18n.t('globalSearch.select')}</span>
           </span>
           <span class="flex items-center gap-1">
             <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">Esc</kbd>
-            <span>Close</span>
+            <span>{$i18n.t('globalSearch.close')}</span>
           </span>
         </div>
         <div class="flex items-center gap-3">
@@ -430,7 +433,7 @@ onMount(() => {
             <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">
               {isMac ? '⌥' : 'Alt'}↵
             </kbd>
-            <span>New friend</span>
+            <span>{$i18n.t('globalSearch.newFriend')}</span>
           </button>
           <button
             type="button"
@@ -440,7 +443,7 @@ onMount(() => {
             <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">
               {isMac ? '⌘' : 'Ctrl'}↵
             </kbd>
-            <span>Friends list</span>
+            <span>{$i18n.t('globalSearch.friendsList')}</span>
           </button>
         </div>
       </div>

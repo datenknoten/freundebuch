@@ -400,5 +400,160 @@
     "copyright": "Freundebuch",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
+  },
+  "friendDetail": {
+    "sections": {
+      "phoneNumbers": "Phone Numbers",
+      "emailAddresses": "Email Addresses",
+      "addresses": "Addresses",
+      "websites": "Websites",
+      "socialProfiles": "Social Profiles",
+      "importantDates": "Important Dates",
+      "circles": "Circles",
+      "relationships": "Relationships",
+      "employmentHistory": "Employment History",
+      "interestsHobbies": "Interests & Hobbies",
+      "howWeMet": "How We Met"
+    },
+    "actions": {
+      "addPhone": "Add Phone",
+      "addEmail": "Add Email",
+      "addAddress": "Add Address",
+      "addWebsite": "Add Website",
+      "addSocialProfile": "Add Social Profile",
+      "addDate": "Add Date",
+      "addCircle": "Add Circle",
+      "addRelationship": "Add Relationship",
+      "addEmployment": "Add Employment"
+    },
+    "empty": {
+      "phones": "No phone numbers added yet.",
+      "emails": "No email addresses added yet.",
+      "addresses": "No addresses added yet.",
+      "websites": "No websites added yet.",
+      "socialProfiles": "No social profiles added yet.",
+      "dates": "No important dates added yet.",
+      "circles": "Not assigned to any circles yet.",
+      "relationships": "No relationships yet. Add relationships to connect this friend with others."
+    },
+    "metadata": {
+      "created": "Created:",
+      "updated": "Updated:"
+    },
+    "modal": {
+      "edit": "Edit",
+      "add": "Add",
+      "phoneNumber": "Phone Number",
+      "emailAddress": "Email Address",
+      "address": "Address",
+      "websiteUrl": "Website/URL",
+      "importantDate": "Important Date",
+      "socialProfile": "Social Profile",
+      "circle": "Circle",
+      "employment": "Employment",
+      "deleteTitle": "Delete",
+      "removeFromCircle": "Remove from"
+    },
+    "delete": {
+      "title": "Delete Friend",
+      "confirmMessage": "Are you sure you want to delete",
+      "cannotUndo": "This action cannot be undone.",
+      "deleting": "Deleting..."
+    },
+    "labels": {
+      "home": "Home",
+      "primary": "Primary"
+    }
+  },
+  "userMenu": {
+    "friends": "Friends",
+    "circles": "Circles",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "globalSearch": {
+    "placeholder": "Search friends...",
+    "recentSearches": "Recent Searches",
+    "clearAll": "Clear all",
+    "noMatch": "Hmm, no one matches \"{{query}}\"",
+    "tryDifferent": "Try different keywords or add them to your Freundebuch",
+    "addNewFriend": "Add new friend",
+    "findFriends": "Find friends by name, email, phone, or notes",
+    "typeToSearch": "Type at least 2 characters to search",
+    "navigate": "Navigate",
+    "select": "Select",
+    "close": "Close",
+    "newFriend": "New friend",
+    "friendsList": "Friends list"
+  },
+  "dashboard": {
+    "upcomingDates": "Upcoming Dates",
+    "relationshipNetwork": "Relationship Network",
+    "noUpcomingDates": "No upcoming dates in the next {{days}} days",
+    "addBirthdays": "Add birthdays and anniversaries to your friends",
+    "viewAllFriends": "View all friends",
+    "noRelationships": "No relationships to display",
+    "addRelationshipsHint": "Add friends and create relationships between them",
+    "noConnections": "No connections yet",
+    "addConnectionsHint": "Add relationships between your friends to see the network",
+    "legend": {
+      "family": "Family",
+      "professional": "Professional",
+      "social": "Social"
+    },
+    "networkHint": "Drag nodes to rearrange. Click to view friend.",
+    "dateLabels": {
+      "birthday": "Birthday",
+      "anniversary": "Anniversary",
+      "date": "Date"
+    },
+    "timeLabels": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays": "In {{count}} days",
+      "nextWeek": "Next week"
+    }
+  },
+  "facets": {
+    "location": "Location",
+    "professional": "Professional",
+    "relationship": "Relationship",
+    "noFilters": "No filters available",
+    "filters": "Filters"
+  },
+  "friendList": {
+    "searchPlaceholder": "Search friends by name, email, phone, or notes...",
+    "resultsFor": "{{count}} result for \"{{query}}\"",
+    "resultsForPlural": "{{count}} results for \"{{query}}\"",
+    "filtered": "(filtered)",
+    "friendCount": "{{count}} friend",
+    "friendCountPlural": "{{count}} friends",
+    "show": "Show:",
+    "sortLabel": "Sort:",
+    "relevance": "Relevance",
+    "name": "Name",
+    "dateAdded": "Date Added",
+    "lastUpdated": "Last Updated",
+    "columns": "Columns",
+    "noFriendsFound": "No friends found",
+    "noResultsFor": "No results for \"{{query}}\"",
+    "noResultsWithFilters": "with current filters",
+    "noMatchFilters": "No friends match the current filters",
+    "tryDifferentTerm": "Try a different search term or check your spelling",
+    "tryAdjustFilters": "Try adjusting or clearing the filters",
+    "clearFilters": "Clear filters",
+    "clearSearch": "Clear search",
+    "noFriendsYet": "No friends yet",
+    "getStarted": "Get started by adding your first friend.",
+    "addFriend": "Add Friend"
+  },
+  "relationshipSection": {
+    "relationships": "Relationships",
+    "addRelationship": "Add Relationship",
+    "confirmRemove": "Are you sure you want to remove this relationship?",
+    "addNotes": "Add notes...",
+    "saving": "Saving...",
+    "save": "Save",
+    "cancel": "Cancel"
   }
 }

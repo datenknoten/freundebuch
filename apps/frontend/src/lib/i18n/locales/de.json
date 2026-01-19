@@ -400,5 +400,160 @@
     "copyright": "Freundebuch",
     "privacy": "Datenschutz",
     "terms": "Nutzungsbedingungen"
+  },
+  "friendDetail": {
+    "sections": {
+      "phoneNumbers": "Telefonnummern",
+      "emailAddresses": "E-Mail-Adressen",
+      "addresses": "Adressen",
+      "websites": "Webseiten",
+      "socialProfiles": "Soziale Profile",
+      "importantDates": "Wichtige Termine",
+      "circles": "Kreise",
+      "relationships": "Beziehungen",
+      "employmentHistory": "Beschäftigungshistorie",
+      "interestsHobbies": "Interessen & Hobbys",
+      "howWeMet": "Wie wir uns kennenlernten"
+    },
+    "actions": {
+      "addPhone": "Telefon hinzufügen",
+      "addEmail": "E-Mail hinzufügen",
+      "addAddress": "Adresse hinzufügen",
+      "addWebsite": "Webseite hinzufügen",
+      "addSocialProfile": "Profil hinzufügen",
+      "addDate": "Termin hinzufügen",
+      "addCircle": "Kreis hinzufügen",
+      "addRelationship": "Beziehung hinzufügen",
+      "addEmployment": "Beschäftigung hinzufügen"
+    },
+    "empty": {
+      "phones": "Noch keine Telefonnummern hinzugefügt.",
+      "emails": "Noch keine E-Mail-Adressen hinzugefügt.",
+      "addresses": "Noch keine Adressen hinzugefügt.",
+      "websites": "Noch keine Webseiten hinzugefügt.",
+      "socialProfiles": "Noch keine sozialen Profile hinzugefügt.",
+      "dates": "Noch keine wichtigen Termine hinzugefügt.",
+      "circles": "Noch keinem Kreis zugeordnet.",
+      "relationships": "Noch keine Beziehungen. Fügen Sie Beziehungen hinzu, um diesen Freund mit anderen zu verbinden."
+    },
+    "metadata": {
+      "created": "Erstellt:",
+      "updated": "Aktualisiert:"
+    },
+    "modal": {
+      "edit": "Bearbeiten",
+      "add": "Hinzufügen",
+      "phoneNumber": "Telefonnummer",
+      "emailAddress": "E-Mail-Adresse",
+      "address": "Adresse",
+      "websiteUrl": "Webseite/URL",
+      "importantDate": "Wichtiger Termin",
+      "socialProfile": "Soziales Profil",
+      "circle": "Kreis",
+      "employment": "Beschäftigung",
+      "deleteTitle": "Löschen",
+      "removeFromCircle": "Entfernen aus"
+    },
+    "delete": {
+      "title": "Freund löschen",
+      "confirmMessage": "Sind Sie sicher, dass Sie löschen möchten",
+      "cannotUndo": "Diese Aktion kann nicht rückgängig gemacht werden.",
+      "deleting": "Wird gelöscht..."
+    },
+    "labels": {
+      "home": "Privat",
+      "primary": "Primär"
+    }
+  },
+  "userMenu": {
+    "friends": "Freunde",
+    "circles": "Kreise",
+    "profile": "Profil",
+    "logout": "Abmelden"
+  },
+  "globalSearch": {
+    "placeholder": "Freunde suchen...",
+    "recentSearches": "Letzte Suchen",
+    "clearAll": "Alle löschen",
+    "noMatch": "Hmm, niemand passt zu \"{{query}}\"",
+    "tryDifferent": "Versuchen Sie andere Suchbegriffe oder fügen Sie sie zu Ihrem Freundebuch hinzu",
+    "addNewFriend": "Neuen Freund hinzufügen",
+    "findFriends": "Freunde nach Name, E-Mail, Telefon oder Notizen suchen",
+    "typeToSearch": "Mindestens 2 Zeichen eingeben",
+    "navigate": "Navigieren",
+    "select": "Auswählen",
+    "close": "Schließen",
+    "newFriend": "Neuer Freund",
+    "friendsList": "Freundeliste"
+  },
+  "dashboard": {
+    "upcomingDates": "Anstehende Termine",
+    "relationshipNetwork": "Beziehungsnetzwerk",
+    "noUpcomingDates": "Keine anstehenden Termine in den nächsten {{days}} Tagen",
+    "addBirthdays": "Fügen Sie Geburtstage und Jahrestage zu Ihren Freunden hinzu",
+    "viewAllFriends": "Alle Freunde anzeigen",
+    "noRelationships": "Keine Beziehungen anzuzeigen",
+    "addRelationshipsHint": "Fügen Sie Freunde hinzu und erstellen Sie Beziehungen zwischen ihnen",
+    "noConnections": "Noch keine Verbindungen",
+    "addConnectionsHint": "Fügen Sie Beziehungen zwischen Ihren Freunden hinzu, um das Netzwerk zu sehen",
+    "legend": {
+      "family": "Familie",
+      "professional": "Beruflich",
+      "social": "Sozial"
+    },
+    "networkHint": "Knoten ziehen zum Anordnen. Klicken zum Anzeigen.",
+    "dateLabels": {
+      "birthday": "Geburtstag",
+      "anniversary": "Jahrestag",
+      "date": "Termin"
+    },
+    "timeLabels": {
+      "today": "Heute",
+      "tomorrow": "Morgen",
+      "inDays": "In {{count}} Tagen",
+      "nextWeek": "Nächste Woche"
+    }
+  },
+  "facets": {
+    "location": "Standort",
+    "professional": "Beruflich",
+    "relationship": "Beziehung",
+    "noFilters": "Keine Filter verfügbar",
+    "filters": "Filter"
+  },
+  "friendList": {
+    "searchPlaceholder": "Freunde nach Name, E-Mail, Telefon oder Notizen suchen...",
+    "resultsFor": "{{count}} Ergebnis für \"{{query}}\"",
+    "resultsForPlural": "{{count}} Ergebnisse für \"{{query}}\"",
+    "filtered": "(gefiltert)",
+    "friendCount": "{{count}} Freund",
+    "friendCountPlural": "{{count}} Freunde",
+    "show": "Anzeigen:",
+    "sortLabel": "Sortieren:",
+    "relevance": "Relevanz",
+    "name": "Name",
+    "dateAdded": "Hinzugefügt am",
+    "lastUpdated": "Zuletzt aktualisiert",
+    "columns": "Spalten",
+    "noFriendsFound": "Keine Freunde gefunden",
+    "noResultsFor": "Keine Ergebnisse für \"{{query}}\"",
+    "noResultsWithFilters": "mit aktuellen Filtern",
+    "noMatchFilters": "Keine Freunde entsprechen den aktuellen Filtern",
+    "tryDifferentTerm": "Versuchen Sie einen anderen Suchbegriff oder prüfen Sie die Rechtschreibung",
+    "tryAdjustFilters": "Versuchen Sie, die Filter anzupassen oder zu löschen",
+    "clearFilters": "Filter löschen",
+    "clearSearch": "Suche löschen",
+    "noFriendsYet": "Noch keine Freunde",
+    "getStarted": "Beginnen Sie, indem Sie Ihren ersten Freund hinzufügen.",
+    "addFriend": "Freund hinzufügen"
+  },
+  "relationshipSection": {
+    "relationships": "Beziehungen",
+    "addRelationship": "Beziehung hinzufügen",
+    "confirmRemove": "Sind Sie sicher, dass Sie diese Beziehung entfernen möchten?",
+    "addNotes": "Notizen hinzufügen...",
+    "saving": "Speichern...",
+    "save": "Speichern",
+    "cancel": "Abbrechen"
   }
 }

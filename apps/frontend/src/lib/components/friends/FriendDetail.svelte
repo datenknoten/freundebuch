@@ -1,7 +1,10 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
+import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
+
+const i18n = createI18n();
 import type {
   Address,
   AddressInput,
@@ -268,16 +271,16 @@ async function handleSubresourceDelete() {
 // Get modal title
 function getModalTitle(): string {
   if (!editingType) return '';
-  const action = editingId ? 'Edit' : 'Add';
+  const action = editingId ? $i18n.t('friendDetail.modal.edit') : $i18n.t('friendDetail.modal.add');
   const typeNames: Record<SubresourceType, string> = {
-    phone: 'Phone Number',
-    email: 'Email Address',
-    address: 'Address',
-    url: 'Website/URL',
-    date: 'Important Date',
-    social: 'Social Profile',
-    circle: 'Circle',
-    professional: 'Employment',
+    phone: $i18n.t('friendDetail.modal.phoneNumber'),
+    email: $i18n.t('friendDetail.modal.emailAddress'),
+    address: $i18n.t('friendDetail.modal.address'),
+    url: $i18n.t('friendDetail.modal.websiteUrl'),
+    date: $i18n.t('friendDetail.modal.importantDate'),
+    social: $i18n.t('friendDetail.modal.socialProfile'),
+    circle: $i18n.t('friendDetail.modal.circle'),
+    professional: $i18n.t('friendDetail.modal.employment'),
   };
   return `${action} ${typeNames[editingType]}`;
 }
@@ -355,13 +358,13 @@ onMount(() => {
         href="/friends/{friend.id}/edit"
         class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
       >
-        Edit
+        {$i18n.t('common.edit')}
       </a>
       <button
         onclick={() => showDeleteConfirm = true}
         class="px-4 py-2 border border-red-300 text-red-600 rounded-lg font-body font-semibold hover:bg-red-50 transition-colors"
       >
-        Delete
+        {$i18n.t('common.delete')}
       </button>
     </div>
   </div>
@@ -377,7 +380,7 @@ onMount(() => {
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              Employment History
+              {$i18n.t('friendDetail.sections.employmentHistory')}
             </h2>
             <button
               type="button"
@@ -388,7 +391,7 @@ onMount(() => {
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              Add Employment
+              {$i18n.t('friendDetail.actions.addEmployment')}
             </button>
           </div>
           <div class="space-y-2">
@@ -411,7 +414,7 @@ onMount(() => {
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
-            Interests & Hobbies
+            {$i18n.t('friendDetail.sections.interestsHobbies')}
           </h2>
           <div class="p-3 bg-gray-50 rounded-lg font-body text-gray-700">
             {friend.interests}
@@ -426,7 +429,7 @@ onMount(() => {
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            How We Met
+            {$i18n.t('friendDetail.sections.howWeMet')}
           </h2>
           <div class="p-3 bg-gray-50 rounded-lg font-body space-y-1">
             {#if friend.metInfo.metDate || friend.metInfo.metLocation}
@@ -458,7 +461,7 @@ onMount(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
           </svg>
-          Phone Numbers
+          {$i18n.t('friendDetail.sections.phoneNumbers')}
         </h2>
         <button
           type="button"
@@ -469,7 +472,7 @@ onMount(() => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add Phone
+          {$i18n.t('friendDetail.actions.addPhone')}
         </button>
       </div>
       {#if friend.phones.length > 0}
@@ -484,7 +487,7 @@ onMount(() => {
           {/each}
         </div>
       {:else}
-        <p class="text-sm text-gray-500 font-body">No phone numbers added yet.</p>
+        <p class="text-sm text-gray-500 font-body">{$i18n.t('friendDetail.empty.phones')}</p>
       {/if}
     </section>
 
@@ -495,7 +498,7 @@ onMount(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
-          Email Addresses
+          {$i18n.t('friendDetail.sections.emailAddresses')}
         </h2>
         <button
           type="button"
@@ -506,7 +509,7 @@ onMount(() => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add Email
+          {$i18n.t('friendDetail.actions.addEmail')}
         </button>
       </div>
       {#if friend.emails.length > 0}
@@ -521,7 +524,7 @@ onMount(() => {
           {/each}
         </div>
       {:else}
-        <p class="text-sm text-gray-500 font-body">No email addresses added yet.</p>
+        <p class="text-sm text-gray-500 font-body">{$i18n.t('friendDetail.empty.emails')}</p>
       {/if}
     </section>
 
@@ -533,7 +536,7 @@ onMount(() => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          Addresses
+          {$i18n.t('friendDetail.sections.addresses')}
         </h2>
         <button
           type="button"
@@ -544,7 +547,7 @@ onMount(() => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add Address
+          {$i18n.t('friendDetail.actions.addAddress')}
         </button>
       </div>
       {#if friend.addresses.length > 0}
@@ -559,7 +562,7 @@ onMount(() => {
           {/each}
         </div>
       {:else}
-        <p class="text-sm text-gray-500 font-body">No addresses added yet.</p>
+        <p class="text-sm text-gray-500 font-body">{$i18n.t('friendDetail.empty.addresses')}</p>
       {/if}
     </section>
 
@@ -570,7 +573,7 @@ onMount(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
-          Websites
+          {$i18n.t('friendDetail.sections.websites')}
         </h2>
         <button
           type="button"
@@ -581,7 +584,7 @@ onMount(() => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add Website
+          {$i18n.t('friendDetail.actions.addWebsite')}
         </button>
       </div>
       {#if friend.urls.length > 0}
@@ -596,7 +599,7 @@ onMount(() => {
           {/each}
         </div>
       {:else}
-        <p class="text-sm text-gray-500 font-body">No websites added yet.</p>
+        <p class="text-sm text-gray-500 font-body">{$i18n.t('friendDetail.empty.websites')}</p>
       {/if}
     </section>
 
@@ -607,7 +610,7 @@ onMount(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
           </svg>
-          Social Profiles
+          {$i18n.t('friendDetail.sections.socialProfiles')}
         </h2>
         <button
           type="button"
@@ -618,7 +621,7 @@ onMount(() => {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add Social Profile
+          {$i18n.t('friendDetail.actions.addSocialProfile')}
         </button>
       </div>
       {#if friend.socialProfiles && friend.socialProfiles.length > 0}
@@ -633,7 +636,7 @@ onMount(() => {
           {/each}
         </div>
       {:else}
-        <p class="text-sm text-gray-500 font-body">No social profiles added yet.</p>
+        <p class="text-sm text-gray-500 font-body">{$i18n.t('friendDetail.empty.socialProfiles')}</p>
       {/if}
     </section>
   </div>
@@ -645,7 +648,7 @@ onMount(() => {
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        Important Dates
+        {$i18n.t('friendDetail.sections.importantDates')}
       </h2>
       <button
         type="button"
@@ -656,7 +659,7 @@ onMount(() => {
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Add Date
+        {$i18n.t('friendDetail.actions.addDate')}
       </button>
     </div>
     {#if friend.dates && friend.dates.length > 0}
@@ -671,7 +674,7 @@ onMount(() => {
         {/each}
       </div>
     {:else}
-      <p class="text-sm text-gray-500 font-body">No important dates added yet.</p>
+      <p class="text-sm text-gray-500 font-body">{$i18n.t('friendDetail.empty.dates')}</p>
     {/if}
   </section>
 
@@ -682,7 +685,7 @@ onMount(() => {
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
-        Circles
+        {$i18n.t('friendDetail.sections.circles')}
       </h2>
       <button
         type="button"
@@ -693,7 +696,7 @@ onMount(() => {
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Add Circle
+        {$i18n.t('friendDetail.actions.addCircle')}
       </button>
     </div>
     {#if friend.circles && friend.circles.length > 0}
@@ -707,7 +710,7 @@ onMount(() => {
         {/each}
       </div>
     {:else}
-      <p class="text-sm text-gray-500 font-body">Not assigned to any circles yet.</p>
+      <p class="text-sm text-gray-500 font-body">{$i18n.t('friendDetail.empty.circles')}</p>
     {/if}
   </section>
 
@@ -722,8 +725,8 @@ onMount(() => {
   <!-- ==================== METADATA FOOTER ==================== -->
   <section class="text-sm text-gray-500 font-body">
     <div class="flex flex-wrap gap-4">
-      <span>Created: {new Date(friend.createdAt).toLocaleDateString()}</span>
-      <span>Updated: {new Date(friend.updatedAt).toLocaleDateString()}</span>
+      <span>{$i18n.t('friendDetail.metadata.created')} {new Date(friend.createdAt).toLocaleDateString()}</span>
+      <span>{$i18n.t('friendDetail.metadata.updated')} {new Date(friend.updatedAt).toLocaleDateString()}</span>
     </div>
   </section>
 </div>
@@ -732,9 +735,9 @@ onMount(() => {
 {#if showDeleteConfirm}
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
-      <h3 class="text-xl font-heading text-gray-900 mb-2">Delete Friend</h3>
+      <h3 class="text-xl font-heading text-gray-900 mb-2">{$i18n.t('friendDetail.delete.title')}</h3>
       <p class="text-gray-600 font-body mb-6">
-        Are you sure you want to delete <strong>{friend.displayName}</strong>? This action cannot be undone.
+        {$i18n.t('friendDetail.delete.confirmMessage')} <strong>{friend.displayName}</strong>? {$i18n.t('friendDetail.delete.cannotUndo')}
       </p>
       <div class="flex gap-3">
         <button
@@ -742,14 +745,14 @@ onMount(() => {
           disabled={isDeleting}
           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
-          Cancel
+          {$i18n.t('common.cancel')}
         </button>
         <button
           onclick={handleDelete}
           disabled={isDeleting}
           class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-body font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
         >
-          {isDeleting ? 'Deleting...' : 'Delete'}
+          {isDeleting ? $i18n.t('friendDetail.delete.deleting') : $i18n.t('common.delete')}
         </button>
       </div>
     </div>
