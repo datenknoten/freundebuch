@@ -1,3 +1,11 @@
+## [2.50.1](https://github.com/datenknoten/freundebuch/compare/v2.50.0...v2.50.1) (2026-01-19)
+
+### Bug Fixes
+
+* **frontend:** Apply i18n translations to all major pages and components ([25474bb](https://github.com/datenknoten/freundebuch/commit/25474bbc814e299715f07fdda36518977948add4))
+* **frontend:** Fix duplicate translation key in CircleEditModal ([b9095a7](https://github.com/datenknoten/freundebuch/commit/b9095a710c18904b92535c33233d6a1c84692c52))
+* **frontend:** Use correct singular form for circle preview placeholder ([2664ceb](https://github.com/datenknoten/freundebuch/commit/2664ceb06a2eaf83bbfc9cdd5368fc3366fb9ec9))
+
 ## [2.50.0](https://github.com/datenknoten/freundebuch/compare/v2.49.1...v2.50.0) (2026-01-19)
 
 ### Features
