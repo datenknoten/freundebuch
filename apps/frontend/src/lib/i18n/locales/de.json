@@ -38,7 +38,7 @@
   "nav": {
     "home": "Startseite",
     "friends": "Freunde",
-    "circles": "Kreise",
+    "circles": "Freundekreise",
     "profile": "Profil",
     "settings": "Einstellungen",
     "logout": "Abmelden",
@@ -136,7 +136,7 @@
       "title": "Warum Freundebuch?",
       "organize": {
         "title": "Freunde organisieren",
-        "description": "Behalte alle Kontakte mit Kreisen und benutzerdefinierten Feldern organisiert."
+        "description": "Behalte alle Kontakte mit Freundekreisen und benutzerdefinierten Feldern organisiert."
       },
       "remember": {
         "title": "Das Wichtige merken",
@@ -203,7 +203,7 @@
       "address": "Adresse",
       "birthday": "Geburtstag",
       "notes": "Notizen",
-      "circles": "Kreise",
+      "circles": "Freundekreise",
       "relationships": "Beziehungen",
       "noRelationships": "Noch keine Beziehungen hinzugefügt"
     },
@@ -228,7 +228,7 @@
       "photo": "Foto",
       "uploadPhoto": "Foto hochladen",
       "removePhoto": "Foto entfernen",
-      "circles": "Zu Kreisen hinzufügen",
+      "circles": "Zu Freundekreisen hinzufügen",
       "save": "Freund speichern",
       "saving": "Speichern..."
     },
@@ -240,13 +240,13 @@
     }
   },
   "circles": {
-    "title": "Kreise",
-    "subtitle": "Organisiere deine Freunde in Kreisen",
-    "addNew": "Neuen Kreis erstellen",
-    "newCircle": "Neuer Kreis",
-    "noCircles": "Noch keine Kreise",
-    "noCirclesSubtitle": "Erstelle Kreise, um deine Freunde zu organisieren",
-    "createFirst": "Erstelle deinen ersten Kreis",
+    "title": "Freundekreise",
+    "subtitle": "Organisiere deine Freunde in Freundekreisen",
+    "addNew": "Neuen Freundekreis erstellen",
+    "newCircle": "Neuer Freundekreis",
+    "noCircles": "Noch keine Freundekreise",
+    "noCirclesSubtitle": "Erstelle Freundekreise, um deine Freunde zu organisieren",
+    "createFirst": "Erstelle deinen ersten Freundekreis",
     "friend": "{{count}} Freund",
     "friend_plural": "{{count}} Freunde",
     "inCircle": "in {{name}}",
@@ -254,29 +254,29 @@
     "members_plural": "{{count}} Mitglieder",
     "form": {
       "title": {
-        "new": "Kreis erstellen",
-        "edit": "Kreis bearbeiten"
+        "new": "Freundekreis erstellen",
+        "edit": "Freundekreis bearbeiten"
       },
       "name": "Name",
-      "defaultName": "Kreisname",
+      "defaultName": "Freundekreisname",
       "namePlaceholder": "z.B. Familie, Arbeit, Schule",
       "description": "Beschreibung",
-      "descriptionPlaceholder": "Wofür ist dieser Kreis?",
+      "descriptionPlaceholder": "Wofür ist dieser Freundekreis?",
       "color": "Farbe",
-      "parentCircle": "Übergeordneter Kreis",
-      "parentCircleOptional": "Übergeordneter Kreis (optional)",
+      "parentCircle": "Übergeordneter Freundekreis",
+      "parentCircleOptional": "Übergeordneter Freundekreis (optional)",
       "noParent": "Keiner (oberste Ebene)",
-      "parentHelp": "Ordne diesen Kreis einem anderen unter, um eine Hierarchie zu erstellen",
+      "parentHelp": "Ordne diesen Freundekreis einem anderen unter, um eine Hierarchie zu erstellen",
       "preview": "Vorschau",
-      "save": "Kreis speichern",
+      "save": "Freundekreis speichern",
       "saving": "Speichern...",
       "saveChanges": "Änderungen speichern",
-      "createCircle": "Kreis erstellen"
+      "createCircle": "Freundekreis erstellen"
     },
     "delete": {
-      "title": "Kreis löschen",
-      "message": "Bist du sicher, dass du \"{{name}}\" löschen möchtest? Freunde in diesem Kreis werden nicht gelöscht.",
-      "messageWithCount": "Bist du sicher, dass du diesen Kreis löschen möchtest? {{count}} Freund(e) werden aus diesem Kreis entfernt.",
+      "title": "Freundekreis löschen",
+      "message": "Bist du sicher, dass du \"{{name}}\" löschen möchtest? Freunde in diesem Freundekreis werden nicht gelöscht.",
+      "messageWithCount": "Bist du sicher, dass du diesen Freundekreis löschen möchtest? {{count}} Freund(e) werden aus diesem Freundekreis entfernt.",
       "confirm": "Löschen",
       "cancel": "Abbrechen"
     },
@@ -368,8 +368,8 @@
       "description": "Erzähl uns ein bisschen über dich"
     },
     "step2": {
-      "title": "Dein erster Kreis",
-      "description": "Erstelle einen Kreis, um Freunde zu organisieren"
+      "title": "Dein erster Freundekreis",
+      "description": "Erstelle einen Freundekreis, um Freunde zu organisieren"
     },
     "step3": {
       "title": "Freunde hinzufügen",
@@ -379,7 +379,7 @@
     "complete": "Einrichtung abschließen"
   },
   "search": {
-    "placeholder": "Freunde, Kreise suchen...",
+    "placeholder": "Freunde, Freundekreise suchen...",
     "noResults": "Keine Ergebnisse gefunden",
     "recentSearches": "Letzte Suchen",
     "clearRecent": "Verlauf löschen"
@@ -392,10 +392,10 @@
     "search": "Suchen",
     "close": "Schließen",
     "newFriend": "Neuer Freund",
-    "newCircle": "Neuer Kreis",
+    "newCircle": "Neuer Freundekreis",
     "goHome": "Zur Startseite",
     "goFriends": "Zu Freunden",
-    "goCircles": "Zu Kreisen",
+    "goCircles": "Zu Freundekreisen",
     "goProfile": "Zum Profil"
   },
   "errors": {
@@ -419,7 +419,7 @@
       "websites": "Webseiten",
       "socialProfiles": "Soziale Profile",
       "importantDates": "Wichtige Termine",
-      "circles": "Kreise",
+      "circles": "Freundekreise",
       "relationships": "Beziehungen",
       "employmentHistory": "Beschäftigungshistorie",
       "interestsHobbies": "Interessen & Hobbys",
@@ -432,7 +432,7 @@
       "addWebsite": "Webseite hinzufügen",
       "addSocialProfile": "Profil hinzufügen",
       "addDate": "Termin hinzufügen",
-      "addCircle": "Kreis hinzufügen",
+      "addCircle": "Freundekreis hinzufügen",
       "addRelationship": "Beziehung hinzufügen",
       "addEmployment": "Beschäftigung hinzufügen"
     },
@@ -443,7 +443,7 @@
       "websites": "Noch keine Webseiten hinzugefügt.",
       "socialProfiles": "Noch keine sozialen Profile hinzugefügt.",
       "dates": "Noch keine wichtigen Termine hinzugefügt.",
-      "circles": "Noch keinem Kreis zugeordnet.",
+      "circles": "Noch keinem Freundekreis zugeordnet.",
       "relationships": "Noch keine Beziehungen. Füge Beziehungen hinzu, um diesen Freund mit anderen zu verbinden."
     },
     "metadata": {
@@ -459,7 +459,7 @@
       "websiteUrl": "Webseite/URL",
       "importantDate": "Wichtiger Termin",
       "socialProfile": "Soziales Profil",
-      "circle": "Kreis",
+      "circle": "Freundekreis",
       "employment": "Beschäftigung",
       "deleteTitle": "Löschen",
       "removeFromCircle": "Entfernen aus"
@@ -477,7 +477,7 @@
   },
   "userMenu": {
     "friends": "Freunde",
-    "circles": "Kreise",
+    "circles": "Freundekreise",
     "profile": "Profil",
     "logout": "Abmelden"
   },
@@ -537,7 +537,7 @@
       "jobTitle": "Berufsbezeichnung",
       "department": "Abteilung",
       "relationshipCategory": "Beziehung",
-      "circles": "Kreis"
+      "circles": "Freundekreis"
     }
   },
   "friendList": {
