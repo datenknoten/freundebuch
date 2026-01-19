@@ -160,8 +160,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ matrix.platform }}
-          provenance: mode=max
-          sbom: true
+          # Disable provenance/sbom for individual builds - they create manifest lists
+          # which break docker manifest create. Attestation is done at manifest level.
+          provenance: false
+          sbom: false
           build-args: ${{ matrix.image == 'nginx' && format('VITE_SENTRY_DSN={0}', secrets.VITE_SENTRY_DSN) || '' }}
           # Multi-layer caching strategy for maximum cache hits
           cache-from: |
