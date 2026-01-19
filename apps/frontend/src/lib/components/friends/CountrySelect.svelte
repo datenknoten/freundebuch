@@ -1,5 +1,8 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import type { CountryInfo } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   /** Available countries to select from */
@@ -117,7 +120,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
 </script>
 
 <div class="relative">
-  <label for="country-input" class="block text-sm font-medium text-gray-700 font-body mb-1">Country</label>
+  <label for="country-input" class="block text-sm font-medium text-gray-700 font-body mb-1">{$i18n.t('countrySelect.label')}</label>
 
   <div class="relative">
     {#if value && !showDropdown}
@@ -149,7 +152,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
           onkeydown={handleKeydown}
           onblur={handleBlur}
           onfocus={handleFocus}
-          placeholder={isLoading ? 'Loading countries...' : 'Search countries...'}
+          placeholder={isLoading ? $i18n.t('countrySelect.loadingCountries') : $i18n.t('countrySelect.searchCountries')}
           disabled={disabled || isLoading}
           class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           autocomplete="off"
@@ -222,7 +225,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
       {/each}
 
       {#if filteredCountries().length === 0}
-        <li class="px-3 py-2 text-sm text-gray-500 font-body">No matching countries found</li>
+        <li class="px-3 py-2 text-sm text-gray-500 font-body">{$i18n.t('countrySelect.noMatchingCountries')}</li>
       {/if}
     </ul>
   {/if}

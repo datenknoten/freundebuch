@@ -414,7 +414,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
     {#if isSearching}
       <div class="absolute right-4 top-1/2 -translate-y-1/2" aria-live="polite">
         <div class="animate-spin rounded-full h-5 w-5 border-2 border-forest border-t-transparent" role="status">
-          <span class="sr-only">Searching...</span>
+          <span class="sr-only">{$i18n.t('common.searching')}</span>
         </div>
       </div>
     {:else if searchQuery}
@@ -521,8 +521,8 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
         <button
           onclick={toggleSortOrder}
           class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-          title={currentSortOrder === 'asc' ? 'Ascending order' : 'Descending order'}
-          aria-label={currentSortOrder === 'asc' ? 'Sort ascending' : 'Sort descending'}
+          title={currentSortOrder === 'asc' ? $i18n.t('common.ascending') : $i18n.t('common.descending')}
+          aria-label={currentSortOrder === 'asc' ? $i18n.t('common.ascending') : $i18n.t('common.descending')}
         >
           {#if currentSortOrder === 'asc'}
             <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -573,7 +573,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
   {#if (isSearchMode || isFilterMode) && isSearching && searchResults.length === 0}
     <div class="flex justify-center py-12" aria-live="polite">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
-        <span class="sr-only">Loading results...</span>
+        <span class="sr-only">{$i18n.t('common.loadingResults')}</span>
       </div>
     </div>
   {:else if (isSearchMode || isFilterMode) && showNoResults}
@@ -620,7 +620,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
   {:else if !isSearchMode && !isFilterMode && $isFriendsLoading}
     <div class="flex justify-center py-12" aria-live="polite">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
-        <span class="sr-only">Loading friends...</span>
+        <span class="sr-only">{$i18n.t('common.loadingFriends')}</span>
       </div>
     </div>
   {:else if !isSearchMode && !isFilterMode && $friendList.length === 0}

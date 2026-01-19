@@ -1,5 +1,8 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import { COLUMN_DEFINITIONS, type ColumnId, DEFAULT_COLUMNS, REQUIRED_COLUMNS } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   columns: ColumnId[];
@@ -87,7 +90,7 @@ $effect(() => {
         d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
       />
     </svg>
-    <span>Columns</span>
+    <span>{$i18n.t('common.columns')}</span>
   </button>
 
   {#if isOpen}
@@ -97,14 +100,14 @@ $effect(() => {
       <div class="px-3 pb-2 border-b border-gray-100">
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Visible Columns
+            {$i18n.t('common.visibleColumns')}
           </span>
           <button
             type="button"
             onclick={resetToDefaults}
             class="text-xs text-forest hover:text-forest-light transition-colors"
           >
-            Reset
+            {$i18n.t('common.reset')}
           </button>
         </div>
       </div>
@@ -130,7 +133,7 @@ $effect(() => {
               {definition.label || (columnId === 'avatar' ? 'Avatar' : columnId)}
             </span>
             {#if isRequired}
-              <span class="text-xs text-gray-400">Required</span>
+              <span class="text-xs text-gray-400">{$i18n.t('common.required')}</span>
             {/if}
           </label>
         {/each}

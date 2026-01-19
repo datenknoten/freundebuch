@@ -5,7 +5,6 @@ import { page } from '$app/stores';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 import { search } from '$lib/stores/search';
-import LanguageSwitcher from './LanguageSwitcher.svelte';
 import UserMenu from './UserMenu.svelte';
 
 const i18n = createI18n();
@@ -216,9 +215,6 @@ $effect(() => {
   </nav>
 
   <div class="absolute bottom-4 left-0 right-0 px-4">
-    <div class="flex justify-center mb-3">
-      <LanguageSwitcher />
-    </div>
     <div class="flex justify-center gap-3 mb-2">
       <a
         href="/privacy"
@@ -319,10 +315,8 @@ $effect(() => {
             </svg>
             <span class="hidden md:inline">{$i18n.t('common.new')}</span>
           </a>
-          <LanguageSwitcher />
           <UserMenu />
         {:else}
-          <LanguageSwitcher />
           <a
             href="/auth/login"
             class="text-gray-700 hover:text-forest font-body font-medium transition-colors duration-200"

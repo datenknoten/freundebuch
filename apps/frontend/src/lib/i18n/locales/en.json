@@ -23,7 +23,17 @@
     "warning": "Warning",
     "info": "Info",
     "optional": "optional",
-    "required": "required"
+    "required": "required",
+    "columns": "Columns",
+    "visibleColumns": "Visible Columns",
+    "reset": "Reset",
+    "ascending": "Ascending order",
+    "descending": "Descending order",
+    "searching": "Searching...",
+    "loadingResults": "Loading results...",
+    "loadingFriends": "Loading friends...",
+    "adding": "Adding...",
+    "loadingRelationshipTypes": "Loading relationship types..."
   },
   "nav": {
     "home": "Home",
@@ -519,7 +529,16 @@
     "professional": "Professional",
     "relationship": "Relationship",
     "noFilters": "No filters available",
-    "filters": "Filters"
+    "filters": "Filters",
+    "fields": {
+      "country": "Country",
+      "city": "City",
+      "organization": "Organization",
+      "jobTitle": "Job Title",
+      "department": "Department",
+      "relationshipCategory": "Relationship",
+      "circles": "Circle"
+    }
   },
   "friendList": {
     "searchPlaceholder": "Search friends by name, email, phone, or notes...",
@@ -555,5 +574,41 @@
     "saving": "Saving...",
     "save": "Save",
     "cancel": "Cancel"
+  },
+  "employment": {
+    "jobTitle": "Job Title",
+    "jobTitlePlaceholder": "Software Engineer",
+    "organization": "Organization",
+    "organizationPlaceholder": "Acme Corp",
+    "department": "Department",
+    "departmentPlaceholder": "Engineering",
+    "currentlyWorkHere": "I currently work here",
+    "startDate": "Start Date",
+    "endDate": "End Date"
+  },
+  "months": {
+    "january": "January",
+    "february": "February",
+    "march": "March",
+    "april": "April",
+    "may": "May",
+    "june": "June",
+    "july": "July",
+    "august": "August",
+    "september": "September",
+    "october": "October",
+    "november": "November",
+    "december": "December"
+  },
+  "countrySelect": {
+    "label": "Country",
+    "loadingCountries": "Loading countries...",
+    "searchCountries": "Search countries...",
+    "noMatchingCountries": "No matching countries found"
+  },
+  "citySelect": {
+    "label": "City",
+    "placeholder": "Enter city name",
+    "selectCity": "Select a city"
   }
 }

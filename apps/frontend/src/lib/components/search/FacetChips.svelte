@@ -1,7 +1,10 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import { circlesById } from '$lib/stores/circles';
 import { type ArrayFacetField, type FacetFilters, isArrayFacetField } from '$shared';
 import CircleChip from '../circles/CircleChip.svelte';
+
+const i18n = createI18n();
 
 interface Props {
   filters: FacetFilters;
@@ -11,19 +14,21 @@ interface Props {
 
 let { filters, onRemove, onClearAll }: Props = $props();
 
-// Field display labels for array-type facet fields
-const fieldLabels: Record<ArrayFacetField, string> = {
-  country: 'Country',
-  city: 'City',
-  organization: 'Organization',
-  job_title: 'Job Title',
-  department: 'Department',
-  relationship_category: 'Relationship',
-  circles: 'Circle',
+// Field display labels for array-type facet fields - mapped to translation keys
+const fieldLabelKeys: Record<ArrayFacetField, string> = {
+  country: 'facets.fields.country',
+  city: 'facets.fields.city',
+  organization: 'facets.fields.organization',
+  job_title: 'facets.fields.jobTitle',
+  department: 'facets.fields.department',
+  relationship_category: 'facets.fields.relationshipCategory',
+  circles: 'facets.fields.circles',
 };
 
 // Flatten filters into chip array (only array-type fields)
-function getChips(): Array<{ field: ArrayFacetField; value: string; label: string }> {
+function getChips(
+  t: typeof $i18n.t,
+): Array<{ field: ArrayFacetField; value: string; label: string }> {
   const result: Array<{ field: ArrayFacetField; value: string; label: string }> = [];
 
   for (const [field, values] of Object.entries(filters)) {
@@ -33,7 +38,7 @@ function getChips(): Array<{ field: ArrayFacetField; value: string; label: strin
         result.push({
           field: facetField,
           value,
-          label: `${fieldLabels[facetField]}: ${value}`,
+          label: `${t(fieldLabelKeys[facetField])}: ${value}`,
         });
       }
     }
@@ -41,7 +46,7 @@ function getChips(): Array<{ field: ArrayFacetField; value: string; label: strin
   return result;
 }
 
-let chips = $derived(getChips());
+let chips = $derived(getChips($i18n.t));
 let hasFilters = $derived(chips.length > 0);
 </script>
 
@@ -98,7 +103,7 @@ let hasFilters = $derived(chips.length > 0);
       onclick={onClearAll}
       class="text-sm text-gray-500 hover:text-gray-700 underline"
     >
-      Clear all
+      {$i18n.t('globalSearch.clearAll')}
     </button>
   </div>
 {/if}

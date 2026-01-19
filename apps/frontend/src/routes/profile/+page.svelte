@@ -3,8 +3,14 @@ import * as authApi from '$lib/api/auth';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import AppPasswordManager from '$lib/components/AppPasswordManager.svelte';
 import CardDAVSetupGuide from '$lib/components/CardDAVSetupGuide.svelte';
-import { createI18n } from '$lib/i18n/index.js';
+import { createI18n, languageNames } from '$lib/i18n/index.js';
 import { auth, birthdayFormat, currentUser } from '$lib/stores/auth';
+import {
+  currentLanguage,
+  locale,
+  type SupportedLanguage,
+  supportedLanguages,
+} from '$lib/stores/locale';
 import type { BirthdayFormat } from '$shared';
 
 const i18n = createI18n();
@@ -49,6 +55,10 @@ function handleCancel() {
 
 function handleBirthdayFormatChange(format: BirthdayFormat) {
   auth.updatePreferences({ birthdayFormat: format });
+}
+
+function handleLanguageChange(lang: SupportedLanguage) {
+  locale.setLanguage(lang);
 }
 </script>
 
@@ -154,6 +164,22 @@ function handleBirthdayFormatChange(format: BirthdayFormat) {
 				</p>
 
 				<div class="space-y-4">
+					<div>
+						<label for="language" class="block text-sm font-body font-semibold text-gray-700 mb-2">
+							{$i18n.t('profile.preferences.language')}
+						</label>
+						<select
+							id="language"
+							value={$currentLanguage}
+							onchange={(e) => handleLanguageChange(e.currentTarget.value as SupportedLanguage)}
+							class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
+						>
+							{#each supportedLanguages as lang}
+								<option value={lang}>{languageNames[lang]}</option>
+							{/each}
+						</select>
+					</div>
+
 					<div>
 						<label for="birthday-format" class="block text-sm font-body font-semibold text-gray-700 mb-2">
 							{$i18n.t('profile.preferences.birthdayFormat')}

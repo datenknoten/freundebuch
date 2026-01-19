@@ -23,7 +23,17 @@
     "warning": "Warnung",
     "info": "Info",
     "optional": "optional",
-    "required": "erforderlich"
+    "required": "erforderlich",
+    "columns": "Spalten",
+    "visibleColumns": "Sichtbare Spalten",
+    "reset": "Zurücksetzen",
+    "ascending": "Aufsteigend",
+    "descending": "Absteigend",
+    "searching": "Suche...",
+    "loadingResults": "Ergebnisse werden geladen...",
+    "loadingFriends": "Freunde werden geladen...",
+    "adding": "Wird hinzugefügt...",
+    "loadingRelationshipTypes": "Beziehungstypen werden geladen..."
   },
   "nav": {
     "home": "Startseite",
@@ -519,7 +529,16 @@
     "professional": "Beruflich",
     "relationship": "Beziehung",
     "noFilters": "Keine Filter verfügbar",
-    "filters": "Filter"
+    "filters": "Filter",
+    "fields": {
+      "country": "Land",
+      "city": "Stadt",
+      "organization": "Organisation",
+      "jobTitle": "Berufsbezeichnung",
+      "department": "Abteilung",
+      "relationshipCategory": "Beziehung",
+      "circles": "Kreis"
+    }
   },
   "friendList": {
     "searchPlaceholder": "Freunde nach Name, E-Mail, Telefon oder Notizen suchen...",
@@ -555,5 +574,41 @@
     "saving": "Speichern...",
     "save": "Speichern",
     "cancel": "Abbrechen"
+  },
+  "employment": {
+    "jobTitle": "Berufsbezeichnung",
+    "jobTitlePlaceholder": "Softwareentwickler",
+    "organization": "Organisation",
+    "organizationPlaceholder": "Beispiel GmbH",
+    "department": "Abteilung",
+    "departmentPlaceholder": "Technik",
+    "currentlyWorkHere": "Ich arbeite hier derzeit",
+    "startDate": "Startdatum",
+    "endDate": "Enddatum"
+  },
+  "months": {
+    "january": "Januar",
+    "february": "Februar",
+    "march": "März",
+    "april": "April",
+    "may": "Mai",
+    "june": "Juni",
+    "july": "Juli",
+    "august": "August",
+    "september": "September",
+    "october": "Oktober",
+    "november": "November",
+    "december": "Dezember"
+  },
+  "countrySelect": {
+    "label": "Land",
+    "loadingCountries": "Länder werden geladen...",
+    "searchCountries": "Länder suchen...",
+    "noMatchingCountries": "Keine passenden Länder gefunden"
+  },
+  "citySelect": {
+    "label": "Stadt",
+    "placeholder": "Stadtnamen eingeben",
+    "selectCity": "Stadt auswählen"
   }
 }

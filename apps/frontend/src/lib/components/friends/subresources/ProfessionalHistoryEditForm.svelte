@@ -1,6 +1,9 @@
 <script lang="ts">
 import { autoFocus } from '$lib/actions/autoFocus';
+import { createI18n } from '$lib/i18n/index.js';
 import type { ProfessionalHistory, ProfessionalHistoryInput } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   initialData?: ProfessionalHistory;
@@ -89,21 +92,23 @@ export function isValid(): boolean {
   return hasContent && hasValidFromDate && hasValidToDate;
 }
 
-// Month names
-const months = [
-  { value: 1, label: 'January' },
-  { value: 2, label: 'February' },
-  { value: 3, label: 'March' },
-  { value: 4, label: 'April' },
-  { value: 5, label: 'May' },
-  { value: 6, label: 'June' },
-  { value: 7, label: 'July' },
-  { value: 8, label: 'August' },
-  { value: 9, label: 'September' },
-  { value: 10, label: 'October' },
-  { value: 11, label: 'November' },
-  { value: 12, label: 'December' },
+// Month names - using derived for reactive translations
+const monthKeys = [
+  'months.january',
+  'months.february',
+  'months.march',
+  'months.april',
+  'months.may',
+  'months.june',
+  'months.july',
+  'months.august',
+  'months.september',
+  'months.october',
+  'months.november',
+  'months.december',
 ];
+
+let months = $derived(monthKeys.map((key, index) => ({ value: index + 1, label: $i18n.t(key) })));
 
 // Generate year options (current year back to 50 years ago, and 5 years ahead)
 const currentYear = new Date().getFullYear();
@@ -114,7 +119,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
   <!-- Job Title -->
   <div>
     <label for="prof-job-title" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Job Title
+      {$i18n.t('employment.jobTitle')}
     </label>
     <input
       use:autoFocus
@@ -122,7 +127,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
       type="text"
       bind:value={jobTitle}
       {disabled}
-      placeholder="Software Engineer"
+      placeholder={$i18n.t('employment.jobTitlePlaceholder')}
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
              font-body disabled:opacity-50 disabled:cursor-not-allowed"
     />
@@ -131,14 +136,14 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
   <!-- Organization -->
   <div>
     <label for="prof-organization" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Organization
+      {$i18n.t('employment.organization')}
     </label>
     <input
       id="prof-organization"
       type="text"
       bind:value={organization}
       {disabled}
-      placeholder="Acme Corp"
+      placeholder={$i18n.t('employment.organizationPlaceholder')}
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
              font-body disabled:opacity-50 disabled:cursor-not-allowed"
     />
@@ -147,14 +152,14 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
   <!-- Department -->
   <div>
     <label for="prof-department" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Department
+      {$i18n.t('employment.department')}
     </label>
     <input
       id="prof-department"
       type="text"
       bind:value={department}
       {disabled}
-      placeholder="Engineering"
+      placeholder={$i18n.t('employment.departmentPlaceholder')}
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
              font-body disabled:opacity-50 disabled:cursor-not-allowed"
     />
@@ -163,7 +168,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
   <!-- From Date -->
   <fieldset>
     <legend class="block text-sm font-body font-medium text-gray-700 mb-1">
-      Start Date <span class="text-red-500">*</span>
+      {$i18n.t('employment.startDate')} <span class="text-red-500">*</span>
     </legend>
     <div class="grid grid-cols-2 gap-2">
       <select
@@ -201,7 +206,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
       class="h-4 w-4 text-forest focus:ring-forest border-gray-300 rounded disabled:opacity-50"
     />
     <label for="prof-current" class="ml-2 block text-sm font-body text-gray-700">
-      I currently work here
+      {$i18n.t('employment.currentlyWorkHere')}
     </label>
   </div>
 
@@ -209,7 +214,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
   {#if !isCurrentPosition}
     <fieldset>
       <legend class="block text-sm font-body font-medium text-gray-700 mb-1">
-        End Date <span class="text-red-500">*</span>
+        {$i18n.t('employment.endDate')} <span class="text-red-500">*</span>
       </legend>
       <div class="grid grid-cols-2 gap-2">
         <select
