@@ -5,11 +5,14 @@
 # Stage 1: Install PHP dependencies
 FROM composer:2 AS deps
 
+# Get target architecture for cache isolation
+ARG TARGETARCH
+
 WORKDIR /app
 COPY apps/sabredav/composer.json apps/sabredav/composer.lock* ./
 
-# Install dependencies with cache mount (ignore platform reqs - pdo_pgsql is in runtime)
-RUN --mount=type=cache,id=composer,target=/root/.composer/cache \
+# Install dependencies with architecture-specific cache mount (ignore platform reqs - pdo_pgsql is in runtime)
+RUN --mount=type=cache,id=composer-${TARGETARCH},target=/root/.composer/cache \
     composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # Stage 2: Production PHP-FPM runtime

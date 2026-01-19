@@ -5,6 +5,16 @@
 # Stage 1: Build dependencies and compile TypeScript
 FROM node:24-bookworm-slim AS builder
 
+# Get target architecture for cache isolation
+ARG TARGETARCH
+
+# Install build dependencies for native modules (cpu-features, ssh2, etc.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
@@ -16,8 +26,8 @@ COPY tsconfig.base.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install all dependencies with cache mount
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+# Install all dependencies with architecture-specific cache mount
+RUN --mount=type=cache,id=pnpm-${TARGETARCH},target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
 # Copy source code
@@ -33,6 +43,9 @@ RUN pnpm --filter @freundebuch/shared run build && \
 # Stage 2: Production runtime
 FROM node:24-bookworm-slim AS production
 
+# Get target architecture for cache isolation
+ARG TARGETARCH
+
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
@@ -41,8 +54,8 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install production dependencies only
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+# Install production dependencies only with architecture-specific cache mount
+RUN --mount=type=cache,id=pnpm-${TARGETARCH},target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # Copy built artifacts
