@@ -1,9 +1,12 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
 import { isModalOpen } from '$lib/stores/ui';
 import type { Circle, CircleInput } from '$shared';
 import { CIRCLE_COLORS } from '$shared';
 import CircleChip from './CircleChip.svelte';
+
+const i18n = createI18n();
 
 interface Props {
   circle?: Circle | null;
@@ -188,7 +191,7 @@ function handleBackdropClick(e: MouseEvent) {
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
       <h2 id="circle-modal-title" class="text-xl font-heading text-gray-900">
-        {isEditing ? 'Edit Circle' : 'New Circle'}
+        {isEditing ? $i18n.t('circles.form.title.edit') : $i18n.t('circles.form.title.new')}
       </h2>
       <button
         type="button"
@@ -196,7 +199,7 @@ function handleBackdropClick(e: MouseEvent) {
         disabled={isSubmitting}
         class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100
                disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label="Close"
+        aria-label={$i18n.t('common.close')}
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -211,14 +214,14 @@ function handleBackdropClick(e: MouseEvent) {
         <!-- Name -->
         <div>
           <label for="circle-name" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-            Name
+            {$i18n.t('circles.form.name')}
           </label>
           <input
             bind:this={nameInputRef}
             type="text"
             id="circle-name"
             bind:value={formName}
-            placeholder="e.g., Family, Work, Book Club"
+            placeholder={$i18n.t('circles.form.namePlaceholder')}
             maxlength="100"
             required
             disabled={isSubmitting}
@@ -229,7 +232,7 @@ function handleBackdropClick(e: MouseEvent) {
         <!-- Color -->
         <fieldset>
           <legend class="block text-sm font-body font-semibold text-gray-700 mb-2">
-            Color
+            {$i18n.t('circles.form.color')}
           </legend>
           <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Circle color">
             {#each CIRCLE_COLORS as color}
@@ -250,7 +253,7 @@ function handleBackdropClick(e: MouseEvent) {
         <!-- Parent Circle -->
         <div>
           <label for="parent-circle" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-            Parent Circle (optional)
+            {$i18n.t('circles.form.parentCircleOptional')}
           </label>
           <select
             id="parent-circle"
@@ -258,22 +261,22 @@ function handleBackdropClick(e: MouseEvent) {
             disabled={isSubmitting}
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:bg-gray-100"
           >
-            <option value={null}>None (top-level circle)</option>
+            <option value={null}>{$i18n.t('circles.form.noParent')}</option>
             {#each getParentOptionsTree() as { circle: parentCircle, depth }}
               <option value={parentCircle.id}>{'\u00A0\u00A0\u00A0'.repeat(depth)}{parentCircle.name}</option>
             {/each}
           </select>
           <p class="mt-1 text-xs font-body text-gray-500">
-            Nest this circle under another to create a hierarchy
+            {$i18n.t('circles.form.parentHelp')}
           </p>
         </div>
 
         <!-- Preview -->
         <div>
           <span class="block text-sm font-body font-semibold text-gray-700 mb-2">
-            Preview
+            {$i18n.t('circles.form.preview')}
           </span>
-          <CircleChip circle={{ id: 'preview', name: formName || 'Circle Name', color: formColor }} size="md" />
+          <CircleChip circle={{ id: 'preview', name: formName || $i18n.t('circles.title'), color: formColor }} size="md" />
         </div>
 
         <!-- Error message -->
@@ -293,7 +296,7 @@ function handleBackdropClick(e: MouseEvent) {
           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold
                  text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
-          Cancel
+          {$i18n.t('common.cancel')}
         </button>
         <button
           type="submit"
@@ -311,9 +314,9 @@ function handleBackdropClick(e: MouseEvent) {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            Saving...
+            {$i18n.t('circles.form.saving')}
           {:else}
-            {isEditing ? 'Save Changes' : 'Create Circle'}
+            {isEditing ? $i18n.t('circles.form.saveChanges') : $i18n.t('circles.form.createCircle')}
           {/if}
         </button>
       </div>
@@ -326,22 +329,22 @@ function handleBackdropClick(e: MouseEvent) {
           <svg class="w-12 h-12 mx-auto text-amber-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <h3 class="text-lg font-heading text-gray-900 mb-2">Unsaved Changes</h3>
-          <p class="text-gray-600 font-body mb-6">You have unsaved changes. Are you sure you want to close?</p>
+          <h3 class="text-lg font-heading text-gray-900 mb-2">{$i18n.t('circles.unsavedChanges.title')}</h3>
+          <p class="text-gray-600 font-body mb-6">{$i18n.t('circles.unsavedChanges.title')}</p>
           <div class="flex gap-3 justify-center">
             <button
               type="button"
               onclick={cancelClose}
               class="px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              Keep Editing
+              {$i18n.t('circles.unsavedChanges.keepEditing')}
             </button>
             <button
               type="button"
               onclick={confirmClose}
               class="px-4 py-2 bg-amber-500 text-white rounded-lg font-body font-semibold hover:bg-amber-600 transition-colors"
             >
-              Discard Changes
+              {$i18n.t('circles.unsavedChanges.discard')}
             </button>
           </div>
         </div>

@@ -2,7 +2,10 @@
 import { getFriend } from '$lib/api/friends';
 import NetworkGraph from '$lib/components/dashboard/NetworkGraph.svelte';
 import UpcomingDates from '$lib/components/dashboard/UpcomingDates.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
+
+const i18n = createI18n();
 
 let displayName = $state<string | null>(null);
 let lastFetchedId = $state<string | null>(null);
@@ -30,7 +33,7 @@ async function fetchDisplayName(selfProfileId: string) {
 </script>
 
 <svelte:head>
-	<title>Home | Freundebuch</title>
+	<title>{$i18n.t('nav.home')} | Freundebuch</title>
 </svelte:head>
 
 <div class="bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16">
@@ -48,26 +51,26 @@ async function fetchDisplayName(selfProfileId: string) {
 		{:else if $isAuthenticated && $currentUser}
 			<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>
 			<p class="text-2xl font-body text-gray-700 mb-8">
-				Welcome back, {userDisplayName}!
+				{$i18n.t('home.welcomeBack', { name: userDisplayName })}
 			</p>
 			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left max-w-6xl mx-auto">
 				<UpcomingDates days={30} limit={10} />
 				<div class="bg-white rounded-xl shadow-lg p-6">
-					<h3 class="text-xl font-heading text-gray-800 mb-4">Quick Actions</h3>
+					<h3 class="text-xl font-heading text-gray-800 mb-4">{$i18n.t('home.quickActions')}</h3>
 					<div class="space-y-3">
 						<a
 							href="/friends/new"
 							class="flex items-center gap-3 p-3 rounded-lg bg-forest text-white hover:bg-forest-light transition-colors"
 						>
 							<span class="text-xl">+</span>
-							<span class="font-body font-medium">Add New Friend</span>
+							<span class="font-body font-medium">{$i18n.t('home.addNewFriend')}</span>
 						</a>
 						<a
 							href="/friends"
 							class="flex items-center gap-3 p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
 						>
 							<span class="text-xl">&#128101;</span>
-							<span class="font-body font-medium">View All Friends</span>
+							<span class="font-body font-medium">{$i18n.t('home.viewAllFriends')}</span>
 						</a>
 					</div>
 				</div>
@@ -87,46 +90,44 @@ async function fetchDisplayName(selfProfileId: string) {
 
 			<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>
 			<p class="text-xl font-body text-gray-700 mb-10">
-				Your personal memory book for the people who matter most
+				{$i18n.t('home.tagline')}
 			</p>
 
 			<div class="bg-white rounded-xl shadow-lg p-8 mb-8 text-left">
 				<h2 class="text-3xl font-heading text-gray-800 mb-6 text-center">
-					Keep Your Connections Alive
+					{$i18n.t('home.hero.title')}
 				</h2>
 				<div class="space-y-4 font-body text-gray-700">
 					<p>
-						Life gets busy, but friendships shouldn't fade away. Freundebuch is your
-						personal space to cherish relationships, remember the little details, and
-						never miss an opportunity to connect with the people you care about.
+						{$i18n.t('home.hero.description')}
 					</p>
 					<div class="grid md:grid-cols-2 gap-4 mt-6">
 						<div class="flex items-start gap-3">
 							<span class="text-forest text-xl">&#9829;</span>
 							<div>
-								<h3 class="font-semibold text-gray-800">Remember What Matters</h3>
-								<p class="text-sm text-gray-600">Store birthdays, anniversaries, and personal notes about your loved ones</p>
+								<h3 class="font-semibold text-gray-800">{$i18n.t('home.features.remember.title')}</h3>
+								<p class="text-sm text-gray-600">{$i18n.t('home.features.remember.description')}</p>
 							</div>
 						</div>
 						<div class="flex items-start gap-3">
 							<span class="text-forest text-xl">&#9734;</span>
 							<div>
-								<h3 class="font-semibold text-gray-800">Stay in Touch</h3>
-								<p class="text-sm text-gray-600">Get gentle reminders when it's time to reach out to friends and family</p>
+								<h3 class="font-semibold text-gray-800">{$i18n.t('home.features.stayInTouch.title')}</h3>
+								<p class="text-sm text-gray-600">{$i18n.t('home.features.stayInTouch.description')}</p>
 							</div>
 						</div>
 						<div class="flex items-start gap-3">
 							<span class="text-forest text-xl">&#9825;</span>
 							<div>
-								<h3 class="font-semibold text-gray-800">Nurture Relationships</h3>
-								<p class="text-sm text-gray-600">Track your interactions and see how your connections grow over time</p>
+								<h3 class="font-semibold text-gray-800">{$i18n.t('home.features.nurture.title')}</h3>
+								<p class="text-sm text-gray-600">{$i18n.t('home.features.nurture.description')}</p>
 							</div>
 						</div>
 						<div class="flex items-start gap-3">
 							<span class="text-forest text-xl">&#10022;</span>
 							<div>
-								<h3 class="font-semibold text-gray-800">Your Data, Your Control</h3>
-								<p class="text-sm text-gray-600">Self-hosted and private - sync across devices with CalDAV/CardDAV</p>
+								<h3 class="font-semibold text-gray-800">{$i18n.t('home.features.privacy.title')}</h3>
+								<p class="text-sm text-gray-600">{$i18n.t('home.features.privacy.description')}</p>
 							</div>
 						</div>
 					</div>
@@ -137,13 +138,13 @@ async function fetchDisplayName(selfProfileId: string) {
 					href="/auth/register"
 					class="bg-forest text-white px-8 py-3 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors text-lg"
 				>
-					Start Your Book
+					{$i18n.t('home.hero.cta')}
 				</a>
 				<a
 					href="/auth/login"
 					class="bg-white border-2 border-forest text-forest px-8 py-3 rounded-lg font-body font-semibold hover:bg-gray-50 transition-colors text-lg"
 				>
-					Sign In
+					{$i18n.t('home.hero.loginCta')}
 				</a>
 			</div>
 		{/if}

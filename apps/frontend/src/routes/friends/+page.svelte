@@ -4,9 +4,12 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 // biome-ignore lint/style/useImportType: FriendList is used both as type and value (bind:this)
 import FriendList from '$lib/components/friends/FriendList.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { friendsPageSize, isAuthInitialized } from '$lib/stores/auth';
 import { friendListFilter, friends } from '$lib/stores/friends';
 import type { FacetFilters } from '$shared';
+
+const i18n = createI18n();
 
 let hasLoaded = $state(false);
 let friendListRef = $state<FriendList | null>(null);
@@ -118,7 +121,7 @@ onMount(() => {
 </script>
 
 <svelte:head>
-  <title>{initialQuery ? `Search: ${initialQuery}` : 'Friends'} | Freundebuch</title>
+  <title>{initialQuery ? `${$i18n.t('search.placeholder')}: ${initialQuery}` : $i18n.t('friends.title')} | Freundebuch</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">
@@ -126,8 +129,8 @@ onMount(() => {
     <div class="bg-white rounded-xl shadow-lg p-8">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 class="text-3xl font-heading text-forest">Friends</h1>
-          <p class="text-gray-600 font-body mt-1">Manage your personal and professional friends</p>
+          <h1 class="text-3xl font-heading text-forest">{$i18n.t('friends.title')}</h1>
+          <p class="text-gray-600 font-body mt-1">{$i18n.t('friends.subtitle')}</p>
         </div>
         <a
           href="/friends/new"
@@ -136,7 +139,7 @@ onMount(() => {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Add Friend
+          {$i18n.t('friends.addFriend')}
         </a>
       </div>
 

@@ -5,6 +5,7 @@ import CircleEditModal from '$lib/components/circles/CircleEditModal.svelte';
 import DeleteConfirmModal from '$lib/components/friends/subresources/DeleteConfirmModal.svelte';
 import DetailActions from '$lib/components/friends/subresources/DetailActions.svelte';
 import SwipeableRow from '$lib/components/friends/subresources/SwipeableRow.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { circles, circlesList } from '$lib/stores/circles';
 import {
@@ -16,6 +17,8 @@ import {
   visibleCircleIds,
 } from '$lib/stores/ui';
 import type { Circle } from '$shared';
+
+const i18n = createI18n();
 
 let hasLoaded = $state(false);
 let showEditModal = $state(false);
@@ -142,7 +145,7 @@ function getActualDepth(circle: Circle): number {
 </script>
 
 <svelte:head>
-  <title>Circles | Freundebuch</title>
+  <title>{$i18n.t('circles.title')} | Freundebuch</title>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 p-4">
@@ -150,8 +153,8 @@ function getActualDepth(circle: Circle): number {
     <div class="bg-white rounded-xl shadow-lg p-8">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 class="text-3xl font-heading text-forest">Circles</h1>
-          <p class="text-gray-600 font-body mt-1">Organize your friends into circles</p>
+          <h1 class="text-3xl font-heading text-forest">{$i18n.t('circles.title')}</h1>
+          <p class="text-gray-600 font-body mt-1">{$i18n.t('circles.subtitle')}</p>
         </div>
         <button
           onclick={openCreateModal}
@@ -160,7 +163,7 @@ function getActualDepth(circle: Circle): number {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          New Circle
+          {$i18n.t('circles.newCircle')}
         </button>
       </div>
 
@@ -172,10 +175,10 @@ function getActualDepth(circle: Circle): number {
       <!-- Delete Confirmation Modal -->
       {#if deleteConfirmCircle}
         <DeleteConfirmModal
-          title="Delete Circle"
+          title={$i18n.t('circles.delete.title')}
           description={deleteConfirmCircle.friendCount > 0
-            ? `Are you sure you want to delete this circle? ${deleteConfirmCircle.friendCount} friend${deleteConfirmCircle.friendCount === 1 ? '' : 's'} will be removed from this circle.`
-            : 'Are you sure you want to delete this circle?'}
+            ? $i18n.t('circles.delete.messageWithCount', { count: deleteConfirmCircle.friendCount })
+            : $i18n.t('circles.delete.message', { name: deleteConfirmCircle.name })}
           itemPreview={deleteConfirmCircle.name}
           onConfirm={handleDelete}
           onClose={closeDeleteConfirm}
@@ -194,8 +197,8 @@ function getActualDepth(circle: Circle): number {
           <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <h3 class="text-lg font-heading text-gray-600 mb-2">No circles yet</h3>
-          <p class="text-gray-500 font-body mb-4">Create circles to organize your friends</p>
+          <h3 class="text-lg font-heading text-gray-600 mb-2">{$i18n.t('circles.noCircles')}</h3>
+          <p class="text-gray-500 font-body mb-4">{$i18n.t('circles.noCirclesSubtitle')}</p>
           <button
             onclick={openCreateModal}
             class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
@@ -203,7 +206,7 @@ function getActualDepth(circle: Circle): number {
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            Create your first circle
+            {$i18n.t('circles.createFirst')}
           </button>
         </div>
       {:else}
@@ -244,7 +247,7 @@ function getActualDepth(circle: Circle): number {
                       <span class="font-body font-medium text-gray-800 truncate">{circle.name}</span>
                       {#if circle.friendCount > 0}
                         <span class="text-xs font-body text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
-                          {circle.friendCount} friend{circle.friendCount === 1 ? '' : 's'}
+                          {$i18n.t('circles.friend', { count: circle.friendCount })}
                         </span>
                       {/if}
                     </div>
@@ -252,7 +255,7 @@ function getActualDepth(circle: Circle): number {
                       {@const parent = $circlesList.find((c) => c.id === circle.parentCircleId)}
                       {#if parent}
                         <p class="text-xs font-body text-gray-500 mt-0.5">
-                          in {parent.name}
+                          {$i18n.t('circles.inCircle', { name: parent.name })}
                         </p>
                       {/if}
                     {/if}
@@ -263,8 +266,8 @@ function getActualDepth(circle: Circle): number {
                     onEdit={() => openEditModal(circle)}
                     onDelete={() => openDeleteConfirm(circle)}
                     {isDeleting}
-                    editLabel="Edit {circle.name}"
-                    deleteLabel="Delete {circle.name}"
+                    editLabel={$i18n.t('common.edit') + ' ' + circle.name}
+                    deleteLabel={$i18n.t('common.delete') + ' ' + circle.name}
                   />
                 </div>
               </SwipeableRow>
@@ -297,7 +300,7 @@ function getActualDepth(circle: Circle): number {
                     <span class="font-body font-medium text-gray-800 truncate">{circle.name}</span>
                     {#if circle.friendCount > 0}
                       <span class="text-xs font-body text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
-                        {circle.friendCount} friend{circle.friendCount === 1 ? '' : 's'}
+                        {$i18n.t('circles.friend', { count: circle.friendCount })}
                       </span>
                     {/if}
                   </div>
@@ -305,7 +308,7 @@ function getActualDepth(circle: Circle): number {
                     {@const parent = $circlesList.find((c) => c.id === circle.parentCircleId)}
                     {#if parent}
                       <p class="text-xs font-body text-gray-500 mt-0.5">
-                        in {parent.name}
+                        {$i18n.t('circles.inCircle', { name: parent.name })}
                       </p>
                     {/if}
                   {/if}
@@ -316,8 +319,8 @@ function getActualDepth(circle: Circle): number {
                   onEdit={() => openEditModal(circle)}
                   onDelete={() => openDeleteConfirm(circle)}
                   {isDeleting}
-                  editLabel="Edit {circle.name}"
-                  deleteLabel="Delete {circle.name}"
+                  editLabel={$i18n.t('common.edit') + ' ' + circle.name}
+                  deleteLabel={$i18n.t('common.delete') + ' ' + circle.name}
                 />
               </div>
             </div>

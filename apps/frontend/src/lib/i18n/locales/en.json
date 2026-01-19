@@ -57,21 +57,28 @@
     },
     "register": {
       "title": "Create Account",
-      "subtitle": "Start your friendship book today!",
+      "subtitle": "Start managing your relationships today",
       "email": "Email",
+      "emailAddress": "Email address",
       "emailPlaceholder": "you@example.com",
       "password": "Password",
       "passwordPlaceholder": "Create a password",
-      "confirmPassword": "Confirm Password",
+      "passwordHelp": "Must be at least 8 characters long",
+      "confirmPassword": "Confirm password",
       "confirmPasswordPlaceholder": "Repeat your password",
-      "submit": "Create Account",
+      "submit": "Create account",
+      "creating": "Creating account...",
       "hasAccount": "Already have an account?",
       "loginLink": "Sign in",
+      "termsAgree": "I agree to the",
+      "termsOfService": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy",
       "passwordRequirements": "Password must be at least 8 characters with uppercase, lowercase, and a number",
       "error": {
         "emailTaken": "This email is already registered",
         "passwordMismatch": "Passwords do not match",
-        "weakPassword": "Password does not meet requirements",
+        "weakPassword": "Password must be at least 8 characters",
         "generic": "Registration failed. Please try again."
       }
     },
@@ -103,9 +110,15 @@
     }
   },
   "home": {
+    "welcomeBack": "Welcome back, {{name}}!",
+    "quickActions": "Quick Actions",
+    "addNewFriend": "Add New Friend",
+    "viewAllFriends": "View All Friends",
+    "tagline": "Your personal memory book for the people who matter most",
     "hero": {
       "title": "Keep Your Connections Alive",
       "subtitle": "A digital friendship book to remember the people who matter most.",
+      "description": "Life gets busy, but friendships shouldn't fade away. Freundebuch is your personal space to cherish relationships, remember the little details, and never miss an opportunity to connect with the people you care about.",
       "cta": "Start Your Book",
       "loginCta": "Sign In"
     },
@@ -116,8 +129,20 @@
         "description": "Keep all your contacts organized with circles and custom fields."
       },
       "remember": {
-        "title": "Remember Details",
-        "description": "Never forget birthdays, addresses, or important notes."
+        "title": "Remember What Matters",
+        "description": "Store birthdays, anniversaries, and personal notes about your loved ones"
+      },
+      "stayInTouch": {
+        "title": "Stay in Touch",
+        "description": "Get gentle reminders when it's time to reach out to friends and family"
+      },
+      "nurture": {
+        "title": "Nurture Relationships",
+        "description": "Track your interactions and see how your connections grow over time"
+      },
+      "privacy": {
+        "title": "Your Data, Your Control",
+        "description": "Self-hosted and private - sync across devices with CalDAV/CardDAV"
       },
       "sync": {
         "title": "Sync Everywhere",
@@ -127,7 +152,14 @@
   },
   "friends": {
     "title": "Friends",
+    "subtitle": "Manage your personal and professional friends",
+    "addFriend": "Add Friend",
     "addNew": "Add New Friend",
+    "newFriend": "New Friend",
+    "newFriendSubtitle": "Add a new person to your friends",
+    "backToFriends": "Back to Friends",
+    "friendNotFound": "Friend not found",
+    "returnToFriends": "Return to friends",
     "noFriends": "No friends yet",
     "noFriendsSubtitle": "Start by adding your first friend!",
     "search": "Search friends...",
@@ -199,9 +231,15 @@
   },
   "circles": {
     "title": "Circles",
+    "subtitle": "Organize your friends into circles",
     "addNew": "Add New Circle",
+    "newCircle": "New Circle",
     "noCircles": "No circles yet",
-    "noCirclesSubtitle": "Create circles to organize your friends!",
+    "noCirclesSubtitle": "Create circles to organize your friends",
+    "createFirst": "Create your first circle",
+    "friend": "{{count}} friend",
+    "friend_plural": "{{count}} friends",
+    "inCircle": "in {{name}}",
     "members": "{{count}} member",
     "members_plural": "{{count}} members",
     "form": {
@@ -214,40 +252,95 @@
       "description": "Description",
       "descriptionPlaceholder": "What is this circle for?",
       "color": "Color",
-      "save": "Save Circle"
+      "parentCircle": "Parent Circle",
+      "parentCircleOptional": "Parent Circle (optional)",
+      "noParent": "None (top-level circle)",
+      "parentHelp": "Nest this circle under another to create a hierarchy",
+      "preview": "Preview",
+      "save": "Save Circle",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes",
+      "createCircle": "Create Circle"
     },
     "delete": {
       "title": "Delete Circle",
       "message": "Are you sure you want to delete \"{{name}}\"? Friends in this circle will not be deleted.",
+      "messageWithCount": "Are you sure you want to delete this circle? {{count}} friend(s) will be removed from this circle.",
       "confirm": "Delete",
       "cancel": "Cancel"
+    },
+    "unsavedChanges": {
+      "title": "Unsaved Changes",
+      "keepEditing": "Keep Editing",
+      "discard": "Discard Changes"
     }
   },
   "profile": {
     "title": "Profile",
+    "yourProfile": "Your Profile",
+    "subtitle": "Manage your account settings",
+    "editProfile": "Edit Profile",
+    "updateSuccess": "Profile updated successfully!",
+    "userId": "User ID",
+    "userIdHelp": "Your unique user identifier",
     "email": "Email",
+    "emailAddress": "Email address",
+    "memberSince": "Member since",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
     "password": "Password",
     "changePassword": "Change Password",
+    "displayPreferences": {
+      "title": "Display Preferences",
+      "subtitle": "Customize how information is displayed throughout the app."
+    },
     "preferences": {
       "title": "Preferences",
       "language": "Language",
       "pageSize": "Items per page",
-      "birthdayFormat": "Birthday format",
+      "birthdayFormat": "Birthday Format",
+      "birthdayFormatHelp": "How birthday dates are displayed in the friends table",
       "birthdayFormats": {
-        "iso": "ISO (YYYY-MM-DD)",
-        "us": "US (MM/DD/YYYY)",
-        "eu": "EU (DD.MM.YYYY)",
-        "long": "Long (Month DD, YYYY)"
+        "iso": "ISO (1990-05-15)",
+        "us": "US (05/15)",
+        "eu": "EU (15.05.)",
+        "long": "Long (May 15)"
       }
     },
+    "appPasswords": {
+      "title": "App Passwords",
+      "subtitle": "Create app-specific passwords to sync your friends with mobile devices and desktop apps.",
+      "created": "App Password Created",
+      "copyNow": "Copy this password now. You won't be able to see it again!",
+      "useWith": "Use this password with your email address to sign in to CardDAV clients.",
+      "namePlaceholder": "Password name (e.g., My iPhone)",
+      "creating": "Creating...",
+      "create": "Create",
+      "loading": "Loading app passwords...",
+      "noPasswords": "No app passwords yet",
+      "noPasswordsSubtitle": "Create one to sync friends with your devices",
+      "createdAt": "Created {{date}}",
+      "lastUsed": "Last used {{date}}",
+      "revoking": "Revoking...",
+      "revoke": "Revoke"
+    },
     "carddav": {
-      "title": "CardDAV Sync",
+      "title": "CardDAV Setup",
+      "subtitle": "Sync your friends with iOS, macOS, Thunderbird, and other CardDAV-compatible apps.",
       "description": "Sync your contacts with other apps using CardDAV.",
-      "serverUrl": "Server URL",
+      "serverUrl": "CardDAV Server URL",
+      "copied": "Copied!",
+      "copy": "Copy",
       "username": "Username",
       "appPassword": "App Password",
       "createPassword": "Create App Password",
-      "setupGuide": "Setup Guide"
+      "setupGuide": "Setup Guide",
+      "useCredentials": "Use your email {{email}} and an app password to sign in.",
+      "important": "Important",
+      "importantNote": "Always use an app password instead of your regular account password for CardDAV clients.",
+      "ios": "iOS / iPadOS",
+      "macos": "macOS",
+      "thunderbird": "Thunderbird"
     },
     "danger": {
       "title": "Danger Zone",
