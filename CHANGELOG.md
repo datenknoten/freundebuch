@@ -1,3 +1,9 @@
+## [2.50.5](https://github.com/datenknoten/freundebuch/compare/v2.50.4...v2.50.5) (2026-01-19)
+
+### Bug Fixes
+
+* **ci:** Support ARM builds for both public and private repositories ([8197638](https://github.com/datenknoten/freundebuch/commit/81976386982452336743dca32e61636901a27a08))
+
 ## [2.50.4](https://github.com/datenknoten/freundebuch/compare/v2.50.3...v2.50.4) (2026-01-19)
 
 ### Bug Fixes
