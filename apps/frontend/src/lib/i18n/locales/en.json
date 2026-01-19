@@ -248,6 +248,7 @@
         "edit": "Edit Circle"
       },
       "name": "Name",
+      "defaultName": "Circle Name",
       "namePlaceholder": "e.g., Family, Work, School",
       "description": "Description",
       "descriptionPlaceholder": "What is this circle for?",
