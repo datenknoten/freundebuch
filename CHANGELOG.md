@@ -1,3 +1,14 @@
+## [2.52.0](https://github.com/datenknoten/freundebuch/compare/v2.51.0...v2.52.0) (2026-01-19)
+
+### Features
+
+* **frontend:** Move language switcher to profile and add missing translations ([70c84e2](https://github.com/datenknoten/freundebuch/commit/70c84e2dfa08f43d6d6a3eb56fcab4cae9fba7cd))
+
+### Bug Fixes
+
+* **frontend:** Use "Freundekreis" instead of "Kreis" in German translations ([502b945](https://github.com/datenknoten/freundebuch/commit/502b94570274ec36982a1d471415210b7e4f4f80))
+* **frontend:** Use informal "du" instead of formal "Sie" in German translations ([de918ed](https://github.com/datenknoten/freundebuch/commit/de918ede1d94a8a8b5e4cd531d9760f273e86e45))
+
 ## [2.51.0](https://github.com/datenknoten/freundebuch/compare/v2.50.7...v2.51.0) (2026-01-19)
 
 ### Features
