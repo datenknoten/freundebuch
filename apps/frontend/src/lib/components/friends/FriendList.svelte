@@ -5,6 +5,7 @@ import * as friendsApi from '$lib/api/friends';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
+
 import { auth, birthdayFormat, friendsPageSize, friendsTableColumns } from '$lib/stores/auth';
 import { friendList, friendListFilter, friends, isFriendsLoading } from '$lib/stores/friends';
 import { filterModeCategory, isFilterModeActive, visibleFriendIds } from '$lib/stores/ui';

@@ -311,10 +311,10 @@ export class CirclesService {
         );
         // Map returned data to CircleSummary (filter out nulls from ON CONFLICT DO NOTHING)
         results = inserted
-          .filter((row) => row.circle_external_id !== null)
+          .filter((row) => row.circle_external_id !== null && row.circle_name !== null)
           .map((row) => ({
-            id: row.circle_external_id!,
-            name: row.circle_name!,
+            id: row.circle_external_id as string,
+            name: row.circle_name as string,
             color: row.circle_color,
           }));
       }
