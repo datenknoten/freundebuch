@@ -1,3 +1,9 @@
+## [2.51.0](https://github.com/datenknoten/freundebuch/compare/v2.50.7...v2.51.0) (2026-01-19)
+
+### Features
+
+* **ci:** Add Matrix notification on release workflow failure ([9e7de1d](https://github.com/datenknoten/freundebuch/commit/9e7de1ddf2bb4c8b5c614659535d40a5da56bd4f))
+
 ## [2.50.7](https://github.com/datenknoten/freundebuch/compare/v2.50.6...v2.50.7) (2026-01-19)
 
 ### Bug Fixes
