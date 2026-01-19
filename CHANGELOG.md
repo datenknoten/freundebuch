@@ -1,3 +1,9 @@
+## [2.50.4](https://github.com/datenknoten/freundebuch/compare/v2.50.3...v2.50.4) (2026-01-19)
+
+### Bug Fixes
+
+* **all:** Build new release ([4510f2c](https://github.com/datenknoten/freundebuch/commit/4510f2c707595ceab082896b999fa7789ce33262))
+
 ## [2.50.3](https://github.com/datenknoten/freundebuch/compare/v2.50.2...v2.50.3) (2026-01-19)
 
 ### Performance Improvements
