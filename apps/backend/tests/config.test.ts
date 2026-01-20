@@ -368,6 +368,8 @@ describe('getConfig', () => {
         OVERPASS_API_URL: 'https://overpass-api.de/api/interpreter',
         OVERPASS_FALLBACK_URL: 'https://overpass.kumi.systems/api/interpreter',
         ADDRESS_CACHE_TTL_HOURS: 24,
+        POSTGIS_ADDRESS_ENABLED: false,
+        POSTGIS_ADDRESS_DACH_ONLY: true,
       });
     });
   });
