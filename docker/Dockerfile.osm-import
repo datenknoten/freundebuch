@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1.4
+# OSM Import Dockerfile
+# ============================================
+# This container is used to import OpenStreetMap address data
+# into the PostGIS database for fast address autocomplete.
+#
+# Usage:
+#   docker compose --profile import run --rm osm-import rheinland-pfalz
+#   docker compose --profile import run --rm osm-import germany
+
+FROM debian:bookworm-slim
+
+# Install osm2pgsql and PostgreSQL client
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    osm2pgsql \
+    postgresql-client \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verify osm2pgsql version (need 1.11+ for flex output)
+RUN osm2pgsql --version
+
+WORKDIR /app
+
+# Copy import scripts
+COPY scripts/osm-import/ /app/
+
+# Ensure scripts are executable
+RUN chmod +x /app/*.sh
+
+# Create data directory for PBF file caching
+RUN mkdir -p /app/data
+
+# Set default data directory
+ENV OSM_DATA_DIR=/app/data
+
+ENTRYPOINT ["/app/import-region.sh"]
+CMD ["--help"]

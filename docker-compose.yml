@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:18-bookworm
+    image: postgis/postgis:17-3.5  # PostGIS for address autocomplete
     container_name: freundebuch-postgres
     environment:
       POSTGRES_DB: freundebuch_dev
@@ -36,6 +36,9 @@ services:
       SESSION_SECRET: invisible-carrot-black-drums-medium
       LOG_LEVEL: debug
       ZIPCODEBASE_API_KEY: c1716d60-e731-11f0-b6a5-e7c811a3e296
+      # PostGIS Address Lookup (enable after running OSM import)
+      POSTGIS_ADDRESS_ENABLED: ${POSTGIS_ADDRESS_ENABLED:-false}
+      POSTGIS_ADDRESS_DACH_ONLY: ${POSTGIS_ADDRESS_DACH_ONLY:-true}
     ports:
       - "3000:3000"
     volumes:
@@ -100,5 +103,22 @@ services:
     volumes:
       - ./docker/nginx.dev.conf:/etc/nginx/nginx.conf:ro
 
+  # OSM address data import (run manually with --profile import)
+  osm-import:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.osm-import
+    container_name: freundebuch-osm-import
+    profiles:
+      - import  # Only runs when explicitly requested
+    environment:
+      DATABASE_URL: postgresql://freundebuch:dev_password@postgres:5432/freundebuch_dev
+    volumes:
+      - osm_data:/app/data  # Persist downloaded PBF files
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
+  osm_data:  # Cached OSM PBF files for imports
