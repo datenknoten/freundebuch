@@ -2,10 +2,12 @@ import type { ErrorResponse } from '@freundebuch/shared/index.js';
 import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
+import type pg from 'pg';
 import type { Logger } from 'pino';
 import { authMiddleware } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { AddressLookupService } from '../services/address-lookup.service.js';
+import { PostGISAddressClient } from '../services/external/postgis-address.client.js';
 import { SUPPORTED_COUNTRIES } from '../services/external/zipcodebase.client.js';
 import type { AppContext } from '../types/context.js';
 import { getConfig } from '../utils/config.js';
@@ -20,17 +22,30 @@ app.use('*', onboardingMiddleware);
 
 // Singleton service instance (lazy init)
 let addressService: AddressLookupService | null = null;
+let postgisClient: PostGISAddressClient | null = null;
 
-function getAddressService(logger: Logger): AddressLookupService {
+function getPostGISClient(pool: pg.Pool, logger: Logger): PostGISAddressClient {
+  if (!postgisClient) {
+    postgisClient = new PostGISAddressClient(pool, logger);
+  }
+  return postgisClient;
+}
+
+function getAddressService(pool: pg.Pool, logger: Logger): AddressLookupService {
   if (!addressService) {
     const config = getConfig();
     if (!config.ZIPCODEBASE_API_KEY) {
       throw new ConfigurationError('ZIPCODEBASE_API_KEY is not configured');
     }
     addressService = new AddressLookupService(
-      config.ZIPCODEBASE_API_KEY,
-      config.OVERPASS_API_URL,
-      config.OVERPASS_FALLBACK_URL,
+      {
+        zipcodeApiKey: config.ZIPCODEBASE_API_KEY,
+        overpassPrimaryUrl: config.OVERPASS_API_URL,
+        overpassFallbackUrl: config.OVERPASS_FALLBACK_URL,
+        postgisClient: config.POSTGIS_ADDRESS_ENABLED ? getPostGISClient(pool, logger) : undefined,
+        postgisEnabled: config.POSTGIS_ADDRESS_ENABLED,
+        postgisDachOnly: config.POSTGIS_ADDRESS_DACH_ONLY,
+      },
       logger,
     );
   }
@@ -78,6 +93,7 @@ app.get('/countries', (c) => {
  */
 app.get('/cities', async (c) => {
   const logger = c.get('logger');
+  const pool = c.get('db');
   const query = c.req.query();
 
   const validated = CitiesQuerySchema(query);
@@ -86,7 +102,7 @@ app.get('/cities', async (c) => {
   }
 
   try {
-    const service = getAddressService(logger);
+    const service = getAddressService(pool, logger);
     const cities = await service.getCitiesByPostalCode(validated.country, validated.postal_code);
     return c.json(cities);
   } catch (error) {
@@ -114,6 +130,7 @@ app.get('/cities', async (c) => {
  */
 app.get('/streets', async (c) => {
   const logger = c.get('logger');
+  const pool = c.get('db');
   const query = c.req.query();
 
   const validated = StreetsQuerySchema(query);
@@ -122,7 +139,7 @@ app.get('/streets', async (c) => {
   }
 
   try {
-    const service = getAddressService(logger);
+    const service = getAddressService(pool, logger);
     const streets = await service.getStreets(
       validated.country,
       validated.city,
@@ -154,6 +171,7 @@ app.get('/streets', async (c) => {
  */
 app.get('/house-numbers', async (c) => {
   const logger = c.get('logger');
+  const pool = c.get('db');
   const query = c.req.query();
 
   const validated = HouseNumbersQuerySchema(query);
@@ -162,7 +180,7 @@ app.get('/house-numbers', async (c) => {
   }
 
   try {
-    const service = getAddressService(logger);
+    const service = getAddressService(pool, logger);
     const houseNumbers = await service.getHouseNumbers(
       validated.country,
       validated.city,
@@ -192,8 +210,9 @@ app.get('/house-numbers', async (c) => {
 export default app;
 
 /**
- * Reset the address service singleton (useful for testing)
+ * Reset the address service singletons (useful for testing)
  */
 export function resetAddressService(): void {
   addressService = null;
+  postgisClient = null;
 }

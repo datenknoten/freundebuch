@@ -49,6 +49,10 @@ const ConfigSchema = type({
   OVERPASS_API_URL: 'string = "https://overpass-api.de/api/interpreter"',
   OVERPASS_FALLBACK_URL: 'string = "https://overpass.kumi.systems/api/interpreter"',
   ADDRESS_CACHE_TTL_HOURS: 'string.integer.parse = "24"',
+
+  // PostGIS Address Lookup (local OSM data)
+  POSTGIS_ADDRESS_ENABLED: BooleanString.default(false),
+  POSTGIS_ADDRESS_DACH_ONLY: BooleanString.default(true),
   '+': 'delete',
 });
 
