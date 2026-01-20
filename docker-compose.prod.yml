@@ -63,6 +63,10 @@ services:
 
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-info}
+
+      # PostGIS Address Lookup (enable after running OSM import)
+      POSTGIS_ADDRESS_ENABLED: ${POSTGIS_ADDRESS_ENABLED:-false}
+      POSTGIS_ADDRESS_DACH_ONLY: ${POSTGIS_ADDRESS_DACH_ONLY:-true}
     volumes:
       - freundebuch_uploads:/app/uploads
     networks:
@@ -96,7 +100,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:18-bookworm
+    image: postgis/postgis:17-3.5  # PostGIS for address autocomplete
     container_name: freundebuch-postgres
     restart: unless-stopped
     environment:
@@ -113,6 +117,22 @@ services:
       timeout: 5s
       retries: 5
 
+  # OSM address data import (run manually with --profile import)
+  osm-import:
+    image: ghcr.io/enko/freundebuch2-osm-import:${VERSION:-latest}
+    container_name: freundebuch-osm-import
+    profiles:
+      - import  # Only runs when explicitly requested
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-freundebuch}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-freundebuch}
+    volumes:
+      - osm_data:/app/data  # Persist downloaded PBF files
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 networks:
   traefik:
     external: true
@@ -122,3 +142,4 @@ networks:
 volumes:
   postgres_data:
   freundebuch_uploads:
+  osm_data:  # Cached OSM PBF files for imports

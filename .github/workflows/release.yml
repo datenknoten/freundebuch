@@ -122,6 +122,16 @@ jobs:
             dockerfile: docker/Dockerfile.sabredav.prod
             platform: linux/arm64
             arch: arm64
+          # osm-import - amd64
+          - image: osm-import
+            dockerfile: docker/Dockerfile.osm-import
+            platform: linux/amd64
+            arch: amd64
+          # osm-import - arm64
+          - image: osm-import
+            dockerfile: docker/Dockerfile.osm-import
+            platform: linux/arm64
+            arch: arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -186,6 +196,7 @@ jobs:
           - nginx
           - backend
           - sabredav
+          - osm-import
     steps:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
