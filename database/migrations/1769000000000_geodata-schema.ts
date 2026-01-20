@@ -1,8 +1,17 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
 export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Enable PostGIS extension
-  pgm.sql('CREATE EXTENSION IF NOT EXISTS postgis');
+  // Try to enable PostGIS extension (may not be available in test environments)
+  // This uses a DO block to check availability before attempting to create
+  pgm.sql(`
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'postgis') THEN
+        CREATE EXTENSION IF NOT EXISTS postgis;
+      END IF;
+    END
+    $$;
+  `);
 
   // Create geodata schema
   pgm.createSchema('geodata', { ifNotExists: true });
@@ -165,11 +174,16 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 
   pgm.sql(`COMMENT ON TABLE geodata.addresses IS 'OSM address data for autocomplete lookups'`);
 
-  // Add location column using PostGIS geometry type
+  // Add location column using PostGIS geometry type (only if PostGIS is available)
   pgm.sql(`
-    ALTER TABLE geodata.addresses
-    ADD COLUMN location GEOMETRY(Point, 4326);
-    COMMENT ON COLUMN geodata.addresses.location IS 'WGS84 coordinates (SRID 4326)';
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'postgis') THEN
+        ALTER TABLE geodata.addresses ADD COLUMN location GEOMETRY(Point, 4326);
+        COMMENT ON COLUMN geodata.addresses.location IS 'WGS84 coordinates (SRID 4326)';
+      END IF;
+    END
+    $$;
   `);
 
   // Create indexes for addresses table
@@ -195,9 +209,15 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     name: 'idx_addresses_import_batch',
   });
 
-  // Create spatial index using raw SQL (GIST index)
+  // Create spatial index using raw SQL (GIST index) - only if PostGIS is available
   pgm.sql(`
-    CREATE INDEX idx_addresses_location ON geodata.addresses USING GIST(location);
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'postgis') THEN
+        CREATE INDEX idx_addresses_location ON geodata.addresses USING GIST(location);
+      END IF;
+    END
+    $$;
   `);
 
   // Create updated_at trigger for addresses
