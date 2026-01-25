@@ -8,9 +8,9 @@
 #   docker compose --profile import run --rm osm-import rheinland-pfalz
 #   docker compose --profile import run --rm osm-import germany
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
-# Install osm2pgsql and PostgreSQL client
+# Install osm2pgsql (trixie has 1.11.0+) and PostgreSQL client
 RUN apt-get update && apt-get install -y --no-install-recommends \
     osm2pgsql \
     postgresql-client \
