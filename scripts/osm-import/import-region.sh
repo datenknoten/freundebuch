@@ -36,9 +36,9 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
-log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_info() { echo -e "${BLUE}[INFO]${NC} $1" >&2; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1" >&2; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1" >&2; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
 
 # Validate prerequisites
@@ -50,7 +50,7 @@ check_prerequisites() {
         exit 1
     fi
 
-    local version=$(osm2pgsql --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+' || echo "0.0")
+    local version=$(osm2pgsql --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+' | head -1 || echo "0.0")
     local major=$(echo "$version" | cut -d. -f1)
     local minor=$(echo "$version" | cut -d. -f2)
 
@@ -142,7 +142,10 @@ download_pbf() {
     mkdir -p "$DATA_DIR"
 
     if [[ -f "$output_file" ]]; then
-        local age=$(( ($(date +%s) - $(stat -f %m "$output_file" 2>/dev/null || stat -c %Y "$output_file")) / 86400 ))
+        local file_mtime
+        # macOS uses -f %m, Linux uses -c %Y
+        file_mtime=$(stat -f %m "$output_file" 2>/dev/null) || file_mtime=$(stat -c %Y "$output_file" 2>/dev/null) || file_mtime=0
+        local age=$(( ($(date +%s) - file_mtime) / 86400 ))
         if (( age < 7 )); then
             log_info "Using existing PBF file (${age} days old)"
             echo "$output_file"
@@ -200,7 +203,7 @@ post_process() {
             '$(basename "$pbf_file")',
             'running'
         ) RETURNING external_id;
-    ")
+    " | head -1 | tr -d '[:space:]')
 
     log_info "Created import batch: $batch_id"
 
