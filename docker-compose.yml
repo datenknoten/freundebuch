@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgis/postgis:17-3.5  # PostGIS for address autocomplete
+    image: imresamu/postgis:17-3.5  # PostGIS with arm64 support (maintainer: imresamu)
     container_name: freundebuch-postgres
     environment:
       POSTGRES_DB: freundebuch_dev
