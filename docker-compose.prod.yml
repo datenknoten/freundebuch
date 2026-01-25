@@ -100,7 +100,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: imresamu/postgis:17-3.5  # PostGIS with arm64 support (maintainer: imresamu)
+    image: imresamu/postgis:18-3.6.1-trixie  # PostGIS 3.6 + PostgreSQL 18, arm64 support
     container_name: freundebuch-postgres
     restart: unless-stopped
     environment:
