@@ -21,7 +21,7 @@ The system imports OpenStreetMap address data into a local PostGIS database, pro
 
 ### 1. Update PostgreSQL Image
 
-The `docker-compose.prod.yml` already uses `imresamu/postgis:17-3.5` (multi-arch, supports amd64 and arm64). If upgrading from a previous version:
+The `docker-compose.prod.yml` already uses `imresamu/postgis:18-3.6.1-trixie` (PostgreSQL 18 + PostGIS 3.6, multi-arch). If upgrading from a previous version:
 
 ```bash
 # Pull the new image
