@@ -11,7 +11,7 @@ The system imports OpenStreetMap address data into a local PostGIS database, pro
 ## Prerequisites
 
 - Docker with Docker Compose
-- PostgreSQL with PostGIS extension (handled automatically by `postgis/postgis` image)
+- PostgreSQL with PostGIS extension (handled automatically by `imresamu/postgis` image, supports arm64/Apple Silicon)
 - Sufficient disk space:
   - Rheinland-Pfalz: ~500MB
   - Full Germany: ~15GB
@@ -21,7 +21,7 @@ The system imports OpenStreetMap address data into a local PostGIS database, pro
 
 ### 1. Update PostgreSQL Image
 
-The `docker-compose.prod.yml` already uses `postgis/postgis:17-3.5`. If upgrading from a previous version:
+The `docker-compose.prod.yml` already uses `imresamu/postgis:17-3.5` (multi-arch, supports amd64 and arm64). If upgrading from a previous version:
 
 ```bash
 # Pull the new image
