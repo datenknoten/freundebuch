@@ -1,3 +1,19 @@
+## [2.54.0](https://github.com/datenknoten/freundebuch/compare/v2.53.0...v2.54.0) (2026-01-26)
+
+### Features
+
+* **backend:** Add OSM import scripts for address data ([2058080](https://github.com/datenknoten/freundebuch/commit/20580802cf335f03a8f2983100dbbd34842d5a0f))
+* **backend:** Integrate PostGIS address client with Overpass fallback ([63ae1ad](https://github.com/datenknoten/freundebuch/commit/63ae1ad4565cd4372d7ad8841cdd4397e139315b))
+* **ci:** Add osm-import Docker image to release workflow ([3316e05](https://github.com/datenknoten/freundebuch/commit/3316e0511c65aaf13e2f84772d8b1299cc3375af))
+* **database:** Add geodata schema for PostGIS address autocomplete ([a2cf517](https://github.com/datenknoten/freundebuch/commit/a2cf517fe39d02b6cfd8e80953a232c944046402))
+* **database:** Remove conditional PostGIS checks and add integration tests ([bb52ff5](https://github.com/datenknoten/freundebuch/commit/bb52ff50d1290b878b5e18b25d0b7d9084bc65a8))
+
+### Bug Fixes
+
+* **ci:** Fix OSM import Docker build and script issues ([497a1aa](https://github.com/datenknoten/freundebuch/commit/497a1aa96516f4fe2bfc0119a38c07d26b510089))
+* **ci:** Use parameterized queries in OSM import script ([046d079](https://github.com/datenknoten/freundebuch/commit/046d0792bd508d18e22b941abbb835f91ec9ad8b))
+* **database:** Make geodata migration work without PostGIS ([8db2a94](https://github.com/datenknoten/freundebuch/commit/8db2a9447aa8eb76fe6f05ef1d7f74d985a2fb67))
+
 ## [2.53.0](https://github.com/datenknoten/freundebuch/compare/v2.52.0...v2.53.0) (2026-01-19)
 
 ### Features
