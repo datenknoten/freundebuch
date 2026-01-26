@@ -709,7 +709,9 @@
       "address": "Adresse",
       "websiteUrl": "Webseite/URL",
       "importantDate": "Wichtiger Termin",
-      "socialProfile": "Soziales Profil"
+      "socialProfile": "Soziales Profil",
+      "circle": "Freundeskreis",
+      "employment": "Berufserfahrung"
     }
   }
 }

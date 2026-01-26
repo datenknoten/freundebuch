@@ -2,6 +2,7 @@
 
 // Types
 export type { SubresourceType } from './AddDetailDropdown.svelte';
+export { default as AddDetailDropdown } from './AddDetailDropdown.svelte';
 export { default as AddressEditForm } from './AddressEditForm.svelte';
 export { default as AddressRow } from './AddressRow.svelte';
 export { default as CircleEditForm } from './CircleEditForm.svelte';
@@ -14,6 +15,7 @@ export { default as DetailActions } from './DetailActions.svelte';
 export { default as DetailEditModal } from './DetailEditModal.svelte';
 export { default as EmailEditForm } from './EmailEditForm.svelte';
 export { default as EmailRow } from './EmailRow.svelte';
+export { default as MobileAddDetailModal } from './MobileAddDetailModal.svelte';
 // Edit Form Components
 export { default as PhoneEditForm } from './PhoneEditForm.svelte';
 // Row Components

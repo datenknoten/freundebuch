@@ -709,7 +709,9 @@
       "address": "Address",
       "websiteUrl": "Website/URL",
       "importantDate": "Important Date",
-      "socialProfile": "Social Profile"
+      "socialProfile": "Social Profile",
+      "circle": "Circle",
+      "employment": "Employment"
     }
   }
 }
