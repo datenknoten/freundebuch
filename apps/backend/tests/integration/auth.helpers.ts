@@ -25,9 +25,9 @@ export interface AuthTestContext {
  * Set up test environment with PostgreSQL container and app
  */
 export async function setupAuthTests(): Promise<AuthTestContext> {
-  // Start PostgreSQL container with health check wait strategy
-  // The default log-based wait strategy doesn't work reliably with postgres:18
-  const container = await new PostgreSqlContainer('postgres:18-bookworm')
+  // Start PostGIS container (required for geodata migration)
+  // Uses the same image as docker-compose.yml for consistency
+  const container = await new PostgreSqlContainer('imresamu/postgis:18-3.6.1-trixie')
     .withDatabase('test')
     .withUsername('test')
     .withPassword('test')
