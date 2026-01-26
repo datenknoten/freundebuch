@@ -1,3 +1,9 @@
+## [2.54.2](https://github.com/datenknoten/freundebuch/compare/v2.54.1...v2.54.2) (2026-01-26)
+
+### Bug Fixes
+
+* **database:** Add unique index for concurrent materialized view refresh ([b82e5c1](https://github.com/datenknoten/freundebuch/commit/b82e5c1d19930786ef6a828ddbcfc37c8aadef58))
+
 ## [2.54.1](https://github.com/datenknoten/freundebuch/compare/v2.54.0...v2.54.1) (2026-01-26)
 
 ### Bug Fixes
