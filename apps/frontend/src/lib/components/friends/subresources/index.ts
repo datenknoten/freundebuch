@@ -15,6 +15,8 @@ export { default as DetailActions } from './DetailActions.svelte';
 export { default as DetailEditModal } from './DetailEditModal.svelte';
 export { default as EmailEditForm } from './EmailEditForm.svelte';
 export { default as EmailRow } from './EmailRow.svelte';
+export type { AddChoice } from './MobileAddChoiceModal.svelte';
+export { default as MobileAddChoiceModal } from './MobileAddChoiceModal.svelte';
 export { default as MobileAddDetailModal } from './MobileAddDetailModal.svelte';
 // Edit Form Components
 export { default as PhoneEditForm } from './PhoneEditForm.svelte';

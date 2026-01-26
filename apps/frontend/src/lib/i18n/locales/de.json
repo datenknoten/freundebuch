@@ -464,6 +464,8 @@
       "deleteTitle": "Löschen",
       "removeFromCircle": "Entfernen aus"
     },
+    "addDetail": "Detail hinzufügen",
+    "addDetailSubtitle": "Telefon, E-Mail, Adresse und mehr hinzufügen",
     "delete": {
       "title": "Freund löschen",
       "confirmMessage": "Bist du sicher, dass du löschen möchtest",

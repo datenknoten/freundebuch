@@ -27,6 +27,7 @@ import type {
 import FriendAvatar from './FriendAvatar.svelte';
 import RelationshipsSection from './RelationshipsSection.svelte';
 import {
+  type AddChoice,
   AddDetailDropdown,
   AddressEditForm,
   AddressRow,
@@ -38,6 +39,7 @@ import {
   DetailEditModal,
   EmailEditForm,
   EmailRow,
+  MobileAddChoiceModal,
   MobileAddDetailModal,
   PhoneEditForm,
   PhoneRow,
@@ -61,6 +63,7 @@ let isDeleting = $state(false);
 let showDeleteConfirm = $state(false);
 
 // Mobile add modal state
+let showMobileAddChoiceModal = $state(false);
 let showMobileAddModal = $state(false);
 
 // Subresource editing state
@@ -730,10 +733,10 @@ onMount(() => {
   </section>
 </div>
 
-<!-- Mobile FAB for adding subresources -->
+<!-- Mobile FAB for adding -->
 <button
   type="button"
-  onclick={() => showMobileAddModal = true}
+  onclick={() => showMobileAddChoiceModal = true}
   class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white
          rounded-full shadow-lg hover:bg-forest-light transition-colors
          flex items-center justify-center z-40"
@@ -744,7 +747,22 @@ onMount(() => {
   </svg>
 </button>
 
-<!-- Mobile add modal -->
+<!-- Mobile add choice modal -->
+{#if showMobileAddChoiceModal}
+  <MobileAddChoiceModal
+    onSelect={(choice: AddChoice) => {
+      showMobileAddChoiceModal = false;
+      if (choice === 'friend') {
+        goto('/friends/new');
+      } else {
+        showMobileAddModal = true;
+      }
+    }}
+    onClose={() => showMobileAddChoiceModal = false}
+  />
+{/if}
+
+<!-- Mobile add detail modal -->
 {#if showMobileAddModal}
   <MobileAddDetailModal
     onSelect={(type) => {
