@@ -6,7 +6,8 @@ namespace Freundebuch\DAV\Tests\Integration;
 
 use PDO;
 use PHPUnit\Framework\TestCase;
-use Testcontainers\Container\PostgresContainer;
+use Testcontainers\Container\Container;
+use Testcontainers\Wait\WaitForExec;
 
 /**
  * Base class for integration tests using testcontainers.
@@ -15,7 +16,7 @@ use Testcontainers\Container\PostgresContainer;
  */
 abstract class IntegrationTestCase extends TestCase
 {
-    protected static ?PostgresContainer $container = null;
+    protected static ?Container $container = null;
     protected static ?PDO $pdo = null;
 
     /**
@@ -36,11 +37,13 @@ abstract class IntegrationTestCase extends TestCase
         }
 
         try {
-            // Start PostgreSQL container
-            // Using static factory method: make(version, password)
-            self::$container = PostgresContainer::make('16', 'test')
-                ->withPostgresUser('test')
-                ->withPostgresDatabase('test');
+            // Start PostGIS container (required for geodata migration)
+            // Uses the same image as docker-compose.yml for consistency
+            self::$container = Container::make('imresamu/postgis:18-3.6.1-trixie')
+                ->withEnvironment('POSTGRES_PASSWORD', 'test')
+                ->withEnvironment('POSTGRES_USER', 'test')
+                ->withEnvironment('POSTGRES_DB', 'test')
+                ->withWait(new WaitForExec(['pg_isready', '-h', '127.0.0.1', '-U', 'test']));
 
             self::$container->start();
 

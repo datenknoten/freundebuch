@@ -21,8 +21,8 @@ describe('Health Endpoint Integration Tests', () => {
     vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
     vi.stubEnv('LOG_LEVEL', 'silent');
 
-    // Start PostgreSQL container with health check wait strategy
-    container = await new PostgreSqlContainer('postgres:18-bookworm')
+    // Start PostGIS container (required for geodata migration)
+    container = await new PostgreSqlContainer('imresamu/postgis:18-3.6.1-trixie')
       .withDatabase('test')
       .withUsername('test')
       .withPassword('test')
