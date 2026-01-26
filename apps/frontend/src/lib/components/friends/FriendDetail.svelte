@@ -387,12 +387,25 @@ onMount(() => {
       <!-- Professional History -->
       {#if friend.professionalHistory && friend.professionalHistory.length > 0}
         <section class="space-y-2">
-          <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            {$i18n.t('friendDetail.sections.employmentHistory')}
-          </h2>
+          <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+            <h2 class="text-lg font-heading flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              {$i18n.t('friendDetail.sections.employmentHistory')}
+            </h2>
+            <button
+              type="button"
+              onclick={() => openEditModal('professional')}
+              class="text-sm font-body font-semibold text-white/90 hover:text-white
+                     flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              {$i18n.t('friendDetail.actions.addEmployment')}
+            </button>
+          </div>
           <div class="space-y-2">
             {#each friend.professionalHistory as history (history.id)}
               <ProfessionalHistoryRow
@@ -456,12 +469,25 @@ onMount(() => {
     <!-- Phone Numbers -->
     {#if friend.phones.length > 0}
       <section class="space-y-2">
-        <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-          </svg>
-          {$i18n.t('friendDetail.sections.phoneNumbers')}
-        </h2>
+        <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+          <h2 class="text-lg font-heading flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            {$i18n.t('friendDetail.sections.phoneNumbers')}
+          </h2>
+          <button
+            type="button"
+            onclick={() => openEditModal('phone')}
+            class="text-sm font-body font-semibold text-white/90 hover:text-white
+                   flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            {$i18n.t('friendDetail.actions.addPhone')}
+          </button>
+        </div>
         <div class="space-y-2">
           {#each friend.phones as phone (phone.id)}
             <PhoneRow
@@ -478,12 +504,25 @@ onMount(() => {
     <!-- Email Addresses -->
     {#if friend.emails.length > 0}
       <section class="space-y-2">
-        <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-          {$i18n.t('friendDetail.sections.emailAddresses')}
-        </h2>
+        <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+          <h2 class="text-lg font-heading flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            {$i18n.t('friendDetail.sections.emailAddresses')}
+          </h2>
+          <button
+            type="button"
+            onclick={() => openEditModal('email')}
+            class="text-sm font-body font-semibold text-white/90 hover:text-white
+                   flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            {$i18n.t('friendDetail.actions.addEmail')}
+          </button>
+        </div>
         <div class="space-y-2">
           {#each friend.emails as email (email.id)}
             <EmailRow
@@ -500,13 +539,26 @@ onMount(() => {
     <!-- Addresses -->
     {#if friend.addresses.length > 0}
       <section class="space-y-2">
-        <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          {$i18n.t('friendDetail.sections.addresses')}
-        </h2>
+        <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+          <h2 class="text-lg font-heading flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {$i18n.t('friendDetail.sections.addresses')}
+          </h2>
+          <button
+            type="button"
+            onclick={() => openEditModal('address')}
+            class="text-sm font-body font-semibold text-white/90 hover:text-white
+                   flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            {$i18n.t('friendDetail.actions.addAddress')}
+          </button>
+        </div>
         <div class="space-y-2">
           {#each friend.addresses as address (address.id)}
             <AddressRow
@@ -523,12 +575,25 @@ onMount(() => {
     <!-- URLs -->
     {#if friend.urls.length > 0}
       <section class="space-y-2">
-        <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-          </svg>
-          {$i18n.t('friendDetail.sections.websites')}
-        </h2>
+        <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+          <h2 class="text-lg font-heading flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            {$i18n.t('friendDetail.sections.websites')}
+          </h2>
+          <button
+            type="button"
+            onclick={() => openEditModal('url')}
+            class="text-sm font-body font-semibold text-white/90 hover:text-white
+                   flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            {$i18n.t('friendDetail.actions.addUrl')}
+          </button>
+        </div>
         <div class="space-y-2">
           {#each friend.urls as url (url.id)}
             <UrlRow
@@ -545,12 +610,25 @@ onMount(() => {
     <!-- Social Profiles -->
     {#if friend.socialProfiles && friend.socialProfiles.length > 0}
       <section class="space-y-2">
-        <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
-          </svg>
-          {$i18n.t('friendDetail.sections.socialProfiles')}
-        </h2>
+        <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+          <h2 class="text-lg font-heading flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
+            </svg>
+            {$i18n.t('friendDetail.sections.socialProfiles')}
+          </h2>
+          <button
+            type="button"
+            onclick={() => openEditModal('social')}
+            class="text-sm font-body font-semibold text-white/90 hover:text-white
+                   flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            {$i18n.t('friendDetail.actions.addSocial')}
+          </button>
+        </div>
         <div class="space-y-2">
           {#each friend.socialProfiles as profile (profile.id)}
             <SocialProfileRow
@@ -568,12 +646,25 @@ onMount(() => {
   <!-- ==================== IMPORTANT DATES SECTION ==================== -->
   {#if friend.dates && friend.dates.length > 0}
     <section class="space-y-2">
-      <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        {$i18n.t('friendDetail.sections.importantDates')}
-      </h2>
+      <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+        <h2 class="text-lg font-heading flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          {$i18n.t('friendDetail.sections.importantDates')}
+        </h2>
+        <button
+          type="button"
+          onclick={() => openEditModal('date')}
+          class="text-sm font-body font-semibold text-white/90 hover:text-white
+                 flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          {$i18n.t('friendDetail.actions.addDate')}
+        </button>
+      </div>
       <div class="space-y-2">
         {#each friend.dates as date (date.id)}
           <DateRow
@@ -590,12 +681,25 @@ onMount(() => {
   <!-- ==================== CIRCLES SECTION ==================== -->
   {#if friend.circles && friend.circles.length > 0}
     <section class="space-y-2">
-      <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-        {$i18n.t('friendDetail.sections.circles')}
-      </h2>
+      <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+        <h2 class="text-lg font-heading flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          {$i18n.t('friendDetail.sections.circles')}
+        </h2>
+        <button
+          type="button"
+          onclick={() => openEditModal('circle')}
+          class="text-sm font-body font-semibold text-white/90 hover:text-white
+                 flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          {$i18n.t('friendDetail.actions.addCircle')}
+        </button>
+      </div>
       <div class="space-y-2">
         {#each friend.circles as circle (circle.id)}
           <CircleRow
