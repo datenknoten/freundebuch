@@ -74,7 +74,7 @@ $effect(() => {
 const showFab = $derived(
   $isAuthenticated &&
     !$page.url.pathname.includes('/friends/new') &&
-    !$page.url.pathname.match(/^\/friends\/[^/]+$/)
+    !$page.url.pathname.match(/^\/friends\/[^/]+$/),
 );
 </script>
 
