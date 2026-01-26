@@ -65,17 +65,13 @@ function handleClickOutside(e: MouseEvent) {
     bind:this={buttonRef}
     type="button"
     onclick={() => (isOpen = !isOpen)}
-    class="text-sm text-forest font-body font-semibold hover:text-forest-light
-           flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors"
+    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-body font-semibold
+           hover:bg-gray-50 transition-colors flex items-center gap-2"
     aria-expanded={isOpen}
     aria-haspopup="menu"
   >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-    </svg>
-    <span>{$i18n.t('subresources.common.add')}</span>
     <svg
-      class="w-3 h-3 transition-transform duration-150"
+      class="w-4 h-4 transition-transform duration-150"
       class:rotate-180={isOpen}
       fill="none"
       stroke="currentColor"
@@ -83,6 +79,7 @@ function handleClickOutside(e: MouseEvent) {
     >
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
     </svg>
+    <span>{$i18n.t('subresources.common.add')}</span>
   </button>
 
   {#if isOpen}
