@@ -1,3 +1,9 @@
+## [2.54.1](https://github.com/datenknoten/freundebuch/compare/v2.54.0...v2.54.1) (2026-01-26)
+
+### Bug Fixes
+
+* **ci:** Use heredoc for psql variable interpolation in OSM import ([1982129](https://github.com/datenknoten/freundebuch/commit/1982129288516872771257f3d32caaf251979d14))
+
 ## [2.54.0](https://github.com/datenknoten/freundebuch/compare/v2.53.0...v2.54.0) (2026-01-26)
 
 ### Features
