@@ -48,12 +48,15 @@ function handleKeydown(e: KeyboardEvent) {
     const firstFocusable = optionButtons[0];
     const lastFocusable = cancelButton;
 
+    // Guard clause to prevent errors if elements aren't ready
+    if (!firstFocusable || !lastFocusable) return;
+
     if (e.shiftKey && document.activeElement === firstFocusable) {
       e.preventDefault();
-      lastFocusable?.focus();
+      lastFocusable.focus();
     } else if (!e.shiftKey && document.activeElement === lastFocusable) {
       e.preventDefault();
-      firstFocusable?.focus();
+      firstFocusable.focus();
     }
   }
 }
