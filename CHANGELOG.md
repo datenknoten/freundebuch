@@ -1,3 +1,9 @@
+## [2.56.0](https://github.com/datenknoten/freundebuch/compare/v2.55.1...v2.56.0) (2026-01-26)
+
+### Features
+
+* **frontend:** Restore inline add buttons to section headers ([a95390d](https://github.com/datenknoten/freundebuch/commit/a95390dac05b9d97b1a16464985874814eacb039))
+
 ## [2.55.1](https://github.com/datenknoten/freundebuch/compare/v2.55.0...v2.55.1) (2026-01-26)
 
 ### Bug Fixes
