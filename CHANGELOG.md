@@ -1,3 +1,9 @@
+## [2.57.0](https://github.com/datenknoten/freundebuch/compare/v2.56.0...v2.57.0) (2026-01-26)
+
+### Features
+
+* **frontend:** Add intermediate choice modal for FAB on friend detail ([92be57c](https://github.com/datenknoten/freundebuch/commit/92be57c3bf604f44ba8062c6341e379aada3af69))
+
 ## [2.56.0](https://github.com/datenknoten/freundebuch/compare/v2.55.1...v2.56.0) (2026-01-26)
 
 ### Features
