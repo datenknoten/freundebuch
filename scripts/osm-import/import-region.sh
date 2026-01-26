@@ -196,20 +196,23 @@ post_process() {
     log_info "Post-processing data into geodata schema..."
 
     # Create import batch record and get the external_id
-    # Using psql -v for parameterized queries to prevent SQL injection
+    # Using heredoc with psql variables for proper interpolation
     local batch_id
     batch_id=$(psql "$DATABASE_URL" -t -A \
         -v country_code="$country_code" \
         -v region="$region" \
-        -v source_file="$source_file" \
-        -c "INSERT INTO geodata.import_batches (
-                country_code, region, source_file, status
-            ) VALUES (
-                :'country_code',
-                :'region',
-                :'source_file',
-                'running'
-            ) RETURNING external_id;" | head -1 | tr -d '[:space:]')
+        -v source_file="$source_file" <<'EOSQL'
+INSERT INTO geodata.import_batches (
+    country_code, region, source_file, status
+) VALUES (
+    :'country_code',
+    :'region',
+    :'source_file',
+    'running'
+) RETURNING external_id;
+EOSQL
+    )
+    batch_id=$(echo "$batch_id" | head -1 | tr -d '[:space:]')
 
     log_info "Created import batch: $batch_id"
 
@@ -217,36 +220,40 @@ post_process() {
     local count
     count=$(psql "$DATABASE_URL" -t -A \
         -v country_code="$country_code" \
-        -v batch_id="$batch_id" \
-        -c "INSERT INTO geodata.addresses (
-                country_code, postal_code, city, street, house_number,
-                location, osm_id, osm_type, import_batch_id
-            )
-            SELECT
-                COALESCE(NULLIF(country_code, ''), :'country_code'),
-                postal_code,
-                COALESCE(NULLIF(city, ''), 'Unknown'),
-                street,
-                house_number,
-                geom,
-                osm_id,
-                osm_type,
-                :'batch_id'::uuid
-            FROM public.osm_addresses_staging
-            WHERE postal_code IS NOT NULL
-              AND street IS NOT NULL
-            ON CONFLICT DO NOTHING
-            RETURNING id;" | wc -l | tr -d ' ')
+        -v batch_id="$batch_id" <<'EOSQL'
+INSERT INTO geodata.addresses (
+    country_code, postal_code, city, street, house_number,
+    location, osm_id, osm_type, import_batch_id
+)
+SELECT
+    COALESCE(NULLIF(country_code, ''), :'country_code'),
+    postal_code,
+    COALESCE(NULLIF(city, ''), 'Unknown'),
+    street,
+    house_number,
+    geom,
+    osm_id,
+    osm_type,
+    :'batch_id'::uuid
+FROM public.osm_addresses_staging
+WHERE postal_code IS NOT NULL
+  AND street IS NOT NULL
+ON CONFLICT DO NOTHING
+RETURNING id;
+EOSQL
+    )
+    count=$(echo "$count" | wc -l | tr -d ' ')
 
     # Update batch with record count and mark as completed
     psql "$DATABASE_URL" -q \
         -v count="$count" \
-        -v batch_id="$batch_id" \
-        -c "UPDATE geodata.import_batches
-            SET record_count = :'count'::integer,
-                completed_at = CURRENT_TIMESTAMP,
-                status = 'completed'
-            WHERE external_id = :'batch_id'::uuid;"
+        -v batch_id="$batch_id" <<'EOSQL'
+UPDATE geodata.import_batches
+SET record_count = :'count'::integer,
+    completed_at = CURRENT_TIMESTAMP,
+    status = 'completed'
+WHERE external_id = :'batch_id'::uuid;
+EOSQL
 
     # Clean up staging table
     psql "$DATABASE_URL" -q -c "DROP TABLE IF EXISTS public.osm_addresses_staging CASCADE;"
