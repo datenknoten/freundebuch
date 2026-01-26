@@ -1,3 +1,14 @@
+## [2.55.0](https://github.com/datenknoten/freundebuch/compare/v2.54.2...v2.55.0) (2026-01-26)
+
+### Features
+
+* **frontend:** Add mobile FAB and desktop dropdown for adding subresources ([d342a31](https://github.com/datenknoten/freundebuch/commit/d342a3158afc1c3177c8542b2c364364020da93e))
+
+### Bug Fixes
+
+* **frontend:** Add guard clause to focus trap in MobileAddDetailModal ([5357fa8](https://github.com/datenknoten/freundebuch/commit/5357fa843eeb7b8ce85135f345bfda13b9e899c4))
+* **frontend:** Respect prefers-reduced-motion for slide-up animation ([4d33f73](https://github.com/datenknoten/freundebuch/commit/4d33f738e6966595a091c450480cee50e2c6a63b))
+
 ## [2.54.2](https://github.com/datenknoten/freundebuch/compare/v2.54.1...v2.54.2) (2026-01-26)
 
 ### Bug Fixes
