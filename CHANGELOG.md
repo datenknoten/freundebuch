@@ -1,3 +1,9 @@
+## [2.55.1](https://github.com/datenknoten/freundebuch/compare/v2.55.0...v2.55.1) (2026-01-26)
+
+### Bug Fixes
+
+* **frontend:** Fix mobile UI issues on friend detail page ([0bc8d7a](https://github.com/datenknoten/freundebuch/commit/0bc8d7a181eca7ac4d98190d37504262dd526568))
+
 ## [2.55.0](https://github.com/datenknoten/freundebuch/compare/v2.54.2...v2.55.0) (2026-01-26)
 
 ### Features
