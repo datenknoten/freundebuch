@@ -568,6 +568,7 @@
   },
   "relationshipSection": {
     "relationships": "Beziehungen",
+    "relationship": "Beziehung",
     "addRelationship": "Beziehung hinzufügen",
     "confirmRemove": "Bist du sicher, dass du diese Beziehung entfernen möchtest?",
     "addNotes": "Notizen hinzufügen...",

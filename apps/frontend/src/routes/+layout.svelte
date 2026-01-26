@@ -70,8 +70,12 @@ $effect(() => {
   }
 });
 
-// Hide FAB on new friend page
-const showFab = $derived($isAuthenticated && !$page.url.pathname.includes('/friends/new'));
+// Hide FAB on new friend page and friend detail pages (which have their own FAB)
+const showFab = $derived(
+  $isAuthenticated &&
+    !$page.url.pathname.includes('/friends/new') &&
+    !$page.url.pathname.match(/^\/friends\/[^/]+$/)
+);
 </script>
 
 <KeyboardShortcuts />

@@ -11,7 +11,8 @@ export type SubresourceType =
   | 'date'
   | 'social'
   | 'circle'
-  | 'professional';
+  | 'professional'
+  | 'relationship';
 
 interface Props {
   onAdd: (type: SubresourceType) => void;

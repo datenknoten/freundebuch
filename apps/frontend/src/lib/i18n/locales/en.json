@@ -568,6 +568,7 @@
   },
   "relationshipSection": {
     "relationships": "Relationships",
+    "relationship": "Relationship",
     "addRelationship": "Add Relationship",
     "confirmRemove": "Are you sure you want to remove this relationship?",
     "addNotes": "Add notes...",

@@ -287,6 +287,7 @@ function getModalTitle(): string {
     social: $i18n.t('friendDetail.modal.socialProfile'),
     circle: $i18n.t('friendDetail.modal.circle'),
     professional: $i18n.t('friendDetail.modal.employment'),
+    relationship: $i18n.t('relationshipSection.relationship'),
   };
   return `${action} ${typeNames[editingType]}`;
 }
@@ -644,7 +645,12 @@ onMount(() => {
   <MobileAddDetailModal
     onSelect={(type) => {
       showMobileAddModal = false;
-      openEditModal(type);
+      if (type === 'relationship') {
+        // Trigger the RelationshipsSection form via custom event
+        window.dispatchEvent(new CustomEvent('shortcut:add-relationship'));
+      } else {
+        openEditModal(type);
+      }
     }}
     onClose={() => showMobileAddModal = false}
   />
