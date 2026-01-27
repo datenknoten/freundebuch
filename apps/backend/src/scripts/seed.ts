@@ -475,12 +475,10 @@ async function main() {
     console.log(`✓ Created ${friendCount} demo friends`);
 
     console.log('\n✅ Seed completed successfully!');
-    console.log(`\nDemo credentials:`);
-    console.log(`  Email: ${DEMO_USER.email}`);
-    console.log(`  Password: ${DEMO_USER.password}`);
-    console.log(`\nTest credentials:`);
-    console.log(`  Email: ${TEST_USER.email}`);
-    console.log(`  Password: ${TEST_USER.password}`);
+    console.log(`\nSeeded accounts:`);
+    console.log(`  Demo: ${DEMO_USER.email}`);
+    console.log(`  Test: ${TEST_USER.email}`);
+    console.log(`  (See seed.ts for credentials)`);
   } catch (error) {
     console.error('Seed failed:', error);
     process.exit(1);

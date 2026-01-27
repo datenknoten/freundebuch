@@ -13,7 +13,10 @@ import { chromium, type FullConfig } from '@playwright/test';
 import { AUTH_STATE_PATH, TEST_USER } from './fixtures/auth.fixture.js';
 
 async function globalSetup(config: FullConfig): Promise<void> {
-  const { baseURL } = config.projects[0].use;
+  const baseURL = config.projects[0]?.use?.baseURL;
+  if (!baseURL) {
+    throw new Error('baseURL not configured in playwright.config.ts');
+  }
 
   const browser = await chromium.launch();
   const context = await browser.newContext();
@@ -41,10 +44,7 @@ async function globalSetup(config: FullConfig): Promise<void> {
 
     // Reset language to English for consistent test behavior
     await page.goto(`${baseURL}/profile`);
-    await page.waitForLoadState('domcontentloaded');
-
-    // Wait for the page to be fully interactive
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // Check current language and change to English if needed
     const languageSelect = page.locator('#language');
@@ -53,11 +53,11 @@ async function globalSetup(config: FullConfig): Promise<void> {
 
     if (currentLanguage !== 'en') {
       await languageSelect.selectOption('en');
-      // Wait for the language change to take effect and be saved to localStorage
-      await page.waitForTimeout(1000);
+      // Wait for the language change to be saved
+      await page.waitForLoadState('networkidle');
       // Reload to ensure the language is applied
       await page.reload();
-      await page.waitForLoadState('domcontentloaded');
+      await page.waitForLoadState('networkidle');
       console.log('Global setup: Language reset to English');
     }
 

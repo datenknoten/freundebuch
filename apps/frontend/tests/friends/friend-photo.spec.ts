@@ -4,6 +4,7 @@
  * Tests photo upload, crop modal, and photo removal functionality.
  */
 
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
@@ -53,7 +54,7 @@ test.describe('Friend Photo Upload', () => {
 
   test('should open crop modal after selecting image', async ({ page }) => {
     // Skip if test image doesn't exist
-    test.skip(!require('node:fs').existsSync(TEST_IMAGE_PATH), 'Test image not found');
+    test.skip(!existsSync(TEST_IMAGE_PATH), 'Test image not found');
 
     await page.goto(`/friends/${friendId}/edit`);
 
@@ -69,7 +70,7 @@ test.describe('Friend Photo Upload', () => {
 
   test('should complete photo upload after cropping', async ({ page }) => {
     // Skip if test image doesn't exist
-    test.skip(!require('node:fs').existsSync(TEST_IMAGE_PATH), 'Test image not found');
+    test.skip(!existsSync(TEST_IMAGE_PATH), 'Test image not found');
 
     await page.goto(`/friends/${friendId}/edit`);
 
@@ -94,7 +95,7 @@ test.describe('Friend Photo Upload', () => {
 
   test('should cancel crop modal', async ({ page }) => {
     // Skip if test image doesn't exist
-    test.skip(!require('node:fs').existsSync(TEST_IMAGE_PATH), 'Test image not found');
+    test.skip(!existsSync(TEST_IMAGE_PATH), 'Test image not found');
 
     await page.goto(`/friends/${friendId}/edit`);
 
