@@ -232,6 +232,9 @@ jobs:
           BCRYPT_SALT_ROUNDS: "10"
         run: pnpm --filter backend run seed
 
+      - name: Build shared package
+        run: pnpm --filter @freundebuch/shared run build
+
       - name: Build frontend
         run: pnpm --filter frontend run build
 
