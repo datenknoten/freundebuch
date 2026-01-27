@@ -9,14 +9,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  *
  * Test categories:
  * - chromium: Default desktop Chrome tests
- * - firefox: Desktop Firefox tests
- * - webkit: Desktop Safari tests
- * - mobile-chrome: Mobile Chrome (Pixel 5 viewport)
- * - mobile-safari: Mobile Safari (iPhone 12 viewport)
+ * - firefox: Desktop Firefox tests (local only)
+ * - webkit: Desktop Safari tests (local only)
+ * - mobile-chrome: Mobile Chrome (Pixel 5 viewport, local only)
+ * - mobile-safari: Mobile Safari (iPhone 12 viewport, local only)
  *
  * Run specific project: npx playwright test --project=chromium
  * Run all: npx playwright test
+ *
+ * In CI, only chromium and auth-tests run to reduce execution time.
+ * Multi-browser testing can be done locally or in a dedicated workflow.
  */
+
+const isCI = !!process.env.CI;
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -66,46 +72,55 @@ export default defineConfig({
       },
       dependencies: ['setup'],
     },
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-        storageState: 'tests/.auth/user.json',
-      },
-      dependencies: ['setup'],
-    },
-    {
-      name: 'webkit',
-      use: {
-        ...devices['Desktop Safari'],
-        storageState: 'tests/.auth/user.json',
-      },
-      dependencies: ['setup'],
-    },
+    // Firefox and WebKit only run locally (not in CI) to reduce execution time
+    ...(isCI
+      ? []
+      : [
+          {
+            name: 'firefox',
+            use: {
+              ...devices['Desktop Firefox'],
+              storageState: 'tests/.auth/user.json',
+            },
+            dependencies: ['setup'],
+          },
+          {
+            name: 'webkit',
+            use: {
+              ...devices['Desktop Safari'],
+              storageState: 'tests/.auth/user.json',
+            },
+            dependencies: ['setup'],
+          },
+        ]),
 
     // ========================================================================
-    // Mobile viewports - authenticated tests
+    // Mobile viewports - authenticated tests (local only)
     // ========================================================================
-    {
-      name: 'mobile-chrome',
-      use: {
-        ...devices['Pixel 5'],
-        storageState: 'tests/.auth/user.json',
-      },
-      dependencies: ['setup'],
-      // Only run mobile-specific tests
-      testMatch: /mobile/,
-    },
-    {
-      name: 'mobile-safari',
-      use: {
-        ...devices['iPhone 12'],
-        storageState: 'tests/.auth/user.json',
-      },
-      dependencies: ['setup'],
-      // Only run mobile-specific tests
-      testMatch: /mobile/,
-    },
+    ...(isCI
+      ? []
+      : [
+          {
+            name: 'mobile-chrome',
+            use: {
+              ...devices['Pixel 5'],
+              storageState: 'tests/.auth/user.json',
+            },
+            dependencies: ['setup'],
+            // Only run mobile-specific tests
+            testMatch: /mobile/,
+          },
+          {
+            name: 'mobile-safari',
+            use: {
+              ...devices['iPhone 12'],
+              storageState: 'tests/.auth/user.json',
+            },
+            dependencies: ['setup'],
+            // Only run mobile-specific tests
+            testMatch: /mobile/,
+          },
+        ]),
 
     // ========================================================================
     // Auth tests - run WITHOUT storage state (fresh browser)
