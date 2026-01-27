@@ -58,46 +58,52 @@ test.describe('Global Search (Command Palette)', () => {
   test('should open global search with Cmd+K', async ({ page }) => {
     await page.goto('/');
 
-    // Press Cmd+K (Mac) or Ctrl+K (Windows/Linux)
-    const isMac = process.platform === 'darwin';
-    await page.keyboard.press(isMac ? 'Meta+k' : 'Control+k');
+    // Wait for page to load and keyboard shortcuts to be initialized
+    await page.waitForLoadState('networkidle');
 
-    // Search modal/palette should open
-    const searchModal = page.locator(
-      '[data-testid="command-palette"], [data-testid="global-search"], [role="dialog"]:has(input[type="search"]), [role="combobox"]',
-    );
-    await expect(searchModal.first()).toBeVisible({ timeout: 3000 });
+    // Press Ctrl+K (works in both Mac and Linux CI, since Meta is Mac-only)
+    await page.keyboard.press('Control+k');
+
+    // Search modal should open - uses role="dialog" with aria-label="Search friends"
+    const searchModal = page.locator('[role="dialog"][aria-label="Search friends"]');
+    await expect(searchModal).toBeVisible({ timeout: 5000 });
   });
 
   test('should close global search with Escape', async ({ page }) => {
     await page.goto('/');
 
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
+
     // Open search
-    const isMac = process.platform === 'darwin';
-    await page.keyboard.press(isMac ? 'Meta+k' : 'Control+k');
+    await page.keyboard.press('Control+k');
 
     // Wait for modal
-    const searchModal = page.locator(
-      '[data-testid="command-palette"], [data-testid="global-search"], [role="dialog"]:has(input), [role="combobox"]',
-    );
-    await expect(searchModal.first()).toBeVisible({ timeout: 3000 });
+    const searchModal = page.locator('[role="dialog"][aria-label="Search friends"]');
+    await expect(searchModal).toBeVisible({ timeout: 5000 });
 
     // Press Escape
     await page.keyboard.press('Escape');
 
     // Modal should close
-    await expect(searchModal.first()).not.toBeVisible({ timeout: 3000 });
+    await expect(searchModal).not.toBeVisible({ timeout: 3000 });
   });
 
   test('should search friends in global search', async ({ page }) => {
     await page.goto('/');
 
-    // Open search
-    const isMac = process.platform === 'darwin';
-    await page.keyboard.press(isMac ? 'Meta+k' : 'Control+k');
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
 
-    // Wait for search input to be visible and focused
-    const searchInput = page.locator('input[type="search"], input[placeholder*="earch"]').first();
+    // Open search
+    await page.keyboard.press('Control+k');
+
+    // Wait for search modal and input
+    const searchModal = page.locator('[role="dialog"][aria-label="Search friends"]');
+    await expect(searchModal).toBeVisible({ timeout: 5000 });
+
+    // The input has role="combobox"
+    const searchInput = searchModal.locator('input[role="combobox"]');
     await searchInput.waitFor({ state: 'visible', timeout: 3000 });
 
     // Type search query
@@ -110,12 +116,17 @@ test.describe('Global Search (Command Palette)', () => {
   test('should navigate with arrow keys in global search', async ({ page }) => {
     await page.goto('/');
 
-    // Open search
-    const isMac = process.platform === 'darwin';
-    await page.keyboard.press(isMac ? 'Meta+k' : 'Control+k');
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
 
-    // Wait for search input to be visible and focused
-    const searchInput = page.locator('input[type="search"], input[placeholder*="earch"]').first();
+    // Open search
+    await page.keyboard.press('Control+k');
+
+    // Wait for search modal and input
+    const searchModal = page.locator('[role="dialog"][aria-label="Search friends"]');
+    await expect(searchModal).toBeVisible({ timeout: 5000 });
+
+    const searchInput = searchModal.locator('input[role="combobox"]');
     await searchInput.waitFor({ state: 'visible', timeout: 3000 });
 
     // Type search query
@@ -127,26 +138,25 @@ test.describe('Global Search (Command Palette)', () => {
     // Press down arrow to select
     await page.keyboard.press('ArrowDown');
 
-    // First result should be highlighted
-    const selectedResult = page
-      .locator('[aria-selected="true"], [data-selected], .selected')
-      .first();
-    await expect(selectedResult)
-      .toBeVisible({ timeout: 2000 })
-      .catch(() => {
-        // Selection may be implicit
-      });
+    // First result should be highlighted (uses aria-selected on list items)
+    const selectedResult = searchModal.locator('[role="option"][aria-selected="true"]');
+    await expect(selectedResult).toBeVisible({ timeout: 2000 });
   });
 
   test('should navigate to friend on Enter', async ({ page }) => {
     await page.goto('/');
 
-    // Open search
-    const isMac = process.platform === 'darwin';
-    await page.keyboard.press(isMac ? 'Meta+k' : 'Control+k');
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
 
-    // Wait for search input to be visible and focused
-    const searchInput = page.locator('input[type="search"], input[placeholder*="earch"]').first();
+    // Open search
+    await page.keyboard.press('Control+k');
+
+    // Wait for search modal and input
+    const searchModal = page.locator('[role="dialog"][aria-label="Search friends"]');
+    await expect(searchModal).toBeVisible({ timeout: 5000 });
+
+    const searchInput = searchModal.locator('input[role="combobox"]');
     await searchInput.waitFor({ state: 'visible', timeout: 3000 });
 
     // Type search query
@@ -155,7 +165,7 @@ test.describe('Global Search (Command Palette)', () => {
     // Wait for results
     await expect(page.getByText('Anna Schmidt')).toBeVisible({ timeout: 5000 });
 
-    // Press Enter to navigate (or click)
+    // Press Enter to navigate
     await page.keyboard.press('Enter');
 
     // Should navigate to friend detail
@@ -164,26 +174,22 @@ test.describe('Global Search (Command Palette)', () => {
 });
 
 test.describe('Keyboard Shortcuts', () => {
-  test('should support Cmd+K to open search from any page', async ({ page }) => {
+  test('should support Ctrl+K to open search from any page', async ({ page }) => {
     // Test from different pages
-    const pages = ['/friends', '/circles', '/profile'];
+    const testPages = ['/friends', '/circles', '/profile'];
 
-    for (const pagePath of pages) {
+    for (const pagePath of testPages) {
       await page.goto(pagePath);
+      await page.waitForLoadState('networkidle');
 
-      const isMac = process.platform === 'darwin';
-      await page.keyboard.press(isMac ? 'Meta+k' : 'Control+k');
+      await page.keyboard.press('Control+k');
 
-      const searchModal = page.locator(
-        '[data-testid="command-palette"], [data-testid="global-search"], [role="dialog"]:has(input), [role="combobox"]',
-      );
+      const searchModal = page.locator('[role="dialog"][aria-label="Search friends"]');
 
-      const isVisible = await searchModal
-        .first()
-        .isVisible({ timeout: 2000 })
-        .catch(() => false);
+      const isVisible = await searchModal.isVisible({ timeout: 3000 }).catch(() => false);
       if (isVisible) {
         await page.keyboard.press('Escape');
+        await expect(searchModal).not.toBeVisible({ timeout: 2000 });
       }
     }
   });
