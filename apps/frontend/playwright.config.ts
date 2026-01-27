@@ -121,11 +121,12 @@ export default defineConfig({
   ],
 
   // Web server configuration
+  // In CI, frontend is already built in a previous step, so just run preview
+  // Locally, build first then preview
   webServer: {
-    command: 'pnpm run build && pnpm run preview',
+    command: process.env.CI ? 'pnpm run preview' : 'pnpm run build && pnpm run preview',
     port: 5173,
     reuseExistingServer: !process.env.CI,
-    // Increased timeout for build
-    timeout: 120000,
+    timeout: 60000,
   },
 });

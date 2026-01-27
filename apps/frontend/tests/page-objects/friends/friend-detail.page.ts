@@ -37,32 +37,37 @@ export class FriendDetailPage extends BasePage {
     this.favoriteButton = page.getByRole('button', { name: /favorite|star|favorit/i });
     this.avatar = page.locator('[data-testid="friend-avatar"], .avatar, img[alt*="avatar"]');
 
-    // Sections - using data-testid or section headings
-    this.phonesSection = page.locator('[data-testid="phones-section"], section:has-text("Phone")');
-    this.emailsSection = page.locator('[data-testid="emails-section"], section:has-text("Email")');
+    // Sections - using data-testid (preferred) or i18n-compatible text patterns
+    // Text patterns include both English and German translations
+    this.phonesSection = page.locator(
+      '[data-testid="phones-section"], section:has-text("Phone"), section:has-text("Telefon")',
+    );
+    this.emailsSection = page.locator(
+      '[data-testid="emails-section"], section:has-text("Email"), section:has-text("E-Mail")',
+    );
     this.addressesSection = page.locator(
-      '[data-testid="addresses-section"], section:has-text("Address")',
+      '[data-testid="addresses-section"], section:has-text("Address"), section:has-text("Adresse")',
     );
     this.urlsSection = page.locator(
-      '[data-testid="urls-section"], section:has-text("Website"), section:has-text("URL")',
+      '[data-testid="urls-section"], section:has-text("Website"), section:has-text("URL"), section:has-text("Webseite")',
     );
     this.datesSection = page.locator(
-      '[data-testid="dates-section"], section:has-text("Date"), section:has-text("Birthday")',
+      '[data-testid="dates-section"], section:has-text("Date"), section:has-text("Birthday"), section:has-text("Datum"), section:has-text("Geburtstag")',
     );
     this.professionalSection = page.locator(
-      '[data-testid="professional-section"], section:has-text("Professional"), section:has-text("Work")',
+      '[data-testid="professional-section"], section:has-text("Professional"), section:has-text("Work"), section:has-text("Beruf"), section:has-text("Arbeit")',
     );
     this.socialProfilesSection = page.locator(
-      '[data-testid="social-section"], section:has-text("Social")',
+      '[data-testid="social-section"], section:has-text("Social"), section:has-text("Sozial")',
     );
     this.circlesSection = page.locator(
-      '[data-testid="circles-section"], section:has-text("Circle")',
+      '[data-testid="circles-section"], section:has-text("Circle"), section:has-text("Kreis")',
     );
     this.interestsSection = page.locator(
-      '[data-testid="interests-section"], section:has-text("Interest")',
+      '[data-testid="interests-section"], section:has-text("Interest"), section:has-text("Interesse")',
     );
     this.metInfoSection = page.locator(
-      '[data-testid="met-info-section"], section:has-text("How We Met"), section:has-text("Met")',
+      '[data-testid="met-info-section"], section:has-text("How We Met"), section:has-text("Met"), section:has-text("Kennengelernt")',
     );
   }
 
