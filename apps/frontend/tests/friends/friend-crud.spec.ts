@@ -42,12 +42,19 @@ test.describe('Friend CRUD Operations', () => {
         suffix: 'PhD',
       });
 
-      // Trigger blur to ensure auto-generation happens
-      await page.keyboard.press('Tab');
-      await page.waitForTimeout(500);
+      // Trigger blur on last field to ensure auto-generation happens
+      const suffixInput = page.getByPlaceholder(/suffix/i);
+      await suffixInput.blur();
 
       // Display name should auto-generate (or we fill it manually if not)
       const displayNameInput = page.getByPlaceholder(/display name/i);
+      // Wait briefly for auto-generation
+      await expect(displayNameInput)
+        .not.toHaveValue('', { timeout: 2000 })
+        .catch(() => {
+          // Auto-generation may not happen, that's OK
+        });
+
       const currentValue = await displayNameInput.inputValue();
       if (!currentValue) {
         // Auto-generation didn't happen, fill manually

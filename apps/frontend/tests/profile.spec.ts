@@ -21,7 +21,7 @@ test.describe('Profile Settings', () => {
       // Email field
       const emailInput = page.getByLabel(/email/i);
       await expect(emailInput).toBeVisible();
-      await expect(emailInput).toHaveValue(/test@example.com/);
+      await expect(emailInput).toHaveValue(/test@example\.com/);
     });
 
     test('should show user ID (read-only)', async ({ page }) => {

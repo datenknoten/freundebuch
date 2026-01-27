@@ -42,8 +42,8 @@ export class FriendListPage extends BasePage {
    */
   async search(query: string): Promise<void> {
     await this.searchInput.fill(query);
-    // Wait for search results to update (debounced)
-    await this.page.waitForTimeout(500);
+    // Wait for network to settle after debounced search
+    await this.page.waitForLoadState('networkidle');
     await this.waitForReady();
   }
 
@@ -52,7 +52,8 @@ export class FriendListPage extends BasePage {
    */
   async clearSearch(): Promise<void> {
     await this.searchInput.clear();
-    await this.page.waitForTimeout(500);
+    // Wait for network to settle after clearing search
+    await this.page.waitForLoadState('networkidle');
     await this.waitForReady();
   }
 

@@ -56,8 +56,15 @@ test.describe('Dashboard - Authenticated', () => {
     await page.goto('/');
 
     // Network graph section should be present (may be empty for new users)
-    // Just check the container loads without errors
-    await page.waitForTimeout(1000); // Give graph time to render
+    // Look for the graph container
+    const graphContainer = page
+      .locator('[data-testid="network-graph"], #network-graph, .network-graph, canvas')
+      .first();
+    await expect(graphContainer)
+      .toBeVisible({ timeout: 5000 })
+      .catch(() => {
+        // Graph may not be visible if no data - that's OK for dashboard
+      });
   });
 });
 

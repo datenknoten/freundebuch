@@ -96,8 +96,12 @@ test.describe('Global Search (Command Palette)', () => {
     const isMac = process.platform === 'darwin';
     await page.keyboard.press(isMac ? 'Meta+k' : 'Control+k');
 
+    // Wait for search input to be visible and focused
+    const searchInput = page.locator('input[type="search"], input[placeholder*="earch"]').first();
+    await searchInput.waitFor({ state: 'visible', timeout: 3000 });
+
     // Type search query
-    await page.keyboard.type('Anna');
+    await searchInput.fill('Anna');
 
     // Should show search results
     await expect(page.getByText('Anna Schmidt')).toBeVisible({ timeout: 5000 });
@@ -110,8 +114,12 @@ test.describe('Global Search (Command Palette)', () => {
     const isMac = process.platform === 'darwin';
     await page.keyboard.press(isMac ? 'Meta+k' : 'Control+k');
 
+    // Wait for search input to be visible and focused
+    const searchInput = page.locator('input[type="search"], input[placeholder*="earch"]').first();
+    await searchInput.waitFor({ state: 'visible', timeout: 3000 });
+
     // Type search query
-    await page.keyboard.type('Anna');
+    await searchInput.fill('Anna');
 
     // Wait for results
     await expect(page.getByText('Anna Schmidt')).toBeVisible({ timeout: 5000 });
@@ -137,8 +145,12 @@ test.describe('Global Search (Command Palette)', () => {
     const isMac = process.platform === 'darwin';
     await page.keyboard.press(isMac ? 'Meta+k' : 'Control+k');
 
+    // Wait for search input to be visible and focused
+    const searchInput = page.locator('input[type="search"], input[placeholder*="earch"]').first();
+    await searchInput.waitFor({ state: 'visible', timeout: 3000 });
+
     // Type search query
-    await page.keyboard.type('Anna');
+    await searchInput.fill('Anna');
 
     // Wait for results
     await expect(page.getByText('Anna Schmidt')).toBeVisible({ timeout: 5000 });

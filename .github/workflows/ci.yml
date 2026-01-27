@@ -172,7 +172,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgis/postgis:16-3.4
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -217,6 +217,10 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm --filter frontend exec playwright install --with-deps chromium
 
+      - name: Create .env file for migrations
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/freundebuch_test" > .env
+
       - name: Run database migrations
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/freundebuch_test
@@ -225,6 +229,7 @@ jobs:
       - name: Seed test data
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/freundebuch_test
+          BCRYPT_SALT_ROUNDS: "10"
         run: pnpm --filter backend run seed
 
       - name: Build frontend
@@ -234,6 +239,11 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/freundebuch_test
           NODE_ENV: test
+          JWT_SECRET: test-jwt-secret-for-ci-minimum-32-chars
+          REFRESH_TOKEN_SECRET: test-refresh-token-secret-min-32-chars
+          SESSION_SECRET: test-session-secret-for-ci-min-32-chars
+          BCRYPT_SALT_ROUNDS: "10"
+          PORT: "3000"
         run: |
           # Start backend in background
           pnpm --filter backend run dev &

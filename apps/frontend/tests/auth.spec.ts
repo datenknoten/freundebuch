@@ -132,13 +132,21 @@ test.describe('Authentication Flow', () => {
     // Wait for network request to complete
     await page.waitForLoadState('networkidle');
 
-    // Should show success message (or rate limit message - both are valid responses)
-    // The success message confirms the flow works; rate limit confirms security
+    // Should show success message
     const successMessage = page.getByText(/password reset link sent/i);
     const rateLimitMessage = page.getByText(/too many.*attempts/i);
 
-    // Wait for either message
+    // Wait for response
     await expect(successMessage.or(rateLimitMessage)).toBeVisible({ timeout: 10000 });
+
+    // Skip test if rate limited (don't treat as pass)
+    const isRateLimited = await rateLimitMessage.isVisible().catch(() => false);
+    if (isRateLimited) {
+      test.skip(true, 'Rate limited - skipping test');
+    }
+
+    // Verify success message
+    await expect(successMessage).toBeVisible();
   });
 
   test('should require terms acceptance on registration', async ({ page }) => {
