@@ -227,4 +227,4 @@ For performance with large datasets:
 - Test quick-add with all templates
 - Test calendar navigation
 - Test performance with concurrent users
-- Test on mobile devices (touch encounters)
+- Test on mobile devices (touch interactions)
