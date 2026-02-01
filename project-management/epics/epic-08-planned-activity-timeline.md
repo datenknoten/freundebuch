@@ -19,46 +19,43 @@ Ever wish you could see the whole story of your relationship with someone? This 
 
 ## Key Features
 
-### Per-Contact Timeline
-- Chronological list of all interactions with a specific contact
+### Per-Friend Timeline
+- Chronological list of all encounters with a specific friend
 - Display of:
-  - Interactions (meetings, calls, messages)
+  - Encounters (with title, location, description)
   - Birthdays and anniversaries
   - Notes with timestamps
   - Reminders (past and upcoming)
-  - Contact changes/updates
-- Filter by interaction type
+  - Friend profile changes/updates
 - Filter by date range
 - Expandable/collapsible entries
-- Rich media display (photos, attachments)
-- Edit/delete interaction directly from timeline
+- Edit/delete encounter directly from timeline
 
 ### Global Timeline
-- Unified view of all activities across all contacts
+- Unified view of all activities across all friends
 - Filter by:
   - Date range (today, this week, this month, custom)
-  - Contact (single or multiple)
-  - Interaction type
-  - Group/tag
+  - Friend (single or multiple)
+  - Circle/group
 - Search within timeline
 - Pagination or infinite scroll
-- Contact avatar/thumbnail in each entry
-- Jump to contact detail from entry
+- Friend avatar/thumbnail in each entry
+- Jump to friend detail from entry
 
 ### Timeline Visualizations
 
 #### Timeline View
 - Vertical timeline with dates
-- Icons for interaction types
-- Color coding by type or contact group
+- Icons for entry types (encounter, birthday, reminder, etc.)
+- Color coding by type or friend circle
 - Today indicator
 - Cluster similar events on same day
 
 #### Calendar View
 - Monthly calendar grid
-- Day cells show interaction count
+- Day cells show encounter count
 - Click day to see details
-- Different colors for interaction types
+- Different colors for entry types
 - Birthday/anniversary indicators
 
 #### List View
@@ -71,13 +68,13 @@ Ever wish you could see the whole story of your relationship with someone? This 
 ### Quick Entry
 - Floating action button for quick add
 - Quick-add modal/drawer
-- Templates for common interaction types:
-  - "Had coffee"
-  - "Phone call"
-  - "Sent birthday wishes"
-  - "Family dinner"
-- Recently contacted auto-suggestions
-- Smart defaults (date=today, type=last used)
+- Templates for common encounter types:
+  - "Coffee"
+  - "Dinner"
+  - "Walk"
+  - "Party"
+- Recently seen friends auto-suggestions
+- Smart defaults (date=today)
 - Keyboard shortcuts
 
 ### Timeline Navigation
@@ -90,38 +87,38 @@ Ever wish you could see the whole story of your relationship with someone? This 
 
 ## User Stories
 
-1. As a user, I want to see all my interactions with a person in chronological order so I can review our relationship history
+1. As a user, I want to see all my encounters with a friend in chronological order so I can review our shared history
 2. As a user, I want to see what I did today/this week so I can track my social activities
-3. As a user, I want to filter the timeline by interaction type so I can see only phone calls or only meetings
-4. As a user, I want to quickly add an interaction I just had so I can log it while it's fresh
+3. As a user, I want to filter the timeline by entry type so I can see only encounters or only birthdays
+4. As a user, I want to quickly add an encounter I just had so I can log it while it's fresh
 5. As a user, I want to view my activities in a calendar so I can see patterns over time
-6. As a user, I want to see all interactions with a specific group so I can review team activities
-7. As a user, I want to edit an interaction from the timeline if I made a mistake
+6. As a user, I want to see all encounters with a specific circle so I can review group activities
+7. As a user, I want to edit an encounter from the timeline if I made a mistake
 
 ## Technical Considerations
 
 ### Database Schema
-- Reuse `interactions` table from Epic 2
+- Reuse `encounters` table from Epic 2
 - Add `activity_feed` view that combines:
-  - Interactions
-  - Contact changes (from audit log)
+  - Encounters
+  - Friend changes (from audit log)
   - Reminders
   - Notes
 - Indexes on date fields for fast timeline queries
 - Composite index on (user_id, date) for global timeline
 
 ### API Endpoints
-- `GET /api/timeline/contacts/:id` - Get contact timeline
+- `GET /api/timeline/friends/:id` - Get friend timeline
 - `GET /api/timeline/global` - Get global timeline with filters
 - `GET /api/timeline/calendar/:year/:month` - Get calendar view data
-- `POST /api/timeline/quick-add` - Quick add interaction
+- `POST /api/timeline/quick-add` - Quick add encounter
 - `GET /api/timeline/templates` - Get quick-add templates
 - `GET /api/timeline/stats` - Get timeline statistics (for insights)
 
 ### Frontend Components
 - Timeline container (virtualized for performance)
 - Timeline entry component
-  - Interaction entry
+  - Encounter entry
   - Birthday entry
   - Note entry
   - Reminder entry
@@ -131,7 +128,7 @@ Ever wish you could see the whole story of your relationship with someone? This 
 - Quick-add modal/drawer
 - Template selector
 - Date range picker
-- Interaction type filter chips
+- Entry type filter chips
 - Empty state (no activities)
 - Loading skeleton
 
@@ -144,23 +141,23 @@ Ever wish you could see the whole story of your relationship with someone? This 
 - Optimistic UI updates for new entries
 
 ### Data Aggregation
-- Group interactions by day
-- Count interactions per day for calendar view
+- Group encounters by day
+- Count encounters per day for calendar view
 - Calculate streaks (consecutive days with activity)
-- Identify gaps (long periods without interaction)
+- Identify gaps (long periods without encounter)
 
 ## Success Metrics
 
-- Timeline loads in <1 second for typical use (100 interactions)
+- Timeline loads in <1 second for typical use (100 encounters)
 - Smooth scrolling with 1000+ entries (virtual scroll)
-- Quick-add interaction completes in <500ms
+- Quick-add encounter completes in <500ms
 - Filter updates apply in <300ms
 - Calendar view loads month data in <500ms
 
 ## Dependencies
 
-- Epic 2: Relationship Management (interaction data)
-- Epic 1: Contact Management (contact data)
+- Epic 2: Encounter Management (encounter data)
+- Epic 1: Friend Management (friend data)
 - Virtual scroll library (e.g., `svelte-virtual-list`)
 - Date handling library (e.g., `date-fns`)
 - Calendar component library
@@ -175,7 +172,7 @@ Ever wish you could see the whole story of your relationship with someone? This 
 
 ## Related Epics
 
-- Epic 2: Relationship Management (provides interaction data)
+- Epic 2: Encounter Management (provides encounter data)
 - Epic 9: Dashboard & Insights (aggregates timeline data)
 - Epic 3: Reminder System (shows upcoming reminders in timeline)
 
@@ -184,11 +181,11 @@ Ever wish you could see the whole story of your relationship with someone? This 
 ### Timeline Entry Types
 
 Each entry should have:
-- **Type:** interaction, birthday, note, reminder, system
+- **Type:** encounter, birthday, note, reminder, system
 - **Icon:** visual indicator
 - **Timestamp:** date and time
-- **Contact:** who it relates to
-- **Content:** description/notes
+- **Friend:** who it relates to
+- **Content:** title/description/notes
 - **Actions:** edit, delete, view details
 
 ### Virtual Scroll Implementation
@@ -210,12 +207,12 @@ For performance with large datasets:
 ```json
 {
   "2025-10-01": {
-    "interactions": 3,
+    "encounters": 3,
     "birthdays": 1,
     "reminders": 0
   },
   "2025-10-02": {
-    "interactions": 1,
+    "encounters": 1,
     "birthdays": 0,
     "reminders": 2
   }
@@ -230,4 +227,4 @@ For performance with large datasets:
 - Test quick-add with all templates
 - Test calendar navigation
 - Test performance with concurrent users
-- Test on mobile devices (touch interactions)
+- Test on mobile devices (touch encounters)
