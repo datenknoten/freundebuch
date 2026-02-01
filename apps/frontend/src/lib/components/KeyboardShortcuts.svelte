@@ -18,9 +18,12 @@ import {
   isEditCircleModeActive,
   isFilterModeActive,
   isModalOpen,
+  isOpenEncounterModeActive,
   isOpenModeActive,
+  openEncounterModePrefix,
   openModePrefix,
   visibleCircleIds,
+  visibleEncounterIds,
   visibleFriendIds,
 } from '$lib/stores/ui';
 
@@ -30,6 +33,7 @@ let pendingKey = $state<string | null>(null);
 // Context-sensitive help: determine which page we're on
 let isOnCirclesPage = $derived($page.url.pathname === '/circles');
 let isOnFriendsListPage = $derived($page.url.pathname === '/friends');
+let isOnEncountersListPage = $derived($page.url.pathname === '/encounters');
 let isOnFriendDetailPage = $derived(
   $page.url.pathname.match(/^\/friends\/[^/]+$/) && !$page.url.pathname.endsWith('/new'),
 );
@@ -46,6 +50,8 @@ function clearPending() {
   editCircleModePrefix.set(null);
   isDeleteCircleModeActive.set(false);
   deleteCircleModePrefix.set(null);
+  isOpenEncounterModeActive.set(false);
+  openEncounterModePrefix.set(null);
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -135,6 +141,9 @@ function handleKeydown(e: KeyboardEvent) {
       case 'c':
         goto('/circles');
         break;
+      case 'e':
+        goto('/encounters');
+        break;
     }
     return;
   }
@@ -155,6 +164,9 @@ function handleKeydown(e: KeyboardEvent) {
         } else {
           goto('/circles');
         }
+        break;
+      case 'e':
+        goto('/encounters/new');
         break;
     }
     return;
@@ -203,11 +215,16 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // Handle two/three-key sequences (o+...) for opening friends from list
+  // Handle two/three-key sequences (o+...) for opening friends or encounters from list
   // Supports: o+1-9 for items 1-9, o+a+1-9 for items 10-18, o+b+1-9 for items 19-27, etc.
   if (pendingKey === 'o') {
-    const friendIds = $visibleFriendIds;
-    const currentPrefix = $openModePrefix;
+    // Determine if we're on friends or encounters page
+    const isOnFriends = $page.url.pathname === '/friends';
+    const isOnEncounters = $page.url.pathname === '/encounters';
+
+    const itemIds = isOnEncounters ? $visibleEncounterIds : $visibleFriendIds;
+    const currentPrefix = isOnEncounters ? $openEncounterModePrefix : $openModePrefix;
+    const basePath = isOnEncounters ? '/encounters' : '/friends';
     const keyNum = parseInt(e.key, 10);
     const keyLower = e.key.toLowerCase();
 
@@ -216,9 +233,9 @@ function handleKeydown(e: KeyboardEvent) {
       if (keyNum >= 1 && keyNum <= 9) {
         e.preventDefault();
         const index = getIndexFromHint(`${currentPrefix}${keyNum}`);
-        if (index >= 0 && index < friendIds.length) {
+        if (index >= 0 && index < itemIds.length) {
           clearPending();
-          goto(`/friends/${friendIds[index]}`);
+          goto(`${basePath}/${itemIds[index]}`);
         } else {
           // Index out of range, clear pending state
           clearPending();
@@ -235,9 +252,9 @@ function handleKeydown(e: KeyboardEvent) {
       // Direct number: open item 1-9
       e.preventDefault();
       const index = keyNum - 1;
-      if (index < friendIds.length) {
+      if (index < itemIds.length) {
         clearPending();
-        goto(`/friends/${friendIds[index]}`);
+        goto(`${basePath}/${itemIds[index]}`);
       }
       return;
     }
@@ -249,9 +266,13 @@ function handleKeydown(e: KeyboardEvent) {
       const groupStartIndex = (letterIndex + 1) * ITEMS_PER_GROUP;
 
       // Only accept the letter if there are items in this group
-      if (groupStartIndex < friendIds.length) {
+      if (groupStartIndex < itemIds.length) {
         e.preventDefault();
-        openModePrefix.set(keyLower);
+        if (isOnEncounters) {
+          openEncounterModePrefix.set(keyLower);
+        } else {
+          openModePrefix.set(keyLower);
+        }
         return;
       }
     }
@@ -481,6 +502,14 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
+  // Start open encounter sequence (only on encounters list page)
+  if (e.key === 'o' && $page.url.pathname === '/encounters') {
+    e.preventDefault();
+    pendingKey = 'o';
+    isOpenEncounterModeActive.set(true);
+    return;
+  }
+
   // Start filter sequence (only on friends list page)
   if (e.key === 'f' && $page.url.pathname === '/friends') {
     e.preventDefault();
@@ -626,6 +655,14 @@ function closeHelp() {
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">c</kbd>
                 </div>
               </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Go to Encounters</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">g</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -657,6 +694,14 @@ function closeHelp() {
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
                   <span class="text-gray-400">then</span>
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">c</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">New Encounter</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
                 </div>
               </div>
               {#if isOnFriendDetailPage}
@@ -880,6 +925,35 @@ function closeHelp() {
           </div>
           {/if}
 
+          <!-- Encounters List (only on /encounters) -->
+          {#if isOnEncountersListPage}
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Encounters List
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Open Encounter (1-9)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Open Encounter (10+)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/if}
+
           <!-- General -->
           <div>
             <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -932,6 +1006,10 @@ function closeHelp() {
         <span class="text-gray-700">Circles</span>
         <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">c</kbd>
       </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Encounters</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">e</kbd>
+      </div>
     </div>
   </div>
 {:else if pendingKey === 'n'}
@@ -948,6 +1026,10 @@ function closeHelp() {
       <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
         <span class="text-gray-700">Circle</span>
         <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">c</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Encounter</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">e</kbd>
       </div>
     </div>
   </div>
@@ -996,7 +1078,7 @@ function closeHelp() {
       </div>
     </div>
   </div>
-{:else if pendingKey === 'o'}
+{:else if pendingKey === 'o' && $page.url.pathname === '/friends'}
   <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
     <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
       <span class="text-sm font-medium text-gray-700">
@@ -1015,6 +1097,28 @@ function closeHelp() {
         Press the number to complete: {$openModePrefix}1, {$openModePrefix}2, ...
       {:else}
         Press the key shown on a friend to open it
+      {/if}
+    </div>
+  </div>
+{:else if pendingKey === 'o' && $page.url.pathname === '/encounters'}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">
+        Open encounter{$openEncounterModePrefix ? ` (${$openEncounterModePrefix}...)` : '...'}
+      </span>
+      <span class="text-xs text-gray-500 ml-2">
+        {#if $openEncounterModePrefix}
+          Press 1-9 or Esc to cancel
+        {:else}
+          Press 1-9, a-z, or Esc to cancel
+        {/if}
+      </span>
+    </div>
+    <div class="p-3 font-body text-sm text-gray-600">
+      {#if $openEncounterModePrefix}
+        Press the number to complete: {$openEncounterModePrefix}1, {$openEncounterModePrefix}2, ...
+      {:else}
+        Press the key shown on an encounter to open it
       {/if}
     </div>
   </div>

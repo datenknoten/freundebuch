@@ -10,6 +10,7 @@ import searchRoutes from './search.routes.js';
 import addressesRoutes from './sub-resources/addresses.routes.js';
 import datesRoutes from './sub-resources/dates.routes.js';
 import emailsRoutes from './sub-resources/emails.routes.js';
+import encountersRoutes from './sub-resources/encounters.routes.js';
 import metInfoRoutes from './sub-resources/met-info.routes.js';
 import phonesRoutes from './sub-resources/phones.routes.js';
 import professionalHistoryRoutes from './sub-resources/professional-history.routes.js';
@@ -48,5 +49,6 @@ app.route('/:id/met-info', metInfoRoutes);
 app.route('/:id/social-profiles', socialProfilesRoutes);
 app.route('/:id/relationships', relationshipsRoutes);
 app.route('/:id/professional-history', professionalHistoryRoutes);
+app.route('/:id/encounters', encountersRoutes);
 
 export default app;

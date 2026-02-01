@@ -25,6 +25,9 @@ const pageTitle = $derived.by(() => {
   if (pathname.startsWith('/friends/') && pathname.endsWith('/edit')) return t('common.edit');
   if (pathname.startsWith('/friends/')) return t('nav.friends');
   if (pathname === '/circles') return t('nav.circles');
+  if (pathname === '/encounters') return t('nav.encounters');
+  if (pathname === '/encounters/new') return t('encounters.logNew');
+  if (pathname.startsWith('/encounters/')) return t('nav.encounters');
   if (pathname === '/profile') return t('nav.profile');
   if (pathname.startsWith('/auth/')) return 'Freundebuch';
   return 'Freundebuch';
@@ -166,6 +169,17 @@ $effect(() => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
           </svg>
           {$i18n.t('nav.circles')}
+        </a>
+        <a
+          href="/encounters"
+          data-sveltekit-preload-data="tap"
+          onclick={closeMobileMenu}
+          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          {$i18n.t('nav.encounters')}
         </a>
         <a
           href="/profile"

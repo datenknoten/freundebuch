@@ -36,6 +36,14 @@ let circlesLimiter = new RateLimiterMemory({
   blockDuration: isTestEnv ? 1 : 60,
 });
 
+// Rate limiter for encounters API endpoints
+// 60 requests per minute in production, 300 in test
+let encountersLimiter = new RateLimiterMemory({
+  points: isTestEnv ? 300 : 60,
+  duration: 60,
+  blockDuration: isTestEnv ? 1 : 60,
+});
+
 /**
  * Reset all rate limiters (for testing purposes)
  */
@@ -56,6 +64,11 @@ export function resetRateLimiters(): void {
     blockDuration: isTestEnv ? 1 : 60,
   });
   circlesLimiter = new RateLimiterMemory({
+    points: isTestEnv ? 300 : 60,
+    duration: 60,
+    blockDuration: isTestEnv ? 1 : 60,
+  });
+  encountersLimiter = new RateLimiterMemory({
     points: isTestEnv ? 300 : 60,
     duration: 60,
     blockDuration: isTestEnv ? 1 : 60,
@@ -159,6 +172,29 @@ export async function circlesRateLimitMiddleware(c: Context, next: Next) {
     const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
 
     logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on circles endpoint');
+
+    return c.json({ error: 'Too many requests. Please try again later.' }, 429, {
+      'Retry-After': String(retryAfter),
+    });
+  }
+}
+
+/**
+ * Rate limiting middleware for encounters API endpoints
+ * Limits: 60 requests per minute, 1 minute block after exceeding
+ */
+export async function encountersRateLimitMiddleware(c: Context, next: Next) {
+  const clientId = getClientIdentifier(c);
+  const logger = c.get('logger');
+
+  try {
+    await encountersLimiter.consume(clientId);
+    return next();
+  } catch (error) {
+    const rateLimiterRes = error as RateLimiterRes;
+    const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
+
+    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on encounters endpoint');
 
     return c.json({ error: 'Too many requests. Please try again later.' }, 429, {
       'Retry-After': String(retryAfter),

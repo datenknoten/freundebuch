@@ -100,6 +100,17 @@ export class CircleNotFoundError extends AppError {
   }
 }
 
+/**
+ * Thrown when an encounter is not found in the database.
+ */
+export class EncounterNotFoundError extends AppError {
+  readonly statusCode = 404;
+
+  constructor(message = 'Encounter not found') {
+    super(message);
+  }
+}
+
 // ============================================================================
 // Bad Request Errors (400)
 // ============================================================================
@@ -185,6 +196,17 @@ export class FriendCreationError extends AppError {
   readonly statusCode = 500;
 
   constructor(message = 'Failed to create friend') {
+    super(message);
+  }
+}
+
+/**
+ * Thrown when encounter creation fails unexpectedly.
+ */
+export class EncounterCreationError extends AppError {
+  readonly statusCode = 500;
+
+  constructor(message = 'Failed to create encounter') {
     super(message);
   }
 }

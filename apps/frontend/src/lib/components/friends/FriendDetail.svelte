@@ -24,6 +24,7 @@ import type {
   Url,
   UrlInput,
 } from '$shared';
+import LastEncounterBadge from '../encounters/LastEncounterBadge.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
 import RelationshipsSection from './RelationshipsSection.svelte';
 import {
@@ -322,7 +323,14 @@ onMount(() => {
     openEditModal('professional');
   }
 
+  function handleLogEncounter() {
+    goto(
+      `/encounters/new?friendId=${friend.id}&friendName=${encodeURIComponent(friend.displayName)}`,
+    );
+  }
+
   window.addEventListener('shortcut:add-phone', handleAddPhone);
+  window.addEventListener('shortcut:log-encounter', handleLogEncounter);
   window.addEventListener('shortcut:add-email', handleAddEmail);
   window.addEventListener('shortcut:add-address', handleAddAddress);
   window.addEventListener('shortcut:add-url', handleAddUrl);
@@ -340,6 +348,7 @@ onMount(() => {
     window.removeEventListener('shortcut:add-social', handleAddSocial);
     window.removeEventListener('shortcut:add-circle', handleAddCircle);
     window.removeEventListener('shortcut:add-professional', handleAddProfessional);
+    window.removeEventListener('shortcut:log-encounter', handleLogEncounter);
   };
 });
 </script>
@@ -366,6 +375,11 @@ onMount(() => {
       {#if friend.nickname}
         <p class="text-gray-500 font-body text-sm mt-1">"{friend.nickname}"</p>
       {/if}
+
+      <!-- Last Encounter Badge -->
+      <div class="mt-3">
+        <LastEncounterBadge friendId={friend.id} friendName={friend.displayName} />
+      </div>
     </div>
 
     <div class="flex gap-2">
