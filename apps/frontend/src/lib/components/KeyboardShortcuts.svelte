@@ -196,6 +196,9 @@ function handleKeydown(e: KeyboardEvent) {
       case 'c':
         window.dispatchEvent(new CustomEvent('shortcut:add-circle'));
         break;
+      case 'w':
+        window.dispatchEvent(new CustomEvent('shortcut:add-professional'));
+        break;
     }
     return;
   }
@@ -818,6 +821,14 @@ function closeHelp() {
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">c</kbd>
                 </div>
               </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Work Experience</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">w</kbd>
+                </div>
+              </div>
             </div>
           </div>
           {/if}
@@ -978,6 +989,10 @@ function closeHelp() {
       <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
         <span class="text-gray-700">Circle</span>
         <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">c</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Work Experience</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">w</kbd>
       </div>
     </div>
   </div>
