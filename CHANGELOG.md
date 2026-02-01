@@ -1,3 +1,9 @@
+## [2.59.0](https://github.com/datenknoten/freundebuch/compare/v2.58.0...v2.59.0) (2026-02-01)
+
+### Features
+
+* Implement encounter management (Epic 2) ([9c72c3e](https://github.com/datenknoten/freundebuch/commit/9c72c3e2f5af13014186f0d5d7fc3510caf88523))
+
 ## [2.58.0](https://github.com/datenknoten/freundebuch/compare/v2.57.0...v2.58.0) (2026-02-01)
 
 ### Features
