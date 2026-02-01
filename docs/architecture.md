@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Freundebuch** is a self-hostable web application for relationship management designed for individuals and families. Think of it as your digital friendship book that helps you maintain meaningful connections by tracking interactions, setting reminders, and providing insights into your relationships.
+**Freundebuch** is a self-hostable web application for relationship management designed for individuals and families. Think of it as your digital friendship book that helps you maintain meaningful connections by tracking encounters, setting reminders, and providing insights into your relationships.
 
 **Important:** This is a personal relationship tool, not a business/sales CRM.
 
@@ -70,7 +70,7 @@ This application implements open standards for interoperability:
 4. Multi-User - Authentication
 
 ### Phase 2: Core Features
-5. Relationship Management - Interaction logging
+5. Encounter Management - Encounter logging
 6. Reminder System - Automated reminders
 7. Activity Timeline - Chronological view
 8. Dashboard & Insights - Analytics

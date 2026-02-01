@@ -54,20 +54,27 @@ This feature lets you capture and remember the meaningful moments you share with
 ## Technical Considerations
 
 ### Database Schema
-- `encounters` table:
-  - `id` (serial, primary key)
-  - `external_id` (uuid, unique)
-  - `user_id` (integer, references auth.users)
-  - `title` (varchar(255), not null)
+- `encounters.encounters` table:
+  - `id` (serial, primary key) - internal use only
+  - `external_id` (uuid, unique, not null, default gen_random_uuid()) - for API
+  - `user_id` (integer, references auth.users on delete cascade)
+  - `title` (text, not null)
   - `encounter_date` (date, not null)
-  - `location_text` (varchar(500), optional free-text location)
-  - `location_address_id` (integer, optional reference to geodata.addresses)
+  - `location_text` (text, optional free-text location)
+  - `location_address_id` (integer, optional reference to geodata.addresses on delete set null)
   - `description` (text, optional)
-  - `created_at`, `updated_at` timestamps
-- `encounter_friends` junction table:
-  - `encounter_id` (references encounters)
-  - `friend_id` (references friends.friends)
-  - Primary key on (encounter_id, friend_id)
+  - `created_at` (timestamptz, not null, default current_timestamp)
+  - `updated_at` (timestamptz, not null, default current_timestamp)
+  - Indexes: `external_id`, `user_id`, `encounter_date`
+  - Trigger: auto-update `updated_at` on changes
+- `encounters.encounter_friends` junction table:
+  - `id` (serial, primary key) - internal use only
+  - `external_id` (uuid, unique, not null, default gen_random_uuid()) - for API
+  - `encounter_id` (integer, references encounters.encounters on delete cascade)
+  - `friend_id` (integer, references friends.friends on delete cascade)
+  - `created_at` (timestamptz, not null, default current_timestamp)
+  - Unique constraint on (encounter_id, friend_id)
+  - Indexes: `external_id`, `encounter_id`, `friend_id`
 
 ### API Endpoints
 - `GET /api/encounters` - List all encounters (with pagination and filters)

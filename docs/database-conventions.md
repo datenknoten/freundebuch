@@ -11,7 +11,7 @@ All database tables MUST be organized into logical PostgreSQL schemas. Never use
 **Schema Structure:**
 - `auth` - Authentication and user management (users, sessions, tokens)
 - `contacts` - Contact management (contacts, relationships, groups)
-- `interactions` - Interaction tracking (interactions, notes, reminders)
+- `encounters` - Encounter tracking (encounters, notes, reminders)
 - `system` - System tables (migrations, settings, audit logs)
 
 **Example:**
@@ -142,7 +142,7 @@ metadata JSONB DEFAULT '{}'::jsonb
 
 ### Tables
 
-- Use plural nouns: `users`, `contacts`, `interactions`
+- Use plural nouns: `users`, `contacts`, `encounters`
 - Use snake_case: `contact_groups`, `user_sessions`
 - Prefix with schema: `auth.users`, `contacts.contacts`
 
