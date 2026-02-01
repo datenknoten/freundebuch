@@ -172,7 +172,7 @@ When naming features, prefer human-readable names over technical ones:
 | Contact list | Your Freundebuch / Friends |
 | Contact profile | [Name]'s page |
 | Groups/categories | Circles |
-| Interaction log | Timeline |
+| Encounter log | Timeline |
 | Contact frequency alerts | Reminders |
 | Data synchronization | Sync |
 | Full-text search | Search |

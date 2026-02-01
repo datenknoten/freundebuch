@@ -49,7 +49,7 @@ See [brand.md](./brand.md) for our brand guidelines and terminology.
 
 ### 3.1 Core Features
 1. **Friend Management** - Your address book, but with all the context you actually need
-2. **Relationship Management** - Track interactions and keep the history of your relationships
+2. **Encounter Management** - Track encounters and build the history of your relationships
 3. **Reminder System** - Never forget to reach out again
 4. **Categorization & Organization** - Organize contacts your way with circles and tags
 5. **Multi-User Management** - Share contacts with family or housemates
@@ -97,11 +97,11 @@ We care about the context and story of your relationships, not just the data poi
 Documentation and tracking of relationship history with each person.
 
 **Scope:**
-- **Interaction Log:**
+- **Encounter Log:**
   - Manual recording of meetings, calls, messages
-  - Date, type, notes for each interaction
+  - Date, type, notes for each encounter
   - Attachments (photos, documents)
-- **Last Interaction:**
+- **Last Encounter:**
   - Automatic display of last contact
   - Time span since last contact
 - **Relationship Quality:**
@@ -202,7 +202,7 @@ Standards-compliant interfaces for synchronization with external applications.
   - Synchronization of:
     - Birthdays as calendar events
     - Reminders as tasks/appointments
-    - Interaction history as calendar entries (optional)
+    - Encounter history as calendar entries (optional)
   - Multiple calendars (e.g., "Birthdays", "Meetings")
 - **Authentication:**
   - Basic Auth, OAuth 2.0
@@ -237,14 +237,14 @@ Easy migration from and to other systems.
 ### Feature 8: Activity Timeline
 
 **Description:**
-Chronological display of all interactions and events.
+Chronological display of all encounters and events.
 
 **Scope:**
 - **Per-Contact Timeline:**
-  - All interactions in chronological order
+  - All encounters in chronological order
   - Birthdays, anniversaries
   - Notes with timestamp
-  - Filter by interaction type
+  - Filter by encounter type
 - **Global Timeline:**
   - Overview of all activities across all contacts
   - Filter by date, person, type
@@ -254,8 +254,8 @@ Chronological display of all interactions and events.
   - Calendar view
   - List view
 - **Quick Entry:**
-  - Quick-add for new interactions
-  - Templates for frequent interaction types
+  - Quick-add for new encounters
+  - Templates for frequent encounter types
 
 ---
 
@@ -269,12 +269,12 @@ Overviews and statistics for contact maintenance.
   - Upcoming birthdays (next 30 days)
   - Overdue contacts ("Haven't seen in a long time")
   - Contact statistics (total, new this week/month)
-  - Activity overview (interactions this week)
-  - Top contacts (by interaction frequency)
+  - Activity overview (encounters this week)
+  - Top contacts (by encounter frequency)
 - **Insights:**
   - Contact frequency analysis
   - Circle distribution (pie chart)
-  - Interaction trends (temporal development)
+  - Encounter trends (temporal development)
   - Identify "neglected" contacts
 - **Personalization:**
   - Widget arrangement customizable
@@ -300,9 +300,9 @@ Powerful search across all contact data.
   - Birthday time period
 - **Sorting:**
   - By name (A-Z)
-  - By last interaction
+  - By last encounter
   - By creation date
-  - By interaction frequency
+  - By encounter frequency
 - **Result Preview:**
   - Contact card with most important info
   - Highlighting of search terms
@@ -377,7 +377,7 @@ Powerful search across all contact data.
 
 **API Endpoints (Examples):**
 - `/api/contacts` - CRUD for contacts
-- `/api/interactions` - interaction tracking
+- `/api/encounters` - encounter tracking
 - `/api/reminders` - reminder management
 - `/api/circles` - circle management
 - `/api/users` - user management
@@ -387,7 +387,7 @@ Powerful search across all contact data.
 **Data Model Relationships:**
 - User → Contacts (1:n)
 - User → Circles (1:n)
-- Contact → Interactions (1:n)
+- Contact → Encounters (1:n)
 - Contact → Reminders (1:n)
 - Contact → Circles (n:m)
 - Contact → Tags (n:m)
@@ -419,7 +419,7 @@ Let's start with the basics that make this useful:
 
 ### Phase 2: The Magic Happens
 Now we add the features that make staying in touch easier:
-- Feature 2: Relationship Management (track your interactions)
+- Feature 2: Encounter Management (track your encounters)
 - Feature 3: Reminder System (never forget to reach out)
 - Feature 8: Activity Timeline (see the full history)
 - Feature 9: Dashboard (get the big picture)
