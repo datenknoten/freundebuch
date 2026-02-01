@@ -129,6 +129,26 @@ export const deleteCircleModePrefix = writable<string | null>(null);
  */
 export const visibleCircleIds = writable<string[]>([]);
 
+// =============================================================================
+// Encounter Mode State (keyboard-driven encounter opening)
+// =============================================================================
+
+/**
+ * Tracks if "open encounter mode" is active for quick keyboard navigation to encounters
+ * When active, encounter cards show keyboard hints and key sequences can open items
+ */
+export const isOpenEncounterModeActive = writable(false);
+
+/**
+ * Tracks the current letter prefix in open encounter mode (e.g., 'a', 'b', 'c')
+ */
+export const openEncounterModePrefix = writable<string | null>(null);
+
+/**
+ * List of encounter IDs currently visible in the list (for keyboard navigation)
+ */
+export const visibleEncounterIds = writable<string[]>([]);
+
 /**
  * Mapping of keyboard keys to filter category field names
  */
