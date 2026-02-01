@@ -1,3 +1,13 @@
+## [2.58.0](https://github.com/datenknoten/freundebuch/compare/v2.57.0...v2.58.0) (2026-02-01)
+
+### Features
+
+* **frontend:** Add keyboard shortcut for work experience (a+w) ([1f2a452](https://github.com/datenknoten/freundebuch/commit/1f2a452eef279f75c5c69711e7304168c70c3007))
+
+### Code Refactoring
+
+* **frontend:** Simplify desktop add dropdown to show details directly ([90aca64](https://github.com/datenknoten/freundebuch/commit/90aca64a97262948c33789cf659aba715d6242f1))
+
 ## [2.57.0](https://github.com/datenknoten/freundebuch/compare/v2.56.0...v2.57.0) (2026-01-26)
 
 ### Features
