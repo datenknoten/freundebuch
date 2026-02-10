@@ -1,6 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
+import { removeMember } from '$lib/api/collectives';
+import { getCollectivesForFriend } from '$lib/api/friends';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 
@@ -10,6 +12,7 @@ import type {
   Address,
   AddressInput,
   CircleSummary,
+  ContactCollectiveSummary,
   DateInput,
   Email,
   EmailInput,
@@ -34,6 +37,7 @@ import {
   AddressRow,
   CircleEditForm,
   CircleRow,
+  CollectiveRow,
   DateEditForm,
   DateRow,
   DeleteConfirmModal,
@@ -58,6 +62,41 @@ interface Props {
 }
 
 let { friend }: Props = $props();
+
+// Collectives state (loaded separately from friend data)
+let collectives = $state<ContactCollectiveSummary[]>([]);
+let collectivesLoading = $state(false);
+let removingCollectiveId = $state<string | null>(null);
+
+// Load collectives on mount
+$effect(() => {
+  if (friend.id) {
+    loadCollectives();
+  }
+});
+
+async function loadCollectives() {
+  collectivesLoading = true;
+  try {
+    collectives = await getCollectivesForFriend(friend.id);
+  } catch (err) {
+    console.error('Failed to load collectives:', err);
+  } finally {
+    collectivesLoading = false;
+  }
+}
+
+async function handleRemoveFromCollective(collectiveId: string, membershipId: string) {
+  removingCollectiveId = collectiveId;
+  try {
+    await removeMember(collectiveId, membershipId);
+    collectives = collectives.filter((c) => c.id !== collectiveId);
+  } catch (err) {
+    console.error('Failed to remove from collective:', err);
+  } finally {
+    removingCollectiveId = null;
+  }
+}
 
 // Friend deletion state
 let isDeleting = $state(false);
@@ -728,6 +767,29 @@ onMount(() => {
             {circle}
             onDelete={() => openDeleteConfirm('circle', circle.id, circle.name)}
             isDeleting={deletingCircleId === circle.id}
+          />
+        {/each}
+      </div>
+    </section>
+  {/if}
+
+  <!-- ==================== COLLECTIVES SECTION ==================== -->
+  {#if collectives.length > 0}
+    <section class="space-y-2">
+      <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+        <h2 class="text-lg font-heading flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          {$i18n.t('friendDetail.sections.collectives')}
+        </h2>
+      </div>
+      <div class="space-y-2">
+        {#each collectives as collective (collective.id)}
+          <CollectiveRow
+            {collective}
+            onRemove={handleRemoveFromCollective}
+            isRemoving={removingCollectiveId === collective.id}
           />
         {/each}
       </div>

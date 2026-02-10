@@ -18,13 +18,19 @@ import {
   isEditCircleModeActive,
   isFilterModeActive,
   isModalOpen,
+  isOpenCollectiveModeActive,
   isOpenEncounterModeActive,
+  isOpenMemberModeActive,
   isOpenModeActive,
+  openCollectiveModePrefix,
   openEncounterModePrefix,
+  openMemberModePrefix,
   openModePrefix,
   visibleCircleIds,
+  visibleCollectiveIds,
   visibleEncounterIds,
   visibleFriendIds,
+  visibleMemberContactIds,
 } from '$lib/stores/ui';
 
 let showHelp = $state(false);
@@ -34,8 +40,12 @@ let pendingKey = $state<string | null>(null);
 let isOnCirclesPage = $derived($page.url.pathname === '/circles');
 let isOnFriendsListPage = $derived($page.url.pathname === '/friends');
 let isOnEncountersListPage = $derived($page.url.pathname === '/encounters');
+let isOnCollectivesListPage = $derived($page.url.pathname === '/collectives');
 let isOnFriendDetailPage = $derived(
   $page.url.pathname.match(/^\/friends\/[^/]+$/) && !$page.url.pathname.endsWith('/new'),
+);
+let isOnCollectiveDetailPage = $derived(
+  $page.url.pathname.match(/^\/collectives\/[^/]+$/) && !$page.url.pathname.endsWith('/new'),
 );
 
 // Clear pending key (used when action completes or Escape is pressed)
@@ -52,6 +62,10 @@ function clearPending() {
   deleteCircleModePrefix.set(null);
   isOpenEncounterModeActive.set(false);
   openEncounterModePrefix.set(null);
+  isOpenCollectiveModeActive.set(false);
+  openCollectiveModePrefix.set(null);
+  isOpenMemberModeActive.set(false);
+  openMemberModePrefix.set(null);
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -144,6 +158,9 @@ function handleKeydown(e: KeyboardEvent) {
       case 'e':
         goto('/encounters');
         break;
+      case 'o':
+        goto('/collectives');
+        break;
     }
     return;
   }
@@ -168,63 +185,116 @@ function handleKeydown(e: KeyboardEvent) {
       case 'e':
         goto('/encounters/new');
         break;
+      case 'o':
+        goto('/collectives/new');
+        break;
     }
     return;
   }
 
-  // Handle two-key sequences (a+...) for adding details - only on friend detail page
+  // Handle two-key sequences (a+...) for adding details - on friend or collective detail page
   if (pendingKey === 'a') {
     clearPending();
 
-    // Only work on friend detail pages
-    if (!$currentFriend || !$page.url.pathname.match(/^\/friends\/[^/]+$/)) {
+    const isOnFriend = $currentFriend && $page.url.pathname.match(/^\/friends\/[^/]+$/);
+    const isOnCollective =
+      $page.url.pathname.match(/^\/collectives\/[^/]+$/) && !$page.url.pathname.endsWith('/new');
+
+    if (!isOnFriend && !isOnCollective) {
       return;
     }
 
     e.preventDefault();
 
-    switch (e.key) {
-      case 'p':
-        window.dispatchEvent(new CustomEvent('shortcut:add-phone'));
-        break;
-      case 'e':
-        window.dispatchEvent(new CustomEvent('shortcut:add-email'));
-        break;
-      case 'a':
-        window.dispatchEvent(new CustomEvent('shortcut:add-address'));
-        break;
-      case 'u':
-        window.dispatchEvent(new CustomEvent('shortcut:add-url'));
-        break;
-      case 'd':
-        window.dispatchEvent(new CustomEvent('shortcut:add-date'));
-        break;
-      case 's':
-        window.dispatchEvent(new CustomEvent('shortcut:add-social'));
-        break;
-      case 'r':
-        window.dispatchEvent(new CustomEvent('shortcut:add-relationship'));
-        break;
-      case 'c':
-        window.dispatchEvent(new CustomEvent('shortcut:add-circle'));
-        break;
-      case 'w':
-        window.dispatchEvent(new CustomEvent('shortcut:add-professional'));
-        break;
+    if (isOnCollective) {
+      // Collective detail shortcuts
+      switch (e.key) {
+        case 'p':
+          window.dispatchEvent(new CustomEvent('shortcut:collective-add-phone'));
+          break;
+        case 'e':
+          window.dispatchEvent(new CustomEvent('shortcut:collective-add-email'));
+          break;
+        case 'a':
+          window.dispatchEvent(new CustomEvent('shortcut:collective-add-address'));
+          break;
+        case 'u':
+          window.dispatchEvent(new CustomEvent('shortcut:collective-add-url'));
+          break;
+        case 'c':
+          window.dispatchEvent(new CustomEvent('shortcut:collective-add-circle'));
+          break;
+        case 'm':
+          window.dispatchEvent(new CustomEvent('shortcut:collective-add-member'));
+          break;
+      }
+    } else {
+      // Friend detail shortcuts
+      switch (e.key) {
+        case 'p':
+          window.dispatchEvent(new CustomEvent('shortcut:add-phone'));
+          break;
+        case 'e':
+          window.dispatchEvent(new CustomEvent('shortcut:add-email'));
+          break;
+        case 'a':
+          window.dispatchEvent(new CustomEvent('shortcut:add-address'));
+          break;
+        case 'u':
+          window.dispatchEvent(new CustomEvent('shortcut:add-url'));
+          break;
+        case 'd':
+          window.dispatchEvent(new CustomEvent('shortcut:add-date'));
+          break;
+        case 's':
+          window.dispatchEvent(new CustomEvent('shortcut:add-social'));
+          break;
+        case 'r':
+          window.dispatchEvent(new CustomEvent('shortcut:add-relationship'));
+          break;
+        case 'c':
+          window.dispatchEvent(new CustomEvent('shortcut:add-circle'));
+          break;
+        case 'w':
+          window.dispatchEvent(new CustomEvent('shortcut:add-professional'));
+          break;
+      }
     }
     return;
   }
 
-  // Handle two/three-key sequences (o+...) for opening friends or encounters from list
+  // Handle two/three-key sequences (o+...) for opening friends, encounters, collectives, or members
   // Supports: o+1-9 for items 1-9, o+a+1-9 for items 10-18, o+b+1-9 for items 19-27, etc.
   if (pendingKey === 'o') {
-    // Determine if we're on friends or encounters page
+    // Determine which page we're on
     const isOnFriends = $page.url.pathname === '/friends';
     const isOnEncounters = $page.url.pathname === '/encounters';
+    const isOnCollectives = $page.url.pathname === '/collectives';
+    const isOnCollectiveDetail =
+      $page.url.pathname.match(/^\/collectives\/[^/]+$/) && !$page.url.pathname.endsWith('/new');
 
-    const itemIds = isOnEncounters ? $visibleEncounterIds : $visibleFriendIds;
-    const currentPrefix = isOnEncounters ? $openEncounterModePrefix : $openModePrefix;
-    const basePath = isOnEncounters ? '/encounters' : '/friends';
+    const itemIds = isOnCollectiveDetail
+      ? $visibleMemberContactIds
+      : isOnCollectives
+        ? $visibleCollectiveIds
+        : isOnEncounters
+          ? $visibleEncounterIds
+          : $visibleFriendIds;
+    const currentPrefix = isOnCollectiveDetail
+      ? $openMemberModePrefix
+      : isOnCollectives
+        ? $openCollectiveModePrefix
+        : isOnEncounters
+          ? $openEncounterModePrefix
+          : $openModePrefix;
+    // Members navigate to /friends/{contactId}, others navigate to their own base path
+    const basePath = isOnCollectiveDetail
+      ? '/friends'
+      : isOnCollectives
+        ? '/collectives'
+        : isOnEncounters
+          ? '/encounters'
+          : '/friends';
     const keyNum = parseInt(e.key, 10);
     const keyLower = e.key.toLowerCase();
 
@@ -268,7 +338,11 @@ function handleKeydown(e: KeyboardEvent) {
       // Only accept the letter if there are items in this group
       if (groupStartIndex < itemIds.length) {
         e.preventDefault();
-        if (isOnEncounters) {
+        if (isOnCollectiveDetail) {
+          openMemberModePrefix.set(keyLower);
+        } else if (isOnCollectives) {
+          openCollectiveModePrefix.set(keyLower);
+        } else if (isOnEncounters) {
           openEncounterModePrefix.set(keyLower);
         } else {
           openModePrefix.set(keyLower);
@@ -487,8 +561,12 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // Start add detail sequence (only on friend detail page)
-  if (e.key === 'a' && $currentFriend && $page.url.pathname.match(/^\/friends\/[^/]+$/)) {
+  // Start add detail sequence (on friend or collective detail page)
+  if (
+    e.key === 'a' &&
+    (($currentFriend && $page.url.pathname.match(/^\/friends\/[^/]+$/)) ||
+      ($page.url.pathname.match(/^\/collectives\/[^/]+$/) && !$page.url.pathname.endsWith('/new')))
+  ) {
     e.preventDefault();
     pendingKey = 'a';
     return;
@@ -507,6 +585,26 @@ function handleKeydown(e: KeyboardEvent) {
     e.preventDefault();
     pendingKey = 'o';
     isOpenEncounterModeActive.set(true);
+    return;
+  }
+
+  // Start open collective sequence (only on collectives list page)
+  if (e.key === 'o' && $page.url.pathname === '/collectives') {
+    e.preventDefault();
+    pendingKey = 'o';
+    isOpenCollectiveModeActive.set(true);
+    return;
+  }
+
+  // Start open member sequence (only on collective detail page)
+  if (
+    e.key === 'o' &&
+    $page.url.pathname.match(/^\/collectives\/[^/]+$/) &&
+    !$page.url.pathname.endsWith('/new')
+  ) {
+    e.preventDefault();
+    pendingKey = 'o';
+    isOpenMemberModeActive.set(true);
     return;
   }
 
@@ -663,6 +761,14 @@ function closeHelp() {
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
                 </div>
               </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Go to Collectives</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">g</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -702,6 +808,14 @@ function closeHelp() {
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
                   <span class="text-gray-400">then</span>
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">New Collective</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
                 </div>
               </div>
               {#if isOnFriendDetailPage}
@@ -793,6 +907,91 @@ function closeHelp() {
                 </div>
               </div>
             </div>
+          {/if}
+
+          <!-- Collective Detail (only on collective detail page) -->
+          {#if isOnCollectiveDetailPage}
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Collective Detail
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Open Member (1-9)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Open Member (10+)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Add Details
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Phone</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">p</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Email</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Address</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add URL</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">u</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Circle</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">c</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Add Member</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">m</kbd>
+                </div>
+              </div>
+            </div>
+          </div>
           {/if}
 
           <!-- Add Details (only on friend detail page) -->
@@ -954,6 +1153,35 @@ function closeHelp() {
           </div>
           {/if}
 
+          <!-- Collectives List (only on /collectives) -->
+          {#if isOnCollectivesListPage}
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Collectives List
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Open Collective (1-9)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Open Collective (10+)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/if}
+
           <!-- General -->
           <div>
             <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -1010,6 +1238,10 @@ function closeHelp() {
         <span class="text-gray-700">Encounters</span>
         <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">e</kbd>
       </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Collectives</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">o</kbd>
+      </div>
     </div>
   </div>
 {:else if pendingKey === 'n'}
@@ -1030,6 +1262,43 @@ function closeHelp() {
       <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
         <span class="text-gray-700">Encounter</span>
         <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">e</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Collective</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">o</kbd>
+      </div>
+    </div>
+  </div>
+{:else if pendingKey === 'a' && isOnCollectiveDetailPage}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">Add...</span>
+      <span class="text-xs text-gray-500 ml-2">Press key or Esc to cancel</span>
+    </div>
+    <div class="p-2 space-y-1 font-body text-sm">
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Phone</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">p</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Email</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">e</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Address</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">a</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">URL</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">u</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Circle</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">c</kbd>
+      </div>
+      <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
+        <span class="text-gray-700">Member</span>
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">m</kbd>
       </div>
     </div>
   </div>
@@ -1119,6 +1388,50 @@ function closeHelp() {
         Press the number to complete: {$openEncounterModePrefix}1, {$openEncounterModePrefix}2, ...
       {:else}
         Press the key shown on an encounter to open it
+      {/if}
+    </div>
+  </div>
+{:else if pendingKey === 'o' && isOnCollectiveDetailPage}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">
+        Open member{$openMemberModePrefix ? ` (${$openMemberModePrefix}...)` : '...'}
+      </span>
+      <span class="text-xs text-gray-500 ml-2">
+        {#if $openMemberModePrefix}
+          Press 1-9 or Esc to cancel
+        {:else}
+          Press 1-9, a-z, or Esc to cancel
+        {/if}
+      </span>
+    </div>
+    <div class="p-3 font-body text-sm text-gray-600">
+      {#if $openMemberModePrefix}
+        Press the number to complete: {$openMemberModePrefix}1, {$openMemberModePrefix}2, ...
+      {:else}
+        Press the key shown on a member to open their profile
+      {/if}
+    </div>
+  </div>
+{:else if pendingKey === 'o' && $page.url.pathname === '/collectives'}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">
+        Open collective{$openCollectiveModePrefix ? ` (${$openCollectiveModePrefix}...)` : '...'}
+      </span>
+      <span class="text-xs text-gray-500 ml-2">
+        {#if $openCollectiveModePrefix}
+          Press 1-9 or Esc to cancel
+        {:else}
+          Press 1-9, a-z, or Esc to cancel
+        {/if}
+      </span>
+    </div>
+    <div class="p-3 font-body text-sm text-gray-600">
+      {#if $openCollectiveModePrefix}
+        Press the number to complete: {$openCollectiveModePrefix}1, {$openCollectiveModePrefix}2, ...
+      {:else}
+        Press the key shown on a collective to open it
       {/if}
     </div>
   </div>

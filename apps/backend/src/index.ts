@@ -14,6 +14,7 @@ import addressLookupRoutes from './routes/address-lookup.js';
 import appPasswordsRoutes from './routes/app-passwords.js';
 import authRoutes from './routes/auth.js';
 import circlesRoutes from './routes/circles.js';
+import collectivesRoutes from './routes/collectives.js';
 import encountersRoutes from './routes/encounters.js';
 import friendsRoutes from './routes/friends.js';
 import healthRoutes from './routes/health.js';
@@ -79,6 +80,7 @@ export async function createApp(pool: pg.Pool) {
   app.route('/api/users', usersRoutes);
   app.route('/api/friends', friendsRoutes);
   app.route('/api/circles', circlesRoutes);
+  app.route('/api/collectives', collectivesRoutes);
   app.route('/api/encounters', encountersRoutes);
   app.route('/api/uploads', uploadsRoutes);
   app.route('/api/app-passwords', appPasswordsRoutes);

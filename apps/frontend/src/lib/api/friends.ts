@@ -2,6 +2,7 @@ import { get } from 'svelte/store';
 import type {
   Address,
   AddressInput,
+  ContactCollectiveSummary,
   DateInput,
   Email,
   EmailInput,
@@ -738,4 +739,17 @@ export async function clearRecentSearches(): Promise<void> {
  */
 export async function getNetworkGraphData(): Promise<NetworkGraphData> {
   return apiRequest<NetworkGraphData>('/api/friends/network-graph');
+}
+
+// ============================================================================
+// Collectives Operations
+// ============================================================================
+
+/**
+ * Get all collectives this friend belongs to
+ */
+export async function getCollectivesForFriend(
+  friendId: string,
+): Promise<ContactCollectiveSummary[]> {
+  return apiRequest<ContactCollectiveSummary[]>(`/api/friends/${friendId}/collectives`);
 }

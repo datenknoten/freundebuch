@@ -111,6 +111,50 @@ export class EncounterNotFoundError extends AppError {
   }
 }
 
+/**
+ * Thrown when a collective is not found in the database.
+ */
+export class CollectiveNotFoundError extends AppError {
+  readonly statusCode = 404;
+
+  constructor() {
+    super('Collective not found');
+  }
+}
+
+/**
+ * Thrown when a membership is not found in the database.
+ */
+export class MembershipNotFoundError extends AppError {
+  readonly statusCode = 404;
+
+  constructor() {
+    super('Membership not found');
+  }
+}
+
+/**
+ * Thrown when a contact is not found in the database.
+ */
+export class ContactNotFoundError extends AppError {
+  readonly statusCode = 404;
+
+  constructor() {
+    super('Contact not found');
+  }
+}
+
+/**
+ * Thrown when a collective role is not found in the database.
+ */
+export class RoleNotFoundError extends AppError {
+  readonly statusCode = 404;
+
+  constructor() {
+    super('Role not found');
+  }
+}
+
 // ============================================================================
 // Bad Request Errors (400)
 // ============================================================================
@@ -174,6 +218,17 @@ export class CircleNameExistsError extends AppError {
   }
 }
 
+/**
+ * Thrown when attempting to add a contact that is already a member of the collective.
+ */
+export class DuplicateMembershipError extends AppError {
+  readonly statusCode = 409;
+
+  constructor() {
+    super('Contact is already a member of this collective');
+  }
+}
+
 // ============================================================================
 // Internal Server Errors (500)
 // ============================================================================
@@ -207,6 +262,28 @@ export class EncounterCreationError extends AppError {
   readonly statusCode = 500;
 
   constructor(message = 'Failed to create encounter') {
+    super(message);
+  }
+}
+
+/**
+ * Thrown when collective creation fails unexpectedly.
+ */
+export class CollectiveCreationError extends AppError {
+  readonly statusCode = 500;
+
+  constructor(message = 'Failed to create collective') {
+    super(message);
+  }
+}
+
+/**
+ * Thrown when membership creation fails unexpectedly.
+ */
+export class MembershipCreationError extends AppError {
+  readonly statusCode = 500;
+
+  constructor(message = 'Failed to create membership') {
     super(message);
   }
 }
