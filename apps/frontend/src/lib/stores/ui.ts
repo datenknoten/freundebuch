@@ -130,6 +130,46 @@ export const deleteCircleModePrefix = writable<string | null>(null);
 export const visibleCircleIds = writable<string[]>([]);
 
 // =============================================================================
+// Collective Mode State (keyboard-driven collective opening)
+// =============================================================================
+
+/**
+ * Tracks if "open collective mode" is active for quick keyboard navigation to collectives
+ * When active, collective rows/cards show keyboard hints and key sequences can open items
+ */
+export const isOpenCollectiveModeActive = writable(false);
+
+/**
+ * Tracks the current letter prefix in open collective mode (e.g., 'a', 'b', 'c')
+ */
+export const openCollectiveModePrefix = writable<string | null>(null);
+
+/**
+ * List of collective IDs currently visible in the list (for open mode navigation)
+ */
+export const visibleCollectiveIds = writable<string[]>([]);
+
+// =============================================================================
+// Member Open Mode State (keyboard-driven member opening on collective detail)
+// =============================================================================
+
+/**
+ * Tracks if "open member mode" is active for quick keyboard navigation to members
+ * When active, member rows show keyboard hints and key sequences can open friend profiles
+ */
+export const isOpenMemberModeActive = writable(false);
+
+/**
+ * Tracks the current letter prefix in open member mode (e.g., 'a', 'b', 'c')
+ */
+export const openMemberModePrefix = writable<string | null>(null);
+
+/**
+ * List of friend/contact IDs of members currently visible (for open mode navigation)
+ */
+export const visibleMemberContactIds = writable<string[]>([]);
+
+// =============================================================================
 // Encounter Mode State (keyboard-driven encounter opening)
 // =============================================================================
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 import DOMPurify from 'isomorphic-dompurify';
 import { goto } from '$app/navigation';
-import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
+import { isOpenModeActive, openModePrefix } from '$lib/stores/ui';
 import {
   type BirthdayFormat,
   COLUMN_DEFINITIONS,
@@ -9,6 +9,7 @@ import {
   type FriendGridItem,
 } from '$shared';
 import CircleChips from '../circles/CircleChips.svelte';
+import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
 
 /** Sanitize search headline HTML to only allow <mark> tags for highlighting */
@@ -92,27 +93,6 @@ function mapColumnToSortBy(
     default:
       return null;
   }
-}
-
-function getKeyHint(index: number): string | null {
-  return getKeyboardHint(index);
-}
-
-function shouldShowKeyHint(index: number): boolean {
-  if (!$isOpenModeActive) return false;
-
-  const keyHint = getKeyHint(index);
-  if (!keyHint) return false;
-
-  const prefix = $openModePrefix;
-
-  if (prefix === null) {
-    // No prefix selected yet - show all hints
-    return true;
-  }
-
-  // Prefix selected - only show hints that match this prefix
-  return keyHint.length === 2 && keyHint[0] === prefix;
 }
 
 function formatDate(dateString: string | undefined): string {
@@ -253,8 +233,6 @@ function getMatchSourceBadge(
     </thead>
     <tbody>
       {#each items as item, index (item.id)}
-        {@const keyHint = getKeyHint(index)}
-        {@const showHint = shouldShowKeyHint(index)}
         {@const matchBadge = getMatchSourceBadge(item.matchSource)}
         <tr
           onclick={() => handleRowClick(item.id)}
@@ -272,11 +250,7 @@ function getMatchSourceBadge(
             >
               {#if columnId === 'avatar'}
                 <!-- Avatar with keyboard hint -->
-                {#if showHint && keyHint}
-                  <div class="absolute -left-6 top-1/2 -translate-y-1/2 min-w-5 h-5 px-1 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">
-                    {keyHint}
-                  </div>
-                {/if}
+                <KeyboardHintBadge {index} isActive={$isOpenModeActive} prefix={$openModePrefix} variant="table-row" />
                 <FriendAvatar
                   displayName={item.displayName}
                   photoUrl={item.photoThumbnailUrl}
@@ -354,19 +328,13 @@ function getMatchSourceBadge(
 <!-- Mobile: Card view -->
 <div class="md:hidden space-y-2" role="list" aria-label="Friends">
   {#each items as item, index (item.id)}
-    {@const keyHint = getKeyHint(index)}
-    {@const showHint = shouldShowKeyHint(index)}
     {@const matchBadge = getMatchSourceBadge(item.matchSource)}
     <a
       href={getFriendDetailUrl(item.id)}
       class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all relative"
       data-sveltekit-preload-data="tap"
     >
-      {#if showHint && keyHint}
-        <div class="absolute -left-1 -top-1 min-w-6 h-6 px-1 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">
-          {keyHint}
-        </div>
-      {/if}
+      <KeyboardHintBadge {index} isActive={$isOpenModeActive} prefix={$openModePrefix} variant="card" />
 
       <FriendAvatar
         displayName={item.displayName}

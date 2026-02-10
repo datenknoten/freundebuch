@@ -28,6 +28,9 @@ const pageTitle = $derived.by(() => {
   if (pathname === '/encounters') return t('nav.encounters');
   if (pathname === '/encounters/new') return t('encounters.logNew');
   if (pathname.startsWith('/encounters/')) return t('nav.encounters');
+  if (pathname === '/collectives') return t('nav.collectives');
+  if (pathname === '/collectives/new') return t('collectives.createNew');
+  if (pathname.startsWith('/collectives/')) return t('nav.collectives');
   if (pathname === '/profile') return t('nav.profile');
   if (pathname.startsWith('/auth/')) return 'Freundebuch';
   return 'Freundebuch';
@@ -180,6 +183,17 @@ $effect(() => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           {$i18n.t('nav.encounters')}
+        </a>
+        <a
+          href="/collectives"
+          data-sveltekit-preload-data="tap"
+          onclick={closeMobileMenu}
+          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          {$i18n.t('nav.collectives')}
         </a>
         <a
           href="/profile"

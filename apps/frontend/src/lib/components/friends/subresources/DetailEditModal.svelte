@@ -11,6 +11,8 @@ interface Props {
   isLoading?: boolean;
   error?: string | null;
   isDirty?: boolean;
+  /** Hide the footer Cancel/Save buttons (useful when children have their own buttons) */
+  hideFooter?: boolean;
   onSave: () => void;
   onClose: () => void;
   children: Snippet;
@@ -22,6 +24,7 @@ let {
   isLoading = false,
   error = null,
   isDirty = false,
+  hideFooter = false,
   onSave,
   onClose,
   children,
@@ -114,6 +117,7 @@ function handleSubmit(e: Event) {
       </div>
 
       <!-- Footer buttons (fixed) -->
+      {#if !hideFooter}
       <div class="flex gap-3 p-4 border-t border-gray-200 flex-shrink-0">
         <button
           type="button"
@@ -146,6 +150,7 @@ function handleSubmit(e: Event) {
           {/if}
         </button>
       </div>
+      {/if}
     </form>
   </div>
 </div>

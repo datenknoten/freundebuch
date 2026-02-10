@@ -8,6 +8,7 @@ import dashboardRoutes from './dashboard.routes.js';
 import organizationRoutes from './organization.routes.js';
 import searchRoutes from './search.routes.js';
 import addressesRoutes from './sub-resources/addresses.routes.js';
+import collectivesRoutes from './sub-resources/collectives.routes.js';
 import datesRoutes from './sub-resources/dates.routes.js';
 import emailsRoutes from './sub-resources/emails.routes.js';
 import encountersRoutes from './sub-resources/encounters.routes.js';
@@ -50,5 +51,6 @@ app.route('/:id/social-profiles', socialProfilesRoutes);
 app.route('/:id/relationships', relationshipsRoutes);
 app.route('/:id/professional-history', professionalHistoryRoutes);
 app.route('/:id/encounters', encountersRoutes);
+app.route('/:id/collectives', collectivesRoutes);
 
 export default app;

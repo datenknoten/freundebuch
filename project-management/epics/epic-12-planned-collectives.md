@@ -84,6 +84,12 @@ Inactive memberships preserve history and the relationships that were created re
 - A divorce doesn't erase the history of being married
 - A child who moves out is still part of the family
 
+**Effect on auto-generated relationships:**
+- When a membership becomes inactive, relationships with `source_membership_id` pointing to it are **not automatically deleted or modified**
+- Users can manually delete these relationships if desired
+- The relationship retains the `source_membership_id` reference for provenance tracking
+- If the membership is reactivated, no new relationships are created (existing ones are still valid)
+
 ---
 
 ## Features
@@ -143,100 +149,114 @@ Inactive memberships preserve history and the relationships that were created re
 
 ## Database Schema
 
+**Note:** This schema uses PostgreSQL-specific features (partial unique constraints, `gen_random_uuid()`).
+
 ```sql
+-- Create schema for collectives
+CREATE SCHEMA IF NOT EXISTS collectives;
+
 -- Collective types (reference table with defaults + user-created)
-CREATE TABLE collective_types (
+CREATE TABLE collectives.collective_types (
     id SERIAL PRIMARY KEY,
     external_id UUID NOT NULL DEFAULT gen_random_uuid(),
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,  -- NULL for system defaults
+    user_id INTEGER REFERENCES auth.users(id) ON DELETE CASCADE,  -- NULL for system defaults
 
-    name VARCHAR(100) NOT NULL,
+    name TEXT NOT NULL,
     description TEXT,
     is_system_default BOOLEAN NOT NULL DEFAULT FALSE,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT unique_collective_type_name_per_user UNIQUE (user_id, name)
 );
 
-CREATE UNIQUE INDEX idx_collective_types_external_id ON collective_types(external_id);
+CREATE UNIQUE INDEX idx_collective_types_external_id ON collectives.collective_types(external_id);
 
 -- Roles available for each collective type
-CREATE TABLE collective_roles (
+CREATE TABLE collectives.collective_roles (
     id SERIAL PRIMARY KEY,
     external_id UUID NOT NULL DEFAULT gen_random_uuid(),
 
-    collective_type_id INTEGER NOT NULL REFERENCES collective_types(id) ON DELETE CASCADE,
+    collective_type_id INTEGER NOT NULL REFERENCES collectives.collective_types(id) ON DELETE CASCADE,
 
-    role_key VARCHAR(50) NOT NULL,  -- e.g., 'parent', 'child', 'employee'
-    label VARCHAR(100) NOT NULL,    -- e.g., 'Parent', 'Child', 'Employee'
+    role_key TEXT NOT NULL,  -- e.g., 'parent', 'child', 'employee'
+    label TEXT NOT NULL,     -- e.g., 'Parent', 'Child', 'Employee'
     sort_order INTEGER NOT NULL DEFAULT 0,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT unique_role_per_type UNIQUE (collective_type_id, role_key)
 );
 
-CREATE UNIQUE INDEX idx_collective_roles_external_id ON collective_roles(external_id);
+CREATE UNIQUE INDEX idx_collective_roles_external_id ON collectives.collective_roles(external_id);
 
 -- Rules for automatic relationship creation
-CREATE TABLE collective_relationship_rules (
+CREATE TABLE collectives.collective_relationship_rules (
     id SERIAL PRIMARY KEY,
 
-    collective_type_id INTEGER NOT NULL REFERENCES collective_types(id) ON DELETE CASCADE,
+    collective_type_id INTEGER NOT NULL REFERENCES collectives.collective_types(id) ON DELETE CASCADE,
 
     -- When a member with this role is added...
-    new_member_role_id INTEGER NOT NULL REFERENCES collective_roles(id) ON DELETE CASCADE,
+    new_member_role_id INTEGER NOT NULL REFERENCES collectives.collective_roles(id) ON DELETE CASCADE,
     -- ...and there's an existing member with this role...
-    existing_member_role_id INTEGER NOT NULL REFERENCES collective_roles(id) ON DELETE CASCADE,
+    existing_member_role_id INTEGER NOT NULL REFERENCES collectives.collective_roles(id) ON DELETE CASCADE,
     -- ...create this relationship type
-    relationship_type_id VARCHAR(50) NOT NULL REFERENCES contacts.relationship_types(id),
+    relationship_type_id TEXT NOT NULL REFERENCES contacts.relationship_types(id),
+    -- Direction: which contact becomes the "from" in the relationship?
+    -- 'new_member' = new member is from_contact, existing is to_contact
+    -- 'existing_member' = existing member is from_contact, new is to_contact
+    -- 'both' = create bidirectional (two relationships, one in each direction)
+    relationship_direction TEXT NOT NULL DEFAULT 'new_member'
+        CHECK (relationship_direction IN ('new_member', 'existing_member', 'both')),
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT unique_rule UNIQUE (collective_type_id, new_member_role_id, existing_member_role_id)
 );
 
 -- Collectives (instances of collective types)
-CREATE TABLE collectives (
+CREATE TABLE collectives.collectives (
     id SERIAL PRIMARY KEY,
     external_id UUID NOT NULL DEFAULT gen_random_uuid(),
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
 
-    collective_type_id INTEGER NOT NULL REFERENCES collective_types(id),
+    -- RESTRICT prevents deleting a collective type that has collectives using it
+    collective_type_id INTEGER NOT NULL REFERENCES collectives.collective_types(id) ON DELETE RESTRICT,
 
-    name VARCHAR(255) NOT NULL,
-    photo_url VARCHAR(500),
-    photo_thumbnail_url VARCHAR(500),
+    name TEXT NOT NULL,
+    photo_url TEXT,
+    photo_thumbnail_url TEXT,
     notes TEXT,
 
     -- Optional address
-    address_street_line1 VARCHAR(255),
-    address_street_line2 VARCHAR(255),
-    address_city VARCHAR(100),
-    address_state_province VARCHAR(100),
-    address_postal_code VARCHAR(20),
-    address_country VARCHAR(100),
+    address_street_line1 TEXT,
+    address_street_line2 TEXT,
+    address_city TEXT,
+    address_state_province TEXT,
+    address_postal_code TEXT,
+    address_country TEXT,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMPTZ,  -- Soft delete support
 
     CONSTRAINT collectives_name_not_empty CHECK (LENGTH(TRIM(name)) > 0)
 );
 
-CREATE UNIQUE INDEX idx_collectives_external_id ON collectives(external_id);
-CREATE INDEX idx_collectives_user_id ON collectives(user_id);
-CREATE INDEX idx_collectives_type_id ON collectives(collective_type_id);
+CREATE UNIQUE INDEX idx_collectives_external_id ON collectives.collectives(external_id);
+CREATE INDEX idx_collectives_user_id ON collectives.collectives(user_id);
+CREATE INDEX idx_collectives_type_id ON collectives.collectives(collective_type_id);
+CREATE INDEX idx_collectives_active ON collectives.collectives(user_id) WHERE deleted_at IS NULL;
 
 -- Collective memberships (contacts belonging to collectives)
-CREATE TABLE collective_memberships (
+CREATE TABLE collectives.collective_memberships (
     id SERIAL PRIMARY KEY,
     external_id UUID NOT NULL DEFAULT gen_random_uuid(),
 
-    collective_id INTEGER NOT NULL REFERENCES collectives(id) ON DELETE CASCADE,
+    collective_id INTEGER NOT NULL REFERENCES collectives.collectives(id) ON DELETE CASCADE,
     contact_id INTEGER NOT NULL REFERENCES contacts.contacts(id) ON DELETE CASCADE,
-    role_id INTEGER NOT NULL REFERENCES collective_roles(id),
+    role_id INTEGER NOT NULL REFERENCES collectives.collective_roles(id),
 
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     inactive_reason TEXT,
@@ -245,8 +265,8 @@ CREATE TABLE collective_memberships (
     joined_date DATE,
     notes TEXT,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     -- A contact can only have one active membership per collective
     -- (but can have multiple inactive ones for history)
@@ -254,16 +274,16 @@ CREATE TABLE collective_memberships (
         WHERE (is_active = TRUE)
 );
 
-CREATE UNIQUE INDEX idx_collective_memberships_external_id ON collective_memberships(external_id);
-CREATE INDEX idx_collective_memberships_collective_id ON collective_memberships(collective_id);
-CREATE INDEX idx_collective_memberships_contact_id ON collective_memberships(contact_id);
-CREATE INDEX idx_collective_memberships_active ON collective_memberships(collective_id, is_active)
+CREATE UNIQUE INDEX idx_collective_memberships_external_id ON collectives.collective_memberships(external_id);
+CREATE INDEX idx_collective_memberships_collective_id ON collectives.collective_memberships(collective_id);
+CREATE INDEX idx_collective_memberships_contact_id ON collectives.collective_memberships(contact_id);
+CREATE INDEX idx_collective_memberships_active ON collectives.collective_memberships(collective_id, is_active)
     WHERE is_active = TRUE;
 
 -- Track which relationships were auto-created from collective membership
 -- (Added column to existing contact_relationships table)
 ALTER TABLE contacts.contact_relationships
-    ADD COLUMN source_membership_id INTEGER REFERENCES collective_memberships(id) ON DELETE SET NULL;
+    ADD COLUMN source_membership_id INTEGER REFERENCES collectives.collective_memberships(id) ON DELETE SET NULL;
 
 CREATE INDEX idx_contact_relationships_source_membership
     ON contacts.contact_relationships(source_membership_id)
@@ -274,15 +294,15 @@ CREATE INDEX idx_contact_relationships_source_membership
 
 ```sql
 -- Insert default collective types
-INSERT INTO collective_types (name, description, is_system_default) VALUES
+INSERT INTO collectives.collective_types (name, description, is_system_default) VALUES
     ('Family', 'A family unit with parents, children, and extended family', TRUE),
     ('Company', 'A business organization with employees and management', TRUE),
     ('Club', 'A club, organization, or group like a sports club or hackerspace', TRUE),
     ('Friend Group', 'A social circle of friends', TRUE);
 
 -- Insert roles for Family
-INSERT INTO collective_roles (collective_type_id, role_key, label, sort_order)
-SELECT id, role_key, label, sort_order FROM collective_types,
+INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
+SELECT id, role_key, label, sort_order FROM collectives.collective_types,
     (VALUES
         ('parent', 'Parent', 1),
         ('child', 'Child', 2),
@@ -293,8 +313,8 @@ SELECT id, role_key, label, sort_order FROM collective_types,
 WHERE name = 'Family';
 
 -- Insert roles for Company
-INSERT INTO collective_roles (collective_type_id, role_key, label, sort_order)
-SELECT id, role_key, label, sort_order FROM collective_types,
+INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
+SELECT id, role_key, label, sort_order FROM collectives.collective_types,
     (VALUES
         ('owner', 'Owner/Founder', 1),
         ('manager', 'Manager', 2),
@@ -303,40 +323,110 @@ SELECT id, role_key, label, sort_order FROM collective_types,
 WHERE name = 'Company';
 
 -- Insert roles for Club
-INSERT INTO collective_roles (collective_type_id, role_key, label, sort_order)
-SELECT id, role_key, label, sort_order FROM collective_types,
+INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
+SELECT id, role_key, label, sort_order FROM collectives.collective_types,
     (VALUES
         ('member', 'Member', 1)
     ) AS roles(role_key, label, sort_order)
 WHERE name = 'Club';
 
 -- Insert roles for Friend Group
-INSERT INTO collective_roles (collective_type_id, role_key, label, sort_order)
-SELECT id, role_key, label, sort_order FROM collective_types,
+INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
+SELECT id, role_key, label, sort_order FROM collectives.collective_types,
     (VALUES
         ('member', 'Member', 1)
     ) AS roles(role_key, label, sort_order)
 WHERE name = 'Friend Group';
 
 -- Insert relationship rules for Family
--- (This requires knowing the role IDs, so in practice this would be done in the migration)
--- child + parent = parent/child relationship
--- child + child = sibling relationship
--- child + grandparent = grandparent/grandchild relationship
--- spouse + spouse = spouse relationship
--- etc.
+-- Uses subqueries to look up role IDs dynamically
+INSERT INTO collectives.collective_relationship_rules (collective_type_id, new_member_role_id, existing_member_role_id, relationship_type_id, relationship_direction)
+SELECT
+    ct.id,
+    nr.id,
+    er.id,
+    rules.relationship_type_id,
+    rules.direction
+FROM collectives.collective_types ct
+CROSS JOIN (VALUES
+    -- child + parent = parent → child (existing parent is "from", new child is "to")
+    ('child', 'parent', 'parent_child', 'existing_member'),
+    -- child + child = sibling ↔ sibling (bidirectional)
+    ('child', 'child', 'sibling', 'both'),
+    -- child + grandparent = grandparent → grandchild
+    ('child', 'grandparent', 'grandparent_grandchild', 'existing_member'),
+    -- parent + child = parent → child (new parent is "from", existing child is "to")
+    ('parent', 'child', 'parent_child', 'new_member'),
+    -- parent + grandparent = grandparent → parent (existing grandparent is "from")
+    ('parent', 'grandparent', 'parent_child', 'existing_member'),
+    -- spouse + spouse = spouse ↔ spouse (bidirectional)
+    ('spouse', 'spouse', 'spouse', 'both'),
+    -- grandparent + child = grandparent → grandchild
+    ('grandparent', 'child', 'grandparent_grandchild', 'new_member'),
+    -- grandparent + grandchild = grandparent → grandchild
+    ('grandparent', 'grandchild', 'grandparent_grandchild', 'new_member'),
+    -- grandchild + grandparent = grandparent → grandchild
+    ('grandchild', 'grandparent', 'grandparent_grandchild', 'existing_member')
+) AS rules(new_role, existing_role, relationship_type_id, direction)
+JOIN collectives.collective_roles nr ON nr.collective_type_id = ct.id AND nr.role_key = rules.new_role
+JOIN collectives.collective_roles er ON er.collective_type_id = ct.id AND er.role_key = rules.existing_role
+WHERE ct.name = 'Family';
 
 -- Insert relationship rules for Company
--- employee + employee = colleague relationship
--- employee + manager = manager/report relationship
+INSERT INTO collectives.collective_relationship_rules (collective_type_id, new_member_role_id, existing_member_role_id, relationship_type_id, relationship_direction)
+SELECT
+    ct.id,
+    nr.id,
+    er.id,
+    rules.relationship_type_id,
+    rules.direction
+FROM collectives.collective_types ct
+CROSS JOIN (VALUES
+    -- employee + employee = colleague ↔ colleague (bidirectional)
+    ('employee', 'employee', 'colleague', 'both'),
+    -- employee + manager = manager → report (existing manager is "from")
+    ('employee', 'manager', 'manager_report', 'existing_member'),
+    -- manager + employee = manager → report (new manager is "from")
+    ('manager', 'employee', 'manager_report', 'new_member'),
+    -- manager + manager = colleague ↔ colleague (bidirectional)
+    ('manager', 'manager', 'colleague', 'both')
+) AS rules(new_role, existing_role, relationship_type_id, direction)
+JOIN collectives.collective_roles nr ON nr.collective_type_id = ct.id AND nr.role_key = rules.new_role
+JOIN collectives.collective_roles er ON er.collective_type_id = ct.id AND er.role_key = rules.existing_role
+WHERE ct.name = 'Company';
 
--- Insert relationship rules for Club and Friend Group
--- member + member = friend relationship
+-- Insert relationship rules for Club
+INSERT INTO collectives.collective_relationship_rules (collective_type_id, new_member_role_id, existing_member_role_id, relationship_type_id, relationship_direction)
+SELECT
+    ct.id,
+    nr.id,
+    er.id,
+    'friend',
+    'both'
+FROM collectives.collective_types ct
+JOIN collectives.collective_roles nr ON nr.collective_type_id = ct.id AND nr.role_key = 'member'
+JOIN collectives.collective_roles er ON er.collective_type_id = ct.id AND er.role_key = 'member'
+WHERE ct.name = 'Club';
+
+-- Insert relationship rules for Friend Group
+INSERT INTO collectives.collective_relationship_rules (collective_type_id, new_member_role_id, existing_member_role_id, relationship_type_id, relationship_direction)
+SELECT
+    ct.id,
+    nr.id,
+    er.id,
+    'friend',
+    'both'
+FROM collectives.collective_types ct
+JOIN collectives.collective_roles nr ON nr.collective_type_id = ct.id AND nr.role_key = 'member'
+JOIN collectives.collective_roles er ON er.collective_type_id = ct.id AND er.role_key = 'member'
+WHERE ct.name = 'Friend Group';
 ```
 
 ---
 
 ## API Endpoints
+
+**Note:** All `:id` parameters in endpoints refer to the `external_id` (UUID), not the internal database ID.
 
 ### Collective Types
 | Method | Endpoint | Description |
@@ -354,7 +444,7 @@ WHERE name = 'Friend Group';
 | POST | `/api/collectives` | Create new collective |
 | GET | `/api/collectives/:id` | Get collective with members |
 | PUT | `/api/collectives/:id` | Update collective |
-| DELETE | `/api/collectives/:id` | Delete collective |
+| DELETE | `/api/collectives/:id` | Soft delete collective |
 | POST | `/api/collectives/:id/photo` | Upload collective photo |
 | DELETE | `/api/collectives/:id/photo` | Remove collective photo |
 
@@ -501,15 +591,21 @@ WHERE name = 'Friend Group';
 - Relationships from different collectives are independent
 
 ### Collective deletion
-- Soft delete the collective
+- Soft delete the collective (sets `deleted_at` timestamp)
 - Keep all relationships that were created (they're still valid)
 - Membership records remain for history
+- Deleted collectives are excluded from normal queries but can be viewed in history
+
+### Contact deletion
+- If a contact is deleted, their memberships are cascade-deleted (per `ON DELETE CASCADE`)
+- Relationships with `source_membership_id` pointing to deleted memberships have that field set to NULL (per `ON DELETE SET NULL`)
+- The relationships themselves remain intact, just without provenance tracking
 
 ---
 
 ## Future Enhancements
 
-- Collective timeline showing all interactions with members
+- Collective timeline showing all encounters with members
 - Collective-wide events (family reunions, company offsites)
 - Inherit collective address to member contacts
 - Collective-level notes and reminders
@@ -521,6 +617,6 @@ WHERE name = 'Friend Group';
 ## Related Epics
 
 - **Epic 1D:** Contact Relationships - prerequisite, provides relationship types
-- **Epic 2:** Relationship Management - interaction logging applies to collective members
+- **Epic 2:** Encounter Management - encounter logging applies to collective members
 - **Epic 4:** Categorization - collectives could be used as a form of grouping
 - **Epic 10:** Search - search within collectives
