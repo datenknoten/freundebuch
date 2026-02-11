@@ -584,6 +584,9 @@
     "skip": "Skip for now",
     "complete": "Complete Setup"
   },
+  "friendSearch": {
+    "noResults": "No friends found"
+  },
   "search": {
     "placeholder": "Search friends, circles...",
     "noResults": "No results found",

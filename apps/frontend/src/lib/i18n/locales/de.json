@@ -584,6 +584,9 @@
     "skip": "Vorerst überspringen",
     "complete": "Einrichtung abschließen"
   },
+  "friendSearch": {
+    "noResults": "Keine Freunde gefunden"
+  },
   "search": {
     "placeholder": "Freunde, Freundekreise suchen...",
     "noResults": "Keine Ergebnisse gefunden",
