@@ -1,3 +1,13 @@
+## [2.60.0](https://github.com/datenknoten/freundebuch/compare/v2.59.0...v2.60.0) (2026-02-11)
+
+### Features
+
+* Implement collectives feature with full CRUD, memberships, and keyboard navigation ([f58cb3e](https://github.com/datenknoten/freundebuch/commit/f58cb3ef9918bb163b208dc5ad9bbfed83c09a18))
+
+### Code Refactoring
+
+* **frontend:** Extract shared FriendSearchInput for AddMemberForm ([0c6df39](https://github.com/datenknoten/freundebuch/commit/0c6df393a65ec1198833e486d50101487dc719eb))
+
 ## [2.59.0](https://github.com/datenknoten/freundebuch/compare/v2.58.0...v2.59.0) (2026-02-01)
 
 ### Features
