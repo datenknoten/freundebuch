@@ -1,8 +1,11 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult } from '$shared';
 import FriendAvatar from './FriendAvatar.svelte';
+
+const i18n = createI18n();
 
 interface Props {
   /** Placeholder text for the input */
@@ -17,6 +20,12 @@ interface Props {
   autofocus?: boolean;
   /** Called when a friend is selected (viaKeyboard is true if Enter was used) */
   onSelect?: (friend: FriendSearchResult, viaKeyboard: boolean) => void;
+  /** Returns a disabled label for a friend (e.g. "Already a member"), or null if enabled */
+  disabledCheck?: (friend: FriendSearchResult) => string | null;
+  /** Override the "no results" text (defaults to i18n friendSearch.noResults) */
+  noResultsText?: string;
+  /** Unique ID prefix for ARIA attributes (defaults to 'friend-search') */
+  id?: string;
 }
 
 let {
@@ -26,6 +35,9 @@ let {
   disabled = false,
   autofocus = false,
   onSelect,
+  disabledCheck,
+  noResultsText,
+  id = 'friend-search',
 }: Props = $props();
 
 onMount(() => {
@@ -44,6 +56,23 @@ let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
 let inputElement: HTMLInputElement;
 let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function isItemDisabled(friend: FriendSearchResult): string | null {
+  return disabledCheck?.(friend) ?? null;
+}
+
+function findNextSelectableIndex(current: number, direction: 1 | -1): number {
+  let next = current + direction;
+  while (next >= 0 && next < results.length) {
+    if (!isItemDisabled(results[next])) {
+      return next;
+    }
+    next += direction;
+  }
+  // If going down and nothing found, stay at current; if going up past -1, allow -1
+  if (direction === -1 && next < 0) return -1;
+  return current;
+}
 
 // Debounced search
 function handleInput() {
@@ -83,6 +112,7 @@ async function performSearch() {
 }
 
 function selectFriend(friend: FriendSearchResult, viaKeyboard = false) {
+  if (isItemDisabled(friend)) return;
   query = '';
   results = [];
   showDropdown = false;
@@ -96,11 +126,11 @@ function handleKeydown(e: KeyboardEvent) {
   switch (e.key) {
     case 'ArrowDown':
       e.preventDefault();
-      highlightedIndex = Math.min(highlightedIndex + 1, results.length - 1);
+      highlightedIndex = findNextSelectableIndex(highlightedIndex, 1);
       break;
     case 'ArrowUp':
       e.preventDefault();
-      highlightedIndex = Math.max(highlightedIndex - 1, -1);
+      highlightedIndex = findNextSelectableIndex(highlightedIndex, -1);
       break;
     case 'Enter':
       e.preventDefault();
@@ -146,7 +176,7 @@ function handleFocus() {
       autocomplete="off"
       role="combobox"
       aria-expanded={showDropdown}
-      aria-controls="friend-search-listbox"
+      aria-controls="{id}-listbox"
       aria-haspopup="listbox"
       aria-autocomplete="list"
     />
@@ -169,34 +199,39 @@ function handleFocus() {
 
   {#if showDropdown}
     <ul
-      id="friend-search-listbox"
+      id="{id}-listbox"
       class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       role="listbox"
     >
       {#each results as friend, index}
+        {@const disabledLabel = isItemDisabled(friend)}
         <li
           role="option"
           aria-selected={highlightedIndex === index}
-          class="cursor-pointer"
+          aria-disabled={disabledLabel !== null}
         >
           <button
             type="button"
             onclick={() => selectFriend(friend)}
-            class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors {highlightedIndex === index ? 'bg-gray-100' : ''}"
+            disabled={disabledLabel !== null}
+            class="w-full flex items-center gap-3 px-3 py-2 transition-colors {disabledLabel !== null ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'hover:bg-gray-50'} {highlightedIndex === index && disabledLabel === null ? 'bg-gray-100' : ''}"
           >
             <FriendAvatar
               displayName={friend.displayName}
               photoUrl={friend.photoThumbnailUrl}
               size="sm"
             />
-            <span class="font-body text-sm text-gray-900">{friend.displayName}</span>
+            <span class="font-body text-sm {disabledLabel !== null ? 'text-gray-500' : 'text-gray-900'}">{friend.displayName}</span>
+            {#if disabledLabel}
+              <span class="ml-auto text-xs text-gray-400 font-body italic">{disabledLabel}</span>
+            {/if}
           </button>
         </li>
       {/each}
 
       {#if results.length === 0 && query.trim() && !isSearching}
         <li class="px-3 py-2 text-sm text-gray-500 font-body">
-          No friends found
+          {noResultsText ?? $i18n.t('friendSearch.noResults')}
         </li>
       {/if}
     </ul>

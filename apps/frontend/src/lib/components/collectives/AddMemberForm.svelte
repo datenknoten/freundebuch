@@ -1,10 +1,9 @@
 <script lang="ts">
-import { autoFocus } from '$lib/actions/autoFocus';
-import { searchFriends } from '$lib/api/friends';
 import { createI18n } from '$lib/i18n/index.js';
 import { previewMemberRelationships } from '$lib/stores/collectives';
 import type { CollectiveRole, FriendSearchResult, RelationshipPreviewResponse } from '$shared';
 import FriendAvatar from '../friends/FriendAvatar.svelte';
+import FriendSearchInput from '../friends/FriendSearchInput.svelte';
 import RelationshipPreview from './RelationshipPreview.svelte';
 
 const i18n = createI18n();
@@ -23,50 +22,19 @@ let { collectiveId, roles, existingMemberContactIds = [], onAdd, onCancel }: Pro
 let existingMemberSet = $derived(new Set(existingMemberContactIds));
 
 // Form state
-let searchQuery = $state('');
-let searchResults = $state<FriendSearchResult[]>([]);
 let selectedFriend = $state<FriendSearchResult | null>(null);
 let selectedRoleId = $state(roles[0]?.id ?? '');
 let skipAutoRelationships = $state(false);
 let preview = $state<RelationshipPreviewResponse | null>(null);
 
-let isSearching = $state(false);
 let isLoadingPreview = $state(false);
 let isSubmitting = $state(false);
 let error = $state('');
-let searchDebounce: ReturnType<typeof setTimeout> | null = null;
 
 let isValid = $derived(selectedFriend !== null && selectedRoleId !== '');
 
-async function handleSearchInput(value: string) {
-  searchQuery = value;
-
-  if (searchDebounce) {
-    clearTimeout(searchDebounce);
-  }
-
-  if (value.trim().length < 2) {
-    searchResults = [];
-    return;
-  }
-
-  searchDebounce = setTimeout(async () => {
-    isSearching = true;
-    try {
-      searchResults = await searchFriends(value.trim(), undefined, 10);
-    } catch (err) {
-      console.error('Search failed:', err);
-      searchResults = [];
-    } finally {
-      isSearching = false;
-    }
-  }, 300);
-}
-
-async function selectFriend(friend: FriendSearchResult) {
+async function handleFriendSelect(friend: FriendSearchResult, _viaKeyboard: boolean) {
   selectedFriend = friend;
-  searchQuery = friend.displayName;
-  searchResults = [];
 
   // Load preview
   await loadPreview();
@@ -74,8 +42,6 @@ async function selectFriend(friend: FriendSearchResult) {
 
 function clearSelection() {
   selectedFriend = null;
-  searchQuery = '';
-  searchResults = [];
   preview = null;
 }
 
@@ -141,7 +107,7 @@ async function handleSubmit(e: Event) {
 
   <!-- Friend search -->
   <div>
-    <label for="friend-search" class="block text-sm font-body font-medium text-gray-700 mb-1">
+    <label for="member-search" class="block text-sm font-body font-medium text-gray-700 mb-1">
       {$i18n.t('collectives.addMember.friendLabel')} <span class="text-red-500">*</span>
     </label>
 
@@ -167,50 +133,18 @@ async function handleSubmit(e: Event) {
         </button>
       </div>
     {:else}
-      <!-- Search input -->
-      <div class="relative">
-        <input
-          use:autoFocus
-          id="friend-search"
-          type="text"
-          value={searchQuery}
-          oninput={(e) => handleSearchInput(e.currentTarget.value)}
-          placeholder={$i18n.t('collectives.addMember.searchPlaceholder')}
-          disabled={isSubmitting}
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-        />
-
-        {#if isSearching}
-          <div class="absolute right-3 top-1/2 -translate-y-1/2">
-            <div class="animate-spin rounded-full h-4 w-4 border-2 border-forest border-t-transparent"></div>
-          </div>
-        {/if}
-      </div>
-
-      <!-- Search results dropdown -->
-      {#if searchResults.length > 0}
-        <div class="mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-          {#each searchResults as friend (friend.id)}
-            {@const isMember = existingMemberSet.has(friend.id)}
-            <button
-              type="button"
-              onclick={() => !isMember && selectFriend(friend)}
-              disabled={isMember}
-              class="w-full flex items-center gap-3 px-3 py-2 transition-colors text-left {isMember ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'hover:bg-gray-50'}"
-            >
-              <FriendAvatar
-                displayName={friend.displayName}
-                photoUrl={friend.photoThumbnailUrl}
-                size="sm"
-              />
-              <span class="font-body text-sm {isMember ? 'text-gray-500' : 'text-gray-900'}">{friend.displayName}</span>
-              {#if isMember}
-                <span class="ml-auto text-xs text-gray-400 font-body italic">{$i18n.t('collectives.addMember.alreadyMember')}</span>
-              {/if}
-            </button>
-          {/each}
-        </div>
-      {/if}
+      <FriendSearchInput
+        id="member-search"
+        placeholder={$i18n.t('collectives.addMember.searchPlaceholder')}
+        disabled={isSubmitting}
+        autofocus
+        disabledCheck={(friend) =>
+          existingMemberSet.has(friend.id)
+            ? $i18n.t('collectives.addMember.alreadyMember')
+            : null
+        }
+        onSelect={handleFriendSelect}
+      />
     {/if}
   </div>
 
