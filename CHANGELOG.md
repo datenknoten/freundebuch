@@ -1,3 +1,9 @@
+## [2.61.1](https://github.com/datenknoten/freundebuch/compare/v2.61.0...v2.61.1) (2026-02-27)
+
+### Bug Fixes
+
+* **backend:** Replace non-null assertions with safe alternatives ([c796f7e](https://github.com/datenknoten/freundebuch/commit/c796f7e391c7de09551a87ab8a76348b25e637ee))
+
 ## [2.61.0](https://github.com/datenknoten/freundebuch/compare/v2.60.0...v2.61.0) (2026-02-27)
 
 ### Features
