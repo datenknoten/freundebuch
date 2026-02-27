@@ -150,7 +150,7 @@ export abstract class CollectiveSubResourceService<
     // Use a transaction for clear+set primary to prevent race conditions
     if (needsPrimaryUpdate && !client) {
       return this.withTransaction(async (txClient) => {
-        await this.config.clearPrimaryFn!({ userExternalId, collectiveExternalId }, txClient);
+        await this.config.clearPrimaryFn?.({ userExternalId, collectiveExternalId }, txClient);
         const [result] = await this.config.createFn(
           { userExternalId, collectiveExternalId, input },
           txClient,
@@ -162,7 +162,7 @@ export abstract class CollectiveSubResourceService<
     const dbClient = client ?? this.db;
 
     if (needsPrimaryUpdate) {
-      await this.config.clearPrimaryFn!({ userExternalId, collectiveExternalId }, dbClient);
+      await this.config.clearPrimaryFn?.({ userExternalId, collectiveExternalId }, dbClient);
     }
 
     const [result] = await this.config.createFn(
@@ -198,7 +198,7 @@ export abstract class CollectiveSubResourceService<
     // Use a transaction for clear+set primary to prevent race conditions
     if (needsPrimaryUpdate && !client) {
       return this.withTransaction(async (txClient) => {
-        await this.config.clearPrimaryFn!({ userExternalId, collectiveExternalId }, txClient);
+        await this.config.clearPrimaryFn?.({ userExternalId, collectiveExternalId }, txClient);
         const [result] = await this.config.updateFn(
           { userExternalId, collectiveExternalId, resourceExternalId, input },
           txClient,
@@ -210,7 +210,7 @@ export abstract class CollectiveSubResourceService<
     const dbClient = client ?? this.db;
 
     if (needsPrimaryUpdate) {
-      await this.config.clearPrimaryFn!({ userExternalId, collectiveExternalId }, dbClient);
+      await this.config.clearPrimaryFn?.({ userExternalId, collectiveExternalId }, dbClient);
     }
 
     const [result] = await this.config.updateFn(

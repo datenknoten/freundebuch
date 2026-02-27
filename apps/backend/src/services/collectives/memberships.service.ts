@@ -429,8 +429,11 @@ export class MembershipsService {
 
     // Fetch any missing inverse types concurrently
     const missingInverseIds = [...typeInfoMap.values()]
-      .filter((info) => info.inverse_type_id && !typeInfoMap.has(info.inverse_type_id))
-      .map((info) => info.inverse_type_id!);
+      .filter(
+        (info): info is { id: string; label: string; category: string; inverse_type_id: string } =>
+          info.inverse_type_id != null && !typeInfoMap.has(info.inverse_type_id),
+      )
+      .map((info) => info.inverse_type_id);
 
     if (missingInverseIds.length > 0) {
       const inverseResults = await Promise.all(
