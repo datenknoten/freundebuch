@@ -1,3 +1,10 @@
+## [2.61.0](https://github.com/datenknoten/freundebuch/compare/v2.60.0...v2.61.0) (2026-02-27)
+
+### Features
+
+* **docs:** Declare a license ([a650f8e](https://github.com/datenknoten/freundebuch/commit/a650f8e3c490eba22368e693fc15886ad22afb69))
+* **docs:** Refactor documentation ([e6a6735](https://github.com/datenknoten/freundebuch/commit/e6a67359e971247abb1b66a74230f6c1c1b7976b))
+
 ## [2.60.0](https://github.com/datenknoten/freundebuch/compare/v2.59.0...v2.60.0) (2026-02-11)
 
 ### Features
