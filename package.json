@@ -3,6 +3,7 @@
   "version": "2.60.0",
   "private": true,
   "type": "module",
+  "license": "agpl-3.0",
   "description": "Freundebuch - A digital friendship book for adults",
   "scripts": {
     "dev": "pnpm --parallel --stream run dev",
