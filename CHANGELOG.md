@@ -1,3 +1,9 @@
+## [2.63.0](https://github.com/datenknoten/freundebuch/compare/v2.62.0...v2.63.0) (2026-02-28)
+
+### Features
+
+* **backend, shared:** Normalize national-format phone numbers to E.164 ([7cd032a](https://github.com/datenknoten/freundebuch/commit/7cd032af33ae01ef41a8ec52ffa1783d41b2452f))
+
 ## [2.62.0](https://github.com/datenknoten/freundebuch/compare/v2.61.1...v2.62.0) (2026-02-28)
 
 ### Features
