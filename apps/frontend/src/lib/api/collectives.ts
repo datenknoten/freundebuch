@@ -186,12 +186,14 @@ export async function deleteCollective(collectiveId: string): Promise<void> {
 export async function previewMemberRelationships(
   collectiveId: string,
   input: RelationshipPreviewRequest,
+  options?: { signal?: AbortSignal },
 ): Promise<RelationshipPreviewResponse> {
   return apiRequest<RelationshipPreviewResponse>(
     `/api/collectives/${collectiveId}/members/preview`,
     {
       method: 'POST',
       body: JSON.stringify(input),
+      signal: options?.signal,
     },
   );
 }

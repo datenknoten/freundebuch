@@ -601,6 +601,7 @@ export const inactiveMembers = derived(
 export async function previewMemberRelationships(
   collectiveId: string,
   input: RelationshipPreviewRequest,
+  options?: { signal?: AbortSignal },
 ): Promise<RelationshipPreviewResponse> {
-  return collectivesApi.previewMemberRelationships(collectiveId, input);
+  return collectivesApi.previewMemberRelationships(collectiveId, input, options);
 }

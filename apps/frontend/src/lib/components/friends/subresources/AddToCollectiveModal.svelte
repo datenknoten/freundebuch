@@ -42,6 +42,7 @@ let preview = $state<RelationshipPreviewResponse | null>(null);
 let isLoadingPreview = $state(false);
 let isSubmitting = $state(false);
 let error = $state<string | null>(null);
+let previewAbortController: AbortController | null = null;
 
 // Derived: filter out collectives the friend is already in
 let existingSet = $derived(new Set(existingCollectiveIds));
@@ -62,9 +63,16 @@ let rolesForSelected = $derived.by(() => {
 let isValid = $derived(selectedCollectiveId !== '' && selectedRoleId !== '');
 
 // Load collectives and types on mount
+// 1000 is a practical upper bound for a personal contacts app.
+// If a user ever hits this limit the dropdown will silently omit extras.
+const MAX_COLLECTIVES_PAGE_SIZE = 1000;
+
 onMount(async () => {
   try {
-    await Promise.all([collectives.loadCollectives({ pageSize: 1000 }), collectives.loadTypes()]);
+    await Promise.all([
+      collectives.loadCollectives({ pageSize: MAX_COLLECTIVES_PAGE_SIZE }),
+      collectives.loadTypes(),
+    ]);
 
     // Read from store after loading
     const unsubCollectives = collectivesList.subscribe((v) => {
@@ -108,17 +116,25 @@ $effect(() => {
 async function loadPreview() {
   if (!selectedCollectiveId || !selectedRoleId) return;
 
+  previewAbortController?.abort();
+  previewAbortController = new AbortController();
+  const signal = previewAbortController.signal;
+
   isLoadingPreview = true;
   try {
-    preview = await previewMemberRelationships(selectedCollectiveId, {
-      friend_id: friendId,
-      role_id: selectedRoleId,
-    });
+    const result = await previewMemberRelationships(
+      selectedCollectiveId,
+      { friend_id: friendId, role_id: selectedRoleId },
+      { signal },
+    );
+    if (!signal.aborted) preview = result;
   } catch (err) {
-    console.error('Failed to load preview:', err);
-    preview = null;
+    if (!signal.aborted) {
+      console.error('Failed to load preview:', err);
+      preview = null;
+    }
   } finally {
-    isLoadingPreview = false;
+    if (!signal.aborted) isLoadingPreview = false;
   }
 }
 
