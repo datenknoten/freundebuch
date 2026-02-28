@@ -1,10 +1,15 @@
-import { type ErrorResponse, PhoneInputSchema } from '@freundebuch/shared/index.js';
+import {
+  type ErrorResponse,
+  normalizePhoneNumber,
+  PhoneInputSchema,
+} from '@freundebuch/shared/index.js';
 import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import type { AppContext } from '../../../types/context.js';
+import { countryNameToCode, localeToCountry } from '../../../utils/country.js';
 import { toError } from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
@@ -25,11 +30,22 @@ app.post('/', async (c) => {
   }
 
   try {
-    let body: unknown;
+    let body: Record<string, unknown>;
     try {
-      body = await c.req.json();
+      body = (await c.req.json()) as Record<string, unknown>;
     } catch {
       return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
+    }
+
+    // Normalize national-format phone numbers to E.164 before validation
+    if (typeof body.phone_number === 'string' && !body.phone_number.startsWith('+')) {
+      const friendsService = new FriendsService(db, logger);
+      const friend = await friendsService.getFriendById(user.userId, friendId);
+      const primaryAddress = friend?.addresses.find((a) => a.isPrimary) ?? friend?.addresses[0];
+      const countryCode =
+        (primaryAddress?.country && countryNameToCode(primaryAddress.country)) ??
+        localeToCountry(c.req.header('Accept-Language'));
+      body.phone_number = normalizePhoneNumber(body.phone_number, countryCode);
     }
 
     const validated = PhoneInputSchema(body);
@@ -70,11 +86,22 @@ app.put('/:phoneId', async (c) => {
   }
 
   try {
-    let body: unknown;
+    let body: Record<string, unknown>;
     try {
-      body = await c.req.json();
+      body = (await c.req.json()) as Record<string, unknown>;
     } catch {
       return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
+    }
+
+    // Normalize national-format phone numbers to E.164 before validation
+    if (typeof body.phone_number === 'string' && !body.phone_number.startsWith('+')) {
+      const friendsService = new FriendsService(db, logger);
+      const friend = await friendsService.getFriendById(user.userId, friendId);
+      const primaryAddress = friend?.addresses.find((a) => a.isPrimary) ?? friend?.addresses[0];
+      const countryCode =
+        (primaryAddress?.country && countryNameToCode(primaryAddress.country)) ??
+        localeToCountry(c.req.header('Accept-Language'));
+      body.phone_number = normalizePhoneNumber(body.phone_number, countryCode);
     }
 
     const validated = PhoneInputSchema(body);
