@@ -5,6 +5,7 @@ export type { SubresourceType } from './AddDetailDropdown.svelte';
 export { default as AddDetailDropdown } from './AddDetailDropdown.svelte';
 export { default as AddressEditForm } from './AddressEditForm.svelte';
 export { default as AddressRow } from './AddressRow.svelte';
+export { default as AddToCollectiveModal } from './AddToCollectiveModal.svelte';
 export { default as CircleEditForm } from './CircleEditForm.svelte';
 export { default as CircleRow } from './CircleRow.svelte';
 export { default as CollectiveRow } from './CollectiveRow.svelte';

@@ -35,6 +35,7 @@ import {
   AddDetailDropdown,
   AddressEditForm,
   AddressRow,
+  AddToCollectiveModal,
   CircleEditForm,
   CircleRow,
   CollectiveRow,
@@ -86,6 +87,11 @@ async function loadCollectives() {
   }
 }
 
+function handleAddToCollectiveSuccess() {
+  showAddToCollectiveModal = false;
+  loadCollectives();
+}
+
 async function handleRemoveFromCollective(collectiveId: string, membershipId: string) {
   removingCollectiveId = collectiveId;
   try {
@@ -101,6 +107,9 @@ async function handleRemoveFromCollective(collectiveId: string, membershipId: st
 // Friend deletion state
 let isDeleting = $state(false);
 let showDeleteConfirm = $state(false);
+
+// Add to collective modal state
+let showAddToCollectiveModal = $state(false);
 
 // Mobile add modal state
 let showMobileAddChoiceModal = $state(false);
@@ -774,16 +783,27 @@ onMount(() => {
   {/if}
 
   <!-- ==================== COLLECTIVES SECTION ==================== -->
-  {#if collectives.length > 0}
-    <section class="space-y-2">
-      <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
-        <h2 class="text-lg font-heading flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-          {$i18n.t('friendDetail.sections.collectives')}
-        </h2>
-      </div>
+  <section class="space-y-2">
+    <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+      <h2 class="text-lg font-heading flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+        {$i18n.t('friendDetail.sections.collectives')}
+      </h2>
+      <button
+        type="button"
+        onclick={() => showAddToCollectiveModal = true}
+        class="text-sm font-body font-semibold text-white/90 hover:text-white
+               flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        {$i18n.t('friendDetail.actions.addCollective')}
+      </button>
+    </div>
+    {#if collectives.length > 0}
       <div class="space-y-2">
         {#each collectives as collective (collective.id)}
           <CollectiveRow
@@ -793,8 +813,10 @@ onMount(() => {
           />
         {/each}
       </div>
-    </section>
-  {/if}
+    {:else if !collectivesLoading}
+      <p class="text-sm text-gray-500 font-body px-3 py-2">{$i18n.t('friendDetail.empty.collectives')}</p>
+    {/if}
+  </section>
 
   <!-- ==================== RELATIONSHIPS SECTION ==================== -->
   <section class="space-y-2">
@@ -960,6 +982,17 @@ onMount(() => {
       />
     {/if}
   </DetailEditModal>
+{/if}
+
+<!-- Add to collective modal -->
+{#if showAddToCollectiveModal}
+  <AddToCollectiveModal
+    friendId={friend.id}
+    friendDisplayName={friend.displayName}
+    existingCollectiveIds={collectives.map((c) => c.id)}
+    onSuccess={handleAddToCollectiveSuccess}
+    onClose={() => showAddToCollectiveModal = false}
+  />
 {/if}
 
 <!-- Subresource delete confirmation modal -->
