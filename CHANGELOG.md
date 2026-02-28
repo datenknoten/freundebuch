@@ -1,3 +1,9 @@
+## [2.62.0](https://github.com/datenknoten/freundebuch/compare/v2.61.1...v2.62.0) (2026-02-28)
+
+### Features
+
+* **frontend, backend:** Auto-preselect primary for first sub-resource entry ([361dd42](https://github.com/datenknoten/freundebuch/commit/361dd428edc3681c292df717f86e58e3616740ec))
+
 ## [2.61.1](https://github.com/datenknoten/freundebuch/compare/v2.61.0...v2.61.1) (2026-02-27)
 
 ### Bug Fixes
