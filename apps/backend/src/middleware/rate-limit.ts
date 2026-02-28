@@ -45,9 +45,9 @@ let encountersLimiter = new RateLimiterMemory({
 });
 
 // Rate limiter for collectives API endpoints
-// 60 requests per minute in production, 300 in test
+// 120 requests per minute in production, 300 in test
 let collectivesLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 300 : 60,
+  points: isTestEnv ? 300 : 120,
   duration: 60,
   blockDuration: isTestEnv ? 1 : 60,
 });
@@ -82,7 +82,7 @@ export function resetRateLimiters(): void {
     blockDuration: isTestEnv ? 1 : 60,
   });
   collectivesLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 300 : 60,
+    points: isTestEnv ? 300 : 120,
     duration: 60,
     blockDuration: isTestEnv ? 1 : 60,
   });
@@ -217,7 +217,7 @@ export async function encountersRateLimitMiddleware(c: Context, next: Next) {
 
 /**
  * Rate limiting middleware for collectives API endpoints
- * Limits: 60 requests per minute, 1 minute block after exceeding
+ * Limits: 120 requests per minute, 1 minute block after exceeding
  */
 export async function collectivesRateLimitMiddleware(c: Context, next: Next) {
   const clientId = getClientIdentifier(c);
