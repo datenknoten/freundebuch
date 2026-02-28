@@ -5,6 +5,12 @@ import { removeMember } from '$lib/api/collectives';
 import { getCollectivesForFriend } from '$lib/api/friends';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
+import {
+  type FriendDetailLink,
+  isOpenFriendLinkModeActive,
+  openFriendLinkModePrefix,
+  visibleFriendDetailLinks,
+} from '$lib/stores/ui';
 
 const i18n = createI18n();
 
@@ -28,6 +34,7 @@ import type {
   UrlInput,
 } from '$shared';
 import LastEncounterBadge from '../encounters/LastEncounterBadge.svelte';
+import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
 import RelationshipsSection from './RelationshipsSection.svelte';
 import {
@@ -103,6 +110,81 @@ async function handleRemoveFromCollective(collectiveId: string, membershipId: st
     removingCollectiveId = null;
   }
 }
+
+// Keyboard link indices for "o" shortcut
+let emailStartIndex = $derived(friend.phones.length);
+let urlStartIndex = $derived(friend.phones.length + friend.emails.length);
+let socialStartIndex = $derived(friend.phones.length + friend.emails.length + friend.urls.length);
+let filteredSocialCount = $derived(
+  friend.socialProfiles ? friend.socialProfiles.filter((p) => p.profileUrl).length : 0,
+);
+let collectiveStartIndex = $derived(
+  friend.phones.length + friend.emails.length + friend.urls.length + filteredSocialCount,
+);
+let relationshipStartIndex = $derived(
+  friend.phones.length +
+    friend.emails.length +
+    friend.urls.length +
+    filteredSocialCount +
+    collectives.length,
+);
+
+// Map social profile IDs to their badge index (only profiles with profileUrl)
+let socialProfileBadgeIndex = $derived.by(() => {
+  const map = new Map<string, number>();
+  if (!friend.socialProfiles) return map;
+  let offset = 0;
+  for (const profile of friend.socialProfiles) {
+    if (profile.profileUrl) {
+      map.set(profile.id, socialStartIndex + offset);
+      offset++;
+    }
+  }
+  return map;
+});
+
+// Computed link list for keyboard shortcut navigation
+let friendDetailLinks = $derived.by(() => {
+  const links: FriendDetailLink[] = [];
+
+  for (const phone of friend.phones) {
+    links.push({ url: `tel:${phone.phoneNumber}`, type: 'protocol' });
+  }
+  for (const email of friend.emails) {
+    links.push({ url: `mailto:${email.emailAddress}`, type: 'protocol' });
+  }
+  for (const url of friend.urls) {
+    links.push({ url: url.url, type: 'external' });
+  }
+  if (friend.socialProfiles) {
+    for (const profile of friend.socialProfiles) {
+      if (profile.profileUrl) {
+        links.push({ url: profile.profileUrl, type: 'external' });
+      }
+    }
+  }
+  for (const collective of collectives) {
+    links.push({ url: `/collectives/${collective.id}`, type: 'internal' });
+  }
+  if (friend.relationships) {
+    // Match RelationshipsSection grouping order: family → professional → social
+    for (const category of ['family', 'professional', 'social'] as const) {
+      for (const rel of friend.relationships.filter((r) => r.relationshipCategory === category)) {
+        links.push({ url: `/friends/${rel.relatedFriendId}`, type: 'internal' });
+      }
+    }
+  }
+
+  return links;
+});
+
+// Sync link list to store for KeyboardShortcuts to read
+$effect(() => {
+  visibleFriendDetailLinks.set(friendDetailLinks);
+  return () => {
+    visibleFriendDetailLinks.set([]);
+  };
+});
 
 // Friend deletion state
 let isDeleting = $state(false);
@@ -377,8 +459,27 @@ onMount(() => {
     );
   }
 
+  function handleOpenFriendLink(e: Event) {
+    const { index } = (e as CustomEvent).detail;
+    const link = friendDetailLinks[index];
+    if (!link) return;
+
+    switch (link.type) {
+      case 'internal':
+        goto(link.url);
+        break;
+      case 'external':
+        window.open(link.url, '_blank', 'noopener,noreferrer');
+        break;
+      case 'protocol':
+        window.location.href = link.url;
+        break;
+    }
+  }
+
   window.addEventListener('shortcut:add-phone', handleAddPhone);
   window.addEventListener('shortcut:log-encounter', handleLogEncounter);
+  window.addEventListener('shortcut:open-friend-link', handleOpenFriendLink);
   window.addEventListener('shortcut:add-email', handleAddEmail);
   window.addEventListener('shortcut:add-address', handleAddAddress);
   window.addEventListener('shortcut:add-url', handleAddUrl);
@@ -397,6 +498,7 @@ onMount(() => {
     window.removeEventListener('shortcut:add-circle', handleAddCircle);
     window.removeEventListener('shortcut:add-professional', handleAddProfessional);
     window.removeEventListener('shortcut:log-encounter', handleLogEncounter);
+    window.removeEventListener('shortcut:open-friend-link', handleOpenFriendLink);
   };
 });
 </script>
@@ -559,13 +661,16 @@ onMount(() => {
           </button>
         </div>
         <div class="space-y-2">
-          {#each friend.phones as phone (phone.id)}
-            <PhoneRow
-              {phone}
-              onEdit={() => openEditModal('phone', phone.id, phone)}
-              onDelete={() => openDeleteConfirm('phone', phone.id, phone.phoneNumber)}
-              isDeleting={deletingPhoneId === phone.id}
-            />
+          {#each friend.phones as phone, i (phone.id)}
+            <div class="relative">
+              <KeyboardHintBadge index={i} isActive={$isOpenFriendLinkModeActive} prefix={$openFriendLinkModePrefix} />
+              <PhoneRow
+                {phone}
+                onEdit={() => openEditModal('phone', phone.id, phone)}
+                onDelete={() => openDeleteConfirm('phone', phone.id, phone.phoneNumber)}
+                isDeleting={deletingPhoneId === phone.id}
+              />
+            </div>
           {/each}
         </div>
       </section>
@@ -594,13 +699,16 @@ onMount(() => {
           </button>
         </div>
         <div class="space-y-2">
-          {#each friend.emails as email (email.id)}
-            <EmailRow
-              {email}
-              onEdit={() => openEditModal('email', email.id, email)}
-              onDelete={() => openDeleteConfirm('email', email.id, email.emailAddress)}
-              isDeleting={deletingEmailId === email.id}
-            />
+          {#each friend.emails as email, i (email.id)}
+            <div class="relative">
+              <KeyboardHintBadge index={emailStartIndex + i} isActive={$isOpenFriendLinkModeActive} prefix={$openFriendLinkModePrefix} />
+              <EmailRow
+                {email}
+                onEdit={() => openEditModal('email', email.id, email)}
+                onDelete={() => openDeleteConfirm('email', email.id, email.emailAddress)}
+                isDeleting={deletingEmailId === email.id}
+              />
+            </div>
           {/each}
         </div>
       </section>
@@ -665,13 +773,16 @@ onMount(() => {
           </button>
         </div>
         <div class="space-y-2">
-          {#each friend.urls as url (url.id)}
-            <UrlRow
-              {url}
-              onEdit={() => openEditModal('url', url.id, url)}
-              onDelete={() => openDeleteConfirm('url', url.id, url.url)}
-              isDeleting={deletingUrlId === url.id}
-            />
+          {#each friend.urls as url, i (url.id)}
+            <div class="relative">
+              <KeyboardHintBadge index={urlStartIndex + i} isActive={$isOpenFriendLinkModeActive} prefix={$openFriendLinkModePrefix} />
+              <UrlRow
+                {url}
+                onEdit={() => openEditModal('url', url.id, url)}
+                onDelete={() => openDeleteConfirm('url', url.id, url.url)}
+                isDeleting={deletingUrlId === url.id}
+              />
+            </div>
           {/each}
         </div>
       </section>
@@ -701,12 +812,17 @@ onMount(() => {
         </div>
         <div class="space-y-2">
           {#each friend.socialProfiles as profile (profile.id)}
-            <SocialProfileRow
-              {profile}
-              onEdit={() => openEditModal('social', profile.id, profile)}
-              onDelete={() => openDeleteConfirm('social', profile.id, profile.username || profile.profileUrl || profile.platform)}
-              isDeleting={deletingSocialId === profile.id}
-            />
+            <div class="relative">
+              {#if socialProfileBadgeIndex.has(profile.id)}
+                <KeyboardHintBadge index={socialProfileBadgeIndex.get(profile.id) ?? 0} isActive={$isOpenFriendLinkModeActive} prefix={$openFriendLinkModePrefix} />
+              {/if}
+              <SocialProfileRow
+                {profile}
+                onEdit={() => openEditModal('social', profile.id, profile)}
+                onDelete={() => openDeleteConfirm('social', profile.id, profile.username || profile.profileUrl || profile.platform)}
+                isDeleting={deletingSocialId === profile.id}
+              />
+            </div>
           {/each}
         </div>
       </section>
@@ -805,12 +921,15 @@ onMount(() => {
     </div>
     {#if collectives.length > 0}
       <div class="space-y-2">
-        {#each collectives as collective (collective.id)}
-          <CollectiveRow
-            {collective}
-            onRemove={handleRemoveFromCollective}
-            isRemoving={removingCollectiveId === collective.id}
-          />
+        {#each collectives as collective, i (collective.id)}
+          <div class="relative">
+            <KeyboardHintBadge index={collectiveStartIndex + i} isActive={$isOpenFriendLinkModeActive} prefix={$openFriendLinkModePrefix} />
+            <CollectiveRow
+              {collective}
+              onRemove={handleRemoveFromCollective}
+              isRemoving={removingCollectiveId === collective.id}
+            />
+          </div>
         {/each}
       </div>
     {:else if !collectivesLoading}
@@ -824,6 +943,7 @@ onMount(() => {
       friendId={friend.id}
       friendDisplayName={friend.displayName}
       relationships={friend.relationships ?? []}
+      linkStartIndex={relationshipStartIndex}
     />
   </section>
 

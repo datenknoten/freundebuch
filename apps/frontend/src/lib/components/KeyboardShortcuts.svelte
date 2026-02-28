@@ -20,15 +20,18 @@ import {
   isModalOpen,
   isOpenCollectiveModeActive,
   isOpenEncounterModeActive,
+  isOpenFriendLinkModeActive,
   isOpenMemberModeActive,
   isOpenModeActive,
   openCollectiveModePrefix,
   openEncounterModePrefix,
+  openFriendLinkModePrefix,
   openMemberModePrefix,
   openModePrefix,
   visibleCircleIds,
   visibleCollectiveIds,
   visibleEncounterIds,
+  visibleFriendDetailLinks,
   visibleFriendIds,
   visibleMemberContactIds,
 } from '$lib/stores/ui';
@@ -66,6 +69,8 @@ function clearPending() {
   openCollectiveModePrefix.set(null);
   isOpenMemberModeActive.set(false);
   openMemberModePrefix.set(null);
+  isOpenFriendLinkModeActive.set(false);
+  openFriendLinkModePrefix.set(null);
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -263,9 +268,61 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // Handle two/three-key sequences (o+...) for opening friends, encounters, collectives, or members
+  // Handle two/three-key sequences (o+...) for opening friends, encounters, collectives, members, or friend links
   // Supports: o+1-9 for items 1-9, o+a+1-9 for items 10-18, o+b+1-9 for items 19-27, etc.
   if (pendingKey === 'o') {
+    // Friend detail page: open links via custom event
+    const isOnFriendDetail =
+      $page.url.pathname.match(/^\/friends\/[^/]+$/) && !$page.url.pathname.endsWith('/new');
+
+    if (isOnFriendDetail) {
+      const links = $visibleFriendDetailLinks;
+      const currentPrefix = $openFriendLinkModePrefix;
+      const keyNum = parseInt(e.key, 10);
+      const keyLower = e.key.toLowerCase();
+
+      if (currentPrefix) {
+        if (keyNum >= 1 && keyNum <= 9) {
+          e.preventDefault();
+          const index = getIndexFromHint(`${currentPrefix}${keyNum}`);
+          if (index >= 0 && index < links.length) {
+            clearPending();
+            window.dispatchEvent(
+              new CustomEvent('shortcut:open-friend-link', { detail: { index } }),
+            );
+          } else {
+            clearPending();
+          }
+        } else {
+          clearPending();
+        }
+        return;
+      }
+
+      if (keyNum >= 1 && keyNum <= 9) {
+        e.preventDefault();
+        const index = keyNum - 1;
+        if (index < links.length) {
+          clearPending();
+          window.dispatchEvent(new CustomEvent('shortcut:open-friend-link', { detail: { index } }));
+        }
+        return;
+      }
+
+      if (keyLower >= 'a' && keyLower <= 'z') {
+        const letterIndex = keyLower.charCodeAt(0) - 97;
+        const groupStartIndex = (letterIndex + 1) * ITEMS_PER_GROUP;
+        if (groupStartIndex < links.length) {
+          e.preventDefault();
+          openFriendLinkModePrefix.set(keyLower);
+          return;
+        }
+      }
+
+      clearPending();
+      return;
+    }
+
     // Determine which page we're on
     const isOnFriends = $page.url.pathname === '/friends';
     const isOnEncounters = $page.url.pathname === '/encounters';
@@ -605,6 +662,18 @@ function handleKeydown(e: KeyboardEvent) {
     e.preventDefault();
     pendingKey = 'o';
     isOpenMemberModeActive.set(true);
+    return;
+  }
+
+  // Start open friend link sequence (only on friend detail page)
+  if (
+    e.key === 'o' &&
+    $page.url.pathname.match(/^\/friends\/[^/]+$/) &&
+    !$page.url.pathname.endsWith('/new')
+  ) {
+    e.preventDefault();
+    pendingKey = 'o';
+    isOpenFriendLinkModeActive.set(true);
     return;
   }
 
@@ -1075,6 +1144,33 @@ function closeHelp() {
               </div>
             </div>
           </div>
+
+          <!-- Open Links (only on friend detail page) -->
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Open Links
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Open Link (1-9)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Open Link (10+)</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
+                  <span class="text-gray-400">then</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+            </div>
+          </div>
           {/if}
 
           <!-- Circles (only on circles page) -->
@@ -1432,6 +1528,28 @@ function closeHelp() {
         Press the number to complete: {$openCollectiveModePrefix}1, {$openCollectiveModePrefix}2, ...
       {:else}
         Press the key shown on a collective to open it
+      {/if}
+    </div>
+  </div>
+{:else if pendingKey === 'o' && isOnFriendDetailPage}
+  <div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+      <span class="text-sm font-medium text-gray-700">
+        Open link{$openFriendLinkModePrefix ? ` (${$openFriendLinkModePrefix}...)` : '...'}
+      </span>
+      <span class="text-xs text-gray-500 ml-2">
+        {#if $openFriendLinkModePrefix}
+          Press 1-9 or Esc to cancel
+        {:else}
+          Press 1-9, a-z, or Esc to cancel
+        {/if}
+      </span>
+    </div>
+    <div class="p-3 font-body text-sm text-gray-600">
+      {#if $openFriendLinkModePrefix}
+        Press the number to complete: {$openFriendLinkModePrefix}1, {$openFriendLinkModePrefix}2, ...
+      {:else}
+        Press the key shown on a link to open it
       {/if}
     </div>
   </div>
