@@ -2,8 +2,9 @@
 import { onMount } from 'svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
-import { isModalOpen } from '$lib/stores/ui';
+import { isModalOpen, isOpenFriendLinkModeActive, openFriendLinkModePrefix } from '$lib/stores/ui';
 import type { Relationship, RelationshipCategory } from '$shared';
+import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
 import AddRelationshipForm from './AddRelationshipForm.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
 
@@ -16,9 +17,11 @@ interface Props {
   friendDisplayName: string;
   /** Array of relationships */
   relationships: Relationship[];
+  /** Starting link index for keyboard hint badges (undefined = no badges) */
+  linkStartIndex?: number;
 }
 
-let { friendId, friendDisplayName, relationships }: Props = $props();
+let { friendId, friendDisplayName, relationships, linkStartIndex }: Props = $props();
 
 let showAddForm = $state(false);
 let autofocusForm = $state(false);
@@ -64,6 +67,21 @@ const groupedRelationships = $derived(() => {
   }
 
   return groups;
+});
+
+// Map relationship IDs to their flat badge index (family → professional → social order)
+let relationshipBadgeIndex = $derived.by(() => {
+  if (linkStartIndex === undefined) return new Map<string, number>();
+  const groups = groupedRelationships();
+  const map = new Map<string, number>();
+  let counter = 0;
+  for (const category of ['family', 'professional', 'social'] as const) {
+    for (const rel of groups[category]) {
+      map.set(rel.id, linkStartIndex + counter);
+      counter++;
+    }
+  }
+  return map;
 });
 
 // Category colors
@@ -183,6 +201,10 @@ function handleBackdropClick(e: MouseEvent) {
 
           <div class="space-y-2">
             {#each rels as relationship}
+              <div class="relative">
+              {#if linkStartIndex !== undefined && relationshipBadgeIndex.has(relationship.id)}
+                <KeyboardHintBadge index={relationshipBadgeIndex.get(relationship.id) ?? 0} isActive={$isOpenFriendLinkModeActive} prefix={$openFriendLinkModePrefix} />
+              {/if}
               <div class="flex items-start gap-3 p-3 {categoryConfig[category as RelationshipCategory].bgColor} rounded-lg">
                 <a
                   href="/friends/{relationship.relatedFriendId}"
@@ -271,6 +293,7 @@ function handleBackdropClick(e: MouseEvent) {
                     {/if}
                   </button>
                 </div>
+              </div>
               </div>
             {/each}
           </div>

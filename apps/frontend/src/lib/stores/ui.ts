@@ -77,6 +77,31 @@ export function getIndexFromHint(hint: string): number {
 }
 
 // =============================================================================
+// Friend Detail Link Mode State (keyboard-driven link opening on friend detail)
+// =============================================================================
+
+export interface FriendDetailLink {
+  url: string;
+  type: 'internal' | 'external' | 'protocol';
+}
+
+/**
+ * Tracks if "open friend link mode" is active for quick keyboard opening of links
+ * When active, linkable rows show keyboard hints and key sequences can open links
+ */
+export const isOpenFriendLinkModeActive = writable(false);
+
+/**
+ * Tracks the current letter prefix in open friend link mode (e.g., 'a', 'b', 'c')
+ */
+export const openFriendLinkModePrefix = writable<string | null>(null);
+
+/**
+ * List of links currently visible on the friend detail page (for open mode navigation)
+ */
+export const visibleFriendDetailLinks = writable<FriendDetailLink[]>([]);
+
+// =============================================================================
 // Filter Mode State (keyboard-driven filter selection)
 // =============================================================================
 
