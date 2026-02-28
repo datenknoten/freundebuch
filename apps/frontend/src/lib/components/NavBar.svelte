@@ -260,7 +260,7 @@ $effect(() => {
         {$i18n.t('footer.terms')}
       </a>
     </div>
-    <p class="text-center text-gray-400 text-xs font-body">v{version}</p>
+    <p class="text-center text-gray-400 text-xs font-body"><a href="https://github.com/datenknoten/freundebuch" class="hover:text-forest transition-colors duration-200" target="_blank" rel="noopener noreferrer">v{version}</a></p>
   </div>
 </div>
 

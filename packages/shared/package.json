@@ -2,6 +2,7 @@
   "name": "@freundebuch/shared",
   "version": "2.61.1",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",

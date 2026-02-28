@@ -45,4 +45,4 @@ See [SECURITY.md](SECURITY.md) for how to report vulnerabilities.
 
 ## License
 
-[To be determined]
+[AGPL-3.0-only](LICENSE.md)
