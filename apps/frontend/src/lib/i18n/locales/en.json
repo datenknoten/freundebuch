@@ -646,7 +646,8 @@
       "addDate": "Add Date",
       "addCircle": "Add Circle",
       "addRelationship": "Add Relationship",
-      "addEmployment": "Add Employment"
+      "addEmployment": "Add Employment",
+      "addCollective": "Add Collective"
     },
     "empty": {
       "phones": "No phone numbers added yet.",
@@ -656,6 +657,7 @@
       "socialProfiles": "No social profiles added yet.",
       "dates": "No important dates added yet.",
       "circles": "Not assigned to any circles yet.",
+      "collectives": "Not a member of any collectives yet.",
       "relationships": "No relationships yet. Add relationships to connect this friend with others."
     },
     "metadata": {
@@ -683,6 +685,17 @@
       "confirmMessage": "Are you sure you want to delete",
       "cannotUndo": "This action cannot be undone.",
       "deleting": "Deleting..."
+    },
+    "addToCollective": {
+      "title": "Add to Collective",
+      "selectCollective": "Select Collective",
+      "selectCollectivePlaceholder": "Choose a collective...",
+      "selectRole": "Role",
+      "noCollectivesAvailable": "No collectives available. Create one first.",
+      "alreadyInAll": "This friend is already in all collectives.",
+      "submit": "Add to Collective",
+      "adding": "Adding...",
+      "error": "Failed to add to collective"
     },
     "labels": {
       "home": "Home",

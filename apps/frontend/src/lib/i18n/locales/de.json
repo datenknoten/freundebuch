@@ -646,7 +646,8 @@
       "addDate": "Termin hinzufügen",
       "addCircle": "Freundekreis hinzufügen",
       "addRelationship": "Beziehung hinzufügen",
-      "addEmployment": "Beschäftigung hinzufügen"
+      "addEmployment": "Beschäftigung hinzufügen",
+      "addCollective": "Gruppe hinzufügen"
     },
     "empty": {
       "phones": "Noch keine Telefonnummern hinzugefügt.",
@@ -656,6 +657,7 @@
       "socialProfiles": "Noch keine sozialen Profile hinzugefügt.",
       "dates": "Noch keine wichtigen Termine hinzugefügt.",
       "circles": "Noch keinem Freundekreis zugeordnet.",
+      "collectives": "Noch kein Mitglied in einer Gruppe.",
       "relationships": "Noch keine Beziehungen. Füge Beziehungen hinzu, um diesen Freund mit anderen zu verbinden."
     },
     "metadata": {
@@ -683,6 +685,17 @@
       "confirmMessage": "Bist du sicher, dass du löschen möchtest",
       "cannotUndo": "Diese Aktion kann nicht rückgängig gemacht werden.",
       "deleting": "Wird gelöscht..."
+    },
+    "addToCollective": {
+      "title": "Zu Gruppe hinzufügen",
+      "selectCollective": "Gruppe auswählen",
+      "selectCollectivePlaceholder": "Gruppe auswählen...",
+      "selectRole": "Rolle",
+      "noCollectivesAvailable": "Keine Gruppen verfügbar. Erstelle zuerst eine.",
+      "alreadyInAll": "Dieser Freund ist bereits in allen Gruppen.",
+      "submit": "Zu Gruppe hinzufügen",
+      "adding": "Wird hinzugefügt...",
+      "error": "Konnte nicht zur Gruppe hinzugefügt werden"
     },
     "labels": {
       "home": "Privat",
