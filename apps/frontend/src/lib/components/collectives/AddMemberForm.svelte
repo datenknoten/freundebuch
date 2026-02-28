@@ -30,6 +30,7 @@ let preview = $state<RelationshipPreviewResponse | null>(null);
 let isLoadingPreview = $state(false);
 let isSubmitting = $state(false);
 let error = $state('');
+let previewAbortController: AbortController | null = null;
 
 let isValid = $derived(selectedFriend !== null && selectedRoleId !== '');
 
@@ -51,17 +52,25 @@ async function loadPreview() {
     return;
   }
 
+  previewAbortController?.abort();
+  previewAbortController = new AbortController();
+  const signal = previewAbortController.signal;
+
   isLoadingPreview = true;
   try {
-    preview = await previewMemberRelationships(collectiveId, {
-      friend_id: selectedFriend.id,
-      role_id: selectedRoleId,
-    });
+    const result = await previewMemberRelationships(
+      collectiveId,
+      { friend_id: selectedFriend.id, role_id: selectedRoleId },
+      { signal },
+    );
+    if (!signal.aborted) preview = result;
   } catch (err) {
-    console.error('Failed to load preview:', err);
-    preview = null;
+    if (!signal.aborted) {
+      console.error('Failed to load preview:', err);
+      preview = null;
+    }
   } finally {
-    isLoadingPreview = false;
+    if (!signal.aborted) isLoadingPreview = false;
   }
 }
 
