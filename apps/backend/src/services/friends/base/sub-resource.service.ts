@@ -52,8 +52,20 @@ export interface SubResourceConfig<TInput, TOutput, TCreateResult, TUpdateResult
     client: pg.Pool | pg.PoolClient,
   ) => Promise<unknown>;
 
+  /** Optional function to count existing resources (for auto-primary) */
+  countFn?: (
+    params: {
+      userExternalId: string;
+      friendExternalId: string;
+    },
+    client: pg.Pool | pg.PoolClient,
+  ) => Promise<unknown[]>;
+
   /** Function to check if input has primary flag set */
   isPrimary?: (input: TInput) => boolean;
+
+  /** Function to set the primary flag on an input (for auto-primary) */
+  setIsPrimary?: (input: TInput, value: boolean) => TInput;
 
   /** Function to map database result to output type */
   mapResult: (result: TCreateResult | TUpdateResult) => TOutput;
@@ -100,6 +112,14 @@ export abstract class SubResourceService<
     this.logger.debug({ friendExternalId }, `Adding ${this.config.resourceName}`);
 
     const dbClient = client ?? this.db;
+
+    // Auto-set primary if this is the first entry
+    if (this.config.hasPrimaryFlag && this.config.countFn && this.config.setIsPrimary) {
+      const existing = await this.config.countFn({ userExternalId, friendExternalId }, dbClient);
+      if (existing.length === 0) {
+        input = this.config.setIsPrimary(input, true);
+      }
+    }
 
     // If setting as primary and a clear function exists, clear existing primary
     if (

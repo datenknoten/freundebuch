@@ -8,16 +8,17 @@ const i18n = createI18n();
 
 interface Props {
   initialData?: Address;
+  defaultPrimary?: boolean;
   disabled?: boolean;
   onchange?: () => void;
 }
 
-let { initialData, disabled = false, onchange }: Props = $props();
+let { initialData, defaultPrimary, disabled = false, onchange }: Props = $props();
 
 // Form state for fields not in HierarchicalAddressInput - initialize with functions to capture initial values
 let addressType = $state<AddressType>((() => initialData?.addressType ?? 'home')());
 let label = $state((() => initialData?.label ?? '')());
-let isPrimary = $state((() => initialData?.isPrimary ?? false)());
+let isPrimary = $state((() => initialData?.isPrimary ?? defaultPrimary ?? false)());
 
 // Address data from HierarchicalAddressInput
 let addressData = $state<{

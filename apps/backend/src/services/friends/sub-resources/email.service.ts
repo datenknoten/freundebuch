@@ -4,6 +4,7 @@ import {
   clearPrimaryEmail,
   createEmail,
   deleteEmail,
+  getEmailsByFriendId,
   type IDeleteEmailResult,
   type IGetEmailsByFriendIdResult,
   updateEmail,
@@ -73,7 +74,13 @@ export class EmailService extends SubResourceService<
         return clearPrimaryEmail.run({ userExternalId, friendExternalId }, client as pg.Pool);
       },
 
+      countFn: async ({ userExternalId, friendExternalId }, client) => {
+        return getEmailsByFriendId.run({ userExternalId, friendExternalId }, client as pg.Pool);
+      },
+
       isPrimary: (input) => input.is_primary ?? false,
+
+      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
       mapResult: (row): Email => ({
         id: row.external_id,

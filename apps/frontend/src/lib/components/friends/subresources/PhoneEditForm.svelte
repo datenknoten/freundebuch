@@ -7,17 +7,18 @@ const i18n = createI18n();
 
 interface Props {
   initialData?: Phone;
+  defaultPrimary?: boolean;
   disabled?: boolean;
   onchange?: () => void;
 }
 
-let { initialData, disabled = false, onchange }: Props = $props();
+let { initialData, defaultPrimary, disabled = false, onchange }: Props = $props();
 
 // Form state - initialize with functions to capture initial values
 let phoneNumber = $state((() => initialData?.phoneNumber ?? '')());
 let phoneType = $state<PhoneType>((() => initialData?.phoneType ?? 'mobile')());
 let label = $state((() => initialData?.label ?? '')());
-let isPrimary = $state((() => initialData?.isPrimary ?? false)());
+let isPrimary = $state((() => initialData?.isPrimary ?? defaultPrimary ?? false)());
 
 // Skip initial effect run
 let initialized = false;

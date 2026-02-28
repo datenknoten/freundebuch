@@ -95,6 +95,8 @@ export class CollectiveEmailService extends CollectiveSubResourceService<
 
       isPrimary: (input) => input.is_primary ?? false,
 
+      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
+
       mapResult: (row): Email => ({
         id: row.external_id,
         emailAddress: row.email_address,

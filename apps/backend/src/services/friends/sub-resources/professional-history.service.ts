@@ -4,6 +4,7 @@ import {
   clearPrimaryProfessionalHistory,
   createProfessionalHistory,
   deleteProfessionalHistory,
+  getProfessionalHistoryByFriendId,
   type IDeleteProfessionalHistoryResult,
   type IGetProfessionalHistoryByFriendIdResult,
   updateProfessionalHistory,
@@ -86,7 +87,16 @@ export class ProfessionalHistoryService extends SubResourceService<
         );
       },
 
+      countFn: async ({ userExternalId, friendExternalId }, client) => {
+        return getProfessionalHistoryByFriendId.run(
+          { userExternalId, friendExternalId },
+          client as pg.Pool,
+        );
+      },
+
       isPrimary: (input) => input.is_primary ?? false,
+
+      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
       mapResult: (row): ProfessionalHistory => ({
         id: row.external_id,

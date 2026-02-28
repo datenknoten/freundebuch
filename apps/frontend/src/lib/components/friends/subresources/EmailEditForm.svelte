@@ -7,17 +7,18 @@ const i18n = createI18n();
 
 interface Props {
   initialData?: Email;
+  defaultPrimary?: boolean;
   disabled?: boolean;
   onchange?: () => void;
 }
 
-let { initialData, disabled = false, onchange }: Props = $props();
+let { initialData, defaultPrimary, disabled = false, onchange }: Props = $props();
 
 // Form state - initialize with functions to capture initial values
 let emailAddress = $state((() => initialData?.emailAddress ?? '')());
 let emailType = $state<EmailType>((() => initialData?.emailType ?? 'personal')());
 let label = $state((() => initialData?.label ?? '')());
-let isPrimary = $state((() => initialData?.isPrimary ?? false)());
+let isPrimary = $state((() => initialData?.isPrimary ?? defaultPrimary ?? false)());
 
 // Skip initial effect run
 let initialized = false;

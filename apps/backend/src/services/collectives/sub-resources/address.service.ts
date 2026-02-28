@@ -110,6 +110,8 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
 
       isPrimary: (input) => input.is_primary ?? false,
 
+      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
+
       mapResult: (row): Address => ({
         id: row.external_id,
         streetLine1: row.street_line1 ?? undefined,

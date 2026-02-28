@@ -74,6 +74,9 @@ export interface CollectiveSubResourceConfig<
   /** Function to check if input has primary flag set */
   isPrimary?: (input: TInput) => boolean;
 
+  /** Function to set the primary flag on an input (for auto-primary) */
+  setIsPrimary?: (input: TInput, value: boolean) => TInput;
+
   /** Function to map database result to output type */
   mapResult: (result: TCreateResult | TUpdateResult) => TOutput;
 }
@@ -143,6 +146,17 @@ export abstract class CollectiveSubResourceService<
     client?: pg.Pool | pg.PoolClient,
   ): Promise<TOutput | null> {
     this.logger.debug({ collectiveExternalId }, `Adding ${this.config.resourceName}`);
+
+    // Auto-set primary if this is the first entry
+    if (this.config.hasPrimaryFlag && this.config.setIsPrimary) {
+      const existing = await this.config.listFn(
+        { userExternalId, collectiveExternalId },
+        client ?? this.db,
+      );
+      if (existing.length === 0) {
+        input = this.config.setIsPrimary(input, true);
+      }
+    }
 
     const needsPrimaryUpdate =
       this.config.hasPrimaryFlag && this.config.clearPrimaryFn && this.config.isPrimary?.(input);

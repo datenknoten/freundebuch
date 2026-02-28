@@ -7,11 +7,12 @@ const i18n = createI18n();
 
 interface Props {
   initialData?: ProfessionalHistory;
+  defaultPrimary?: boolean;
   disabled?: boolean;
   onchange?: () => void;
 }
 
-let { initialData, disabled = false, onchange }: Props = $props();
+let { initialData, defaultPrimary, disabled = false, onchange }: Props = $props();
 
 // Form state - initialize with functions to capture initial values
 let jobTitle = $state((() => initialData?.jobTitle ?? '')());
@@ -22,7 +23,7 @@ let fromMonth = $state((() => initialData?.fromMonth ?? new Date().getMonth() + 
 let fromYear = $state((() => initialData?.fromYear ?? new Date().getFullYear())());
 let toMonth = $state((() => initialData?.toMonth ?? null)() as number | null);
 let toYear = $state((() => initialData?.toYear ?? null)() as number | null);
-let isPrimary = $state((() => initialData?.isPrimary ?? false)());
+let isPrimary = $state((() => initialData?.isPrimary ?? defaultPrimary ?? false)());
 let isCurrentPosition = $state(
   (() => !initialData || (initialData.toMonth === null && initialData.toYear === null))(),
 );

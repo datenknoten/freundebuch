@@ -4,6 +4,7 @@ import {
   clearPrimaryAddress,
   createAddress,
   deleteAddress,
+  getAddressesByFriendId,
   type IDeleteAddressResult,
   type IGetAddressesByFriendIdResult,
   updateAddress,
@@ -83,7 +84,13 @@ export class AddressService extends SubResourceService<
         return clearPrimaryAddress.run({ userExternalId, friendExternalId }, client as pg.Pool);
       },
 
+      countFn: async ({ userExternalId, friendExternalId }, client) => {
+        return getAddressesByFriendId.run({ userExternalId, friendExternalId }, client as pg.Pool);
+      },
+
       isPrimary: (input) => input.is_primary ?? false,
+
+      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
       mapResult: (row): Address => ({
         id: row.external_id,

@@ -95,6 +95,8 @@ export class CollectivePhoneService extends CollectiveSubResourceService<
 
       isPrimary: (input) => input.is_primary ?? false,
 
+      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
+
       mapResult: (row): Phone => ({
         id: row.external_id,
         phoneNumber: row.phone_number,

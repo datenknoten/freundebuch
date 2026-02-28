@@ -765,11 +765,11 @@ onMount(() => {
     onClose={closeEditModal}
   >
     {#if editingType === 'phone'}
-      <PhoneEditForm bind:this={phoneFormRef} initialData={editingData as Phone | undefined} />
+      <PhoneEditForm bind:this={phoneFormRef} initialData={editingData as Phone | undefined} defaultPrimary={!editingId && phones.length === 0} />
     {:else if editingType === 'email'}
-      <EmailEditForm bind:this={emailFormRef} initialData={editingData as Email | undefined} />
+      <EmailEditForm bind:this={emailFormRef} initialData={editingData as Email | undefined} defaultPrimary={!editingId && emails.length === 0} />
     {:else if editingType === 'address'}
-      <AddressEditForm bind:this={addressFormRef} initialData={editingData as Address | undefined} />
+      <AddressEditForm bind:this={addressFormRef} initialData={editingData as Address | undefined} defaultPrimary={!editingId && addresses.length === 0} />
     {:else if editingType === 'url'}
       <UrlEditForm bind:this={urlFormRef} initialData={editingData as Url | undefined} />
     {:else if editingType === 'circle'}

@@ -902,6 +902,7 @@ onMount(() => {
       <PhoneEditForm
         bind:this={phoneFormRef}
         initialData={editingData as Phone | undefined}
+        defaultPrimary={!editingId && friend.phones.length === 0}
         disabled={isEditLoading}
         onchange={() => isDirty = true}
       />
@@ -909,6 +910,7 @@ onMount(() => {
       <EmailEditForm
         bind:this={emailFormRef}
         initialData={editingData as Email | undefined}
+        defaultPrimary={!editingId && friend.emails.length === 0}
         disabled={isEditLoading}
         onchange={() => isDirty = true}
       />
@@ -916,6 +918,7 @@ onMount(() => {
       <AddressEditForm
         bind:this={addressFormRef}
         initialData={editingData as Address | undefined}
+        defaultPrimary={!editingId && friend.addresses.length === 0}
         disabled={isEditLoading}
         onchange={() => isDirty = true}
       />
@@ -951,6 +954,7 @@ onMount(() => {
       <ProfessionalHistoryEditForm
         bind:this={professionalFormRef}
         initialData={editingData as ProfessionalHistory | undefined}
+        defaultPrimary={!editingId && (!friend.professionalHistory || friend.professionalHistory.length === 0)}
         disabled={isEditLoading}
         onchange={() => isDirty = true}
       />

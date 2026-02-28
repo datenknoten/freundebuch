@@ -4,6 +4,7 @@ import {
   clearPrimaryPhone,
   createPhone,
   deletePhone,
+  getPhonesByFriendId,
   type IDeletePhoneResult,
   type IGetPhonesByFriendIdResult,
   updatePhone,
@@ -73,7 +74,13 @@ export class PhoneService extends SubResourceService<
         return clearPrimaryPhone.run({ userExternalId, friendExternalId }, client as pg.Pool);
       },
 
+      countFn: async ({ userExternalId, friendExternalId }, client) => {
+        return getPhonesByFriendId.run({ userExternalId, friendExternalId }, client as pg.Pool);
+      },
+
       isPrimary: (input) => input.is_primary ?? false,
+
+      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
       mapResult: (row): Phone => ({
         id: row.external_id,
