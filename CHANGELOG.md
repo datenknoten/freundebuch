@@ -1,3 +1,15 @@
+## [2.64.0](https://github.com/datenknoten/freundebuch/compare/v2.63.0...v2.64.0) (2026-02-28)
+
+### Features
+
+* **frontend:** Add `o` shortcut to open links on friend detail page ([eb7b0fc](https://github.com/datenknoten/freundebuch/commit/eb7b0fcff5fbffd0fadd9c5714e525c881ab6bba))
+* **frontend:** Add friend to collective from friend detail page ([7d6ddd2](https://github.com/datenknoten/freundebuch/commit/7d6ddd2a306a097762c1fb707d44400dcdde1d21))
+
+### Bug Fixes
+
+* **backend:** Increase collectives rate limit from 60 to 120 req/min ([cd16b45](https://github.com/datenknoten/freundebuch/commit/cd16b45bfce26d035b751ba954f4eca88b9fc823))
+* **frontend:** Cancel stale preview requests and extract page size constant ([bc1f82a](https://github.com/datenknoten/freundebuch/commit/bc1f82ac2322243e4f380de53c8e15c9a30a9a7e))
+
 ## [2.63.0](https://github.com/datenknoten/freundebuch/compare/v2.62.0...v2.63.0) (2026-02-28)
 
 ### Features
