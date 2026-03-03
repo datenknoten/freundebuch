@@ -1,5 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import { autoFocus } from '$lib/actions/autoFocus';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
 import type { Encounter, EncounterInput, EncounterUpdate, FriendSearchResult } from '$shared';
@@ -118,6 +119,7 @@ function handleCancel() {
       {$i18n.t('encounters.form.titleLabel')} <span class="text-red-500">{$i18n.t('encounters.form.required')}</span>
     </label>
     <input
+      use:autoFocus
       id="title"
       type="text"
       bind:value={title}

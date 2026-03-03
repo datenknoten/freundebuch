@@ -1,5 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import { autoFocus } from '$lib/actions/autoFocus';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
@@ -55,6 +56,7 @@ async function handleSubmit(e) {
 			{$i18n.t('auth.register.emailAddress')}
 		</label>
 		<input
+            use:autoFocus
 			type="email"
 			id="email"
 			bind:value={email}
