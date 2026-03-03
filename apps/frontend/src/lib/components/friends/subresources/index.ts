@@ -26,6 +26,7 @@ export { default as PhoneEditForm } from './PhoneEditForm.svelte';
 export { default as PhoneRow } from './PhoneRow.svelte';
 export { default as ProfessionalHistoryEditForm } from './ProfessionalHistoryEditForm.svelte';
 export { default as ProfessionalHistoryRow } from './ProfessionalHistoryRow.svelte';
+export { default as RelationshipEditForm } from './RelationshipEditForm.svelte';
 export { default as SocialProfileEditForm } from './SocialProfileEditForm.svelte';
 export { default as SocialProfileRow } from './SocialProfileRow.svelte';
 export { default as SwipeableRow } from './SwipeableRow.svelte';

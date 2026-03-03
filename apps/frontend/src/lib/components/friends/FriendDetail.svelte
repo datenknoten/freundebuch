@@ -28,6 +28,8 @@ import type {
   PhoneInput,
   ProfessionalHistory,
   ProfessionalHistoryInput,
+  RelationshipInput,
+  RelationshipTypeId,
   SocialProfile,
   SocialProfileInput,
   Url,
@@ -58,6 +60,7 @@ import {
   PhoneRow,
   ProfessionalHistoryEditForm,
   ProfessionalHistoryRow,
+  RelationshipEditForm,
   SocialProfileEditForm,
   SocialProfileRow,
   type SubresourceType,
@@ -238,6 +241,14 @@ let professionalFormRef = $state<{
   getData: () => ProfessionalHistoryInput;
   isValid: () => boolean;
 } | null>(null);
+let relationshipFormRef = $state<{
+  getData: () => {
+    related_friend_id: string;
+    relationship_type_id: RelationshipTypeId;
+    notes?: string;
+  };
+  isValid: () => boolean;
+} | null>(null);
 
 // Friend delete handler
 async function handleDelete() {
@@ -348,6 +359,9 @@ async function handleSave() {
       } else {
         await friends.addProfessionalHistory(friend.id, data);
       }
+    } else if (editingType === 'relationship' && relationshipFormRef) {
+      const data = relationshipFormRef.getData();
+      await friends.addRelationship(friend.id, data);
     }
 
     closeEditModal();
@@ -452,6 +466,9 @@ onMount(() => {
   function handleAddProfessional() {
     openEditModal('professional');
   }
+  function handleAddRelationship() {
+    openEditModal('relationship');
+  }
 
   function handleLogEncounter() {
     goto(
@@ -487,6 +504,7 @@ onMount(() => {
   window.addEventListener('shortcut:add-social', handleAddSocial);
   window.addEventListener('shortcut:add-circle', handleAddCircle);
   window.addEventListener('shortcut:add-professional', handleAddProfessional);
+  window.addEventListener('shortcut:add-relationship', handleAddRelationship);
 
   return () => {
     window.removeEventListener('shortcut:add-phone', handleAddPhone);
@@ -497,6 +515,7 @@ onMount(() => {
     window.removeEventListener('shortcut:add-social', handleAddSocial);
     window.removeEventListener('shortcut:add-circle', handleAddCircle);
     window.removeEventListener('shortcut:add-professional', handleAddProfessional);
+    window.removeEventListener('shortcut:add-relationship', handleAddRelationship);
     window.removeEventListener('shortcut:log-encounter', handleLogEncounter);
     window.removeEventListener('shortcut:open-friend-link', handleOpenFriendLink);
   };
@@ -899,6 +918,7 @@ onMount(() => {
   {/if}
 
   <!-- ==================== COLLECTIVES SECTION ==================== -->
+  {#if collectives.length > 0}
   <section class="space-y-2">
     <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
       <h2 class="text-lg font-heading flex items-center gap-2">
@@ -936,17 +956,37 @@ onMount(() => {
       <p class="text-sm text-gray-500 font-body px-3 py-2">{$i18n.t('friendDetail.empty.collectives')}</p>
     {/if}
   </section>
+  {/if}
 
   <!-- ==================== RELATIONSHIPS SECTION ==================== -->
+  {#if friend.relationships && friend.relationships.length > 0}
   <section class="space-y-2">
+    <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+      <h2 class="text-lg font-heading flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        {$i18n.t('relationshipSection.relationships')}
+      </h2>
+      <button
+        type="button"
+        onclick={() => openEditModal('relationship')}
+        class="hidden sm:flex text-sm font-body font-semibold text-white/90 hover:text-white
+               items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        {$i18n.t('relationshipSection.addRelationship')}
+      </button>
+    </div>
     <RelationshipsSection
       friendId={friend.id}
-      friendDisplayName={friend.displayName}
-      relationships={friend.relationships ?? []}
+      relationships={friend.relationships}
       linkStartIndex={relationshipStartIndex}
     />
   </section>
-
+  {/if}
   <!-- ==================== METADATA FOOTER ==================== -->
   <section class="text-sm text-gray-500 font-body">
     <div class="flex flex-wrap gap-4">
@@ -990,12 +1030,7 @@ onMount(() => {
   <MobileAddDetailModal
     onSelect={(type) => {
       showMobileAddModal = false;
-      if (type === 'relationship') {
-        // Trigger the RelationshipsSection form via custom event
-        window.dispatchEvent(new CustomEvent('shortcut:add-relationship'));
-      } else {
-        openEditModal(type);
-      }
+      openEditModal(type);
     }}
     onClose={() => showMobileAddModal = false}
   />
@@ -1097,6 +1132,14 @@ onMount(() => {
         bind:this={professionalFormRef}
         initialData={editingData as ProfessionalHistory | undefined}
         defaultPrimary={!editingId && (!friend.professionalHistory || friend.professionalHistory.length === 0)}
+        disabled={isEditLoading}
+        onchange={() => isDirty = true}
+      />
+    {:else if editingType === 'relationship'}
+      <RelationshipEditForm
+        bind:this={relationshipFormRef}
+        friendId={friend.id}
+        existingRelationshipFriendIds={friend.relationships?.map(r => r.relatedFriendId)}
         disabled={isEditLoading}
         onchange={() => isDirty = true}
       />
