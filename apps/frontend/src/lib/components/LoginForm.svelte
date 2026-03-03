@@ -1,5 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import { autoFocus } from '$lib/actions/autoFocus';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
@@ -47,6 +48,7 @@ async function handleSubmit(e) {
 			bind:value={email}
 			required
 			autocomplete="email"
+            use:autoFocus
 			class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
 			placeholder={$i18n.t('auth.login.emailPlaceholder')}
 			disabled={isLoading}
