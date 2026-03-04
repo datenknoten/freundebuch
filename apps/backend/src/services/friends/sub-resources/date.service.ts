@@ -1,4 +1,4 @@
-import type { DateInput, DateType, FriendDate, UpcomingDate } from '@freundebuch/shared/index.js';
+import type { DateInput, FriendDate, UpcomingDate } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
@@ -11,6 +11,7 @@ import {
   updateDate,
 } from '../../../models/queries/friend-dates.queries.js';
 import { BirthdayAlreadyExistsError } from '../../../utils/errors.js';
+import { parseDateType } from '../../../utils/type-guards.js';
 
 export interface DateServiceOptions {
   db: pg.Pool;
@@ -49,7 +50,7 @@ export class DateService {
     if (data.date_type === 'birthday') {
       const [countResult] = await countBirthdaysForFriend.run(
         { userExternalId, friendExternalId },
-        dbClient as pg.Pool,
+        dbClient,
       );
       if (countResult && (countResult.count ?? 0) > 0) {
         throw new BirthdayAlreadyExistsError();
@@ -65,7 +66,7 @@ export class DateService {
         dateType: data.date_type,
         label: data.label ?? null,
       },
-      dbClient as pg.Pool,
+      dbClient,
     );
 
     if (!date) {
@@ -99,7 +100,7 @@ export class DateService {
         dateType: data.date_type,
         label: data.label ?? null,
       },
-      dbClient as pg.Pool,
+      dbClient,
     );
 
     if (!date) {
@@ -124,7 +125,7 @@ export class DateService {
 
     const result = await deleteDate.run(
       { userExternalId, friendExternalId, dateExternalId },
-      dbClient as pg.Pool,
+      dbClient,
     );
 
     return result.length > 0;
@@ -184,7 +185,7 @@ export class DateService {
       id: row.external_id,
       dateValue,
       yearKnown: row.year_known,
-      dateType: row.date_type as DateType,
+      dateType: parseDateType(row.date_type),
       label: row.label ?? undefined,
       createdAt: row.created_at.toISOString(),
     };
@@ -201,7 +202,7 @@ export class DateService {
       id: row.date_external_id,
       dateValue,
       yearKnown: row.year_known,
-      dateType: row.date_type as DateType,
+      dateType: parseDateType(row.date_type),
       label: row.label ?? undefined,
       daysUntil: row.days_until ?? 0,
       friend: {

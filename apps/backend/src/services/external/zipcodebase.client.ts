@@ -1,5 +1,5 @@
 import type { Logger } from 'pino';
-import { type AddressCache, getCitiesCache } from '../../utils/cache.js';
+import { type AddressCache, getCitiesCache, type ZipcodeResultCached } from '../../utils/cache.js';
 import { ZipcodeBaseApiError } from '../../utils/errors.js';
 
 export interface Country {
@@ -7,16 +7,7 @@ export interface Country {
   name: string;
 }
 
-export interface ZipcodeResult {
-  postal_code: string;
-  city: string;
-  state?: string;
-  state_code?: string;
-  province?: string;
-  country_code: string;
-  latitude?: string;
-  longitude?: string;
-}
+export type ZipcodeResult = ZipcodeResultCached;
 
 interface ZipcodeBaseSearchResponse {
   query: {
@@ -213,14 +204,14 @@ export const SUPPORTED_COUNTRIES: Country[] = [
 export class ZipcodeBaseClient {
   private apiKey: string;
   private baseUrl = 'https://app.zipcodebase.com/api/v1';
-  private zipcodeCache: AddressCache<ZipcodeResult[]>;
+  private zipcodeCache: AddressCache<ZipcodeResultCached[]>;
 
   constructor(
     apiKey: string,
     private logger: Logger,
   ) {
     this.apiKey = apiKey;
-    this.zipcodeCache = getCitiesCache<ZipcodeResult[]>();
+    this.zipcodeCache = getCitiesCache();
   }
 
   /**

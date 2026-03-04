@@ -1,5 +1,4 @@
-import type { Email, EmailInput, EmailType } from '@freundebuch/shared/index.js';
-import type pg from 'pg';
+import type { Email, EmailInput } from '@freundebuch/shared/index.js';
 import {
   clearPrimaryEmail,
   createEmail,
@@ -9,6 +8,7 @@ import {
   type IGetEmailsByCollectiveIdResult,
   updateEmail,
 } from '../../../models/queries/collective-emails.queries.js';
+import { parseEmailType } from '../../../utils/type-guards.js';
 import {
   CollectiveSubResourceService,
   type CollectiveSubResourceServiceOptions,
@@ -31,16 +31,13 @@ export class CollectiveEmailService extends CollectiveSubResourceService<
       hasPrimaryFlag: true,
 
       listFn: async ({ userExternalId, collectiveExternalId }, client) => {
-        return getEmailsByCollectiveId.run(
-          { userExternalId, collectiveExternalId },
-          client as pg.Pool,
-        );
+        return getEmailsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
       },
 
       mapListResult: (row): Email => ({
         id: row.external_id,
         emailAddress: row.email_address,
-        emailType: row.email_type as EmailType,
+        emailType: parseEmailType(row.email_type),
         label: row.label ?? undefined,
         isPrimary: row.is_primary,
         createdAt: row.created_at.toISOString(),
@@ -56,7 +53,7 @@ export class CollectiveEmailService extends CollectiveSubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -74,7 +71,7 @@ export class CollectiveEmailService extends CollectiveSubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -85,12 +82,12 @@ export class CollectiveEmailService extends CollectiveSubResourceService<
             collectiveExternalId,
             emailExternalId: resourceExternalId,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
       clearPrimaryFn: async ({ userExternalId, collectiveExternalId }, client) => {
-        return clearPrimaryEmail.run({ userExternalId, collectiveExternalId }, client as pg.Pool);
+        return clearPrimaryEmail.run({ userExternalId, collectiveExternalId }, client);
       },
 
       isPrimary: (input) => input.is_primary ?? false,
@@ -100,7 +97,7 @@ export class CollectiveEmailService extends CollectiveSubResourceService<
       mapResult: (row): Email => ({
         id: row.external_id,
         emailAddress: row.email_address,
-        emailType: row.email_type as EmailType,
+        emailType: parseEmailType(row.email_type),
         label: row.label ?? undefined,
         isPrimary: row.is_primary,
         createdAt: row.created_at.toISOString(),

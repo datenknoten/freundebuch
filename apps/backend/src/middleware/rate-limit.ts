@@ -1,5 +1,6 @@
 import type { Context, Next } from 'hono';
-import { RateLimiterMemory, type RateLimiterRes } from 'rate-limiter-flexible';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { isRateLimiterRes } from '../utils/type-guards.js';
 
 // Use higher limits in test environment to allow concurrent operation tests
 const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
@@ -101,25 +102,36 @@ function getClientIdentifier(c: Context): string {
 }
 
 /**
+ * Shared handler for rate-limiter rejections.
+ * Validates that the caught value is a RateLimiterRes, calculates the
+ * Retry-After header, logs a warning, and returns a 429 JSON response.
+ */
+function handleRateLimitRejection(
+  c: Context,
+  error: unknown,
+  logMessage: string,
+  responseMessage = 'Too many requests. Please try again later.',
+): Response {
+  if (!isRateLimiterRes(error)) throw error;
+  const retryAfter = Math.ceil(error.msBeforeNext / 1000);
+  c.get('logger').warn({ clientId: getClientIdentifier(c), retryAfter }, logMessage);
+  return c.json({ error: responseMessage }, 429, {
+    'Retry-After': String(retryAfter),
+  });
+}
+
+/**
  * Rate limiting middleware for authentication endpoints
  * Limits: 5 attempts per minute, 5 minute block after exceeding
  */
 export async function authRateLimitMiddleware(c: Context, next: Next) {
   const clientId = getClientIdentifier(c);
-  const logger = c.get('logger');
 
   try {
     await authLimiter.consume(clientId);
     return next();
   } catch (error) {
-    const rateLimiterRes = error as RateLimiterRes;
-    const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
-
-    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on auth endpoint');
-
-    return c.json({ error: 'Too many requests. Please try again later.' }, 429, {
-      'Retry-After': String(retryAfter),
-    });
+    return handleRateLimitRejection(c, error, 'Rate limit exceeded on auth endpoint');
   }
 }
 
@@ -129,20 +141,17 @@ export async function authRateLimitMiddleware(c: Context, next: Next) {
  */
 export async function passwordResetRateLimitMiddleware(c: Context, next: Next) {
   const clientId = getClientIdentifier(c);
-  const logger = c.get('logger');
 
   try {
     await passwordResetLimiter.consume(clientId);
     return next();
   } catch (error) {
-    const rateLimiterRes = error as RateLimiterRes;
-    const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
-
-    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on password reset endpoint');
-
-    return c.json({ error: 'Too many password reset attempts. Please try again later.' }, 429, {
-      'Retry-After': String(retryAfter),
-    });
+    return handleRateLimitRejection(
+      c,
+      error,
+      'Rate limit exceeded on password reset endpoint',
+      'Too many password reset attempts. Please try again later.',
+    );
   }
 }
 
@@ -152,20 +161,12 @@ export async function passwordResetRateLimitMiddleware(c: Context, next: Next) {
  */
 export async function friendsRateLimitMiddleware(c: Context, next: Next) {
   const clientId = getClientIdentifier(c);
-  const logger = c.get('logger');
 
   try {
     await friendsLimiter.consume(clientId);
     return next();
   } catch (error) {
-    const rateLimiterRes = error as RateLimiterRes;
-    const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
-
-    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on friends endpoint');
-
-    return c.json({ error: 'Too many requests. Please try again later.' }, 429, {
-      'Retry-After': String(retryAfter),
-    });
+    return handleRateLimitRejection(c, error, 'Rate limit exceeded on friends endpoint');
   }
 }
 
@@ -175,20 +176,12 @@ export async function friendsRateLimitMiddleware(c: Context, next: Next) {
  */
 export async function circlesRateLimitMiddleware(c: Context, next: Next) {
   const clientId = getClientIdentifier(c);
-  const logger = c.get('logger');
 
   try {
     await circlesLimiter.consume(clientId);
     return next();
   } catch (error) {
-    const rateLimiterRes = error as RateLimiterRes;
-    const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
-
-    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on circles endpoint');
-
-    return c.json({ error: 'Too many requests. Please try again later.' }, 429, {
-      'Retry-After': String(retryAfter),
-    });
+    return handleRateLimitRejection(c, error, 'Rate limit exceeded on circles endpoint');
   }
 }
 
@@ -198,20 +191,12 @@ export async function circlesRateLimitMiddleware(c: Context, next: Next) {
  */
 export async function encountersRateLimitMiddleware(c: Context, next: Next) {
   const clientId = getClientIdentifier(c);
-  const logger = c.get('logger');
 
   try {
     await encountersLimiter.consume(clientId);
     return next();
   } catch (error) {
-    const rateLimiterRes = error as RateLimiterRes;
-    const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
-
-    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on encounters endpoint');
-
-    return c.json({ error: 'Too many requests. Please try again later.' }, 429, {
-      'Retry-After': String(retryAfter),
-    });
+    return handleRateLimitRejection(c, error, 'Rate limit exceeded on encounters endpoint');
   }
 }
 
@@ -221,19 +206,11 @@ export async function encountersRateLimitMiddleware(c: Context, next: Next) {
  */
 export async function collectivesRateLimitMiddleware(c: Context, next: Next) {
   const clientId = getClientIdentifier(c);
-  const logger = c.get('logger');
 
   try {
     await collectivesLimiter.consume(clientId);
     return next();
   } catch (error) {
-    const rateLimiterRes = error as RateLimiterRes;
-    const retryAfter = Math.ceil(rateLimiterRes.msBeforeNext / 1000);
-
-    logger.warn({ clientId, retryAfter }, 'Rate limit exceeded on collectives endpoint');
-
-    return c.json({ error: 'Too many requests. Please try again later.' }, 429, {
-      'Retry-After': String(retryAfter),
-    });
+    return handleRateLimitRejection(c, error, 'Rate limit exceeded on collectives endpoint');
   }
 }

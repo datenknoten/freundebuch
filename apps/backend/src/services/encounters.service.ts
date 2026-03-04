@@ -315,13 +315,17 @@ export class EncountersService {
   }
 
   private mapFriendResults(results: ISetEncounterFriendsResult[]): EncounterFriendSummary[] {
-    return results
-      .filter((r) => r.friend_external_id !== null && r.friend_display_name !== null)
-      .map((r) => ({
-        id: r.friend_external_id as string,
-        displayName: r.friend_display_name as string,
-        photoUrl: r.friend_photo_url,
-      }));
+    return results.flatMap((r) =>
+      r.friend_external_id !== null && r.friend_display_name !== null
+        ? [
+            {
+              id: r.friend_external_id,
+              displayName: r.friend_display_name,
+              photoUrl: r.friend_photo_url,
+            },
+          ]
+        : [],
+    );
   }
 
   private formatDate(date: Date): string {

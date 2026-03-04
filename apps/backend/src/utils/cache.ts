@@ -160,6 +160,7 @@ export class AddressCache<T extends object> {
             return undefined;
           }
 
+          // biome-ignore lint/suspicious/noExplicitAny: Safe cast — this no-validator fallback path is only reached by countriesCache where T = object, and the typeof check above already narrows rawValue to object.
           const value = rawValue as T;
           this.memoryCache.set(key, value);
           return value;
@@ -262,20 +263,20 @@ let houseNumbersCache: AddressCache<HouseNumberCached[]> | null = null;
  * Get the countries cache (must be initialized first)
  * Note: Countries use a static list, no validation needed
  */
-export function getCountriesCache<T extends object>(): AddressCache<T> {
+export function getCountriesCache(): AddressCache<object> {
   if (!countriesCache) {
     countriesCache = new AddressCache<object>(
       CACHE_CONFIG.countries.ttlHours,
       CACHE_CONFIG.countries.maxSize,
     );
   }
-  return countriesCache as unknown as AddressCache<T>;
+  return countriesCache;
 }
 
 /**
  * Get the cities cache with arktype validation
  */
-export function getCitiesCache<T extends object>(): AddressCache<T> {
+export function getCitiesCache(): AddressCache<ZipcodeResultCached[]> {
   if (!citiesCache) {
     citiesCache = new AddressCache<ZipcodeResultCached[]>(
       CACHE_CONFIG.cities.ttlHours,
@@ -283,13 +284,13 @@ export function getCitiesCache<T extends object>(): AddressCache<T> {
       validators.cities,
     );
   }
-  return citiesCache as unknown as AddressCache<T>;
+  return citiesCache;
 }
 
 /**
  * Get the streets cache with arktype validation
  */
-export function getStreetsCache<T extends object>(): AddressCache<T> {
+export function getStreetsCache(): AddressCache<StreetCached[]> {
   if (!streetsCache) {
     streetsCache = new AddressCache<StreetCached[]>(
       CACHE_CONFIG.streets.ttlHours,
@@ -297,13 +298,13 @@ export function getStreetsCache<T extends object>(): AddressCache<T> {
       validators.streets,
     );
   }
-  return streetsCache as unknown as AddressCache<T>;
+  return streetsCache;
 }
 
 /**
  * Get the house numbers cache with arktype validation
  */
-export function getHouseNumbersCache<T extends object>(): AddressCache<T> {
+export function getHouseNumbersCache(): AddressCache<HouseNumberCached[]> {
   if (!houseNumbersCache) {
     houseNumbersCache = new AddressCache<HouseNumberCached[]>(
       CACHE_CONFIG.houseNumbers.ttlHours,
@@ -311,7 +312,7 @@ export function getHouseNumbersCache<T extends object>(): AddressCache<T> {
       validators.houseNumbers,
     );
   }
-  return houseNumbersCache as unknown as AddressCache<T>;
+  return houseNumbersCache;
 }
 
 /**

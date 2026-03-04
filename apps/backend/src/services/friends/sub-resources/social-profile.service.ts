@@ -1,9 +1,4 @@
-import type {
-  SocialPlatform,
-  SocialProfile,
-  SocialProfileInput,
-} from '@freundebuch/shared/index.js';
-import type pg from 'pg';
+import type { SocialProfile, SocialProfileInput } from '@freundebuch/shared/index.js';
 import {
   createSocialProfile,
   deleteSocialProfile,
@@ -11,6 +6,7 @@ import {
   type IGetSocialProfilesByFriendIdResult,
   updateSocialProfile,
 } from '../../../models/queries/friend-social-profiles.queries.js';
+import { parseSocialPlatform } from '../../../utils/type-guards.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -42,7 +38,7 @@ export class SocialProfileService extends SubResourceService<
             profileUrl: input.profile_url ?? null,
             username: input.username ?? null,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -56,7 +52,7 @@ export class SocialProfileService extends SubResourceService<
             profileUrl: input.profile_url ?? null,
             username: input.username ?? null,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -67,13 +63,13 @@ export class SocialProfileService extends SubResourceService<
             friendExternalId,
             profileExternalId: resourceExternalId,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
       mapResult: (row): SocialProfile => ({
         id: row.external_id,
-        platform: row.platform as SocialPlatform,
+        platform: parseSocialPlatform(row.platform),
         profileUrl: row.profile_url ?? undefined,
         username: row.username ?? undefined,
         createdAt: row.created_at.toISOString(),

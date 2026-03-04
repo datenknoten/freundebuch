@@ -1,16 +1,16 @@
 import type { Logger } from 'pino';
-import { type AddressCache, getHouseNumbersCache, getStreetsCache } from '../../utils/cache.js';
+import {
+  type AddressCache,
+  getHouseNumbersCache,
+  getStreetsCache,
+  type HouseNumberCached,
+  type StreetCached,
+} from '../../utils/cache.js';
 import { OverpassApiError } from '../../utils/errors.js';
 
-export interface Street {
-  name: string;
-  type?: string; // highway type: residential, primary, etc.
-}
+export type Street = StreetCached;
 
-export interface HouseNumber {
-  number: string;
-  street?: string;
-}
+export type HouseNumber = HouseNumberCached;
 
 interface OverpassElement {
   type: 'node' | 'way' | 'relation';
@@ -31,16 +31,16 @@ const naturalCollator = new Intl.Collator(undefined, {
 });
 
 export class OverpassClient {
-  private streetCache: AddressCache<Street[]>;
-  private houseNumberCache: AddressCache<HouseNumber[]>;
+  private streetCache: AddressCache<StreetCached[]>;
+  private houseNumberCache: AddressCache<HouseNumberCached[]>;
 
   constructor(
     private primaryUrl: string,
     private fallbackUrl: string,
     private logger: Logger,
   ) {
-    this.streetCache = getStreetsCache<Street[]>();
-    this.houseNumberCache = getHouseNumbersCache<HouseNumber[]>();
+    this.streetCache = getStreetsCache();
+    this.houseNumberCache = getHouseNumbersCache();
   }
 
   /**

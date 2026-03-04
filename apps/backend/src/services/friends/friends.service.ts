@@ -1,12 +1,9 @@
 import type {
   Address,
   AddressInput,
-  AddressType,
   DateInput,
-  DateType,
   Email,
   EmailInput,
-  EmailType,
   FacetedSearchOptions,
   FacetedSearchResponse,
   Friend,
@@ -24,23 +21,18 @@ import type {
   PaginatedSearchResponse,
   Phone,
   PhoneInput,
-  PhoneType,
   ProfessionalHistory,
   ProfessionalHistoryInput,
   Relationship,
-  RelationshipCategory,
   RelationshipInput,
-  RelationshipTypeId,
   RelationshipTypesGrouped,
   RelationshipUpdateInput,
   SearchOptions,
-  SocialPlatform,
   SocialProfile,
   SocialProfileInput,
   UpcomingDate,
   Url,
   UrlInput,
-  UrlType,
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
@@ -57,7 +49,29 @@ import {
   updateFriend,
   updateFriendPhoto,
 } from '../../models/queries/friends.queries.js';
+import {
+  parseAddressesJson,
+  parseCirclesJson,
+  parseDatesJson,
+  parseEmailsJson,
+  parseMetInfoJson,
+  parsePhonesJson,
+  parseProfessionalHistoryJson,
+  parseRelationshipsJson,
+  parseSocialProfilesJson,
+  parseUrlsJson,
+} from '../../utils/db-json-schemas.js';
 import { FriendCreationError } from '../../utils/errors.js';
+import {
+  parseAddressType,
+  parseDateType,
+  parseEmailType,
+  parsePhoneType,
+  parseRelationshipCategory,
+  parseRelationshipTypeId,
+  parseSocialPlatform,
+  parseUrlType,
+} from '../../utils/type-guards.js';
 import { NetworkGraphService } from './network-graph.service.js';
 import { RelationshipService } from './relationship.service.js';
 import { SearchService } from './search.service.js';
@@ -835,11 +849,7 @@ export class FriendsService {
   // ============================================================================
 
   private mapFriendListItem(row: IGetFriendsByUserIdResult): FriendListItem {
-    const circlesRaw = (row.circles || []) as Array<{
-      external_id: string;
-      name: string;
-      color: string | null;
-    }>;
+    const circlesRaw = parseCirclesJson(row.circles);
 
     const birthday =
       row.birthday instanceof Date
@@ -873,103 +883,16 @@ export class FriendsService {
   }
 
   private mapFriendWithEmbeddedRelations(friend: IGetFriendByIdResult): Friend {
-    const phones = (friend.phones || []) as Array<{
-      external_id: string;
-      phone_number: string;
-      phone_type: string;
-      label: string | null;
-      is_primary: boolean;
-      created_at: string;
-    }>;
-
-    const emails = (friend.emails || []) as Array<{
-      external_id: string;
-      email_address: string;
-      email_type: string;
-      label: string | null;
-      is_primary: boolean;
-      created_at: string;
-    }>;
-
-    const addresses = (friend.addresses || []) as Array<{
-      external_id: string;
-      street_line1: string | null;
-      street_line2: string | null;
-      city: string | null;
-      state_province: string | null;
-      postal_code: string | null;
-      country: string | null;
-      address_type: string;
-      label: string | null;
-      is_primary: boolean;
-      created_at: string;
-    }>;
-
-    const urls = (friend.urls || []) as Array<{
-      external_id: string;
-      url: string;
-      url_type: string;
-      label: string | null;
-      created_at: string;
-    }>;
-
-    const dates = (friend.dates || []) as Array<{
-      external_id: string;
-      date_value: string;
-      year_known: boolean;
-      date_type: string;
-      label: string | null;
-      created_at: string;
-    }>;
-
-    const metInfoRaw = friend.met_info as {
-      external_id: string;
-      met_date: string | null;
-      met_location: string | null;
-      met_context: string | null;
-      created_at: string;
-      updated_at: string;
-    } | null;
-
-    const socialProfiles = (friend.social_profiles || []) as Array<{
-      external_id: string;
-      platform: string;
-      profile_url: string | null;
-      username: string | null;
-      created_at: string;
-    }>;
-
-    const relationships = (friend.relationships || []) as Array<{
-      external_id: string;
-      related_friend_external_id: string;
-      related_friend_display_name: string;
-      related_friend_photo_thumbnail_url: string | null;
-      relationship_type_id: string;
-      relationship_type_label: string;
-      relationship_category: string;
-      notes: string | null;
-      created_at: string;
-    }>;
-
-    const circles = (friend.circles || []) as Array<{
-      external_id: string;
-      name: string;
-      color: string | null;
-    }>;
-
-    const professionalHistory = (friend.professional_history || []) as Array<{
-      external_id: string;
-      job_title: string | null;
-      organization: string | null;
-      department: string | null;
-      notes: string | null;
-      from_month: number;
-      from_year: number;
-      to_month: number | null;
-      to_year: number | null;
-      is_primary: boolean;
-      created_at: string;
-    }>;
+    const phones = parsePhonesJson(friend.phones);
+    const emails = parseEmailsJson(friend.emails);
+    const addresses = parseAddressesJson(friend.addresses);
+    const urls = parseUrlsJson(friend.urls);
+    const dates = parseDatesJson(friend.dates);
+    const metInfoRaw = parseMetInfoJson(friend.met_info);
+    const socialProfiles = parseSocialProfilesJson(friend.social_profiles);
+    const relationships = parseRelationshipsJson(friend.relationships);
+    const circles = parseCirclesJson(friend.circles);
+    const professionalHistory = parseProfessionalHistoryJson(friend.professional_history);
 
     return {
       id: friend.external_id,
@@ -1000,7 +923,7 @@ export class FriendsService {
       phones: phones.map((p) => ({
         id: p.external_id,
         phoneNumber: p.phone_number,
-        phoneType: p.phone_type as PhoneType,
+        phoneType: parsePhoneType(p.phone_type),
         label: p.label ?? undefined,
         isPrimary: p.is_primary,
         createdAt: p.created_at,
@@ -1008,7 +931,7 @@ export class FriendsService {
       emails: emails.map((e) => ({
         id: e.external_id,
         emailAddress: e.email_address,
-        emailType: e.email_type as EmailType,
+        emailType: parseEmailType(e.email_type),
         label: e.label ?? undefined,
         isPrimary: e.is_primary,
         createdAt: e.created_at,
@@ -1021,7 +944,7 @@ export class FriendsService {
         stateProvince: a.state_province ?? undefined,
         postalCode: a.postal_code ?? undefined,
         country: a.country ?? undefined,
-        addressType: a.address_type as AddressType,
+        addressType: parseAddressType(a.address_type),
         label: a.label ?? undefined,
         isPrimary: a.is_primary,
         createdAt: a.created_at,
@@ -1029,7 +952,7 @@ export class FriendsService {
       urls: urls.map((u) => ({
         id: u.external_id,
         url: u.url,
-        urlType: u.url_type as UrlType,
+        urlType: parseUrlType(u.url_type),
         label: u.label ?? undefined,
         createdAt: u.created_at,
       })),
@@ -1037,7 +960,7 @@ export class FriendsService {
         id: d.external_id,
         dateValue: d.date_value,
         yearKnown: d.year_known,
-        dateType: d.date_type as DateType,
+        dateType: parseDateType(d.date_type),
         label: d.label ?? undefined,
         createdAt: d.created_at,
       })),
@@ -1053,7 +976,7 @@ export class FriendsService {
         : undefined,
       socialProfiles: socialProfiles.map((sp) => ({
         id: sp.external_id,
-        platform: sp.platform as SocialPlatform,
+        platform: parseSocialPlatform(sp.platform),
         profileUrl: sp.profile_url ?? undefined,
         username: sp.username ?? undefined,
         createdAt: sp.created_at,
@@ -1063,9 +986,9 @@ export class FriendsService {
         relatedFriendId: r.related_friend_external_id,
         relatedFriendDisplayName: r.related_friend_display_name,
         relatedFriendPhotoThumbnailUrl: r.related_friend_photo_thumbnail_url ?? undefined,
-        relationshipTypeId: r.relationship_type_id as RelationshipTypeId,
+        relationshipTypeId: parseRelationshipTypeId(r.relationship_type_id),
         relationshipTypeLabel: r.relationship_type_label,
-        relationshipCategory: r.relationship_category as RelationshipCategory,
+        relationshipCategory: parseRelationshipCategory(r.relationship_category),
         notes: r.notes ?? undefined,
         createdAt: r.created_at,
       })),

@@ -1,10 +1,8 @@
 import type {
   FriendSearchResult,
   Relationship,
-  RelationshipCategory,
   RelationshipInput,
   RelationshipType,
-  RelationshipTypeId,
   RelationshipTypesGrouped,
   RelationshipUpdateInput,
 } from '@freundebuch/shared/index.js';
@@ -21,6 +19,7 @@ import {
   searchFriends,
   updateRelationship,
 } from '../../models/queries/friend-relationships.queries.js';
+import { parseRelationshipCategory, parseRelationshipTypeId } from '../../utils/type-guards.js';
 import { createWildcardQuery } from './search.service.js';
 
 export interface RelationshipServiceOptions {
@@ -57,10 +56,10 @@ export class RelationshipService {
 
     for (const t of types) {
       const relationshipType: RelationshipType = {
-        id: t.id as RelationshipTypeId,
-        category: t.category as RelationshipCategory,
+        id: parseRelationshipTypeId(t.id),
+        category: parseRelationshipCategory(t.category),
         label: t.label,
-        inverseTypeId: (t.inverse_type_id ?? t.id) as RelationshipTypeId,
+        inverseTypeId: parseRelationshipTypeId(t.inverse_type_id ?? t.id),
       };
 
       if (t.category === 'family') {
@@ -261,9 +260,9 @@ export class RelationshipService {
       relatedFriendId: row.related_friend_external_id,
       relatedFriendDisplayName: row.related_friend_display_name,
       relatedFriendPhotoThumbnailUrl: row.related_friend_photo_thumbnail_url ?? undefined,
-      relationshipTypeId: row.relationship_type_id as RelationshipTypeId,
+      relationshipTypeId: parseRelationshipTypeId(row.relationship_type_id),
       relationshipTypeLabel: row.relationship_type_label,
-      relationshipCategory: row.relationship_category as RelationshipCategory,
+      relationshipCategory: parseRelationshipCategory(row.relationship_category),
       notes: row.notes ?? undefined,
       createdAt: row.created_at.toISOString(),
     };

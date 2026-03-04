@@ -40,6 +40,7 @@ import {
   MembershipNotFoundError,
   RoleNotFoundError,
 } from '../../utils/errors.js';
+import { parseRelationshipDirection } from '../../utils/type-guards.js';
 
 /**
  * Service for managing collective memberships and auto-relationships
@@ -602,7 +603,7 @@ export class MembershipsService {
     existingContactId: number,
     membershipId: number,
   ): Promise<void> {
-    const direction = rule.relationship_direction as 'new_member' | 'existing_member' | 'both';
+    const direction = parseRelationshipDirection(rule.relationship_direction);
 
     if (direction === 'new_member' || direction === 'both') {
       // Skip if the inverse relationship already exists (prevents circular chains)

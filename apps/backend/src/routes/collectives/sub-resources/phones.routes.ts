@@ -15,6 +15,7 @@ import type { AppContext } from '../../../types/context.js';
 import { countryNameToCode, localeToCountry } from '../../../utils/country.js';
 import { isAppError, toError } from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
+import { isRecord } from '../../../utils/type-guards.js';
 
 const app = new Hono<AppContext>();
 
@@ -63,12 +64,11 @@ app.post('/', async (c) => {
   }
 
   try {
-    let body: Record<string, unknown>;
-    try {
-      body = (await c.req.json()) as Record<string, unknown>;
-    } catch {
+    const rawBody: unknown = await c.req.json().catch(() => null);
+    if (!isRecord(rawBody)) {
       return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
     }
+    const body = { ...rawBody };
 
     // Normalize national-format phone numbers to E.164 before validation
     if (typeof body.phone_number === 'string' && !body.phone_number.startsWith('+')) {
@@ -123,12 +123,11 @@ app.put('/:phoneId', async (c) => {
   }
 
   try {
-    let body: Record<string, unknown>;
-    try {
-      body = (await c.req.json()) as Record<string, unknown>;
-    } catch {
+    const rawBody: unknown = await c.req.json().catch(() => null);
+    if (!isRecord(rawBody)) {
       return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
     }
+    const body = { ...rawBody };
 
     // Normalize national-format phone numbers to E.164 before validation
     if (typeof body.phone_number === 'string' && !body.phone_number.startsWith('+')) {

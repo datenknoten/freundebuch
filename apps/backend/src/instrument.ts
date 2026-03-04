@@ -12,7 +12,8 @@ import * as Sentry from '@sentry/node';
 // Read version from package.json for release tracking
 const require = createRequire(import.meta.url);
 // biome-ignore lint/correctness/useImportExtensions: package.json is correct, not package.js
-const pkg = require('../package.json') as { version: string };
+const pkg: Record<string, unknown> = require('../package.json');
+const pkgVersion = typeof pkg.version === 'string' ? pkg.version : 'unknown';
 
 // Read directly from process.env to avoid config validation during tests
 const SENTRY_DSN = process.env.SENTRY_DSN;
@@ -22,7 +23,7 @@ if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: NODE_ENV,
-    release: `freundebuch-backend@${pkg.version}`,
+    release: `freundebuch-backend@${pkgVersion}`,
 
     // Performance monitoring - 100% sampling for MVP phase
     tracesSampleRate: 1.0,
