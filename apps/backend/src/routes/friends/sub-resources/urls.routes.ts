@@ -1,10 +1,14 @@
-import { type ErrorResponse, UrlInputSchema } from '@freundebuch/shared/index.js';
+import { UrlInputSchema } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { FriendNotFoundError, ValidationError } from '../../../utils/errors.js';
+import {
+  FriendNotFoundError,
+  ResourceNotFoundError,
+  ValidationError,
+} from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -76,7 +80,7 @@ app.put('/:urlId', async (c) => {
   const url = await friendsService.updateUrl(user.userId, friendId, urlId, validated);
 
   if (!url) {
-    return c.json<ErrorResponse>({ error: 'URL not found' }, 404);
+    throw new ResourceNotFoundError('URL');
   }
 
   return c.json(url);
@@ -100,7 +104,7 @@ app.delete('/:urlId', async (c) => {
   const deleted = await friendsService.deleteUrl(user.userId, friendId, urlId);
 
   if (!deleted) {
-    return c.json<ErrorResponse>({ error: 'URL not found' }, 404);
+    throw new ResourceNotFoundError('URL');
   }
 
   return c.json({ message: 'URL deleted successfully' });

@@ -1,8 +1,4 @@
-import {
-  type ErrorResponse,
-  normalizePhoneNumber,
-  PhoneInputSchema,
-} from '@freundebuch/shared/index.js';
+import { normalizePhoneNumber, PhoneInputSchema } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
@@ -12,7 +8,11 @@ import {
 } from '../../../services/collectives/index.js';
 import type { AppContext } from '../../../types/context.js';
 import { countryNameToCode, localeToCountry } from '../../../utils/country.js';
-import { CollectiveNotFoundError, ValidationError } from '../../../utils/errors.js';
+import {
+  CollectiveNotFoundError,
+  ResourceNotFoundError,
+  ValidationError,
+} from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 import { isRecord } from '../../../utils/type-guards.js';
 
@@ -132,7 +132,7 @@ app.put('/:phoneId', async (c) => {
   const phone = await phoneService.update(user.userId, collectiveId, phoneId, validated);
 
   if (!phone) {
-    return c.json<ErrorResponse>({ error: 'Phone not found' }, 404);
+    throw new ResourceNotFoundError('Phone');
   }
 
   return c.json(phone);
@@ -157,7 +157,7 @@ app.delete('/:phoneId', async (c) => {
   const deleted = await phoneService.delete(user.userId, collectiveId, phoneId);
 
   if (!deleted) {
-    return c.json<ErrorResponse>({ error: 'Phone not found' }, 404);
+    throw new ResourceNotFoundError('Phone');
   }
 
   return c.json({ message: 'Phone deleted successfully' });

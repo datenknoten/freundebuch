@@ -175,6 +175,18 @@ export class AppPasswordNotFoundError extends AppError {
 }
 
 /**
+ * Generic not-found error for sub-resources (addresses, emails, phones, etc.)
+ * Use this instead of inline c.json() returns for consistency.
+ */
+export class ResourceNotFoundError extends AppError {
+  readonly statusCode = 404;
+
+  constructor(resource: string) {
+    super(`${resource} not found`);
+  }
+}
+
+/**
  * Thrown when a collective role is not found in the database.
  */
 export class RoleNotFoundError extends AppError {
@@ -303,6 +315,17 @@ export class EncounterCreationError extends AppError {
   readonly statusCode = 500;
 
   constructor(message = 'Failed to create encounter') {
+    super(message);
+  }
+}
+
+/**
+ * Thrown when circle creation fails unexpectedly.
+ */
+export class CircleCreationError extends AppError {
+  readonly statusCode = 500;
+
+  constructor(message = 'Failed to create circle') {
     super(message);
   }
 }

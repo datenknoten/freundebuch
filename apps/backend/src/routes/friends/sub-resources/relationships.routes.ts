@@ -9,7 +9,11 @@ import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { FriendNotFoundError, ValidationError } from '../../../utils/errors.js';
+import {
+  FriendNotFoundError,
+  ResourceNotFoundError,
+  ValidationError,
+} from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -106,7 +110,7 @@ app.put('/:relationshipId', async (c) => {
   );
 
   if (!relationship) {
-    return c.json<ErrorResponse>({ error: 'Relationship not found' }, 404);
+    throw new ResourceNotFoundError('Relationship');
   }
 
   return c.json(relationship);
@@ -130,7 +134,7 @@ app.delete('/:relationshipId', async (c) => {
   const deleted = await friendsService.deleteRelationship(user.userId, friendId, relationshipId);
 
   if (!deleted) {
-    return c.json<ErrorResponse>({ error: 'Relationship not found' }, 404);
+    throw new ResourceNotFoundError('Relationship');
   }
 
   return c.json({ message: 'Relationship deleted successfully' });

@@ -1,10 +1,14 @@
-import { type ErrorResponse, SocialProfileInputSchema } from '@freundebuch/shared/index.js';
+import { SocialProfileInputSchema } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { FriendNotFoundError, ValidationError } from '../../../utils/errors.js';
+import {
+  FriendNotFoundError,
+  ResourceNotFoundError,
+  ValidationError,
+} from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -81,7 +85,7 @@ app.put('/:profileId', async (c) => {
   );
 
   if (!profile) {
-    return c.json<ErrorResponse>({ error: 'Social profile not found' }, 404);
+    throw new ResourceNotFoundError('Social profile');
   }
 
   return c.json(profile);
@@ -105,7 +109,7 @@ app.delete('/:profileId', async (c) => {
   const deleted = await friendsService.deleteSocialProfile(user.userId, friendId, profileId);
 
   if (!deleted) {
-    return c.json<ErrorResponse>({ error: 'Social profile not found' }, 404);
+    throw new ResourceNotFoundError('Social profile');
   }
 
   return c.json({ message: 'Social profile deleted successfully' });

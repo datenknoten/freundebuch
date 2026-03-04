@@ -9,7 +9,7 @@ import { Hono } from 'hono';
 import { getAuthUser } from '../../middleware/auth.js';
 import { FriendsService } from '../../services/friends/index.js';
 import type { AppContext } from '../../types/context.js';
-import { ValidationError } from '../../utils/errors.js';
+import { ResourceNotFoundError, ValidationError } from '../../utils/errors.js';
 import { isValidUuid } from '../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -211,7 +211,7 @@ app.delete('/recent/:query', async (c) => {
   const deleted = await friendsService.deleteRecentSearch(user.userId, query);
 
   if (!deleted) {
-    return c.json({ error: 'Search query not found' }, 404);
+    throw new ResourceNotFoundError('Search query');
   }
 
   return c.json({ success: true });

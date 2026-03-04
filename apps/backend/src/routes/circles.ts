@@ -6,7 +6,7 @@ import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { circlesRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { CirclesService } from '../services/circles.service.js';
 import type { AppContext } from '../types/context.js';
-import { CircleNotFoundError, ValidationError } from '../utils/errors.js';
+import { CircleCreationError, CircleNotFoundError, ValidationError } from '../utils/errors.js';
 import { isValidUuid } from '../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -55,7 +55,7 @@ app.post('/', async (c) => {
   const circle = await circlesService.createCircle(user.userId, validated);
 
   if (!circle) {
-    throw new Error('Failed to create circle');
+    throw new CircleCreationError();
   }
 
   return c.json(circle, 201);

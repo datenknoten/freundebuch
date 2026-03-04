@@ -1,14 +1,10 @@
-import {
-  EncounterListQuerySchema,
-  type ErrorResponse,
-  parseEncounterListQuery,
-} from '@freundebuch/shared/index.js';
+import { EncounterListQuerySchema, parseEncounterListQuery } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { EncountersService } from '../../../services/encounters.service.js';
 import type { AppContext } from '../../../types/context.js';
-import { ValidationError } from '../../../utils/errors.js';
+import { ResourceNotFoundError, ValidationError } from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -59,7 +55,7 @@ app.get('/last', async (c) => {
   const lastEncounter = await encountersService.getLastEncounterForFriend(user.userId, friendId);
 
   if (!lastEncounter) {
-    return c.json<ErrorResponse>({ error: 'No encounters found' }, 404);
+    throw new ResourceNotFoundError('Encounters');
   }
 
   return c.json(lastEncounter);
