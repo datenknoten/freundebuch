@@ -3,6 +3,7 @@ import type { Pool } from 'pg';
 import pino from 'pino';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { AppContext } from '../types/context.js';
+import { isAppError } from '../utils/errors.js';
 import authRoutes from './auth.js';
 
 // This is an integration test that tests the auth routes
@@ -30,6 +31,14 @@ describe('Auth Routes Integration Tests', () => {
 
     // Mount auth routes
     app.route('/api/auth', authRoutes);
+
+    // Add error handler to match production behavior
+    app.onError((err, c) => {
+      if (isAppError(err)) {
+        return c.json({ error: err.message }, err.statusCode);
+      }
+      return c.json({ error: 'Internal Server Error' }, 500);
+    });
   });
 
   describe('POST /api/auth/register', () => {

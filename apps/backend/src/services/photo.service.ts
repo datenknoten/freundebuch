@@ -11,6 +11,7 @@ import { type } from 'arktype';
 import type { Logger } from 'pino';
 import sharp from 'sharp';
 import { getConfig } from '../utils/config.js';
+import { AppError } from '../utils/errors.js';
 import { isPathWithinBase, isValidUuid } from '../utils/security.js';
 import { isNodeError } from '../utils/type-guards.js';
 
@@ -206,12 +207,10 @@ export class PhotoService {
   }
 }
 
-export class PhotoUploadError extends Error {
-  code: string;
+export class PhotoUploadError extends AppError {
+  readonly statusCode = 400;
 
-  constructor(message: string, code: string) {
-    super(message);
-    this.name = 'PhotoUploadError';
-    this.code = code;
+  constructor(message: string, errorCode: string) {
+    super(message, { code: errorCode });
   }
 }

@@ -10,16 +10,17 @@ import {
   revokeAppPassword,
   updateAppPasswordLastUsed,
 } from '../models/queries/app-passwords.queries.js';
-import { AppPasswordCreationError } from '../utils/errors.js';
+import { AppError, AppPasswordCreationError } from '../utils/errors.js';
 
 const SALT_ROUNDS = 10;
 const PASSWORD_LENGTH = 24; // 24 bytes = 32 chars in base64url
 const MAX_APP_PASSWORDS_PER_USER = 20;
 
-export class MaxAppPasswordsExceededError extends Error {
+export class MaxAppPasswordsExceededError extends AppError {
+  readonly statusCode = 429;
+
   constructor() {
     super(`Maximum number of app passwords (${MAX_APP_PASSWORDS_PER_USER}) exceeded`);
-    this.name = 'MaxAppPasswordsExceededError';
   }
 }
 

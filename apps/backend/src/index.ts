@@ -2,6 +2,7 @@
 // This ensures pg and other modules are properly instrumented
 import './instrument.js';
 
+import type { ErrorResponse } from '@freundebuch/shared/index.js';
 import { serve } from '@hono/node-server';
 import * as Sentry from '@sentry/node';
 import { Hono } from 'hono';
@@ -26,7 +27,7 @@ import type { AppContext } from './types/context.js';
 import { initializeAddressCaches } from './utils/cache.js';
 import { getConfig } from './utils/config.js';
 import { checkDatabaseConnection, createPool } from './utils/db.js';
-import { DatabaseConnectionError } from './utils/errors.js';
+import { DatabaseConnectionError, isAppError, toError } from './utils/errors.js';
 import { createLogger } from './utils/logger.js';
 import { setupCleanupScheduler } from './utils/scheduler.js';
 
@@ -90,23 +91,21 @@ export async function createApp(pool: pg.Pool) {
   // Error handling
   app.onError((err, c) => {
     const pinoLogger = c.get('logger');
-    pinoLogger.error({ err }, 'Unhandled error');
 
-    // Report error to Sentry
-    Sentry.captureException(err, {
-      extra: {
-        path: c.req.path,
-        method: c.req.method,
-      },
+    if (isAppError(err)) {
+      pinoLogger[err.statusCode >= 500 ? 'error' : 'warn']({ err }, err.message);
+      const body: ErrorResponse = { error: err.message };
+      if (err.code) body.code = err.code;
+      if (err.details !== undefined) body.details = err.details;
+      return c.json(body, err.statusCode);
+    }
+
+    const normalizedErr = toError(err);
+    pinoLogger.error({ err: normalizedErr }, 'Unhandled error');
+    Sentry.captureException(normalizedErr, {
+      extra: { path: c.req.path, method: c.req.method },
     });
-
-    return c.json(
-      {
-        status: 500,
-        error: 'Internal Server Error',
-      },
-      500,
-    );
+    return c.json<ErrorResponse>({ error: 'Internal Server Error' }, 500);
   });
 
   // 404 handler

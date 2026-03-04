@@ -1,11 +1,10 @@
 import { AddressInputSchema, type ErrorResponse } from '@freundebuch/shared/index.js';
-import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { CollectiveAddressService } from '../../../services/collectives/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { isAppError, toError } from '../../../utils/errors.js';
+import { CollectiveNotFoundError, ValidationError } from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -21,23 +20,12 @@ app.get('/', async (c) => {
   const collectiveId = c.req.param('id') ?? '';
 
   if (!isValidUuid(collectiveId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid collective ID' }, 400);
+    throw new ValidationError('Invalid collective ID');
   }
 
-  try {
-    const addressService = new CollectiveAddressService({ db, logger });
-    const addresses = await addressService.list(user.userId, collectiveId);
-    return c.json(addresses);
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to list addresses for collective');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId }, 'Failed to list addresses for collective');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to list addresses' }, 500);
-  }
+  const addressService = new CollectiveAddressService({ db, logger });
+  const addresses = await addressService.list(user.userId, collectiveId);
+  return c.json(addresses);
 });
 
 /**
@@ -51,41 +39,30 @@ app.post('/', async (c) => {
   const collectiveId = c.req.param('id') ?? '';
 
   if (!isValidUuid(collectiveId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid collective ID' }, 400);
+    throw new ValidationError('Invalid collective ID');
   }
 
+  let body: unknown;
   try {
-    let body: unknown;
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
-    }
-
-    const validated = AddressInputSchema(body);
-
-    if (validated instanceof type.errors) {
-      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
-    }
-
-    const addressService = new CollectiveAddressService({ db, logger });
-    const address = await addressService.add(user.userId, collectiveId, validated);
-
-    if (!address) {
-      return c.json<ErrorResponse>({ error: 'Collective not found' }, 404);
-    }
-
-    return c.json(address, 201);
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to add address to collective');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId }, 'Failed to add address to collective');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to add address' }, 500);
+    body = await c.req.json();
+  } catch {
+    throw new ValidationError('Invalid JSON');
   }
+
+  const validated = AddressInputSchema(body);
+
+  if (validated instanceof type.errors) {
+    throw new ValidationError('Invalid request', validated);
+  }
+
+  const addressService = new CollectiveAddressService({ db, logger });
+  const address = await addressService.add(user.userId, collectiveId, validated);
+
+  if (!address) {
+    throw new CollectiveNotFoundError();
+  }
+
+  return c.json(address, 201);
 });
 
 /**
@@ -100,41 +77,30 @@ app.put('/:addressId', async (c) => {
   const addressId = c.req.param('addressId') ?? '';
 
   if (!isValidUuid(collectiveId) || !isValidUuid(addressId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+    throw new ValidationError('Invalid ID');
   }
 
+  let body: unknown;
   try {
-    let body: unknown;
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
-    }
-
-    const validated = AddressInputSchema(body);
-
-    if (validated instanceof type.errors) {
-      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
-    }
-
-    const addressService = new CollectiveAddressService({ db, logger });
-    const address = await addressService.update(user.userId, collectiveId, addressId, validated);
-
-    if (!address) {
-      return c.json<ErrorResponse>({ error: 'Address not found' }, 404);
-    }
-
-    return c.json(address);
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to update address');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId, addressId }, 'Failed to update address');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to update address' }, 500);
+    body = await c.req.json();
+  } catch {
+    throw new ValidationError('Invalid JSON');
   }
+
+  const validated = AddressInputSchema(body);
+
+  if (validated instanceof type.errors) {
+    throw new ValidationError('Invalid request', validated);
+  }
+
+  const addressService = new CollectiveAddressService({ db, logger });
+  const address = await addressService.update(user.userId, collectiveId, addressId, validated);
+
+  if (!address) {
+    return c.json<ErrorResponse>({ error: 'Address not found' }, 404);
+  }
+
+  return c.json(address);
 });
 
 /**
@@ -149,28 +115,17 @@ app.delete('/:addressId', async (c) => {
   const addressId = c.req.param('addressId') ?? '';
 
   if (!isValidUuid(collectiveId) || !isValidUuid(addressId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+    throw new ValidationError('Invalid ID');
   }
 
-  try {
-    const addressService = new CollectiveAddressService({ db, logger });
-    const deleted = await addressService.delete(user.userId, collectiveId, addressId);
+  const addressService = new CollectiveAddressService({ db, logger });
+  const deleted = await addressService.delete(user.userId, collectiveId, addressId);
 
-    if (!deleted) {
-      return c.json<ErrorResponse>({ error: 'Address not found' }, 404);
-    }
-
-    return c.json({ message: 'Address deleted successfully' });
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to delete address');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId, addressId }, 'Failed to delete address');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to delete address' }, 500);
+  if (!deleted) {
+    return c.json<ErrorResponse>({ error: 'Address not found' }, 404);
   }
+
+  return c.json({ message: 'Address deleted successfully' });
 });
 
 export default app;

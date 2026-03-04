@@ -1,15 +1,15 @@
 import {
   type ErrorResponse,
+  type Relationship,
   RelationshipInputSchema,
   RelationshipUpdateSchema,
 } from '@freundebuch/shared/index.js';
-import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { toError } from '../../../utils/errors.js';
+import { FriendNotFoundError, ValidationError } from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -19,57 +19,55 @@ const app = new Hono<AppContext>();
  * Add a relationship to a friend (creates inverse automatically)
  */
 app.post('/', async (c) => {
-  const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
   const friendId = c.req.param('id') ?? '';
 
   if (!isValidUuid(friendId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid friend ID' }, 400);
+    throw new ValidationError('Invalid friend ID');
   }
 
+  let body: unknown;
   try {
-    let body: unknown;
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
-    }
-
-    const validated = RelationshipInputSchema(body);
-
-    if (validated instanceof type.errors) {
-      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
-    }
-
-    // Validate related_friend_id is a valid UUID
-    if (!isValidUuid(validated.related_friend_id)) {
-      return c.json<ErrorResponse>({ error: 'Invalid related friend ID' }, 400);
-    }
-
-    // Prevent self-relationships
-    if (validated.related_friend_id === friendId) {
-      return c.json<ErrorResponse>({ error: 'Cannot create relationship with self' }, 400);
-    }
-
-    const friendsService = new FriendsService(db, logger);
-    const relationship = await friendsService.addRelationship(user.userId, friendId, validated);
-
-    if (!relationship) {
-      return c.json<ErrorResponse>({ error: 'Friend not found' }, 404);
-    }
-
-    return c.json(relationship, 201);
-  } catch (error) {
-    // Handle unique constraint violation (duplicate relationship)
-    if (error instanceof Error && error.message.includes('unique_relationship')) {
-      return c.json<ErrorResponse>({ error: 'Relationship already exists' }, 409);
-    }
-    const err = toError(error);
-    logger.error({ err, friendId }, 'Failed to add relationship');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to add relationship' }, 500);
+    body = await c.req.json();
+  } catch {
+    throw new ValidationError('Invalid JSON');
   }
+
+  const validated = RelationshipInputSchema(body);
+
+  if (validated instanceof type.errors) {
+    throw new ValidationError('Invalid request', validated);
+  }
+
+  // Validate related_friend_id is a valid UUID
+  if (!isValidUuid(validated.related_friend_id)) {
+    throw new ValidationError('Invalid related friend ID');
+  }
+
+  // Prevent self-relationships
+  if (validated.related_friend_id === friendId) {
+    throw new ValidationError('Cannot create relationship with self');
+  }
+
+  const friendsService = new FriendsService(db, c.get('logger'));
+
+  // Focused try-catch for unique constraint violation (duplicate relationship)
+  let relationship: Relationship | null;
+  try {
+    relationship = await friendsService.addRelationship(user.userId, friendId, validated);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('unique_relationship')) {
+      return c.json<ErrorResponse>({ error: 'This relationship already exists' }, 409);
+    }
+    throw error;
+  }
+
+  if (!relationship) {
+    throw new FriendNotFoundError();
+  }
+
+  return c.json(relationship, 201);
 });
 
 /**
@@ -77,49 +75,41 @@ app.post('/', async (c) => {
  * Update a relationship's notes
  */
 app.put('/:relationshipId', async (c) => {
-  const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
   const friendId = c.req.param('id') ?? '';
   const relationshipId = c.req.param('relationshipId') ?? '';
 
   if (!isValidUuid(friendId) || !isValidUuid(relationshipId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+    throw new ValidationError('Invalid ID');
   }
 
+  let body: unknown;
   try {
-    let body: unknown;
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
-    }
-
-    const validated = RelationshipUpdateSchema(body);
-
-    if (validated instanceof type.errors) {
-      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
-    }
-
-    const friendsService = new FriendsService(db, logger);
-    const relationship = await friendsService.updateRelationship(
-      user.userId,
-      friendId,
-      relationshipId,
-      validated,
-    );
-
-    if (!relationship) {
-      return c.json<ErrorResponse>({ error: 'Relationship not found' }, 404);
-    }
-
-    return c.json(relationship);
-  } catch (error) {
-    const err = toError(error);
-    logger.error({ err, friendId, relationshipId }, 'Failed to update relationship');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to update relationship' }, 500);
+    body = await c.req.json();
+  } catch {
+    throw new ValidationError('Invalid JSON');
   }
+
+  const validated = RelationshipUpdateSchema(body);
+
+  if (validated instanceof type.errors) {
+    throw new ValidationError('Invalid request', validated);
+  }
+
+  const friendsService = new FriendsService(db, c.get('logger'));
+  const relationship = await friendsService.updateRelationship(
+    user.userId,
+    friendId,
+    relationshipId,
+    validated,
+  );
+
+  if (!relationship) {
+    return c.json<ErrorResponse>({ error: 'Relationship not found' }, 404);
+  }
+
+  return c.json(relationship);
 });
 
 /**
@@ -127,31 +117,23 @@ app.put('/:relationshipId', async (c) => {
  * Delete a relationship (and its inverse)
  */
 app.delete('/:relationshipId', async (c) => {
-  const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
   const friendId = c.req.param('id') ?? '';
   const relationshipId = c.req.param('relationshipId') ?? '';
 
   if (!isValidUuid(friendId) || !isValidUuid(relationshipId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+    throw new ValidationError('Invalid ID');
   }
 
-  try {
-    const friendsService = new FriendsService(db, logger);
-    const deleted = await friendsService.deleteRelationship(user.userId, friendId, relationshipId);
+  const friendsService = new FriendsService(db, c.get('logger'));
+  const deleted = await friendsService.deleteRelationship(user.userId, friendId, relationshipId);
 
-    if (!deleted) {
-      return c.json<ErrorResponse>({ error: 'Relationship not found' }, 404);
-    }
-
-    return c.json({ message: 'Relationship deleted successfully' });
-  } catch (error) {
-    const err = toError(error);
-    logger.error({ err, friendId, relationshipId }, 'Failed to delete relationship');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to delete relationship' }, 500);
+  if (!deleted) {
+    return c.json<ErrorResponse>({ error: 'Relationship not found' }, 404);
   }
+
+  return c.json({ message: 'Relationship deleted successfully' });
 });
 
 export default app;

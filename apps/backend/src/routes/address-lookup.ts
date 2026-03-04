@@ -1,5 +1,3 @@
-import type { ErrorResponse } from '@freundebuch/shared/index.js';
-import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import type pg from 'pg';
@@ -11,7 +9,7 @@ import { PostGISAddressClient } from '../services/external/postgis-address.clien
 import { SUPPORTED_COUNTRIES } from '../services/external/zipcodebase.client.js';
 import type { AppContext } from '../types/context.js';
 import { getConfig } from '../utils/config.js';
-import { ConfigurationError, isAppError, toError } from '../utils/errors.js';
+import { ServiceNotConfiguredError, ValidationError } from '../utils/errors.js';
 
 const app = new Hono<AppContext>();
 
@@ -35,7 +33,7 @@ function getAddressService(pool: pg.Pool, logger: Logger): AddressLookupService 
   if (!addressService) {
     const config = getConfig();
     if (!config.ZIPCODEBASE_API_KEY) {
-      throw new ConfigurationError('ZIPCODEBASE_API_KEY is not configured');
+      throw new ServiceNotConfiguredError('Address lookup service not configured');
     }
     addressService = new AddressLookupService(
       {
@@ -98,30 +96,12 @@ app.get('/cities', async (c) => {
 
   const validated = CitiesQuerySchema(query);
   if (validated instanceof type.errors) {
-    return c.json<ErrorResponse>({ error: 'Invalid query parameters', details: validated }, 400);
+    throw new ValidationError('Invalid query parameters', validated);
   }
 
-  try {
-    const service = getAddressService(pool, logger);
-    const cities = await service.getCitiesByPostalCode(validated.country, validated.postal_code);
-    return c.json(cities);
-  } catch (error) {
-    // Handle configuration errors
-    if (error instanceof ConfigurationError) {
-      return c.json<ErrorResponse>({ error: 'Address lookup service not configured' }, 503);
-    }
-
-    // Handle AppErrors with their status codes
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to get cities');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-
-    const err = toError(error);
-    logger.error({ err }, 'Failed to get cities');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to load cities' }, 500);
-  }
+  const service = getAddressService(pool, logger);
+  const cities = await service.getCitiesByPostalCode(validated.country, validated.postal_code);
+  return c.json(cities);
 });
 
 /**
@@ -135,34 +115,16 @@ app.get('/streets', async (c) => {
 
   const validated = StreetsQuerySchema(query);
   if (validated instanceof type.errors) {
-    return c.json<ErrorResponse>({ error: 'Invalid query parameters', details: validated }, 400);
+    throw new ValidationError('Invalid query parameters', validated);
   }
 
-  try {
-    const service = getAddressService(pool, logger);
-    const streets = await service.getStreets(
-      validated.country,
-      validated.city,
-      validated.postal_code,
-    );
-    return c.json(streets);
-  } catch (error) {
-    // Handle configuration errors
-    if (error instanceof ConfigurationError) {
-      return c.json<ErrorResponse>({ error: 'Address lookup service not configured' }, 503);
-    }
-
-    // Handle AppErrors with their status codes
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to get streets');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-
-    const err = toError(error);
-    logger.error({ err }, 'Failed to get streets');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to load streets' }, 500);
-  }
+  const service = getAddressService(pool, logger);
+  const streets = await service.getStreets(
+    validated.country,
+    validated.city,
+    validated.postal_code,
+  );
+  return c.json(streets);
 });
 
 /**
@@ -176,35 +138,17 @@ app.get('/house-numbers', async (c) => {
 
   const validated = HouseNumbersQuerySchema(query);
   if (validated instanceof type.errors) {
-    return c.json<ErrorResponse>({ error: 'Invalid query parameters', details: validated }, 400);
+    throw new ValidationError('Invalid query parameters', validated);
   }
 
-  try {
-    const service = getAddressService(pool, logger);
-    const houseNumbers = await service.getHouseNumbers(
-      validated.country,
-      validated.city,
-      validated.postal_code,
-      validated.street,
-    );
-    return c.json(houseNumbers);
-  } catch (error) {
-    // Handle configuration errors
-    if (error instanceof ConfigurationError) {
-      return c.json<ErrorResponse>({ error: 'Address lookup service not configured' }, 503);
-    }
-
-    // Handle AppErrors with their status codes
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to get house numbers');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-
-    const err = toError(error);
-    logger.error({ err }, 'Failed to get house numbers');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to load house numbers' }, 500);
-  }
+  const service = getAddressService(pool, logger);
+  const houseNumbers = await service.getHouseNumbers(
+    validated.country,
+    validated.city,
+    validated.postal_code,
+    validated.street,
+  );
+  return c.json(houseNumbers);
 });
 
 export default app;

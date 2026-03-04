@@ -1,10 +1,9 @@
 import type { ErrorResponse } from '@freundebuch/shared/index.js';
-import * as Sentry from '@sentry/node';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { CollectiveCircleService } from '../../../services/collectives/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { isAppError, toError } from '../../../utils/errors.js';
+import { ValidationError } from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -20,24 +19,13 @@ app.get('/', async (c) => {
   const collectiveId = c.req.param('id') ?? '';
 
   if (!isValidUuid(collectiveId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid collective ID' }, 400);
+    throw new ValidationError('Invalid collective ID');
   }
 
-  try {
-    const circleService = new CollectiveCircleService({ db, logger });
-    const circles = await circleService.getCircles(user.userId, collectiveId);
+  const circleService = new CollectiveCircleService({ db, logger });
+  const circles = await circleService.getCircles(user.userId, collectiveId);
 
-    return c.json(circles);
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to get circles for collective');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId }, 'Failed to get circles for collective');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to get circles' }, 500);
-  }
+  return c.json(circles);
 });
 
 /**
@@ -51,24 +39,13 @@ app.get('/available', async (c) => {
   const collectiveId = c.req.param('id') ?? '';
 
   if (!isValidUuid(collectiveId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid collective ID' }, 400);
+    throw new ValidationError('Invalid collective ID');
   }
 
-  try {
-    const circleService = new CollectiveCircleService({ db, logger });
-    const circles = await circleService.getAvailableCircles(user.userId, collectiveId);
+  const circleService = new CollectiveCircleService({ db, logger });
+  const circles = await circleService.getAvailableCircles(user.userId, collectiveId);
 
-    return c.json(circles);
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to get available circles');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId }, 'Failed to get available circles');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to get available circles' }, 500);
-  }
+  return c.json(circles);
 });
 
 /**
@@ -83,28 +60,17 @@ app.post('/:circleId', async (c) => {
   const circleId = c.req.param('circleId') ?? '';
 
   if (!isValidUuid(collectiveId) || !isValidUuid(circleId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+    throw new ValidationError('Invalid ID');
   }
 
-  try {
-    const circleService = new CollectiveCircleService({ db, logger });
-    const added = await circleService.addToCircle(user.userId, collectiveId, circleId);
+  const circleService = new CollectiveCircleService({ db, logger });
+  const added = await circleService.addToCircle(user.userId, collectiveId, circleId);
 
-    if (!added) {
-      return c.json<ErrorResponse>({ error: 'Failed to add collective to circle' }, 400);
-    }
-
-    return c.json({ message: 'Collective added to circle successfully' }, 201);
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to add collective to circle');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId, circleId }, 'Failed to add collective to circle');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to add to circle' }, 500);
+  if (!added) {
+    throw new ValidationError('Failed to add collective to circle');
   }
+
+  return c.json({ message: 'Collective added to circle successfully' }, 201);
 });
 
 /**
@@ -119,28 +85,17 @@ app.delete('/:circleId', async (c) => {
   const circleId = c.req.param('circleId') ?? '';
 
   if (!isValidUuid(collectiveId) || !isValidUuid(circleId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+    throw new ValidationError('Invalid ID');
   }
 
-  try {
-    const circleService = new CollectiveCircleService({ db, logger });
-    const removed = await circleService.removeFromCircle(user.userId, collectiveId, circleId);
+  const circleService = new CollectiveCircleService({ db, logger });
+  const removed = await circleService.removeFromCircle(user.userId, collectiveId, circleId);
 
-    if (!removed) {
-      return c.json<ErrorResponse>({ error: 'Circle membership not found' }, 404);
-    }
-
-    return c.json({ message: 'Collective removed from circle successfully' });
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to remove collective from circle');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId, circleId }, 'Failed to remove collective from circle');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to remove from circle' }, 500);
+  if (!removed) {
+    return c.json<ErrorResponse>({ error: 'Circle membership not found' }, 404);
   }
+
+  return c.json({ message: 'Collective removed from circle successfully' });
 });
 
 export default app;

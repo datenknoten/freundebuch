@@ -6,6 +6,7 @@ import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { FriendsService } from '../services/friends.service.js';
 import { PhotoService } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
+import { FriendNotFoundError, ValidationError } from '../utils/errors.js';
 import { isValidUuid } from '../utils/security.js';
 import { isNodeError } from '../utils/type-guards.js';
 
@@ -29,7 +30,7 @@ app.get('/friends/:friendId/:filename', async (c) => {
 
   // Validate friendId is a valid UUID to prevent path traversal
   if (!isValidUuid(friendId)) {
-    return c.json({ error: 'Invalid friend ID' }, 400);
+    throw new ValidationError('Invalid friend ID');
   }
 
   // Verify the user owns this friend
@@ -37,12 +38,12 @@ app.get('/friends/:friendId/:filename', async (c) => {
   const friend = await friendsService.getFriendById(user.userId, friendId);
 
   if (!friend) {
-    return c.json({ error: 'Friend not found' }, 404);
+    throw new FriendNotFoundError();
   }
 
   // Validate filename to prevent directory traversal
   if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-    return c.json({ error: 'Invalid filename' }, 400);
+    throw new ValidationError('Invalid filename');
   }
 
   // Only allow specific filenames
@@ -55,7 +56,7 @@ app.get('/friends/:friendId/:filename', async (c) => {
     'photo_thumb.webp',
   ];
   if (!allowedFilenames.includes(filename)) {
-    return c.json({ error: 'Invalid filename' }, 400);
+    throw new ValidationError('Invalid filename');
   }
 
   const photoService = new PhotoService(logger);
