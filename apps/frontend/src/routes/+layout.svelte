@@ -6,10 +6,10 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import Footer from '$lib/components/Footer.svelte';
 import GlobalSearch from '$lib/components/GlobalSearch.svelte';
-import KeyboardShortcuts from '$lib/components/KeyboardShortcuts.svelte';
 import NavBar from '$lib/components/NavBar.svelte';
 import type { SupportedLanguage } from '$lib/i18n/index.js';
 import { createI18n } from '$lib/i18n/index.js';
+import { KeyboardShortcuts } from '$lib/shortcuts';
 import {
   auth,
   isAuthenticated,
