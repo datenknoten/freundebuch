@@ -1,3 +1,19 @@
+## [2.65.0](https://github.com/datenknoten/freundebuch/compare/v2.64.0...v2.65.0) (2026-03-04)
+
+### Features
+
+* **frontend:** Add autofocus to login, register, and encounter forms ([2ea459d](https://github.com/datenknoten/freundebuch/commit/2ea459d768fd31d2d4acf23f8b4ff5d5558dadb1))
+
+### Bug Fixes
+
+* **frontend:** Address PR review feedback on shortcuts module ([5de9b04](https://github.com/datenknoten/freundebuch/commit/5de9b04d1aaaa042dd7ffd20dcdcdb3df4cb3497))
+* **frontend:** Remove shiftKey guard from keyboard shortcuts ([89049d0](https://github.com/datenknoten/freundebuch/commit/89049d0993243a70bf463f9a67a2704c3740d1d1))
+
+### Code Refactoring
+
+* **frontend:** Extract keyboard shortcuts into module with i18n support ([8c67aa4](https://github.com/datenknoten/freundebuch/commit/8c67aa4773a1d33d26e8b59f33f8aeeadbc1f046))
+* **frontend:** Extract relationship form into centralized modal system ([21de9c1](https://github.com/datenknoten/freundebuch/commit/21de9c169dea1a8c5a6022b27fd6dcf0b702e3dc))
+
 ## [2.64.0](https://github.com/datenknoten/freundebuch/compare/v2.63.0...v2.64.0) (2026-02-28)
 
 ### Features
