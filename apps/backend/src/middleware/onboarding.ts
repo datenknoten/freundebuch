@@ -1,12 +1,7 @@
 import type { Context, Next } from 'hono';
 import { hasSelfProfile } from '../models/queries/users.queries.js';
-import { toError } from '../utils/errors.js';
+import { AuthenticationError, OnboardingRequiredError } from '../utils/errors.js';
 import { getAuthUser } from './auth.js';
-
-/**
- * Error code returned when user hasn't completed onboarding
- */
-export const ONBOARDING_REQUIRED_CODE = 'ONBOARDING_REQUIRED';
 
 /**
  * Middleware to ensure user has completed onboarding (has a profile)
@@ -31,28 +26,15 @@ export async function onboardingMiddleware(c: Context, next: Next) {
     logger.error(
       'onboardingMiddleware called without authenticated user - ensure authMiddleware runs first',
     );
-    return c.json({ error: 'Unauthorized' }, 401);
+    throw new AuthenticationError('Unauthorized');
   }
 
-  try {
-    const result = await hasSelfProfile.run({ userExternalId: authUser.userId }, db);
+  const result = await hasSelfProfile.run({ userExternalId: authUser.userId }, db);
 
-    if (!result[0]?.has_self_profile) {
-      logger.info({ userId: authUser.userId }, 'User has not completed onboarding');
-      return c.json(
-        {
-          error: 'Onboarding required',
-          code: ONBOARDING_REQUIRED_CODE,
-          message: 'Please complete your profile setup before using this feature',
-        },
-        403,
-      );
-    }
-
-    return next();
-  } catch (error) {
-    const err = toError(error);
-    logger.error({ err }, 'Failed to check onboarding status');
-    return c.json({ error: 'Internal server error' }, 500);
+  if (!result[0]?.has_self_profile) {
+    logger.info({ userId: authUser.userId }, 'User has not completed onboarding');
+    throw new OnboardingRequiredError();
   }
+
+  return next();
 }

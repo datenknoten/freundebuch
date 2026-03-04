@@ -33,11 +33,11 @@ import {
 import {
   AuthenticationError,
   InvalidSessionError,
-  InvalidTokenError,
   PreferencesUpdateError,
   UserAlreadyExistsError,
   UserCreationError,
   UserNotFoundError,
+  ValidationError,
 } from '../utils/errors.js';
 import { parseUserPreferences, toJson } from '../utils/type-guards.js';
 
@@ -360,13 +360,13 @@ export class AuthService {
 
     if (tokens.length === 0) {
       this.logger.warn('Invalid or expired password reset token');
-      throw new InvalidTokenError('Invalid or expired password reset token');
+      throw new ValidationError('Invalid or expired password reset token');
     }
 
     const resetToken = tokens[0];
 
     if (!resetToken) {
-      throw new InvalidTokenError('Invalid or expired password reset token');
+      throw new ValidationError('Invalid or expired password reset token');
     }
 
     // Hash new password

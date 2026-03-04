@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authMiddleware, getAuthUser } from '../../src/middleware/auth.js';
 import * as auth from '../../src/utils/auth.js';
+import { isAppError } from '../../src/utils/errors.js';
 
 // Mock the auth utility
 vi.mock('../../src/utils/auth.ts', () => ({
@@ -20,6 +21,14 @@ describe('authMiddleware', () => {
     app.get('/protected/resource', (c) => {
       const user = getAuthUser(c);
       return c.json({ message: 'success', user });
+    });
+
+    // Add error handler to match production behavior
+    app.onError((err, c) => {
+      if (isAppError(err)) {
+        return c.json({ error: err.message }, err.statusCode);
+      }
+      return c.json({ error: 'Internal Server Error' }, 500);
     });
   });
 

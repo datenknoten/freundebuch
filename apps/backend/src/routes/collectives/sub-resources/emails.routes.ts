@@ -1,11 +1,10 @@
 import { EmailInputSchema, type ErrorResponse } from '@freundebuch/shared/index.js';
-import * as Sentry from '@sentry/node';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { CollectiveEmailService } from '../../../services/collectives/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { isAppError, toError } from '../../../utils/errors.js';
+import { CollectiveNotFoundError, ValidationError } from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -21,23 +20,12 @@ app.get('/', async (c) => {
   const collectiveId = c.req.param('id') ?? '';
 
   if (!isValidUuid(collectiveId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid collective ID' }, 400);
+    throw new ValidationError('Invalid collective ID');
   }
 
-  try {
-    const emailService = new CollectiveEmailService({ db, logger });
-    const emails = await emailService.list(user.userId, collectiveId);
-    return c.json(emails);
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to list emails for collective');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId }, 'Failed to list emails for collective');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to list emails' }, 500);
-  }
+  const emailService = new CollectiveEmailService({ db, logger });
+  const emails = await emailService.list(user.userId, collectiveId);
+  return c.json(emails);
 });
 
 /**
@@ -51,41 +39,30 @@ app.post('/', async (c) => {
   const collectiveId = c.req.param('id') ?? '';
 
   if (!isValidUuid(collectiveId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid collective ID' }, 400);
+    throw new ValidationError('Invalid collective ID');
   }
 
+  let body: unknown;
   try {
-    let body: unknown;
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
-    }
-
-    const validated = EmailInputSchema(body);
-
-    if (validated instanceof type.errors) {
-      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
-    }
-
-    const emailService = new CollectiveEmailService({ db, logger });
-    const email = await emailService.add(user.userId, collectiveId, validated);
-
-    if (!email) {
-      return c.json<ErrorResponse>({ error: 'Collective not found' }, 404);
-    }
-
-    return c.json(email, 201);
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to add email to collective');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId }, 'Failed to add email to collective');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to add email' }, 500);
+    body = await c.req.json();
+  } catch {
+    throw new ValidationError('Invalid JSON');
   }
+
+  const validated = EmailInputSchema(body);
+
+  if (validated instanceof type.errors) {
+    throw new ValidationError('Invalid request', validated);
+  }
+
+  const emailService = new CollectiveEmailService({ db, logger });
+  const email = await emailService.add(user.userId, collectiveId, validated);
+
+  if (!email) {
+    throw new CollectiveNotFoundError();
+  }
+
+  return c.json(email, 201);
 });
 
 /**
@@ -100,41 +77,30 @@ app.put('/:emailId', async (c) => {
   const emailId = c.req.param('emailId') ?? '';
 
   if (!isValidUuid(collectiveId) || !isValidUuid(emailId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+    throw new ValidationError('Invalid ID');
   }
 
+  let body: unknown;
   try {
-    let body: unknown;
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json<ErrorResponse>({ error: 'Invalid JSON' }, 400);
-    }
-
-    const validated = EmailInputSchema(body);
-
-    if (validated instanceof type.errors) {
-      return c.json<ErrorResponse>({ error: 'Invalid request', details: validated }, 400);
-    }
-
-    const emailService = new CollectiveEmailService({ db, logger });
-    const email = await emailService.update(user.userId, collectiveId, emailId, validated);
-
-    if (!email) {
-      return c.json<ErrorResponse>({ error: 'Email not found' }, 404);
-    }
-
-    return c.json(email);
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to update email');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId, emailId }, 'Failed to update email');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to update email' }, 500);
+    body = await c.req.json();
+  } catch {
+    throw new ValidationError('Invalid JSON');
   }
+
+  const validated = EmailInputSchema(body);
+
+  if (validated instanceof type.errors) {
+    throw new ValidationError('Invalid request', validated);
+  }
+
+  const emailService = new CollectiveEmailService({ db, logger });
+  const email = await emailService.update(user.userId, collectiveId, emailId, validated);
+
+  if (!email) {
+    return c.json<ErrorResponse>({ error: 'Email not found' }, 404);
+  }
+
+  return c.json(email);
 });
 
 /**
@@ -149,28 +115,17 @@ app.delete('/:emailId', async (c) => {
   const emailId = c.req.param('emailId') ?? '';
 
   if (!isValidUuid(collectiveId) || !isValidUuid(emailId)) {
-    return c.json<ErrorResponse>({ error: 'Invalid ID' }, 400);
+    throw new ValidationError('Invalid ID');
   }
 
-  try {
-    const emailService = new CollectiveEmailService({ db, logger });
-    const deleted = await emailService.delete(user.userId, collectiveId, emailId);
+  const emailService = new CollectiveEmailService({ db, logger });
+  const deleted = await emailService.delete(user.userId, collectiveId, emailId);
 
-    if (!deleted) {
-      return c.json<ErrorResponse>({ error: 'Email not found' }, 404);
-    }
-
-    return c.json({ message: 'Email deleted successfully' });
-  } catch (error) {
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to delete email');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-    const err = toError(error);
-    logger.error({ err, collectiveId, emailId }, 'Failed to delete email');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to delete email' }, 500);
+  if (!deleted) {
+    return c.json<ErrorResponse>({ error: 'Email not found' }, 404);
   }
+
+  return c.json({ message: 'Email deleted successfully' });
 });
 
 export default app;

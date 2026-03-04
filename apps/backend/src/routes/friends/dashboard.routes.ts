@@ -1,10 +1,7 @@
-import type { ErrorResponse } from '@freundebuch/shared/index.js';
-import * as Sentry from '@sentry/node';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../middleware/auth.js';
 import { FriendsService } from '../../services/friends/index.js';
 import type { AppContext } from '../../types/context.js';
-import { isAppError, toError } from '../../utils/errors.js';
 
 const app = new Hono<AppContext>();
 
@@ -24,17 +21,10 @@ app.get('/dates/upcoming', async (c) => {
   const days = daysParam ? Math.min(365, Math.max(1, Number.parseInt(daysParam, 10) || 30)) : 30;
   const limit = limitParam ? Math.min(50, Math.max(1, Number.parseInt(limitParam, 10) || 10)) : 10;
 
-  try {
-    const friendsService = new FriendsService(db, logger);
-    const upcomingDates = await friendsService.getUpcomingDates(user.userId, { days, limit });
+  const friendsService = new FriendsService(db, logger);
+  const upcomingDates = await friendsService.getUpcomingDates(user.userId, { days, limit });
 
-    return c.json(upcomingDates);
-  } catch (error) {
-    const err = toError(error);
-    logger.error({ err }, 'Failed to get upcoming dates');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to get upcoming dates' }, 500);
-  }
+  return c.json(upcomingDates);
 });
 
 /**
@@ -47,23 +37,10 @@ app.get('/network-graph', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  try {
-    const friendsService = new FriendsService(db, logger);
-    const graphData = await friendsService.getNetworkGraphData(user.userId);
+  const friendsService = new FriendsService(db, logger);
+  const graphData = await friendsService.getNetworkGraphData(user.userId);
 
-    return c.json(graphData);
-  } catch (error) {
-    // Handle AppErrors with their status codes
-    if (isAppError(error)) {
-      logger.error({ err: error }, 'Failed to get network graph data');
-      return c.json<ErrorResponse>({ error: error.message }, error.statusCode);
-    }
-
-    const err = toError(error);
-    logger.error({ err }, 'Failed to get network graph data');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to get network graph data' }, 500);
-  }
+  return c.json(graphData);
 });
 
 /**
@@ -74,17 +51,10 @@ app.get('/relationship-types', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
 
-  try {
-    const friendsService = new FriendsService(db, logger);
-    const types = await friendsService.getRelationshipTypes();
+  const friendsService = new FriendsService(db, logger);
+  const types = await friendsService.getRelationshipTypes();
 
-    return c.json(types);
-  } catch (error) {
-    const err = toError(error);
-    logger.error({ err }, 'Failed to get relationship types');
-    Sentry.captureException(err);
-    return c.json<ErrorResponse>({ error: 'Failed to get relationship types' }, 500);
-  }
+  return c.json(types);
 });
 
 export default app;

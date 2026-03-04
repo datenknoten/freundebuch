@@ -3,6 +3,7 @@ import type { Pool } from 'pg';
 import pino from 'pino';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { AppContext } from '../types/context.js';
+import { isAppError } from '../utils/errors.js';
 import collectivesRoutes from './collectives.js';
 
 /**
@@ -37,6 +38,14 @@ describe('Collectives Routes Integration Tests', () => {
 
     // Mount collectives routes
     app.route('/api/collectives', collectivesRoutes);
+
+    // Add error handler to match production behavior
+    app.onError((err, c) => {
+      if (isAppError(err)) {
+        return c.json({ error: err.message }, err.statusCode);
+      }
+      return c.json({ error: 'Internal Server Error' }, 500);
+    });
   });
 
   // ============================================================================

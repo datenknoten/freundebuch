@@ -16,10 +16,14 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
  */
 export abstract class AppError extends Error {
   abstract readonly statusCode: ContentfulStatusCode;
+  readonly code?: string;
+  readonly details?: unknown;
 
-  constructor(message: string) {
+  constructor(message: string, options?: { code?: string; details?: unknown }) {
     super(message);
     this.name = this.constructor.name;
+    if (options?.code) this.code = options.code;
+    if (options?.details !== undefined) this.details = options.details;
     // Maintains proper stack trace for where our error was thrown
     Error.captureStackTrace?.(this, this.constructor);
   }
@@ -60,6 +64,21 @@ export class InvalidTokenError extends AppError {
 
   constructor(message = 'Invalid or expired token') {
     super(message);
+  }
+}
+
+// ============================================================================
+// Forbidden Errors (403)
+// ============================================================================
+
+/**
+ * Thrown when a user has not completed onboarding.
+ */
+export class OnboardingRequiredError extends AppError {
+  readonly statusCode = 403;
+
+  constructor() {
+    super('Onboarding required', { code: 'ONBOARDING_REQUIRED' });
   }
 }
 
@@ -158,6 +177,17 @@ export class RoleNotFoundError extends AppError {
 // ============================================================================
 // Bad Request Errors (400)
 // ============================================================================
+
+/**
+ * Thrown when input validation fails (ArkType, UUID checks, malformed JSON).
+ */
+export class ValidationError extends AppError {
+  readonly statusCode = 400;
+
+  constructor(message = 'Invalid input', details?: unknown) {
+    super(message, { details });
+  }
+}
 
 /**
  * Thrown when search parameters are invalid or missing required fields.
@@ -326,6 +356,21 @@ export class DatabaseConnectionError extends AppError {
  */
 export class ConfigurationError extends AppError {
   readonly statusCode = 500;
+}
+
+// ============================================================================
+// Service Not Configured Errors (503)
+// ============================================================================
+
+/**
+ * Thrown when a required service/configuration is not available.
+ */
+export class ServiceNotConfiguredError extends AppError {
+  readonly statusCode = 503;
+
+  constructor(message = 'Service not configured') {
+    super(message);
+  }
 }
 
 // ============================================================================
