@@ -1,4 +1,3 @@
-import type { ErrorResponse } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
@@ -9,7 +8,7 @@ import {
   type AppPasswordWithSecret,
 } from '../services/app-passwords.service.js';
 import type { AppContext } from '../types/context.js';
-import { ValidationError } from '../utils/errors.js';
+import { AppPasswordNotFoundError, ValidationError } from '../utils/errors.js';
 import { isValidUuid } from '../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -82,7 +81,7 @@ app.delete('/:id', async (c) => {
   const success = await service.revokeAppPassword(authUser.userId, appPasswordId);
 
   if (!success) {
-    return c.json<ErrorResponse>({ error: 'App password not found' }, 404);
+    throw new AppPasswordNotFoundError();
   }
 
   return c.json({ success: true });
