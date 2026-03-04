@@ -4,7 +4,7 @@ import { auth } from '../stores/auth.js';
 
 // In production with single-domain deployment, use empty string for same-origin requests.
 // In development, VITE_API_URL can point to the backend server if needed.
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 /**
  * Custom error class for API errors
