@@ -1,7 +1,7 @@
 import { derived, writable } from 'svelte/store';
 import type { FacetFilters } from '$shared';
 
-interface FriendListFilterState {
+export interface FriendListFilterState {
   query: string;
   filters: FacetFilters;
 }
@@ -32,53 +32,6 @@ function createFriendListFilterStore() {
     clear: () => {
       set(initialFilterState);
     },
-
-    buildSearchParams: (state: FriendListFilterState): URLSearchParams => {
-      const params = new URLSearchParams();
-
-      if (state.query.trim()) {
-        params.set('q', state.query.trim());
-      }
-
-      for (const [key, values] of Object.entries(state.filters)) {
-        if (values && values.length > 0) {
-          params.set(key, values.join(','));
-        }
-      }
-
-      return params;
-    },
-
-    parseSearchParams: (params: URLSearchParams): FriendListFilterState => {
-      const query = params.get('q') ?? '';
-      const filters: FacetFilters = {};
-
-      const stringArrayKeys = [
-        'country',
-        'city',
-        'organization',
-        'job_title',
-        'department',
-        'circles',
-      ] as const;
-      for (const key of stringArrayKeys) {
-        const value = params.get(key);
-        if (value) {
-          filters[key] = value.split(',');
-        }
-      }
-
-      const relationshipCategory = params.get('relationship_category');
-      if (relationshipCategory) {
-        filters.relationship_category = relationshipCategory.split(',') as (
-          | 'family'
-          | 'professional'
-          | 'social'
-        )[];
-      }
-
-      return { query, filters };
-    },
   };
 }
 
@@ -92,3 +45,58 @@ export const hasFriendListFilters = derived(
     $filter.query.trim().length > 0 ||
     Object.values($filter.filters).some((arr) => arr && arr.length > 0),
 );
+
+/**
+ * Build URL search params from filter state.
+ * Pure utility — does not read the store; pass a state snapshot.
+ */
+export function buildSearchParams(state: FriendListFilterState): URLSearchParams {
+  const params = new URLSearchParams();
+
+  if (state.query.trim()) {
+    params.set('q', state.query.trim());
+  }
+
+  for (const [key, values] of Object.entries(state.filters)) {
+    if (values && values.length > 0) {
+      params.set(key, values.join(','));
+    }
+  }
+
+  return params;
+}
+
+/**
+ * Parse URL search params into filter state.
+ * Pure utility — does not read the store.
+ */
+export function parseSearchParams(params: URLSearchParams): FriendListFilterState {
+  const query = params.get('q') ?? '';
+  const filters: FacetFilters = {};
+
+  const stringArrayKeys = [
+    'country',
+    'city',
+    'organization',
+    'job_title',
+    'department',
+    'circles',
+  ] as const;
+  for (const key of stringArrayKeys) {
+    const value = params.get(key);
+    if (value) {
+      filters[key] = value.split(',');
+    }
+  }
+
+  const relationshipCategory = params.get('relationship_category');
+  if (relationshipCategory) {
+    filters.relationship_category = relationshipCategory.split(',') as (
+      | 'family'
+      | 'professional'
+      | 'social'
+    )[];
+  }
+
+  return { query, filters };
+}
