@@ -16,30 +16,20 @@ import {
   visibleFriendIds,
   visibleMemberContactIds,
 } from '$lib/stores/ui';
-import type { MenuShortcut, OpenModeConfig } from './types.js';
+import type { MenuShortcut, NavigationShortcut, OpenModeConfig } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Navigation (g + key)
 // ---------------------------------------------------------------------------
 
-export const NAVIGATION_SHORTCUTS: MenuShortcut[] = [
-  { key: 'h', labelKey: 'shortcuts.nav.home' },
-  { key: 'f', labelKey: 'shortcuts.nav.friends' },
-  { key: 'p', labelKey: 'shortcuts.nav.profile' },
-  { key: 'c', labelKey: 'shortcuts.nav.circles' },
-  { key: 'e', labelKey: 'shortcuts.nav.encounters' },
-  { key: 'o', labelKey: 'shortcuts.nav.collectives' },
+export const NAVIGATION_SHORTCUTS: NavigationShortcut[] = [
+  { key: 'h', labelKey: 'shortcuts.nav.home', helpKey: 'shortcuts.goHome' },
+  { key: 'f', labelKey: 'shortcuts.nav.friends', helpKey: 'shortcuts.goFriends' },
+  { key: 'p', labelKey: 'shortcuts.nav.profile', helpKey: 'shortcuts.goProfile' },
+  { key: 'c', labelKey: 'shortcuts.nav.circles', helpKey: 'shortcuts.goCircles' },
+  { key: 'e', labelKey: 'shortcuts.nav.encounters', helpKey: 'shortcuts.goEncounters' },
+  { key: 'o', labelKey: 'shortcuts.nav.collectives', helpKey: 'shortcuts.goCollectives' },
 ];
-
-// Mapping from nav shortcut key to full "Go to..." i18n key (for help dialog)
-export const NAVIGATION_HELP_KEYS: Record<string, string> = {
-  h: 'shortcuts.goHome',
-  f: 'shortcuts.goFriends',
-  p: 'shortcuts.goProfile',
-  c: 'shortcuts.goCircles',
-  e: 'shortcuts.goEncounters',
-  o: 'shortcuts.goCollectives',
-};
 
 export const NAVIGATION_PATHS: Record<string, string> = {
   h: '/',
@@ -121,9 +111,7 @@ export const COLLECTIVE_DETAIL_EVENTS: Record<string, string> = {
 export const OPEN_MODE_CONFIGS: OpenModeConfig[] = [
   {
     routeMatch: /^\/friends\/[^/]+$/,
-    itemIdsStore: {
-      subscribe: visibleFriendDetailLinks.subscribe,
-    } as unknown as OpenModeConfig['itemIdsStore'],
+    itemIdsStore: visibleFriendDetailLinks,
     prefixStore: openFriendLinkModePrefix,
     activeStore: isOpenFriendLinkModeActive,
     basePath: '',

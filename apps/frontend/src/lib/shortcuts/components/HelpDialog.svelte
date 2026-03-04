@@ -4,7 +4,6 @@ import {
   COLLECTIVE_DETAIL_ACTIONS,
   CREATION_SHORTCUTS,
   FRIEND_DETAIL_ACTIONS,
-  NAVIGATION_HELP_KEYS,
   NAVIGATION_SHORTCUTS,
 } from '../config.js';
 import type { PageContext } from '../types.js';
@@ -61,7 +60,7 @@ const i18n = createI18n();
           <div class="space-y-2">
             {#each NAVIGATION_SHORTCUTS as shortcut}
               <div class="flex justify-between items-center">
-                <span class="text-gray-700">{$i18n.t(NAVIGATION_HELP_KEYS[shortcut.key])}</span>
+                <span class="text-gray-700">{$i18n.t(shortcut.helpKey)}</span>
                 <div class="flex gap-1">
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">g</kbd>
                   <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
