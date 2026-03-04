@@ -63,7 +63,7 @@ export function handleGuards(
   }
 
   // Handle ? for help
-  if (e.shiftKey && (e.key === '?' || e.key === '/')) {
+  if (e.key === '?') {
     e.preventDefault();
     callbacks.toggleHelp();
     return { suppress: true };

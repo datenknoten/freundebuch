@@ -28,8 +28,7 @@ export function handleSingleKey(e: KeyboardEvent): boolean {
     }
 
     case '<':
-    case ',':
-      if (e.shiftKey && pathname === '/friends') {
+      if (pathname === '/friends') {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('shortcut:previous-page'));
         return true;
@@ -37,8 +36,7 @@ export function handleSingleKey(e: KeyboardEvent): boolean {
       break;
 
     case '>':
-    case '.':
-      if (e.shiftKey && pathname === '/friends') {
+      if (pathname === '/friends') {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('shortcut:next-page'));
         return true;
