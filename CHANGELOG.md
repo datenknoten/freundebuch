@@ -1,3 +1,11 @@
+## [2.65.4](https://github.com/datenknoten/freundebuch/compare/v2.65.3...v2.65.4) (2026-03-04)
+
+### Code Refactoring
+
+* **frontend:** Address review suggestions for friendListFilter ([589a1a1](https://github.com/datenknoten/freundebuch/commit/589a1a1d944055b1e40e009d59d249b37ba7f6a1))
+* **frontend:** Extract generic storeAction() wrapper to eliminate store boilerplate ([abd7d2a](https://github.com/datenknoten/freundebuch/commit/abd7d2a8f01de30e83f034968bf25cb1fd97c0da)), closes [#112](https://github.com/datenknoten/freundebuch/issues/112)
+* **frontend:** Split friends.ts store into focused modules ([0dee0f5](https://github.com/datenknoten/freundebuch/commit/0dee0f55c0bb769259ff4d7d27d4f406764b9136)), closes [#113](https://github.com/datenknoten/freundebuch/issues/113)
+
 ## [2.65.3](https://github.com/datenknoten/freundebuch/compare/v2.65.2...v2.65.3) (2026-03-04)
 
 ### Code Refactoring
