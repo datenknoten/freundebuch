@@ -1,3 +1,10 @@
+## [2.65.1](https://github.com/datenknoten/freundebuch/compare/v2.65.0...v2.65.1) (2026-03-04)
+
+### Code Refactoring
+
+* **backend:** Add per-element ArkType validation to JSON column parsers ([450e2ef](https://github.com/datenknoten/freundebuch/commit/450e2ef5e1c1c390a6166d3a1a217c21c94a8197))
+* **backend:** Replace ~115 unsafe `as` type assertions with runtime checks ([96a4b0f](https://github.com/datenknoten/freundebuch/commit/96a4b0f5936094820e4fb256a1a8f216f05430a1))
+
 ## [2.65.0](https://github.com/datenknoten/freundebuch/compare/v2.64.0...v2.65.0) (2026-03-04)
 
 ### Features
