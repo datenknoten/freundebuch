@@ -29,7 +29,8 @@ function enhanceErrorWithStack(error: unknown, callSiteStack: string): Error {
  * Wraps a pg.PoolClient to capture stack traces for query errors
  */
 function wrapClient(client: pg.PoolClient): pg.PoolClient {
-  const originalQuery = client.query.bind(client) as pg.PoolClient['query'];
+  // biome-ignore lint/suspicious/noExplicitAny: preserving pg's query overload signature
+  const originalQuery: (...args: any[]) => any = client.query.bind(client);
 
   // Override query to capture stack trace
   const wrappedQuery = function (
@@ -41,8 +42,7 @@ function wrapClient(client: pg.PoolClient): pg.PoolClient {
     const callSiteError = new Error();
     Error.captureStackTrace?.(callSiteError, wrappedQuery);
 
-    // biome-ignore lint/suspicious/noExplicitAny: matching pg's query signature
-    const result = (originalQuery as (...args: any[]) => any)(...args);
+    const result = originalQuery(...args);
 
     // Handle both Promise and callback patterns
     if (result instanceof Promise) {
@@ -65,8 +65,10 @@ function wrapClient(client: pg.PoolClient): pg.PoolClient {
  * stack trace is preserved, showing which route/service initiated the query.
  */
 function wrapPool(originalPool: pg.Pool): pg.Pool {
-  const originalQuery = originalPool.query.bind(originalPool) as pg.Pool['query'];
-  const originalConnect = originalPool.connect.bind(originalPool) as pg.Pool['connect'];
+  // biome-ignore lint/suspicious/noExplicitAny: preserving pg's query overload signature
+  const originalQuery: (...args: any[]) => any = originalPool.query.bind(originalPool);
+  // biome-ignore lint/suspicious/noExplicitAny: preserving pg's connect overload signature
+  const originalConnect: (...args: any[]) => any = originalPool.connect.bind(originalPool);
 
   // Override query to capture stack trace at call site
   const wrappedPoolQuery = function (
@@ -78,8 +80,7 @@ function wrapPool(originalPool: pg.Pool): pg.Pool {
     const callSiteError = new Error();
     Error.captureStackTrace?.(callSiteError, wrappedPoolQuery);
 
-    // biome-ignore lint/suspicious/noExplicitAny: matching pg's query signature
-    const result = (originalQuery as (...args: any[]) => any)(...args);
+    const result = originalQuery(...args);
 
     if (result instanceof Promise) {
       return result.catch((error: unknown) => {
@@ -117,9 +118,7 @@ function wrapPool(originalPool: pg.Pool): pg.Pool {
     }
 
     // Handle promise style
-    return (originalConnect as () => Promise<pg.PoolClient>)().then((client: pg.PoolClient) =>
-      wrapClient(client),
-    );
+    return originalConnect().then((client: pg.PoolClient) => wrapClient(client));
   };
 
   // biome-ignore lint/suspicious/noExplicitAny: matching pg's connect signature

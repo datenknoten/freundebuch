@@ -1,5 +1,4 @@
-import type { Phone, PhoneInput, PhoneType } from '@freundebuch/shared/index.js';
-import type pg from 'pg';
+import type { Phone, PhoneInput } from '@freundebuch/shared/index.js';
 import {
   clearPrimaryPhone,
   createPhone,
@@ -9,6 +8,7 @@ import {
   type IGetPhonesByFriendIdResult,
   updatePhone,
 } from '../../../models/queries/friend-phones.queries.js';
+import { parsePhoneType } from '../../../utils/type-guards.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -40,7 +40,7 @@ export class PhoneService extends SubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -55,7 +55,7 @@ export class PhoneService extends SubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -66,16 +66,16 @@ export class PhoneService extends SubResourceService<
             friendExternalId,
             phoneExternalId: resourceExternalId,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
       clearPrimaryFn: async ({ userExternalId, friendExternalId }, client) => {
-        return clearPrimaryPhone.run({ userExternalId, friendExternalId }, client as pg.Pool);
+        return clearPrimaryPhone.run({ userExternalId, friendExternalId }, client);
       },
 
       countFn: async ({ userExternalId, friendExternalId }, client) => {
-        return getPhonesByFriendId.run({ userExternalId, friendExternalId }, client as pg.Pool);
+        return getPhonesByFriendId.run({ userExternalId, friendExternalId }, client);
       },
 
       isPrimary: (input) => input.is_primary ?? false,
@@ -85,7 +85,7 @@ export class PhoneService extends SubResourceService<
       mapResult: (row): Phone => ({
         id: row.external_id,
         phoneNumber: row.phone_number,
-        phoneType: row.phone_type as PhoneType,
+        phoneType: parsePhoneType(row.phone_type),
         label: row.label ?? undefined,
         isPrimary: row.is_primary,
         createdAt: row.created_at.toISOString(),

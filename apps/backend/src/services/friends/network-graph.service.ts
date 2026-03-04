@@ -2,8 +2,6 @@ import type {
   NetworkGraphData,
   NetworkGraphLink,
   NetworkGraphNode,
-  RelationshipCategory,
-  RelationshipTypeId,
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
@@ -11,6 +9,7 @@ import {
   getNetworkGraphLinks,
   getNetworkGraphNodes,
 } from '../../models/queries/friend-relationships.queries.js';
+import { parseRelationshipCategory, parseRelationshipTypeId } from '../../utils/type-guards.js';
 
 export interface NetworkGraphServiceOptions {
   db: pg.Pool;
@@ -58,8 +57,8 @@ export class NetworkGraphService {
       .map((row) => ({
         source: row.source_id,
         target: row.target_id,
-        relationshipType: row.relationship_type_id as RelationshipTypeId,
-        relationshipCategory: row.relationship_category as RelationshipCategory,
+        relationshipType: parseRelationshipTypeId(row.relationship_type_id),
+        relationshipCategory: parseRelationshipCategory(row.relationship_category),
         relationshipLabel: row.relationship_label,
       }));
 

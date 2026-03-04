@@ -1,6 +1,5 @@
 import {
   type ErrorResponse,
-  type FriendCreateInput,
   FriendCreateSchema,
   UpdateProfileRequestSchema,
   type User,
@@ -236,10 +235,7 @@ app.post('/me/self-profile', async (c) => {
 
     // Create the friend
     const friendsService = new FriendsService(db, logger);
-    const newFriend = await friendsService.createFriend(
-      authUser.userId,
-      validated as FriendCreateInput,
-    );
+    const newFriend = await friendsService.createFriend(authUser.userId, validated);
 
     // Set it as the self-profile
     const setResult = await setUserSelfProfile.run(

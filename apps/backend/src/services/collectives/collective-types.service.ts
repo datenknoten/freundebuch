@@ -14,6 +14,7 @@ import {
   type IGetRolesForTypeResult,
   type IGetRulesForTypeResult,
 } from '../../models/queries/collectives.queries.js';
+import { parseRelationshipDirection } from '../../utils/type-guards.js';
 
 /**
  * Service for managing collective types (family, company, club, friend_group)
@@ -120,10 +121,7 @@ export class CollectiveTypesService {
       existingMemberRoleId: row.existing_member_role_id,
       existingMemberRoleKey: row.existing_member_role_key,
       relationshipTypeId: row.relationship_type_id,
-      relationshipDirection: row.relationship_direction as
-        | 'new_member'
-        | 'existing_member'
-        | 'both',
+      relationshipDirection: parseRelationshipDirection(row.relationship_direction),
     };
   }
 }

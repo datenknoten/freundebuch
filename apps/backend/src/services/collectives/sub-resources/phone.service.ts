@@ -1,5 +1,4 @@
-import type { Phone, PhoneInput, PhoneType } from '@freundebuch/shared/index.js';
-import type pg from 'pg';
+import type { Phone, PhoneInput } from '@freundebuch/shared/index.js';
 import {
   clearPrimaryPhone,
   createPhone,
@@ -9,6 +8,7 @@ import {
   type IGetPhonesByCollectiveIdResult,
   updatePhone,
 } from '../../../models/queries/collective-phones.queries.js';
+import { parsePhoneType } from '../../../utils/type-guards.js';
 import {
   CollectiveSubResourceService,
   type CollectiveSubResourceServiceOptions,
@@ -31,16 +31,13 @@ export class CollectivePhoneService extends CollectiveSubResourceService<
       hasPrimaryFlag: true,
 
       listFn: async ({ userExternalId, collectiveExternalId }, client) => {
-        return getPhonesByCollectiveId.run(
-          { userExternalId, collectiveExternalId },
-          client as pg.Pool,
-        );
+        return getPhonesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
       },
 
       mapListResult: (row): Phone => ({
         id: row.external_id,
         phoneNumber: row.phone_number,
-        phoneType: row.phone_type as PhoneType,
+        phoneType: parsePhoneType(row.phone_type),
         label: row.label ?? undefined,
         isPrimary: row.is_primary,
         createdAt: row.created_at.toISOString(),
@@ -56,7 +53,7 @@ export class CollectivePhoneService extends CollectiveSubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -74,7 +71,7 @@ export class CollectivePhoneService extends CollectiveSubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -85,12 +82,12 @@ export class CollectivePhoneService extends CollectiveSubResourceService<
             collectiveExternalId,
             phoneExternalId: resourceExternalId,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
       clearPrimaryFn: async ({ userExternalId, collectiveExternalId }, client) => {
-        return clearPrimaryPhone.run({ userExternalId, collectiveExternalId }, client as pg.Pool);
+        return clearPrimaryPhone.run({ userExternalId, collectiveExternalId }, client);
       },
 
       isPrimary: (input) => input.is_primary ?? false,
@@ -100,7 +97,7 @@ export class CollectivePhoneService extends CollectiveSubResourceService<
       mapResult: (row): Phone => ({
         id: row.external_id,
         phoneNumber: row.phone_number,
-        phoneType: row.phone_type as PhoneType,
+        phoneType: parsePhoneType(row.phone_type),
         label: row.label ?? undefined,
         isPrimary: row.is_primary,
         createdAt: row.created_at.toISOString(),

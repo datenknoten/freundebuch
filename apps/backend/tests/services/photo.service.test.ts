@@ -210,14 +210,14 @@ describe('PhotoService', () => {
 
     it('should handle non-existent directory gracefully', async () => {
       const { stat } = await import('node:fs/promises');
-      vi.mocked(stat).mockRejectedValue({ code: 'ENOENT' });
+      vi.mocked(stat).mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
 
       await expect(photoService.deletePhoto(VALID_FRIEND_ID_2)).resolves.not.toThrow();
     });
 
     it('should throw on other file system errors', async () => {
       const { stat } = await import('node:fs/promises');
-      vi.mocked(stat).mockRejectedValue({ code: 'EACCES' });
+      vi.mocked(stat).mockRejectedValue(Object.assign(new Error('EACCES'), { code: 'EACCES' }));
 
       await expect(photoService.deletePhoto(VALID_FRIEND_ID)).rejects.toMatchObject({
         code: 'EACCES',

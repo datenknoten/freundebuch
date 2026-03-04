@@ -1,5 +1,4 @@
-import type { Email, EmailInput, EmailType } from '@freundebuch/shared/index.js';
-import type pg from 'pg';
+import type { Email, EmailInput } from '@freundebuch/shared/index.js';
 import {
   clearPrimaryEmail,
   createEmail,
@@ -9,6 +8,7 @@ import {
   type IGetEmailsByFriendIdResult,
   updateEmail,
 } from '../../../models/queries/friend-emails.queries.js';
+import { parseEmailType } from '../../../utils/type-guards.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -40,7 +40,7 @@ export class EmailService extends SubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -55,7 +55,7 @@ export class EmailService extends SubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -66,16 +66,16 @@ export class EmailService extends SubResourceService<
             friendExternalId,
             emailExternalId: resourceExternalId,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
       clearPrimaryFn: async ({ userExternalId, friendExternalId }, client) => {
-        return clearPrimaryEmail.run({ userExternalId, friendExternalId }, client as pg.Pool);
+        return clearPrimaryEmail.run({ userExternalId, friendExternalId }, client);
       },
 
       countFn: async ({ userExternalId, friendExternalId }, client) => {
-        return getEmailsByFriendId.run({ userExternalId, friendExternalId }, client as pg.Pool);
+        return getEmailsByFriendId.run({ userExternalId, friendExternalId }, client);
       },
 
       isPrimary: (input) => input.is_primary ?? false,
@@ -85,7 +85,7 @@ export class EmailService extends SubResourceService<
       mapResult: (row): Email => ({
         id: row.external_id,
         emailAddress: row.email_address,
-        emailType: row.email_type as EmailType,
+        emailType: parseEmailType(row.email_type),
         label: row.label ?? undefined,
         isPrimary: row.is_primary,
         createdAt: row.created_at.toISOString(),

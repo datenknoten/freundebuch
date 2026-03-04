@@ -30,8 +30,10 @@ import {
   type IPaginatedFullTextSearchResult,
   paginatedFullTextSearch,
 } from '../../models/queries/search.queries.js';
+import { parseCirclesJson } from '../../utils/db-json-schemas.js';
 import { InvalidSearchParametersError } from '../../utils/errors.js';
 import { sanitizeSearchHeadline } from '../../utils/security.js';
+import { parseMatchSource } from '../../utils/type-guards.js';
 
 /**
  * Escape special characters for PostgreSQL LIKE/ILIKE patterns.
@@ -311,7 +313,7 @@ export class SearchService {
       rank: row.rank ?? 0,
       // Sanitize headline to prevent XSS - only allow <mark> tags from ts_headline
       headline: sanitizeSearchHeadline(row.headline),
-      matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
+      matchSource: parseMatchSource(row.match_source ?? null),
       circles: [], // Circles not included in this query
     };
   }
@@ -328,18 +330,14 @@ export class SearchService {
       rank: row.rank ?? 0,
       // Sanitize headline to prevent XSS - only allow <mark> tags from ts_headline
       headline: sanitizeSearchHeadline(row.headline),
-      matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
+      matchSource: parseMatchSource(row.match_source ?? null),
       circles: [], // Circles not included in this query
     };
   }
 
   private mapFacetedSearchResult(row: IFacetedSearchResult): GlobalSearchResult {
     // Parse circles from JSON
-    const circlesRaw = (row.circles || []) as Array<{
-      external_id: string;
-      name: string;
-      color: string | null;
-    }>;
+    const circlesRaw = parseCirclesJson(row.circles);
 
     return {
       id: row.external_id,
@@ -352,7 +350,7 @@ export class SearchService {
       rank: row.rank ?? 0,
       // Sanitize headline to prevent XSS - only allow <mark> tags from ts_headline
       headline: sanitizeSearchHeadline(row.headline),
-      matchSource: (row.match_source as GlobalSearchResult['matchSource']) ?? null,
+      matchSource: parseMatchSource(row.match_source ?? null),
       circles: circlesRaw.map((c) => ({
         id: c.external_id,
         name: c.name,
@@ -363,11 +361,7 @@ export class SearchService {
 
   private mapFilterOnlyResult(row: IFilterOnlyListResult): GlobalSearchResult {
     // Parse circles from JSON
-    const circlesRaw = (row.circles || []) as Array<{
-      external_id: string;
-      name: string;
-      color: string | null;
-    }>;
+    const circlesRaw = parseCirclesJson(row.circles);
 
     return {
       id: row.external_id,

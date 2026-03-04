@@ -7,6 +7,7 @@ import { FriendsService } from '../services/friends.service.js';
 import { PhotoService } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
 import { isValidUuid } from '../utils/security.js';
+import { isNodeError } from '../utils/type-guards.js';
 
 const app = new Hono<AppContext>();
 
@@ -88,7 +89,7 @@ app.get('/friends/:friendId/:filename', async (c) => {
 
     return c.body(fileBuffer);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if (isNodeError(error) && error.code === 'ENOENT') {
       return c.json({ error: 'File not found' }, 404);
     }
     logger.error({ error, friendId, filename }, 'Failed to serve photo');

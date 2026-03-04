@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node';
 import { Hono } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { AppContext } from '../types/context.js';
 import { toError } from '../utils/errors.js';
 
@@ -84,7 +85,8 @@ sentryTunnelRoutes.post('/', async (c) => {
       body: envelope,
     });
 
-    return c.json({ success: true }, response.status as 200 | 400 | 500);
+    const status: ContentfulStatusCode = response.ok ? 200 : response.status >= 500 ? 500 : 400;
+    return c.json({ success: true }, status);
   } catch (error) {
     const err = toError(error);
     logger.error({ err }, 'Sentry tunnel error');

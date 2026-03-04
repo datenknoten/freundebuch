@@ -1,5 +1,4 @@
-import type { Address, AddressInput, AddressType } from '@freundebuch/shared/index.js';
-import type pg from 'pg';
+import type { Address, AddressInput } from '@freundebuch/shared/index.js';
 import {
   clearPrimaryAddress,
   createAddress,
@@ -9,6 +8,7 @@ import {
   type IGetAddressesByFriendIdResult,
   updateAddress,
 } from '../../../models/queries/friend-addresses.queries.js';
+import { parseAddressType } from '../../../utils/type-guards.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -45,7 +45,7 @@ export class AddressService extends SubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -65,7 +65,7 @@ export class AddressService extends SubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -76,16 +76,16 @@ export class AddressService extends SubResourceService<
             friendExternalId,
             addressExternalId: resourceExternalId,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
       clearPrimaryFn: async ({ userExternalId, friendExternalId }, client) => {
-        return clearPrimaryAddress.run({ userExternalId, friendExternalId }, client as pg.Pool);
+        return clearPrimaryAddress.run({ userExternalId, friendExternalId }, client);
       },
 
       countFn: async ({ userExternalId, friendExternalId }, client) => {
-        return getAddressesByFriendId.run({ userExternalId, friendExternalId }, client as pg.Pool);
+        return getAddressesByFriendId.run({ userExternalId, friendExternalId }, client);
       },
 
       isPrimary: (input) => input.is_primary ?? false,
@@ -100,7 +100,7 @@ export class AddressService extends SubResourceService<
         stateProvince: row.state_province ?? undefined,
         postalCode: row.postal_code ?? undefined,
         country: row.country ?? undefined,
-        addressType: row.address_type as AddressType,
+        addressType: parseAddressType(row.address_type),
         label: row.label ?? undefined,
         isPrimary: row.is_primary,
         createdAt: row.created_at.toISOString(),

@@ -47,7 +47,7 @@ export class MetInfoService {
         metLocation: data.met_location ?? null,
         metContext: data.met_context ?? null,
       },
-      dbClient as pg.Pool,
+      dbClient,
     );
 
     if (!metInfo) {
@@ -69,10 +69,7 @@ export class MetInfoService {
 
     const dbClient = client ?? this.db;
 
-    const result = await deleteMetInfo.run(
-      { userExternalId, friendExternalId },
-      dbClient as pg.Pool,
-    );
+    const result = await deleteMetInfo.run({ userExternalId, friendExternalId }, dbClient);
 
     return result.length > 0;
   }

@@ -1,5 +1,4 @@
 import type { ProfessionalHistory, ProfessionalHistoryInput } from '@freundebuch/shared/index.js';
-import type pg from 'pg';
 import {
   clearPrimaryProfessionalHistory,
   createProfessionalHistory,
@@ -45,7 +44,7 @@ export class ProfessionalHistoryService extends SubResourceService<
             toYear: input.to_year ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -65,7 +64,7 @@ export class ProfessionalHistoryService extends SubResourceService<
             toYear: input.to_year ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -76,22 +75,16 @@ export class ProfessionalHistoryService extends SubResourceService<
             friendExternalId,
             historyExternalId: resourceExternalId,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
       clearPrimaryFn: async ({ userExternalId, friendExternalId }, client) => {
-        return clearPrimaryProfessionalHistory.run(
-          { userExternalId, friendExternalId },
-          client as pg.Pool,
-        );
+        return clearPrimaryProfessionalHistory.run({ userExternalId, friendExternalId }, client);
       },
 
       countFn: async ({ userExternalId, friendExternalId }, client) => {
-        return getProfessionalHistoryByFriendId.run(
-          { userExternalId, friendExternalId },
-          client as pg.Pool,
-        );
+        return getProfessionalHistoryByFriendId.run({ userExternalId, friendExternalId }, client);
       },
 
       isPrimary: (input) => input.is_primary ?? false,

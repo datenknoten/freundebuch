@@ -1,5 +1,4 @@
-import type { Address, AddressInput, AddressType } from '@freundebuch/shared/index.js';
-import type pg from 'pg';
+import type { Address, AddressInput } from '@freundebuch/shared/index.js';
 import {
   clearPrimaryAddress,
   createAddress,
@@ -9,6 +8,7 @@ import {
   type IGetAddressesByCollectiveIdResult,
   updateAddress,
 } from '../../../models/queries/collective-addresses.queries.js';
+import { parseAddressType } from '../../../utils/type-guards.js';
 import {
   CollectiveSubResourceService,
   type CollectiveSubResourceServiceOptions,
@@ -31,10 +31,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
       hasPrimaryFlag: true,
 
       listFn: async ({ userExternalId, collectiveExternalId }, client) => {
-        return getAddressesByCollectiveId.run(
-          { userExternalId, collectiveExternalId },
-          client as pg.Pool,
-        );
+        return getAddressesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
       },
 
       mapListResult: (row): Address => ({
@@ -45,7 +42,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
         stateProvince: row.state_province ?? undefined,
         postalCode: row.postal_code ?? undefined,
         country: row.country ?? undefined,
-        addressType: row.address_type as AddressType,
+        addressType: parseAddressType(row.address_type),
         label: row.label ?? undefined,
         isPrimary: row.is_primary,
         createdAt: row.created_at.toISOString(),
@@ -66,7 +63,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -89,7 +86,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
             label: input.label ?? null,
             isPrimary: input.is_primary ?? false,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -100,12 +97,12 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
             collectiveExternalId,
             addressExternalId: resourceExternalId,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
       clearPrimaryFn: async ({ userExternalId, collectiveExternalId }, client) => {
-        return clearPrimaryAddress.run({ userExternalId, collectiveExternalId }, client as pg.Pool);
+        return clearPrimaryAddress.run({ userExternalId, collectiveExternalId }, client);
       },
 
       isPrimary: (input) => input.is_primary ?? false,
@@ -120,7 +117,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
         stateProvince: row.state_province ?? undefined,
         postalCode: row.postal_code ?? undefined,
         country: row.country ?? undefined,
-        addressType: row.address_type as AddressType,
+        addressType: parseAddressType(row.address_type),
         label: row.label ?? undefined,
         isPrimary: row.is_primary,
         createdAt: row.created_at.toISOString(),

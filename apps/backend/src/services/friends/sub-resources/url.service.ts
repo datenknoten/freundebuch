@@ -1,5 +1,4 @@
-import type { Url, UrlInput, UrlType } from '@freundebuch/shared/index.js';
-import type pg from 'pg';
+import type { Url, UrlInput } from '@freundebuch/shared/index.js';
 import {
   createUrl,
   deleteUrl,
@@ -7,6 +6,7 @@ import {
   type IGetUrlsByFriendIdResult,
   updateUrl,
 } from '../../../models/queries/friend-urls.queries.js';
+import { parseUrlType } from '../../../utils/type-guards.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -38,7 +38,7 @@ export class UrlService extends SubResourceService<
             urlType: input.url_type,
             label: input.label ?? null,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -52,7 +52,7 @@ export class UrlService extends SubResourceService<
             urlType: input.url_type,
             label: input.label ?? null,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -63,14 +63,14 @@ export class UrlService extends SubResourceService<
             friendExternalId,
             urlExternalId: resourceExternalId,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
       mapResult: (row): Url => ({
         id: row.external_id,
         url: row.url,
-        urlType: row.url_type as UrlType,
+        urlType: parseUrlType(row.url_type),
         label: row.label ?? undefined,
         createdAt: row.created_at.toISOString(),
       }),

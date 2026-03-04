@@ -17,7 +17,6 @@ import {
   getUserByExternalId,
   getUserSelfProfile,
   getUserWithPreferences,
-  type Json,
   updateUserPassword,
   updateUserPreferences,
 } from '../models/queries/users.queries.js';
@@ -40,6 +39,7 @@ import {
   UserCreationError,
   UserNotFoundError,
 } from '../utils/errors.js';
+import { parseUserPreferences, toJson } from '../utils/type-guards.js';
 
 export interface RegisterRequest {
   email: string;
@@ -284,7 +284,7 @@ export class AuthService {
       user: {
         externalId: user.external_id,
         email: user.email,
-        preferences: user.preferences as UserPreferences,
+        preferences: parseUserPreferences(user.preferences),
         selfProfileId: selfProfileExternalId ?? undefined,
         hasCompletedOnboarding: selfProfileExternalId !== null,
       },
@@ -434,7 +434,7 @@ export class AuthService {
     return {
       externalId: user.external_id,
       email: user.email,
-      preferences: user.preferences as UserPreferences,
+      preferences: parseUserPreferences(user.preferences),
       selfProfileId: selfProfileExternalId ?? undefined,
       hasCompletedOnboarding: selfProfileExternalId !== null,
     };
@@ -462,7 +462,7 @@ export class AuthService {
     }
 
     // Merge with existing preferences
-    const currentPreferences = (user.preferences || {}) as UserPreferences;
+    const currentPreferences = parseUserPreferences(user.preferences ?? {});
     const newPreferences: UserPreferences = {
       ...currentPreferences,
       ...preferences,
@@ -472,7 +472,7 @@ export class AuthService {
     const result = await updateUserPreferences.run(
       {
         externalId: userExternalId,
-        preferences: newPreferences as unknown as Json,
+        preferences: toJson(newPreferences),
       },
       this.db,
     );
@@ -483,6 +483,6 @@ export class AuthService {
 
     this.logger.info({ userId: userExternalId }, 'User preferences updated successfully');
 
-    return result[0]?.preferences as UserPreferences;
+    return parseUserPreferences(result[0]?.preferences);
   }
 }

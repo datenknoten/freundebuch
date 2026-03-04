@@ -12,6 +12,7 @@ import type { Logger } from 'pino';
 import sharp from 'sharp';
 import { getConfig } from '../utils/config.js';
 import { isPathWithinBase, isValidUuid } from '../utils/security.js';
+import { isNodeError } from '../utils/type-guards.js';
 
 export class PhotoService {
   private logger: Logger;
@@ -57,7 +58,7 @@ export class PhotoService {
         return;
       } catch (error) {
         // New directory doesn't exist, proceed with rename
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        if (!isNodeError(error) || error.code !== 'ENOENT') {
           throw error;
         }
       }
@@ -67,7 +68,7 @@ export class PhotoService {
       logger.info({ legacyDir, newDir }, 'Migrated uploads directory from legacy path');
     } catch (error) {
       // Legacy directory doesn't exist, nothing to migrate
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      if (isNodeError(error) && error.code === 'ENOENT') {
         return;
       }
       logger.error({ error, legacyDir, newDir }, 'Failed to migrate uploads directory');
@@ -178,7 +179,7 @@ export class PhotoService {
       this.logger.info({ friendExternalId }, 'Photos deleted successfully');
     } catch (error) {
       // Directory doesn't exist, that's fine
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      if (!isNodeError(error) || error.code !== 'ENOENT') {
         throw error;
       }
     }

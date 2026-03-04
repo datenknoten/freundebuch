@@ -1,5 +1,4 @@
-import type { Url, UrlInput, UrlType } from '@freundebuch/shared/index.js';
-import type pg from 'pg';
+import type { Url, UrlInput } from '@freundebuch/shared/index.js';
 import {
   createUrl,
   deleteUrl,
@@ -8,6 +7,7 @@ import {
   type IGetUrlsByCollectiveIdResult,
   updateUrl,
 } from '../../../models/queries/collective-urls.queries.js';
+import { parseUrlType } from '../../../utils/type-guards.js';
 import {
   CollectiveSubResourceService,
   type CollectiveSubResourceServiceOptions,
@@ -30,16 +30,13 @@ export class CollectiveUrlService extends CollectiveSubResourceService<
       hasPrimaryFlag: false,
 
       listFn: async ({ userExternalId, collectiveExternalId }, client) => {
-        return getUrlsByCollectiveId.run(
-          { userExternalId, collectiveExternalId },
-          client as pg.Pool,
-        );
+        return getUrlsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
       },
 
       mapListResult: (row): Url => ({
         id: row.external_id,
         url: row.url,
-        urlType: row.url_type as UrlType,
+        urlType: parseUrlType(row.url_type),
         label: row.label ?? undefined,
         createdAt: row.created_at.toISOString(),
       }),
@@ -53,7 +50,7 @@ export class CollectiveUrlService extends CollectiveSubResourceService<
             urlType: input.url_type,
             label: input.label ?? null,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -70,7 +67,7 @@ export class CollectiveUrlService extends CollectiveSubResourceService<
             urlType: input.url_type,
             label: input.label ?? null,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
@@ -81,14 +78,14 @@ export class CollectiveUrlService extends CollectiveSubResourceService<
             collectiveExternalId,
             urlExternalId: resourceExternalId,
           },
-          client as pg.Pool,
+          client,
         );
       },
 
       mapResult: (row): Url => ({
         id: row.external_id,
         url: row.url,
-        urlType: row.url_type as UrlType,
+        urlType: parseUrlType(row.url_type),
         label: row.label ?? undefined,
         createdAt: row.created_at.toISOString(),
       }),
