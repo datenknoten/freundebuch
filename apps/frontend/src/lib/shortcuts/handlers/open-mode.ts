@@ -22,7 +22,7 @@ export function handleOpenMode(e: KeyboardEvent, ctx: HandlerContext): boolean {
     return true;
   }
 
-  const itemIds = get(config.itemIdsStore) as (string | { url: string })[];
+  const itemIds = get(config.itemIdsStore);
   const currentPrefix = get(config.prefixStore);
   const keyNum = parseInt(e.key, 10);
   const keyLower = e.key.toLowerCase();
