@@ -1,4 +1,4 @@
-import { type ErrorResponse, PhotoValidationErrors } from '@freundebuch/shared/index.js';
+import { PhotoValidationErrors } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../middleware/auth.js';
@@ -6,7 +6,7 @@ import { CirclesService } from '../../services/circles.service.js';
 import { FriendsService } from '../../services/friends/index.js';
 import { PhotoService } from '../../services/photo.service.js';
 import type { AppContext } from '../../types/context.js';
-import { FriendNotFoundError, ValidationError } from '../../utils/errors.js';
+import { FriendNotFoundError, ResourceNotFoundError, ValidationError } from '../../utils/errors.js';
 import { isValidUuid } from '../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -192,7 +192,7 @@ app.post('/:id/circles/:circleId', async (c) => {
   const circle = await circlesService.addFriendToCircle(user.userId, friendId, circleId);
 
   if (!circle) {
-    return c.json<ErrorResponse>({ error: 'Friend or circle not found' }, 404);
+    throw new ResourceNotFoundError('Friend or circle');
   }
 
   return c.json(circle, 201);
@@ -216,7 +216,7 @@ app.delete('/:id/circles/:circleId', async (c) => {
   const removed = await circlesService.removeFriendFromCircle(user.userId, friendId, circleId);
 
   if (!removed) {
-    return c.json<ErrorResponse>({ error: 'Friend-circle assignment not found' }, 404);
+    throw new ResourceNotFoundError('Friend-circle assignment');
   }
 
   return c.json({ message: 'Friend removed from circle successfully' });
@@ -288,7 +288,7 @@ app.post('/:id/archive', async (c) => {
   const archived = await friendsService.archiveFriend(user.userId, friendId, validated.reason);
 
   if (!archived) {
-    return c.json<ErrorResponse>({ error: 'Friend not found or already archived' }, 404);
+    throw new FriendNotFoundError('Friend not found or already archived');
   }
 
   return c.json({ message: 'Friend archived successfully' });
@@ -312,7 +312,7 @@ app.post('/:id/unarchive', async (c) => {
   const unarchived = await friendsService.unarchiveFriend(user.userId, friendId);
 
   if (!unarchived) {
-    return c.json<ErrorResponse>({ error: 'Friend not found or not archived' }, 404);
+    throw new FriendNotFoundError('Friend not found or not archived');
   }
 
   return c.json({ message: 'Friend unarchived successfully' });

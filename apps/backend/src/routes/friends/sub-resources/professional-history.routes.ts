@@ -1,10 +1,14 @@
-import { type ErrorResponse, ProfessionalHistoryInputSchema } from '@freundebuch/shared/index.js';
+import { ProfessionalHistoryInputSchema } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { FriendNotFoundError, ValidationError } from '../../../utils/errors.js';
+import {
+  FriendNotFoundError,
+  ResourceNotFoundError,
+  ValidationError,
+} from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -81,7 +85,7 @@ app.put('/:historyId', async (c) => {
   );
 
   if (!history) {
-    return c.json<ErrorResponse>({ error: 'Professional history entry not found' }, 404);
+    throw new ResourceNotFoundError('Professional history entry');
   }
 
   return c.json(history);
@@ -105,7 +109,7 @@ app.delete('/:historyId', async (c) => {
   const deleted = await friendsService.deleteProfessionalHistory(user.userId, friendId, historyId);
 
   if (!deleted) {
-    return c.json<ErrorResponse>({ error: 'Professional history entry not found' }, 404);
+    throw new ResourceNotFoundError('Professional history entry');
   }
 
   return c.json({ message: 'Professional history entry deleted' });

@@ -1,10 +1,14 @@
-import { DateInputSchema, type ErrorResponse } from '@freundebuch/shared/index.js';
+import { DateInputSchema } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { FriendNotFoundError, ValidationError } from '../../../utils/errors.js';
+import {
+  FriendNotFoundError,
+  ResourceNotFoundError,
+  ValidationError,
+} from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -76,7 +80,7 @@ app.put('/:dateId', async (c) => {
   const date = await friendsService.updateDate(user.userId, friendId, dateId, validated);
 
   if (!date) {
-    return c.json<ErrorResponse>({ error: 'Date not found' }, 404);
+    throw new ResourceNotFoundError('Date');
   }
 
   return c.json(date);
@@ -100,7 +104,7 @@ app.delete('/:dateId', async (c) => {
   const deleted = await friendsService.deleteDate(user.userId, friendId, dateId);
 
   if (!deleted) {
-    return c.json<ErrorResponse>({ error: 'Date not found' }, 404);
+    throw new ResourceNotFoundError('Date');
   }
 
   return c.json({ message: 'Date deleted successfully' });

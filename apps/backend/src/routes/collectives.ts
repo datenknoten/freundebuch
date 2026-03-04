@@ -2,7 +2,6 @@ import {
   CollectiveInputSchema,
   CollectiveListQuerySchema,
   CollectiveUpdateSchema,
-  type ErrorResponse,
   MembershipDeactivateSchema,
   MembershipInputSchema,
   MembershipUpdateSchema,
@@ -20,7 +19,12 @@ import {
   MembershipsService,
 } from '../services/collectives/index.js';
 import type { AppContext } from '../types/context.js';
-import { CollectiveNotFoundError, ValidationError } from '../utils/errors.js';
+import {
+  CollectiveNotFoundError,
+  MembershipNotFoundError,
+  ResourceNotFoundError,
+  ValidationError,
+} from '../utils/errors.js';
 import { isValidUuid } from '../utils/security.js';
 
 // Sub-resource routes
@@ -75,7 +79,7 @@ app.get('/types/:id', async (c) => {
   const collectiveType = await typesService.getTypeById(user.userId, typeId);
 
   if (!collectiveType) {
-    return c.json<ErrorResponse>({ error: 'Collective type not found' }, 404);
+    throw new ResourceNotFoundError('Collective type');
   }
 
   return c.json(collectiveType);
@@ -312,7 +316,7 @@ app.delete('/:id/members/:memberId', async (c) => {
   const deleted = await membershipsService.removeMember(user.userId, collectiveId, memberId);
 
   if (!deleted) {
-    return c.json<ErrorResponse>({ error: 'Member not found' }, 404);
+    throw new MembershipNotFoundError();
   }
 
   return c.json({ success: true });

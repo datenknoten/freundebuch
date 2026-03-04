@@ -1,10 +1,14 @@
-import { EmailInputSchema, type ErrorResponse } from '@freundebuch/shared/index.js';
+import { EmailInputSchema } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { CollectiveEmailService } from '../../../services/collectives/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { CollectiveNotFoundError, ValidationError } from '../../../utils/errors.js';
+import {
+  CollectiveNotFoundError,
+  ResourceNotFoundError,
+  ValidationError,
+} from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -97,7 +101,7 @@ app.put('/:emailId', async (c) => {
   const email = await emailService.update(user.userId, collectiveId, emailId, validated);
 
   if (!email) {
-    return c.json<ErrorResponse>({ error: 'Email not found' }, 404);
+    throw new ResourceNotFoundError('Email');
   }
 
   return c.json(email);
@@ -122,7 +126,7 @@ app.delete('/:emailId', async (c) => {
   const deleted = await emailService.delete(user.userId, collectiveId, emailId);
 
   if (!deleted) {
-    return c.json<ErrorResponse>({ error: 'Email not found' }, 404);
+    throw new ResourceNotFoundError('Email');
   }
 
   return c.json({ message: 'Email deleted successfully' });

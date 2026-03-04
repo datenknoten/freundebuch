@@ -1,10 +1,14 @@
-import { type ErrorResponse, MetInfoInputSchema } from '@freundebuch/shared/index.js';
+import { MetInfoInputSchema } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { FriendNotFoundError, ValidationError } from '../../../utils/errors.js';
+import {
+  FriendNotFoundError,
+  ResourceNotFoundError,
+  ValidationError,
+} from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -62,7 +66,7 @@ app.delete('/', async (c) => {
   const deleted = await friendsService.deleteMetInfo(user.userId, friendId);
 
   if (!deleted) {
-    return c.json<ErrorResponse>({ error: 'Met info not found' }, 404);
+    throw new ResourceNotFoundError('Met info');
   }
 
   return c.json({ message: 'Met info deleted successfully' });

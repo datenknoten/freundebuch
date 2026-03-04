@@ -1,9 +1,8 @@
-import type { ErrorResponse } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { CollectiveCircleService } from '../../../services/collectives/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { ValidationError } from '../../../utils/errors.js';
+import { ResourceNotFoundError, ValidationError } from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
 
 const app = new Hono<AppContext>();
@@ -92,7 +91,7 @@ app.delete('/:circleId', async (c) => {
   const removed = await circleService.removeFromCircle(user.userId, collectiveId, circleId);
 
   if (!removed) {
-    return c.json<ErrorResponse>({ error: 'Circle membership not found' }, 404);
+    throw new ResourceNotFoundError('Circle membership');
   }
 
   return c.json({ message: 'Collective removed from circle successfully' });
