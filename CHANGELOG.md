@@ -1,3 +1,11 @@
+## [2.65.2](https://github.com/datenknoten/freundebuch/compare/v2.65.1...v2.65.2) (2026-03-04)
+
+### Code Refactoring
+
+* **backend:** Add AppPasswordNotFoundError for consistent error handling ([dcba113](https://github.com/datenknoten/freundebuch/commit/dcba1135453fde84c13e778086dd6cf6b14ae681))
+* **backend:** Centralize error handling with AppError-aware global handler ([e2b6430](https://github.com/datenknoten/freundebuch/commit/e2b643062c76d6d4056fd0f425f6844efcaa88ac))
+* **backend:** Replace remaining inline 404 returns with thrown errors ([1312729](https://github.com/datenknoten/freundebuch/commit/131272901d676863ea38bc7f456863dec8f9c414))
+
 ## [2.65.1](https://github.com/datenknoten/freundebuch/compare/v2.65.0...v2.65.1) (2026-03-04)
 
 ### Code Refactoring
