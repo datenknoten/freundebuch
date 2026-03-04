@@ -164,6 +164,17 @@ export class ContactNotFoundError extends AppError {
 }
 
 /**
+ * Thrown when an app password is not found in the database.
+ */
+export class AppPasswordNotFoundError extends AppError {
+  readonly statusCode = 404;
+
+  constructor() {
+    super('App password not found');
+  }
+}
+
+/**
  * Thrown when a collective role is not found in the database.
  */
 export class RoleNotFoundError extends AppError {
