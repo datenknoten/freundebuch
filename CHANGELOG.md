@@ -1,3 +1,10 @@
+## [2.65.3](https://github.com/datenknoten/freundebuch/compare/v2.65.2...v2.65.3) (2026-03-04)
+
+### Code Refactoring
+
+* **frontend:** Address review suggestions for shared API client ([0a74541](https://github.com/datenknoten/freundebuch/commit/0a745416b24a7f53970cdce5d8ba417dc03cb74e))
+* **frontend:** Extract shared API client from duplicated helpers ([b8c4442](https://github.com/datenknoten/freundebuch/commit/b8c4442094da47767341212c93e773f4de6e2cc8)), closes [#111](https://github.com/datenknoten/freundebuch/issues/111)
+
 ## [2.65.2](https://github.com/datenknoten/freundebuch/compare/v2.65.1...v2.65.2) (2026-03-04)
 
 ### Code Refactoring
