@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
-import { friendListFilter } from '$lib/stores/friends';
+import { buildSearchParams, friendListFilter } from '$lib/stores/friends';
 import { NAVIGATION_PATHS } from '../config.js';
 import type { HandlerContext } from '../types.js';
 
@@ -13,7 +13,7 @@ export function handleNavigation(e: KeyboardEvent, ctx: HandlerContext): boolean
   if (e.key === 'f') {
     // Restore filter state from store when navigating to friends
     const filterState = get(friendListFilter);
-    const params = friendListFilter.buildSearchParams(filterState);
+    const params = buildSearchParams(filterState);
     const queryString = params.toString();
     goto(queryString ? `/friends?${queryString}` : '/friends');
     return true;
