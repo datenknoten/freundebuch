@@ -12,11 +12,14 @@ import * as friendsApi from '../api/friends.js';
 import { createSubresourceOps } from './friendSubresources.js';
 import { storeAction } from './storeAction.js';
 
+export type { FriendListFilterState } from './friendListFilter.js';
 // Re-export filter store so consumers can still import from '$lib/stores/friends'
 export {
+  buildSearchParams,
   friendListFilter,
   friendListQuery,
   hasFriendListFilters,
+  parseSearchParams,
 } from './friendListFilter.js';
 
 export interface FriendsState {
