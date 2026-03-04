@@ -14,10 +14,8 @@ import type {
 import { ApiError } from '../api/auth.js';
 import type { CollectiveListParams } from '../api/collectives.js';
 import * as collectivesApi from '../api/collectives.js';
+import { storeAction } from './storeAction.js';
 
-/**
- * Pagination state
- */
 interface PaginationState {
   page: number;
   pageSize: number;
@@ -25,18 +23,12 @@ interface PaginationState {
   totalPages: number;
 }
 
-/**
- * Filter state
- */
 interface FilterState {
   typeId?: string;
   search?: string;
   includeDeleted?: boolean;
 }
 
-/**
- * Collectives state interface
- */
 interface CollectivesState {
   collectives: CollectiveListItem[];
   currentCollective: Collective | null;
@@ -48,9 +40,6 @@ interface CollectivesState {
   error: string | null;
 }
 
-/**
- * Initial collectives state
- */
 const initialState: CollectivesState = {
   collectives: [],
   currentCollective: null,
@@ -67,18 +56,13 @@ const initialState: CollectivesState = {
   error: null,
 };
 
-/**
- * Create the collectives store
- */
 function createCollectivesStore() {
   const { subscribe, set, update } = writable<CollectivesState>(initialState);
 
   return {
     subscribe,
 
-    /**
-     * Load collective types
-     */
+    // loadTypes uses isLoadingTypes instead of isLoading, so it stays manual
     loadTypes: async () => {
       update((state) => ({ ...state, isLoadingTypes: true, error: null }));
 
@@ -107,17 +91,11 @@ function createCollectivesStore() {
       }
     },
 
-    /**
-     * Load collectives with current filters and pagination
-     */
-    loadCollectives: async (params: CollectiveListParams = {}) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        const result = await collectivesApi.listCollectives(params);
-
-        update((state) => ({
-          ...state,
+    loadCollectives: (params: CollectiveListParams = {}) =>
+      storeAction(
+        update,
+        () => collectivesApi.listCollectives(params),
+        (_state, result) => ({
           collectives: result.collectives,
           pagination: result.pagination,
           filters: {
@@ -125,69 +103,24 @@ function createCollectivesStore() {
             search: params.search,
             includeDeleted: params.includeDeleted,
           },
-          isLoading: false,
-          error: null,
-        }));
+        }),
+        'Failed to load collectives',
+      ),
 
-        return result;
-      } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to load collectives';
+    loadCollective: (collectiveId: string) =>
+      storeAction(
+        update,
+        () => collectivesApi.getCollective(collectiveId),
+        (_state, collective) => ({ currentCollective: collective }),
+        'Failed to load collective',
+        () => ({ currentCollective: null }),
+      ),
 
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Load a single collective by ID
-     */
-    loadCollective: async (collectiveId: string) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        const collective = await collectivesApi.getCollective(collectiveId);
-
-        update((state) => ({
-          ...state,
-          currentCollective: collective,
-          isLoading: false,
-          error: null,
-        }));
-
-        return collective;
-      } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to load collective';
-
-        update((state) => ({
-          ...state,
-          currentCollective: null,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Create a new collective
-     */
-    createCollective: async (input: CollectiveInput) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        const collective = await collectivesApi.createCollective(input);
-
-        // Add to list
-        update((state) => ({
-          ...state,
+    createCollective: (input: CollectiveInput) =>
+      storeAction(
+        update,
+        () => collectivesApi.createCollective(input),
+        (state, collective) => ({
           collectives: [
             {
               id: collective.id,
@@ -211,36 +144,15 @@ function createCollectivesStore() {
             totalCount: state.pagination.totalCount + 1,
             totalPages: Math.ceil((state.pagination.totalCount + 1) / state.pagination.pageSize),
           },
-          isLoading: false,
-          error: null,
-        }));
+        }),
+        'Failed to create collective',
+      ),
 
-        return collective;
-      } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to create collective';
-
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Update a collective
-     */
-    updateCollective: async (collectiveId: string, input: CollectiveUpdate) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        const collective = await collectivesApi.updateCollective(collectiveId, input);
-
-        update((state) => ({
-          ...state,
+    updateCollective: (collectiveId: string, input: CollectiveUpdate) =>
+      storeAction(
+        update,
+        () => collectivesApi.updateCollective(collectiveId, input),
+        (state, collective) => ({
           currentCollective:
             state.currentCollective?.id === collectiveId ? collective : state.currentCollective,
           collectives: state.collectives.map((c) =>
@@ -253,36 +165,15 @@ function createCollectivesStore() {
                 }
               : c,
           ),
-          isLoading: false,
-          error: null,
-        }));
+        }),
+        'Failed to update collective',
+      ),
 
-        return collective;
-      } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to update collective';
-
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Delete a collective
-     */
-    deleteCollective: async (collectiveId: string) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        await collectivesApi.deleteCollective(collectiveId);
-
-        update((state) => ({
-          ...state,
+    deleteCollective: (collectiveId: string) =>
+      storeAction(
+        update,
+        () => collectivesApi.deleteCollective(collectiveId),
+        (state) => ({
           currentCollective:
             state.currentCollective?.id === collectiveId ? null : state.currentCollective,
           collectives: state.collectives.filter((c) => c.id !== collectiveId),
@@ -293,83 +184,37 @@ function createCollectivesStore() {
               Math.max(0, state.pagination.totalCount - 1) / state.pagination.pageSize,
             ),
           },
-          isLoading: false,
-          error: null,
-        }));
-      } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to delete collective';
+        }),
+        'Failed to delete collective',
+      ),
 
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Add a member to the current collective
-     */
-    addMember: async (collectiveId: string, input: MembershipInput) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        const member = await collectivesApi.addMember(collectiveId, input);
-
-        update((state) => {
-          if (state.currentCollective?.id !== collectiveId) {
-            return { ...state, isLoading: false, error: null };
-          }
-
+    addMember: (collectiveId: string, input: MembershipInput) =>
+      storeAction(
+        update,
+        () => collectivesApi.addMember(collectiveId, input),
+        (state, member) => {
+          if (state.currentCollective?.id !== collectiveId) return {};
           return {
-            ...state,
             currentCollective: {
               ...state.currentCollective,
               members: [...state.currentCollective.members, member],
               memberCount: state.currentCollective.memberCount + 1,
               activeMemberCount: state.currentCollective.activeMemberCount + 1,
             },
-            isLoading: false,
-            error: null,
           };
-        });
+        },
+        'Failed to add member',
+      ),
 
-        return member;
-      } catch (error) {
-        const errorMessage = error instanceof ApiError ? error.message : 'Failed to add member';
-
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Remove a member from the current collective
-     */
-    removeMember: async (collectiveId: string, memberId: string) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        await collectivesApi.removeMember(collectiveId, memberId);
-
-        update((state) => {
-          if (state.currentCollective?.id !== collectiveId) {
-            return { ...state, isLoading: false, error: null };
-          }
-
+    removeMember: (collectiveId: string, memberId: string) =>
+      storeAction(
+        update,
+        () => collectivesApi.removeMember(collectiveId, memberId),
+        (state) => {
+          if (state.currentCollective?.id !== collectiveId) return {};
           const removedMember = state.currentCollective.members.find((m) => m.id === memberId);
           const wasActive = removedMember?.isActive ?? false;
-
           return {
-            ...state,
             currentCollective: {
               ...state.currentCollective,
               members: state.currentCollective.members.filter((m) => m.id !== memberId),
@@ -378,173 +223,74 @@ function createCollectivesStore() {
                 ? state.currentCollective.activeMemberCount - 1
                 : state.currentCollective.activeMemberCount,
             },
-            isLoading: false,
-            error: null,
           };
-        });
-      } catch (error) {
-        const errorMessage = error instanceof ApiError ? error.message : 'Failed to remove member';
+        },
+        'Failed to remove member',
+      ),
 
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Update a member's role
-     */
-    updateMemberRole: async (collectiveId: string, memberId: string, input: MembershipUpdate) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        const member = await collectivesApi.updateMemberRole(collectiveId, memberId, input);
-
-        update((state) => {
-          if (state.currentCollective?.id !== collectiveId) {
-            return { ...state, isLoading: false, error: null };
-          }
-
+    updateMemberRole: (collectiveId: string, memberId: string, input: MembershipUpdate) =>
+      storeAction(
+        update,
+        () => collectivesApi.updateMemberRole(collectiveId, memberId, input),
+        (state, member) => {
+          if (state.currentCollective?.id !== collectiveId) return {};
           return {
-            ...state,
             currentCollective: {
               ...state.currentCollective,
               members: state.currentCollective.members.map((m) => (m.id === memberId ? member : m)),
             },
-            isLoading: false,
-            error: null,
           };
-        });
+        },
+        'Failed to update member role',
+      ),
 
-        return member;
-      } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to update member role';
-
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Deactivate a member
-     */
-    deactivateMember: async (
-      collectiveId: string,
-      memberId: string,
-      input: MembershipDeactivate = {},
-    ) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        const member = await collectivesApi.deactivateMember(collectiveId, memberId, input);
-
-        update((state) => {
-          if (state.currentCollective?.id !== collectiveId) {
-            return { ...state, isLoading: false, error: null };
-          }
-
+    deactivateMember: (collectiveId: string, memberId: string, input: MembershipDeactivate = {}) =>
+      storeAction(
+        update,
+        () => collectivesApi.deactivateMember(collectiveId, memberId, input),
+        (state, member) => {
+          if (state.currentCollective?.id !== collectiveId) return {};
           const wasActive =
             state.currentCollective.members.find((m) => m.id === memberId)?.isActive ?? false;
-
           return {
-            ...state,
             currentCollective: {
               ...state.currentCollective,
               members: state.currentCollective.members.map((m) => (m.id === memberId ? member : m)),
               activeMemberCount: state.currentCollective.activeMemberCount - (wasActive ? 1 : 0),
             },
-            isLoading: false,
-            error: null,
           };
-        });
+        },
+        'Failed to deactivate member',
+      ),
 
-        return member;
-      } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to deactivate member';
-
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Reactivate a member
-     */
-    reactivateMember: async (collectiveId: string, memberId: string) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        const member = await collectivesApi.reactivateMember(collectiveId, memberId);
-
-        update((state) => {
-          if (state.currentCollective?.id !== collectiveId) {
-            return { ...state, isLoading: false, error: null };
-          }
-
+    reactivateMember: (collectiveId: string, memberId: string) =>
+      storeAction(
+        update,
+        () => collectivesApi.reactivateMember(collectiveId, memberId),
+        (state, member) => {
+          if (state.currentCollective?.id !== collectiveId) return {};
           const wasInactive = !(
             state.currentCollective.members.find((m) => m.id === memberId)?.isActive ?? true
           );
-
           return {
-            ...state,
             currentCollective: {
               ...state.currentCollective,
               members: state.currentCollective.members.map((m) => (m.id === memberId ? member : m)),
               activeMemberCount: state.currentCollective.activeMemberCount + (wasInactive ? 1 : 0),
             },
-            isLoading: false,
-            error: null,
           };
-        });
+        },
+        'Failed to reactivate member',
+      ),
 
-        return member;
-      } catch (error) {
-        const errorMessage =
-          error instanceof ApiError ? error.message : 'Failed to reactivate member';
-
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Set filters
-     */
     setFilters: (filters: FilterState) => {
       update((state) => ({ ...state, filters }));
     },
 
-    /**
-     * Clear current collective
-     */
     clearCurrentCollective: () => {
       update((state) => ({ ...state, currentCollective: null }));
     },
 
-    /**
-     * Clear the store
-     */
     clear: () => {
       set(initialState);
     },
@@ -553,39 +299,21 @@ function createCollectivesStore() {
 
 export const collectives = createCollectivesStore();
 
-/**
- * Derived store: collectives sorted by name
- */
 export const collectivesList = derived(collectives, ($collectives) =>
   [...$collectives.collectives].sort((a, b) => a.name.localeCompare(b.name)),
 );
 
-/**
- * Derived store: loading state
- */
 export const isLoadingCollectives = derived(collectives, ($collectives) => $collectives.isLoading);
 
-/**
- * Derived store: error state
- */
 export const collectivesError = derived(collectives, ($collectives) => $collectives.error);
 
-/**
- * Derived store: collective types
- */
 export const collectiveTypes = derived(collectives, ($collectives) => $collectives.collectiveTypes);
 
-/**
- * Derived store: current collective's active members
- */
 export const activeMembers = derived(
   collectives,
   ($collectives) => $collectives.currentCollective?.members.filter((m) => m.isActive) ?? [],
 );
 
-/**
- * Derived store: current collective's inactive members
- */
 export const inactiveMembers = derived(
   collectives,
   ($collectives) => $collectives.currentCollective?.members.filter((m) => !m.isActive) ?? [],
@@ -595,9 +323,6 @@ export const inactiveMembers = derived(
 // Relationship Preview Helper
 // ============================================================================
 
-/**
- * Preview relationships that would be created when adding a member
- */
 export async function previewMemberRelationships(
   collectiveId: string,
   input: RelationshipPreviewRequest,
