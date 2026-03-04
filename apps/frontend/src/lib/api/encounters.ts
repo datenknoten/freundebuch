@@ -1,59 +1,12 @@
-import { get } from 'svelte/store';
 import type {
   Encounter,
   EncounterInput,
   EncounterListResponse,
   EncounterUpdate,
-  ErrorResponse,
   LastEncounterSummary,
 } from '$shared';
-import { auth } from '../stores/auth.js';
 import { ApiError } from './auth.js';
-
-// In production with single-domain deployment, use empty string for same-origin requests.
-// In development, VITE_API_URL can point to the backend server if needed.
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
-
-/**
- * Get the current access token from the auth store
- */
-function getAccessToken(): string | null {
-  const authState = get(auth);
-  return authState.accessToken;
-}
-
-/**
- * Helper function to make authenticated API requests
- */
-async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const accessToken = getAccessToken();
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
-  };
-
-  if (accessToken) {
-    headers.Authorization = `Bearer ${accessToken}`;
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const errorData: ErrorResponse = await response.json().catch(() => ({
-      error: 'An unknown error occurred',
-    }));
-
-    throw new ApiError(response.status, errorData.error, errorData.code, errorData.details);
-  }
-
-  return response.json();
-}
+import { apiRequest } from './client.js';
 
 // ============================================================================
 // Query Parameters
