@@ -5,8 +5,7 @@ import type {
   EncounterUpdate,
   LastEncounterSummary,
 } from '$shared';
-import { ApiError } from './auth.js';
-import { apiRequest } from './client.js';
+import { ApiError, apiRequest } from './client.js';
 
 // ============================================================================
 // Query Parameters
