@@ -144,7 +144,7 @@
       }
     },
     {
-      "includes": ["**/i18n/**/*.ts", "**/shortcuts/**/index.ts"],
+      "includes": ["**/i18n/**/*.ts", "**/shortcuts/**/index.ts", "**/components/ui/index.ts"],
       "linter": {
         "rules": {
           "correctness": {

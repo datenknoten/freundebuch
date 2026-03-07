@@ -1,5 +1,11 @@
 <script lang="ts">
-import { autoFocus } from '$lib/actions/autoFocus';
+import {
+  createDirtyTracker,
+  FormCheckbox,
+  FormInput,
+  FormTextarea,
+  formClasses,
+} from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { ProfessionalHistory, ProfessionalHistoryInput } from '$shared';
 
@@ -28,27 +34,21 @@ let isCurrentPosition = $state(
   (() => !initialData || (initialData.toMonth === null && initialData.toYear === null))(),
 );
 
-// Skip initial effect run
-let initialized = false;
-
-// Call onchange when any field changes
-$effect(() => {
-  jobTitle;
-  organization;
-  department;
-  notes;
-  fromMonth;
-  fromYear;
-  toMonth;
-  toYear;
-  isPrimary;
-  isCurrentPosition;
-  if (initialized) {
-    onchange?.();
-  } else {
-    initialized = true;
-  }
-});
+createDirtyTracker(
+  () => {
+    jobTitle;
+    organization;
+    department;
+    notes;
+    fromMonth;
+    fromYear;
+    toMonth;
+    toYear;
+    isPrimary;
+    isCurrentPosition;
+  },
+  () => onchange,
+);
 
 // When toggling current position, clear or set the end date
 $effect(() => {
@@ -117,58 +117,34 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
 </script>
 
 <div class="space-y-4">
-  <!-- Job Title -->
-  <div>
-    <label for="prof-job-title" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('employment.jobTitle')}
-    </label>
-    <input
-      use:autoFocus
-      id="prof-job-title"
-      type="text"
-      bind:value={jobTitle}
-      {disabled}
-      placeholder={$i18n.t('employment.jobTitlePlaceholder')}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-    />
-  </div>
+  <FormInput
+    id="prof-job-title"
+    label={$i18n.t('employment.jobTitle')}
+    bind:value={jobTitle}
+    {disabled}
+    placeholder={$i18n.t('employment.jobTitlePlaceholder')}
+    autofocus
+  />
 
-  <!-- Organization -->
-  <div>
-    <label for="prof-organization" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('employment.organization')}
-    </label>
-    <input
-      id="prof-organization"
-      type="text"
-      bind:value={organization}
-      {disabled}
-      placeholder={$i18n.t('employment.organizationPlaceholder')}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-    />
-  </div>
+  <FormInput
+    id="prof-organization"
+    label={$i18n.t('employment.organization')}
+    bind:value={organization}
+    {disabled}
+    placeholder={$i18n.t('employment.organizationPlaceholder')}
+  />
 
-  <!-- Department -->
-  <div>
-    <label for="prof-department" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('employment.department')}
-    </label>
-    <input
-      id="prof-department"
-      type="text"
-      bind:value={department}
-      {disabled}
-      placeholder={$i18n.t('employment.departmentPlaceholder')}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-    />
-  </div>
+  <FormInput
+    id="prof-department"
+    label={$i18n.t('employment.department')}
+    bind:value={department}
+    {disabled}
+    placeholder={$i18n.t('employment.departmentPlaceholder')}
+  />
 
   <!-- From Date -->
   <fieldset>
-    <legend class="block text-sm font-body font-medium text-gray-700 mb-1">
+    <legend class={formClasses.label}>
       {$i18n.t('employment.startDate')} <span class="text-red-500">*</span>
     </legend>
     <div class="grid grid-cols-2 gap-2">
@@ -176,8 +152,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
         bind:value={fromMonth}
         {disabled}
         aria-label="Start month"
-        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-               font-body disabled:opacity-50 disabled:cursor-not-allowed"
+        class={formClasses.select}
       >
         {#each months as { value, label }}
           <option {value}>{label}</option>
@@ -187,8 +162,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
         bind:value={fromYear}
         {disabled}
         aria-label="Start year"
-        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-               font-body disabled:opacity-50 disabled:cursor-not-allowed"
+        class={formClasses.select}
       >
         {#each years as year}
           <option value={year}>{year}</option>
@@ -197,24 +171,17 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
     </div>
   </fieldset>
 
-  <!-- Current Position Checkbox -->
-  <div class="flex items-center">
-    <input
-      id="prof-current"
-      type="checkbox"
-      bind:checked={isCurrentPosition}
-      {disabled}
-      class="h-4 w-4 text-forest focus:ring-forest border-gray-300 rounded disabled:opacity-50"
-    />
-    <label for="prof-current" class="ml-2 block text-sm font-body text-gray-700">
-      {$i18n.t('employment.currentlyWorkHere')}
-    </label>
-  </div>
+  <FormCheckbox
+    id="prof-current"
+    label={$i18n.t('employment.currentlyWorkHere')}
+    bind:checked={isCurrentPosition}
+    {disabled}
+  />
 
   <!-- To Date (only shown if not current position) -->
   {#if !isCurrentPosition}
     <fieldset>
-      <legend class="block text-sm font-body font-medium text-gray-700 mb-1">
+      <legend class={formClasses.label}>
         {$i18n.t('employment.endDate')} <span class="text-red-500">*</span>
       </legend>
       <div class="grid grid-cols-2 gap-2">
@@ -222,8 +189,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
           bind:value={toMonth}
           {disabled}
           aria-label="End month"
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-                 font-body disabled:opacity-50 disabled:cursor-not-allowed"
+          class={formClasses.select}
         >
           {#each months as { value, label }}
             <option {value}>{label}</option>
@@ -233,8 +199,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
           bind:value={toYear}
           {disabled}
           aria-label="End year"
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-                 font-body disabled:opacity-50 disabled:cursor-not-allowed"
+          class={formClasses.select}
         >
           {#each years as year}
             <option value={year}>{year}</option>
@@ -244,35 +209,21 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
     </fieldset>
   {/if}
 
-  <!-- Primary Checkbox -->
-  <div class="flex items-center">
-    <input
-      id="prof-primary"
-      type="checkbox"
-      bind:checked={isPrimary}
-      {disabled}
-      class="h-4 w-4 text-forest focus:ring-forest border-gray-300 rounded disabled:opacity-50"
-    />
-    <label for="prof-primary" class="ml-2 block text-sm font-body text-gray-700">
-      {$i18n.t('subresources.employment.primaryEmployment')}
-    </label>
-  </div>
+  <FormCheckbox
+    id="prof-primary"
+    label={$i18n.t('subresources.employment.primaryEmployment')}
+    bind:checked={isPrimary}
+    {disabled}
+  />
 
-  <!-- Notes -->
-  <div>
-    <label for="prof-notes" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('subresources.employment.notes')}
-    </label>
-    <textarea
-      id="prof-notes"
-      bind:value={notes}
-      {disabled}
-      rows="2"
-      placeholder={$i18n.t('subresources.employment.notesPlaceholder')}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed resize-none"
-    ></textarea>
-  </div>
+  <FormTextarea
+    id="prof-notes"
+    label={$i18n.t('subresources.employment.notes')}
+    bind:value={notes}
+    {disabled}
+    rows={2}
+    placeholder={$i18n.t('subresources.employment.notesPlaceholder')}
+  />
 
   <p class="text-sm text-gray-500 font-body">
     {$i18n.t('subresources.employment.hint')}
