@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import { autoFocus } from '$lib/actions/autoFocus';
 import CircleChip from '$lib/components/circles/CircleChip.svelte';
+import { createDirtyTracker, formClasses } from '$lib/components/ui';
 import { circles, circlesList } from '$lib/stores/circles';
 import type { Circle, CircleSummary } from '$shared';
 
@@ -47,18 +48,12 @@ let availableCirclesTree = $derived.by(() => {
   return buildTree(null, 0);
 });
 
-// Skip initial effect run
-let initialized = false;
-
-// Call onchange when selection changes
-$effect(() => {
-  selectedCircleId;
-  if (initialized) {
-    onchange?.();
-  } else {
-    initialized = true;
-  }
-});
+createDirtyTracker(
+  () => {
+    selectedCircleId;
+  },
+  () => onchange,
+);
 
 export function getData(): { circleId: string } {
   return {
@@ -95,7 +90,7 @@ export function getSelectedCircle(): Circle | undefined {
     </div>
   {:else}
     <div>
-      <label for="circle-select" class="block text-sm font-body font-medium text-gray-700 mb-1">
+      <label for="circle-select" class={formClasses.label}>
         Select Circle <span class="text-red-500">*</span>
       </label>
       <select
@@ -103,8 +98,7 @@ export function getSelectedCircle(): Circle | undefined {
         id="circle-select"
         bind:value={selectedCircleId}
         {disabled}
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-               font-body disabled:opacity-50 disabled:cursor-not-allowed"
+        class={formClasses.select}
         required
       >
         <option value="">Choose a circle...</option>

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { autoFocus } from '$lib/actions/autoFocus';
+import { createDirtyTracker, FormCheckbox, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { Address, AddressInput, AddressType } from '$shared';
 import HierarchicalAddressInput from '../HierarchicalAddressInput.svelte';
@@ -30,21 +30,21 @@ let addressData = $state<{
   street_line2?: string;
 } | null>(null);
 
-// Skip initial effect run
-let initialized = false;
+createDirtyTracker(
+  () => {
+    addressType;
+    label;
+    isPrimary;
+    addressData;
+  },
+  () => onchange,
+);
 
-// Call onchange when any field changes
-$effect(() => {
-  addressType;
-  label;
-  isPrimary;
-  addressData;
-  if (initialized) {
-    onchange?.();
-  } else {
-    initialized = true;
-  }
-});
+const addressTypeOptions = $derived([
+  { value: 'home' as const, label: $i18n.t('subresources.address.types.home') },
+  { value: 'work' as const, label: $i18n.t('subresources.address.types.work') },
+  { value: 'other' as const, label: $i18n.t('subresources.address.types.other') },
+]);
 
 function handleAddressChange(data: {
   country: string;
@@ -94,24 +94,14 @@ const parsedStreet = (() => parseStreetLine1(initialData?.streetLine1))();
 </script>
 
 <div class="space-y-4">
-  <!-- Address Type -->
-  <div>
-    <label for="address-type" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('subresources.common.type')}
-    </label>
-    <select
-      use:autoFocus
-      id="address-type"
-      bind:value={addressType}
-      {disabled}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      <option value="home">{$i18n.t('subresources.address.types.home')}</option>
-      <option value="work">{$i18n.t('subresources.address.types.work')}</option>
-      <option value="other">{$i18n.t('subresources.address.types.other')}</option>
-    </select>
-  </div>
+  <FormSelect
+    id="address-type"
+    label={$i18n.t('subresources.common.type')}
+    bind:value={addressType}
+    options={addressTypeOptions}
+    {disabled}
+    autofocus
+  />
 
   <!-- Hierarchical Address Input -->
   <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -130,34 +120,20 @@ const parsedStreet = (() => parseStreetLine1(initialData?.streetLine1))();
     />
   </div>
 
-  <!-- Label (optional) -->
-  <div>
-    <label for="address-label" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('subresources.common.label')} <span class="text-gray-400">({$i18n.t('common.optional')})</span>
-    </label>
-    <input
-      id="address-label"
-      type="text"
-      bind:value={label}
-      {disabled}
-      placeholder="e.g., Main residence, Summer house"
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-    />
-  </div>
+  <FormInput
+    id="address-label"
+    label={$i18n.t('subresources.common.label')}
+    bind:value={label}
+    {disabled}
+    placeholder="e.g., Main residence, Summer house"
+    optional
+    optionalText={$i18n.t('common.optional')}
+  />
 
-  <!-- Primary checkbox -->
-  <div class="flex items-center gap-2">
-    <input
-      id="address-primary"
-      type="checkbox"
-      bind:checked={isPrimary}
-      {disabled}
-      class="w-4 h-4 text-forest border-gray-300 rounded focus:ring-forest
-             disabled:opacity-50 disabled:cursor-not-allowed"
-    />
-    <label for="address-primary" class="text-sm font-body text-gray-700">
-      {$i18n.t('subresources.address.primaryAddress')}
-    </label>
-  </div>
+  <FormCheckbox
+    id="address-primary"
+    label={$i18n.t('subresources.address.primaryAddress')}
+    bind:checked={isPrimary}
+    {disabled}
+  />
 </div>

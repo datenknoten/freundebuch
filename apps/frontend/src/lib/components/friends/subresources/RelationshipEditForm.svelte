@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { createDirtyTracker, FormTextarea, formClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
@@ -35,20 +36,14 @@ onMount(async () => {
   }
 });
 
-// Skip initial effect run
-let initialized = false;
-
-// Call onchange when form data changes
-$effect(() => {
-  selectedFriend;
-  relationshipTypeId;
-  notes;
-  if (initialized) {
-    onchange?.();
-  } else {
-    initialized = true;
-  }
-});
+createDirtyTracker(
+  () => {
+    selectedFriend;
+    relationshipTypeId;
+    notes;
+  },
+  () => onchange,
+);
 
 function handleFriendSelect(friend: FriendSearchResult, viaKeyboard: boolean) {
   selectedFriend = friend;
@@ -101,7 +96,7 @@ export function isValid(): boolean {
 
   <!-- Friend Selection -->
   <div class="space-y-2">
-    <span class="block text-sm font-body font-medium text-gray-700">
+    <span class={formClasses.label}>
       {$i18n.t('relationshipSection.relatedFriend')} <span class="text-red-500">*</span>
     </span>
 
@@ -133,7 +128,7 @@ export function isValid(): boolean {
 
   <!-- Relationship Type -->
   <div class="space-y-2">
-    <span class="block text-sm font-body font-medium text-gray-700">
+    <span class={formClasses.label}>
       {$i18n.t('relationshipSection.relationshipType')} <span class="text-red-500">*</span>
     </span>
 
@@ -156,7 +151,7 @@ export function isValid(): boolean {
 
   <!-- Notes -->
   <div class="space-y-2">
-    <label for="relationship-notes" class="block text-sm font-body font-medium text-gray-700">
+    <label for="relationship-notes" class={formClasses.label}>
       {$i18n.t('relationshipSection.notesOptional')}
     </label>
     <textarea

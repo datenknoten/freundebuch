@@ -1,5 +1,5 @@
 <script lang="ts">
-import { autoFocus } from '$lib/actions/autoFocus';
+import { createDirtyTracker, FormCheckbox, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { DateInput, DateType, FriendDate } from '$shared';
 
@@ -19,21 +19,21 @@ let yearKnown = $state((() => initialData?.yearKnown ?? true)());
 let dateType = $state<DateType>((() => initialData?.dateType ?? 'birthday')());
 let label = $state((() => initialData?.label ?? '')());
 
-// Skip initial effect run
-let initialized = false;
+createDirtyTracker(
+  () => {
+    dateValue;
+    yearKnown;
+    dateType;
+    label;
+  },
+  () => onchange,
+);
 
-// Call onchange when any field changes
-$effect(() => {
-  dateValue;
-  yearKnown;
-  dateType;
-  label;
-  if (initialized) {
-    onchange?.();
-  } else {
-    initialized = true;
-  }
-});
+const dateTypeOptions = $derived([
+  { value: 'birthday' as const, label: $i18n.t('subresources.date.types.birthday') },
+  { value: 'anniversary' as const, label: $i18n.t('subresources.date.types.anniversary') },
+  { value: 'other' as const, label: $i18n.t('subresources.date.types.other') },
+]);
 
 export function getData(): DateInput {
   return {
@@ -50,69 +50,38 @@ export function isValid(): boolean {
 </script>
 
 <div class="space-y-4">
-  <!-- Date Value -->
-  <div>
-    <label for="date-value" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('subresources.date.date')} <span class="text-red-500">*</span>
-    </label>
-    <input
-      use:autoFocus
-      id="date-value"
-      type="date"
-      bind:value={dateValue}
-      {disabled}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-      required
-    />
-  </div>
+  <FormInput
+    id="date-value"
+    label={$i18n.t('subresources.date.date')}
+    bind:value={dateValue}
+    type="date"
+    {disabled}
+    required
+    autofocus
+  />
 
-  <!-- Date Type -->
-  <div>
-    <label for="date-type" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('subresources.common.type')}
-    </label>
-    <select
-      id="date-type"
-      bind:value={dateType}
-      {disabled}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      <option value="birthday">{$i18n.t('subresources.date.types.birthday')}</option>
-      <option value="anniversary">{$i18n.t('subresources.date.types.anniversary')}</option>
-      <option value="other">{$i18n.t('subresources.date.types.other')}</option>
-    </select>
-  </div>
+  <FormSelect
+    id="date-type"
+    label={$i18n.t('subresources.common.type')}
+    bind:value={dateType}
+    options={dateTypeOptions}
+    {disabled}
+  />
 
-  <!-- Label (optional) -->
-  <div>
-    <label for="date-label" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('subresources.common.label')} <span class="text-gray-400">({$i18n.t('common.optional')})</span>
-    </label>
-    <input
-      id="date-label"
-      type="text"
-      bind:value={label}
-      {disabled}
-      placeholder="e.g., Wedding anniversary, First met"
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-    />
-  </div>
+  <FormInput
+    id="date-label"
+    label={$i18n.t('subresources.common.label')}
+    bind:value={label}
+    {disabled}
+    placeholder="e.g., Wedding anniversary, First met"
+    optional
+    optionalText={$i18n.t('common.optional')}
+  />
 
-  <!-- Year Known checkbox -->
-  <div class="flex items-center gap-2">
-    <input
-      id="date-year-known"
-      type="checkbox"
-      bind:checked={yearKnown}
-      {disabled}
-      class="w-4 h-4 text-forest border-gray-300 rounded focus:ring-forest
-             disabled:opacity-50 disabled:cursor-not-allowed"
-    />
-    <label for="date-year-known" class="text-sm font-body text-gray-700">
-      {$i18n.t('subresources.date.yearKnown')}
-    </label>
-  </div>
+  <FormCheckbox
+    id="date-year-known"
+    label={$i18n.t('subresources.date.yearKnown')}
+    bind:checked={yearKnown}
+    {disabled}
+  />
 </div>

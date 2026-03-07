@@ -1,5 +1,5 @@
 <script lang="ts">
-import { autoFocus } from '$lib/actions/autoFocus';
+import { createDirtyTracker, FormCheckbox, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { Phone, PhoneInput, PhoneType } from '$shared';
 
@@ -20,23 +20,23 @@ let phoneType = $state<PhoneType>((() => initialData?.phoneType ?? 'mobile')());
 let label = $state((() => initialData?.label ?? '')());
 let isPrimary = $state((() => initialData?.isPrimary ?? defaultPrimary ?? false)());
 
-// Skip initial effect run
-let initialized = false;
+createDirtyTracker(
+  () => {
+    phoneNumber;
+    phoneType;
+    label;
+    isPrimary;
+  },
+  () => onchange,
+);
 
-// Call onchange when any field changes
-$effect(() => {
-  // Track all fields
-  phoneNumber;
-  phoneType;
-  label;
-  isPrimary;
-  // Skip initial run, only notify on actual changes
-  if (initialized) {
-    onchange?.();
-  } else {
-    initialized = true;
-  }
-});
+const phoneTypeOptions = $derived([
+  { value: 'mobile' as const, label: $i18n.t('subresources.phone.types.mobile') },
+  { value: 'home' as const, label: $i18n.t('subresources.phone.types.home') },
+  { value: 'work' as const, label: $i18n.t('subresources.phone.types.work') },
+  { value: 'fax' as const, label: $i18n.t('subresources.phone.types.fax') },
+  { value: 'other' as const, label: $i18n.t('subresources.phone.types.other') },
+]);
 
 export function getData(): PhoneInput {
   return {
@@ -53,72 +53,39 @@ export function isValid(): boolean {
 </script>
 
 <div class="space-y-4">
-  <!-- Phone Number -->
-  <div>
-    <label for="phone-number" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('subresources.phone.phoneNumber')} <span class="text-red-500">*</span>
-    </label>
-    <input
-      use:autoFocus
-      id="phone-number"
-      type="tel"
-      bind:value={phoneNumber}
-      {disabled}
-      placeholder="+1 555-123-4567"
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-      required
-    />
-  </div>
+  <FormInput
+    id="phone-number"
+    label={$i18n.t('subresources.phone.phoneNumber')}
+    bind:value={phoneNumber}
+    type="tel"
+    {disabled}
+    placeholder="+1 555-123-4567"
+    required
+    autofocus
+  />
 
-  <!-- Phone Type -->
-  <div>
-    <label for="phone-type" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('subresources.common.type')}
-    </label>
-    <select
-      id="phone-type"
-      bind:value={phoneType}
-      {disabled}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      <option value="mobile">{$i18n.t('subresources.phone.types.mobile')}</option>
-      <option value="home">{$i18n.t('subresources.phone.types.home')}</option>
-      <option value="work">{$i18n.t('subresources.phone.types.work')}</option>
-      <option value="fax">{$i18n.t('subresources.phone.types.fax')}</option>
-      <option value="other">{$i18n.t('subresources.phone.types.other')}</option>
-    </select>
-  </div>
+  <FormSelect
+    id="phone-type"
+    label={$i18n.t('subresources.common.type')}
+    bind:value={phoneType}
+    options={phoneTypeOptions}
+    {disabled}
+  />
 
-  <!-- Label (optional) -->
-  <div>
-    <label for="phone-label" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('subresources.common.label')} <span class="text-gray-400">({$i18n.t('common.optional')})</span>
-    </label>
-    <input
-      id="phone-label"
-      type="text"
-      bind:value={label}
-      {disabled}
-      placeholder="e.g., Personal cell, Work direct"
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent
-             font-body disabled:opacity-50 disabled:cursor-not-allowed"
-    />
-  </div>
+  <FormInput
+    id="phone-label"
+    label={$i18n.t('subresources.common.label')}
+    bind:value={label}
+    {disabled}
+    placeholder="e.g., Personal cell, Work direct"
+    optional
+    optionalText={$i18n.t('common.optional')}
+  />
 
-  <!-- Primary checkbox -->
-  <div class="flex items-center gap-2">
-    <input
-      id="phone-primary"
-      type="checkbox"
-      bind:checked={isPrimary}
-      {disabled}
-      class="w-4 h-4 text-forest border-gray-300 rounded focus:ring-forest
-             disabled:opacity-50 disabled:cursor-not-allowed"
-    />
-    <label for="phone-primary" class="text-sm font-body text-gray-700">
-      {$i18n.t('subresources.phone.primaryPhone')}
-    </label>
-  </div>
+  <FormCheckbox
+    id="phone-primary"
+    label={$i18n.t('subresources.phone.primaryPhone')}
+    bind:checked={isPrimary}
+    {disabled}
+  />
 </div>
