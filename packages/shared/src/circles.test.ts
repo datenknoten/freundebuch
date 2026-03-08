@@ -14,16 +14,20 @@ describe('CircleInputSchema', () => {
 
   it('rejects an invalid hex color without hash', () => {
     const result = CircleInputSchema({ name: 'Work', color: '3B82F6' });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be a circle with a valid hex color (e.g., #3B82F6) (was {"name":"Work","color":"3B82F6"})"`,
+    );
   });
 
   it('rejects an invalid hex color with wrong length', () => {
     const result = CircleInputSchema({ name: 'Work', color: '#3B8' });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be a circle with a valid hex color (e.g., #3B82F6) (was {"name":"Work","color":"#3B8"})"`,
+    );
   });
 
   it('rejects an empty name', () => {
     const result = CircleInputSchema({ name: '' });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(`"name must be non-empty"`);
   });
 });

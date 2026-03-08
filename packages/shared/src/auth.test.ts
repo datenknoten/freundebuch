@@ -9,22 +9,28 @@ describe('PasswordSchema', () => {
 
   it('rejects a password shorter than 8 characters', () => {
     const result = PasswordSchema('Ab1cdef');
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(`"must be at least length 8 (was 7)"`);
   });
 
   it('rejects a password without a lowercase letter', () => {
     const result = PasswordSchema('ABCDEFG1');
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be valid according to an anonymous predicate (was "ABCDEFG1")"`,
+    );
   });
 
   it('rejects a password without an uppercase letter', () => {
     const result = PasswordSchema('abcdefg1');
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be valid according to an anonymous predicate (was "abcdefg1")"`,
+    );
   });
 
   it('rejects a password without a digit', () => {
     const result = PasswordSchema('Abcdefgh');
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be valid according to an anonymous predicate (was "Abcdefgh")"`,
+    );
   });
 
   it('accepts a password with special characters', () => {

@@ -22,7 +22,9 @@ describe('PhoneInputSchema', () => {
       phone_number: 'not-a-number',
       phone_type: 'mobile',
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be a valid phone number (was {"phone_number":"not-a-number","phone_type":"mobile"})"`,
+    );
   });
 
   it('rejects an empty phone number', () => {
@@ -30,7 +32,7 @@ describe('PhoneInputSchema', () => {
       phone_number: '',
       phone_type: 'home',
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(`"phone_number must be non-empty"`);
   });
 });
 
@@ -48,7 +50,9 @@ describe('EmailInputSchema', () => {
       email_address: 'not-an-email',
       email_type: 'personal',
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"email_address must be an email address (was "not-an-email")"`,
+    );
   });
 
   it('rejects an invalid email type', () => {
@@ -56,7 +60,9 @@ describe('EmailInputSchema', () => {
       email_address: 'test@example.com',
       email_type: 'school',
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"email_type must be "other", "personal" or "work" (was "school")"`,
+    );
   });
 });
 
@@ -74,7 +80,7 @@ describe('UrlInputSchema', () => {
       url: 'not-a-url',
       url_type: 'personal',
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(`"url must be a URL string (was "not-a-url")"`);
   });
 
   it('rejects an invalid URL type', () => {
@@ -82,7 +88,9 @@ describe('UrlInputSchema', () => {
       url: 'https://example.com',
       url_type: 'school',
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"url_type must be "blog", "other", "personal" or "work" (was "school")"`,
+    );
   });
 });
 
@@ -136,7 +144,9 @@ describe('SocialProfileInputSchema', () => {
     const result = SocialProfileInputSchema({
       platform: 'github',
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be a social profile with either profile_url or username (was {"platform":"github"})"`,
+    );
   });
 
   it('rejects a profile with an invalid URL scheme', () => {
@@ -144,7 +154,9 @@ describe('SocialProfileInputSchema', () => {
       platform: 'github',
       profile_url: 'ftp://github.com/user',
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be a social profile with a valid URL (must start with http:// or https://) (was {"platform":"github","profile_url":"ftp://github.com/user"})"`,
+    );
   });
 });
 
@@ -180,7 +192,9 @@ describe('ProfessionalHistoryInputSchema', () => {
       from_month: 1,
       from_year: 2020,
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be a professional history entry with either job_title or organization (was {"from_month":1,"from_year":2020})"`,
+    );
   });
 
   it('rejects an invalid month', () => {
@@ -189,7 +203,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       from_month: 13,
       from_year: 2020,
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(`"from_month must be at most 12 (was 13)"`);
   });
 
   it('rejects to_month without to_year', () => {
@@ -199,7 +213,9 @@ describe('ProfessionalHistoryInputSchema', () => {
       from_year: 2020,
       to_month: 6,
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be a professional history entry with both to_month and to_year set or both null (was {"job_title":"Engineer","from_month":1,"from_year":2020,"to_month":6})"`,
+    );
   });
 
   it('rejects end date before start date', () => {
@@ -210,7 +226,9 @@ describe('ProfessionalHistoryInputSchema', () => {
       to_month: 1,
       to_year: 2020,
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be a professional history entry with end date after or equal to start date (was {"job_title":"Engineer","from_month":6,"from_year":2020,"to_month":1,"to_year":2020})"`,
+    );
   });
 
   it('accepts equal start and end dates', () => {

@@ -18,7 +18,9 @@ describe('EncounterInputSchema', () => {
       encounter_date: '01/15/2025',
       friend_ids: ['abc-123'],
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be an encounter with a valid date (YYYY-MM-DD format) (was {"title":"Coffee","encounter_date":"01/15/2025","friend_ids":["abc-123"]})"`,
+    );
   });
 
   it('rejects empty friend_ids', () => {
@@ -27,7 +29,9 @@ describe('EncounterInputSchema', () => {
       encounter_date: '2025-01-15',
       friend_ids: [],
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(
+      `"must be an encounter with at least one friend (was {"title":"Coffee","encounter_date":"2025-01-15","friend_ids":[]})"`,
+    );
   });
 
   it('rejects an empty title', () => {
@@ -36,7 +40,7 @@ describe('EncounterInputSchema', () => {
       encounter_date: '2025-01-15',
       friend_ids: ['abc-123'],
     });
-    expect(result).toHaveProperty('summary');
+    expect(result.summary).toMatchInlineSnapshot(`"title must be non-empty"`);
   });
 
   it('accepts an encounter with optional fields', () => {
