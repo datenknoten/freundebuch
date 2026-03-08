@@ -1,0 +1,167 @@
+<script lang="ts">
+import { onMount } from 'svelte';
+import { createI18n } from '$lib/i18n/index.js';
+import { friends } from '$lib/stores/friends';
+import type { DateInput, FriendDate } from '$shared';
+import { DateEditForm, DateRow, DeleteConfirmModal, DetailEditModal } from '../subresources';
+
+const i18n = createI18n();
+
+interface Props {
+  friendId: string;
+  dates: FriendDate[];
+}
+
+let { friendId, dates }: Props = $props();
+
+let editingId = $state<string | null>(null);
+let editingData = $state<FriendDate | null>(null);
+let isAdding = $state(false);
+let isEditLoading = $state(false);
+let editError = $state<string | null>(null);
+let isDirty = $state(false);
+let formRef = $state<{ getData: () => DateInput; isValid: () => boolean } | null>(null);
+
+let deletingId = $state<string | null>(null);
+let deleteConfirmId = $state<string | null>(null);
+let deleteConfirmName = $state('');
+
+let showModal = $derived(isAdding || editingId !== null);
+
+function openAdd() {
+  editingId = null;
+  editingData = null;
+  isAdding = true;
+  editError = null;
+  isDirty = false;
+}
+
+function openEdit(date: FriendDate) {
+  editingId = date.id;
+  editingData = date;
+  isAdding = false;
+  editError = null;
+  isDirty = false;
+}
+
+function closeModal() {
+  editingId = null;
+  editingData = null;
+  isAdding = false;
+  editError = null;
+  isDirty = false;
+  isEditLoading = false;
+}
+
+async function handleSave() {
+  if (!formRef) return;
+  if (!formRef.isValid()) return;
+  isEditLoading = true;
+  editError = null;
+
+  try {
+    const data = formRef.getData();
+    if (editingId) {
+      await friends.updateDate(friendId, editingId, data);
+    } else {
+      await friends.addDate(friendId, data);
+    }
+    closeModal();
+  } catch (err) {
+    editError = err instanceof Error ? err.message : 'Failed to save';
+    isEditLoading = false;
+  }
+}
+
+function openDeleteConfirm(id: string, name: string) {
+  deleteConfirmId = id;
+  deleteConfirmName = name;
+}
+
+function closeDeleteConfirm() {
+  deleteConfirmId = null;
+  deleteConfirmName = '';
+}
+
+async function handleDelete() {
+  if (!deleteConfirmId) return;
+  deletingId = deleteConfirmId;
+  try {
+    await friends.deleteDate(friendId, deleteConfirmId);
+  } finally {
+    deletingId = null;
+  }
+}
+
+onMount(() => {
+  function handleAddDate() {
+    openAdd();
+  }
+  window.addEventListener('shortcut:add-date', handleAddDate);
+  return () => {
+    window.removeEventListener('shortcut:add-date', handleAddDate);
+  };
+});
+</script>
+
+{#if dates.length > 0}
+  <section class="space-y-2">
+    <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+      <h2 class="text-lg font-heading flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        {$i18n.t('friendDetail.sections.importantDates')}
+      </h2>
+      <button
+        type="button"
+        onclick={openAdd}
+        class="text-sm font-body font-semibold text-white/90 hover:text-white
+               flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        {$i18n.t('friendDetail.actions.addDate')}
+      </button>
+    </div>
+    <div class="space-y-2">
+      {#each dates as date (date.id)}
+        <DateRow
+          {date}
+          onEdit={() => openEdit(date)}
+          onDelete={() => openDeleteConfirm(date.id, date.dateValue)}
+          isDeleting={deletingId === date.id}
+        />
+      {/each}
+    </div>
+  </section>
+{/if}
+
+{#if showModal}
+  <DetailEditModal
+    title="{editingId ? $i18n.t('friendDetail.modal.edit') : $i18n.t('friendDetail.modal.add')} {$i18n.t('friendDetail.modal.importantDate')}"
+    isLoading={isEditLoading}
+    error={editError}
+    {isDirty}
+    onSave={handleSave}
+    onClose={closeModal}
+  >
+    <DateEditForm
+      bind:this={formRef}
+      initialData={editingData ?? undefined}
+      disabled={isEditLoading}
+      onchange={() => isDirty = true}
+    />
+  </DetailEditModal>
+{/if}
+
+{#if deleteConfirmId}
+  <DeleteConfirmModal
+    title="Delete Date"
+    description="Are you sure you want to delete this important date?"
+    itemPreview={deleteConfirmName}
+    onConfirm={handleDelete}
+    onClose={closeDeleteConfirm}
+  />
+{/if}
