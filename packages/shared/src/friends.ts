@@ -366,6 +366,13 @@ export interface FriendDate {
   createdAt: string;
 }
 
+/** Friend preview for embedding in dashboard and summary views */
+export interface FriendPreview {
+  id: string;
+  displayName: string;
+  photoThumbnailUrl?: string;
+}
+
 /** Upcoming date with friend info for dashboard */
 export interface UpcomingDate {
   id: string;
@@ -374,11 +381,7 @@ export interface UpcomingDate {
   dateType: DateType;
   label?: string;
   daysUntil: number;
-  friend: {
-    id: string;
-    displayName: string;
-    photoThumbnailUrl?: string;
-  };
+  friend: FriendPreview;
 }
 
 /** Met information in API responses */

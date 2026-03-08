@@ -1,4 +1,5 @@
 import { type } from 'arktype';
+import type { PaginationInfo } from './pagination.js';
 
 /**
  * Collective types and validation schemas for Epic 12: Collectives
@@ -236,14 +237,17 @@ export interface Collective {
   deletedAt: string | null;
 }
 
+/** Type summary for collective list items */
+export interface CollectiveTypeSummary {
+  id: string;
+  name: string;
+}
+
 /** Collective in list responses (fewer details) */
 export interface CollectiveListItem {
   id: string; // external_id
   name: string;
-  type: {
-    id: string;
-    name: string;
-  };
+  type: CollectiveTypeSummary;
   photoUrl: string | null;
   photoThumbnailUrl: string | null;
   memberCount: number;
@@ -256,23 +260,21 @@ export interface CollectiveListItem {
 /** Paginated collective list response */
 export interface CollectiveListResponse {
   collectives: CollectiveListItem[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalCount: number;
-    totalPages: number;
-  };
+  pagination: PaginationInfo;
+}
+
+/** Relationship type summary for preview items */
+export interface RelationshipTypeSummary {
+  id: string;
+  label: string;
+  category: string;
 }
 
 /** Preview of a relationship that will be created */
 export interface RelationshipPreviewItem {
   fromContact: CollectiveMemberContact;
   toContact: CollectiveMemberContact;
-  relationshipType: {
-    id: string;
-    label: string;
-    category: string;
-  };
+  relationshipType: RelationshipTypeSummary;
   alreadyExists: boolean; // If true, this relationship already exists
 }
 

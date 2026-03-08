@@ -1,13 +1,14 @@
 import {
   type AuthResponse,
   ForgotPasswordRequestSchema,
+  type ForgotPasswordResponse,
   LoginRequestSchema,
+  type PreferencesResponse,
   RefreshRequestSchema,
   RegisterRequestSchema,
   ResetPasswordRequestSchema,
   UpdatePreferencesRequestSchema,
-  type User,
-  type UserPreferences,
+  type UserWithPreferencesResponse,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
@@ -229,7 +230,7 @@ app.post('/forgot-password', passwordResetRateLimitMiddleware, async (c) => {
   // Always return success to prevent user enumeration
   // Only include resetToken in non-production environments for testing
   const config = getConfig();
-  const response: { message: string; resetToken?: string } = {
+  const response: ForgotPasswordResponse = {
     message: 'If the email exists, a password reset link has been sent',
   };
 
@@ -285,7 +286,7 @@ app.get('/me', authMiddleware, async (c) => {
     throw new UserNotFoundError();
   }
 
-  const response: { user: User; preferences: UserPreferences } = {
+  const response: UserWithPreferencesResponse = {
     user: {
       externalId: userWithPrefs.externalId,
       email: userWithPrefs.email,
@@ -326,7 +327,7 @@ app.patch('/preferences', authMiddleware, async (c) => {
 
   logger.info({ userId: authUser.userId }, 'User preferences updated');
 
-  return c.json<{ preferences: UserPreferences }>({ preferences: updatedPreferences });
+  return c.json<PreferencesResponse>({ preferences: updatedPreferences });
 });
 
 export default app;

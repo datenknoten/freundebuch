@@ -108,6 +108,35 @@ export const ResetPasswordRequestSchema = type({
 
 export type ResetPasswordRequest = typeof ResetPasswordRequestSchema.infer;
 
+// ============================================================================
+// Endpoint Response Types
+// ============================================================================
+
+/** Response from GET /api/auth/me */
+export interface UserWithPreferencesResponse {
+  user: User;
+  preferences: UserPreferences;
+}
+
+/** Response from PATCH /api/auth/preferences */
+export interface PreferencesResponse {
+  preferences: UserPreferences;
+}
+
+/** Response from POST /api/auth/forgot-password */
+export interface ForgotPasswordResponse {
+  message: string;
+  resetToken?: string;
+}
+
+/** Response from GET /api/health */
+export interface HealthCheckResponse {
+  status: 'healthy' | 'unhealthy';
+  timestamp: string;
+  uptime: number;
+  database: 'connected' | 'disconnected';
+}
+
 // Error response
 export interface ErrorResponse {
   error: string;
