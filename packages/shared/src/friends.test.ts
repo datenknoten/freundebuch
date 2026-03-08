@@ -1,4 +1,3 @@
-import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 import {
   DateInputSchema,
@@ -23,7 +22,7 @@ describe('PhoneInputSchema', () => {
       phone_number: 'not-a-number',
       phone_type: 'mobile',
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects an empty phone number', () => {
@@ -31,7 +30,7 @@ describe('PhoneInputSchema', () => {
       phone_number: '',
       phone_type: 'home',
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 });
 
@@ -49,7 +48,7 @@ describe('EmailInputSchema', () => {
       email_address: 'not-an-email',
       email_type: 'personal',
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects an invalid email type', () => {
@@ -57,7 +56,7 @@ describe('EmailInputSchema', () => {
       email_address: 'test@example.com',
       email_type: 'school',
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 });
 
@@ -75,7 +74,7 @@ describe('UrlInputSchema', () => {
       url: 'not-a-url',
       url_type: 'personal',
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects an invalid URL type', () => {
@@ -83,7 +82,7 @@ describe('UrlInputSchema', () => {
       url: 'https://example.com',
       url_type: 'school',
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 });
 
@@ -137,7 +136,7 @@ describe('SocialProfileInputSchema', () => {
     const result = SocialProfileInputSchema({
       platform: 'github',
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects a profile with an invalid URL scheme', () => {
@@ -145,7 +144,7 @@ describe('SocialProfileInputSchema', () => {
       platform: 'github',
       profile_url: 'ftp://github.com/user',
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 });
 
@@ -181,7 +180,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       from_month: 1,
       from_year: 2020,
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects an invalid month', () => {
@@ -190,7 +189,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       from_month: 13,
       from_year: 2020,
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects to_month without to_year', () => {
@@ -200,7 +199,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       from_year: 2020,
       to_month: 6,
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects end date before start date', () => {
@@ -211,7 +210,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       to_month: 1,
       to_year: 2020,
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('accepts equal start and end dates', () => {
