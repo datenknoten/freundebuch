@@ -115,6 +115,16 @@ describe('DateInputSchema', () => {
       date_type: 'anniversary',
     });
   });
+
+  it('rejects an invalid date_type', () => {
+    const result = DateInputSchema({
+      date_value: '1990-05-15',
+      date_type: 'graduation',
+    });
+    expect(result.summary).toMatchInlineSnapshot(
+      `"date_type must be "anniversary", "birthday" or "other" (was "graduation")"`,
+    );
+  });
 });
 
 describe('SocialProfileInputSchema', () => {
