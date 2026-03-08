@@ -1,3 +1,9 @@
+## [2.65.5](https://github.com/datenknoten/freundebuch/compare/v2.65.4...v2.65.5) (2026-03-08)
+
+### Code Refactoring
+
+* **frontend:** Extract shared form primitives to eliminate subresource duplication ([#114](https://github.com/datenknoten/freundebuch/issues/114)) ([2134168](https://github.com/datenknoten/freundebuch/commit/2134168ab3e22f835eda55b2f16a27e14fd27755))
+
 ## [2.65.4](https://github.com/datenknoten/freundebuch/compare/v2.65.3...v2.65.4) (2026-03-04)
 
 ### Code Refactoring
