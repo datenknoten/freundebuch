@@ -1,7 +1,6 @@
 <script lang="ts">
 import type { SocialPlatform, SocialProfile } from '$shared';
-import DetailActions from './DetailActions.svelte';
-import SwipeableRow from './SwipeableRow.svelte';
+import SubresourceRow from './SubresourceRow.svelte';
 
 interface Props {
   profile: SocialProfile;
@@ -45,68 +44,24 @@ function getLink(): string | null {
 }
 </script>
 
-<!-- Mobile: Swipeable row -->
-<div class="sm:hidden">
-  <SwipeableRow onSwipeRight={onEdit} onSwipeLeft={onDelete} disabled={isDeleting}>
-    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg group">
-      <div class="flex-1 min-w-0">
-        {#if getLink()}
-          <a
-            href={getLink()}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-forest font-body font-semibold hover:text-forest-light truncate block"
-          >
-            {getDisplayText()}
-          </a>
-        {:else}
-          <span class="text-gray-900 font-body font-semibold truncate block">
-            {getDisplayText()}
-          </span>
-        {/if}
-        <div class="text-sm text-gray-500">
-          {formatPlatform(profile.platform)}
-        </div>
-      </div>
-      <DetailActions
-        {onEdit}
-        {onDelete}
-        {isDeleting}
-        editLabel="Edit social profile"
-        deleteLabel="Delete social profile"
-      />
-    </div>
-  </SwipeableRow>
-</div>
-
-<!-- Desktop: Hover-revealed actions -->
-<div class="hidden sm:block">
-  <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg group">
-    <div class="flex-1 min-w-0">
-      {#if getLink()}
-        <a
-          href={getLink()}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-forest font-body font-semibold hover:text-forest-light"
-        >
-          {getDisplayText()}
-        </a>
-      {:else}
-        <span class="text-gray-900 font-body font-semibold">
-          {getDisplayText()}
-        </span>
-      {/if}
-      <span class="text-sm text-gray-500 ml-2">
-        {formatPlatform(profile.platform)}
+<SubresourceRow {onEdit} {onDelete} {isDeleting} editLabel="Edit social profile" deleteLabel="Delete social profile">
+  <div class="flex-1 min-w-0">
+    {#if getLink()}
+      <a
+        href={getLink()}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-forest font-body font-semibold hover:text-forest-light truncate block"
+      >
+        {getDisplayText()}
+      </a>
+    {:else}
+      <span class="text-gray-900 font-body font-semibold truncate block">
+        {getDisplayText()}
       </span>
-    </div>
-    <DetailActions
-      {onEdit}
-      {onDelete}
-      {isDeleting}
-      editLabel="Edit social profile"
-      deleteLabel="Delete social profile"
-    />
+    {/if}
+    <span class="text-sm text-gray-500 block sm:inline sm:ml-2">
+      {formatPlatform(profile.platform)}
+    </span>
   </div>
-</div>
+</SubresourceRow>
