@@ -157,16 +157,11 @@ describe('apiRequest', () => {
       json: () => Promise.resolve({ error: 'Validation failed', code: 'VALIDATION_ERROR' }),
     } as unknown as Response);
 
-    await expect(apiRequest('/api/test')).rejects.toThrow(ApiError);
-
-    try {
-      await apiRequest('/api/test');
-    } catch (e) {
-      const err = e as InstanceType<typeof ApiError>;
-      expect(err.statusCode).toBe(422);
-      expect(err.message).toBe('Validation failed');
-      expect(err.code).toBe('VALIDATION_ERROR');
-    }
+    await expect(apiRequest('/api/test')).rejects.toMatchObject({
+      statusCode: 422,
+      message: 'Validation failed',
+      code: 'VALIDATION_ERROR',
+    });
   });
 
   it('throws ApiError with fallback message when response is not JSON', async () => {
@@ -176,14 +171,9 @@ describe('apiRequest', () => {
       json: () => Promise.reject(new Error('not json')),
     } as unknown as Response);
 
-    await expect(apiRequest('/api/test')).rejects.toThrow(ApiError);
-
-    try {
-      await apiRequest('/api/test');
-    } catch (e) {
-      const err = e as InstanceType<typeof ApiError>;
-      expect(err.statusCode).toBe(500);
-      expect(err.message).toBe('An unknown error occurred');
-    }
+    await expect(apiRequest('/api/test')).rejects.toMatchObject({
+      statusCode: 500,
+      message: 'An unknown error occurred',
+    });
   });
 });
