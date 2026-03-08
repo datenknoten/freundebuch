@@ -43,12 +43,16 @@ export const CircleInputSchema = type({
 });
 export type CircleInput = typeof CircleInputSchema.infer;
 
+/** Single item in a circle reorder request */
+export const CircleReorderItemSchema = type({
+  id: 'string > 0', // external_id
+  sort_order: 'number >= 0',
+});
+export type CircleReorderItem = typeof CircleReorderItemSchema.infer;
+
 /** Schema for reordering circles */
 export const CircleReorderSchema = type({
-  circles: type({
-    id: 'string > 0', // external_id
-    sort_order: 'number >= 0',
-  }).array(),
+  circles: CircleReorderItemSchema.array(),
 });
 export type CircleReorderInput = typeof CircleReorderSchema.infer;
 

@@ -5,17 +5,11 @@ import type {
   EncounterListItem,
   EncounterUpdate,
   LastEncounterSummary,
+  PaginationInfo,
 } from '$shared';
 import type { EncounterListParams } from '../api/encounters.js';
 import * as encountersApi from '../api/encounters.js';
 import { storeAction } from './storeAction.js';
-
-interface PaginationState {
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  totalPages: number;
-}
 
 interface FilterState {
   friendId?: string;
@@ -27,7 +21,7 @@ interface FilterState {
 interface EncountersState {
   encounters: EncounterListItem[];
   currentEncounter: Encounter | null;
-  pagination: PaginationState;
+  pagination: PaginationInfo;
   filters: FilterState;
   isLoading: boolean;
   error: string | null;

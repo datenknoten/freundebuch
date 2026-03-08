@@ -1,3 +1,4 @@
+import type { HealthCheckResponse } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import type { AppContext } from '../types/context.js';
 import { toError } from '../utils/errors.js';
@@ -21,7 +22,7 @@ health.get('/', async (c) => {
     client.release();
   }
 
-  const health = {
+  const health: HealthCheckResponse = {
     status: dbHealthy ? 'healthy' : 'unhealthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),

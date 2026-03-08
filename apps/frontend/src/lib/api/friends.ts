@@ -325,13 +325,16 @@ export async function deleteDate(friendId: string, dateId: string): Promise<{ me
   });
 }
 
+/** Options for upcoming dates query */
+export interface UpcomingDatesOptions {
+  days?: number;
+  limit?: number;
+}
+
 /**
  * Get upcoming important dates across all friends
  */
-export async function getUpcomingDates(options?: {
-  days?: number;
-  limit?: number;
-}): Promise<UpcomingDate[]> {
+export async function getUpcomingDates(options?: UpcomingDatesOptions): Promise<UpcomingDate[]> {
   const searchParams = new URLSearchParams();
   if (options?.days) searchParams.set('days', options.days.toString());
   if (options?.limit) searchParams.set('limit', options.limit.toString());

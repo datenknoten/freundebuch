@@ -8,6 +8,7 @@ import type {
   MembershipDeactivate,
   MembershipInput,
   MembershipUpdate,
+  PaginationInfo,
   RelationshipPreviewRequest,
   RelationshipPreviewResponse,
 } from '$shared';
@@ -15,13 +16,6 @@ import { ApiError } from '../api/auth.js';
 import type { CollectiveListParams } from '../api/collectives.js';
 import * as collectivesApi from '../api/collectives.js';
 import { storeAction } from './storeAction.js';
-
-interface PaginationState {
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  totalPages: number;
-}
 
 interface FilterState {
   typeId?: string;
@@ -33,7 +27,7 @@ interface CollectivesState {
   collectives: CollectiveListItem[];
   currentCollective: Collective | null;
   collectiveTypes: CollectiveType[];
-  pagination: PaginationState;
+  pagination: PaginationInfo;
   filters: FilterState;
   isLoading: boolean;
   isLoadingTypes: boolean;
