@@ -164,7 +164,7 @@ async function handleAddRelationship() {
     await friends.addRelationship(friendId, data);
     closeAddRelationship();
   } catch (err) {
-    addError = err instanceof Error ? err.message : 'Failed to save';
+    addError = err instanceof Error ? err.message : $i18n.t('subresources.common.failedToSave');
     isAddLoading = false;
   }
 }

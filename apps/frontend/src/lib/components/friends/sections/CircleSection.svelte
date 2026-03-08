@@ -49,7 +49,7 @@ async function handleSave() {
     await friends.addCircle(friendId, data.circleId);
     closeModal();
   } catch (err) {
-    editError = err instanceof Error ? err.message : 'Failed to save';
+    editError = err instanceof Error ? err.message : $i18n.t('subresources.common.failedToSave');
     isEditLoading = false;
   }
 }
@@ -138,8 +138,8 @@ onMount(() => {
 
 {#if deleteConfirmId}
   <DeleteConfirmModal
-    title="Remove from Circle"
-    description="Are you sure you want to remove this friend from this circle?"
+    title={$i18n.t('friendDetail.modal.removeFromCircleTitle')}
+    description={$i18n.t('friendDetail.modal.confirmRemoveCircle')}
     itemPreview={deleteConfirmName}
     onConfirm={handleDelete}
     onClose={closeDeleteConfirm}
