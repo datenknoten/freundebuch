@@ -1,3 +1,13 @@
+## [2.65.7](https://github.com/datenknoten/freundebuch/compare/v2.65.6...v2.65.7) (2026-03-08)
+
+### Bug Fixes
+
+* **frontend:** Replace hardcoded strings with i18n keys in section components ([6abeae7](https://github.com/datenknoten/freundebuch/commit/6abeae7e38786aef72d98839013dc804deac6190))
+
+### Code Refactoring
+
+* **frontend:** Split FriendDetail into self-contained section components ([#116](https://github.com/datenknoten/freundebuch/issues/116)) ([18cea50](https://github.com/datenknoten/freundebuch/commit/18cea504ef96acb72d9c31802b9f72cb2a674cfc))
+
 ## [2.65.6](https://github.com/datenknoten/freundebuch/compare/v2.65.5...v2.65.6) (2026-03-08)
 
 ### Code Refactoring
