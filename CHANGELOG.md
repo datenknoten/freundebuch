@@ -1,3 +1,9 @@
+## [2.65.6](https://github.com/datenknoten/freundebuch/compare/v2.65.5...v2.65.6) (2026-03-08)
+
+### Code Refactoring
+
+* **frontend:** Create SubresourceRow wrapper to eliminate mobile/desktop duplication ([8d029a3](https://github.com/datenknoten/freundebuch/commit/8d029a3f0285013c8f18b13f58d50fd632468079)), closes [#115](https://github.com/datenknoten/freundebuch/issues/115)
+
 ## [2.65.5](https://github.com/datenknoten/freundebuch/compare/v2.65.4...v2.65.5) (2026-03-08)
 
 ### Code Refactoring
