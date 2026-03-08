@@ -1,4 +1,3 @@
-import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 import { EncounterInputSchema } from './encounters.js';
 
@@ -19,7 +18,7 @@ describe('EncounterInputSchema', () => {
       encounter_date: '01/15/2025',
       friend_ids: ['abc-123'],
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects empty friend_ids', () => {
@@ -28,7 +27,7 @@ describe('EncounterInputSchema', () => {
       encounter_date: '2025-01-15',
       friend_ids: [],
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects an empty title', () => {
@@ -37,7 +36,7 @@ describe('EncounterInputSchema', () => {
       encounter_date: '2025-01-15',
       friend_ids: ['abc-123'],
     });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('accepts an encounter with optional fields', () => {

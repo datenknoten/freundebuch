@@ -1,4 +1,3 @@
-import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 import { CircleInputSchema } from './circles.js';
 
@@ -15,16 +14,16 @@ describe('CircleInputSchema', () => {
 
   it('rejects an invalid hex color without hash', () => {
     const result = CircleInputSchema({ name: 'Work', color: '3B82F6' });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects an invalid hex color with wrong length', () => {
     const result = CircleInputSchema({ name: 'Work', color: '#3B8' });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 
   it('rejects an empty name', () => {
     const result = CircleInputSchema({ name: '' });
-    expect(result).toBeInstanceOf(type.errors);
+    expect(result).toHaveProperty('summary');
   });
 });
