@@ -1,3 +1,14 @@
+## [2.65.8](https://github.com/datenknoten/freundebuch/compare/v2.65.7...v2.65.8) (2026-03-08)
+
+### Bug Fixes
+
+* **frontend:** Replace try/catch error assertions with rejects.toMatchObject ([e3601c4](https://github.com/datenknoten/freundebuch/commit/e3601c46c877912a088777c57fa933b84dd0cdad))
+
+### Code Refactoring
+
+* **shared:** Use inline snapshots for schema validation error assertions ([25ff73c](https://github.com/datenknoten/freundebuch/commit/25ff73c239b6a2ae082d38ea3c26f4f8c2f60ce5))
+* **shared:** Use toHaveProperty('summary') instead of toBeInstanceOf(type.errors) ([7a68ab5](https://github.com/datenknoten/freundebuch/commit/7a68ab52aad14526a27a1c6984e3305fee73f990))
+
 ## [2.65.7](https://github.com/datenknoten/freundebuch/compare/v2.65.6...v2.65.7) (2026-03-08)
 
 ### Bug Fixes
