@@ -68,7 +68,7 @@ async function handleSave() {
     }
     closeModal();
   } catch (err) {
-    editError = err instanceof Error ? err.message : 'Failed to save';
+    editError = err instanceof Error ? err.message : $i18n.t('subresources.common.failedToSave');
     isEditLoading = false;
   }
 }
@@ -160,8 +160,8 @@ onMount(() => {
 
 {#if deleteConfirmId}
   <DeleteConfirmModal
-    title="Delete Address"
-    description="Are you sure you want to delete this address?"
+    title={$i18n.t('friendDetail.modal.deleteAddress')}
+    description={$i18n.t('friendDetail.modal.confirmDeleteAddress')}
     itemPreview={deleteConfirmName}
     onConfirm={handleDelete}
     onClose={closeDeleteConfirm}
