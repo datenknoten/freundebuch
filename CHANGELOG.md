@@ -1,3 +1,9 @@
+## [2.65.9](https://github.com/datenknoten/freundebuch/compare/v2.65.8...v2.65.9) (2026-03-09)
+
+### Code Refactoring
+
+* Replace inline types with dedicated named types ([a3f88eb](https://github.com/datenknoten/freundebuch/commit/a3f88eb2e3da06abe263f6ece7411ad81b6475ad)), closes [#126](https://github.com/datenknoten/freundebuch/issues/126)
+
 ## [2.65.8](https://github.com/datenknoten/freundebuch/compare/v2.65.7...v2.65.8) (2026-03-08)
 
 ### Bug Fixes
