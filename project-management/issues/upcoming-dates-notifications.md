@@ -1,208 +1,398 @@
-# Upcoming Dates Notifications via Messaging Bots
+# Feature: Upcoming Dates Notifications via Messaging Bots
 
+**Project:** freundebuch2
+**Type:** Feature
 **Related Epic:** [Epic 3: Reminder System](../epics/epic-03-planned-reminder-system.md)
-**Priority:** High
+**Phase:** Phase 2 (Core Functionality)
+**Priority:** Medium
+
+---
 
 ## Summary
 
-Users should receive daily notifications about upcoming dates (birthdays, anniversaries, and custom dates) through messaging platforms they already use. This feature adds support for configuring **Telegram**, **Matrix**, and **Discord** bot accounts in the user settings, so freundebuch can send a daily summary of dates coming up in the near future.
+Allow users to configure bot accounts for Telegram, Matrix, and Discord so that Freundebuch can send a daily digest of upcoming dates (birthdays, anniversaries, and other saved dates) directly into their preferred messaging platform.
 
-Think of it as your personal assistant tapping you on the shoulder each morning: "Hey, just a heads up - Sarah's birthday is in 3 days!"
+This extends the notification channels described in Epic 3, which currently covers in-app notifications, email, and browser push. Messaging bots are a natural fit for self-hosters who already live in these platforms and want reminders to arrive where they actually pay attention.
 
-## Motivation
+---
 
-Staying on top of important dates for the people in your life shouldn't require checking the app every day. By sending notifications to platforms users already have open (Telegram, Matrix, Discord), we meet them where they are. A daily digest keeps things low-noise while making sure nothing slips through the cracks.
+## Background
 
-## Key Features
+Freundebuch already stores friend dates in `friends.friend_dates` with fields for `date_value`, `year_known`, `date_type` (`birthday`, `anniversary`, `other`), and `label`. There is also an existing `GetUpcomingDates` PgTyped query that calculates `days_until` for all dates belonging to a user, handling leap-year edge cases correctly.
 
-### 1. Bot Account Configuration (Settings)
+The backend already has a `node-cron` scheduler at `apps/backend/src/utils/scheduler.ts` that runs hourly cleanup jobs. A daily notification job can be added alongside the existing `setupCleanupScheduler` function without any new infrastructure.
 
-Users can configure one or more notification channels in their profile settings. Each platform requires different credentials:
+User preferences are stored as JSONB in `auth.users.preferences`. This issue proposes a dedicated `system.notification_channels` table instead of stuffing bot credentials into the preferences blob, because credentials need to be stored, validated, and referenced independently per channel, and because per-channel preferences (lookahead window, notify time) belong alongside the credentials rather than in a global preferences object.
+
+---
+
+## Feature Description
+
+### 1. Bot Channel Configuration
+
+Users can configure one or more messaging bot channels from the settings page. The supported platforms are:
 
 **Telegram**
-- Bot token (obtained from @BotFather)
-- Chat ID (the user's chat or a group chat)
+- Bot token (obtained from BotFather)
+- Chat ID (the target personal chat or group chat)
 
 **Matrix**
-- Homeserver URL (e.g., `https://matrix.org`)
+- Homeserver URL (e.g., `https://matrix.example.com`)
 - Access token
-- Room ID (e.g., `!roomid:matrix.org`)
+- Room ID (e.g., `!roomid:example.com`)
 
 **Discord**
-- Webhook URL (from channel settings > Integrations > Webhooks)
+- Webhook URL (generated from a Discord server channel's Integrations settings)
 
-Users should be able to:
-- Add multiple notification channels (e.g., both Telegram and Discord)
-- Enable/disable individual channels without deleting them
-- Send a test notification to verify the configuration works
-- Remove a configured channel
+Each channel can be individually enabled or disabled without deleting the configuration. Users can also send a test message to verify a channel works before relying on it.
 
 ### 2. Daily Notification Job
 
-A scheduled background job runs once per day (at a user-configurable time, defaulting to 08:00 in their timezone) and:
+A new scheduled job fires once per day at a user-configurable time (default: 08:00, compared against UTC). For each user who has at least one active notification channel, the job:
 
-1. Queries all friends with dates falling within a configurable lookahead window (default: 7 days)
-2. Groups dates by day
+1. Queries upcoming dates using the existing `GetUpcomingDates` logic with the user's configured lookahead window (default: 7 days)
+2. Skips the user entirely if there are no upcoming dates in the window - no message is sent
 3. Formats a summary message
-4. Sends it to all enabled notification channels for that user
+4. Dispatches the message to each active channel for that user
 
-If there are no upcoming dates within the window, no notification is sent (no "nothing coming up" spam).
+If delivery to one channel fails (network error, bad credentials, etc.), the failure is logged and captured in Sentry but does not block delivery to other channels. The job does not retry automatically; the user should correct their channel configuration if messages stop arriving.
 
 ### 3. Notification Message Format
 
-The daily summary should be clear and scannable. Example:
+The message should be concise and warm. Example for a day with two upcoming dates:
 
 ```
-Upcoming dates (next 7 days):
+Freundebuch - Upcoming dates
 
-Today - March 10
-  Birthday: Sarah Miller
+Tomorrow: Anna Bauer's birthday (March 11)
+In 5 days: Jan & Sarah's wedding anniversary (March 15)
 
-In 2 days - March 12
-  Anniversary: Tom & Lisa Johnson
-
-In 5 days - March 15
-  Birthday: Alex Chen (turns 30)
+View your Freundebuch: https://your-instance.example.com
 ```
 
-- Include the date type (birthday, anniversary, or custom label)
-- Include the friend's name
-- For birthdays where the year is known, include the age they are turning
-- Sort by date (soonest first)
+Formatting rules:
+- Dates are listed in ascending `days_until` order, matching the existing query's sort
+- "Today" / "Tomorrow" / "In N days" phrasing for `days_until` of 0, 1, and 2+ respectively
+- For dates where `year_known` is `false`, omit any age calculation and show only the event name and calendar date
+- For `date_type = 'other'`, use the `label` field as the event name
+- The instance base URL is appended as a convenience link; it falls back to being omitted if the instance URL is not configured in system settings
+- If there are no upcoming dates in the lookahead window, no message is sent at all
 
-### 4. Notification Preferences
+Platform-specific formatting notes:
+- **Telegram**: Plain text; Markdown formatting can be added in a follow-up
+- **Matrix**: Send both a plain text `body` and an HTML-formatted `formatted_body` in the `m.room.message` event
+- **Discord**: Plain text in the `content` field of the webhook payload
 
-Add the following user preferences:
+---
 
-| Preference | Type | Default | Description |
-|---|---|---|---|
-| `notificationLookaheadDays` | number | `7` | How many days ahead to look for upcoming dates |
-| `notificationTime` | string (HH:mm) | `"08:00"` | When to send the daily notification |
-| `notificationTimezone` | string | `"UTC"` | User's timezone for scheduling |
+## Database Changes
 
-## Technical Design
-
-### Database Changes
-
-New table in the `auth` schema:
+### New Table: `system.notification_channels`
 
 ```sql
-CREATE TABLE auth.notification_channels (
-    id SERIAL PRIMARY KEY,
-    external_id UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE,
-    user_id INTEGER NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    platform TEXT NOT NULL CHECK (platform IN ('telegram', 'matrix', 'discord')),
-    config JSONB NOT NULL,
-    enabled BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE IF NOT EXISTS system.notification_channels (
+    id                  SERIAL PRIMARY KEY,
+    external_id         UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+    user_id             INTEGER NOT NULL,
+    platform            TEXT NOT NULL CHECK (platform IN ('telegram', 'matrix', 'discord')),
+    is_enabled          BOOLEAN NOT NULL DEFAULT true,
+
+    -- Telegram
+    telegram_bot_token  TEXT,
+    telegram_chat_id    TEXT,
+
+    -- Matrix
+    matrix_homeserver   TEXT,
+    matrix_access_token TEXT,
+    matrix_room_id      TEXT,
+
+    -- Discord
+    discord_webhook_url TEXT,
+
+    -- Per-channel notification preferences
+    lookahead_days      INTEGER NOT NULL DEFAULT 7 CHECK (lookahead_days BETWEEN 1 AND 30),
+    notify_time         TIME NOT NULL DEFAULT '08:00:00',
+
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_notification_channels_user_id
+        FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
+
+    -- One row per platform per user
+    CONSTRAINT uq_notification_channels_user_platform
+        UNIQUE (user_id, platform)
 );
 
-CREATE INDEX idx_notification_channels_user_id ON auth.notification_channels(user_id);
+CREATE INDEX IF NOT EXISTS idx_notification_channels_external_id
+    ON system.notification_channels(external_id);
+
+CREATE INDEX IF NOT EXISTS idx_notification_channels_user_id
+    ON system.notification_channels(user_id);
+
+-- Partial index for the scheduler: only scan rows that are actually enabled
+CREATE INDEX IF NOT EXISTS idx_notification_channels_enabled
+    ON system.notification_channels(notify_time)
+    WHERE is_enabled = true;
 ```
 
-The `config` JSONB stores platform-specific credentials:
+**Schema notes:**
+- The `system` schema is already created as part of Epic 0 migrations
+- Credentials are stored in plaintext columns. Self-hosted deployments are responsible for securing their PostgreSQL instance at the infrastructure level. A future enhancement could add column-level encryption
+- The unique constraint on `(user_id, platform)` means each user has at most one configuration per platform. To change a bot, they update the existing row
+- `notify_time` stores the time-of-day for delivery. The scheduler compares each enabled channel's `notify_time` against the current UTC time. Per-user timezone support is out of scope for this issue (see Out of Scope)
+- `lookahead_days` is stored per channel so a user could receive a 7-day digest on Telegram and a 14-day digest on Discord if they prefer
+- A trigger for `updated_at` must be added following the project convention
+
+---
+
+## API Endpoints
+
+All endpoints require authentication. Channels are always addressed by `external_id`, never by internal `id`.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/notification-channels` | List all configured channels for the current user |
+| POST | `/api/notification-channels` | Create a new channel configuration |
+| GET | `/api/notification-channels/:channelId` | Get a single channel by `external_id` |
+| PUT | `/api/notification-channels/:channelId` | Update an existing channel (credentials, preferences) |
+| DELETE | `/api/notification-channels/:channelId` | Remove a channel configuration entirely |
+| POST | `/api/notification-channels/:channelId/test` | Send a test message to verify the channel works |
+| PATCH | `/api/notification-channels/:channelId/toggle` | Enable or disable a channel without a full update |
+
+### Response Shape (single channel)
 
 ```typescript
-// Telegram
-{ botToken: string; chatId: string }
+{
+  externalId: string,            // UUID - always use this in API calls
+  platform: 'telegram' | 'matrix' | 'discord',
+  isEnabled: boolean,
+  lookaheadDays: number,
+  notifyTime: string,            // "HH:MM" 24-hour format
+  credentials: {
+    // Telegram
+    botToken?: string,           // masked in responses: "...1234"
+    chatId?: string,
 
-// Matrix
-{ homeserverUrl: string; accessToken: string; roomId: string }
+    // Matrix
+    homeserver?: string,         // not masked (not a secret)
+    accessToken?: string,        // masked: "...5678"
+    roomId?: string,             // not masked
 
-// Discord
-{ webhookUrl: string }
-```
-
-Extend user preferences (JSONB in `auth.users.preferences`):
-
-```typescript
-interface UserPreferences {
-    // ... existing preferences ...
-    notificationLookaheadDays?: number;
-    notificationTime?: string;    // HH:mm format
-    notificationTimezone?: string; // IANA timezone
+    // Discord
+    webhookUrl?: string,         // masked: "https://discord.com/api/webhooks/.../...abcd"
+  },
+  createdAt: string,             // ISO 8601
+  updatedAt: string,
 }
 ```
 
-### API Endpoints
+Credential fields that are secrets (tokens, bot tokens, the token portion of webhook URLs) are masked in all GET responses. The full value is accepted on POST/PUT and stored, but never returned after the initial write. The frontend should treat existing credential fields as write-only after save and prompt the user to re-enter if they want to change them.
+
+---
+
+## ArkType Validation
+
+```typescript
+import { type } from 'arktype';
+
+const NotificationChannelCreateSchema = type({
+  platform: '"telegram" | "matrix" | "discord"',
+  'isEnabled?': 'boolean',
+  'lookaheadDays?': 'number.integer >= 1 & number.integer <= 30',
+  'notifyTime?': /^([01]\d|2[0-3]):[0-5]\d$/,
+  credentials: 'object',
+});
+
+const NotificationChannelUpdateSchema = type({
+  'isEnabled?': 'boolean',
+  'lookaheadDays?': 'number.integer >= 1 & number.integer <= 30',
+  'notifyTime?': /^([01]\d|2[0-3]):[0-5]\d$/,
+  'credentials?': 'object',
+});
+
+// Applied conditionally after platform is known
+const TelegramCredentialsSchema = type({
+  botToken: 'string > 0',
+  chatId: 'string > 0',
+});
+
+const MatrixCredentialsSchema = type({
+  homeserver: /^https?:\/\/.+/,
+  accessToken: 'string > 0',
+  roomId: /^!.+:.+/,
+});
+
+const DiscordCredentialsSchema = type({
+  webhookUrl: /^https:\/\/discord(app)?\.com\/api\/webhooks\/.+\/.+/,
+});
+```
+
+An invalid credential format (e.g., a Discord webhook URL pointing to a different domain) returns a `400` with a descriptive validation error. Credentials are validated structurally but not verified against the live platform API at save time; the "Send test message" action serves that purpose.
+
+---
+
+## Backend Implementation
+
+### New Service: `NotificationChannelsService`
+
+Place at `apps/backend/src/services/notification-channels.service.ts`, following the existing service pattern (e.g., `circles.service.ts`). Responsibilities:
+
+- CRUD operations against `system.notification_channels`, using PgTyped queries
+- Credential masking for GET responses
+- Delegating test message dispatch to the platform-specific clients
+
+### New Scheduler Function: `setupNotificationScheduler`
+
+Add to `apps/backend/src/utils/scheduler.ts` alongside `setupCleanupScheduler`.
+
+The job runs every minute and checks which enabled channels have a `notify_time` matching the current UTC hour and minute. This avoids a single fixed daily trigger that could miss windows for users with different preferred times, and keeps the pattern consistent with the existing scheduler.
+
+```typescript
+// Conceptual outline - not final code
+cron.schedule('* * * * *', async () => {
+  const now = new Date();
+  const currentTime = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}`;
+
+  const dueChannels = await getEnabledChannelsDueAt.run({ notifyTime: currentTime }, pool);
+
+  for (const channel of dueChannels) {
+    try {
+      const upcomingDates = await getUpcomingDates.run({
+        userExternalId: channel.user_external_id,
+        maxDays: channel.lookahead_days,
+        limitCount: 50,
+      }, pool);
+
+      if (upcomingDates.length === 0) continue;
+
+      const message = formatNotificationMessage(upcomingDates);
+      await dispatch(channel, message);
+      logger.info({ channelExternalId: channel.external_id }, 'Notification dispatched');
+    } catch (error) {
+      const err = toError(error);
+      logger.error({ err, channelExternalId: channel.external_id }, 'Failed to dispatch notification');
+      Sentry.captureException(err);
+    }
+  }
+});
+```
+
+A new PgTyped query `getEnabledChannelsDueAt` is needed that selects from `system.notification_channels` where `is_enabled = true` and `notify_time = :notifyTime`, joining to `auth.users` to retrieve `user_external_id`.
+
+### New External Clients
+
+Create under `apps/backend/src/services/external/`:
+
+| File | Platform | API Used |
+|------|----------|----------|
+| `telegram.client.ts` | Telegram | `POST https://api.telegram.org/bot{token}/sendMessage` |
+| `matrix.client.ts` | Matrix | `PUT {homeserver}/_matrix/client/v3/rooms/{roomId}/send/m.room.message/{txnId}` |
+| `discord.client.ts` | Discord | `POST {webhookUrl}` |
+
+Each client is a plain async function accepting the relevant credentials and message string. Native `fetch` (available in Node 24+) is sufficient; no new HTTP client dependency is needed.
+
+---
+
+## Frontend Changes
+
+### Settings Page
+
+Add a "Messaging Reminders" section to the existing profile/settings page at `apps/frontend/src/routes/profile/+page.svelte`.
+
+The section contains:
+- A short description of what messaging reminders do
+- A list of configured channels, each showing platform name, enabled/disabled status, and last-updated date
+- An "Add channel" button that opens a form for selecting a new platform and entering its credentials
+- Per-channel actions: Edit, Send test message, Enable/Disable toggle, Delete
+
+### New Components
+
+| Component | Description |
+|-----------|-------------|
+| `NotificationChannelList.svelte` | Renders the full list of configured channels |
+| `NotificationChannelCard.svelte` | Single channel with toggle, test, and delete actions |
+| `NotificationChannelForm.svelte` | Platform-aware form; renders different credential fields based on the selected platform |
+| `TestMessageButton.svelte` | Button that fires the test endpoint and shows inline success or error feedback |
+
+### i18n Keys
+
+New translation keys needed in both English (`en`) and German (`de`):
 
 ```
-GET    /api/notification-channels          - List all channels for authenticated user
-POST   /api/notification-channels          - Create a new channel
-PATCH  /api/notification-channels/:id      - Update a channel (toggle enabled, update config)
-DELETE /api/notification-channels/:id      - Remove a channel
-POST   /api/notification-channels/:id/test - Send a test notification
+settings.messagingReminders.title
+settings.messagingReminders.description
+settings.messagingReminders.addChannel
+settings.messagingReminders.noChannels
+settings.messagingReminders.platform.telegram
+settings.messagingReminders.platform.matrix
+settings.messagingReminders.platform.discord
+settings.messagingReminders.fields.botToken
+settings.messagingReminders.fields.chatId
+settings.messagingReminders.fields.homeserver
+settings.messagingReminders.fields.accessToken
+settings.messagingReminders.fields.roomId
+settings.messagingReminders.fields.webhookUrl
+settings.messagingReminders.fields.lookaheadDays
+settings.messagingReminders.fields.notifyTime
+settings.messagingReminders.test.button
+settings.messagingReminders.test.success
+settings.messagingReminders.test.failure
+settings.messagingReminders.toggle.enable
+settings.messagingReminders.toggle.disable
+settings.messagingReminders.delete.confirm
 ```
 
-### Backend Components
-
-**Notification Service** (`src/services/notifications.service.ts`)
-- Channel CRUD operations
-- Message formatting logic
-- Platform-specific sender implementations (Telegram API, Matrix client-server API, Discord webhooks)
-
-**Notification Scheduler** (extend `src/utils/scheduler.ts`)
-- Daily job that iterates over users with enabled notification channels
-- Queries upcoming dates per user
-- Formats and dispatches notifications
-- Handles failures gracefully (log errors, don't block other users)
-
-**Platform Clients** (`src/services/external/`)
-- `telegram.client.ts` - Send messages via Telegram Bot API (`POST /bot<token>/sendMessage`)
-- `matrix.client.ts` - Send messages via Matrix client-server API (`PUT /_matrix/client/v3/rooms/{roomId}/send/m.room.message/{txnId}`)
-- `discord.client.ts` - Send messages via Discord webhook (`POST <webhookUrl>`)
-
-### Frontend Components
-
-**Notification Settings Section** (in profile page or dedicated settings tab)
-- List of configured channels with enable/disable toggle
-- "Add Channel" form with platform selector and platform-specific fields
-- "Test" button per channel
-- "Remove" button with confirmation
-
-### Shared Schema
-
-Add validation schemas in `packages/shared/` for:
-- `NotificationChannelCreateSchema` (platform + config validation)
-- `NotificationChannelUpdateSchema`
-- Extended `UserPreferencesSchema` with notification preferences
+---
 
 ## Acceptance Criteria
 
-- [ ] Users can add, edit, enable/disable, and remove Telegram bot notification channels
-- [ ] Users can add, edit, enable/disable, and remove Matrix bot notification channels
-- [ ] Users can add, edit, enable/disable, and remove Discord webhook notification channels
-- [ ] Users can send a test notification to verify their channel configuration
-- [ ] A daily background job sends upcoming date summaries to all enabled channels
-- [ ] Users can configure the lookahead window (how many days ahead to check)
-- [ ] Users can configure what time of day they receive their notification
-- [ ] Notifications include friend name, date type, and (when applicable) age
-- [ ] No notification is sent when there are no upcoming dates in the window
-- [ ] Errors in one channel do not prevent delivery to other channels
-- [ ] Sensitive credentials (bot tokens, access tokens) are stored securely and never exposed in API responses
-- [ ] All new UI strings are available in both English and German
-- [ ] API endpoints are protected by authentication middleware
+- [ ] A user can add a Telegram channel by providing a bot token and chat ID; the configuration is saved and appears in the channel list
+- [ ] A user can add a Matrix channel by providing a homeserver URL, access token, and room ID
+- [ ] A user can add a Discord channel by providing a webhook URL
+- [ ] Only one configuration per platform per user is allowed; attempting to create a second channel for the same platform returns a clear error
+- [ ] Secret credential fields (bot tokens, access tokens, the token portion of webhook URLs) are masked in API GET responses and never returned in full after the initial save
+- [ ] The "Send test message" action delivers a message to the configured channel and shows the user a success confirmation or a descriptive error within 10 seconds
+- [ ] The daily job fires at the user's configured `notify_time` and sends a digest only when there are upcoming dates within the `lookahead_days` window
+- [ ] No message is sent on days when there are no upcoming dates in the lookahead window
+- [ ] A channel can be toggled off; the job skips disabled channels entirely
+- [ ] Deleting a channel removes the row and all associated credentials from the database
+- [ ] If delivery to one channel fails, other channels for the same user are still attempted; each failure is logged and captured in Sentry
+- [ ] An invalid Discord webhook URL (wrong domain or path format) is rejected at the API level with a `400` response
+- [ ] An invalid Matrix room ID format (must start with `!` and contain `:`) is rejected at the API level with a `400` response
+- [ ] All new settings UI strings are available in both English and German
+- [ ] The migration includes a proper `down()` function that drops `system.notification_channels`
+- [ ] The `updated_at` trigger is created for `system.notification_channels` following project convention
 
-## Security Considerations
-
-- Bot tokens and access tokens must be encrypted at rest or stored securely
-- API responses for notification channels should redact sensitive fields (show only last 4 characters of tokens)
-- Webhook URLs and tokens should be validated before saving
-- Rate limiting on the test notification endpoint to prevent abuse
+---
 
 ## Out of Scope
 
-- Email notifications (covered separately in Epic 3)
-- In-app notification center (covered separately in Epic 3)
-- Push notifications (covered separately in Epic 3)
-- SMS notifications
-- Per-friend notification preferences (notify only for specific friends)
-- Notification history/log UI
+- **User timezone support** - `notify_time` is compared against UTC. Per-user timezone configuration is a separate feature that should be tracked in its own issue. Until then, users set `notify_time` in UTC themselves.
+- **Email notifications** - Already planned in Epic 3; not covered here.
+- **In-app notification center and browser push** - Already planned in Epic 3; not covered here.
+- **SMS notifications** - Excluded in Epic 3 and out of scope here.
+- **Retry logic for failed deliveries** - If a message fails to deliver, the failure is logged. Building a retry queue would require a jobs table or external queue and is not in scope for this issue.
+- **Encryption of stored credentials at the application layer** - Credentials are stored in plaintext columns. Encryption at rest is a system-level concern (disk encryption, PostgreSQL TDE). Application-layer column encryption can be added in a follow-up.
+- **Rich formatting (Markdown, Discord embeds)** - Plain text only for the initial implementation. Telegram Markdown and Discord embeds can be added in a follow-up without schema changes.
+- **Per-friend notification opt-out** - The digest includes all friends with upcoming dates in the window. Excluding specific friends from bot notifications is a future refinement.
+- **Slack and other messaging platforms** - Telegram, Matrix, and Discord cover the most common self-hoster use cases. Adding more platforms later is straightforward: extend the `platform` CHECK constraint, add a new client file, and add the credential columns.
+- **Notification history** - No log of sent notifications is persisted. This is intentional to keep the feature simple; a history view can be added later.
+
+---
 
 ## Dependencies
 
-- Existing `friends.friend_dates` table (already implemented)
-- Existing user preferences system (already implemented)
-- Existing scheduler infrastructure (already implemented)
-- Network access to Telegram API, Matrix homeservers, and Discord webhooks from the server
+- `friends.friend_dates` table and `GetUpcomingDates` PgTyped query already exist and require no changes
+- `node-cron` is already installed and in use in the scheduler; no new dependency needed
+- `system` PostgreSQL schema must exist; it is created in Epic 0 migrations
+- Native `fetch` is available in Node 24+; no new HTTP client library is needed
+- This issue does not depend on Epic 3 being fully implemented first. It can be built as a standalone feature, and Epic 3 will reuse the `system.notification_channels` table when it adds the full reminder system
+
+---
+
+## Related Epics and Issues
+
+- [Epic 3: Reminder System](../epics/epic-03-planned-reminder-system.md) - This issue implements the messaging bot subset of Epic 3's planned notification channels
+- [Epic 5: Multi-User Management](../epics/epic-05-done-multi-user-management.md) - Authentication infrastructure this issue builds on top of
+- [Epic 9: Dashboard & Insights](../epics/epic-09-planned-dashboard-insights.md) - The upcoming dates data surfaced here is also a good candidate for a dashboard widget
