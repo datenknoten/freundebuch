@@ -6,6 +6,7 @@ export * from './collectives.js';
 export * from './columns.js';
 export * from './encounters.js';
 export * from './friends.js';
+export * from './notification-channels.js';
 export * from './pagination.js';
 export * from './phone-utils.js';
 export * from './photo.js';
