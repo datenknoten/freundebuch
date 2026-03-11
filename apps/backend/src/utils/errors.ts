@@ -175,6 +175,17 @@ export class AppPasswordNotFoundError extends AppError {
 }
 
 /**
+ * Thrown when a notification channel is not found in the database.
+ */
+export class NotificationChannelNotFoundError extends AppError {
+  readonly statusCode = 404;
+
+  constructor(message = 'Notification channel not found') {
+    super(message);
+  }
+}
+
+/**
  * Generic not-found error for sub-resources (addresses, emails, phones, etc.)
  * Use this instead of inline c.json() returns for consistency.
  */
@@ -279,6 +290,18 @@ export class DuplicateMembershipError extends AppError {
 
   constructor() {
     super('Contact is already a member of this collective');
+  }
+}
+
+/**
+ * Thrown when attempting to create a notification channel for a platform
+ * that the user already has configured.
+ */
+export class NotificationChannelAlreadyExistsError extends AppError {
+  readonly statusCode = 409;
+
+  constructor(platform: string) {
+    super(`A ${platform} notification channel already exists for this user`);
   }
 }
 
@@ -441,6 +464,19 @@ export class OverpassApiError extends ExternalServiceError {
 export class ZipcodeBaseApiError extends ExternalServiceError {
   constructor(message: string, originalStatus?: number) {
     super('ZipcodeBase', message, originalStatus);
+  }
+}
+
+/**
+ * Thrown when a notification delivery to an external messaging platform fails.
+ */
+export class NotificationDeliveryError extends ExternalServiceError {
+  constructor(platform: string, detail?: string, originalStatus?: number) {
+    super(
+      platform,
+      `Failed to deliver ${platform} notification${detail ? `: ${detail}` : ''}`,
+      originalStatus,
+    );
   }
 }
 
