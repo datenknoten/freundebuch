@@ -67,6 +67,7 @@ export async function sendMatrixMessage(
       format: 'org.matrix.custom.html',
       formatted_body: html,
     }),
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!response.ok) {
