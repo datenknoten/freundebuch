@@ -19,6 +19,7 @@ import collectivesRoutes from './routes/collectives.js';
 import encountersRoutes from './routes/encounters.js';
 import friendsRoutes from './routes/friends.js';
 import healthRoutes from './routes/health.js';
+import notificationChannelsRoutes from './routes/notification-channels.js';
 import sentryTunnelRoutes from './routes/sentry-tunnel.js';
 import uploadsRoutes from './routes/uploads.js';
 import usersRoutes from './routes/users.js';
@@ -29,7 +30,7 @@ import { getConfig } from './utils/config.js';
 import { checkDatabaseConnection, createPool } from './utils/db.js';
 import { DatabaseConnectionError, isAppError, toError } from './utils/errors.js';
 import { createLogger } from './utils/logger.js';
-import { setupCleanupScheduler } from './utils/scheduler.js';
+import { setupCleanupScheduler, setupNotificationScheduler } from './utils/scheduler.js';
 
 Error.stackTraceLimit = 100;
 
@@ -87,6 +88,7 @@ export async function createApp(pool: pg.Pool) {
   app.route('/api/app-passwords', appPasswordsRoutes);
   app.route('/api/sentry-tunnel', sentryTunnelRoutes);
   app.route('/api/address-lookup', addressLookupRoutes);
+  app.route('/api/notification-channels', notificationChannelsRoutes);
 
   // Error handling
   app.onError((err, c) => {
@@ -141,6 +143,9 @@ export async function startServer() {
 
   // Setup cleanup scheduler for expired sessions, tokens, and cache
   setupCleanupScheduler(pool, pinoLogger);
+
+  // Setup notification scheduler for daily date digest messages
+  setupNotificationScheduler(pool, pinoLogger);
 
   pinoLogger.info(`Starting server on port ${port}`);
 
