@@ -2,6 +2,10 @@ import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
+import {
+  notificationChannelsRateLimitMiddleware,
+  notificationTestRateLimitMiddleware,
+} from '../middleware/rate-limit.js';
 import { NotificationChannelsService } from '../services/notification-channels.service.js';
 import type { AppContext } from '../types/context.js';
 import { NotificationChannelNotFoundError, ValidationError } from '../utils/errors.js';
@@ -9,9 +13,10 @@ import { isValidUuid } from '../utils/security.js';
 
 const app = new Hono<AppContext>();
 
-// Apply auth and onboarding middleware to all routes
+// Apply auth, onboarding, and rate limiting middleware to all routes
 app.use('*', authMiddleware);
 app.use('*', onboardingMiddleware);
+app.use('*', notificationChannelsRateLimitMiddleware);
 
 // ============================================================================
 // ArkType Schemas
@@ -215,7 +220,7 @@ app.delete('/:channelId', async (c) => {
  * POST /api/notification-channels/:channelId/test
  * Send a test message to verify the channel works
  */
-app.post('/:channelId/test', async (c) => {
+app.post('/:channelId/test', notificationTestRateLimitMiddleware, async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const channelId = c.req.param('channelId');
