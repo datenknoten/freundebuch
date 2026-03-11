@@ -8,6 +8,7 @@ export async function sendDiscordMessage(webhookUrl: string, content: string): P
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content }),
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!response.ok) {

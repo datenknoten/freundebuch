@@ -17,6 +17,7 @@ export async function sendTelegramMessage(
       chat_id: chatId,
       text,
     }),
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!response.ok) {
