@@ -59,7 +59,9 @@ If delivery to one channel fails (network error, bad credentials, etc.), the fai
 
 ### 3. Notification Message Format
 
-The message should be concise and warm. Example for a day with two upcoming dates:
+Messages are localized based on the user's `language` preference (`'en' | 'de'`) stored in `auth.users.preferences`. The scheduler reads this preference when building the message so each user receives their digest in their chosen language.
+
+**English example:**
 
 ```
 Freundebuch - Upcoming dates
@@ -70,6 +72,27 @@ In 5 days: Jan & Sarah's wedding anniversary (March 15)
 View your Freundebuch: https://your-instance.example.com
 ```
 
+**German example:**
+
+```
+Freundebuch - Bevorstehende Termine
+
+Morgen: Anna Bauers Geburtstag (11. März)
+In 5 Tagen: Hochzeitstag von Jan & Sarah (15. März)
+
+Dein Freundebuch öffnen: https://your-instance.example.com
+```
+
+Since the backend does not currently use i18next, notification message strings should be kept in a simple lookup object (e.g., `apps/backend/src/utils/notification-messages.ts`) keyed by locale, rather than pulling in the full i18next library. This keeps the backend dependency-light while still supporting both languages. The lookup must cover:
+
+- Header ("Upcoming dates" / "Bevorstehende Termine")
+- Day phrasing ("Today" / "Heute", "Tomorrow" / "Morgen", "In N days" / "In N Tagen")
+- Date type labels ("birthday" / "Geburtstag", "anniversary" / "Hochzeitstag")
+- Footer link text ("View your Freundebuch" / "Dein Freundebuch öffnen")
+- Date formatting (month names, day-month order per locale)
+
+If the user has no `language` preference set, fall back to `'en'`.
+
 Formatting rules:
 - Dates are listed in ascending `days_until` order, matching the existing query's sort
 - "Today" / "Tomorrow" / "In N days" phrasing for `days_until` of 0, 1, and 2+ respectively
@@ -77,6 +100,7 @@ Formatting rules:
 - For `date_type = 'other'`, use the `label` field as the event name
 - The instance base URL is appended as a convenience link; it falls back to being omitted if the instance URL is not configured in system settings
 - If there are no upcoming dates in the lookahead window, no message is sent at all
+- Date formatting follows locale conventions: "March 11" for English, "11. März" for German
 
 Platform-specific formatting notes:
 - **Telegram**: Plain text; Markdown formatting can be added in a follow-up
@@ -321,7 +345,8 @@ cron.schedule('* * * * *', async () => {
 
       if (upcomingDates.length === 0) continue;
 
-      const message = formatNotificationMessage(upcomingDates);
+      const locale = channel.user_language ?? 'en';
+      const message = formatNotificationMessage(upcomingDates, locale);
       await dispatch(channel, message);
       logger.info({ channelExternalId: channel.external_id }, 'Notification dispatched');
     } catch (error) {
@@ -333,7 +358,7 @@ cron.schedule('* * * * *', async () => {
 });
 ```
 
-A new PgTyped query `getEnabledChannelsDueAt` is needed that selects from `system.notification_channels` where `is_enabled = true` and `notify_time = :notifyTime`, joining to `auth.users` to retrieve `user_external_id`.
+A new PgTyped query `getEnabledChannelsDueAt` is needed that selects from `system.notification_channels` where `is_enabled = true` and `notify_time = :notifyTime`, joining to `auth.users` to retrieve `user_external_id` and the user's `language` preference (extracted from `preferences->'language'`, defaulting to `'en'`).
 
 **Important:** The scheduler pseudo-code above calls `getUpcomingDates` with `maxDays` and `limitCount` parameters. The existing `GetUpcomingDates` query in `friend-dates.sql` already accepts these exact parameters (`maxDays` for the lookahead window, `limitCount` for the result limit), so no modification to the existing query is needed. The scheduler reuses it as-is — the only difference from the frontend dashboard usage is that different values are passed at call time (per-channel `lookahead_days` rather than a hardcoded default). A new query is **not** required; the existing one is fully compatible.
 
@@ -418,6 +443,7 @@ settings.messagingReminders.delete.confirm
 - [ ] An invalid Discord webhook URL (wrong domain or path format) is rejected at the API level with a `400` response
 - [ ] An invalid Matrix room ID format (must start with `!` and contain `:`) is rejected at the API level with a `400` response
 - [ ] All new settings UI strings are available in both English and German
+- [ ] Notification messages (header, day phrasing, date type labels, footer, date formatting) are sent in the user's configured `language` preference, falling back to English if unset
 - [ ] The migration includes a proper `down()` function that drops `system.notification_channels`
 - [ ] The `updated_at` trigger is created for `system.notification_channels` following project convention
 
