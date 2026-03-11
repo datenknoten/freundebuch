@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS system.notification_channels (
     -- Per-channel notification preferences
     lookahead_days      INTEGER NOT NULL DEFAULT 7 CHECK (lookahead_days BETWEEN 1 AND 30),
     notify_time         TIME NOT NULL DEFAULT '08:00:00',
+    last_notified_date  DATE,
 
     created_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -332,8 +333,15 @@ The job runs every minute and checks which enabled channels have a `notify_time`
 cron.schedule('* * * * *', async () => {
   const now = new Date();
   const currentTime = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}`;
+  const todayUtc = now.toISOString().slice(0, 10); // 'YYYY-MM-DD'
 
-  const dueChannels = await getEnabledChannelsDueAt.run({ notifyTime: currentTime }, pool);
+  // Idempotency: only select channels that haven't already been notified today.
+  // The WHERE clause includes `(last_notified_date IS NULL OR last_notified_date < :today)`
+  // so duplicate runs within the same minute or across multiple instances are safe.
+  const dueChannels = await getEnabledChannelsDueAt.run(
+    { notifyTime: currentTime, today: todayUtc },
+    pool,
+  );
 
   for (const channel of dueChannels) {
     try {
@@ -343,22 +351,42 @@ cron.schedule('* * * * *', async () => {
         limitCount: 50,
       }, pool);
 
-      if (upcomingDates.length === 0) continue;
+      if (upcomingDates.length === 0) {
+        // No upcoming dates — still mark as notified so we don't re-check every minute
+        await markChannelNotified.run({ channelId: channel.id, today: todayUtc }, pool);
+        continue;
+      }
 
       const locale = channel.user_language ?? 'en';
       const message = formatNotificationMessage(upcomingDates, locale);
       await dispatch(channel, message);
+
+      // Atomically set last_notified_date to today after successful dispatch
+      await markChannelNotified.run({ channelId: channel.id, today: todayUtc }, pool);
       logger.info({ channelExternalId: channel.external_id }, 'Notification dispatched');
     } catch (error) {
       const err = toError(error);
       logger.error({ err, channelExternalId: channel.external_id }, 'Failed to dispatch notification');
       Sentry.captureException(err);
+      // last_notified_date is NOT updated on failure, so the channel will be retried next minute
     }
   }
 });
 ```
 
-A new PgTyped query `getEnabledChannelsDueAt` is needed that selects from `system.notification_channels` where `is_enabled = true` and `notify_time = :notifyTime`, joining to `auth.users` to retrieve `user_external_id` and the user's `language` preference (extracted from `preferences->'language'`, defaulting to `'en'`).
+**Idempotency:** The `last_notified_date` column ensures each channel receives at most one digest per calendar day (UTC). The `getEnabledChannelsDueAt` query filters out channels where `last_notified_date` already matches today's date, making the scheduler safe to run across multiple backend instances. A separate `markChannelNotified` PgTyped query updates the column:
+
+```sql
+/* @name MarkChannelNotified */
+UPDATE system.notification_channels
+SET last_notified_date = :today
+WHERE id = :channelId
+  AND (last_notified_date IS NULL OR last_notified_date < :today::date);
+```
+
+The `WHERE` guard in the UPDATE makes the mark itself idempotent — concurrent instances racing to mark the same channel will not conflict. If dispatch fails, `last_notified_date` is left unchanged so the scheduler retries on the next minute tick until either delivery succeeds or the day rolls over.
+
+A new PgTyped query `getEnabledChannelsDueAt` is needed that selects from `system.notification_channels` where `is_enabled = true`, `notify_time = :notifyTime`, and `(last_notified_date IS NULL OR last_notified_date < :today::date)`, joining to `auth.users` to retrieve `user_external_id` and the user's `language` preference (extracted from `preferences->'language'`, defaulting to `'en'`). The `last_notified_date` filter is the idempotency guard that prevents duplicate notifications.
 
 **Important:** The scheduler pseudo-code above calls `getUpcomingDates` with `maxDays` and `limitCount` parameters. The existing `GetUpcomingDates` query in `friend-dates.sql` already accepts these exact parameters (`maxDays` for the lookahead window, `limitCount` for the result limit), so no modification to the existing query is needed. The scheduler reuses it as-is — the only difference from the frontend dashboard usage is that different values are passed at call time (per-channel `lookahead_days` rather than a hardcoded default). A new query is **not** required; the existing one is fully compatible.
 
