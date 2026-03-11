@@ -542,6 +542,43 @@
       "revoking": "Revoking...",
       "revoke": "Revoke"
     },
+    "messagingReminders": {
+      "title": "Messaging Reminders",
+      "description": "Receive daily digests of upcoming friend dates via your favorite messaging platform.",
+      "addChannel": "Add Channel",
+      "noChannels": "No messaging channels configured",
+      "platform": {
+        "telegram": "Telegram",
+        "matrix": "Matrix",
+        "discord": "Discord"
+      },
+      "fields": {
+        "platform": "Platform",
+        "botToken": "Bot Token",
+        "chatId": "Chat ID",
+        "homeserver": "Homeserver URL",
+        "accessToken": "Access Token",
+        "roomId": "Room ID",
+        "webhookUrl": "Webhook URL",
+        "lookaheadDays": "Lookahead Days",
+        "notifyTime": "Notification Time (UTC)"
+      },
+      "test": {
+        "button": "Test",
+        "sending": "Sending...",
+        "success": "Sent!",
+        "failure": "Failed"
+      },
+      "toggle": {
+        "enable": "Enable",
+        "disable": "Disable",
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "delete": {
+        "confirm": "Confirm?"
+      }
+    },
     "carddav": {
       "title": "CardDAV Setup",
       "subtitle": "Sync your friends with iOS, macOS, Thunderbird, and other CardDAV-compatible apps.",

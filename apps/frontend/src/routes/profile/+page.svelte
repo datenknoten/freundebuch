@@ -3,6 +3,7 @@ import * as authApi from '$lib/api/auth';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import AppPasswordManager from '$lib/components/AppPasswordManager.svelte';
 import CardDAVSetupGuide from '$lib/components/CardDAVSetupGuide.svelte';
+import NotificationChannelList from '$lib/components/NotificationChannelList.svelte';
 import { createI18n, languageNames } from '$lib/i18n/index.js';
 import { auth, birthdayFormat, currentUser } from '$lib/stores/auth';
 import {
@@ -208,6 +209,14 @@ function handleLanguageChange(lang: SupportedLanguage) {
 					{$i18n.t('profile.appPasswords.subtitle')}
 				</p>
 				<AppPasswordManager />
+			</div>
+
+			<div class="mt-8 pt-8 border-t border-gray-200">
+				<h2 class="text-xl font-heading text-gray-800 mb-2">{$i18n.t('profile.messagingReminders.title')}</h2>
+				<p class="text-sm font-body text-gray-600 mb-4">
+					{$i18n.t('profile.messagingReminders.description')}
+				</p>
+				<NotificationChannelList />
 			</div>
 
 			<div class="mt-8 pt-8 border-t border-gray-200">
