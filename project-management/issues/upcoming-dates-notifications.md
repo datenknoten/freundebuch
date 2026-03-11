@@ -228,11 +228,52 @@ const DiscordCredentialsSchema = type({
 });
 ```
 
-An invalid credential format (e.g., a Discord webhook URL pointing to a different domain) returns a `400` with a descriptive validation error. Credentials are validated structurally but not verified against the live platform API at save time; the "Send test message" action serves that purpose.
+**Validation flow in the route handler:**
+
+1. The route handler parses the incoming body with `NotificationChannelCreateSchema` (or `NotificationChannelUpdateSchema` for PUT). This validates the top-level shape, including that `credentials` is an object and `platform` is one of the three allowed values.
+2. Immediately after step 1 succeeds, the route handler reads the now-validated `platform` field and applies the corresponding platform-specific schema (`TelegramCredentialsSchema`, `MatrixCredentialsSchema`, or `DiscordCredentialsSchema`) to the `credentials` object. This second-pass validation happens in the route handler, not in the service layer, so that invalid input is rejected before any service call is made.
+3. If either validation step fails, a `400` response is returned with the ArkType validation errors.
+
+Credentials are validated structurally but not verified against the live platform API at save time; the "Send test message" action serves that purpose.
 
 ---
 
 ## Backend Implementation
+
+### Custom Error Classes
+
+Add to `apps/backend/src/utils/errors.ts`, following the existing pattern (e.g., `FriendNotFoundError`, `CircleNameExistsError`):
+
+```typescript
+// 404 - channel not found
+export class NotificationChannelNotFoundError extends AppError {
+  statusCode = 404 as const;
+  constructor(externalId: string, options?: ErrorOptions) {
+    super(`Notification channel not found: ${externalId}`, options);
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+// 409 - duplicate platform for user
+export class NotificationChannelAlreadyExistsError extends AppError {
+  statusCode = 409 as const;
+  constructor(platform: string, options?: ErrorOptions) {
+    super(`A ${platform} notification channel already exists for this user`, options);
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+// 502 - external messaging platform returned an error
+export class NotificationDeliveryError extends AppError {
+  statusCode = 502 as const;
+  constructor(platform: string, detail?: string, options?: ErrorOptions) {
+    super(`Failed to deliver ${platform} notification${detail ? `: ${detail}` : ''}`, options);
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+```
+
+`NotificationChannelNotFoundError` is thrown by the service when a lookup by `external_id` returns no rows. `NotificationChannelAlreadyExistsError` is thrown when the unique constraint `(user_id, platform)` is violated. `NotificationDeliveryError` wraps transport failures from the external platform clients and is used by the test-message endpoint to return a `502` to the caller.
 
 ### New Service: `NotificationChannelsService`
 
@@ -279,6 +320,8 @@ cron.schedule('* * * * *', async () => {
 ```
 
 A new PgTyped query `getEnabledChannelsDueAt` is needed that selects from `system.notification_channels` where `is_enabled = true` and `notify_time = :notifyTime`, joining to `auth.users` to retrieve `user_external_id`.
+
+**Important:** The scheduler pseudo-code above calls `getUpcomingDates` with `maxDays` and `limitCount` parameters. The existing `GetUpcomingDates` query in `friend-dates.sql` already accepts these exact parameters (`maxDays` for the lookahead window, `limitCount` for the result limit), so no modification to the existing query is needed. The scheduler reuses it as-is — the only difference from the frontend dashboard usage is that different values are passed at call time (per-channel `lookahead_days` rather than a hardcoded default). A new query is **not** required; the existing one is fully compatible.
 
 ### New External Clients
 
