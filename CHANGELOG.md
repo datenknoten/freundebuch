@@ -1,3 +1,20 @@
+## [2.66.0](https://github.com/datenknoten/freundebuch/compare/v2.65.9...v2.66.0) (2026-03-11)
+
+### Features
+
+* **backend:** Add notification channel error classes and PgTyped queries ([8cf3f04](https://github.com/datenknoten/freundebuch/commit/8cf3f048825055a87733279505bd7ed69f4f7546))
+* **backend:** Add notification channels service, clients, scheduler, and routes ([5ded882](https://github.com/datenknoten/freundebuch/commit/5ded882c13b96301a976510657e8711a54274064))
+* **database:** Add notification_channels table migration ([1614c2b](https://github.com/datenknoten/freundebuch/commit/1614c2b1fa5dc56672f40a2635e9166d4cfe3e3b))
+* **frontend:** Add notification channels UI with profile page integration ([71923c9](https://github.com/datenknoten/freundebuch/commit/71923c9203277850383688208dea0c3ff19f0475))
+* **shared:** Add notification channel types ([d979ad1](https://github.com/datenknoten/freundebuch/commit/d979ad19a196fb237f95261346fe752871961c40))
+
+### Bug Fixes
+
+* **backend:** Add 10s timeout to external messaging HTTP calls ([47d58c5](https://github.com/datenknoten/freundebuch/commit/47d58c5f4230baf185ccb10bb86946650a80e999))
+* **backend:** Address code review findings on notification channels ([91f68e5](https://github.com/datenknoten/freundebuch/commit/91f68e507b10bb6f15f1fa6403dae26cb4c95e79))
+* **backend:** Fix IPv6 SSRF bypass in homeserver URL validation ([f051b45](https://github.com/datenknoten/freundebuch/commit/f051b4519a52e388a43a2642963daae186993abf))
+* **frontend:** Replace hand-written bell SVG with Heroicons bell icon ([49fc88c](https://github.com/datenknoten/freundebuch/commit/49fc88cbe27331b2abd760ce4cc217c3b6e476d4))
+
 ## [2.65.9](https://github.com/datenknoten/freundebuch/compare/v2.65.8...v2.65.9) (2026-03-09)
 
 ### Code Refactoring
