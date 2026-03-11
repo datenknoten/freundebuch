@@ -27,9 +27,9 @@ function assertPublicHomeserver(homeserver: string): void {
     /^172\.(1[6-9]|2\d|3[01])\./,
     /^192\.168\./,
     /^169\.254\./,
-    /^fc00:/i,
-    /^fd/i,
-    /^fe80:/i,
+    /^\[fc00:/i,
+    /^\[fd/i,
+    /^\[fe80:/i,
   ];
 
   for (const pattern of blockedPatterns) {
