@@ -53,6 +53,22 @@ let collectivesLimiter = new RateLimiterMemory({
   blockDuration: isTestEnv ? 1 : 60,
 });
 
+// Rate limiter for notification channels API endpoints
+// 30 requests per minute in production, 300 in test
+let notificationChannelsLimiter = new RateLimiterMemory({
+  points: isTestEnv ? 300 : 30,
+  duration: 60,
+  blockDuration: isTestEnv ? 1 : 60,
+});
+
+// Rate limiter for notification test message endpoint
+// 3 attempts per minute in production, 100 in test
+let notificationTestLimiter = new RateLimiterMemory({
+  points: isTestEnv ? 100 : 3,
+  duration: 60,
+  blockDuration: isTestEnv ? 1 : 120,
+});
+
 /**
  * Reset all rate limiters (for testing purposes)
  */
@@ -86,6 +102,16 @@ export function resetRateLimiters(): void {
     points: isTestEnv ? 300 : 120,
     duration: 60,
     blockDuration: isTestEnv ? 1 : 60,
+  });
+  notificationChannelsLimiter = new RateLimiterMemory({
+    points: isTestEnv ? 300 : 30,
+    duration: 60,
+    blockDuration: isTestEnv ? 1 : 60,
+  });
+  notificationTestLimiter = new RateLimiterMemory({
+    points: isTestEnv ? 100 : 3,
+    duration: 60,
+    blockDuration: isTestEnv ? 1 : 120,
   });
 }
 
@@ -212,5 +238,44 @@ export async function collectivesRateLimitMiddleware(c: Context, next: Next) {
     return next();
   } catch (error) {
     return handleRateLimitRejection(c, error, 'Rate limit exceeded on collectives endpoint');
+  }
+}
+
+/**
+ * Rate limiting middleware for notification channels API endpoints
+ * Limits: 30 requests per minute, 1 minute block after exceeding
+ */
+export async function notificationChannelsRateLimitMiddleware(c: Context, next: Next) {
+  const clientId = getClientIdentifier(c);
+
+  try {
+    await notificationChannelsLimiter.consume(clientId);
+    return next();
+  } catch (error) {
+    return handleRateLimitRejection(
+      c,
+      error,
+      'Rate limit exceeded on notification channels endpoint',
+    );
+  }
+}
+
+/**
+ * Rate limiting middleware for notification test message endpoint
+ * Limits: 3 attempts per minute, 2 minute block after exceeding
+ */
+export async function notificationTestRateLimitMiddleware(c: Context, next: Next) {
+  const clientId = getClientIdentifier(c);
+
+  try {
+    await notificationTestLimiter.consume(clientId);
+    return next();
+  } catch (error) {
+    return handleRateLimitRejection(
+      c,
+      error,
+      'Rate limit exceeded on notification test endpoint',
+      'Too many test messages. Please wait before trying again.',
+    );
   }
 }

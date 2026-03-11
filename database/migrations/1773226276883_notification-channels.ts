@@ -40,6 +40,11 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
         comment: 'Whether this channel is active for notifications',
       },
 
+      // Credentials are stored as plaintext TEXT columns. For a self-hosted app where
+      // the DB admin and the app operator are typically the same person, this is an
+      // acceptable trade-off. If stronger isolation is needed in the future, consider
+      // application-level encryption (e.g. AES-256-GCM with a server-side key).
+
       // Telegram credentials
       telegram_bot_token: {
         type: 'text',
