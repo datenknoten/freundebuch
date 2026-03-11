@@ -42,14 +42,29 @@ const TelegramCredentialsSchema = type({
   chatId: 'string > 0',
 });
 
+const TelegramCredentialsUpdateSchema = type({
+  'botToken?': 'string > 0',
+  'chatId?': 'string > 0',
+});
+
 const MatrixCredentialsSchema = type({
   homeserver: /^https?:\/\/.+/,
   accessToken: 'string > 0',
   roomId: /^!.+:.+/,
 });
 
+const MatrixCredentialsUpdateSchema = type({
+  'homeserver?': /^https?:\/\/.+/,
+  'accessToken?': 'string > 0',
+  'roomId?': /^!.+:.+/,
+});
+
 const DiscordCredentialsSchema = type({
   webhookUrl: /^https:\/\/discord(app)?\.com\/api\/webhooks\/.+\/.+/,
+});
+
+const DiscordCredentialsUpdateSchema = type({
+  'webhookUrl?': /^https:\/\/discord(app)?\.com\/api\/webhooks\/.+\/.+/,
 });
 
 const ToggleSchema = type({
@@ -57,7 +72,7 @@ const ToggleSchema = type({
 });
 
 /**
- * Validate platform-specific credentials
+ * Validate platform-specific credentials (all fields required — for creation)
  */
 function validateCredentials(platform: string, credentials: object): Record<string, string> {
   let validated:
@@ -73,6 +88,39 @@ function validateCredentials(platform: string, credentials: object): Record<stri
       break;
     case 'discord':
       validated = DiscordCredentialsSchema(credentials);
+      break;
+    default:
+      throw new ValidationError(`Unknown platform: ${platform}`);
+  }
+
+  if (validated instanceof type.errors) {
+    throw new ValidationError('Invalid credentials', validated);
+  }
+
+  return validated as Record<string, string>;
+}
+
+/**
+ * Validate platform-specific credentials (all fields optional — for updates)
+ * Tokens are omitted from API responses for security, so partial updates must be allowed.
+ */
+function validateCredentialsForUpdate(
+  platform: string,
+  credentials: object,
+): Record<string, string> {
+  let validated:
+    | ReturnType<typeof TelegramCredentialsUpdateSchema>
+    | ReturnType<typeof MatrixCredentialsUpdateSchema>
+    | ReturnType<typeof DiscordCredentialsUpdateSchema>;
+  switch (platform) {
+    case 'telegram':
+      validated = TelegramCredentialsUpdateSchema(credentials);
+      break;
+    case 'matrix':
+      validated = MatrixCredentialsUpdateSchema(credentials);
+      break;
+    case 'discord':
+      validated = DiscordCredentialsUpdateSchema(credentials);
       break;
     default:
       throw new ValidationError(`Unknown platform: ${platform}`);
@@ -179,7 +227,7 @@ app.put('/:channelId', async (c) => {
   if (validated.credentials) {
     const service = new NotificationChannelsService(db);
     const existing = await service.getChannel(user.userId, channelId);
-    credentials = validateCredentials(existing.data.platform, validated.credentials);
+    credentials = validateCredentialsForUpdate(existing.data.platform, validated.credentials);
   }
 
   const service = new NotificationChannelsService(db);
