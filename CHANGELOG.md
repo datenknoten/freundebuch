@@ -1,3 +1,9 @@
+## [2.66.2](https://github.com/datenknoten/freundebuch/compare/v2.66.1...v2.66.2) (2026-03-11)
+
+### Bug Fixes
+
+* **backend:** Allow partial credential updates for notification channels ([d1cdddc](https://github.com/datenknoten/freundebuch/commit/d1cdddc94dd0f79f6c8f72908b08a5644f2cf773))
+
 ## [2.66.1](https://github.com/datenknoten/freundebuch/compare/v2.66.0...v2.66.1) (2026-03-11)
 
 ### Bug Fixes
