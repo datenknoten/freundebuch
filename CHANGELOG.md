@@ -1,3 +1,9 @@
+## [2.66.1](https://github.com/datenknoten/freundebuch/compare/v2.66.0...v2.66.1) (2026-03-11)
+
+### Bug Fixes
+
+* **backend:** Regenerate sql types ([c0cade0](https://github.com/datenknoten/freundebuch/commit/c0cade0300d3064a3009a97729fe3a911df8508f))
+
 ## [2.66.0](https://github.com/datenknoten/freundebuch/compare/v2.65.9...v2.66.0) (2026-03-11)
 
 ### Features
