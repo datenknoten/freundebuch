@@ -160,30 +160,44 @@ All endpoints require authentication. Channels are always addressed by `external
 | POST | `/api/notification-channels/:channelId/test` | Send a test message to verify the channel works |
 | PATCH | `/api/notification-channels/:channelId/toggle` | Enable or disable a channel without a full update |
 
-### Response Shape (single channel)
+### Response Shape
+
+All responses follow the project's `{ data: T }` envelope convention per AGENTS.md.
+
+**Single channel** (GET `/api/notification-channels/:channelId`, POST, PUT):
 
 ```typescript
 {
-  externalId: string,            // UUID - always use this in API calls
-  platform: 'telegram' | 'matrix' | 'discord',
-  isEnabled: boolean,
-  lookaheadDays: number,
-  notifyTime: string,            // "HH:MM" 24-hour format
-  credentials: {
-    // Telegram
-    botToken?: string,           // masked in responses: "...1234"
-    chatId?: string,
+  data: {
+    externalId: string,            // UUID - always use this in API calls
+    platform: 'telegram' | 'matrix' | 'discord',
+    isEnabled: boolean,
+    lookaheadDays: number,
+    notifyTime: string,            // "HH:MM" 24-hour format
+    credentials: {
+      // Telegram
+      botToken?: string,           // masked in responses: "...1234"
+      chatId?: string,
 
-    // Matrix
-    homeserver?: string,         // not masked (not a secret)
-    accessToken?: string,        // masked: "...5678"
-    roomId?: string,             // not masked
+      // Matrix
+      homeserver?: string,         // not masked (not a secret)
+      accessToken?: string,        // masked: "...5678"
+      roomId?: string,             // not masked
 
-    // Discord
-    webhookUrl?: string,         // masked: "https://discord.com/api/webhooks/.../...abcd"
-  },
-  createdAt: string,             // ISO 8601
-  updatedAt: string,
+      // Discord
+      webhookUrl?: string,         // masked: "https://discord.com/api/webhooks/.../...abcd"
+    },
+    createdAt: string,             // ISO 8601
+    updatedAt: string,
+  }
+}
+```
+
+**Channel list** (GET `/api/notification-channels`):
+
+```typescript
+{
+  data: NotificationChannel[]      // same shape as above, one per configured channel
 }
 ```
 
