@@ -60,8 +60,8 @@ export function generateToken(payload: unknown): string {
   // Add jti (JWT ID) for uniqueness - ensures each token is unique even if issued in the same second
   const jti = crypto.randomBytes(16).toString('hex');
 
-  return jwt.sign({ ...content, jti }, config.JWT_SECRET, {
-    expiresIn: config.JWT_EXPIRY,
+  return jwt.sign({ ...content, jti }, config.JWT_SECRET ?? '', {
+    expiresIn: config.JWT_EXPIRY ?? 604800,
   });
 }
 
@@ -71,7 +71,7 @@ export function generateToken(payload: unknown): string {
 export function verifyToken(token: string): JWTPayload | null {
   try {
     const config = getConfig();
-    const content = JWTPayloadSchema(jwt.verify(token, config.JWT_SECRET));
+    const content = JWTPayloadSchema(jwt.verify(token, config.JWT_SECRET ?? ''));
 
     if (content instanceof type.errors) {
       return null;
@@ -104,7 +104,7 @@ export function hashSessionToken(token: string): string {
 export function getSessionExpiry(): Date {
   const config = getConfig();
   const expiry = new Date();
-  expiry.setDate(expiry.getDate() + config.SESSION_EXPIRY_DAYS);
+  expiry.setDate(expiry.getDate() + (config.SESSION_EXPIRY_DAYS ?? 7));
   return expiry;
 }
 
@@ -121,7 +121,7 @@ export function generatePasswordResetToken(): string {
 export function getPasswordResetExpiry(): Date {
   const config = getConfig();
   const expiry = new Date();
-  expiry.setHours(expiry.getHours() + config.PASSWORD_RESET_EXPIRY_HOURS);
+  expiry.setHours(expiry.getHours() + (config.PASSWORD_RESET_EXPIRY_HOURS ?? 1));
   return expiry;
 }
 
@@ -134,7 +134,7 @@ export function getSessionCookieOptions(): CookieOptions {
     httpOnly: true,
     secure: config.ENV === 'production',
     sameSite: 'Lax',
-    maxAge: config.SESSION_EXPIRY_DAYS * 24 * 60 * 60, // Convert days to seconds
+    maxAge: (config.SESSION_EXPIRY_DAYS ?? 7) * 24 * 60 * 60, // Convert days to seconds
     path: '/',
   };
 }
@@ -164,7 +164,7 @@ export function getAuthTokenCookieOptions(): CookieOptions {
     httpOnly: true,
     secure: config.ENV === 'production',
     sameSite: 'Lax',
-    maxAge: config.JWT_EXPIRY, // Match JWT expiry (in seconds)
+    maxAge: config.JWT_EXPIRY ?? 604800, // Match JWT expiry (in seconds)
     path: '/',
   };
 }

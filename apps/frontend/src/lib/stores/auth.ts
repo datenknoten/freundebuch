@@ -1,6 +1,7 @@
 import { derived, writable } from 'svelte/store';
 import type { User, UserPreferences } from '$shared';
 import * as authApi from '../api/auth.js';
+import { authClient } from '../auth-client.js';
 import { retryWithBackoff } from '../utils/retry.js';
 
 /** Default user preferences */
@@ -14,8 +15,6 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 interface AuthState {
   user: User | null;
   preferences: UserPreferences;
-  accessToken: string | null;
-  sessionToken: string | null;
   isLoading: boolean;
   isInitialized: boolean;
   error: string | null;
@@ -27,8 +26,6 @@ interface AuthState {
 const initialState: AuthState = {
   user: null,
   preferences: DEFAULT_PREFERENCES,
-  accessToken: null,
-  sessionToken: null,
   isLoading: false,
   isInitialized: false,
   error: null,
@@ -40,6 +37,25 @@ const initialState: AuthState = {
 function createAuthStore() {
   const { subscribe, set, update } = writable<AuthState>(initialState);
 
+  /**
+   * Fetch user data from our custom /api/auth/me endpoint
+   * which includes preferences and onboarding status
+   */
+  async function fetchUserData(): Promise<User | null> {
+    try {
+      const result = await authApi.getUserWithPreferences();
+      return {
+        externalId: result.user.externalId,
+        email: result.user.email,
+        selfProfileId: result.user.selfProfileId,
+        hasCompletedOnboarding: result.user.hasCompletedOnboarding,
+        preferences: result.preferences,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   return {
     subscribe,
 
@@ -50,25 +66,38 @@ function createAuthStore() {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const result = await authApi.register({ email, password });
+        const result = await authClient.signUp.email({
+          email,
+          password,
+          name: email.split('@')[0],
+        });
 
-        update((state) => ({
-          ...state,
-          user: result.user,
-          accessToken: result.accessToken,
-          sessionToken: result.sessionToken,
-          isLoading: false,
-          error: null,
-        }));
+        if (result.error) {
+          throw new Error(result.error.message || 'Registration failed');
+        }
 
-        return result;
+        // Fetch full user data including preferences/onboarding
+        const userData = await fetchUserData();
+
+        if (userData) {
+          update((state) => ({
+            ...state,
+            user: userData,
+            preferences: { ...DEFAULT_PREFERENCES, ...userData.preferences },
+            isLoading: false,
+            isInitialized: true,
+            error: null,
+          }));
+        }
+
+        return userData;
       } catch (error) {
-        const errorMessage =
-          error instanceof authApi.ApiError ? error.message : 'Registration failed';
+        const errorMessage = error instanceof Error ? error.message : 'Registration failed';
 
         update((state) => ({
           ...state,
           isLoading: false,
+          isInitialized: true,
           error: errorMessage,
         }));
 
@@ -83,24 +112,37 @@ function createAuthStore() {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        const result = await authApi.login({ email, password });
+        const result = await authClient.signIn.email({
+          email,
+          password,
+        });
 
-        update((state) => ({
-          ...state,
-          user: result.user,
-          accessToken: result.accessToken,
-          sessionToken: result.sessionToken,
-          isLoading: false,
-          error: null,
-        }));
+        if (result.error) {
+          throw new Error(result.error.message || 'Login failed');
+        }
 
-        return result;
+        // Fetch full user data including preferences/onboarding
+        const userData = await fetchUserData();
+
+        if (userData) {
+          update((state) => ({
+            ...state,
+            user: userData,
+            preferences: { ...DEFAULT_PREFERENCES, ...userData.preferences },
+            isLoading: false,
+            isInitialized: true,
+            error: null,
+          }));
+        }
+
+        return userData;
       } catch (error) {
-        const errorMessage = error instanceof authApi.ApiError ? error.message : 'Login failed';
+        const errorMessage = error instanceof Error ? error.message : 'Login failed';
 
         update((state) => ({
           ...state,
           isLoading: false,
+          isInitialized: true,
           error: errorMessage,
         }));
 
@@ -115,45 +157,10 @@ function createAuthStore() {
       update((state) => ({ ...state, isLoading: true, error: null }));
 
       try {
-        await authApi.logout();
-
+        await authClient.signOut();
         set(initialState);
       } catch (error) {
-        const errorMessage = error instanceof authApi.ApiError ? error.message : 'Logout failed';
-
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Refresh the access token
-     */
-    refresh: async () => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        const result = await authApi.refresh();
-
-        update((state) => ({
-          ...state,
-          user: result.user,
-          preferences: { ...DEFAULT_PREFERENCES, ...result.user.preferences },
-          accessToken: result.accessToken,
-          sessionToken: result.sessionToken,
-          isLoading: false,
-          error: null,
-        }));
-
-        return result;
-      } catch (error) {
-        const errorMessage =
-          error instanceof authApi.ApiError ? error.message : 'Token refresh failed';
+        const errorMessage = error instanceof Error ? error.message : 'Logout failed';
 
         update((state) => ({
           ...state,
@@ -167,26 +174,41 @@ function createAuthStore() {
 
     /**
      * Initialize auth state (e.g., on app load)
-     * Attempts to refresh the session if a cookie exists
+     * Checks if there's a valid session via Better Auth
      */
     initialize: async () => {
       update((state) => ({ ...state, isLoading: true }));
 
       try {
-        const result = await authApi.refresh();
+        const session = await authClient.getSession();
 
+        if (session.data) {
+          // We have a valid session, fetch full user data
+          const userData = await fetchUserData();
+
+          if (userData) {
+            update((state) => ({
+              ...state,
+              user: userData,
+              preferences: { ...DEFAULT_PREFERENCES, ...userData.preferences },
+              isLoading: false,
+              isInitialized: true,
+              error: null,
+            }));
+
+            return { user: userData };
+          }
+        }
+
+        // No valid session
         update((state) => ({
           ...state,
-          user: result.user,
-          preferences: { ...DEFAULT_PREFERENCES, ...result.user.preferences },
-          accessToken: result.accessToken,
-          sessionToken: result.sessionToken,
           isLoading: false,
           isInitialized: true,
           error: null,
         }));
 
-        return result;
+        return null;
       } catch {
         // Not an error if there's no valid session
         update((state) => ({

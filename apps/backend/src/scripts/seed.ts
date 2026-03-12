@@ -6,9 +6,14 @@
  * Usage: pnpm seed
  */
 
+import bcrypt from 'bcrypt';
 import pg from 'pg';
-import { hashPassword } from '../utils/auth.js';
 import { getConfig } from '../utils/config.js';
+
+const SALT_ROUNDS = 10;
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, SALT_ROUNDS);
+}
 
 const { Pool } = pg;
 
@@ -110,7 +115,7 @@ async function seed() {
     try {
       await client.query('BEGIN');
 
-      // 1. Create demo user
+      // 1. Create demo user (both legacy and Better Auth tables)
       console.log('Creating demo user...');
       const passwordHash = await hashPassword(DEMO_USER.password);
       const userResult = await client.query(
@@ -121,6 +126,18 @@ async function seed() {
       );
       const userId = userResult.rows[0].id;
       const userExternalId = userResult.rows[0].external_id;
+
+      // Also insert into Better Auth user and account tables
+      await client.query(
+        `INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
+         VALUES ($1, $2, $3, false, NOW(), NOW())`,
+        [userExternalId, DEMO_USER.displayName, DEMO_USER.email],
+      );
+      await client.query(
+        `INSERT INTO auth.account (id, account_id, provider_id, user_id, password, created_at, updated_at)
+         VALUES (gen_random_uuid()::text, $1, 'credential', $1, $2, NOW(), NOW())`,
+        [userExternalId, passwordHash],
+      );
       console.log(`  Created user: ${DEMO_USER.email} (${userExternalId})`);
 
       // 2. Create self-profile for onboarding

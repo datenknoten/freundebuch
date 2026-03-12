@@ -1,12 +1,11 @@
 <script lang="ts">
-import * as authApi from '$lib/api/auth';
+import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 
 let email = $state('');
 let isLoading = $state(false);
 let error = $state('');
 let success = $state(false);
-let resetToken = $state(''); // For MVP - will be removed in production
 
 async function handleSubmit(e) {
   e.preventDefault();
@@ -15,10 +14,18 @@ async function handleSubmit(e) {
   success = false;
 
   try {
-    const result = await authApi.forgotPassword({ email });
+    const result = await authClient.requestPasswordReset({
+      email,
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (result.error) {
+      error = result.error.message || 'Failed to send reset email';
+      isLoading = false;
+      return;
+    }
+
     success = true;
-    // For MVP only - display the reset token
-    resetToken = result.resetToken || '';
     isLoading = false;
   } catch (err) {
     error = (err as Error)?.message || 'Failed to send reset email';
@@ -41,28 +48,6 @@ async function handleSubmit(e) {
 		<AlertBanner variant="success">
 			<p class="font-semibold mb-2">Password reset link sent!</p>
 			<p>If the email exists, a password reset link has been sent. Please check your inbox.</p>
-
-			{#if resetToken}
-				<div class="mt-4 p-3 bg-amber-warm/10 border border-amber-warm rounded">
-					<p class="font-semibold text-gray-800 mb-2">
-						⚠️ MVP Testing Mode - Reset Token:
-					</p>
-					<code class="text-xs break-all block bg-white p-2 rounded border">
-						{resetToken}
-					</code>
-					<p class="text-xs mt-2 text-gray-600">
-						Copy this token and use it in the reset password form.
-						<br />
-						<strong>This will be removed in production!</strong>
-					</p>
-					<a
-						href={`/auth/reset-password?token=${resetToken}`}
-						class="inline-block mt-3 text-sm font-semibold text-forest hover:text-forest-light"
-					>
-						Go to reset password page →
-					</a>
-				</div>
-			{/if}
 		</AlertBanner>
 	{/if}
 

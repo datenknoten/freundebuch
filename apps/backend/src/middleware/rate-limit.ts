@@ -5,21 +5,9 @@ import { isRateLimiterRes } from '../utils/type-guards.js';
 // Use higher limits in test environment to allow concurrent operation tests
 const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 
-// Rate limiter for authentication endpoints (login, register)
-// 5 attempts per minute in production, 100 in test
-let authLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 100 : 5,
-  duration: 60,
-  blockDuration: isTestEnv ? 1 : 300,
-});
-
-// Rate limiter for password reset endpoints
-// 3 attempts per hour in production, 100 in test
-let passwordResetLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 100 : 3,
-  duration: 3600,
-  blockDuration: isTestEnv ? 1 : 3600,
-});
+// Auth endpoint rate limiting is handled by Better Auth's rateLimit config
+// (5 req/min window). The authLimiter and passwordResetLimiter were removed
+// as part of Epic 18.
 
 // Rate limiter for friends API endpoints
 // 100 requests per minute in production, 500 in test
@@ -73,16 +61,6 @@ let notificationTestLimiter = new RateLimiterMemory({
  * Reset all rate limiters (for testing purposes)
  */
 export function resetRateLimiters(): void {
-  authLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 100 : 5,
-    duration: 60,
-    blockDuration: isTestEnv ? 1 : 300,
-  });
-  passwordResetLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 100 : 3,
-    duration: 3600,
-    blockDuration: isTestEnv ? 1 : 3600,
-  });
   friendsLimiter = new RateLimiterMemory({
     points: isTestEnv ? 500 : 100,
     duration: 60,
@@ -144,41 +122,6 @@ function handleRateLimitRejection(
   return c.json({ error: responseMessage }, 429, {
     'Retry-After': String(retryAfter),
   });
-}
-
-/**
- * Rate limiting middleware for authentication endpoints
- * Limits: 5 attempts per minute, 5 minute block after exceeding
- */
-export async function authRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
-
-  try {
-    await authLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(c, error, 'Rate limit exceeded on auth endpoint');
-  }
-}
-
-/**
- * Rate limiting middleware for password reset endpoints
- * Limits: 3 attempts per hour, 1 hour block after exceeding
- */
-export async function passwordResetRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
-
-  try {
-    await passwordResetLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(
-      c,
-      error,
-      'Rate limit exceeded on password reset endpoint',
-      'Too many password reset attempts. Please try again later.',
-    );
-  }
 }
 
 /**

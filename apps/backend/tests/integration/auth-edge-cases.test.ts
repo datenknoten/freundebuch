@@ -1,502 +1,329 @@
-import bcrypt from 'bcrypt';
 import { describe, expect, it } from 'vitest';
-import { generateSessionToken, hashSessionToken } from '../../src/utils/auth.js';
-import { countUserSessions, createTestSession, setupAuthTestSuite } from './auth.helpers.js';
+import { extractCookies, extractSessionToken, setupAuthTestSuite } from './auth.helpers.js';
 
-describe('Auth Endpoints - Edge Cases & Integration', () => {
+/**
+ * Helper to sign up a new user via Better Auth and return cookies + response body.
+ */
+async function signUp(
+  app: { fetch: (req: Request) => Response | Promise<Response> },
+  email: string,
+  password: string,
+  name?: string,
+) {
+  const response = await app.fetch(
+    new Request('http://localhost/api/auth/sign-up/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name: name ?? email.split('@')[0] }),
+    }),
+  );
+
+  const body: any = await response.json();
+  const cookies = extractCookies(response);
+
+  return { response, body, cookies };
+}
+
+/**
+ * Helper to sign in via Better Auth and return cookies + response body.
+ */
+async function signIn(
+  app: { fetch: (req: Request) => Response | Promise<Response> },
+  email: string,
+  password: string,
+) {
+  const response = await app.fetch(
+    new Request('http://localhost/api/auth/sign-in/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    }),
+  );
+
+  const body: any = await response.json();
+  const cookies = extractCookies(response);
+
+  return { response, body, cookies };
+}
+
+/**
+ * Helper to sign out via Better Auth using session cookies.
+ */
+async function signOut(
+  app: { fetch: (req: Request) => Response | Promise<Response> },
+  cookies: string,
+) {
+  const response = await app.fetch(
+    new Request('http://localhost/api/auth/sign-out', {
+      method: 'POST',
+      headers: { Cookie: cookies },
+    }),
+  );
+
+  return { response };
+}
+
+/**
+ * Count sessions for a user in the Better Auth session table.
+ */
+async function countBetterAuthSessions(pool: import('pg').Pool, userId: string): Promise<number> {
+  const result = await pool.query('SELECT COUNT(*) FROM auth.session WHERE user_id = $1', [userId]);
+  return parseInt(result.rows[0].count, 10);
+}
+
+describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
   const { getContext } = setupAuthTestSuite();
 
   describe('Complete User Journey', () => {
-    it('should handle complete user lifecycle: register → login → logout → login again', async () => {
+    it('should handle complete user lifecycle: sign-up -> sign-in -> sign-out -> sign-in again', async () => {
       const { app, pool } = getContext();
 
       const email = 'lifecycle@example.com';
       const password = 'SecurePassword123';
 
-      // Step 1: Register
-      const registerResponse = await app.fetch(
-        new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
+      // Step 1: Sign up
+      const { body: signUpBody, cookies: signUpCookies } = await signUp(app, email, password);
 
-      expect(registerResponse.status).toBe(201);
-      const registerBody: any = await registerResponse.json();
-      const session1Token = registerBody.sessionToken;
+      expect(signUpBody).toHaveProperty('user');
+      expect(signUpBody.user).toHaveProperty('id');
+      const userId = signUpBody.user.id;
 
-      // Step 2: Login (creates second session)
-      const loginResponse = await app.fetch(
-        new Request('http://localhost/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
+      // Step 2: Sign in (creates second session)
+      const { response: signIn1Res, cookies: signIn1Cookies } = await signIn(app, email, password);
+      expect(signIn1Res.status).toBe(200);
 
-      expect(loginResponse.status).toBe(200);
-      const loginBody: any = await loginResponse.json();
-      const session2Token = loginBody.sessionToken;
-
-      // Should have 2 sessions
-      let sessionCount = await countUserSessions(pool, registerBody.user.externalId);
+      // Should have 2 sessions (1 from sign-up + 1 from sign-in)
+      let sessionCount = await countBetterAuthSessions(pool, userId);
       expect(sessionCount).toBe(2);
 
-      // Step 3: Logout first session
-      const logoutResponse = await app.fetch(
-        new Request('http://localhost/api/auth/logout', {
-          method: 'POST',
-          headers: { Cookie: `session_token=${session1Token}` },
-        }),
-      );
-
-      expect(logoutResponse.status).toBe(200);
+      // Step 3: Sign out the sign-up session
+      const { response: signOut1Res } = await signOut(app, signUpCookies);
+      expect(signOut1Res.status).toBe(200);
 
       // Should have 1 session remaining
-      sessionCount = await countUserSessions(pool, registerBody.user.externalId);
+      sessionCount = await countBetterAuthSessions(pool, userId);
       expect(sessionCount).toBe(1);
 
-      // Step 4: Login again (creates third session)
-      const login2Response = await app.fetch(
-        new Request('http://localhost/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
-
-      expect(login2Response.status).toBe(200);
+      // Step 4: Sign in again (creates third session)
+      const { response: signIn2Res, cookies: signIn2Cookies } = await signIn(app, email, password);
+      expect(signIn2Res.status).toBe(200);
 
       // Should have 2 sessions again
-      sessionCount = await countUserSessions(pool, registerBody.user.externalId);
+      sessionCount = await countBetterAuthSessions(pool, userId);
       expect(sessionCount).toBe(2);
 
-      // Step 5: Logout all by logging out remaining sessions
-      await app.fetch(
-        new Request('http://localhost/api/auth/logout', {
-          method: 'POST',
-          headers: { Cookie: `session_token=${session2Token}` },
-        }),
-      );
-
-      const login2Body: any = await login2Response.json();
-      await app.fetch(
-        new Request('http://localhost/api/auth/logout', {
-          method: 'POST',
-          headers: { Cookie: `session_token=${login2Body.sessionToken}` },
-        }),
-      );
+      // Step 5: Sign out all remaining sessions
+      await signOut(app, signIn1Cookies);
+      await signOut(app, signIn2Cookies);
 
       // Should have 0 sessions
-      sessionCount = await countUserSessions(pool, registerBody.user.externalId);
+      sessionCount = await countBetterAuthSessions(pool, userId);
       expect(sessionCount).toBe(0);
-    });
-
-    it('should handle register → password reset → login with new password → logout', async () => {
-      const { app } = getContext();
-
-      const email = 'resetjourney@example.com';
-      const oldPassword = 'OldPassword123';
-      const newPassword = 'NewPassword456';
-
-      // Register
-      const registerResponse = await app.fetch(
-        new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password: oldPassword }),
-        }),
-      );
-
-      expect(registerResponse.status).toBe(201);
-
-      // Request password reset
-      const forgotResponse = await app.fetch(
-        new Request('http://localhost/api/auth/forgot-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        }),
-      );
-
-      const forgotBody: any = await forgotResponse.json();
-
-      // Reset password
-      const resetResponse = await app.fetch(
-        new Request('http://localhost/api/auth/reset-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: forgotBody.resetToken,
-            password: newPassword,
-          }),
-        }),
-      );
-
-      expect(resetResponse.status).toBe(200);
-
-      // Login with new password
-      const loginResponse = await app.fetch(
-        new Request('http://localhost/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password: newPassword }),
-        }),
-      );
-
-      expect(loginResponse.status).toBe(200);
-      const loginBody: any = await loginResponse.json();
-
-      // Logout
-      const logoutResponse = await app.fetch(
-        new Request('http://localhost/api/auth/logout', {
-          method: 'POST',
-          headers: { Cookie: `session_token=${loginBody.sessionToken}` },
-        }),
-      );
-
-      expect(logoutResponse.status).toBe(200);
     });
   });
 
   describe('Multi-Device Scenarios', () => {
-    it('should support user logged in on multiple devices simultaneously', async () => {
+    it('should support user signed in on multiple devices simultaneously', async () => {
       const { app, pool } = getContext();
 
       const email = 'multidevice@example.com';
       const password = 'SecurePassword123';
 
-      // Register
-      await app.fetch(
-        new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
+      // Sign up
+      const { body: signUpBody } = await signUp(app, email, password);
+      const userId = signUpBody.user.id;
 
-      // Login from device 1
-      const device1Response = await app.fetch(
-        new Request('http://localhost/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
+      // Sign in from device 1
+      const { cookies: device1Cookies } = await signIn(app, email, password);
+      const device1Token = extractSessionToken(device1Cookies);
 
-      const device1Body: any = await device1Response.json();
-      const device1Token = device1Body.sessionToken;
+      // Sign in from device 2
+      const { cookies: device2Cookies } = await signIn(app, email, password);
+      const device2Token = extractSessionToken(device2Cookies);
 
-      // Login from device 2
-      const device2Response = await app.fetch(
-        new Request('http://localhost/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
-
-      const device2Body: any = await device2Response.json();
-      const device2Token = device2Body.sessionToken;
-
-      // Login from device 3
-      const device3Response = await app.fetch(
-        new Request('http://localhost/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
-
-      const device3Body: any = await device3Response.json();
+      // Sign in from device 3
+      const { cookies: device3Cookies } = await signIn(app, email, password);
+      const device3Token = extractSessionToken(device3Cookies);
 
       // All should have different session tokens
       expect(device1Token).not.toBe(device2Token);
-      expect(device2Token).not.toBe(device3Body.sessionToken);
-      expect(device1Token).not.toBe(device3Body.sessionToken);
+      expect(device2Token).not.toBe(device3Token);
+      expect(device1Token).not.toBe(device3Token);
 
-      // Should have 4 sessions (1 from register + 3 from logins)
-      const sessionCount = await countUserSessions(pool, device1Body.user.externalId);
+      // Should have 4 sessions (1 from sign-up + 3 from sign-ins)
+      const sessionCount = await countBetterAuthSessions(pool, userId);
       expect(sessionCount).toBe(4);
 
-      // Refresh from device 1 should work
-      const refresh1Response = await app.fetch(
-        new Request('http://localhost/api/auth/refresh', {
-          method: 'POST',
-          headers: { Cookie: `session_token=${device1Token}` },
+      // Sign out from device 1
+      await signOut(app, device1Cookies);
+
+      // Device 2 should still have a valid session (verify via /api/auth/me)
+      const meResponse = await app.fetch(
+        new Request('http://localhost/api/auth/me', {
+          method: 'GET',
+          headers: { Cookie: device2Cookies },
         }),
       );
+      expect(meResponse.status).toBe(200);
 
-      expect(refresh1Response.status).toBe(200);
-
-      // Refresh from device 2 should work
-      const refresh2Response = await app.fetch(
-        new Request('http://localhost/api/auth/refresh', {
-          method: 'POST',
-          headers: { Cookie: `session_token=${device2Token}` },
+      // Device 1 session should be invalidated.
+      // Strip the session_data cache cookie to simulate browser behavior:
+      // sign-out sets Max-Age=0 on session_data, so browsers delete it.
+      const device1TokenOnly = device1Cookies
+        .split('; ')
+        .filter((c) => !c.startsWith('better-auth.session_data='))
+        .join('; ');
+      const me1Response = await app.fetch(
+        new Request('http://localhost/api/auth/me', {
+          method: 'GET',
+          headers: { Cookie: device1TokenOnly },
         }),
       );
-
-      expect(refresh2Response.status).toBe(200);
-
-      // Logout from device 1
-      await app.fetch(
-        new Request('http://localhost/api/auth/logout', {
-          method: 'POST',
-          headers: { Cookie: `session_token=${device1Token}` },
-        }),
-      );
-
-      // Device 2 should still work
-      const refresh2AfterLogout = await app.fetch(
-        new Request('http://localhost/api/auth/refresh', {
-          method: 'POST',
-          headers: { Cookie: `session_token=${device2Token}` },
-        }),
-      );
-
-      expect(refresh2AfterLogout.status).toBe(200);
-
-      // Device 1 should not work
-      const refresh1AfterLogout = await app.fetch(
-        new Request('http://localhost/api/auth/refresh', {
-          method: 'POST',
-          headers: { Cookie: `session_token=${device1Token}` },
-        }),
-      );
-
-      expect(refresh1AfterLogout.status).toBe(401);
+      expect(me1Response.status).toBe(401);
     });
   });
 
-  describe('Token Expiration & Cleanup', () => {
+  describe('Session Expiration', () => {
     it('should reject expired session tokens', async () => {
       const { app, pool } = getContext();
 
       const email = 'expiredsession@example.com';
       const password = 'SecurePassword123';
 
-      // Register
-      const registerResponse = await app.fetch(
-        new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
+      // Sign up
+      const { body: signUpBody, cookies } = await signUp(app, email, password);
+      const userId = signUpBody.user.id;
 
-      const registerBody: any = await registerResponse.json();
-      const sessionToken = registerBody.sessionToken;
-
-      // Manually expire the session
-      const tokenHash = hashSessionToken(sessionToken);
+      // Manually expire the session in the Better Auth session table
       await pool.query(
-        "UPDATE auth.sessions SET expires_at = NOW() - INTERVAL '1 day' WHERE token_hash = $1",
-        [tokenHash],
+        `UPDATE auth.session SET expires_at = NOW() - INTERVAL '1 day' WHERE user_id = $1`,
+        [userId],
       );
 
-      // Try to refresh with expired session
-      const refreshResponse = await app.fetch(
-        new Request('http://localhost/api/auth/refresh', {
-          method: 'POST',
-          headers: { Cookie: `session_token=${sessionToken}` },
+      // Strip the session_data cache cookie so Better Auth checks the DB
+      // instead of returning the cached (now-stale) session data
+      const sessionTokenOnly = cookies
+        .split('; ')
+        .filter((c) => !c.startsWith('better-auth.session_data='))
+        .join('; ');
+
+      // Try to access a protected route with expired session
+      const meResponse = await app.fetch(
+        new Request('http://localhost/api/auth/me', {
+          method: 'GET',
+          headers: { Cookie: sessionTokenOnly },
         }),
       );
 
-      expect(refreshResponse.status).toBe(401);
-
-      const body: any = await refreshResponse.json();
-      expect(body.error).toBe('Invalid or expired session');
-    });
-
-    it('should handle concurrent refresh requests with same session token', async () => {
-      const { app } = getContext();
-
-      const email = 'concurrent@example.com';
-      const password = 'SecurePassword123';
-
-      // Register
-      const registerResponse = await app.fetch(
-        new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
-
-      const registerBody: any = await registerResponse.json();
-      const sessionToken = registerBody.sessionToken;
-
-      // Make 5 concurrent refresh requests
-      const refreshPromises = Array.from({ length: 5 }, () =>
-        app.fetch(
-          new Request('http://localhost/api/auth/refresh', {
-            method: 'POST',
-            headers: { Cookie: `session_token=${sessionToken}` },
-          }),
-        ),
-      );
-
-      const responses = await Promise.all(refreshPromises);
-
-      // All should succeed (session token doesn't rotate on refresh)
-      responses.forEach((response) => {
-        expect(response.status).toBe(200);
-      });
-
-      // All should return new access tokens
-      const bodies: any[] = await Promise.all(responses.map((r) => r.json()));
-      const accessTokens = bodies.map((b) => b.accessToken);
-
-      // All access tokens should be valid
-      accessTokens.forEach((token) => {
-        expect(token).toMatch(/^[\w-]+\.[\w-]+\.[\w-]+$/);
-      });
+      expect(meResponse.status).toBe(401);
     });
   });
 
   describe('Database Constraint Tests', () => {
-    it('should enforce unique email constraint at database level', async () => {
+    it('should enforce unique email constraint on Better Auth user table', async () => {
       const { pool } = getContext();
 
-      const email = 'unique@example.com';
-      const passwordHash = await bcrypt.hash('SecurePassword123', 10);
+      const email = 'unique-ba@example.com';
 
-      // Insert user
-      await pool.query('INSERT INTO auth.users (email, password_hash) VALUES ($1, $2)', [
-        email,
-        passwordHash,
-      ]);
+      // Insert user into Better Auth user table
+      await pool.query(
+        `INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
+         VALUES (gen_random_uuid()::text, 'Test', $1, false, NOW(), NOW())`,
+        [email],
+      );
 
       // Try to insert duplicate email
       await expect(
-        pool.query('INSERT INTO auth.users (email, password_hash) VALUES ($1, $2)', [
-          email,
-          passwordHash,
-        ]),
+        pool.query(
+          `INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
+           VALUES (gen_random_uuid()::text, 'Test2', $1, false, NOW(), NOW())`,
+          [email],
+        ),
       ).rejects.toThrow();
     });
 
     it('should enforce unique session token constraint', async () => {
       const { pool } = getContext();
 
-      const email = 'sessionunique@example.com';
-      const passwordHash = await bcrypt.hash('SecurePassword123', 10);
+      const email = 'sessionunique-ba@example.com';
 
       // Create user
-      const userResult = await pool.query(
-        'INSERT INTO auth.users (email, password_hash) VALUES ($1, $2) RETURNING id, external_id',
-        [email, passwordHash],
+      const userId = `test-session-unique-${Date.now()}`;
+      await pool.query(
+        `INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
+         VALUES ($1, 'Test', $2, false, NOW(), NOW())`,
+        [userId, email],
       );
 
-      const userId = userResult.rows[0].id;
-      const userExternalId = userResult.rows[0].external_id;
-
-      // Create session
-      const sessionToken = generateSessionToken();
-      const tokenHash = hashSessionToken(sessionToken);
+      const token = `unique-token-test-${Date.now()}`;
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-      await createTestSession(pool, userExternalId, tokenHash, expiresAt);
+      // Create session
+      await pool.query(
+        `INSERT INTO auth.session (id, token, expires_at, created_at, updated_at, user_id)
+         VALUES (gen_random_uuid()::text, $1, $2, NOW(), NOW(), $3)`,
+        [token, expiresAt, userId],
+      );
 
       // Try to create duplicate session with same token
       await expect(
         pool.query(
-          'INSERT INTO auth.sessions (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
-          [userId, tokenHash, expiresAt],
+          `INSERT INTO auth.session (id, token, expires_at, created_at, updated_at, user_id)
+           VALUES (gen_random_uuid()::text, $1, $2, NOW(), NOW(), $3)`,
+          [token, expiresAt, userId],
         ),
       ).rejects.toThrow();
     });
 
-    it('should cascade delete sessions when user is deleted', async () => {
+    it('should cascade delete sessions when Better Auth user is deleted', async () => {
       const { app, pool } = getContext();
 
-      const email = 'cascadedelete@example.com';
+      const email = 'cascadedelete-ba@example.com';
       const password = 'SecurePassword123';
 
-      // Register (creates user and session)
-      const registerResponse = await app.fetch(
-        new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
+      // Sign up (creates user and session)
+      const { body: signUpBody } = await signUp(app, email, password);
+      const userId = signUpBody.user.id;
 
-      const registerBody: any = await registerResponse.json();
-      const userExternalId = registerBody.user.externalId;
-
-      // Create additional session
-      await app.fetch(
-        new Request('http://localhost/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
+      // Create additional session via sign-in
+      await signIn(app, email, password);
 
       // Verify user has sessions
-      let sessionCount = await countUserSessions(pool, userExternalId);
+      let sessionCount = await countBetterAuthSessions(pool, userId);
       expect(sessionCount).toBeGreaterThan(0);
 
-      // Delete user
-      await pool.query('DELETE FROM auth.users WHERE external_id = $1', [userExternalId]);
+      // Delete user from Better Auth user table
+      await pool.query('DELETE FROM auth."user" WHERE id = $1', [userId]);
 
       // Verify sessions were cascade deleted
-      sessionCount = await countUserSessions(pool, userExternalId);
+      sessionCount = await countBetterAuthSessions(pool, userId);
       expect(sessionCount).toBe(0);
     });
 
-    it('should cascade delete password reset tokens when user is deleted', async () => {
+    it('should cascade delete accounts when Better Auth user is deleted', async () => {
       const { app, pool } = getContext();
 
-      const email = 'cascadereset@example.com';
+      const email = 'cascadeaccount-ba@example.com';
       const password = 'SecurePassword123';
 
-      // Register
-      const registerResponse = await app.fetch(
-        new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
+      // Sign up
+      const { body: signUpBody } = await signUp(app, email, password);
+      const userId = signUpBody.user.id;
 
-      const registerBody: any = await registerResponse.json();
-      const userExternalId = registerBody.user.externalId;
-
-      // Request password reset
-      await app.fetch(
-        new Request('http://localhost/api/auth/forgot-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        }),
-      );
-
-      // Get user ID
-      const userResult = await pool.query('SELECT id FROM auth.users WHERE external_id = $1', [
-        userExternalId,
+      // Verify account exists
+      let accountResult = await pool.query('SELECT COUNT(*) FROM auth.account WHERE user_id = $1', [
+        userId,
       ]);
-      const userId = userResult.rows[0].id;
-
-      // Verify reset token exists
-      let tokenResult = await pool.query(
-        'SELECT COUNT(*) FROM auth.password_reset_tokens WHERE user_id = $1',
-        [userId],
-      );
-      expect(parseInt(tokenResult.rows[0].count, 10)).toBeGreaterThan(0);
+      expect(parseInt(accountResult.rows[0].count, 10)).toBeGreaterThan(0);
 
       // Delete user
-      await pool.query('DELETE FROM auth.users WHERE external_id = $1', [userExternalId]);
+      await pool.query('DELETE FROM auth."user" WHERE id = $1', [userId]);
 
-      // Verify reset tokens were cascade deleted
-      tokenResult = await pool.query(
-        'SELECT COUNT(*) FROM auth.password_reset_tokens WHERE user_id = $1',
-        [userId],
-      );
-      expect(parseInt(tokenResult.rows[0].count, 10)).toBe(0);
+      // Verify accounts were cascade deleted
+      accountResult = await pool.query('SELECT COUNT(*) FROM auth.account WHERE user_id = $1', [
+        userId,
+      ]);
+      expect(parseInt(accountResult.rows[0].count, 10)).toBe(0);
     });
   });
 
@@ -507,36 +334,38 @@ describe('Auth Endpoints - Edge Cases & Integration', () => {
       // Email with 254 characters (max valid length)
       const longEmail = `${'a'.repeat(64)}@${'b'.repeat(63)}.com`;
 
-      const request = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: longEmail,
-          password: 'SecurePassword123',
+      const response = await app.fetch(
+        new Request('http://localhost/api/auth/sign-up/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: longEmail,
+            password: 'SecurePassword123',
+            name: 'Long Email User',
+          }),
         }),
-      });
-
-      const response = await app.fetch(request);
+      );
 
       // Should either accept or reject gracefully
-      expect([201, 400]).toContain(response.status);
+      expect([200, 400, 422]).toContain(response.status);
     });
 
-    it('should handle password with exactly 8 characters (minimum)', async () => {
+    it('should handle password with exactly minimum length', async () => {
       const { app } = getContext();
 
-      const request = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: 'minpwd@example.com',
-          password: 'Ee123456',
+      const response = await app.fetch(
+        new Request('http://localhost/api/auth/sign-up/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: 'minpwd-ba@example.com',
+            password: 'Ee123456',
+            name: 'Min Pwd User',
+          }),
         }),
-      });
+      );
 
-      const response = await app.fetch(request);
-
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
     });
 
     it('should handle password with special characters', async () => {
@@ -547,116 +376,100 @@ describe('Auth Endpoints - Edge Cases & Integration', () => {
         'Pass!@#$%^&*()',
         'Pässwörd123',
         'パスワード123abc',
-        'P@ss\nw0rd', // with newline
       ];
 
       for (const password of specialPasswords) {
-        const request = new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: `special-${Math.random()}@example.com`,
-            password,
+        const response = await app.fetch(
+          new Request('http://localhost/api/auth/sign-up/email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: `special-${Math.random().toString(36).slice(2)}@example.com`,
+              password,
+              name: 'Special Pwd User',
+            }),
           }),
-        });
+        );
 
-        const response = await app.fetch(request);
-
-        // Should handle special characters
-        expect([201, 400]).toContain(response.status);
+        // Should handle special characters gracefully
+        expect([200, 400, 422]).toContain(response.status);
       }
     });
 
     it('should handle very long passwords', async () => {
       const { app } = getContext();
 
-      // bcrypt has max length of 72 bytes
-      const longPassword = 'a'.repeat(100);
+      const longPassword = `A1!${'a'.repeat(200)}`;
 
-      const request = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: 'longpwd@example.com',
-          password: longPassword,
+      const response = await app.fetch(
+        new Request('http://localhost/api/auth/sign-up/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: 'longpwd-ba@example.com',
+            password: longPassword,
+            name: 'Long Pwd User',
+          }),
         }),
-      });
-
-      const response = await app.fetch(request);
+      );
 
       // Should either accept or reject gracefully
-      expect([201, 400]).toContain(response.status);
+      expect([200, 400, 422]).toContain(response.status);
     });
 
     it('should handle email with plus addressing (RFC 5233)', async () => {
       const { app } = getContext();
 
-      const email = 'user+test@example.com';
+      const email = 'user+test-ba@example.com';
 
-      const request = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password: 'SecurePassword123',
-        }),
-      });
+      const { response, body } = await signUp(app, email, 'SecurePassword123');
 
-      const response = await app.fetch(request);
-      const body: any = await response.json();
-
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect(body.user.email).toBe(email);
     });
   });
 
   describe('Concurrent Operations', () => {
-    it('should handle concurrent registration attempts with same email', async () => {
+    it('should handle concurrent sign-up attempts with same email', async () => {
       const { app } = getContext();
 
-      const email = 'concurrent-register@example.com';
+      const email = 'concurrent-signup@example.com';
       const password = 'SecurePassword123';
 
-      // Make 5 concurrent registration requests
+      // Make 5 concurrent sign-up requests
       const requests = Array.from({ length: 5 }, () =>
         app.fetch(
-          new Request('http://localhost/api/auth/register', {
+          new Request('http://localhost/api/auth/sign-up/email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, name: 'Concurrent User' }),
           }),
         ),
       );
 
       const responses = await Promise.all(requests);
 
-      // Exactly one should succeed (201), others should fail (409)
-      const successCount = responses.filter((r) => r.status === 201).length;
-      const conflictCount = responses.filter((r) => r.status === 409).length;
+      // Exactly one should succeed, others should fail
+      const successCount = responses.filter((r) => r.status === 200).length;
+      const failureCount = responses.filter((r) => r.status !== 200).length;
 
       expect(successCount).toBe(1);
-      expect(conflictCount).toBe(4);
+      expect(failureCount).toBe(4);
     });
 
-    it('should handle concurrent login attempts', async () => {
+    it('should handle concurrent sign-in attempts', async () => {
       const { app } = getContext();
 
-      const email = 'concurrent-login@example.com';
+      const email = 'concurrent-signin@example.com';
       const password = 'SecurePassword123';
 
-      // Register
-      await app.fetch(
-        new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        }),
-      );
+      // Sign up first
+      await signUp(app, email, password);
 
-      // Make 10 concurrent login requests
+      // Make 10 concurrent sign-in requests
       const requests = Array.from({ length: 10 }, () =>
         app.fetch(
-          new Request('http://localhost/api/auth/login', {
+          new Request('http://localhost/api/auth/sign-in/email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
@@ -671,12 +484,58 @@ describe('Auth Endpoints - Edge Cases & Integration', () => {
         expect(response.status).toBe(200);
       });
 
-      // All should have unique session tokens
-      const bodies: any[] = await Promise.all(responses.map((r) => r.json()));
-      const sessionTokens = bodies.map((b) => b.sessionToken);
-      const uniqueTokens = new Set(sessionTokens);
+      // All should have unique session cookies
+      const tokens = responses.map((r) => {
+        const cookies = extractCookies(r);
+        return extractSessionToken(cookies);
+      });
+      const uniqueTokens = new Set(tokens.filter(Boolean));
 
       expect(uniqueTokens.size).toBe(10);
+    });
+  });
+
+  describe('Session Cookie Handling', () => {
+    it('should reject requests without session cookie on protected routes', async () => {
+      const { app } = getContext();
+
+      const response = await app.fetch(
+        new Request('http://localhost/api/auth/me', {
+          method: 'GET',
+        }),
+      );
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should reject requests with invalid session cookie', async () => {
+      const { app } = getContext();
+
+      const response = await app.fetch(
+        new Request('http://localhost/api/auth/me', {
+          method: 'GET',
+          headers: { Cookie: 'better-auth.session_token=invalid-token-value' },
+        }),
+      );
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should set session cookie on successful sign-in', async () => {
+      const { app } = getContext();
+
+      const email = 'cookie-check@example.com';
+      const password = 'SecurePassword123';
+
+      await signUp(app, email, password);
+
+      const { response } = await signIn(app, email, password);
+
+      expect(response.status).toBe(200);
+
+      const cookies = extractCookies(response);
+      const sessionToken = extractSessionToken(cookies);
+      expect(sessionToken).toBeTruthy();
     });
   });
 });

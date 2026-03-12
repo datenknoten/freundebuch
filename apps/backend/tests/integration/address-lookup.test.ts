@@ -1,38 +1,18 @@
 import bcrypt from 'bcrypt';
 import { describe, expect, it } from 'vitest';
 import { SUPPORTED_COUNTRIES } from '../../src/services/external/zipcodebase.client.js';
-import { completeTestUserOnboarding, createTestUser, setupAuthTestSuite } from './auth.helpers.js';
+import {
+  completeTestUserOnboarding,
+  createBetterAuthSession,
+  createTestUser,
+  setupAuthTestSuite,
+} from './auth.helpers.js';
 
 describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
   const { getContext } = setupAuthTestSuite();
 
   /**
-   * Helper to get auth tokens for a test user
-   */
-  async function getAuthTokens(email: string, password: string) {
-    const { app } = getContext();
-
-    const response = await app.fetch(
-      new Request('http://localhost/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      }),
-    );
-
-    if (response.status !== 200) {
-      throw new Error(`Login failed: ${response.status}`);
-    }
-
-    const body = (await response.json()) as { accessToken: string; sessionToken: string };
-    return {
-      accessToken: body.accessToken,
-      sessionToken: body.sessionToken,
-    };
-  }
-
-  /**
-   * Helper to create a test user and get auth tokens
+   * Helper to create a test user and get session cookies
    */
   async function createUserAndLogin(email: string, password: string) {
     const { pool } = getContext();
@@ -40,8 +20,8 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
     const user = await createTestUser(pool, email, passwordHash);
     // Complete onboarding (required by onboarding middleware)
     await completeTestUserOnboarding(pool, user.externalId);
-    const tokens = await getAuthTokens(email, password);
-    return { user, tokens };
+    const sessionCookies = await createBetterAuthSession(pool, user.externalId);
+    return { user, sessionCookies };
   }
 
   describe('Authentication', () => {
@@ -103,13 +83,16 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
   describe('GET /api/address-lookup/countries', () => {
     it('should return list of supported countries when authenticated', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-countries@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'addr-countries@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/address-lookup/countries', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -134,13 +117,16 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should include common countries like Germany and United States', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-countries2@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'addr-countries2@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/address-lookup/countries', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -161,13 +147,16 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
   describe('GET /api/address-lookup/cities - Validation', () => {
     it('should return 400 when country is missing', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-cities1@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'addr-cities1@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/address-lookup/cities?postal_code=12345', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -179,13 +168,16 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return 400 when postal_code is missing', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-cities2@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'addr-cities2@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/address-lookup/cities?country=DE', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -197,13 +189,16 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return 400 when postal_code is empty', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-cities3@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'addr-cities3@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/address-lookup/cities?country=DE&postal_code=', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -217,13 +212,16 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
   describe('GET /api/address-lookup/streets - Validation', () => {
     it('should return 400 when country is missing', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-streets1@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'addr-streets1@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/address-lookup/streets?city=Berlin&postal_code=12345', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -235,13 +233,16 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return 400 when city is missing', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-streets2@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'addr-streets2@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/address-lookup/streets?country=DE&postal_code=12345', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -253,13 +254,16 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return 400 when postal_code is missing', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-streets3@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'addr-streets3@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/address-lookup/streets?country=DE&city=Berlin', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -273,7 +277,7 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
   describe('GET /api/address-lookup/house-numbers - Validation', () => {
     it('should return 400 when country is missing', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-hn1@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin('addr-hn1@test.com', 'TestPassword123');
 
       const response = await app.fetch(
         new Request(
@@ -281,7 +285,7 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
           {
             method: 'GET',
             headers: {
-              Authorization: `Bearer ${tokens.accessToken}`,
+              Cookie: sessionCookies,
             },
           },
         ),
@@ -294,7 +298,7 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return 400 when street is missing', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-hn2@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin('addr-hn2@test.com', 'TestPassword123');
 
       const response = await app.fetch(
         new Request(
@@ -302,7 +306,7 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
           {
             method: 'GET',
             headers: {
-              Authorization: `Bearer ${tokens.accessToken}`,
+              Cookie: sessionCookies,
             },
           },
         ),
@@ -315,13 +319,13 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return 400 when all parameters are missing', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-hn3@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin('addr-hn3@test.com', 'TestPassword123');
 
       const response = await app.fetch(
         new Request('http://localhost/api/address-lookup/house-numbers', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -335,7 +339,7 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
   describe('Service Configuration', () => {
     it('should return 503 when ZIPCODEBASE_API_KEY is not configured for cities endpoint', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('addr-nokey@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin('addr-nokey@test.com', 'TestPassword123');
 
       // Note: In test environment, the API key is not configured
       // This test verifies the error handling when the service is not available
@@ -343,7 +347,7 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
         new Request('http://localhost/api/address-lookup/cities?country=DE&postal_code=12345', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );

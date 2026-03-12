@@ -1,12 +1,6 @@
 import type {
-  AuthResponse,
-  ForgotPasswordRequest,
   Friend,
   FriendCreateInput,
-  LoginRequest,
-  RefreshRequest,
-  RegisterRequest,
-  ResetPasswordRequest,
   UpdatePreferencesRequest,
   User,
   UserPreferences,
@@ -15,91 +9,9 @@ import { apiRequest } from './client.js';
 
 export { ApiError } from './client.js';
 
-/**
- * Register a new user
- */
-export async function register(data: RegisterRequest): Promise<AuthResponse> {
-  return apiRequest<AuthResponse>(
-    '/api/auth/register',
-    {
-      method: 'POST',
-      body: JSON.stringify(data),
-    },
-    { auth: false },
-  );
-}
-
-/**
- * Login an existing user
- */
-export async function login(data: LoginRequest): Promise<AuthResponse> {
-  return apiRequest<AuthResponse>(
-    '/api/auth/login',
-    {
-      method: 'POST',
-      body: JSON.stringify(data),
-    },
-    { auth: false },
-  );
-}
-
-/**
- * Logout the current user
- */
-export async function logout(): Promise<{ message: string }> {
-  return apiRequest(
-    '/api/auth/logout',
-    {
-      method: 'POST',
-    },
-    { auth: false },
-  );
-}
-
-/**
- * Refresh the access token
- * Uses session token from cookie by default
- */
-export async function refresh(data?: RefreshRequest): Promise<AuthResponse> {
-  return apiRequest<AuthResponse>(
-    '/api/auth/refresh',
-    {
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    },
-    { auth: false },
-  );
-}
-
-/**
- * Request a password reset token
- */
-export async function forgotPassword(
-  data: ForgotPasswordRequest,
-): Promise<{ message: string; resetToken?: string }> {
-  return apiRequest(
-    '/api/auth/forgot-password',
-    {
-      method: 'POST',
-      body: JSON.stringify(data),
-    },
-    { auth: false },
-  );
-}
-
-/**
- * Reset password using a reset token
- */
-export async function resetPassword(data: ResetPasswordRequest): Promise<{ message: string }> {
-  return apiRequest(
-    '/api/auth/reset-password',
-    {
-      method: 'POST',
-      body: JSON.stringify(data),
-    },
-    { auth: false },
-  );
-}
+// Note: register, login, logout, refresh, forgotPassword, resetPassword
+// are now handled by the Better Auth client (authClient) directly.
+// See lib/auth-client.ts and lib/stores/auth.ts
 
 /**
  * Get the current user's profile

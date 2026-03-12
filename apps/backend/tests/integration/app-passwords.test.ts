@@ -1,37 +1,17 @@
 import bcrypt from 'bcrypt';
 import { describe, expect, it } from 'vitest';
-import { completeTestUserOnboarding, createTestUser, setupAuthTestSuite } from './auth.helpers.js';
+import {
+  completeTestUserOnboarding,
+  createBetterAuthSession,
+  createTestUser,
+  setupAuthTestSuite,
+} from './auth.helpers.js';
 
 describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
   const { getContext } = setupAuthTestSuite();
 
   /**
-   * Helper to get auth tokens for a test user
-   */
-  async function getAuthTokens(email: string, password: string) {
-    const { app } = getContext();
-
-    const response = await app.fetch(
-      new Request('http://localhost/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      }),
-    );
-
-    if (response.status !== 200) {
-      throw new Error(`Login failed: ${response.status}`);
-    }
-
-    const body: any = await response.json();
-    return {
-      accessToken: body.accessToken,
-      sessionToken: body.sessionToken,
-    };
-  }
-
-  /**
-   * Helper to create a test user and get auth tokens
+   * Helper to create a test user and get session cookies
    */
   async function createUserAndLogin(email: string, password: string) {
     const { pool } = getContext();
@@ -39,8 +19,8 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
     const user = await createTestUser(pool, email, passwordHash);
     // Complete onboarding (required by onboarding middleware)
     await completeTestUserOnboarding(pool, user.externalId);
-    const tokens = await getAuthTokens(email, password);
-    return { user, tokens };
+    const sessionCookies = await createBetterAuthSession(pool, user.externalId);
+    return { user, sessionCookies };
   }
 
   describe('GET /api/app-passwords', () => {
@@ -58,13 +38,16 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return empty array when no passwords exist', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('apppw-empty@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'apppw-empty@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/app-passwords', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -76,7 +59,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return list of app passwords', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('apppw-list@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin('apppw-list@test.com', 'TestPassword123');
 
       // Create a password first
       await app.fetch(
@@ -84,7 +67,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
           body: JSON.stringify({ name: 'Test iPhone' }),
         }),
@@ -95,7 +78,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         new Request('http://localhost/api/app-passwords', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -130,14 +113,17 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should create an app password and return it with the secret', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('apppw-create@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'apppw-create@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/app-passwords', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
           body: JSON.stringify({ name: 'My Thunderbird' }),
         }),
@@ -161,14 +147,17 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return 400 for missing name', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('apppw-noname@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'apppw-noname@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/app-passwords', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
           body: JSON.stringify({}),
         }),
@@ -179,7 +168,10 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return 429 when max passwords limit reached', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('apppw-limit@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'apppw-limit@test.com',
+        'TestPassword123',
+      );
 
       // Create 20 passwords (the max limit)
       for (let i = 0; i < 20; i++) {
@@ -188,7 +180,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${tokens.accessToken}`,
+              Cookie: sessionCookies,
             },
             body: JSON.stringify({ name: `Password ${i + 1}` }),
           }),
@@ -201,7 +193,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
           body: JSON.stringify({ name: 'One Too Many' }),
         }),
@@ -228,7 +220,10 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should revoke an app password', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('apppw-revoke@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'apppw-revoke@test.com',
+        'TestPassword123',
+      );
 
       // Create a password first
       const createResponse = await app.fetch(
@@ -236,7 +231,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
           body: JSON.stringify({ name: 'To Be Revoked' }),
         }),
@@ -249,7 +244,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         new Request(`http://localhost/api/app-passwords/${created.externalId}`, {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -263,7 +258,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         new Request('http://localhost/api/app-passwords', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -274,14 +269,14 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return 404 for non-existent password', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('apppw-404@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin('apppw-404@test.com', 'TestPassword123');
 
       // Use a valid UUID v4 format that doesn't exist in the database
       const response = await app.fetch(
         new Request('http://localhost/api/app-passwords/00000000-0000-4000-8000-000000000000', {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -291,13 +286,16 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
 
     it('should return 400 for invalid UUID format', async () => {
       const { app } = getContext();
-      const { tokens } = await createUserAndLogin('apppw-invalid-uuid@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin(
+        'apppw-invalid-uuid@test.com',
+        'TestPassword123',
+      );
 
       const response = await app.fetch(
         new Request('http://localhost/api/app-passwords/not-a-valid-uuid', {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -309,7 +307,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       const { app } = getContext();
 
       // Create user 1 and their password
-      const { tokens: tokens1 } = await createUserAndLogin(
+      const { sessionCookies: sessionCookies1 } = await createUserAndLogin(
         'apppw-user1@test.com',
         'TestPassword123',
       );
@@ -318,7 +316,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokens1.accessToken}`,
+            Cookie: sessionCookies1,
           },
           body: JSON.stringify({ name: 'User1 Password' }),
         }),
@@ -326,7 +324,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       const created: any = await createResponse.json();
 
       // Create user 2
-      const { tokens: tokens2 } = await createUserAndLogin(
+      const { sessionCookies: sessionCookies2 } = await createUserAndLogin(
         'apppw-user2@test.com',
         'TestPassword123',
       );
@@ -336,7 +334,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         new Request(`http://localhost/api/app-passwords/${created.externalId}`, {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${tokens2.accessToken}`,
+            Cookie: sessionCookies2,
           },
         }),
       );
@@ -350,7 +348,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       const { app, pool } = getContext();
       const testEmail = 'apppw-e2e@test.com';
       const testPassword = 'TestPassword123';
-      const { tokens } = await createUserAndLogin(testEmail, testPassword);
+      const { sessionCookies } = await createUserAndLogin(testEmail, testPassword);
 
       // 1. Create an app password
       const createResponse = await app.fetch(
@@ -358,7 +356,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
           body: JSON.stringify({ name: 'E2E Test' }),
         }),
@@ -372,7 +370,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         new Request('http://localhost/api/app-passwords', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -395,7 +393,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         new Request(`http://localhost/api/app-passwords/${created.externalId}`, {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );
@@ -407,7 +405,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         new Request('http://localhost/api/app-passwords', {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Cookie: sessionCookies,
           },
         }),
       );

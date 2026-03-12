@@ -18,7 +18,7 @@ export interface SearchTestContext extends FriendsTestContext {
   testUser: {
     externalId: string;
     email: string;
-    accessToken: string;
+    sessionCookies: string;
   };
 }
 
@@ -300,6 +300,7 @@ export function setupSearchTestSuite() {
 
   beforeAll(async () => {
     // Set required environment variables for tests
+    process.env.BETTER_AUTH_SECRET = 'test-better-auth-secret-test-better-auth-secret-1';
     process.env.JWT_SECRET = 'test-jwt-secret-test-jwt-secret-1';
     process.env.SESSION_SECRET = 'test-session-secret-test-session-secret-1';
     process.env.JWT_EXPIRY = '604800';
@@ -337,6 +338,7 @@ export function setupSearchTestSuite() {
 
   afterAll(async () => {
     await teardownAuthTests(context);
+    delete process.env.BETTER_AUTH_SECRET;
     delete process.env.JWT_SECRET;
     delete process.env.SESSION_SECRET;
     delete process.env.JWT_EXPIRY;
