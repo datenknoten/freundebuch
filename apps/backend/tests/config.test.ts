@@ -16,42 +16,42 @@ describe('getConfig', () => {
 
   describe('required fields', () => {
     it('should throw error when DATABASE_URL is missing', () => {
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
 
       expect(() => getConfig()).toThrow('Configuration validation failed');
     });
 
-    it('should throw error when JWT_SECRET is missing', () => {
+    it('should throw error when BETTER_AUTH_SECRET is missing', () => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
 
       expect(() => getConfig()).toThrow('Configuration validation failed');
     });
 
-    it('should throw error when SESSION_SECRET is missing', () => {
+    it('should throw an error when BETTER_AUTH_SECRET contains change-this', () => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-
-      expect(() => getConfig()).toThrow('Configuration validation failed');
-    });
-
-    it('should throw an error when JWT_SECRET contains change-this', () => {
-      vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-change-this-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-change-this-test-better-auth-secret-1');
 
       expect(() => getConfig()).toThrow('Configuration validation failed');
     });
 
     it('should succeed with only required fields', () => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
+
+      const config = getConfig();
+
+      expect(config.DATABASE_URL).toBe('postgresql://localhost:5432/test');
+      expect(config.BETTER_AUTH_SECRET).toBe('test-better-auth-secret-test-better-auth-secret-1');
+    });
+
+    it('should accept legacy JWT_SECRET and SESSION_SECRET as optional', () => {
+      vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
       vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
       vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
 
       const config = getConfig();
 
-      expect(config.DATABASE_URL).toBe('postgresql://localhost:5432/test');
       expect(config.JWT_SECRET).toBe('test-jwt-secret-test-jwt-secret-1');
       expect(config.SESSION_SECRET).toBe('test-session-secret-test-session-secret-1');
     });
@@ -61,8 +61,7 @@ describe('getConfig', () => {
     beforeEach(() => {
       // Set required fields
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
     });
 
     it('should handle missing DATABASE_POOL_MIN and DATABASE_POOL_MAX', () => {
@@ -109,27 +108,12 @@ describe('getConfig', () => {
       vi.unstubAllEnvs();
       resetConfig();
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
       vi.stubEnv('ENV', undefined);
 
       const config = getConfig();
 
       expect(config.ENV).toBe('development');
-    });
-
-    it('should handle missing JWT_EXPIRY', () => {
-      const config = getConfig();
-
-      expect(config.JWT_EXPIRY).toBe(604800);
-    });
-
-    it('should accept JWT_EXPIRY as string', () => {
-      vi.stubEnv('JWT_EXPIRY', '2592000');
-
-      const config = getConfig();
-
-      expect(config.JWT_EXPIRY).toBe(2592000);
     });
 
     it('should handle missing FRONTEND_URL', () => {
@@ -150,8 +134,7 @@ describe('getConfig', () => {
   describe('ENV validation', () => {
     beforeEach(() => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
     });
 
     it('should accept "development"', () => {
@@ -188,8 +171,7 @@ describe('getConfig', () => {
   describe('LOG_LEVEL validation', () => {
     beforeEach(() => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
     });
 
     it('should accept valid log levels', () => {
@@ -199,8 +181,7 @@ describe('getConfig', () => {
         resetConfig();
         vi.unstubAllEnvs();
         vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-        vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-        vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+        vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
         vi.stubEnv('LOG_LEVEL', level);
 
         const config = getConfig();
@@ -219,8 +200,7 @@ describe('getConfig', () => {
   describe('ENABLE_API_DOCS boolean handling', () => {
     beforeEach(() => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
     });
 
     it('should parse "true" as boolean true', () => {
@@ -249,8 +229,7 @@ describe('getConfig', () => {
   describe('SMTP configuration', () => {
     beforeEach(() => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
     });
 
     it('should handle all SMTP fields as optional', () => {
@@ -289,8 +268,7 @@ describe('getConfig', () => {
   describe('caching behavior', () => {
     it('should cache config after first call', () => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
       vi.stubEnv('PORT', '3000');
 
       const config1 = getConfig();
@@ -307,8 +285,7 @@ describe('getConfig', () => {
 
     it('should re-read after resetConfig', () => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
       vi.stubEnv('PORT', '3000');
 
       const config1 = getConfig();
@@ -334,9 +311,7 @@ describe('getConfig', () => {
       vi.stubEnv('ENV', 'production');
       vi.stubEnv('PORT', '8080');
       vi.stubEnv('FRONTEND_URL', 'https://app.example.com');
-      vi.stubEnv('JWT_SECRET', 'super-secret-jwt-key-00000000000');
-      vi.stubEnv('JWT_EXPIRY', '1209600');
-      vi.stubEnv('SESSION_SECRET', 'super-secret-session-key-super-secret-session-key');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'super-secret-better-auth-key-00000000000');
       vi.stubEnv('SMTP_HOST', 'smtp.gmail.com');
       vi.stubEnv('SMTP_PORT', '587');
       vi.stubEnv('SMTP_USER', 'user@gmail.com');
@@ -346,31 +321,19 @@ describe('getConfig', () => {
 
       const config = getConfig();
 
-      expect(config).toEqual({
-        DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
-        DATABASE_POOL_MIN: 5,
-        DATABASE_POOL_MAX: 20,
-        ENV: 'production',
-        PORT: 8080,
-        FRONTEND_URL: 'https://app.example.com',
-        BACKEND_URL: 'http://localhost:3000',
-        JWT_SECRET: 'super-secret-jwt-key-00000000000',
-        JWT_EXPIRY: 1209600,
-        SESSION_SECRET: 'super-secret-session-key-super-secret-session-key',
-        SESSION_EXPIRY_DAYS: 7,
-        PASSWORD_RESET_EXPIRY_HOURS: 1,
-        SMTP_HOST: 'smtp.gmail.com',
-        SMTP_PORT: 587,
-        SMTP_USER: 'user@gmail.com',
-        SMTP_PASSWORD: 'app-password',
-        LOG_LEVEL: 'warn',
-        ENABLE_API_DOCS: false,
-        OVERPASS_API_URL: 'https://overpass-api.de/api/interpreter',
-        OVERPASS_FALLBACK_URL: 'https://overpass.kumi.systems/api/interpreter',
-        ADDRESS_CACHE_TTL_HOURS: 24,
-        POSTGIS_ADDRESS_ENABLED: false,
-        POSTGIS_ADDRESS_DACH_ONLY: true,
-      });
+      expect(config.DATABASE_URL).toBe('postgresql://user:pass@localhost:5432/db');
+      expect(config.DATABASE_POOL_MIN).toBe(5);
+      expect(config.DATABASE_POOL_MAX).toBe(20);
+      expect(config.ENV).toBe('production');
+      expect(config.PORT).toBe(8080);
+      expect(config.FRONTEND_URL).toBe('https://app.example.com');
+      expect(config.BETTER_AUTH_SECRET).toBe('super-secret-better-auth-key-00000000000');
+      expect(config.SMTP_HOST).toBe('smtp.gmail.com');
+      expect(config.SMTP_PORT).toBe(587);
+      expect(config.SMTP_USER).toBe('user@gmail.com');
+      expect(config.SMTP_PASSWORD).toBe('app-password');
+      expect(config.LOG_LEVEL).toBe('warn');
+      expect(config.ENABLE_API_DOCS).toBe(false);
     });
   });
 });

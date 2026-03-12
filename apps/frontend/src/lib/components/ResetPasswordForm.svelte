@@ -1,6 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
-import * as authApi from '$lib/api/auth';
+import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 
 let { token } = $props();
@@ -29,7 +29,17 @@ async function handleSubmit(e) {
   isLoading = true;
 
   try {
-    await authApi.resetPassword({ token, password });
+    const result = await authClient.resetPassword({
+      newPassword: password,
+      token,
+    });
+
+    if (result.error) {
+      error = result.error.message || 'Password reset failed';
+      isLoading = false;
+      return;
+    }
+
     success = true;
     isLoading = false;
 

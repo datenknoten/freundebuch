@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
@@ -8,6 +9,7 @@ import pg from 'pg';
 import { Wait } from 'testcontainers';
 import { afterAll, beforeAll, beforeEach } from 'vitest';
 import { createApp } from '../../src/index.js';
+import { resetAuth } from '../../src/lib/auth.js';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
 import { resetConfig } from '../../src/utils/config.js';
@@ -34,6 +36,9 @@ export async function setupAuthTests(): Promise<AuthTestContext> {
     .withStartupTimeout(120000)
     .withWaitStrategy(Wait.forHealthCheck())
     .start();
+
+  // Reset any existing auth singleton so it reconnects to this container's DB
+  await resetAuth();
 
   // Set DATABASE_URL from the container
   process.env.DATABASE_URL = container.getConnectionUri();
@@ -67,6 +72,8 @@ export async function teardownAuthTests(context: AuthTestContext): Promise<void>
   if (!context) {
     return;
   }
+  // Drain Better Auth's internal pool before ending the app pool / stopping the container
+  await resetAuth();
   if (context.pool) {
     await context.pool.end();
   }
@@ -109,30 +116,60 @@ async function runMigrations(pool: pg.Pool): Promise<void> {
 }
 
 /**
- * Helper to extract session token from cookie header
+ * Helper to extract session token from cookie header.
+ * Supports both Better Auth cookie names.
  */
 export function extractSessionToken(cookieHeader: string | null): string | null {
   if (!cookieHeader) return null;
 
-  const match = cookieHeader.match(/session_token=([^;]+)/);
+  // Better Auth uses 'better-auth.session_token' or '__Secure-better-auth.session_token'
+  const match =
+    cookieHeader.match(/better-auth\.session_token=([^;]+)/) ||
+    cookieHeader.match(/__Secure-better-auth\.session_token=([^;]+)/) ||
+    // Legacy fallback
+    cookieHeader.match(/session_token=([^;]+)/);
   return match ? match[1] : null;
 }
 
 /**
- * Helper to create a test user directly in the database
+ * Helper to extract all cookies from set-cookie headers for use in subsequent requests
+ */
+export function extractCookies(response: Response): string {
+  const setCookieHeaders = response.headers.getSetCookie?.() || [];
+  return setCookieHeaders.map((h) => h.split(';')[0]).join('; ');
+}
+
+/**
+ * Helper to create a test user directly in the database.
+ * Inserts into both legacy auth.users and Better Auth auth.user/account tables.
  */
 export async function createTestUser(
   pool: pg.Pool,
   email: string,
   passwordHash: string,
 ): Promise<{ externalId: string; email: string }> {
+  // Insert into legacy table (still needed for FK references from other schemas)
   const result = await pool.query(
     'INSERT INTO auth.users (email, password_hash) VALUES ($1, $2) RETURNING external_id, email',
     [email, passwordHash],
   );
 
+  const externalId = result.rows[0].external_id;
+
+  // Also insert into Better Auth tables
+  await pool.query(
+    `INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
+     VALUES ($1, $2, $3, false, NOW(), NOW())`,
+    [externalId, email.split('@')[0], email],
+  );
+  await pool.query(
+    `INSERT INTO auth.account (id, account_id, provider_id, user_id, password, created_at, updated_at)
+     VALUES (gen_random_uuid()::text, $1, 'credential', $1, $2, NOW(), NOW())`,
+    [externalId, passwordHash],
+  );
+
   return {
-    externalId: result.rows[0].external_id,
+    externalId,
     email: result.rows[0].email,
   };
 }
@@ -249,13 +286,14 @@ export async function completeTestUserOnboarding(
      SELECT u.id, 'Test User (Self)'
      FROM auth.users u
      WHERE u.external_id = $1
-     RETURNING external_id`,
+     RETURNING id, external_id`,
     [userExternalId],
   );
 
+  const friendInternalId = friendResult.rows[0].id;
   const friendId = friendResult.rows[0].external_id;
 
-  // Set it as the user's self-profile
+  // Set it as the user's self-profile (legacy table)
   await pool.query(
     `UPDATE auth.users u
      SET self_profile_id = f.id
@@ -265,7 +303,58 @@ export async function completeTestUserOnboarding(
     [userExternalId, friendId],
   );
 
+  // Also update Better Auth user table
+  await pool.query(`UPDATE auth."user" SET self_profile_id = $1 WHERE id = $2`, [
+    friendInternalId,
+    userExternalId,
+  ]);
+
   return friendId;
+}
+
+/**
+ * Compute HMAC-SHA256 signature for Hono signed cookies.
+ * Matches the algorithm used by Hono's setSignedCookie / getSignedCookie.
+ */
+async function makeHonoCookieSignature(value: string, secret: string): Promise<string> {
+  const key = await globalThis.crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const signature = await globalThis.crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(value),
+  );
+  return btoa(String.fromCharCode(...new Uint8Array(signature)));
+}
+
+/**
+ * Create a Better Auth session directly in the database and return session cookies.
+ * This bypasses the sign-in flow for test setup.
+ *
+ * The cookie must be signed with HMAC-SHA256 to match how Better Auth / Hono
+ * sets and reads signed cookies (via setSignedCookie / getSignedCookie).
+ */
+export async function createBetterAuthSession(pool: pg.Pool, userId: string): Promise<string> {
+  const token = crypto.randomBytes(24).toString('base64url'); // ~32 chars, matching BA format
+  const sessionId = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+  await pool.query(
+    `INSERT INTO auth.session (id, user_id, token, expires_at, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+    [sessionId, userId, token, expiresAt],
+  );
+
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (!secret) throw new Error('BETTER_AUTH_SECRET must be set for test session creation');
+  const signature = await makeHonoCookieSignature(token, secret);
+  const signedValue = encodeURIComponent(`${token}.${signature}`);
+  return `better-auth.session_token=${signedValue}`;
 }
 
 /**
@@ -276,6 +365,7 @@ export function setupAuthTestSuite() {
 
   beforeAll(async () => {
     // Set required environment variables for tests
+    process.env.BETTER_AUTH_SECRET = 'test-better-auth-secret-test-better-auth-secret-1';
     process.env.JWT_SECRET = 'test-jwt-secret-test-jwt-secret-1';
     process.env.SESSION_SECRET = 'test-session-secret-test-session-secret-1';
     process.env.JWT_EXPIRY = '604800';
@@ -292,6 +382,7 @@ export function setupAuthTestSuite() {
 
   afterAll(async () => {
     await teardownAuthTests(context);
+    delete process.env.BETTER_AUTH_SECRET;
     delete process.env.JWT_SECRET;
     delete process.env.SESSION_SECRET;
     delete process.env.JWT_EXPIRY;

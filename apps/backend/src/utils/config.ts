@@ -22,14 +22,15 @@ const ConfigSchema = type({
   FRONTEND_URL: 'string = "http://localhost:5173"',
   BACKEND_URL: 'string = "http://localhost:3000"',
 
-  // Authentication
-  JWT_SECRET: SecretType,
-  // TODO convert that later to a smart string like 7d
-  // Default expiry of 7 days
-  JWT_EXPIRY: 'string.integer.parse = "604800"',
-  SESSION_SECRET: SecretType,
-  SESSION_EXPIRY_DAYS: 'string.integer.parse = "7"',
-  PASSWORD_RESET_EXPIRY_HOURS: 'string.integer.parse = "1"',
+  // Authentication (Better Auth)
+  BETTER_AUTH_SECRET: SecretType,
+
+  // Legacy authentication (kept during transition, will be removed)
+  'JWT_SECRET?': SecretType,
+  'JWT_EXPIRY?': 'string.integer.parse',
+  'SESSION_SECRET?': SecretType,
+  'SESSION_EXPIRY_DAYS?': 'string.integer.parse',
+  'PASSWORD_RESET_EXPIRY_HOURS?': 'string.integer.parse',
 
   // Email (optional, for later phases)
   'SMTP_HOST?': 'string',

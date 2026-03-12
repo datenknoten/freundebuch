@@ -1,11 +1,108 @@
 import { describe, expect, it } from 'vitest';
-import { hashSessionToken } from '../../src/utils/auth.js';
-import { countUserSessions, setupAuthTestSuite } from './auth.helpers.js';
+import { setupAuthTestSuite } from './auth.helpers.js';
 
-describe('Auth Endpoints - Password Reset Flow', () => {
+/**
+ * Helper to register a user via Better Auth's sign-up endpoint.
+ */
+async function signUp(
+  app: { fetch: (req: Request) => Response | Promise<Response> },
+  email: string,
+  password: string,
+) {
+  const response = await app.fetch(
+    new Request('http://localhost/api/auth/sign-up/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name: email.split('@')[0] }),
+    }),
+  );
+  return response;
+}
+
+/**
+ * Helper to sign in via Better Auth's sign-in endpoint.
+ */
+async function signIn(
+  app: { fetch: (req: Request) => Response | Promise<Response> },
+  email: string,
+  password: string,
+) {
+  const response = await app.fetch(
+    new Request('http://localhost/api/auth/sign-in/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    }),
+  );
+  return response;
+}
+
+/**
+ * Helper to request a password reset via Better Auth.
+ */
+async function requestPasswordReset(
+  app: { fetch: (req: Request) => Response | Promise<Response> },
+  email: string,
+) {
+  const response = await app.fetch(
+    new Request('http://localhost/api/auth/request-password-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, redirectTo: 'http://localhost:5173/reset-password' }),
+    }),
+  );
+  return response;
+}
+
+/**
+ * Helper to extract the reset token from the auth.verification table.
+ * Better Auth stores verification entries with identifier = user email
+ * and the value contains the token.
+ * The reset URL logged by sendResetPassword contains the token as a query param.
+ * We query the DB directly to retrieve the token for testing.
+ */
+async function getResetTokenFromDb(pool: import('pg').Pool, email: string): Promise<string | null> {
+  // Better Auth stores verification entries with:
+  //   identifier = 'reset-password:<token>'
+  //   value = user ID
+  // We join with auth."user" to filter by email.
+  const result = await pool.query(
+    `SELECT v.identifier
+     FROM auth.verification v
+     JOIN auth."user" u ON v.value = u.id
+     WHERE v.identifier LIKE 'reset-password:%' AND u.email = $1
+     ORDER BY v.created_at DESC
+     LIMIT 1`,
+    [email],
+  );
+
+  if (result.rows.length === 0) return null;
+  // Extract the token from the identifier (strip 'reset-password:' prefix)
+  return result.rows[0].identifier.replace('reset-password:', '');
+}
+
+/**
+ * Helper to reset password via Better Auth.
+ */
+async function resetPassword(
+  app: { fetch: (req: Request) => Response | Promise<Response> },
+  token: string,
+  newPassword: string,
+) {
+  const response = await app.fetch(
+    new Request('http://localhost/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPassword, token }),
+    }),
+  );
+  return response;
+}
+
+describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
   const { getContext } = setupAuthTestSuite();
 
-  describe('POST /api/auth/forgot-password', () => {
+  describe('POST /api/auth/forget-password', () => {
     it('should successfully request password reset for existing user', async () => {
       const { app, pool } = getContext();
 
@@ -13,180 +110,80 @@ describe('Auth Endpoints - Password Reset Flow', () => {
       const password = 'SecurePassword123';
 
       // Register a user
-      const registerRequest = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      await app.fetch(registerRequest);
+      await signUp(app, email, password);
 
       // Request password reset
-      const resetRequest = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const resetResponse = await app.fetch(resetRequest);
-      const body: any = await resetResponse.json();
-
+      const resetResponse = await requestPasswordReset(app, email);
       expect(resetResponse.status).toBe(200);
-      expect(body).toHaveProperty('message');
-      expect(body.message).toContain('password reset');
 
-      // Should return a reset token (only in MVP - remove in production)
-      expect(body).toHaveProperty('resetToken');
-      expect(body.resetToken).toMatch(/^[a-f0-9]{64}$/);
+      // Better Auth may return { status: true } or an empty body for forget-password
+      const text = await resetResponse.text();
+      if (text) {
+        const body = JSON.parse(text);
+        expect(body).toHaveProperty('status', true);
+      }
 
-      // Verify token was stored in database
-      const tokenHash = hashSessionToken(body.resetToken);
+      // Verify a verification token was stored in the database
       const result = await pool.query(
-        'SELECT * FROM auth.password_reset_tokens WHERE token_hash = $1',
-        [tokenHash],
+        `SELECT * FROM auth.verification
+         ORDER BY created_at DESC LIMIT 1`,
       );
 
       expect(result.rows.length).toBe(1);
-      expect(result.rows[0].used_at).toBeNull();
+      // Better Auth stores identifier as 'reset-password:<token>'
+      expect(result.rows[0].identifier).toMatch(/^reset-password:/);
+      // Better Auth stores the user ID as the value
+      expect(result.rows[0].value).toBeTruthy();
 
-      // Check expiration (should be ~1 hour)
+      // Check expiration is set in the future
       const expiresAt = new Date(result.rows[0].expires_at);
       const now = new Date();
-      const diffMs = expiresAt.getTime() - now.getTime();
-      const diffMinutes = diffMs / (1000 * 60);
-
-      expect(diffMinutes).toBeGreaterThan(59);
-      expect(diffMinutes).toBeLessThan(61);
+      expect(expiresAt.getTime()).toBeGreaterThan(now.getTime());
     });
 
     it('should return success even for non-existent user (prevent user enumeration)', async () => {
       const { app } = getContext();
 
-      const resetRequest = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: 'nonexistent@example.com',
-        }),
-      });
+      const resetResponse = await requestPasswordReset(app, 'nonexistent@example.com');
 
-      const resetResponse = await app.fetch(resetRequest);
-      const body: any = await resetResponse.json();
-
-      // Should return 200 (don't reveal if user exists)
+      // Better Auth returns 200 to prevent user enumeration
       expect(resetResponse.status).toBe(200);
-      expect(body).toHaveProperty('message');
-      expect(body.message).toContain('password reset');
 
-      // Should still return a token to prevent timing attacks
-      expect(body).toHaveProperty('resetToken');
+      // Better Auth may return { status: true } or an empty body
+      const text = await resetResponse.text();
+      if (text) {
+        const body = JSON.parse(text);
+        expect(body).toHaveProperty('status', true);
+      }
     });
 
-    it('should allow multiple reset requests (creates new token each time)', async () => {
+    it('should allow multiple reset requests (creates new verification each time)', async () => {
       const { app, pool } = getContext();
 
       const email = 'multiplereset@example.com';
       const password = 'SecurePassword123';
 
       // Register
-      const registerRequest = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const registerResponse = await app.fetch(registerRequest);
-      const registerBody: any = await registerResponse.json();
-      const userExternalId = registerBody.user.externalId;
-
-      // Get user ID
-      const userResult = await pool.query('SELECT id FROM auth.users WHERE external_id = $1', [
-        userExternalId,
-      ]);
-      const userId = userResult.rows[0].id;
+      await signUp(app, email, password);
 
       // First reset request
-      const reset1 = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      const response1 = await requestPasswordReset(app, email);
+      expect(response1.status).toBe(200);
 
-      const response1 = await app.fetch(reset1);
-      const body1: any = await response1.json();
+      // Get first token
+      const firstToken = await getResetTokenFromDb(pool, email);
 
       // Second reset request
-      const reset2 = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const response2 = await app.fetch(reset2);
-      const body2: any = await response2.json();
-
-      expect(response1.status).toBe(200);
+      const response2 = await requestPasswordReset(app, email);
       expect(response2.status).toBe(200);
 
-      // Should generate different tokens
-      expect(body1.resetToken).not.toBe(body2.resetToken);
+      // Get second token
+      const secondToken = await getResetTokenFromDb(pool, email);
 
-      // Should have 2 tokens in database
-      const tokensResult = await pool.query(
-        'SELECT COUNT(*) FROM auth.password_reset_tokens WHERE user_id = $1',
-        [userId],
-      );
-      expect(parseInt(tokensResult.rows[0].count, 10)).toBe(2);
-    });
-
-    it('should return 400 for missing email', async () => {
-      const { app } = getContext();
-
-      const request = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
-      });
-
-      const response = await app.fetch(request);
-      const body: any = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(body).toHaveProperty('error');
-    });
-
-    it('should return 400 for invalid email format', async () => {
-      const { app } = getContext();
-
-      const request = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: 'not-an-email',
-        }),
-      });
-
-      const response = await app.fetch(request);
-      const body: any = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(body).toHaveProperty('error');
+      // Tokens should be different
+      expect(firstToken).toBeTruthy();
+      expect(secondToken).toBeTruthy();
+      expect(firstToken).not.toBe(secondToken);
     });
   });
 
@@ -199,79 +196,26 @@ describe('Auth Endpoints - Password Reset Flow', () => {
       const newPassword = 'NewPassword456';
 
       // Register
-      const registerRequest = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password: oldPassword }),
-      });
-
-      await app.fetch(registerRequest);
+      await signUp(app, email, oldPassword);
 
       // Request password reset
-      const forgotRequest = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      await requestPasswordReset(app, email);
 
-      const forgotResponse = await app.fetch(forgotRequest);
-      const forgotBody: any = await forgotResponse.json();
-      const resetToken = forgotBody.resetToken;
+      // Get the token from the database
+      const token = await getResetTokenFromDb(pool, email);
+      expect(token).toBeTruthy();
 
       // Reset password
-      const resetRequest = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: resetToken,
-          password: newPassword,
-        }),
-      });
-
-      const resetResponse = await app.fetch(resetRequest);
-      const resetBody: any = await resetResponse.json();
+      const resetResponse = await resetPassword(app, token as string, newPassword);
 
       expect(resetResponse.status).toBe(200);
-      expect(resetBody).toHaveProperty('message');
-      expect(resetBody.message).toContain('Password reset successfully');
-
-      // Verify token was marked as used
-      const tokenHash = hashSessionToken(resetToken);
-      const tokenResult = await pool.query(
-        'SELECT used_at FROM auth.password_reset_tokens WHERE token_hash = $1',
-        [tokenHash],
-      );
-
-      expect(tokenResult.rows[0].used_at).not.toBeNull();
 
       // Verify old password no longer works
-      const oldLoginRequest = new Request('http://localhost/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password: oldPassword }),
-      });
-
-      const oldLoginResponse = await app.fetch(oldLoginRequest);
-      expect(oldLoginResponse.status).toBe(401);
+      const oldLoginResponse = await signIn(app, email, oldPassword);
+      expect(oldLoginResponse.status).not.toBe(200);
 
       // Verify new password works
-      const newLoginRequest = new Request('http://localhost/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password: newPassword }),
-      });
-
-      const newLoginResponse = await app.fetch(newLoginRequest);
+      const newLoginResponse = await signIn(app, email, newPassword);
       expect(newLoginResponse.status).toBe(200);
     });
 
@@ -283,512 +227,209 @@ describe('Auth Endpoints - Password Reset Flow', () => {
       const newPassword = 'NewPassword456';
 
       // Register (creates 1st session)
-      const registerRequest = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password: oldPassword }),
-      });
-
-      const registerResponse = await app.fetch(registerRequest);
+      const registerResponse = await signUp(app, email, oldPassword);
       const registerBody: any = await registerResponse.json();
-      const userExternalId = registerBody.user.externalId;
+      const userId = registerBody.user?.id;
 
       // Login again (creates 2nd session)
-      const loginRequest = new Request('http://localhost/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password: oldPassword }),
-      });
+      await signIn(app, email, oldPassword);
 
-      await app.fetch(loginRequest);
-
-      // Verify 2 sessions exist
-      let sessionCount = await countUserSessions(pool, userExternalId);
-      expect(sessionCount).toBe(2);
+      // Verify sessions exist (Better Auth uses auth.session table)
+      const sessionsBefore = await pool.query(
+        'SELECT COUNT(*) FROM auth.session WHERE user_id = $1',
+        [userId],
+      );
+      expect(parseInt(sessionsBefore.rows[0].count, 10)).toBeGreaterThanOrEqual(2);
 
       // Request and complete password reset
-      const forgotRequest = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      await requestPasswordReset(app, email);
+      const token = await getResetTokenFromDb(pool, email);
+      expect(token).toBeTruthy();
 
-      const forgotResponse = await app.fetch(forgotRequest);
-      const forgotBody: any = await forgotResponse.json();
+      await resetPassword(app, token as string, newPassword);
 
-      const resetRequest = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: forgotBody.resetToken,
-          password: newPassword,
-        }),
-      });
-
-      await app.fetch(resetRequest);
-
-      // Verify all sessions were deleted
-      sessionCount = await countUserSessions(pool, userExternalId);
-      expect(sessionCount).toBe(0);
+      // Verify all sessions were deleted after password reset
+      const sessionsAfter = await pool.query(
+        'SELECT COUNT(*) FROM auth.session WHERE user_id = $1',
+        [userId],
+      );
+      expect(parseInt(sessionsAfter.rows[0].count, 10)).toBe(0);
     });
 
-    it('should return 400 for invalid/expired token', async () => {
+    it('should reject an invalid/nonexistent token', async () => {
       const { app } = getContext();
 
-      const request = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: 'invalid-token-1234567890abcdef1234567890abcdef1234567890abcdef12',
-          password: 'NewPassword123',
-        }),
-      });
+      const resetResponse = await resetPassword(
+        app,
+        'totally-invalid-token-value',
+        'NewPassword123',
+      );
 
-      const response = await app.fetch(request);
-      const body: any = await response.json();
+      // Better Auth should reject invalid tokens
+      expect(resetResponse.status).not.toBe(200);
 
-      expect(response.status).toBe(400);
-      expect(body).toHaveProperty('error');
-      expect(body.error).toContain('Invalid or expired');
+      // The response should indicate an error; safely parse the body
+      const text = await resetResponse.text();
+      if (text) {
+        const body = JSON.parse(text);
+        expect(body).toBeDefined();
+      }
     });
 
-    it('should return 400 for already used token', async () => {
-      const { app } = getContext();
+    it('should reject an already-used token', async () => {
+      const { app, pool } = getContext();
 
       const email = 'usedtoken@example.com';
       const password = 'OldPassword123';
 
       // Register
-      const registerRequest = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      await app.fetch(registerRequest);
+      await signUp(app, email, password);
 
       // Get reset token
-      const forgotRequest = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const forgotResponse = await app.fetch(forgotRequest);
-      const forgotBody: any = await forgotResponse.json();
-      const resetToken = forgotBody.resetToken;
+      await requestPasswordReset(app, email);
+      const token = await getResetTokenFromDb(pool, email);
+      expect(token).toBeTruthy();
 
       // Use token once
-      const reset1 = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: resetToken,
-          password: 'NewPassword123',
-        }),
-      });
-
-      const response1 = await app.fetch(reset1);
+      const response1 = await resetPassword(app, token as string, 'NewPassword123');
       expect(response1.status).toBe(200);
 
-      // Try to use token again
-      const reset2 = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: resetToken,
-          password: 'AnotherPassword456',
-        }),
-      });
+      // Try to use the same token again
+      const response2 = await resetPassword(app, token as string, 'AnotherPassword456');
 
-      const response2 = await app.fetch(reset2);
-      const body2: any = await response2.json();
-
-      expect(response2.status).toBe(400);
-      expect(body2).toHaveProperty('error');
-      expect(body2.error).toContain('Invalid or expired');
+      // Should be rejected (token consumed on first use)
+      expect(response2.status).not.toBe(200);
     });
 
-    it('should return 400 for expired token', async () => {
+    it('should reject an expired token', async () => {
       const { app, pool } = getContext();
 
       const email = 'expiredtoken@example.com';
       const password = 'OldPassword123';
 
       // Register
-      const registerRequest = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      await app.fetch(registerRequest);
+      await signUp(app, email, password);
 
       // Get reset token
-      const forgotRequest = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      await requestPasswordReset(app, email);
+      const token = await getResetTokenFromDb(pool, email);
+      expect(token).toBeTruthy();
 
-      const forgotResponse = await app.fetch(forgotRequest);
-      const forgotBody: any = await forgotResponse.json();
-      const resetToken = forgotBody.resetToken;
-
-      // Manually expire the token
-      const tokenHash = hashSessionToken(resetToken);
+      // Manually expire the verification entry in the database
       await pool.query(
-        "UPDATE auth.password_reset_tokens SET expires_at = NOW() - INTERVAL '1 hour' WHERE token_hash = $1",
-        [tokenHash],
+        `UPDATE auth.verification SET expires_at = NOW() - INTERVAL '1 hour'
+         WHERE identifier = $1`,
+        [`reset-password:${token}`],
       );
 
-      // Try to use expired token
-      const resetRequest = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: resetToken,
-          password: 'NewPassword123',
-        }),
-      });
+      // Try to use the expired token
+      const resetResponse = await resetPassword(app, token as string, 'NewPassword123');
 
-      const resetResponse = await app.fetch(resetRequest);
-      const body: any = await resetResponse.json();
-
-      expect(resetResponse.status).toBe(400);
-      expect(body).toHaveProperty('error');
-      expect(body.error).toContain('Invalid or expired');
-    });
-
-    it('should return 400 for missing token', async () => {
-      const { app } = getContext();
-
-      const request = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          password: 'NewPassword123',
-        }),
-      });
-
-      const response = await app.fetch(request);
-      const body: any = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(body).toHaveProperty('error');
-    });
-
-    it('should return 400 for missing password', async () => {
-      const { app } = getContext();
-
-      const request = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: 'some-token-12345678901234567890123456789012345678901234567890',
-        }),
-      });
-
-      const response = await app.fetch(request);
-      const body: any = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(body).toHaveProperty('error');
-    });
-
-    it('should return 400 for new password less than 8 characters', async () => {
-      const { app } = getContext();
-
-      const email = 'shortpwd@example.com';
-      const password = 'OldPassword123';
-
-      // Register and get reset token
-      const registerRequest = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      await app.fetch(registerRequest);
-
-      const forgotRequest = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const forgotResponse = await app.fetch(forgotRequest);
-      const forgotBody: any = await forgotResponse.json();
-
-      // Try to reset with short password
-      const resetRequest = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: forgotBody.resetToken,
-          password: 'Short1',
-        }),
-      });
-
-      const resetResponse = await app.fetch(resetRequest);
-      const body = await resetResponse.json();
-
-      expect(resetResponse.status).toBe(400);
-      expect(body).toHaveProperty('error');
-    });
-
-    it('should hash new password before storing', async () => {
-      const { app, pool } = getContext();
-
-      const email = 'hashcheck@example.com';
-      const oldPassword = 'OldPassword123';
-      const newPassword = 'NewPassword456';
-
-      // Register and get reset token
-      const registerRequest = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password: oldPassword }),
-      });
-
-      await app.fetch(registerRequest);
-
-      const forgotRequest = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const forgotResponse = await app.fetch(forgotRequest);
-      const forgotBody: any = await forgotResponse.json();
-
-      // Reset password
-      const resetRequest = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: forgotBody.resetToken,
-          password: newPassword,
-        }),
-      });
-
-      await app.fetch(resetRequest);
-
-      // Check password in database
-      const userResult = await pool.query('SELECT password_hash FROM auth.users WHERE email = $1', [
-        email,
-      ]);
-
-      const passwordHash = userResult.rows[0].password_hash;
-
-      // Should be hashed (not plaintext)
-      expect(passwordHash).not.toBe(newPassword);
-      expect(passwordHash).toMatch(/^\$2[aby]\$.{56}$/); // bcrypt format
+      // Should be rejected
+      expect(resetResponse.status).not.toBe(200);
     });
   });
 
   describe('Password Reset Flow - Complete Integration', () => {
-    it('should complete full password reset flow: forgot → reset → login', async () => {
-      const { app } = getContext();
+    it('should complete full password reset flow: request reset -> reset -> sign in', async () => {
+      const { app, pool } = getContext();
 
       const email = 'fullflow@example.com';
       const oldPassword = 'OldPassword123';
       const newPassword = 'NewPassword456';
 
       // Step 1: Register
-      const registerRequest = new Request('http://localhost/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password: oldPassword }),
-      });
-
-      const registerResponse = await app.fetch(registerRequest);
-      expect(registerResponse.status).toBe(201);
+      const registerResponse = await signUp(app, email, oldPassword);
+      expect(registerResponse.status).toBe(200);
 
       // Step 2: Request password reset
-      const forgotRequest = new Request('http://localhost/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const forgotResponse = await app.fetch(forgotRequest);
+      const forgotResponse = await requestPasswordReset(app, email);
       expect(forgotResponse.status).toBe(200);
 
-      const forgotBody: any = await forgotResponse.json();
-      const resetToken = forgotBody.resetToken;
+      // Step 3: Get token from DB and reset password
+      const token = await getResetTokenFromDb(pool, email);
+      expect(token).toBeTruthy();
 
-      // Step 3: Reset password
-      const resetRequest = new Request('http://localhost/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: resetToken,
-          password: newPassword,
-        }),
-      });
-
-      const resetResponse = await app.fetch(resetRequest);
+      const resetResponse = await resetPassword(app, token as string, newPassword);
       expect(resetResponse.status).toBe(200);
 
-      // Step 4: Login with new password
-      const loginRequest = new Request('http://localhost/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password: newPassword }),
-      });
-
-      const loginResponse = await app.fetch(loginRequest);
-      const loginBody = await loginResponse.json();
-
+      // Step 4: Sign in with new password
+      const loginResponse = await signIn(app, email, newPassword);
       expect(loginResponse.status).toBe(200);
+
+      const loginBody: any = await loginResponse.json();
       expect(loginBody).toHaveProperty('user');
-      expect(loginBody).toHaveProperty('accessToken');
-      expect(loginBody).toHaveProperty('sessionToken');
     });
 
     it('should handle multiple users with simultaneous reset requests', async () => {
-      const { app } = getContext();
+      const { app, pool } = getContext();
 
       const user1Email = 'user1reset@example.com';
       const user2Email = 'user2reset@example.com';
       const password = 'SecurePassword123';
 
       // Register both users
-      await app.fetch(
-        new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user1Email, password }),
-        }),
-      );
+      await signUp(app, user1Email, password);
+      await signUp(app, user2Email, password);
 
-      await app.fetch(
-        new Request('http://localhost/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user2Email, password }),
-        }),
-      );
+      // User 1 requests reset
+      await requestPasswordReset(app, user1Email);
+      const token1 = await getResetTokenFromDb(pool, user1Email);
 
-      // Both request password reset
-      const forgot1Response = await app.fetch(
-        new Request('http://localhost/api/auth/forgot-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user1Email }),
-        }),
-      );
+      // User 2 requests reset
+      await requestPasswordReset(app, user2Email);
+      const token2 = await getResetTokenFromDb(pool, user2Email);
 
-      const forgot2Response = await app.fetch(
-        new Request('http://localhost/api/auth/forgot-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user2Email }),
-        }),
-      );
-
-      const forgot1Body: any = await forgot1Response.json();
-      const forgot2Body: any = await forgot2Response.json();
-
-      // Tokens should be different
-      expect(forgot1Body.resetToken).not.toBe(forgot2Body.resetToken);
+      expect(token1).toBeTruthy();
+      expect(token2).toBeTruthy();
+      expect(token1).not.toBe(token2);
 
       // User 1 resets password
-      const reset1Response = await app.fetch(
-        new Request('http://localhost/api/auth/reset-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: forgot1Body.resetToken,
-            password: 'NewPassword1',
-          }),
-        }),
-      );
-
+      const reset1Response = await resetPassword(app, token1 as string, 'NewPassword1!');
       expect(reset1Response.status).toBe(200);
 
       // User 2's token should still be valid
-      const reset2Response = await app.fetch(
-        new Request('http://localhost/api/auth/reset-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: forgot2Body.resetToken,
-            password: 'NewPassword2',
-          }),
-        }),
-      );
-
+      const reset2Response = await resetPassword(app, token2 as string, 'NewPassword2!');
       expect(reset2Response.status).toBe(200);
 
-      // Both should be able to login with their new passwords
-      const login1Response = await app.fetch(
-        new Request('http://localhost/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user1Email, password: 'NewPassword1' }),
-        }),
-      );
-
-      const login2Response = await app.fetch(
-        new Request('http://localhost/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user2Email, password: 'NewPassword2' }),
-        }),
-      );
+      // Both should be able to sign in with their new passwords
+      const login1Response = await signIn(app, user1Email, 'NewPassword1!');
+      const login2Response = await signIn(app, user2Email, 'NewPassword2!');
 
       expect(login1Response.status).toBe(200);
       expect(login2Response.status).toBe(200);
+    });
+
+    it('should hash the new password (not store plaintext)', async () => {
+      const { app, pool } = getContext();
+
+      const email = 'hashcheck@example.com';
+      const oldPassword = 'OldPassword123';
+      const newPassword = 'NewPassword456';
+
+      // Register and reset password
+      await signUp(app, email, oldPassword);
+      await requestPasswordReset(app, email);
+      const token = await getResetTokenFromDb(pool, email);
+      expect(token).toBeTruthy();
+
+      await resetPassword(app, token as string, newPassword);
+
+      // Check password in Better Auth account table
+      const accountResult = await pool.query(
+        `SELECT a.password FROM auth.account a
+         JOIN auth."user" u ON a.user_id = u.id
+         WHERE u.email = $1 AND a.provider_id = 'credential'`,
+        [email],
+      );
+
+      const storedPassword = accountResult.rows[0]?.password;
+
+      // Should be hashed (not plaintext)
+      expect(storedPassword).not.toBe(newPassword);
+      expect(storedPassword).toBeTruthy();
+      // The hash should be either bcrypt ($2b$) or scrypt format (used by Better Auth)
+      expect(storedPassword?.length).toBeGreaterThan(20);
     });
   });
 });

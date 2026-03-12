@@ -16,7 +16,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);
@@ -42,7 +42,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends?page=1&pageSize=2', {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);
@@ -68,7 +68,7 @@ describe('Friends API - Integration Tests', () => {
         'http://localhost/api/friends?sortBy=display_name&sortOrder=asc',
         {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -100,7 +100,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'John Doe',
         }),
@@ -129,7 +129,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Dr. John M. Smith Jr.',
           name_prefix: 'Dr.',
@@ -157,7 +157,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Full Friend',
           phones: [
@@ -200,7 +200,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Test Friend',
           emails: [{ email_address: 'invalid-email', email_type: 'personal' }],
@@ -217,7 +217,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: '',
         }),
@@ -245,7 +245,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);
@@ -265,7 +265,7 @@ describe('Friends API - Integration Tests', () => {
         'http://localhost/api/friends/00000000-0000-0000-0000-000000000000',
         {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -283,7 +283,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'PUT',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'New Name',
         }),
@@ -311,7 +311,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'PUT',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           name_prefix: null,
         }),
@@ -331,7 +331,7 @@ describe('Friends API - Integration Tests', () => {
         'http://localhost/api/friends/00000000-0000-0000-0000-000000000000',
         {
           method: 'PUT',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
           body: JSON.stringify({ display_name: 'Test' }),
         },
       );
@@ -350,7 +350,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'DELETE',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);
@@ -366,7 +366,7 @@ describe('Friends API - Integration Tests', () => {
       // Should not appear in list (only self-profile remains)
       const listRequest = new Request('http://localhost/api/friends', {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const listResponse = await app.fetch(listRequest);
@@ -383,7 +383,7 @@ describe('Friends API - Integration Tests', () => {
         'http://localhost/api/friends/00000000-0000-0000-0000-000000000000',
         {
           method: 'DELETE',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -401,7 +401,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request(`http://localhost/api/friends/${friendId}/phones`, {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           phone_number: '+12125551234',
           phone_type: 'mobile',
@@ -427,7 +427,7 @@ describe('Friends API - Integration Tests', () => {
       // Add phone
       const addRequest = new Request(`http://localhost/api/friends/${friendId}/phones`, {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           phone_number: '+12125551234',
           phone_type: 'mobile',
@@ -443,7 +443,7 @@ describe('Friends API - Integration Tests', () => {
         `http://localhost/api/friends/${friendId}/phones/${phoneId}`,
         {
           method: 'DELETE',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -454,7 +454,7 @@ describe('Friends API - Integration Tests', () => {
       // Verify phone is gone
       const getRequest = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const getResponse = await app.fetch(getRequest);
@@ -472,7 +472,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request(`http://localhost/api/friends/${friendId}/emails`, {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           email_address: 'test@example.com',
           email_type: 'personal',
@@ -498,7 +498,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request(`http://localhost/api/friends/${friendId}/addresses`, {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           street_line1: '123 Main St',
           city: 'Anytown',
@@ -527,7 +527,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request(`http://localhost/api/friends/${friendId}/urls`, {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           url: 'https://example.com',
           url_type: 'personal',
@@ -557,7 +557,7 @@ describe('Friends API - Integration Tests', () => {
       // Try to access with testUser's token
       const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);
@@ -572,7 +572,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Test Friend',
           phones: [
@@ -592,7 +592,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Test Friend',
           emails: [
@@ -612,7 +612,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Test Friend',
           addresses: [
@@ -632,7 +632,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Valid Friend',
           phones: [
@@ -667,7 +667,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Too Many Phones',
           phones,
@@ -690,7 +690,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Too Many Emails',
           emails,
@@ -713,7 +713,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Too Many URLs',
           urls,
@@ -736,7 +736,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
         body: JSON.stringify({
           display_name: 'Max Phones Friend',
           phones,
@@ -761,7 +761,7 @@ describe('Friends API - Integration Tests', () => {
       const request = new Request(`http://localhost/api/friends/${friendId}/photo`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${testUser.accessToken}`,
+          Cookie: testUser.sessionCookies,
         },
         body: formData,
       });
@@ -785,7 +785,7 @@ describe('Friends API - Integration Tests', () => {
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${testUser.accessToken}`,
+            Cookie: testUser.sessionCookies,
           },
           body: formData,
         },
@@ -822,7 +822,7 @@ describe('Friends API - Integration Tests', () => {
 
       const request = new Request(`http://localhost/api/friends/${friendId}/photo`, {
         method: 'DELETE',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);

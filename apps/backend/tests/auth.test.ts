@@ -32,9 +32,11 @@ describe('auth.ts', () => {
   beforeEach(() => {
     // Set required environment variables
     vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
+    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
     vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
     vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
     vi.stubEnv('JWT_EXPIRY', '604800');
+    vi.stubEnv('SESSION_EXPIRY_DAYS', '7');
     resetConfig();
     vi.clearAllMocks();
   });

@@ -32,7 +32,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -52,7 +52,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=xyz123', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -71,7 +71,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=john', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -91,7 +91,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=smith', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -111,7 +111,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=acme', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -149,7 +149,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=engineer', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -170,7 +170,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=example.com', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -190,7 +190,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=415555', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -213,7 +213,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=patsch', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -237,7 +237,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=conference', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -262,7 +262,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=hackathon', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -287,7 +287,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=machine learning', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -312,7 +312,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=patsch', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -343,7 +343,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -363,7 +363,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -400,7 +400,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -424,7 +424,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice&limit=3', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -444,7 +444,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -459,7 +459,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice&limit=100', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -475,7 +475,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -488,7 +488,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -501,7 +501,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=a', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -542,7 +542,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -572,7 +572,7 @@ describe('Search API - Integration Tests', () => {
         'http://localhost/api/friends/search/paginated?q=alice&page=1&pageSize=5',
         {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -598,7 +598,7 @@ describe('Search API - Integration Tests', () => {
         'http://localhost/api/friends/search/paginated?q=alice&sortBy=display_name&sortOrder=asc',
         {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -622,7 +622,7 @@ describe('Search API - Integration Tests', () => {
         'http://localhost/api/friends/search/paginated?q=alice&sortBy=relevance&sortOrder=desc',
         {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -646,7 +646,7 @@ describe('Search API - Integration Tests', () => {
         'http://localhost/api/friends/search/paginated?q=alice&page=2&pageSize=3&sortBy=display_name&sortOrder=asc',
         {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -686,7 +686,7 @@ describe('Search API - Integration Tests', () => {
           'http://localhost/api/friends/search/faceted?q=alice&city=New York',
           {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           },
         );
 
@@ -715,7 +715,7 @@ describe('Search API - Integration Tests', () => {
           'http://localhost/api/friends/search/faceted?q=alice&country=USA',
           {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           },
         );
 
@@ -738,7 +738,7 @@ describe('Search API - Integration Tests', () => {
           'http://localhost/api/friends/search/faceted?q=alice&organization=Acme Corp',
           {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           },
         );
 
@@ -779,7 +779,7 @@ describe('Search API - Integration Tests', () => {
           'http://localhost/api/friends/search/faceted?q=alice&job_title=Engineer',
           {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           },
         );
 
@@ -809,7 +809,7 @@ describe('Search API - Integration Tests', () => {
           `http://localhost/api/friends/search/faceted?q=alice&circles=${circleId}`,
           {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           },
         );
 
@@ -856,7 +856,7 @@ describe('Search API - Integration Tests', () => {
           'http://localhost/api/friends/search/faceted?q=alice&organization=Acme Corp&city=New York',
           {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           },
         );
 
@@ -882,7 +882,7 @@ describe('Search API - Integration Tests', () => {
           'http://localhost/api/friends/search/faceted?q=alice&organization=Acme Corp',
           {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           },
         );
 
@@ -931,7 +931,7 @@ describe('Search API - Integration Tests', () => {
           'http://localhost/api/friends/search/faceted?q=patsch&organization=Tech Corp',
           {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           },
         );
 
@@ -959,7 +959,7 @@ describe('Search API - Integration Tests', () => {
           'http://localhost/api/friends/search/faceted?q=alice&includeFacets=true',
           {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           },
         );
 
@@ -983,7 +983,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/faceted?q=alice', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -1009,7 +1009,7 @@ describe('Search API - Integration Tests', () => {
           'http://localhost/api/friends/search/faceted?organization=Acme Corp',
           {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           },
         );
 
@@ -1026,7 +1026,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/faceted', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -1047,7 +1047,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/recent', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -1065,7 +1065,7 @@ describe('Search API - Integration Tests', () => {
         for (const query of ['alice', 'bob', 'charlie']) {
           const addRequest = new Request('http://localhost/api/friends/search/recent', {
             method: 'POST',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
             body: JSON.stringify({ query }),
           });
           await app.fetch(addRequest);
@@ -1073,7 +1073,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/recent', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -1094,7 +1094,7 @@ describe('Search API - Integration Tests', () => {
         for (let i = 0; i < 5; i++) {
           const addRequest = new Request('http://localhost/api/friends/search/recent', {
             method: 'POST',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
             body: JSON.stringify({ query: `search${i}` }),
           });
           await app.fetch(addRequest);
@@ -1102,7 +1102,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/recent?limit=3', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const response = await app.fetch(request);
@@ -1119,7 +1119,7 @@ describe('Search API - Integration Tests', () => {
 
         const addRequest = new Request('http://localhost/api/friends/search/recent', {
           method: 'POST',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
           body: JSON.stringify({ query: 'test search' }),
         });
 
@@ -1130,7 +1130,7 @@ describe('Search API - Integration Tests', () => {
         // Verify it was added
         const getRequest = new Request('http://localhost/api/friends/search/recent', {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         });
 
         const getResponse = await app.fetch(getRequest);
@@ -1146,7 +1146,7 @@ describe('Search API - Integration Tests', () => {
         await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'POST',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
             body: JSON.stringify({ query: 'alice' }),
           }),
         );
@@ -1155,7 +1155,7 @@ describe('Search API - Integration Tests', () => {
         await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'POST',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
             body: JSON.stringify({ query: 'bob' }),
           }),
         );
@@ -1164,7 +1164,7 @@ describe('Search API - Integration Tests', () => {
         await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'POST',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
             body: JSON.stringify({ query: 'alice' }),
           }),
         );
@@ -1173,7 +1173,7 @@ describe('Search API - Integration Tests', () => {
         const response = await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           }),
         );
         const body: any = await response.json();
@@ -1188,7 +1188,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/recent', {
           method: 'POST',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
           body: JSON.stringify({ query: '' }),
         });
 
@@ -1202,7 +1202,7 @@ describe('Search API - Integration Tests', () => {
 
         const request = new Request('http://localhost/api/friends/search/recent', {
           method: 'POST',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
           body: JSON.stringify({ query: 'a' }),
         });
 
@@ -1221,7 +1221,7 @@ describe('Search API - Integration Tests', () => {
           await app.fetch(
             new Request('http://localhost/api/friends/search/recent', {
               method: 'POST',
-              headers: authHeaders(testUser.accessToken),
+              headers: authHeaders(testUser.sessionCookies),
               body: JSON.stringify({ query }),
             }),
           );
@@ -1231,7 +1231,7 @@ describe('Search API - Integration Tests', () => {
         const deleteResponse = await app.fetch(
           new Request('http://localhost/api/friends/search/recent/bob', {
             method: 'DELETE',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           }),
         );
 
@@ -1241,7 +1241,7 @@ describe('Search API - Integration Tests', () => {
         const getResponse = await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           }),
         );
         const body: any = await getResponse.json();
@@ -1258,7 +1258,7 @@ describe('Search API - Integration Tests', () => {
         const response = await app.fetch(
           new Request('http://localhost/api/friends/search/recent/nonexistent', {
             method: 'DELETE',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           }),
         );
 
@@ -1275,7 +1275,7 @@ describe('Search API - Integration Tests', () => {
           await app.fetch(
             new Request('http://localhost/api/friends/search/recent', {
               method: 'POST',
-              headers: authHeaders(testUser.accessToken),
+              headers: authHeaders(testUser.sessionCookies),
               body: JSON.stringify({ query }),
             }),
           );
@@ -1285,7 +1285,7 @@ describe('Search API - Integration Tests', () => {
         const clearResponse = await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'DELETE',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           }),
         );
 
@@ -1295,7 +1295,7 @@ describe('Search API - Integration Tests', () => {
         const getResponse = await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'GET',
-            headers: authHeaders(testUser.accessToken),
+            headers: authHeaders(testUser.sessionCookies),
           }),
         );
         const body: any = await getResponse.json();
@@ -1320,7 +1320,7 @@ describe('Search API - Integration Tests', () => {
         `http://localhost/api/friends/search/full?q=${encodeURIComponent("O'Brien")}`,
         {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -1342,7 +1342,7 @@ describe('Search API - Integration Tests', () => {
         `http://localhost/api/friends/search/full?q=${encodeURIComponent('Müller')}`,
         {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -1359,7 +1359,7 @@ describe('Search API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends/search/full?q=   ', {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);
@@ -1376,7 +1376,7 @@ describe('Search API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends/search/full?q=alice smith', {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);
@@ -1400,7 +1400,7 @@ describe('Search API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends/search/full?q=alice', {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);
@@ -1418,7 +1418,7 @@ describe('Search API - Integration Tests', () => {
 
       const request = new Request(`http://localhost/api/friends/search/full?q=${longQuery}`, {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);
@@ -1442,7 +1442,7 @@ describe('Search API - Integration Tests', () => {
 
       const request = new Request('http://localhost/api/friends/search?q=alice', {
         method: 'GET',
-        headers: authHeaders(testUser.accessToken),
+        headers: authHeaders(testUser.sessionCookies),
       });
 
       const response = await app.fetch(request);
@@ -1466,7 +1466,7 @@ describe('Search API - Integration Tests', () => {
         `http://localhost/api/friends/search?q=alice&exclude=${friend1}`,
         {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 
@@ -1485,7 +1485,7 @@ describe('Search API - Integration Tests', () => {
         'http://localhost/api/friends/search?q=alice&exclude=invalid-uuid',
         {
           method: 'GET',
-          headers: authHeaders(testUser.accessToken),
+          headers: authHeaders(testUser.sessionCookies),
         },
       );
 

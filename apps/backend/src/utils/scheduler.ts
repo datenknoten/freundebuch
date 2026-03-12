@@ -8,6 +8,8 @@ import {
   getEnabledChannelsDueAt,
   markChannelNotified,
 } from '../models/queries/notification-channels.queries.js';
+// Note: Session and password reset token cleanup is now handled by Better Auth.
+// Legacy table cleanup is kept during the transition period.
 import { deleteExpiredPasswordResetTokens } from '../models/queries/password-reset-tokens.queries.js';
 import { deleteExpiredSessions } from '../models/queries/sessions.queries.js';
 import { dispatchNotification } from '../services/external/notification-dispatcher.js';

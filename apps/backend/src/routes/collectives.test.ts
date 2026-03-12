@@ -1,9 +1,19 @@
 import { Hono } from 'hono';
 import type { Pool } from 'pg';
 import pino from 'pino';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { AppContext } from '../types/context.js';
 import { isAppError } from '../utils/errors.js';
+
+// Mock the Better Auth module so auth middleware can load without config
+vi.mock('../lib/auth.ts', () => ({
+  getAuth: () => ({
+    api: {
+      getSession: vi.fn().mockResolvedValue(null),
+    },
+  }),
+}));
+
 import collectivesRoutes from './collectives.js';
 
 /**

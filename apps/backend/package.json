@@ -27,6 +27,7 @@
     "@sentry/node": "^10.32.1",
     "arktype": "2.1.29",
     "bcrypt": "6.0.0",
+    "better-auth": "1.5.5",
     "hono": "4.11.1",
     "jsonwebtoken": "9.0.3",
     "lru-cache": "11.2.4",

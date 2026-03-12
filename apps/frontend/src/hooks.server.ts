@@ -30,17 +30,16 @@ const API_URL = process.env.API_URL || 'http://localhost:8787';
  *   will be blocked by the backend API which is the authoritative enforcement
  * - This prevents users from being locked out during temporary outages
  */
-async function checkOnboardingStatus(accessToken: string): Promise<boolean> {
+async function checkOnboardingStatus(cookie: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_URL}/api/users/me`, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Cookie: cookie,
       },
     });
 
     if (!response.ok) {
       // If check fails, assume user is onboarded (fail open for UX)
-      // Backend will enforce onboarding requirement via onboardingMiddleware
       return true;
     }
 
@@ -48,7 +47,6 @@ async function checkOnboardingStatus(accessToken: string): Promise<boolean> {
     return user.hasCompletedOnboarding === true;
   } catch {
     // On error, assume user is onboarded (fail open for UX)
-    // Backend will enforce onboarding requirement via onboardingMiddleware
     return true;
   }
 }
@@ -56,14 +54,16 @@ async function checkOnboardingStatus(accessToken: string): Promise<boolean> {
 /**
  * SvelteKit server hook to handle authentication
  * This runs on every request and protects routes that require authentication
+ *
+ * Better Auth manages sessions via cookies. We check for the presence of
+ * Better Auth's session cookie to determine authentication state.
  */
 const authHandle: Handle = async ({ event, resolve }) => {
-  // Get tokens from cookies
-  const sessionToken = event.cookies.get('session_token');
-  const accessToken = event.cookies.get('auth_token');
-
-  // Add session token to locals for use in load functions
-  event.locals.sessionToken = sessionToken || null;
+  // Better Auth session cookie name
+  const sessionCookie =
+    event.cookies.get('better-auth.session_token') ||
+    event.cookies.get('__Secure-better-auth.session_token');
+  const hasSession = !!sessionCookie;
 
   // Define protected routes that require authentication
   const protectedRoutes = ['/profile', '/friends', '/onboarding'];
@@ -72,7 +72,7 @@ const authHandle: Handle = async ({ event, resolve }) => {
   const isProtectedRoute = protectedRoutes.some((route) => event.url.pathname.startsWith(route));
 
   // If route is protected and user is not authenticated, redirect to login
-  if (isProtectedRoute && !sessionToken) {
+  if (isProtectedRoute && !hasSession) {
     throw redirect(303, `/auth/login?redirect=${event.url.pathname}`);
   }
 
@@ -83,20 +83,20 @@ const authHandle: Handle = async ({ event, resolve }) => {
   const isAuthRoute = authRoutes.some((route) => event.url.pathname.startsWith(route));
 
   // If user is authenticated and tries to access auth routes, redirect to home
-  if (isAuthRoute && sessionToken) {
+  if (isAuthRoute && hasSession) {
     throw redirect(303, '/');
   }
 
   // Check onboarding status for authenticated users on routes that require it
-  // Routes exempt from onboarding check: /onboarding, /auth/*, /api/*
+  // Routes exempt from onboarding check: /onboarding, /auth/, /api/
   const onboardingExemptRoutes = ['/onboarding', '/auth/', '/api/'];
   const requiresOnboarding =
-    sessionToken &&
-    accessToken &&
-    !onboardingExemptRoutes.some((r) => event.url.pathname.startsWith(r));
+    hasSession && !onboardingExemptRoutes.some((r) => event.url.pathname.startsWith(r));
 
   if (requiresOnboarding) {
-    const hasCompletedOnboarding = await checkOnboardingStatus(accessToken);
+    // Forward all cookies to the backend for session-based auth
+    const cookieHeader = event.request.headers.get('cookie') || '';
+    const hasCompletedOnboarding = await checkOnboardingStatus(cookieHeader);
     if (!hasCompletedOnboarding) {
       throw redirect(303, '/onboarding');
     }

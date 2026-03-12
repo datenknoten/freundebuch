@@ -30,7 +30,7 @@ services:
       DATABASE_POOL_MAX: 10
       NODE_ENV: development
       PORT: 3000
-      FRONTEND_URL: http://localhost:5173
+      FRONTEND_URL: http://localhost:8080
       JWT_SECRET: invisible-carrot-black-drums-medium
       JWT_EXPIRY: 604800
       SESSION_SECRET: invisible-carrot-black-drums-medium
@@ -39,6 +39,7 @@ services:
       # PostGIS Address Lookup (enable after running OSM import)
       POSTGIS_ADDRESS_ENABLED: ${POSTGIS_ADDRESS_ENABLED:-false}
       POSTGIS_ADDRESS_DACH_ONLY: ${POSTGIS_ADDRESS_DACH_ONLY:-true}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-better-auth-secret-change-in-prod}
     ports:
       - "3000:3000"
     volumes:

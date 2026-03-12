@@ -10,12 +10,12 @@ WHERE email = :email;
 
 /* @name GetUserByEmailWithSelfProfile */
 SELECT
-    u.external_id,
+    u.id as external_id,
     u.email,
     u.created_at,
     u.updated_at,
     c.external_id as self_profile_external_id
-FROM auth.users u
+FROM auth."user" u
 LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
 WHERE u.email = :email;
 
@@ -53,41 +53,52 @@ WHERE external_id = :externalId
 RETURNING external_id, email, created_at, updated_at;
 
 /* @name GetUserWithPreferences */
-SELECT external_id, email, preferences, created_at, updated_at
-FROM auth.users
-WHERE external_id = :externalId;
+SELECT id as external_id, email, preferences, created_at, updated_at
+FROM auth."user"
+WHERE id = :externalId;
 
 /* @name UpdateUserPreferences */
-UPDATE auth.users
+UPDATE auth."user"
 SET preferences = :preferences,
     updated_at = CURRENT_TIMESTAMP
-WHERE external_id = :externalId
-RETURNING external_id, email, preferences, created_at, updated_at;
+WHERE id = :externalId
+RETURNING id as external_id, email, preferences, created_at, updated_at;
 
 /* @name GetUserSelfProfile */
 SELECT
     u.self_profile_id,
     c.external_id as self_profile_external_id
-FROM auth.users u
+FROM auth."user" u
 LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
-WHERE u.external_id = :userExternalId;
+WHERE u.id = :userExternalId;
+
+/* @name GetSelfProfileExternalId */
+SELECT external_id as self_profile_external_id
+FROM friends.friends
+WHERE id = :selfProfileId AND deleted_at IS NULL;
 
 /* @name SetUserSelfProfile */
-UPDATE auth.users u
+UPDATE auth."user" ba_u
 SET self_profile_id = c.id,
     updated_at = CURRENT_TIMESTAMP
 FROM friends.friends c
-WHERE u.external_id = :userExternalId
+JOIN auth.users legacy_u ON legacy_u.email = ba_u.email
+WHERE ba_u.id = :userExternalId
   AND c.external_id = :friendExternalId
-  AND c.user_id = u.id
+  AND c.user_id = legacy_u.id
   AND c.deleted_at IS NULL
-RETURNING u.external_id, c.external_id as self_profile_external_id;
+RETURNING ba_u.id as external_id, c.external_id as self_profile_external_id;
+
+/* @name CreateLegacyUserForBetterAuth */
+INSERT INTO auth.users (email, password_hash)
+VALUES (:email, '')
+ON CONFLICT (email) DO NOTHING;
 
 /* @name HasSelfProfile */
 SELECT
     CASE WHEN u.self_profile_id IS NOT NULL
          AND c.deleted_at IS NULL
     THEN true ELSE false END as has_self_profile
-FROM auth.users u
+FROM auth."user" u
 LEFT JOIN friends.friends c ON u.self_profile_id = c.id
-WHERE u.external_id = :userExternalId;
+WHERE u.id = :userExternalId;

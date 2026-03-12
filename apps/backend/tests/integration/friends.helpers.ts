@@ -1,11 +1,12 @@
 import type pg from 'pg';
 import { afterAll, beforeAll, beforeEach } from 'vitest';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
-import { generateToken, hashPassword } from '../../src/utils/auth.js';
+import { hashPassword } from '../../src/utils/auth.js';
 import { resetConfig } from '../../src/utils/config.js';
 import {
   type AuthTestContext,
   completeTestUserOnboarding,
+  createBetterAuthSession,
   createTestUser,
   setupAuthTests,
   teardownAuthTests,
@@ -15,26 +16,26 @@ export interface FriendsTestContext extends AuthTestContext {
   testUser: {
     externalId: string;
     email: string;
-    accessToken: string;
+    sessionCookies: string;
   };
 }
 
 /**
- * Create a test user and return with access token for authentication
+ * Create a test user and return with session cookies for authentication
  */
 export async function createAuthenticatedUser(
   pool: pg.Pool,
   email: string,
   password: string,
-): Promise<{ externalId: string; email: string; accessToken: string }> {
+): Promise<{ externalId: string; email: string; sessionCookies: string }> {
   const passwordHash = await hashPassword(password);
   const user = await createTestUser(pool, email, passwordHash);
-  const accessToken = generateToken({ userId: user.externalId, email: user.email });
+  const sessionCookies = await createBetterAuthSession(pool, user.externalId);
 
   return {
     externalId: user.externalId,
     email: user.email,
-    accessToken,
+    sessionCookies,
   };
 }
 
@@ -95,11 +96,11 @@ export async function countUserFriends(pool: pg.Pool, userExternalId: string): P
 }
 
 /**
- * Helper to make authenticated request
+ * Helper to make authenticated request using session cookies
  */
-export function authHeaders(accessToken: string): Record<string, string> {
+export function authHeaders(sessionCookies: string): Record<string, string> {
   return {
-    Authorization: `Bearer ${accessToken}`,
+    Cookie: sessionCookies,
     'Content-Type': 'application/json',
   };
 }
@@ -158,6 +159,7 @@ export function setupFriendsTestSuite() {
 
   beforeAll(async () => {
     // Set required environment variables for tests
+    process.env.BETTER_AUTH_SECRET = 'test-better-auth-secret-test-better-auth-secret-1';
     process.env.JWT_SECRET = 'test-jwt-secret-test-jwt-secret-1';
     process.env.SESSION_SECRET = 'test-session-secret-test-session-secret-1';
     process.env.JWT_EXPIRY = '604800';
@@ -192,6 +194,7 @@ export function setupFriendsTestSuite() {
 
   afterAll(async () => {
     await teardownAuthTests(context);
+    delete process.env.BETTER_AUTH_SECRET;
     delete process.env.JWT_SECRET;
     delete process.env.SESSION_SECRET;
     delete process.env.JWT_EXPIRY;

@@ -72,14 +72,37 @@ export interface User {
 /** Error code returned when user hasn't completed onboarding */
 export const ONBOARDING_REQUIRED_CODE = 'ONBOARDING_REQUIRED';
 
-// Auth response (for login/register/refresh)
+// Better Auth session response shape
+export interface BetterAuthSession {
+  session: {
+    id: string;
+    userId: string;
+    token: string;
+    expiresAt: string;
+    createdAt: string;
+    updatedAt: string;
+    ipAddress?: string;
+    userAgent?: string;
+  };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    emailVerified: boolean;
+    image?: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+// Legacy AuthResponse type - kept for backward compatibility during transition
 export interface AuthResponse {
   user: User;
   accessToken: string;
   sessionToken: string;
 }
 
-// Refresh request schema
+// Legacy RefreshRequest - kept for backward compatibility during transition
 export const RefreshRequestSchema = type({
   'sessionToken?': 'string',
 });

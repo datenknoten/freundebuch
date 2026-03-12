@@ -19,6 +19,7 @@
   "dependencies": {
     "@sentry/sveltekit": "^10.32.1",
     "arktype": "2.1.29",
+    "better-auth": "1.5.5",
     "d3": "^7.9.0",
     "i18next": "^25.7.4",
     "i18next-browser-languagedetector": "^8.2.0",
