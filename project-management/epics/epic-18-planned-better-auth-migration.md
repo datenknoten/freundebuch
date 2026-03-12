@@ -112,6 +112,7 @@ Better Auth uses **scrypt** by default, not bcrypt. Our existing passwords are h
 
 **Dual-algorithm strategy during parallel operation:**
 ```typescript
+import { scryptAsync, timingSafeEqual } from "@noble/hashes/scrypt";
 import bcrypt from "bcrypt";
 
 export const auth = betterAuth({
@@ -119,15 +120,22 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: false,
     password: {
-      // New passwords use Better Auth's default scrypt
-      // (omit hash to use default)
       verify: async ({ hash, password }) => {
-        // Try scrypt first (new passwords)
-        const scryptResult = await defaultVerify({ hash, password });
-        if (scryptResult) return true;
-        // Fall back to bcrypt (migrated passwords)
+        // bcrypt hashes start with $2b$ (or $2a$) — detect and verify directly
+        if (hash.startsWith("$2b$") || hash.startsWith("$2a$")) {
+          try {
+            return await bcrypt.compare(password, hash);
+          } catch {
+            return false;
+          }
+        }
+        // Otherwise, assume scrypt (Better Auth default for new passwords)
+        // Better Auth stores scrypt hashes in PHC string format
+        // Use the same verification logic Better Auth uses internally
+        // (exact import/method to be validated during spike)
         try {
-          return await bcrypt.compare(password, hash);
+          const { verify } = await import("better-auth/crypto");
+          return await verify({ hash, password });
         } catch {
           return false;
         }
@@ -136,6 +144,10 @@ export const auth = betterAuth({
   },
 });
 ```
+
+> **Note:** The exact import path for Better Auth's internal scrypt verify function
+> must be validated during the spike phase. The `better-auth/crypto` path is a
+> placeholder — check the actual exports in the pinned version.
 
 This approach:
 - Verifies new passwords (scrypt) and legacy passwords (bcrypt) transparently
@@ -245,7 +257,7 @@ export const auth = betterAuth({
 2. **Prepare database:**
    - Rename `auth` schema to `auth_legacy`
    - Create new `auth` schema
-   - Run Better Auth CLI migration: `npx auth@latest migrate`
+   - Run Better Auth CLI migration: `pnpm dlx auth@latest migrate`
    - Write and test data migration script (users → Better Auth tables)
 
 3. **Install and configure:**
