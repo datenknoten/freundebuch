@@ -542,6 +542,32 @@
       "revoking": "Widerrufen...",
       "revoke": "Widerrufen"
     },
+    "passkeys": {
+      "title": "Passkeys",
+      "subtitle": "Melde dich ohne Passwort an – mit Touch ID, Face ID, Windows Hello oder einem Hardware-Sicherheitsschlüssel.",
+      "add": "Passkey hinzufügen",
+      "registering": "Wird registriert...",
+      "loading": "Passkeys werden geladen...",
+      "noPasskeys": "Keine Passkeys registriert",
+      "noPasskeysHint": "Füge einen Passkey hinzu, um dich ohne Passwort mit Touch ID, Face ID oder einem Hardware-Schlüssel anzumelden",
+      "namePlaceholder": "Passkey-Name",
+      "unnamedPasskey": "Unbenannter Passkey",
+      "added": "Hinzugefügt {{date}}",
+      "deleting": "Wird gelöscht...",
+      "renameAria": "Passkey umbenennen",
+      "deviceType": {
+        "multiDevice": "Mehrere Geräte",
+        "singleDevice": "Einzelgerät",
+        "unknown": "Unbekannt"
+      },
+      "signIn": "Mit Passkey anmelden",
+      "signingIn": "Anmeldung läuft...",
+      "signInFailed": "Passkey-Anmeldung fehlgeschlagen",
+      "failedToLoad": "Passkeys konnten nicht geladen werden",
+      "failedToRegister": "Passkey konnte nicht registriert werden",
+      "failedToDelete": "Passkey konnte nicht gelöscht werden",
+      "failedToRename": "Passkey konnte nicht umbenannt werden"
+    },
     "messagingReminders": {
       "title": "Messaging-Erinnerungen",
       "description": "Erhalte tägliche Zusammenfassungen anstehender Termine deiner Freunde über deine bevorzugte Messaging-Plattform.",

@@ -1,3 +1,4 @@
+import { passkey } from '@better-auth/passkey';
 import bcrypt from 'bcrypt';
 import { betterAuth } from 'better-auth';
 import { Pool } from 'pg';
@@ -122,6 +123,25 @@ function createAuth() {
         updatedAt: 'updated_at',
       },
     },
+    plugins: [
+      passkey({
+        rpID: config.WEBAUTHN_RP_ID ?? 'localhost',
+        rpName: 'Freundebuch',
+        origin: config.FRONTEND_URL,
+        schema: {
+          passkey: {
+            fields: {
+              publicKey: 'public_key',
+              userId: 'user_id',
+              credentialID: 'credential_id',
+              deviceType: 'device_type',
+              backedUp: 'backed_up',
+              createdAt: 'created_at',
+            },
+          },
+        },
+      }),
+    ],
     trustedOrigins: [config.FRONTEND_URL],
     rateLimit: {
       window: 60,

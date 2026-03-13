@@ -40,6 +40,7 @@ services:
       POSTGIS_ADDRESS_ENABLED: ${POSTGIS_ADDRESS_ENABLED:-false}
       POSTGIS_ADDRESS_DACH_ONLY: ${POSTGIS_ADDRESS_DACH_ONLY:-true}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-better-auth-secret-change-in-prod}
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-localhost}
     ports:
       - "3000:3000"
     volumes:

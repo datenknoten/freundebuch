@@ -542,6 +542,32 @@
       "revoking": "Revoking...",
       "revoke": "Revoke"
     },
+    "passkeys": {
+      "title": "Passkeys",
+      "subtitle": "Sign in without a password using Touch ID, Face ID, Windows Hello, or a hardware security key.",
+      "add": "Add Passkey",
+      "registering": "Registering...",
+      "loading": "Loading passkeys...",
+      "noPasskeys": "No passkeys registered",
+      "noPasskeysHint": "Add a passkey for passwordless sign-in using Touch ID, Face ID, or a hardware key",
+      "namePlaceholder": "Passkey name",
+      "unnamedPasskey": "Unnamed passkey",
+      "added": "Added {{date}}",
+      "deleting": "Deleting...",
+      "renameAria": "Rename passkey",
+      "deviceType": {
+        "multiDevice": "Multi-device",
+        "singleDevice": "Single device",
+        "unknown": "Unknown"
+      },
+      "signIn": "Sign in with Passkey",
+      "signingIn": "Signing in...",
+      "signInFailed": "Passkey sign-in failed",
+      "failedToLoad": "Failed to load passkeys",
+      "failedToRegister": "Failed to register passkey",
+      "failedToDelete": "Failed to delete passkey",
+      "failedToRename": "Failed to rename passkey"
+    },
     "messagingReminders": {
       "title": "Messaging Reminders",
       "description": "Receive daily digests of upcoming friend dates via your favorite messaging platform.",
