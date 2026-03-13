@@ -25,6 +25,9 @@ const ConfigSchema = type({
   // Authentication (Better Auth)
   BETTER_AUTH_SECRET: SecretType,
 
+  // WebAuthn / Passkey
+  'WEBAUTHN_RP_ID?': 'string',
+
   // Legacy authentication (kept during transition, will be removed)
   'JWT_SECRET?': SecretType,
   'JWT_EXPIRY?': 'string.integer.parse',

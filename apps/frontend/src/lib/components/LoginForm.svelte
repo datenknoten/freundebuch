@@ -1,6 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { autoFocus } from '$lib/actions/autoFocus';
+import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
@@ -10,6 +11,7 @@ const i18n = createI18n();
 let email = $state('');
 let password = $state('');
 let isLoading = $state(false);
+let isPasskeyLoading = $state(false);
 let error = $state('');
 
 async function handleSubmit(e) {
@@ -24,6 +26,26 @@ async function handleSubmit(e) {
   } catch (err) {
     error = (err as Error)?.message || $i18n.t('auth.login.error.generic');
     isLoading = false;
+  }
+}
+
+async function handlePasskeySignIn() {
+  error = '';
+  isPasskeyLoading = true;
+
+  try {
+    const result = await authClient.signIn.passkey();
+    if (result?.error) {
+      error = result.error.message || $i18n.t('profile.passkeys.signInFailed');
+      isPasskeyLoading = false;
+    } else {
+      // Refresh the auth store so the app has the user data
+      await auth.initialize();
+      goto('/');
+    }
+  } catch (err) {
+    error = (err as Error)?.message || $i18n.t('profile.passkeys.signInFailed');
+    isPasskeyLoading = false;
   }
 }
 </script>
@@ -47,7 +69,7 @@ async function handleSubmit(e) {
 			id="email"
 			bind:value={email}
 			required
-			autocomplete="email"
+			autocomplete="username webauthn"
             use:autoFocus
 			class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
 			placeholder={$i18n.t('auth.login.emailPlaceholder')}
@@ -93,10 +115,31 @@ async function handleSubmit(e) {
 
 	<button
 		type="submit"
-		disabled={isLoading}
+		disabled={isLoading || isPasskeyLoading}
 		class="w-full bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 	>
 		{isLoading ? $i18n.t('common.loading') : $i18n.t('auth.login.submit')}
+	</button>
+
+	<div class="relative">
+		<div class="absolute inset-0 flex items-center">
+			<div class="w-full border-t border-gray-300"></div>
+		</div>
+		<div class="relative flex justify-center text-sm">
+			<span class="px-2 bg-white text-gray-500 font-body">{$i18n.t('common.or')}</span>
+		</div>
+	</div>
+
+	<button
+		type="button"
+		onclick={handlePasskeySignIn}
+		disabled={isPasskeyLoading || isLoading}
+		class="w-full flex items-center justify-center gap-2 bg-white text-gray-800 py-3 px-4 rounded-lg font-body font-semibold border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+	>
+		<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+		</svg>
+		{isPasskeyLoading ? $i18n.t('profile.passkeys.signingIn') : $i18n.t('profile.passkeys.signIn')}
 	</button>
 
 	<p class="text-center text-sm font-body text-gray-600">

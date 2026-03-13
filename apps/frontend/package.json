@@ -17,6 +17,7 @@
     "check": "pnpm run sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
+    "@better-auth/passkey": "1.5.5",
     "@sentry/sveltekit": "^10.32.1",
     "arktype": "2.1.29",
     "better-auth": "1.5.5",

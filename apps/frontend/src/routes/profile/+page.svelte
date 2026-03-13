@@ -4,6 +4,7 @@ import AlertBanner from '$lib/components/AlertBanner.svelte';
 import AppPasswordManager from '$lib/components/AppPasswordManager.svelte';
 import CardDAVSetupGuide from '$lib/components/CardDAVSetupGuide.svelte';
 import NotificationChannelList from '$lib/components/NotificationChannelList.svelte';
+import PasskeyManager from '$lib/components/PasskeyManager.svelte';
 import { createI18n, languageNames } from '$lib/i18n/index.js';
 import { auth, birthdayFormat, currentUser } from '$lib/stores/auth';
 import {
@@ -201,6 +202,14 @@ function handleLanguageChange(lang: SupportedLanguage) {
 						</p>
 					</div>
 				</div>
+			</div>
+
+			<div class="mt-8 pt-8 border-t border-gray-200">
+				<h2 class="text-xl font-heading text-gray-800 mb-2">{$i18n.t('profile.passkeys.title')}</h2>
+				<p class="text-sm font-body text-gray-600 mb-4">
+					{$i18n.t('profile.passkeys.subtitle')}
+				</p>
+				<PasskeyManager />
 			</div>
 
 			<div class="mt-8 pt-8 border-t border-gray-200">
