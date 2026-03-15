@@ -1,4 +1,7 @@
 <script lang="ts">
+import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
+import XMark from 'svelte-heros-v2/XMark.svelte';
+
 interface Props {
   onEdit?: () => void;
   onDelete: () => void;
@@ -38,14 +41,7 @@ let {
              sm:min-w-[44px] sm:min-h-[44px]"
       aria-label={editLabel}
     >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-        />
-      </svg>
+      <PencilSquare class="w-4 h-4" strokeWidth="2" />
     </button>
   {/if}
   <button
@@ -71,9 +67,7 @@ let {
         />
       </svg>
     {:else}
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
+      <XMark class="w-4 h-4" strokeWidth="2" />
     {/if}
   </button>
 </div>

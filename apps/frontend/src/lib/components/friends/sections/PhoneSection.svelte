@@ -1,5 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import { isOpenFriendLinkModeActive, openFriendLinkModePrefix } from '$lib/stores/ui';
@@ -113,9 +115,7 @@ onMount(() => {
   <section class="space-y-2">
     <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
       <h2 class="text-lg font-heading flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-        </svg>
+        <PhoneIcon class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('friendDetail.sections.phoneNumbers')}
       </h2>
       <button
@@ -124,9 +124,7 @@ onMount(() => {
         class="text-sm font-body font-semibold text-white/90 hover:text-white
                flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
+        <Plus class="w-4 h-4" strokeWidth="2" />
         {$i18n.t('friendDetail.actions.addPhone')}
       </button>
     </div>

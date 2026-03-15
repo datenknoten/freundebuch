@@ -1,5 +1,10 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import Calendar from 'svelte-heros-v2/Calendar.svelte';
+import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
+import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
+import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
 import type { EncounterListParams } from '$lib/api/encounters';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters, encountersList } from '$lib/stores/encounters';
@@ -98,14 +103,7 @@ function goToPage(page: number) {
         {$i18n.t('encounters.search')}
       </label>
       <div class="relative">
-        <svg
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+        <MagnifyingGlass class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth="2" />
         <input
           id="encounter-search"
           type="text"
@@ -180,14 +178,7 @@ function goToPage(page: number) {
   {:else if encounterItems.length === 0}
     <!-- Empty state -->
     <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <svg
-        class="mx-auto h-12 w-12 text-gray-400"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
+      <Calendar class="mx-auto h-12 w-12 text-gray-400" strokeWidth="2" />
       <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('encounters.noEncounters')}</h3>
       <p class="mt-2 text-sm text-gray-600 font-body">
         {#if searchQuery || fromDate || toDate}
@@ -201,9 +192,7 @@ function goToPage(page: number) {
           href="/encounters/new"
           class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('encounters.logNew')}
         </a>
       {/if}
@@ -225,9 +214,7 @@ function goToPage(page: number) {
           class="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           aria-label="Previous page"
         >
-          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
         </button>
 
         <span class="text-sm text-gray-600 font-body px-2">
@@ -240,9 +227,7 @@ function goToPage(page: number) {
           class="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           aria-label="Next page"
         >
-          <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
+          <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
         </button>
       </div>
     {/if}
