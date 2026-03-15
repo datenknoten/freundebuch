@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type pg from 'pg';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authMiddleware, getAuthUser } from '../../src/middleware/auth.js';
 import type { AppContext } from '../../src/types/context.js';
@@ -32,7 +33,7 @@ describe('authMiddleware', () => {
 
     // Setup db context and test route with auth middleware
     app.use('/protected/*', async (c, next) => {
-      c.set('db', {} as any); // mock db pool
+      c.set('db', {} as unknown as pg.Pool); // mock db pool
       return next();
     });
     app.use('/protected/*', authMiddleware);
