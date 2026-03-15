@@ -6,7 +6,7 @@ import { runner } from 'node-pg-migrate';
 import pg from 'pg';
 import pino from 'pino';
 import { Wait } from 'testcontainers';
-import { afterAll, beforeAll } from 'vitest';
+import { afterAll, beforeAll, vi } from 'vitest';
 import { PostGISAddressClient } from '../../src/services/external/postgis-address.client.js';
 import { resetConfig } from '../../src/utils/config.js';
 
@@ -50,7 +50,7 @@ export async function setupPostGISTests(): Promise<PostGISTestContext> {
   const connectionUri = container.getConnectionUri();
 
   // Set DATABASE_URL from the container
-  process.env.DATABASE_URL = connectionUri;
+  vi.stubEnv('DATABASE_URL', connectionUri);
   resetConfig();
 
   // Create connection pool
@@ -176,19 +176,16 @@ export function setupPostGISTestSuite() {
 
   beforeAll(async () => {
     // Set required environment variables for tests
-    process.env.JWT_SECRET = 'test-jwt-secret-test-jwt-secret-1';
-    process.env.SESSION_SECRET = 'test-session-secret-test-session-secret-1';
-    process.env.LOG_LEVEL = 'silent';
+    vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
+    vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+    vi.stubEnv('LOG_LEVEL', 'silent');
 
     context = await setupPostGISTests();
   }, 180000); // 180 second timeout for container startup
 
   afterAll(async () => {
     await teardownPostGISTests(context);
-    delete process.env.JWT_SECRET;
-    delete process.env.SESSION_SECRET;
-    delete process.env.DATABASE_URL;
-    delete process.env.LOG_LEVEL;
+    vi.unstubAllEnvs();
     resetConfig();
   }, 60000);
 

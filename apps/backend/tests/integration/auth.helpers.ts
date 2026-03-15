@@ -7,7 +7,7 @@ import type { Hono } from 'hono';
 import { runner } from 'node-pg-migrate';
 import pg from 'pg';
 import { Wait } from 'testcontainers';
-import { afterAll, beforeAll, beforeEach } from 'vitest';
+import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
 import { createApp } from '../../src/index.js';
 import { resetAuth } from '../../src/lib/auth.js';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
@@ -41,7 +41,7 @@ export async function setupAuthTests(): Promise<AuthTestContext> {
   await resetAuth();
 
   // Set DATABASE_URL from the container
-  process.env.DATABASE_URL = container.getConnectionUri();
+  vi.stubEnv('DATABASE_URL', container.getConnectionUri());
   resetConfig();
 
   // Create connection pool
@@ -365,12 +365,12 @@ export function setupAuthTestSuite() {
 
   beforeAll(async () => {
     // Set required environment variables for tests
-    process.env.BETTER_AUTH_SECRET = 'test-better-auth-secret-test-better-auth-secret-1';
-    process.env.JWT_SECRET = 'test-jwt-secret-test-jwt-secret-1';
-    process.env.SESSION_SECRET = 'test-session-secret-test-session-secret-1';
-    process.env.JWT_EXPIRY = '604800';
-    process.env.FRONTEND_URL = 'http://localhost:5173';
-    process.env.LOG_LEVEL = 'silent';
+    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
+    vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
+    vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+    vi.stubEnv('JWT_EXPIRY', '604800');
+    vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
+    vi.stubEnv('LOG_LEVEL', 'silent');
 
     context = await setupAuthTests();
   }, 120000); // 120 second timeout for container startup
@@ -382,13 +382,7 @@ export function setupAuthTestSuite() {
 
   afterAll(async () => {
     await teardownAuthTests(context);
-    delete process.env.BETTER_AUTH_SECRET;
-    delete process.env.JWT_SECRET;
-    delete process.env.SESSION_SECRET;
-    delete process.env.JWT_EXPIRY;
-    delete process.env.FRONTEND_URL;
-    delete process.env.DATABASE_URL;
-    delete process.env.LOG_LEVEL;
+    vi.unstubAllEnvs();
     resetConfig();
   }, 120000);
 
