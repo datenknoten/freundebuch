@@ -81,9 +81,9 @@ WHERE id = :selfProfileId AND deleted_at IS NULL;
 UPDATE auth."user" ba_u
 SET self_profile_id = c.id,
     updated_at = CURRENT_TIMESTAMP
-FROM friends.friends c
-JOIN auth.users legacy_u ON legacy_u.email = ba_u.email
+FROM friends.friends c, auth.users legacy_u
 WHERE ba_u.id = :userExternalId
+  AND legacy_u.email = ba_u.email
   AND c.external_id = :friendExternalId
   AND c.user_id = legacy_u.id
   AND c.deleted_at IS NULL
