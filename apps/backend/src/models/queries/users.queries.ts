@@ -421,19 +421,27 @@ const getSelfProfileExternalIdIR: any = {"usedParamSet":{"selfProfileId":true},"
 export const getSelfProfileExternalId = new PreparedQuery<IGetSelfProfileExternalIdParams,IGetSelfProfileExternalIdResult>(getSelfProfileExternalIdIR);
 
 
-/** 'SetUserSelfProfile' parameters type (manually defined — PgTyped cannot infer UPDATE+FROM+JOIN) */
+/** 'SetUserSelfProfile' parameters type */
 export interface ISetUserSelfProfileParams {
-  userExternalId?: string | null | void;
   friendExternalId?: string | null | void;
+  userExternalId?: string | null | void;
 }
 
-/** 'SetUserSelfProfile' return type (manually defined — PgTyped cannot infer UPDATE+FROM+JOIN) */
+/** 'SetUserSelfProfile' return type */
 export interface ISetUserSelfProfileResult {
+  /** UUID primary key (mapped from legacy external_id) */
   external_id: string;
+  /** Public UUID for API exposure (always use this in APIs) */
   self_profile_external_id: string;
 }
 
-const setUserSelfProfileIR: any = {"usedParamSet":{"userExternalId":true,"friendExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":182,"b":196}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":220,"b":236}]}],"statement":"UPDATE auth.\"user\" ba_u\nSET self_profile_id = c.id,\n    updated_at = CURRENT_TIMESTAMP\nFROM friends.friends c\nJOIN auth.users legacy_u ON legacy_u.email = ba_u.email\nWHERE ba_u.id = :userExternalId\n  AND c.external_id = :friendExternalId\n  AND c.user_id = legacy_u.id\n  AND c.deleted_at IS NULL\nRETURNING ba_u.id as external_id, c.external_id as self_profile_external_id"};
+/** 'SetUserSelfProfile' query type */
+export interface ISetUserSelfProfileQuery {
+  params: ISetUserSelfProfileParams;
+  result: ISetUserSelfProfileResult;
+}
+
+const setUserSelfProfileIR: any = {"usedParamSet":{"userExternalId":true,"friendExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":147,"b":161}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":219,"b":235}]}],"statement":"UPDATE auth.\"user\" ba_u\nSET self_profile_id = c.id,\n    updated_at = CURRENT_TIMESTAMP\nFROM friends.friends c, auth.users legacy_u\nWHERE ba_u.id = :userExternalId\n  AND legacy_u.email = ba_u.email\n  AND c.external_id = :friendExternalId\n  AND c.user_id = legacy_u.id\n  AND c.deleted_at IS NULL\nRETURNING ba_u.id as external_id, c.external_id as self_profile_external_id"};
 
 /**
  * Query generated from SQL:
@@ -441,9 +449,9 @@ const setUserSelfProfileIR: any = {"usedParamSet":{"userExternalId":true,"friend
  * UPDATE auth."user" ba_u
  * SET self_profile_id = c.id,
  *     updated_at = CURRENT_TIMESTAMP
- * FROM friends.friends c
- * JOIN auth.users legacy_u ON legacy_u.email = ba_u.email
+ * FROM friends.friends c, auth.users legacy_u
  * WHERE ba_u.id = :userExternalId
+ *   AND legacy_u.email = ba_u.email
  *   AND c.external_id = :friendExternalId
  *   AND c.user_id = legacy_u.id
  *   AND c.deleted_at IS NULL
