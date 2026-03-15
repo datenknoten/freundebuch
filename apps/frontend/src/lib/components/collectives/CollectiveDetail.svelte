@@ -1,5 +1,16 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
+import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
+import Envelope from 'svelte-heros-v2/Envelope.svelte';
+import Heart from 'svelte-heros-v2/Heart.svelte';
+import Home from 'svelte-heros-v2/Home.svelte';
+import Link from 'svelte-heros-v2/Link.svelte';
+import MapPin from 'svelte-heros-v2/MapPin.svelte';
+import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
+import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
+import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import {
   type AvailableCircleInfo,
@@ -149,19 +160,19 @@ async function loadSubresources() {
   }
 }
 
-// Icon mapping for collective types
-function getTypeIcon(typeName: string): string {
+// Icon component mapping for collective types
+function getTypeIconComponent(typeName: string): typeof Home {
   switch (typeName.toLowerCase()) {
     case 'family':
-      return 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6';
+      return Home;
     case 'company':
-      return 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4';
+      return BuildingOffice;
     case 'club':
-      return 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z';
+      return Users;
     case 'friend group':
-      return 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z';
+      return Heart;
     default:
-      return 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z';
+      return Users;
   }
 }
 
@@ -457,9 +468,7 @@ onMount(() => {
   <div class="flex flex-col sm:flex-row items-center gap-6">
     <!-- Type icon as avatar -->
     <div class="flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center {getTypeBadgeColor(collective.type.name)}">
-      <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={getTypeIcon(collective.type.name)} />
-      </svg>
+      <svelte:component this={getTypeIconComponent(collective.type.name)} class="w-10 h-10" strokeWidth="2" />
     </div>
 
     <div class="flex-1 text-center sm:text-left">
@@ -474,10 +483,7 @@ onMount(() => {
       </div>
       {#if address}
         <div class="flex items-center gap-2 text-gray-600 font-body text-sm mt-2 justify-center sm:justify-start">
-          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+          <MapPin class="w-4 h-4 flex-shrink-0" strokeWidth="2" />
           <span>{address}</span>
         </div>
       {/if}
@@ -504,9 +510,7 @@ onMount(() => {
   {#if collective.notes}
     <section class="space-y-2">
       <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
+        <DocumentText class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('collectives.detail.notes')}
       </h2>
       <div class="p-3 bg-gray-50 rounded-lg font-body text-gray-700 whitespace-pre-wrap">
@@ -522,9 +526,7 @@ onMount(() => {
       <section class="space-y-2">
         <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
           <h2 class="text-lg font-heading flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-            </svg>
+            <PhoneIcon class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('friendDetail.sections.phoneNumbers')}
           </h2>
           <button
@@ -533,9 +535,7 @@ onMount(() => {
             class="text-sm font-body font-semibold text-white/90 hover:text-white
                    flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus class="w-4 h-4" strokeWidth="2" />
             {$i18n.t('friendDetail.actions.addPhone')}
           </button>
         </div>
@@ -557,9 +557,7 @@ onMount(() => {
       <section class="space-y-2">
         <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
           <h2 class="text-lg font-heading flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+            <Envelope class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('friendDetail.sections.emailAddresses')}
           </h2>
           <button
@@ -568,9 +566,7 @@ onMount(() => {
             class="text-sm font-body font-semibold text-white/90 hover:text-white
                    flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus class="w-4 h-4" strokeWidth="2" />
             {$i18n.t('friendDetail.actions.addEmail')}
           </button>
         </div>
@@ -592,10 +588,7 @@ onMount(() => {
       <section class="space-y-2">
         <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
           <h2 class="text-lg font-heading flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <MapPin class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('friendDetail.sections.addresses')}
           </h2>
           <button
@@ -604,9 +597,7 @@ onMount(() => {
             class="text-sm font-body font-semibold text-white/90 hover:text-white
                    flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus class="w-4 h-4" strokeWidth="2" />
             {$i18n.t('friendDetail.actions.addAddress')}
           </button>
         </div>
@@ -628,9 +619,7 @@ onMount(() => {
       <section class="space-y-2">
         <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
           <h2 class="text-lg font-heading flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
+            <Link class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('friendDetail.sections.websites')}
           </h2>
           <button
@@ -639,9 +628,7 @@ onMount(() => {
             class="text-sm font-body font-semibold text-white/90 hover:text-white
                    flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus class="w-4 h-4" strokeWidth="2" />
             {$i18n.t('friendDetail.actions.addUrl')}
           </button>
         </div>
@@ -664,9 +651,7 @@ onMount(() => {
     <section class="space-y-2">
       <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
         <h2 class="text-lg font-heading flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
+          <Users class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('friendDetail.sections.circles')}
         </h2>
         <button
@@ -675,9 +660,7 @@ onMount(() => {
           class="text-sm font-body font-semibold text-white/90 hover:text-white
                  flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('friendDetail.actions.addCircle')}
         </button>
       </div>
@@ -697,9 +680,7 @@ onMount(() => {
   <section class="space-y-2">
     <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
       <h2 class="text-lg font-heading flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
+        <UserPlus class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('collectives.detail.members')}
         <span class="text-sm font-body font-normal text-white/80">({collective.activeMemberCount})</span>
       </h2>
@@ -709,9 +690,7 @@ onMount(() => {
         class="text-sm font-body font-semibold text-white/90 hover:text-white
                flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
+        <Plus class="w-4 h-4" strokeWidth="2" />
         {$i18n.t('collectives.addMember.button')}
       </button>
     </div>

@@ -1,5 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import GlobeAlt from 'svelte-heros-v2/GlobeAlt.svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import { isOpenFriendLinkModeActive, openFriendLinkModePrefix } from '$lib/stores/ui';
@@ -130,9 +132,7 @@ onMount(() => {
   <section class="space-y-2">
     <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
       <h2 class="text-lg font-heading flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
-        </svg>
+        <GlobeAlt class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('friendDetail.sections.socialProfiles')}
       </h2>
       <button
@@ -141,9 +141,7 @@ onMount(() => {
         class="text-sm font-body font-semibold text-white/90 hover:text-white
                flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
+        <Plus class="w-4 h-4" strokeWidth="2" />
         {$i18n.t('friendDetail.actions.addSocial')}
       </button>
     </div>

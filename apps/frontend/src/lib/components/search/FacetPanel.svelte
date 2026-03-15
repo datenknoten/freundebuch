@@ -1,4 +1,5 @@
 <script lang="ts">
+import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type { ArrayFacetField, FacetFilters, FacetGroups } from '$shared';
 
@@ -70,20 +71,7 @@ let hasFacets = $derived(
           class="flex items-center justify-between w-full text-left"
         >
           <span class="font-medium text-gray-900">{$i18n.t('facets.location')}</span>
-          <svg
-            class="w-4 h-4 text-gray-500 transition-transform"
-            class:rotate-180={expandedSections.location}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          <ChevronDown class="w-4 h-4 text-gray-500 transition-transform {expandedSections.location ? 'rotate-180' : ''}" strokeWidth="2" />
         </button>
         {#if expandedSections.location}
           <div class="mt-3 space-y-3">
@@ -122,20 +110,7 @@ let hasFacets = $derived(
           class="flex items-center justify-between w-full text-left"
         >
           <span class="font-medium text-gray-900">{$i18n.t('facets.professional')}</span>
-          <svg
-            class="w-4 h-4 text-gray-500 transition-transform"
-            class:rotate-180={expandedSections.professional}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          <ChevronDown class="w-4 h-4 text-gray-500 transition-transform {expandedSections.professional ? 'rotate-180' : ''}" strokeWidth="2" />
         </button>
         {#if expandedSections.professional}
           <div class="mt-3 space-y-3">
@@ -174,20 +149,7 @@ let hasFacets = $derived(
           class="flex items-center justify-between w-full text-left"
         >
           <span class="font-medium text-gray-900">{$i18n.t('facets.relationship')}</span>
-          <svg
-            class="w-4 h-4 text-gray-500 transition-transform"
-            class:rotate-180={expandedSections.relationship}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          <ChevronDown class="w-4 h-4 text-gray-500 transition-transform {expandedSections.relationship ? 'rotate-180' : ''}" strokeWidth="2" />
         </button>
         {#if expandedSections.relationship}
           <div class="mt-3 space-y-1">

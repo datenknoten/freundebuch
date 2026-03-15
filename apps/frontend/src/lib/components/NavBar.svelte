@@ -1,5 +1,14 @@
 <script lang="ts">
 import { fade } from 'svelte/transition';
+import ArrowRightOnRectangle from 'svelte-heros-v2/ArrowRightOnRectangle.svelte';
+import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
+import Calendar from 'svelte-heros-v2/Calendar.svelte';
+import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
+import Swatch from 'svelte-heros-v2/Swatch.svelte';
+import User from 'svelte-heros-v2/User.svelte';
+import Users from 'svelte-heros-v2/Users.svelte';
+import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { createI18n } from '$lib/i18n/index.js';
@@ -146,9 +155,7 @@ $effect(() => {
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('friends.addNew')}
         </a>
         <a
@@ -157,9 +164,7 @@ $effect(() => {
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
+          <Users class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.friends')}
         </a>
         <a
@@ -168,9 +173,7 @@ $effect(() => {
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-          </svg>
+          <Swatch class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.circles')}
         </a>
         <a
@@ -179,9 +182,7 @@ $effect(() => {
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
+          <Calendar class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.encounters')}
         </a>
         <a
@@ -190,9 +191,7 @@ $effect(() => {
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
+          <BuildingOffice class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.collectives')}
         </a>
         <a
@@ -201,9 +200,7 @@ $effect(() => {
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
+          <User class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.profile')}
         </a>
       </div>
@@ -216,9 +213,7 @@ $effect(() => {
           onclick={handleLogout}
           class="w-full flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
+          <ArrowRightOnRectangle class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.logout')}
         </button>
       </div>
@@ -274,13 +269,7 @@ $effect(() => {
         aria-label="Toggle menu"
         aria-expanded={mobileMenuOpen}
       >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {#if mobileMenuOpen}
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          {:else}
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          {/if}
-        </svg>
+        <XMark class="w-6 h-6" strokeWidth="2" />
       </button>
 
       <!-- Desktop: Logo -->
@@ -302,9 +291,7 @@ $effect(() => {
           onclick={() => search.open()}
           aria-label="Search"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          <MagnifyingGlass class="w-6 h-6" strokeWidth="2" />
         </button>
       {:else}
         <div class="sm:hidden w-10"></div>
@@ -318,9 +305,7 @@ $effect(() => {
             class="w-full max-w-md flex items-center gap-3 px-4 py-2 text-gray-400 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors duration-200 cursor-text"
             title="{$i18n.t('common.search')} ({isMac ? 'Cmd' : 'Ctrl'}+K)"
           >
-            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <MagnifyingGlass class="w-5 h-5 shrink-0" strokeWidth="2" />
             <span class="flex-1 text-left font-body text-sm">{$i18n.t('friends.search')}</span>
             <kbd class="hidden md:inline-block px-2 py-1 text-xs bg-white border border-gray-200 rounded font-mono text-gray-400">
               {isMac ? '⌘' : 'Ctrl'}K
@@ -338,9 +323,7 @@ $effect(() => {
             class="inline-flex items-center gap-1.5 bg-forest text-white px-3 py-1.5 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200 text-sm"
             title="{$i18n.t('friends.addNew')} (n)"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus class="w-4 h-4" strokeWidth="2" />
             <span class="hidden md:inline">{$i18n.t('common.new')}</span>
           </a>
           <UserMenu />

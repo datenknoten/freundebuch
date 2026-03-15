@@ -1,5 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import Heart from 'svelte-heros-v2/Heart.svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
+import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import { getCollectivesForFriend } from '$lib/api/friends';
 import { createI18n } from '$lib/i18n/index.js';
@@ -250,9 +253,7 @@ onMount(() => {
       {#if friend.interests}
         <section class="space-y-2">
           <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
+            <Heart class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('friendDetail.sections.interestsHobbies')}
           </h2>
           <div class="p-3 bg-gray-50 rounded-lg font-body text-gray-700">
@@ -265,9 +266,7 @@ onMount(() => {
       {#if friend.metInfo}
         <section class="space-y-2">
           <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
+            <Users class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('friendDetail.sections.howWeMet')}
           </h2>
           <div class="p-3 bg-gray-50 rounded-lg font-body space-y-1">
@@ -371,9 +370,7 @@ onMount(() => {
          flex items-center justify-center z-40"
   aria-label={$i18n.t('subresources.common.add')}
 >
-  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-  </svg>
+  <Plus class="w-6 h-6" strokeWidth="2" />
 </button>
 
 <!-- Mobile add choice modal -->

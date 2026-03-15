@@ -1,5 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import MapPin from 'svelte-heros-v2/MapPin.svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { Address, AddressInput } from '$shared';
@@ -108,10 +110,7 @@ onMount(() => {
   <section class="space-y-2">
     <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
       <h2 class="text-lg font-heading flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
+        <MapPin class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('friendDetail.sections.addresses')}
       </h2>
       <button
@@ -120,9 +119,7 @@ onMount(() => {
         class="text-sm font-body font-semibold text-white/90 hover:text-white
                flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
+        <Plus class="w-4 h-4" strokeWidth="2" />
         {$i18n.t('friendDetail.actions.addAddress')}
       </button>
     </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { previewMemberRelationships } from '$lib/stores/collectives';
 import type { CollectiveRole, FriendSearchResult, RelationshipPreviewResponse } from '$shared';
@@ -136,9 +137,7 @@ async function handleSubmit(e: Event) {
           onclick={clearSelection}
           class="text-gray-400 hover:text-gray-600 transition-colors"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <XMark class="w-4 h-4" strokeWidth="2" />
         </button>
       </div>
     {:else}

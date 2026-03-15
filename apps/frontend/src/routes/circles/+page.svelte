@@ -1,5 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
+import Users from 'svelte-heros-v2/Users.svelte';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import CircleEditModal from '$lib/components/circles/CircleEditModal.svelte';
 import DeleteConfirmModal from '$lib/components/friends/subresources/DeleteConfirmModal.svelte';
@@ -160,9 +162,7 @@ function getActualDepth(circle: Circle): number {
           onclick={openCreateModal}
           class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('circles.newCircle')}
         </button>
       </div>
@@ -194,18 +194,14 @@ function getActualDepth(circle: Circle): number {
         <AlertBanner variant="error">{$circles.error}</AlertBanner>
       {:else if $circlesList.length === 0}
         <div class="text-center py-12">
-          <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+          <Users class="w-16 h-16 mx-auto text-gray-300 mb-4" strokeWidth="2" />
           <h3 class="text-lg font-heading text-gray-600 mb-2">{$i18n.t('circles.noCircles')}</h3>
           <p class="text-gray-500 font-body mb-4">{$i18n.t('circles.noCirclesSubtitle')}</p>
           <button
             onclick={openCreateModal}
             class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('circles.createFirst')}
           </button>
         </div>

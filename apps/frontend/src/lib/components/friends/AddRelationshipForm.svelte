@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
@@ -114,9 +115,7 @@ async function handleSubmit(e: Event) {
           class="text-gray-400 hover:text-gray-600"
           aria-label={$i18n.t('common.clear')}
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <XMark class="w-5 h-5" strokeWidth="2" />
         </button>
       </div>
     {:else}

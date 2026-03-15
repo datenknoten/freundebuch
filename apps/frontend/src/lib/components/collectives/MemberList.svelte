@@ -1,4 +1,8 @@
 <script lang="ts">
+import CheckCircle from 'svelte-heros-v2/CheckCircle.svelte';
+import NoSymbol from 'svelte-heros-v2/NoSymbol.svelte';
+import Tag from 'svelte-heros-v2/Tag.svelte';
+import Trash from 'svelte-heros-v2/Trash.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isOpenMemberModeActive, openMemberModePrefix } from '$lib/stores/ui';
 import type { CollectiveMember } from '$shared';
@@ -85,9 +89,7 @@ function formatDate(dateStr: string | null): string {
                   class="p-1.5 text-gray-400 hover:text-gray-600 transition-colors"
                   title={$i18n.t('collectives.changeRole')}
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
+                  <Tag class="w-4 h-4" strokeWidth="2" />
                 </button>
               {/if}
 
@@ -98,9 +100,7 @@ function formatDate(dateStr: string | null): string {
                   class="p-1.5 text-gray-400 hover:text-amber-600 transition-colors"
                   title={$i18n.t('collectives.deactivateMember')}
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
+                  <NoSymbol class="w-4 h-4" strokeWidth="2" />
                 </button>
               {/if}
 
@@ -111,9 +111,7 @@ function formatDate(dateStr: string | null): string {
                   class="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
                   title={$i18n.t('collectives.removeMember')}
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <Trash class="w-4 h-4" strokeWidth="2" />
                 </button>
               {/if}
             </div>
@@ -168,9 +166,7 @@ function formatDate(dateStr: string | null): string {
                   class="p-1.5 text-gray-400 hover:text-green-600 transition-colors"
                   title={$i18n.t('collectives.reactivateMember')}
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <CheckCircle class="w-4 h-4" strokeWidth="2" />
                 </button>
               {/if}
 
@@ -181,9 +177,7 @@ function formatDate(dateStr: string | null): string {
                   class="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
                   title={$i18n.t('collectives.removeMember')}
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <Trash class="w-4 h-4" strokeWidth="2" />
                 </button>
               {/if}
             </div>

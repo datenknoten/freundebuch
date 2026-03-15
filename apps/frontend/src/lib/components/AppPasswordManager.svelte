@@ -1,5 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import Key from 'svelte-heros-v2/Key.svelte';
+import XMark from 'svelte-heros-v2/XMark.svelte';
 import type { AppPassword, CreateAppPasswordResult } from '$lib/api/app-passwords';
 import * as appPasswordsApi from '$lib/api/app-passwords';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
@@ -88,9 +90,7 @@ function formatDate(dateString: string | null): string {
           class="text-green-600 hover:text-green-800"
           aria-label="Dismiss"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <XMark class="w-5 h-5" strokeWidth="2" />
         </button>
       </div>
       <p class="font-body text-sm text-green-700 mb-3">
@@ -128,9 +128,7 @@ function formatDate(dateString: string | null): string {
     </div>
   {:else if passwords.length === 0}
     <div class="text-center py-8 bg-gray-50 rounded-lg">
-      <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-      </svg>
+      <Key class="w-12 h-12 mx-auto text-gray-400 mb-3" strokeWidth="2" />
       <p class="text-gray-600 font-body">No app passwords yet</p>
       <p class="text-gray-500 font-body text-sm mt-1">Create one to sync friends with your devices</p>
     </div>
