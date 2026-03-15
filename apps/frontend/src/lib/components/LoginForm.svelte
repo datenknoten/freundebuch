@@ -1,4 +1,5 @@
 <script lang="ts">
+import Key from 'svelte-heros-v2/Key.svelte';
 import { goto } from '$app/navigation';
 import { autoFocus } from '$lib/actions/autoFocus';
 import { authClient } from '$lib/auth-client';
@@ -136,9 +137,7 @@ async function handlePasskeySignIn() {
 		disabled={isPasskeyLoading || isLoading}
 		class="w-full flex items-center justify-center gap-2 bg-white text-gray-800 py-3 px-4 rounded-lg font-body font-semibold border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 	>
-		<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-		</svg>
+		<Key class="w-5 h-5" strokeWidth="2" />
 		{isPasskeyLoading ? $i18n.t('profile.passkeys.signingIn') : $i18n.t('profile.passkeys.signIn')}
 	</button>
 

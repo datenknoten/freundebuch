@@ -1,4 +1,5 @@
 <script lang="ts">
+import Plus from 'svelte-heros-v2/Plus.svelte';
 import EncounterList from '$lib/components/encounters/EncounterList.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
@@ -21,9 +22,7 @@ const i18n = createI18n();
           href="/encounters/new"
           class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('encounters.logNew')}
         </a>
       </div>

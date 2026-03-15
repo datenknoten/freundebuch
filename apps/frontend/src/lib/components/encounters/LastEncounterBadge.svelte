@@ -1,5 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import Calendar from 'svelte-heros-v2/Calendar.svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
 import { getLastEncounter } from '$lib/stores/encounters';
 import type { LastEncounterSummary } from '$shared';
 
@@ -76,9 +78,7 @@ function getDateColor(dateStr: string): string {
     class="inline-flex items-center gap-2 px-3 py-1.5 border rounded-full text-sm font-body transition-colors hover:opacity-80 {getDateColor(lastEncounter.encounterDate)}"
     title="Last seen: {lastEncounter.title}"
   >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
+    <Calendar class="w-4 h-4" strokeWidth="2" />
     <span>Last seen: {formatDate(lastEncounter.encounterDate)}</span>
   </a>
 {:else}
@@ -87,9 +87,7 @@ function getDateColor(dateStr: string): string {
     class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-500 font-body hover:bg-gray-100 hover:border-gray-300 transition-colors"
     title="Log an encounter with this friend"
   >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-    </svg>
+    <Plus class="w-4 h-4" strokeWidth="2" />
     <span>Log encounter</span>
   </a>
 {/if}

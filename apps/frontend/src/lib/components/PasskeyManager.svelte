@@ -1,5 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import Key from 'svelte-heros-v2/Key.svelte';
+import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/index.js';
@@ -141,9 +143,7 @@ function deviceTypeLabel(type: string | null): string {
     </div>
   {:else if passkeys.length === 0}
     <div class="text-center py-8 bg-gray-50 rounded-lg">
-      <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-      </svg>
+      <Key class="w-12 h-12 mx-auto text-gray-400 mb-3" strokeWidth="2" />
       <p class="text-gray-600 font-body">{$i18n.t('profile.passkeys.noPasskeys')}</p>
       <p class="text-gray-500 font-body text-sm mt-1">{$i18n.t('profile.passkeys.noPasskeysHint')}</p>
     </div>
@@ -187,9 +187,7 @@ function deviceTypeLabel(type: string | null): string {
                   class="text-gray-400 hover:text-gray-600"
                   aria-label={$i18n.t('profile.passkeys.renameAria')}
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
+                  <PencilSquare class="w-4 h-4" strokeWidth="2" />
                 </button>
               </div>
               <div class="text-sm font-body text-gray-500 mt-1">

@@ -16,8 +16,12 @@ SvelteKit application with Tailwind CSS. See root [AGENTS.md](../../AGENTS.md) f
 - `font-body` (Merriweather) - Body text
 
 ### Icons
-- **Heroicons only** - Consistent stroke width, outline/solid variants
+- **Heroicons only** - Use the `svelte-heros-v2` package (Heroicons v2 for Svelte 5)
+- Import icons directly: `import UserGroup from 'svelte-heros-v2/UserGroup.svelte';`
+- Usage: `<UserGroup class="w-5 h-5" strokeWidth="2" />`
+- Default to outline variant; pass `variation="solid"` for filled icons
 - Sizes: `w-4 h-4` (small), `w-5 h-5` (default), `w-6 h-6` (large)
+- **Never use inline SVG** for Heroicons - always import from the package
 
 ## SvelteKit Patterns
 
