@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { afterAll, beforeAll, beforeEach } from 'vitest';
+import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import { hashPassword } from '../../src/utils/auth.js';
 import { resetConfig } from '../../src/utils/config.js';
@@ -159,12 +159,12 @@ export function setupFriendsTestSuite() {
 
   beforeAll(async () => {
     // Set required environment variables for tests
-    process.env.BETTER_AUTH_SECRET = 'test-better-auth-secret-test-better-auth-secret-1';
-    process.env.JWT_SECRET = 'test-jwt-secret-test-jwt-secret-1';
-    process.env.SESSION_SECRET = 'test-session-secret-test-session-secret-1';
-    process.env.JWT_EXPIRY = '604800';
-    process.env.FRONTEND_URL = 'http://localhost:5173';
-    process.env.LOG_LEVEL = 'silent';
+    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
+    vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
+    vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
+    vi.stubEnv('JWT_EXPIRY', '604800');
+    vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
+    vi.stubEnv('LOG_LEVEL', 'silent');
 
     const authContext = await setupAuthTests();
 
@@ -194,13 +194,7 @@ export function setupFriendsTestSuite() {
 
   afterAll(async () => {
     await teardownAuthTests(context);
-    delete process.env.BETTER_AUTH_SECRET;
-    delete process.env.JWT_SECRET;
-    delete process.env.SESSION_SECRET;
-    delete process.env.JWT_EXPIRY;
-    delete process.env.FRONTEND_URL;
-    delete process.env.DATABASE_URL;
-    delete process.env.LOG_LEVEL;
+    vi.unstubAllEnvs();
     resetConfig();
   }, 120000);
 
