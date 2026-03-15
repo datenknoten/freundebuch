@@ -1,3 +1,10 @@
+## [2.67.0](https://github.com/datenknoten/freundebuch/compare/v2.66.2...v2.67.0) (2026-03-15)
+
+### Features
+
+* **backend, frontend:** Add passkey (WebAuthn) support via Better Auth ([288627e](https://github.com/datenknoten/freundebuch/commit/288627eceee7e1e56b7845a5e913648a3c3a3003))
+* **backend, frontend:** Migrate authentication from custom JWT to Better Auth ([51dfb2b](https://github.com/datenknoten/freundebuch/commit/51dfb2b5d5aa952b78891160ab9d54dc9ebbd863))
+
 ## [2.66.2](https://github.com/datenknoten/freundebuch/compare/v2.66.1...v2.66.2) (2026-03-11)
 
 ### Bug Fixes
