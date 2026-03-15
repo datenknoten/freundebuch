@@ -123,7 +123,7 @@ app.get('/me/self-profile', async (c) => {
   const db = c.get('db');
 
   const authUser = getAuthUser(c);
-  const result = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
+  const result = await getUserSelfProfile.run({ userExternalId: authUser.betterAuthId }, db);
   const selfProfileExternalId = result[0]?.self_profile_external_id ?? null;
 
   return c.json({ selfProfileId: selfProfileExternalId });
@@ -149,7 +149,7 @@ app.put('/me/self-profile', async (c) => {
 
   const result = await setUserSelfProfile.run(
     {
-      userExternalId: authUser.userId,
+      userExternalId: authUser.betterAuthId,
       friendExternalId: validated.friendId,
     },
     db,
@@ -186,19 +186,22 @@ app.post('/me/self-profile', async (c) => {
   }
 
   // Check if user already has a self-profile
-  const existingResult = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
+  const existingResult = await getUserSelfProfile.run(
+    { userExternalId: authUser.betterAuthId },
+    db,
+  );
   if (existingResult[0]?.self_profile_external_id) {
     throw new ValidationError('Self-profile already exists');
   }
 
-  // Create the friend
+  // Create the friend (uses legacy auth.users.external_id)
   const friendsService = new FriendsService(db, logger);
   const newFriend = await friendsService.createFriend(authUser.userId, validated);
 
-  // Set it as the self-profile
+  // Set it as the self-profile (uses Better Auth user.id)
   const setResult = await setUserSelfProfile.run(
     {
-      userExternalId: authUser.userId,
+      userExternalId: authUser.betterAuthId,
       friendExternalId: newFriend.id,
     },
     db,
