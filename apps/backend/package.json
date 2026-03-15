@@ -1,6 +1,6 @@
 {
   "name": "@freundebuch/backend",
-  "version": "2.67.1",
+  "version": "2.67.2",
   "private": true,
   "license": "AGPL-3.0-only",
   "type": "module",

@@ -1,3 +1,10 @@
+## [2.67.2](https://github.com/datenknoten/freundebuch/compare/v2.67.1...v2.67.2) (2026-03-15)
+
+### Bug Fixes
+
+* **backend:** Replace `as any` with typed cast in auth test ([af5088b](https://github.com/datenknoten/freundebuch/commit/af5088ba25ab0f963d650ac4cd08a252faf909b9))
+* **backend:** Resolve Better Auth user ID / legacy UUID mismatch ([923a7d6](https://github.com/datenknoten/freundebuch/commit/923a7d6403a1bc5710d523f28d58d3a1b4b9d9fe))
+
 ## [2.67.1](https://github.com/datenknoten/freundebuch/compare/v2.67.0...v2.67.1) (2026-03-15)
 
 ### Bug Fixes
