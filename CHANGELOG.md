@@ -1,3 +1,9 @@
+## [2.67.1](https://github.com/datenknoten/freundebuch/compare/v2.67.0...v2.67.1) (2026-03-15)
+
+### Bug Fixes
+
+* **backend:** Resolve flaky integration test timeouts under parallel execution ([2ab3b1e](https://github.com/datenknoten/freundebuch/commit/2ab3b1e1ebf26f1a010900bf13c08d3647990da9))
+
 ## [2.67.0](https://github.com/datenknoten/freundebuch/compare/v2.66.2...v2.67.0) (2026-03-15)
 
 ### Features
