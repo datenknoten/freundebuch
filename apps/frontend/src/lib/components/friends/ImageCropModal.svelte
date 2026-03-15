@@ -1,5 +1,6 @@
 <script lang="ts">
 import Cropper, { type CropArea, type OnCropCompleteEvent } from 'svelte-easy-crop';
+import XMark from 'svelte-heros-v2/XMark.svelte';
 import { isModalOpen } from '$lib/stores/ui';
 
 interface Props {
@@ -137,9 +138,7 @@ async function handleConfirm() {
                disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Close"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <XMark class="w-5 h-5" strokeWidth="2" />
       </button>
     </div>
 

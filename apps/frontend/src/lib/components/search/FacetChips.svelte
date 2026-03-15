@@ -1,4 +1,5 @@
 <script lang="ts">
+import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { circlesById } from '$lib/stores/circles';
 import { type ArrayFacetField, type FacetFilters, isArrayFacetField } from '$shared';
@@ -70,14 +71,7 @@ let hasFilters = $derived(chips.length > 0);
             class="inline-flex items-center gap-1 px-2 py-1 bg-forest/10 text-forest text-sm rounded-full hover:bg-forest/20 transition-colors"
           >
             <span>Circle: {chip.value}</span>
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <XMark class="w-3 h-3" strokeWidth="2" />
           </button>
         {/if}
       {:else}
@@ -87,14 +81,7 @@ let hasFilters = $derived(chips.length > 0);
           class="inline-flex items-center gap-1 px-2 py-1 bg-forest/10 text-forest text-sm rounded-full hover:bg-forest/20 transition-colors"
         >
           <span>{chip.label}</span>
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <XMark class="w-3 h-3" strokeWidth="2" />
         </button>
       {/if}
     {/each}

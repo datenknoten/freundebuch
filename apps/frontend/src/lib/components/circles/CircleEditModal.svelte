@@ -1,4 +1,6 @@
 <script lang="ts">
+import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
+import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
 import { isModalOpen } from '$lib/stores/ui';
@@ -201,9 +203,7 @@ function handleBackdropClick(e: MouseEvent) {
                disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label={$i18n.t('common.close')}
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <XMark class="w-5 h-5" strokeWidth="2" />
       </button>
     </div>
 
@@ -326,9 +326,7 @@ function handleBackdropClick(e: MouseEvent) {
     {#if showUnsavedWarning}
       <div class="absolute inset-0 bg-white bg-opacity-95 rounded-xl flex items-center justify-center p-6">
         <div class="text-center">
-          <svg class="w-12 h-12 mx-auto text-amber-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+          <ExclamationTriangle class="w-12 h-12 mx-auto text-amber-500 mb-4" strokeWidth="2" />
           <h3 class="text-lg font-heading text-gray-900 mb-2">{$i18n.t('circles.unsavedChanges.title')}</h3>
           <p class="text-gray-600 font-body mb-6">{$i18n.t('circles.unsavedChanges.message')}</p>
           <div class="flex gap-3 justify-center">

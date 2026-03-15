@@ -1,4 +1,5 @@
 <script lang="ts">
+import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type { CityInfo } from '$shared';
 
@@ -96,13 +97,6 @@ function formatCityDisplay(city: CityInfo): string {
         <option value={city.city}>{formatCityDisplay(city)}</option>
       {/each}
     </select>
-    <svg
-      class="absolute right-3 top-[calc(50%+0.5rem)] -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-    </svg>
+    <ChevronDown class="absolute right-3 top-[calc(50%+0.5rem)] -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" strokeWidth="2" />
   {/if}
 </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+import XMark from 'svelte-heros-v2/XMark.svelte';
 import { circlesById } from '$lib/stores/circles';
 import type { Circle, CircleSummary } from '$shared';
 
@@ -79,9 +80,7 @@ let sizeClasses = $derived(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 te
       }}
       aria-label="Remove {pathParts.ancestors.length > 0 ? pathParts.ancestors.join(' ') + ' ' : ''}{pathParts.name}"
     >
-      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
+      <XMark class="w-3 h-3" strokeWidth="2" />
     </button>
   {/if}
 {/snippet}

@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isModalOpen } from '$lib/stores/ui';
 
@@ -96,9 +97,7 @@ function handleSubmit(e: Event) {
                disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label={$i18n.t('subresources.common.close')}
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <XMark class="w-5 h-5" strokeWidth="2" />
       </button>
     </div>
 

@@ -1,5 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import Calendar from 'svelte-heros-v2/Calendar.svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { DateInput, FriendDate } from '$shared';
@@ -108,9 +110,7 @@ onMount(() => {
   <section class="space-y-2">
     <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
       <h2 class="text-lg font-heading flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
+        <Calendar class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('friendDetail.sections.importantDates')}
       </h2>
       <button
@@ -119,9 +119,7 @@ onMount(() => {
         class="text-sm font-body font-semibold text-white/90 hover:text-white
                flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
+        <Plus class="w-4 h-4" strokeWidth="2" />
         {$i18n.t('friendDetail.actions.addDate')}
       </button>
     </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+import Plus from 'svelte-heros-v2/Plus.svelte';
 import '../app.css';
 import type { Snippet } from 'svelte';
 import { onMount } from 'svelte';
@@ -97,9 +98,7 @@ const showFab = $derived(
 			title={$i18n.t('friends.addNew')}
 			aria-label={$i18n.t('friends.addNew')}
 		>
-			<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-			</svg>
+			<Plus class="w-6 h-6" strokeWidth="2" />
 		</a>
 	{/if}
 </div>

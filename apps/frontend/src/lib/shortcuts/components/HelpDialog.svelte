@@ -1,4 +1,5 @@
 <script lang="ts">
+import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   COLLECTIVE_DETAIL_ACTIONS,
@@ -45,9 +46,7 @@ const i18n = createI18n();
           class="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
           aria-label={$i18n.t('shortcuts.close')}
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <XMark class="w-5 h-5" strokeWidth="2" />
         </button>
       </div>
 

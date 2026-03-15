@@ -1,4 +1,5 @@
 <script lang="ts">
+import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import CollectiveForm from '$lib/components/collectives/CollectiveForm.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
@@ -17,9 +18,7 @@ const i18n = createI18n();
           href="/collectives"
           class="inline-flex items-center gap-2 text-gray-600 hover:text-forest font-body text-sm transition-colors"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('collectives.backToCollectives')}
         </a>
         <h1 class="text-3xl font-heading text-forest mt-4">{$i18n.t('collectives.createNew')}</h1>

@@ -1,3 +1,7 @@
+<script>
+import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
+</script>
+
 <svelte:head>
 	<title>Privacy Policy | Freundebuch</title>
 </svelte:head>
@@ -240,9 +244,7 @@
 					href="/"
 					class="text-sm text-gray-500 hover:text-forest font-body flex items-center gap-1"
 				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-					</svg>
+					<ChevronLeft class="w-4 h-4" strokeWidth="2" />
 					Back to Home
 				</a>
 			</div>
