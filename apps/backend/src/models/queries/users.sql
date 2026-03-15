@@ -89,6 +89,9 @@ WHERE ba_u.id = :userExternalId
   AND c.deleted_at IS NULL
 RETURNING ba_u.id as external_id, c.external_id as self_profile_external_id;
 
+/* @name GetLegacyExternalIdByEmail */
+SELECT external_id FROM auth.users WHERE email = :email;
+
 /* @name CreateLegacyUserForBetterAuth */
 INSERT INTO auth.users (email, password_hash)
 VALUES (:email, '')

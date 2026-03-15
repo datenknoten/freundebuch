@@ -29,7 +29,7 @@ export async function onboardingMiddleware(c: Context, next: Next) {
     throw new AuthenticationError('Unauthorized');
   }
 
-  const result = await hasSelfProfile.run({ userExternalId: authUser.userId }, db);
+  const result = await hasSelfProfile.run({ userExternalId: authUser.betterAuthId }, db);
 
   if (!result[0]?.has_self_profile) {
     logger.info({ userId: authUser.userId }, 'User has not completed onboarding');

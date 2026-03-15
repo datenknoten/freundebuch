@@ -69,7 +69,7 @@ app.get('/me', authMiddleware, async (c) => {
 
   const response: UserWithPreferencesResponse = {
     user: {
-      externalId: authUser.userId,
+      externalId: authUser.betterAuthId,
       email: authUser.email,
       selfProfileId: selfProfileExternalId ?? undefined,
       hasCompletedOnboarding: selfProfileExternalId !== null,
@@ -103,7 +103,7 @@ app.patch('/preferences', authMiddleware, async (c) => {
   }
 
   // Get current preferences
-  const users = await getUserWithPreferences.run({ externalId: authUser.userId }, db);
+  const users = await getUserWithPreferences.run({ externalId: authUser.betterAuthId }, db);
 
   if (users.length === 0) {
     throw new UserNotFoundError();
@@ -124,7 +124,7 @@ app.patch('/preferences', authMiddleware, async (c) => {
   // Update in database
   const result = await updateUserPreferences.run(
     {
-      externalId: authUser.userId,
+      externalId: authUser.betterAuthId,
       preferences: toJson(newPreferences),
     },
     db,

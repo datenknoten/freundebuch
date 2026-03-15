@@ -453,6 +453,34 @@ const setUserSelfProfileIR: any = {"usedParamSet":{"userExternalId":true,"friend
 export const setUserSelfProfile = new PreparedQuery<ISetUserSelfProfileParams,ISetUserSelfProfileResult>(setUserSelfProfileIR);
 
 
+/** 'GetLegacyExternalIdByEmail' parameters type */
+export interface IGetLegacyExternalIdByEmailParams {
+  email?: string | null | void;
+}
+
+/** 'GetLegacyExternalIdByEmail' return type */
+export interface IGetLegacyExternalIdByEmailResult {
+  /** Public UUID for API exposure (always use this in APIs) */
+  external_id: string;
+}
+
+/** 'GetLegacyExternalIdByEmail' query type */
+export interface IGetLegacyExternalIdByEmailQuery {
+  params: IGetLegacyExternalIdByEmailParams;
+  result: IGetLegacyExternalIdByEmailResult;
+}
+
+const getLegacyExternalIdByEmailIR: any = {"usedParamSet":{"email":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":49,"b":54}]}],"statement":"SELECT external_id FROM auth.users WHERE email = :email"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT external_id FROM auth.users WHERE email = :email
+ * ```
+ */
+export const getLegacyExternalIdByEmail = new PreparedQuery<IGetLegacyExternalIdByEmailParams,IGetLegacyExternalIdByEmailResult>(getLegacyExternalIdByEmailIR);
+
+
 /** 'CreateLegacyUserForBetterAuth' parameters type */
 export interface ICreateLegacyUserForBetterAuthParams {
   email?: string | null | void;

@@ -1,9 +1,11 @@
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authMiddleware, getAuthUser } from '../../src/middleware/auth.js';
+import type { AppContext } from '../../src/types/context.js';
 import { isAppError } from '../../src/utils/errors.js';
 
 const mockGetSession = vi.fn();
+const mockGetLegacyExternalId = vi.fn();
 
 // Mock the Better Auth module
 vi.mock('../../src/lib/auth.ts', () => ({
@@ -14,14 +16,25 @@ vi.mock('../../src/lib/auth.ts', () => ({
   }),
 }));
 
+// Mock the legacy external ID lookup
+vi.mock('../../src/models/queries/users.queries.ts', () => ({
+  getLegacyExternalIdByEmail: {
+    run: (...args: unknown[]) => mockGetLegacyExternalId(...args),
+  },
+}));
+
 describe('authMiddleware', () => {
-  let app: Hono;
+  let app: Hono<AppContext>;
 
   beforeEach(() => {
-    app = new Hono();
+    app = new Hono<AppContext>();
     vi.clearAllMocks();
 
-    // Setup test route with auth middleware
+    // Setup db context and test route with auth middleware
+    app.use('/protected/*', async (c, next) => {
+      c.set('db', {} as any); // mock db pool
+      return next();
+    });
     app.use('/protected/*', authMiddleware);
     app.get('/protected/resource', (c) => {
       const user = getAuthUser(c);
@@ -43,6 +56,7 @@ describe('authMiddleware', () => {
         user: { id: 'user-123', email: 'test@example.com', name: 'Test' },
         session: { id: 'session-1', userId: 'user-123', token: 'tok' },
       });
+      mockGetLegacyExternalId.mockResolvedValue([{ external_id: 'legacy-uuid-123' }]);
 
       const res = await app.request('/protected/resource');
 
@@ -51,7 +65,7 @@ describe('authMiddleware', () => {
       const body = await res.json();
       expect(body).toEqual({
         message: 'success',
-        user: { userId: 'user-123', email: 'test@example.com' },
+        user: { userId: 'legacy-uuid-123', betterAuthId: 'user-123', email: 'test@example.com' },
       });
     });
 
@@ -60,10 +74,15 @@ describe('authMiddleware', () => {
         user: { id: 'user-456', email: 'another@example.com', name: 'Another' },
         session: { id: 'session-2', userId: 'user-456', token: 'tok' },
       });
+      mockGetLegacyExternalId.mockResolvedValue([{ external_id: 'legacy-uuid-456' }]);
 
       const res = await app.request('/protected/resource');
       const body = (await res.json()) as { user: unknown };
-      expect(body.user).toEqual({ userId: 'user-456', email: 'another@example.com' });
+      expect(body.user).toEqual({
+        userId: 'legacy-uuid-456',
+        betterAuthId: 'user-456',
+        email: 'another@example.com',
+      });
     });
   });
 
@@ -85,6 +104,20 @@ describe('authMiddleware', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('should return 401 when legacy user does not exist', async () => {
+      mockGetSession.mockResolvedValue({
+        user: { id: 'user-new', email: 'new@example.com', name: 'New' },
+        session: { id: 's1', userId: 'user-new', token: 'tok' },
+      });
+      mockGetLegacyExternalId.mockResolvedValue([]);
+
+      const res = await app.request('/protected/resource');
+
+      expect(res.status).toBe(401);
+      const body = await res.json();
+      expect(body).toEqual({ error: 'User account not fully provisioned' });
+    });
   });
 
   describe('getAuthUser helper', () => {
@@ -93,10 +126,15 @@ describe('authMiddleware', () => {
         user: { id: 'user-999', email: 'helper@example.com', name: 'Helper' },
         session: { id: 'session-3', userId: 'user-999', token: 'tok' },
       });
+      mockGetLegacyExternalId.mockResolvedValue([{ external_id: 'legacy-uuid-999' }]);
 
       const res = await app.request('/protected/resource');
       const body = (await res.json()) as { user: unknown };
-      expect(body.user).toEqual({ userId: 'user-999', email: 'helper@example.com' });
+      expect(body.user).toEqual({
+        userId: 'legacy-uuid-999',
+        betterAuthId: 'user-999',
+        email: 'helper@example.com',
+      });
     });
 
     it('should return correct user for different authenticated requests', async () => {
@@ -108,18 +146,20 @@ describe('authMiddleware', () => {
         user: user1,
         session: { id: 's1', userId: 'user-1', token: 'tok' },
       });
+      mockGetLegacyExternalId.mockResolvedValue([{ external_id: 'legacy-uuid-1' }]);
       const res1 = await app.request('/protected/resource');
       const body1 = (await res1.json()) as { user: { userId: string } };
-      expect(body1.user.userId).toBe('user-1');
+      expect(body1.user.userId).toBe('legacy-uuid-1');
 
       // Second request
       mockGetSession.mockResolvedValue({
         user: user2,
         session: { id: 's2', userId: 'user-2', token: 'tok' },
       });
+      mockGetLegacyExternalId.mockResolvedValue([{ external_id: 'legacy-uuid-2' }]);
       const res2 = await app.request('/protected/resource');
       const body2 = (await res2.json()) as { user: { userId: string } };
-      expect(body2.user.userId).toBe('user-2');
+      expect(body2.user.userId).toBe('legacy-uuid-2');
     });
   });
 
@@ -129,6 +169,7 @@ describe('authMiddleware', () => {
         user: { id: 'user-chain', email: 'chain@example.com', name: 'Chain' },
         session: { id: 's1', userId: 'user-chain', token: 'tok' },
       });
+      mockGetLegacyExternalId.mockResolvedValue([{ external_id: 'legacy-uuid-chain' }]);
 
       const res = await app.request('/protected/resource');
 
