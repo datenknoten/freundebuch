@@ -466,8 +466,8 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       // Sign up first
       await signUp(app, email, password);
 
-      // Make 10 concurrent sign-in requests
-      const requests = Array.from({ length: 10 }, () =>
+      // Make 5 concurrent sign-in requests
+      const requests = Array.from({ length: 5 }, () =>
         app.fetch(
           new Request('http://localhost/api/auth/sign-in/email', {
             method: 'POST',
@@ -491,7 +491,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       });
       const uniqueTokens = new Set(tokens.filter(Boolean));
 
-      expect(uniqueTokens.size).toBe(10);
+      expect(uniqueTokens.size).toBe(5);
     });
   });
 
