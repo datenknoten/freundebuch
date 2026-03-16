@@ -618,10 +618,50 @@
       "setupGuide": "Einrichtungsanleitung",
       "useCredentials": "Verwende deine E-Mail {{email}} und ein App-Passwort zum Anmelden.",
       "important": "Wichtig",
-      "importantNote": "Verwende immer ein App-Passwort anstelle deines regulären Kontopassworts für CardDAV-Clients.",
+      "importantNote": "Verwende immer ein <strong>App-Passwort</strong> anstelle deines regulären Kontopassworts. App-Passwörter können einzeln widerrufen werden, ohne dein Hauptpasswort zu ändern.",
       "ios": "iOS / iPadOS",
       "macos": "macOS",
-      "thunderbird": "Thunderbird"
+      "thunderbird": "Thunderbird",
+      "fields": {
+        "server": "Server:",
+        "userName": "Benutzername:",
+        "password": "Passwort:",
+        "yourAppPassword": "Dein App-Passwort",
+        "description": "Beschreibung:",
+        "accountType": "Kontotyp:",
+        "manual": "Manuell",
+        "serverAddress": "Serveradresse:",
+        "url": "URL:",
+        "user": "Benutzer:"
+      },
+      "steps": {
+        "ios": {
+          "1": "Öffne <strong>Einstellungen</strong> und tippe auf <strong>Kontakte</strong>",
+          "2": "Tippe auf <strong>Accounts</strong>, dann auf <strong>Account hinzufügen</strong>",
+          "3": "Wähle <strong>Andere</strong> ganz unten",
+          "4": "Tippe auf <strong>CardDAV-Account hinzufügen</strong>",
+          "5": "Gib deine Daten ein:",
+          "6": "Tippe auf <strong>Weiter</strong> zum Überprüfen und Speichern"
+        },
+        "macos": {
+          "1": "Öffne <strong>Systemeinstellungen</strong>",
+          "2": "Klicke auf <strong>Internetaccounts</strong>",
+          "3": "Klicke auf <strong>Account hinzufügen</strong>, dann wähle <strong>Anderer Kontakte-Account</strong>",
+          "4": "Wähle <strong>CardDAV</strong> als Kontotyp",
+          "5": "Gib deine Daten ein:",
+          "6": "Klicke auf <strong>Anmelden</strong>"
+        },
+        "thunderbird": {
+          "1": "Installiere das <strong>CardBook</strong>-Add-on aus den Thunderbird-Add-ons",
+          "2": "Öffne <strong>CardBook</strong> über das Thunderbird-Menü",
+          "3": "Klicke auf <strong>Adressbuch</strong> &rarr; <strong>Neues Adressbuch</strong>",
+          "4": "Wähle <strong>Entfernt</strong> und klicke auf <strong>Weiter</strong>",
+          "5": "Wähle <strong>CardDAV</strong> und klicke auf <strong>Weiter</strong>",
+          "6": "Gib deine Daten ein:",
+          "7": "Klicke auf <strong>Überprüfen</strong>, um die Verbindung zu testen",
+          "8": "Wähle das Adressbuch aus und schließe die Einrichtung ab"
+        }
+      }
     },
     "danger": {
       "title": "Gefahrenzone",
