@@ -1,3 +1,13 @@
+## [2.67.3](https://github.com/datenknoten/freundebuch/compare/v2.67.2...v2.67.3) (2026-03-16)
+
+### Bug Fixes
+
+* **backend:** Fix invalid FROM-clause reference in SetUserSelfProfile query ([c28acdc](https://github.com/datenknoten/freundebuch/commit/c28acdc6cbab3ef3125c1575ef3432ad92403d85))
+
+### Code Refactoring
+
+* **frontend:** Replace inline SVG icons with svelte-heros-v2 package ([8b18421](https://github.com/datenknoten/freundebuch/commit/8b18421b08049e9cbc359d205511c9d2b3f9621f))
+
 ## [2.67.2](https://github.com/datenknoten/freundebuch/compare/v2.67.1...v2.67.2) (2026-03-15)
 
 ### Bug Fixes
