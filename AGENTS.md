@@ -16,6 +16,7 @@ This file provides guidance for AI coding assistants working with this codebase.
 | [docs/tone.md](docs/tone.md) | Writing style guidelines |
 | [docs/design-language.md](docs/design-language.md) | Visual design system |
 | [docs/database-conventions.md](docs/database-conventions.md) | Database design patterns |
+| [docs/git-workflow.md](docs/git-workflow.md) | Branching model, commit conventions, git hooks |
 
 ## Subproject Guidelines
 
