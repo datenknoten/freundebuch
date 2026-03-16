@@ -1,19 +1,18 @@
 <script lang="ts">
-import * as authApi from '$lib/api/auth';
-import AlertBanner from '$lib/components/AlertBanner.svelte';
-import AppPasswordManager from '$lib/components/AppPasswordManager.svelte';
-import CardDAVSetupGuide from '$lib/components/CardDAVSetupGuide.svelte';
-import NotificationChannelList from '$lib/components/NotificationChannelList.svelte';
-import PasskeyManager from '$lib/components/PasskeyManager.svelte';
+import { onMount } from 'svelte';
+import ChatBubbleLeft from 'svelte-heros-v2/ChatBubbleLeft.svelte';
+import CloudArrowUp from 'svelte-heros-v2/CloudArrowUp.svelte';
+import FingerPrint from 'svelte-heros-v2/FingerPrint.svelte';
+import LockClosed from 'svelte-heros-v2/LockClosed.svelte';
+import PaintBrush from 'svelte-heros-v2/PaintBrush.svelte';
+import User from 'svelte-heros-v2/User.svelte';
+import { listAppPasswords } from '$lib/api/app-passwords';
+import { authClient } from '$lib/auth-client';
+import ProfileCard from '$lib/components/ProfileCard.svelte';
 import { createI18n, languageNames } from '$lib/i18n/index.js';
-import { auth, birthdayFormat, currentUser } from '$lib/stores/auth';
-import {
-  currentLanguage,
-  locale,
-  type SupportedLanguage,
-  supportedLanguages,
-} from '$lib/stores/locale';
-import type { BirthdayFormat } from '$shared';
+import { birthdayFormat, currentUser } from '$lib/stores/auth';
+import { currentLanguage } from '$lib/stores/locale';
+import { notificationChannels } from '$lib/stores/notificationChannels';
 
 const i18n = createI18n();
 
@@ -21,220 +20,133 @@ const pageTitle = $derived(
   $currentUser?.email ? `${$currentUser.email} | Freundebuch` : 'Profile | Freundebuch',
 );
 
-let isEditing = $state(false);
-let email = $state($currentUser?.email || '');
-let isLoading = $state(false);
-let error = $state('');
-let success = $state(false);
+let passkeyCount = $state(0);
+let appPasswordCount = $state(0);
 
-async function handleSubmit(event: SubmitEvent) {
-  event.preventDefault();
-  error = '';
-  success = false;
-  isLoading = true;
-
+onMount(async () => {
   try {
-    await authApi.updateCurrentUser({ email });
-    success = true;
-    isEditing = false;
-    isLoading = false;
-
-    // Hide success message after 3 seconds
-    setTimeout(() => {
-      success = false;
-    }, 3000);
-  } catch (err) {
-    error = (err as Error)?.message || 'Failed to update profile';
-    isLoading = false;
+    const [passkeyResult, appPasswords] = await Promise.all([
+      authClient.passkey.listUserPasskeys(),
+      listAppPasswords(),
+      notificationChannels.loadChannels(),
+    ]);
+    passkeyCount = (passkeyResult?.data ?? []).length;
+    appPasswordCount = appPasswords.length;
+  } catch {
+    // Counts stay at 0 — cards will show "No X" status gracefully
   }
-}
+});
 
-function handleCancel() {
-  email = $currentUser?.email || '';
-  isEditing = false;
-  error = '';
-}
+const accountStatus = $derived($currentUser?.email ?? '');
 
-function handleBirthdayFormatChange(format: BirthdayFormat) {
-  auth.updatePreferences({ birthdayFormat: format });
-}
+const displayStatus = $derived(
+  $i18n.t('profile.hub.status.language', {
+    language: languageNames[$currentLanguage] ?? $currentLanguage,
+    format: $birthdayFormat.toUpperCase(),
+  }),
+);
 
-function handleLanguageChange(lang: SupportedLanguage) {
-  locale.setLanguage(lang);
-}
+const passkeyStatus = $derived(
+  passkeyCount > 0
+    ? $i18n.t('profile.hub.status.passkeyCount', { count: passkeyCount })
+    : $i18n.t('profile.hub.status.noPasskeys'),
+);
+
+const appPasswordStatus = $derived(
+  appPasswordCount > 0
+    ? $i18n.t('profile.hub.status.appPasswordCount', { count: appPasswordCount })
+    : $i18n.t('profile.hub.status.noAppPasswords'),
+);
+
+const channelTotal = $derived($notificationChannels.channels.length);
+const channelEnabled = $derived($notificationChannels.channels.filter((c) => c.isEnabled).length);
+const messagingStatus = $derived(
+  channelTotal > 0
+    ? `${$i18n.t('profile.hub.status.channelCount', { count: channelTotal })} · ${$i18n.t('profile.hub.status.channelsEnabled', { count: channelEnabled })}`
+    : $i18n.t('profile.hub.status.noChannels'),
+);
+
+const carddavStatus = $derived(
+  appPasswordCount > 0
+    ? $i18n.t('profile.hub.status.carddavReady')
+    : $i18n.t('profile.hub.status.carddavNeedsPassword'),
+);
 </script>
 
 <svelte:head>
-	<title>{pageTitle}</title>
+  <title>{pageTitle}</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 p-4">
-	<div class="max-w-7xl mx-auto mt-8">
-		<div class="bg-white rounded-xl shadow-lg p-8">
-			<div class="flex justify-between items-start mb-6">
-				<div>
-					<h1 class="text-3xl font-heading text-forest mb-2">{$i18n.t('profile.yourProfile')}</h1>
-					<p class="text-gray-600 font-body">{$i18n.t('profile.subtitle')}</p>
-				</div>
-				{#if !isEditing}
-					<button
-						onclick={() => (isEditing = true)}
-						class="bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-					>
-						{$i18n.t('profile.editProfile')}
-					</button>
-				{/if}
-			</div>
+<div>
+  <h1 class="text-3xl font-heading text-forest mb-2">{$i18n.t('profile.yourProfile')}</h1>
+  <p class="text-gray-600 font-body mb-8">{$i18n.t('profile.subtitle')}</p>
 
-			{#if error}
-				<div class="mb-6">
-					<AlertBanner variant="error">{error}</AlertBanner>
-				</div>
-			{/if}
+  <section class="mb-10">
+    <h2 class="text-lg font-heading text-gray-800 mb-4">{$i18n.t('profile.hub.categories.account')}</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <ProfileCard
+        href="/profile/account"
+        title={$i18n.t('profile.hub.cards.account.title')}
+        description={$i18n.t('profile.hub.cards.account.description')}
+        status={accountStatus}
+      >
+        {#snippet icon()}<User class="w-5 h-5" strokeWidth="2" />{/snippet}
+      </ProfileCard>
 
-			{#if success}
-				<div class="mb-6">
-					<AlertBanner variant="success">{$i18n.t('profile.updateSuccess')}</AlertBanner>
-				</div>
-			{/if}
+      <ProfileCard
+        href="/profile/display"
+        title={$i18n.t('profile.hub.cards.display.title')}
+        description={$i18n.t('profile.hub.cards.display.description')}
+        status={displayStatus}
+      >
+        {#snippet icon()}<PaintBrush class="w-5 h-5" strokeWidth="2" />{/snippet}
+      </ProfileCard>
+    </div>
+  </section>
 
-			<form onsubmit={handleSubmit} class="space-y-6">
-				<div>
-					<label for="user-id" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-						{$i18n.t('profile.userId')}
-					</label>
-					<input
-						type="text"
-						id="user-id"
-						value={$currentUser?.externalId || ''}
-						disabled
-						class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 font-body text-gray-600"
-					/>
-					<p class="mt-1 text-xs font-body text-gray-500">{$i18n.t('profile.userIdHelp')}</p>
-				</div>
+  <section class="mb-10">
+    <h2 class="text-lg font-heading text-gray-800 mb-4">{$i18n.t('profile.hub.categories.security')}</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <ProfileCard
+        href="/profile/passkeys"
+        title={$i18n.t('profile.hub.cards.passkeys.title')}
+        description={$i18n.t('profile.hub.cards.passkeys.description')}
+        status={passkeyStatus}
+      >
+        {#snippet icon()}<FingerPrint class="w-5 h-5" strokeWidth="2" />{/snippet}
+      </ProfileCard>
 
-				<div>
-					<label for="email" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-						{$i18n.t('profile.emailAddress')}
-					</label>
-					<input
-						type="email"
-						id="email"
-						bind:value={email}
-						required
-						disabled={!isEditing || isLoading}
-						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:bg-gray-100 disabled:text-gray-600"
-					/>
-				</div>
+      <ProfileCard
+        href="/profile/app-passwords"
+        title={$i18n.t('profile.hub.cards.appPasswords.title')}
+        description={$i18n.t('profile.hub.cards.appPasswords.description')}
+        status={appPasswordStatus}
+      >
+        {#snippet icon()}<LockClosed class="w-5 h-5" strokeWidth="2" />{/snippet}
+      </ProfileCard>
+    </div>
+  </section>
 
-				{#if $currentUser?.createdAt}
-					<div>
-						<p class="block text-sm font-body font-semibold text-gray-700 mb-2">
-							{$i18n.t('profile.memberSince')}
-						</p>
-						<p class="font-body text-gray-600">
-							{new Date($currentUser.createdAt).toLocaleDateString()}
-						</p>
-					</div>
-				{/if}
+  <section>
+    <h2 class="text-lg font-heading text-gray-800 mb-4">{$i18n.t('profile.hub.categories.integrations')}</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <ProfileCard
+        href="/profile/messaging"
+        title={$i18n.t('profile.hub.cards.messaging.title')}
+        description={$i18n.t('profile.hub.cards.messaging.description')}
+        status={messagingStatus}
+      >
+        {#snippet icon()}<ChatBubbleLeft class="w-5 h-5" strokeWidth="2" />{/snippet}
+      </ProfileCard>
 
-				{#if isEditing}
-					<div class="flex gap-3">
-						<button
-							type="submit"
-							disabled={isLoading}
-							class="flex-1 bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{isLoading ? $i18n.t('profile.saving') : $i18n.t('profile.saveChanges')}
-						</button>
-						<button
-							type="button"
-							onclick={handleCancel}
-							disabled={isLoading}
-							class="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-body font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{$i18n.t('common.cancel')}
-						</button>
-					</div>
-				{/if}
-			</form>
-
-			<div class="mt-8 pt-8 border-t border-gray-200">
-				<h2 class="text-xl font-heading text-gray-800 mb-2">{$i18n.t('profile.displayPreferences.title')}</h2>
-				<p class="text-sm font-body text-gray-600 mb-4">
-					{$i18n.t('profile.displayPreferences.subtitle')}
-				</p>
-
-				<div class="space-y-4">
-					<div>
-						<label for="language" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-							{$i18n.t('profile.preferences.language')}
-						</label>
-						<select
-							id="language"
-							value={$currentLanguage}
-							onchange={(e) => handleLanguageChange(e.currentTarget.value as SupportedLanguage)}
-							class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-						>
-							{#each supportedLanguages as lang}
-								<option value={lang}>{languageNames[lang]}</option>
-							{/each}
-						</select>
-					</div>
-
-					<div>
-						<label for="birthday-format" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-							{$i18n.t('profile.preferences.birthdayFormat')}
-						</label>
-						<select
-							id="birthday-format"
-							value={$birthdayFormat}
-							onchange={(e) => handleBirthdayFormatChange(e.currentTarget.value as BirthdayFormat)}
-							class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-						>
-							<option value="iso">{$i18n.t('profile.preferences.birthdayFormats.iso')}</option>
-							<option value="us">{$i18n.t('profile.preferences.birthdayFormats.us')}</option>
-							<option value="eu">{$i18n.t('profile.preferences.birthdayFormats.eu')}</option>
-							<option value="long">{$i18n.t('profile.preferences.birthdayFormats.long')}</option>
-						</select>
-						<p class="mt-1 text-xs font-body text-gray-500">
-							{$i18n.t('profile.preferences.birthdayFormatHelp')}
-						</p>
-					</div>
-				</div>
-			</div>
-
-			<div class="mt-8 pt-8 border-t border-gray-200">
-				<h2 class="text-xl font-heading text-gray-800 mb-2">{$i18n.t('profile.passkeys.title')}</h2>
-				<p class="text-sm font-body text-gray-600 mb-4">
-					{$i18n.t('profile.passkeys.subtitle')}
-				</p>
-				<PasskeyManager />
-			</div>
-
-			<div class="mt-8 pt-8 border-t border-gray-200">
-				<h2 class="text-xl font-heading text-gray-800 mb-2">{$i18n.t('profile.appPasswords.title')}</h2>
-				<p class="text-sm font-body text-gray-600 mb-4">
-					{$i18n.t('profile.appPasswords.subtitle')}
-				</p>
-				<AppPasswordManager />
-			</div>
-
-			<div class="mt-8 pt-8 border-t border-gray-200">
-				<h2 class="text-xl font-heading text-gray-800 mb-2">{$i18n.t('profile.messagingReminders.title')}</h2>
-				<p class="text-sm font-body text-gray-600 mb-4">
-					{$i18n.t('profile.messagingReminders.description')}
-				</p>
-				<NotificationChannelList />
-			</div>
-
-			<div class="mt-8 pt-8 border-t border-gray-200">
-				<h2 class="text-xl font-heading text-gray-800 mb-2">{$i18n.t('profile.carddav.title')}</h2>
-				<p class="text-sm font-body text-gray-600 mb-4">
-					{$i18n.t('profile.carddav.subtitle')}
-				</p>
-				<CardDAVSetupGuide />
-			</div>
-		</div>
-	</div>
+      <ProfileCard
+        href="/profile/carddav"
+        title={$i18n.t('profile.hub.cards.carddav.title')}
+        description={$i18n.t('profile.hub.cards.carddav.description')}
+        status={carddavStatus}
+      >
+        {#snippet icon()}<CloudArrowUp class="w-5 h-5" strokeWidth="2" />{/snippet}
+      </ProfileCard>
+    </div>
+  </section>
 </div>

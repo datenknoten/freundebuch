@@ -627,6 +627,58 @@
       "title": "Danger Zone",
       "deleteAccount": "Delete Account",
       "deleteWarning": "This will permanently delete your account and all data."
+    },
+    "hub": {
+      "categories": {
+        "account": "Account",
+        "security": "Security",
+        "integrations": "Integrations"
+      },
+      "cards": {
+        "account": {
+          "title": "Account",
+          "description": "Email, user ID, and membership info"
+        },
+        "display": {
+          "title": "Display Preferences",
+          "description": "Language and date format settings"
+        },
+        "passkeys": {
+          "title": "Passkeys",
+          "description": "Passwordless sign-in with biometrics or security keys"
+        },
+        "appPasswords": {
+          "title": "App Passwords",
+          "description": "Manage passwords for third-party app access"
+        },
+        "messaging": {
+          "title": "Messaging Reminders",
+          "description": "Daily digests of upcoming friend dates"
+        },
+        "carddav": {
+          "title": "CardDAV Sync",
+          "description": "Sync friends with mobile and desktop apps"
+        }
+      },
+      "status": {
+        "email": "{{email}}",
+        "memberSince": "Member since {{date}}",
+        "language": "Language: {{language}} · Birthday: {{format}}",
+        "birthdayFormat": "Birthday: {{format}}",
+        "passkeyCount": "{{count}} passkey registered",
+        "passkeyCount_plural": "{{count}} passkeys registered",
+        "noPasskeys": "No passkeys registered",
+        "appPasswordCount": "{{count}} app password",
+        "appPasswordCount_plural": "{{count}} app passwords",
+        "noAppPasswords": "No app passwords",
+        "channelCount": "{{count}} channel configured",
+        "channelCount_plural": "{{count}} channels configured",
+        "noChannels": "No channels configured",
+        "channelsEnabled": "{{count}} active",
+        "carddavReady": "Ready to sync",
+        "carddavNeedsPassword": "Create an app password first"
+      },
+      "backToProfile": "Back to Profile"
     }
   },
   "onboarding": {
