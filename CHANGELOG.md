@@ -1,3 +1,13 @@
+## [2.67.4](https://github.com/datenknoten/freundebuch/compare/v2.67.3...v2.67.4) (2026-03-16)
+
+### Bug Fixes
+
+* **frontend:** Translate hardcoded strings in CardDAVSetupGuide component ([6557154](https://github.com/datenknoten/freundebuch/commit/6557154c2dfe3f0e1df4df52b4f533d671ed6805))
+
+### Code Refactoring
+
+* **frontend:** Replace monolithic profile page with hub-and-spoke layout ([45722f4](https://github.com/datenknoten/freundebuch/commit/45722f4ee043c718b0e1c8d279952bd4ebcd01a5))
+
 ## [2.67.3](https://github.com/datenknoten/freundebuch/compare/v2.67.2...v2.67.3) (2026-03-16)
 
 ### Bug Fixes
