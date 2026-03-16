@@ -1,6 +1,9 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { currentUser } from '$lib/stores/auth';
+
+const i18n = createI18n();
 
 interface Props {
   serverUrl?: string;
@@ -41,7 +44,7 @@ async function copyUrl() {
 
 <div class="space-y-6">
   <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-    <h4 class="font-body font-semibold text-blue-800 mb-2">CardDAV Server URL</h4>
+    <h4 class="font-body font-semibold text-blue-800 mb-2">{$i18n.t('profile.carddav.serverUrl')}</h4>
     <div class="flex items-center gap-2">
       <code class="flex-1 bg-white border border-blue-200 rounded px-3 py-2 font-mono text-sm break-all">
         {carddavUrl}
@@ -50,11 +53,11 @@ async function copyUrl() {
         onclick={copyUrl}
         class="shrink-0 bg-blue-600 text-white px-3 py-2 rounded font-body text-sm hover:bg-blue-700 transition-colors"
       >
-        {copied ? 'Copied!' : 'Copy'}
+        {copied ? $i18n.t('profile.carddav.copied') : $i18n.t('profile.carddav.copy')}
       </button>
     </div>
     <p class="font-body text-xs text-blue-600 mt-2">
-      Use your email <strong>{$currentUser?.email}</strong> and an app password to sign in.
+      {$i18n.t('profile.carddav.useCredentials', { email: $currentUser?.email })}
     </p>
   </div>
 
@@ -64,74 +67,74 @@ async function copyUrl() {
         onclick={() => activeTab = 'ios'}
         class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'ios' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
       >
-        iOS / iPadOS
+        {$i18n.t('profile.carddav.ios')}
       </button>
       <button
         onclick={() => activeTab = 'macos'}
         class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'macos' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
       >
-        macOS
+        {$i18n.t('profile.carddav.macos')}
       </button>
       <button
         onclick={() => activeTab = 'thunderbird'}
         class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'thunderbird' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
       >
-        Thunderbird
+        {$i18n.t('profile.carddav.thunderbird')}
       </button>
     </div>
 
     <div class="p-4">
       {#if activeTab === 'ios'}
         <ol class="list-decimal list-inside space-y-3 font-body text-gray-700">
-          <li>Open <strong>Settings</strong> and tap <strong>Contacts</strong></li>
-          <li>Tap <strong>Accounts</strong>, then <strong>Add Account</strong></li>
-          <li>Select <strong>Other</strong> at the bottom</li>
-          <li>Tap <strong>Add CardDAV Account</strong></li>
+          <li>{@html $i18n.t('profile.carddav.steps.ios.1')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.ios.2')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.ios.3')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.ios.4')}</li>
           <li>
-            Enter your details:
+            {@html $i18n.t('profile.carddav.steps.ios.5')}
             <ul class="list-disc list-inside ml-4 mt-2 space-y-1 text-sm text-gray-600">
-              <li><strong>Server:</strong> {carddavUrl}</li>
-              <li><strong>User Name:</strong> {$currentUser?.email}</li>
-              <li><strong>Password:</strong> Your app password</li>
-              <li><strong>Description:</strong> Freundebuch</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.server')}</strong> {carddavUrl}</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.userName')}</strong> {$currentUser?.email}</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.password')}</strong> {$i18n.t('profile.carddav.fields.yourAppPassword')}</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.description')}</strong> Freundebuch</li>
             </ul>
           </li>
-          <li>Tap <strong>Next</strong> to verify and save</li>
+          <li>{@html $i18n.t('profile.carddav.steps.ios.6')}</li>
         </ol>
       {:else if activeTab === 'macos'}
         <ol class="list-decimal list-inside space-y-3 font-body text-gray-700">
-          <li>Open <strong>System Settings</strong> (or System Preferences)</li>
-          <li>Click <strong>Internet Accounts</strong></li>
-          <li>Click <strong>Add Account</strong>, then select <strong>Other Contacts Account</strong></li>
-          <li>Select <strong>CardDAV</strong> as the account type</li>
+          <li>{@html $i18n.t('profile.carddav.steps.macos.1')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.macos.2')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.macos.3')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.macos.4')}</li>
           <li>
-            Enter your details:
+            {@html $i18n.t('profile.carddav.steps.macos.5')}
             <ul class="list-disc list-inside ml-4 mt-2 space-y-1 text-sm text-gray-600">
-              <li><strong>Account Type:</strong> Manual</li>
-              <li><strong>User Name:</strong> {$currentUser?.email}</li>
-              <li><strong>Password:</strong> Your app password</li>
-              <li><strong>Server Address:</strong> {carddavUrl}</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.accountType')}</strong> {$i18n.t('profile.carddav.fields.manual')}</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.userName')}</strong> {$currentUser?.email}</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.password')}</strong> {$i18n.t('profile.carddav.fields.yourAppPassword')}</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.serverAddress')}</strong> {carddavUrl}</li>
             </ul>
           </li>
-          <li>Click <strong>Sign In</strong></li>
+          <li>{@html $i18n.t('profile.carddav.steps.macos.6')}</li>
         </ol>
       {:else if activeTab === 'thunderbird'}
         <ol class="list-decimal list-inside space-y-3 font-body text-gray-700">
-          <li>Install the <strong>CardBook</strong> add-on from Thunderbird Add-ons</li>
-          <li>Open <strong>CardBook</strong> from the Thunderbird menu</li>
-          <li>Click <strong>Address Book</strong> &rarr; <strong>New Address Book</strong></li>
-          <li>Select <strong>Remote</strong> and click <strong>Next</strong></li>
-          <li>Select <strong>CardDAV</strong> and click <strong>Next</strong></li>
+          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.1')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.2')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.3')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.4')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.5')}</li>
           <li>
-            Enter your details:
+            {@html $i18n.t('profile.carddav.steps.thunderbird.6')}
             <ul class="list-disc list-inside ml-4 mt-2 space-y-1 text-sm text-gray-600">
-              <li><strong>URL:</strong> {carddavUrl}</li>
-              <li><strong>User:</strong> {$currentUser?.email}</li>
-              <li><strong>Password:</strong> Your app password</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.url')}</strong> {carddavUrl}</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.user')}</strong> {$currentUser?.email}</li>
+              <li><strong>{$i18n.t('profile.carddav.fields.password')}</strong> {$i18n.t('profile.carddav.fields.yourAppPassword')}</li>
             </ul>
           </li>
-          <li>Click <strong>Validate</strong> to verify the connection</li>
-          <li>Select the address book and complete the setup</li>
+          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.7')}</li>
+          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.8')}</li>
         </ol>
       {/if}
     </div>
@@ -141,10 +144,9 @@ async function copyUrl() {
     <div class="flex items-start gap-2">
       <ExclamationTriangle class="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" strokeWidth="2" />
       <div>
-        <h4 class="font-body font-semibold text-yellow-800">Important</h4>
+        <h4 class="font-body font-semibold text-yellow-800">{$i18n.t('profile.carddav.important')}</h4>
         <p class="font-body text-sm text-yellow-700 mt-1">
-          Always use an <strong>app password</strong> instead of your regular account password.
-          App passwords can be revoked individually without changing your main password.
+          {@html $i18n.t('profile.carddav.importantNote')}
         </p>
       </div>
     </div>
