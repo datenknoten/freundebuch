@@ -627,6 +627,58 @@
       "title": "Gefahrenzone",
       "deleteAccount": "Konto löschen",
       "deleteWarning": "Dies wird dein Konto und alle Daten dauerhaft löschen."
+    },
+    "hub": {
+      "categories": {
+        "account": "Konto",
+        "security": "Sicherheit",
+        "integrations": "Integrationen"
+      },
+      "cards": {
+        "account": {
+          "title": "Konto",
+          "description": "E-Mail, Benutzer-ID und Mitgliedschaftsinfos"
+        },
+        "display": {
+          "title": "Anzeigeeinstellungen",
+          "description": "Sprache und Datumsformat-Einstellungen"
+        },
+        "passkeys": {
+          "title": "Passkeys",
+          "description": "Passwortlose Anmeldung mit Biometrie oder Sicherheitsschlüsseln"
+        },
+        "appPasswords": {
+          "title": "App-Passwörter",
+          "description": "Passwörter für Drittanbieter-App-Zugriff verwalten"
+        },
+        "messaging": {
+          "title": "Messaging-Erinnerungen",
+          "description": "Tägliche Zusammenfassungen anstehender Freundestermine"
+        },
+        "carddav": {
+          "title": "CardDAV-Synchronisation",
+          "description": "Freunde mit mobilen und Desktop-Apps synchronisieren"
+        }
+      },
+      "status": {
+        "email": "{{email}}",
+        "memberSince": "Mitglied seit {{date}}",
+        "language": "Sprache: {{language}} · Geburtstag: {{format}}",
+        "birthdayFormat": "Geburtstag: {{format}}",
+        "passkeyCount": "{{count}} Passkey registriert",
+        "passkeyCount_plural": "{{count}} Passkeys registriert",
+        "noPasskeys": "Keine Passkeys registriert",
+        "appPasswordCount": "{{count}} App-Passwort",
+        "appPasswordCount_plural": "{{count}} App-Passwörter",
+        "noAppPasswords": "Keine App-Passwörter",
+        "channelCount": "{{count}} Kanal konfiguriert",
+        "channelCount_plural": "{{count}} Kanäle konfiguriert",
+        "noChannels": "Keine Kanäle konfiguriert",
+        "channelsEnabled": "{{count}} aktiv",
+        "carddavReady": "Bereit zur Synchronisation",
+        "carddavNeedsPassword": "Erstelle zuerst ein App-Passwort"
+      },
+      "backToProfile": "Zurück zum Profil"
     }
   },
   "onboarding": {
