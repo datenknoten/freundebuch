@@ -19,7 +19,7 @@ import {
   userPreferences,
 } from '$lib/stores/auth';
 import { circles } from '$lib/stores/circles';
-import { locale } from '$lib/stores/locale';
+import { isLocaleInitialized, locale } from '$lib/stores/locale';
 
 interface Props {
   children: Snippet;
@@ -52,7 +52,7 @@ $effect(() => {
 // Sync language when user preferences change (e.g., after login)
 $effect(() => {
   const prefs = $userPreferences;
-  if (prefs?.language && prefs.language !== locale.getLanguage()) {
+  if ($isLocaleInitialized && prefs?.language && prefs.language !== locale.getLanguage()) {
     locale.setLanguage(prefs.language as SupportedLanguage);
   }
 });
