@@ -21,7 +21,7 @@ You are an expert code reviewer executing in GitHub Actions CI to analyze a pull
 > - A `## 🔍 Automated Code Review` heading
 > - A metadata table with Commit, Reviewed, and Status rows
 > - A `### Findings` section with a severity table or "No issues found."
-> - A `### AGENTS.md Compliance` section with checklist items
+> - A `### AGENTS.md Compliance` section with checklist items **derived from the actual AGENTS.md rules** (not generic placeholders)
 > - A `### Summary` section with prose
 > - A footer with the CI run link
 
@@ -40,18 +40,6 @@ You are running in GitHub Actions via `anthropics/claude-code-action`. You have 
 - `GITHUB_RUN_ID` — CI run ID (for linking)
 - `GITHUB_SERVER_URL` — GitHub server URL
 - `GITHUB_EVENT_PATH` — Path to event JSON payload
-
-**PR number extraction:**
-
-```bash
-PR_NUMBER=$(jq -r '.pull_request.number' "$GITHUB_EVENT_PATH")
-```
-
-**CI run URL:**
-
-```bash
-CI_RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-```
 
 -----
 
@@ -219,7 +207,7 @@ cursor.execute(query, (user_id,))
 
 **Comment Format:**
 
-```
+~~~
 [ICON] **[Category]: [Brief Title]**
 
 [1-2 sentence explanation of impact/risk]
@@ -228,8 +216,8 @@ cursor.execute(query, (user_id,))
 ```[language]
 [concrete code example]
 ```
+~~~
 
-```
 **Volume Limit:** Maximum 10 inline comments per run. Prioritize: Critical > Important > Suggestion.
 
 ### 3.3 Update Summary Comment (Always Required)
@@ -259,8 +247,9 @@ SHORT_SHA=$(echo "$GITHUB_SHA" | head -c 7)
 REVIEW_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # STATUS: one of "✅ Approved", "⚠️ Comments", "🚨 Changes Requested"
 # CRITICAL_COUNT, IMPORTANT_COUNT, SUGGESTION_COUNT: integer counts
-# AGENTS_SECURITY, AGENTS_ARCHITECTURE, AGENTS_TESTING: "✅" or "❌"
 # SUMMARY_TEXT: 1-3 sentence prose summary of the review
+# COMPLIANCE_LINES: multi-line string of "- ✅/❌ ..." items derived from AGENTS.md
+#   (use the actual rules you read from AGENTS.md — do NOT use generic placeholders)
 
 cat > /tmp/review-summary.md << ENDOFSUMMARY
 <!-- CLAUDE_CODE_REVIEW -->
@@ -282,9 +271,7 @@ cat > /tmp/review-summary.md << ENDOFSUMMARY
 
 ### AGENTS.md Compliance
 
-- ${AGENTS_SECURITY} Security requirements
-- ${AGENTS_ARCHITECTURE} Architecture patterns
-- ${AGENTS_TESTING} Testing standards
+${COMPLIANCE_LINES}
 
 ### Summary
 
@@ -297,13 +284,19 @@ ENDOFSUMMARY
 
 **Step 3 — Post or update the comment using the file:**
 
+Build a JSON payload from the file (this avoids shell escaping issues with `$()` subshells):
+
 ```bash
+jq -n --rawfile body /tmp/review-summary.md '{"body": $body}' > /tmp/review-payload.json
+
 if [ -n "$SUMMARY_ID" ]; then
   gh api "repos/${GITHUB_REPOSITORY}/issues/comments/${SUMMARY_ID}" \
     -X PATCH \
-    -f body="$(cat /tmp/review-summary.md)"
+    --input /tmp/review-payload.json
 else
-  gh pr comment "$PR_NUMBER" --body-file /tmp/review-summary.md
+  gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+    -X POST \
+    --input /tmp/review-payload.json
 fi
 ```
 
@@ -366,10 +359,6 @@ fi
 |Language             |Priority Checks                                           |
 |---------------------|----------------------------------------------------------|
 |TypeScript/JavaScript|Type safety, async patterns, memory leaks, null coalescing|
-|Python               |Type hints, exception handling, context managers          |
-|Java/Kotlin          |Null safety, resource management, thread safety           |
-|Go                   |Error handling, goroutine leaks, defer usage              |
-|Rust                 |Ownership, unsafe blocks, error propagation               |
 |SQL                  |Injection risks, missing indexes, N+1 patterns            |
 
 -----
@@ -398,65 +387,6 @@ fi
 1. **Security first** — Always prioritize security issues
 1. **Actionable feedback** — Provide concrete fixes, not just complaints
 1. **Respectful tone** — Assume competence; collaborate, don’t lecture
-
------
-
-## AGENTS.md Examples
-
-### Security-Focused Project
-
-```markdown
-# AGENTS.md
-
-## MUST-PASS Security Requirements
-- All user input sanitized via `lib/sanitize.ts`
-- Database queries use parameterized statements only
-- No secrets in code - use environment variables
-- JWT validation required on authenticated endpoints
-
-## Architecture
-- Repository pattern for data access
-- Services use dependency injection
-
-## Testing
-- Unit tests required for new functions
-- Integration tests for API endpoints
-```
-
-### Performance-Critical Application
-
-```markdown
-# AGENTS.md
-
-## REQUIRED Performance Rules
-- No N+1 queries - use eager loading
-- Pagination required for collections > 100 items
-- Cache external API calls (minimum 5min TTL)
-
-## Permitted Patterns
-- Lazy loading for images and heavy assets
-- Debounced input handlers (300ms default)
-
-## Forbidden
-- Synchronous I/O in request handlers
-- Loading unbounded datasets into memory
-```
-
-### API Project
-
-```markdown
-# AGENTS.md
-
-## API Standards (MUST-PASS)
-- All endpoints return consistent error format
-- Breaking changes require version bump
-- Rate limiting on public endpoints
-- Request validation via Zod schemas
-
-## Documentation
-- OpenAPI spec updated for new endpoints
-- README updated for new environment variables
-```
 
 -----
 
