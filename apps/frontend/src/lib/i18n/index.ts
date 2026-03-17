@@ -16,8 +16,8 @@ export const languageNames: Record<SupportedLanguage, string> = {
 /**
  * Initialize i18next with the given language or auto-detect
  */
-export function initI18n(initialLanguage?: SupportedLanguage) {
-  i18next.use(LanguageDetector).init({
+export async function initI18n(initialLanguage?: SupportedLanguage) {
+  await i18next.use(LanguageDetector).init({
     resources: {
       en: { translation: en },
       de: { translation: de },

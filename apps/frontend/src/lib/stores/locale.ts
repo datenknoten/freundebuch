@@ -32,7 +32,7 @@ function createLocaleStore() {
      */
     initialize: async (userLanguage?: SupportedLanguage) => {
       // Initialize i18next with user's preference or auto-detect
-      initI18n(userLanguage);
+      await initI18n(userLanguage);
       const detectedLang = getCurrentLanguage();
 
       // Update document lang attribute
