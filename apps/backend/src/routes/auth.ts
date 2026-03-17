@@ -150,7 +150,7 @@ app.patch('/preferences', authMiddleware, async (c) => {
  * GET /api/auth/passkey/list-user-passkeys
  * List all passkeys for the authenticated user.
  *
- * Extracted from Better Auth's handler to use a dedicated rate limit
+ * Facade over Better Auth's internal API with a dedicated rate limit
  * (30 req/min) instead of the global auth rate limit (5 req/min),
  * since this read-only endpoint is called frequently by the UI.
  */
@@ -159,32 +159,9 @@ app.get(
   authMiddleware,
   passkeyListRateLimitMiddleware,
   async (c) => {
-    const db = c.get('db');
-    const authUser = getAuthUser(c);
-
-    const result = await db.query(
-      `SELECT id, name, public_key, user_id, credential_id, counter,
-            device_type, backed_up, transports, created_at, aaguid
-     FROM auth.passkey
-     WHERE user_id = $1
-     ORDER BY created_at DESC`,
-      [authUser.betterAuthId],
-    );
-
-    const passkeys = result.rows.map((row: Record<string, unknown>) => ({
-      id: row.id,
-      name: row.name,
-      publicKey: row.public_key,
-      userId: row.user_id,
-      credentialID: row.credential_id,
-      counter: row.counter,
-      deviceType: row.device_type,
-      backedUp: row.backed_up,
-      transports: row.transports,
-      createdAt: row.created_at,
-      aaguid: row.aaguid,
-    }));
-
+    const passkeys = await getAuth().api.listPasskeys({
+      headers: c.req.raw.headers,
+    });
     return c.json(passkeys);
   },
 );
