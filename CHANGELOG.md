@@ -1,3 +1,10 @@
+## [2.67.6](https://github.com/datenknoten/freundebuch/compare/v2.67.5...v2.67.6) (2026-03-17)
+
+### Bug Fixes
+
+* clean up review prompt — fix fencing, trim bloat, improve accuracy ([f7823fc](https://github.com/datenknoten/freundebuch/commit/f7823fc834d88503cd39e5c697aa0d95c59110b5))
+* enforce Markdown formatting in code review summary comments ([654096c](https://github.com/datenknoten/freundebuch/commit/654096ccf0712bb7497a9881e4142140c4762f84))
+
 ## [2.67.5](https://github.com/datenknoten/freundebuch/compare/v2.67.4...v2.67.5) (2026-03-17)
 
 ### Bug Fixes
