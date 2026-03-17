@@ -1,3 +1,13 @@
+## [2.67.5](https://github.com/datenknoten/freundebuch/compare/v2.67.4...v2.67.5) (2026-03-17)
+
+### Bug Fixes
+
+* **backend:** Extract passkey listing to custom route with dedicated rate limit ([3703356](https://github.com/datenknoten/freundebuch/commit/3703356bf5808b7ecf46ac410da354fa3af9e76e))
+
+### Code Refactoring
+
+* **backend:** Use Better Auth internal API for passkey listing facade ([c56873f](https://github.com/datenknoten/freundebuch/commit/c56873f9e186a291e0078a499cbe7c71eaab4f64))
+
 ## [2.67.4](https://github.com/datenknoten/freundebuch/compare/v2.67.3...v2.67.4) (2026-03-16)
 
 ### Bug Fixes
