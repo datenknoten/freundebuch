@@ -7,6 +7,7 @@ import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuth } from '../lib/auth.js';
 import { authMiddleware, getAuthSession, getAuthUser } from '../middleware/auth.js';
+import { passkeyListRateLimitMiddleware } from '../middleware/rate-limit.js';
 import {
   getSelfProfileExternalId,
   getUserWithPreferences,
@@ -26,7 +27,11 @@ const app = new Hono<AppContext>();
 app.on(['POST', 'GET'], '/*', async (c, next) => {
   // Check if this is a custom route we handle ourselves
   const path = new URL(c.req.url).pathname;
-  const customPaths = ['/api/auth/me', '/api/auth/preferences'];
+  const customPaths = [
+    '/api/auth/me',
+    '/api/auth/preferences',
+    '/api/auth/passkey/list-user-passkeys',
+  ];
   if (customPaths.some((p) => path === p)) {
     return next();
   }
@@ -140,5 +145,48 @@ app.patch('/preferences', authMiddleware, async (c) => {
     preferences: parseUserPreferences(result[0]?.preferences),
   });
 });
+
+/**
+ * GET /api/auth/passkey/list-user-passkeys
+ * List all passkeys for the authenticated user.
+ *
+ * Extracted from Better Auth's handler to use a dedicated rate limit
+ * (30 req/min) instead of the global auth rate limit (5 req/min),
+ * since this read-only endpoint is called frequently by the UI.
+ */
+app.get(
+  '/passkey/list-user-passkeys',
+  authMiddleware,
+  passkeyListRateLimitMiddleware,
+  async (c) => {
+    const db = c.get('db');
+    const authUser = getAuthUser(c);
+
+    const result = await db.query(
+      `SELECT id, name, public_key, user_id, credential_id, counter,
+            device_type, backed_up, transports, created_at, aaguid
+     FROM auth.passkey
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
+      [authUser.betterAuthId],
+    );
+
+    const passkeys = result.rows.map((row: Record<string, unknown>) => ({
+      id: row.id,
+      name: row.name,
+      publicKey: row.public_key,
+      userId: row.user_id,
+      credentialID: row.credential_id,
+      counter: row.counter,
+      deviceType: row.device_type,
+      backedUp: row.backed_up,
+      transports: row.transports,
+      createdAt: row.created_at,
+      aaguid: row.aaguid,
+    }));
+
+    return c.json(passkeys);
+  },
+);
 
 export default app;
