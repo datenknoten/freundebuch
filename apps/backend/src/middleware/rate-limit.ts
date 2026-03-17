@@ -7,7 +7,8 @@ const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST === 'tru
 
 // Auth endpoint rate limiting is handled by Better Auth's rateLimit config
 // (5 req/min window). The authLimiter and passwordResetLimiter were removed
-// as part of Epic 18.
+// as part of Epic 18. The passkey list endpoint is handled separately below
+// with its own generous limit since it's a read-only listing.
 
 // Rate limiter for friends API endpoints
 // 100 requests per minute in production, 500 in test
@@ -49,6 +50,14 @@ let notificationChannelsLimiter = new RateLimiterMemory({
   blockDuration: isTestEnv ? 1 : 60,
 });
 
+// Rate limiter for passkey listing endpoint
+// 30 requests per minute in production, 300 in test
+let passkeyListLimiter = new RateLimiterMemory({
+  points: isTestEnv ? 300 : 30,
+  duration: 60,
+  blockDuration: isTestEnv ? 1 : 60,
+});
+
 // Rate limiter for notification test message endpoint
 // 3 attempts per minute in production, 100 in test
 let notificationTestLimiter = new RateLimiterMemory({
@@ -82,6 +91,11 @@ export function resetRateLimiters(): void {
     blockDuration: isTestEnv ? 1 : 60,
   });
   notificationChannelsLimiter = new RateLimiterMemory({
+    points: isTestEnv ? 300 : 30,
+    duration: 60,
+    blockDuration: isTestEnv ? 1 : 60,
+  });
+  passkeyListLimiter = new RateLimiterMemory({
     points: isTestEnv ? 300 : 30,
     duration: 60,
     blockDuration: isTestEnv ? 1 : 60,
@@ -200,6 +214,21 @@ export async function notificationChannelsRateLimitMiddleware(c: Context, next: 
       error,
       'Rate limit exceeded on notification channels endpoint',
     );
+  }
+}
+
+/**
+ * Rate limiting middleware for passkey listing endpoint
+ * Limits: 30 requests per minute, 1 minute block after exceeding
+ */
+export async function passkeyListRateLimitMiddleware(c: Context, next: Next) {
+  const clientId = getClientIdentifier(c);
+
+  try {
+    await passkeyListLimiter.consume(clientId);
+    return next();
+  } catch (error) {
+    return handleRateLimitRejection(c, error, 'Rate limit exceeded on passkey list endpoint');
   }
 }
 
