@@ -53,8 +53,8 @@ pnpm check                    # Lint + format
 pnpm test                     # Run all tests
 
 # Docker
-pnpm docker:up                # Start database
-pnpm docker:down              # Stop database
+pnpm docker:db:up             # Start PostgreSQL + PostGIS
+pnpm docker:down              # Stop docker stack
 ```
 
 ## Quick Reference
