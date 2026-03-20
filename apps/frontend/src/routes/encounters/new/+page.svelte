@@ -1,7 +1,7 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import { page } from '$app/stores';
-import EncounterForm from '$lib/components/encounters/EncounterForm.svelte';
+import EncounterForm from '$lib/components/encounters/encounter-form.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type { FriendSearchResult } from '$shared';
 

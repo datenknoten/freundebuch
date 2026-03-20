@@ -1,4 +1,4 @@
-export { default as FilterPanel } from './FilterPanel.svelte';
-export { default as HelpDialog } from './HelpDialog.svelte';
-export { default as HintModePanel } from './HintModePanel.svelte';
-export { default as MenuPanel } from './MenuPanel.svelte';
+export { default as FilterPanel } from './filter-panel.svelte';
+export { default as HelpDialog } from './help-dialog.svelte';
+export { default as HintModePanel } from './hint-mode-panel.svelte';
+export { default as MenuPanel } from './menu-panel.svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-import ForgotPasswordForm from '$lib/components/ForgotPasswordForm.svelte';
+import ForgotPasswordForm from '$lib/components/forgot-password-form.svelte';
 </script>
 
 <svelte:head>

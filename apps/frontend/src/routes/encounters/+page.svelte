@@ -1,6 +1,6 @@
 <script lang="ts">
 import Plus from 'svelte-heros-v2/Plus.svelte';
-import EncounterList from '$lib/components/encounters/EncounterList.svelte';
+import EncounterList from '$lib/components/encounters/encounter-list.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();

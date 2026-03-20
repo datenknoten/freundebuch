@@ -1,6 +1,6 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
-import PasskeyManager from '$lib/components/PasskeyManager.svelte';
+import PasskeyManager from '$lib/components/passkey-manager.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();

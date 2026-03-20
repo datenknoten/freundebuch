@@ -1,7 +1,7 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import * as authApi from '$lib/api/auth';
-import AlertBanner from '$lib/components/AlertBanner.svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser } from '$lib/stores/auth';
 
