@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "./packages/shared" },
+    { "path": "./packages/danger" },
     { "path": "./apps/backend" },
     { "path": "./apps/frontend" }
   ]
