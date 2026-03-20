@@ -1,6 +1,6 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
-import CollectiveForm from '$lib/components/collectives/CollectiveForm.svelte';
+import CollectiveForm from '$lib/components/collectives/collective-form.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();

@@ -15,7 +15,7 @@ import type {
 import { ApiError } from '../api/auth.js';
 import type { CollectiveListParams } from '../api/collectives.js';
 import * as collectivesApi from '../api/collectives.js';
-import { storeAction } from './storeAction.js';
+import { storeAction } from './store-action.js';
 
 interface FilterState {
   typeId?: string;

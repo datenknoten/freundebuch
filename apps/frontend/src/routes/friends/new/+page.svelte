@@ -1,6 +1,6 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
-import FriendForm from '$lib/components/friends/FriendForm.svelte';
+import FriendForm from '$lib/components/friends/friend-form.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();

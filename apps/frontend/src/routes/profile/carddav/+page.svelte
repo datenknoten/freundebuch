@@ -1,6 +1,6 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
-import CardDAVSetupGuide from '$lib/components/CardDAVSetupGuide.svelte';
+import CardDAVSetupGuide from '$lib/components/card-dav-setup-guide.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();

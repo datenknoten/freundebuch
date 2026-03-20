@@ -1,8 +1,8 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import * as authApi from '$lib/api/auth';
-import AlertBanner from '$lib/components/AlertBanner.svelte';
-import FriendForm from '$lib/components/friends/FriendForm.svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import FriendForm from '$lib/components/friends/friend-form.svelte';
 import { auth, refreshUserData } from '$lib/stores/auth';
 import type { FriendCreateInput } from '$shared';
 

@@ -2,7 +2,7 @@ import { derived, writable } from 'svelte/store';
 import type { Circle, CircleInput, CircleSummary, CircleWithHierarchy } from '$shared';
 import { buildCircleHierarchy } from '$shared';
 import * as circlesApi from '../api/circles.js';
-import { storeAction } from './storeAction.js';
+import { storeAction } from './store-action.js';
 
 interface CirclesState {
   circles: Circle[];

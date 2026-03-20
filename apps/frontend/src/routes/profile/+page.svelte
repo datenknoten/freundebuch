@@ -8,11 +8,11 @@ import PaintBrush from 'svelte-heros-v2/PaintBrush.svelte';
 import User from 'svelte-heros-v2/User.svelte';
 import { listAppPasswords } from '$lib/api/app-passwords';
 import { authClient } from '$lib/auth-client';
-import ProfileCard from '$lib/components/ProfileCard.svelte';
+import ProfileCard from '$lib/components/profile-card.svelte';
 import { createI18n, languageNames } from '$lib/i18n/index.js';
 import { birthdayFormat, currentUser } from '$lib/stores/auth';
 import { currentLanguage } from '$lib/stores/locale';
-import { notificationChannels } from '$lib/stores/notificationChannels';
+import { notificationChannels } from '$lib/stores/notification-channels';
 
 const i18n = createI18n();
 

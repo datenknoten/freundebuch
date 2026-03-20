@@ -9,10 +9,10 @@ import type {
 } from '$shared';
 import { ApiError } from '../api/auth.js';
 import * as friendsApi from '../api/friends.js';
-import { createSubresourceOps } from './friendSubresources.js';
-import { storeAction } from './storeAction.js';
+import { createSubresourceOps } from './friend-subresources.js';
+import { storeAction } from './store-action.js';
 
-export type { FriendListFilterState } from './friendListFilter.js';
+export type { FriendListFilterState } from './friend-list-filter.js';
 // Re-export filter store so consumers can still import from '$lib/stores/friends'
 export {
   buildSearchParams,
@@ -20,7 +20,7 @@ export {
   friendListQuery,
   hasFriendListFilters,
   parseSearchParams,
-} from './friendListFilter.js';
+} from './friend-list-filter.js';
 
 export interface FriendsState {
   friends: FriendListItem[];

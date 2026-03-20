@@ -9,7 +9,7 @@ import type {
 } from '$shared';
 import type { EncounterListParams } from '../api/encounters.js';
 import * as encountersApi from '../api/encounters.js';
-import { storeAction } from './storeAction.js';
+import { storeAction } from './store-action.js';
 
 interface FilterState {
   friendId?: string;

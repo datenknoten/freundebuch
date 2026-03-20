@@ -1,6 +1,6 @@
 <script lang="ts">
 import { page } from '$app/stores';
-import ResetPasswordForm from '$lib/components/ResetPasswordForm.svelte';
+import ResetPasswordForm from '$lib/components/reset-password-form.svelte';
 
 // Get the reset token from URL query parameter
 const token = $derived($page.url.searchParams.get('token') || '');

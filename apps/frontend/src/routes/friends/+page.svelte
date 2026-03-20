@@ -4,7 +4,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 // biome-ignore lint/style/useImportType: FriendList is used both as type and value (bind:this)
-import FriendList from '$lib/components/friends/FriendList.svelte';
+import FriendList from '$lib/components/friends/friend-list.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friendsPageSize, isAuthInitialized } from '$lib/stores/auth';
 import { friendListFilter, friends } from '$lib/stores/friends';

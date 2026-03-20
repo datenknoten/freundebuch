@@ -1,6 +1,6 @@
 <script lang="ts">
 import Plus from 'svelte-heros-v2/Plus.svelte';
-import CollectiveList from '$lib/components/collectives/CollectiveList.svelte';
+import CollectiveList from '$lib/components/collectives/collective-list.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();

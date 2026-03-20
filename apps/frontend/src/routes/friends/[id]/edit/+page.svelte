@@ -2,7 +2,7 @@
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import { page } from '$app/stores';
-import FriendForm from '$lib/components/friends/FriendForm.svelte';
+import FriendForm from '$lib/components/friends/friend-form.svelte';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { currentFriend, friends, isFriendsLoading } from '$lib/stores/friends';
 

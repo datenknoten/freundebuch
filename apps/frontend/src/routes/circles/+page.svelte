@@ -2,11 +2,11 @@
 import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
-import AlertBanner from '$lib/components/AlertBanner.svelte';
-import CircleEditModal from '$lib/components/circles/CircleEditModal.svelte';
-import DeleteConfirmModal from '$lib/components/friends/subresources/DeleteConfirmModal.svelte';
-import DetailActions from '$lib/components/friends/subresources/DetailActions.svelte';
-import SwipeableRow from '$lib/components/friends/subresources/SwipeableRow.svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import CircleEditModal from '$lib/components/circles/circle-edit-modal.svelte';
+import DeleteConfirmModal from '$lib/components/friends/subresources/delete-confirm-modal.svelte';
+import DetailActions from '$lib/components/friends/subresources/detail-actions.svelte';
+import SwipeableRow from '$lib/components/friends/subresources/swipeable-row.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { circles, circlesList } from '$lib/stores/circles';

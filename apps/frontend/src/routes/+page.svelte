@@ -1,7 +1,7 @@
 <script lang="ts">
 import { getFriend } from '$lib/api/friends';
-import NetworkGraph from '$lib/components/dashboard/NetworkGraph.svelte';
-import UpcomingDates from '$lib/components/dashboard/UpcomingDates.svelte';
+import NetworkGraph from '$lib/components/dashboard/network-graph.svelte';
+import UpcomingDates from '$lib/components/dashboard/upcoming-dates.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
 
