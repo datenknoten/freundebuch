@@ -172,6 +172,22 @@
           }
         }
       }
+    },
+    {
+      "includes": ["dangerfile.ts", "packages/danger/**/*.ts"],
+      "javascript": {
+        "globals": ["danger", "fail", "warn", "message", "markdown"]
+      },
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useImportExtensions": "off"
+          },
+          "style": {
+            "useNodejsImportProtocol": "off"
+          }
+        }
+      }
     }
   ]
 }
