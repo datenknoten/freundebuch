@@ -1,7 +1,9 @@
 <script lang="ts">
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import Language from 'svelte-heros-v2/Language.svelte';
-import { languageNames } from '$lib/i18n/index.js';
+import { createI18n, languageNames } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 import {
   currentLanguage,
   locale,
@@ -61,7 +63,7 @@ $effect(() => {
     class="flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:text-forest rounded-md hover:bg-gray-100 transition-colors duration-200"
     aria-expanded={isOpen}
     aria-haspopup="listbox"
-    aria-label="Select language"
+    aria-label={$i18n.t('aria.selectLanguage')}
   >
     <Language class="w-4 h-4" strokeWidth="2" />
     <span class="uppercase font-medium">{$currentLanguage}</span>
@@ -73,7 +75,7 @@ $effect(() => {
       bind:this={menuRef}
       class="absolute right-0 mt-1 py-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-50"
       role="listbox"
-      aria-label="Available languages"
+      aria-label={$i18n.t('aria.availableLanguages')}
     >
       {#each supportedLanguages as lang}
         <button

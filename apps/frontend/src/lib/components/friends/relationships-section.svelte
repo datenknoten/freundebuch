@@ -280,8 +280,8 @@ onMount(() => {
                     onclick={() => startEditing(relationship)}
                     disabled={isDeleting === relationship.id}
                     class="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-white/50 transition-colors disabled:opacity-50"
-                    aria-label="Edit notes"
-                    title="Edit notes"
+                    aria-label={$i18n.t('aria.editNotes')}
+                    title={$i18n.t('aria.editNotes')}
                   >
                     <PencilSquare class="w-4 h-4" strokeWidth="2" />
                   </button>
@@ -290,8 +290,8 @@ onMount(() => {
                     onclick={() => deleteRelationship(relationship.id)}
                     disabled={isDeleting === relationship.id}
                     class="p-1 text-gray-400 hover:text-red-600 rounded hover:bg-white/50 transition-colors disabled:opacity-50"
-                    aria-label="Remove relationship"
-                    title="Remove relationship"
+                    aria-label={$i18n.t('aria.removeRelationship')}
+                    title={$i18n.t('aria.removeRelationship')}
                   >
                     {#if isDeleting === relationship.id}
                       <div class="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div>

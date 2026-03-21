@@ -151,7 +151,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
       <select
         bind:value={fromMonth}
         {disabled}
-        aria-label="Start month"
+        aria-label={$i18n.t('aria.startMonth')}
         class={formClasses.select}
       >
         {#each months as { value, label }}
@@ -161,7 +161,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
       <select
         bind:value={fromYear}
         {disabled}
-        aria-label="Start year"
+        aria-label={$i18n.t('aria.startYear')}
         class={formClasses.select}
       >
         {#each years as year}
@@ -188,7 +188,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
         <select
           bind:value={toMonth}
           {disabled}
-          aria-label="End month"
+          aria-label={$i18n.t('aria.endMonth')}
           class={formClasses.select}
         >
           {#each months as { value, label }}
@@ -198,7 +198,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
         <select
           bind:value={toYear}
           {disabled}
-          aria-label="End year"
+          aria-label={$i18n.t('aria.endYear')}
           class={formClasses.select}
         >
           {#each years as year}

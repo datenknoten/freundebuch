@@ -128,7 +128,7 @@ onMount(() => {
         <AddressRow
           {address}
           onEdit={() => openEdit(address)}
-          onDelete={() => openDeleteConfirm(address.id, address.streetLine1 || address.city || 'this address')}
+          onDelete={() => openDeleteConfirm(address.id, address.streetLine1 || address.city || $i18n.t('subresources.address.thisAddress'))}
           isDeleting={deletingId === address.id}
         />
       {/each}

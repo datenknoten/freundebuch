@@ -3,7 +3,10 @@ import { onMount } from 'svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { getLastEncounter } from '$lib/stores/encounters';
+import { createI18n } from '$lib/i18n/index.js';
 import type { LastEncounterSummary } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   friendId: string;
@@ -85,9 +88,9 @@ function getDateColor(dateStr: string): string {
   <a
     href="/encounters/new?friendId={friendId}{friendName ? `&friendName=${encodeURIComponent(friendName)}` : ''}"
     class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-500 font-body hover:bg-gray-100 hover:border-gray-300 transition-colors"
-    title="Log an encounter with this friend"
+    title={$i18n.t('aria.logEncounter')}
   >
     <Plus class="w-4 h-4" strokeWidth="2" />
-    <span>Log encounter</span>
+    <span>{$i18n.t('encounters.logEncounter')}</span>
   </a>
 {/if}

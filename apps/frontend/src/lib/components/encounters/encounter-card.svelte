@@ -8,7 +8,10 @@ import {
   openEncounterModePrefix,
 } from '$lib/stores/ui';
 import type { EncounterListItem } from '$shared';
+import { createI18n } from '$lib/i18n/index.js';
 import FriendAvatar from '../friends/friend-avatar.svelte';
+
+const i18n = createI18n();
 
 interface Props {
   encounter: EncounterListItem;
@@ -107,7 +110,7 @@ function formatDate(dateStr: string): string {
       </div>
       {#if encounter.friendCount > 3}
         <span class="ml-2 text-xs text-gray-500 font-body">
-          +{encounter.friendCount - 3} more
+          {$i18n.t('encounters.friendCountMore', { count: encounter.friendCount - 3 })}
         </span>
       {/if}
     </div>

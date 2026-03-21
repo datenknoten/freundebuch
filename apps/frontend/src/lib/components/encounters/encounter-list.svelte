@@ -157,7 +157,7 @@ function goToPage(page: number) {
 
   <!-- Results count -->
   <div class="text-sm text-gray-600 font-body">
-    {$i18n.t(pagination.totalCount === 1 ? 'encounters.encounterCount' : 'encounters.encounterCount_plural', { count: pagination.totalCount })}
+    {$i18n.t('encounters.encounterCount', { count: pagination.totalCount })}
     {#if searchQuery || fromDate || toDate}
       <span class="text-forest">{$i18n.t('encounters.filtered')}</span>
     {/if}
@@ -212,7 +212,7 @@ function goToPage(page: number) {
           onclick={() => goToPage(pagination.page - 1)}
           disabled={pagination.page <= 1 || isLoading}
           class="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Previous page"
+          aria-label={$i18n.t('aria.previousPage')}
         >
           <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
         </button>
@@ -225,7 +225,7 @@ function goToPage(page: number) {
           onclick={() => goToPage(pagination.page + 1)}
           disabled={pagination.page >= pagination.totalPages || isLoading}
           class="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Next page"
+          aria-label={$i18n.t('aria.nextPage')}
         >
           <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
         </button>

@@ -234,7 +234,7 @@ function handleBackdropClick(e: MouseEvent) {
           <legend class="block text-sm font-body font-semibold text-gray-700 mb-2">
             {$i18n.t('circles.form.color')}
           </legend>
-          <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Circle color">
+          <div class="flex flex-wrap gap-2" role="radiogroup" aria-label={$i18n.t('aria.circleColor')}>
             {#each CIRCLE_COLORS as color}
               <button
                 type="button"

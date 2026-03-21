@@ -238,7 +238,7 @@ function formatDate(dateString: string | undefined): string {
         <div class="flex items-center gap-3 mt-1 text-sm text-gray-500 font-body">
           <span class="flex items-center gap-1">
             <Users class="w-4 h-4" strokeWidth="2" />
-            {item.activeMemberCount} {$i18n.t(item.activeMemberCount === 1 ? 'collectives.member' : 'collectives.members')}
+            {$i18n.t('collectives.memberCount', { count: item.activeMemberCount })}
           </span>
         </div>
 
