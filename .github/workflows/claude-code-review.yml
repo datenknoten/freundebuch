@@ -37,6 +37,14 @@ jobs:
             echo 'REVIEW_PROMPT<<GHADELIMITER7x9k2m'
             cat .github/prompts/code-review-prompt.md
             echo ''
+            echo '---'
+            echo ''
+            cat .github/prompts/code-review-policy.md
+            echo ''
+            echo '---'
+            echo ''
+            cat .github/prompts/code-review-output.md
+            echo ''
             echo 'GHADELIMITER7x9k2m'
           } >> $GITHUB_ENV
 
