@@ -176,7 +176,7 @@ onMount(() => {
     onkeydown={handleKeydown}
     role="dialog"
     aria-modal="true"
-    aria-label="Search friends"
+    aria-label={$i18n.t('aria.searchFriends')}
     tabindex="-1"
   >
     <!-- Modal container -->

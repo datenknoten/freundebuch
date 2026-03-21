@@ -478,7 +478,7 @@ onMount(() => {
           {collective.type.name}
         </span>
         <span class="text-sm text-gray-500 font-body">
-          {collective.activeMemberCount} {$i18n.t(collective.activeMemberCount === 1 ? 'collectives.member' : 'collectives.members')}
+          {$i18n.t('collectives.memberCount', { count: collective.activeMemberCount })}
         </span>
       </div>
       {#if address}
@@ -606,7 +606,7 @@ onMount(() => {
             <AddressRow
               address={addr}
               onEdit={() => openEditModal('address', addr.id, addr)}
-              onDelete={() => openDeleteConfirm('address', addr.id, addr.streetLine1 || addr.city || 'this address')}
+              onDelete={() => openDeleteConfirm('address', addr.id, addr.streetLine1 || addr.city || $i18n.t('subresources.address.thisAddress'))}
               isDeleting={deletingAddressId === addr.id}
             />
           {/each}

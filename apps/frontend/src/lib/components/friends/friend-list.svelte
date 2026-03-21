@@ -405,7 +405,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
       class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
       autocomplete="off"
       data-search-input
-      aria-label="Search friends"
+      aria-label={$i18n.t('aria.searchFriends')}
     />
     {#if isSearching}
       <div class="absolute right-4 top-1/2 -translate-y-1/2" aria-live="polite">
@@ -418,7 +418,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
         type="button"
         onclick={clearSearch}
         class="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-        aria-label="Clear search"
+        aria-label={$i18n.t('aria.clearSearch')}
       >
         <XMark class="w-5 h-5" strokeWidth="2" />
       </button>
@@ -452,14 +452,14 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
     <!-- Left: Result count -->
     <div class="text-sm text-gray-600 font-body" aria-live="polite">
       {#if isSearchMode}
-        {displayTotal === 1 ? $i18n.t('friendList.resultsFor', { count: displayTotal, query: searchQuery }) : $i18n.t('friendList.resultsForPlural', { count: displayTotal, query: searchQuery })}
+        {$i18n.t('friendList.resultsFor', { count: displayTotal, query: searchQuery })}
         {#if hasActiveFilters}
           <span class="text-forest">{$i18n.t('friendList.filtered')}</span>
         {/if}
       {:else if isFilterMode}
-        {displayTotal === 1 ? $i18n.t('friendList.friendCount', { count: displayTotal }) : $i18n.t('friendList.friendCountPlural', { count: displayTotal })} <span class="text-forest">{$i18n.t('friendList.filtered')}</span>
+        {$i18n.t('friendList.friendCount', { count: displayTotal })} <span class="text-forest">{$i18n.t('friendList.filtered')}</span>
       {:else}
-        {displayTotal === 1 ? $i18n.t('friendList.friendCount', { count: displayTotal }) : $i18n.t('friendList.friendCountPlural', { count: displayTotal })}
+        {$i18n.t('friendList.friendCount', { count: displayTotal })}
       {/if}
     </div>
 
@@ -478,7 +478,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
           value={currentPageSize}
           onchange={(e) => handlePageSizeChange(Number(e.currentTarget.value) as PageSize)}
           class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
-          aria-label="Items per page"
+          aria-label={$i18n.t('aria.itemsPerPage')}
         >
           <option value={10}>10</option>
           <option value={25}>25</option>
@@ -502,7 +502,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
             handleSortChange();
           }}
           class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
-          aria-label="Sort by"
+          aria-label={$i18n.t('aria.sortBy')}
         >
           {#if isSearchMode}
             <option value="relevance">{$i18n.t('friendList.relevance')}</option>
@@ -533,8 +533,8 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
             onclick={() => loadPage(displayPage - 1)}
             disabled={displayPage <= 1}
             class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            title="Previous page (Shift+,)"
-            aria-label="Previous page"
+            title={$i18n.t('aria.previousPage')}
+            aria-label={$i18n.t('aria.previousPage')}
           >
             <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
           </button>
@@ -545,8 +545,8 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
             onclick={() => loadPage(displayPage + 1)}
             disabled={displayPage >= displayTotalPages}
             class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            title="Next page (Shift+.)"
-            aria-label="Next page"
+            title={$i18n.t('aria.nextPage')}
+            aria-label={$i18n.t('aria.nextPage')}
           >
             <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
           </button>

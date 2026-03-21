@@ -158,14 +158,14 @@ let sortedItems = $derived.by(() => {
       class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
       autocomplete="off"
       data-search-input
-      aria-label="Search collectives"
+      aria-label={$i18n.t('aria.searchCollectives')}
     />
     {#if searchQuery}
       <button
         type="button"
         onclick={clearFilters}
         class="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-        aria-label="Clear search"
+        aria-label={$i18n.t('aria.clearSearch')}
       >
         <XMark class="w-5 h-5" strokeWidth="2" />
       </button>
@@ -176,7 +176,7 @@ let sortedItems = $derived.by(() => {
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-2 border-b border-gray-200">
     <!-- Left: Result count -->
     <div class="text-sm text-gray-600 font-body" aria-live="polite">
-      {$i18n.t(pagination.totalCount === 1 ? 'collectives.collectiveCount' : 'collectives.collectiveCount_plural', { count: pagination.totalCount })}
+      {$i18n.t('collectives.collectiveCount', { count: pagination.totalCount })}
       {#if searchQuery || selectedTypeId}
         <span class="text-forest">{$i18n.t('collectives.filtered')}</span>
       {/if}
@@ -194,7 +194,7 @@ let sortedItems = $derived.by(() => {
           value={selectedTypeId}
           onchange={handleTypeChange}
           class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
-          aria-label="Filter by type"
+          aria-label={$i18n.t('aria.filterByType')}
         >
           <option value="">{$i18n.t('collectives.allTypes')}</option>
           {#each types as type (type.id)}
@@ -213,7 +213,7 @@ let sortedItems = $derived.by(() => {
             sortBy = e.currentTarget.value as 'name' | 'created_at' | 'member_count';
           }}
           class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
-          aria-label="Sort by"
+          aria-label={$i18n.t('aria.sortBy')}
         >
           <option value="name">{$i18n.t('friendList.name')}</option>
           <option value="created_at">{$i18n.t('friendList.dateAdded')}</option>
@@ -241,7 +241,7 @@ let sortedItems = $derived.by(() => {
             onclick={() => goToPage(pagination.page - 1)}
             disabled={pagination.page <= 1 || isLoading}
             class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label="Previous page"
+            aria-label={$i18n.t('aria.previousPage')}
           >
             <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
           </button>
@@ -252,7 +252,7 @@ let sortedItems = $derived.by(() => {
             onclick={() => goToPage(pagination.page + 1)}
             disabled={pagination.page >= pagination.totalPages || isLoading}
             class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label="Next page"
+            aria-label={$i18n.t('aria.nextPage')}
           >
             <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
           </button>

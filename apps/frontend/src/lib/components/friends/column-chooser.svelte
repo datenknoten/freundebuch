@@ -79,8 +79,8 @@ $effect(() => {
       isOpen = !isOpen;
     }}
     class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 transition-colors border-gray-300"
-    title="Choose columns"
-    aria-label="Choose table columns"
+    title={$i18n.t('aria.chooseColumns')}
+    aria-label={$i18n.t('aria.chooseColumns')}
     aria-expanded={isOpen}
   >
     <ViewColumns class="w-4 h-4" strokeWidth="2" />
