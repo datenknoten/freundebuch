@@ -1,3 +1,19 @@
+## [2.68.0](https://github.com/datenknoten/freundebuch/compare/v2.67.6...v2.68.0) (2026-03-22)
+
+### Features
+
+* **all:** Add DangerJS for automated PR quality checks ([69f0c49](https://github.com/datenknoten/freundebuch/commit/69f0c49a9a9df526940129eaaa915abcf94a2a39))
+
+### Bug Fixes
+
+* **ci:** Add statuses:write permission to release workflow ([abe0100](https://github.com/datenknoten/freundebuch/commit/abe010081af30dce36559b06866009abb1f87535))
+* **frontend:** Use i18next v4 plural format and translate hardcoded strings ([48fb365](https://github.com/datenknoten/freundebuch/commit/48fb3658b5d64337d7fcf91b041278cfa35d5d88))
+
+### Code Refactoring
+
+* **ci:** Split code review prompt into three focused files ([e90de36](https://github.com/datenknoten/freundebuch/commit/e90de3602c6fd7b1594e1dbae48ed11c85e63692))
+* **frontend:** Rename all files to kebab-case convention ([3599b57](https://github.com/datenknoten/freundebuch/commit/3599b578836988c6adf5424446fcc39917a22c0e))
+
 ## [2.67.6](https://github.com/datenknoten/freundebuch/compare/v2.67.5...v2.67.6) (2026-03-17)
 
 ### Bug Fixes
