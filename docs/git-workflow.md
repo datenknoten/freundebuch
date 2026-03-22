@@ -35,7 +35,7 @@ All commits must follow the [Conventional Commits](https://www.conventionalcommi
 [optional footer]
 ```
 
-The description should be lowercase, imperative mood, and not end with a period. Think "add circle filtering" not "Added circle filtering."
+The description should be sentence case, imperative mood, and not end with a period. Think "Add circle filtering" not "Added circle filtering."
 
 ### Types
 
@@ -48,29 +48,37 @@ The description should be lowercase, imperative mood, and not end with a period.
 | `refactor` | Code restructuring that neither fixes a bug nor adds a feature |
 | `perf` | A change that improves performance |
 | `test` | Adding or updating tests |
-| `chore` | Maintenance tasks, dependency updates, tooling |
+| `build` | Changes to build system or dependencies |
+| `ci` | Changes to CI configuration files and scripts |
+| `chore` | Other changes that don't modify src or test files |
+| `revert` | Reverts a previous commit |
 
 ### Scopes
 
 | Scope | Covers |
 |-------|--------|
-| `frontend` | `apps/frontend` (SvelteKit) |
+| `all` | Affects everything |
 | `backend` | `apps/backend` (Node/Express) |
+| `frontend` | `apps/frontend` (SvelteKit) |
 | `shared` | `packages/shared` |
-| `db` | Database migrations and schema |
-| `ci` | CI/CD configuration |
+| `database` | Database migrations and schema |
 | `docs` | Documentation files |
+| `deps` | Dependency updates |
+| `config` | Configuration files |
+| `ci` | CI/CD configuration |
+| `dx` | Developer experience |
+| `release` | Semantic-release automated commits |
 
 A commit that touches multiple scopes usually means it should be split into separate commits.
 
 ### Examples
 
 ```
-feat(frontend): add circle filtering to friend list
-fix(backend): handle missing email in registration flow
-refactor(shared): extract date formatting utilities
-docs: add git workflow guide
-chore(ci): update Node to v24
+feat(frontend): Add circle filtering to friend list
+fix(backend): Handle missing email in registration flow
+refactor(shared): Extract date formatting utilities
+docs: Add git workflow guide
+chore(ci): Update Node to v24
 ```
 
 ### Breaking Changes
@@ -78,14 +86,14 @@ chore(ci): update Node to v24
 Breaking changes go in the commit footer:
 
 ```
-feat(backend): replace session tokens with JWTs
+feat(backend): Replace session tokens with JWTs
 
 BREAKING CHANGE: existing sessions are invalidated on deploy
 ```
 
 ### What to Avoid
 
-- ✅ `fix(backend): resolve null pointer in auth middleware`
+- ✅ `fix(backend): Resolve null pointer in auth middleware`
 - ❌ `fixed stuff`
 - ❌ `WIP`
 - ❌ `update`
