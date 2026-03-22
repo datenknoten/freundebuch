@@ -17,6 +17,7 @@ permissions:
   pull-requests: write
   id-token: write
   attestations: write
+  statuses: write
 
 jobs:
   # Job 1: Run all CI checks first
