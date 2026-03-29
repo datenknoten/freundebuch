@@ -428,29 +428,6 @@ export class MembershipsService {
       }
     }
 
-    // Fetch any missing inverse types concurrently
-    const missingInverseIds = [...typeInfoMap.values()]
-      .filter(
-        (info): info is { id: string; label: string; category: string; inverse_type_id: string } =>
-          info.inverse_type_id != null && !typeInfoMap.has(info.inverse_type_id),
-      )
-      .map((info) => info.inverse_type_id);
-
-    if (missingInverseIds.length > 0) {
-      const inverseResults = await Promise.all(
-        missingInverseIds.map((typeId) =>
-          getRelationshipTypeInfo.run({ relationshipTypeId: typeId }, this.db),
-        ),
-      );
-
-      for (let i = 0; i < missingInverseIds.length; i++) {
-        const info = inverseResults[i];
-        if (info.length > 0) {
-          typeInfoMap.set(missingInverseIds[i], info[0]);
-        }
-      }
-    }
-
     // Calculate relationships that would be created
     const relationships: RelationshipPreviewItem[] = [];
     let existingRelationshipsSkipped = 0;
@@ -506,10 +483,6 @@ export class MembershipsService {
             rule.relationship_type_id,
           );
 
-          // For 'both' direction with symmetric relationships, show inverse
-          const inverseTypeId = typeInfo.inverse_type_id ?? rule.relationship_type_id;
-          const inverseTypeInfo = typeInfoMap.get(inverseTypeId) ?? typeInfo;
-
           relationships.push({
             fromContact: {
               id: existingMember.contact_external_id,
@@ -518,9 +491,9 @@ export class MembershipsService {
             },
             toContact: newContact,
             relationshipType: {
-              id: inverseTypeInfo.id,
-              label: inverseTypeInfo.label,
-              category: inverseTypeInfo.category,
+              id: typeInfo.id,
+              label: typeInfo.label,
+              category: typeInfo.category,
             },
             alreadyExists: exists,
           });
@@ -631,20 +604,15 @@ export class MembershipsService {
     }
 
     if (direction === 'existing_member' || direction === 'both') {
-      // Existing member is the "from" friend - use inverse relationship type
-      const typeInfo = await getRelationshipTypeInfo.run(
-        { relationshipTypeId: rule.relationship_type_id },
-        client,
-      );
-
-      const inverseTypeId = typeInfo[0]?.inverse_type_id ?? rule.relationship_type_id;
+      // Existing member is the "from" friend - use the rule's relationship type directly
+      // (the rule already specifies the correct type for this direction)
 
       // Skip if the inverse relationship already exists (prevents circular chains)
       const inverseExists = await checkRelationshipExists.run(
         {
           fromFriendId: newContactId,
           toFriendId: existingContactId,
-          relationshipTypeId: inverseTypeId,
+          relationshipTypeId: rule.relationship_type_id,
         },
         client,
       );
@@ -654,7 +622,7 @@ export class MembershipsService {
           {
             fromFriendId: existingContactId,
             toFriendId: newContactId,
-            relationshipTypeId: inverseTypeId,
+            relationshipTypeId: rule.relationship_type_id,
             sourceMembershipId: membershipId,
           },
           client,

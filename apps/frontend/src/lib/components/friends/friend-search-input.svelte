@@ -103,7 +103,7 @@ async function performSearch() {
   try {
     results = await friends.searchFriends(query, excludeFriendId, limit);
     showDropdown = results.length > 0;
-    highlightedIndex = -1;
+    highlightedIndex = showDropdown ? findNextSelectableIndex(-1, 1) : -1;
   } catch {
     results = [];
     showDropdown = false;
