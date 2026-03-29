@@ -4,6 +4,9 @@ import { isExemptFile, isIgnoredPath } from '../utils';
 
 const KEBAB_CASE_STEM = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
+// Migration files use a "<timestamp>_<name>" pattern — strip the prefix before checking
+const MIGRATION_PREFIX = /^\d+_/;
+
 function toKebabCase(name: string): string {
   return name
     .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
@@ -19,7 +22,10 @@ const kebabCaseFiles: DangerRule = () => {
     const basename = path.basename(filePath);
 
     // Strip all extensions (e.g. "foo.test.ts" -> "foo")
-    const stem = basename.replace(/\..*$/, '');
+    let stem = basename.replace(/\..*$/, '');
+
+    // Strip migration timestamp prefix (e.g. "1774799536929_fix-bug" -> "fix-bug")
+    stem = stem.replace(MIGRATION_PREFIX, '');
 
     if (!KEBAB_CASE_STEM.test(stem)) {
       const suggestion = toKebabCase(stem);
