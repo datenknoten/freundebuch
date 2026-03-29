@@ -1,3 +1,9 @@
+## [2.68.1](https://github.com/datenknoten/freundebuch/compare/v2.68.0...v2.68.1) (2026-03-29)
+
+### Bug Fixes
+
+* **frontend,backend:** Fix search focus and family relationship type inversion ([233334f](https://github.com/datenknoten/freundebuch/commit/233334f35171fa36dfef31d3b0059be977769c34))
+
 ## [2.68.0](https://github.com/datenknoten/freundebuch/compare/v2.67.6...v2.68.0) (2026-03-22)
 
 ### Features
