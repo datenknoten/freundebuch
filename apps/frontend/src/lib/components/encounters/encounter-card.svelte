@@ -2,13 +2,13 @@
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import {
   getKeyboardHint,
   isOpenEncounterModeActive,
   openEncounterModePrefix,
 } from '$lib/stores/ui';
 import type { EncounterListItem } from '$shared';
-import { createI18n } from '$lib/i18n/index.js';
 import FriendAvatar from '../friends/friend-avatar.svelte';
 
 const i18n = createI18n();

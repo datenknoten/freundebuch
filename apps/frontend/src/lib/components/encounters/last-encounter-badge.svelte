@@ -2,8 +2,8 @@
 import { onMount } from 'svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
-import { getLastEncounter } from '$lib/stores/encounters';
 import { createI18n } from '$lib/i18n/index.js';
+import { getLastEncounter } from '$lib/stores/encounters';
 import type { LastEncounterSummary } from '$shared';
 
 const i18n = createI18n();

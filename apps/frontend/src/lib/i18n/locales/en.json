@@ -485,7 +485,7 @@
       "title": "Delete Circle",
       "message": "Are you sure you want to delete \"{{name}}\"? Friends in this circle will not be deleted.",
       "messageWithCount_one": "Are you sure you want to delete this circle? {{count}} friend will be removed from this circle.",
-    "messageWithCount_other": "Are you sure you want to delete this circle? {{count}} friends will be removed from this circle.",
+      "messageWithCount_other": "Are you sure you want to delete this circle? {{count}} friends will be removed from this circle.",
       "confirm": "Delete",
       "cancel": "Cancel"
     },

@@ -485,7 +485,7 @@
       "title": "Freundekreis löschen",
       "message": "Bist du sicher, dass du \"{{name}}\" löschen möchtest? Freunde in diesem Freundekreis werden nicht gelöscht.",
       "messageWithCount_one": "Bist du sicher, dass du diesen Freundekreis löschen möchtest? {{count}} Freund wird aus diesem Freundekreis entfernt.",
-    "messageWithCount_other": "Bist du sicher, dass du diesen Freundekreis löschen möchtest? {{count}} Freunde werden aus diesem Freundekreis entfernt.",
+      "messageWithCount_other": "Bist du sicher, dass du diesen Freundekreis löschen möchtest? {{count}} Freunde werden aus diesem Freundekreis entfernt.",
       "confirm": "Löschen",
       "cancel": "Abbrechen"
     },

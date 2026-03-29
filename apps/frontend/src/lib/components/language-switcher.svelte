@@ -4,6 +4,7 @@ import Language from 'svelte-heros-v2/Language.svelte';
 import { createI18n, languageNames } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
+
 import {
   currentLanguage,
   locale,
