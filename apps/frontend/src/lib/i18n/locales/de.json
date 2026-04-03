@@ -813,6 +813,7 @@
     "help": {
       "globalSearch": "Globale Suche",
       "editFriend": "Freund bearbeiten",
+      "editCollective": "Gruppe bearbeiten",
       "focusSearch": "Suche fokussieren",
       "friendsList": "Freundesliste",
       "openItem19": "{{item}} öffnen (1-9)",

@@ -193,6 +193,10 @@ const i18n = createI18n();
             </h3>
             <div class="space-y-2">
               <div class="flex justify-between items-center">
+                <span class="text-gray-700">{$i18n.t('shortcuts.help.editCollective')}</span>
+                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
+              </div>
+              <div class="flex justify-between items-center">
                 <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.add.member') })}</span>
                 <div class="flex gap-1">
                   <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>

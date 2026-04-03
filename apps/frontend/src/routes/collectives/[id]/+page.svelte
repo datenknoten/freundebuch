@@ -47,6 +47,19 @@ function handleEditSuccess(_updatedCollective: Collective) {
 function handleEditCancel() {
   isEditing = false;
 }
+
+function handleShortcutEdit() {
+  if (collective && !isEditing) {
+    isEditing = true;
+  }
+}
+
+$effect(() => {
+  window.addEventListener('shortcut:edit-collective', handleShortcutEdit);
+  return () => {
+    window.removeEventListener('shortcut:edit-collective', handleShortcutEdit);
+  };
+});
 </script>
 
 <svelte:head>

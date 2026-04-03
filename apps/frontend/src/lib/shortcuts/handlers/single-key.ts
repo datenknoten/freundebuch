@@ -14,6 +14,12 @@ export function handleSingleKey(e: KeyboardEvent): boolean {
         goto(`/friends/${get(currentFriend)?.id}/edit`);
         return true;
       }
+      // Edit current collective if on collective detail page
+      if (pathname.match(/^\/collectives\/[^/]+$/)) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('shortcut:edit-collective'));
+        return true;
+      }
       break;
 
     case '/': {
