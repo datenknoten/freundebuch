@@ -1,3 +1,9 @@
+## [2.68.2](https://github.com/datenknoten/freundebuch/compare/v2.68.1...v2.68.2) (2026-04-03)
+
+### Bug Fixes
+
+* **frontend:** Add 'e' keyboard shortcut to open edit form on collective detail page ([6833361](https://github.com/datenknoten/freundebuch/commit/6833361fd281efad30c86aebc859b9dc3e941695))
+
 ## [2.68.1](https://github.com/datenknoten/freundebuch/compare/v2.68.0...v2.68.1) (2026-03-29)
 
 ### Bug Fixes
