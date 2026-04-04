@@ -25,12 +25,6 @@ let isEditMode = $derived(!!collective);
 let name = $state(collective?.name ?? '');
 let selectedTypeId = $state(collective?.type.id ?? '');
 let notes = $state(collective?.notes ?? '');
-let addressStreetLine1 = $state(collective?.address.streetLine1 ?? '');
-let addressStreetLine2 = $state(collective?.address.streetLine2 ?? '');
-let addressCity = $state(collective?.address.city ?? '');
-let addressStateProvince = $state(collective?.address.stateProvince ?? '');
-let addressPostalCode = $state(collective?.address.postalCode ?? '');
-let addressCountry = $state(collective?.address.country ?? '');
 
 let isSubmitting = $state(false);
 let error = $state('');
@@ -69,12 +63,6 @@ async function handleSubmit(e: Event) {
       const input: CollectiveUpdate = {
         name: name.trim(),
         notes: notes.trim() || null,
-        address_street_line1: addressStreetLine1.trim() || null,
-        address_street_line2: addressStreetLine2.trim() || null,
-        address_city: addressCity.trim() || null,
-        address_state_province: addressStateProvince.trim() || null,
-        address_postal_code: addressPostalCode.trim() || null,
-        address_country: addressCountry.trim() || null,
       };
       result = await collectives.updateCollective(collective.id, input);
     } else {
@@ -82,12 +70,6 @@ async function handleSubmit(e: Event) {
         name: name.trim(),
         collective_type_id: selectedTypeId,
         notes: notes.trim() || undefined,
-        address_street_line1: addressStreetLine1.trim() || undefined,
-        address_street_line2: addressStreetLine2.trim() || undefined,
-        address_city: addressCity.trim() || undefined,
-        address_state_province: addressStateProvince.trim() || undefined,
-        address_postal_code: addressPostalCode.trim() || undefined,
-        address_country: addressCountry.trim() || undefined,
       };
       result = await collectives.createCollective(input);
     }
@@ -185,98 +167,6 @@ function handleCancel() {
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none disabled:opacity-50"
     ></textarea>
   </div>
-
-  <!-- Address section (edit mode only - use subresource detail for new collectives) -->
-  {#if isEditMode}
-  <fieldset class="border border-gray-200 rounded-lg p-4">
-    <legend class="text-sm font-body font-medium text-gray-700 px-2">
-      {$i18n.t('collectives.form.addressSection')} <span class="text-gray-400">{$i18n.t('collectives.form.optional')}</span>
-    </legend>
-
-    <div class="space-y-4">
-      <div>
-        <label for="street1" class="block text-sm font-body font-medium text-gray-700 mb-1">
-          {$i18n.t('collectives.form.streetLabel')}
-        </label>
-        <input
-          id="street1"
-          type="text"
-          bind:value={addressStreetLine1}
-          placeholder={$i18n.t('collectives.form.streetPlaceholder')}
-          disabled={isSubmitting}
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-        />
-      </div>
-
-      <div>
-        <input
-          id="street2"
-          type="text"
-          bind:value={addressStreetLine2}
-          placeholder={$i18n.t('collectives.form.street2Placeholder')}
-          disabled={isSubmitting}
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-        />
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="city" class="block text-sm font-body font-medium text-gray-700 mb-1">
-            {$i18n.t('collectives.form.cityLabel')}
-          </label>
-          <input
-            id="city"
-            type="text"
-            bind:value={addressCity}
-            disabled={isSubmitting}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-          />
-        </div>
-
-        <div>
-          <label for="state" class="block text-sm font-body font-medium text-gray-700 mb-1">
-            {$i18n.t('collectives.form.stateLabel')}
-          </label>
-          <input
-            id="state"
-            type="text"
-            bind:value={addressStateProvince}
-            disabled={isSubmitting}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-          />
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="postal" class="block text-sm font-body font-medium text-gray-700 mb-1">
-            {$i18n.t('collectives.form.postalLabel')}
-          </label>
-          <input
-            id="postal"
-            type="text"
-            bind:value={addressPostalCode}
-            disabled={isSubmitting}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-          />
-        </div>
-
-        <div>
-          <label for="country" class="block text-sm font-body font-medium text-gray-700 mb-1">
-            {$i18n.t('collectives.form.countryLabel')}
-          </label>
-          <input
-            id="country"
-            type="text"
-            bind:value={addressCountry}
-            disabled={isSubmitting}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-          />
-        </div>
-      </div>
-    </div>
-  </fieldset>
-  {/if}
 
   <!-- Form Actions -->
   <div class="flex gap-3 pt-2">
