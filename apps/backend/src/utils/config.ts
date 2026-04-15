@@ -28,13 +28,6 @@ const ConfigSchema = type({
   // WebAuthn / Passkey
   'WEBAUTHN_RP_ID?': 'string',
 
-  // Legacy authentication (kept during transition, will be removed)
-  'JWT_SECRET?': SecretType,
-  'JWT_EXPIRY?': 'string.integer.parse',
-  'SESSION_SECRET?': SecretType,
-  'SESSION_EXPIRY_DAYS?': 'string.integer.parse',
-  'PASSWORD_RESET_EXPIRY_HOURS?': 'string.integer.parse',
-
   // Email (optional, for later phases)
   'SMTP_HOST?': 'string',
   'SMTP_PORT?': 'string.integer.parse',

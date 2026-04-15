@@ -1,4 +1,5 @@
 <script lang="ts">
+import DOMPurify from 'isomorphic-dompurify';
 import { onMount } from 'svelte';
 import Clock from 'svelte-heros-v2/Clock.svelte';
 import FaceSmile from 'svelte-heros-v2/FaceSmile.svelte';
@@ -21,6 +22,12 @@ import FacetChips from './search/facet-chips.svelte';
 import FacetDropdown from './search/facet-dropdown.svelte';
 
 const i18n = createI18n();
+
+/** Sanitize search headline HTML to only allow <mark> tags for highlighting */
+function sanitizeHeadline(html: string | null | undefined): string {
+  if (!html) return '';
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS: ['mark'] });
+}
 
 let inputElement = $state<HTMLInputElement | undefined>(undefined);
 let containerElement = $state<HTMLDivElement | undefined>(undefined);
@@ -306,8 +313,7 @@ onMount(() => {
                     {/if}
                     {#if friend.headline && friend.matchSource}
                       <div class="mt-1 font-body text-xs text-gray-500 line-clamp-2">
-                        <!-- Using @html for highlighted content from ts_headline -->
-                        {@html friend.headline}
+                        {@html sanitizeHeadline(friend.headline)}
                       </div>
                     {/if}
                   </div>

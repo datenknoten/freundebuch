@@ -137,7 +137,8 @@ COPY docker/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY docker/entrypoint.sh /entrypoint.sh
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN chmod +x /entrypoint.sh && \
-    mkdir -p /var/log/supervisor /app/uploads
+    mkdir -p /var/log/supervisor /app/uploads && \
+    chown -R node:node /app /var/log/supervisor
 
 # Expose port 80 (nginx)
 EXPOSE 80

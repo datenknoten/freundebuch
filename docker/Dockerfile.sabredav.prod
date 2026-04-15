@@ -32,9 +32,9 @@ WORKDIR /app
 COPY --from=deps /app/vendor ./vendor
 
 # Copy SabreDAV application code
-COPY apps/sabredav/config ./config
-COPY apps/sabredav/public ./public
-COPY apps/sabredav/src ./src
+COPY --chown=www-data:www-data apps/sabredav/config ./config
+COPY --chown=www-data:www-data apps/sabredav/public ./public
+COPY --chown=www-data:www-data apps/sabredav/src ./src
 
 # Configure PHP-FPM for production
 RUN echo "pm.max_children = 20" >> /usr/local/etc/php-fpm.d/www.conf \
@@ -45,6 +45,9 @@ RUN echo "pm.max_children = 20" >> /usr/local/etc/php-fpm.d/www.conf \
     && echo "decorate_workers_output = no" >> /usr/local/etc/php-fpm.d/www.conf
 
 EXPOSE 9000
+
+# Drop to non-root user
+USER www-data
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD pidof php-fpm > /dev/null || exit 1

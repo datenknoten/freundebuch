@@ -44,16 +44,14 @@ describe('getConfig', () => {
       expect(config.BETTER_AUTH_SECRET).toBe('test-better-auth-secret-test-better-auth-secret-1');
     });
 
-    it('should accept legacy JWT_SECRET and SESSION_SECRET as optional', () => {
+    it('should not include removed legacy auth config fields', () => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
       vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-      vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-      vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
 
       const config = getConfig();
 
-      expect(config.JWT_SECRET).toBe('test-jwt-secret-test-jwt-secret-1');
-      expect(config.SESSION_SECRET).toBe('test-session-secret-test-session-secret-1');
+      expect(config).not.toHaveProperty('JWT_SECRET');
+      expect(config).not.toHaveProperty('SESSION_SECRET');
     });
   });
 
