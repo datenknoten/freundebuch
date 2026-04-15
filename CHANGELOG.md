@@ -1,3 +1,9 @@
+## [2.68.3](https://github.com/datenknoten/freundebuch/compare/v2.68.2...v2.68.3) (2026-04-15)
+
+### Bug Fixes
+
+* **all:** Remove legacy auth code, harden Docker, sanitize search HTML ([119bf2a](https://github.com/datenknoten/freundebuch/commit/119bf2a97a71a86895fefb1f9e1821a3dfbc87c2))
+
 ## [2.68.2](https://github.com/datenknoten/freundebuch/compare/v2.68.1...v2.68.2) (2026-04-03)
 
 ### Bug Fixes
