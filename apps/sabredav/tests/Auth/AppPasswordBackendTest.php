@@ -161,6 +161,45 @@ class AppPasswordBackendTest extends TestCase
     }
 
     #[Test]
+    public function validateUserPassPreservesRawDashesThatArePartOfBase64Url(): void
+    {
+        // Regression: previous implementation stripped every '-' from the input,
+        // corrupting ~42% of generated passwords whose base64url raw contains
+        // '-'. Now only format-separator dashes are removed.
+        // Raw: "AAAA-BBBCCCCDDDDEEEEFFFFGGGGHHHH" (32 chars, '-' at index 4).
+        // Formatted: "AAAA--BBB-CCCC-DDDD-EEEE-FFFF-GGGG-HHHH".
+        $rawPassword = 'AAAA-BBBCCCCDDDDEEEEFFFFGGGGHHHH';
+        $formattedPassword = 'AAAA--BBB-CCCC-DDDD-EEEE-FFFF-GGGG-HHHH';
+        $passwordHash = password_hash($rawPassword, PASSWORD_BCRYPT);
+
+        $userStmt = $this->createMock(PDOStatement::class);
+        $userStmt->method('execute')->willReturn(true);
+        $userStmt->method('fetch')->willReturn([
+            'id' => 1,
+            'external_id' => 'user-uuid',
+            'email' => 'user@example.com',
+        ]);
+
+        $passwordStmt = $this->createMock(PDOStatement::class);
+        $passwordStmt->method('execute')->willReturn(true);
+        $passwordStmt->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                ['id' => 1, 'password_hash' => $passwordHash],
+                false
+            );
+
+        $updateStmt = $this->createMock(PDOStatement::class);
+        $updateStmt->method('execute')->willReturn(true);
+
+        $this->pdo->method('prepare')
+            ->willReturnOnConsecutiveCalls($userStmt, $passwordStmt, $updateStmt);
+
+        $result = $this->callValidateUserPass('user@example.com', $formattedPassword);
+
+        $this->assertTrue($result);
+    }
+
+    #[Test]
     public function validateUserPassHandlesNodeJsBcryptPrefix(): void
     {
         $rawPassword = 'abcd1234efgh5678';
