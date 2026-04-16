@@ -294,6 +294,67 @@ describe('AppPasswordsService', () => {
       expect(result?.userId).toBe(VALID_USER_ID);
     });
 
+    it('should preserve raw dashes that are part of base64url', async () => {
+      // Regression: verifyAppPassword used to strip ALL dashes, corrupting passwords
+      // whose base64url raw contains '-' (a valid base64url char).
+      // Raw: 32-char base64url with embedded '-'. Format inserts '-' after each 4 chars:
+      // "AAAA" | "-BBB" | "CCCC" | "DDDD" | "EEEE" | "FFFF" | "GGGG" | "HHHH"
+      // → "AAAA--BBB-CCCC-DDDD-EEEE-FFFF-GGGG-HHHH"
+      const rawPassword = 'AAAA-BBBCCCCDDDDEEEEFFFFGGGGHHHH';
+      const formattedPassword = 'AAAA--BBB-CCCC-DDDD-EEEE-FFFF-GGGG-HHHH';
+      const passwordHash = await bcrypt.hash(rawPassword, 10);
+
+      vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
+        { id: 1, external_id: VALID_USER_ID, email: testEmail },
+      ]);
+      vi.mocked(getAppPasswordsByUserIdAndPrefix.run).mockResolvedValue([
+        {
+          id: 1,
+          external_id: VALID_PASSWORD_ID,
+          password_hash: passwordHash,
+        },
+      ]);
+      vi.mocked(updateAppPasswordLastUsed.run).mockResolvedValue([]);
+
+      const result = await service.verifyAppPassword(testEmail, formattedPassword);
+
+      expect(result).not.toBeNull();
+      expect(result?.userId).toBe(VALID_USER_ID);
+      expect(getAppPasswordsByUserIdAndPrefix.run).toHaveBeenCalledWith(
+        { userId: 1, prefix: 'AAAA-BBB' },
+        mockDb,
+      );
+    });
+
+    it('should fall back to strip-all-dashes when separator slots are malformed', async () => {
+      // Input has well-formatted length (39 chars) but a non-'-' sits where a
+      // format separator should be. Rather than passing the mangled string to
+      // bcrypt, the service falls back to the legacy strip-all-dashes path.
+      // The bcrypt compare still fails (input is malformed), so we get 401.
+      const malformed = 'abcdXefgh-ijkl-mnop-qrst-uvwx-yz12-3456-7890';
+      const hashOfArbitrary = await bcrypt.hash('something-unrelated', 10);
+
+      vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
+        { id: 1, external_id: VALID_USER_ID, email: testEmail },
+      ]);
+      vi.mocked(getAppPasswordsByUserIdAndPrefix.run).mockResolvedValue([
+        {
+          id: 1,
+          external_id: VALID_PASSWORD_ID,
+          password_hash: hashOfArbitrary,
+        },
+      ]);
+
+      const result = await service.verifyAppPassword(testEmail, malformed);
+
+      expect(result).toBeNull();
+      // Prefix derived from fallback: strip all dashes → "abcdXefghijklmnopqrstuvwxyz1234567890"
+      expect(getAppPasswordsByUserIdAndPrefix.run).toHaveBeenCalledWith(
+        expect.objectContaining({ prefix: 'abcdXefg' }),
+        mockDb,
+      );
+    });
+
     it('should update last_used_at on successful verification', async () => {
       const passwordHash = await bcrypt.hash(testPassword, 10);
 
