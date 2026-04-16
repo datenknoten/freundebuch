@@ -249,6 +249,62 @@ export async function callTool(
   return { status, body };
 }
 
+/**
+ * Revoke all app passwords for a user. Used in tests that need to simulate a
+ * revoked credential; paired with `restoreAppPasswordsForUser` in a try/finally.
+ */
+export async function revokeAppPasswordsForUser(
+  pool: pg.Pool,
+  userExternalId: string,
+): Promise<void> {
+  await pool.query(
+    `UPDATE auth.app_passwords ap
+       SET revoked_at = NOW()
+       FROM auth.users u
+       WHERE ap.user_id = u.id AND u.external_id = $1`,
+    [userExternalId],
+  );
+}
+
+export async function restoreAppPasswordsForUser(
+  pool: pg.Pool,
+  userExternalId: string,
+): Promise<void> {
+  await pool.query(
+    `UPDATE auth.app_passwords ap
+       SET revoked_at = NULL
+       FROM auth.users u
+       WHERE ap.user_id = u.id AND u.external_id = $1`,
+    [userExternalId],
+  );
+}
+
+/**
+ * Delete seeded encounters, circles, and friends for a set of users while
+ * preserving their self-profiles. Junction tables (encounter_friends,
+ * friend_circles) cascade with their parents so we don't need to clean them
+ * explicitly.
+ */
+export async function cleanupUserData(pool: pg.Pool, userExternalIds: string[]): Promise<void> {
+  if (userExternalIds.length === 0) return;
+  await pool.query(
+    `DELETE FROM encounters.encounters
+       WHERE user_id IN (SELECT id FROM auth.users WHERE external_id = ANY($1::uuid[]))`,
+    [userExternalIds],
+  );
+  await pool.query(
+    `DELETE FROM friends.circles
+       WHERE user_id IN (SELECT id FROM auth.users WHERE external_id = ANY($1::uuid[]))`,
+    [userExternalIds],
+  );
+  await pool.query(
+    `DELETE FROM friends.friends f
+       WHERE f.user_id IN (SELECT id FROM auth.users WHERE external_id = ANY($1::uuid[]))
+         AND f.id NOT IN (SELECT self_profile_id FROM auth.users WHERE self_profile_id IS NOT NULL)`,
+    [userExternalIds],
+  );
+}
+
 export function setupMcpTestSuite() {
   let context: TestContext;
 
@@ -267,8 +323,9 @@ export function setupMcpTestSuite() {
       max: 5,
     });
 
-    pool.on('error', () => {
-      // Ignore — expected during test teardown
+    const poolLogger = pino({ level: 'silent' });
+    pool.on('error', (err) => {
+      poolLogger.error({ err }, 'pg pool error during MCP integration test');
     });
 
     await runMigrations(pool);

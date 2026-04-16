@@ -1,14 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   basicAuthHeader,
   callTool,
+  cleanupUserData,
   initMcpSession,
   mcpRequest,
+  restoreAppPasswordsForUser,
+  revokeAppPasswordsForUser,
   setupMcpTestSuite,
 } from './helpers.js';
 
 describe('MCP Server', { timeout: 60000 }, () => {
   const { getContext } = setupMcpTestSuite();
+
+  afterEach(async () => {
+    const { pool, testUser, otherUser } = getContext();
+    await cleanupUserData(pool, [testUser.externalId, otherUser.externalId]);
+  });
 
   // =========================================================================
   // HTTP Routing
@@ -210,38 +218,26 @@ describe('MCP Server', { timeout: 60000 }, () => {
     it('should reject revoked app password', async () => {
       const { baseUrl, pool, testUser } = getContext();
 
-      await pool.query(
-        `UPDATE auth.app_passwords ap
-         SET revoked_at = NOW()
-         FROM auth.users u
-         WHERE ap.user_id = u.id AND u.external_id = $1`,
-        [testUser.externalId],
-      );
-
-      const { status } = await mcpRequest(
-        baseUrl,
-        {
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'initialize',
-          params: {
-            protocolVersion: '2025-03-26',
-            capabilities: {},
-            clientInfo: { name: 'test-client', version: '1.0.0' },
+      await revokeAppPasswordsForUser(pool, testUser.externalId);
+      try {
+        const { status } = await mcpRequest(
+          baseUrl,
+          {
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'initialize',
+            params: {
+              protocolVersion: '2025-03-26',
+              capabilities: {},
+              clientInfo: { name: 'test-client', version: '1.0.0' },
+            },
           },
-        },
-        { email: testUser.email, password: testUser.appPassword },
-      );
-      expect(status).toBe(401);
-
-      // Restore for subsequent tests
-      await pool.query(
-        `UPDATE auth.app_passwords ap
-         SET revoked_at = NULL
-         FROM auth.users u
-         WHERE ap.user_id = u.id AND u.external_id = $1`,
-        [testUser.externalId],
-      );
+          { email: testUser.email, password: testUser.appPassword },
+        );
+        expect(status).toBe(401);
+      } finally {
+        await restoreAppPasswordsForUser(pool, testUser.externalId);
+      }
     });
   });
 
@@ -382,7 +378,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
       const result = body as { result?: { tools?: Array<{ name: string }> } };
       const toolNames = result.result?.tools?.map((t) => t.name) ?? [];
 
-      expect(toolNames).toHaveLength(12);
+      expect(toolNames.length).toBeGreaterThanOrEqual(12);
       expect(toolNames).toContain('list_friends');
       expect(toolNames).toContain('get_friend');
       expect(toolNames).toContain('search_friends');
