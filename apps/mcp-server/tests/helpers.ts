@@ -11,7 +11,7 @@ import type { Logger } from 'pino';
 import pino from 'pino';
 import { Wait } from 'testcontainers';
 import { afterAll, beforeAll } from 'vitest';
-import { createMcpServer } from '../src/server.js';
+import { createMcpRequestHandler, type Session } from '../src/http-handler.js';
 import { createServices, type Services } from '../src/utils/service-factory.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -121,130 +121,16 @@ async function createTestUserWithAppPassword(
 
 function startMcpHttpServer(
   services: Services,
-  _logger: Logger,
-): Promise<{ server: http.Server; baseUrl: string }> {
-  // Import the handler setup inline to avoid circular deps
+  logger: Logger,
+): Promise<{ server: http.Server; baseUrl: string; sessions: Map<string, Session> }> {
   return new Promise((resolve) => {
-    const { randomUUID } = crypto;
-
-    interface Session {
-      transport: import('@modelcontextprotocol/sdk/server/streamableHttp.js').StreamableHTTPServerTransport;
-      userId: string;
-    }
     const sessions = new Map<string, Session>();
-
-    const httpServer = http.createServer(async (req, res) => {
-      const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
-
-      if (url.pathname === '/health') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok' }));
-        return;
-      }
-
-      if (url.pathname !== '/mcp') {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Not Found' }));
-        return;
-      }
-
-      // Authenticate
-      const authHeader = req.headers.authorization;
-      if (!authHeader?.startsWith('Basic ')) {
-        res.writeHead(401, {
-          'WWW-Authenticate': 'Basic realm="Freundebuch MCP"',
-          'Content-Type': 'application/json',
-        });
-        res.end(JSON.stringify({ error: 'Unauthorized' }));
-        return;
-      }
-
-      const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf-8');
-      const colonIndex = decoded.indexOf(':');
-      if (colonIndex === -1) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Unauthorized' }));
-        return;
-      }
-
-      const email = decoded.slice(0, colonIndex);
-      const password = decoded.slice(colonIndex + 1);
-
-      const authResult = await services.appPasswords.verifyAppPassword(email, password);
-      if (!authResult) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Unauthorized' }));
-        return;
-      }
-
-      const sessionId = req.headers['mcp-session-id'] as string | undefined;
-
-      if (req.method === 'POST') {
-        const body = await new Promise<string>((resolveBody, reject) => {
-          let data = '';
-          req.on('data', (chunk: Buffer) => {
-            data += chunk.toString();
-          });
-          req.on('end', () => resolveBody(data));
-          req.on('error', reject);
-        });
-
-        let parsedBody: unknown;
-        try {
-          parsedBody = JSON.parse(body);
-        } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
-          return;
-        }
-
-        const existingSession = sessionId ? sessions.get(sessionId) : undefined;
-        if (existingSession) {
-          if (existingSession.userId !== authResult.userId) {
-            res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Unauthorized' }));
-            return;
-          }
-          await existingSession.transport.handleRequest(req, res, parsedBody);
-        } else {
-          const { StreamableHTTPServerTransport } = await import(
-            '@modelcontextprotocol/sdk/server/streamableHttp.js'
-          );
-          const newSessionId = randomUUID();
-          const transport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: () => newSessionId,
-          });
-
-          const userId = authResult.userId;
-          const server = createMcpServer(services, () => userId);
-          sessions.set(newSessionId, { transport, userId });
-          transport.onclose = () => sessions.delete(newSessionId);
-          await server.connect(transport);
-          await transport.handleRequest(req, res, parsedBody);
-        }
-      } else if (req.method === 'DELETE') {
-        const deleteSession = sessionId ? sessions.get(sessionId) : undefined;
-        if (!deleteSession) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Session not found' }));
-          return;
-        }
-        if (deleteSession.userId !== authResult.userId) {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Unauthorized' }));
-          return;
-        }
-        await deleteSession.transport.handleRequest(req, res);
-        sessions.delete(sessionId as string);
-      } else {
-        res.writeHead(405, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Method not allowed' }));
-      }
-    });
+    const handler = createMcpRequestHandler({ services, logger, sessions });
+    const httpServer = http.createServer(handler);
 
     httpServer.listen(0, () => {
       const addr = httpServer.address() as { port: number };
-      resolve({ server: httpServer, baseUrl: `http://localhost:${addr.port}` });
+      resolve({ server: httpServer, baseUrl: `http://localhost:${addr.port}`, sessions });
     });
   });
 }

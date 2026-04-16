@@ -50,6 +50,86 @@ describe('MCP Server', { timeout: 60000 }, () => {
       expect(response.status).toBe(401);
       expect(response.headers.get('www-authenticate')).toContain('Basic');
     });
+
+    it('should return 413 for bodies exceeding the size cap', async () => {
+      const { baseUrl, testUser } = getContext();
+      // Payload > 1 MiB default cap. Use a single big string value to keep JSON legal.
+      const bigValue = 'x'.repeat(2 * 1024 * 1024);
+      const body = JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: { filler: bigValue },
+      });
+      const response = await fetch(`${baseUrl}/mcp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: basicAuthHeader(testUser.email, testUser.appPassword),
+        },
+        body,
+      });
+      expect(response.status).toBe(413);
+    });
+
+    it('should return 400 for duplicate mcp-session-id headers', async () => {
+      const { baseUrl, testUser } = getContext();
+      // `undici` fetch collapses duplicate headers into a comma-joined string,
+      // so use raw http.request with an array-valued header to emit two
+      // separate header lines (Node surfaces both in `req.rawHeaders`).
+      const http = await import('node:http');
+      const url = new URL(`${baseUrl}/mcp`);
+      const { status, body } = await new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          const req = http.request(
+            {
+              method: 'POST',
+              hostname: url.hostname,
+              port: url.port,
+              path: url.pathname,
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: basicAuthHeader(testUser.email, testUser.appPassword),
+                'mcp-session-id': ['session-one', 'session-two'],
+              },
+            },
+            (res) => {
+              const chunks: Buffer[] = [];
+              res.on('data', (c: Buffer) => chunks.push(c));
+              res.on('end', () =>
+                resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString() }),
+              );
+            },
+          );
+          req.on('error', reject);
+          req.end(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }));
+        },
+      );
+      expect(status).toBe(400);
+      expect(body).toContain('Duplicate');
+    });
+
+    it('should handle multi-byte utf-8 characters correctly', async () => {
+      const { baseUrl, testUser } = getContext();
+      const sessionId = await initMcpSession(baseUrl, testUser.email, testUser.appPassword);
+
+      // Request payload carrying emoji + non-ASCII — guards against naive
+      // per-chunk `Buffer.toString()` that would mangle split code points.
+      const { status } = await mcpRequest(
+        baseUrl,
+        {
+          jsonrpc: '2.0',
+          id: 42,
+          method: 'tools/call',
+          params: {
+            name: 'search_friends',
+            arguments: { query: '🌮 café 日本語 €', limit: 1 },
+          },
+        },
+        { email: testUser.email, password: testUser.appPassword, sessionId },
+      );
+      expect(status).toBe(200);
+    });
   });
 
   // =========================================================================
