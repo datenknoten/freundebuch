@@ -16,6 +16,14 @@ const SALT_ROUNDS = 10;
 const PASSWORD_LENGTH = 24; // 24 bytes = 32 chars in base64url
 const MAX_APP_PASSWORDS_PER_USER = 20;
 
+// Format: raw base64url password split into CHUNK-char chunks joined by '-'.
+// A well-formatted input has length `chunks * CHUNK + (chunks - 1)` — i.e.
+// `(length + 1) % (CHUNK + 1) === 0`. Separators sit at positions where
+// `i % (CHUNK + 1) === CHUNK`. Kept as a constant so format/unformat stay
+// in sync.
+const FORMAT_CHUNK_SIZE = 4;
+const FORMAT_STRIDE = FORMAT_CHUNK_SIZE + 1; // chunk + one separator
+
 export class MaxAppPasswordsExceededError extends AppError {
   readonly statusCode = 429;
 
@@ -55,12 +63,40 @@ export class AppPasswordsService {
    * Format raw bytes as a readable password (xxxx-xxxx-xxxx-xxxx)
    */
   private formatPassword(password: string): string {
-    // Split into chunks of 4 characters and join with dashes
     const chunks: string[] = [];
-    for (let i = 0; i < password.length; i += 4) {
-      chunks.push(password.slice(i, i + 4));
+    for (let i = 0; i < password.length; i += FORMAT_CHUNK_SIZE) {
+      chunks.push(password.slice(i, i + FORMAT_CHUNK_SIZE));
     }
     return chunks.join('-');
+  }
+
+  /**
+   * Invert formatPassword: remove only the separator dashes inserted at every
+   * FORMAT_STRIDE-th position, preserving any '-' that are part of the
+   * original base64url raw password (base64url alphabet includes '-').
+   *
+   * Fallback behavior: if the input either doesn't have a well-formatted length
+   * or has a non-dash character at a separator slot, fall back to stripping
+   * all dashes. This preserves legacy behavior for malformed input — garbage
+   * into bcrypt simply fails the compare and produces a 401.
+   */
+  private unformatPassword(input: string): string {
+    const hasWellFormattedLength =
+      input.length >= FORMAT_STRIDE && (input.length + 1) % FORMAT_STRIDE === 0;
+    if (!hasWellFormattedLength) {
+      return input.replace(/-/g, '');
+    }
+    let out = '';
+    for (let i = 0; i < input.length; i++) {
+      if (i % FORMAT_STRIDE === FORMAT_CHUNK_SIZE) {
+        if (input[i] !== '-') {
+          return input.replace(/-/g, '');
+        }
+        continue;
+      }
+      out += input[i];
+    }
+    return out;
   }
 
   /**
@@ -176,8 +212,10 @@ export class AppPasswordsService {
   async verifyAppPassword(email: string, password: string): Promise<BasicAuthContext | null> {
     this.logger.debug({ email }, 'Verifying app password');
 
-    // Remove dashes from formatted password
-    const rawPassword = password.replace(/-/g, '');
+    // Invert formatPassword to recover the raw base64url password. Must preserve
+    // '-' characters that are part of the base64url alphabet; only strip the
+    // dashes inserted as separators by formatPassword.
+    const rawPassword = this.unformatPassword(password);
     const prefix = rawPassword.substring(0, 8);
 
     // Get user by email
