@@ -90,6 +90,25 @@ class AppPasswordBackendIntegrationTest extends IntegrationTestCase
     }
 
     #[Test]
+    public function validateUserPassPreservesRawDashesThatArePartOfBase64Url(): void
+    {
+        // Regression: previous implementation ran str_replace('-', '', $password)
+        // which corrupted ~42% of generated passwords whose base64url raw
+        // contains '-' (a valid base64url char), yielding intermittent 401s.
+        $user = $this->createTestUser('user@example.com');
+        // Raw: 32-char base64url with embedded '-' at index 4.
+        // "AAAA" | "-BBB" | "CCCC" | "DDDD" | "EEEE" | "FFFF" | "GGGG" | "HHHH"
+        // → formatted "AAAA--BBB-CCCC-DDDD-EEEE-FFFF-GGGG-HHHH"
+        $rawPassword = 'AAAA-BBBCCCCDDDDEEEEFFFFGGGGHHHH';
+        $formattedPassword = 'AAAA--BBB-CCCC-DDDD-EEEE-FFFF-GGGG-HHHH';
+        $this->createAppPassword((int) $user['id'], 'Test Device', $rawPassword);
+
+        $result = $this->callValidateUserPass('user@example.com', $formattedPassword);
+
+        $this->assertTrue($result);
+    }
+
+    #[Test]
     public function validateUserPassUpdatesLastUsedAt(): void
     {
         $user = $this->createTestUser('user@example.com');

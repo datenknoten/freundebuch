@@ -23,11 +23,43 @@ use Sabre\DAV\Auth\Backend\AbstractBasic;
  */
 class AppPasswordBackend extends AbstractBasic
 {
+    private const FORMAT_CHUNK_SIZE = 4;
+    private const FORMAT_STRIDE = self::FORMAT_CHUNK_SIZE + 1;
+
     private PDO $pdo;
 
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
+    }
+
+    /**
+     * Invert the server-side formatPassword (4-char chunks joined with '-').
+     *
+     * Base64url — the alphabet used for raw passwords — includes '-' as a
+     * valid character, so naive `str_replace('-', '', ...)` corrupts passwords
+     * whose raw contains '-'. Walk the input and strip only the dashes that
+     * sit at separator positions. Fall back to full strip for malformed input
+     * so bcrypt still gets a deterministic value (and fails the compare).
+     */
+    private function unformatPassword(string $input): string
+    {
+        $len = strlen($input);
+        $wellFormatted = $len >= self::FORMAT_STRIDE && ($len + 1) % self::FORMAT_STRIDE === 0;
+        if (!$wellFormatted) {
+            return str_replace('-', '', $input);
+        }
+        $out = '';
+        for ($i = 0; $i < $len; $i++) {
+            if ($i % self::FORMAT_STRIDE === self::FORMAT_CHUNK_SIZE) {
+                if ($input[$i] !== '-') {
+                    return str_replace('-', '', $input);
+                }
+                continue;
+            }
+            $out .= $input[$i];
+        }
+        return $out;
     }
 
     /**
@@ -39,8 +71,7 @@ class AppPasswordBackend extends AbstractBasic
      */
     protected function validateUserPass($username, $password): bool
     {
-        // Remove dashes from formatted password (xxxx-xxxx-xxxx-xxxx -> xxxxxxxxxxxxxxxx)
-        $rawPassword = str_replace('-', '', $password);
+        $rawPassword = $this->unformatPassword($password);
         $prefix = substr($rawPassword, 0, 8);
 
         // Find user by email
