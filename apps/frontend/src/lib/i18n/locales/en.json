@@ -666,6 +666,43 @@
         }
       }
     },
+    "mcp": {
+      "title": "MCP Server Setup",
+      "subtitle": "Connect AI assistants like Claude to your Freundebuch data using the Model Context Protocol.",
+      "endpointUrl": "MCP Server URL",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "useCredentials": "Use your email {{email}} and an app password to authenticate.",
+      "appPasswordRequired": "MCP access requires an app password. You can use the same app password for CardDAV and MCP, or create a separate one.",
+      "manageAppPasswords": "Manage App Passwords",
+      "tabs": {
+        "claudeDesktop": "Claude Desktop",
+        "claudeCode": "Claude Code",
+        "other": "Other Clients"
+      },
+      "steps": {
+        "claudeDesktop": {
+          "intro": "Add this configuration to your Claude Desktop config file:",
+          "step1": "Open Claude Desktop Settings",
+          "step2": "Navigate to the MCP Servers section",
+          "step3": "Add the following configuration (replace the Authorization header with your base64-encoded credentials):",
+          "note": "To create the base64 credentials, encode \"your@email.com:your-app-password\" (without quotes). On macOS/Linux: echo -n \"email:password\" | base64"
+        },
+        "claudeCode": {
+          "intro": "Run this command in your terminal to add the Freundebuch MCP server:",
+          "note": "Replace <base64-credentials> with your base64-encoded email and app password. Create it with: echo -n \"{{email}}:your-app-password\" | base64"
+        },
+        "other": {
+          "intro": "Use the following connection details for any MCP-compatible client:",
+          "transport": "Transport",
+          "url": "URL",
+          "auth": "Authentication",
+          "username": "Username",
+          "password": "Password",
+          "passwordValue": "Your app password"
+        }
+      }
+    },
     "danger": {
       "title": "Danger Zone",
       "deleteAccount": "Delete Account",
@@ -701,6 +738,10 @@
         "carddav": {
           "title": "CardDAV Sync",
           "description": "Sync friends with mobile and desktop apps"
+        },
+        "mcp": {
+          "title": "MCP Server",
+          "description": "Connect AI assistants to your friend data"
         }
       },
       "status": {
@@ -719,7 +760,9 @@
         "noChannels": "No channels configured",
         "channelsEnabled": "{{count}} active",
         "carddavReady": "Ready to sync",
-        "carddavNeedsPassword": "Create an app password first"
+        "carddavNeedsPassword": "Create an app password first",
+        "mcpReady": "Ready to connect",
+        "mcpNeedsPassword": "Create an app password first"
       },
       "backToProfile": "Back to Profile"
     }

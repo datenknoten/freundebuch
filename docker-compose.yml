@@ -71,6 +71,33 @@ services:
       - /app/node_modules
     command: pnpm --filter frontend run dev
 
+  mcp:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: freundebuch-mcp
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://freundebuch:dev_password@postgres:5432/freundebuch_dev
+      DATABASE_POOL_MIN: 1
+      DATABASE_POOL_MAX: 5
+      MCP_PORT: 3100
+      LOG_LEVEL: debug
+      ENV: development
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./apps/mcp-server:/app/apps/mcp-server
+      - /app/apps/mcp-server/node_modules
+      - ./apps/backend:/app/apps/backend
+      - /app/apps/backend/node_modules
+      - ./packages:/app/packages
+      - /app/packages/shared/node_modules
+      - /app/node_modules
+    command: pnpm --filter @freundebuch/mcp-server run dev
+
   sabredav:
     build:
       context: .
@@ -97,6 +124,8 @@ services:
       backend:
         condition: service_started
       frontend:
+        condition: service_started
+      mcp:
         condition: service_started
       sabredav:
         condition: service_healthy

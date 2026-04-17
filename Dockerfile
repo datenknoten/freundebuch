@@ -57,6 +57,7 @@ COPY tsconfig.base.json ./
 # Copy all package.json files for dependency resolution
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/frontend/package.json ./apps/frontend/
+COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install all dependencies with cache mount for pnpm store
@@ -81,6 +82,15 @@ COPY apps/backend ./apps/backend
 COPY database ./database
 RUN pnpm --filter @freundebuch/backend run build && \
     pnpm run migrate:build
+
+# ============================================
+# Stage: Build MCP server
+# Runs in parallel with backend-builder and frontend-builder
+# ============================================
+FROM backend-builder AS mcp-server-builder
+
+COPY apps/mcp-server ./apps/mcp-server
+RUN pnpm --filter @freundebuch/mcp-server run build
 
 # ============================================
 # Stage: Build frontend (static)
@@ -110,6 +120,7 @@ COPY docker/php-fpm-pool.conf /etc/php/8.2/fpm/pool.d/zz-logging.conf
 # Copy workspace configuration for production dependencies
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/
+COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install production dependencies only with cache mount
@@ -119,6 +130,7 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 # Copy built artifacts from parallel build stages
 COPY --from=shared-builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=backend-builder /app/apps/backend/dist ./apps/backend/dist
+COPY --from=mcp-server-builder /app/apps/mcp-server/dist ./apps/mcp-server/dist
 COPY --from=frontend-builder /app/apps/frontend/build ./apps/frontend/build
 
 # Copy compiled database migrations

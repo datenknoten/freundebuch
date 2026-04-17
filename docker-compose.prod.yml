@@ -1,4 +1,27 @@
 services:
+  mcp-server:
+    image: ghcr.io/enko/freundebuch2-mcp-server:${VERSION:-latest}
+    container_name: freundebuch-mcp-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_POOL_MIN: ${DATABASE_POOL_MIN:-1}
+      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-5}
+      MCP_PORT: 3100
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      ENV: production
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3100/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   nginx:
     image: ghcr.io/enko/freundebuch2-nginx:${VERSION:-latest}
     container_name: freundebuch-nginx
@@ -8,6 +31,8 @@ services:
       BACKEND_PORT: 3000
       SABREDAV_HOST: sabredav
       SABREDAV_PORT: 9000
+      MCP_HOST: mcp-server
+      MCP_PORT: 3100
       NGINX_ACCESS_LOG: ${NGINX_ACCESS_LOG:-off}
       NGINX_ERROR_LOG_LEVEL: ${NGINX_ERROR_LOG_LEVEL:-warn}
     networks:
@@ -34,6 +59,8 @@ services:
       start_period: 40s
     depends_on:
       backend:
+        condition: service_healthy
+      mcp-server:
         condition: service_healthy
       sabredav:
         condition: service_healthy

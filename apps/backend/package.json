@@ -4,6 +4,16 @@
   "private": true,
   "license": "AGPL-3.0-only",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./src/*",
+      "default": "./dist/*"
+    }
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc --project tsconfig.build.json",

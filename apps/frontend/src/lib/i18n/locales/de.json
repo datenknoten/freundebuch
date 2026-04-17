@@ -666,6 +666,43 @@
         }
       }
     },
+    "mcp": {
+      "title": "MCP-Server-Einrichtung",
+      "subtitle": "Verbinde KI-Assistenten wie Claude mit deinen Freundebuch-Daten über das Model Context Protocol.",
+      "endpointUrl": "MCP-Server-URL",
+      "copy": "Kopieren",
+      "copied": "Kopiert!",
+      "useCredentials": "Verwende deine E-Mail {{email}} und ein App-Passwort zur Authentifizierung.",
+      "appPasswordRequired": "MCP-Zugriff erfordert ein App-Passwort. Du kannst das gleiche App-Passwort für CardDAV und MCP verwenden oder ein separates erstellen.",
+      "manageAppPasswords": "App-Passwörter verwalten",
+      "tabs": {
+        "claudeDesktop": "Claude Desktop",
+        "claudeCode": "Claude Code",
+        "other": "Andere Clients"
+      },
+      "steps": {
+        "claudeDesktop": {
+          "intro": "Füge diese Konfiguration zu deiner Claude Desktop-Konfigurationsdatei hinzu:",
+          "step1": "Öffne die Claude Desktop-Einstellungen",
+          "step2": "Navigiere zum Abschnitt MCP-Server",
+          "step3": "Füge die folgende Konfiguration hinzu (ersetze den Authorization-Header durch deine base64-codierten Zugangsdaten):",
+          "note": "Um die base64-Zugangsdaten zu erstellen, codiere \"deine@email.de:dein-app-passwort\" (ohne Anführungszeichen). Unter macOS/Linux: echo -n \"email:passwort\" | base64"
+        },
+        "claudeCode": {
+          "intro": "Führe diesen Befehl in deinem Terminal aus, um den Freundebuch-MCP-Server hinzuzufügen:",
+          "note": "Ersetze <base64-credentials> durch deine base64-codierte E-Mail und dein App-Passwort. Erstelle sie mit: echo -n \"{{email}}:dein-app-passwort\" | base64"
+        },
+        "other": {
+          "intro": "Verwende die folgenden Verbindungsdaten für jeden MCP-kompatiblen Client:",
+          "transport": "Transport",
+          "url": "URL",
+          "auth": "Authentifizierung",
+          "username": "Benutzername",
+          "password": "Passwort",
+          "passwordValue": "Dein App-Passwort"
+        }
+      }
+    },
     "danger": {
       "title": "Gefahrenzone",
       "deleteAccount": "Konto löschen",
@@ -701,6 +738,10 @@
         "carddav": {
           "title": "CardDAV-Synchronisation",
           "description": "Freunde mit mobilen und Desktop-Apps synchronisieren"
+        },
+        "mcp": {
+          "title": "MCP-Server",
+          "description": "KI-Assistenten mit deinen Freundedaten verbinden"
         }
       },
       "status": {
@@ -719,7 +760,9 @@
         "noChannels": "Keine Kanäle konfiguriert",
         "channelsEnabled": "{{count}} aktiv",
         "carddavReady": "Bereit zur Synchronisation",
-        "carddavNeedsPassword": "Erstelle zuerst ein App-Passwort"
+        "carddavNeedsPassword": "Erstelle zuerst ein App-Passwort",
+        "mcpReady": "Verbindungsbereit",
+        "mcpNeedsPassword": "Erstelle zuerst ein App-Passwort"
       },
       "backToProfile": "Zurück zum Profil"
     }
