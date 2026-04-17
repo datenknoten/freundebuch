@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import ChatBubbleLeft from 'svelte-heros-v2/ChatBubbleLeft.svelte';
 import CloudArrowUp from 'svelte-heros-v2/CloudArrowUp.svelte';
+import CommandLine from 'svelte-heros-v2/CommandLine.svelte';
 import FingerPrint from 'svelte-heros-v2/FingerPrint.svelte';
 import LockClosed from 'svelte-heros-v2/LockClosed.svelte';
 import PaintBrush from 'svelte-heros-v2/PaintBrush.svelte';
@@ -70,6 +71,12 @@ const carddavStatus = $derived(
   appPasswordCount > 0
     ? $i18n.t('profile.hub.status.carddavReady')
     : $i18n.t('profile.hub.status.carddavNeedsPassword'),
+);
+
+const mcpStatus = $derived(
+  appPasswordCount > 0
+    ? $i18n.t('profile.hub.status.mcpReady')
+    : $i18n.t('profile.hub.status.mcpNeedsPassword'),
 );
 </script>
 
@@ -146,6 +153,15 @@ const carddavStatus = $derived(
         status={carddavStatus}
       >
         {#snippet icon()}<CloudArrowUp class="w-5 h-5" strokeWidth="2" />{/snippet}
+      </ProfileCard>
+
+      <ProfileCard
+        href="/profile/mcp"
+        title={$i18n.t('profile.hub.cards.mcp.title')}
+        description={$i18n.t('profile.hub.cards.mcp.description')}
+        status={mcpStatus}
+      >
+        {#snippet icon()}<CommandLine class="w-5 h-5" strokeWidth="2" />{/snippet}
       </ProfileCard>
     </div>
   </section>
