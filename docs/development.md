@@ -37,7 +37,7 @@ pnpm pgtyped:watch          # Watch and regenerate types
 pnpm seed                   # Seed database with test data
 
 # Docker
-pnpm docker:up              # Start Docker services
+pnpm docker:db:up           # Start PostgreSQL + PostGIS
 pnpm docker:down            # Stop Docker services
 ```
 

@@ -13,14 +13,12 @@ A self-hostable web application for relationship management. Think of it as your
 ## Quick Start
 
 ```bash
-# Prerequisites: Node.js 24+, pnpm 8+, PostgreSQL 18+ (or Docker)
-pnpm install
-pnpm docker:up
-pnpm migrate
-pnpm dev
+docker compose up -d
+docker compose exec backend pnpm migrate
+docker compose exec backend pnpm seed    # Optional: populate with sample data
 ```
 
-Frontend runs at `http://localhost:5173`, backend at `http://localhost:3000`.
+The app is available at `http://localhost:8080` (nginx reverse proxy). This setup also works well for development — source code is mounted into the containers with hot reload enabled.
 
 ## Documentation
 
