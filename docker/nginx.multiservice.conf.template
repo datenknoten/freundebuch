@@ -48,6 +48,9 @@ http {
         server ${MCP_HOST}:${MCP_PORT};
     }
 
+    # Brute-force throttle for the MCP Basic Auth endpoint.
+    limit_req_zone $binary_remote_addr zone=mcp_auth:10m rate=30r/m;
+
     server {
         listen 80;
         listen [::]:80;
@@ -107,12 +110,13 @@ http {
 
         # MCP Server - Model Context Protocol endpoint for LLM access
         #
-        # TODO: brute-force protection for Basic Auth is intended to live here.
-        # Add a `limit_req_zone $binary_remote_addr zone=mcp_auth:10m rate=30r/m;`
-        # directive at the http{} level and `limit_req zone=mcp_auth burst=10 nodelay;`
-        # inside this location. MCP server itself does not rate-limit on purpose
-        # — see apps/mcp-server/src/http-handler.ts comment.
+        # Brute-force protection for Basic Auth lives at this layer (see the
+        # `limit_req_zone` directive in the surrounding http{} block); the MCP
+        # server intentionally does not rate-limit in-process — see
+        # apps/mcp-server/src/http-handler.ts comment.
         location ^~ /mcp {
+            limit_req zone=mcp_auth burst=10 nodelay;
+
             proxy_pass http://mcp-server;
             proxy_http_version 1.1;
             proxy_set_header Host $host;

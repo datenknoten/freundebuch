@@ -48,6 +48,19 @@ describe('MCP Server', { timeout: 60000 }, () => {
       expect(response.status).toBe(405);
     });
 
+    it('should accept /mcp/ with a trailing slash', async () => {
+      // Some reverse proxies normalize requests to add a trailing slash; the
+      // MCP path matcher must treat `/mcp/` as equivalent to `/mcp`.
+      const { baseUrl, testUser } = getContext();
+      const response = await fetch(`${baseUrl}/mcp/`, {
+        method: 'PUT',
+        headers: {
+          Authorization: basicAuthHeader(testUser.email, testUser.appPassword),
+        },
+      });
+      expect(response.status).toBe(405);
+    });
+
     it('should return 401 for /mcp without auth', async () => {
       const { baseUrl } = getContext();
       const response = await fetch(`${baseUrl}/mcp`, {

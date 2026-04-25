@@ -5,11 +5,11 @@ import type { Logger } from 'pino';
 import { createMcpServer } from './server.js';
 import type { Services } from './utils/service-factory.js';
 
-// Brute-force / rate limiting is intentionally handled at the infrastructure
-// layer (nginx `limit_req_zone`, WAF, or load balancer) — same design as
-// `apps/sabredav/src/Auth/AppPasswordBackend.php`. An in-process limiter would
-// not survive restarts or span replicas. Failed auth attempts are logged via
-// `logger.warn` so infrastructure alerting can trigger.
+// Brute-force / rate limiting is handled at the infrastructure layer — see
+// the `limit_req_zone zone=mcp_auth` directives in `docker/nginx*.conf*`.
+// Same design as `apps/sabredav/src/Auth/AppPasswordBackend.php`: an in-process
+// limiter would not survive restarts or span replicas. Failed auth attempts
+// are still logged via `logger.warn` so infrastructure alerting can trigger.
 
 export interface Session {
   transport: StreamableHTTPServerTransport;
@@ -139,13 +139,16 @@ export function createMcpRequestHandler(
   const maxBodyBytes = deps.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
 
   return async function handleRequest(req, res) {
-    const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
+    // `Host` is optional in HTTP/1.0 and can be missing behind some proxies, so
+    // use a fixed base — we only care about pathname here, not the host.
+    const url = new URL(req.url ?? '/', 'http://localhost');
+    const pathname = url.pathname.replace(/\/+$/, '') || '/';
 
-    if (url.pathname === '/health') {
+    if (pathname === '/health') {
       sendJson(res, 200, { status: 'ok' });
       return;
     }
-    if (url.pathname !== '/mcp') {
+    if (pathname !== '/mcp') {
       sendJson(res, 404, { error: 'Not Found' });
       return;
     }
