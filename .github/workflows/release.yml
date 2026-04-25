@@ -103,16 +103,14 @@ jobs:
             dockerfile: docker/Dockerfile.nginx.prod
             platform: linux/arm64
             arch: arm64
-          # backend - amd64
+          # backend - amd64 (default stage of Dockerfile.backend.prod, no --target needed)
           - image: backend
             dockerfile: docker/Dockerfile.backend.prod
-            target: backend
             platform: linux/amd64
             arch: amd64
           # backend - arm64
           - image: backend
             dockerfile: docker/Dockerfile.backend.prod
-            target: backend
             platform: linux/arm64
             arch: arm64
           # mcp-server - amd64 (shares Dockerfile.backend.prod)
@@ -181,7 +179,7 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
-          target: ${{ matrix.target || '' }}
+          target: ${{ matrix.target }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
