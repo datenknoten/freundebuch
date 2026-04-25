@@ -1,8 +1,11 @@
 # syntax=docker/dockerfile:1.4
 # Production Dockerfile for Node-based services (backend + mcp-server).
-# Two production targets share the workspace install + shared/backend build:
-#   --target backend     → ghcr.io/.../backend
-#   --target mcp-server  → ghcr.io/.../mcp-server
+# Two production targets share the workspace install + shared/backend build.
+# `backend` is the *last* stage so a plain `docker build` (no `--target`)
+# produces the backend image — matches the historical default.
+#   docker build -f docker/Dockerfile.backend.prod .                 → backend
+#   docker build -f docker/Dockerfile.backend.prod --target backend .→ backend
+#   docker build -f docker/Dockerfile.backend.prod --target mcp-server . → mcp-server
 # ============================================
 
 # Stage 1: Build dependencies and compile TypeScript (shared by both targets)
@@ -49,47 +52,7 @@ RUN pnpm --filter @freundebuch/shared run build && \
     pnpm run migrate:build
 
 # ============================================
-# Stage 2: backend production runtime
-FROM node:24-bookworm-slim AS backend
-
-ARG TARGETARCH
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
-WORKDIR /app
-
-# Copy workspace configuration for production dependencies
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY apps/backend/package.json ./apps/backend/
-COPY packages/shared/package.json ./packages/shared/
-
-# Install production dependencies only with architecture-specific cache mount
-RUN --mount=type=cache,id=pnpm-${TARGETARCH},target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --prod --ignore-scripts
-
-# Copy built artifacts
-COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
-COPY --from=builder /app/database/dist ./database/dist
-
-# Create uploads directory and set ownership for non-root execution
-RUN mkdir -p /app/uploads && \
-    chown -R node:node /app
-
-ENV NODE_ENV=production
-ENV PORT=3000
-
-EXPOSE 3000
-
-# Drop to non-root user
-USER node
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
-
-CMD ["node", "/app/apps/backend/dist/index.js"]
-
-# ============================================
-# Stage 3: mcp-server production runtime
+# Stage 2: mcp-server production runtime
 FROM node:24-bookworm-slim AS mcp-server
 
 ARG TARGETARCH
@@ -132,3 +95,43 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3100/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
 CMD ["node", "/app/apps/mcp-server/dist/index.js"]
+
+# ============================================
+# Stage 3: backend production runtime (default target)
+FROM node:24-bookworm-slim AS backend
+
+ARG TARGETARCH
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+
+# Copy workspace configuration for production dependencies
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY apps/backend/package.json ./apps/backend/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install production dependencies only with architecture-specific cache mount
+RUN --mount=type=cache,id=pnpm-${TARGETARCH},target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --prod --ignore-scripts
+
+# Copy built artifacts
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder /app/database/dist ./database/dist
+
+# Create uploads directory and set ownership for non-root execution
+RUN mkdir -p /app/uploads && \
+    chown -R node:node /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+EXPOSE 3000
+
+# Drop to non-root user
+USER node
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+
+CMD ["node", "/app/apps/backend/dist/index.js"]
