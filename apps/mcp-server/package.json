@@ -1,6 +1,6 @@
 {
   "name": "@freundebuch/mcp-server",
-  "version": "2.68.2",
+  "version": "2.68.3",
   "private": true,
   "license": "AGPL-3.0-only",
   "type": "module",
