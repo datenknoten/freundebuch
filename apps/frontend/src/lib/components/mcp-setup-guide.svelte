@@ -66,7 +66,7 @@ const claudeDesktopConfig = $derived(
       </button>
     </div>
     <p class="font-body text-xs text-blue-600 mt-2">
-      {$i18n.t('profile.mcp.useCredentials', { email: $currentUser?.email })}
+      {$i18n.t('profile.mcp.useCredentials', { email: $currentUser?.email ?? 'your@email.com' })}
     </p>
   </div>
 
@@ -135,7 +135,7 @@ const claudeDesktopConfig = $derived(
   --url {mcpUrl} \
   --header "Authorization: Basic &lt;base64-credentials&gt;"</pre>
           <p class="font-body text-xs text-gray-500">
-            {$i18n.t('profile.mcp.steps.claudeCode.note', { email: $currentUser?.email })}
+            {$i18n.t('profile.mcp.steps.claudeCode.note', { email: $currentUser?.email ?? 'your@email.com' })}
           </p>
         </div>
       {:else}

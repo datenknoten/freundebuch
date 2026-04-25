@@ -63,45 +63,55 @@ type ReadResult = { ok: true; body: string } | { ok: false; reason: 'too-large' 
  * so multi-byte characters split across TCP chunks are handled correctly.
  *
  * If `Content-Length` is present and exceeds the cap, short-circuit before
- * reading any body. Otherwise, stream the body and once the cap is reached
- * stop buffering (keep draining data events so the client finishes sending
- * and reads the 413 response cleanly instead of hitting ECONNRESET).
+ * reading any body. Otherwise stream the body, and as soon as the cap is
+ * exceeded resolve with `too-large` immediately (so the caller can send 413
+ * without waiting for the client to finish uploading). The remaining body is
+ * drained in the background to keep the connection healthy.
  */
 async function readBody(req: IncomingMessage, maxBytes: number): Promise<ReadResult> {
   const declared = Number.parseInt(req.headers['content-length'] ?? '', 10);
   if (Number.isFinite(declared) && declared > maxBytes) {
+    req.resume();
     return { ok: false, reason: 'too-large' };
   }
 
   return new Promise((resolve) => {
     const chunks: Buffer[] = [];
     let total = 0;
-    let tooLarge = false;
     let settled = false;
+
+    const cleanup = () => {
+      req.off('data', onData);
+      req.off('end', onEnd);
+      req.off('error', onError);
+    };
     const settle = (value: ReadResult) => {
       if (settled) return;
       settled = true;
+      cleanup();
       resolve(value);
     };
-    req.on('data', (chunk: Buffer) => {
+
+    const onData = (chunk: Buffer) => {
       total += chunk.length;
       if (total > maxBytes) {
-        tooLarge = true;
         chunks.length = 0;
-        return; // keep draining; client will finish and we respond after 'end'
-      }
-      if (!tooLarge) chunks.push(chunk);
-    });
-    req.on('end', () => {
-      if (tooLarge) {
         settle({ ok: false, reason: 'too-large' });
+        req.resume(); // drain remaining bytes in background
         return;
       }
+      chunks.push(chunk);
+    };
+    const onEnd = () => {
       settle({ ok: true, body: Buffer.concat(chunks).toString('utf-8') });
-    });
-    req.on('error', () => {
+    };
+    const onError = () => {
       settle({ ok: false, reason: 'stream-error' });
-    });
+    };
+
+    req.on('data', onData);
+    req.on('end', onEnd);
+    req.on('error', onError);
   });
 }
 
