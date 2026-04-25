@@ -1,3 +1,9 @@
+## [2.69.1](https://github.com/datenknoten/freundebuch/compare/v2.69.0...v2.69.1) (2026-04-25)
+
+### Code Refactoring
+
+* **frontend:** Remove address fields from collective form ([03f44f1](https://github.com/datenknoten/freundebuch/commit/03f44f16e8fd20b27e03bc47fc81cc8ddad8422a))
+
 ## [2.69.0](https://github.com/datenknoten/freundebuch/compare/v2.68.3...v2.69.0) (2026-04-25)
 
 ### Features
