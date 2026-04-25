@@ -1,3 +1,19 @@
+## [2.69.0](https://github.com/datenknoten/freundebuch/compare/v2.68.3...v2.69.0) (2026-04-25)
+
+### Features
+
+* **all:** Add MCP server for LLM data access ([8de92d9](https://github.com/datenknoten/freundebuch/commit/8de92d9fd0c96e346bfde2d8da7918ed9458c223))
+
+### Bug Fixes
+
+* **all:** Address PR [#148](https://github.com/datenknoten/freundebuch/issues/148) Copilot follow-ups ([20e4d7a](https://github.com/datenknoten/freundebuch/commit/20e4d7ae51c32d2639f4337250844484c4a068a9))
+* **all:** Address PR [#148](https://github.com/datenknoten/freundebuch/issues/148) round-4 review ([ae41070](https://github.com/datenknoten/freundebuch/commit/ae41070396ae49b0bfff1e46089e873691bad175))
+* **all:** Address PR review for MCP server hardening ([1e423b1](https://github.com/datenknoten/freundebuch/commit/1e423b1856636768f3455f9c2a6c177d45e62d0e))
+* **all:** Address remaining PR review comments ([c7e9612](https://github.com/datenknoten/freundebuch/commit/c7e961284c6ee00aa53f183a8f6c2845d7f4ed45))
+* **all:** Extract MCP HTTP handler and add request hardening ([fa4ac83](https://github.com/datenknoten/freundebuch/commit/fa4ac83de367d5997a4d5283ad504d87ed49d1fc))
+* **all:** Port base64url dash fix to sabredav ([807b215](https://github.com/datenknoten/freundebuch/commit/807b215a61a3c129c5191b8b49aead693d4d9098))
+* **backend:** Preserve base64url dashes when verifying app passwords ([93eb4a3](https://github.com/datenknoten/freundebuch/commit/93eb4a3c0de9065645352adaad397ba231828861))
+
 ## [2.68.3](https://github.com/datenknoten/freundebuch/compare/v2.68.2...v2.68.3) (2026-04-15)
 
 ### Bug Fixes
