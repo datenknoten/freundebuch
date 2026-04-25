@@ -13,6 +13,7 @@ COPY tsconfig.base.json ./
 # Copy all workspace package.json files (needed for pnpm lockfile resolution)
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/frontend/package.json ./apps/frontend/
+COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies
@@ -20,6 +21,7 @@ RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY apps/backend ./apps/backend
+COPY apps/mcp-server ./apps/mcp-server
 COPY packages/shared ./packages/shared
 COPY database ./database
 

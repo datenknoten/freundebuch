@@ -71,6 +71,9 @@ type ReadResult = { ok: true; body: string } | { ok: false; reason: 'too-large' 
 async function readBody(req: IncomingMessage, maxBytes: number): Promise<ReadResult> {
   const declared = Number.parseInt(req.headers['content-length'] ?? '', 10);
   if (Number.isFinite(declared) && declared > maxBytes) {
+    // Swallow drain-time errors (client abort, socket reset). Without a listener,
+    // an `'error'` event would crash the process via Node's default handler.
+    req.on('error', () => undefined);
     req.resume();
     return { ok: false, reason: 'too-large' };
   }
@@ -97,6 +100,9 @@ async function readBody(req: IncomingMessage, maxBytes: number): Promise<ReadRes
       if (total > maxBytes) {
         chunks.length = 0;
         settle({ ok: false, reason: 'too-large' });
+        // settle() ran cleanup() and detached the original `'error'` listener.
+        // Reattach a no-op so a drain-time abort doesn't crash the process.
+        req.on('error', () => undefined);
         req.resume(); // drain remaining bytes in background
         return;
       }

@@ -106,11 +106,25 @@ jobs:
           # backend - amd64
           - image: backend
             dockerfile: docker/Dockerfile.backend.prod
+            target: backend
             platform: linux/amd64
             arch: amd64
           # backend - arm64
           - image: backend
             dockerfile: docker/Dockerfile.backend.prod
+            target: backend
+            platform: linux/arm64
+            arch: arm64
+          # mcp-server - amd64 (shares Dockerfile.backend.prod)
+          - image: mcp-server
+            dockerfile: docker/Dockerfile.backend.prod
+            target: mcp-server
+            platform: linux/amd64
+            arch: amd64
+          # mcp-server - arm64 (shares Dockerfile.backend.prod)
+          - image: mcp-server
+            dockerfile: docker/Dockerfile.backend.prod
+            target: mcp-server
             platform: linux/arm64
             arch: arm64
           # sabredav - amd64
@@ -167,6 +181,7 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target || '' }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -196,6 +211,7 @@ jobs:
         image:
           - nginx
           - backend
+          - mcp-server
           - sabredav
           - osm-import
     steps:

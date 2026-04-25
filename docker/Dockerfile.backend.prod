@@ -1,8 +1,11 @@
 # syntax=docker/dockerfile:1.4
-# Production Dockerfile for Backend
+# Production Dockerfile for Node-based services (backend + mcp-server).
+# Two production targets share the workspace install + shared/backend build:
+#   --target backend     → ghcr.io/.../backend
+#   --target mcp-server  → ghcr.io/.../mcp-server
 # ============================================
 
-# Stage 1: Build dependencies and compile TypeScript
+# Stage 1: Build dependencies and compile TypeScript (shared by both targets)
 FROM node:24-bookworm-slim AS builder
 
 # Get target architecture for cache isolation
@@ -22,8 +25,11 @@ WORKDIR /app
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY tsconfig.base.json ./
 
-# Copy package.json files for dependency resolution
+# Copy package.json files for all workspaces that participate in either prod image.
+# mcp-server depends on @freundebuch/backend (workspace dep), so backend's
+# package.json is required even for the mcp-server target.
 COPY apps/backend/package.json ./apps/backend/
+COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install all dependencies with architecture-specific cache mount
@@ -33,17 +39,19 @@ RUN --mount=type=cache,id=pnpm-${TARGETARCH},target=/root/.local/share/pnpm/stor
 # Copy source code
 COPY packages/shared ./packages/shared
 COPY apps/backend ./apps/backend
+COPY apps/mcp-server ./apps/mcp-server
 COPY database ./database
 
-# Build shared package and backend
+# Build shared package, backend, mcp-server, and migrations
 RUN pnpm --filter @freundebuch/shared run build && \
     pnpm --filter @freundebuch/backend run build && \
+    pnpm --filter @freundebuch/mcp-server run build && \
     pnpm run migrate:build
 
-# Stage 2: Production runtime
-FROM node:24-bookworm-slim AS production
+# ============================================
+# Stage 2: backend production runtime
+FROM node:24-bookworm-slim AS backend
 
-# Get target architecture for cache isolation
 ARG TARGETARCH
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -79,3 +87,48 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
 CMD ["node", "/app/apps/backend/dist/index.js"]
+
+# ============================================
+# Stage 3: mcp-server production runtime
+FROM node:24-bookworm-slim AS mcp-server
+
+ARG TARGETARCH
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+
+# Copy workspace configuration for production dependencies. mcp-server imports
+# @freundebuch/backend/services/*.js at runtime (workspace dep), so backend's
+# package.json must be present for pnpm to wire up the workspace symlink.
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY apps/mcp-server/package.json ./apps/mcp-server/
+COPY apps/backend/package.json ./apps/backend/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install production dependencies only with architecture-specific cache mount
+RUN --mount=type=cache,id=pnpm-${TARGETARCH},target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --prod --ignore-scripts
+
+# Copy built artifacts. backend dist is included because mcp-server resolves
+# `@freundebuch/backend/services/*.js` to backend's compiled JS via the
+# workspace package's `exports` field.
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder /app/apps/mcp-server/dist ./apps/mcp-server/dist
+
+RUN chown -R node:node /app
+
+# config.ts requires ENV; default it so the all-in-one supervisord image and
+# any compose deploy that forgets to set ENV still boot in production mode.
+ENV ENV=production
+ENV MCP_PORT=3100
+
+EXPOSE 3100
+
+# Drop to non-root user
+USER node
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3100/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+
+CMD ["node", "/app/apps/mcp-server/dist/index.js"]

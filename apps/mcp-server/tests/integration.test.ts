@@ -93,6 +93,44 @@ describe('MCP Server', { timeout: 60000 }, () => {
       expect(response.status).toBe(413);
     });
 
+    it('should not crash when client aborts during oversized body drain', async () => {
+      // Repro: client declares Content-Length > 1 MiB cap, writes a partial body,
+      // then destroys the socket. readBody() short-circuits on Content-Length and
+      // starts draining via req.resume(). The aborted socket surfaces an 'error'
+      // event on the server-side IncomingMessage. Without a no-op error listener
+      // attached before resume(), Node would throw an uncaught error and crash
+      // this test process. Server liveness is verified via /health afterward.
+      const { baseUrl, testUser } = getContext();
+      const http = await import('node:http');
+      const url = new URL(`${baseUrl}/mcp`);
+
+      await new Promise<void>((resolve) => {
+        const req = http.request({
+          method: 'POST',
+          hostname: url.hostname,
+          port: url.port,
+          path: url.pathname,
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': String(2 * 1024 * 1024),
+            Authorization: basicAuthHeader(testUser.email, testUser.appPassword),
+          },
+        });
+        // Expected after destroy(); swallow so the test runner doesn't see it.
+        req.on('error', () => undefined);
+        req.on('close', () => resolve());
+        req.write(Buffer.alloc(64));
+        setTimeout(() => req.destroy(), 10);
+      });
+
+      // Give the server a tick to process the aborted stream + any background drain.
+      await new Promise((r) => setTimeout(r, 100));
+
+      // If the server crashed on an unhandled 'error' event, this would fail.
+      const health = await fetch(`${baseUrl}/health`);
+      expect(health.status).toBe(200);
+    });
+
     it('should return 400 for duplicate mcp-session-id headers', async () => {
       const { baseUrl, testUser } = getContext();
       // `undici` fetch collapses duplicate headers into a comma-joined string,
