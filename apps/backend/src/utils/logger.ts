@@ -4,7 +4,7 @@ import { getConfig } from './config.js';
 export function createLogger() {
   const config = getConfig();
   return pino({
-    level: config.LOG_LEVEL,
+    level: process.env.VITEST === 'true' ? 'silent' : config.LOG_LEVEL,
     redact: {
       paths: [
         'body.password',

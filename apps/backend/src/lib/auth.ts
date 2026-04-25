@@ -28,6 +28,9 @@ function createAuth() {
     database: _authPool,
     basePath: '/api/auth',
     secret: config.BETTER_AUTH_SECRET,
+    logger: {
+      disabled: process.env.VITEST === 'true',
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,

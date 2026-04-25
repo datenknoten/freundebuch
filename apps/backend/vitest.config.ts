@@ -7,6 +7,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     fileParallelism: false,
+    silent: true,
     exclude: ['node_modules', 'dist', '.git', '.cache'],
     coverage: {
       provider: 'v8',
