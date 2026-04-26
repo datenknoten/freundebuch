@@ -71,8 +71,8 @@ hk fix                        # Run all linters with auto-fix
 The pre-commit hook (defined in [`hk.pkl`](hk.pkl)) runs:
 
 - **biome** — auto-fix lint + format on staged JS/TS/Svelte/CSS/JSON files
-- **frontend-type-check** — `aube --filter frontend run type-check` when `apps/frontend/**` is staged
-- **backend-type-check** — `aube --filter backend run type-check` when `apps/backend/**` is staged
+- **frontend-type-check** — `aube --filter @freundebuch/frontend run type-check` when `apps/frontend/**` is staged
+- **backend-type-check** — `aube --filter @freundebuch/backend run type-check` when `apps/backend/**` is staged
 - **shared-build** — build shared package + root type-check when `packages/shared/**` is staged
 
 There is no per-app build step in the pre-commit hook; full builds run on pre-push.

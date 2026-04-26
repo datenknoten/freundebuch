@@ -122,10 +122,10 @@ try {
 
 ```bash
 # From monorepo root
-aube --filter backend dev           # Run dev server
-aube --filter backend build         # Build for production
-aube --filter backend test          # Run tests
-aube --filter backend type-check    # Check types
+aube --filter @freundebuch/backend dev           # Run dev server
+aube --filter @freundebuch/backend build         # Build for production
+aube --filter @freundebuch/backend test          # Run tests
+aube --filter @freundebuch/backend type-check    # Check types
 
 # Or from apps/backend/
 aube dev

@@ -120,8 +120,8 @@ Runs against staged files with auto-fix enabled. Steps are scoped by file glob, 
 | File pattern | Step | What runs |
 |---|---|---|
 | `*.{js,ts,tsx,jsx,svelte,css,json,jsonc}` | `biome` | `biome check` (with `--write` on failure) |
-| `apps/frontend/**/*.{ts,js,svelte}` | `frontend-type-check` | `aube --filter frontend run type-check` |
-| `apps/backend/**/*.{ts,js}` | `backend-type-check` | `aube --filter backend run type-check` |
+| `apps/frontend/**/*.{ts,js,svelte}` | `frontend-type-check` | `aube --filter @freundebuch/frontend run type-check` |
+| `apps/backend/**/*.{ts,js}` | `backend-type-check` | `aube --filter @freundebuch/backend run type-check` |
 | `packages/shared/**/*.{ts,js}` | `shared-build` | shared package build + root `aube type-check` |
 
 There is no per-app build step in pre-commit; full builds run only on pre-push. Auto-fixed files are restaged automatically. Type errors block the commit.
