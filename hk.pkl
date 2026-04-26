@@ -39,12 +39,12 @@ local linters = new Mapping<String, Step> {
       "apps/frontend/**/*.js",
       "apps/frontend/**/*.svelte"
     )
-    check = "aube --filter frontend run type-check"
+    check = "aube --filter @freundebuch/frontend run type-check"
     exclusive = true
   }
   ["backend-type-check"] {
     glob = List("apps/backend/**/*.ts", "apps/backend/**/*.js")
-    check = "aube --filter backend run type-check"
+    check = "aube --filter @freundebuch/backend run type-check"
     exclusive = true
   }
   ["shared-build"] {

@@ -137,7 +137,7 @@ docker compose --profile import run --rm osm-import rheinland-pfalz
 export POSTGIS_ADDRESS_ENABLED=true
 
 # Start the backend
-aube --filter backend run dev
+aube --filter @freundebuch/backend run dev
 ```
 
 ## Troubleshooting
