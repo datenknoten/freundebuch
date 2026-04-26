@@ -49,6 +49,11 @@ function getTypeBadgeColor(typeName: string): string {
 }
 
 let badgeColor = $derived(getTypeBadgeColor(collective.type.name));
+
+function getTypeLabel(typeName: string): string {
+  const key = typeName.toLowerCase().replace(/\s+/g, '_');
+  return $i18n.t(`collectives.types.${key}`, { defaultValue: typeName });
+}
 </script>
 
 <a
@@ -67,7 +72,7 @@ let badgeColor = $derived(getTypeBadgeColor(collective.type.name));
       <div class="mt-2">
         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-body font-medium {badgeColor}">
           <svelte:component this={getTypeIconComponent(collective.type.name)} class="w-3 h-3" strokeWidth="2" />
-          {collective.type.name}
+          {getTypeLabel(collective.type.name)}
         </span>
       </div>
     </div>
