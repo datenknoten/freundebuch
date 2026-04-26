@@ -1219,6 +1219,8 @@
       "address": "Adresse",
       "thisAddress": "diese Adresse",
       "primaryAddress": "Primäre Adresse",
+      "showMap": "Karte anzeigen",
+      "hideMap": "Karte ausblenden",
       "types": {
         "home": "Privat",
         "work": "Arbeit",

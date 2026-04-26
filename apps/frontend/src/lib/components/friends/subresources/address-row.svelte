@@ -1,5 +1,8 @@
 <script lang="ts">
+import MapPin from 'svelte-heros-v2/MapPin.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import type { Address, AddressType } from '$shared';
+import AddressMapModal from './address-map-modal.svelte';
 import SubresourceRow from './subresource-row.svelte';
 
 interface Props {
@@ -10,6 +13,11 @@ interface Props {
 }
 
 let { address, onEdit, onDelete, isDeleting = false }: Props = $props();
+
+const i18n = createI18n();
+let showMap = $state(false);
+
+const hasCoordinates = $derived(address.latitude != null && address.longitude != null);
 
 function formatAddressType(type: AddressType): string {
   const typeLabels: Record<AddressType, string> = {
@@ -29,6 +37,10 @@ function formatAddress(addr: Address): string[] {
   if (addr.stateProvince) lines.push(addr.stateProvince);
   if (addr.country) lines.push(addr.country);
   return lines;
+}
+
+function formatAddressLabel(addr: Address): string {
+  return formatAddress(addr).join(', ');
 }
 
 const addressLines = $derived(formatAddress(address));
@@ -52,5 +64,25 @@ const addressLines = $derived(formatAddress(address));
         {/if}
       </div>
     </div>
+    {#if hasCoordinates}
+      <button
+        type="button"
+        class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-forest border border-forest/30 hover:bg-forest hover:text-white hover:border-forest px-2.5 py-1 rounded-full transition-colors"
+        onclick={() => (showMap = true)}
+        aria-haspopup="dialog"
+      >
+        <MapPin class="w-3.5 h-3.5" strokeWidth="2" />
+        {$i18n.t('subresources.address.showMap')}
+      </button>
+    {/if}
+    {#if address.latitude != null && address.longitude != null}
+      <AddressMapModal
+        open={showMap}
+        latitude={address.latitude}
+        longitude={address.longitude}
+        addressLabel={formatAddressLabel(address)}
+        onClose={() => (showMap = false)}
+      />
+    {/if}
   </div>
 </SubresourceRow>
