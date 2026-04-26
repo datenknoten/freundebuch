@@ -40,36 +40,31 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup mise
+        uses: jdx/mise-action@v2
         with:
-          node-version-file: '.tool-versions'
+          experimental: true
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Get pnpm store directory
+      - name: Resolve aube store path
         shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+        run: echo "AUBE_STORE=$(aube store path 2>/dev/null || echo $HOME/.local/share/aube/store)" >> "$GITHUB_ENV"
 
-      - name: Setup pnpm cache
+      - name: Setup aube cache
         uses: actions/cache@v4
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ${{ env.AUBE_STORE }}
+          key: ${{ runner.os }}-aube-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-aube-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: aube ci
 
       - name: Run semantic-release
         id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HUSKY: 0
+          HK: 0
         run: |
           npx semantic-release
 
@@ -269,30 +264,25 @@ jobs:
         with:
           ref: v${{ needs.release.outputs.new_release_version }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup mise
+        uses: jdx/mise-action@v2
         with:
-          node-version-file: '.tool-versions'
+          experimental: true
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Get pnpm store directory
+      - name: Resolve aube store path
         shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+        run: echo "AUBE_STORE=$(aube store path 2>/dev/null || echo $HOME/.local/share/aube/store)" >> "$GITHUB_ENV"
 
-      - name: Setup pnpm cache
+      - name: Setup aube cache
         uses: actions/cache@v4
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ${{ env.AUBE_STORE }}
+          key: ${{ runner.os }}-aube-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-aube-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: aube ci
 
       - name: Build frontend
         env:
@@ -300,8 +290,8 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
-          pnpm --filter @freundebuch/shared run build
-          pnpm --filter @freundebuch/frontend run build
+          aube --filter @freundebuch/shared run build
+          aube --filter @freundebuch/frontend run build
 
       - name: Create frontend tarball
         env:
