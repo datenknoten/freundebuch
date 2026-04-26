@@ -1,0 +1,122 @@
+// hk configuration — https://hk.jdx.dev
+//
+// hk replaces husky + lint-staged for this repo. The hooks below mirror the
+// previous .husky/* scripts but run with hk's parallel scheduling and
+// read/write file locking.
+//
+// Tools are pinned by mise.toml. Setting HK_MISE=1 in mise.toml makes the
+// installed hooks run via `mise x` so contributors who haven't activated
+// mise in their shell still get the right versions.
+
+amends "package://github.com/jdx/hk/releases/download/v1.9.2/hk@1.9.2#/Config.pkl"
+
+local biomeGlobs = List(
+  "*.js",
+  "*.jsx",
+  "*.ts",
+  "*.tsx",
+  "*.svelte",
+  "*.css",
+  "*.json",
+  "*.jsonc"
+)
+
+// Linters run on individual file changes during pre-commit (with auto-fix)
+// and as read-only checks on pre-push.
+local linters = new Mapping<String, Step> {
+  ["biome"] {
+    glob = biomeGlobs
+    check = "biome check --no-errors-on-unmatched {{files}}"
+    fix = "biome check --write --no-errors-on-unmatched {{files}}"
+    batch = true
+  }
+
+  // Workspace-aware type checks. They run only when files in the matching
+  // workspace are staged, mirroring the lint-staged config in package.json.
+  ["frontend-type-check"] {
+    glob = List(
+      "apps/frontend/**/*.ts",
+      "apps/frontend/**/*.js",
+      "apps/frontend/**/*.svelte"
+    )
+    check = "aube --filter frontend run type-check"
+    exclusive = true
+  }
+  ["backend-type-check"] {
+    glob = List("apps/backend/**/*.ts", "apps/backend/**/*.js")
+    check = "aube --filter backend run type-check"
+    exclusive = true
+  }
+  ["shared-build"] {
+    glob = List("packages/shared/**/*.ts", "packages/shared/**/*.js")
+    check = "aube --filter @freundebuch/shared run build && aube type-check"
+    exclusive = true
+  }
+}
+
+hooks {
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    steps = linters
+  }
+
+  // pre-push mirrors CI. Steps must run in this order; `depends` enforces it.
+  ["pre-push"] {
+    steps {
+      ["danger"] {
+        check = "npx danger local --base main"
+        exclusive = true
+      }
+      ["check"] {
+        check = "aube check"
+        exclusive = true
+        depends = List("danger")
+      }
+      ["type-check"] {
+        check = "aube type-check"
+        exclusive = true
+        depends = List("check")
+      }
+      ["test"] {
+        check = "aube --recursive run test"
+        exclusive = true
+        depends = List("type-check")
+      }
+      ["test-php"] {
+        check = """
+          if [ ! -d apps/sabredav/vendor ]; then
+            (cd apps/sabredav && composer install --no-interaction --prefer-dist --quiet)
+          fi
+          aube test:php
+          """
+        exclusive = true
+        depends = List("test")
+      }
+      ["build"] {
+        check = "aube build"
+        exclusive = true
+        depends = List("test-php")
+      }
+    }
+  }
+
+  // Validate commit messages against commitlint.config.mjs.
+  ["commit-msg"] {
+    steps {
+      ["commitlint"] {
+        check = "npx commitlint --edit {{commit_msg_file}}"
+      }
+    }
+  }
+
+  // `hk fix` and `hk check` re-use the same linters so contributors can run
+  // them ad-hoc without going through git.
+  ["fix"] {
+    fix = true
+    steps = linters
+  }
+  ["check"] {
+    steps = linters
+  }
+}
