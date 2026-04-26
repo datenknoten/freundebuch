@@ -1219,6 +1219,8 @@
       "address": "Address",
       "thisAddress": "this address",
       "primaryAddress": "Primary address",
+      "showMap": "Show map",
+      "hideMap": "Hide map",
       "types": {
         "home": "Home",
         "work": "Work",

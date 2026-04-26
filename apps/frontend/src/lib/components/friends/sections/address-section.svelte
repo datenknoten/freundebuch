@@ -30,6 +30,24 @@ let deleteConfirmName = $state('');
 
 let showModal = $derived(isAdding || editingId !== null);
 
+/**
+ * Poll for geocoding completion. Backend geocodes addresses asynchronously
+ * after the write commits, so the response we just stored may still have
+ * null coordinates. Refetch a few times to pick up coordinates once they
+ * land — fast for PostGIS (DACH) hits, up to a couple seconds for the
+ * Nominatim fallback.
+ */
+function scheduleGeocodeRefresh() {
+  const delaysMs = [800, 2000, 4500];
+  for (const delay of delaysMs) {
+    setTimeout(() => {
+      friends.loadFriend(friendId).catch(() => {
+        // Refetch is best-effort; ignore transient failures.
+      });
+    }, delay);
+  }
+}
+
 function openAdd() {
   editingId = null;
   editingData = null;
@@ -69,6 +87,10 @@ async function handleSave() {
       await friends.addAddress(friendId, data);
     }
     closeModal();
+    // Geocoding runs asynchronously on the backend after the write commits.
+    // Refetch the friend after a short delay so newly resolved coordinates
+    // (and the resulting "Show map" button) appear without a manual reload.
+    scheduleGeocodeRefresh();
   } catch (err) {
     editError = err instanceof Error ? err.message : $i18n.t('subresources.common.failedToSave');
     isEditLoading = false;

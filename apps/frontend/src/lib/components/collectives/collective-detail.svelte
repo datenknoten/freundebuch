@@ -349,6 +349,13 @@ async function handleSave() {
         const created = await addAddress(collective.id, data);
         addresses = [...addresses, created];
       }
+      // Geocoding runs asynchronously on the backend; refetch a few times to
+      // pick up coordinates once they land.
+      for (const delay of [800, 2000, 4500]) {
+        setTimeout(() => {
+          loadSubresources().catch(() => undefined);
+        }, delay);
+      }
     } else if (editingType === 'url' && urlFormRef?.isValid()) {
       const data = urlFormRef.getData();
       if (editingId) {

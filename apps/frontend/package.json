@@ -25,6 +25,7 @@
     "i18next": "25.7.4",
     "i18next-browser-languagedetector": "8.2.0",
     "isomorphic-dompurify": "2.35.0",
+    "leaflet": "1.9.4",
     "svelte-easy-crop": "5.0.0",
     "svelte-heros-v2": "3.0.1",
     "svelte-i18next": "2.2.2"
@@ -37,6 +38,7 @@
     "@tailwindcss/postcss": "4.1.18",
     "@testing-library/svelte": "5.3.0",
     "@types/d3": "7.4.3",
+    "@types/leaflet": "1.9.21",
     "autoprefixer": "10.4.23",
     "jsdom": "27.3.0",
     "postcss": "8.5.6",
