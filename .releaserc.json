@@ -57,7 +57,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "pnpm version:sync ${nextRelease.version}"
+        "prepareCmd": "aube version:sync ${nextRelease.version}"
       }
     ],
     [

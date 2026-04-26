@@ -6,5 +6,5 @@ FILE=$(jq -r '.tool_input.file_path // empty')
 
 # Only run if the edited file is a .sql file
 if [[ "$FILE" == *.sql ]]; then
-  cd "$CLAUDE_PROJECT_DIR" && pnpm pgtyped 2>&1
+  cd "$CLAUDE_PROJECT_DIR" && aube pgtyped 2>&1
 fi

@@ -1,7 +1,6 @@
 packages:
   - apps/*
   - packages/*
-
 onlyBuiltDependencies:
   - '@sveltejs/kit'
   - bcrypt
@@ -10,3 +9,4 @@ onlyBuiltDependencies:
   - protobufjs
   - sharp
   - ssh2
+  - '@sentry/cli'
