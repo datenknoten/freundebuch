@@ -1,6 +1,0 @@
-#!/usr/bin/env sh
-
-# Pre-commit hook: Run lint-staged for all checks
-# lint-staged handles running the right commands for each file type
-
-pnpm lint-staged
