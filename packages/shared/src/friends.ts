@@ -342,6 +342,8 @@ export interface Address {
   addressType: AddressType;
   label?: string;
   isPrimary: boolean;
+  latitude?: number;
+  longitude?: number;
   createdAt: string;
 }
 

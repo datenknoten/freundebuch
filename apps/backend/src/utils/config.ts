@@ -47,6 +47,12 @@ const ConfigSchema = type({
   OVERPASS_FALLBACK_URL: 'string = "https://overpass.kumi.systems/api/interpreter"',
   ADDRESS_CACHE_TTL_HOURS: 'string.integer.parse = "24"',
 
+  // Nominatim geocoding contact email. OSM usage policy requires identifying
+  // contact info — without it the User-Agent is generic and OSM may
+  // rate-limit or block requests. NominatimClient logs a startup warning
+  // when this is missing.
+  'NOMINATIM_CONTACT_EMAIL?': 'string',
+
   // PostGIS Address Lookup (local OSM data)
   POSTGIS_ADDRESS_ENABLED: BooleanString.default(false),
   POSTGIS_ADDRESS_DACH_ONLY: BooleanString.default(true),

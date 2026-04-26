@@ -19,6 +19,10 @@ export interface IGetAddressesByFriendIdResult {
   is_primary: boolean;
   /** User-defined label */
   label: string | null;
+  /** WGS84 latitude from geocoding */
+  latitude: number | null;
+  /** WGS84 longitude from geocoding */
+  longitude: number | null;
   postal_code: string | null;
   state_province: string | null;
   street_line1: string | null;
@@ -31,7 +35,7 @@ export interface IGetAddressesByFriendIdQuery {
   result: IGetAddressesByFriendIdResult;
 }
 
-const getAddressesByFriendIdIR: any = {"usedParamSet":{"friendExternalId":true,"userExternalId":true},"params":[{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":351,"b":367}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":391,"b":405}]}],"statement":"SELECT\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.created_at\nFROM friends.friend_addresses a\nINNER JOIN friends.friends c ON a.friend_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY a.is_primary DESC, a.created_at ASC"};
+const getAddressesByFriendIdIR: any = {"usedParamSet":{"friendExternalId":true,"userExternalId":true},"params":[{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":384,"b":400}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":424,"b":438}]}],"statement":"SELECT\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.latitude,\n    a.longitude,\n    a.created_at\nFROM friends.friend_addresses a\nINNER JOIN friends.friends c ON a.friend_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY a.is_primary DESC, a.created_at ASC"};
 
 /**
  * Query generated from SQL:
@@ -47,6 +51,8 @@ const getAddressesByFriendIdIR: any = {"usedParamSet":{"friendExternalId":true,"
  *     a.address_type,
  *     a.label,
  *     a.is_primary,
+ *     a.latitude,
+ *     a.longitude,
  *     a.created_at
  * FROM friends.friend_addresses a
  * INNER JOIN friends.friends c ON a.friend_id = c.id
@@ -79,6 +85,10 @@ export interface IGetAddressByIdResult {
   is_primary: boolean;
   /** User-defined label */
   label: string | null;
+  /** WGS84 latitude from geocoding */
+  latitude: number | null;
+  /** WGS84 longitude from geocoding */
+  longitude: number | null;
   postal_code: string | null;
   state_province: string | null;
   street_line1: string | null;
@@ -91,7 +101,7 @@ export interface IGetAddressByIdQuery {
   result: IGetAddressByIdResult;
 }
 
-const getAddressByIdIR: any = {"usedParamSet":{"addressExternalId":true,"friendExternalId":true,"userExternalId":true},"params":[{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":351,"b":368}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":392,"b":408}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":432,"b":446}]}],"statement":"SELECT\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.created_at\nFROM friends.friend_addresses a\nINNER JOIN friends.friends c ON a.friend_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE a.external_id = :addressExternalId\n  AND c.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
+const getAddressByIdIR: any = {"usedParamSet":{"addressExternalId":true,"friendExternalId":true,"userExternalId":true},"params":[{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":384,"b":401}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":425,"b":441}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":465,"b":479}]}],"statement":"SELECT\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.latitude,\n    a.longitude,\n    a.created_at\nFROM friends.friend_addresses a\nINNER JOIN friends.friends c ON a.friend_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE a.external_id = :addressExternalId\n  AND c.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
 
 /**
  * Query generated from SQL:
@@ -107,6 +117,8 @@ const getAddressByIdIR: any = {"usedParamSet":{"addressExternalId":true,"friendE
  *     a.address_type,
  *     a.label,
  *     a.is_primary,
+ *     a.latitude,
+ *     a.longitude,
  *     a.created_at
  * FROM friends.friend_addresses a
  * INNER JOIN friends.friends c ON a.friend_id = c.id
@@ -128,6 +140,8 @@ export interface ICreateAddressParams {
   friendExternalId?: string | null | void;
   isPrimary?: boolean | null | void;
   label?: string | null | void;
+  latitude?: number | null | void;
+  longitude?: number | null | void;
   postalCode?: string | null | void;
   stateProvince?: string | null | void;
   streetLine1?: string | null | void;
@@ -147,6 +161,10 @@ export interface ICreateAddressResult {
   is_primary: boolean;
   /** User-defined label */
   label: string | null;
+  /** WGS84 latitude from geocoding */
+  latitude: number | null;
+  /** WGS84 longitude from geocoding */
+  longitude: number | null;
   postal_code: string | null;
   state_province: string | null;
   street_line1: string | null;
@@ -159,7 +177,7 @@ export interface ICreateAddressQuery {
   result: ICreateAddressResult;
 }
 
-const createAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":true,"city":true,"stateProvince":true,"postalCode":true,"country":true,"addressType":true,"label":true,"isPrimary":true,"friendExternalId":true,"userExternalId":true},"params":[{"name":"streetLine1","required":false,"transform":{"type":"scalar"},"locs":[{"a":217,"b":228}]},{"name":"streetLine2","required":false,"transform":{"type":"scalar"},"locs":[{"a":235,"b":246}]},{"name":"city","required":false,"transform":{"type":"scalar"},"locs":[{"a":253,"b":257}]},{"name":"stateProvince","required":false,"transform":{"type":"scalar"},"locs":[{"a":264,"b":277}]},{"name":"postalCode","required":false,"transform":{"type":"scalar"},"locs":[{"a":284,"b":294}]},{"name":"country","required":false,"transform":{"type":"scalar"},"locs":[{"a":301,"b":308}]},{"name":"addressType","required":false,"transform":{"type":"scalar"},"locs":[{"a":315,"b":326}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":333,"b":338}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":345,"b":354}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":445,"b":461}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":485,"b":499}]}],"statement":"INSERT INTO friends.friend_addresses (\n    friend_id,\n    street_line1,\n    street_line2,\n    city,\n    state_province,\n    postal_code,\n    country,\n    address_type,\n    label,\n    is_primary\n)\nSELECT\n    c.id,\n    :streetLine1,\n    :streetLine2,\n    :city,\n    :stateProvince,\n    :postalCode,\n    :country,\n    :addressType,\n    :label,\n    :isPrimary\nFROM friends.friends c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    external_id,\n    street_line1,\n    street_line2,\n    city,\n    state_province,\n    postal_code,\n    country,\n    address_type,\n    label,\n    is_primary,\n    created_at"};
+const createAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":true,"city":true,"stateProvince":true,"postalCode":true,"country":true,"addressType":true,"label":true,"isPrimary":true,"latitude":true,"longitude":true,"friendExternalId":true,"userExternalId":true},"params":[{"name":"streetLine1","required":false,"transform":{"type":"scalar"},"locs":[{"a":246,"b":257}]},{"name":"streetLine2","required":false,"transform":{"type":"scalar"},"locs":[{"a":264,"b":275}]},{"name":"city","required":false,"transform":{"type":"scalar"},"locs":[{"a":282,"b":286}]},{"name":"stateProvince","required":false,"transform":{"type":"scalar"},"locs":[{"a":293,"b":306}]},{"name":"postalCode","required":false,"transform":{"type":"scalar"},"locs":[{"a":313,"b":323}]},{"name":"country","required":false,"transform":{"type":"scalar"},"locs":[{"a":330,"b":337}]},{"name":"addressType","required":false,"transform":{"type":"scalar"},"locs":[{"a":344,"b":355}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":362,"b":367}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":374,"b":383}]},{"name":"latitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":390,"b":398}]},{"name":"longitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":405,"b":414}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":505,"b":521}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":545,"b":559}]}],"statement":"INSERT INTO friends.friend_addresses (\n    friend_id,\n    street_line1,\n    street_line2,\n    city,\n    state_province,\n    postal_code,\n    country,\n    address_type,\n    label,\n    is_primary,\n    latitude,\n    longitude\n)\nSELECT\n    c.id,\n    :streetLine1,\n    :streetLine2,\n    :city,\n    :stateProvince,\n    :postalCode,\n    :country,\n    :addressType,\n    :label,\n    :isPrimary,\n    :latitude,\n    :longitude\nFROM friends.friends c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    external_id,\n    street_line1,\n    street_line2,\n    city,\n    state_province,\n    postal_code,\n    country,\n    address_type,\n    label,\n    is_primary,\n    latitude,\n    longitude,\n    created_at"};
 
 /**
  * Query generated from SQL:
@@ -174,7 +192,9 @@ const createAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":t
  *     country,
  *     address_type,
  *     label,
- *     is_primary
+ *     is_primary,
+ *     latitude,
+ *     longitude
  * )
  * SELECT
  *     c.id,
@@ -186,7 +206,9 @@ const createAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":t
  *     :country,
  *     :addressType,
  *     :label,
- *     :isPrimary
+ *     :isPrimary,
+ *     :latitude,
+ *     :longitude
  * FROM friends.friends c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE c.external_id = :friendExternalId
@@ -203,6 +225,8 @@ const createAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":t
  *     address_type,
  *     label,
  *     is_primary,
+ *     latitude,
+ *     longitude,
  *     created_at
  * ```
  */
@@ -218,6 +242,8 @@ export interface IUpdateAddressParams {
   friendExternalId?: string | null | void;
   isPrimary?: boolean | null | void;
   label?: string | null | void;
+  latitude?: number | null | void;
+  longitude?: number | null | void;
   postalCode?: string | null | void;
   stateProvince?: string | null | void;
   streetLine1?: string | null | void;
@@ -237,6 +263,10 @@ export interface IUpdateAddressResult {
   is_primary: boolean;
   /** User-defined label */
   label: string | null;
+  /** WGS84 latitude from geocoding */
+  latitude: number | null;
+  /** WGS84 longitude from geocoding */
+  longitude: number | null;
   postal_code: string | null;
   state_province: string | null;
   street_line1: string | null;
@@ -249,7 +279,7 @@ export interface IUpdateAddressQuery {
   result: IUpdateAddressResult;
 }
 
-const updateAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":true,"city":true,"stateProvince":true,"postalCode":true,"country":true,"addressType":true,"label":true,"isPrimary":true,"addressExternalId":true,"friendExternalId":true,"userExternalId":true},"params":[{"name":"streetLine1","required":false,"transform":{"type":"scalar"},"locs":[{"a":57,"b":68}]},{"name":"streetLine2","required":false,"transform":{"type":"scalar"},"locs":[{"a":90,"b":101}]},{"name":"city","required":false,"transform":{"type":"scalar"},"locs":[{"a":115,"b":119}]},{"name":"stateProvince","required":false,"transform":{"type":"scalar"},"locs":[{"a":143,"b":156}]},{"name":"postalCode","required":false,"transform":{"type":"scalar"},"locs":[{"a":177,"b":187}]},{"name":"country","required":false,"transform":{"type":"scalar"},"locs":[{"a":204,"b":211}]},{"name":"addressType","required":false,"transform":{"type":"scalar"},"locs":[{"a":233,"b":244}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":259,"b":264}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":284,"b":293}]},{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":384,"b":401}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":450,"b":466}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":490,"b":504}]}],"statement":"UPDATE friends.friend_addresses a\nSET\n    street_line1 = :streetLine1,\n    street_line2 = :streetLine2,\n    city = :city,\n    state_province = :stateProvince,\n    postal_code = :postalCode,\n    country = :country,\n    address_type = :addressType,\n    label = :label,\n    is_primary = :isPrimary\nFROM friends.friends c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE a.external_id = :addressExternalId\n  AND a.friend_id = c.id\n  AND c.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.created_at"};
+const updateAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":true,"city":true,"stateProvince":true,"postalCode":true,"country":true,"addressType":true,"label":true,"isPrimary":true,"latitude":true,"longitude":true,"addressExternalId":true,"friendExternalId":true,"userExternalId":true},"params":[{"name":"streetLine1","required":false,"transform":{"type":"scalar"},"locs":[{"a":57,"b":68}]},{"name":"streetLine2","required":false,"transform":{"type":"scalar"},"locs":[{"a":90,"b":101}]},{"name":"city","required":false,"transform":{"type":"scalar"},"locs":[{"a":115,"b":119}]},{"name":"stateProvince","required":false,"transform":{"type":"scalar"},"locs":[{"a":143,"b":156}]},{"name":"postalCode","required":false,"transform":{"type":"scalar"},"locs":[{"a":177,"b":187}]},{"name":"country","required":false,"transform":{"type":"scalar"},"locs":[{"a":204,"b":211}]},{"name":"addressType","required":false,"transform":{"type":"scalar"},"locs":[{"a":233,"b":244}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":259,"b":264}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":284,"b":293}]},{"name":"latitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":311,"b":319}]},{"name":"longitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":338,"b":347}]},{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":438,"b":455}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":504,"b":520}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":544,"b":558}]}],"statement":"UPDATE friends.friend_addresses a\nSET\n    street_line1 = :streetLine1,\n    street_line2 = :streetLine2,\n    city = :city,\n    state_province = :stateProvince,\n    postal_code = :postalCode,\n    country = :country,\n    address_type = :addressType,\n    label = :label,\n    is_primary = :isPrimary,\n    latitude = :latitude,\n    longitude = :longitude\nFROM friends.friends c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE a.external_id = :addressExternalId\n  AND a.friend_id = c.id\n  AND c.external_id = :friendExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.latitude,\n    a.longitude,\n    a.created_at"};
 
 /**
  * Query generated from SQL:
@@ -264,7 +294,9 @@ const updateAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":t
  *     country = :country,
  *     address_type = :addressType,
  *     label = :label,
- *     is_primary = :isPrimary
+ *     is_primary = :isPrimary,
+ *     latitude = :latitude,
+ *     longitude = :longitude
  * FROM friends.friends c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE a.external_id = :addressExternalId
@@ -283,10 +315,43 @@ const updateAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":t
  *     a.address_type,
  *     a.label,
  *     a.is_primary,
+ *     a.latitude,
+ *     a.longitude,
  *     a.created_at
  * ```
  */
 export const updateAddress = new PreparedQuery<IUpdateAddressParams,IUpdateAddressResult>(updateAddressIR);
+
+
+/** 'UpdateAddressCoordinates' parameters type */
+export interface IUpdateAddressCoordinatesParams {
+  addressExternalId?: string | null | void;
+  latitude?: number | null | void;
+  longitude?: number | null | void;
+}
+
+/** 'UpdateAddressCoordinates' return type */
+export type IUpdateAddressCoordinatesResult = void;
+
+/** 'UpdateAddressCoordinates' query type */
+export interface IUpdateAddressCoordinatesQuery {
+  params: IUpdateAddressCoordinatesParams;
+  result: IUpdateAddressCoordinatesResult;
+}
+
+const updateAddressCoordinatesIR: any = {"usedParamSet":{"latitude":true,"longitude":true,"addressExternalId":true},"params":[{"name":"latitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":51,"b":59}]},{"name":"longitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":78,"b":87}]},{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":109,"b":126}]}],"statement":"UPDATE friends.friend_addresses\nSET\n    latitude = :latitude,\n    longitude = :longitude\nWHERE external_id = :addressExternalId"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * UPDATE friends.friend_addresses
+ * SET
+ *     latitude = :latitude,
+ *     longitude = :longitude
+ * WHERE external_id = :addressExternalId
+ * ```
+ */
+export const updateAddressCoordinates = new PreparedQuery<IUpdateAddressCoordinatesParams,IUpdateAddressCoordinatesResult>(updateAddressCoordinatesIR);
 
 
 /** 'DeleteAddress' parameters type */

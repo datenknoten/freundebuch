@@ -19,7 +19,7 @@ app.use('*', authMiddleware);
 app.use('*', onboardingMiddleware);
 
 // Singleton service instance (lazy init)
-let addressService: AddressLookupService | null = null;
+let addressLookupService: AddressLookupService | null = null;
 let postgisClient: PostGISAddressClient | null = null;
 
 function getPostGISClient(pool: pg.Pool, logger: Logger): PostGISAddressClient {
@@ -30,12 +30,12 @@ function getPostGISClient(pool: pg.Pool, logger: Logger): PostGISAddressClient {
 }
 
 function getAddressService(pool: pg.Pool, logger: Logger): AddressLookupService {
-  if (!addressService) {
+  if (!addressLookupService) {
     const config = getConfig();
     if (!config.ZIPCODEBASE_API_KEY) {
       throw new ServiceNotConfiguredError('Address lookup service not configured');
     }
-    addressService = new AddressLookupService(
+    addressLookupService = new AddressLookupService(
       {
         zipcodeApiKey: config.ZIPCODEBASE_API_KEY,
         overpassPrimaryUrl: config.OVERPASS_API_URL,
@@ -43,11 +43,33 @@ function getAddressService(pool: pg.Pool, logger: Logger): AddressLookupService 
         postgisClient: config.POSTGIS_ADDRESS_ENABLED ? getPostGISClient(pool, logger) : undefined,
         postgisEnabled: config.POSTGIS_ADDRESS_ENABLED,
         postgisDachOnly: config.POSTGIS_ADDRESS_DACH_ONLY,
+        nominatimContactEmail: config.NOMINATIM_CONTACT_EMAIL,
       },
       logger,
     );
   }
-  return addressService;
+  return addressLookupService;
+}
+
+/**
+ * Get the AddressLookupService singleton for geocoding.
+ * Returns undefined when the service is not configured (e.g., missing API key).
+ * Re-throws any other error so genuine bugs are not silently swallowed.
+ */
+export function getAddressLookupService(
+  pool: pg.Pool,
+  logger: Logger,
+): AddressLookupService | undefined {
+  try {
+    return getAddressService(pool, logger);
+  } catch (error) {
+    if (error instanceof ServiceNotConfiguredError) {
+      logger.debug({ error }, 'Address lookup service not configured, geocoding disabled');
+      return undefined;
+    }
+    logger.error({ error }, 'Unexpected error initializing address lookup service');
+    throw error;
+  }
 }
 
 // ============================================================================
@@ -157,6 +179,6 @@ export default app;
  * Reset the address service singletons (useful for testing)
  */
 export function resetAddressService(): void {
-  addressService = null;
+  addressLookupService = null;
   postgisClient = null;
 }

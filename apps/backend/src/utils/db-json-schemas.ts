@@ -46,6 +46,8 @@ const AddressJsonRowSchema = type({
   address_type: 'string',
   label: 'string | null',
   is_primary: 'boolean',
+  latitude: 'number | null',
+  longitude: 'number | null',
   created_at: 'string',
 });
 

@@ -55,6 +55,8 @@ SELECT
             'address_type', a.address_type,
             'label', a.label,
             'is_primary', a.is_primary,
+            'latitude', a.latitude,
+            'longitude', a.longitude,
             'created_at', a.created_at
         ) ORDER BY a.is_primary DESC, a.created_at ASC), '[]'::json)
         FROM friends.friend_addresses a

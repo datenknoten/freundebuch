@@ -1,4 +1,6 @@
 import type { Logger } from 'pino';
+import type { GeocodedLocation } from './external/nominatim.client.js';
+import { NominatimClient } from './external/nominatim.client.js';
 import { type HouseNumber, OverpassClient, type Street } from './external/overpass.client.js';
 import type { PostGISAddressClient } from './external/postgis-address.client.js';
 import { type Country, ZipcodeBaseClient } from './external/zipcodebase.client.js';
@@ -21,11 +23,13 @@ export interface AddressLookupServiceOptions {
   postgisClient?: PostGISAddressClient;
   postgisEnabled?: boolean;
   postgisDachOnly?: boolean;
+  nominatimContactEmail?: string;
 }
 
 export class AddressLookupService {
   private zipcodeClient: ZipcodeBaseClient;
   private overpassClient: OverpassClient;
+  private nominatimClient: NominatimClient;
   private postgisClient?: PostGISAddressClient;
   private postgisEnabled: boolean;
   private postgisDachOnly: boolean;
@@ -40,6 +44,7 @@ export class AddressLookupService {
       options.overpassFallbackUrl,
       logger,
     );
+    this.nominatimClient = new NominatimClient(logger, options.nominatimContactEmail);
     this.postgisClient = options.postgisClient;
     this.postgisEnabled = options.postgisEnabled ?? false;
     this.postgisDachOnly = options.postgisDachOnly ?? true;
@@ -181,6 +186,61 @@ export class AddressLookupService {
         'Failed to fetch house numbers from Overpass',
       );
       return [];
+    }
+  }
+
+  /**
+   * Geocode an address to lat/lon coordinates.
+   * Uses PostGIS for DACH countries (if enabled), falls back to Nominatim.
+   * Returns null if geocoding fails — never throws.
+   */
+  async geocodeAddress(
+    countryCode: string,
+    city: string,
+    postalCode: string,
+    street?: string,
+    houseNumber?: string,
+  ): Promise<GeocodedLocation | null> {
+    // Need at least country + city or postal code
+    if (!countryCode || (!city && !postalCode)) {
+      return null;
+    }
+
+    // Try PostGIS first for DACH countries
+    if (this.shouldUsePostGIS(countryCode) && this.postgisClient && street) {
+      try {
+        const location = await this.postgisClient.geocodeAddress(
+          countryCode,
+          postalCode,
+          city,
+          street,
+          houseNumber,
+        );
+        if (location) {
+          this.logger.debug({ countryCode, city, postalCode, street }, 'PostGIS geocode succeeded');
+          return location;
+        }
+        this.logger.debug(
+          { countryCode, city, postalCode, street },
+          'PostGIS geocode returned no results, falling back to Nominatim',
+        );
+      } catch (error) {
+        this.logger.warn(
+          { error, countryCode, city, postalCode, street },
+          'PostGIS geocode failed, falling back to Nominatim',
+        );
+      }
+    }
+
+    // Fallback to Nominatim
+    try {
+      return await this.nominatimClient.geocode(countryCode, city, postalCode, street, houseNumber);
+    } catch (error) {
+      this.logger.warn(
+        { error, countryCode, city, postalCode, street },
+        'Nominatim geocode failed',
+      );
+      return null;
     }
   }
 }

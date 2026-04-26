@@ -10,6 +10,7 @@ import {
   ValidationError,
 } from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
+import { getAddressLookupService } from '../../address-lookup.js';
 
 const app = new Hono<AppContext>();
 
@@ -39,7 +40,8 @@ app.post('/', async (c) => {
     throw new ValidationError('Invalid request', validated);
   }
 
-  const friendsService = new FriendsService(db, c.get('logger'));
+  const logger = c.get('logger');
+  const friendsService = new FriendsService(db, logger, getAddressLookupService(db, logger));
   const address = await friendsService.addAddress(user.userId, friendId, validated);
 
   if (!address) {
@@ -76,7 +78,8 @@ app.put('/:addressId', async (c) => {
     throw new ValidationError('Invalid request', validated);
   }
 
-  const friendsService = new FriendsService(db, c.get('logger'));
+  const logger = c.get('logger');
+  const friendsService = new FriendsService(db, logger, getAddressLookupService(db, logger));
   const address = await friendsService.updateAddress(user.userId, friendId, addressId, validated);
 
   if (!address) {
@@ -100,7 +103,8 @@ app.delete('/:addressId', async (c) => {
     throw new ValidationError('Invalid ID');
   }
 
-  const friendsService = new FriendsService(db, c.get('logger'));
+  const logger = c.get('logger');
+  const friendsService = new FriendsService(db, logger, getAddressLookupService(db, logger));
   const deleted = await friendsService.deleteAddress(user.userId, friendId, addressId);
 
   if (!deleted) {
