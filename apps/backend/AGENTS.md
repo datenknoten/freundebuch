@@ -122,23 +122,23 @@ try {
 
 ```bash
 # From monorepo root
-pnpm --filter backend dev           # Run dev server
-pnpm --filter backend build         # Build for production
-pnpm --filter backend test          # Run tests
-pnpm --filter backend type-check    # Check types
+aube --filter backend dev           # Run dev server
+aube --filter backend build         # Build for production
+aube --filter backend test          # Run tests
+aube --filter backend type-check    # Check types
 
 # Or from apps/backend/
-pnpm dev
-pnpm build
-pnpm test
+aube dev
+aube build
+aube test
 ```
 
 ### Migrations
 
 ```bash
-pnpm migrate:create <name>    # Create new migration
-pnpm migrate                  # Run pending migrations
-pnpm migrate:down             # Rollback last migration
+aube migrate:create <name>    # Create new migration
+aube migrate                  # Run pending migrations
+aube migrate:down             # Rollback last migration
 ```
 
 - Always implement `down()` for rollback
@@ -148,11 +148,11 @@ pnpm migrate:down             # Rollback last migration
 ### PgTyped
 
 ```bash
-pnpm pgtyped                  # Generate types from SQL (one-time)
-pnpm pgtyped:watch            # Watch mode for development
+aube pgtyped                  # Generate types from SQL (one-time)
+aube pgtyped:watch            # Watch mode for development
 ```
 
-Run `pnpm pgtyped` after:
+Run `aube pgtyped` after:
 - Creating/modifying `.sql` query files
 - Running migrations that change schema
 

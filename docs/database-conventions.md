@@ -335,7 +335,7 @@ WHERE external_id = :externalId;
 
 ### Generated Types
 
-- Regenerate types after schema changes: `pnpm pgtyped`
+- Regenerate types after schema changes: `aube pgtyped`
 - Commit generated types to version control
 - Types are in `.types.ts` files (gitignored, but examples committed)
 

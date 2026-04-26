@@ -100,15 +100,15 @@ const i18n = createI18n();
 
 ```bash
 # From monorepo root
-pnpm --filter frontend dev          # Run dev server
-pnpm --filter frontend build        # Build for production
-pnpm --filter frontend test         # Run tests
-pnpm --filter frontend type-check   # Check types
+aube --filter frontend dev          # Run dev server
+aube --filter frontend build        # Build for production
+aube --filter frontend test         # Run tests
+aube --filter frontend type-check   # Check types
 
 # Or from apps/frontend/
-pnpm dev
-pnpm build
-pnpm test
+aube dev
+aube build
+aube test
 ```
 
 ## Related Epics

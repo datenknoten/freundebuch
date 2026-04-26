@@ -13,11 +13,13 @@ A self-hostable web application for relationship management. Think of it as your
 ## Quick Start
 
 ```bash
-# Prerequisites: Node.js 24+, pnpm 8+, PostgreSQL 18+ (or Docker)
-pnpm install
-pnpm docker:up
-pnpm migrate
-pnpm dev
+# Prerequisites: PostgreSQL 18+ (or Docker), plus mise (https://mise.jdx.dev)
+# mise installs Node, aube (pnpm-compatible runner), hk, and pkl automatically.
+mise install
+aube install
+mise run docker:up
+aube migrate
+aube dev
 ```
 
 Frontend runs at `http://localhost:5173`, backend at `http://localhost:3000`.

@@ -39,23 +39,43 @@ gh pr view <number>           # View PR details
 
 ## Quick Commands
 
-See [docs/development.md](docs/development.md) for full list.
+See [docs/development.md](docs/development.md) for full list. Composite tasks live in [mise.toml](mise.toml); per-script commands run via `aube <script>`.
 
 ```bash
+# Bootstrap (one-time)
+mise install                  # Install pinned tools + register hk git hooks
+aube install                  # Install JS dependencies
+
 # Database (run from root)
-pnpm migrate:create <name>    # Create new migration
-pnpm migrate                  # Run pending migrations
-pnpm pgtyped                  # Generate types from SQL
+aube migrate:create <name>    # Create new migration
+aube migrate                  # Run pending migrations
+aube pgtyped                  # Generate types from SQL
 
 # Development
-pnpm dev                      # Run all dev servers
-pnpm check                    # Lint + format
-pnpm test                     # Run all tests
+aube dev                      # Run all dev servers
+aube check                    # Lint + format
+aube test                     # Run all tests
 
 # Docker
-pnpm docker:up                # Start database
-pnpm docker:down              # Stop database
+mise run docker:up            # Start database
+mise run docker:down          # Stop database
+
+# Hooks (managed by hk, see hk.pkl)
+hk run pre-commit             # Run the pre-commit hook ad-hoc
+hk check                      # Run all linters in check-only mode
+hk fix                        # Run all linters with auto-fix
 ```
+
+### Pre-commit hook scope
+
+The pre-commit hook (defined in [`hk.pkl`](hk.pkl)) runs:
+
+- **biome** — auto-fix lint + format on staged JS/TS/Svelte/CSS/JSON files
+- **frontend-type-check** — `aube --filter frontend run type-check` when `apps/frontend/**` is staged
+- **backend-type-check** — `aube --filter backend run type-check` when `apps/backend/**` is staged
+- **shared-build** — build shared package + root type-check when `packages/shared/**` is staged
+
+There is no per-app build step in the pre-commit hook; full builds run on pre-push.
 
 ## Quick Reference
 
