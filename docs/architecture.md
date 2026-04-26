@@ -15,7 +15,7 @@ This is a personal relationship tool, not a business/sales CRM.
 | CalDAV/CardDAV | PHP + SabreDAV | Device sync via open protocols |
 | Database | PostgreSQL + PostGIS + PgTyped | Type-safe spatial queries |
 | Shared | TypeScript + ArkType | Cross-app types and runtime validation |
-| Package Manager | pnpm workspaces | Monorepo management |
+| Package Manager | aube (pnpm-compatible workspaces) | Monorepo management |
 | Code Quality | Biome | Linting + formatting |
 | Testing | Vitest + Playwright + PHPUnit | Unit, integration, E2E |
 | Migrations | node-pg-migrate | Database schema management |

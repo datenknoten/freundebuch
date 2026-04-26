@@ -60,12 +60,12 @@ export type Contact = typeof ContactSchema.infer;
 
 ```bash
 # From monorepo root
-pnpm --filter @freundebuch/shared build       # Build the package
-pnpm --filter @freundebuch/shared type-check  # Check types
+aube --filter @freundebuch/shared build       # Build the package
+aube --filter @freundebuch/shared type-check  # Check types
 
 # Or from packages/shared/
-pnpm build
-pnpm type-check
+aube build
+aube type-check
 ```
 
-**Important:** The shared package must be built before frontend or backend can use it. The monorepo root commands (`pnpm build`, `pnpm dev`) handle this automatically.
+**Important:** The shared package must be built before frontend or backend can use it. The monorepo root commands (`aube build`, `aube dev`) handle this automatically.

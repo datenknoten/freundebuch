@@ -9,10 +9,10 @@ This directory contains integration tests that use Testcontainers to spin up rea
 
 ## Running Integration Tests
 
-### Using pnpm (recommended)
+### Using aube (recommended)
 
 ```bash
-pnpm test:integration
+aube test:integration
 ```
 
 ### With Colima
@@ -20,13 +20,13 @@ pnpm test:integration
 If you're using Colima, you may need to set the DOCKER_HOST environment variable:
 
 ```bash
-DOCKER_HOST=unix://$HOME/.colima/default/docker.sock pnpm test:integration
+DOCKER_HOST=unix://$HOME/.colima/default/docker.sock aube test:integration
 ```
 
 ### With OrbStack
 
 ```bash
-DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock pnpm test:integration
+DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock aube test:integration
 ```
 
 ### Environment Variables

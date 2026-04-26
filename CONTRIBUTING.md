@@ -37,22 +37,27 @@ Freundebuch follows a **trunk-based development** model. Keep branches short-liv
 ### 1. Set Up Your Environment
 
 ```bash
-# Prerequisites: Node.js 24+, pnpm 8+, PostgreSQL 18+, PHP 8.4 (for sabredav)
+# Prerequisites: PostgreSQL 18+ (or Docker), PHP 8.4 + Composer 2 (for sabredav),
+# plus mise (https://mise.jdx.dev). mise installs node, aube, hk, and pkl
+# at the versions pinned in mise.toml.
 
 git clone <repo-url>
 cd freundebuch2
-pnpm install
+mise install        # installs all pinned tools and registers git hooks via hk
+aube install        # installs JS dependencies (reads pnpm-lock.yaml)
 
 # Start the database
-pnpm docker:up
+mise run docker:up
 
 # Run migrations and seed data
-pnpm migrate
-pnpm seed
+aube migrate
+aube seed
 
 # Start all dev servers
-pnpm dev
+aube dev
 ```
+
+If you don't use mise, install Node 24, [aube](https://github.com/endevco/aube), PHP 8.4, and Composer 2 manually, then run `aube install`. Git hooks register automatically only if [hk](https://hk.jdx.dev) is on your `PATH` when you run `aube install`.
 
 ### 2. Create a Branch
 
@@ -69,9 +74,9 @@ Keep branch names descriptive and short. Prefix with the commit type (`feat/`, `
 - Run checks locally before pushing:
 
 ```bash
-pnpm check          # Biome lint + format
-pnpm type-check     # TypeScript
-pnpm test           # All tests
+aube check          # Biome lint + format
+aube type-check     # TypeScript
+aube test           # All tests
 ```
 
 ### 4. Open a Pull Request
@@ -87,10 +92,10 @@ Every PR runs these checks automatically:
 
 | Check | Command | What It Verifies |
 |-------|---------|-------------------|
-| Lint & Format | `pnpm check` | Biome rules pass |
-| Type Check | `pnpm type-check` | No TypeScript errors |
-| Tests | `pnpm test` | Unit, integration, and PHP tests pass |
-| Build | `pnpm build` | Project builds successfully |
+| Lint & Format | `aube check` | Biome rules pass |
+| Type Check | `aube type-check` | No TypeScript errors |
+| Tests | `aube test` | Unit, integration, and PHP tests pass |
+| Build | `aube build` | Project builds successfully |
 
 All checks must pass before merging.
 
@@ -107,10 +112,10 @@ All checks must pass before merging.
 [Biome](https://biomejs.dev/) handles both linting and formatting. There is no separate ESLint or Prettier setup.
 
 ```bash
-pnpm check          # Lint + format check (what CI runs)
-pnpm lint           # Linting only
-pnpm format         # Auto-fix formatting
-pnpm format:check   # Check formatting without fixing
+aube check          # Lint + format check (what CI runs)
+aube lint           # Linting only
+aube format         # Auto-fix formatting
+aube format:check   # Check formatting without fixing
 ```
 
 Key settings:
@@ -128,7 +133,7 @@ Biome runs automatically on staged files via a pre-commit hook, so most issues g
 Strict mode is enabled across the monorepo. Run the type checker with:
 
 ```bash
-pnpm type-check
+aube type-check
 ```
 
 ### Conventional Commits
@@ -197,28 +202,28 @@ chore(deps): Update dependencies to latest versions
 After editing any `.sql` file, regenerate types:
 
 ```bash
-pnpm pgtyped
+aube pgtyped
 ```
 
 ### Testing
 
 ```bash
-pnpm test               # Everything (unit + integration + PHP)
-pnpm test:unit          # Unit tests only (Vitest)
-pnpm test:integration   # Integration tests only (Vitest + testcontainers)
-pnpm test:e2e           # End-to-end tests (Playwright)
-pnpm test:php           # PHP tests (PHPUnit)
+aube test               # Everything (unit + integration + PHP)
+aube test:unit          # Unit tests only (Vitest)
+aube test:integration   # Integration tests only (Vitest + testcontainers)
+aube test:e2e           # End-to-end tests (Playwright)
+aube test:php           # PHP tests (PHPUnit)
 ```
 
 ### Git Hooks
 
-[Husky](https://typicode.github.io/husky/) runs these hooks automatically:
+[hk](https://hk.jdx.dev) runs these hooks automatically. The hook definitions live in [`hk.pkl`](./hk.pkl); see [docs/git-workflow.md](./docs/git-workflow.md#git-hooks-hk) for details.
 
 | Hook | What It Does |
 |------|-------------|
-| **pre-commit** | Biome check + format on staged files, type-check and build for affected apps |
+| **pre-commit** | Biome (auto-fix) on staged files; type-check for affected app workspace; build + root type-check when `packages/shared` changes |
 | **commit-msg** | Validates commit message format via commitlint |
-| **pre-push** | Runs the full test suite |
+| **pre-push** | Runs Danger, Biome check, type-check, tests, PHP tests, and build (in that order) |
 
 ### Project Structure
 

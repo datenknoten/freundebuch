@@ -101,40 +101,54 @@ BREAKING CHANGE: existing sessions are invalidated on deploy
 
 Vague commit messages make `git log` and release notes useless. Be specific about what changed and why.
 
-## Git Hooks (Husky)
+## Git Hooks (hk)
 
-Three hooks run automatically. They exist to catch problems locally before they reach CI - not to slow you down, but to save you the round-trip of a failing pipeline.
+Hooks are managed by [hk](https://hk.jdx.dev), installed automatically by the `mise install` postinstall step (or by `aube install` if hk is already on `PATH`). The hook definitions live in [`hk.pkl`](../hk.pkl). hk replaces the older Husky + lint-staged setup and runs steps in parallel with read/write file locking.
+
+To install (or reinstall) the hooks manually:
+
+```bash
+mise run hk install --mise   # or: hk install --mise
+```
+
+Set `HK=0` on a single command to bypass hooks (e.g. `HK=0 git commit ...`). Reach for this only as a last resort.
 
 ### Pre-commit
 
-Runs `pnpm lint-staged`, which applies checks to staged files only (not the whole codebase):
+Runs against staged files with auto-fix enabled. Steps are scoped by file glob, mirroring the prior lint-staged config:
 
-| File pattern | Action |
-|---|---|
-| `*.{js,ts,tsx,jsx,svelte,css,json,jsonc}` | Biome check with auto-fix |
-| `apps/frontend/**/*.{ts,js,svelte}` | TypeScript type-check + build |
-| `apps/backend/**/*.{ts,js}` | TypeScript type-check + build |
-| `packages/shared/**/*.{ts,js}` | Build + full type-check |
+| File pattern | Step | What runs |
+|---|---|---|
+| `*.{js,ts,tsx,jsx,svelte,css,json,jsonc}` | `biome` | `biome check` (with `--write` on failure) |
+| `apps/frontend/**/*.{ts,js,svelte}` | `frontend-type-check` | `aube --filter frontend run type-check` |
+| `apps/backend/**/*.{ts,js}` | `backend-type-check` | `aube --filter backend run type-check` |
+| `packages/shared/**/*.{ts,js}` | `shared-build` | shared package build + root `aube type-check` |
 
-If Biome makes auto-fixes, the fixed files are staged automatically. If a type error is found, the commit is blocked until you resolve it.
+There is no per-app build step in pre-commit; full builds run only on pre-push. Auto-fixed files are restaged automatically. Type errors block the commit.
 
 ### Commit-msg
 
-Runs `pnpm commitlint --edit` against your commit message. If the message doesn't conform to the Conventional Commits format, the commit is rejected with a clear error explaining what's wrong.
+Runs `aube commitlint --edit <commit-msg-file>`. Non-conforming messages are rejected with a clear error.
 
 ### Pre-push
 
-Runs the full quality suite before any push reaches the remote. This mirrors what CI will run, so if it passes locally it should pass in the pipeline.
+Mirrors CI - if this passes locally, the pipeline should too. Steps are wired with explicit `depends` in `hk.pkl` so they always run in this order:
 
-The five steps, in order:
+1. **danger** - `npx danger local --base main`
+2. **check** - `aube check` (Biome lint + format across the whole codebase)
+3. **type-check** - `aube type-check` (all TypeScript workspaces)
+4. **test** - `aube --recursive run test` across all workspaces
+5. **test-php** - `apps/sabredav` PHPUnit suite (installs Composer deps if missing)
+6. **build** - `aube build` (full workspace build verification)
 
-1. **Biome check** - lint and format across the whole codebase
-2. **TypeScript type-check** - all workspaces
-3. **TypeScript tests** - `pnpm --recursive run test` across all workspaces
-4. **PHP tests** - `apps/sabredav` test suite
-5. **Build verification** - confirms all workspaces produce a clean build
+### Running hooks ad-hoc
 
-If a test fails because of a known flaky test, retry the push rather than skipping the hook. Bypassing hooks with `--no-verify` should be a last resort, not a habit.
+```bash
+hk run pre-commit            # exactly what `git commit` would run
+hk check                     # all linters in check-only mode
+hk fix                       # all linters with auto-fix
+hk check --all               # check the whole repo, not just staged files
+```
 
 ## Keeping History Clean
 
@@ -187,13 +201,13 @@ The release type is determined by commit types:
 
 ## PgTyped Generated Files
 
-When you edit or create a `.sql` query file, a Claude Code hook automatically runs `pnpm pgtyped` to regenerate the corresponding `.queries.ts` file. These generated files must be committed alongside the SQL changes - they are not gitignored.
+When you edit or create a `.sql` query file, a Claude Code hook automatically runs `aube pgtyped` to regenerate the corresponding `.queries.ts` file. These generated files must be committed alongside the SQL changes - they are not gitignored.
 
-If pgtyped appears to have skipped regeneration (the `.queries.ts` file is unchanged when it should have updated), delete the file and re-run `pnpm pgtyped` manually:
+If pgtyped appears to have skipped regeneration (the `.queries.ts` file is unchanged when it should have updated), delete the file and re-run `aube pgtyped` manually:
 
 ```bash
 rm apps/backend/src/models/queries/<name>.queries.ts
-pnpm pgtyped
+aube pgtyped
 ```
 
 Then stage both the `.sql` and the regenerated `.queries.ts` before committing.

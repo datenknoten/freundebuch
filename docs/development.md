@@ -10,35 +10,75 @@ This project follows **trunk-based development**:
 - All code on `main` must be deployable (even if features are hidden behind flags)
 - CI runs on every commit to `main`
 
+## Toolchain
+
+Tool versions are managed by [mise](https://mise.jdx.dev). With mise installed and activated in your shell, two commands bootstrap everything:
+
+```bash
+mise install        # installs node, aube, hk, pkl (versions pinned in mise.toml)
+aube install        # installs JS dependencies from pnpm-lock.yaml
+```
+
+`mise install` also runs hk's `postinstall` hook, which installs the git hooks defined in [`hk.pkl`](../hk.pkl). See [git-workflow.md](./git-workflow.md#git-hooks-hk) for the hook layout.
+
+The list of pinned tools lives in [`mise.toml`](../mise.toml). Use `mise.local.toml` (gitignored) for personal overrides.
+
+### Package Manager: aube
+
+This repo uses [aube](https://github.com/endevco/aube), a fast Node.js package manager that reads and writes `pnpm-lock.yaml` in place. The CLI is pnpm-compatible: `aube install`, `aube --filter <pkg> run <script>`, `aube --recursive run <script>`, `aube ci`, etc.
+
+```bash
+aube install          # install deps
+aube ci               # frozen-lockfile install (used in CI)
+aube add <pkg>        # add a dependency
+aube <script>         # run a root-level package.json script
+aubr <script>         # = aube run <script>, auto-installs if deps are stale
+```
+
+pnpm itself is not installed by mise; `aube` is the only supported runner. The lockfile remains `pnpm-lock.yaml` so contributors using pnpm directly out of habit will not break it, but all documented commands assume aube.
+
+### Composite tasks via mise
+
+mise hosts only orchestration tasks (composite, multi-tool, or environment-bound). For 1:1 script aliases use `aube <script>` directly.
+
+```bash
+mise tasks            # list every mise task with its description
+mise run setup        # first-time install (JS + PHP deps + git hooks)
+mise run ci           # mirror CI: check + type-check + test + build
+mise run db:reset     # drop + recreate dev DB, run migrations + seed
+mise run docker:up    # start docker services
+mise run db:psql      # open psql shell on dev database
+```
+
 ## Common Commands
 
 ```bash
 # Development
-pnpm dev                    # Run all workspace dev scripts concurrently
-pnpm build                  # Build all workspaces
+aube dev                    # Run all workspace dev scripts concurrently
+aube build                  # Build all workspaces
 
 # Testing
-pnpm test                   # Run all tests across workspaces
-pnpm test:unit              # Run unit tests (Vitest)
-pnpm test:integration       # Run integration tests (Vitest)
-pnpm test:e2e               # Run E2E tests (Playwright)
+aube test                   # Run all tests across workspaces
+aube test:unit              # Run unit tests (Vitest)
+aube test:integration       # Run integration tests (Vitest)
+aube test:e2e               # Run E2E tests (Playwright)
 
 # Code Quality
-pnpm check                  # Run Biome check (lint + format)
-pnpm lint                   # Run Biome linter
-pnpm format                 # Run Biome formatter
-pnpm type-check             # Run TypeScript compiler
+aube check                  # Run Biome check (lint + format)
+aube lint                   # Run Biome linter
+aube format                 # Run Biome formatter
+aube type-check             # Run TypeScript compiler
 
 # Database
-pnpm migrate                # Run database migrations
-pnpm migrate:create         # Create new migration
-pnpm pgtyped                # Generate TypeScript types from SQL queries
-pnpm pgtyped:watch          # Watch and regenerate types
-pnpm seed                   # Seed database with test data
+aube migrate                # Run database migrations
+aube migrate:create         # Create new migration
+aube pgtyped                # Generate TypeScript types from SQL queries
+aube pgtyped:watch          # Watch and regenerate types
+aube seed                   # Seed database with test data
 
 # Docker
-pnpm docker:up              # Start Docker services
-pnpm docker:down            # Stop Docker services
+aube docker:up              # Start Docker services
+aube docker:down            # Stop Docker services
 ```
 
 ## Git Conventions
@@ -83,7 +123,7 @@ chore(ci): Add semantic-release workflow
 Single tool for linting and formatting (replaces ESLint + Prettier):
 
 - Auto-fix on save (configure your editor)
-- Git hooks (Husky) run checks before commit
+- Git hooks (hk) run checks before commit
 - Pre-push hooks run all tests
 
 ### Type Safety
