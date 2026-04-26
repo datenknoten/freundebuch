@@ -27,7 +27,7 @@
     "seed": "aube --filter @freundebuch/backend run seed",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "prepare": "command -v hk >/dev/null && hk install --mise; aube --filter @freundebuch/frontend run sync",
+    "prepare": "command -v hk >/dev/null && hk install --mise; aube --filter @freundebuch/frontend run sync --no-install",
     "release": "semantic-release",
     "version:sync": "node scripts/sync-versions.mjs",
     "generate:assets": "node scripts/generate-logo-assets.mjs"

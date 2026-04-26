@@ -9,6 +9,15 @@ on:
       - main
   workflow_call:
 
+# Cancel an older CI run on the same ref when a newer one is pushed.
+# `release.yml` keeps cancel-in-progress: false because it must finish, but
+# CI-only runs are safe (and helpful) to cancel — otherwise stale runs hold
+# runner slots and an `aube ci` from a previous commit can race with the new
+# install that just landed in the fresh checkout.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   lint-and-format:
     name: Lint and Format Check
