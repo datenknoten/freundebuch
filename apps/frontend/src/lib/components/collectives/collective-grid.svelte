@@ -94,6 +94,11 @@ function getTypeBadgeColor(typeName: string): string {
   }
 }
 
+function getTypeLabel(typeName: string): string {
+  const key = typeName.toLowerCase().replace(/\s+/g, '_');
+  return $i18n.t(`collectives.types.${key}`, { defaultValue: typeName });
+}
+
 function formatDate(dateString: string | undefined): string {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -158,7 +163,7 @@ function formatDate(dateString: string | undefined): string {
           <td class="py-2 px-3">
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-body font-medium {getTypeBadgeColor(item.type.name)}">
               <svelte:component this={getTypeIconComponent(item.type.name)} class="w-3 h-3" strokeWidth="2" />
-              {item.type.name}
+              {getTypeLabel(item.type.name)}
             </span>
           </td>
 
@@ -227,7 +232,7 @@ function formatDate(dateString: string | undefined): string {
           </h3>
           <div class="flex items-center gap-2 shrink-0">
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-body font-medium {getTypeBadgeColor(item.type.name)}">
-              {item.type.name}
+              {getTypeLabel(item.type.name)}
             </span>
             {#if item.deletedAt}
               <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{$i18n.t('collectives.deleted')}</span>

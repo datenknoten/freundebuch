@@ -191,6 +191,11 @@ function getTypeBadgeColor(typeName: string): string {
   }
 }
 
+function getTypeLabel(typeName: string): string {
+  const key = typeName.toLowerCase().replace(/\s+/g, '_');
+  return $i18n.t(`collectives.types.${key}`, { defaultValue: typeName });
+}
+
 function formatAddress(c: Collective): string | null {
   const parts = [
     c.address.streetLine1,
@@ -482,7 +487,7 @@ onMount(() => {
       <h1 class="text-3xl font-heading text-gray-900">{collective.name}</h1>
       <div class="mt-1 flex flex-wrap items-center gap-2 justify-center sm:justify-start">
         <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-sm font-body font-medium {getTypeBadgeColor(collective.type.name)}">
-          {collective.type.name}
+          {getTypeLabel(collective.type.name)}
         </span>
         <span class="text-sm text-gray-500 font-body">
           {$i18n.t('collectives.memberCount', { count: collective.activeMemberCount })}

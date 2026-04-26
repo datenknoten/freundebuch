@@ -34,22 +34,16 @@ function formatDate(dateStr: string): string {
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) {
-    return 'Today';
-  } else if (diffDays === 1) {
-    return 'Yesterday';
-  } else if (diffDays < 7) {
-    return `${diffDays} days ago`;
-  } else if (diffDays < 30) {
-    const weeks = Math.floor(diffDays / 7);
-    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
-  } else if (diffDays < 365) {
-    const months = Math.floor(diffDays / 30);
-    return `${months} ${months === 1 ? 'month' : 'months'} ago`;
-  } else {
-    const years = Math.floor(diffDays / 365);
-    return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+  if (diffDays === 0) return $i18n.t('encounters.lastSeen.today');
+  if (diffDays === 1) return $i18n.t('encounters.lastSeen.yesterday');
+  if (diffDays < 7) return $i18n.t('encounters.lastSeen.daysAgo', { count: diffDays });
+  if (diffDays < 30) {
+    return $i18n.t('encounters.lastSeen.weeksAgo', { count: Math.floor(diffDays / 7) });
   }
+  if (diffDays < 365) {
+    return $i18n.t('encounters.lastSeen.monthsAgo', { count: Math.floor(diffDays / 30) });
+  }
+  return $i18n.t('encounters.lastSeen.yearsAgo', { count: Math.floor(diffDays / 365) });
 }
 
 function getDateColor(dateStr: string): string {
@@ -79,10 +73,10 @@ function getDateColor(dateStr: string): string {
   <a
     href="/encounters/{lastEncounter.id}"
     class="inline-flex items-center gap-2 px-3 py-1.5 border rounded-full text-sm font-body transition-colors hover:opacity-80 {getDateColor(lastEncounter.encounterDate)}"
-    title="Last seen: {lastEncounter.title}"
+    title="{$i18n.t('encounters.lastSeen.label')}: {lastEncounter.title}"
   >
     <Calendar class="w-4 h-4" strokeWidth="2" />
-    <span>Last seen: {formatDate(lastEncounter.encounterDate)}</span>
+    <span>{$i18n.t('encounters.lastSeen.label')}: {formatDate(lastEncounter.encounterDate)}</span>
   </a>
 {:else}
   <a
