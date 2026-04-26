@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { replaceState } from '$app/navigation';
@@ -29,6 +30,7 @@ let showEditModal = $state(false);
 let editingCircle = $state<Circle | null>(null);
 let deleteConfirmCircle = $state<Circle | null>(null);
 let deletingCircleId = $state<string | null>(null);
+let searchQuery = $state('');
 
 // Load circles when auth is ready
 $effect(() => {
@@ -130,9 +132,19 @@ function renderCircleTree(parentId: string | null = null, depth: number = 0): Ci
 
 let hierarchicalCircles = $derived(renderCircleTree(null, 0));
 
+// When user is searching, render flat filtered list (drops hierarchy intentionally so matches surface)
+let visibleCircles = $derived.by(() => {
+  const q = searchQuery.trim().toLowerCase();
+  if (!q) return hierarchicalCircles;
+  return $circlesList
+    .filter((c) => c.name.toLowerCase().includes(q))
+    .map((c) => ({ ...c, sortOrder: 0 }));
+});
+let isSearching = $derived(searchQuery.trim().length > 0);
+
 // Update visible circle IDs for keyboard navigation
 $effect(() => {
-  visibleCircleIds.set(hierarchicalCircles.map((c) => c.id));
+  visibleCircleIds.set(visibleCircles.map((c) => c.id));
 });
 
 // Check if keyboard hints should be shown
@@ -178,6 +190,31 @@ function getActualDepth(circle: Circle): number {
         </button>
       </div>
 
+      <!-- Search + count toolbar -->
+      {#if hasLoaded && $circlesList.length > 0}
+        <div class="mb-6">
+          <div class="relative">
+            <MagnifyingGlass class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth="2" />
+            <input
+              type="search"
+              bind:value={searchQuery}
+              placeholder={$i18n.t('circles.searchPlaceholder', { defaultValue: 'Freundekreise suchen...' })}
+              aria-label={$i18n.t('circles.searchPlaceholder', { defaultValue: 'Freundekreise suchen...' })}
+              class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg font-body text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
+            />
+          </div>
+          <div class="mt-3 text-sm font-body text-gray-600">
+            {$i18n.t('circles.circleCount', {
+              count: visibleCircles.length,
+              defaultValue: `${visibleCircles.length} Freundekreise`,
+            })}
+            {#if isSearching}
+              <span class="text-gray-400">{$i18n.t('common.filtered', { defaultValue: '(gefiltert)' })}</span>
+            {/if}
+          </div>
+        </div>
+      {/if}
+
       <!-- Edit/Create Modal -->
       {#if showEditModal}
         <CircleEditModal circle={editingCircle} onClose={closeEditModal} />
@@ -216,10 +253,15 @@ function getActualDepth(circle: Circle): number {
             {$i18n.t('circles.createFirst')}
           </button>
         </div>
+      {:else if isSearching && visibleCircles.length === 0}
+        <div class="text-center py-12">
+          <Users class="w-12 h-12 mx-auto text-gray-300 mb-3" strokeWidth="2" />
+          <p class="text-gray-500 font-body">{$i18n.t('circles.noMatches')}</p>
+        </div>
       {:else}
         <div class="space-y-2">
-          {#each hierarchicalCircles as circle, index (circle.id)}
-            {@const actualDepth = getActualDepth(circle)}
+          {#each visibleCircles as circle, index (circle.id)}
+            {@const actualDepth = isSearching ? 0 : getActualDepth(circle)}
             {@const isDeleting = deletingCircleId === circle.id}
             {@const keyHint = getKeyboardHint(index)}
             {@const showHint = showKeyboardHints && (!currentPrefix || keyHint.startsWith(currentPrefix))}
