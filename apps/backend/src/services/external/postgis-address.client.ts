@@ -1,5 +1,6 @@
 import type { Pool } from 'pg';
 import type { Logger } from 'pino';
+import type { GeocodedLocation } from './nominatim.client.js';
 import type { HouseNumber, Street } from './overpass.client.js';
 
 // Collator for natural sorting of house numbers
@@ -117,6 +118,55 @@ export class PostGISAddressClient {
     } catch (error) {
       this.logger.debug({ error, countryCode }, 'PostGIS country check failed');
       return false;
+    }
+  }
+
+  /**
+   * Geocode an address using stored OSM location data.
+   * Returns coordinates from the geodata.addresses table.
+   */
+  async geocodeAddress(
+    countryCode: string,
+    postalCode: string,
+    city: string,
+    street: string,
+    houseNumber?: string,
+  ): Promise<GeocodedLocation | null> {
+    try {
+      const result = await this.pool.query<{ latitude: number; longitude: number }>(
+        `SELECT ST_Y(location) as latitude, ST_X(location) as longitude
+         FROM geodata.addresses
+         WHERE country_code = $1
+           AND TRIM(postal_code) = TRIM($2)
+           AND LOWER(TRIM(city)) = LOWER(TRIM($3))
+           AND LOWER(TRIM(street)) = LOWER(TRIM($4))
+           AND ($5::text IS NULL OR LOWER(TRIM(house_number)) = LOWER(TRIM($5)))
+           AND location IS NOT NULL
+         LIMIT 1`,
+        [countryCode.toUpperCase(), postalCode, city, street, houseNumber ?? null],
+      );
+
+      if (result.rowCount === 0 || !result.rows[0]) {
+        this.logger.debug(
+          { countryCode, postalCode, city, street, houseNumber },
+          'PostGIS geocode returned no results',
+        );
+        return null;
+      }
+
+      const { latitude, longitude } = result.rows[0];
+      this.logger.debug(
+        { countryCode, postalCode, city, street, houseNumber, latitude, longitude },
+        'PostGIS geocode succeeded',
+      );
+
+      return { latitude, longitude };
+    } catch (error) {
+      this.logger.error(
+        { error, countryCode, postalCode, city, street },
+        'PostGIS geocode query failed',
+      );
+      return null;
     }
   }
 

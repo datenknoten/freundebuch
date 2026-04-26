@@ -10,6 +10,7 @@ import {
   ValidationError,
 } from '../../../utils/errors.js';
 import { isValidUuid } from '../../../utils/security.js';
+import { getAddressLookupService } from '../../address-lookup.js';
 
 const app = new Hono<AppContext>();
 
@@ -59,7 +60,11 @@ app.post('/', async (c) => {
     throw new ValidationError('Invalid request', validated);
   }
 
-  const addressService = new CollectiveAddressService({ db, logger });
+  const addressService = new CollectiveAddressService({
+    db,
+    logger,
+    addressLookupService: getAddressLookupService(db, logger),
+  });
   const address = await addressService.add(user.userId, collectiveId, validated);
 
   if (!address) {
@@ -97,7 +102,11 @@ app.put('/:addressId', async (c) => {
     throw new ValidationError('Invalid request', validated);
   }
 
-  const addressService = new CollectiveAddressService({ db, logger });
+  const addressService = new CollectiveAddressService({
+    db,
+    logger,
+    addressLookupService: getAddressLookupService(db, logger),
+  });
   const address = await addressService.update(user.userId, collectiveId, addressId, validated);
 
   if (!address) {

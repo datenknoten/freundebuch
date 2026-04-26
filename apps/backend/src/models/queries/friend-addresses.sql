@@ -10,6 +10,8 @@ SELECT
     a.address_type,
     a.label,
     a.is_primary,
+    a.latitude,
+    a.longitude,
     a.created_at
 FROM friends.friend_addresses a
 INNER JOIN friends.friends c ON a.friend_id = c.id
@@ -31,6 +33,8 @@ SELECT
     a.address_type,
     a.label,
     a.is_primary,
+    a.latitude,
+    a.longitude,
     a.created_at
 FROM friends.friend_addresses a
 INNER JOIN friends.friends c ON a.friend_id = c.id
@@ -51,7 +55,9 @@ INSERT INTO friends.friend_addresses (
     country,
     address_type,
     label,
-    is_primary
+    is_primary,
+    latitude,
+    longitude
 )
 SELECT
     c.id,
@@ -63,7 +69,9 @@ SELECT
     :country,
     :addressType,
     :label,
-    :isPrimary
+    :isPrimary,
+    :latitude,
+    :longitude
 FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :friendExternalId
@@ -80,6 +88,8 @@ RETURNING
     address_type,
     label,
     is_primary,
+    latitude,
+    longitude,
     created_at;
 
 /* @name UpdateAddress */
@@ -93,7 +103,9 @@ SET
     country = :country,
     address_type = :addressType,
     label = :label,
-    is_primary = :isPrimary
+    is_primary = :isPrimary,
+    latitude = :latitude,
+    longitude = :longitude
 FROM friends.friends c
 INNER JOIN auth.users u ON c.user_id = u.id
 WHERE a.external_id = :addressExternalId
@@ -112,7 +124,16 @@ RETURNING
     a.address_type,
     a.label,
     a.is_primary,
+    a.latitude,
+    a.longitude,
     a.created_at;
+
+/* @name UpdateAddressCoordinates */
+UPDATE friends.friend_addresses
+SET
+    latitude = :latitude,
+    longitude = :longitude
+WHERE external_id = :addressExternalId;
 
 /* @name DeleteAddress */
 DELETE FROM friends.friend_addresses a

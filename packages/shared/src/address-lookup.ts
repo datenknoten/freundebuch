@@ -35,3 +35,11 @@ export interface HouseNumberInfo {
   number: string;
   street?: string; // The street this house number is on (for verification)
 }
+
+/**
+ * Geocoded location coordinates
+ */
+export interface GeocodedLocation {
+  latitude: number;
+  longitude: number;
+}

@@ -72,6 +72,7 @@ import {
   parseSocialPlatform,
   parseUrlType,
 } from '../../utils/type-guards.js';
+import type { AddressLookupService } from '../address-lookup.service.js';
 import { NetworkGraphService } from './network-graph.service.js';
 import { RelationshipService } from './relationship.service.js';
 import { SearchService } from './search.service.js';
@@ -91,6 +92,7 @@ import { UrlService } from './sub-resources/url.service.js';
 export class FriendsService {
   private db: pg.Pool;
   private logger: Logger;
+  private _addressLookupService?: AddressLookupService;
 
   // Lazy-loaded service instances
   private _searchService?: SearchService;
@@ -105,9 +107,10 @@ export class FriendsService {
   private _professionalHistoryService?: ProfessionalHistoryService;
   private _metInfoService?: MetInfoService;
 
-  constructor(db: pg.Pool, logger: Logger) {
+  constructor(db: pg.Pool, logger: Logger, addressLookupService?: AddressLookupService) {
     this.db = db;
     this.logger = logger;
+    this._addressLookupService = addressLookupService;
   }
 
   // ============================================================================
@@ -151,7 +154,11 @@ export class FriendsService {
 
   private get addressService(): AddressService {
     if (!this._addressService) {
-      this._addressService = new AddressService({ db: this.db, logger: this.logger });
+      this._addressService = new AddressService({
+        db: this.db,
+        logger: this.logger,
+        addressLookupService: this._addressLookupService,
+      });
     }
     return this._addressService;
   }
@@ -947,6 +954,8 @@ export class FriendsService {
         addressType: parseAddressType(a.address_type),
         label: a.label ?? undefined,
         isPrimary: a.is_primary,
+        latitude: a.latitude ?? undefined,
+        longitude: a.longitude ?? undefined,
         createdAt: a.created_at,
       })),
       urls: urls.map((u) => ({

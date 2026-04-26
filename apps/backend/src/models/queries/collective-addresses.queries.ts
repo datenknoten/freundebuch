@@ -22,6 +22,10 @@ export interface IGetAddressesByCollectiveIdResult {
   is_primary: boolean;
   /** Custom label for this address */
   label: string | null;
+  /** WGS84 latitude from geocoding */
+  latitude: number | null;
+  /** WGS84 longitude from geocoding */
+  longitude: number | null;
   /** Postal or ZIP code */
   postal_code: string | null;
   /** State or province */
@@ -38,7 +42,7 @@ export interface IGetAddressesByCollectiveIdQuery {
   result: IGetAddressesByCollectiveIdResult;
 }
 
-const getAddressesByCollectiveIdIR: any = {"usedParamSet":{"collectiveExternalId":true,"userExternalId":true},"params":[{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":371,"b":391}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":415,"b":429}]}],"statement":"SELECT\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.created_at\nFROM collectives.collective_addresses a\nINNER JOIN collectives.collectives c ON a.collective_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :collectiveExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY a.is_primary DESC, a.created_at ASC"};
+const getAddressesByCollectiveIdIR: any = {"usedParamSet":{"collectiveExternalId":true,"userExternalId":true},"params":[{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":404,"b":424}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":448,"b":462}]}],"statement":"SELECT\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.latitude,\n    a.longitude,\n    a.created_at\nFROM collectives.collective_addresses a\nINNER JOIN collectives.collectives c ON a.collective_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :collectiveExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nORDER BY a.is_primary DESC, a.created_at ASC"};
 
 /**
  * Query generated from SQL:
@@ -54,6 +58,8 @@ const getAddressesByCollectiveIdIR: any = {"usedParamSet":{"collectiveExternalId
  *     a.address_type,
  *     a.label,
  *     a.is_primary,
+ *     a.latitude,
+ *     a.longitude,
  *     a.created_at
  * FROM collectives.collective_addresses a
  * INNER JOIN collectives.collectives c ON a.collective_id = c.id
@@ -89,6 +95,10 @@ export interface IGetAddressByIdResult {
   is_primary: boolean;
   /** Custom label for this address */
   label: string | null;
+  /** WGS84 latitude from geocoding */
+  latitude: number | null;
+  /** WGS84 longitude from geocoding */
+  longitude: number | null;
   /** Postal or ZIP code */
   postal_code: string | null;
   /** State or province */
@@ -105,7 +115,7 @@ export interface IGetAddressByIdQuery {
   result: IGetAddressByIdResult;
 }
 
-const getAddressByIdIR: any = {"usedParamSet":{"addressExternalId":true,"collectiveExternalId":true,"userExternalId":true},"params":[{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":371,"b":388}]},{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":412,"b":432}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":456,"b":470}]}],"statement":"SELECT\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.created_at\nFROM collectives.collective_addresses a\nINNER JOIN collectives.collectives c ON a.collective_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE a.external_id = :addressExternalId\n  AND c.external_id = :collectiveExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
+const getAddressByIdIR: any = {"usedParamSet":{"addressExternalId":true,"collectiveExternalId":true,"userExternalId":true},"params":[{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":404,"b":421}]},{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":445,"b":465}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":489,"b":503}]}],"statement":"SELECT\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.latitude,\n    a.longitude,\n    a.created_at\nFROM collectives.collective_addresses a\nINNER JOIN collectives.collectives c ON a.collective_id = c.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE a.external_id = :addressExternalId\n  AND c.external_id = :collectiveExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL"};
 
 /**
  * Query generated from SQL:
@@ -121,6 +131,8 @@ const getAddressByIdIR: any = {"usedParamSet":{"addressExternalId":true,"collect
  *     a.address_type,
  *     a.label,
  *     a.is_primary,
+ *     a.latitude,
+ *     a.longitude,
  *     a.created_at
  * FROM collectives.collective_addresses a
  * INNER JOIN collectives.collectives c ON a.collective_id = c.id
@@ -142,6 +154,8 @@ export interface ICreateAddressParams {
   country?: string | null | void;
   isPrimary?: boolean | null | void;
   label?: string | null | void;
+  latitude?: number | null | void;
+  longitude?: number | null | void;
   postalCode?: string | null | void;
   stateProvince?: string | null | void;
   streetLine1?: string | null | void;
@@ -164,6 +178,10 @@ export interface ICreateAddressResult {
   is_primary: boolean;
   /** Custom label for this address */
   label: string | null;
+  /** WGS84 latitude from geocoding */
+  latitude: number | null;
+  /** WGS84 longitude from geocoding */
+  longitude: number | null;
   /** Postal or ZIP code */
   postal_code: string | null;
   /** State or province */
@@ -180,7 +198,7 @@ export interface ICreateAddressQuery {
   result: ICreateAddressResult;
 }
 
-const createAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":true,"city":true,"stateProvince":true,"postalCode":true,"country":true,"addressType":true,"label":true,"isPrimary":true,"collectiveExternalId":true,"userExternalId":true},"params":[{"name":"streetLine1","required":false,"transform":{"type":"scalar"},"locs":[{"a":229,"b":240}]},{"name":"streetLine2","required":false,"transform":{"type":"scalar"},"locs":[{"a":247,"b":258}]},{"name":"city","required":false,"transform":{"type":"scalar"},"locs":[{"a":265,"b":269}]},{"name":"stateProvince","required":false,"transform":{"type":"scalar"},"locs":[{"a":276,"b":289}]},{"name":"postalCode","required":false,"transform":{"type":"scalar"},"locs":[{"a":296,"b":306}]},{"name":"country","required":false,"transform":{"type":"scalar"},"locs":[{"a":313,"b":320}]},{"name":"addressType","required":false,"transform":{"type":"scalar"},"locs":[{"a":327,"b":338}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":345,"b":350}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":357,"b":366}]},{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":465,"b":485}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":509,"b":523}]}],"statement":"INSERT INTO collectives.collective_addresses (\n    collective_id,\n    street_line1,\n    street_line2,\n    city,\n    state_province,\n    postal_code,\n    country,\n    address_type,\n    label,\n    is_primary\n)\nSELECT\n    c.id,\n    :streetLine1,\n    :streetLine2,\n    :city,\n    :stateProvince,\n    :postalCode,\n    :country,\n    :addressType,\n    :label,\n    :isPrimary\nFROM collectives.collectives c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :collectiveExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    external_id,\n    street_line1,\n    street_line2,\n    city,\n    state_province,\n    postal_code,\n    country,\n    address_type,\n    label,\n    is_primary,\n    created_at"};
+const createAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":true,"city":true,"stateProvince":true,"postalCode":true,"country":true,"addressType":true,"label":true,"isPrimary":true,"latitude":true,"longitude":true,"collectiveExternalId":true,"userExternalId":true},"params":[{"name":"streetLine1","required":false,"transform":{"type":"scalar"},"locs":[{"a":258,"b":269}]},{"name":"streetLine2","required":false,"transform":{"type":"scalar"},"locs":[{"a":276,"b":287}]},{"name":"city","required":false,"transform":{"type":"scalar"},"locs":[{"a":294,"b":298}]},{"name":"stateProvince","required":false,"transform":{"type":"scalar"},"locs":[{"a":305,"b":318}]},{"name":"postalCode","required":false,"transform":{"type":"scalar"},"locs":[{"a":325,"b":335}]},{"name":"country","required":false,"transform":{"type":"scalar"},"locs":[{"a":342,"b":349}]},{"name":"addressType","required":false,"transform":{"type":"scalar"},"locs":[{"a":356,"b":367}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":374,"b":379}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":386,"b":395}]},{"name":"latitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":402,"b":410}]},{"name":"longitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":417,"b":426}]},{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":525,"b":545}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":569,"b":583}]}],"statement":"INSERT INTO collectives.collective_addresses (\n    collective_id,\n    street_line1,\n    street_line2,\n    city,\n    state_province,\n    postal_code,\n    country,\n    address_type,\n    label,\n    is_primary,\n    latitude,\n    longitude\n)\nSELECT\n    c.id,\n    :streetLine1,\n    :streetLine2,\n    :city,\n    :stateProvince,\n    :postalCode,\n    :country,\n    :addressType,\n    :label,\n    :isPrimary,\n    :latitude,\n    :longitude\nFROM collectives.collectives c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :collectiveExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    external_id,\n    street_line1,\n    street_line2,\n    city,\n    state_province,\n    postal_code,\n    country,\n    address_type,\n    label,\n    is_primary,\n    latitude,\n    longitude,\n    created_at"};
 
 /**
  * Query generated from SQL:
@@ -195,7 +213,9 @@ const createAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":t
  *     country,
  *     address_type,
  *     label,
- *     is_primary
+ *     is_primary,
+ *     latitude,
+ *     longitude
  * )
  * SELECT
  *     c.id,
@@ -207,7 +227,9 @@ const createAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":t
  *     :country,
  *     :addressType,
  *     :label,
- *     :isPrimary
+ *     :isPrimary,
+ *     :latitude,
+ *     :longitude
  * FROM collectives.collectives c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE c.external_id = :collectiveExternalId
@@ -224,6 +246,8 @@ const createAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":t
  *     address_type,
  *     label,
  *     is_primary,
+ *     latitude,
+ *     longitude,
  *     created_at
  * ```
  */
@@ -239,6 +263,8 @@ export interface IUpdateAddressParams {
   country?: string | null | void;
   isPrimary?: boolean | null | void;
   label?: string | null | void;
+  latitude?: number | null | void;
+  longitude?: number | null | void;
   postalCode?: string | null | void;
   stateProvince?: string | null | void;
   streetLine1?: string | null | void;
@@ -261,6 +287,10 @@ export interface IUpdateAddressResult {
   is_primary: boolean;
   /** Custom label for this address */
   label: string | null;
+  /** WGS84 latitude from geocoding */
+  latitude: number | null;
+  /** WGS84 longitude from geocoding */
+  longitude: number | null;
   /** Postal or ZIP code */
   postal_code: string | null;
   /** State or province */
@@ -277,7 +307,7 @@ export interface IUpdateAddressQuery {
   result: IUpdateAddressResult;
 }
 
-const updateAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":true,"city":true,"stateProvince":true,"postalCode":true,"country":true,"addressType":true,"label":true,"isPrimary":true,"addressExternalId":true,"collectiveExternalId":true,"userExternalId":true},"params":[{"name":"streetLine1","required":false,"transform":{"type":"scalar"},"locs":[{"a":65,"b":76}]},{"name":"streetLine2","required":false,"transform":{"type":"scalar"},"locs":[{"a":98,"b":109}]},{"name":"city","required":false,"transform":{"type":"scalar"},"locs":[{"a":123,"b":127}]},{"name":"stateProvince","required":false,"transform":{"type":"scalar"},"locs":[{"a":151,"b":164}]},{"name":"postalCode","required":false,"transform":{"type":"scalar"},"locs":[{"a":185,"b":195}]},{"name":"country","required":false,"transform":{"type":"scalar"},"locs":[{"a":212,"b":219}]},{"name":"addressType","required":false,"transform":{"type":"scalar"},"locs":[{"a":241,"b":252}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":267,"b":272}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":292,"b":301}]},{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":400,"b":417}]},{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":470,"b":490}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":514,"b":528}]}],"statement":"UPDATE collectives.collective_addresses a\nSET\n    street_line1 = :streetLine1,\n    street_line2 = :streetLine2,\n    city = :city,\n    state_province = :stateProvince,\n    postal_code = :postalCode,\n    country = :country,\n    address_type = :addressType,\n    label = :label,\n    is_primary = :isPrimary\nFROM collectives.collectives c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE a.external_id = :addressExternalId\n  AND a.collective_id = c.id\n  AND c.external_id = :collectiveExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.created_at"};
+const updateAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":true,"city":true,"stateProvince":true,"postalCode":true,"country":true,"addressType":true,"label":true,"isPrimary":true,"latitude":true,"longitude":true,"addressExternalId":true,"collectiveExternalId":true,"userExternalId":true},"params":[{"name":"streetLine1","required":false,"transform":{"type":"scalar"},"locs":[{"a":65,"b":76}]},{"name":"streetLine2","required":false,"transform":{"type":"scalar"},"locs":[{"a":98,"b":109}]},{"name":"city","required":false,"transform":{"type":"scalar"},"locs":[{"a":123,"b":127}]},{"name":"stateProvince","required":false,"transform":{"type":"scalar"},"locs":[{"a":151,"b":164}]},{"name":"postalCode","required":false,"transform":{"type":"scalar"},"locs":[{"a":185,"b":195}]},{"name":"country","required":false,"transform":{"type":"scalar"},"locs":[{"a":212,"b":219}]},{"name":"addressType","required":false,"transform":{"type":"scalar"},"locs":[{"a":241,"b":252}]},{"name":"label","required":false,"transform":{"type":"scalar"},"locs":[{"a":267,"b":272}]},{"name":"isPrimary","required":false,"transform":{"type":"scalar"},"locs":[{"a":292,"b":301}]},{"name":"latitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":319,"b":327}]},{"name":"longitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":346,"b":355}]},{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":454,"b":471}]},{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":524,"b":544}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":568,"b":582}]}],"statement":"UPDATE collectives.collective_addresses a\nSET\n    street_line1 = :streetLine1,\n    street_line2 = :streetLine2,\n    city = :city,\n    state_province = :stateProvince,\n    postal_code = :postalCode,\n    country = :country,\n    address_type = :addressType,\n    label = :label,\n    is_primary = :isPrimary,\n    latitude = :latitude,\n    longitude = :longitude\nFROM collectives.collectives c\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE a.external_id = :addressExternalId\n  AND a.collective_id = c.id\n  AND c.external_id = :collectiveExternalId\n  AND u.external_id = :userExternalId\n  AND c.deleted_at IS NULL\nRETURNING\n    a.external_id,\n    a.street_line1,\n    a.street_line2,\n    a.city,\n    a.state_province,\n    a.postal_code,\n    a.country,\n    a.address_type,\n    a.label,\n    a.is_primary,\n    a.latitude,\n    a.longitude,\n    a.created_at"};
 
 /**
  * Query generated from SQL:
@@ -292,7 +322,9 @@ const updateAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":t
  *     country = :country,
  *     address_type = :addressType,
  *     label = :label,
- *     is_primary = :isPrimary
+ *     is_primary = :isPrimary,
+ *     latitude = :latitude,
+ *     longitude = :longitude
  * FROM collectives.collectives c
  * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE a.external_id = :addressExternalId
@@ -311,10 +343,43 @@ const updateAddressIR: any = {"usedParamSet":{"streetLine1":true,"streetLine2":t
  *     a.address_type,
  *     a.label,
  *     a.is_primary,
+ *     a.latitude,
+ *     a.longitude,
  *     a.created_at
  * ```
  */
 export const updateAddress = new PreparedQuery<IUpdateAddressParams,IUpdateAddressResult>(updateAddressIR);
+
+
+/** 'UpdateAddressCoordinates' parameters type */
+export interface IUpdateAddressCoordinatesParams {
+  addressExternalId?: string | null | void;
+  latitude?: number | null | void;
+  longitude?: number | null | void;
+}
+
+/** 'UpdateAddressCoordinates' return type */
+export type IUpdateAddressCoordinatesResult = void;
+
+/** 'UpdateAddressCoordinates' query type */
+export interface IUpdateAddressCoordinatesQuery {
+  params: IUpdateAddressCoordinatesParams;
+  result: IUpdateAddressCoordinatesResult;
+}
+
+const updateAddressCoordinatesIR: any = {"usedParamSet":{"latitude":true,"longitude":true,"addressExternalId":true},"params":[{"name":"latitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":59,"b":67}]},{"name":"longitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":86,"b":95}]},{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":117,"b":134}]}],"statement":"UPDATE collectives.collective_addresses\nSET\n    latitude = :latitude,\n    longitude = :longitude\nWHERE external_id = :addressExternalId"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * UPDATE collectives.collective_addresses
+ * SET
+ *     latitude = :latitude,
+ *     longitude = :longitude
+ * WHERE external_id = :addressExternalId
+ * ```
+ */
+export const updateAddressCoordinates = new PreparedQuery<IUpdateAddressCoordinatesParams,IUpdateAddressCoordinatesResult>(updateAddressCoordinatesIR);
 
 
 /** 'DeleteAddress' parameters type */
