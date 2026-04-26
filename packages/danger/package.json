@@ -2,8 +2,18 @@
   "name": "@freundebuch/danger",
   "version": "2.67.6",
   "private": true,
+  "description": "Danger.js rules consumed by dangerfile.ts at the repo root",
   "license": "AGPL-3.0-only",
   "type": "module",
+  "main": "./src/rules/index.ts",
+  "exports": {
+    ".": "./src/rules/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "node --eval \"\"",
+    "type-check": "tsc --noEmit"
+  },
   "dependencies": {
     "@commitlint/lint": "20.2.0",
     "@commitlint/load": "20.2.0"
