@@ -1,6 +1,6 @@
 services:
   mcp-server:
-    image: ghcr.io/enko/freundebuch2-mcp-server:${VERSION:-latest}
+    image: ghcr.io/datenknoten/freundebuch-mcp-server:${VERSION:-latest}
     container_name: freundebuch-mcp-server
     restart: unless-stopped
     environment:
@@ -23,7 +23,7 @@ services:
         condition: service_healthy
 
   nginx:
-    image: ghcr.io/enko/freundebuch2-nginx:${VERSION:-latest}
+    image: ghcr.io/datenknoten/freundebuch-nginx:${VERSION:-latest}
     container_name: freundebuch-nginx
     restart: unless-stopped
     environment:
@@ -66,7 +66,7 @@ services:
         condition: service_healthy
 
   backend:
-    image: ghcr.io/enko/freundebuch2-backend:${VERSION:-latest}
+    image: ghcr.io/datenknoten/freundebuch-backend:${VERSION:-latest}
     container_name: freundebuch-backend
     restart: unless-stopped
     environment:
@@ -109,7 +109,7 @@ services:
         condition: service_healthy
 
   sabredav:
-    image: ghcr.io/enko/freundebuch2-sabredav:${VERSION:-latest}
+    image: ghcr.io/datenknoten/freundebuch-sabredav:${VERSION:-latest}
     container_name: freundebuch-sabredav
     restart: unless-stopped
     environment:
@@ -146,7 +146,7 @@ services:
 
   # OSM address data import (run manually with --profile import)
   osm-import:
-    image: ghcr.io/enko/freundebuch2-osm-import:${VERSION:-latest}
+    image: ghcr.io/datenknoten/freundebuch-osm-import:${VERSION:-latest}
     container_name: freundebuch-osm-import
     profiles:
       - import  # Only runs when explicitly requested
