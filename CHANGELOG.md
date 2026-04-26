@@ -1,3 +1,11 @@
+## [2.70.0](https://github.com/datenknoten/freundebuch/compare/v2.69.2...v2.70.0) (2026-04-26)
+
+### Features
+
+* **backend:** Add address geocoding via PostGIS and Nominatim ([3e55b49](https://github.com/datenknoten/freundebuch/commit/3e55b4952818794ff8aade8de7884963420af419))
+* **database:** Add latitude and longitude to address tables ([bf5a1e2](https://github.com/datenknoten/freundebuch/commit/bf5a1e23d897c0b2ec3f84a6b37b610a7c311e75))
+* **frontend:** Add address map view with Leaflet ([54cd0e8](https://github.com/datenknoten/freundebuch/commit/54cd0e8c7c1497906cd1400c586562237ab1fce4))
+
 ## [2.69.2](https://github.com/datenknoten/freundebuch/compare/v2.69.1...v2.69.2) (2026-04-26)
 
 ### Bug Fixes
