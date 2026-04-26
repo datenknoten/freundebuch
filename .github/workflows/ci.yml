@@ -47,7 +47,10 @@ jobs:
         run: aube ci
 
       - name: Run Biome check
-        run: aube check
+        # Use `aube run check` explicitly: bare `aube check` resolves to aube's
+        # built-in dependency-tree verifier (`Verify that every installed package
+        # can resolve its declared deps...`), not our biome script.
+        run: aube run check
 
   type-check:
     name: TypeScript Type Check
