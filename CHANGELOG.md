@@ -1,3 +1,9 @@
+## [2.69.2](https://github.com/datenknoten/freundebuch/compare/v2.69.1...v2.69.2) (2026-04-26)
+
+### Bug Fixes
+
+* **ci:** Align image registry with current repository path ([76acbc1](https://github.com/datenknoten/freundebuch/commit/76acbc163f6bb2c5a6ec9660e26b713bf324fea9))
+
 ## [2.69.1](https://github.com/datenknoten/freundebuch/compare/v2.69.0...v2.69.1) (2026-04-25)
 
 ### Code Refactoring
