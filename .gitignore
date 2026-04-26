@@ -13,6 +13,11 @@ build/
 .env.local
 .env.*.local
 
+# mise / hk local overrides
+mise.local.toml
+hk.local.pkl
+.mise.local.toml
+
 # IDE
 .vscode/
 .idea/

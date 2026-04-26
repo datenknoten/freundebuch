@@ -1,0 +1,100 @@
+# mise configuration — https://mise.jdx.dev
+#
+# Run `mise install` to install every tool listed below at the pinned version.
+# Tasks defined here are runnable with `mise run <task>` (or `mise <task>`).
+#
+# `mise.local.toml` (gitignored) can be used for personal overrides.
+
+[tools]
+node = "24.9.0"
+# Fast Node.js package manager that reads pnpm-lock.yaml — https://github.com/endevco/aube
+# This repo uses aube exclusively; pnpm is no longer installed.
+aube = "1.2.0"
+
+# PHP runtime + dependency manager for apps/sabredav
+# TODO Need to figure out if there is a reasonable php distribution that does not need compilation
+# This would be a good approach, but the releases are broken
+# "ubi:adwinying/php" = "8.4.20"
+# composer = "2"
+
+# Git hook manager and project linter — https://hk.jdx.dev
+hk = "1.9.2"
+# Pkl CLI is required by hk to evaluate `hk.pkl`.
+# Set HK_PKL_BACKEND=pklr (in mise.local.toml or your shell) to use hk's
+# built-in evaluator and skip installing pkl entirely.
+pkl = "0.29"
+
+[env]
+# Wrap git hooks with `mise x` so the right tool versions are on PATH even
+# for contributors who don't auto-activate mise in their shell.
+HK_MISE = "1"
+
+[hooks]
+# After `mise install`, install hk's git hooks for this repo.
+postinstall = "hk install --mise"
+
+# ---------------------------------------------------------------------------
+# Tasks — runnable with `mise run <task>` (or `mise <task>`).
+# Only composite/orchestration tasks live here. For 1:1 script wrappers,
+# call `aube <script>` directly (e.g. `aube dev`, `aube test`).
+# ---------------------------------------------------------------------------
+
+[tasks.setup]
+description = "First-time setup: install JS + PHP deps and register git hooks"
+depends = ["install", "composer:install", "hooks:install"]
+
+[tasks.install]
+description = "Install JS dependencies (aube)"
+run = "aube install"
+
+[tasks."composer:install"]
+description = "Install PHP dependencies for apps/sabredav"
+dir = "{{config_root}}/apps/sabredav"
+run = "composer install --no-interaction --prefer-dist"
+
+[tasks.clean]
+description = "Remove build outputs and TS build info from every workspace"
+run = """
+rm -rf apps/*/dist apps/*/build apps/*/.svelte-kit packages/*/dist
+find . -name '*.tsbuildinfo' -not -path '*/node_modules/*' -delete
+"""
+
+[tasks."db:psql"]
+description = "Open a psql shell on the dev database"
+run = "docker exec -it freundebuch-postgres psql -U freundebuch -d freundebuch_dev"
+
+[tasks."db:reset"]
+description = "Drop and recreate the dev database, then re-run migrations + seed"
+depends = ["docker:down", "docker:up", "migrate", "seed"]
+
+[tasks."docker:up"]
+description = "Start Docker services"
+run = "docker-compose up -d"
+
+[tasks."docker:down"]
+description = "Stop Docker services"
+run = "docker-compose down"
+
+[tasks."docker:logs"]
+description = "Tail logs from all Docker services"
+run = "docker-compose logs -f"
+
+[tasks."docker:reset"]
+description = "Recreate Docker services from scratch"
+run = "docker-compose down -v && docker-compose up -d"
+
+[tasks.migrate]
+description = "Run pending database migrations"
+run = "aube migrate"
+
+[tasks.seed]
+description = "Seed the database with test data"
+run = "aube seed"
+
+[tasks."hooks:install"]
+description = "(Re)install hk git hooks for this repo"
+run = "hk install --mise"
+
+[tasks.ci]
+description = "Run the same checks CI runs (lint, types, tests, build)"
+run = "aube check && aube type-check && aube test && aube build"
