@@ -14,7 +14,7 @@
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "type-check": "svelte-check --tsconfig ./tsconfig.json",
-    "check": "pnpm run sync && svelte-check --tsconfig ./tsconfig.json"
+    "check": "aube run sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
     "@better-auth/passkey": "1.5.5",
