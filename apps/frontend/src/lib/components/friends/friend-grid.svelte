@@ -5,7 +5,10 @@ import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
 import Star from 'svelte-heros-v2/Star.svelte';
 import { goto } from '$app/navigation';
+import { createI18n } from '$lib/i18n/index.js';
 import { isOpenModeActive, openModePrefix } from '$lib/stores/ui';
+
+const i18n = createI18n();
 import {
   type BirthdayFormat,
   COLUMN_DEFINITIONS,
@@ -212,7 +215,7 @@ function getMatchSourceBadge(
                 onclick={() => handleSort(columnId)}
                 class="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-forest transition-colors font-body"
               >
-                {definition.label}
+                {$i18n.t(definition.i18nKey, { defaultValue: definition.label })}
                 {#if isCurrentSort}
                   {#if sortOrder === 'asc'}
                     <ChevronUp class="w-4 h-4" strokeWidth="2" />
@@ -222,7 +225,7 @@ function getMatchSourceBadge(
                 {/if}
               </button>
             {:else}
-              <span class="text-sm font-semibold text-gray-700 font-body">{definition.label}</span>
+              <span class="text-sm font-semibold text-gray-700 font-body">{$i18n.t(definition.i18nKey, { defaultValue: definition.label })}</span>
             {/if}
           </th>
         {/each}

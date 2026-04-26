@@ -124,7 +124,7 @@ $effect(() => {
               class="rounded border-gray-300 text-forest focus:ring-forest disabled:opacity-50"
             />
             <span class="flex-1 text-sm text-gray-700">
-              {definition.label || (columnId === 'avatar' ? 'Avatar' : columnId)}
+              {$i18n.t(definition.i18nKey, { defaultValue: definition.label }) || (columnId === 'avatar' ? 'Avatar' : columnId)}
             </span>
             {#if isRequired}
               <span class="text-xs text-gray-400">{$i18n.t('common.required')}</span>
