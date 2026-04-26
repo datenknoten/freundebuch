@@ -24,17 +24,18 @@ VERSION="$1"
 # Configuration
 COMPOSE_DIR="/srv/freundebuch.schumacher.im"
 COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
-IMAGE_BASE="ghcr.io/enko/freundebuch2"
+IMAGE_BASE="ghcr.io/datenknoten/freundebuch"
 
 # Service images (multi-service architecture)
 IMAGES=(
     "${IMAGE_BASE}-nginx:${VERSION}"
     "${IMAGE_BASE}-backend:${VERSION}"
+    "${IMAGE_BASE}-mcp-server:${VERSION}"
     "${IMAGE_BASE}-sabredav:${VERSION}"
 )
 
 # Services to manage
-SERVICES=("nginx" "backend" "sabredav")
+SERVICES=("nginx" "backend" "mcp-server" "sabredav")
 
 # Retry configuration
 MAX_PULL_RETRIES=5
