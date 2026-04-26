@@ -1,3 +1,14 @@
+## <small>2.70.2 (2026-04-26)</small>
+
+* fix(ci): Cancel stale CI runs and avoid prepare-time auto-install ([549e6a3](https://github.com/datenknoten/freundebuch/commit/549e6a3))
+* fix(ci): Resolve aube check shadowing biome and add scripts to @freundebuch/danger ([1206195](https://github.com/datenknoten/freundebuch/commit/1206195))
+* fix(dx): Use scoped names in aube --filter calls ([f615007](https://github.com/datenknoten/freundebuch/commit/f615007))
+* docs(dx): Document mise + hk + aube toolchain ([ea99779](https://github.com/datenknoten/freundebuch/commit/ea99779))
+* ci: Adopt mise-action and aube in workflows ([3bd707b](https://github.com/datenknoten/freundebuch/commit/3bd707b))
+* chore(dx): Pin toolchain with mise ([f7cff59](https://github.com/datenknoten/freundebuch/commit/f7cff59))
+* chore(dx): Replace husky and lint-staged with hk ([a9dab3f](https://github.com/datenknoten/freundebuch/commit/a9dab3f))
+* chore(dx): Switch package runner from pnpm to aube ([41d119f](https://github.com/datenknoten/freundebuch/commit/41d119f))
+
 ## [2.70.1](https://github.com/datenknoten/freundebuch/compare/v2.70.0...v2.70.1) (2026-04-26)
 
 ### Bug Fixes
