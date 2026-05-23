@@ -22,6 +22,7 @@ export function longPress(node: HTMLElement, params: LongPressParams) {
   let current = params;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let longPressFired = false;
+  let cancelled = false;
   let activePointerId: number | null = null;
   let activePointerType = '';
   let startX = 0;
@@ -47,6 +48,7 @@ export function longPress(node: HTMLElement, params: LongPressParams) {
     activePointerId = e.pointerId;
     activePointerType = e.pointerType;
     longPressFired = false;
+    cancelled = false;
     startX = e.clientX;
     startY = e.clientY;
     timer = setTimeout(() => {
@@ -62,7 +64,10 @@ export function longPress(node: HTMLElement, params: LongPressParams) {
       Math.abs(e.clientX - startX) > MOVE_CANCEL_PX ||
       Math.abs(e.clientY - startY) > MOVE_CANCEL_PX
     ) {
+      // Treat a drag/scroll as a cancelled gesture: stop the long press and
+      // suppress the click that follows so it isn't mistaken for a short tap.
       clearTimer();
+      cancelled = true;
     }
   }
 
@@ -72,11 +77,13 @@ export function longPress(node: HTMLElement, params: LongPressParams) {
   }
 
   function handleClick(e: MouseEvent) {
-    // Suppress the click synthesized after a long press so it doesn't also fire onShort.
-    if (longPressFired) {
+    // Suppress the click that follows a long press or a cancelled drag so it
+    // doesn't also fire onShort.
+    if (longPressFired || cancelled) {
       e.preventDefault();
       e.stopPropagation();
       longPressFired = false;
+      cancelled = false;
       return;
     }
     // Covers pointer taps (mouse/touch) and keyboard activation (Enter/Space).

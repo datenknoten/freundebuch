@@ -85,12 +85,13 @@ const showFab = $derived(
 
 let createMenuOpen = $state(false);
 
-// Close the create menu on navigation (incl. browser back/forward) so the
-// bottom-sheet overlay can never linger on a route where the FAB is hidden.
-let lastPath = $page.url.pathname;
+// Close the create menu on any navigation (incl. browser back/forward and
+// query-param-only updates) so the bottom-sheet overlay can never linger on a
+// route where the FAB is hidden.
+let lastHref = $page.url.href;
 $effect(() => {
-  if ($page.url.pathname !== lastPath) {
-    lastPath = $page.url.pathname;
+  if ($page.url.href !== lastHref) {
+    lastHref = $page.url.href;
     createMenuOpen = false;
   }
 });
