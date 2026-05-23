@@ -1,3 +1,10 @@
+## 2.71.0 (2026-05-23)
+
+* fix(frontend): Align encounter detail with unified design language ([6cfc3e6](https://github.com/datenknoten/freundebuch/commit/6cfc3e6))
+* fix(frontend): Close create menu on navigation and auto-open circle modal ([0d0bfe2](https://github.com/datenknoten/freundebuch/commit/0d0bfe2))
+* fix(frontend): Suppress tap after cancelled drag and close menu on any URL change ([6302c45](https://github.com/datenknoten/freundebuch/commit/6302c45))
+* feat(frontend): Add long-press create menu to mobile FAB ([e3def8b](https://github.com/datenknoten/freundebuch/commit/e3def8b))
+
 ## <small>2.70.2 (2026-04-26)</small>
 
 * fix(ci): Cancel stale CI runs and avoid prepare-time auto-install ([549e6a3](https://github.com/datenknoten/freundebuch/commit/549e6a3))
