@@ -5,6 +5,11 @@ import type { Snippet } from 'svelte';
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
+import { longPress } from '$lib/actions/long-press';
+import FabCreateMenu, {
+  type FabCreateChoice,
+  navigateForCreateChoice,
+} from '$lib/components/fab-create-menu.svelte';
 import Footer from '$lib/components/footer.svelte';
 import GlobalSearch from '$lib/components/global-search.svelte';
 import NavBar from '$lib/components/nav-bar.svelte';
@@ -77,6 +82,13 @@ const showFab = $derived(
     !$page.url.pathname.includes('/friends/new') &&
     !$page.url.pathname.match(/^\/friends\/[^/]+$/),
 );
+
+let createMenuOpen = $state(false);
+
+function handleCreateSelect(choice: FabCreateChoice) {
+  createMenuOpen = false;
+  navigateForCreateChoice(choice);
+}
 </script>
 
 <KeyboardShortcuts />
@@ -89,16 +101,23 @@ const showFab = $derived(
 	</main>
 	<Footer />
 
-	<!-- Floating Action Button for mobile -->
+	<!-- Floating Action Button for mobile: tap = new friend, long-press = create menu -->
 	{#if showFab}
-		<a
-			href="/friends/new"
-			data-sveltekit-preload-data="tap"
-			class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white rounded-full shadow-lg hover:bg-forest-light transition-colors flex items-center justify-center z-50"
+		<button
+			type="button"
+			use:longPress={{
+				onShort: () => goto('/friends/new'),
+				onLong: () => (createMenuOpen = true),
+			}}
+			class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white rounded-full shadow-lg hover:bg-forest-light transition-colors flex items-center justify-center z-50 select-none touch-none [-webkit-touch-callout:none]"
 			title={$i18n.t('friends.addNew')}
 			aria-label={$i18n.t('friends.addNew')}
 		>
 			<Plus class="w-6 h-6" strokeWidth="2" />
-		</a>
+		</button>
+	{/if}
+
+	{#if createMenuOpen}
+		<FabCreateMenu onSelect={handleCreateSelect} onClose={() => (createMenuOpen = false)} />
 	{/if}
 </div>
