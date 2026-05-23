@@ -1,8 +1,8 @@
 <script lang="ts">
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
+import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
-import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
-import Trash from 'svelte-heros-v2/Trash.svelte';
+import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
@@ -56,54 +56,53 @@ async function handleDelete() {
 </script>
 
 <div class="space-y-6">
-  <!-- Header -->
-  <div class="flex items-start justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-heading font-bold text-gray-900">
-        {encounter.title}
-      </h1>
-      <div class="mt-2 flex items-center gap-2 text-gray-600 font-body">
-        <Calendar class="w-5 h-5" strokeWidth="2" />
-        <span>{formatDate(encounter.encounterDate)}</span>
-      </div>
+  <!-- Header with icon avatar and actions -->
+  <div class="flex flex-col sm:flex-row items-center gap-6">
+    <!-- Calendar icon as avatar -->
+    <div class="flex-shrink-0 w-20 h-20 rounded-full bg-forest/10 text-forest flex items-center justify-center">
+      <Calendar class="w-10 h-10" strokeWidth="2" />
     </div>
 
-    <!-- Actions -->
+    <div class="flex-1 text-center sm:text-left">
+      <h1 class="text-3xl font-heading text-gray-900">{encounter.title}</h1>
+      <div class="mt-1 flex items-center gap-2 text-gray-600 font-body justify-center sm:justify-start">
+        <Calendar class="w-4 h-4 flex-shrink-0" strokeWidth="2" />
+        <span>{formatDate(encounter.encounterDate)}</span>
+      </div>
+      {#if encounter.locationText}
+        <div class="mt-1 flex items-center gap-2 text-gray-600 font-body text-sm justify-center sm:justify-start">
+          <MapPin class="w-4 h-4 flex-shrink-0" strokeWidth="2" />
+          <span>{encounter.locationText}</span>
+        </div>
+      {/if}
+    </div>
+
     <div class="flex gap-2">
       <button
         type="button"
         onclick={() => onEdit?.()}
-        class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg font-body text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+        class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
       >
-        <PencilSquare class="w-4 h-4" strokeWidth="2" />
-        {$i18n.t('encounters.detail.edit')}
+        {$i18n.t('common.edit')}
       </button>
-
       <button
         type="button"
         onclick={() => showDeleteConfirm = true}
-        class="inline-flex items-center gap-2 px-3 py-2 border border-red-300 rounded-lg font-body text-sm text-red-700 hover:bg-red-50 transition-colors"
+        class="px-4 py-2 border border-red-300 text-red-600 rounded-lg font-body font-semibold hover:bg-red-50 transition-colors"
       >
-        <Trash class="w-4 h-4" strokeWidth="2" />
-        {$i18n.t('encounters.detail.delete')}
+        {$i18n.t('common.delete')}
       </button>
     </div>
   </div>
 
-  <!-- Location -->
-  {#if encounter.locationText}
-    <div class="flex items-center gap-2 text-gray-600 font-body">
-      <MapPin class="w-5 h-5" strokeWidth="2" />
-      <span>{encounter.locationText}</span>
-    </div>
-  {/if}
-
-  <!-- Friends -->
-  <div class="bg-gray-50 rounded-lg p-4">
-    <h2 class="text-sm font-body font-medium text-gray-700 mb-3">
-      {$i18n.t('encounters.detail.friends')} ({encounter.friends.length})
+  <!-- ==================== FRIENDS SECTION ==================== -->
+  <section class="space-y-2">
+    <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
+      <Users class="w-5 h-5" strokeWidth="2" />
+      {$i18n.t('encounters.detail.friends')}
+      <span class="text-sm font-body font-normal text-white/80">({encounter.friends.length})</span>
     </h2>
-    <div class="flex flex-wrap gap-3">
+    <div class="flex flex-wrap gap-3 p-3 bg-gray-50 rounded-lg">
       {#each encounter.friends as friend (friend.id)}
         <a
           href="/friends/{friend.id}"
@@ -118,47 +117,51 @@ async function handleDelete() {
         </a>
       {/each}
     </div>
-  </div>
+  </section>
 
-  <!-- Description -->
+  <!-- ==================== NOTES SECTION ==================== -->
   {#if encounter.description}
-    <div>
-      <h2 class="text-sm font-body font-medium text-gray-700 mb-2">{$i18n.t('encounters.detail.notes')}</h2>
-      <p class="text-gray-600 font-body whitespace-pre-wrap">
+    <section class="space-y-2">
+      <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
+        <DocumentText class="w-5 h-5" strokeWidth="2" />
+        {$i18n.t('encounters.detail.notes')}
+      </h2>
+      <div class="p-3 bg-gray-50 rounded-lg font-body text-gray-700 whitespace-pre-wrap">
         {encounter.description}
-      </p>
-    </div>
+      </div>
+    </section>
   {/if}
 
-  <!-- Metadata -->
-  <div class="border-t border-gray-200 pt-4 text-xs text-gray-500 font-body">
-    <p>{$i18n.t('encounters.detail.created')} {formatTimestamp(encounter.createdAt)}</p>
-    <p>{$i18n.t('encounters.detail.lastUpdated')} {formatTimestamp(encounter.updatedAt)}</p>
-  </div>
+  <!-- ==================== METADATA FOOTER ==================== -->
+  <section class="text-sm text-gray-500 font-body">
+    <div class="flex flex-wrap gap-4">
+      <span>{$i18n.t('encounters.detail.created')} {formatTimestamp(encounter.createdAt)}</span>
+      <span>{$i18n.t('encounters.detail.lastUpdated')} {formatTimestamp(encounter.updatedAt)}</span>
+    </div>
+  </section>
 </div>
 
 <!-- Delete confirmation modal -->
 {#if showDeleteConfirm}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
     role="dialog"
     aria-modal="true"
     aria-labelledby="delete-modal-title"
   >
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-      <h3 id="delete-modal-title" class="text-lg font-heading font-semibold text-gray-900">
+    <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
+      <h3 id="delete-modal-title" class="text-xl font-heading text-gray-900 mb-2">
         {$i18n.t('encounters.detail.deleteConfirmTitle')}
       </h3>
-      <p class="mt-2 text-sm text-gray-600 font-body">
+      <p class="text-gray-600 font-body mb-6">
         {$i18n.t('encounters.detail.deleteConfirmMessage', { title: encounter.title })}
       </p>
-
-      <div class="mt-6 flex gap-3 justify-end">
+      <div class="flex gap-3">
         <button
           type="button"
           onclick={() => showDeleteConfirm = false}
           disabled={isDeleting}
-          class="px-4 py-2 border border-gray-300 rounded-lg font-body text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           {$i18n.t('encounters.form.cancel')}
         </button>
@@ -166,9 +169,9 @@ async function handleDelete() {
           type="button"
           onclick={handleDelete}
           disabled={isDeleting}
-          class="px-4 py-2 bg-red-600 text-white rounded-lg font-body text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
+          class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-body font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
         >
-          {isDeleting ? $i18n.t('encounters.detail.deleting') : $i18n.t('encounters.detail.delete')}
+          {isDeleting ? $i18n.t('encounters.detail.deleting') : $i18n.t('common.delete')}
         </button>
       </div>
     </div>
