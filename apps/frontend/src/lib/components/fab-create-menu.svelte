@@ -18,12 +18,12 @@ export function navigateForCreateChoice(choice: FabCreateChoice): void {
       goto('/collectives/new');
       break;
     case 'circle':
-      // Mirror the keyboard shortcut (shortcuts/handlers/creation.ts): circles are
-      // created via a modal, so open it in place when already on /circles, else navigate.
+      // Circles are created via a modal. Open it in place when already on /circles,
+      // otherwise navigate there with a flag the circles page uses to auto-open it.
       if (get(page).url.pathname === '/circles') {
         window.dispatchEvent(new CustomEvent('shortcut:new-circle'));
       } else {
-        goto('/circles');
+        goto('/circles?new=1');
       }
       break;
   }

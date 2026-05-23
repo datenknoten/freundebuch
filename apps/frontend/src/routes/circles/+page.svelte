@@ -2,6 +2,8 @@
 import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
+import { replaceState } from '$app/navigation';
+import { page } from '$app/stores';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import CircleEditModal from '$lib/components/circles/circle-edit-modal.svelte';
 import DeleteConfirmModal from '$lib/components/friends/subresources/delete-confirm-modal.svelte';
@@ -59,6 +61,15 @@ onMount(() => {
   window.addEventListener('shortcut:new-circle', handleNewCircle);
   window.addEventListener('shortcut:edit-circle', handleEditCircle as EventListener);
   window.addEventListener('shortcut:delete-circle', handleDeleteCircle as EventListener);
+
+  // Auto-open the create modal when navigated here with ?new=1 (e.g. from the
+  // mobile FAB long-press menu), then strip the flag so reloads don't reopen it.
+  if ($page.url.searchParams.get('new') === '1') {
+    openCreateModal();
+    const cleaned = new URL($page.url);
+    cleaned.searchParams.delete('new');
+    replaceState(cleaned.pathname + cleaned.search, {});
+  }
 
   return () => {
     window.removeEventListener('shortcut:new-circle', handleNewCircle);
