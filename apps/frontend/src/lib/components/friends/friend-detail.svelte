@@ -4,7 +4,12 @@ import Heart from 'svelte-heros-v2/Heart.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import { longPress } from '$lib/actions/long-press';
 import { getCollectivesForFriend } from '$lib/api/friends';
+import FabCreateMenu, {
+  type FabCreateChoice,
+  navigateForCreateChoice,
+} from '$lib/components/fab-create-menu.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import {
@@ -135,6 +140,7 @@ let showDeleteConfirm = $state(false);
 // Mobile add modal state
 let showMobileAddChoiceModal = $state(false);
 let showMobileAddModal = $state(false);
+let showFabCreateMenu = $state(false);
 
 // Friend delete handler
 async function handleDelete() {
@@ -361,13 +367,16 @@ onMount(() => {
   </section>
 </div>
 
-<!-- Mobile FAB for adding -->
+<!-- Mobile FAB: tap = add friend/detail choice, long-press = create menu -->
 <button
   type="button"
-  onclick={() => showMobileAddChoiceModal = true}
+  use:longPress={{
+    onShort: () => (showMobileAddChoiceModal = true),
+    onLong: () => (showFabCreateMenu = true),
+  }}
   class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white
          rounded-full shadow-lg hover:bg-forest-light transition-colors
-         flex items-center justify-center z-40"
+         flex items-center justify-center z-40 select-none touch-none [-webkit-touch-callout:none]"
   aria-label={$i18n.t('subresources.common.add')}
 >
   <Plus class="w-6 h-6" strokeWidth="2" />
@@ -396,6 +405,17 @@ onMount(() => {
       dispatchAddEvent(type);
     }}
     onClose={() => showMobileAddModal = false}
+  />
+{/if}
+
+<!-- Mobile long-press create menu -->
+{#if showFabCreateMenu}
+  <FabCreateMenu
+    onSelect={(choice: FabCreateChoice) => {
+      showFabCreateMenu = false;
+      navigateForCreateChoice(choice);
+    }}
+    onClose={() => (showFabCreateMenu = false)}
   />
 {/if}
 
