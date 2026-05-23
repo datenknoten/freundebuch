@@ -85,6 +85,16 @@ const showFab = $derived(
 
 let createMenuOpen = $state(false);
 
+// Close the create menu on navigation (incl. browser back/forward) so the
+// bottom-sheet overlay can never linger on a route where the FAB is hidden.
+let lastPath = $page.url.pathname;
+$effect(() => {
+  if ($page.url.pathname !== lastPath) {
+    lastPath = $page.url.pathname;
+    createMenuOpen = false;
+  }
+});
+
 function handleCreateSelect(choice: FabCreateChoice) {
   createMenuOpen = false;
   navigateForCreateChoice(choice);
@@ -117,7 +127,7 @@ function handleCreateSelect(choice: FabCreateChoice) {
 		</button>
 	{/if}
 
-	{#if createMenuOpen}
+	{#if showFab && createMenuOpen}
 		<FabCreateMenu onSelect={handleCreateSelect} onClose={() => (createMenuOpen = false)} />
 	{/if}
 </div>
