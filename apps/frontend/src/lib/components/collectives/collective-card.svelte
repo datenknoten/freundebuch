@@ -4,6 +4,7 @@ import Heart from 'svelte-heros-v2/Heart.svelte';
 import Home from 'svelte-heros-v2/Home.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { createI18n } from '$lib/i18n/index.js';
+import { collectiveTypeI18nKey } from '$lib/utils/collective-types';
 import type { CollectiveListItem } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
 
@@ -49,11 +50,6 @@ function getTypeBadgeColor(typeName: string): string {
 }
 
 let badgeColor = $derived(getTypeBadgeColor(collective.type.name));
-
-function getTypeLabel(typeName: string): string {
-  const key = typeName.toLowerCase().replace(/\s+/g, '_');
-  return $i18n.t(`collectives.types.${key}`, { defaultValue: typeName });
-}
 </script>
 
 <a
@@ -72,7 +68,7 @@ function getTypeLabel(typeName: string): string {
       <div class="mt-2">
         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-body font-medium {badgeColor}">
           <svelte:component this={getTypeIconComponent(collective.type.name)} class="w-3 h-3" strokeWidth="2" />
-          {getTypeLabel(collective.type.name)}
+          {$i18n.t(collectiveTypeI18nKey(collective.type.name), { defaultValue: collective.type.name })}
         </span>
       </div>
     </div>
