@@ -34,6 +34,15 @@ coverage/
 .nyc_output/
 playwright-report/
 test-results/
+.playwright-mcp/
+
+# Local screenshots (Playwright MCP / manual captures)
+*-after.png
+*-list.png
+*-restored.png
+collective-detail.png
+encounter-detail.png
+friend-detail.png
 
 # Logs
 logs/
