@@ -21,6 +21,9 @@ ARG TARGETARCH
 ENV MISE_NO_HOOKS=1
 ENV MISE_DATA_DIR=/mise
 ENV PATH="/mise/shims:${PATH}"
+# Trust the copied mise.toml for all users (incl. the runtime `node` user) so the
+# mise shims run node/aube without a per-user trust prompt.
+ENV MISE_TRUSTED_CONFIG_PATHS=/app
 
 # Install build dependencies for native modules (cpu-features, ssh2, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -33,7 +36,7 @@ WORKDIR /app
 
 # Install the toolchain pinned in mise.toml (node + aube).
 COPY mise.toml ./
-RUN mise trust && mise install
+RUN mise install
 
 # Copy workspace configuration.
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
@@ -72,6 +75,9 @@ ARG TARGETARCH
 ENV MISE_NO_HOOKS=1
 ENV MISE_DATA_DIR=/mise
 ENV PATH="/mise/shims:${PATH}"
+# Trust the copied mise.toml for all users (incl. the runtime `node` user) so the
+# mise shims run node/aube without a per-user trust prompt.
+ENV MISE_TRUSTED_CONFIG_PATHS=/app
 WORKDIR /app
 
 # The mise base image has no `node` user (the old node:slim base did); create one
@@ -79,7 +85,7 @@ WORKDIR /app
 RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin node
 
 COPY mise.toml ./
-RUN mise trust && mise install
+RUN mise install
 
 # Copy workspace configuration for production dependencies. mcp-server imports
 # @freundebuch/backend/services/*.js at runtime (workspace dep), so backend's
@@ -128,12 +134,15 @@ ARG TARGETARCH
 ENV MISE_NO_HOOKS=1
 ENV MISE_DATA_DIR=/mise
 ENV PATH="/mise/shims:${PATH}"
+# Trust the copied mise.toml for all users (incl. the runtime `node` user) so the
+# mise shims run node/aube without a per-user trust prompt.
+ENV MISE_TRUSTED_CONFIG_PATHS=/app
 WORKDIR /app
 
 RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin node
 
 COPY mise.toml ./
-RUN mise trust && mise install
+RUN mise install
 
 # Copy workspace configuration for production dependencies
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
