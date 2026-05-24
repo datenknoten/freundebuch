@@ -1,3 +1,14 @@
+## <small>2.71.1 (2026-05-24)</small>
+
+* fix(ci): Build prod images from a pruned builder tree, not a re-install ([402334d](https://github.com/datenknoten/freundebuch/commit/402334d))
+* fix(ci): Clear the mise image ENTRYPOINT so CMD runs node/aube directly ([01b19e0](https://github.com/datenknoten/freundebuch/commit/01b19e0))
+* fix(ci): Make aube-built prod images self-contained and slim ([dd603ca](https://github.com/datenknoten/freundebuch/commit/dd603ca))
+* fix(ci): Replace pnpm CLI with aube via mise in Docker image builds ([59d0d9d](https://github.com/datenknoten/freundebuch/commit/59d0d9d))
+* fix(ci): Resolve smoke-test modules from each app directory ([d300a7c](https://github.com/datenknoten/freundebuch/commit/d300a7c))
+* fix(ci): Trust mise.toml in images so the node shim runs at runtime ([ef060d3](https://github.com/datenknoten/freundebuch/commit/ef060d3))
+* test(ci): Add Docker build smoke test on pull requests ([d6b80c0](https://github.com/datenknoten/freundebuch/commit/d6b80c0))
+* docs(ci): Explain why the all-in-one image avoids the mise base image ([991523f](https://github.com/datenknoten/freundebuch/commit/991523f))
+
 ## 2.71.0 (2026-05-23)
 
 * fix(frontend): Align encounter detail with unified design language ([6cfc3e6](https://github.com/datenknoten/freundebuch/commit/6cfc3e6))
