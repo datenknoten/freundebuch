@@ -2,6 +2,11 @@
 # ============================================
 # Optimized multi-stage build for production
 # Requires Docker BuildKit (DOCKER_BUILDKIT=1)
+#
+# Toolchain: aube + node are installed via mise from mise.toml. This image needs
+# php8.2 (a Debian bookworm package), so it keeps the node:24-bookworm-slim base
+# rather than the mise image; mise itself is installed at a pinned version.
+# MISE_NO_HOOKS skips mise.toml's dev-only postinstall hook (no .git here).
 # ============================================
 
 # ============================================
@@ -11,11 +16,15 @@
 # ============================================
 FROM node:24-bookworm-slim AS runtime-base
 
+ENV MISE_NO_HOOKS=1
+ENV MISE_DATA_DIR=/mise
+ENV PATH="/mise/shims:${PATH}"
+
 # Install nginx, supervisor, curl, gettext (for envsubst), and PHP-FPM with PostgreSQL extension
 # Combined into single layer for caching
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        nginx supervisor curl gettext-base \
+        nginx supervisor curl ca-certificates gettext-base \
         php8.2-fpm php8.2-pgsql php8.2-xml php8.2-mbstring php8.2-curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
@@ -23,8 +32,8 @@ RUN apt-get update && \
     sed -i 's|listen = /run/php/php8.2-fpm.sock|listen = 127.0.0.1:9000|' /etc/php/8.2/fpm/pool.d/www.conf && \
     # Ensure PHP-FPM directory exists
     mkdir -p /run/php && \
-    # Enable corepack for pnpm
-    corepack enable && corepack prepare pnpm@latest --activate
+    # Install mise at a pinned version (provides node + aube from mise.toml)
+    curl -fsSL https://mise.run | MISE_VERSION=v2026.5.15 MISE_INSTALL_PATH=/usr/local/bin/mise sh
 
 # ============================================
 # Stage: SabreDAV PHP dependencies
@@ -38,19 +47,25 @@ RUN --mount=type=cache,id=composer,target=/root/.composer/cache \
     composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # ============================================
-# Stage: Node base with pnpm
+# Stage: Node base with aube (via mise)
 # ============================================
 FROM node:24-bookworm-slim AS base
-RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV MISE_NO_HOOKS=1
+ENV MISE_DATA_DIR=/mise
+ENV PATH="/mise/shims:${PATH}"
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    curl -fsSL https://mise.run | MISE_VERSION=v2026.5.15 MISE_INSTALL_PATH=/usr/local/bin/mise sh
 WORKDIR /app
 
 # ============================================
 # Stage: Install dependencies
-# Uses cache mount for pnpm store - major speedup on rebuilds
+# Uses cache mount for the aube store - major speedup on rebuilds
 # ============================================
 FROM base AS deps
 
 # Copy workspace configuration
+COPY mise.toml ./
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY tsconfig.base.json ./
 
@@ -60,9 +75,10 @@ COPY apps/frontend/package.json ./apps/frontend/
 COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install all dependencies with cache mount for pnpm store
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+# Install the toolchain pinned in mise.toml, then all JS dependencies.
+RUN mise trust && mise install
+RUN --mount=type=cache,id=aube,target=/root/.local/share/aube/store \
+    aube ci
 
 # ============================================
 # Stage: Build shared package
@@ -70,7 +86,7 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 FROM deps AS shared-builder
 
 COPY packages/shared ./packages/shared
-RUN pnpm --filter @freundebuch/shared run build
+RUN aube --filter @freundebuch/shared run build
 
 # ============================================
 # Stage: Build backend and migrations
@@ -80,8 +96,8 @@ FROM shared-builder AS backend-builder
 
 COPY apps/backend ./apps/backend
 COPY database ./database
-RUN pnpm --filter @freundebuch/backend run build && \
-    pnpm run migrate:build
+RUN aube --filter @freundebuch/backend run build && \
+    aube run migrate:build
 
 # ============================================
 # Stage: Build MCP server
@@ -90,7 +106,7 @@ RUN pnpm --filter @freundebuch/backend run build && \
 FROM backend-builder AS mcp-server-builder
 
 COPY apps/mcp-server ./apps/mcp-server
-RUN pnpm --filter @freundebuch/mcp-server run build
+RUN aube --filter @freundebuch/mcp-server run build
 
 # ============================================
 # Stage: Build frontend (static)
@@ -104,7 +120,7 @@ ENV VITE_API_URL=""
 # Sentry DSN is passed as build arg (optional)
 ARG VITE_SENTRY_DSN=""
 ENV VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
-RUN pnpm --filter @freundebuch/frontend run build
+RUN aube --filter @freundebuch/frontend run build
 
 # ============================================
 # Stage: Production runtime
@@ -118,14 +134,16 @@ WORKDIR /app
 COPY docker/php-fpm-pool.conf /etc/php/8.2/fpm/pool.d/zz-logging.conf
 
 # Copy workspace configuration for production dependencies
+COPY mise.toml ./
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install production dependencies only with cache mount
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --prod --ignore-scripts
+# Install the toolchain pinned in mise.toml, then production dependencies only.
+RUN mise trust && mise install
+RUN --mount=type=cache,id=aube,target=/root/.local/share/aube/store \
+    aube install --prod
 
 # Copy built artifacts from parallel build stages
 COPY --from=shared-builder /app/packages/shared/dist ./packages/shared/dist

@@ -1,15 +1,23 @@
 # syntax=docker/dockerfile:1.4
 # Production Dockerfile for Nginx (frontend + reverse proxy)
+# Toolchain: node + aube via mise (from mise.toml). MISE_NO_HOOKS skips the
+# dev-only postinstall hook that can't run in an image with no .git.
 # ============================================
 
 # Stage 1: Build frontend
-FROM node:24-bookworm-slim AS builder
+FROM ghcr.io/jdx/mise:2026.5.15 AS builder
 
 # Get target architecture for cache isolation
 ARG TARGETARCH
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV MISE_NO_HOOKS=1
+ENV MISE_DATA_DIR=/mise
+ENV PATH="/mise/shims:${PATH}"
 WORKDIR /app
+
+# Install the toolchain pinned in mise.toml (node + aube).
+COPY mise.toml ./
+RUN mise trust && mise install
 
 # Copy workspace configuration
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
@@ -19,9 +27,9 @@ COPY tsconfig.base.json ./
 COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install dependencies with architecture-specific cache mount
-RUN --mount=type=cache,id=pnpm-${TARGETARCH},target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+# Install dependencies (aube reads pnpm-lock.yaml; honors onlyBuiltDependencies).
+RUN --mount=type=cache,id=aube-${TARGETARCH},target=/root/.local/share/aube/store \
+    aube ci
 
 # Copy source code
 COPY packages/shared ./packages/shared
@@ -33,8 +41,8 @@ ARG VITE_SENTRY_DSN=""
 ENV VITE_API_URL=""
 ENV VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
 
-RUN pnpm --filter @freundebuch/shared run build && \
-    pnpm --filter @freundebuch/frontend run build
+RUN aube --filter @freundebuch/shared run build && \
+    aube --filter @freundebuch/frontend run build
 
 # Stage 2: Production nginx
 FROM nginx:1.27-alpine AS production
