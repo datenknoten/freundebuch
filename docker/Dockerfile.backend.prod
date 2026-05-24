@@ -123,6 +123,9 @@ USER node
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3100/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
+# The mise base image sets ENTRYPOINT ["mise"]; clear it so CMD runs node
+# directly (node resolves via the mise shims on PATH).
+ENTRYPOINT []
 CMD ["node", "/app/apps/mcp-server/dist/index.js"]
 
 # ============================================
@@ -173,4 +176,7 @@ USER node
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
+# The mise base image sets ENTRYPOINT ["mise"]; clear it so CMD runs node
+# directly (node resolves via the mise shims on PATH).
+ENTRYPOINT []
 CMD ["node", "/app/apps/backend/dist/index.js"]
