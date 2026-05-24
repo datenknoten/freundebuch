@@ -49,7 +49,7 @@ services:
       - ./packages:/app/packages
       - /app/packages/shared/node_modules
       - /app/node_modules
-    command: pnpm --filter backend run dev
+    command: aube --filter @freundebuch/backend run dev
 
   frontend:
     build:
@@ -69,7 +69,7 @@ services:
       - ./packages:/app/packages
       - /app/packages/shared/node_modules
       - /app/node_modules
-    command: pnpm --filter frontend run dev
+    command: aube --filter @freundebuch/frontend run dev
 
   mcp:
     build:
@@ -96,7 +96,7 @@ services:
       - ./packages:/app/packages
       - /app/packages/shared/node_modules
       - /app/node_modules
-    command: pnpm --filter @freundebuch/mcp-server run dev
+    command: aube --filter @freundebuch/mcp-server run dev
 
   sabredav:
     build:

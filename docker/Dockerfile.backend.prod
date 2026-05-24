@@ -6,13 +6,21 @@
 #   docker build -f docker/Dockerfile.backend.prod .                 → backend
 #   docker build -f docker/Dockerfile.backend.prod --target backend .→ backend
 #   docker build -f docker/Dockerfile.backend.prod --target mcp-server . → mcp-server
+#
+# Toolchain: node + aube are installed via mise from mise.toml (single source of
+# truth with CI/dev). aube reads pnpm-lock.yaml. MISE_NO_HOOKS skips mise.toml's
+# dev-only postinstall hook (hk install) which can't run in an image with no .git.
 # ============================================
 
 # Stage 1: Build dependencies and compile TypeScript (shared by both targets)
-FROM node:24-bookworm-slim AS builder
+FROM ghcr.io/jdx/mise:2026.5.15 AS builder
 
 # Get target architecture for cache isolation
 ARG TARGETARCH
+
+ENV MISE_NO_HOOKS=1
+ENV MISE_DATA_DIR=/mise
+ENV PATH="/mise/shims:${PATH}"
 
 # Install build dependencies for native modules (cpu-features, ssh2, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -21,10 +29,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
-# Copy workspace configuration
+# Install the toolchain pinned in mise.toml (node + aube).
+COPY mise.toml ./
+RUN mise trust && mise install
+
+# Copy workspace configuration.
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY tsconfig.base.json ./
 
@@ -35,9 +46,10 @@ COPY apps/backend/package.json ./apps/backend/
 COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install all dependencies with architecture-specific cache mount
-RUN --mount=type=cache,id=pnpm-${TARGETARCH},target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+# Install all dependencies. `aube ci` treats the lockfile as the source of truth
+# and honors onlyBuiltDependencies (pnpm-workspace.yaml) to build native modules.
+RUN --mount=type=cache,id=aube-${TARGETARCH},target=/root/.local/share/aube/store \
+    aube ci
 
 # Copy source code
 COPY packages/shared ./packages/shared
@@ -46,31 +58,42 @@ COPY apps/mcp-server ./apps/mcp-server
 COPY database ./database
 
 # Build shared package, backend, mcp-server, and migrations
-RUN pnpm --filter @freundebuch/shared run build && \
-    pnpm --filter @freundebuch/backend run build && \
-    pnpm --filter @freundebuch/mcp-server run build && \
-    pnpm run migrate:build
+RUN aube --filter @freundebuch/shared run build && \
+    aube --filter @freundebuch/backend run build && \
+    aube --filter @freundebuch/mcp-server run build && \
+    aube run migrate:build
 
 # ============================================
 # Stage 2: mcp-server production runtime
-FROM node:24-bookworm-slim AS mcp-server
+FROM ghcr.io/jdx/mise:2026.5.15 AS mcp-server
 
 ARG TARGETARCH
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV MISE_NO_HOOKS=1
+ENV MISE_DATA_DIR=/mise
+ENV PATH="/mise/shims:${PATH}"
 WORKDIR /app
+
+# The mise base image has no `node` user (the old node:slim base did); create one
+# with uid 1000 to keep file ownership stable.
+RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin node
+
+COPY mise.toml ./
+RUN mise trust && mise install
 
 # Copy workspace configuration for production dependencies. mcp-server imports
 # @freundebuch/backend/services/*.js at runtime (workspace dep), so backend's
-# package.json must be present for pnpm to wire up the workspace symlink.
+# package.json must be present for aube to wire up the workspace symlink.
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install production dependencies only with architecture-specific cache mount
-RUN --mount=type=cache,id=pnpm-${TARGETARCH},target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --prod --ignore-scripts
+# Install production dependencies only. aube skips dependency build scripts by
+# default; the shared store cache carries the prebuilt native binaries that the
+# builder stage produced.
+RUN --mount=type=cache,id=aube-${TARGETARCH},target=/root/.local/share/aube/store \
+    aube install --prod
 
 # Copy built artifacts. backend dist is included because mcp-server resolves
 # `@freundebuch/backend/services/*.js` to backend's compiled JS via the
@@ -98,21 +121,28 @@ CMD ["node", "/app/apps/mcp-server/dist/index.js"]
 
 # ============================================
 # Stage 3: backend production runtime (default target)
-FROM node:24-bookworm-slim AS backend
+FROM ghcr.io/jdx/mise:2026.5.15 AS backend
 
 ARG TARGETARCH
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV MISE_NO_HOOKS=1
+ENV MISE_DATA_DIR=/mise
+ENV PATH="/mise/shims:${PATH}"
 WORKDIR /app
+
+RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin node
+
+COPY mise.toml ./
+RUN mise trust && mise install
 
 # Copy workspace configuration for production dependencies
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install production dependencies only with architecture-specific cache mount
-RUN --mount=type=cache,id=pnpm-${TARGETARCH},target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --prod --ignore-scripts
+# Install production dependencies only (see note in the mcp-server stage).
+RUN --mount=type=cache,id=aube-${TARGETARCH},target=/root/.local/share/aube/store \
+    aube install --prod
 
 # Copy built artifacts
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
