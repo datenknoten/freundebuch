@@ -7,10 +7,12 @@
 #   docker build -f docker/Dockerfile.backend.prod --target backend .→ backend
 #   docker build -f docker/Dockerfile.backend.prod --target mcp-server . → mcp-server
 #
-# Strategy: one mise-based builder resolves + builds + prunes to prod deps; each
-# runtime target reuses that exact tree (same base image, so the compiled native
-# modules stay ABI/glibc-compatible). aube reads pnpm-lock.yaml; node + aube come
-# from mise.toml. MISE_NO_HOOKS skips the dev-only postinstall hook.
+# Strategy: a mise-based builder installs (node + aube from mise.toml), builds,
+# and prunes to a self-contained prod tree under /app; each runtime target is a
+# slim node base that just copies that tree (the native modules built under the
+# mise builder are glibc-compatible with bookworm, verified by the CI smoke
+# build). aube reads pnpm-lock.yaml. MISE_NO_HOOKS skips the dev-only postinstall
+# hook; XDG_CACHE_HOME + package-import-method=copy keep aube's store inside /app.
 # ============================================
 
 # Stage 1: Resolve deps, compile TypeScript, prune to production deps
@@ -49,10 +51,22 @@ COPY apps/backend/package.json ./apps/backend/
 COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
+# Make the installed tree self-contained under /app so `COPY /app` into the
+# runtime stages works and the non-root `node` user can read it:
+#   - XDG_CACHE_HOME under /app: aube's virtual-store (what node_modules/.aube
+#     symlinks into) lands at /app/.aube-cache instead of /root/.cache (external
+#     to /app and unreadable by the node user).
+#   - package-import-method=copy: the virtual-store holds real files rather than
+#     symlinks into the content store (~/.local/share/aube), so nothing outside
+#     /app is referenced.
+# The default linker is kept (it builds native modules like bcrypt correctly;
+# node-linker=hoisted breaks their install scripts).
+ENV XDG_CACHE_HOME=/app/.aube-cache
+RUN printf 'package-import-method=copy\n' > .npmrc
+
 # Install all dependencies. `aube ci` treats the lockfile as the source of truth
 # and honors onlyBuiltDependencies (pnpm-workspace.yaml) to build native modules.
-RUN --mount=type=cache,id=aube-${TARGETARCH},target=/root/.local/share/aube/store \
-    aube ci
+RUN aube ci
 
 # Copy source code
 COPY packages/shared ./packages/shared
@@ -66,33 +80,22 @@ RUN aube --filter @freundebuch/shared run build && \
     aube --filter @freundebuch/mcp-server run build && \
     aube run migrate:build
 
-# Strip devDependencies so the runtime images carry only production deps (the
-# built native modules for prod packages are kept).
+# Drop devDependencies so the runtime images carry only production deps.
 RUN aube prune --prod
 
 # ============================================
 # Stage 2: mcp-server production runtime
-FROM ghcr.io/jdx/mise:2026.5.15 AS mcp-server
+FROM node:24-bookworm-slim AS mcp-server
 
-ENV MISE_NO_HOOKS=1
-ENV MISE_DATA_DIR=/mise
-ENV PATH="/mise/shims:${PATH}"
-ENV MISE_TRUSTED_CONFIG_PATHS=/app
 WORKDIR /app
 
-# The mise base image has no `node` user; create one (uid 1000) for non-root runtime.
-RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin node
-
-# Install node from mise.toml (the binary the app runs with). Dependencies are
-# not resolved here — they come from the builder's pruned tree below.
-COPY mise.toml ./
-RUN mise install
-
-# Reuse the builder's resolved + built + pruned workspace (includes the prod
-# node_modules with native binaries and the inlined @freundebuch/* packages).
-COPY --from=builder /app ./
-
-RUN chown -R node:node /app
+# Reuse the builder's resolved + built + pruned workspace. It is self-contained
+# (aube's virtual-store lives under /app/.aube-cache, copied along with it), so a
+# plain node base suffices at runtime -- no mise, aube, or external store needed.
+# The native modules built in the mise builder are glibc-compatible with bookworm.
+# --chown sets ownership in the COPY layer; a separate `chown -R` would duplicate
+# the whole tree into another layer and roughly double the image size.
+COPY --chown=node:node --from=builder /app ./
 
 # config.ts requires ENV; default it so the all-in-one supervisord image and
 # any compose deploy that forgets to set ENV still boot in production mode.
@@ -101,12 +104,8 @@ ENV MCP_PORT=3100
 
 EXPOSE 3100
 
-# Drop to non-root user
+# Drop to non-root user (node:slim ships a uid-1000 `node` user)
 USER node
-
-# The mise base image sets ENTRYPOINT ["mise"]; clear it so CMD runs node
-# directly (node resolves via the mise shims on PATH).
-ENTRYPOINT []
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3100/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
@@ -115,38 +114,24 @@ CMD ["node", "/app/apps/mcp-server/dist/index.js"]
 
 # ============================================
 # Stage 3: backend production runtime (default target)
-FROM ghcr.io/jdx/mise:2026.5.15 AS backend
+FROM node:24-bookworm-slim AS backend
 
-ENV MISE_NO_HOOKS=1
-ENV MISE_DATA_DIR=/mise
-ENV PATH="/mise/shims:${PATH}"
-ENV MISE_TRUSTED_CONFIG_PATHS=/app
 WORKDIR /app
 
-RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin node
+# Reuse the builder's resolved + built + pruned, self-contained workspace
+# (see the mcp-server stage). --chown avoids a tree-duplicating `chown -R` layer.
+COPY --chown=node:node --from=builder /app ./
 
-# Install node from mise.toml (deps come from the builder's pruned tree below).
-COPY mise.toml ./
-RUN mise install
-
-# Reuse the builder's resolved + built + pruned workspace.
-COPY --from=builder /app ./
-
-# Create uploads directory and set ownership for non-root execution
-RUN mkdir -p /app/uploads && \
-    chown -R node:node /app
+# Create uploads directory owned by the runtime user
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
 
 ENV NODE_ENV=production
 ENV PORT=3000
 
 EXPOSE 3000
 
-# Drop to non-root user
+# Drop to non-root user (node:slim ships a uid-1000 `node` user)
 USER node
-
-# The mise base image sets ENTRYPOINT ["mise"]; clear it so CMD runs node
-# directly (node resolves via the mise shims on PATH).
-ENTRYPOINT []
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"

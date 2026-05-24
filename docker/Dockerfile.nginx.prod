@@ -30,8 +30,12 @@ COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies (aube reads pnpm-lock.yaml; honors onlyBuiltDependencies).
-RUN --mount=type=cache,id=aube-${TARGETARCH},target=/root/.local/share/aube/store \
-    aube ci
+# No store cache mount: aube's node_modules symlinks into its store, which a
+# cache mount makes ephemeral (separate filesystem) -- the tree would dangle in
+# the following build step. Keeping the store in the image layer keeps it intact.
+# Only the static build/ output is copied to the nginx stage, so no XDG/copy
+# tweaks are needed here (unlike the node runtime images).
+RUN aube ci
 
 # Copy source code
 COPY packages/shared ./packages/shared

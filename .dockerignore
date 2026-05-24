@@ -41,8 +41,14 @@ commitlint.config.mjs
 .env.example
 
 # Dependencies (will be installed fresh in container)
+# `**/` is required to also exclude nested workspace node_modules
+# (apps/*/node_modules, packages/*/node_modules) -- a bare `node_modules/` only
+# matches the repo root. Without this, a populated local checkout copies host
+# node_modules (with absolute host-path symlinks) into the image and breaks it.
 node_modules/
+**/node_modules/
 .pnpm-store/
+**/.aube/
 
 # Build outputs (will be built fresh in container)
 dist/
