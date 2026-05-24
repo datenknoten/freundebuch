@@ -198,18 +198,15 @@ function getActualDepth(circle: Circle): number {
             <input
               type="search"
               bind:value={searchQuery}
-              placeholder={$i18n.t('circles.searchPlaceholder', { defaultValue: 'Freundekreise suchen...' })}
-              aria-label={$i18n.t('circles.searchPlaceholder', { defaultValue: 'Freundekreise suchen...' })}
+              placeholder={$i18n.t('circles.searchPlaceholder')}
+              aria-label={$i18n.t('circles.searchPlaceholder')}
               class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg font-body text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
             />
           </div>
           <div class="mt-3 text-sm font-body text-gray-600">
-            {$i18n.t('circles.circleCount', {
-              count: visibleCircles.length,
-              defaultValue: `${visibleCircles.length} Freundekreise`,
-            })}
+            {$i18n.t('circles.circleCount', { count: visibleCircles.length })}
             {#if isSearching}
-              <span class="text-gray-400">{$i18n.t('common.filtered', { defaultValue: '(gefiltert)' })}</span>
+              <span class="text-gray-400">{$i18n.t('common.filtered')}</span>
             {/if}
           </div>
         </div>

@@ -7,8 +7,6 @@ import Star from 'svelte-heros-v2/Star.svelte';
 import { goto } from '$app/navigation';
 import { createI18n } from '$lib/i18n/index.js';
 import { isOpenModeActive, openModePrefix } from '$lib/stores/ui';
-
-const i18n = createI18n();
 import {
   type BirthdayFormat,
   COLUMN_DEFINITIONS,
@@ -18,6 +16,8 @@ import {
 import CircleChips from '../circles/circle-chips.svelte';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 import FriendAvatar from './friend-avatar.svelte';
+
+const i18n = createI18n();
 
 /** Sanitize search headline HTML to only allow <mark> tags for highlighting */
 function sanitizeHeadline(html: string | null | undefined): string {
