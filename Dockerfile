@@ -3,9 +3,14 @@
 # Optimized multi-stage build for production
 # Requires Docker BuildKit (DOCKER_BUILDKIT=1)
 #
-# Toolchain: aube + node are installed via mise from mise.toml. This image needs
-# php8.2 (a Debian bookworm package), so it keeps the node:24-bookworm-slim base
-# rather than the mise image; mise itself is installed at a pinned version.
+# Toolchain: aube + node are installed via mise from mise.toml.
+#
+# Unlike the other Dockerfiles, this image does NOT use the ghcr.io/jdx/mise base
+# image. It bundles all services in one container and needs php8.2-fpm, which is
+# packaged for Debian bookworm; the mise image's OS does not ship php8.2. So we
+# base on node:24-bookworm-slim and install mise via its official installer
+# (pinned version) instead.
+#
 # MISE_NO_HOOKS skips mise.toml's dev-only postinstall hook (no .git here).
 # ============================================
 
@@ -32,7 +37,8 @@ RUN apt-get update && \
     sed -i 's|listen = /run/php/php8.2-fpm.sock|listen = 127.0.0.1:9000|' /etc/php/8.2/fpm/pool.d/www.conf && \
     # Ensure PHP-FPM directory exists
     mkdir -p /run/php && \
-    # Install mise at a pinned version (provides node + aube from mise.toml)
+    # Install mise via its installer rather than the mise base image (php8.2
+    # needs the bookworm base — see header). Pinned; provides node + aube.
     curl -fsSL https://mise.run | MISE_VERSION=v2026.5.15 MISE_INSTALL_PATH=/usr/local/bin/mise sh
 
 # ============================================
@@ -55,6 +61,8 @@ ENV MISE_DATA_DIR=/mise
 ENV PATH="/mise/shims:${PATH}"
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
+    # mise installed via its installer to share the bookworm base with the
+    # production stage (see header for why this image avoids the mise base image).
     curl -fsSL https://mise.run | MISE_VERSION=v2026.5.15 MISE_INSTALL_PATH=/usr/local/bin/mise sh
 WORKDIR /app
 
