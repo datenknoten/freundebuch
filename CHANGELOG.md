@@ -1,3 +1,8 @@
+## <small>2.72.1 (2026-05-24)</small>
+
+* fix(config): Revalidate stable-named icons instead of caching them forever ([9d7273e](https://github.com/datenknoten/freundebuch/commit/9d7273e))
+* fix(frontend): Fix cropped home-screen icon and truncated PWA name ([e178b11](https://github.com/datenknoten/freundebuch/commit/e178b11))
+
 ## 2.72.0 (2026-05-24)
 
 * chore(config): Ignore local Playwright MCP captures and ad-hoc screenshots ([916bbaa](https://github.com/datenknoten/freundebuch/commit/916bbaa))
