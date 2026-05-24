@@ -1,3 +1,11 @@
+## 2.72.0 (2026-05-24)
+
+* chore(config): Ignore local Playwright MCP captures and ad-hoc screenshots ([916bbaa](https://github.com/datenknoten/freundebuch/commit/916bbaa))
+* chore(frontend): Tighten i18n keys and fix import order ([16e03f7](https://github.com/datenknoten/freundebuch/commit/16e03f7))
+* refactor(frontend): Extract collectiveTypeI18nKey util ([3f7172b](https://github.com/datenknoten/freundebuch/commit/3f7172b))
+* feat(frontend): Align detail-page UX across friends, collectives, encounters ([650c2ad](https://github.com/datenknoten/freundebuch/commit/650c2ad))
+* feat(frontend): Align list-page UX across friends, circles, collectives, encounters ([c9c00b7](https://github.com/datenknoten/freundebuch/commit/c9c00b7))
+
 ## <small>2.71.1 (2026-05-24)</small>
 
 * fix(ci): Build prod images from a pruned builder tree, not a re-install ([402334d](https://github.com/datenknoten/freundebuch/commit/402334d))
