@@ -34,4 +34,7 @@ WORKDIR /app/apps/frontend
 
 EXPOSE 5173
 
+# The mise base image sets ENTRYPOINT ["mise"]; clear it so the command runs
+# aube directly (resolves via the mise shims on PATH).
+ENTRYPOINT []
 CMD ["aube", "run", "dev"]
