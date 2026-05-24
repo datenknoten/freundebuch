@@ -24,6 +24,8 @@ FROM node:24-bookworm-slim AS runtime-base
 ENV MISE_NO_HOOKS=1
 ENV MISE_DATA_DIR=/mise
 ENV PATH="/mise/shims:${PATH}"
+# Trust the copied mise.toml for all users so the mise shims run node/aube.
+ENV MISE_TRUSTED_CONFIG_PATHS=/app
 
 # Install nginx, supervisor, curl, gettext (for envsubst), and PHP-FPM with PostgreSQL extension
 # Combined into single layer for caching
@@ -59,6 +61,8 @@ FROM node:24-bookworm-slim AS base
 ENV MISE_NO_HOOKS=1
 ENV MISE_DATA_DIR=/mise
 ENV PATH="/mise/shims:${PATH}"
+# Trust the copied mise.toml for all users so the mise shims run node/aube.
+ENV MISE_TRUSTED_CONFIG_PATHS=/app
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
     # mise installed via its installer to share the bookworm base with the
@@ -84,7 +88,7 @@ COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install the toolchain pinned in mise.toml, then all JS dependencies.
-RUN mise trust && mise install
+RUN mise install
 RUN --mount=type=cache,id=aube,target=/root/.local/share/aube/store \
     aube ci
 
@@ -149,7 +153,7 @@ COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install the toolchain pinned in mise.toml, then production dependencies only.
-RUN mise trust && mise install
+RUN mise install
 RUN --mount=type=cache,id=aube,target=/root/.local/share/aube/store \
     aube install --prod
 

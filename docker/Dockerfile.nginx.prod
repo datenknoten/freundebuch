@@ -13,11 +13,13 @@ ARG TARGETARCH
 ENV MISE_NO_HOOKS=1
 ENV MISE_DATA_DIR=/mise
 ENV PATH="/mise/shims:${PATH}"
+# Trust the copied mise.toml for all users so the mise shims run node/aube.
+ENV MISE_TRUSTED_CONFIG_PATHS=/app
 WORKDIR /app
 
 # Install the toolchain pinned in mise.toml (node + aube).
 COPY mise.toml ./
-RUN mise trust && mise install
+RUN mise install
 
 # Copy workspace configuration
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
