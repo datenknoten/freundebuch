@@ -246,9 +246,12 @@ jobs:
 
       - name: Smoke test images
         run: |
-          # Native modules must load at runtime (the aube/mise migration risk).
-          docker run --rm freundebuch-backend:ci node -e "require('bcrypt'); require('sharp');"
-          docker run --rm freundebuch-mcp-server:ci node -e "require('bcrypt');"
+          # Resolve modules from each app's own directory: in the pnpm/aube
+          # workspace layout a package's deps live under apps/<name>/node_modules
+          # (symlinked to the virtual store), not the repo-root node_modules. This
+          # matches how the real CMD (node apps/<name>/dist/index.js) resolves them.
+          docker run --rm -w /app/apps/backend freundebuch-backend:ci node -e "require('bcrypt'); require('sharp');"
+          docker run --rm -w /app/apps/mcp-server freundebuch-mcp-server:ci node -e "require('bcrypt');"
           # Frontend build produced static assets served by nginx.
           docker run --rm freundebuch-nginx:ci test -f /app/frontend/index.html
           echo "Docker smoke tests passed"
