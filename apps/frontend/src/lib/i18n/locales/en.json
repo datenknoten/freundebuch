@@ -417,6 +417,7 @@
     },
     "columns": {
       "avatar": "",
+      "avatarPickerLabel": "Avatar",
       "displayName": "Name",
       "circles": "Circles",
       "primaryEmail": "Email",
