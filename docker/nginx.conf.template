@@ -169,6 +169,13 @@ http {
             try_files $uri =404;
         }
 
+        # Stable-named PWA/home-screen icons (no content hash) - revalidate so
+        # icon updates propagate after a deploy instead of being cached for a year
+        location ~* ^/(favicon(-16)?\.png|apple-touch-icon\.png|icon-(192|512|maskable-512)\.png)$ {
+            add_header Cache-Control "public, max-age=3600, must-revalidate";
+            try_files $uri =404;
+        }
+
         # Other static files with content hashes - long-term caching
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
             expires 1y;
