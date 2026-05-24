@@ -21,6 +21,42 @@ const FAVICON_EXTRACT = {
   height: 650,
 };
 
+// Warm paper background for the home-screen icons. iOS fills transparent
+// areas and rounds the corners, so the icon needs an opaque background and
+// enough padding that no part of the logo lands in the clipped corners.
+const ICON_BG = { r: 0xfc, g: 0xf6, b: 0xe8, alpha: 1 };
+
+/**
+ * Render the full logo centered on an opaque square canvas with padding.
+ * @param {number} size output edge length in px
+ * @param {number} padding fraction of the edge reserved as margin (per side)
+ * @param {string} outName file name written into OUTPUT_DIR
+ */
+async function generateSquareIcon(size, padding, outName) {
+  const content = Math.round(size * (1 - padding * 2));
+  const logo = await sharp(SOURCE_LOGO)
+    .resize(content, content, {
+      fit: 'inside',
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .toBuffer();
+  const { width = content, height = content } = await sharp(logo).metadata();
+
+  await sharp({
+    create: { width: size, height: size, channels: 4, background: ICON_BG },
+  })
+    .composite([
+      {
+        input: logo,
+        left: Math.round((size - width) / 2),
+        top: Math.round((size - height) / 2),
+      },
+    ])
+    .png()
+    .toFile(join(OUTPUT_DIR, outName));
+  console.log(`Created: ${outName} (${size}x${size})`);
+}
+
 async function generateAssets() {
   console.log('Generating logo assets from:', SOURCE_LOGO);
 
@@ -46,20 +82,16 @@ async function generateAssets() {
     .toFile(join(OUTPUT_DIR, 'favicon-16.png'));
   console.log('Created: favicon-16.png (16x16)');
 
-  // 3. Apple touch icon 180x180 (cropped with slight padding)
-  await sharp(SOURCE_LOGO)
-    .extract(FAVICON_EXTRACT)
-    .resize(160, 160, { fit: 'cover' })
-    .extend({
-      top: 10,
-      bottom: 10,
-      left: 10,
-      right: 10,
-      background: { r: 255, g: 255, b: 255, alpha: 0 },
-    })
-    .png()
-    .toFile(join(OUTPUT_DIR, 'apple-touch-icon.png'));
-  console.log('Created: apple-touch-icon.png (180x180)');
+  // 3. Apple touch icon 180x180 (full logo on an opaque padded canvas)
+  await generateSquareIcon(180, 0.1, 'apple-touch-icon.png');
+
+  // 3b. PWA manifest icons (full logo on an opaque padded canvas)
+  await generateSquareIcon(192, 0.1, 'icon-192.png');
+  await generateSquareIcon(512, 0.1, 'icon-512.png');
+
+  // 3c. Maskable PWA icon: extra padding so the logo stays inside the
+  // safe zone when the platform masks it to a circle/squircle.
+  await generateSquareIcon(512, 0.2, 'icon-maskable-512.png');
 
   // 4. Full logo for landing page (400px wide, proportional)
   await sharp(SOURCE_LOGO)
