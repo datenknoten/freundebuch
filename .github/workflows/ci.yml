@@ -192,3 +192,64 @@ jobs:
 
       - name: Build all workspaces
         run: aube build
+
+  docker-smoke:
+    name: Docker Build Smoke Test
+    # PR-only: pushes to main go through the release workflow, which builds and
+    # publishes the real multi-arch images. This is a fast amd64 build that
+    # catches Dockerfile/toolchain breakage (e.g. the aube/mise install) before
+    # merge, then verifies native modules actually load at runtime.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.backend.prod
+          target: backend
+          load: true
+          tags: freundebuch-backend:ci
+          platforms: linux/amd64
+          cache-from: type=gha,scope=ci-backend-prod
+          cache-to: type=gha,mode=max,scope=ci-backend-prod
+
+      - name: Build mcp-server image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.backend.prod
+          target: mcp-server
+          load: true
+          tags: freundebuch-mcp-server:ci
+          platforms: linux/amd64
+          # Shares the builder layers with the backend build above.
+          cache-from: type=gha,scope=ci-backend-prod
+          cache-to: type=gha,mode=max,scope=ci-backend-prod
+
+      - name: Build nginx image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.nginx.prod
+          load: true
+          tags: freundebuch-nginx:ci
+          platforms: linux/amd64
+          cache-from: type=gha,scope=ci-nginx
+          cache-to: type=gha,mode=max,scope=ci-nginx
+
+      - name: Smoke test images
+        run: |
+          # Native modules must load at runtime (the aube/mise migration risk).
+          docker run --rm freundebuch-backend:ci node -e "require('bcrypt'); require('sharp');"
+          docker run --rm freundebuch-mcp-server:ci node -e "require('bcrypt');"
+          # Frontend build produced static assets served by nginx.
+          docker run --rm freundebuch-nginx:ci test -f /app/frontend/index.html
+          echo "Docker smoke tests passed"
+
