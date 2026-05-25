@@ -26,8 +26,11 @@ local biomeGlobs = List(
 local linters = new Mapping<String, Step> {
   ["biome"] {
     glob = biomeGlobs
-    check = "biome check --no-errors-on-unmatched {{files}}"
-    fix = "biome check --write --no-errors-on-unmatched {{files}}"
+    // `npx` so the pinned node_modules biome resolves under `mise x` (which
+    // doesn't add node_modules/.bin to PATH) — matches the danger/commitlint
+    // steps below.
+    check = "npx biome check --no-errors-on-unmatched {{files}}"
+    fix = "npx biome check --write --no-errors-on-unmatched {{files}}"
     batch = true
   }
 
