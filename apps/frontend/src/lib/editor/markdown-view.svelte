@@ -76,8 +76,10 @@ let html = $derived(renderMarkdown(source));
 .fb-md-view :global(h3) { font-size: 1.15em; }
 .fb-md-view :global(h4) { font-size: 1em; }
 .fb-md-view :global(p) { margin: 0.5em 0; }
-.fb-md-view :global(:first-child) { margin-top: 0; }
-.fb-md-view :global(:last-child) { margin-bottom: 0; }
+/* Trim only the outer block's leading/trailing margin — direct children
+ * (`>`) so nested first/last items (e.g. a list's first <li>) keep theirs. */
+.fb-md-view > :global(:first-child) { margin-top: 0; }
+.fb-md-view > :global(:last-child) { margin-bottom: 0; }
 .fb-md-view :global(a) {
   color: #2d5016;
   text-decoration: underline;
