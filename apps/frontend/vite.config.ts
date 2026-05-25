@@ -18,8 +18,9 @@ export default defineConfig({
     }),
     sveltekit(),
     // Enables Svelte 5 component testing under jsdom (browser resolve
-    // condition + auto-cleanup between tests).
-    svelteTesting(),
+    // condition + auto-cleanup). Test-only — excluded from dev/preview/prod
+    // builds so it can't affect production module resolution.
+    ...(process.env.VITEST ? [svelteTesting()] : []),
   ],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
