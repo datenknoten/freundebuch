@@ -28,6 +28,7 @@ export interface PageContext {
   isOnCollectivesListPage: boolean;
   isOnFriendDetailPage: boolean;
   isOnCollectiveDetailPage: boolean;
+  isOnEncounterDetailPage: boolean;
 }
 
 export interface HandlerContext {

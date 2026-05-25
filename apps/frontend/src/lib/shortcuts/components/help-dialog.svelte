@@ -236,6 +236,21 @@ const i18n = createI18n();
           </div>
         {/if}
 
+        <!-- Encounter Detail -->
+        {#if pageContext.isOnEncounterDetailPage}
+          <div>
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              {$i18n.t('shortcuts.help.encounterDetail')}
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">{$i18n.t('shortcuts.help.editEncounter')}</span>
+                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
+              </div>
+            </div>
+          </div>
+        {/if}
+
         <!-- Friend Detail: Add Details + Open Links -->
         {#if pageContext.isOnFriendDetailPage}
           <div>

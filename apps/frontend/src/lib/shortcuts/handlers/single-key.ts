@@ -20,6 +20,15 @@ export function handleSingleKey(e: KeyboardEvent): boolean {
         window.dispatchEvent(new CustomEvent('shortcut:edit-collective'));
         return true;
       }
+      // Edit current encounter if on encounter detail page. Exclude
+      // `/encounters/new` so pressing `e` on the creation route doesn't get
+      // silently swallowed (matches the `isOnEncounterDetailPage` guard in
+      // keyboard-shortcuts.svelte).
+      if (pathname.match(/^\/encounters\/[^/]+$/) && !pathname.endsWith('/new')) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('shortcut:edit-encounter'));
+        return true;
+      }
       break;
 
     case '/': {

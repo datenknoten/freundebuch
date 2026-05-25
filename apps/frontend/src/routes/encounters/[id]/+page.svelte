@@ -42,6 +42,19 @@ function handleEdit() {
   isEditing = true;
 }
 
+function handleShortcutEdit() {
+  if (encounter && !isEditing) {
+    isEditing = true;
+  }
+}
+
+$effect(() => {
+  window.addEventListener('shortcut:edit-encounter', handleShortcutEdit);
+  return () => {
+    window.removeEventListener('shortcut:edit-encounter', handleShortcutEdit);
+  };
+});
+
 function handleEditSuccess(_updatedEncounter: Encounter) {
   isEditing = false;
 }

@@ -44,6 +44,9 @@ let isOnFriendDetailPage = $derived(
 let isOnCollectiveDetailPage = $derived(
   $page.url.pathname.match(/^\/collectives\/[^/]+$/) && !$page.url.pathname.endsWith('/new'),
 );
+let isOnEncounterDetailPage = $derived(
+  $page.url.pathname.match(/^\/encounters\/[^/]+$/) && !$page.url.pathname.endsWith('/new'),
+);
 
 function clearPending() {
   pendingKey = null;
@@ -93,6 +96,7 @@ const handleKeydown = $derived(
       isOnCollectivesListPage,
       isOnFriendDetailPage: !!isOnFriendDetailPage,
       isOnCollectiveDetailPage: !!isOnCollectiveDetailPage,
+      isOnEncounterDetailPage: !!isOnEncounterDetailPage,
     }}
     onclose={() => (showHelp = false)}
   />
