@@ -5,6 +5,7 @@ import type {
   EncounterListItem,
   EncounterListOptions,
   EncounterListResponse,
+  EncounterType,
   EncounterUpdate,
   LastEncounterSummary,
 } from '@freundebuch/shared/index.js';
@@ -59,6 +60,7 @@ export class EncountersService {
           friendExternalId: options.friendId ?? null,
           fromDate: options.fromDate ?? null,
           toDate: options.toDate ?? null,
+          encounterType: options.type ?? null,
           search: options.search ?? null,
           pageSize: options.pageSize,
           offset,
@@ -71,6 +73,7 @@ export class EncountersService {
           friendExternalId: options.friendId ?? null,
           fromDate: options.fromDate ?? null,
           toDate: options.toDate ?? null,
+          encounterType: options.type ?? null,
           search: options.search ?? null,
         },
         this.db,
@@ -129,7 +132,8 @@ export class EncountersService {
       const encounterResults = await createEncounter.run(
         {
           userExternalId,
-          title: input.title,
+          title: input.title ?? null,
+          encounterType: input.encounter_type,
           encounterDate: input.encounter_date,
           locationText: input.location_text ?? null,
           description: input.description ?? null,
@@ -185,7 +189,9 @@ export class EncountersService {
         {
           userExternalId,
           encounterExternalId,
+          updateTitle: 'title' in input,
           title: input.title ?? null,
+          encounterType: input.encounter_type ?? null,
           encounterDate: input.encounter_date ?? null,
           updateLocationText: 'location_text' in input,
           locationText: input.location_text ?? null,
@@ -267,6 +273,7 @@ export class EncountersService {
     return {
       id: row.external_id,
       title: row.title,
+      encounterType: row.encounter_type as EncounterType,
       encounterDate: this.formatDate(row.encounter_date),
     };
   }
@@ -282,6 +289,7 @@ export class EncountersService {
     return {
       id: row.external_id,
       title: row.title,
+      encounterType: row.encounter_type as EncounterType,
       encounterDate: this.formatDate(row.encounter_date),
       locationText: row.location_text,
       description: row.description,
@@ -298,6 +306,7 @@ export class EncountersService {
     return {
       id: row.external_id,
       title: row.title,
+      encounterType: row.encounter_type as EncounterType,
       encounterDate: this.formatDate(row.encounter_date),
       locationText: row.location_text,
       friendCount: row.friend_count ?? 0,

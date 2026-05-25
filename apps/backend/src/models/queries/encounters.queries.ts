@@ -7,6 +7,7 @@ export type NumberOrString = number | string;
 
 /** 'GetEncountersByUserId' parameters type */
 export interface IGetEncountersByUserIdParams {
+  encounterType?: string | null | void;
   friendExternalId?: string | null | void;
   fromDate?: DateOrString | null | void;
   offset?: NumberOrString | null | void;
@@ -23,13 +24,15 @@ export interface IGetEncountersByUserIdResult {
   description: string | null;
   /** Date when the encounter occurred */
   encounter_date: Date;
+  /** Kind of contact: 'in_person', 'phone_call', 'video_call' or 'message' */
+  encounter_type: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
   friend_count: number | null;
   /** Free-text location description */
   location_text: string | null;
   /** Title/name of the encounter (e.g., "Coffee at Starbucks", "Birthday Party") */
-  title: string;
+  title: string | null;
   updated_at: Date;
 }
 
@@ -39,7 +42,7 @@ export interface IGetEncountersByUserIdQuery {
   result: IGetEncountersByUserIdResult;
 }
 
-const getEncountersByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"friendExternalId":true,"fromDate":true,"toDate":true,"search":true,"pageSize":true,"offset":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":347,"b":361}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":381,"b":397},{"a":605,"b":621}]},{"name":"fromDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":651,"b":659},{"a":702,"b":710}]},{"name":"toDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":734,"b":740},{"a":783,"b":789}]},{"name":"search","required":false,"transform":{"type":"scalar"},"locs":[{"a":813,"b":819},{"a":863,"b":869},{"a":912,"b":918}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":1103,"b":1111}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":1120,"b":1126}]}],"statement":"SELECT\n    e.external_id,\n    e.title,\n    e.encounter_date,\n    e.location_text,\n    e.description,\n    e.created_at,\n    e.updated_at,\n    COUNT(DISTINCT ef.id)::int AS friend_count\nFROM encounters.encounters e\nINNER JOIN auth.users u ON e.user_id = u.id\nLEFT JOIN encounters.encounter_friends ef ON ef.encounter_id = e.id\nWHERE u.external_id = :userExternalId::uuid\n  AND (\n    :friendExternalId::uuid IS NULL\n    OR EXISTS (\n      SELECT 1 FROM encounters.encounter_friends ef2\n      INNER JOIN friends.friends f ON ef2.friend_id = f.id\n      WHERE ef2.encounter_id = e.id\n        AND f.external_id = :friendExternalId::uuid\n    )\n  )\n  AND (\n    :fromDate::date IS NULL\n    OR e.encounter_date >= :fromDate::date\n  )\n  AND (\n    :toDate::date IS NULL\n    OR e.encounter_date <= :toDate::date\n  )\n  AND (\n    :search::text IS NULL\n    OR e.title ILIKE '%' || :search || '%'\n    OR e.description ILIKE '%' || :search || '%'\n  )\nGROUP BY e.id, e.external_id, e.title, e.encounter_date, e.location_text, e.description, e.created_at, e.updated_at\nORDER BY e.encounter_date DESC, e.created_at DESC\nLIMIT :pageSize\nOFFSET :offset"};
+const getEncountersByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"friendExternalId":true,"fromDate":true,"toDate":true,"encounterType":true,"search":true,"pageSize":true,"offset":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":369,"b":383}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":403,"b":419},{"a":627,"b":643}]},{"name":"fromDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":673,"b":681},{"a":724,"b":732}]},{"name":"toDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":756,"b":762},{"a":805,"b":811}]},{"name":"encounterType","required":false,"transform":{"type":"scalar"},"locs":[{"a":835,"b":848},{"a":890,"b":903}]},{"name":"search","required":false,"transform":{"type":"scalar"},"locs":[{"a":921,"b":927},{"a":971,"b":977},{"a":1020,"b":1026}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":1229,"b":1237}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":1246,"b":1252}]}],"statement":"SELECT\n    e.external_id,\n    e.title,\n    e.encounter_type,\n    e.encounter_date,\n    e.location_text,\n    e.description,\n    e.created_at,\n    e.updated_at,\n    COUNT(DISTINCT ef.id)::int AS friend_count\nFROM encounters.encounters e\nINNER JOIN auth.users u ON e.user_id = u.id\nLEFT JOIN encounters.encounter_friends ef ON ef.encounter_id = e.id\nWHERE u.external_id = :userExternalId::uuid\n  AND (\n    :friendExternalId::uuid IS NULL\n    OR EXISTS (\n      SELECT 1 FROM encounters.encounter_friends ef2\n      INNER JOIN friends.friends f ON ef2.friend_id = f.id\n      WHERE ef2.encounter_id = e.id\n        AND f.external_id = :friendExternalId::uuid\n    )\n  )\n  AND (\n    :fromDate::date IS NULL\n    OR e.encounter_date >= :fromDate::date\n  )\n  AND (\n    :toDate::date IS NULL\n    OR e.encounter_date <= :toDate::date\n  )\n  AND (\n    :encounterType::text IS NULL\n    OR e.encounter_type = :encounterType\n  )\n  AND (\n    :search::text IS NULL\n    OR e.title ILIKE '%' || :search || '%'\n    OR e.description ILIKE '%' || :search || '%'\n  )\nGROUP BY e.id, e.external_id, e.title, e.encounter_type, e.encounter_date, e.location_text, e.description, e.created_at, e.updated_at\nORDER BY e.encounter_date DESC, e.created_at DESC\nLIMIT :pageSize\nOFFSET :offset"};
 
 /**
  * Query generated from SQL:
@@ -47,6 +50,7 @@ const getEncountersByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"fri
  * SELECT
  *     e.external_id,
  *     e.title,
+ *     e.encounter_type,
  *     e.encounter_date,
  *     e.location_text,
  *     e.description,
@@ -75,11 +79,15 @@ const getEncountersByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"fri
  *     OR e.encounter_date <= :toDate::date
  *   )
  *   AND (
+ *     :encounterType::text IS NULL
+ *     OR e.encounter_type = :encounterType
+ *   )
+ *   AND (
  *     :search::text IS NULL
  *     OR e.title ILIKE '%' || :search || '%'
  *     OR e.description ILIKE '%' || :search || '%'
  *   )
- * GROUP BY e.id, e.external_id, e.title, e.encounter_date, e.location_text, e.description, e.created_at, e.updated_at
+ * GROUP BY e.id, e.external_id, e.title, e.encounter_type, e.encounter_date, e.location_text, e.description, e.created_at, e.updated_at
  * ORDER BY e.encounter_date DESC, e.created_at DESC
  * LIMIT :pageSize
  * OFFSET :offset
@@ -90,6 +98,7 @@ export const getEncountersByUserId = new PreparedQuery<IGetEncountersByUserIdPar
 
 /** 'CountEncountersByUserId' parameters type */
 export interface ICountEncountersByUserIdParams {
+  encounterType?: string | null | void;
   friendExternalId?: string | null | void;
   fromDate?: DateOrString | null | void;
   search?: string | null | void;
@@ -108,7 +117,7 @@ export interface ICountEncountersByUserIdQuery {
   result: ICountEncountersByUserIdResult;
 }
 
-const countEncountersByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"friendExternalId":true,"fromDate":true,"toDate":true,"search":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":143,"b":157}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":177,"b":193},{"a":398,"b":414}]},{"name":"fromDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":444,"b":452},{"a":495,"b":503}]},{"name":"toDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":527,"b":533},{"a":576,"b":582}]},{"name":"search","required":false,"transform":{"type":"scalar"},"locs":[{"a":606,"b":612},{"a":656,"b":662},{"a":705,"b":711}]}],"statement":"SELECT COUNT(DISTINCT e.id)::int AS total_count\nFROM encounters.encounters e\nINNER JOIN auth.users u ON e.user_id = u.id\nWHERE u.external_id = :userExternalId::uuid\n  AND (\n    :friendExternalId::uuid IS NULL\n    OR EXISTS (\n      SELECT 1 FROM encounters.encounter_friends ef\n      INNER JOIN friends.friends f ON ef.friend_id = f.id\n      WHERE ef.encounter_id = e.id\n        AND f.external_id = :friendExternalId::uuid\n    )\n  )\n  AND (\n    :fromDate::date IS NULL\n    OR e.encounter_date >= :fromDate::date\n  )\n  AND (\n    :toDate::date IS NULL\n    OR e.encounter_date <= :toDate::date\n  )\n  AND (\n    :search::text IS NULL\n    OR e.title ILIKE '%' || :search || '%'\n    OR e.description ILIKE '%' || :search || '%'\n  )"};
+const countEncountersByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"friendExternalId":true,"fromDate":true,"toDate":true,"encounterType":true,"search":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":143,"b":157}]},{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":177,"b":193},{"a":398,"b":414}]},{"name":"fromDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":444,"b":452},{"a":495,"b":503}]},{"name":"toDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":527,"b":533},{"a":576,"b":582}]},{"name":"encounterType","required":false,"transform":{"type":"scalar"},"locs":[{"a":606,"b":619},{"a":661,"b":674}]},{"name":"search","required":false,"transform":{"type":"scalar"},"locs":[{"a":692,"b":698},{"a":742,"b":748},{"a":791,"b":797}]}],"statement":"SELECT COUNT(DISTINCT e.id)::int AS total_count\nFROM encounters.encounters e\nINNER JOIN auth.users u ON e.user_id = u.id\nWHERE u.external_id = :userExternalId::uuid\n  AND (\n    :friendExternalId::uuid IS NULL\n    OR EXISTS (\n      SELECT 1 FROM encounters.encounter_friends ef\n      INNER JOIN friends.friends f ON ef.friend_id = f.id\n      WHERE ef.encounter_id = e.id\n        AND f.external_id = :friendExternalId::uuid\n    )\n  )\n  AND (\n    :fromDate::date IS NULL\n    OR e.encounter_date >= :fromDate::date\n  )\n  AND (\n    :toDate::date IS NULL\n    OR e.encounter_date <= :toDate::date\n  )\n  AND (\n    :encounterType::text IS NULL\n    OR e.encounter_type = :encounterType\n  )\n  AND (\n    :search::text IS NULL\n    OR e.title ILIKE '%' || :search || '%'\n    OR e.description ILIKE '%' || :search || '%'\n  )"};
 
 /**
  * Query generated from SQL:
@@ -135,6 +144,10 @@ const countEncountersByUserIdIR: any = {"usedParamSet":{"userExternalId":true,"f
  *     OR e.encounter_date <= :toDate::date
  *   )
  *   AND (
+ *     :encounterType::text IS NULL
+ *     OR e.encounter_type = :encounterType
+ *   )
+ *   AND (
  *     :search::text IS NULL
  *     OR e.title ILIKE '%' || :search || '%'
  *     OR e.description ILIKE '%' || :search || '%'
@@ -157,12 +170,14 @@ export interface IGetEncounterByIdResult {
   description: string | null;
   /** Date when the encounter occurred */
   encounter_date: Date;
+  /** Kind of contact: 'in_person', 'phone_call', 'video_call' or 'message' */
+  encounter_type: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
   /** Free-text location description */
   location_text: string | null;
   /** Title/name of the encounter (e.g., "Coffee at Starbucks", "Birthday Party") */
-  title: string;
+  title: string | null;
   updated_at: Date;
 }
 
@@ -172,7 +187,7 @@ export interface IGetEncounterByIdQuery {
   result: IGetEncounterByIdResult;
 }
 
-const getEncounterByIdIR: any = {"usedParamSet":{"encounterExternalId":true,"userExternalId":true},"params":[{"name":"encounterExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":231,"b":250}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":280,"b":294}]}],"statement":"SELECT\n    e.external_id,\n    e.title,\n    e.encounter_date,\n    e.location_text,\n    e.description,\n    e.created_at,\n    e.updated_at\nFROM encounters.encounters e\nINNER JOIN auth.users u ON e.user_id = u.id\nWHERE e.external_id = :encounterExternalId::uuid\n  AND u.external_id = :userExternalId::uuid"};
+const getEncounterByIdIR: any = {"usedParamSet":{"encounterExternalId":true,"userExternalId":true},"params":[{"name":"encounterExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":253,"b":272}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":302,"b":316}]}],"statement":"SELECT\n    e.external_id,\n    e.title,\n    e.encounter_type,\n    e.encounter_date,\n    e.location_text,\n    e.description,\n    e.created_at,\n    e.updated_at\nFROM encounters.encounters e\nINNER JOIN auth.users u ON e.user_id = u.id\nWHERE e.external_id = :encounterExternalId::uuid\n  AND u.external_id = :userExternalId::uuid"};
 
 /**
  * Query generated from SQL:
@@ -180,6 +195,7 @@ const getEncounterByIdIR: any = {"usedParamSet":{"encounterExternalId":true,"use
  * SELECT
  *     e.external_id,
  *     e.title,
+ *     e.encounter_type,
  *     e.encounter_date,
  *     e.location_text,
  *     e.description,
@@ -284,6 +300,7 @@ export const getEncounterFriendsPreview = new PreparedQuery<IGetEncounterFriends
 export interface ICreateEncounterParams {
   description?: string | null | void;
   encounterDate?: DateOrString | null | void;
+  encounterType?: string | null | void;
   locationText?: string | null | void;
   title?: string | null | void;
   userExternalId?: string | null | void;
@@ -296,12 +313,14 @@ export interface ICreateEncounterResult {
   description: string | null;
   /** Date when the encounter occurred */
   encounter_date: Date;
+  /** Kind of contact: 'in_person', 'phone_call', 'video_call' or 'message' */
+  encounter_type: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
   /** Free-text location description */
   location_text: string | null;
   /** Title/name of the encounter (e.g., "Coffee at Starbucks", "Birthday Party") */
-  title: string;
+  title: string | null;
   updated_at: Date;
 }
 
@@ -311,7 +330,7 @@ export interface ICreateEncounterQuery {
   result: ICreateEncounterResult;
 }
 
-const createEncounterIR: any = {"usedParamSet":{"title":true,"encounterDate":true,"locationText":true,"description":true,"userExternalId":true},"params":[{"name":"title","required":false,"transform":{"type":"scalar"},"locs":[{"a":138,"b":143}]},{"name":"encounterDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":150,"b":163}]},{"name":"locationText","required":false,"transform":{"type":"scalar"},"locs":[{"a":176,"b":188}]},{"name":"description","required":false,"transform":{"type":"scalar"},"locs":[{"a":195,"b":206}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":248,"b":262}]}],"statement":"INSERT INTO encounters.encounters (\n    user_id,\n    title,\n    encounter_date,\n    location_text,\n    description\n)\nSELECT\n    u.id,\n    :title,\n    :encounterDate::date,\n    :locationText,\n    :description\nFROM auth.users u\nWHERE u.external_id = :userExternalId::uuid\nRETURNING\n    external_id,\n    title,\n    encounter_date,\n    location_text,\n    description,\n    created_at,\n    updated_at"};
+const createEncounterIR: any = {"usedParamSet":{"title":true,"encounterType":true,"encounterDate":true,"locationText":true,"description":true,"userExternalId":true},"params":[{"name":"title","required":false,"transform":{"type":"scalar"},"locs":[{"a":158,"b":163}]},{"name":"encounterType","required":false,"transform":{"type":"scalar"},"locs":[{"a":170,"b":183}]},{"name":"encounterDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":190,"b":203}]},{"name":"locationText","required":false,"transform":{"type":"scalar"},"locs":[{"a":216,"b":228}]},{"name":"description","required":false,"transform":{"type":"scalar"},"locs":[{"a":235,"b":246}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":288,"b":302}]}],"statement":"INSERT INTO encounters.encounters (\n    user_id,\n    title,\n    encounter_type,\n    encounter_date,\n    location_text,\n    description\n)\nSELECT\n    u.id,\n    :title,\n    :encounterType,\n    :encounterDate::date,\n    :locationText,\n    :description\nFROM auth.users u\nWHERE u.external_id = :userExternalId::uuid\nRETURNING\n    external_id,\n    title,\n    encounter_type,\n    encounter_date,\n    location_text,\n    description,\n    created_at,\n    updated_at"};
 
 /**
  * Query generated from SQL:
@@ -319,6 +338,7 @@ const createEncounterIR: any = {"usedParamSet":{"title":true,"encounterDate":tru
  * INSERT INTO encounters.encounters (
  *     user_id,
  *     title,
+ *     encounter_type,
  *     encounter_date,
  *     location_text,
  *     description
@@ -326,6 +346,7 @@ const createEncounterIR: any = {"usedParamSet":{"title":true,"encounterDate":tru
  * SELECT
  *     u.id,
  *     :title,
+ *     :encounterType,
  *     :encounterDate::date,
  *     :locationText,
  *     :description
@@ -334,6 +355,7 @@ const createEncounterIR: any = {"usedParamSet":{"title":true,"encounterDate":tru
  * RETURNING
  *     external_id,
  *     title,
+ *     encounter_type,
  *     encounter_date,
  *     location_text,
  *     description,
@@ -349,10 +371,12 @@ export interface IUpdateEncounterParams {
   description?: string | null | void;
   encounterDate?: DateOrString | null | void;
   encounterExternalId?: string | null | void;
+  encounterType?: string | null | void;
   locationText?: string | null | void;
   title?: string | null | void;
   updateDescription?: boolean | null | void;
   updateLocationText?: boolean | null | void;
+  updateTitle?: boolean | null | void;
   userExternalId?: string | null | void;
 }
 
@@ -363,12 +387,14 @@ export interface IUpdateEncounterResult {
   description: string | null;
   /** Date when the encounter occurred */
   encounter_date: Date;
+  /** Kind of contact: 'in_person', 'phone_call', 'video_call' or 'message' */
+  encounter_type: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
   /** Free-text location description */
   location_text: string | null;
   /** Title/name of the encounter (e.g., "Coffee at Starbucks", "Birthday Party") */
-  title: string;
+  title: string | null;
   updated_at: Date;
 }
 
@@ -378,14 +404,18 @@ export interface IUpdateEncounterQuery {
   result: IUpdateEncounterResult;
 }
 
-const updateEncounterIR: any = {"usedParamSet":{"title":true,"encounterDate":true,"updateLocationText":true,"locationText":true,"updateDescription":true,"description":true,"encounterExternalId":true,"userExternalId":true},"params":[{"name":"title","required":false,"transform":{"type":"scalar"},"locs":[{"a":56,"b":61}]},{"name":"encounterDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":104,"b":117}]},{"name":"updateLocationText","required":false,"transform":{"type":"scalar"},"locs":[{"a":183,"b":201}]},{"name":"locationText","required":false,"transform":{"type":"scalar"},"locs":[{"a":224,"b":236}]},{"name":"updateDescription","required":false,"transform":{"type":"scalar"},"locs":[{"a":312,"b":329}]},{"name":"description","required":false,"transform":{"type":"scalar"},"locs":[{"a":352,"b":363}]},{"name":"encounterExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":476,"b":495}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":548,"b":562}]}],"statement":"UPDATE encounters.encounters e\nSET\n    title = COALESCE(:title, e.title),\n    encounter_date = COALESCE(:encounterDate::date, e.encounter_date),\n    location_text = CASE\n        WHEN :updateLocationText::boolean = true THEN :locationText\n        ELSE e.location_text\n    END,\n    description = CASE\n        WHEN :updateDescription::boolean = true THEN :description\n        ELSE e.description\n    END,\n    updated_at = current_timestamp\nFROM auth.users u\nWHERE e.external_id = :encounterExternalId::uuid\n  AND e.user_id = u.id\n  AND u.external_id = :userExternalId::uuid\nRETURNING\n    e.external_id,\n    e.title,\n    e.encounter_date,\n    e.location_text,\n    e.description,\n    e.created_at,\n    e.updated_at"};
+const updateEncounterIR: any = {"usedParamSet":{"updateTitle":true,"title":true,"encounterType":true,"encounterDate":true,"updateLocationText":true,"locationText":true,"updateDescription":true,"description":true,"encounterExternalId":true,"userExternalId":true},"params":[{"name":"updateTitle","required":false,"transform":{"type":"scalar"},"locs":[{"a":65,"b":76}]},{"name":"title","required":false,"transform":{"type":"scalar"},"locs":[{"a":99,"b":104}]},{"name":"encounterType","required":false,"transform":{"type":"scalar"},"locs":[{"a":166,"b":179}]},{"name":"encounterDate","required":false,"transform":{"type":"scalar"},"locs":[{"a":231,"b":244}]},{"name":"updateLocationText","required":false,"transform":{"type":"scalar"},"locs":[{"a":310,"b":328}]},{"name":"locationText","required":false,"transform":{"type":"scalar"},"locs":[{"a":351,"b":363}]},{"name":"updateDescription","required":false,"transform":{"type":"scalar"},"locs":[{"a":439,"b":456}]},{"name":"description","required":false,"transform":{"type":"scalar"},"locs":[{"a":479,"b":490}]},{"name":"encounterExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":603,"b":622}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":675,"b":689}]}],"statement":"UPDATE encounters.encounters e\nSET\n    title = CASE\n        WHEN :updateTitle::boolean = true THEN :title\n        ELSE e.title\n    END,\n    encounter_type = COALESCE(:encounterType, e.encounter_type),\n    encounter_date = COALESCE(:encounterDate::date, e.encounter_date),\n    location_text = CASE\n        WHEN :updateLocationText::boolean = true THEN :locationText\n        ELSE e.location_text\n    END,\n    description = CASE\n        WHEN :updateDescription::boolean = true THEN :description\n        ELSE e.description\n    END,\n    updated_at = current_timestamp\nFROM auth.users u\nWHERE e.external_id = :encounterExternalId::uuid\n  AND e.user_id = u.id\n  AND u.external_id = :userExternalId::uuid\nRETURNING\n    e.external_id,\n    e.title,\n    e.encounter_type,\n    e.encounter_date,\n    e.location_text,\n    e.description,\n    e.created_at,\n    e.updated_at"};
 
 /**
  * Query generated from SQL:
  * ```
  * UPDATE encounters.encounters e
  * SET
- *     title = COALESCE(:title, e.title),
+ *     title = CASE
+ *         WHEN :updateTitle::boolean = true THEN :title
+ *         ELSE e.title
+ *     END,
+ *     encounter_type = COALESCE(:encounterType, e.encounter_type),
  *     encounter_date = COALESCE(:encounterDate::date, e.encounter_date),
  *     location_text = CASE
  *         WHEN :updateLocationText::boolean = true THEN :locationText
@@ -403,6 +433,7 @@ const updateEncounterIR: any = {"usedParamSet":{"title":true,"encounterDate":tru
  * RETURNING
  *     e.external_id,
  *     e.title,
+ *     e.encounter_type,
  *     e.encounter_date,
  *     e.location_text,
  *     e.description,
@@ -457,10 +488,12 @@ export interface IGetLastEncounterForFriendParams {
 export interface IGetLastEncounterForFriendResult {
   /** Date when the encounter occurred */
   encounter_date: Date;
+  /** Kind of contact: 'in_person', 'phone_call', 'video_call' or 'message' */
+  encounter_type: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
   /** Title/name of the encounter (e.g., "Coffee at Starbucks", "Birthday Party") */
-  title: string;
+  title: string | null;
 }
 
 /** 'GetLastEncounterForFriend' query type */
@@ -469,7 +502,7 @@ export interface IGetLastEncounterForFriendQuery {
   result: IGetLastEncounterForFriendResult;
 }
 
-const getLastEncounterForFriendIR: any = {"usedParamSet":{"friendExternalId":true,"userExternalId":true},"params":[{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":276,"b":292}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":322,"b":336}]}],"statement":"SELECT\n    e.external_id,\n    e.title,\n    e.encounter_date\nFROM encounters.encounters e\nINNER JOIN encounters.encounter_friends ef ON ef.encounter_id = e.id\nINNER JOIN friends.friends f ON ef.friend_id = f.id\nINNER JOIN auth.users u ON e.user_id = u.id\nWHERE f.external_id = :friendExternalId::uuid\n  AND u.external_id = :userExternalId::uuid\n  AND f.deleted_at IS NULL\nORDER BY e.encounter_date DESC, e.created_at DESC\nLIMIT 1"};
+const getLastEncounterForFriendIR: any = {"usedParamSet":{"friendExternalId":true,"userExternalId":true},"params":[{"name":"friendExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":298,"b":314}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":344,"b":358}]}],"statement":"SELECT\n    e.external_id,\n    e.title,\n    e.encounter_type,\n    e.encounter_date\nFROM encounters.encounters e\nINNER JOIN encounters.encounter_friends ef ON ef.encounter_id = e.id\nINNER JOIN friends.friends f ON ef.friend_id = f.id\nINNER JOIN auth.users u ON e.user_id = u.id\nWHERE f.external_id = :friendExternalId::uuid\n  AND u.external_id = :userExternalId::uuid\n  AND f.deleted_at IS NULL\nORDER BY e.encounter_date DESC, e.created_at DESC\nLIMIT 1"};
 
 /**
  * Query generated from SQL:
@@ -477,6 +510,7 @@ const getLastEncounterForFriendIR: any = {"usedParamSet":{"friendExternalId":tru
  * SELECT
  *     e.external_id,
  *     e.title,
+ *     e.encounter_type,
  *     e.encounter_date
  * FROM encounters.encounters e
  * INNER JOIN encounters.encounter_friends ef ON ef.encounter_id = e.id

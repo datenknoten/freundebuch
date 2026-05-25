@@ -73,6 +73,20 @@
     "pageOf": "Page {{page}} of {{total}}",
     "friendCountMore": "+{{count}} more",
     "logEncounter": "Log encounter",
+    "typeFilter": "Type",
+    "allTypes": "All types",
+    "types": {
+      "in_person": "In person",
+      "phone_call": "Phone call",
+      "video_call": "Video call",
+      "message": "Message"
+    },
+    "derivedTitle": {
+      "in_person": "Met {{names}}",
+      "phone_call": "Phone call with {{names}}",
+      "video_call": "Video call with {{names}}",
+      "message": "Message with {{names}}"
+    },
     "lastSeen": {
       "label": "Last seen",
       "today": "today",
@@ -87,6 +101,7 @@
       "yearsAgo_other": "{{count}} years ago"
     },
     "form": {
+      "typeLabel": "Type",
       "titleLabel": "Title",
       "titlePlaceholder": "e.g., Coffee at Starbucks, Birthday Party",
       "dateLabel": "Date",

@@ -2,6 +2,7 @@
 SELECT
     e.external_id,
     e.title,
+    e.encounter_type,
     e.encounter_date,
     e.location_text,
     e.description,
@@ -30,11 +31,15 @@ WHERE u.external_id = :userExternalId::uuid
     OR e.encounter_date <= :toDate::date
   )
   AND (
+    :encounterType::text IS NULL
+    OR e.encounter_type = :encounterType
+  )
+  AND (
     :search::text IS NULL
     OR e.title ILIKE '%' || :search || '%'
     OR e.description ILIKE '%' || :search || '%'
   )
-GROUP BY e.id, e.external_id, e.title, e.encounter_date, e.location_text, e.description, e.created_at, e.updated_at
+GROUP BY e.id, e.external_id, e.title, e.encounter_type, e.encounter_date, e.location_text, e.description, e.created_at, e.updated_at
 ORDER BY e.encounter_date DESC, e.created_at DESC
 LIMIT :pageSize
 OFFSET :offset;
@@ -62,6 +67,10 @@ WHERE u.external_id = :userExternalId::uuid
     OR e.encounter_date <= :toDate::date
   )
   AND (
+    :encounterType::text IS NULL
+    OR e.encounter_type = :encounterType
+  )
+  AND (
     :search::text IS NULL
     OR e.title ILIKE '%' || :search || '%'
     OR e.description ILIKE '%' || :search || '%'
@@ -71,6 +80,7 @@ WHERE u.external_id = :userExternalId::uuid
 SELECT
     e.external_id,
     e.title,
+    e.encounter_type,
     e.encounter_date,
     e.location_text,
     e.description,
@@ -113,6 +123,7 @@ LIMIT :limit;
 INSERT INTO encounters.encounters (
     user_id,
     title,
+    encounter_type,
     encounter_date,
     location_text,
     description
@@ -120,6 +131,7 @@ INSERT INTO encounters.encounters (
 SELECT
     u.id,
     :title,
+    :encounterType,
     :encounterDate::date,
     :locationText,
     :description
@@ -128,6 +140,7 @@ WHERE u.external_id = :userExternalId::uuid
 RETURNING
     external_id,
     title,
+    encounter_type,
     encounter_date,
     location_text,
     description,
@@ -137,7 +150,11 @@ RETURNING
 /* @name UpdateEncounter */
 UPDATE encounters.encounters e
 SET
-    title = COALESCE(:title, e.title),
+    title = CASE
+        WHEN :updateTitle::boolean = true THEN :title
+        ELSE e.title
+    END,
+    encounter_type = COALESCE(:encounterType, e.encounter_type),
     encounter_date = COALESCE(:encounterDate::date, e.encounter_date),
     location_text = CASE
         WHEN :updateLocationText::boolean = true THEN :locationText
@@ -155,6 +172,7 @@ WHERE e.external_id = :encounterExternalId::uuid
 RETURNING
     e.external_id,
     e.title,
+    e.encounter_type,
     e.encounter_date,
     e.location_text,
     e.description,
@@ -173,6 +191,7 @@ RETURNING e.external_id;
 SELECT
     e.external_id,
     e.title,
+    e.encounter_type,
     e.encounter_date
 FROM encounters.encounters e
 INNER JOIN encounters.encounter_friends ef ON ef.encounter_id = e.id

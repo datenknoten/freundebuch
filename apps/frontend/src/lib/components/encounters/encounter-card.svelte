@@ -10,6 +10,8 @@ import {
 } from '$lib/stores/ui';
 import type { EncounterListItem } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
+import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display';
+import EncounterTypeIcon from './encounter-type-icon.svelte';
 
 const i18n = createI18n();
 
@@ -21,6 +23,8 @@ interface Props {
 }
 
 let { encounter, href = `/encounters/${encounter.id}`, index }: Props = $props();
+
+let displayTitle = $derived(encounterDisplayTitle($i18n.t, encounter));
 
 // Keyboard hint logic
 function getKeyHint(): string | null {
@@ -70,8 +74,14 @@ function formatDate(dateStr: string): string {
   {/if}
   <div class="flex items-start justify-between gap-4">
     <div class="flex-1 min-w-0">
-      <h3 class="font-heading font-semibold text-gray-900 truncate">
-        {encounter.title}
+      <h3 class="font-heading font-semibold text-gray-900 truncate flex items-center gap-2">
+        <span
+          class="flex-shrink-0 text-forest"
+          title={encounterTypeLabel($i18n.t, encounter.encounterType)}
+        >
+          <EncounterTypeIcon type={encounter.encounterType} class="w-4 h-4" />
+        </span>
+        <span class="truncate">{displayTitle}</span>
       </h3>
 
       <div class="mt-1 flex items-center gap-2 text-sm text-gray-500 font-body">

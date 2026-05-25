@@ -5,6 +5,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { getLastEncounter } from '$lib/stores/encounters';
 import type { LastEncounterSummary } from '$shared';
+import { encounterDisplayTitle } from './encounter-display';
 
 const i18n = createI18n();
 
@@ -18,6 +19,15 @@ let { friendId, friendName }: Props = $props();
 let lastEncounter = $state<LastEncounterSummary | null>(null);
 let isLoading = $state(true);
 let error = $state<string | null>(null);
+
+let displayTitle = $derived(
+  lastEncounter
+    ? encounterDisplayTitle($i18n.t, {
+        ...lastEncounter,
+        friends: friendName ? [{ displayName: friendName }] : [],
+      })
+    : '',
+);
 
 onMount(async () => {
   try {
@@ -73,7 +83,7 @@ function getDateColor(dateStr: string): string {
   <a
     href="/encounters/{lastEncounter.id}"
     class="inline-flex items-center gap-2 px-3 py-1.5 border rounded-full text-sm font-body transition-colors hover:opacity-80 {getDateColor(lastEncounter.encounterDate)}"
-    title="{$i18n.t('encounters.lastSeen.label')}: {lastEncounter.title}"
+    title="{$i18n.t('encounters.lastSeen.label')}: {displayTitle}"
   >
     <Calendar class="w-4 h-4" strokeWidth="2" />
     <span>{$i18n.t('encounters.lastSeen.label')}: {formatDate(lastEncounter.encounterDate)}</span>
