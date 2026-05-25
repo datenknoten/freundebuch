@@ -181,9 +181,11 @@ onDestroy(() => view?.destroy());
   box-shadow: 0 0 0 2px #2d5016;
 }
 
+/* Editing is blocked via EditorView.editable(false); we only dim here.
+ * No `pointer-events: none` — a disabled textarea still scrolls and allows
+ * selection/copy, so long notes stay readable during submit. */
 :global(.fb-md-editor--disabled) {
   opacity: 0.5;
-  pointer-events: none;
 }
 
 /* Brand heading font on rendered heading lines, matching the detail view. */

@@ -216,6 +216,9 @@ function handleCancel() {
 
   <!-- Description -->
   <div>
+    <!-- Field label, associated to the editor via aria-labelledby. The editor
+         box is large and click/tab focusable, so no label click-to-focus
+         handler (which would need a role + a11y suppression on a static span). -->
     <span id="notes-label" class="block text-sm font-body font-medium text-gray-700 mb-1">
       {$i18n.t('encounters.form.notesLabel')} <span class="text-gray-400">{$i18n.t('encounters.form.optional')}</span>
     </span>

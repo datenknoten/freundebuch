@@ -8,27 +8,28 @@ const md = new MarkdownIt({ html: false, linkify: true, breaks: true });
 // (markers render as inert text) and forbid <img> at sanitize time.
 md.disable('image');
 
-// Harden every rendered link: open in a new tab and sever the opener so
-// note content can't reach back into the app. Runs after sanitization, so
-// it also covers autolinked bare URLs (linkify) and survives `html:false`.
-let hooked = false;
-function ensureHook() {
-  if (hooked) return;
-  DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-    if (node.tagName === 'A') {
-      node.setAttribute('target', '_blank');
-      node.setAttribute('rel', 'noopener noreferrer nofollow');
-    }
-  });
-  hooked = true;
-}
+// Harden every rendered link at render time (this markdown-it instance is
+// module-local, so this is scoped to encounter notes — unlike a global
+// DOMPurify.addHook, which would mutate every sanitize() call in the app).
+// Covers both `[text](url)` links and linkified bare URLs.
+const defaultLinkOpen =
+  md.renderer.rules.link_open ??
+  ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
+md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  tokens[idx].attrSet('target', '_blank');
+  tokens[idx].attrSet('rel', 'noopener noreferrer nofollow');
+  return defaultLinkOpen(tokens, idx, options, env, self);
+};
 
 export function renderMarkdown(source: string): string {
-  ensureHook();
   // html:false already neutralizes raw HTML; DOMPurify is the belt to that
   // suspenders, and the only thing standing between note text and the DOM.
-  // FORBID_TAGS img backstops the parser-level image disable above.
-  return DOMPurify.sanitize(md.render(source ?? ''), { FORBID_TAGS: ['img'] });
+  // FORBID_TAGS img backstops the parser-level image disable above;
+  // ADD_ATTR keeps the target/rel that markdown-it added on links.
+  return DOMPurify.sanitize(md.render(source ?? ''), {
+    FORBID_TAGS: ['img'],
+    ADD_ATTR: ['target', 'rel'],
+  });
 }
 </script>
 
