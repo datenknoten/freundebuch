@@ -1,3 +1,18 @@
+## 2.74.0 (2026-05-25)
+
+* fix(frontend): Associate notes label via aria-labelledby ([364cfb3](https://github.com/datenknoten/freundebuch/commit/364cfb3))
+* fix(frontend): Harden editor links, undo, and viewer per review ([0d63c97](https://github.com/datenknoten/freundebuch/commit/0d63c97))
+* fix(frontend): React to prop changes and scope viewer margins ([8c63d69](https://github.com/datenknoten/freundebuch/commit/8c63d69))
+* fix(frontend): Scope link hardening and disabled state per review ([16302a3](https://github.com/datenknoten/freundebuch/commit/16302a3))
+* chore(config): Only unset core.hooksPath when it points at husky ([7b9eaa3](https://github.com/datenknoten/freundebuch/commit/7b9eaa3))
+* chore(config): Unset stale husky hooksPath in prepare ([a3dbd86](https://github.com/datenknoten/freundebuch/commit/a3dbd86))
+* chore(config): Use npx for biome in the hk pre-commit hook ([513f8a1](https://github.com/datenknoten/freundebuch/commit/513f8a1))
+* chore(deps): Add CodeMirror 6 + markdown-it for note editor ([7abf6da](https://github.com/datenknoten/freundebuch/commit/7abf6da))
+* test(frontend): Add unit tests for markdown editor and viewer ([e821085](https://github.com/datenknoten/freundebuch/commit/e821085))
+* feat(frontend): Add markdown editor and viewer components ([8d94de5](https://github.com/datenknoten/freundebuch/commit/8d94de5))
+* feat(frontend): Render encounter notes as inline-preview markdown ([34bd0da](https://github.com/datenknoten/freundebuch/commit/34bd0da))
+* feat(frontend): Vendor atomic-editor inline-preview CM6 engine ([cbfb94c](https://github.com/datenknoten/freundebuch/commit/cbfb94c))
+
 ## 2.73.0 (2026-05-25)
 
 * feat(all): Add interaction type to encounters ([e75190a](https://github.com/datenknoten/freundebuch/commit/e75190a))
