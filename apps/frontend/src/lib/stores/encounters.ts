@@ -82,6 +82,7 @@ function createEncountersStore() {
             {
               id: encounter.id,
               title: encounter.title,
+              encounterType: encounter.encounterType,
               encounterDate: encounter.encounterDate,
               locationText: encounter.locationText,
               friendCount: encounter.friends.length,
@@ -111,6 +112,7 @@ function createEncountersStore() {
               ? {
                   id: encounter.id,
                   title: encounter.title,
+                  encounterType: encounter.encounterType,
                   encounterDate: encounter.encounterDate,
                   locationText: encounter.locationText,
                   friendCount: encounter.friends.length,

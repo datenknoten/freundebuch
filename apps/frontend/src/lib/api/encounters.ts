@@ -2,6 +2,7 @@ import type {
   Encounter,
   EncounterInput,
   EncounterListResponse,
+  EncounterType,
   EncounterUpdate,
   LastEncounterSummary,
 } from '$shared';
@@ -18,6 +19,7 @@ export interface EncounterListParams {
   fromDate?: string;
   toDate?: string;
   search?: string;
+  type?: EncounterType;
 }
 
 function buildQueryString(params: EncounterListParams): string {
@@ -40,6 +42,9 @@ function buildQueryString(params: EncounterListParams): string {
   }
   if (params.search) {
     searchParams.set('search', params.search);
+  }
+  if (params.type) {
+    searchParams.set('type', params.type);
   }
 
   const queryString = searchParams.toString();

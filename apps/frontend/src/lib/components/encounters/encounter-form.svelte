@@ -3,7 +3,16 @@ import { goto } from '$app/navigation';
 import { autoFocus } from '$lib/actions/auto-focus';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
-import type { Encounter, EncounterInput, EncounterUpdate, FriendSearchResult } from '$shared';
+import {
+  ENCOUNTER_TYPES,
+  type Encounter,
+  type EncounterInput,
+  type EncounterType,
+  type EncounterUpdate,
+  type FriendSearchResult,
+} from '$shared';
+import { encounterTypeLabel } from './encounter-display';
+import EncounterTypeIcon from './encounter-type-icon.svelte';
 import FriendMultiSelect from './friend-multi-select.svelte';
 
 const i18n = createI18n();
@@ -25,6 +34,7 @@ let isEditMode = $derived(!!encounter);
 
 // Form state
 let title = $state(encounter?.title ?? '');
+let encounterType = $state<EncounterType>(encounter?.encounterType ?? 'in_person');
 let encounterDate = $state(encounter?.encounterDate ?? new Date().toISOString().split('T')[0]);
 let locationText = $state(encounter?.locationText ?? '');
 let description = $state(encounter?.description ?? '');
@@ -39,10 +49,11 @@ let selectedFriends = $state<FriendSearchResult[]>(
 let isSubmitting = $state(false);
 let error = $state('');
 
-// Validation
-let isValid = $derived(
-  title.trim().length > 0 && encounterDate.length > 0 && selectedFriends.length > 0,
-);
+// Location only applies to in-person encounters
+let showLocation = $derived(encounterType === 'in_person');
+
+// Validation — title is optional (a label is derived for calls/messages)
+let isValid = $derived(encounterDate.length > 0 && selectedFriends.length > 0);
 
 function handleFriendsChange(friends: FriendSearchResult[]) {
   selectedFriends = friends;
@@ -64,19 +75,21 @@ async function handleSubmit(e: Event) {
 
     if (isEditMode && encounter) {
       const input: EncounterUpdate = {
-        title: title.trim(),
+        title: title.trim() || null,
+        encounter_type: encounterType,
         encounter_date: encounterDate,
         friend_ids: selectedFriends.map((f) => f.id),
-        location_text: locationText.trim() || null,
+        location_text: showLocation ? locationText.trim() || null : null,
         description: description.trim() || null,
       };
       result = await encounters.updateEncounter(encounter.id, input);
     } else {
       const input: EncounterInput = {
-        title: title.trim(),
+        title: title.trim() || undefined,
+        encounter_type: encounterType,
         encounter_date: encounterDate,
         friend_ids: selectedFriends.map((f) => f.id),
-        location_text: locationText.trim() || undefined,
+        location_text: showLocation ? locationText.trim() || undefined : undefined,
         description: description.trim() || undefined,
       };
       result = await encounters.createEncounter(input);
@@ -113,10 +126,31 @@ function handleCancel() {
     </div>
   {/if}
 
+  <!-- Type -->
+  <div>
+    <span class="block text-sm font-body font-medium text-gray-700 mb-1">
+      {$i18n.t('encounters.form.typeLabel')}
+    </span>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {#each ENCOUNTER_TYPES as type (type)}
+        <button
+          type="button"
+          onclick={() => (encounterType = type)}
+          disabled={isSubmitting}
+          aria-pressed={encounterType === type}
+          class="flex items-center justify-center gap-2 px-3 py-2 border rounded-lg font-body text-sm transition-colors disabled:opacity-50 {encounterType === type ? 'border-forest bg-forest/10 text-forest font-semibold' : 'border-gray-300 text-gray-700 hover:border-forest'}"
+        >
+          <EncounterTypeIcon {type} class="w-4 h-4 flex-shrink-0" />
+          <span class="truncate">{encounterTypeLabel($i18n.t, type)}</span>
+        </button>
+      {/each}
+    </div>
+  </div>
+
   <!-- Title -->
   <div>
     <label for="title" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('encounters.form.titleLabel')} <span class="text-red-500">{$i18n.t('encounters.form.required')}</span>
+      {$i18n.t('encounters.form.titleLabel')} <span class="text-gray-400">{$i18n.t('encounters.form.optional')}</span>
     </label>
     <input
       use:autoFocus
@@ -126,7 +160,6 @@ function handleCancel() {
       placeholder={$i18n.t('encounters.form.titlePlaceholder')}
       disabled={isSubmitting}
       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-      required
     />
   </div>
 
@@ -163,20 +196,22 @@ function handleCancel() {
     {/if}
   </div>
 
-  <!-- Location -->
-  <div>
-    <label for="location" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('encounters.form.locationLabel')} <span class="text-gray-400">{$i18n.t('encounters.form.optional')}</span>
-    </label>
-    <input
-      id="location"
-      type="text"
-      bind:value={locationText}
-      placeholder={$i18n.t('encounters.form.locationPlaceholder')}
-      disabled={isSubmitting}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-    />
-  </div>
+  <!-- Location (in-person only) -->
+  {#if showLocation}
+    <div>
+      <label for="location" class="block text-sm font-body font-medium text-gray-700 mb-1">
+        {$i18n.t('encounters.form.locationLabel')} <span class="text-gray-400">{$i18n.t('encounters.form.optional')}</span>
+      </label>
+      <input
+        id="location"
+        type="text"
+        bind:value={locationText}
+        placeholder={$i18n.t('encounters.form.locationPlaceholder')}
+        disabled={isSubmitting}
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
+      />
+    </div>
+  {/if}
 
   <!-- Description -->
   <div>

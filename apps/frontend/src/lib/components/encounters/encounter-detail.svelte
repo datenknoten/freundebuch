@@ -8,6 +8,8 @@ import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
 import type { Encounter } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
+import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display';
+import EncounterTypeIcon from './encounter-type-icon.svelte';
 
 const i18n = createI18n();
 
@@ -20,6 +22,8 @@ let { encounter, onEdit }: Props = $props();
 
 let isDeleting = $state(false);
 let showDeleteConfirm = $state(false);
+
+let displayTitle = $derived(encounterDisplayTitle($i18n.t, encounter));
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -58,13 +62,17 @@ async function handleDelete() {
 <div class="space-y-6">
   <!-- Header with icon avatar and actions -->
   <div class="flex flex-col sm:flex-row items-center gap-6">
-    <!-- Calendar icon as avatar -->
+    <!-- Type icon as avatar -->
     <div class="flex-shrink-0 w-20 h-20 rounded-full bg-forest/10 text-forest flex items-center justify-center">
-      <Calendar class="w-10 h-10" strokeWidth="2" />
+      <EncounterTypeIcon type={encounter.encounterType} class="w-10 h-10" />
     </div>
 
     <div class="flex-1 text-center sm:text-left">
-      <h1 class="text-3xl font-heading text-gray-900">{encounter.title}</h1>
+      <h1 class="text-3xl font-heading text-gray-900">{displayTitle}</h1>
+      <div class="mt-1 flex items-center gap-2 text-gray-600 font-body justify-center sm:justify-start">
+        <EncounterTypeIcon type={encounter.encounterType} class="w-4 h-4 flex-shrink-0" />
+        <span>{encounterTypeLabel($i18n.t, encounter.encounterType)}</span>
+      </div>
       <div class="mt-1 flex items-center gap-2 text-gray-600 font-body justify-center sm:justify-start">
         <Calendar class="w-4 h-4 flex-shrink-0" strokeWidth="2" />
         <span>{formatDate(encounter.encounterDate)}</span>
@@ -154,7 +162,7 @@ async function handleDelete() {
         {$i18n.t('encounters.detail.deleteConfirmTitle')}
       </h3>
       <p class="text-gray-600 font-body mb-6">
-        {$i18n.t('encounters.detail.deleteConfirmMessage', { title: encounter.title })}
+        {$i18n.t('encounters.detail.deleteConfirmMessage', { title: displayTitle })}
       </p>
       <div class="flex gap-3">
         <button

@@ -9,6 +9,8 @@ import type { EncounterListParams } from '$lib/api/encounters';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters, encountersList } from '$lib/stores/encounters';
 import { visibleEncounterIds } from '$lib/stores/ui';
+import { ENCOUNTER_TYPES, type EncounterType } from '$shared';
+import { encounterTypeLabel } from './encounter-display';
 import EncounterCard from './encounter-card.svelte';
 
 const i18n = createI18n();
@@ -25,6 +27,7 @@ let { friendId, initialSearch = '' }: Props = $props();
 let searchQuery = $state(initialSearch);
 let fromDate = $state('');
 let toDate = $state('');
+let selectedType = $state<EncounterType | ''>('');
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Derived state
@@ -62,6 +65,9 @@ async function loadEncounters(page = 1) {
   if (toDate) {
     params.toDate = toDate;
   }
+  if (selectedType) {
+    params.type = selectedType;
+  }
 
   await encounters.loadEncounters(params);
 }
@@ -86,6 +92,7 @@ function clearFilters() {
   searchQuery = '';
   fromDate = '';
   toDate = '';
+  selectedType = '';
   loadEncounters();
 }
 
@@ -113,6 +120,24 @@ function goToPage(page: number) {
           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
         />
       </div>
+    </div>
+
+    <!-- Type filter -->
+    <div>
+      <label for="type-filter" class="block text-sm font-body font-medium text-gray-700 mb-1">
+        {$i18n.t('encounters.typeFilter')}
+      </label>
+      <select
+        id="type-filter"
+        bind:value={selectedType}
+        onchange={() => loadEncounters()}
+        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm bg-white"
+      >
+        <option value="">{$i18n.t('encounters.allTypes')}</option>
+        {#each ENCOUNTER_TYPES as type (type)}
+          <option value={type}>{encounterTypeLabel($i18n.t, type)}</option>
+        {/each}
+      </select>
     </div>
 
     <!-- Date filters -->
@@ -144,7 +169,7 @@ function goToPage(page: number) {
     </div>
 
     <!-- Clear filters -->
-    {#if searchQuery || fromDate || toDate}
+    {#if searchQuery || fromDate || toDate || selectedType}
       <button
         type="button"
         onclick={clearFilters}
@@ -158,7 +183,7 @@ function goToPage(page: number) {
   <!-- Results count -->
   <div class="text-sm text-gray-600 font-body">
     {$i18n.t('encounters.encounterCount', { count: pagination.totalCount })}
-    {#if searchQuery || fromDate || toDate}
+    {#if searchQuery || fromDate || toDate || selectedType}
       <span class="text-forest">{$i18n.t('encounters.filtered')}</span>
     {/if}
   </div>
@@ -181,7 +206,7 @@ function goToPage(page: number) {
       <Calendar class="mx-auto h-12 w-12 text-gray-400" strokeWidth="2" />
       <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('encounters.noEncounters')}</h3>
       <p class="mt-2 text-sm text-gray-600 font-body">
-        {#if searchQuery || fromDate || toDate}
+        {#if searchQuery || fromDate || toDate || selectedType}
           {$i18n.t('encounters.noEncountersFiltered')}
         {:else}
           {$i18n.t('encounters.noEncountersSubtitle')}

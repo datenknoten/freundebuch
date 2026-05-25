@@ -73,6 +73,20 @@
     "pageOf": "Seite {{page}} von {{total}}",
     "friendCountMore": "+{{count}} weitere",
     "logEncounter": "Begegnung erfassen",
+    "typeFilter": "Art",
+    "allTypes": "Alle Arten",
+    "types": {
+      "in_person": "Persönlich",
+      "phone_call": "Anruf",
+      "video_call": "Videoanruf",
+      "message": "Nachricht"
+    },
+    "derivedTitle": {
+      "in_person": "{{names}} getroffen",
+      "phone_call": "Anruf mit {{names}}",
+      "video_call": "Videoanruf mit {{names}}",
+      "message": "Nachricht mit {{names}}"
+    },
     "lastSeen": {
       "label": "Zuletzt gesehen",
       "today": "heute",
@@ -87,6 +101,7 @@
       "yearsAgo_other": "vor {{count}} Jahren"
     },
     "form": {
+      "typeLabel": "Art",
       "titleLabel": "Titel",
       "titlePlaceholder": "z.B. Kaffee bei Starbucks, Geburtstagsfeier",
       "dateLabel": "Datum",
