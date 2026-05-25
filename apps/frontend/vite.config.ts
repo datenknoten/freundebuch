@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { sentrySvelteKit } from '@sentry/sveltekit';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { svelteTesting } from '@testing-library/svelte/vite';
 import { defineConfig } from 'vitest/config';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
@@ -16,6 +17,9 @@ export default defineConfig({
       },
     }),
     sveltekit(),
+    // Enables Svelte 5 component testing under jsdom (browser resolve
+    // condition + auto-cleanup between tests).
+    svelteTesting(),
   ],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
