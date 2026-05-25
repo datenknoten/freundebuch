@@ -44,7 +44,7 @@ let html = $derived(renderMarkdown(source));
 </script>
 
 <div class="fb-md-view">
-  <!-- eslint-disable-next-line svelte/no-at-html-tags — sanitized above -->
+  <!-- html is sanitized in renderMarkdown (markdown-it html:false + DOMPurify). -->
   {@html html}
 </div>
 

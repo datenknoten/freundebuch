@@ -216,12 +216,13 @@ function handleCancel() {
 
   <!-- Description -->
   <div>
-    <label for="description" class="block text-sm font-body font-medium text-gray-700 mb-1">
+    <!-- svelte-ignore a11y_label_has_associated_control -->
+    <label id="notes-label" class="block text-sm font-body font-medium text-gray-700 mb-1">
       {$i18n.t('encounters.form.notesLabel')} <span class="text-gray-400">{$i18n.t('encounters.form.optional')}</span>
     </label>
     <MarkdownEditor
       bind:value={description}
-      ariaLabel={$i18n.t('encounters.form.notesLabel')}
+      labelledBy="notes-label"
       placeholder={$i18n.t('encounters.form.notesPlaceholder')}
       disabled={isSubmitting}
     />
