@@ -1,3 +1,7 @@
+## 2.73.0 (2026-05-25)
+
+* feat(all): Add interaction type to encounters ([e75190a](https://github.com/datenknoten/freundebuch/commit/e75190a))
+
 ## <small>2.72.1 (2026-05-24)</small>
 
 * fix(config): Revalidate stable-named icons instead of caching them forever ([9d7273e](https://github.com/datenknoten/freundebuch/commit/9d7273e))
