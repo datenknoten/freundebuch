@@ -1,0 +1,180 @@
+<script lang="ts">
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { markdown } from '@codemirror/lang-markdown';
+import { Compartment, EditorState } from '@codemirror/state';
+import { placeholder as cmPlaceholder, EditorView, keymap } from '@codemirror/view';
+import { onDestroy, onMount } from 'svelte';
+import {
+  atomicEditorTheme,
+  atomicMarkdownSyntax,
+  extendEmphasisPair,
+  inlinePreview,
+} from './inline-preview';
+import './inline-preview/inline-preview.css';
+
+interface Props {
+  /** Raw markdown — the source of truth. Two-way bound. */
+  value?: string;
+  /** Accessible label text for the editor content. Ignored if `labelledBy` is set. */
+  ariaLabel?: string;
+  /** ID of an element labelling the editor (wins over `ariaLabel`). */
+  labelledBy?: string;
+  /** Placeholder shown while the document is empty. */
+  placeholder?: string;
+  /** Disables editing (mirrors the textarea's `disabled`). */
+  disabled?: boolean;
+}
+
+let {
+  value = $bindable(''),
+  ariaLabel = 'Notes',
+  labelledBy = '',
+  placeholder = '',
+  disabled = false,
+}: Props = $props();
+
+let host: HTMLDivElement;
+let view: EditorView | undefined;
+
+// Lets us reconfigure `editable` after mount when `disabled` changes —
+// `EditorView.editable.of(...)` is otherwise fixed at construction.
+const editableConf = new Compartment();
+
+// FB: the vendored atomic theme targets full-page editors (height:100%,
+// 40vh bottom padding, internal scroll). For an inline form field we want
+// the editor to grow with its content up to a cap. Added after
+// atomicEditorTheme so these rules win on conflict.
+const inlineFieldTheme = EditorView.theme({
+  '&': { height: 'auto' },
+  '.cm-scroller': { overflow: 'auto', maxHeight: '50vh' },
+  '.cm-content': { paddingBottom: '0.5rem', minHeight: '4.5rem' },
+});
+
+onMount(() => {
+  view = new EditorView({
+    parent: host,
+    state: EditorState.create({
+      doc: value,
+      extensions: [
+        history(),
+        keymap.of([...defaultKeymap, ...historyKeymap]),
+        markdown(),
+        inlinePreview(),
+        extendEmphasisPair,
+        atomicMarkdownSyntax,
+        atomicEditorTheme,
+        inlineFieldTheme,
+        EditorView.lineWrapping,
+        ...(placeholder ? [cmPlaceholder(placeholder)] : []),
+        editableConf.of(EditorView.editable.of(!disabled)),
+        EditorView.contentAttributes.of(
+          labelledBy ? { 'aria-labelledby': labelledBy } : { 'aria-label': ariaLabel },
+        ),
+        EditorView.updateListener.of((u) => {
+          if (u.docChanged) value = u.state.doc.toString();
+        }),
+      ],
+    }),
+  });
+});
+
+// Mirror a disabled <textarea>: actually toggle CM editability (the CSS
+// pointer-events guard alone wouldn't block keyboard input on a focused
+// editor). Blur on disable so a focused editor releases the caret.
+$effect(() => {
+  if (!view) return;
+  view.dispatch({ effects: editableConf.reconfigure(EditorView.editable.of(!disabled)) });
+  if (disabled && view.hasFocus) view.contentDOM.blur();
+});
+
+// Reconcile external value changes (e.g. switching edit target) without
+// clobbering the cursor or looping back through the update listener.
+$effect(() => {
+  if (view && value !== view.state.doc.toString()) {
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: value },
+    });
+  }
+});
+
+onDestroy(() => view?.destroy());
+</script>
+
+<div
+  bind:this={host}
+  class="fb-md-editor atomic-cm-editor"
+  class:fb-md-editor--disabled={disabled}
+></div>
+
+<style>
+/* Design-system palette for the vendored engine. All colors flow through
+ * the engine's `--atomic-editor-*` variables; set them on the host and they
+ * inherit into the CodeMirror DOM. :global because the CM nodes are created
+ * at runtime, outside this component's scoped markup. */
+:global(.fb-md-editor) {
+  --atomic-editor-font: var(--font-body);
+  --atomic-editor-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --atomic-editor-body-size: 0.875rem;
+  --atomic-editor-body-leading: 1.7;
+  --atomic-editor-measure: 100%;
+
+  --atomic-editor-fg: #374151;
+  --atomic-editor-fg-muted: #6b7280;
+  --atomic-editor-fg-faint: #9ca3af;
+  --atomic-editor-bg: #ffffff;
+  --atomic-editor-bg-surface: #f9fafb;
+  --atomic-editor-bg-panel: #f3f4f6;
+  --atomic-editor-border: #d1d5db;
+  --atomic-editor-code-bg: #f3f4f6;
+
+  --atomic-editor-accent: #2d5016;
+  --atomic-editor-accent-bright: #2d5016;
+  --atomic-editor-accent-soft: #8b9d83;
+  --atomic-editor-link: #2d5016;
+  --atomic-editor-link-hover: #3a6b1e;
+  --atomic-editor-selection-bg: color-mix(in srgb, #2d5016 16%, transparent);
+  --atomic-editor-initial-reveal-bg: color-mix(in srgb, #2d5016 14%, transparent);
+  --atomic-editor-initial-reveal-bg-strong: color-mix(in srgb, #2d5016 22%, transparent);
+
+  /* Code-block highlight palette tuned for a light background
+   * (GitHub-light, from the engine's own light theme). */
+  --atomic-editor-hl-keyword: #cf222e;
+  --atomic-editor-hl-string: #0a3069;
+  --atomic-editor-hl-number: #0550ae;
+  --atomic-editor-hl-comment: #6e7781;
+  --atomic-editor-hl-type: #953800;
+  --atomic-editor-hl-function: #8250df;
+  --atomic-editor-hl-property: #0550ae;
+  --atomic-editor-hl-regexp: #116329;
+  --atomic-editor-hl-escape: #0550ae;
+  --atomic-editor-hl-tag: #116329;
+  --atomic-editor-hl-variable: #24292f;
+  --atomic-editor-hl-operator: #cf222e;
+  --atomic-editor-hl-invalid: #82071e;
+
+  /* Match the surrounding form fields: bordered, rounded, forest focus ring. */
+  display: block;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+:global(.fb-md-editor:focus-within) {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #2d5016;
+}
+
+:global(.fb-md-editor--disabled) {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Brand heading font on rendered heading lines, matching the detail view. */
+:global(.fb-md-editor .cm-atomic-h1),
+:global(.fb-md-editor .cm-atomic-h2),
+:global(.fb-md-editor .cm-atomic-h3),
+:global(.fb-md-editor .cm-atomic-h4) {
+  font-family: var(--font-heading);
+}
+</style>
