@@ -214,4 +214,25 @@ onDestroy(() => view?.destroy());
 :global(.fb-md-editor .cm-atomic-h4) {
   font-family: var(--font-heading);
 }
+
+/* FB: the vendored heading scale (1.35 / 1.2 / 1.1 / 1.0em) is tuned for a
+ * larger editor body size. With our 0.875rem body plus the brand heading
+ * font's smaller apparent size, those steps barely clear the body text, so
+ * the hierarchy reads flat (h4 even matches the body exactly). Bump each
+ * step so headings stay clearly readable above the body. Values stay in em,
+ * so they scale with --atomic-editor-body-size and the vendored per-heading
+ * line-heights track along; the size is class-based (not cursor-based), so
+ * the active/inactive no-layout-shift invariant is preserved. */
+:global(.fb-md-editor .cm-atomic-h1) {
+  font-size: 1.9em;
+}
+:global(.fb-md-editor .cm-atomic-h2) {
+  font-size: 1.55em;
+}
+:global(.fb-md-editor .cm-atomic-h3) {
+  font-size: 1.3em;
+}
+:global(.fb-md-editor .cm-atomic-h4) {
+  font-size: 1.15em;
+}
 </style>
