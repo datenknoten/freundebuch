@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
-import { Compartment, EditorState } from '@codemirror/state';
+import { Compartment, EditorState, Transaction } from '@codemirror/state';
 import { placeholder as cmPlaceholder, EditorView, keymap } from '@codemirror/view';
 import { onDestroy, onMount } from 'svelte';
 import {
@@ -50,6 +50,19 @@ const inlineFieldTheme = EditorView.theme({
   '.cm-content': { paddingBottom: '0.5rem', minHeight: '4.5rem' },
 });
 
+// Open links from the editor only for safe schemes — the URL comes straight
+// from note markdown, so reject javascript:/data: etc. before window.open.
+const SAFE_LINK_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
+function openSafeLink(url: string): void {
+  try {
+    const parsed = new URL(url, window.location.href);
+    if (!SAFE_LINK_SCHEMES.includes(parsed.protocol)) return;
+    window.open(parsed.href, '_blank', 'noopener,noreferrer');
+  } catch {
+    // Malformed URL — ignore rather than open anything.
+  }
+}
+
 onMount(() => {
   view = new EditorView({
     parent: host,
@@ -59,7 +72,7 @@ onMount(() => {
         history(),
         keymap.of([...defaultKeymap, ...historyKeymap]),
         markdown(),
-        inlinePreview(),
+        inlinePreview({ onLinkClick: openSafeLink }),
         extendEmphasisPair,
         atomicMarkdownSyntax,
         atomicEditorTheme,
@@ -93,6 +106,9 @@ $effect(() => {
   if (view && value !== view.state.doc.toString()) {
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: value },
+      // An external swap isn't the user's edit — keep it out of undo history
+      // so Ctrl-Z doesn't jump back to the previous document's content.
+      annotations: Transaction.addToHistory.of(false),
     });
   }
 });

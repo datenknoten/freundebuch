@@ -80,6 +80,7 @@ let html = $derived(renderMarkdown(source));
 .fb-md-view :global(a) {
   color: #2d5016;
   text-decoration: underline;
+  overflow-wrap: anywhere;
 }
 .fb-md-view :global(a:hover) { color: #3a6b1e; }
 .fb-md-view :global(strong) { font-weight: 700; }
@@ -119,8 +120,5 @@ let html = $derived(renderMarkdown(source));
   border: none;
   border-top: 1px solid #d1d5db;
   margin: 1em 0;
-}
-.fb-md-view :global(a) {
-  overflow-wrap: anywhere;
 }
 </style>

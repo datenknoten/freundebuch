@@ -216,10 +216,9 @@ function handleCancel() {
 
   <!-- Description -->
   <div>
-    <!-- svelte-ignore a11y_label_has_associated_control -->
-    <label id="notes-label" class="block text-sm font-body font-medium text-gray-700 mb-1">
+    <span id="notes-label" class="block text-sm font-body font-medium text-gray-700 mb-1">
       {$i18n.t('encounters.form.notesLabel')} <span class="text-gray-400">{$i18n.t('encounters.form.optional')}</span>
-    </label>
+    </span>
     <MarkdownEditor
       bind:value={description}
       labelledBy="notes-label"
