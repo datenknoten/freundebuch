@@ -36,9 +36,21 @@ let {
 let host: HTMLDivElement;
 let view: EditorView | undefined;
 
-// Lets us reconfigure `editable` after mount when `disabled` changes —
-// `EditorView.editable.of(...)` is otherwise fixed at construction.
+// Compartments let us reconfigure these after mount when the corresponding
+// props change (e.g. the user switches language while the form is open) —
+// extensions baked into EditorState.create are otherwise fixed at construction.
 const editableConf = new Compartment();
+const placeholderConf = new Compartment();
+const attrsConf = new Compartment();
+
+function placeholderExt(text: string) {
+  return text ? cmPlaceholder(text) : [];
+}
+function attrsExt(forId: string, label: string) {
+  return EditorView.contentAttributes.of(
+    forId ? { 'aria-labelledby': forId } : { 'aria-label': label },
+  );
+}
 
 // FB: the vendored atomic theme targets full-page editors (height:100%,
 // 40vh bottom padding, internal scroll). For an inline form field we want
@@ -78,11 +90,9 @@ onMount(() => {
         atomicEditorTheme,
         inlineFieldTheme,
         EditorView.lineWrapping,
-        ...(placeholder ? [cmPlaceholder(placeholder)] : []),
+        placeholderConf.of(placeholderExt(placeholder)),
         editableConf.of(EditorView.editable.of(!disabled)),
-        EditorView.contentAttributes.of(
-          labelledBy ? { 'aria-labelledby': labelledBy } : { 'aria-label': ariaLabel },
-        ),
+        attrsConf.of(attrsExt(labelledBy, ariaLabel)),
         EditorView.updateListener.of((u) => {
           if (u.docChanged) value = u.state.doc.toString();
         }),
@@ -98,6 +108,15 @@ $effect(() => {
   if (!view) return;
   view.dispatch({ effects: editableConf.reconfigure(EditorView.editable.of(!disabled)) });
   if (disabled && view.hasFocus) view.contentDOM.blur();
+});
+
+// Keep the (translatable) placeholder and label attributes live when the
+// props change — e.g. an in-place language switch.
+$effect(() => {
+  view?.dispatch({ effects: placeholderConf.reconfigure(placeholderExt(placeholder)) });
+});
+$effect(() => {
+  view?.dispatch({ effects: attrsConf.reconfigure(attrsExt(labelledBy, ariaLabel)) });
 });
 
 // Reconcile external value changes (e.g. switching edit target) without
