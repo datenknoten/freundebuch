@@ -1,6 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { autoFocus } from '$lib/actions/auto-focus';
+import MarkdownEditor from '$lib/editor/markdown-editor.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
 import {
@@ -218,14 +219,12 @@ function handleCancel() {
     <label for="description" class="block text-sm font-body font-medium text-gray-700 mb-1">
       {$i18n.t('encounters.form.notesLabel')} <span class="text-gray-400">{$i18n.t('encounters.form.optional')}</span>
     </label>
-    <textarea
-      id="description"
+    <MarkdownEditor
       bind:value={description}
-      rows="3"
+      ariaLabel={$i18n.t('encounters.form.notesLabel')}
       placeholder={$i18n.t('encounters.form.notesPlaceholder')}
       disabled={isSubmitting}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none disabled:opacity-50"
-    ></textarea>
+    />
   </div>
 
   <!-- Form Actions -->

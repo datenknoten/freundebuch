@@ -4,6 +4,7 @@ import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
 import type { Encounter } from '$shared';
@@ -134,8 +135,8 @@ async function handleDelete() {
         <DocumentText class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('encounters.detail.notes')}
       </h2>
-      <div class="p-3 bg-gray-50 rounded-lg font-body text-gray-700 whitespace-pre-wrap">
-        {encounter.description}
+      <div class="p-3 bg-gray-50 rounded-lg">
+        <MarkdownView source={encounter.description} />
       </div>
     </section>
   {/if}
