@@ -16,7 +16,8 @@
       "!**/coverage",
       "!**/*.types.ts",
       "!**/*.queries.ts",
-      "!**/vendor"
+      "!**/vendor",
+      "!**/editor/inline-preview"
     ]
   },
   "formatter": {
@@ -145,6 +146,16 @@
     },
     {
       "includes": ["**/i18n/**/*.ts", "**/shortcuts/**/index.ts", "**/components/ui/index.ts"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useImportExtensions": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/frontend/**/*.{test,spec}.ts"],
       "linter": {
         "rules": {
           "correctness": {
