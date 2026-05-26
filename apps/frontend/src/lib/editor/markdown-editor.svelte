@@ -4,6 +4,9 @@ import { markdown } from '@codemirror/lang-markdown';
 import { Compartment, EditorState, Transaction } from '@codemirror/state';
 import { placeholder as cmPlaceholder, EditorView, keymap } from '@codemirror/view';
 import { onDestroy, onMount } from 'svelte';
+import { get } from 'svelte/store';
+import { goto } from '$app/navigation';
+import { createI18n } from '$lib/i18n/index.js';
 import {
   atomicEditorTheme,
   atomicMarkdownSyntax,
@@ -11,6 +14,7 @@ import {
   inlinePreview,
 } from './inline-preview';
 import './inline-preview/inline-preview.css';
+import { mentionAutocomplete } from './mentions';
 
 interface Props {
   /** Raw markdown — the source of truth. Two-way bound. */
@@ -23,6 +27,8 @@ interface Props {
   placeholder?: string;
   /** Disables editing (mirrors the textarea's `disabled`). */
   disabled?: boolean;
+  /** Enables `@`-mention autocomplete across friends, collectives, encounters. */
+  mentions?: boolean;
 }
 
 let {
@@ -31,7 +37,10 @@ let {
   labelledBy = '',
   placeholder = '',
   disabled = false,
+  mentions = true,
 }: Props = $props();
+
+const i18n = createI18n();
 
 let host: HTMLDivElement;
 let view: EditorView | undefined;
@@ -42,6 +51,7 @@ let view: EditorView | undefined;
 const editableConf = new Compartment();
 const placeholderConf = new Compartment();
 const attrsConf = new Compartment();
+const mentionsConf = new Compartment();
 
 function placeholderExt(text: string) {
   return text ? cmPlaceholder(text) : [];
@@ -65,14 +75,44 @@ const inlineFieldTheme = EditorView.theme({
 // Open links from the editor only for safe schemes — the URL comes straight
 // from note markdown, so reject javascript:/data: etc. before window.open.
 const SAFE_LINK_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
+
+// Allowlist of in-app route prefixes that should route through SvelteKit's
+// client router (in-tab, no full reload). Limited to the entity-detail routes
+// that `@`-mentions can target. Any other same-origin path — `/api/...`,
+// auth endpoints, file downloads — falls through to the new-tab `window.open`
+// so we don't trash unsaved form state or break server-served responses.
+const APP_ROUTE_PREFIXES = ['/friends/', '/collectives/', '/encounters/', '/circles'];
+function isAppRoute(pathname: string): boolean {
+  return APP_ROUTE_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
 function openSafeLink(url: string): void {
   try {
     const parsed = new URL(url, window.location.href);
+    // Same-origin link to a known app route (e.g. an `@`-mention target like
+    // /friends/{id}) — navigate in-app so the user stays in the SPA.
+    if (parsed.origin === window.location.origin && isAppRoute(parsed.pathname)) {
+      goto(parsed.pathname + parsed.search + parsed.hash);
+      return;
+    }
     if (!SAFE_LINK_SCHEMES.includes(parsed.protocol)) return;
     window.open(parsed.href, '_blank', 'noopener,noreferrer');
   } catch {
     // Malformed URL — ignore rather than open anything.
   }
+}
+
+// Localized kind labels for the mention dropdown, read once at mount. An
+// in-place language switch won't relabel an open editor's list — acceptable,
+// since the list is transient and forms are typically opened fresh.
+function mentionExtension() {
+  if (!mentions) return [];
+  const t = get(i18n).t;
+  return mentionAutocomplete({
+    friend: t('shortcuts.help.friend'),
+    collective: t('shortcuts.help.collective'),
+    encounter: t('shortcuts.help.encounter'),
+  });
 }
 
 onMount(() => {
@@ -82,6 +122,11 @@ onMount(() => {
       doc: value,
       extensions: [
         history(),
+        // Mentions before the default keymap so its completion keybindings
+        // (Enter / arrows / Esc) take precedence while the list is open.
+        // Compartment lets the `mentions` prop toggle the extension after
+        // mount, matching the placeholder/editable/attrs pattern below.
+        mentionsConf.of(mentionExtension()),
         keymap.of([...defaultKeymap, ...historyKeymap]),
         markdown(),
         inlinePreview({ onLinkClick: openSafeLink }),
@@ -117,6 +162,9 @@ $effect(() => {
 });
 $effect(() => {
   view?.dispatch({ effects: attrsConf.reconfigure(attrsExt(labelledBy, ariaLabel)) });
+});
+$effect(() => {
+  view?.dispatch({ effects: mentionsConf.reconfigure(mentionExtension()) });
 });
 
 // Reconcile external value changes (e.g. switching edit target) without

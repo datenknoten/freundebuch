@@ -31,6 +31,15 @@ describe('renderMarkdown', () => {
     expect(html).toContain('rel="noopener noreferrer nofollow"');
   });
 
+  it('keeps in-app entity links in-tab so SvelteKit can intercept the click', () => {
+    // `@`-mentions render as `[name](/friends/{id})` — must NOT be marked
+    // `target="_blank"`, otherwise the click opens a new tab and bypasses the
+    // SvelteKit client router.
+    const html = renderMarkdown('[Anja](/friends/abc-123)');
+    expect(html).toContain('href="/friends/abc-123"');
+    expect(html).not.toContain('target="_blank"');
+  });
+
   it('never renders an <img> (no external requests on view)', () => {
     const html = renderMarkdown('![pixel](https://tracker.example/p.png)');
     expect(html).not.toContain('<img');
