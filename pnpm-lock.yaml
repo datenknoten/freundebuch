@@ -689,7 +689,7 @@ time:
   highlight.js@10.7.3: 2021-06-04T01:40:39.747Z
   homedir-polyfill@1.0.3: 2019-02-21T18:42:07.345Z
   hono@4.11.1: 2025-12-14T22:14:21.820Z
-  hono@4.12.22: 2026-05-22T09:15:53.204Z
+  hono@4.12.23: 2026-05-25T01:59:47.698Z
   hook-std@3.0.0: 2021-09-17T18:37:09.042Z
   hosted-git-info@7.0.2: 2024-05-04T01:10:57.235Z
   hosted-git-info@8.1.0: 2025-04-14T18:31:45.932Z
@@ -1108,8 +1108,8 @@ time:
   tinyglobby@0.2.16: 2026-04-07T23:37:03.457Z
   tinypool@1.1.1: 2025-06-16T17:17:44.588Z
   tinyrainbow@3.1.0: 2026-03-12T09:21:01.296Z
-  tldts-core@7.1.0: 2026-05-23T22:12:47.858Z
-  tldts@7.1.0: 2026-05-23T22:12:53.877Z
+  tldts-core@7.1.2: 2026-05-24T16:26:37.774Z
+  tldts@7.1.2: 2026-05-24T16:26:44.566Z
   tmp@0.2.5: 2025-08-08T21:22:08.916Z
   to-regex-range@5.0.1: 2019-04-07T06:04:37.030Z
   toidentifier@1.0.1: 2021-11-14T22:19:09.631Z
@@ -1287,7 +1287,7 @@ importers:
         version: 4.0.0
       '@freundebuch/shared':
         specifier: workspace:*
-        version: 2.73.0
+        version: 2.74.0
       '@hono/node-server':
         specifier: 1.19.7
         version: 1.19.7(hono@4.11.1)
@@ -1487,6 +1487,9 @@ importers:
       '@better-fetch/fetch':
         specifier: 1.1.21
         version: 1.1.21
+      '@codemirror/autocomplete':
+        specifier: 6.20.2
+        version: 6.20.2
       '@codemirror/commands':
         specifier: 6.10.3
         version: 6.10.3
@@ -1694,10 +1697,10 @@ importers:
         version: 4.0.0
       '@freundebuch/backend':
         specifier: workspace:*
-        version: 2.73.0
+        version: 2.74.0
       '@freundebuch/shared':
         specifier: workspace:*
-        version: 2.73.0
+        version: 2.74.0
       '@modelcontextprotocol/sdk':
         specifier: 1.29.0
         version: 1.29.0(zod@3.25.76)
@@ -4975,8 +4978,8 @@ packages:
     resolution: {integrity: sha512-KsFcH0xxHes0J4zaQgWbYwmz3UPOOskdqZmItstUG93+Wk1ePBLkLGwbP9zlmh1BFUiL8Qp+Xfu9P7feJWpGNg==}
     engines: {node: '>=16.9.0'}
 
-  hono@4.12.22:
-    resolution: {integrity: sha512-7fvVPbB92zNRsQke+uiRGwtTuef0tB2Dg4hWxYfFNvkQhIltWoyi0ONReM5LWA+jJWS3nfT5lTq+qbsIpX0IQw==}
+  hono@4.12.23:
+    resolution: {integrity: sha512-eIaZ9qDgu7XV0pxOCrg7/WhnQ6Ivm22UcxhXx/A3dcbqbbYgBEkc6e/J/s7j2tS96zoB0S9VBdLwQNCWwUo4LA==}
     engines: {node: '>=16.9.0'}
 
   hook-std@3.0.0:
@@ -6627,11 +6630,11 @@ packages:
     resolution: {integrity: sha512-Bf+ILmBgretUrdJxzXM0SgXLZ3XfiaUuOj/IKQHuTXip+05Xn+uyEYdVg0kYDipTBcLrCVyUzAPz7QmArb0mmw==}
     engines: {node: '>=14.0.0'}
 
-  tldts-core@7.1.0:
-    resolution: {integrity: sha512-Ou+YJ467tR700sk2mZBB1/uFah6LDeH/VKO0N4xfjFOXE0hJkZgiOgXj16gEi1wQ4L6334UTKjxF6gum8ftZzQ==}
+  tldts-core@7.1.2:
+    resolution: {integrity: sha512-26EbERPLf5wkNFKW+7egxArSPN1Nqipe/PIe1nvhpNu8HqQeY2pYdOeQk4sAiADv/e03VzHkLY0PPohKv1JMAQ==}
 
-  tldts@7.1.0:
-    resolution: {integrity: sha512-Y+iRHtDrPOlNH9ZZpqpIogonv7jwSPHIt3Gpe+kRvYJlBaK+QGNXu+xooJY0QEmb62/ERo3GF3zCxRMbMtKEEA==}
+  tldts@7.1.2:
+    resolution: {integrity: sha512-RUX5sQm8bl03ycwQ6nSgJiKw9FZWhA8GBzxX6X1lsG3xKzFIW+lYLLpM30FQbDD6XjTWa/VkF15VxjnAMWYJAQ==}
     hasBin: true
 
   tmp@0.2.5:
@@ -7533,9 +7536,9 @@ snapshots:
 
   '@hexagon/base64@1.1.28': {}
 
-  '@hono/node-server@1.19.14(hono@4.12.22)':
+  '@hono/node-server@1.19.14(hono@4.12.23)':
     dependencies:
-      hono: 4.12.22
+      hono: 4.12.23
 
   '@hono/node-server@1.19.7(hono@4.11.1)':
     dependencies:
@@ -7648,7 +7651,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.29.0(zod@3.25.76)':
     dependencies:
-      '@hono/node-server': 1.19.14(hono@4.12.22)
+      '@hono/node-server': 1.19.14(hono@4.12.23)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -7658,7 +7661,7 @@ snapshots:
       eventsource-parser: 3.0.8
       express: 5.2.1
       express-rate-limit: 8.5.2(express@5.2.1)
-      hono: 4.12.22
+      hono: 4.12.23
       jose: 6.2.3
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -10185,7 +10188,7 @@ snapshots:
 
   hono@4.11.1: {}
 
-  hono@4.12.22: {}
+  hono@4.12.23: {}
 
   hook-std@3.0.0: {}
 
@@ -11847,11 +11850,11 @@ snapshots:
 
   tinyrainbow@3.1.0: {}
 
-  tldts-core@7.1.0: {}
+  tldts-core@7.1.2: {}
 
-  tldts@7.1.0:
+  tldts@7.1.2:
     dependencies:
-      tldts-core: 7.1.0
+      tldts-core: 7.1.2
 
   tmp@0.2.5: {}
 
@@ -11865,7 +11868,7 @@ snapshots:
 
   tough-cookie@6.0.1:
     dependencies:
-      tldts: 7.1.0
+      tldts: 7.1.2
 
   tr46@0.0.3: {}
 

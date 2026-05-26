@@ -8,6 +8,19 @@ const md = new MarkdownIt({ html: false, linkify: true, breaks: true });
 // (markers render as inert text) and forbid <img> at sanitize time.
 md.disable('image');
 
+// In-app route prefixes that should stay in-tab so SvelteKit's client router
+// can take the click (no full reload, no new tab). Matches the allowlist in
+// markdown-editor.svelte; `@`-mentions insert paths under these prefixes.
+const APP_ROUTE_PREFIXES = ['/friends/', '/collectives/', '/encounters/', '/circles'];
+function isAppRoute(href: string): boolean {
+  // markdown-it linkifies bare URLs to absolute hrefs; `[text](path)` keeps
+  // the raw path. Only path-relative hrefs can be app routes here — absolute
+  // URLs would have to match origin at click time, which we can't know at
+  // render time. Mentions always insert `/…` paths, so this covers them.
+  if (!href.startsWith('/')) return false;
+  return APP_ROUTE_PREFIXES.some((p) => href.startsWith(p));
+}
+
 // Harden every rendered link at render time (this markdown-it instance is
 // module-local, so this is scoped to encounter notes — unlike a global
 // DOMPurify.addHook, which would mutate every sanitize() call in the app).
@@ -16,8 +29,16 @@ const defaultLinkOpen =
   md.renderer.rules.link_open ??
   ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
 md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
-  tokens[idx].attrSet('target', '_blank');
-  tokens[idx].attrSet('rel', 'noopener noreferrer nofollow');
+  const href = tokens[idx].attrGet('href') ?? '';
+  if (isAppRoute(href)) {
+    // App-route link (e.g. an `@`-mention target) — no `target="_blank"`, so
+    // SvelteKit's same-origin click interception routes it through the
+    // client-side router instead of opening a new tab.
+    tokens[idx].attrSet('rel', 'noopener');
+  } else {
+    tokens[idx].attrSet('target', '_blank');
+    tokens[idx].attrSet('rel', 'noopener noreferrer nofollow');
+  }
   return defaultLinkOpen(tokens, idx, options, env, self);
 };
 
@@ -86,6 +107,24 @@ let html = $derived(renderMarkdown(source));
   overflow-wrap: anywhere;
 }
 .fb-md-view :global(a:hover) { color: #3a6b1e; }
+
+/* Entity-kind indicator on rendered `@`-mention links so the reader can tell
+ * at a glance whether `[Anja](/friends/…)` points to a friend, a collective,
+ * or an encounter. Pure CSS, keyed off the in-app route prefix, so it stays
+ * locale-neutral and needs no markup change. `aria-hidden`-equivalent: the
+ * emoji is decorative noise to screen readers, so wrap it in a way that
+ * doesn't change the accessible name — `content: "…"` is announced, but the
+ * URL + visible text already carry the meaning, so the redundancy is mild. */
+.fb-md-view :global(a[href^="/friends/"])::before { content: "👤\00a0"; }
+.fb-md-view :global(a[href^="/collectives/"])::before { content: "👥\00a0"; }
+.fb-md-view :global(a[href^="/encounters/"])::before { content: "📅\00a0"; }
+/* Slight nudge so the emoji doesn't underline alongside the link text. */
+.fb-md-view :global(a[href^="/friends/"])::before,
+.fb-md-view :global(a[href^="/collectives/"])::before,
+.fb-md-view :global(a[href^="/encounters/"])::before {
+  text-decoration: none;
+  display: inline-block;
+}
 .fb-md-view :global(strong) { font-weight: 700; }
 .fb-md-view :global(em) { font-style: italic; }
 .fb-md-view :global(ul),
