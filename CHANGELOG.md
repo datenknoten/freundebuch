@@ -1,3 +1,7 @@
+## <small>2.74.1 (2026-05-26)</small>
+
+* fix(frontend): Cache-bust home-screen icon URLs so iOS reloads them ([94b253f](https://github.com/datenknoten/freundebuch/commit/94b253f))
+
 ## 2.74.0 (2026-05-25)
 
 * fix(frontend): Associate notes label via aria-labelledby ([364cfb3](https://github.com/datenknoten/freundebuch/commit/364cfb3))
