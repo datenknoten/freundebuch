@@ -1,3 +1,9 @@
+## 2.75.0 (2026-05-31)
+
+* feat(frontend): Add @-mention autocomplete to notes editor ([5e728d3](https://github.com/datenknoten/freundebuch/commit/5e728d3))
+* feat(frontend): Add edit hotkey on encounter detail ([34f6ed4](https://github.com/datenknoten/freundebuch/commit/34f6ed4))
+* fix(frontend): Improve heading readability in notes editor ([57842d0](https://github.com/datenknoten/freundebuch/commit/57842d0))
+
 ## <small>2.74.1 (2026-05-26)</small>
 
 * fix(frontend): Cache-bust home-screen icon URLs so iOS reloads them ([94b253f](https://github.com/datenknoten/freundebuch/commit/94b253f))
