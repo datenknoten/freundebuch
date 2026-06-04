@@ -9,7 +9,7 @@ import { getAuth } from '../lib/auth.js';
 import { authMiddleware, getAuthSession, getAuthUser } from '../middleware/auth.js';
 import { passkeyListRateLimitMiddleware } from '../middleware/rate-limit.js';
 import {
-  getSelfProfileExternalId,
+  getUserSelfProfile,
   getUserWithPreferences,
   updateUserPreferences,
 } from '../models/queries/users.queries.js';
@@ -59,18 +59,14 @@ app.get('/me', authMiddleware, async (c) => {
     throw new UserNotFoundError();
   }
 
-  // Look up the self-profile external_id from the friends table directly,
-  // using the internal self_profile_id from the Better Auth session.
-  // We avoid querying auth.users here because Better Auth user IDs are not
-  // UUIDs and the legacy external_id column is UUID-typed.
-  let selfProfileExternalId: string | null = null;
-  if (session.user.selfProfileId) {
-    const result = await getSelfProfileExternalId.run(
-      { selfProfileId: session.user.selfProfileId },
-      db,
-    );
-    selfProfileExternalId = result[0]?.self_profile_external_id ?? null;
-  }
+  // Look up the self-profile external_id from auth."user" directly instead of
+  // trusting session.user.selfProfileId: the session cookie cache (5 min) holds
+  // a stale null right after onboarding sets the self-profile via SQL, which
+  // trapped users in an onboarding redirect loop until the cache expired.
+  // We still avoid the legacy auth.users table because Better Auth user IDs
+  // are not UUIDs and the legacy external_id column is UUID-typed.
+  const result = await getUserSelfProfile.run({ userExternalId: authUser.betterAuthId }, db);
+  const selfProfileExternalId = result[0]?.self_profile_external_id ?? null;
 
   const response: UserWithPreferencesResponse = {
     user: {
