@@ -1,3 +1,7 @@
+## 2.77.0 (2026-06-04)
+
+* feat(frontend): Add PWA shortcuts for common actions ([bbe1770](https://github.com/datenknoten/freundebuch/commit/bbe1770))
+
 ## 2.76.0 (2026-06-04)
 
 * feat(frontend): Open first result on Enter in list search boxes ([270d547](https://github.com/datenknoten/freundebuch/commit/270d547))
