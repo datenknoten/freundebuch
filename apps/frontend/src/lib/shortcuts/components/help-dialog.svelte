@@ -247,6 +247,24 @@ const i18n = createI18n();
                 <span class="text-gray-700">{$i18n.t('shortcuts.help.editEncounter')}</span>
                 <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
               </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.friend') })}</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.friend') })}</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
+                  <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
+                  <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
+                  <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
+                </div>
+              </div>
             </div>
           </div>
         {/if}

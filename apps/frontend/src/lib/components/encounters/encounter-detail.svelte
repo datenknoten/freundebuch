@@ -7,8 +7,14 @@ import { goto } from '$app/navigation';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
+import {
+  isOpenEncounterFriendModeActive,
+  openEncounterFriendModePrefix,
+  visibleEncounterFriendIds,
+} from '$lib/stores/ui';
 import type { Encounter } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
+import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display';
 import EncounterTypeIcon from './encounter-type-icon.svelte';
 
@@ -25,6 +31,11 @@ let isDeleting = $state(false);
 let showDeleteConfirm = $state(false);
 
 let displayTitle = $derived(encounterDisplayTitle($i18n.t, encounter));
+
+// Track visible friend IDs for keyboard open mode (o)
+$effect(() => {
+  visibleEncounterFriendIds.set(encounter.friends.map((f) => f.id));
+});
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -112,18 +123,21 @@ async function handleDelete() {
       <span class="text-sm font-body font-normal text-white/80">({encounter.friends.length})</span>
     </h2>
     <div class="flex flex-wrap gap-3 p-3 bg-gray-50 rounded-lg">
-      {#each encounter.friends as friend (friend.id)}
-        <a
-          href="/friends/{friend.id}"
-          class="inline-flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:border-forest transition-colors"
-        >
-          <FriendAvatar
-            displayName={friend.displayName}
-            photoUrl={friend.photoUrl}
-            size="sm"
-          />
-          <span class="font-body text-sm text-gray-900">{friend.displayName}</span>
-        </a>
+      {#each encounter.friends as friend, index (friend.id)}
+        <div class="relative">
+          <KeyboardHintBadge {index} isActive={$isOpenEncounterFriendModeActive} prefix={$openEncounterFriendModePrefix} variant="card" />
+          <a
+            href="/friends/{friend.id}"
+            class="inline-flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:border-forest transition-colors"
+          >
+            <FriendAvatar
+              displayName={friend.displayName}
+              photoUrl={friend.photoUrl}
+              size="sm"
+            />
+            <span class="font-body text-sm text-gray-900">{friend.displayName}</span>
+          </a>
+        </div>
       {/each}
     </div>
   </section>

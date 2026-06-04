@@ -5,6 +5,7 @@ import {
   isDeleteCircleModeActive,
   isEditCircleModeActive,
   isOpenCollectiveModeActive,
+  isOpenEncounterFriendModeActive,
   isOpenEncounterModeActive,
   isOpenFriendLinkModeActive,
   isOpenMemberModeActive,
@@ -131,6 +132,12 @@ export function createKeydownHandler(callbacks: KeydownHandlerCallbacks) {
         e.preventDefault();
         callbacks.setPendingKey('o');
         isOpenFriendLinkModeActive.set(true);
+        return;
+      }
+      if (pathname.match(/^\/encounters\/[^/]+$/) && !pathname.endsWith('/new')) {
+        e.preventDefault();
+        callbacks.setPendingKey('o');
+        isOpenEncounterFriendModeActive.set(true);
         return;
       }
     }

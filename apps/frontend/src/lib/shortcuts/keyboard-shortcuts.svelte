@@ -10,11 +10,13 @@ import {
   isEditCircleModeActive,
   isFilterModeActive,
   isOpenCollectiveModeActive,
+  isOpenEncounterFriendModeActive,
   isOpenEncounterModeActive,
   isOpenFriendLinkModeActive,
   isOpenMemberModeActive,
   isOpenModeActive,
   openCollectiveModePrefix,
+  openEncounterFriendModePrefix,
   openEncounterModePrefix,
   openFriendLinkModePrefix,
   openMemberModePrefix,
@@ -67,6 +69,8 @@ function clearPending() {
   openMemberModePrefix.set(null);
   isOpenFriendLinkModeActive.set(false);
   openFriendLinkModePrefix.set(null);
+  isOpenEncounterFriendModeActive.set(false);
+  openEncounterFriendModePrefix.set(null);
 }
 
 // The handler is recreated when showHelp changes so guards get fresh state
@@ -120,6 +124,8 @@ const handleKeydown = $derived(
   <HintModePanel title={$i18n.t('shortcuts.panels.openCollective')} prefix={$openCollectiveModePrefix} itemDescription={$i18n.t('shortcuts.items.collective')} />
 {:else if pendingKey === 'o' && isOnFriendDetailPage}
   <HintModePanel title={$i18n.t('shortcuts.panels.openLink')} prefix={$openFriendLinkModePrefix} itemDescription={$i18n.t('shortcuts.items.link')} />
+{:else if pendingKey === 'o' && isOnEncounterDetailPage}
+  <HintModePanel title={$i18n.t('shortcuts.panels.openFriend')} prefix={$openEncounterFriendModePrefix} itemDescription={$i18n.t('shortcuts.items.friend')} />
 {:else if pendingKey === 'f'}
   <FilterPanel />
 {:else if pendingKey === 'e' && isOnCirclesPage}
