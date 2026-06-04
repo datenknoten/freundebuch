@@ -275,9 +275,12 @@ async function handleSubmit(e: Event) {
               friend_id: newFriend.id,
               role_id: roleId,
             });
+            // Only return to the collective once the friend is actually a member
+            goto(`/collectives/${addToCollective.id}`);
+            return;
           }
-          goto(`/collectives/${addToCollective.id}`);
-          return;
+          // No role could be resolved (e.g. collective has no roles); the friend
+          // was created but not added, so fall through to the friend detail page
         } catch (err) {
           // Friend was created; membership failed - land on the friend so nothing is lost
           console.error('Failed to add new friend to collective:', err);
