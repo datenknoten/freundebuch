@@ -9,6 +9,7 @@ import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
 import { createI18n } from '$lib/i18n/index.js';
@@ -390,6 +391,16 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
     return $friendList.map(toFriendGridItem);
   }
 });
+
+// Open the first result when pressing Enter in the search box
+function openFirstResult() {
+  const first = gridItems[0];
+  if (!first) return;
+  const url = returnUrl
+    ? `/friends/${first.id}?from=${encodeURIComponent(returnUrl)}`
+    : `/friends/${first.id}`;
+  goto(url);
+}
 </script>
 
 <div class="space-y-4">
@@ -401,6 +412,7 @@ let gridItems = $derived.by<FriendGridItem[]>(() => {
       type="text"
       value={searchQuery}
       oninput={(e) => handleSearchInput(e.currentTarget.value)}
+      onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); openFirstResult(); } }}
       placeholder={$i18n.t('friendList.searchPlaceholder')}
       class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
       autocomplete="off"

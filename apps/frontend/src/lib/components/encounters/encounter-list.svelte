@@ -5,13 +5,14 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
+import { goto } from '$app/navigation';
 import type { EncounterListParams } from '$lib/api/encounters';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters, encountersList } from '$lib/stores/encounters';
 import { visibleEncounterIds } from '$lib/stores/ui';
 import { ENCOUNTER_TYPES, type EncounterType } from '$shared';
-import { encounterTypeLabel } from './encounter-display';
 import EncounterCard from './encounter-card.svelte';
+import { encounterTypeLabel } from './encounter-display';
 
 const i18n = createI18n();
 
@@ -41,6 +42,13 @@ $effect(() => {
   const ids = encounterItems.map((e) => e.id);
   visibleEncounterIds.set(ids);
 });
+
+// Open the first result when pressing Enter in the search box
+function openFirstResult() {
+  const first = encounterItems[0];
+  if (!first) return;
+  goto(`/encounters/${first.id}`);
+}
 
 // Load encounters on mount (not in $effect to avoid infinite loop)
 onMount(() => {
@@ -116,8 +124,10 @@ function goToPage(page: number) {
           type="text"
           value={searchQuery}
           oninput={(e) => handleSearchInput(e.currentTarget.value)}
+          onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); openFirstResult(); } }}
           placeholder={$i18n.t('encounters.searchPlaceholder')}
           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+          data-search-input
         />
       </div>
     </div>
