@@ -1,3 +1,7 @@
+## 2.78.0 (2026-06-04)
+
+* feat(frontend): Add friend to collective from friend detail page ([4623e75](https://github.com/datenknoten/freundebuch/commit/4623e75))
+
 ## 2.77.0 (2026-06-04)
 
 * feat(frontend): Add PWA shortcuts for common actions ([bbe1770](https://github.com/datenknoten/freundebuch/commit/bbe1770))
