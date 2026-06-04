@@ -74,6 +74,7 @@ export const FRIEND_DETAIL_ACTIONS: MenuShortcut[] = [
   { key: 's', labelKey: 'shortcuts.add.socialProfile' },
   { key: 'r', labelKey: 'shortcuts.add.relationship' },
   { key: 'c', labelKey: 'shortcuts.add.circle' },
+  { key: 'o', labelKey: 'shortcuts.add.collective' },
   { key: 'w', labelKey: 'shortcuts.add.workExperience' },
 ];
 
@@ -86,6 +87,7 @@ export const FRIEND_DETAIL_EVENTS: Record<string, string> = {
   s: 'shortcut:add-social',
   r: 'shortcut:add-relationship',
   c: 'shortcut:add-circle',
+  o: 'shortcut:add-collective',
   w: 'shortcut:add-professional',
 };
 

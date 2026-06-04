@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import Briefcase from 'svelte-heros-v2/Briefcase.svelte';
+import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import Envelope from 'svelte-heros-v2/Envelope.svelte';
 import Heart from 'svelte-heros-v2/Heart.svelte';
@@ -34,6 +35,7 @@ const optionConfig: { type: SubresourceType; labelKey: string; icon: string }[] 
   { type: 'date', labelKey: 'subresources.dropdown.importantDate', icon: 'calendar' },
   { type: 'social', labelKey: 'subresources.dropdown.socialProfile', icon: 'share' },
   { type: 'circle', labelKey: 'subresources.dropdown.circle', icon: 'users' },
+  { type: 'collective', labelKey: 'subresources.dropdown.collective', icon: 'building-office' },
   { type: 'professional', labelKey: 'subresources.dropdown.employment', icon: 'briefcase' },
   { type: 'relationship', labelKey: 'relationshipSection.addRelationship', icon: 'heart' },
 ];
@@ -135,6 +137,8 @@ onMount(() => {
               <Share class="w-6 h-6 text-forest" strokeWidth="2" />
             {:else if option.icon === 'users'}
               <Users class="w-6 h-6 text-forest" strokeWidth="2" />
+            {:else if option.icon === 'building-office'}
+              <BuildingOffice class="w-6 h-6 text-forest" strokeWidth="2" />
             {:else if option.icon === 'briefcase'}
               <Briefcase class="w-6 h-6 text-forest" strokeWidth="2" />
             {:else if option.icon === 'heart'}
