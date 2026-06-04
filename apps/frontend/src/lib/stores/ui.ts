@@ -214,6 +214,26 @@ export const openEncounterModePrefix = writable<string | null>(null);
  */
 export const visibleEncounterIds = writable<string[]>([]);
 
+// =============================================================================
+// Encounter Friend Open Mode State (keyboard-driven friend opening on encounter detail)
+// =============================================================================
+
+/**
+ * Tracks if "open encounter friend mode" is active for quick keyboard navigation
+ * to the friends linked on an encounter detail page
+ */
+export const isOpenEncounterFriendModeActive = writable(false);
+
+/**
+ * Tracks the current letter prefix in open encounter friend mode (e.g., 'a', 'b', 'c')
+ */
+export const openEncounterFriendModePrefix = writable<string | null>(null);
+
+/**
+ * List of friend IDs linked to the current encounter (for open mode navigation)
+ */
+export const visibleEncounterFriendIds = writable<string[]>([]);
+
 /**
  * Mapping of keyboard keys to filter category field names
  */
