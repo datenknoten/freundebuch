@@ -246,15 +246,17 @@ onMount(() => {
     </div>
   </div>
 
-  <!-- ==================== ABOUT SECTION ==================== -->
-  {#if (friend.professionalHistory && friend.professionalHistory.length > 0) || friend.interests || friend.metInfo}
-    <div class="space-y-4">
-      <!-- Professional History -->
-      <ProfessionalHistorySection
-        friendId={friend.id}
-        professionalHistory={friend.professionalHistory ?? []}
-      />
+  <!-- ==================== PROFESSIONAL HISTORY SECTION ==================== -->
+  <!-- Always mounted so the add-work-experience shortcut/listener is registered
+       even when the friend has no employment entries yet -->
+  <ProfessionalHistorySection
+    friendId={friend.id}
+    professionalHistory={friend.professionalHistory ?? []}
+  />
 
+  <!-- ==================== ABOUT SECTION ==================== -->
+  {#if friend.interests || friend.metInfo}
+    <div class="space-y-4">
       <!-- Interests -->
       {#if friend.interests}
         <section class="space-y-2">
