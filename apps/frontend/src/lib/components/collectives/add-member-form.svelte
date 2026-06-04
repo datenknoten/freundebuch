@@ -11,6 +11,7 @@ const i18n = createI18n();
 
 interface Props {
   collectiveId: string;
+  collectiveName: string;
   roles: CollectiveRole[];
   /** Contact IDs of friends already in this collective (to mark them in results) */
   existingMemberContactIds?: string[];
@@ -18,7 +19,14 @@ interface Props {
   onCancel: () => void;
 }
 
-let { collectiveId, roles, existingMemberContactIds = [], onAdd, onCancel }: Props = $props();
+let {
+  collectiveId,
+  collectiveName,
+  roles,
+  existingMemberContactIds = [],
+  onAdd,
+  onCancel,
+}: Props = $props();
 
 let existingMemberSet = $derived(new Set(existingMemberContactIds));
 
@@ -34,6 +42,16 @@ let error = $state('');
 let previewAbortController: AbortController | null = null;
 
 let isValid = $derived(selectedFriend !== null && selectedRoleId !== '');
+
+// Link to create a brand-new friend, carrying the collective context along
+let createNewFriendHref = $derived.by(() => {
+  const params = new URLSearchParams({
+    collectiveId,
+    collectiveName,
+  });
+  if (selectedRoleId) params.set('roleId', selectedRoleId);
+  return `/friends/new?${params.toString()}`;
+});
 
 async function handleFriendSelect(friend: FriendSearchResult, _viaKeyboard: boolean) {
   selectedFriend = friend;
@@ -153,6 +171,12 @@ async function handleSubmit(e: Event) {
         }
         onSelect={handleFriendSelect}
       />
+      <a
+        href={createNewFriendHref}
+        class="inline-block mt-2 text-sm text-forest hover:text-forest-light font-body underline"
+      >
+        {$i18n.t('collectives.addMember.createNewFriend')}
+      </a>
     {/if}
   </div>
 
