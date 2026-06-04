@@ -1,3 +1,9 @@
+## 2.76.0 (2026-06-04)
+
+* feat(frontend): Open first result on Enter in list search boxes ([270d547](https://github.com/datenknoten/freundebuch/commit/270d547))
+* feat(frontend): Open linked friends from encounter detail with o ([d9cce1d](https://github.com/datenknoten/freundebuch/commit/d9cce1d))
+* fix(frontend): Allow adding work experience to friends with empty history ([5c31fa7](https://github.com/datenknoten/freundebuch/commit/5c31fa7))
+
 ## 2.75.0 (2026-05-31)
 
 * feat(frontend): Add @-mention autocomplete to notes editor ([5e728d3](https://github.com/datenknoten/freundebuch/commit/5e728d3))
