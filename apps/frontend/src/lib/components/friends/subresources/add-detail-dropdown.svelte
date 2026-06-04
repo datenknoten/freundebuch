@@ -1,5 +1,6 @@
 <script lang="ts">
 import Briefcase from 'svelte-heros-v2/Briefcase.svelte';
+import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import Envelope from 'svelte-heros-v2/Envelope.svelte';
@@ -21,6 +22,7 @@ export type SubresourceType =
   | 'date'
   | 'social'
   | 'circle'
+  | 'collective'
   | 'professional'
   | 'relationship';
 
@@ -41,6 +43,7 @@ const optionConfig: { type: SubresourceType; labelKey: string; icon: string }[] 
   { type: 'date', labelKey: 'subresources.dropdown.importantDate', icon: 'calendar' },
   { type: 'social', labelKey: 'subresources.dropdown.socialProfile', icon: 'share' },
   { type: 'circle', labelKey: 'subresources.dropdown.circle', icon: 'users' },
+  { type: 'collective', labelKey: 'subresources.dropdown.collective', icon: 'building-office' },
   { type: 'professional', labelKey: 'subresources.dropdown.employment', icon: 'briefcase' },
   { type: 'relationship', labelKey: 'relationshipSection.addRelationship', icon: 'heart' },
 ];
@@ -115,6 +118,8 @@ function handleClickOutside(e: MouseEvent) {
             <Share class="w-4 h-4 text-gray-400" strokeWidth="2" />
           {:else if option.icon === 'users'}
             <Users class="w-4 h-4 text-gray-400" strokeWidth="2" />
+          {:else if option.icon === 'building-office'}
+            <BuildingOffice class="w-4 h-4 text-gray-400" strokeWidth="2" />
           {:else if option.icon === 'briefcase'}
             <Briefcase class="w-4 h-4 text-gray-400" strokeWidth="2" />
           {:else if option.icon === 'heart'}

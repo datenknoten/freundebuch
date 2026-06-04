@@ -880,6 +880,7 @@
       "socialProfile": "Soziales Profil",
       "relationship": "Beziehung",
       "circle": "Freundekreis",
+      "collective": "Kollektiv",
       "workExperience": "Berufserfahrung",
       "member": "Mitglied"
     },
@@ -1327,6 +1328,7 @@
       "importantDate": "Wichtiger Termin",
       "socialProfile": "Soziales Profil",
       "circle": "Freundeskreis",
+      "collective": "Kollektiv",
       "employment": "Berufserfahrung"
     }
   }

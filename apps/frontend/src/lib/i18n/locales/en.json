@@ -880,6 +880,7 @@
       "socialProfile": "Social Profile",
       "relationship": "Relationship",
       "circle": "Circle",
+      "collective": "Collective",
       "workExperience": "Work Experience",
       "member": "Member"
     },
@@ -1327,6 +1328,7 @@
       "importantDate": "Important Date",
       "socialProfile": "Social Profile",
       "circle": "Circle",
+      "collective": "Collective",
       "employment": "Employment"
     }
   }

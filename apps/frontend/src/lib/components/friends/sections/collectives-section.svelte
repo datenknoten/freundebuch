@@ -1,4 +1,5 @@
 <script lang="ts">
+import { onMount } from 'svelte';
 import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { removeMember } from '$lib/api/collectives';
@@ -40,6 +41,16 @@ async function handleRemoveFromCollective(collectiveId: string, membershipId: st
     removingCollectiveId = null;
   }
 }
+
+onMount(() => {
+  function handleAddCollective() {
+    showAddToCollectiveModal = true;
+  }
+  window.addEventListener('shortcut:add-collective', handleAddCollective);
+  return () => {
+    window.removeEventListener('shortcut:add-collective', handleAddCollective);
+  };
+});
 </script>
 
 {#if collectives.length > 0}
