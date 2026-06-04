@@ -1,3 +1,8 @@
+## 2.79.0 (2026-06-04)
+
+* fix(frontend): Only redirect to collective after membership succeeds ([3963d93](https://github.com/datenknoten/freundebuch/commit/3963d93))
+* feat(frontend): Create new friend for collective from detail page ([762a463](https://github.com/datenknoten/freundebuch/commit/762a463))
+
 ## <small>2.78.1 (2026-06-04)</small>
 
 * fix(backend): Read self-profile from DB instead of cached session ([1c3710f](https://github.com/datenknoten/freundebuch/commit/1c3710f))
