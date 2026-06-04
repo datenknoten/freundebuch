@@ -732,6 +732,7 @@ onMount(() => {
   >
     <AddMemberForm
       collectiveId={collective.id}
+      collectiveName={collective.name}
       roles={collective.type.roles}
       existingMemberContactIds={collective.members.map((m) => m.contact.id)}
       onAdd={handleAddMember}

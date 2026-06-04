@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import Camera from 'svelte-heros-v2/Camera.svelte';
 import { goto } from '$app/navigation';
+import * as collectivesApi from '$lib/api/collectives.js';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import { friends } from '$lib/stores/friends';
 import type { Friend, FriendCreateInput } from '$shared';
@@ -19,6 +20,8 @@ interface Props {
   submitLabel?: string;
   /** External loading state (used in onboarding mode) */
   isLoading?: boolean;
+  /** When set, the new friend is added to this collective after creation */
+  addToCollective?: { id: string; roleId?: string };
 }
 
 let {
@@ -27,6 +30,7 @@ let {
   onSubmit: onSubmitProp,
   submitLabel,
   isLoading: externalIsLoading,
+  addToCollective,
 }: Props = $props();
 
 const isEditing = $derived(!!friend && !isOnboarding);
@@ -256,6 +260,30 @@ async function handleSubmit(e: Event) {
       // Create new friend - core fields only
       // Subresources can be added inline on the detail page after creation
       const newFriend = await friends.createFriend(friendData);
+
+      if (addToCollective) {
+        // Add the new friend to the collective, then return there
+        try {
+          let roleId = addToCollective.roleId;
+          if (!roleId) {
+            // Fall back to the collective type's default (first) role
+            const collective = await collectivesApi.getCollective(addToCollective.id);
+            roleId = collective.type.roles.toSorted((a, b) => a.sortOrder - b.sortOrder)[0]?.id;
+          }
+          if (roleId) {
+            await collectivesApi.addMember(addToCollective.id, {
+              friend_id: newFriend.id,
+              role_id: roleId,
+            });
+          }
+          goto(`/collectives/${addToCollective.id}`);
+          return;
+        } catch (err) {
+          // Friend was created; membership failed - land on the friend so nothing is lost
+          console.error('Failed to add new friend to collective:', err);
+        }
+      }
+
       goto(`/friends/${newFriend.id}`);
     }
   } catch (err) {
@@ -463,7 +491,11 @@ async function handleSubmit(e: Event) {
 
     {#if !isOnboarding}
       <a
-        href={isEditing && friend ? `/friends/${friend.id}` : '/friends'}
+        href={isEditing && friend
+          ? `/friends/${friend.id}`
+          : addToCollective
+            ? `/collectives/${addToCollective.id}`
+            : '/friends'}
         class="px-6 py-3 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors text-center"
       >
         Cancel
