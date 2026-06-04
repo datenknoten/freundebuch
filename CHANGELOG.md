@@ -1,3 +1,7 @@
+## <small>2.78.1 (2026-06-04)</small>
+
+* fix(backend): Read self-profile from DB instead of cached session ([1c3710f](https://github.com/datenknoten/freundebuch/commit/1c3710f))
+
 ## 2.78.0 (2026-06-04)
 
 * feat(frontend): Add friend to collective from friend detail page ([4623e75](https://github.com/datenknoten/freundebuch/commit/4623e75))
