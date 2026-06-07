@@ -343,6 +343,14 @@ export const friendsTableColumns = derived(
 export const birthdayFormat = derived(auth, ($auth) => $auth.preferences.birthdayFormat ?? 'iso');
 
 /**
+ * Derived store for shortcut hint toasts (default: enabled)
+ */
+export const showShortcutHints = derived(
+  auth,
+  ($auth) => $auth.preferences.showShortcutHints ?? true,
+);
+
+/**
  * Helper to wait for auth initialization
  * Returns a promise that resolves when auth is initialized
  */

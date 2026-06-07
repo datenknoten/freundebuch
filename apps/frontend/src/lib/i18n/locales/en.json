@@ -581,7 +581,9 @@
         "us": "US (05/15)",
         "eu": "EU (15.05.)",
         "long": "Long (May 15)"
-      }
+      },
+      "shortcutHints": "Keyboard shortcut hints",
+      "shortcutHintsHelp": "Show a tip when a clicked action also has a keyboard shortcut"
     },
     "appPasswords": {
       "title": "App Passwords",
@@ -908,6 +910,10 @@
       "pressKeyShown": "Press the key shown on {{item}}",
       "pressKeyShownFilter": "Press key shown next to filter value (1-9 or a1, b2, ...)",
       "clearAllFilters": "Clear all filters"
+    },
+    "hintToast": {
+      "tip": "Tip:",
+      "then": "then"
     },
     "help": {
       "globalSearch": "Global Search",
