@@ -1,3 +1,10 @@
+## 2.81.0 (2026-06-07)
+
+* feat(frontend): Add settings toggle for shortcut hints ([da0a804](https://github.com/datenknoten/freundebuch/commit/da0a804))
+* feat(frontend): Show shortcut hint toast for mouse-driven actions ([b1e68cc](https://github.com/datenknoten/freundebuch/commit/b1e68cc))
+* feat(frontend): Tag mouse actions with their keyboard shortcuts ([3f2f6c2](https://github.com/datenknoten/freundebuch/commit/3f2f6c2))
+* feat(shared): Add showShortcutHints user preference ([ffebaed](https://github.com/datenknoten/freundebuch/commit/ffebaed))
+
 ## <small>2.80.2 (2026-06-07)</small>
 
 * fix(ci): Use bracketed host:port format for demo host key ([d32ea33](https://github.com/datenknoten/freundebuch/commit/d32ea33))
