@@ -1,7 +1,7 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import { createI18n, languageNames } from '$lib/i18n/index.js';
-import { auth, birthdayFormat } from '$lib/stores/auth';
+import { auth, birthdayFormat, showShortcutHints } from '$lib/stores/auth';
 import {
   currentLanguage,
   locale,
@@ -18,6 +18,10 @@ function handleBirthdayFormatChange(format: BirthdayFormat) {
 
 function handleLanguageChange(lang: SupportedLanguage) {
   locale.setLanguage(lang);
+}
+
+function handleShortcutHintsChange(enabled: boolean) {
+  auth.updatePreferences({ showShortcutHints: enabled });
 }
 </script>
 
@@ -72,6 +76,23 @@ function handleLanguageChange(lang: SupportedLanguage) {
       </select>
       <p class="mt-1 text-xs font-body text-gray-500">
         {$i18n.t('profile.preferences.birthdayFormatHelp')}
+      </p>
+    </div>
+
+    <div>
+      <label class="flex items-center gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={$showShortcutHints}
+          onchange={(e) => handleShortcutHintsChange(e.currentTarget.checked)}
+          class="rounded border-gray-300 text-forest focus:ring-forest"
+        />
+        <span class="text-sm font-body font-semibold text-gray-700">
+          {$i18n.t('profile.preferences.shortcutHints')}
+        </span>
+      </label>
+      <p class="mt-1 text-xs font-body text-gray-500 ml-7">
+        {$i18n.t('profile.preferences.shortcutHintsHelp')}
       </p>
     </div>
   </div>
