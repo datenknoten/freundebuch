@@ -4,7 +4,11 @@ import Envelope from 'svelte-heros-v2/Envelope.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
-import { isOpenFriendLinkModeActive, openFriendLinkModePrefix } from '$lib/stores/ui';
+import {
+  getKeyboardHint,
+  isOpenFriendLinkModeActive,
+  openFriendLinkModePrefix,
+} from '$lib/stores/ui';
 import type { Email, EmailInput } from '$shared';
 import KeyboardHintBadge from '../../keyboard-hint-badge.svelte';
 import { DeleteConfirmModal, DetailEditModal, EmailEditForm, EmailRow } from '../subresources';
@@ -137,6 +141,9 @@ onMount(() => {
             onEdit={() => openEdit(email)}
             onDelete={() => openDeleteConfirm(email.id, email.emailAddress)}
             isDeleting={deletingId === email.id}
+            shortcutHint={linkStartIndex !== undefined
+              ? `o ${getKeyboardHint(linkStartIndex + i)}`
+              : undefined}
           />
         </div>
       {/each}

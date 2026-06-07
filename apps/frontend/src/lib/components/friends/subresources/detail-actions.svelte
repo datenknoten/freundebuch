@@ -8,6 +8,10 @@ interface Props {
   isDeleting?: boolean;
   editLabel?: string;
   deleteLabel?: string;
+  /** Keyboard chord for the edit action (e.g. "e 2"), shown as a hint on click */
+  editShortcutHint?: string;
+  /** Keyboard chord for the delete action (e.g. "d 2"), shown as a hint on click */
+  deleteShortcutHint?: string;
 }
 
 let {
@@ -16,6 +20,8 @@ let {
   isDeleting = false,
   editLabel = 'Edit',
   deleteLabel = 'Delete',
+  editShortcutHint,
+  deleteShortcutHint,
 }: Props = $props();
 </script>
 
@@ -40,6 +46,8 @@ let {
              transition-colors min-w-[28px] min-h-[28px] flex items-center justify-center
              sm:min-w-[44px] sm:min-h-[44px]"
       aria-label={editLabel}
+      data-shortcut={editShortcutHint}
+      data-shortcut-label={editShortcutHint ? 'shortcuts.panels.editCircle' : undefined}
     >
       <PencilSquare class="w-4 h-4" strokeWidth="2" />
     </button>
@@ -56,6 +64,8 @@ let {
            sm:min-w-[44px] sm:min-h-[44px]
            disabled:opacity-50 disabled:cursor-not-allowed"
     aria-label={deleteLabel}
+    data-shortcut={deleteShortcutHint}
+    data-shortcut-label={deleteShortcutHint ? 'shortcuts.panels.deleteCircle' : undefined}
   >
     {#if isDeleting}
       <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">

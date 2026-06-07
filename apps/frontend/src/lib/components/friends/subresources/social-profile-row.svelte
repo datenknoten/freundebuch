@@ -7,9 +7,11 @@ interface Props {
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
+  /** Keyboard chord that opens this link (e.g. "o 3"), shown as a hint on click */
+  shortcutHint?: string;
 }
 
-let { profile, onEdit, onDelete, isDeleting = false }: Props = $props();
+let { profile, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $props();
 
 const platformLabels: Record<SocialPlatform, string> = {
   linkedin: 'LinkedIn',
@@ -52,6 +54,8 @@ function getLink(): string | null {
         target="_blank"
         rel="noopener noreferrer"
         class="text-forest font-body font-semibold hover:text-forest-light truncate block"
+        data-shortcut={shortcutHint}
+        data-shortcut-label={shortcutHint ? 'shortcuts.panels.openLink' : undefined}
       >
         {getDisplayText()}
       </a>

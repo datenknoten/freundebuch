@@ -4,7 +4,11 @@ import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
-import { isOpenFriendLinkModeActive, openFriendLinkModePrefix } from '$lib/stores/ui';
+import {
+  getKeyboardHint,
+  isOpenFriendLinkModeActive,
+  openFriendLinkModePrefix,
+} from '$lib/stores/ui';
 import type { Phone, PhoneInput } from '$shared';
 import KeyboardHintBadge from '../../keyboard-hint-badge.svelte';
 import { DeleteConfirmModal, DetailEditModal, PhoneEditForm, PhoneRow } from '../subresources';
@@ -139,6 +143,9 @@ onMount(() => {
             onEdit={() => openEdit(phone)}
             onDelete={() => openDeleteConfirm(phone.id, phone.phoneNumber)}
             isDeleting={deletingId === phone.id}
+            shortcutHint={linkStartIndex !== undefined
+              ? `o ${getKeyboardHint(linkStartIndex + i)}`
+              : undefined}
           />
         </div>
       {/each}

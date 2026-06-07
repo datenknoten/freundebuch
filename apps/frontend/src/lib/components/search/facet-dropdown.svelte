@@ -3,6 +3,7 @@ import { tick } from 'svelte';
 import Funnel from 'svelte-heros-v2/Funnel.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import {
+  FILTER_CATEGORY_LABELS,
   filterModeCategory,
   filterModePrefix,
   getKeyboardHint,
@@ -459,9 +460,10 @@ $effect(() => {
             <div class="mb-2">
               <span class="text-xs text-gray-400">{group.label}</span>
               <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
-                {#each group.values.slice(0, 8) as facet}
+                {#each group.values.slice(0, 8) as facet, i}
                   <label
                     class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+                    data-shortcut="f {FILTER_CATEGORY_LABELS[group.field]?.key} {getKeyboardHint(i)}"
                   >
                     <input
                       type="checkbox"
@@ -489,9 +491,10 @@ $effect(() => {
             <div class="mb-2">
               <span class="text-xs text-gray-400">{group.label}</span>
               <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
-                {#each group.values.slice(0, 8) as facet}
+                {#each group.values.slice(0, 8) as facet, i}
                   <label
                     class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+                    data-shortcut="f {FILTER_CATEGORY_LABELS[group.field]?.key} {getKeyboardHint(i)}"
                   >
                     <input
                       type="checkbox"
@@ -517,9 +520,10 @@ $effect(() => {
           </h4>
           {#each facets.relationship as group}
             <div class="space-y-1">
-              {#each group.values as facet}
+              {#each group.values as facet, i}
                 <label
                   class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+                  data-shortcut="f {FILTER_CATEGORY_LABELS[group.field]?.key} {getKeyboardHint(i)}"
                 >
                   <input
                     type="checkbox"
@@ -546,6 +550,7 @@ $effect(() => {
             <!-- No Circle option -->
             <label
               class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+              data-shortcut="f l 1"
             >
               <input
                 type="checkbox"
@@ -555,9 +560,10 @@ $effect(() => {
               />
               <span class="flex-1 italic text-gray-500">No Circle</span>
             </label>
-            {#each circlesWithMembers.slice(0, 8) as circle}
+            {#each circlesWithMembers.slice(0, 8) as circle, i}
               <label
                 class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
+                data-shortcut="f l {getKeyboardHint(i + 1)}"
               >
                 <input
                   type="checkbox"

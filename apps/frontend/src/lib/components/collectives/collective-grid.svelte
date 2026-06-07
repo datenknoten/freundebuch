@@ -8,7 +8,11 @@ import Home from 'svelte-heros-v2/Home.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import { createI18n } from '$lib/i18n/index.js';
-import { isOpenCollectiveModeActive, openCollectiveModePrefix } from '$lib/stores/ui';
+import {
+  getKeyboardHint,
+  isOpenCollectiveModeActive,
+  openCollectiveModePrefix,
+} from '$lib/stores/ui';
 import { collectiveTypeI18nKey } from '$lib/utils/collective-types';
 import type { CollectiveListItem } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
@@ -148,6 +152,8 @@ function formatDate(dateString: string | undefined): string {
           tabindex="0"
           role="link"
           aria-label="View {item.name}"
+          data-shortcut="o {getKeyboardHint(index)}"
+          data-shortcut-label="shortcuts.panels.openCollective"
         >
           <!-- Name -->
           <td class="py-2 px-3 relative">
@@ -213,6 +219,8 @@ function formatDate(dateString: string | undefined): string {
       class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all relative"
       class:opacity-60={item.deletedAt}
       data-sveltekit-preload-data="tap"
+      data-shortcut="o {getKeyboardHint(index)}"
+      data-shortcut-label="shortcuts.panels.openCollective"
     >
       <KeyboardHintBadge {index} isActive={$isOpenCollectiveModeActive} prefix={$openCollectiveModePrefix} variant="card" />
 

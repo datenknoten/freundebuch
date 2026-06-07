@@ -66,6 +66,8 @@ function formatDate(dateStr: string): string {
 <a
   {href}
   class="block bg-white border border-gray-200 rounded-lg p-4 hover:border-forest hover:shadow-sm transition-all relative"
+  data-shortcut={keyHint ? `o ${keyHint}` : undefined}
+  data-shortcut-label={keyHint ? 'shortcuts.panels.openEncounter' : undefined}
 >
   {#if showHint && keyHint}
     <div class="absolute -left-1 -top-1 min-w-6 h-6 px-1 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">

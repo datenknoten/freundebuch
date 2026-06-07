@@ -7,9 +7,11 @@ interface Props {
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
+  /** Keyboard chord that opens this link (e.g. "o 3"), shown as a hint on click */
+  shortcutHint?: string;
 }
 
-let { email, onEdit, onDelete, isDeleting = false }: Props = $props();
+let { email, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $props();
 
 function formatEmailType(type: EmailType): string {
   const typeLabels: Record<EmailType, string> = {
@@ -26,6 +28,8 @@ function formatEmailType(type: EmailType): string {
     <a
       href="mailto:{email.emailAddress}"
       class="text-forest font-body font-semibold hover:text-forest-light truncate block"
+      data-shortcut={shortcutHint}
+      data-shortcut-label={shortcutHint ? 'shortcuts.panels.openLink' : undefined}
     >
       {email.emailAddress}
     </a>

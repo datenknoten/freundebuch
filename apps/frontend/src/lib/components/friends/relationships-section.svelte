@@ -6,7 +6,11 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
-import { isOpenFriendLinkModeActive, openFriendLinkModePrefix } from '$lib/stores/ui';
+import {
+  getKeyboardHint,
+  isOpenFriendLinkModeActive,
+  openFriendLinkModePrefix,
+} from '$lib/stores/ui';
 import type { Relationship, RelationshipCategory, RelationshipTypeId } from '$shared';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 import FriendAvatar from './friend-avatar.svelte';
@@ -233,6 +237,12 @@ onMount(() => {
                     <a
                       href="/friends/{relationship.relatedFriendId}"
                       class="font-body text-sm font-medium text-gray-900 hover:text-forest transition-colors truncate"
+                      data-shortcut={relationshipBadgeIndex.has(relationship.id)
+                        ? `o ${getKeyboardHint(relationshipBadgeIndex.get(relationship.id) ?? 0)}`
+                        : undefined}
+                      data-shortcut-label={relationshipBadgeIndex.has(relationship.id)
+                        ? 'shortcuts.panels.openLink'
+                        : undefined}
                     >
                       {relationship.relatedFriendDisplayName}
                     </a>

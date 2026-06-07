@@ -4,7 +4,7 @@ import NoSymbol from 'svelte-heros-v2/NoSymbol.svelte';
 import Tag from 'svelte-heros-v2/Tag.svelte';
 import Trash from 'svelte-heros-v2/Trash.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import { isOpenMemberModeActive, openMemberModePrefix } from '$lib/stores/ui';
+import { getKeyboardHint, isOpenMemberModeActive, openMemberModePrefix } from '$lib/stores/ui';
 import type { CollectiveMember } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
@@ -59,7 +59,12 @@ function formatDate(dateStr: string | null): string {
         {#each activeMembers as member, index (member.id)}
           <div class="flex items-center justify-between gap-4 bg-white border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors relative">
             <KeyboardHintBadge {index} isActive={$isOpenMemberModeActive} prefix={$openMemberModePrefix} variant="card" />
-            <a href="/friends/{member.contact.id}" class="flex items-center gap-3 flex-1 min-w-0">
+            <a
+              href="/friends/{member.contact.id}"
+              class="flex items-center gap-3 flex-1 min-w-0"
+              data-shortcut="o {getKeyboardHint(index)}"
+              data-shortcut-label="shortcuts.panels.openMember"
+            >
               <FriendAvatar
                 displayName={member.contact.displayName}
                 photoUrl={member.contact.photoUrl}

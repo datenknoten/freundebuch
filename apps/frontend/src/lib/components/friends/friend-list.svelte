@@ -547,6 +547,8 @@ function openFirstResult() {
             class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             title={$i18n.t('aria.previousPage')}
             aria-label={$i18n.t('aria.previousPage')}
+            data-shortcut="<"
+            data-shortcut-label="shortcuts.help.previousPage"
           >
             <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
           </button>
@@ -559,6 +561,8 @@ function openFirstResult() {
             class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             title={$i18n.t('aria.nextPage')}
             aria-label={$i18n.t('aria.nextPage')}
+            data-shortcut=">"
+            data-shortcut-label="shortcuts.help.nextPage"
           >
             <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
           </button>
