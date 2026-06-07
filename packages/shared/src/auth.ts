@@ -45,6 +45,7 @@ export const UserPreferencesSchema = type({
   'friendsTableColumns?': 'string[]',
   'birthdayFormat?': BirthdayFormatSchema,
   'language?': LanguageSchema,
+  'showShortcutHints?': 'boolean',
 });
 export type UserPreferences = typeof UserPreferencesSchema.infer;
 
@@ -53,6 +54,7 @@ export const UpdatePreferencesRequestSchema = type({
   'friendsTableColumns?': 'string[]',
   'birthdayFormat?': BirthdayFormatSchema,
   'language?': LanguageSchema,
+  'showShortcutHints?': 'boolean',
 });
 export type UpdatePreferencesRequest = typeof UpdatePreferencesRequestSchema.infer;
 
