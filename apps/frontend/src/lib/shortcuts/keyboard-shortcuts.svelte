@@ -1,4 +1,5 @@
 <script lang="ts">
+import { onMount } from 'svelte';
 import { page } from '$app/stores';
 import { createI18n } from '$lib/i18n/index.js';
 import {
@@ -22,7 +23,13 @@ import {
   openMemberModePrefix,
   openModePrefix,
 } from '$lib/stores/ui';
-import { FilterPanel, HelpDialog, HintModePanel, MenuPanel } from './components/index.js';
+import {
+  FilterPanel,
+  HelpDialog,
+  HintModePanel,
+  MenuPanel,
+  ShortcutHintToast,
+} from './components/index.js';
 import {
   COLLECTIVE_DETAIL_ACTIONS,
   CREATION_SHORTCUTS,
@@ -30,6 +37,7 @@ import {
   NAVIGATION_SHORTCUTS,
 } from './config.js';
 import { createKeydownHandler } from './handlers/index.js';
+import { handleShortcutHintClick } from './hint-store.js';
 
 const i18n = createI18n();
 
@@ -72,6 +80,12 @@ function clearPending() {
   isOpenEncounterFriendModeActive.set(false);
   openEncounterFriendModePrefix.set(null);
 }
+
+// Capture phase so the hint fires even when inner handlers stopPropagation()
+onMount(() => {
+  document.addEventListener('click', handleShortcutHintClick, true);
+  return () => document.removeEventListener('click', handleShortcutHintClick, true);
+});
 
 // The handler is recreated when showHelp changes so guards get fresh state
 const handleKeydown = $derived(
@@ -132,4 +146,6 @@ const handleKeydown = $derived(
   <HintModePanel title={$i18n.t('shortcuts.panels.editCircle')} prefix={$editCircleModePrefix} itemDescription={$i18n.t('shortcuts.items.circleEdit')} />
 {:else if pendingKey === 'd' && isOnCirclesPage}
   <HintModePanel title={$i18n.t('shortcuts.panels.deleteCircle')} prefix={$deleteCircleModePrefix} variant="danger" itemDescription={$i18n.t('shortcuts.items.circleDelete')} />
+{:else}
+  <ShortcutHintToast />
 {/if}

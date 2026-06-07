@@ -581,7 +581,9 @@
         "us": "US (05/15)",
         "eu": "EU (15.05.)",
         "long": "Lang (15. Mai)"
-      }
+      },
+      "shortcutHints": "Tastenkürzel-Hinweise",
+      "shortcutHintsHelp": "Zeigt einen Tipp, wenn eine angeklickte Aktion auch ein Tastenkürzel hat"
     },
     "appPasswords": {
       "title": "App-Passwörter",
@@ -908,6 +910,10 @@
       "pressKeyShown": "Die angezeigte Taste auf {{item}} drücken",
       "pressKeyShownFilter": "Taste neben dem Filterwert drücken (1-9 oder a1, b2, ...)",
       "clearAllFilters": "Alle Filter löschen"
+    },
+    "hintToast": {
+      "tip": "Tipp:",
+      "then": "dann"
     },
     "help": {
       "globalSearch": "Globale Suche",
