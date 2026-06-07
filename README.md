@@ -10,6 +10,17 @@ A self-hostable web application for relationship management. Think of it as your
 - **Self-hostable** — run it on your own server, keep full control over your data
 - **Multi-user ready** — works great for families or households sharing an address book
 
+## Try the Demo
+
+Want to poke around before setting anything up? There's a public demo at [demo.freundebuch.datenknoten.me](https://demo.freundebuch.datenknoten.me).
+
+Log in with the demo account, which comes pre-filled with sample friends, circles, and encounters:
+
+- **Email:** `demo@freundebuch.app`
+- **Password:** `DemoPassword123!`
+
+It's a sandbox, so experiment as much as you like. Just don't store anything you want to keep: **all demo data is reset daily at 06:00 UTC**.
+
 ## Quick Start
 
 ```bash
