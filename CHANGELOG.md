@@ -1,3 +1,7 @@
+## <small>2.80.1 (2026-06-07)</small>
+
+* fix(ci): Add demo system known host ([1a2207c](https://github.com/datenknoten/freundebuch/commit/1a2207c))
+
 ## 2.80.0 (2026-06-07)
 
 * feat(ci): Add demo system deployment and document it in the README ([f0436fc](https://github.com/datenknoten/freundebuch/commit/f0436fc))
