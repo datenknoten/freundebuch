@@ -11,6 +11,7 @@ import {
   setupAuthTests,
   teardownAuthTests,
 } from './auth.helpers.js';
+import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 export interface FriendsTestContext extends AuthTestContext {
   testUser: {
@@ -182,7 +183,7 @@ export function setupFriendsTestSuite() {
       ...authContext,
       testUser,
     };
-  }, 120000);
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
     resetRateLimiters();
@@ -196,7 +197,7 @@ export function setupFriendsTestSuite() {
     await teardownAuthTests(context);
     vi.unstubAllEnvs();
     resetConfig();
-  }, 120000);
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   return {
     getContext: () => context,

@@ -13,6 +13,7 @@ import { resetAuth } from '../../src/lib/auth.js';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
 import { resetConfig } from '../../src/utils/config.js';
+import { CONTAINER_STARTUP_TIMEOUT_MS, SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +34,7 @@ export async function setupAuthTests(): Promise<AuthTestContext> {
     .withDatabase('test')
     .withUsername('test')
     .withPassword('test')
-    .withStartupTimeout(120000)
+    .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT_MS)
     .withWaitStrategy(Wait.forHealthCheck())
     .start();
 
@@ -373,7 +374,7 @@ export function setupAuthTestSuite() {
     vi.stubEnv('LOG_LEVEL', 'silent');
 
     context = await setupAuthTests();
-  }, 120000); // 120 second timeout for container startup
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(() => {
     // Reset rate limiters before each test to avoid test interference
@@ -384,7 +385,7 @@ export function setupAuthTestSuite() {
     await teardownAuthTests(context);
     vi.unstubAllEnvs();
     resetConfig();
-  }, 120000);
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   return {
     getContext: () => context,

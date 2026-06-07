@@ -9,6 +9,7 @@ import { Wait } from 'testcontainers';
 import { afterAll, beforeAll, vi } from 'vitest';
 import { PostGISAddressClient } from '../../src/services/external/postgis-address.client.js';
 import { resetConfig } from '../../src/utils/config.js';
+import { CONTAINER_STARTUP_TIMEOUT_MS, SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,7 +44,7 @@ export async function setupPostGISTests(): Promise<PostGISTestContext> {
     .withDatabase('test')
     .withUsername('test')
     .withPassword('test')
-    .withStartupTimeout(120000)
+    .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT_MS)
     .withWaitStrategy(Wait.forHealthCheck())
     .start();
 
@@ -181,13 +182,13 @@ export function setupPostGISTestSuite() {
     vi.stubEnv('LOG_LEVEL', 'silent');
 
     context = await setupPostGISTests();
-  }, 180000); // 180 second timeout for container startup
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   afterAll(async () => {
     await teardownPostGISTests(context);
     vi.unstubAllEnvs();
     resetConfig();
-  }, 60000);
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   return {
     getContext: () => context,

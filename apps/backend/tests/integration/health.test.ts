@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../../src/index.js';
 import type { AppContext } from '../../src/types/context.js';
 import { resetConfig } from '../../src/utils/config.js';
+import { CONTAINER_STARTUP_TIMEOUT_MS, SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 describe('Health Endpoint Integration Tests', () => {
   let container: StartedPostgreSqlContainer;
@@ -27,7 +28,7 @@ describe('Health Endpoint Integration Tests', () => {
       .withDatabase('test')
       .withUsername('test')
       .withPassword('test')
-      .withStartupTimeout(120000)
+      .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT_MS)
       .withWaitStrategy(Wait.forHealthCheck())
       .start();
 
@@ -49,7 +50,7 @@ describe('Health Endpoint Integration Tests', () => {
 
     // Create the Hono app
     app = await createApp(pool);
-  }, 120000); // 120 second timeout for container startup
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   afterAll(async () => {
     // Clean up
@@ -61,7 +62,7 @@ describe('Health Endpoint Integration Tests', () => {
     }
     vi.unstubAllEnvs();
     resetConfig();
-  }, 120000);
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   describe('GET /health', () => {
     it('should return 200 and healthy status when database is connected', async () => {

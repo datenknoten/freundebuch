@@ -10,6 +10,7 @@ import {
   createTestFriend,
   type FriendsTestContext,
 } from './friends.helpers.js';
+import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 // Re-export common helpers
 export { authHeaders, createTestFriend };
@@ -323,7 +324,7 @@ export function setupSearchTestSuite() {
       ...authContext,
       testUser,
     };
-  }, 120000);
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
     resetRateLimiters();
@@ -340,7 +341,7 @@ export function setupSearchTestSuite() {
     await teardownAuthTests(context);
     vi.unstubAllEnvs();
     resetConfig();
-  }, 120000);
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   return {
     getContext: () => context,
