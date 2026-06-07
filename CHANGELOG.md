@@ -1,3 +1,10 @@
+## 2.80.0 (2026-06-07)
+
+* feat(ci): Add demo system deployment and document it in the README ([f0436fc](https://github.com/datenknoten/freundebuch/commit/f0436fc))
+* fix(backend): Prevent integration test flake from container startup timeouts ([eaac1da](https://github.com/datenknoten/freundebuch/commit/eaac1da))
+* docs(docs): Add comparison with Monica personal CRM ([bc9ec7b](https://github.com/datenknoten/freundebuch/commit/bc9ec7b))
+* docs(docs): Add pitch documents in English and German ([ed01060](https://github.com/datenknoten/freundebuch/commit/ed01060))
+
 ## 2.79.0 (2026-06-04)
 
 * fix(frontend): Only redirect to collective after membership succeeds ([3963d93](https://github.com/datenknoten/freundebuch/commit/3963d93))
