@@ -328,7 +328,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "[node4.datenknoten.me]:820 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILOtQWdKnvQYP0gA5tnyYrTt+uGJDek3YGWSHi2M6f35" >> ~/.ssh/known_hosts
-          echo "demo.freundebuch.datenknoten.me ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHs9Iw7r9+n+AtdAETA+Qw4fZkhuInOxxft+1Yc42tYhXY+XWyPGEuvTvikmWLglTNFlicv4uMdZ2i9FYamMlss=" >> ~/.ssh/known_hosts
+          echo "[demo.freundebuch.datenknoten.me]:820 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHs9Iw7r9+n+AtdAETA+Qw4fZkhuInOxxft+1Yc42tYhXY+XWyPGEuvTvikmWLglTNFlicv4uMdZ2i9FYamMlss=" >> ~/.ssh/known_hosts
 
       - name: Deploy Production System
         env:
