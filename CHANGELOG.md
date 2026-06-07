@@ -1,3 +1,7 @@
+## <small>2.80.2 (2026-06-07)</small>
+
+* fix(ci): Use bracketed host:port format for demo host key ([d32ea33](https://github.com/datenknoten/freundebuch/commit/d32ea33))
+
 ## <small>2.80.1 (2026-06-07)</small>
 
 * fix(ci): Add demo system known host ([1a2207c](https://github.com/datenknoten/freundebuch/commit/1a2207c))
