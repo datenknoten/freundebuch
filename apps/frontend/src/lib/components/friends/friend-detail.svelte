@@ -234,6 +234,8 @@ onMount(() => {
       <a
         href="/friends/{friend.id}/edit"
         class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
+        data-shortcut="e"
+        data-shortcut-label="shortcuts.help.editFriend"
       >
         {$i18n.t('common.edit')}
       </a>

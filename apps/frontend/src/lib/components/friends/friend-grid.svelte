@@ -6,7 +6,7 @@ import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
 import Star from 'svelte-heros-v2/Star.svelte';
 import { goto } from '$app/navigation';
 import { createI18n } from '$lib/i18n/index.js';
-import { isOpenModeActive, openModePrefix } from '$lib/stores/ui';
+import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
 import {
   type BirthdayFormat,
   COLUMN_DEFINITIONS,
@@ -246,6 +246,8 @@ function getMatchSourceBadge(
           tabindex="0"
           role="link"
           aria-label="View {item.displayName}"
+          data-shortcut="o {getKeyboardHint(index)}"
+          data-shortcut-label="shortcuts.panels.openFriend"
         >
           {#each columns as columnId}
             <td
@@ -336,6 +338,8 @@ function getMatchSourceBadge(
       href={getFriendDetailUrl(item.id)}
       class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all relative"
       data-sveltekit-preload-data="tap"
+      data-shortcut="o {getKeyboardHint(index)}"
+      data-shortcut-label="shortcuts.panels.openFriend"
     >
       <KeyboardHintBadge {index} isActive={$isOpenModeActive} prefix={$openModePrefix} variant="card" />
 

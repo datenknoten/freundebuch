@@ -7,9 +7,11 @@ interface Props {
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
+  /** Keyboard chord that opens this link (e.g. "o 3"), shown as a hint on click */
+  shortcutHint?: string;
 }
 
-let { url, onEdit, onDelete, isDeleting = false }: Props = $props();
+let { url, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $props();
 
 function formatUrlType(type: UrlType): string {
   const typeLabels: Record<UrlType, string> = {
@@ -38,6 +40,8 @@ function formatUrl(rawUrl: string): string {
       target="_blank"
       rel="noopener noreferrer"
       class="text-forest font-body font-semibold hover:text-forest-light truncate block"
+      data-shortcut={shortcutHint}
+      data-shortcut-label={shortcutHint ? 'shortcuts.panels.openLink' : undefined}
     >
       {formatUrl(url.url)}
     </a>

@@ -10,9 +10,11 @@ interface Props {
   collective: ContactCollectiveSummary;
   onRemove: (collectiveId: string, membershipId: string) => void;
   isRemoving?: boolean;
+  /** Keyboard chord that opens this link (e.g. "o 3"), shown as a hint on click */
+  shortcutHint?: string;
 }
 
-let { collective, onRemove, isRemoving = false }: Props = $props();
+let { collective, onRemove, isRemoving = false, shortcutHint }: Props = $props();
 </script>
 
 <!-- Mobile: Swipeable row (only swipe left for remove, no edit) -->
@@ -56,6 +58,8 @@ let { collective, onRemove, isRemoving = false }: Props = $props();
         <a
           href="/collectives/{collective.id}"
           class="font-body font-semibold text-forest hover:underline"
+          data-shortcut={shortcutHint}
+          data-shortcut-label={shortcutHint ? 'shortcuts.panels.openLink' : undefined}
         >
           {collective.name}
         </a>

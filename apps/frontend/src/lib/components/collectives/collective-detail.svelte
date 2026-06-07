@@ -502,6 +502,8 @@ onMount(() => {
         type="button"
         onclick={() => onEdit?.()}
         class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
+        data-shortcut="e"
+        data-shortcut-label="shortcuts.help.editCollective"
       >
         {$i18n.t('common.edit')}
       </button>
@@ -542,6 +544,8 @@ onMount(() => {
             onclick={() => openEditModal('phone')}
             class="text-sm font-body font-semibold text-white/90 hover:text-white
                    flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+            data-shortcut="a p"
+            data-shortcut-label="shortcuts.add.phone"
           >
             <Plus class="w-4 h-4" strokeWidth="2" />
             {$i18n.t('friendDetail.actions.addPhone')}
@@ -573,6 +577,8 @@ onMount(() => {
             onclick={() => openEditModal('email')}
             class="text-sm font-body font-semibold text-white/90 hover:text-white
                    flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+            data-shortcut="a e"
+            data-shortcut-label="shortcuts.add.email"
           >
             <Plus class="w-4 h-4" strokeWidth="2" />
             {$i18n.t('friendDetail.actions.addEmail')}
@@ -604,6 +610,8 @@ onMount(() => {
             onclick={() => openEditModal('address')}
             class="text-sm font-body font-semibold text-white/90 hover:text-white
                    flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+            data-shortcut="a a"
+            data-shortcut-label="shortcuts.add.address"
           >
             <Plus class="w-4 h-4" strokeWidth="2" />
             {$i18n.t('friendDetail.actions.addAddress')}
@@ -635,6 +643,8 @@ onMount(() => {
             onclick={() => openEditModal('url')}
             class="text-sm font-body font-semibold text-white/90 hover:text-white
                    flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+            data-shortcut="a u"
+            data-shortcut-label="shortcuts.add.url"
           >
             <Plus class="w-4 h-4" strokeWidth="2" />
             {$i18n.t('friendDetail.actions.addUrl')}
@@ -667,6 +677,8 @@ onMount(() => {
           onclick={() => openEditModal('circle')}
           class="text-sm font-body font-semibold text-white/90 hover:text-white
                  flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+          data-shortcut="a c"
+          data-shortcut-label="shortcuts.add.circle"
         >
           <Plus class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('friendDetail.actions.addCircle')}
@@ -697,6 +709,8 @@ onMount(() => {
         onclick={() => { showAddMember = true; isModalOpen.set(true); }}
         class="text-sm font-body font-semibold text-white/90 hover:text-white
                flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+        data-shortcut="a m"
+        data-shortcut-label="shortcuts.add.member"
       >
         <Plus class="w-4 h-4" strokeWidth="2" />
         {$i18n.t('collectives.addMember.button')}

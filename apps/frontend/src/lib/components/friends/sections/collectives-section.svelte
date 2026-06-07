@@ -4,7 +4,11 @@ import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { removeMember } from '$lib/api/collectives';
 import { createI18n } from '$lib/i18n/index.js';
-import { isOpenFriendLinkModeActive, openFriendLinkModePrefix } from '$lib/stores/ui';
+import {
+  getKeyboardHint,
+  isOpenFriendLinkModeActive,
+  openFriendLinkModePrefix,
+} from '$lib/stores/ui';
 import type { ContactCollectiveSummary } from '$shared';
 import KeyboardHintBadge from '../../keyboard-hint-badge.svelte';
 import { AddToCollectiveModal, CollectiveRow } from '../subresources';
@@ -80,6 +84,9 @@ onMount(() => {
             {collective}
             onRemove={handleRemoveFromCollective}
             isRemoving={removingCollectiveId === collective.id}
+            shortcutHint={linkStartIndex !== undefined
+              ? `o ${getKeyboardHint(linkStartIndex + i)}`
+              : undefined}
           />
         </div>
       {/each}

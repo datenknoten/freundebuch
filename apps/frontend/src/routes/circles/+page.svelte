@@ -184,6 +184,8 @@ function getActualDepth(circle: Circle): number {
         <button
           onclick={openCreateModal}
           class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
+          data-shortcut="n c"
+          data-shortcut-label="shortcuts.newCircle"
         >
           <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('circles.newCircle')}
@@ -314,6 +316,8 @@ function getActualDepth(circle: Circle): number {
                     {isDeleting}
                     editLabel={$i18n.t('common.edit') + ' ' + circle.name}
                     deleteLabel={$i18n.t('common.delete') + ' ' + circle.name}
+                    editShortcutHint="e {keyHint}"
+                    deleteShortcutHint="d {keyHint}"
                   />
                 </div>
               </SwipeableRow>
@@ -367,6 +371,8 @@ function getActualDepth(circle: Circle): number {
                   {isDeleting}
                   editLabel={$i18n.t('common.edit') + ' ' + circle.name}
                   deleteLabel={$i18n.t('common.delete') + ' ' + circle.name}
+                  editShortcutHint="e {keyHint}"
+                  deleteShortcutHint="d {keyHint}"
                 />
               </div>
             </div>

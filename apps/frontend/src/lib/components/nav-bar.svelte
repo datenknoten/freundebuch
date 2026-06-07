@@ -153,6 +153,8 @@ $effect(() => {
         <a
           href="/friends/new"
           data-sveltekit-preload-data="tap"
+          data-shortcut="n f"
+          data-shortcut-label="shortcuts.newFriend"
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
@@ -162,6 +164,8 @@ $effect(() => {
         <a
           href="/friends"
           data-sveltekit-preload-data="tap"
+          data-shortcut="g f"
+          data-shortcut-label="shortcuts.goFriends"
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
@@ -171,6 +175,8 @@ $effect(() => {
         <a
           href="/circles"
           data-sveltekit-preload-data="tap"
+          data-shortcut="g c"
+          data-shortcut-label="shortcuts.goCircles"
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
@@ -180,6 +186,8 @@ $effect(() => {
         <a
           href="/encounters"
           data-sveltekit-preload-data="tap"
+          data-shortcut="g e"
+          data-shortcut-label="shortcuts.goEncounters"
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
@@ -189,6 +197,8 @@ $effect(() => {
         <a
           href="/collectives"
           data-sveltekit-preload-data="tap"
+          data-shortcut="g o"
+          data-shortcut-label="shortcuts.goCollectives"
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
@@ -198,6 +208,8 @@ $effect(() => {
         <a
           href="/profile"
           data-sveltekit-preload-data="tap"
+          data-shortcut="g p"
+          data-shortcut-label="shortcuts.goProfile"
           onclick={closeMobileMenu}
           class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
         >
@@ -295,6 +307,8 @@ $effect(() => {
           class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
           onclick={() => search.open()}
           aria-label="Search"
+          data-shortcut="/"
+          data-shortcut-label="shortcuts.help.focusSearch"
         >
           <MagnifyingGlass class="w-6 h-6" strokeWidth="2" />
         </button>
@@ -309,6 +323,8 @@ $effect(() => {
             onclick={() => search.open()}
             class="w-full max-w-md flex items-center gap-3 px-4 py-2 text-gray-400 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors duration-200 cursor-text"
             title="{$i18n.t('common.search')} ({isMac ? 'Cmd' : 'Ctrl'}+K)"
+            data-shortcut="/"
+            data-shortcut-label="shortcuts.help.focusSearch"
           >
             <MagnifyingGlass class="w-5 h-5 shrink-0" strokeWidth="2" />
             <span class="flex-1 text-left font-body text-sm">{$i18n.t('friends.search')}</span>
@@ -325,6 +341,8 @@ $effect(() => {
           <a
             href="/friends/new"
             data-sveltekit-preload-data="tap"
+            data-shortcut="n f"
+            data-shortcut-label="shortcuts.newFriend"
             class="inline-flex items-center gap-1.5 bg-forest text-white px-3 py-1.5 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200 text-sm"
             title="{$i18n.t('friends.addNew')} (n)"
           >

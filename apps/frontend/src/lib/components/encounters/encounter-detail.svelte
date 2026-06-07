@@ -8,6 +8,7 @@ import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
 import {
+  getKeyboardHint,
   isOpenEncounterFriendModeActive,
   openEncounterFriendModePrefix,
   visibleEncounterFriendIds,
@@ -102,6 +103,8 @@ async function handleDelete() {
         type="button"
         onclick={() => onEdit?.()}
         class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
+        data-shortcut="e"
+        data-shortcut-label="shortcuts.help.editEncounter"
       >
         {$i18n.t('common.edit')}
       </button>
@@ -129,6 +132,8 @@ async function handleDelete() {
           <a
             href="/friends/{friend.id}"
             class="inline-flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:border-forest transition-colors"
+            data-shortcut="o {getKeyboardHint(index)}"
+            data-shortcut-label="shortcuts.panels.openFriend"
           >
             <FriendAvatar
               displayName={friend.displayName}

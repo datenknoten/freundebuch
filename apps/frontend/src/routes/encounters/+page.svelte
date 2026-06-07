@@ -21,6 +21,8 @@ const i18n = createI18n();
         <a
           href="/encounters/new"
           class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
+          data-shortcut="n e"
+          data-shortcut-label="shortcuts.newEncounter"
         >
           <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('encounters.logNew')}

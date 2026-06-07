@@ -7,9 +7,11 @@ interface Props {
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
+  /** Keyboard chord that opens this link (e.g. "o 3"), shown as a hint on click */
+  shortcutHint?: string;
 }
 
-let { phone, onEdit, onDelete, isDeleting = false }: Props = $props();
+let { phone, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $props();
 
 function formatPhoneType(type: PhoneType): string {
   const typeLabels: Record<PhoneType, string> = {
@@ -28,6 +30,8 @@ function formatPhoneType(type: PhoneType): string {
     <a
       href="tel:{phone.phoneNumber}"
       class="text-forest font-body font-semibold hover:text-forest-light"
+      data-shortcut={shortcutHint}
+      data-shortcut-label={shortcutHint ? 'shortcuts.panels.openLink' : undefined}
     >
       {phone.phoneNumber}
     </a>

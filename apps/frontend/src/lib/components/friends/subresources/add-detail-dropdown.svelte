@@ -35,17 +35,48 @@ let isOpen = $state(false);
 let buttonRef = $state<HTMLButtonElement | null>(null);
 let menuRef = $state<HTMLDivElement | null>(null);
 
-const optionConfig: { type: SubresourceType; labelKey: string; icon: string }[] = [
-  { type: 'phone', labelKey: 'subresources.dropdown.phoneNumber', icon: 'phone' },
-  { type: 'email', labelKey: 'subresources.dropdown.emailAddress', icon: 'mail' },
-  { type: 'address', labelKey: 'subresources.dropdown.address', icon: 'map-pin' },
-  { type: 'url', labelKey: 'subresources.dropdown.websiteUrl', icon: 'link' },
-  { type: 'date', labelKey: 'subresources.dropdown.importantDate', icon: 'calendar' },
-  { type: 'social', labelKey: 'subresources.dropdown.socialProfile', icon: 'share' },
-  { type: 'circle', labelKey: 'subresources.dropdown.circle', icon: 'users' },
-  { type: 'collective', labelKey: 'subresources.dropdown.collective', icon: 'building-office' },
-  { type: 'professional', labelKey: 'subresources.dropdown.employment', icon: 'briefcase' },
-  { type: 'relationship', labelKey: 'relationshipSection.addRelationship', icon: 'heart' },
+// Shortcut keys mirror FRIEND_DETAIL_ACTIONS in $lib/shortcuts/config.ts ("a" + key)
+const optionConfig: {
+  type: SubresourceType;
+  labelKey: string;
+  icon: string;
+  shortcutKey: string;
+}[] = [
+  { type: 'phone', labelKey: 'subresources.dropdown.phoneNumber', icon: 'phone', shortcutKey: 'p' },
+  { type: 'email', labelKey: 'subresources.dropdown.emailAddress', icon: 'mail', shortcutKey: 'e' },
+  { type: 'address', labelKey: 'subresources.dropdown.address', icon: 'map-pin', shortcutKey: 'a' },
+  { type: 'url', labelKey: 'subresources.dropdown.websiteUrl', icon: 'link', shortcutKey: 'u' },
+  {
+    type: 'date',
+    labelKey: 'subresources.dropdown.importantDate',
+    icon: 'calendar',
+    shortcutKey: 'd',
+  },
+  {
+    type: 'social',
+    labelKey: 'subresources.dropdown.socialProfile',
+    icon: 'share',
+    shortcutKey: 's',
+  },
+  { type: 'circle', labelKey: 'subresources.dropdown.circle', icon: 'users', shortcutKey: 'c' },
+  {
+    type: 'collective',
+    labelKey: 'subresources.dropdown.collective',
+    icon: 'building-office',
+    shortcutKey: 'o',
+  },
+  {
+    type: 'professional',
+    labelKey: 'subresources.dropdown.employment',
+    icon: 'briefcase',
+    shortcutKey: 'w',
+  },
+  {
+    type: 'relationship',
+    labelKey: 'relationshipSection.addRelationship',
+    icon: 'heart',
+    shortcutKey: 'r',
+  },
 ];
 
 function handleSelect(type: SubresourceType) {
@@ -103,6 +134,8 @@ function handleClickOutside(e: MouseEvent) {
           class="w-full px-4 py-2 text-left text-sm font-body text-gray-700
                  hover:bg-gray-50 flex items-center gap-3 transition-colors"
           role="menuitem"
+          data-shortcut="a {option.shortcutKey}"
+          data-shortcut-label={option.labelKey}
         >
           {#if option.icon === 'phone'}
             <Phone class="w-4 h-4 text-gray-400" strokeWidth="2" />
