@@ -1,0 +1,13 @@
+[Unit]
+Description=Reset Freundebuch demo data
+Documentation=https://github.com/datenknoten/freundebuch
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/deploy-freundebuch/demo-reset.sh
+User=deploy-freundebuch
+Group=deploy-freundebuch
+# Wait at most 10 minutes for the reset (image pull on cold cache etc.)
+TimeoutStartSec=600

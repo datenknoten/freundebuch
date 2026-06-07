@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily Freundebuch demo data reset at 06:00 UTC
+
+[Timer]
+OnCalendar=*-*-* 06:00:00 UTC
+# Run on next boot if the 06:00 slot was missed (host was down)
+Persistent=true
+# Spread the start a little to avoid thundering-herd with other timers
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target
