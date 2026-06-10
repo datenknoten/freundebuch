@@ -76,10 +76,12 @@ $effect(() => {
   }
 });
 
-// Hide FAB on new friend page and friend detail pages (which have their own FAB)
+// Hide the FAB while the user is creating a new entity (any /new route, e.g.
+// /friends/new, /encounters/new, /collectives/new) so an accidental tap can't
+// interrupt them, and on friend detail pages (which have their own FAB).
 const showFab = $derived(
   $isAuthenticated &&
-    !$page.url.pathname.includes('/friends/new') &&
+    !$page.url.pathname.endsWith('/new') &&
     !$page.url.pathname.match(/^\/friends\/[^/]+$/),
 );
 
