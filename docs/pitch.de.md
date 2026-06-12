@@ -56,7 +56,7 @@ Verschiedene Menschen interessieren sich für verschiedene Dinge. Fang mit dem a
 | Datenschutzbewusste | "Google kennt deine Kontakte. Hier liegen sie auf einem Server, den wir kontrollieren" |
 | Technikmenschen | Self-hosted, AGPL, SvelteKit/Hono/PostgreSQL + PostGIS, CardDAV mit vCard 4.0, MCP-Server für KI-Assistenten, wöchentliche Releases |
 | Power-User | "Am Desktop brauchst du kaum die Maus - suchen, öffnen, bearbeiten geht alles per Tastatur." Dann vorführen: mit ein paar Tastendrücken von der Suche zur Seite eines Freundes |
-| Monica-Umsteiger | "Monica v4 ist eingefroren, v5 seit Jahren Beta ohne Migrationspfad. Freundebuch wird aktiv entwickelt" - siehe [comparison-monica.md](./comparison-monica.md) |
+| Monica-Umsteiger | "Monica v4 ist eingefroren, v5 hat die Beta nie verlassen, und die Entwicklung steht seit 2025 komplett still. Freundebuch released wöchentlich" - siehe [comparison-monica.md](./comparison-monica.md) |
 | Familie / Partner | Geteiltes Wissen: "Wir wissen beide noch, welche Cousine die Nussallergie hat" |
 
 ---
