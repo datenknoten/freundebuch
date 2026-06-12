@@ -64,7 +64,7 @@ aube test:integration       # Run integration tests (Vitest)
 aube test:e2e               # Run E2E tests (Playwright)
 
 # Code Quality
-aube check                  # Run Biome check (lint + format)
+aube check                  # Run Biome check (lint + format, auto-fixes)
 aube lint                   # Run Biome linter
 aube format                 # Run Biome formatter
 aube type-check             # Run TypeScript compiler
@@ -83,9 +83,9 @@ aube docker:down            # Stop Docker services
 
 ## Git Conventions
 
-### Commit Messages
+See [git-workflow.md](./git-workflow.md) for the full branching model, hook layout, and history-rewriting guidance. The short version:
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+Follow [Conventional Commits](https://www.conventionalcommits.org/), enforced by a `commit-msg` hook:
 
 ```
 <type>(<scope>): <description>
@@ -95,22 +95,16 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 [optional footer]
 ```
 
-**Types:**
-- `feat` - New feature
-- `fix` - Bug fix
-- `docs` - Documentation only
-- `style` - Formatting, no code change
-- `refactor` - Code change that neither fixes a bug nor adds a feature
-- `perf` - Performance improvement
-- `test` - Adding or updating tests
-- `chore` - Maintenance tasks
+**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
 
-**Scopes:** `frontend`, `backend`, `shared`, `db`, `ci`, `docs`
+**Scopes:** `all`, `backend`, `frontend`, `shared`, `database`, `docs`, `deps`, `config`, `ci`, `dx`, `release`
+
+The description is sentence case, imperative mood, no trailing period. The authoritative lists live in [`commitlint.config.mjs`](../commitlint.config.mjs).
 
 ### Examples
 
 ```
-feat(frontend): Add contact search component
+feat(frontend): Add friend search component
 fix(backend): Handle null email in user creation
 docs: Update API documentation
 chore(ci): Add semantic-release workflow

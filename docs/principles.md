@@ -16,7 +16,7 @@ Use open standards - no vendor lock-in.
 - vCard 4.0 for contact data
 - iCalendar for reminders
 - CalDAV/CardDAV for device sync
-- OAuth 2.0 for authentication
+- WebAuthn (passkeys) for passwordless authentication
 - Data export in standard formats (JSON, CSV, vCard)
 
 ## 3. User-Friendly
@@ -55,7 +55,8 @@ Security is not an afterthought.
 - Input validation at all API boundaries (ArkType)
 - SQL injection prevention (PgTyped)
 - Secure password hashing (bcrypt)
-- JWT-based authentication with proper expiry
+- Session-based authentication via Better Auth, with passkey (WebAuthn) support
+- App-specific passwords for CalDAV/CardDAV clients
 
 ## Design Constraints
 

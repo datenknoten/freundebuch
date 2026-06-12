@@ -1,7 +1,7 @@
 # Concept Document: Freundebuch
 
-**Version:** 1.1
-**Date:** 04.10.2025
+**Version:** 1.2
+**Date:** 12.06.2026
 **Status:** Active
 
 ---
@@ -25,7 +25,7 @@ See [brand.md](./brand.md) for our brand guidelines and terminology.
 **Primary Goals:**
 - An address book that actually helps you maintain relationships, not just store phone numbers
 - Tools to help you remember to stay in touch with the people who matter
-- Multi-user support so families can manage contacts together
+- Multi-user support so families can manage their Freundebuch together
 - Seamless sync with your existing devices using CalDAV/CardDAV
 - A web app you can host yourself or use our hosted version
 
@@ -51,8 +51,8 @@ See [brand.md](./brand.md) for our brand guidelines and terminology.
 1. **Friend Management** - Your address book, but with all the context you actually need
 2. **Encounter Management** - Track encounters and build the history of your relationships
 3. **Reminder System** - Never forget to reach out again
-4. **Categorization & Organization** - Organize contacts your way with circles and tags
-5. **Multi-User Management** - Share contacts with family or housemates
+4. **Categorization & Organization** - Organize friends your way with circles and tags
+5. **Multi-User Management** - Share friends with family or housemates
 
 ### 3.2 Integration Features
 6. **CalDAV/CardDAV Interface** - Sync seamlessly with your phone, computer, and other devices
@@ -70,7 +70,7 @@ See [brand.md](./brand.md) for our brand guidelines and terminology.
 ### Feature 1: Friend Management
 
 **What it does:**
-This is your contact database on steroids. We're storing way more than just phone numbers and email addresses.
+This is your address book on steroids. We're storing way more than just phone numbers and email addresses.
 
 **What you get:**
 - All the basics (name, address, phone, email)
@@ -83,7 +83,7 @@ This is your contact database on steroids. We're storing way more than just phon
   - Social media profiles if you want them
   - Custom fields for whatever else matters to you
 - Multiple addresses, phone numbers, and emails per person
-- Map relationships between contacts (partners, kids, siblings, coworkers)
+- Map relationships between friends (partners, kids, siblings, coworkers)
 - Add notes whenever you think of something important
 
 **Why it's different:**
@@ -91,7 +91,7 @@ We care about the context and story of your relationships, not just the data poi
 
 ---
 
-### Feature 2: Relationship Management
+### Feature 2: Encounter Management
 
 **Description:**
 Documentation and tracking of relationship history with each person.
@@ -121,7 +121,7 @@ Proactive support for contact maintenance through intelligent reminders.
 **Scope:**
 - **Automatic Reminders:**
   - "Person X not contacted for Y days/weeks"
-  - Configurable thresholds per contact or circle
+  - Configurable thresholds per friend or circle
   - Birthday reminders (configurable lead time)
 - **Manual Reminders:**
   - "Contact X again on [date]"
@@ -138,24 +138,24 @@ Proactive support for contact maintenance through intelligent reminders.
 ### Feature 4: Categorization & Organization
 
 **Description:**
-Flexible organization of contacts according to various criteria.
+Flexible organization of friends according to various criteria.
 
 **Scope:**
 - **Circles:**
   - Predefined circles (family, friends, work, club, neighbors)
   - Custom circles
   - Hierarchical circles (e.g., Friends > School Friends)
-  - One contact can belong to multiple circles
+  - One friend can belong to multiple circles
 - **Tags:**
   - Free tag assignment (e.g., #Hiking, #Cooking, #Tech)
   - Tag cloud for quick navigation
   - Tag-based filters
 - **Favorites:**
-  - Marking especially important contacts
+  - Marking especially important friends
   - Quick access to favorites
 - **Archiving:**
-  - Archive contacts (not delete)
-  - Separate view for active/archived contacts
+  - Archive friends (not delete)
+  - Separate view for active/archived friends
 
 ---
 
@@ -173,12 +173,12 @@ Shared use of the friend database within families or households.
   - Creation of shared workspaces
   - Invitation of members
   - Role-based permissions (admin, member, read-only)
-- **Contact Ownership:**
-  - Personal contacts (visible only to one user)
-  - Shared contacts (visible to all group members)
+- **Friend Ownership:**
+  - Personal friends (visible only to one user)
+  - Shared friends (visible to all group members)
   - Conflict resolution for simultaneous editing
 - **Activity Tracking:**
-  - Who created/edited which contact
+  - Who created/edited which friend
   - Change history
 
 ---
@@ -224,12 +224,12 @@ Easy migration from and to other systems.
   - Deduplication assistant after import
 - **Export:**
   - Full export as vCard
-  - Selective export (individual contacts, circles)
+  - Selective export (individual friends, circles)
   - CSV export for further processing
   - Backup function (complete data export incl. metadata)
 - **Data Cleansing:**
   - Duplicate detection
-  - Merge function for duplicate contacts
+  - Merge function for duplicate friends
   - Validation of data formats (email, phone, etc.)
 
 ---
@@ -246,7 +246,7 @@ Chronological display of all encounters and events.
   - Notes with timestamp
   - Filter by encounter type
 - **Global Timeline:**
-  - Overview of all activities across all contacts
+  - Overview of all activities across all friends
   - Filter by date, person, type
   - "Today", "This Week", "This Month" views
 - **Visualization:**
@@ -267,15 +267,15 @@ Overviews and statistics for contact maintenance.
 **Scope:**
 - **Dashboard Widgets:**
   - Upcoming birthdays (next 30 days)
-  - Overdue contacts ("Haven't seen in a long time")
-  - Contact statistics (total, new this week/month)
+  - Overdue friends ("Haven't seen in a long time")
+  - Friend statistics (total, new this week/month)
   - Activity overview (encounters this week)
-  - Top contacts (by encounter frequency)
+  - Top friends (by encounter frequency)
 - **Insights:**
   - Contact frequency analysis
   - Circle distribution (pie chart)
   - Encounter trends (temporal development)
-  - Identify "neglected" contacts
+  - Identify "neglected" friends
 - **Personalization:**
   - Widget arrangement customizable
   - Selectable metrics
@@ -286,7 +286,7 @@ Overviews and statistics for contact maintenance.
 ### Feature 10: Search Functionality
 
 **Description:**
-Powerful search across all contact data.
+Powerful search across all friend data.
 
 **Scope:**
 - **Full-Text Search:**
@@ -304,26 +304,28 @@ Powerful search across all contact data.
   - By creation date
   - By encounter frequency
 - **Result Preview:**
-  - Contact card with most important info
+  - Friend card with most important info
   - Highlighting of search terms
 
 ---
 
 ## 5. Technical Framework
 
-### 5.1 Architecture Considerations
+### 5.1 Architecture
+
+These decisions are made and implemented - see [architecture.md](./architecture.md) for the full picture.
 
 **Frontend:**
-- Modern web technology (React, Vue, Svelte or similar)
+- SvelteKit + Tailwind CSS
 - Responsive design (mobile-first)
 - Progressive Web App (PWA) capabilities optional
 - Offline capability (Service Worker) as future extension
 
 **Backend:**
-- RESTful API or GraphQL
-- Authentication & authorization (JWT, session-based)
-- CalDAV/CardDAV server component
-- Database (PostgreSQL, MySQL or similar)
+- RESTful API (Node.js + Hono)
+- Authentication & authorization via Better Auth (sessions, passkeys)
+- CalDAV/CardDAV server component (PHP + SabreDAV)
+- PostgreSQL with PostGIS
 
 **Deployment:**
 - Docker-based for easy installation
@@ -345,7 +347,7 @@ Powerful search across all contact data.
 
 - Page load time < 2 seconds
 - Search results < 500ms
-- Support for at least 10,000 contacts per user
+- Support for at least 10,000 friends per user
 - Optimistic UI updates
 - Lazy loading of lists
 - Caching strategy
@@ -376,21 +378,23 @@ Powerful search across all contact data.
 ### 6.2 Internal Interfaces
 
 **API Endpoints (Examples):**
-- `/api/contacts` - CRUD for contacts
+- `/api/friends` - CRUD for friends and their sub-resources
 - `/api/encounters` - encounter tracking
-- `/api/reminders` - reminder management
 - `/api/circles` - circle management
+- `/api/collectives` - collective management
 - `/api/users` - user management
-- `/caldav/` - CalDAV endpoint
-- `/carddav/` - CardDAV endpoint
+- `/api/reminders` - reminder management (planned)
+- `/caldav/` - CalDAV endpoint (SabreDAV)
+- `/carddav/` - CardDAV endpoint (SabreDAV)
 
 **Data Model Relationships:**
-- User → Contacts (1:n)
+- User → Friends (1:n)
 - User → Circles (1:n)
-- Contact → Encounters (1:n)
-- Contact → Reminders (1:n)
-- Contact → Circles (n:m)
-- Contact → Tags (n:m)
+- Friend → Encounters (n:m)
+- Friend → Reminders (1:n)
+- Friend → Circles (n:m)
+- Friend → Tags (n:m)
+- Friend → Collectives (n:m, via memberships)
 - Circle → Users (n:m) - for multi-user
 
 ### 6.3 Data Interfaces
@@ -404,7 +408,7 @@ Powerful search across all contact data.
 - vCard (.vcf)
 - CSV
 - JSON
-- PDF (for printing individual contacts or lists)
+- PDF (for printing individual pages or lists)
 
 ---
 
@@ -434,13 +438,13 @@ Finally, let's make it work with everything else:
 ### Phase 4: Full Circle
 Bring back the original Freundebuch experience:
 - Self-Service Friend Pages (let friends fill out their own pages)
-- See [Epic 13](../project-management/epics/epic-13-self-service-pages.md) for details
+- See [Epic 13](../project-management/epics/epic-13-future-self-service-pages.md) for details
 
 ### Questions We're Still Figuring Out
 1. Multi-tenant from day one, or add it later?
 2. How should the SaaS pricing work?
 3. What's the best backup strategy?
-4. Hard delete contacts or soft delete (archive)?
+4. Hard delete friends or soft delete (archive)?
 5. Which languages should we support initially?
 
 ---
