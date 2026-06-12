@@ -1,4 +1,4 @@
-# Database Conventions & System Prompt
+# Database Conventions
 
 This document defines the database design conventions and best practices for Freundebuch.
 
@@ -9,11 +9,11 @@ This document defines the database design conventions and best practices for Fre
 All database tables MUST be organized into logical PostgreSQL schemas. Never use the default `public` schema.
 
 **Schema Structure:**
-- `auth` - Authentication and user management (users, sessions, tokens)
-- `contacts` - Contact management (contacts, relationships, groups)
-- `collectives` - Collective management (collective types, collectives, memberships)
-- `encounters` - Encounter tracking (encounters, notes, reminders)
-- `system` - System tables (migrations, settings, audit logs)
+- `auth` - Authentication and user management (Better Auth tables, app passwords)
+- `friends` - Friend management (friends, sub-resources, relationships, circles)
+- `encounters` - Encounter tracking (encounters, encounter participants)
+- `collectives` - Collective management (collective types, roles, collectives, memberships, sub-resources)
+- `geodata` - OpenStreetMap address data for autocomplete (addresses, house numbers, import batches)
 
 **Example:**
 ```sql
@@ -51,6 +51,8 @@ id BIGSERIAL PRIMARY KEY
 ### External IDs (ALWAYS expose in API)
 
 Every table MUST have an `external_id` column with type `UUID` for API exposure.
+
+> **Exception:** The Better Auth tables in the `auth` schema (`user`, `session`, `account`, `verification`, `passkey`) are managed by Better Auth and follow its conventions instead: singular table names and a `TEXT` primary key (`id`) that holds the public UUID directly. Do not "fix" them to match this guide. All Freundebuch-owned tables follow the rules below.
 
 ```sql
 external_id UUID NOT NULL UNIQUE DEFAULT gen_random_uuid()
@@ -143,9 +145,9 @@ metadata JSONB DEFAULT '{}'::jsonb
 
 ### Tables
 
-- Use plural nouns: `users`, `contacts`, `encounters`
-- Use snake_case: `contact_groups`, `user_sessions`
-- Prefix with schema: `auth.users`, `contacts.contacts`
+- Use plural nouns: `friends`, `encounters`, `collectives`
+- Use snake_case: `friend_circles`, `collective_memberships`
+- Prefix with schema: `friends.friends`, `encounters.encounters`
 
 ### Columns
 
@@ -321,8 +323,8 @@ Create indexes for:
 
 ### Query Files
 
-- Organize queries by schema: `queries/auth/`, `queries/contacts/`
-- Use descriptive names: `getUserByExternalId.sql`, `createContact.sql`
+- Queries live in `apps/backend/src/models/queries/`, one `.sql` file per resource: `friends.sql`, `encounters.sql`, `friend-addresses.sql`, ...
+- Use descriptive query names inside the file: `/* @name GetFriendByExternalId */`
 - Always use `external_id` in WHERE clauses for API-facing queries
 - Never expose `id` columns in SELECT statements for API responses
 
@@ -335,9 +337,9 @@ WHERE external_id = :externalId;
 
 ### Generated Types
 
-- Regenerate types after schema changes: `aube pgtyped`
-- Commit generated types to version control
-- Types are in `.types.ts` files (gitignored, but examples committed)
+- Regenerate types after schema or query changes: `aube pgtyped`
+- PgTyped writes a `.queries.ts` file next to each `.sql` file
+- Generated `.queries.ts` files are **committed** to version control alongside their `.sql` sources (see [git-workflow.md](./git-workflow.md#pgtyped-generated-files))
 
 ## Documentation
 
@@ -372,6 +374,6 @@ For every new table, ensure:
 
 ---
 
-**Last Updated:** 2025-01-07
-**PostgreSQL Version:** 18+
+**Last Updated:** 2026-06-12
+**PostgreSQL Version:** 18+ (with PostGIS)
 **Node.js Version:** 24+

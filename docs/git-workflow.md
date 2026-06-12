@@ -58,7 +58,7 @@ The description should be sentence case, imperative mood, and not end with a per
 | Scope | Covers |
 |-------|--------|
 | `all` | Affects everything |
-| `backend` | `apps/backend` (Node/Express) |
+| `backend` | `apps/backend` (Node/Hono) |
 | `frontend` | `apps/frontend` (SvelteKit) |
 | `shared` | `packages/shared` |
 | `database` | Database migrations and schema |

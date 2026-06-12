@@ -12,6 +12,7 @@ This is a personal relationship tool, not a business/sales CRM.
 |-------|------------|---------|
 | Frontend | SvelteKit + Tailwind CSS | Responsive, mobile-first UI |
 | Backend | Node.js + Hono | Lightweight RESTful API |
+| Auth | Better Auth (+ passkey plugin) | Sessions, passkeys/WebAuthn, app passwords for DAV |
 | CalDAV/CardDAV | PHP + SabreDAV | Device sync via open protocols |
 | Database | PostgreSQL + PostGIS + PgTyped | Type-safe spatial queries |
 | Shared | TypeScript + ArkType | Cross-app types and runtime validation |
@@ -31,6 +32,8 @@ freundebuch2/
 │   │   │   ├── services/     # Business logic
 │   │   │   ├── models/       # PgTyped SQL queries
 │   │   │   ├── middleware/   # Request middleware
+│   │   │   ├── lib/          # Better Auth instance
+│   │   │   ├── scripts/      # Seed script
 │   │   │   ├── types/        # App-level types
 │   │   │   └── utils/        # Config, DB, logging, caching
 │   │   └── tests/
@@ -88,7 +91,7 @@ PostgreSQL with PostGIS extension. Each domain gets its own schema — the `publ
 
 | Schema | Purpose | Key Tables |
 |--------|---------|------------|
-| `auth` | Authentication and sessions | users, sessions |
+| `auth` | Authentication and sessions | user, session, account, verification, passkey (Better Auth), app_passwords; legacy users/sessions tables pending removal |
 | `friends` | Friend management | friends, friend_phones, friend_emails, friend_addresses, friend_urls, friend_dates, friend_professional_history, friend_social_profiles, friend_met_info, friend_relationships, friend_changes, circles, friend_circles |
 | `encounters` | Encounter tracking | encounters, encounter_friends |
 | `collectives` | Collectives (families, companies, clubs) | collective_types, collective_roles, collectives, collective_memberships, collective_addresses, collective_emails, collective_phones, collective_urls, collective_circles |
@@ -140,6 +143,7 @@ Detailed epics live in [project-management/epics/](../project-management/epics/)
 ### In Progress
 
 - **Epic 6** — CalDAV/CardDAV interface (SabreDAV infrastructure exists)
+- **Epic 18** — Better Auth migration (Better Auth with passkeys is live; legacy auth tables still pending removal)
 
 ### Planned
 
@@ -153,4 +157,3 @@ Detailed epics live in [project-management/epics/](../project-management/epics/)
 - **Epic 15** — Friend notes
 - **Epic 16** — Multi-user workspaces
 - **Epic 17** — Advanced search
-- **Epic 18** — Better auth migration

@@ -190,7 +190,15 @@ We use **Heroicons**, the official Tailwind CSS icon set. They're clean, consist
 ### Icon Set
 - **Heroicons** - consistent stroke width across all icons (1.5px for outline variant)
 - Two variants: Outline (default), Solid (for active/selected states)
-- Installation: `npm install @heroicons/react`
+- We use the [`svelte-heros-v2`](https://www.npmjs.com/package/svelte-heros-v2) package (Heroicons v2 for Svelte 5) - never paste inline SVG markup
+
+```svelte
+<script>
+  import { UserCircle } from 'svelte-heros-v2';
+</script>
+
+<UserCircle class="w-5 h-5 text-gray-600" />
+```
 
 ### Sizes
 - **Small**: `w-4 h-4` (16px)
@@ -221,50 +229,31 @@ We use **Heroicons**, the official Tailwind CSS icon set. They're clean, consist
 
 ## Custom Tailwind Configuration
 
-Ready to bring these colors and fonts into your project? Here's what you'll need to add to `tailwind.config.js`:
+We're on **Tailwind CSS 4**, so the design tokens live in CSS, not in a JS config file. The source of truth is the `@theme` block in [`apps/frontend/src/app.css`](../apps/frontend/src/app.css):
 
-```js
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        forest: {
-          DEFAULT: '#2D5016',
-          light: '#3A6B1E',
-          dark: '#1F3810',
-        },
-        sage: {
-          DEFAULT: '#8B9D83',
-        },
-        amber: {
-          warm: '#D4A574',
-        },
-      },
-      fontFamily: {
-        heading: ['"Yanone Kaffeesatz"', 'sans-serif'],
-        body: ['Merriweather', 'serif'],
-      },
-    },
-  },
+```css
+@theme {
+  /* Custom colors */
+  --color-forest: #2d5016;
+  --color-forest-light: #3a6b1e;
+  --color-forest-dark: #1f3810;
+  --color-sage: #8b9d83;
+  --color-amber-warm: #d4a574;
+
+  /* Custom fonts */
+  --font-heading: "Yanone Kaffeesatz", sans-serif;
+  --font-body: Merriweather, serif;
 }
 ```
 
-### Font Weights
+### Fonts
 
-Ensure the following weights are available for each font:
+Both fonts are self-hosted as `woff2` files in `apps/frontend/static/fonts/` and registered via `@font-face` in `app.css` - no Google Fonts requests, in keeping with our privacy-first principle. Available weights:
 
-**Yanone Kaffeesatz:**
-- Regular (400)
-- Medium (500)
-- Semi-Bold (600)
-- Bold (700)
+**Yanone Kaffeesatz:** Regular (400), Bold (700)
 
-**Merriweather:**
-- Light (300)
-- Regular (400)
-- Bold (700)
-- Black (900)
+**Merriweather:** Light (300), Regular (400), Bold (700)
 
 ### Usage
-- Colors: `bg-forest`, `text-forest-light`, `border-sage`
+- Colors: `bg-forest`, `text-forest-light`, `border-sage`, `text-amber-warm`
 - Typography: `font-heading`, `font-body`
