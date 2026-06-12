@@ -2,7 +2,7 @@
 
 **Project:** freundebuch2
 **Type:** Chore
-**Related Epic:** [Epic 18: Better Auth Migration](../epics/epic-18-planned-better-auth-migration.md)
+**Related Epic:** [Epic 18: Better Auth Migration](../epics/epic-18-partial-better-auth-migration.md)
 **Phase:** Phase 1.5 (Post-MVP Enhancement)
 **Priority:** Medium
 
@@ -93,7 +93,7 @@ Check whether `jsonwebtoken` and `bcrypt` in `apps/backend/package.json` are sti
 
 ### Documentation
 
-- Update or archive `docs/security-session-tokens.md` (describes the legacy session approach)
+- Update or archive `docs/security-authentication.md` (describes the legacy session approach)
 - Update Epic 18 status to reflect cleanup completion
 
 ---
@@ -139,7 +139,7 @@ Create a migration to:
 - [ ] Legacy queries are removed from `apps/backend/src/models/queries/users.sql` (and `.queries.ts` regenerated)
 - [ ] Legacy env vars are removed from `config.ts` and `.env.example`
 - [ ] `jsonwebtoken` dependency is removed from `apps/backend/package.json`
-- [ ] `docs/security-session-tokens.md` is updated or archived
+- [ ] `docs/security-authentication.md` is updated or archived
 - [ ] All existing tests pass
 - [ ] No production code imports any deleted file (verify with `grep -r` across `apps/backend/src/`)
 
@@ -176,4 +176,4 @@ Create a migration to:
 ## Related Issues
 
 - [Better Auth Production Deployment Checklist](./better-auth-production-deployment.md) — documents the SabreDAV legacy dependency
-- [Epic 18: Better Auth Migration](../epics/epic-18-planned-better-auth-migration.md) — parent epic, cleanup steps outlined in lines 305–309
+- [Epic 18: Better Auth Migration](../epics/epic-18-partial-better-auth-migration.md) — parent epic, cleanup steps outlined in lines 305–309

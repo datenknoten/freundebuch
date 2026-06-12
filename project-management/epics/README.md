@@ -8,7 +8,7 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 |------|-------|-------|----------|--------|
 | [Epic 0](epic-00-done-project-setup.md) | Project Setup & Infrastructure | Pre-MVP (Phase 0) | Critical | **Done** |
 | [Epic 1](epic-01-done-friend-management.md) | Friend Management | MVP (Phase 1) | High | **Done** |
-| [Epic 2](epic-02-planned-relationship-management.md) | Relationship Management | Phase 2 | High | Planned |
+| [Epic 2](epic-02-done-encounter-management.md) | Encounter Management | Phase 2 | High | **Done** |
 | [Epic 3](epic-03-planned-reminder-system.md) | Reminder System | Phase 2 | High | Planned |
 | [Epic 4](epic-04-planned-categorization-organization.md) | Categorization & Organization | MVP (Phase 1) | High | Planned |
 | [Epic 5](epic-05-done-multi-user-management.md) | Multi-User Management (Auth) | MVP (Phase 1) | High | **Done** |
@@ -18,13 +18,13 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 | [Epic 9](epic-09-planned-dashboard-insights.md) | Dashboard & Insights | Phase 2 (basic), Phase 3 (extended) | Medium | Planned |
 | [Epic 10](epic-10-done-search-functionality.md) | Search Functionality (Basic) | MVP (Phase 1) | High | **Done** |
 | [Epic 11](epic-11-planned-custom-fields.md) | Custom Fields | Phase 2 | Low | Planned |
-| [Epic 12](epic-12-planned-collectives.md) | Collectives | Phase 2 | Medium | Planned |
+| [Epic 12](epic-12-done-collectives.md) | Collectives | Phase 2 | Medium | **Done** |
 | [Epic 13](epic-13-future-self-service-pages.md) | Self-Service Friend Pages | Phase 4 | Low | Future |
 | [Epic 14](epic-14-done-subresource-inline-editing.md) | Subresource Inline Editing | Enhancement | High | **Done** |
 | [Epic 15](epic-15-planned-friend-notes.md) | Friend Notes | MVP (Phase 1) | High | Planned |
 | [Epic 16](epic-16-planned-multi-user-workspaces.md) | Multi-User Workspaces | Phase 2 | Medium | Planned |
 | [Epic 17](epic-17-planned-advanced-search.md) | Advanced Search | Phase 2 | Medium | Planned |
-| [Epic 18](epic-18-planned-better-auth-migration.md) | Better Auth Migration | Phase 1.5 | High | Planned |
+| [Epic 18](epic-18-partial-better-auth-migration.md) | Better Auth Migration | Phase 1.5 | High | **Partial** (live; legacy table removal pending) |
 
 ## Implementation Phases
 
@@ -56,16 +56,16 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 - Epic 15: Friend Notes - Planned (extracted from Epic 1C)
 
 **What you can do now:**
-- Create, edit, and manage your contacts
+- Create, edit, and manage your friends
 - Add phones, emails, addresses, URLs, dates, social profiles inline
-- Define relationships between contacts
+- Define relationships between friends
 - Search to find anyone quickly
 - Log in securely (single-user)
 - Use it on any device (responsive design!)
 
 **Still to come:**
-- Organize contacts into groups and tag them (Epic 4)
-- Contact notes (Epic 15)
+- Organize friends into circles and tag them (Epic 4)
+- Friend notes (Epic 15)
 
 ---
 
@@ -73,12 +73,12 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 **Goal:** Improve the foundation before expanding features
 
 **Epics:**
-- Epic 18: Better Auth Migration - Planned
+- Epic 18: Better Auth Migration - **Partial** (Better Auth with passkeys is live; legacy auth tables pending removal)
 
-**What we'll do:**
-- Replace custom auth with Better Auth library
-- Reduce maintenance burden
-- Enable future auth features (2FA, social login, passkeys)
+**What we did:**
+- Replaced custom auth with Better Auth library
+- Added passkey (WebAuthn) support
+- Reduced maintenance burden and enabled future auth features (2FA, social login)
 
 ---
 
@@ -86,24 +86,26 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 **Goal:** Add the features that make staying in touch easier
 
 **Epics:**
-- Epic 2: Relationship Management (track your interactions) - Planned
+- Epic 2: Encounter Management (track your encounters) - **Done**
 - Epic 3: Reminder System (never forget to reach out) - Planned
 - Epic 8: Activity Timeline (see your history) - Planned
 - Epic 9: Dashboard & Insights (the big picture) - Planned
 - Epic 11: Custom Fields (make it truly yours) - Planned
-- Epic 12: Collectives (families, companies, and groups with auto-relationships) - Planned
+- Epic 12: Collectives (families, companies, and groups with auto-relationships) - **Done**
 - Epic 16: Multi-User Workspaces (sharing capabilities) - Planned (extracted from Epic 5)
 - Epic 17: Advanced Search (filters, fuzzy search, saved searches) - Planned (extracted from Epic 10)
 
-**What you'll be able to do:**
-- Keep a history of all your interactions
+**What you can do now:**
+- Log encounters with one or more friends and build a shared history
+- Group friends into families, companies, or clubs with automatic relationship creation
+
+**Still to come:**
 - Get reminded when it's time to reconnect
-- Share contacts with family or housemates
+- Share friends with family or housemates
 - See a timeline of your relationship history
 - Get insights into your social network
 - Use powerful search filters and save them
-- Add your own custom fields to contacts
-- Group contacts into families, companies, or clubs with automatic relationship creation
+- Add your own custom fields to friends
 
 ---
 
@@ -147,11 +149,11 @@ graph TD
     E0 --> E4[Epic 4: Categorization]
     E0 --> E5[Epic 5: Multi-User Auth ✅]
     E0 --> E10[Epic 10: Search ✅]
-    E1 --> E2[Epic 2: Relationship Management]
+    E1 --> E2[Epic 2: Encounter Management ✅]
     E1 --> E4
     E1 --> E10
     E1 --> E11[Epic 11: Custom Fields]
-    E1 --> E12[Epic 12: Collectives]
+    E1 --> E12[Epic 12: Collectives ✅]
     E1 --> E15[Epic 15: Friend Notes]
     E2 --> E3[Epic 3: Reminders]
     E2 --> E8[Epic 8: Timeline]
@@ -165,7 +167,7 @@ graph TD
     E1 --> E13[Epic 13: Self-Service Pages]
     E5 --> E13
     E5 --> E16[Epic 16: Multi-User Workspaces]
-    E5 --> E18[Epic 18: Better Auth Migration]
+    E5 --> E18[Epic 18: Better Auth Migration 🔶]
     E18 --> E16
     E1 --> E14[Epic 14: Inline Editing ✅]
 ```

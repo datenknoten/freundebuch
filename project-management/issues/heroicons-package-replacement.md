@@ -217,4 +217,4 @@ Alternatively, if using a custom wrapper:
 - [Epic 14: Subresource Inline Editing](../epics/epic-14-done-subresource-inline-editing.md) - Improved UI consistency across the frontend
 - [Epic 1: Friend Management](../epics/epic-01-done-friend-management.md) - Friend UI components affected by this refactor
 - [Epic 10: Search Functionality](../epics/epic-10-done-search-functionality.md) - Search UI uses icons extensively
-- [Epic 12: Collectives](../epics/epic-12-planned-collectives.md) - Collective components use icons
+- [Epic 12: Collectives](../epics/epic-12-done-collectives.md) - Collective components use icons
