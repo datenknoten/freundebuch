@@ -1,7 +1,7 @@
 # Comparison: Freundebuch vs. Monica
 
-**Version:** 1.0
-**Date:** 05.06.2026
+**Version:** 1.1
+**Date:** 12.06.2026
 **Status:** Active
 
 ---
@@ -18,14 +18,16 @@ This is a living document - update it when either project ships something signif
 
 Monica is a PHP/Laravel + Vue application backed by MySQL (SQLite and PostgreSQL also work), licensed under AGPL-3.0 - same license as us. It's self-hostable via Docker for free, with a hosted SaaS option at $9/month.
 
-The crucial context: **Monica is currently two products.**
+The crucial context: **Monica is currently two products - and both have stopped moving.**
 
-- **Monica v4** - the original app, stable and feature-rich, but effectively frozen since its last release (v4.1.2, May 2024).
-- **Monica v5 "Chandler"** - a from-scratch rewrite, in beta since June 2023 and still in beta as of mid-2025 (v5.0.0-beta.5). It introduces a new "vaults" data model and a journaling focus, but launched missing several v4 features (DAV sync, life events, imports) that are only gradually being backfilled.
+- **Monica v4** - the original app, stable and feature-rich, but frozen since its last release (v4.1.2, May 2024). It is still the "latest" stable release.
+- **Monica v5 "Chandler"** - a from-scratch rewrite, in beta since June 2023. The newest tag of any kind is v5.0.0-beta.5 (April 2025); three years of beta with no stable release in sight. It introduces a new "vaults" data model and a journaling focus, but launched missing several v4 features that are only partially backfilled.
 
-There is **no automated migration path from v4 to v5**, and the maintainers have said one may not come soon. The team is small, treats the project as a side project, and openly acknowledges slow issue triage. The project is not dead, but its users are caught between a stable dead end and an unfinished rewrite.
+As of June 2026 the project is **effectively dormant**: the last commit to `main` was August 30, 2025 - over nine months of zero activity - with no official announcement, no shutdown notice, and no new maintainer. The last official blog post is still "Chandler is in beta" from June 2023. Telling detail: founder Régis Freyd's own successor project, [peopleOS](https://github.com/djaiss/peopleOS) ("the spiritual successor to Monica"), was archived on August 31, 2025 - one day after Monica's last commit. The hosted SaaS at monicahq.com remains live at unchanged pricing ($9/month, free tier capped at 10 contacts), and the repo is not archived, but nothing is being developed.
 
-Sources: [project update (#6626)](https://github.com/monicahq/monica/issues/6626), [v4 vs v5 discussion (#7321)](https://github.com/monicahq/monica/discussions/7321), [vaults docs](https://docs.monicahq.com/vaults/introduction), [releases](https://github.com/monicahq/monica/releases).
+There is **no automated migration path from v4 to v5**, and the maintainers said one would likely not come - community threads explicitly warn that upgrading means data loss. Monica's users are caught between a stable dead end and an unfinished, now-unmaintained rewrite.
+
+Sources (all re-verified 2026-06-12): [project update (#6626)](https://github.com/monicahq/monica/issues/6626), [v4 vs v5 discussion (#7321)](https://github.com/monicahq/monica/discussions/7321), [vaults docs](https://docs.monicahq.com/vaults/introduction), [releases](https://github.com/monicahq/monica/releases), [commit history](https://github.com/monicahq/monica/commits/main), [pricing](https://www.monicahq.com/pricing).
 
 ---
 
@@ -34,13 +36,13 @@ Sources: [project update (#6626)](https://github.com/monicahq/monica/issues/6626
 | Area | Freundebuch | Monica |
 |---|---|---|
 | **Collectives with auto-relationships** | Adding a member to a family, company, or club with a role automatically creates relationships to the other members based on type-specific rules | Manual relationship linking only - no equivalent concept |
-| **CardDAV sync depth** | vCard 4.0 with custom extensions for met info, interests, and social profiles; per-device app passwords | CardDAV exists but is more basic; Chandler only regained DAV support in August 2025 |
+| **CardDAV sync depth** | vCard 4.0 with custom extensions for met info, interests, and social profiles; per-device app passwords | CardDAV exists but is more basic; Chandler's CalDAV (calendar) support was merged to `main` in August 2025 and has never appeared in a tagged release |
 | **Met info as first-class data** | How/where/when/context of meeting someone, synced via vCard | A shallower "how you met" field |
 | **Professional history** | Full employment history as a sub-resource (positions, companies, dates) | A job title and company snapshot |
 | **Modern authentication** | Passkeys/WebAuthn via Better Auth, app-specific passwords | Standard Laravel session auth |
 | **Geospatial features** | PostGIS-backed address autocomplete (OpenStreetMap/Overpass), maps via Leaflet | Plain address strings |
-| **AI integration** | Built-in MCP server for AI assistant access | None |
-| **Development momentum** | Weekly releases, semantic-release automation, strict TypeScript, type-safe SQL via PgTyped | Deliberately slowed; v4 frozen, v5 in multi-year beta |
+| **AI integration** | Built-in MCP server for AI assistant access | None (explicitly no AI integrations, as a privacy stance) |
+| **Development momentum** | Weekly releases, semantic-release automation, strict TypeScript, type-safe SQL via PgTyped | Stalled: no commits since August 2025, no release since April 2025, v4 frozen since May 2024 |
 | **No version schism** | One codebase with continuous migrations | v4/v5 split with no migration path |
 
 ---
@@ -79,7 +81,7 @@ Everything in this list is something Monica shipped years ago and we have only p
 ## 6. Strategic Takeaways
 
 1. **Close the reminders gap first.** Stay-in-touch reminders are the feature that turns an address book into a relationship tool, and the feature Monica users will expect on day one. Epic 3 should be high priority.
-2. **The migration opening is real.** Monica v4 users are orphaned. vCard import (Epic 7) plus a dedicated Monica importer would be a direct funnel - Monica's documented REST API makes extracting their data straightforward.
+2. **The migration opening is real - and wider than before.** Monica v4 users are orphaned, and with all development stopped since August 2025 the rewrite will not rescue them. vCard import (Epic 7) plus a dedicated Monica importer would be a direct funnel - Monica's documented REST API makes extracting their data straightforward.
 3. **Don't chase the journal.** Chandler bet on journaling, which drifts toward diary-app territory. Our encounter model plus collectives is a more distinct position.
 4. **Lead with collectives.** Nothing in Monica auto-derives relationships from group membership. It's our clearest differentiator and worth featuring prominently in any "why Freundebuch" messaging.
 5. **Self-service friend pages (Epic 13) stay unique.** Monica has nothing comparable - friends filling in their own pages fits the Freundebuch tradition perfectly and no competitor offers it.

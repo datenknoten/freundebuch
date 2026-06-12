@@ -56,7 +56,7 @@ Different people care about different things. Lead with what lands.
 | Privacy-conscious | "Google knows your contacts. This keeps them on a server we control" |
 | Tech person | Self-hosted, AGPL, SvelteKit/Hono/PostgreSQL + PostGIS, CardDAV with vCard 4.0, MCP server for AI assistants, weekly releases |
 | Power user | "On the desktop you barely touch the mouse - search, open, and edit everything with keyboard shortcuts." Then demo it: a few keystrokes from search to a friend's page |
-| Monica refugee | "Monica v4 is frozen, v5 is a multi-year beta with no migration path. Freundebuch is actively developed" - see [comparison-monica.md](./comparison-monica.md) |
+| Monica refugee | "Monica v4 is frozen, v5 never left beta, and development stopped entirely in 2025. Freundebuch ships weekly" - see [comparison-monica.md](./comparison-monica.md) |
 | Family / partner | Shared knowledge: "we both remember which cousin has the nut allergy" |
 
 ---
