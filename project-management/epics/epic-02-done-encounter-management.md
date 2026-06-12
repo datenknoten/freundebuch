@@ -1,6 +1,6 @@
 # Epic 2: Encounter Management (Begegnungen)
 
-**Status:** Planned
+**Status:** Done
 **Phase:** Core Functionality (Phase 2)
 **Priority:** High
 **GitHub Issue:** [#4](https://github.com/enko/freundebuch2/issues/4)

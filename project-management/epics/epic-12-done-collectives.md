@@ -1,6 +1,6 @@
 # Epic 12: Collectives
 
-**Status:** Planned
+**Status:** Done
 **Phase:** Phase 2
 **Priority:** Medium
 **Depends On:** Epic 1D (Contact Relationships)
