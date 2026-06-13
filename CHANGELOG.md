@@ -1,3 +1,7 @@
+## <small>2.84.3 (2026-06-13)</small>
+
+* fix(database): Use RAM node cache instead of flat-nodes for OSM import ([18e51d2](https://github.com/datenknoten/freundebuch/commit/18e51d2))
+
 ## <small>2.84.2 (2026-06-13)</small>
 
 * fix(database): Speed up full-country OSM import with flat-nodes ([c654f38](https://github.com/datenknoten/freundebuch/commit/c654f38))
