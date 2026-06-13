@@ -266,7 +266,7 @@ export class FriendsService {
    * Create a new friend with optional sub-resources
    */
   async createFriend(userExternalId: string, data: FriendCreateInput): Promise<Friend> {
-    this.logger.info({ userExternalId, displayName: data.display_name }, 'Creating friend');
+    this.logger.info({ userExternalId }, 'Creating friend');
 
     const [friend] = await createFriend.run(
       {

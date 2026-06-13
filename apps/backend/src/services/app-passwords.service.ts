@@ -122,7 +122,7 @@ export class AppPasswordsService {
    * @throws MaxAppPasswordsExceededError if user has too many app passwords
    */
   async createAppPassword(userExternalId: string, name: string): Promise<AppPasswordWithSecret> {
-    this.logger.info({ userId: userExternalId, name }, 'Creating app password');
+    this.logger.info({ userId: userExternalId }, 'Creating app password');
 
     // Check if user has reached the maximum number of app passwords
     const existingPasswords = await this.listAppPasswords(userExternalId);
@@ -210,7 +210,7 @@ export class AppPasswordsService {
    * Returns user info if valid, null if invalid
    */
   async verifyAppPassword(email: string, password: string): Promise<BasicAuthContext | null> {
-    this.logger.debug({ email }, 'Verifying app password');
+    this.logger.debug('Verifying app password');
 
     // Invert formatPassword to recover the raw base64url password. Must preserve
     // '-' characters that are part of the base64url alphabet; only strip the
@@ -223,7 +223,7 @@ export class AppPasswordsService {
 
     const user = users[0];
     if (!user) {
-      this.logger.warn({ email }, 'User not found for app password verification');
+      this.logger.warn('User not found for app password verification');
       return null;
     }
 
@@ -244,10 +244,7 @@ export class AppPasswordsService {
         // Update last_used_at
         await updateAppPasswordLastUsed.run({ id: ap.id }, this.db);
 
-        this.logger.info(
-          { email, passwordId: ap.external_id },
-          'App password verified successfully',
-        );
+        this.logger.info({ passwordId: ap.external_id }, 'App password verified successfully');
 
         return {
           userId: user.external_id,
@@ -257,7 +254,7 @@ export class AppPasswordsService {
       }
     }
 
-    this.logger.warn({ email }, 'Invalid app password');
+    this.logger.warn('Invalid app password');
     return null;
   }
 }

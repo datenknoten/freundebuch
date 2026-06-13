@@ -6,6 +6,10 @@ export function createLogger() {
   return pino({
     level: process.env.VITEST === 'true' ? 'silent' : config.LOG_LEVEL,
     redact: {
+      // Backstop against PII reaching logs (and, via the Sentry pino
+      // integration, Sentry). Call sites should log IDs not PII, but this
+      // catches anything that slips through. This is a personal CRM — names,
+      // emails and addresses are sensitive.
       paths: [
         'body.password',
         'body.token',
@@ -13,6 +17,16 @@ export function createLogger() {
         'password',
         'body.newPassword',
         'body.oldPassword',
+        'email',
+        '*.email',
+        'body.email',
+        'newEmail',
+        'body.newEmail',
+        'displayName',
+        '*.displayName',
+        'name',
+        'address',
+        '*.address',
       ],
     },
     transport:

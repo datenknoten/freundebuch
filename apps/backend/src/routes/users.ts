@@ -97,7 +97,7 @@ app.put('/me', async (c) => {
     throw new Error('Failed to update user');
   }
 
-  logger.info({ userId: authUser.userId, newEmail: validated.email }, 'User profile updated');
+  logger.info({ userId: authUser.userId }, 'User profile updated');
 
   const selfProfileExternalId = updatedUser.self_profile_external_id;
 

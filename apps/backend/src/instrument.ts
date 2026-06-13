@@ -19,17 +19,32 @@ const pkgVersion = typeof pkg.version === 'string' ? pkg.version : 'unknown';
 const SENTRY_DSN = process.env.SENTRY_DSN;
 const NODE_ENV = process.env.ENV || 'development';
 
+const IS_PRODUCTION = NODE_ENV === 'production';
+
+// Attribute keys that must never leave the process. Backstop for the pino
+// redaction in utils/logger.ts — forwarded log attributes are scrubbed here
+// too, since this is a personal CRM (names, emails, addresses).
+const SENSITIVE_LOG_KEYS = [
+  'email',
+  'newEmail',
+  'displayName',
+  'name',
+  'address',
+  'password',
+  'token',
+];
+
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: NODE_ENV,
     release: `freundebuch-backend@${pkgVersion}`,
 
-    // Performance monitoring - 100% sampling for MVP phase
-    tracesSampleRate: 1.0,
+    // Full tracing in dev for debugging; sample in production to bound cost.
+    tracesSampleRate: IS_PRODUCTION ? 0.1 : 1.0,
 
-    // Enable sending of default PII (useful for debugging but disable in prod if needed)
-    sendDefaultPii: NODE_ENV !== 'production',
+    // Default PII (request IP, headers) only outside production.
+    sendDefaultPii: !IS_PRODUCTION,
 
     // Capture pino log messages as breadcrumbs and errors, and trace postgres queries
     integrations: [
@@ -37,5 +52,17 @@ if (SENTRY_DSN) {
       Sentry.postgresIntegration(),
     ],
     enableLogs: true,
+
+    // Strip sensitive attributes from forwarded logs before they leave the process.
+    beforeSendLog: (log) => {
+      if (log.attributes) {
+        for (const key of SENSITIVE_LOG_KEYS) {
+          if (key in log.attributes) {
+            delete log.attributes[key];
+          }
+        }
+      }
+      return log;
+    },
   });
 }

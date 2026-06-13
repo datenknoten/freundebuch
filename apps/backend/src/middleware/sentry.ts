@@ -56,15 +56,9 @@ export const sentryTracingMiddleware: MiddlewareHandler<AppContext> = async (c, 
               span.setStatus({ code: 1 }); // OK
             }
           } catch (error) {
-            // Capture exception with full trace context
-            Sentry.captureException(error, {
-              extra: {
-                path: c.req.path,
-                method: c.req.method,
-                routePath: c.req.routePath,
-              },
-            });
-
+            // Mark the span as failed, but do NOT capture here — the global
+            // onError handler is the single capture point, so capturing here
+            // too would double-report every error and flag every expected 4xx.
             span.setStatus({ code: 2 }); // ERROR
             span.setAttribute('error', true);
 
