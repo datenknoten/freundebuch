@@ -50,9 +50,15 @@ check_prerequisites() {
         exit 1
     fi
 
-    local version=$(osm2pgsql --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+' | head -1 || echo "0.0")
-    local major=$(echo "$version" | cut -d. -f1)
-    local minor=$(echo "$version" | cut -d. -f2)
+    # Capture first, then parse — keeps osm2pgsql out of a SIGPIPE'd pipeline
+    # (head closing early + pipefail would otherwise corrupt the version string).
+    local version_raw
+    version_raw=$(osm2pgsql --version 2>&1 | head -1)
+    local version
+    version=$(printf '%s\n' "$version_raw" | grep -oE '[0-9]+\.[0-9]+' | head -1 || true)
+    version=${version:-0.0}
+    local major=${version%%.*}
+    local minor=${version##*.}
 
     if (( major < 1 )) || (( major == 1 && minor < 11 )); then
         log_error "osm2pgsql version $version is too old. Need 1.11+ for flex output."
@@ -173,14 +179,23 @@ run_osm2pgsql() {
     # Drop staging table if exists
     psql "$DATABASE_URL" -q -c "DROP TABLE IF EXISTS public.osm_addresses_staging CASCADE;"
 
-    # Run osm2pgsql with flex output
+    # Run osm2pgsql with flex output.
+    # --flat-nodes stores node coords in a single file instead of DB middle
+    # tables, turning per-way random DB lookups into fast sequential file reads.
+    # Essential for full-country imports (100x faster way processing).
+    # --cache 0 because flat-nodes replaces the in-RAM node cache.
     osm2pgsql \
         -d "$DATABASE_URL" \
         -O flex \
         -S "$SCRIPT_DIR/address-import.lua" \
         --slim \
         --drop \
+        --cache 0 \
+        --flat-nodes "$DATA_DIR/flat-nodes.bin" \
         "$pbf_file"
+
+    # --drop wipes middle tables but leaves the flat-nodes file behind
+    rm -f "$DATA_DIR/flat-nodes.bin"
 
     log_success "osm2pgsql import completed"
 }
