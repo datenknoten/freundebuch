@@ -1,3 +1,9 @@
+## 2.83.0 (2026-06-13)
+
+* fix(backend): Align notification date display with occurrence and pluralize years ([9fcac89](https://github.com/datenknoten/freundebuch/commit/9fcac89))
+* fix(backend): Escape user values in HTML notification body ([ad32560](https://github.com/datenknoten/freundebuch/commit/ad32560))
+* feat(backend): Include age in upcoming date notifications ([4a2270d](https://github.com/datenknoten/freundebuch/commit/4a2270d))
+
 ## 2.82.0 (2026-06-13)
 
 * feat(frontend): Hide FAB on entity creation pages ([3b213c8](https://github.com/datenknoten/freundebuch/commit/3b213c8))
