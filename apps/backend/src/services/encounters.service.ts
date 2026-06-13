@@ -21,7 +21,7 @@ import {
   deleteEncounter,
   getEncounterById,
   getEncounterFriends,
-  getEncounterFriendsPreview,
+  getEncounterFriendsPreviewBatch,
   getEncountersByUserId,
   getLastEncounterForFriend,
   type IGetEncounterByIdResult,
@@ -82,15 +82,29 @@ export class EncountersService {
 
     const totalCount = countResult[0]?.total_count ?? 0;
 
-    // Get friend previews for each encounter
-    const encounters: EncounterListItem[] = await Promise.all(
-      encountersResult.map(async (row) => {
-        const friends = await getEncounterFriendsPreview.run(
-          { encounterExternalId: row.external_id, limit: PREVIEW_FRIEND_LIMIT },
-          this.db,
-        );
-        return this.mapEncounterListItem(row, friends);
-      }),
+    // Fetch the friend previews for the whole page in one query (avoids N+1),
+    // then group them by encounter in memory.
+    const previewRows = await getEncounterFriendsPreviewBatch.run(
+      {
+        userExternalId,
+        encounterExternalIds: encountersResult.map((row) => row.external_id),
+        limit: PREVIEW_FRIEND_LIMIT,
+      },
+      this.db,
+    );
+
+    const previewsByEncounter = new Map<string, typeof previewRows>();
+    for (const preview of previewRows) {
+      const list = previewsByEncounter.get(preview.encounter_external_id);
+      if (list) {
+        list.push(preview);
+      } else {
+        previewsByEncounter.set(preview.encounter_external_id, [preview]);
+      }
+    }
+
+    const encounters: EncounterListItem[] = encountersResult.map((row) =>
+      this.mapEncounterListItem(row, previewsByEncounter.get(row.external_id) ?? []),
     );
 
     return {
