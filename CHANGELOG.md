@@ -1,3 +1,7 @@
+## <small>2.84.2 (2026-06-13)</small>
+
+* fix(database): Speed up full-country OSM import with flat-nodes ([c654f38](https://github.com/datenknoten/freundebuch/commit/c654f38))
+
 ## <small>2.84.1 (2026-06-13)</small>
 
 * fix(all): Address dashboard PR review feedback ([acc1fc4](https://github.com/datenknoten/freundebuch/commit/acc1fc4))
