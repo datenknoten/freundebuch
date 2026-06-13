@@ -2,8 +2,11 @@ import type { Context, Next } from 'hono';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { isRateLimiterRes } from '../utils/type-guards.js';
 
-// Use higher limits in test environment to allow concurrent operation tests
-const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+// Use higher limits in test environment to allow concurrent operation tests.
+// Honor ENV (the canonical config var) as well as NODE_ENV so test detection
+// can't diverge from the rest of the app.
+const isTestEnv =
+  process.env.ENV === 'test' || process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 
 // Auth endpoint rate limiting is handled by Better Auth's rateLimit config
 // (5 req/min window). The authLimiter and passwordResetLimiter were removed
