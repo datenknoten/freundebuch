@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { withTransaction } from '../../../utils/db.js';
 
 /**
  * Configuration for a collective sub-resource service.
@@ -163,7 +164,7 @@ export abstract class CollectiveSubResourceService<
 
     // Use a transaction for clear+set primary to prevent race conditions
     if (needsPrimaryUpdate && !client) {
-      return this.withTransaction(async (txClient) => {
+      return withTransaction(this.db, async (txClient) => {
         await this.config.clearPrimaryFn?.({ userExternalId, collectiveExternalId }, txClient);
         const [result] = await this.config.createFn(
           { userExternalId, collectiveExternalId, input },
@@ -211,7 +212,7 @@ export abstract class CollectiveSubResourceService<
 
     // Use a transaction for clear+set primary to prevent race conditions
     if (needsPrimaryUpdate && !client) {
-      return this.withTransaction(async (txClient) => {
+      return withTransaction(this.db, async (txClient) => {
         await this.config.clearPrimaryFn?.({ userExternalId, collectiveExternalId }, txClient);
         const [result] = await this.config.updateFn(
           { userExternalId, collectiveExternalId, resourceExternalId, input },
@@ -261,31 +262,5 @@ export abstract class CollectiveSubResourceService<
     );
 
     return result.length > 0;
-  }
-
-  /**
-   * Execute a function within a database transaction
-   */
-  private async withTransaction<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
-    const client = await this.db.connect();
-    try {
-      await client.query('BEGIN');
-      const result = await fn(client);
-      await client.query('COMMIT');
-      return result;
-    } catch (error) {
-      try {
-        await client.query('ROLLBACK');
-      } catch {
-        // Ignore rollback errors to preserve the original error
-      }
-      throw error;
-    } finally {
-      try {
-        client.release();
-      } catch {
-        // Prevent connection leak from masking the original error
-      }
-    }
   }
 }
