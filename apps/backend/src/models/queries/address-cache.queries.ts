@@ -96,6 +96,32 @@ const deleteExpiredAddressCacheEntriesIR: any = {"usedParamSet":{},"params":[],"
 export const deleteExpiredAddressCacheEntries = new PreparedQuery<IDeleteExpiredAddressCacheEntriesParams,IDeleteExpiredAddressCacheEntriesResult>(deleteExpiredAddressCacheEntriesIR);
 
 
+/** 'DeleteAddressCacheEntry' parameters type */
+export interface IDeleteAddressCacheEntryParams {
+  cacheKey: string;
+}
+
+/** 'DeleteAddressCacheEntry' return type */
+export type IDeleteAddressCacheEntryResult = void;
+
+/** 'DeleteAddressCacheEntry' query type */
+export interface IDeleteAddressCacheEntryQuery {
+  params: IDeleteAddressCacheEntryParams;
+  result: IDeleteAddressCacheEntryResult;
+}
+
+const deleteAddressCacheEntryIR: any = {"usedParamSet":{"cacheKey":true},"params":[{"name":"cacheKey","required":true,"transform":{"type":"scalar"},"locs":[{"a":51,"b":60}]}],"statement":"DELETE FROM system.address_cache\nWHERE cache_key = :cacheKey!"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * DELETE FROM system.address_cache
+ * WHERE cache_key = :cacheKey!
+ * ```
+ */
+export const deleteAddressCacheEntry = new PreparedQuery<IDeleteAddressCacheEntryParams,IDeleteAddressCacheEntryResult>(deleteAddressCacheEntryIR);
+
+
 /** 'ClearAddressCache' parameters type */
 export type IClearAddressCacheParams = void;
 
