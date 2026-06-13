@@ -28,6 +28,10 @@ const ConfigSchema = type({
   PORT: 'string.integer.parse = "3000"',
   FRONTEND_URL: 'string = "http://localhost:5173"',
   BACKEND_URL: 'string = "http://localhost:3000"',
+  // Set true only when the app runs behind a reverse proxy that appends the
+  // real client IP as the last X-Forwarded-For hop. When false, rate limiting
+  // keys off the socket peer address, which clients cannot spoof.
+  TRUST_PROXY: BooleanString.default(false),
 
   // Authentication (Better Auth)
   BETTER_AUTH_SECRET: SecretType,
