@@ -17,7 +17,7 @@ import authRoutes from './routes/auth.js';
 import circlesRoutes from './routes/circles.js';
 import collectivesRoutes from './routes/collectives.js';
 import encountersRoutes from './routes/encounters.js';
-import friendsRoutes from './routes/friends.js';
+import friendsRoutes from './routes/friends/index.js';
 import healthRoutes from './routes/health.js';
 import notificationChannelsRoutes from './routes/notification-channels.js';
 import sentryTunnelRoutes from './routes/sentry-tunnel.js';
