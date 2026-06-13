@@ -125,6 +125,18 @@ export async function startServer() {
   const port = config.PORT;
   const pinoLogger = createLogger();
 
+  // Last-resort handlers so an unhandled rejection / uncaught exception is
+  // logged and reported to Sentry instead of silently killing the process.
+  process.on('unhandledRejection', (reason) => {
+    const err = toError(reason);
+    pinoLogger.error({ err }, 'Unhandled promise rejection');
+    Sentry.captureException(err);
+  });
+  process.on('uncaughtException', (err) => {
+    pinoLogger.error({ err }, 'Uncaught exception');
+    Sentry.captureException(err);
+  });
+
   // Migrate uploads directory from legacy 'contacts' path to 'friends'
   await PhotoService.migrateFromLegacyPath(pinoLogger);
 

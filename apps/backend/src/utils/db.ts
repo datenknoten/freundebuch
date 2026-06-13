@@ -136,22 +136,36 @@ export function createPool(): pg.Pool {
     connectionString: config.DATABASE_URL,
     min: config.DATABASE_POOL_MIN,
     max: config.DATABASE_POOL_MAX,
+    connectionTimeoutMillis: config.DATABASE_CONNECTION_TIMEOUT_MS,
+    idleTimeoutMillis: config.DATABASE_IDLE_TIMEOUT_MS,
+    statement_timeout: config.DATABASE_STATEMENT_TIMEOUT_MS,
+    query_timeout: config.DATABASE_STATEMENT_TIMEOUT_MS,
   });
+
+  // Without an 'error' listener, an idle-client error (DB restart, network
+  // blip) is emitted as an unhandled 'error' event and crashes the process.
+  const poolLogger = createLogger();
+  rawPool.on('error', (err) => {
+    poolLogger.error({ err: toError(err) }, 'Idle pg client error');
+  });
+
   pool = wrapPool(rawPool);
   return pool;
 }
 
 export async function checkDatabaseConnection(dbPool: pg.Pool): Promise<boolean> {
+  let client: pg.PoolClient | undefined;
   try {
-    const client = await dbPool.connect();
+    client = await dbPool.connect();
     await client.query('SELECT 1');
-    client.release();
     return true;
   } catch (error) {
     const logger = createLogger();
     const err = toError(error);
     logger.error({ err }, 'Database connection check failed');
     return false;
+  } finally {
+    client?.release();
   }
 }
 
