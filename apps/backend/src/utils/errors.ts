@@ -471,12 +471,15 @@ export class ZipcodeBaseApiError extends ExternalServiceError {
  * Thrown when a notification delivery to an external messaging platform fails.
  */
 export class NotificationDeliveryError extends ExternalServiceError {
+  /** Raw upstream response body — kept for logging, never sent to the client. */
+  readonly detail?: string;
+
   constructor(platform: string, detail?: string, originalStatus?: number) {
-    super(
-      platform,
-      `Failed to deliver ${platform} notification${detail ? `: ${detail}` : ''}`,
-      originalStatus,
-    );
+    // The client-facing message stays generic: a third-party response body is
+    // untrusted input and must not be echoed back through the API. The body is
+    // preserved in `detail` so it still appears in logs/Sentry.
+    super(platform, `Failed to deliver ${platform} notification`, originalStatus);
+    this.detail = detail;
   }
 }
 
