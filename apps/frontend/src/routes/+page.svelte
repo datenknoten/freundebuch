@@ -24,9 +24,16 @@ let dashboardError = $state<string | null>(null);
 let dashboardLoaded = false;
 
 $effect(() => {
-  if ($isAuthInitialized && $isAuthenticated && !dashboardLoaded) {
+  if (!$isAuthInitialized) return;
+
+  if ($isAuthenticated) {
+    if (dashboardLoaded) return;
     dashboardLoaded = true;
     loadDashboard();
+  } else {
+    // Reset so re-authentication in the same SPA session reloads the dashboard
+    // instead of showing the previous (or empty) state.
+    dashboardLoaded = false;
   }
 });
 
@@ -39,6 +46,9 @@ async function loadDashboard() {
     networkGraph = data.networkGraph;
   } catch (err) {
     dashboardError = err instanceof Error ? err.message : 'Failed to load dashboard';
+    // Allow a retry: a transient failure shouldn't latch the dashboard into a
+    // permanent error state for the lifetime of this component instance.
+    dashboardLoaded = false;
   } finally {
     isDashboardLoading = false;
   }

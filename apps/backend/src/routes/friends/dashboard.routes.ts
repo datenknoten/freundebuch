@@ -15,12 +15,16 @@ app.use('/network-graph', etag());
 
 /** Clamp the `days` query param to a sane range (default 30). */
 function parseDays(value: string | undefined): number {
-  return value ? Math.min(365, Math.max(1, Number.parseInt(value, 10) || 30)) : 30;
+  if (value === undefined) return 30;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? 30 : Math.min(365, Math.max(1, parsed));
 }
 
 /** Clamp the `limit` query param to a sane range (default 10). */
 function parseLimit(value: string | undefined): number {
-  return value ? Math.min(50, Math.max(1, Number.parseInt(value, 10) || 10)) : 10;
+  if (value === undefined) return 10;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? 10 : Math.min(50, Math.max(1, parsed));
 }
 
 /**
