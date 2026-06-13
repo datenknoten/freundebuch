@@ -47,8 +47,13 @@ export async function createApp(pool: pg.Pool) {
 
   // Global context middleware - inject db and logger
   app.use('*', async (c, next) => {
+    const requestId = crypto.randomUUID();
     c.set('db', pool);
-    c.set('logger', logger.child({ requestId: crypto.randomUUID() }));
+    c.set('logger', logger.child({ requestId }));
+    // Surface the correlation id so clients/frontend can quote it, and tag the
+    // Sentry scope so captured errors are searchable by request id.
+    c.header('X-Request-Id', requestId);
+    Sentry.setTag('request_id', requestId);
     await next();
   });
 
@@ -92,7 +97,9 @@ export async function createApp(pool: pg.Pool) {
 
   // Error handling
   app.onError((err, c) => {
-    const pinoLogger = c.get('logger');
+    // Fall back to a fresh logger: an error thrown before the context
+    // middleware runs would leave c.get('logger') undefined.
+    const pinoLogger = c.get('logger') ?? createLogger();
 
     // Single Sentry capture point for the whole app: report unexpected errors
     // and 5xx AppErrors, but not expected 4xx (validation, not-found, etc.).

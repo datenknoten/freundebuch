@@ -7,12 +7,16 @@ const BooleanString = type('"true" | "false" | "TRUE" | "FALSE" | "1" | "0" | bo
 
 const SecretType = type('string >= 32').and(/^(?!.*(?:change-this|your-secret|REPLACE)).*$/);
 
+// Validate the connection string shape at boot rather than failing on first
+// connect with an opaque error.
+const DatabaseUrlType = type('string').and(/^postgres(?:ql)?:\/\//);
+
 /**
  * ArkType schema for environment configuration validation
  */
 const ConfigSchema = type({
   // Database
-  DATABASE_URL: 'string',
+  DATABASE_URL: DatabaseUrlType,
   DATABASE_POOL_MIN: 'string.integer.parse = "2"',
   DATABASE_POOL_MAX: 'string.integer.parse = "10"',
   DATABASE_CONNECTION_TIMEOUT_MS: 'string.integer.parse = "5000"',
