@@ -17,7 +17,7 @@ import type { AddressLookupService } from '../../address-lookup.service.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
-} from '../base/sub-resource.service.js';
+} from '../../base/sub-resource.service.js';
 
 export interface AddressServiceOptions extends SubResourceServiceOptions {
   addressLookupService?: AddressLookupService;
@@ -46,7 +46,7 @@ export class AddressService extends SubResourceService<
       resourceName: 'address',
       hasPrimaryFlag: true,
 
-      createFn: async ({ userExternalId, friendExternalId, input }, client) => {
+      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
         return createAddress.run(
           {
             userExternalId,
@@ -67,7 +67,10 @@ export class AddressService extends SubResourceService<
         );
       },
 
-      updateFn: async ({ userExternalId, friendExternalId, resourceExternalId, input }, client) => {
+      updateFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+        client,
+      ) => {
         return updateAddress.run(
           {
             userExternalId,
@@ -89,7 +92,10 @@ export class AddressService extends SubResourceService<
         );
       },
 
-      deleteFn: async ({ userExternalId, friendExternalId, resourceExternalId }, client) => {
+      deleteFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
+        client,
+      ) => {
         return deleteAddress.run(
           {
             userExternalId,
@@ -100,11 +106,11 @@ export class AddressService extends SubResourceService<
         );
       },
 
-      clearPrimaryFn: async ({ userExternalId, friendExternalId }, client) => {
+      clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
         return clearPrimaryAddress.run({ userExternalId, friendExternalId }, client);
       },
 
-      countFn: async ({ userExternalId, friendExternalId }, client) => {
+      countFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
         return getAddressesByFriendId.run({ userExternalId, friendExternalId }, client);
       },
 

@@ -12,7 +12,7 @@ import { parsePhoneType } from '../../../utils/type-guards.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
-} from '../base/sub-resource.service.js';
+} from '../../base/sub-resource.service.js';
 
 /**
  * PhoneService handles all phone-related operations for friends.
@@ -30,7 +30,7 @@ export class PhoneService extends SubResourceService<
       resourceName: 'phone',
       hasPrimaryFlag: true,
 
-      createFn: async ({ userExternalId, friendExternalId, input }, client) => {
+      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
         return createPhone.run(
           {
             userExternalId,
@@ -44,7 +44,10 @@ export class PhoneService extends SubResourceService<
         );
       },
 
-      updateFn: async ({ userExternalId, friendExternalId, resourceExternalId, input }, client) => {
+      updateFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+        client,
+      ) => {
         return updatePhone.run(
           {
             userExternalId,
@@ -59,7 +62,10 @@ export class PhoneService extends SubResourceService<
         );
       },
 
-      deleteFn: async ({ userExternalId, friendExternalId, resourceExternalId }, client) => {
+      deleteFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
+        client,
+      ) => {
         return deletePhone.run(
           {
             userExternalId,
@@ -70,11 +76,11 @@ export class PhoneService extends SubResourceService<
         );
       },
 
-      clearPrimaryFn: async ({ userExternalId, friendExternalId }, client) => {
+      clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
         return clearPrimaryPhone.run({ userExternalId, friendExternalId }, client);
       },
 
-      countFn: async ({ userExternalId, friendExternalId }, client) => {
+      countFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
         return getPhonesByFriendId.run({ userExternalId, friendExternalId }, client);
       },
 

@@ -1,8 +1,11 @@
 // Re-export all friend-related services
 
-export type { SubResourceConfig, SubResourceServiceOptions } from './base/sub-resource.service.js';
+export type {
+  SubResourceConfig,
+  SubResourceServiceOptions,
+} from '../base/sub-resource.service.js';
 // Base service
-export { SubResourceService } from './base/sub-resource.service.js';
+export { SubResourceService } from '../base/sub-resource.service.js';
 export { FriendsService } from './friends.service.js';
 export type { NetworkGraphServiceOptions } from './network-graph.service.js';
 export { NetworkGraphService } from './network-graph.service.js';

@@ -10,27 +10,27 @@ import {
 } from '../../../models/queries/collective-emails.queries.js';
 import { parseEmailType } from '../../../utils/type-guards.js';
 import {
-  CollectiveSubResourceService,
-  type CollectiveSubResourceServiceOptions,
-} from './base.service.js';
+  SubResourceService,
+  type SubResourceServiceOptions,
+} from '../../base/sub-resource.service.js';
 
 /**
  * EmailService handles all email-related operations for collectives.
- * Extends CollectiveSubResourceService for common CRUD operations.
+ * Extends SubResourceService for common CRUD operations.
  */
-export class CollectiveEmailService extends CollectiveSubResourceService<
+export class CollectiveEmailService extends SubResourceService<
   EmailInput,
   Email,
   IGetEmailsByCollectiveIdResult,
   IGetEmailsByCollectiveIdResult,
   IDeleteEmailResult
 > {
-  constructor(options: CollectiveSubResourceServiceOptions) {
+  constructor(options: SubResourceServiceOptions) {
     super(options, {
       resourceName: 'collective email',
       hasPrimaryFlag: true,
 
-      listFn: async ({ userExternalId, collectiveExternalId }, client) => {
+      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
         return getEmailsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
       },
 
@@ -43,7 +43,10 @@ export class CollectiveEmailService extends CollectiveSubResourceService<
         createdAt: row.created_at.toISOString(),
       }),
 
-      createFn: async ({ userExternalId, collectiveExternalId, input }, client) => {
+      createFn: async (
+        { userExternalId, ownerExternalId: collectiveExternalId, input },
+        client,
+      ) => {
         return createEmail.run(
           {
             userExternalId,
@@ -58,7 +61,7 @@ export class CollectiveEmailService extends CollectiveSubResourceService<
       },
 
       updateFn: async (
-        { userExternalId, collectiveExternalId, resourceExternalId, input },
+        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
         client,
       ) => {
         return updateEmail.run(
@@ -75,7 +78,10 @@ export class CollectiveEmailService extends CollectiveSubResourceService<
         );
       },
 
-      deleteFn: async ({ userExternalId, collectiveExternalId, resourceExternalId }, client) => {
+      deleteFn: async (
+        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
+        client,
+      ) => {
         return deleteEmail.run(
           {
             userExternalId,
@@ -86,7 +92,7 @@ export class CollectiveEmailService extends CollectiveSubResourceService<
         );
       },
 
-      clearPrimaryFn: async ({ userExternalId, collectiveExternalId }, client) => {
+      clearPrimaryFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
         return clearPrimaryEmail.run({ userExternalId, collectiveExternalId }, client);
       },
 

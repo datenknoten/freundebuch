@@ -1,9 +1,5 @@
 export { CollectiveAddressService } from './address.service.js';
 export {
-  CollectiveSubResourceService,
-  type CollectiveSubResourceServiceOptions,
-} from './base.service.js';
-export {
   type AvailableCircle,
   type CollectiveCircle,
   CollectiveCircleService,
