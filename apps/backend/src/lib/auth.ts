@@ -61,7 +61,7 @@ function createAuth() {
       },
       sendResetPassword: async ({ user, url }, _request) => {
         const logger = (await import('../utils/logger.js')).createLogger();
-        logger.info({ userId: user.id, email: user.email }, 'Password reset requested');
+        logger.info({ userId: user.id }, 'Password reset requested');
         // Only log the reset URL in non-production environments
         if (config.ENV !== 'production') {
           logger.debug({ resetUrl: url }, 'Reset URL (dev only)');

@@ -94,8 +94,15 @@ export async function createApp(pool: pg.Pool) {
   app.onError((err, c) => {
     const pinoLogger = c.get('logger');
 
+    // Single Sentry capture point for the whole app: report unexpected errors
+    // and 5xx AppErrors, but not expected 4xx (validation, not-found, etc.).
     if (isAppError(err)) {
       pinoLogger[err.statusCode >= 500 ? 'error' : 'warn']({ err }, err.message);
+      if (err.statusCode >= 500) {
+        Sentry.captureException(err, {
+          extra: { path: c.req.path, method: c.req.method },
+        });
+      }
       const body: ErrorResponse = { error: err.message };
       if (err.code) body.code = err.code;
       if (err.details !== undefined) body.details = err.details;
