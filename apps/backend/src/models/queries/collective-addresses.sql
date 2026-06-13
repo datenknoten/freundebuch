@@ -129,11 +129,15 @@ RETURNING
     a.created_at;
 
 /* @name UpdateAddressCoordinates */
-UPDATE collectives.collective_addresses
+UPDATE collectives.collective_addresses a
 SET
     latitude = :latitude,
     longitude = :longitude
-WHERE external_id = :addressExternalId;
+FROM collectives.collectives c, auth.users u
+WHERE a.external_id = :addressExternalId
+  AND a.collective_id = c.id
+  AND c.user_id = u.id
+  AND u.external_id = :userExternalId;
 
 /* @name DeleteAddress */
 DELETE FROM collectives.collective_addresses a
