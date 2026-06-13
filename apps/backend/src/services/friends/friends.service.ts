@@ -268,61 +268,115 @@ export class FriendsService {
   async createFriend(userExternalId: string, data: FriendCreateInput): Promise<Friend> {
     this.logger.info({ userExternalId }, 'Creating friend');
 
-    const [friend] = await createFriend.run(
-      {
-        userExternalId,
-        displayName: data.display_name,
-        nickname: data.nickname ?? null,
-        namePrefix: data.name_prefix ?? null,
-        nameFirst: data.name_first ?? null,
-        nameMiddle: data.name_middle ?? null,
-        nameLast: data.name_last ?? null,
-        nameSuffix: data.name_suffix ?? null,
-        maidenName: data.maiden_name ?? null,
-        interests: data.interests ?? null,
-      },
-      this.db,
-    );
-
-    if (!friend) {
-      this.logger.error({ userExternalId }, 'Failed to create friend');
-      throw new FriendCreationError();
-    }
-
-    const friendExternalId = friend.external_id;
-
-    // Create sub-resources in parallel
-    const [phones, emails, addresses, urls, dates, socialProfiles, professionalHistory] =
-      await Promise.all([
-        this.phoneService.createMany(userExternalId, friendExternalId, data.phones ?? []),
-        this.emailService.createMany(userExternalId, friendExternalId, data.emails ?? []),
-        this.addressService.createMany(userExternalId, friendExternalId, data.addresses ?? []),
-        this.urlService.createMany(userExternalId, friendExternalId, data.urls ?? []),
-        this.dateService.createMany(userExternalId, friendExternalId, data.dates ?? []),
-        this.socialProfileService.createMany(
-          userExternalId,
-          friendExternalId,
-          data.social_profiles ?? [],
-        ),
-        this.professionalHistoryService.createMany(
-          userExternalId,
-          friendExternalId,
-          data.professional_history ?? [],
-        ),
-      ]);
-
-    // Create met info if provided
+    // The friend row and all its sub-resources must be created atomically:
+    // a failure partway through previously left an orphaned friend while the
+    // API returned 500. Run everything on one transactional client, sequentially
+    // (a single connection serializes anyway, so Promise.all bought nothing).
+    const client = await this.db.connect();
+    let friend: Awaited<ReturnType<typeof createFriend.run>>[number];
+    let phones: Awaited<ReturnType<PhoneService['createMany']>>;
+    let emails: Awaited<ReturnType<EmailService['createMany']>>;
+    let addresses: Awaited<ReturnType<AddressService['createMany']>>;
+    let urls: Awaited<ReturnType<UrlService['createMany']>>;
+    let dates: Awaited<ReturnType<DateService['createMany']>>;
+    let socialProfiles: Awaited<ReturnType<SocialProfileService['createMany']>>;
+    let professionalHistory: Awaited<ReturnType<ProfessionalHistoryService['createMany']>>;
     let metInfo: MetInfo | undefined;
-    if (data.met_info) {
-      metInfo =
-        (await this.metInfoService.set(userExternalId, friendExternalId, data.met_info)) ??
-        undefined;
+
+    try {
+      await client.query('BEGIN');
+
+      const [created] = await createFriend.run(
+        {
+          userExternalId,
+          displayName: data.display_name,
+          nickname: data.nickname ?? null,
+          namePrefix: data.name_prefix ?? null,
+          nameFirst: data.name_first ?? null,
+          nameMiddle: data.name_middle ?? null,
+          nameLast: data.name_last ?? null,
+          nameSuffix: data.name_suffix ?? null,
+          maidenName: data.maiden_name ?? null,
+          interests: data.interests ?? null,
+        },
+        client,
+      );
+
+      if (!created) {
+        throw new FriendCreationError();
+      }
+      friend = created;
+      const friendExternalId = friend.external_id;
+
+      phones = await this.phoneService.createMany(
+        userExternalId,
+        friendExternalId,
+        data.phones ?? [],
+        client,
+      );
+      emails = await this.emailService.createMany(
+        userExternalId,
+        friendExternalId,
+        data.emails ?? [],
+        client,
+      );
+      addresses = await this.addressService.createMany(
+        userExternalId,
+        friendExternalId,
+        data.addresses ?? [],
+        client,
+      );
+      urls = await this.urlService.createMany(
+        userExternalId,
+        friendExternalId,
+        data.urls ?? [],
+        client,
+      );
+      dates = await this.dateService.createMany(
+        userExternalId,
+        friendExternalId,
+        data.dates ?? [],
+        client,
+      );
+      socialProfiles = await this.socialProfileService.createMany(
+        userExternalId,
+        friendExternalId,
+        data.social_profiles ?? [],
+        client,
+      );
+      professionalHistory = await this.professionalHistoryService.createMany(
+        userExternalId,
+        friendExternalId,
+        data.professional_history ?? [],
+        client,
+      );
+
+      if (data.met_info) {
+        metInfo =
+          (await this.metInfoService.set(
+            userExternalId,
+            friendExternalId,
+            data.met_info,
+            client,
+          )) ?? undefined;
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // Ignore rollback failure to preserve the original error.
+      }
+      if (error instanceof FriendCreationError) {
+        this.logger.error({ userExternalId }, 'Failed to create friend');
+      }
+      throw error;
+    } finally {
+      client.release();
     }
 
-    this.logger.info(
-      { friendExternalId, displayName: data.display_name },
-      'Friend created successfully',
-    );
+    this.logger.info({ friendExternalId: friend.external_id }, 'Friend created successfully');
 
     return {
       id: friend.external_id,
