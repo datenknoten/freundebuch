@@ -141,8 +141,11 @@ SELECT
     COALESCE(u.preferences->>'language', 'en') AS user_language
 FROM system.notification_channels nc
 INNER JOIN auth.users u ON nc.user_id = u.id
+-- notify_time <= now (not exact equality): if a tick is delayed past the
+-- minute boundary (GC pause, restart, deploy), the digest still fires on the
+-- next tick. The last_notified_date gate keeps it to once per day.
 WHERE nc.is_enabled = true
-  AND nc.notify_time = :notifyTime::time
+  AND nc.notify_time <= :notifyTime::time
   AND (nc.last_notified_date IS NULL OR nc.last_notified_date < :today::date);
 
 /* @name MarkChannelNotified */
