@@ -40,7 +40,8 @@ RETURNING
     u.email,
     u.created_at,
     u.updated_at,
-    (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id;
+    (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id,
+    (SELECT c.display_name FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_display_name;
 
 /* @name DeleteUser */
 DELETE FROM auth.users

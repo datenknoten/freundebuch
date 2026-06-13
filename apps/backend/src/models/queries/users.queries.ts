@@ -195,6 +195,7 @@ export interface IUpdateUserReturningWithSelfProfileResult {
   email: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
+  self_profile_display_name: string | null;
   self_profile_external_id: string | null;
   updated_at: Date;
 }
@@ -205,7 +206,7 @@ export interface IUpdateUserReturningWithSelfProfileQuery {
   result: IUpdateUserReturningWithSelfProfileResult;
 }
 
-const updateUserReturningWithSelfProfileIR: any = {"usedParamSet":{"email":true,"externalId":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":32,"b":37}]},{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":93,"b":103}]}],"statement":"UPDATE auth.users u\nSET email = :email, updated_at = CURRENT_TIMESTAMP\nWHERE u.external_id = :externalId\nRETURNING\n    u.external_id,\n    u.email,\n    u.created_at,\n    u.updated_at,\n    (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id"};
+const updateUserReturningWithSelfProfileIR: any = {"usedParamSet":{"email":true,"externalId":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":32,"b":37}]},{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":93,"b":103}]}],"statement":"UPDATE auth.users u\nSET email = :email, updated_at = CURRENT_TIMESTAMP\nWHERE u.external_id = :externalId\nRETURNING\n    u.external_id,\n    u.email,\n    u.created_at,\n    u.updated_at,\n    (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id,\n    (SELECT c.display_name FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_display_name"};
 
 /**
  * Query generated from SQL:
@@ -218,7 +219,8 @@ const updateUserReturningWithSelfProfileIR: any = {"usedParamSet":{"email":true,
  *     u.email,
  *     u.created_at,
  *     u.updated_at,
- *     (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id
+ *     (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id,
+ *     (SELECT c.display_name FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_display_name
  * ```
  */
 export const updateUserReturningWithSelfProfile = new PreparedQuery<IUpdateUserReturningWithSelfProfileParams,IUpdateUserReturningWithSelfProfileResult>(updateUserReturningWithSelfProfileIR);

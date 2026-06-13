@@ -3,6 +3,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import '../app.css';
 import type { Snippet } from 'svelte';
 import { onMount } from 'svelte';
+import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { longPress } from '$lib/actions/long-press';
@@ -52,14 +53,27 @@ onMount(async () => {
 // (e.g. the dashboard's consolidated request).
 let circlesPreloaded = false;
 $effect(() => {
-  if ($isAuthInitialized && $isAuthenticated && !circlesPreloaded) {
+  if (!$isAuthInitialized) return;
+
+  if ($isAuthenticated) {
+    if (circlesPreloaded) return;
     circlesPreloaded = true;
-    const preload = () => circles.loadCircles();
+    const preload = () => {
+      // Re-check auth: the user may have logged out (or the session may have
+      // expired) between scheduling and this callback firing, in which case we
+      // must not issue an unauthenticated request.
+      if (get(isAuthenticated)) circles.loadCircles();
+    };
     if (typeof requestIdleCallback === 'function') {
       requestIdleCallback(preload);
     } else {
       setTimeout(preload, 0);
     }
+  } else {
+    // On logout/session loss, drop the previous user's cached circles and
+    // re-arm the preload so a subsequent login fetches a fresh set.
+    circlesPreloaded = false;
+    circles.clear();
   }
 });
 
