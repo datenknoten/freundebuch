@@ -25,7 +25,7 @@ const locales: Record<string, LocaleStrings> = {
     birthday: 'birthday',
     anniversary: 'wedding anniversary',
     birthdayAge: (n) => `turns ${n}`,
-    yearsCount: (n) => `${n} years`,
+    yearsCount: (n) => `${n} year${n === 1 ? '' : 's'}`,
     footer: (url) => `View your Freundebuch: ${url}`,
     months: [
       'January',
@@ -53,7 +53,7 @@ const locales: Record<string, LocaleStrings> = {
     birthday: 'Geburtstag',
     anniversary: 'Hochzeitstag',
     birthdayAge: (n) => `wird ${n}`,
-    yearsCount: (n) => `${n} Jahre`,
+    yearsCount: (n) => `${n} Jahr${n === 1 ? '' : 'e'}`,
     footer: (url) => `Dein Freundebuch öffnen: ${url}`,
     months: [
       'Januar',
@@ -91,27 +91,32 @@ function getEventLabel(l: LocaleStrings, dateType: string, label: string | null)
   return label ?? dateType;
 }
 
-function extractMonthDay(dateValue: Date): { month: number; day: number } {
-  // date_value is a DATE type, extract month and day
-  const month = dateValue.getMonth() + 1;
-  const day = dateValue.getDate();
+function extractMonthDay(date: Date): { month: number; day: number } {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
   return { month, day };
 }
 
 /**
- * Compute the age (or number of years) the date marks on its upcoming occurrence.
- *
- * The occurrence year is derived from `daysUntil` (added to today) so it stays
- * consistent with the value the SQL query produced, correctly handling dates
- * that roll over into next year. Returns null when the birth year is unknown or
- * the resulting age is not a positive number.
+ * Resolve the actual upcoming occurrence date by adding `daysUntil` (the value
+ * the SQL query computed) to today. Using this for both the displayed date and
+ * the age keeps the notification consistent with the query logic, including its
+ * leap-year handling (e.g. a Feb 29 date is shown as Feb 28 in non-leap years).
  */
-function computeAge(dateValue: Date, yearKnown: boolean, daysUntil: number): number | null {
+function getUpcomingOccurrence(daysUntil: number): Date {
+  const now = new Date();
+  // All-local date arithmetic, matching how date_value is read.
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntil);
+}
+
+/**
+ * Compute the age (or number of years) the date marks on its upcoming
+ * occurrence. Returns null when the birth year is unknown or the resulting age
+ * is not a positive number.
+ */
+function computeAge(dateValue: Date, yearKnown: boolean, occurrence: Date): number | null {
   if (!yearKnown) return null;
 
-  const now = new Date();
-  // Use all-local date arithmetic to stay consistent with extractMonthDay.
-  const occurrence = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntil);
   const age = occurrence.getFullYear() - dateValue.getFullYear();
 
   return age > 0 ? age : null;
@@ -141,10 +146,11 @@ export function formatNotificationMessage(
     const daysUntil = date.days_until ?? 0;
     const dayPhrase = getDayPhrase(l, daysUntil);
     const eventLabel = getEventLabel(l, date.date_type, date.label);
-    const { month, day } = extractMonthDay(date.date_value);
+    const occurrence = getUpcomingOccurrence(daysUntil);
+    const { month, day } = extractMonthDay(occurrence);
     const formattedDate = l.formatDate(month, day);
 
-    const age = computeAge(date.date_value, date.year_known, daysUntil);
+    const age = computeAge(date.date_value, date.year_known, occurrence);
     const agePhrase = getAgePhrase(l, date.date_type, age);
     const datePart = agePhrase ? `${formattedDate}, ${agePhrase}` : formattedDate;
 
