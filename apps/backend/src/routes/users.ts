@@ -44,6 +44,7 @@ app.get('/me', async (c) => {
     createdAt: user.created_at.toISOString(),
     updatedAt: user.updated_at.toISOString(),
     selfProfileId: selfProfileExternalId ?? undefined,
+    displayName: user.self_profile_display_name ?? undefined,
     hasCompletedOnboarding: selfProfileExternalId !== null,
   });
 });

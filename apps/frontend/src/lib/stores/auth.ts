@@ -48,6 +48,7 @@ function createAuthStore() {
         externalId: result.user.externalId,
         email: result.user.email,
         selfProfileId: result.user.selfProfileId,
+        displayName: result.user.displayName,
         hasCompletedOnboarding: result.user.hasCompletedOnboarding,
         preferences: result.preferences,
       };
@@ -179,47 +180,35 @@ function createAuthStore() {
     initialize: async () => {
       update((state) => ({ ...state, isLoading: true }));
 
-      try {
-        const session = await authClient.getSession();
+      // Fetch the user directly from /api/auth/me. The endpoint already
+      // validates the session via auth middleware, so a separate
+      // authClient.getSession() round-trip would only add a redundant request
+      // to the critical path. fetchUserData() returns null on any failure
+      // (including a 401 when there's no valid session).
+      const userData = await fetchUserData();
 
-        if (session.data) {
-          // We have a valid session, fetch full user data
-          const userData = await fetchUserData();
-
-          if (userData) {
-            update((state) => ({
-              ...state,
-              user: userData,
-              preferences: { ...DEFAULT_PREFERENCES, ...userData.preferences },
-              isLoading: false,
-              isInitialized: true,
-              error: null,
-            }));
-
-            return { user: userData };
-          }
-        }
-
-        // No valid session
+      if (userData) {
         update((state) => ({
           ...state,
+          user: userData,
+          preferences: { ...DEFAULT_PREFERENCES, ...userData.preferences },
           isLoading: false,
           isInitialized: true,
           error: null,
         }));
 
-        return null;
-      } catch {
-        // Not an error if there's no valid session
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          isInitialized: true,
-          error: null,
-        }));
-
-        return null;
+        return { user: userData };
       }
+
+      // No valid session
+      update((state) => ({
+        ...state,
+        isLoading: false,
+        isInitialized: true,
+        error: null,
+      }));
+
+      return null;
     },
 
     /**

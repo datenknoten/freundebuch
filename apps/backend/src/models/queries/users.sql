@@ -9,7 +9,8 @@ SELECT
     u.email,
     u.created_at,
     u.updated_at,
-    c.external_id as self_profile_external_id
+    c.external_id as self_profile_external_id,
+    c.display_name as self_profile_display_name
 FROM auth."user" u
 LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
 WHERE u.email = :email;
@@ -46,7 +47,8 @@ RETURNING id as external_id, email, preferences, created_at, updated_at;
 /* @name GetUserSelfProfile */
 SELECT
     u.self_profile_id,
-    c.external_id as self_profile_external_id
+    c.external_id as self_profile_external_id,
+    c.display_name as self_profile_display_name
 FROM auth."user" u
 LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
 WHERE u.id = :userExternalId;

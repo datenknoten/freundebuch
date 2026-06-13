@@ -1,33 +1,46 @@
 <script lang="ts">
-import { getFriend } from '$lib/api/friends';
+import { getDashboardData } from '$lib/api/friends';
 import NetworkGraph from '$lib/components/dashboard/network-graph.svelte';
 import UpcomingDates from '$lib/components/dashboard/upcoming-dates.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
+import type { NetworkGraphData, UpcomingDate } from '$shared';
 
 const i18n = createI18n();
 
-let displayName = $state<string | null>(null);
-let lastFetchedId = $state<string | null>(null);
-let userDisplayName = $derived(displayName || $currentUser?.email || '');
+// The self-profile display name is provided by /api/auth/me (via the auth
+// store), so no extra request is needed to greet the user by name.
+let userDisplayName = $derived($currentUser?.displayName || $currentUser?.email || '');
+
+// Dashboard widgets share a single request via /api/friends/dashboard rather
+// than each fetching independently.
+const UPCOMING_DAYS = 30;
+const UPCOMING_LIMIT = 10;
+
+let upcomingDates = $state<UpcomingDate[]>([]);
+let networkGraph = $state<NetworkGraphData | null>(null);
+let isDashboardLoading = $state(true);
+let dashboardError = $state<string | null>(null);
+let dashboardLoaded = false;
 
 $effect(() => {
-  const selfProfileId = $currentUser?.selfProfileId;
-  // Only fetch when selfProfileId changes to a new value
-  // This prevents duplicate fetches and handles user switching properly
-  if (selfProfileId && selfProfileId !== lastFetchedId) {
-    lastFetchedId = selfProfileId;
-    fetchDisplayName(selfProfileId);
+  if ($isAuthInitialized && $isAuthenticated && !dashboardLoaded) {
+    dashboardLoaded = true;
+    loadDashboard();
   }
 });
 
-async function fetchDisplayName(selfProfileId: string) {
+async function loadDashboard() {
+  isDashboardLoading = true;
+  dashboardError = null;
   try {
-    const friend = await getFriend(selfProfileId);
-    displayName = friend.displayName;
-  } catch (error) {
-    console.warn('Failed to fetch self-profile for display name:', error);
-    displayName = null;
+    const data = await getDashboardData({ days: UPCOMING_DAYS, limit: UPCOMING_LIMIT });
+    upcomingDates = data.upcomingDates;
+    networkGraph = data.networkGraph;
+  } catch (err) {
+    dashboardError = err instanceof Error ? err.message : 'Failed to load dashboard';
+  } finally {
+    isDashboardLoading = false;
   }
 }
 </script>
@@ -54,7 +67,13 @@ async function fetchDisplayName(selfProfileId: string) {
 				{$i18n.t('home.welcomeBack', { name: userDisplayName })}
 			</p>
 			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left max-w-6xl mx-auto">
-				<UpcomingDates days={30} limit={10} />
+				<UpcomingDates
+					{upcomingDates}
+					isLoading={isDashboardLoading}
+					error={dashboardError}
+					days={UPCOMING_DAYS}
+					limit={UPCOMING_LIMIT}
+				/>
 				<div class="bg-white rounded-xl shadow-lg p-6">
 					<h3 class="text-xl font-heading text-gray-800 mb-4">{$i18n.t('home.quickActions')}</h3>
 					<div class="space-y-3">
@@ -75,7 +94,7 @@ async function fetchDisplayName(selfProfileId: string) {
 					</div>
 				</div>
 				<div class="lg:col-span-2">
-					<NetworkGraph />
+					<NetworkGraph graphData={networkGraph} isLoading={isDashboardLoading} error={dashboardError} />
 				</div>
 			</div>
 		{:else}

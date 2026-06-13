@@ -1,6 +1,7 @@
 import { CircleInputSchema } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
+import { etag } from 'hono/etag';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { circlesRateLimitMiddleware } from '../middleware/rate-limit.js';
@@ -24,9 +25,11 @@ app.use('*', onboardingMiddleware);
 
 /**
  * GET /api/circles
- * List all circles for the authenticated user
+ * List all circles for the authenticated user.
+ * Emits an ETag so warm reloads can revalidate cheaply (304) without
+ * serving stale data.
  */
-app.get('/', async (c) => {
+app.get('/', etag(), async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 

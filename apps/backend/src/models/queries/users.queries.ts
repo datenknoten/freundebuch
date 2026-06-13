@@ -47,6 +47,8 @@ export interface IGetUserByEmailWithSelfProfileResult {
   email: string;
   /** UUID primary key (mapped from legacy external_id) */
   external_id: string;
+  /** Display name of the self-profile friend */
+  self_profile_display_name: string | null;
   /** Public UUID for API exposure (always use this in APIs) */
   self_profile_external_id: string;
   updated_at: Date;
@@ -58,7 +60,7 @@ export interface IGetUserByEmailWithSelfProfileQuery {
   result: IGetUserByEmailWithSelfProfileResult;
 }
 
-const getUserByEmailWithSelfProfileIR: any = {"usedParamSet":{"email":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":243,"b":248}]}],"statement":"SELECT\n    u.id as external_id,\n    u.email,\n    u.created_at,\n    u.updated_at,\n    c.external_id as self_profile_external_id\nFROM auth.\"user\" u\nLEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL\nWHERE u.email = :email"};
+const getUserByEmailWithSelfProfileIR: any = {"usedParamSet":{"email":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":292,"b":297}]}],"statement":"SELECT\n    u.id as external_id,\n    u.email,\n    u.created_at,\n    u.updated_at,\n    c.external_id as self_profile_external_id,\n    c.display_name as self_profile_display_name\nFROM auth.\"user\" u\nLEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL\nWHERE u.email = :email"};
 
 /**
  * Query generated from SQL:
@@ -68,7 +70,8 @@ const getUserByEmailWithSelfProfileIR: any = {"usedParamSet":{"email":true},"par
  *     u.email,
  *     u.created_at,
  *     u.updated_at,
- *     c.external_id as self_profile_external_id
+ *     c.external_id as self_profile_external_id,
+ *     c.display_name as self_profile_display_name
  * FROM auth."user" u
  * LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
  * WHERE u.email = :email
@@ -233,6 +236,8 @@ export interface IGetUserSelfProfileParams {
 
 /** 'GetUserSelfProfile' return type */
 export interface IGetUserSelfProfileResult {
+  /** Display name of the self-profile friend */
+  self_profile_display_name: string | null;
   /** Public UUID for API exposure (always use this in APIs) */
   self_profile_external_id: string;
   /** FK to friends.friends - set during onboarding */
@@ -245,14 +250,15 @@ export interface IGetUserSelfProfileQuery {
   result: IGetUserSelfProfileResult;
 }
 
-const getUserSelfProfileIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":189,"b":203}]}],"statement":"SELECT\n    u.self_profile_id,\n    c.external_id as self_profile_external_id\nFROM auth.\"user\" u\nLEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL\nWHERE u.id = :userExternalId"};
+const getUserSelfProfileIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":238,"b":252}]}],"statement":"SELECT\n    u.self_profile_id,\n    c.external_id as self_profile_external_id,\n    c.display_name as self_profile_display_name\nFROM auth.\"user\" u\nLEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL\nWHERE u.id = :userExternalId"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT
  *     u.self_profile_id,
- *     c.external_id as self_profile_external_id
+ *     c.external_id as self_profile_external_id,
+ *     c.display_name as self_profile_display_name
  * FROM auth."user" u
  * LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
  * WHERE u.id = :userExternalId

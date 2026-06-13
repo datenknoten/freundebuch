@@ -2,6 +2,7 @@ import type {
   Address,
   AddressInput,
   ContactCollectiveSummary,
+  DashboardData,
   DateInput,
   Email,
   EmailInput,
@@ -674,6 +675,19 @@ export async function clearRecentSearches(): Promise<void> {
  */
 export async function getNetworkGraphData(): Promise<NetworkGraphData> {
   return apiRequest<NetworkGraphData>('/api/friends/network-graph');
+}
+
+/**
+ * Get the consolidated dashboard payload (upcoming dates + network graph)
+ * in a single request. Used by the home page to avoid multiple round-trips.
+ */
+export async function getDashboardData(options?: UpcomingDatesOptions): Promise<DashboardData> {
+  const searchParams = new URLSearchParams();
+  if (options?.days) searchParams.set('days', options.days.toString());
+  if (options?.limit) searchParams.set('limit', options.limit.toString());
+  const queryString = searchParams.toString();
+  const endpoint = `/api/friends/dashboard${queryString ? `?${queryString}` : ''}`;
+  return apiRequest<DashboardData>(endpoint);
 }
 
 // ============================================================================

@@ -1,6 +1,4 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-import { getUpcomingDates } from '$lib/api/friends.js';
 import FriendAvatar from '$lib/components/friends/friend-avatar.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type { DateType, UpcomingDate } from '$shared';
@@ -8,32 +6,21 @@ import type { DateType, UpcomingDate } from '$shared';
 const i18n = createI18n();
 
 interface Props {
+  /** Upcoming dates to display (fetched by the parent dashboard). */
+  upcomingDates?: UpcomingDate[];
+  isLoading?: boolean;
+  error?: string | null;
   days?: number;
   limit?: number;
 }
 
-let { days = 30, limit = 10 }: Props = $props();
-
-let upcomingDates = $state<UpcomingDate[]>([]);
-let isLoading = $state(true);
-let error = $state<string | null>(null);
-
-async function loadUpcomingDates() {
-  isLoading = true;
-  error = null;
-  try {
-    upcomingDates = await getUpcomingDates({ days, limit });
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load upcoming dates';
-  } finally {
-    isLoading = false;
-  }
-}
-
-// Load once on mount - props are static for dashboard usage
-onMount(() => {
-  loadUpcomingDates();
-});
+let {
+  upcomingDates = [],
+  isLoading = false,
+  error = null,
+  days = 30,
+  limit = 10,
+}: Props = $props();
 
 function formatDateType(type: DateType): string {
   const typeKeys: Record<DateType, string> = {
