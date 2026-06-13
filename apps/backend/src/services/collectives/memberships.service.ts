@@ -34,8 +34,8 @@ import {
 } from '../../models/queries/collectives.queries.js';
 import {
   CollectiveNotFoundError,
-  ContactNotFoundError,
   DuplicateMembershipError,
+  FriendNotFoundError,
   MembershipCreationError,
   MembershipNotFoundError,
   RoleNotFoundError,
@@ -85,7 +85,7 @@ export class MembershipsService {
         throw new CollectiveNotFoundError();
       }
       if (contactResult.length === 0) {
-        throw new ContactNotFoundError();
+        throw new FriendNotFoundError();
       }
       if (roleResult.length === 0) {
         throw new RoleNotFoundError();
@@ -358,7 +358,7 @@ export class MembershipsService {
     );
 
     if (contactResult.length === 0) {
-      throw new ContactNotFoundError();
+      throw new FriendNotFoundError();
     }
 
     const newContact: CollectiveMemberContact = {

@@ -153,17 +153,6 @@ export class MembershipNotFoundError extends AppError {
 }
 
 /**
- * Thrown when a contact is not found in the database.
- */
-export class ContactNotFoundError extends AppError {
-  readonly statusCode = 404;
-
-  constructor() {
-    super('Contact not found');
-  }
-}
-
-/**
  * Thrown when an app password is not found in the database.
  */
 export class AppPasswordNotFoundError extends AppError {
@@ -283,13 +272,13 @@ export class CircleNameExistsError extends AppError {
 }
 
 /**
- * Thrown when attempting to add a contact that is already a member of the collective.
+ * Thrown when attempting to add a friend that is already a member of the collective.
  */
 export class DuplicateMembershipError extends AppError {
   readonly statusCode = 409;
 
   constructor() {
-    super('Contact is already a member of this collective');
+    super('Friend is already a member of this collective');
   }
 }
 
