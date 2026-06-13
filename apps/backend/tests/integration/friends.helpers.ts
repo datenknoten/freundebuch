@@ -1,7 +1,6 @@
 import type pg from 'pg';
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
-import { hashPassword } from '../../src/utils/auth.js';
 import { resetConfig } from '../../src/utils/config.js';
 import {
   type AuthTestContext,
@@ -27,9 +26,12 @@ export interface FriendsTestContext extends AuthTestContext {
 export async function createAuthenticatedUser(
   pool: pg.Pool,
   email: string,
-  password: string,
+  _password: string,
 ): Promise<{ externalId: string; email: string; sessionCookies: string }> {
-  const passwordHash = await hashPassword(password);
+  // The stored account password is never verified in tests — sessions are
+  // created directly via createBetterAuthSession — so a placeholder hash is
+  // sufficient and avoids depending on the (removed) legacy bcrypt helper.
+  const passwordHash = 'integration-test-password-not-verified';
   const user = await createTestUser(pool, email, passwordHash);
   const sessionCookies = await createBetterAuthSession(pool, user.externalId);
 

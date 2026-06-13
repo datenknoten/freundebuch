@@ -12,7 +12,7 @@ import {
   setUserSelfProfile,
   updateUserReturningWithSelfProfile,
 } from '../models/queries/users.queries.js';
-import { FriendsService } from '../services/friends.service.js';
+import { FriendsService } from '../services/friends/index.js';
 import type { AppContext } from '../types/context.js';
 import { UserNotFoundError, ValidationError } from '../utils/errors.js';
 

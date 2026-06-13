@@ -3,7 +3,7 @@ import path from 'node:path';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
-import { FriendsService } from '../services/friends.service.js';
+import { FriendsService } from '../services/friends/index.js';
 import { PhotoService } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
 import { FriendNotFoundError, ValidationError } from '../utils/errors.js';

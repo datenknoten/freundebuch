@@ -3,11 +3,6 @@ SELECT external_id, email, created_at, updated_at
 FROM auth.users
 WHERE external_id = :externalId;
 
-/* @name GetUserByEmail */
-SELECT external_id, email, password_hash, created_at, updated_at
-FROM auth.users
-WHERE email = :email;
-
 /* @name GetUserByEmailWithSelfProfile */
 SELECT
     u.id as external_id,
@@ -18,11 +13,6 @@ SELECT
 FROM auth."user" u
 LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
 WHERE u.email = :email;
-
-/* @name CreateUser */
-INSERT INTO auth.users (email, password_hash)
-VALUES (:email, :passwordHash)
-RETURNING external_id, email, created_at, updated_at;
 
 /* @name UpdateUser */
 UPDATE auth.users
@@ -40,17 +30,6 @@ RETURNING
     u.created_at,
     u.updated_at,
     (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id;
-
-/* @name DeleteUser */
-DELETE FROM auth.users
-WHERE external_id = :externalId;
-
-/* @name UpdateUserPassword */
-UPDATE auth.users
-SET password_hash = :passwordHash,
-    updated_at = CURRENT_TIMESTAMP
-WHERE external_id = :externalId
-RETURNING external_id, email, created_at, updated_at;
 
 /* @name GetUserWithPreferences */
 SELECT id as external_id, email, preferences, created_at, updated_at
