@@ -1,5 +1,6 @@
 import type { HealthCheckResponse } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
+import type pg from 'pg';
 import type { AppContext } from '../types/context.js';
 import { toError } from '../utils/errors.js';
 
@@ -10,8 +11,11 @@ health.get('/', async (c) => {
   const logger = c.get('logger');
 
   let dbHealthy = false;
-  const client = await db.connect();
+  let client: pg.PoolClient | undefined;
   try {
+    // connect() must be inside the try: a down or saturated pool throws here,
+    // and the health check should report 503, not bubble up as a 500.
+    client = await db.connect();
     await client.query('SELECT 1');
     dbHealthy = true;
   } catch (error) {
@@ -19,7 +23,7 @@ health.get('/', async (c) => {
     logger.error({ err }, 'Database connection check failed');
     dbHealthy = false;
   } finally {
-    client.release();
+    client?.release();
   }
 
   const health: HealthCheckResponse = {
