@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Laden...",
+    "retry": "Erneut versuchen",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Löschen",

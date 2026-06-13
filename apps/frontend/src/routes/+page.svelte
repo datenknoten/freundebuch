@@ -46,9 +46,6 @@ async function loadDashboard() {
     networkGraph = data.networkGraph;
   } catch (err) {
     dashboardError = err instanceof Error ? err.message : 'Failed to load dashboard';
-    // Allow a retry: a transient failure shouldn't latch the dashboard into a
-    // permanent error state for the lifetime of this component instance.
-    dashboardLoaded = false;
   } finally {
     isDashboardLoading = false;
   }
@@ -81,6 +78,7 @@ async function loadDashboard() {
 					{upcomingDates}
 					isLoading={isDashboardLoading}
 					error={dashboardError}
+					onRetry={loadDashboard}
 					days={UPCOMING_DAYS}
 					limit={UPCOMING_LIMIT}
 				/>
@@ -104,7 +102,7 @@ async function loadDashboard() {
 					</div>
 				</div>
 				<div class="lg:col-span-2">
-					<NetworkGraph graphData={networkGraph} isLoading={isDashboardLoading} error={dashboardError} />
+					<NetworkGraph graphData={networkGraph} isLoading={isDashboardLoading} error={dashboardError} onRetry={loadDashboard} />
 				</div>
 			</div>
 		{:else}
