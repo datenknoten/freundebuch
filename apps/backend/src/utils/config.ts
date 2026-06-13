@@ -15,6 +15,9 @@ const ConfigSchema = type({
   DATABASE_URL: 'string',
   DATABASE_POOL_MIN: 'string.integer.parse = "2"',
   DATABASE_POOL_MAX: 'string.integer.parse = "10"',
+  DATABASE_CONNECTION_TIMEOUT_MS: 'string.integer.parse = "5000"',
+  DATABASE_IDLE_TIMEOUT_MS: 'string.integer.parse = "30000"',
+  DATABASE_STATEMENT_TIMEOUT_MS: 'string.integer.parse = "30000"',
 
   // Server
   ENV: '"development" | "production" | "test" = "development"',
