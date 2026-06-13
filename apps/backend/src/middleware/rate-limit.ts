@@ -71,6 +71,14 @@ let notificationTestLimiter = new RateLimiterMemory({
   blockDuration: isTestEnv ? 1 : 120,
 });
 
+// Rate limiter for the unauthenticated Sentry tunnel endpoint
+// 60 requests per minute in production, 300 in test
+let sentryTunnelLimiter = new RateLimiterMemory({
+  points: isTestEnv ? 300 : 60,
+  duration: 60,
+  blockDuration: isTestEnv ? 1 : 60,
+});
+
 /**
  * Reset all rate limiters (for testing purposes)
  */
@@ -109,6 +117,11 @@ export function resetRateLimiters(): void {
     points: isTestEnv ? 100 : 3,
     duration: 60,
     blockDuration: isTestEnv ? 1 : 120,
+  });
+  sentryTunnelLimiter = new RateLimiterMemory({
+    points: isTestEnv ? 300 : 60,
+    duration: 60,
+    blockDuration: isTestEnv ? 1 : 60,
   });
 }
 
@@ -246,6 +259,21 @@ export async function notificationChannelsRateLimitMiddleware(c: Context, next: 
       error,
       'Rate limit exceeded on notification channels endpoint',
     );
+  }
+}
+
+/**
+ * Rate limiting middleware for the unauthenticated Sentry tunnel endpoint
+ * Limits: 60 requests per minute, 1 minute block after exceeding
+ */
+export async function sentryTunnelRateLimitMiddleware(c: Context, next: Next) {
+  const clientId = getClientIdentifier(c);
+
+  try {
+    await sentryTunnelLimiter.consume(clientId);
+    return next();
+  } catch (error) {
+    return handleRateLimitRejection(c, error, 'Rate limit exceeded on sentry tunnel endpoint');
   }
 }
 
