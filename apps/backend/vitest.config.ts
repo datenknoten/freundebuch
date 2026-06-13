@@ -7,6 +7,9 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     fileParallelism: false,
+    // One shared PostGIS container for the whole integration run; each suite
+    // clones a fresh database from a migrated template (see global-setup.ts).
+    globalSetup: ['./tests/integration/global-setup.ts'],
     // Show console output for failing tests but stay quiet for passing ones.
     silent: 'passed-only',
     exclude: ['node_modules', 'dist', '.git', '.cache'],
