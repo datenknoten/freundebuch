@@ -111,4 +111,31 @@ describe('formatNotificationMessage age handling', () => {
     );
     expect(plain).toContain('Gotcha day (June 20, 6 years)');
   });
+
+  it('uses singular year wording for a one-year count (en/de)', () => {
+    const date = makeDate({
+      date_type: 'anniversary',
+      date_value: new Date(2025, 5, 20),
+      days_until: 7,
+    });
+    // 2026 - 2025 = 1
+    expect(formatNotificationMessage([date], 'en').plain).toContain('June 20, 1 year)');
+    expect(formatNotificationMessage([date], 'de').plain).toContain('20. Juni, 1 Jahr)');
+  });
+
+  it('displays the normalized occurrence date for Feb 29 in a non-leap year', () => {
+    vi.setSystemTime(new Date(2026, 1, 20)); // 2026-02-20, non-leap year
+    const { plain } = formatNotificationMessage(
+      [
+        makeDate({
+          date_value: new Date(2000, 1, 29), // Feb 29 2000
+          days_until: 8, // -> 2026-02-28 (SQL normalizes Feb 29 to Feb 28)
+        }),
+      ],
+      'en',
+    );
+    // Shows the actual upcoming occurrence (Feb 28), not the stored Feb 29
+    expect(plain).toContain("Anna Bauer's birthday (February 28, turns 26)");
+    expect(plain).not.toContain('February 29');
+  });
 });
