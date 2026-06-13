@@ -50,6 +50,7 @@ describe('db.ts', () => {
         connect: vi.fn(),
         query: vi.fn(),
         end: vi.fn(),
+        on: vi.fn(),
       };
 
       // @ts-expect-error - Mock implementation
@@ -64,6 +65,10 @@ describe('db.ts', () => {
         connectionString: 'postgresql://localhost:5432/test',
         min: 2,
         max: 10,
+        connectionTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000,
+        statement_timeout: 30000,
+        query_timeout: 30000,
       });
       expect(pool).toBe(mockPoolInstance);
     });
@@ -77,6 +82,7 @@ describe('db.ts', () => {
         connect: vi.fn(),
         query: vi.fn(),
         end: vi.fn(),
+        on: vi.fn(),
       };
 
       // @ts-expect-error - Mock implementation
@@ -91,6 +97,10 @@ describe('db.ts', () => {
         connectionString: 'postgresql://localhost:5432/test',
         min: 5,
         max: 20,
+        connectionTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000,
+        statement_timeout: 30000,
+        query_timeout: 30000,
       });
     });
   });
@@ -153,8 +163,8 @@ describe('db.ts', () => {
 
       await checkDatabaseConnection(mockPool);
 
-      // Client should still be released on error
-      expect(mockClient.release).not.toHaveBeenCalled();
+      // Client must still be released on error (released in a finally block).
+      expect(mockClient.release).toHaveBeenCalledOnce();
     });
   });
 
