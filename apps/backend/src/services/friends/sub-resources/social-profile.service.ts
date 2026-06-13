@@ -10,7 +10,7 @@ import { parseSocialPlatform } from '../../../utils/type-guards.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
-} from '../base/sub-resource.service.js';
+} from '../../base/sub-resource.service.js';
 
 /**
  * SocialProfileService handles all social profile operations for friends.
@@ -29,7 +29,7 @@ export class SocialProfileService extends SubResourceService<
       resourceName: 'social profile',
       hasPrimaryFlag: false,
 
-      createFn: async ({ userExternalId, friendExternalId, input }, client) => {
+      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
         return createSocialProfile.run(
           {
             userExternalId,
@@ -42,7 +42,10 @@ export class SocialProfileService extends SubResourceService<
         );
       },
 
-      updateFn: async ({ userExternalId, friendExternalId, resourceExternalId, input }, client) => {
+      updateFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+        client,
+      ) => {
         return updateSocialProfile.run(
           {
             userExternalId,
@@ -56,7 +59,10 @@ export class SocialProfileService extends SubResourceService<
         );
       },
 
-      deleteFn: async ({ userExternalId, friendExternalId, resourceExternalId }, client) => {
+      deleteFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
+        client,
+      ) => {
         return deleteSocialProfile.run(
           {
             userExternalId,

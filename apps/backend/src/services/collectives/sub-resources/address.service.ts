@@ -15,22 +15,22 @@ import { addressGeoFieldsChanged, parseStreetLine } from '../../../utils/address
 import { parseAddressType } from '../../../utils/type-guards.js';
 import type { AddressLookupService } from '../../address-lookup.service.js';
 import {
-  CollectiveSubResourceService,
-  type CollectiveSubResourceServiceOptions,
-} from './base.service.js';
+  SubResourceService,
+  type SubResourceServiceOptions,
+} from '../../base/sub-resource.service.js';
 
-export interface CollectiveAddressServiceOptions extends CollectiveSubResourceServiceOptions {
+export interface CollectiveAddressServiceOptions extends SubResourceServiceOptions {
   addressLookupService?: AddressLookupService;
 }
 
 /**
  * AddressService handles all address-related operations for collectives.
- * Extends CollectiveSubResourceService for common CRUD operations.
+ * Extends SubResourceService for common CRUD operations.
  *
  * Geocoding runs in the background after a successful write so saves are
  * never blocked on slow or rate-limited external geocode calls.
  */
-export class CollectiveAddressService extends CollectiveSubResourceService<
+export class CollectiveAddressService extends SubResourceService<
   AddressInput,
   Address,
   IGetAddressesByCollectiveIdResult,
@@ -44,7 +44,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
       resourceName: 'collective address',
       hasPrimaryFlag: true,
 
-      listFn: async ({ userExternalId, collectiveExternalId }, client) => {
+      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
         return getAddressesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
       },
 
@@ -64,7 +64,10 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
         createdAt: row.created_at.toISOString(),
       }),
 
-      createFn: async ({ userExternalId, collectiveExternalId, input }, client) => {
+      createFn: async (
+        { userExternalId, ownerExternalId: collectiveExternalId, input },
+        client,
+      ) => {
         return createAddress.run(
           {
             userExternalId,
@@ -86,7 +89,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
       },
 
       updateFn: async (
-        { userExternalId, collectiveExternalId, resourceExternalId, input },
+        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
         client,
       ) => {
         return updateAddress.run(
@@ -110,7 +113,10 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
         );
       },
 
-      deleteFn: async ({ userExternalId, collectiveExternalId, resourceExternalId }, client) => {
+      deleteFn: async (
+        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
+        client,
+      ) => {
         return deleteAddress.run(
           {
             userExternalId,
@@ -121,7 +127,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
         );
       },
 
-      clearPrimaryFn: async ({ userExternalId, collectiveExternalId }, client) => {
+      clearPrimaryFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
         return clearPrimaryAddress.run({ userExternalId, collectiveExternalId }, client);
       },
 

@@ -11,7 +11,7 @@ import {
 import {
   SubResourceService,
   type SubResourceServiceOptions,
-} from '../base/sub-resource.service.js';
+} from '../../base/sub-resource.service.js';
 
 /**
  * ProfessionalHistoryService handles all professional history operations for friends.
@@ -29,7 +29,7 @@ export class ProfessionalHistoryService extends SubResourceService<
       resourceName: 'professional history',
       hasPrimaryFlag: true,
 
-      createFn: async ({ userExternalId, friendExternalId, input }, client) => {
+      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
         return createProfessionalHistory.run(
           {
             userExternalId,
@@ -48,7 +48,10 @@ export class ProfessionalHistoryService extends SubResourceService<
         );
       },
 
-      updateFn: async ({ userExternalId, friendExternalId, resourceExternalId, input }, client) => {
+      updateFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+        client,
+      ) => {
         return updateProfessionalHistory.run(
           {
             userExternalId,
@@ -68,7 +71,10 @@ export class ProfessionalHistoryService extends SubResourceService<
         );
       },
 
-      deleteFn: async ({ userExternalId, friendExternalId, resourceExternalId }, client) => {
+      deleteFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
+        client,
+      ) => {
         return deleteProfessionalHistory.run(
           {
             userExternalId,
@@ -79,11 +85,11 @@ export class ProfessionalHistoryService extends SubResourceService<
         );
       },
 
-      clearPrimaryFn: async ({ userExternalId, friendExternalId }, client) => {
+      clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
         return clearPrimaryProfessionalHistory.run({ userExternalId, friendExternalId }, client);
       },
 
-      countFn: async ({ userExternalId, friendExternalId }, client) => {
+      countFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
         return getProfessionalHistoryByFriendId.run({ userExternalId, friendExternalId }, client);
       },
 

@@ -12,7 +12,7 @@ import { parseEmailType } from '../../../utils/type-guards.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
-} from '../base/sub-resource.service.js';
+} from '../../base/sub-resource.service.js';
 
 /**
  * EmailService handles all email-related operations for friends.
@@ -30,7 +30,7 @@ export class EmailService extends SubResourceService<
       resourceName: 'email',
       hasPrimaryFlag: true,
 
-      createFn: async ({ userExternalId, friendExternalId, input }, client) => {
+      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
         return createEmail.run(
           {
             userExternalId,
@@ -44,7 +44,10 @@ export class EmailService extends SubResourceService<
         );
       },
 
-      updateFn: async ({ userExternalId, friendExternalId, resourceExternalId, input }, client) => {
+      updateFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+        client,
+      ) => {
         return updateEmail.run(
           {
             userExternalId,
@@ -59,7 +62,10 @@ export class EmailService extends SubResourceService<
         );
       },
 
-      deleteFn: async ({ userExternalId, friendExternalId, resourceExternalId }, client) => {
+      deleteFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
+        client,
+      ) => {
         return deleteEmail.run(
           {
             userExternalId,
@@ -70,11 +76,11 @@ export class EmailService extends SubResourceService<
         );
       },
 
-      clearPrimaryFn: async ({ userExternalId, friendExternalId }, client) => {
+      clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
         return clearPrimaryEmail.run({ userExternalId, friendExternalId }, client);
       },
 
-      countFn: async ({ userExternalId, friendExternalId }, client) => {
+      countFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
         return getEmailsByFriendId.run({ userExternalId, friendExternalId }, client);
       },
 

@@ -10,7 +10,7 @@ import { parseUrlType } from '../../../utils/type-guards.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
-} from '../base/sub-resource.service.js';
+} from '../../base/sub-resource.service.js';
 
 /**
  * UrlService handles all URL-related operations for friends.
@@ -29,7 +29,7 @@ export class UrlService extends SubResourceService<
       resourceName: 'URL',
       hasPrimaryFlag: false,
 
-      createFn: async ({ userExternalId, friendExternalId, input }, client) => {
+      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
         return createUrl.run(
           {
             userExternalId,
@@ -42,7 +42,10 @@ export class UrlService extends SubResourceService<
         );
       },
 
-      updateFn: async ({ userExternalId, friendExternalId, resourceExternalId, input }, client) => {
+      updateFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+        client,
+      ) => {
         return updateUrl.run(
           {
             userExternalId,
@@ -56,7 +59,10 @@ export class UrlService extends SubResourceService<
         );
       },
 
-      deleteFn: async ({ userExternalId, friendExternalId, resourceExternalId }, client) => {
+      deleteFn: async (
+        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
+        client,
+      ) => {
         return deleteUrl.run(
           {
             userExternalId,
