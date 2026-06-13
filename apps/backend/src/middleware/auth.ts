@@ -1,7 +1,13 @@
 import type { Context, Next } from 'hono';
 import { getAuth } from '../lib/auth.js';
 import { getLegacyExternalIdByEmail } from '../models/queries/users.queries.js';
+import type { AppContext } from '../types/context.js';
 import { AuthenticationError } from '../utils/errors.js';
+
+/** The Better Auth session as returned by api.getSession (non-null). */
+export type AuthSession = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getAuth>['api']['getSession']>>
+>;
 
 export interface AuthContext {
   /** Legacy auth.users.external_id (UUID) — used by domain queries (friends, circles, etc.) */
@@ -20,7 +26,7 @@ export interface AuthContext {
  * external_id, since domain queries (friends, encounters, etc.)
  * reference auth.users.external_id which is UUID-typed.
  */
-export async function authMiddleware(c: Context, next: Next) {
+export async function authMiddleware(c: Context<AppContext>, next: Next) {
   const session = await getAuth().api.getSession({
     headers: c.req.raw.headers,
   });
@@ -55,13 +61,13 @@ export async function authMiddleware(c: Context, next: Next) {
 /**
  * Get authenticated user from context
  */
-export function getAuthUser(c: Context): AuthContext {
+export function getAuthUser(c: Context<AppContext>): AuthContext {
   return c.get('user');
 }
 
 /**
  * Get the full Better Auth session from context (set by authMiddleware).
  */
-export function getAuthSession(c: Context) {
+export function getAuthSession(c: Context<AppContext>) {
   return c.get('session');
 }
