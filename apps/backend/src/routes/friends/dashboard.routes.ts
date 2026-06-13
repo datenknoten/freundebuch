@@ -1,9 +1,27 @@
 import { Hono } from 'hono';
+import { etag } from 'hono/etag';
 import { getAuthUser } from '../../middleware/auth.js';
 import { FriendsService } from '../../services/friends/index.js';
 import type { AppContext } from '../../types/context.js';
 
 const app = new Hono<AppContext>();
+
+// Emit ETags so browsers can revalidate dashboard/graph responses cheaply
+// (304 Not Modified) on warm navigations and back/forward, without ever
+// serving stale data — these payloads change whenever friends or
+// relationships do.
+app.use('/dashboard', etag());
+app.use('/network-graph', etag());
+
+/** Clamp the `days` query param to a sane range (default 30). */
+function parseDays(value: string | undefined): number {
+  return value ? Math.min(365, Math.max(1, Number.parseInt(value, 10) || 30)) : 30;
+}
+
+/** Clamp the `limit` query param to a sane range (default 10). */
+function parseLimit(value: string | undefined): number {
+  return value ? Math.min(50, Math.max(1, Number.parseInt(value, 10) || 10)) : 10;
+}
 
 /**
  * GET /api/friends/dates/upcoming
@@ -15,16 +33,35 @@ app.get('/dates/upcoming', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const daysParam = c.req.query('days');
-  const limitParam = c.req.query('limit');
-
-  const days = daysParam ? Math.min(365, Math.max(1, Number.parseInt(daysParam, 10) || 30)) : 30;
-  const limit = limitParam ? Math.min(50, Math.max(1, Number.parseInt(limitParam, 10) || 10)) : 10;
+  const days = parseDays(c.req.query('days'));
+  const limit = parseLimit(c.req.query('limit'));
 
   const friendsService = new FriendsService(db, logger);
   const upcomingDates = await friendsService.getUpcomingDates(user.userId, { days, limit });
 
   return c.json(upcomingDates);
+});
+
+/**
+ * GET /api/friends/dashboard
+ * Consolidated dashboard payload: upcoming dates + network graph in one request.
+ * Query params: days (default 30), limit (default 10) — applied to upcoming dates.
+ */
+app.get('/dashboard', async (c) => {
+  const logger = c.get('logger');
+  const db = c.get('db');
+  const user = getAuthUser(c);
+
+  const days = parseDays(c.req.query('days'));
+  const limit = parseLimit(c.req.query('limit'));
+
+  const friendsService = new FriendsService(db, logger);
+  const [upcomingDates, networkGraph] = await Promise.all([
+    friendsService.getUpcomingDates(user.userId, { days, limit }),
+    friendsService.getNetworkGraphData(user.userId),
+  ]);
+
+  return c.json({ upcomingDates, networkGraph });
 });
 
 /**

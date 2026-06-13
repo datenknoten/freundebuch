@@ -45,12 +45,21 @@ onMount(async () => {
   await locale.initialize(userLanguage);
 });
 
-// Load circles when user is authenticated
-let circlesLoaded = false;
+// Preload circles when the user is authenticated. The circles store caches
+// the result, so this only fetches once and is shared by every consumer
+// (circles page, circle picker, etc.). We defer the preload off the critical
+// path so it doesn't compete with the current page's initial data requests
+// (e.g. the dashboard's consolidated request).
+let circlesPreloaded = false;
 $effect(() => {
-  if ($isAuthInitialized && $isAuthenticated && !circlesLoaded) {
-    circlesLoaded = true;
-    circles.loadCircles();
+  if ($isAuthInitialized && $isAuthenticated && !circlesPreloaded) {
+    circlesPreloaded = true;
+    const preload = () => circles.loadCircles();
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(preload);
+    } else {
+      setTimeout(preload, 0);
+    }
   }
 });
 

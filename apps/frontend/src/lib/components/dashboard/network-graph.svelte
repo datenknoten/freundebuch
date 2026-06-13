@@ -1,7 +1,6 @@
 <script lang="ts">
 import * as d3 from 'd3';
-import { onDestroy, onMount } from 'svelte';
-import { getNetworkGraphData } from '$lib/api/friends.js';
+import { onDestroy } from 'svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type {
   NetworkGraphData,
@@ -12,13 +11,18 @@ import type {
 
 const i18n = createI18n();
 
+interface Props {
+  /** Network graph data to render (fetched by the parent dashboard). */
+  graphData?: NetworkGraphData | null;
+  isLoading?: boolean;
+  error?: string | null;
+}
+
+let { graphData = null, isLoading = false, error = null }: Props = $props();
+
 let container = $state<HTMLDivElement | null>(null);
 let svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 let simulation: d3.Simulation<SimulationNode, SimulationLink>;
-
-let graphData = $state<NetworkGraphData | null>(null);
-let isLoading = $state(true);
-let error = $state<string | null>(null);
 
 // Extended node type for D3 simulation (D3 adds x, y, fx, fy properties)
 type SimulationNode = NetworkGraphNode & d3.SimulationNodeDatum;
@@ -35,18 +39,6 @@ const categoryColors: Record<RelationshipCategory, string> = {
   professional: '#D4A574', // Warm amber
   social: '#8B9D83', // Sage green
 };
-
-async function loadGraphData() {
-  isLoading = true;
-  error = null;
-  try {
-    graphData = await getNetworkGraphData();
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load network graph';
-  } finally {
-    isLoading = false;
-  }
-}
 
 function initializeGraph() {
   if (!container || !graphData || graphData.nodes.length === 0) return;
@@ -245,10 +237,6 @@ function initializeGraph() {
     d.fy = null;
   }
 }
-
-onMount(() => {
-  loadGraphData();
-});
 
 // Watch for graphData changes to initialize the graph
 $effect(() => {

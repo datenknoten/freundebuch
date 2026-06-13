@@ -1,4 +1,4 @@
-import { derived, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 import type { Circle, CircleInput, CircleSummary, CircleWithHierarchy } from '$shared';
 import { buildCircleHierarchy } from '$shared';
 import * as circlesApi from '../api/circles.js';
@@ -8,12 +8,15 @@ interface CirclesState {
   circles: Circle[];
   isLoading: boolean;
   error: string | null;
+  /** Whether circles have been successfully loaded at least once. */
+  hasLoaded: boolean;
 }
 
 const initialState: CirclesState = {
   circles: [],
   isLoading: false,
   error: null,
+  hasLoaded: false,
 };
 
 function createCirclesStore() {
@@ -22,13 +25,24 @@ function createCirclesStore() {
   return {
     subscribe,
 
-    loadCircles: () =>
-      storeAction(
+    /**
+     * Load circles, caching the result. Subsequent calls are a no-op while a
+     * load is in flight or after a successful load, so the many call sites
+     * (layout, circles page, circle picker) share a single request. Pass
+     * `force` to bypass the cache and refetch.
+     */
+    loadCircles: (force = false) => {
+      const state = get({ subscribe });
+      if (!force && (state.hasLoaded || state.isLoading)) {
+        return Promise.resolve(state.circles);
+      }
+      return storeAction(
         update,
         () => circlesApi.listCircles(),
-        (_state, circles) => ({ circles }),
+        (_state, circles) => ({ circles, hasLoaded: true }),
         'Failed to load circles',
-      ),
+      );
+    },
 
     createCircle: (input: CircleInput) =>
       storeAction(

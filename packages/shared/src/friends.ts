@@ -846,6 +846,16 @@ export interface NetworkGraphData {
   links: NetworkGraphLink[];
 }
 
+/**
+ * Consolidated dashboard payload.
+ * Bundles the home page widgets into a single response so the dashboard
+ * can load with one request instead of several.
+ */
+export interface DashboardData {
+  upcomingDates: UpcomingDate[];
+  networkGraph: NetworkGraphData;
+}
+
 export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearchOptions {
   const sortBy = query.sortBy || (query.q ? 'relevance' : 'display_name');
 

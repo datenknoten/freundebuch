@@ -67,12 +67,14 @@ app.get('/me', authMiddleware, async (c) => {
   // are not UUIDs and the legacy external_id column is UUID-typed.
   const result = await getUserSelfProfile.run({ userExternalId: authUser.betterAuthId }, db);
   const selfProfileExternalId = result[0]?.self_profile_external_id ?? null;
+  const selfProfileDisplayName = result[0]?.self_profile_display_name ?? null;
 
   const response: UserWithPreferencesResponse = {
     user: {
       externalId: authUser.betterAuthId,
       email: authUser.email,
       selfProfileId: selfProfileExternalId ?? undefined,
+      displayName: selfProfileDisplayName ?? undefined,
       hasCompletedOnboarding: selfProfileExternalId !== null,
     },
     preferences: parseUserPreferences(session.user.preferences ?? {}),
