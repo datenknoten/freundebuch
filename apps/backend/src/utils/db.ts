@@ -175,7 +175,23 @@ export async function closePool(pool: pg.Pool): Promise<void> {
 
 let isShuttingDown = false;
 
-export function setupGracefulShutdown(pool: pg.Pool): void {
+/** Minimal shape of an http server we need for draining (matches node http.Server). */
+interface ClosableServer {
+  close(callback?: (err?: Error) => void): unknown;
+}
+
+/** Minimal shape of a scheduled cron task we need to stop. */
+interface StoppableTask {
+  stop(): unknown;
+}
+
+interface ShutdownOptions {
+  pool: pg.Pool;
+  server?: ClosableServer;
+  tasks?: StoppableTask[];
+}
+
+export function setupGracefulShutdown({ pool, server, tasks = [] }: ShutdownOptions): void {
   const logger = createLogger();
   const shutdown = async (signal: string) => {
     if (isShuttingDown) return;
@@ -183,13 +199,33 @@ export function setupGracefulShutdown(pool: pg.Pool): void {
 
     logger.info(`${signal} received, starting graceful shutdown`);
 
-    setTimeout(() => {
+    // Force-exit if graceful teardown hangs. unref() so this timer alone
+    // doesn't keep the event loop alive.
+    const forceTimer = setTimeout(() => {
       logger.error('Forced shutdown after timeout');
       process.exit(1);
-    }, 30000); // 30 second timeout
+    }, 30000);
+    forceTimer.unref();
 
-    await closePool(pool);
-    process.exit(0);
+    try {
+      // 1. Stop cron jobs so no new scheduled work starts mid-shutdown.
+      await Promise.all(tasks.map((task) => Promise.resolve(task.stop())));
+
+      // 2. Stop accepting new connections and drain in-flight requests
+      //    before tearing down the pool they depend on.
+      if (server) {
+        await new Promise<void>((resolve, reject) => {
+          server.close((err) => (err ? reject(err) : resolve()));
+        });
+      }
+
+      // 3. Now that nothing is using the pool, close it.
+      await closePool(pool);
+      process.exit(0);
+    } catch (error) {
+      logger.error({ err: toError(error) }, 'Error during graceful shutdown');
+      process.exit(1);
+    }
   };
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));

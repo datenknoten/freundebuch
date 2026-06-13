@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node';
-import cron from 'node-cron';
+import cron, { type ScheduledTask } from 'node-cron';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { deleteExpiredAddressCacheEntries } from '../models/queries/address-cache.queries.js';
@@ -21,10 +21,10 @@ import { formatNotificationMessage } from './notification-messages.js';
  * Setup scheduled cleanup tasks for expired tokens and sessions
  * Runs every hour at minute 0
  */
-export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): void {
+export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): ScheduledTask {
   // Run cleanup every hour at minute 0
   // Cron expression: "0 * * * *" = at minute 0 of every hour
-  cron.schedule('0 * * * *', async () => {
+  const task = cron.schedule('0 * * * *', async () => {
     logger.info('Running scheduled cleanup of expired sessions, tokens, and cache');
 
     try {
@@ -56,14 +56,15 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): void {
   });
 
   logger.info('Cleanup scheduler initialized - runs every hour');
+  return task;
 }
 
 /**
  * Setup notification scheduler for daily date digest messages
  * Runs every minute to check for channels due for notification
  */
-export function setupNotificationScheduler(pool: pg.Pool, logger: Logger): void {
-  cron.schedule('* * * * *', async () => {
+export function setupNotificationScheduler(pool: pg.Pool, logger: Logger): ScheduledTask {
+  const task = cron.schedule('* * * * *', async () => {
     const now = new Date();
     const currentTime = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}`;
     const todayUtc = now.toISOString().slice(0, 10);
@@ -123,6 +124,7 @@ export function setupNotificationScheduler(pool: pg.Pool, logger: Logger): void 
   });
 
   logger.info('Notification scheduler initialized - runs every minute');
+  return task;
 }
 
 /**
