@@ -2,7 +2,10 @@ import * as path from 'path';
 import type { DangerRule } from '../types';
 import { isExemptFile, isIgnoredPath } from '../utils';
 
-const KEBAB_CASE_STEM = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+// Lowercase alphanumeric segments separated by single hyphens. A segment may
+// start with a digit so date-prefixed names (e.g. 2026-06-13-backend-review)
+// and names like 2fa-setup are valid kebab-case.
+const KEBAB_CASE_STEM = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 // Migration files use a "<timestamp>_<name>" pattern — strip the prefix before checking
 const MIGRATION_PREFIX = /^\d+_/;
