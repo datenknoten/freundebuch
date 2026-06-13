@@ -3,6 +3,8 @@ import { LRUCache } from 'lru-cache';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
+  clearAddressCache,
+  deleteAddressCacheEntry,
   deleteExpiredAddressCacheEntries,
   getAddressCacheEntry,
   upsertAddressCacheEntry,
@@ -143,7 +145,10 @@ export class AddressCache<T extends object> {
           if (this.validator) {
             const validated = this.validator(rawValue);
             if (validated === undefined) {
-              // Validation failed, log already happened in validator
+              // Validation failed (log already happened in the validator).
+              // Delete the bad row so we don't re-read and re-reject it every
+              // miss until it expires.
+              await this.deleteFromDatabase(key);
               return undefined;
             }
             // Populate memory cache with validated value
@@ -206,17 +211,39 @@ export class AddressCache<T extends object> {
   }
 
   /**
-   * Remove a specific key from cache
+   * Remove a specific key from both the memory and database tiers. Deleting
+   * from memory alone would let the entry resurrect from the DB on next get().
    */
-  delete(key: string): boolean {
-    return this.memoryCache.delete(key);
+  async delete(key: string): Promise<boolean> {
+    const existed = this.memoryCache.delete(key);
+    await this.deleteFromDatabase(key);
+    return existed;
   }
 
   /**
-   * Clear all entries from memory cache
+   * Clear all entries from both the memory and database tiers.
    */
-  clear(): void {
+  async clear(): Promise<void> {
     this.memoryCache.clear();
+    if (this.pool) {
+      try {
+        await clearAddressCache.run(undefined, this.pool);
+      } catch (error) {
+        cacheLogger?.error({ error }, 'Failed to clear address cache database');
+      }
+    }
+  }
+
+  /** Best-effort delete of a single key from the database tier. */
+  private async deleteFromDatabase(key: string): Promise<void> {
+    if (!this.pool) {
+      return;
+    }
+    try {
+      await deleteAddressCacheEntry.run({ cacheKey: key }, this.pool);
+    } catch (error) {
+      cacheLogger?.error({ error, cacheKey: key }, 'Failed to delete from address cache database');
+    }
   }
 
   /**

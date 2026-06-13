@@ -16,5 +16,9 @@ DO UPDATE SET
 DELETE FROM system.address_cache
 WHERE expires_at < NOW();
 
+/* @name deleteAddressCacheEntry */
+DELETE FROM system.address_cache
+WHERE cache_key = :cacheKey!;
+
 /* @name clearAddressCache */
 DELETE FROM system.address_cache;
