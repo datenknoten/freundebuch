@@ -1,5 +1,7 @@
+import { getConnInfo } from '@hono/node-server/conninfo';
 import type { Context, Next } from 'hono';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { getConfig } from '../utils/config.js';
 import { isRateLimiterRes } from '../utils/type-guards.js';
 
 // Use higher limits in test environment to allow concurrent operation tests.
@@ -111,15 +113,42 @@ export function resetRateLimiters(): void {
 }
 
 /**
- * Get client identifier from request headers
- * Uses X-Forwarded-For if behind proxy, otherwise X-Real-IP
+ * Get the client identifier used as the rate-limit key.
+ *
+ * By default this is the socket peer address, which a client cannot spoof.
+ * Only when TRUST_PROXY is set (i.e. a reverse proxy fronts the app) do we
+ * read X-Forwarded-For, and then we take the LAST hop — the value the trusted
+ * proxy appended — rather than the leftmost, client-controlled entry.
  */
 function getClientIdentifier(c: Context): string {
-  const forwarded = c.req.header('X-Forwarded-For');
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
+  if (getConfig().TRUST_PROXY) {
+    const forwarded = c.req.header('X-Forwarded-For');
+    if (forwarded) {
+      const hops = forwarded
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean);
+      if (hops.length > 0) {
+        return hops[hops.length - 1];
+      }
+    }
+    const realIp = c.req.header('X-Real-IP');
+    if (realIp) {
+      return realIp;
+    }
   }
-  return c.req.header('X-Real-IP') || 'unknown';
+
+  try {
+    const address = getConnInfo(c).remote.address;
+    if (address) {
+      return address;
+    }
+  } catch {
+    // Connection info is unavailable outside the node-server runtime
+    // (e.g. the unit-test harness); fall through to 'unknown'.
+  }
+
+  return 'unknown';
 }
 
 /**
