@@ -107,43 +107,15 @@ export function authHeaders(sessionCookies: string): Record<string, string> {
 }
 
 /**
- * Clean up friends between tests (preserves self-profiles used for onboarding)
+ * Clean up friends between tests, preserving the self-profiles used for
+ * onboarding. Deleting the non-self friend rows is enough: every friend
+ * sub-resource (emails, phones, addresses, urls, dates, relationships,
+ * social profiles, professional history, circle links, encounter links)
+ * has an ON DELETE CASCADE foreign key to friends.friends, so this removes
+ * them all in one statement — the previous version enumerated only four
+ * sub-resource tables and silently leaked the rest.
  */
 export async function cleanupFriends(pool: pg.Pool): Promise<void> {
-  // Delete sub-resources for non-self-profile friends only
-  await pool.query(`
-    DELETE FROM friends.friend_urls
-    WHERE friend_id IN (
-      SELECT c.id FROM friends.friends c
-      LEFT JOIN auth.users u ON u.self_profile_id = c.id
-      WHERE u.self_profile_id IS NULL
-    )
-  `);
-  await pool.query(`
-    DELETE FROM friends.friend_addresses
-    WHERE friend_id IN (
-      SELECT c.id FROM friends.friends c
-      LEFT JOIN auth.users u ON u.self_profile_id = c.id
-      WHERE u.self_profile_id IS NULL
-    )
-  `);
-  await pool.query(`
-    DELETE FROM friends.friend_emails
-    WHERE friend_id IN (
-      SELECT c.id FROM friends.friends c
-      LEFT JOIN auth.users u ON u.self_profile_id = c.id
-      WHERE u.self_profile_id IS NULL
-    )
-  `);
-  await pool.query(`
-    DELETE FROM friends.friend_phones
-    WHERE friend_id IN (
-      SELECT c.id FROM friends.friends c
-      LEFT JOIN auth.users u ON u.self_profile_id = c.id
-      WHERE u.self_profile_id IS NULL
-    )
-  `);
-  // Delete friends that are NOT self-profiles
   await pool.query(`
     DELETE FROM friends.friends c
     WHERE NOT EXISTS (
