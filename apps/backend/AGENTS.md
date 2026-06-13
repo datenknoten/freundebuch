@@ -70,26 +70,26 @@ src/
 
 ### Usage Pattern
 
+Routes and services just **throw** the typed error — a single global
+`app.onError` handler in `src/index.ts` maps it to the right status and JSON
+body, logs it (warn for <500, error for >=500) and reports 5xx to Sentry.
+Don't write per-route `try/catch` + `isAppError` blocks; the only intentional
+try/catch in routes are for things like JSON parsing (use `parseBody` from
+`utils/http.ts`).
+
 ```typescript
-// In services - throw custom errors
-import { AuthenticationError, UserNotFoundError } from '../utils/errors.js';
+// In services or routes - just throw
+import { FriendNotFoundError } from '../utils/errors.js';
 
-if (!user) {
-  throw new UserNotFoundError();
+const friend = await friendsService.getFriendById(userId, friendId);
+if (!friend) {
+  throw new FriendNotFoundError();
 }
-
-// In routes - use isAppError for type-safe handling
-import { isAppError } from '../utils/errors.js';
-
-try {
-  // ... service call
-} catch (error) {
-  if (isAppError(error)) {
-    return c.json({ error: error.message }, error.statusCode);
-  }
-  // Handle unknown errors
-}
+// The global onError turns this into 404 { error: 'Friend not found' }.
 ```
+
+`isAppError` still exists for the rare case you need to branch on it (e.g. the
+`onError` handler itself), but routes should not need it.
 
 ### Why Custom Errors?
 
@@ -100,22 +100,24 @@ try {
 
 ## Authentication
 
-- JWT-based with access + refresh tokens
-- Tokens stored in HTTP-only cookies (production)
-- Password hashing with bcrypt (cost factor 12)
-- Session management via database
+- **Better Auth** (1.5.5) with passkeys; sessions managed by Better Auth and
+  stored in `auth.session`. Session cookies are HTTP-only.
+- `authMiddleware` validates the session and resolves both the Better Auth
+  user id and the legacy `auth.users.external_id` (UUID) used by domain queries.
+- DAV (CardDAV/CalDAV) uses app passwords, bcrypt-hashed.
+- The legacy JWT/bcrypt user-auth path has been removed.
 
 ## API Response Format
 
 ```typescript
-// Success
-{ data: T }
+// Success — bare resource (no envelope)
+T
 
-// Error
-{ error: { code: string, message: string } }
+// Error — flat shape emitted by the global onError handler
+{ error: string, code?: string, details?: unknown }
 
-// Paginated
-{ data: T[], pagination: { page, limit, total, totalPages } }
+// Paginated — friends use { friends, total, page, pageSize, totalPages };
+// newer endpoints use { data: T[], pagination: { page, pageSize, totalCount, totalPages } }
 ```
 
 ## Commands
