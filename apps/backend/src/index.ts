@@ -27,7 +27,7 @@ import { PhotoService } from './services/photo.service.js';
 import type { AppContext } from './types/context.js';
 import { initializeAddressCaches } from './utils/cache.js';
 import { getConfig } from './utils/config.js';
-import { checkDatabaseConnection, createPool } from './utils/db.js';
+import { checkDatabaseConnection, createPool, setupGracefulShutdown } from './utils/db.js';
 import { DatabaseConnectionError, isAppError, toError } from './utils/errors.js';
 import { createLogger } from './utils/logger.js';
 import { setupCleanupScheduler, setupNotificationScheduler } from './utils/scheduler.js';
@@ -140,11 +140,6 @@ export async function startServer() {
   // Migrate uploads directory from legacy 'contacts' path to 'friends'
   await PhotoService.migrateFromLegacyPath(pinoLogger);
 
-  // Import setupGracefulShutdown lazily to avoid side effects
-  import('./utils/db.js').then(({ setupGracefulShutdown }) => {
-    setupGracefulShutdown(pool);
-  });
-
   // Initialize address caches with database pool for persistence
   initializeAddressCaches(pool, pinoLogger);
 
@@ -154,17 +149,21 @@ export async function startServer() {
   }
 
   // Setup cleanup scheduler for expired sessions, tokens, and cache
-  setupCleanupScheduler(pool, pinoLogger);
+  const cleanupTask = setupCleanupScheduler(pool, pinoLogger);
 
   // Setup notification scheduler for daily date digest messages
-  setupNotificationScheduler(pool, pinoLogger);
+  const notificationTask = setupNotificationScheduler(pool, pinoLogger);
 
   pinoLogger.info(`Starting server on port ${port}`);
 
-  serve({
+  const server = serve({
     fetch: app.fetch,
     port,
   });
+
+  // Register graceful shutdown now that the server and cron tasks exist, so
+  // SIGTERM/SIGINT stops cron, drains in-flight requests, then closes the pool.
+  setupGracefulShutdown({ pool, server, tasks: [cleanupTask, notificationTask] });
 
   return { app, port, logger: pinoLogger };
 }

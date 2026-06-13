@@ -197,7 +197,7 @@ describe('db.ts', () => {
     });
 
     it('should register SIGTERM and SIGINT handlers', () => {
-      setupGracefulShutdown(mockPool);
+      setupGracefulShutdown({ pool: mockPool });
 
       expect(process.listenerCount('SIGTERM')).toBe(1);
       expect(process.listenerCount('SIGINT')).toBe(1);
