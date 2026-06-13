@@ -76,19 +76,24 @@ export function getAddressLookupService(
 // Query Schemas
 // ============================================================================
 
+// ISO-3166-1 alpha-2 country code. Restricting the shape here is the primary
+// guard against Overpass QL injection via the country parameter (the value is
+// interpolated into the upstream query string).
+const CountryCode = type(/^[A-Za-z]{2}$/);
+
 const CitiesQuerySchema = type({
-  country: 'string > 0',
+  country: CountryCode,
   postal_code: 'string > 0',
 });
 
 const StreetsQuerySchema = type({
-  country: 'string > 0',
+  country: CountryCode,
   city: 'string > 0',
   postal_code: 'string > 0',
 });
 
 const HouseNumbersQuerySchema = type({
-  country: 'string > 0',
+  country: CountryCode,
   city: 'string > 0',
   postal_code: 'string > 0',
   street: 'string > 0',

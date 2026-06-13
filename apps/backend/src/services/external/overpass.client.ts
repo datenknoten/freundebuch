@@ -128,6 +128,7 @@ export class OverpassClient {
    * Strategy: Find addresses with this postal code and extract unique street names
    */
   private buildStreetQuery(countryCode: string, city: string, postalCode: string): string {
+    const escapedCountry = this.escapeOverpassString(countryCode);
     const escapedCity = this.escapeOverpassString(city);
     const escapedPostalCode = this.escapeOverpassString(postalCode);
 
@@ -135,7 +136,7 @@ export class OverpassClient {
     // This is more reliable than trying to find city areas with postal_code tags
     return `
 [out:json][timeout:25];
-area["ISO3166-1"="${countryCode}"]->.country;
+area["ISO3166-1"="${escapedCountry}"]->.country;
 (
   node["addr:postcode"="${escapedPostalCode}"]["addr:street"](area.country);
   way["addr:postcode"="${escapedPostalCode}"]["addr:street"](area.country);
@@ -156,12 +157,13 @@ out tags;
     postalCode: string,
     street: string,
   ): string {
+    const escapedCountry = this.escapeOverpassString(countryCode);
     const escapedPostalCode = this.escapeOverpassString(postalCode);
     const escapedStreet = this.escapeOverpassString(street);
 
     return `
 [out:json][timeout:25];
-area["ISO3166-1"="${countryCode}"]->.country;
+area["ISO3166-1"="${escapedCountry}"]->.country;
 (
   node["addr:postcode"="${escapedPostalCode}"]["addr:street"="${escapedStreet}"]["addr:housenumber"](area.country);
   way["addr:postcode"="${escapedPostalCode}"]["addr:street"="${escapedStreet}"]["addr:housenumber"](area.country);
