@@ -1,3 +1,7 @@
+## 2.82.0 (2026-06-13)
+
+* feat(frontend): Hide FAB on entity creation pages ([3b213c8](https://github.com/datenknoten/freundebuch/commit/3b213c8))
+
 ## 2.81.0 (2026-06-07)
 
 * feat(frontend): Add settings toggle for shortcut hints ([da0a804](https://github.com/datenknoten/freundebuch/commit/da0a804))
