@@ -73,6 +73,7 @@ import {
   parseUrlType,
 } from '../../utils/type-guards.js';
 import type { AddressLookupService } from '../address-lookup.service.js';
+import { PhotoService } from '../photo.service.js';
 import { NetworkGraphService } from './network-graph.service.js';
 import { RelationshipService } from './relationship.service.js';
 import { SearchService } from './search.service.js';
@@ -461,6 +462,15 @@ export class FriendsService {
 
     if (result.length === 0) {
       return false;
+    }
+
+    // Remove photo files here rather than in the route, so every caller of
+    // deleteFriend cleans them up. Best-effort: a missing file must not fail
+    // the delete.
+    try {
+      await new PhotoService(this.logger).deletePhoto(friendExternalId);
+    } catch (error) {
+      this.logger.warn({ error, friendExternalId }, 'Failed to delete friend photos');
     }
 
     this.logger.info({ friendExternalId }, 'Friend deleted successfully');

@@ -8,7 +8,6 @@ import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../middleware/auth.js';
 import { FriendsService } from '../../services/friends/index.js';
-import { PhotoService } from '../../services/photo.service.js';
 import type { AppContext } from '../../types/context.js';
 import { FriendNotFoundError, ValidationError } from '../../utils/errors.js';
 import { parseBody, requireUuidParam } from '../../utils/http.js';
@@ -124,14 +123,7 @@ app.delete('/:id', async (c) => {
     throw new FriendNotFoundError();
   }
 
-  // Delete photo files from disk (best effort - don't fail if photos don't exist)
-  try {
-    const photoService = new PhotoService(logger);
-    await photoService.deletePhoto(friendId);
-  } catch (photoError) {
-    logger.warn({ error: photoError, friendId }, 'Failed to delete friend photos');
-  }
-
+  // Photo cleanup now happens inside deleteFriend so all callers get it.
   return c.json({ message: 'Friend deleted successfully' });
 });
 
