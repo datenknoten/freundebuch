@@ -87,40 +87,61 @@ export class RelationshipService {
       'Adding relationship',
     );
 
-    // Create the primary relationship
-    const [relationship] = await createRelationship.run(
-      {
-        userExternalId,
-        friendExternalId,
-        relatedFriendExternalId: data.related_friend_id,
-        relationshipTypeId: data.relationship_type_id,
-        notes: data.notes ?? null,
-      },
-      this.db,
-    );
+    // The primary relationship and its inverse must be created together; a
+    // failure in between previously left a one-way edge. Wrap both in one
+    // transaction.
+    const client = await this.db.connect();
+    let relationshipExternalId: string;
+    try {
+      await client.query('BEGIN');
 
-    if (!relationship) {
-      return null;
+      const [relationship] = await createRelationship.run(
+        {
+          userExternalId,
+          friendExternalId,
+          relatedFriendExternalId: data.related_friend_id,
+          relationshipTypeId: data.relationship_type_id,
+          notes: data.notes ?? null,
+        },
+        client,
+      );
+
+      if (!relationship) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+
+      // Create the inverse relationship (if inverse type exists)
+      await createInverseRelationship.run(
+        {
+          userExternalId,
+          friendExternalId,
+          relatedFriendExternalId: data.related_friend_id,
+          relationshipTypeId: data.relationship_type_id,
+          notes: data.notes ?? null,
+        },
+        client,
+      );
+
+      await client.query('COMMIT');
+      relationshipExternalId = relationship.external_id;
+    } catch (error) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // Ignore rollback failure to preserve the original error.
+      }
+      throw error;
+    } finally {
+      client.release();
     }
-
-    // Create the inverse relationship (if inverse type exists)
-    await createInverseRelationship.run(
-      {
-        userExternalId,
-        friendExternalId,
-        relatedFriendExternalId: data.related_friend_id,
-        relationshipTypeId: data.relationship_type_id,
-        notes: data.notes ?? null,
-      },
-      this.db,
-    );
 
     // Fetch the full relationship with related friend info
     const [fullRelationship] = await getRelationshipById.run(
       {
         userExternalId,
         friendExternalId,
-        relationshipExternalId: relationship.external_id,
+        relationshipExternalId,
       },
       this.db,
     );
@@ -195,26 +216,43 @@ export class RelationshipService {
   ): Promise<boolean> {
     this.logger.debug({ friendExternalId, relationshipExternalId }, 'Deleting relationship');
 
-    // Delete the primary relationship and get related friend ID
-    const [deleted] = await deleteRelationship.run(
-      { userExternalId, friendExternalId, relationshipExternalId },
-      this.db,
-    );
+    // Delete the primary relationship and its inverse together so an inverse
+    // edge can't survive its partner.
+    const client = await this.db.connect();
+    try {
+      await client.query('BEGIN');
 
-    if (!deleted) {
-      return false;
+      const [deleted] = await deleteRelationship.run(
+        { userExternalId, friendExternalId, relationshipExternalId },
+        client,
+      );
+
+      if (!deleted) {
+        await client.query('ROLLBACK');
+        return false;
+      }
+
+      await deleteInverseRelationship.run(
+        {
+          userExternalId,
+          friendExternalId,
+          relatedFriendId: deleted.related_friend_id,
+          relationshipTypeId: deleted.relationship_type_id,
+        },
+        client,
+      );
+
+      await client.query('COMMIT');
+    } catch (error) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // Ignore rollback failure to preserve the original error.
+      }
+      throw error;
+    } finally {
+      client.release();
     }
-
-    // Delete the inverse relationship
-    await deleteInverseRelationship.run(
-      {
-        userExternalId,
-        friendExternalId,
-        relatedFriendId: deleted.related_friend_id,
-        relationshipTypeId: deleted.relationship_type_id,
-      },
-      this.db,
-    );
 
     this.logger.info({ friendExternalId, relationshipExternalId }, 'Relationship deleted');
 
