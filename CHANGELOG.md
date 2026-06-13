@@ -1,3 +1,10 @@
+## <small>2.84.1 (2026-06-13)</small>
+
+* fix(all): Address dashboard PR review feedback ([acc1fc4](https://github.com/datenknoten/freundebuch/commit/acc1fc4))
+* fix(all): Address second round of dashboard PR review feedback ([d6acf09](https://github.com/datenknoten/freundebuch/commit/d6acf09))
+* fix(all): Address third round of dashboard PR review feedback ([1afba89](https://github.com/datenknoten/freundebuch/commit/1afba89))
+* perf(all): Reduce dashboard requests from 6 to 3 ([151db1b](https://github.com/datenknoten/freundebuch/commit/151db1b))
+
 ## 2.84.0 (2026-06-13)
 
 * fix(backend): Address PR review — tunnel status passthrough, doc name ([20030ca](https://github.com/datenknoten/freundebuch/commit/20030ca))
