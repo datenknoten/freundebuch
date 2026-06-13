@@ -412,7 +412,7 @@ export interface IGetEnabledChannelsDueAtQuery {
   result: IGetEnabledChannelsDueAtResult;
 }
 
-const getEnabledChannelsDueAtIR: any = {"usedParamSet":{"notifyTime":true,"today":true},"params":[{"name":"notifyTime","required":false,"transform":{"type":"scalar"},"locs":[{"a":470,"b":480}]},{"name":"today","required":false,"transform":{"type":"scalar"},"locs":[{"a":552,"b":557}]}],"statement":"SELECT\n    nc.id,\n    nc.external_id,\n    nc.platform,\n    nc.telegram_bot_token,\n    nc.telegram_chat_id,\n    nc.matrix_homeserver,\n    nc.matrix_access_token,\n    nc.matrix_room_id,\n    nc.discord_webhook_url,\n    nc.lookahead_days,\n    u.external_id AS user_external_id,\n    COALESCE(u.preferences->>'language', 'en') AS user_language\nFROM system.notification_channels nc\nINNER JOIN auth.users u ON nc.user_id = u.id\nWHERE nc.is_enabled = true\n  AND nc.notify_time = :notifyTime::time\n  AND (nc.last_notified_date IS NULL OR nc.last_notified_date < :today::date)"};
+const getEnabledChannelsDueAtIR: any = {"usedParamSet":{"notifyTime":true,"today":true},"params":[{"name":"notifyTime","required":false,"transform":{"type":"scalar"},"locs":[{"a":691,"b":701}]},{"name":"today","required":false,"transform":{"type":"scalar"},"locs":[{"a":773,"b":778}]}],"statement":"SELECT\n    nc.id,\n    nc.external_id,\n    nc.platform,\n    nc.telegram_bot_token,\n    nc.telegram_chat_id,\n    nc.matrix_homeserver,\n    nc.matrix_access_token,\n    nc.matrix_room_id,\n    nc.discord_webhook_url,\n    nc.lookahead_days,\n    u.external_id AS user_external_id,\n    COALESCE(u.preferences->>'language', 'en') AS user_language\nFROM system.notification_channels nc\nINNER JOIN auth.users u ON nc.user_id = u.id\n-- notify_time <= now (not exact equality): if a tick is delayed past the\n-- minute boundary (GC pause, restart, deploy), the digest still fires on the\n-- next tick. The last_notified_date gate keeps it to once per day.\nWHERE nc.is_enabled = true\n  AND nc.notify_time <= :notifyTime::time\n  AND (nc.last_notified_date IS NULL OR nc.last_notified_date < :today::date)"};
 
 /**
  * Query generated from SQL:
@@ -432,8 +432,11 @@ const getEnabledChannelsDueAtIR: any = {"usedParamSet":{"notifyTime":true,"today
  *     COALESCE(u.preferences->>'language', 'en') AS user_language
  * FROM system.notification_channels nc
  * INNER JOIN auth.users u ON nc.user_id = u.id
+ * -- notify_time <= now (not exact equality): if a tick is delayed past the
+ * -- minute boundary (GC pause, restart, deploy), the digest still fires on the
+ * -- next tick. The last_notified_date gate keeps it to once per day.
  * WHERE nc.is_enabled = true
- *   AND nc.notify_time = :notifyTime::time
+ *   AND nc.notify_time <= :notifyTime::time
  *   AND (nc.last_notified_date IS NULL OR nc.last_notified_date < :today::date)
  * ```
  */
