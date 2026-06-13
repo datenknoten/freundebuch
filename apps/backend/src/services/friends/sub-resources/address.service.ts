@@ -140,7 +140,7 @@ export class AddressService extends SubResourceService<
   ): Promise<Address | null> {
     const result = await super.add(userExternalId, friendExternalId, input, client);
     if (result) {
-      this.scheduleBackgroundGeocode(result.id, input);
+      this.scheduleBackgroundGeocode(userExternalId, result.id, input);
     }
     return result;
   }
@@ -173,7 +173,7 @@ export class AddressService extends SubResourceService<
     const fieldsChanged = !existing || addressGeoFieldsChanged(input, existing);
 
     if (fieldsChanged) {
-      this.scheduleBackgroundGeocode(resourceExternalId, input);
+      this.scheduleBackgroundGeocode(userExternalId, resourceExternalId, input);
       return result;
     }
 
@@ -182,6 +182,7 @@ export class AddressService extends SubResourceService<
       await updateAddressCoordinates.run(
         {
           addressExternalId: resourceExternalId,
+          userExternalId,
           latitude: existing.latitude,
           longitude: existing.longitude,
         },
@@ -201,7 +202,11 @@ export class AddressService extends SubResourceService<
    * committed. Errors are logged and never propagate to the caller — saving
    * an address must never fail because a third-party geocode failed.
    */
-  private scheduleBackgroundGeocode(addressExternalId: string, input: AddressInput): void {
+  private scheduleBackgroundGeocode(
+    userExternalId: string,
+    addressExternalId: string,
+    input: AddressInput,
+  ): void {
     if (!this.addressLookupService || !input.country) return;
 
     const service = this.addressLookupService;
@@ -228,6 +233,7 @@ export class AddressService extends SubResourceService<
         await updateAddressCoordinates.run(
           {
             addressExternalId,
+            userExternalId,
             latitude: location.latitude,
             longitude: location.longitude,
           },

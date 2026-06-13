@@ -157,7 +157,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
   ): Promise<Address | null> {
     const result = await super.add(userExternalId, collectiveExternalId, input, client);
     if (result) {
-      this.scheduleBackgroundGeocode(result.id, input);
+      this.scheduleBackgroundGeocode(userExternalId, result.id, input);
     }
     return result;
   }
@@ -190,7 +190,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
     const fieldsChanged = !existing || addressGeoFieldsChanged(input, existing);
 
     if (fieldsChanged) {
-      this.scheduleBackgroundGeocode(resourceExternalId, input);
+      this.scheduleBackgroundGeocode(userExternalId, resourceExternalId, input);
       return result;
     }
 
@@ -198,6 +198,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
       await updateAddressCoordinates.run(
         {
           addressExternalId: resourceExternalId,
+          userExternalId,
           latitude: existing.latitude,
           longitude: existing.longitude,
         },
@@ -212,7 +213,11 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
     return result;
   }
 
-  private scheduleBackgroundGeocode(addressExternalId: string, input: AddressInput): void {
+  private scheduleBackgroundGeocode(
+    userExternalId: string,
+    addressExternalId: string,
+    input: AddressInput,
+  ): void {
     if (!this.addressLookupService || !input.country) return;
 
     const service = this.addressLookupService;
@@ -242,6 +247,7 @@ export class CollectiveAddressService extends CollectiveSubResourceService<
         await updateAddressCoordinates.run(
           {
             addressExternalId,
+            userExternalId,
             latitude: location.latitude,
             longitude: location.longitude,
           },

@@ -328,6 +328,7 @@ export interface IUpdateAddressCoordinatesParams {
   addressExternalId?: string | null | void;
   latitude?: number | null | void;
   longitude?: number | null | void;
+  userExternalId?: string | null | void;
 }
 
 /** 'UpdateAddressCoordinates' return type */
@@ -339,16 +340,20 @@ export interface IUpdateAddressCoordinatesQuery {
   result: IUpdateAddressCoordinatesResult;
 }
 
-const updateAddressCoordinatesIR: any = {"usedParamSet":{"latitude":true,"longitude":true,"addressExternalId":true},"params":[{"name":"latitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":51,"b":59}]},{"name":"longitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":78,"b":87}]},{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":109,"b":126}]}],"statement":"UPDATE friends.friend_addresses\nSET\n    latitude = :latitude,\n    longitude = :longitude\nWHERE external_id = :addressExternalId"};
+const updateAddressCoordinatesIR: any = {"usedParamSet":{"latitude":true,"longitude":true,"addressExternalId":true,"userExternalId":true},"params":[{"name":"latitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":53,"b":61}]},{"name":"longitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":80,"b":89}]},{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":150,"b":167}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":239,"b":253}]}],"statement":"UPDATE friends.friend_addresses a\nSET\n    latitude = :latitude,\n    longitude = :longitude\nFROM friends.friends c, auth.users u\nWHERE a.external_id = :addressExternalId\n  AND a.friend_id = c.id\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId"};
 
 /**
  * Query generated from SQL:
  * ```
- * UPDATE friends.friend_addresses
+ * UPDATE friends.friend_addresses a
  * SET
  *     latitude = :latitude,
  *     longitude = :longitude
- * WHERE external_id = :addressExternalId
+ * FROM friends.friends c, auth.users u
+ * WHERE a.external_id = :addressExternalId
+ *   AND a.friend_id = c.id
+ *   AND c.user_id = u.id
+ *   AND u.external_id = :userExternalId
  * ```
  */
 export const updateAddressCoordinates = new PreparedQuery<IUpdateAddressCoordinatesParams,IUpdateAddressCoordinatesResult>(updateAddressCoordinatesIR);

@@ -129,11 +129,15 @@ RETURNING
     a.created_at;
 
 /* @name UpdateAddressCoordinates */
-UPDATE friends.friend_addresses
+UPDATE friends.friend_addresses a
 SET
     latitude = :latitude,
     longitude = :longitude
-WHERE external_id = :addressExternalId;
+FROM friends.friends c, auth.users u
+WHERE a.external_id = :addressExternalId
+  AND a.friend_id = c.id
+  AND c.user_id = u.id
+  AND u.external_id = :userExternalId;
 
 /* @name DeleteAddress */
 DELETE FROM friends.friend_addresses a

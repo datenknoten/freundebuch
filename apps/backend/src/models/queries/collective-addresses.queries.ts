@@ -356,6 +356,7 @@ export interface IUpdateAddressCoordinatesParams {
   addressExternalId?: string | null | void;
   latitude?: number | null | void;
   longitude?: number | null | void;
+  userExternalId?: string | null | void;
 }
 
 /** 'UpdateAddressCoordinates' return type */
@@ -367,16 +368,20 @@ export interface IUpdateAddressCoordinatesQuery {
   result: IUpdateAddressCoordinatesResult;
 }
 
-const updateAddressCoordinatesIR: any = {"usedParamSet":{"latitude":true,"longitude":true,"addressExternalId":true},"params":[{"name":"latitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":59,"b":67}]},{"name":"longitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":86,"b":95}]},{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":117,"b":134}]}],"statement":"UPDATE collectives.collective_addresses\nSET\n    latitude = :latitude,\n    longitude = :longitude\nWHERE external_id = :addressExternalId"};
+const updateAddressCoordinatesIR: any = {"usedParamSet":{"latitude":true,"longitude":true,"addressExternalId":true,"userExternalId":true},"params":[{"name":"latitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":61,"b":69}]},{"name":"longitude","required":false,"transform":{"type":"scalar"},"locs":[{"a":88,"b":97}]},{"name":"addressExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":166,"b":183}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":259,"b":273}]}],"statement":"UPDATE collectives.collective_addresses a\nSET\n    latitude = :latitude,\n    longitude = :longitude\nFROM collectives.collectives c, auth.users u\nWHERE a.external_id = :addressExternalId\n  AND a.collective_id = c.id\n  AND c.user_id = u.id\n  AND u.external_id = :userExternalId"};
 
 /**
  * Query generated from SQL:
  * ```
- * UPDATE collectives.collective_addresses
+ * UPDATE collectives.collective_addresses a
  * SET
  *     latitude = :latitude,
  *     longitude = :longitude
- * WHERE external_id = :addressExternalId
+ * FROM collectives.collectives c, auth.users u
+ * WHERE a.external_id = :addressExternalId
+ *   AND a.collective_id = c.id
+ *   AND c.user_id = u.id
+ *   AND u.external_id = :userExternalId
  * ```
  */
 export const updateAddressCoordinates = new PreparedQuery<IUpdateAddressCoordinatesParams,IUpdateAddressCoordinatesResult>(updateAddressCoordinatesIR);
