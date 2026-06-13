@@ -48,7 +48,7 @@ export interface IGetUserByEmailWithSelfProfileResult {
   /** UUID primary key (mapped from legacy external_id) */
   external_id: string;
   /** Display name of the self-profile friend */
-  self_profile_display_name: string | null;
+  self_profile_display_name: string;
   /** Public UUID for API exposure (always use this in APIs) */
   self_profile_external_id: string;
   updated_at: Date;
@@ -239,7 +239,7 @@ export interface IGetUserSelfProfileParams {
 /** 'GetUserSelfProfile' return type */
 export interface IGetUserSelfProfileResult {
   /** Display name of the self-profile friend */
-  self_profile_display_name: string | null;
+  self_profile_display_name: string;
   /** Public UUID for API exposure (always use this in APIs) */
   self_profile_external_id: string;
   /** FK to friends.friends - set during onboarding */

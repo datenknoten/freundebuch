@@ -10,6 +10,8 @@ interface Props {
   upcomingDates?: UpcomingDate[];
   isLoading?: boolean;
   error?: string | null;
+  /** Called when the user retries after an error. */
+  onRetry?: () => void;
   days?: number;
   limit?: number;
 }
@@ -18,6 +20,7 @@ let {
   upcomingDates = [],
   isLoading = false,
   error = null,
+  onRetry,
   days = 30,
   limit = 10,
 }: Props = $props();
@@ -85,6 +88,15 @@ function getDaysUntilClass(daysUntil: number): string {
     </div>
   {:else if error}
     <div class="text-red-600 text-sm">{error}</div>
+    {#if onRetry}
+      <button
+        type="button"
+        onclick={onRetry}
+        class="mt-3 text-sm font-body text-forest hover:text-forest-light"
+      >
+        {$i18n.t('common.retry')}
+      </button>
+    {/if}
   {:else if upcomingDates.length === 0}
     <div class="text-center py-6">
       <div class="text-gray-400 text-4xl mb-2">&#128197;</div>

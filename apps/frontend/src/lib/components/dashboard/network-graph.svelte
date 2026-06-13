@@ -16,9 +16,11 @@ interface Props {
   graphData?: NetworkGraphData | null;
   isLoading?: boolean;
   error?: string | null;
+  /** Called when the user retries after an error. */
+  onRetry?: () => void;
 }
 
-let { graphData = null, isLoading = false, error = null }: Props = $props();
+let { graphData = null, isLoading = false, error = null, onRetry }: Props = $props();
 
 let container = $state<HTMLDivElement | null>(null);
 let svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
@@ -270,7 +272,18 @@ onDestroy(() => {
     </div>
   {:else if error}
     <div class="h-[400px] flex items-center justify-center">
-      <div class="text-red-600 text-sm">{error}</div>
+      <div class="text-center">
+        <div class="text-red-600 text-sm">{error}</div>
+        {#if onRetry}
+          <button
+            type="button"
+            onclick={onRetry}
+            class="mt-3 text-sm font-body text-forest hover:text-forest-light"
+          >
+            {$i18n.t('common.retry')}
+          </button>
+        {/if}
+      </div>
     </div>
   {:else if !graphData || graphData.nodes.length === 0}
     <div class="h-[400px] flex items-center justify-center">
