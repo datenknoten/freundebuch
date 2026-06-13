@@ -204,6 +204,23 @@ ON DELETE SET NULL
 -- For most relations, use CASCADE or RESTRICT
 ```
 
+### Delete Policy (soft vs hard)
+
+The codebase mixes soft and hard deletes intentionally:
+
+- **Soft delete** (`deleted_at` timestamp): top-level user-facing entities —
+  `friends.friends` and `collectives.collectives` — so a delete is recoverable
+  and history (encounters, changes) referencing them stays intact.
+- **Hard delete**: encounters, all sub-resources (emails, phones, addresses,
+  …), memberships, and session/token rows. Sub-resource queries always
+  re-check the parent's `deleted_at IS NULL`.
+
+Soft-deleted rows are **not** purged automatically: this is a single-tenant
+personal CRM where the "undo" safety net outweighs the modest storage cost,
+and permanent deletion of personal data should be an explicit user action, not
+a timer. If a retention/purge policy is introduced later, make the window and
+the user-facing behavior explicit.
+
 ## Security Considerations
 
 ### Row-Level Security (RLS)
