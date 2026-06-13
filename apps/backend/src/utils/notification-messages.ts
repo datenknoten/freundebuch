@@ -7,6 +7,10 @@ interface LocaleStrings {
   inDays: (n: number) => string;
   birthday: string;
   anniversary: string;
+  /** Age phrasing for a birthday, e.g. "turns 30" */
+  birthdayAge: (n: number) => string;
+  /** Year count for non-birthday dates, e.g. "30 years" */
+  yearsCount: (n: number) => string;
   footer: (url: string) => string;
   months: string[];
   formatDate: (month: number, day: number) => string;
@@ -20,6 +24,8 @@ const locales: Record<string, LocaleStrings> = {
     inDays: (n) => `In ${n} days`,
     birthday: 'birthday',
     anniversary: 'wedding anniversary',
+    birthdayAge: (n) => `turns ${n}`,
+    yearsCount: (n) => `${n} years`,
     footer: (url) => `View your Freundebuch: ${url}`,
     months: [
       'January',
@@ -46,6 +52,8 @@ const locales: Record<string, LocaleStrings> = {
     inDays: (n) => `In ${n} Tagen`,
     birthday: 'Geburtstag',
     anniversary: 'Hochzeitstag',
+    birthdayAge: (n) => `wird ${n}`,
+    yearsCount: (n) => `${n} Jahre`,
     footer: (url) => `Dein Freundebuch öffnen: ${url}`,
     months: [
       'Januar',
@@ -91,6 +99,31 @@ function extractMonthDay(dateValue: Date): { month: number; day: number } {
 }
 
 /**
+ * Compute the age (or number of years) the date marks on its upcoming occurrence.
+ *
+ * The occurrence year is derived from `daysUntil` (added to today) so it stays
+ * consistent with the value the SQL query produced, correctly handling dates
+ * that roll over into next year. Returns null when the birth year is unknown or
+ * the resulting age is not a positive number.
+ */
+function computeAge(dateValue: Date, yearKnown: boolean, daysUntil: number): number | null {
+  if (!yearKnown) return null;
+
+  const now = new Date();
+  // Use all-local date arithmetic to stay consistent with extractMonthDay.
+  const occurrence = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntil);
+  const age = occurrence.getFullYear() - dateValue.getFullYear();
+
+  return age > 0 ? age : null;
+}
+
+function getAgePhrase(l: LocaleStrings, dateType: string, age: number | null): string | null {
+  if (age === null) return null;
+  if (dateType === 'birthday') return l.birthdayAge(age);
+  return l.yearsCount(age);
+}
+
+/**
  * Format upcoming dates into a notification message
  * Returns both plain text and HTML versions
  */
@@ -111,8 +144,12 @@ export function formatNotificationMessage(
     const { month, day } = extractMonthDay(date.date_value);
     const formattedDate = l.formatDate(month, day);
 
-    const plainLine = `${dayPhrase}: ${date.friend_display_name}'s ${eventLabel} (${formattedDate})`;
-    const htmlLine = `${dayPhrase}: <b>${date.friend_display_name}</b>'s ${eventLabel} (${formattedDate})`;
+    const age = computeAge(date.date_value, date.year_known, daysUntil);
+    const agePhrase = getAgePhrase(l, date.date_type, age);
+    const datePart = agePhrase ? `${formattedDate}, ${agePhrase}` : formattedDate;
+
+    const plainLine = `${dayPhrase}: ${date.friend_display_name}'s ${eventLabel} (${datePart})`;
+    const htmlLine = `${dayPhrase}: <b>${date.friend_display_name}</b>'s ${eventLabel} (${datePart})`;
 
     plainLines.push(plainLine);
     htmlLines.push(htmlLine);
