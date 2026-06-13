@@ -1,15 +1,10 @@
 import { EmailInputSchema } from '@freundebuch/shared/index.js';
-import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import type { AppContext } from '../../../types/context.js';
-import {
-  FriendNotFoundError,
-  ResourceNotFoundError,
-  ValidationError,
-} from '../../../utils/errors.js';
-import { isValidUuid } from '../../../utils/security.js';
+import { FriendNotFoundError, ResourceNotFoundError } from '../../../utils/errors.js';
+import { parseBody, requireUuidParam } from '../../../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -20,24 +15,8 @@ const app = new Hono<AppContext>();
 app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
-
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = EmailInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
+  const validated = await parseBody(c, EmailInputSchema);
 
   const friendsService = new FriendsService(db, c.get('logger'));
   const email = await friendsService.addEmail(user.userId, friendId, validated);
@@ -56,25 +35,9 @@ app.post('/', async (c) => {
 app.put('/:emailId', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-  const emailId = c.req.param('emailId') ?? '';
-
-  if (!isValidUuid(friendId) || !isValidUuid(emailId)) {
-    throw new ValidationError('Invalid ID');
-  }
-
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = EmailInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
+  const emailId = requireUuidParam(c, 'emailId', 'email ID');
+  const validated = await parseBody(c, EmailInputSchema);
 
   const friendsService = new FriendsService(db, c.get('logger'));
   const email = await friendsService.updateEmail(user.userId, friendId, emailId, validated);
@@ -93,12 +56,8 @@ app.put('/:emailId', async (c) => {
 app.delete('/:emailId', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-  const emailId = c.req.param('emailId') ?? '';
-
-  if (!isValidUuid(friendId) || !isValidUuid(emailId)) {
-    throw new ValidationError('Invalid ID');
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
+  const emailId = requireUuidParam(c, 'emailId', 'email ID');
 
   const friendsService = new FriendsService(db, c.get('logger'));
   const deleted = await friendsService.deleteEmail(user.userId, friendId, emailId);

@@ -1,15 +1,10 @@
 import { UrlInputSchema } from '@freundebuch/shared/index.js';
-import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { CollectiveUrlService } from '../../../services/collectives/index.js';
 import type { AppContext } from '../../../types/context.js';
-import {
-  CollectiveNotFoundError,
-  ResourceNotFoundError,
-  ValidationError,
-} from '../../../utils/errors.js';
-import { isValidUuid } from '../../../utils/security.js';
+import { CollectiveNotFoundError, ResourceNotFoundError } from '../../../utils/errors.js';
+import { parseBody, requireUuidParam } from '../../../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -21,11 +16,7 @@ app.get('/', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id') ?? '';
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
 
   const urlService = new CollectiveUrlService({ db, logger });
   const urls = await urlService.list(user.userId, collectiveId);
@@ -40,24 +31,8 @@ app.post('/', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id') ?? '';
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
-
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = UrlInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
+  const validated = await parseBody(c, UrlInputSchema);
 
   const urlService = new CollectiveUrlService({ db, logger });
   const url = await urlService.add(user.userId, collectiveId, validated);
@@ -77,25 +52,9 @@ app.put('/:urlId', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id') ?? '';
-  const urlId = c.req.param('urlId') ?? '';
-
-  if (!isValidUuid(collectiveId) || !isValidUuid(urlId)) {
-    throw new ValidationError('Invalid ID');
-  }
-
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = UrlInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
+  const urlId = requireUuidParam(c, 'urlId', 'URL ID');
+  const validated = await parseBody(c, UrlInputSchema);
 
   const urlService = new CollectiveUrlService({ db, logger });
   const url = await urlService.update(user.userId, collectiveId, urlId, validated);
@@ -115,12 +74,8 @@ app.delete('/:urlId', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id') ?? '';
-  const urlId = c.req.param('urlId') ?? '';
-
-  if (!isValidUuid(collectiveId) || !isValidUuid(urlId)) {
-    throw new ValidationError('Invalid ID');
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
+  const urlId = requireUuidParam(c, 'urlId', 'URL ID');
 
   const urlService = new CollectiveUrlService({ db, logger });
   const deleted = await urlService.delete(user.userId, collectiveId, urlId);
