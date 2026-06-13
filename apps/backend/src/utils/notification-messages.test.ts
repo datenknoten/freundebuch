@@ -123,6 +123,29 @@ describe('formatNotificationMessage age handling', () => {
     expect(formatNotificationMessage([date], 'de').plain).toContain('20. Juni, 1 Jahr)');
   });
 
+  it('escapes user-controlled values in the HTML body to prevent injection', () => {
+    const { plain, html } = formatNotificationMessage(
+      [
+        makeDate({
+          date_type: 'other',
+          friend_display_name: '<b>Mallory</b> & "friends"',
+          label: '<img src=x onerror=alert(1)>',
+          year_known: false,
+        }),
+      ],
+      'en',
+      'https://example.com/?a=1&b=2',
+    );
+    // HTML body must not contain the raw injected markup
+    expect(html).not.toContain('<img src=x');
+    expect(html).not.toContain('<b>Mallory</b> &');
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(html).toContain('&lt;b&gt;Mallory&lt;/b&gt; &amp; &quot;friends&quot;');
+    expect(html).toContain('https://example.com/?a=1&amp;b=2');
+    // Plain text stays unescaped
+    expect(plain).toContain('<b>Mallory</b> & "friends"');
+  });
+
   it('displays the normalized occurrence date for Feb 29 in a non-leap year', () => {
     vi.setSystemTime(new Date(2026, 1, 20)); // 2026-02-20, non-leap year
     const { plain } = formatNotificationMessage(

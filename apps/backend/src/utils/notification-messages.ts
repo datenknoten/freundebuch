@@ -129,6 +129,21 @@ function getAgePhrase(l: LocaleStrings, dateType: string, age: number | null): s
 }
 
 /**
+ * Escape values that are interpolated into the HTML notification body. The HTML
+ * is delivered as a Matrix `formatted_body`, so user-controlled values such as
+ * the friend's display name and custom date labels must be escaped to prevent
+ * HTML injection.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
  * Format upcoming dates into a notification message
  * Returns both plain text and HTML versions
  */
@@ -155,7 +170,7 @@ export function formatNotificationMessage(
     const datePart = agePhrase ? `${formattedDate}, ${agePhrase}` : formattedDate;
 
     const plainLine = `${dayPhrase}: ${date.friend_display_name}'s ${eventLabel} (${datePart})`;
-    const htmlLine = `${dayPhrase}: <b>${date.friend_display_name}</b>'s ${eventLabel} (${datePart})`;
+    const htmlLine = `${dayPhrase}: <b>${escapeHtml(date.friend_display_name)}</b>'s ${escapeHtml(eventLabel)} (${escapeHtml(datePart)})`;
 
     plainLines.push(plainLine);
     htmlLines.push(htmlLine);
@@ -163,7 +178,10 @@ export function formatNotificationMessage(
 
   if (instanceUrl) {
     plainLines.push('', l.footer(instanceUrl));
-    htmlLines.push('', `<a href="${instanceUrl}">${l.footer(instanceUrl)}</a>`);
+    htmlLines.push(
+      '',
+      `<a href="${escapeHtml(instanceUrl)}">${escapeHtml(l.footer(instanceUrl))}</a>`,
+    );
   }
 
   return {
