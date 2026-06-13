@@ -105,19 +105,30 @@ WHERE e.external_id = :encounterExternalId::uuid
   AND f.deleted_at IS NULL
 ORDER BY display_name ASC;
 
-/* @name GetEncounterFriendsPreview */
--- Gets first N friends for list preview
+/* @name GetEncounterFriendsPreviewBatch */
+-- Gets first N friends for each encounter in one query (avoids N+1).
+-- Scoped to the requesting user via auth.users.
 SELECT
-    f.external_id,
-    COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,
-    f.photo_url
-FROM friends.friends f
-INNER JOIN encounters.encounter_friends ef ON ef.friend_id = f.id
-INNER JOIN encounters.encounters e ON ef.encounter_id = e.id
-WHERE e.external_id = :encounterExternalId::uuid
-  AND f.deleted_at IS NULL
-ORDER BY display_name ASC
-LIMIT :limit;
+    e.external_id AS encounter_external_id,
+    sub.external_id,
+    sub.display_name,
+    sub.photo_url
+FROM encounters.encounters e
+INNER JOIN auth.users u ON e.user_id = u.id
+CROSS JOIN LATERAL (
+    SELECT
+        f.external_id,
+        COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,
+        f.photo_url
+    FROM friends.friends f
+    INNER JOIN encounters.encounter_friends ef ON ef.friend_id = f.id
+    WHERE ef.encounter_id = e.id
+      AND f.deleted_at IS NULL
+    ORDER BY display_name ASC
+    LIMIT :limit
+) sub
+WHERE e.external_id = ANY(:encounterExternalIds::uuid[])
+  AND u.external_id = :userExternalId::uuid;
 
 /* @name CreateEncounter */
 INSERT INTO encounters.encounters (

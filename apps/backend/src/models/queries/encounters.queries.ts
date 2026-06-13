@@ -5,6 +5,8 @@ export type DateOrString = Date | string;
 
 export type NumberOrString = number | string;
 
+export type stringArray = (string)[];
+
 /** 'GetEncountersByUserId' parameters type */
 export interface IGetEncountersByUserIdParams {
   encounterType?: string | null | void;
@@ -253,47 +255,61 @@ const getEncounterFriendsIR: any = {"usedParamSet":{"encounterExternalId":true,"
 export const getEncounterFriends = new PreparedQuery<IGetEncounterFriendsParams,IGetEncounterFriendsResult>(getEncounterFriendsIR);
 
 
-/** 'GetEncounterFriendsPreview' parameters type */
-export interface IGetEncounterFriendsPreviewParams {
-  encounterExternalId?: string | null | void;
+/** 'GetEncounterFriendsPreviewBatch' parameters type */
+export interface IGetEncounterFriendsPreviewBatchParams {
+  encounterExternalIds?: stringArray | null | void;
   limit?: NumberOrString | null | void;
+  userExternalId?: string | null | void;
 }
 
-/** 'GetEncounterFriendsPreview' return type */
-export interface IGetEncounterFriendsPreviewResult {
+/** 'GetEncounterFriendsPreviewBatch' return type */
+export interface IGetEncounterFriendsPreviewBatchResult {
   display_name: string | null;
+  /** Public UUID for API exposure (always use this in APIs) */
+  encounter_external_id: string;
   /** Public UUID for API exposure (always use this in APIs) */
   external_id: string;
   /** URL to original profile picture */
   photo_url: string | null;
 }
 
-/** 'GetEncounterFriendsPreview' query type */
-export interface IGetEncounterFriendsPreviewQuery {
-  params: IGetEncounterFriendsPreviewParams;
-  result: IGetEncounterFriendsPreviewResult;
+/** 'GetEncounterFriendsPreviewBatch' query type */
+export interface IGetEncounterFriendsPreviewBatchQuery {
+  params: IGetEncounterFriendsPreviewBatchParams;
+  result: IGetEncounterFriendsPreviewBatchResult;
 }
 
-const getEncounterFriendsPreviewIR: any = {"usedParamSet":{"encounterExternalId":true,"limit":true},"params":[{"name":"encounterExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":324,"b":343}]},{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":410,"b":415}]}],"statement":"-- Gets first N friends for list preview\nSELECT\n    f.external_id,\n    COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,\n    f.photo_url\nFROM friends.friends f\nINNER JOIN encounters.encounter_friends ef ON ef.friend_id = f.id\nINNER JOIN encounters.encounters e ON ef.encounter_id = e.id\nWHERE e.external_id = :encounterExternalId::uuid\n  AND f.deleted_at IS NULL\nORDER BY display_name ASC\nLIMIT :limit"};
+const getEncounterFriendsPreviewBatchIR: any = {"usedParamSet":{"limit":true,"encounterExternalIds":true,"userExternalId":true},"params":[{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":653,"b":658}]},{"name":"encounterExternalIds","required":false,"transform":{"type":"scalar"},"locs":[{"a":692,"b":712}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":745,"b":759}]}],"statement":"-- Gets first N friends for each encounter in one query (avoids N+1).\n-- Scoped to the requesting user via auth.users.\nSELECT\n    e.external_id AS encounter_external_id,\n    sub.external_id,\n    sub.display_name,\n    sub.photo_url\nFROM encounters.encounters e\nINNER JOIN auth.users u ON e.user_id = u.id\nCROSS JOIN LATERAL (\n    SELECT\n        f.external_id,\n        COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,\n        f.photo_url\n    FROM friends.friends f\n    INNER JOIN encounters.encounter_friends ef ON ef.friend_id = f.id\n    WHERE ef.encounter_id = e.id\n      AND f.deleted_at IS NULL\n    ORDER BY display_name ASC\n    LIMIT :limit\n) sub\nWHERE e.external_id = ANY(:encounterExternalIds::uuid[])\n  AND u.external_id = :userExternalId::uuid"};
 
 /**
  * Query generated from SQL:
  * ```
- * -- Gets first N friends for list preview
+ * -- Gets first N friends for each encounter in one query (avoids N+1).
+ * -- Scoped to the requesting user via auth.users.
  * SELECT
- *     f.external_id,
- *     COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,
- *     f.photo_url
- * FROM friends.friends f
- * INNER JOIN encounters.encounter_friends ef ON ef.friend_id = f.id
- * INNER JOIN encounters.encounters e ON ef.encounter_id = e.id
- * WHERE e.external_id = :encounterExternalId::uuid
- *   AND f.deleted_at IS NULL
- * ORDER BY display_name ASC
- * LIMIT :limit
+ *     e.external_id AS encounter_external_id,
+ *     sub.external_id,
+ *     sub.display_name,
+ *     sub.photo_url
+ * FROM encounters.encounters e
+ * INNER JOIN auth.users u ON e.user_id = u.id
+ * CROSS JOIN LATERAL (
+ *     SELECT
+ *         f.external_id,
+ *         COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,
+ *         f.photo_url
+ *     FROM friends.friends f
+ *     INNER JOIN encounters.encounter_friends ef ON ef.friend_id = f.id
+ *     WHERE ef.encounter_id = e.id
+ *       AND f.deleted_at IS NULL
+ *     ORDER BY display_name ASC
+ *     LIMIT :limit
+ * ) sub
+ * WHERE e.external_id = ANY(:encounterExternalIds::uuid[])
+ *   AND u.external_id = :userExternalId::uuid
  * ```
  */
-export const getEncounterFriendsPreview = new PreparedQuery<IGetEncounterFriendsPreviewParams,IGetEncounterFriendsPreviewResult>(getEncounterFriendsPreviewIR);
+export const getEncounterFriendsPreviewBatch = new PreparedQuery<IGetEncounterFriendsPreviewBatchParams,IGetEncounterFriendsPreviewBatchResult>(getEncounterFriendsPreviewBatchIR);
 
 
 /** 'CreateEncounter' parameters type */
