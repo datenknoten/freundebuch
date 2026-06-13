@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/node';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { sentryTunnelRateLimitMiddleware } from '../middleware/rate-limit.js';
 import type { AppContext } from '../types/context.js';
 import { toError } from '../utils/errors.js';
@@ -100,12 +101,12 @@ sentryTunnelRoutes.post(
         return c.json({ success: true }, 200);
       }
 
-      // Upstream rejected the envelope — report a matching, non-success status.
+      // Pass an upstream 4xx through as-is (preserving e.g. 429 rate limiting),
+      // and collapse upstream 5xx to 502 (a bad-gateway from our perspective).
       logger.warn({ upstreamStatus: response.status }, 'Sentry upstream rejected envelope');
-      return c.json(
-        { success: false, error: 'Sentry rejected the envelope' },
-        response.status >= 500 ? 502 : 400,
-      );
+      const status: ContentfulStatusCode =
+        response.status >= 500 ? 502 : (response.status as ContentfulStatusCode);
+      return c.json({ success: false, error: 'Sentry rejected the envelope' }, status);
     } catch (error) {
       const err = toError(error);
       logger.error({ err }, 'Sentry tunnel error');
