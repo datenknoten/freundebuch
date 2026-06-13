@@ -141,12 +141,21 @@ SELECT
     COALESCE(u.preferences->>'language', 'en') AS user_language
 FROM system.notification_channels nc
 INNER JOIN auth.users u ON nc.user_id = u.id
--- notify_time <= now (not exact equality): if a tick is delayed past the
--- minute boundary (GC pause, restart, deploy), the digest still fires on the
--- next tick. The last_notified_date gate keeps it to once per day.
+-- Fire when the channel hasn't been notified today AND either:
+--   * notify_time has passed today (notify_time <= now) — the normal case,
+--     using <= rather than = so a tick delayed past the minute boundary
+--     (GC pause, restart, deploy) still fires on the next tick; or
+--   * the channel is overdue — last notified before yesterday — which catches
+--     up a digest missed across a day boundary (e.g. notify_time 23:59, the
+--     process is down from 23:58 until 00:01, so notify_time is no longer
+--     <= the new day's clock). A never-notified channel (NULL) only fires via
+--     notify_time, so a newly-created late-in-the-day channel isn't sent early.
 WHERE nc.is_enabled = true
-  AND nc.notify_time <= :notifyTime::time
-  AND (nc.last_notified_date IS NULL OR nc.last_notified_date < :today::date);
+  AND (nc.last_notified_date IS NULL OR nc.last_notified_date < :today::date)
+  AND (
+    nc.notify_time <= :notifyTime::time
+    OR nc.last_notified_date < (:today::date - 1)
+  );
 
 /* @name MarkChannelNotified */
 UPDATE system.notification_channels

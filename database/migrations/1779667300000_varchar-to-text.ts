@@ -6,7 +6,11 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * predate the convention; later migrations already use text. ALTER ... TYPE
  * text is a metadata-only change in PostgreSQL (no table rewrite).
  *
- * down() restores the original lengths captured from the live schema.
+ * down() restores the original lengths captured from the live schema. Note
+ * it is only safe as an immediate rollback: once TEXT values longer than the
+ * old VARCHAR(n) limits have been written, the down() ALTER will fail (or
+ * would truncate) — by design, since the point of this migration is to drop
+ * those limits.
  */
 const COLUMNS: Array<[schema: string, table: string, column: string, length: number]> = [
   ['auth', 'app_passwords', 'name', 100],
