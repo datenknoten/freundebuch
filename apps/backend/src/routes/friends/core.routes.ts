@@ -11,6 +11,7 @@ import { FriendsService } from '../../services/friends/index.js';
 import { PhotoService } from '../../services/photo.service.js';
 import type { AppContext } from '../../types/context.js';
 import { FriendNotFoundError, ValidationError } from '../../utils/errors.js';
+import { parseBody, requireUuidParam } from '../../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -45,7 +46,7 @@ app.get('/:id', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
 
   const friendsService = new FriendsService(db, logger);
   const friend = await friendsService.getFriendById(user.userId, friendId);
@@ -93,20 +94,8 @@ app.put('/:id', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
-
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = FriendUpdateSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
+  const validated = await parseBody(c, FriendUpdateSchema);
 
   const friendsService = new FriendsService(db, logger);
   const friend = await friendsService.updateFriend(user.userId, friendId, validated);
@@ -126,7 +115,7 @@ app.delete('/:id', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
 
   const friendsService = new FriendsService(db, logger);
   const deleted = await friendsService.deleteFriend(user.userId, friendId);
