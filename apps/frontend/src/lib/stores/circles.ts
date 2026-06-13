@@ -22,26 +22,35 @@ const initialState: CirclesState = {
 function createCirclesStore() {
   const { subscribe, set, update } = writable<CirclesState>(initialState);
 
+  // Tracks an in-flight load so concurrent callers share one request and all
+  // await the same result rather than receiving stale/empty data.
+  let inFlight: Promise<Circle[]> | null = null;
+
   return {
     subscribe,
 
     /**
-     * Load circles, caching the result. Subsequent calls are a no-op while a
-     * load is in flight or after a successful load, so the many call sites
-     * (layout, circles page, circle picker) share a single request. Pass
-     * `force` to bypass the cache and refetch.
+     * Load circles, caching the result. After a successful load this is a
+     * no-op; while a load is in flight, concurrent callers reuse the same
+     * promise. This lets the many call sites (layout, circles page, circle
+     * picker) share a single request. Pass `force` to bypass the cache and
+     * refetch.
      */
-    loadCircles: (force = false) => {
+    loadCircles: (force = false): Promise<Circle[]> => {
       const state = get({ subscribe });
-      if (!force && (state.hasLoaded || state.isLoading)) {
-        return Promise.resolve(state.circles);
+      if (!force) {
+        if (state.hasLoaded) return Promise.resolve(state.circles);
+        if (inFlight) return inFlight;
       }
-      return storeAction(
+      inFlight = storeAction(
         update,
         () => circlesApi.listCircles(),
         (_state, circles) => ({ circles, hasLoaded: true }),
         'Failed to load circles',
-      );
+      ).finally(() => {
+        inFlight = null;
+      });
+      return inFlight;
     },
 
     createCircle: (input: CircleInput) =>
@@ -103,6 +112,7 @@ function createCirclesStore() {
       ),
 
     clear: () => {
+      inFlight = null;
       set(initialState);
     },
   };
