@@ -1,3 +1,7 @@
+## <small>2.84.5 (2026-06-14)</small>
+
+* fix(database): Gate OSM ways on tags before building geometry ([15221d0](https://github.com/datenknoten/freundebuch/commit/15221d0))
+
 ## <small>2.84.4 (2026-06-14)</small>
 
 * fix(database): Revert OSM import to flat-nodes node store ([a1b34f6](https://github.com/datenknoten/freundebuch/commit/a1b34f6))
