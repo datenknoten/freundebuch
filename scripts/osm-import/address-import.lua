@@ -58,6 +58,10 @@ end
 
 -- Process nodes with address tags
 function osm2pgsql.process_node(object)
+    -- Cheap tag gate first: skip building geometry for non-address nodes
+    if not object.tags['addr:postcode'] then
+        return
+    end
     local addr = extract_address(object.tags, object:as_point())
     if addr then
         addresses:insert(addr)
@@ -66,6 +70,13 @@ end
 
 -- Process ways with address tags
 function osm2pgsql.process_way(object)
+    -- Cheap tag gate FIRST. Building the polygon geometry fetches every node
+    -- coordinate, so doing it for all ~60M ways (roads, rivers, boundaries)
+    -- before discarding non-address ones is the dominant cost (~0.4k/s). Most
+    -- ways have no addr:postcode, so this gate skips geometry for >99% of them.
+    if not object.tags['addr:postcode'] then
+        return
+    end
     -- For ways, use centroid as the point geometry
     local addr = extract_address(object.tags, object:as_polygon():centroid())
     if addr then
