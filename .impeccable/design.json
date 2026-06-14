@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-14T00:00:00Z",
+  "title": "Design System: Freundebuch",
+  "extensions": {
+    "colorMeta": {
+      "forest": {
+        "role": "primary",
+        "displayName": "Forest Green",
+        "canonical": "#2d5016",
+        "tonalRamp": [
+          "#101c08",
+          "#16280b",
+          "#1f3810",
+          "#2d5016",
+          "#3a6b1e",
+          "#4f8a2c",
+          "#7bb35e",
+          "#b6d6a3"
+        ]
+      },
+      "sage": {
+        "role": "secondary",
+        "displayName": "Sage Green",
+        "canonical": "#8b9d83",
+        "tonalRamp": [
+          "#2f352b",
+          "#444c3e",
+          "#5e6b55",
+          "#79886f",
+          "#8b9d83",
+          "#a6b59f",
+          "#c4cfbe",
+          "#e3e9df"
+        ]
+      },
+      "amber-warm": {
+        "role": "tertiary",
+        "displayName": "Warm Amber",
+        "canonical": "#d4a574",
+        "tonalRamp": [
+          "#3d2c16",
+          "#5a4222",
+          "#7d5d32",
+          "#a37c46",
+          "#c2935b",
+          "#d4a574",
+          "#e3c19c",
+          "#f1e0cb"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#111827",
+        "tonalRamp": [
+          "#030712",
+          "#111827",
+          "#1f2937",
+          "#374151",
+          "#6b7280",
+          "#9ca3af",
+          "#d1d5db",
+          "#f3f4f6"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles and a friend's name. Yanone Bold."
+      },
+      "headline": { "displayName": "Headline", "purpose": "Major section headers." },
+      "title": { "displayName": "Title", "purpose": "Card titles and sub-sections." },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running prose, notes, friend pages. Merriweather serif, 65-75ch."
+      },
+      "label": { "displayName": "Label", "purpose": "Form labels, metadata, chips." }
+    },
+    "shadows": [
+      {
+        "name": "rest",
+        "value": "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
+        "purpose": "Default content card lift (Tailwind shadow-lg)."
+      },
+      {
+        "name": "subtle",
+        "value": "0 1px 2px 0 rgba(0,0,0,0.05)",
+        "purpose": "Small surfaces and chips at rest."
+      },
+      {
+        "name": "prominent",
+        "value": "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
+        "purpose": "Modals, popovers, mobile drawer."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0, 0, 0.2, 1)",
+        "purpose": "Entering elements and toast slide-up."
+      },
+      {
+        "name": "transition-colors",
+        "value": "200ms ease-in-out",
+        "purpose": "Default hover/state color transitions."
+      },
+      {
+        "name": "slide-up",
+        "value": "translateY(100%) -> translateY(0) over 0.3s ease-out",
+        "purpose": "Toast entrance; disabled under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "2xl", "value": "1536px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main call to action — forest green, used for confirm/create/save.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"/><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/></svg>Add friend</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: #2d5016; color: #fff; font-family: Merriweather, serif; font-weight: 600; font-size: 1rem; padding: 0.5rem 1rem; border: none; border-radius: 0.5rem; cursor: pointer; transition: background-color 200ms ease-in-out; } .ds-btn-primary:hover { background: #3a6b1e; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2d5016; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Supporting action — sage green, lower emphasis than primary.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 0.5rem; background: #8b9d83; color: #111827; font-family: Merriweather, serif; font-weight: 600; font-size: 1rem; padding: 0.5rem 1rem; border: none; border-radius: 0.5rem; cursor: pointer; transition: background-color 200ms ease-in-out; } .ds-btn-secondary:hover { background: #7a8c72; } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #8b9d83; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard text field with forest focus glow.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search your Freundebuch\" />",
+      "css": ".ds-input { width: 100%; box-sizing: border-box; background: #fff; color: #111827; font-family: Merriweather, serif; font-size: 1rem; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; transition: box-shadow 150ms ease, border-color 150ms ease; } .ds-input::placeholder { color: #6b7280; } .ds-input:focus { outline: none; border-color: transparent; box-shadow: 0 0 0 2px #2d5016; }"
+    },
+    {
+      "name": "Friend Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Soft, gently-elevated content card — the core surface for a friend's page summary.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-avatar\">AK</div><div><h3 class=\"ds-card-title\">Anita Keller</h3><p class=\"ds-card-meta\">Last caught up 3 weeks ago</p></div></div>",
+      "css": ".ds-card { display: flex; align-items: center; gap: 1rem; background: #fff; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); } .ds-card-avatar { width: 3rem; height: 3rem; flex-shrink: 0; border-radius: 9999px; background: rgba(45,80,22,0.1); color: #2d5016; font-family: 'Yanone Kaffeesatz', sans-serif; font-weight: 700; display: flex; align-items: center; justify-content: center; } .ds-card-title { margin: 0; font-family: 'Yanone Kaffeesatz', sans-serif; font-weight: 600; font-size: 1.5rem; line-height: 1.2; color: #111827; } .ds-card-meta { margin: 0.125rem 0 0; font-family: Merriweather, serif; font-size: 0.875rem; color: #6b7280; }"
+    },
+    {
+      "name": "Tag Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Soft forest-tinted pill for tags and circle labels.",
+      "html": "<span class=\"ds-chip\">#hiking</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(45,80,22,0.1); color: #2d5016; font-family: Merriweather, serif; font-size: 0.875rem; padding: 0.25rem 0.5rem; border-radius: 9999px; cursor: pointer; transition: background-color 200ms ease-in-out; } .ds-chip:hover { background: rgba(45,80,22,0.2); }"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Sidebar navigation row — gray at rest, forest on hover/active.",
+      "html": "<a class=\"ds-nav-item\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/></svg>Friends</a>",
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 0.375rem; color: #374151; font-family: Merriweather, serif; font-weight: 500; text-decoration: none; transition: background-color 200ms, color 200ms; } .ds-nav-item:hover { background: #f3f4f6; color: #2d5016; } .ds-nav-item[aria-current=\"page\"] { color: #2d5016; font-weight: 700; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Garden Almanac",
+    "overview": "Freundebuch is a place you tend, not a database you query. The visual system treats relationships the way an almanac treats a garden: forest green for things rooted and trustworthy, sage for the calm supporting growth, warm amber for the small seasonal sparks worth noticing. Nothing here should feel like business software — it should feel like a warm, attentive notebook that remembers the people you care about so you don't have to. Density is low and calm; surfaces are soft white cards floating on a near-white ground, with gently rounded corners and a quiet lift of shadow.",
+    "keyCharacteristics": [
+      "Warm and human, never clinical — opening a well-loved book, not a dashboard.",
+      "Nature palette: grounded greens + one amber spark, used sparingly.",
+      "Condensed sans headings (Yanone Kaffeesatz) paired with a readable serif body (Merriweather).",
+      "Soft, gently-elevated cards: rounded-xl corners, a single calm shadow.",
+      "Privacy-first restraint: nothing implies data leaves the user's hands."
+    ],
+    "rules": [
+      {
+        "name": "The Amber Spark Rule",
+        "body": "Warm amber appears on ≤10% of any screen. It is a seasonal highlight, not a structural color.",
+        "section": "colors"
+      },
+      {
+        "name": "The Earned-Green Rule",
+        "body": "Forest green means act or active. Reserve it for primary actions, the current nav item, and links so its meaning stays legible.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serif-Body Rule",
+        "body": "Body copy is always Merriweather serif. The serif IS the well-loved-book feel.",
+        "section": "typography"
+      },
+      {
+        "name": "The Soft-Lift Rule",
+        "body": "If a shadow looks like a dark line under the card, it is wrong — lift should read as warm diffuse light from above.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep body copy in Merriweather serif and cap line length at 65-75ch.",
+      "Do reserve forest green for actions/active state and amber for ≤10% sparks.",
+      "Do float content on soft rounded-xl shadow-lg cards over the gray-50 ground.",
+      "Do verify contrast: body text uses gray-700 (#374151) or darker on white; never muted gray-500 for running prose.",
+      "Do show a forest ring-2 focus state on every interactive element, keyboard-visible.",
+      "Do honor prefers-reduced-motion; every new motion needs the slide-up's same fallback.",
+      "Do write warm, human copy: 'Added to your Freundebuch!' not 'Contact created successfully.'"
+    ],
+    "donts": [
+      "Don't build the CRM/sales aesthetic — dense data grids, pipeline metrics, or lead/touchpoint/contact language.",
+      "Don't ship cold enterprise-SaaS surfaces or social-network feed patterns.",
+      "Don't fall into generic AI slop: identical icon-heading-text card grids, muted-gray body text on tinted near-white, tiny uppercase tracked eyebrows on every section.",
+      "Don't use colored side-stripe borders (border-left >1px as an accent) on cards or alerts.",
+      "Don't use gradient text (background-clip: text) or decorative glassmorphism.",
+      "Don't tighten Yanone heading letter-spacing below -0.04em or push display past ~36px in app context.",
+      "Don't swap body type to the condensed sans for cleanliness — it kills the well-loved-book warmth."
+    ]
+  }
+}
