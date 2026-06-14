@@ -181,7 +181,7 @@ function handleBackdropClick(e: MouseEvent) {
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- Modal backdrop -->
 <div
-  class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+  class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4"
   onclick={handleBackdropClick}
   role="dialog"
   aria-modal="true"
@@ -324,7 +324,7 @@ function handleBackdropClick(e: MouseEvent) {
 
     <!-- Unsaved changes warning overlay -->
     {#if showUnsavedWarning}
-      <div class="absolute inset-0 bg-white bg-opacity-95 rounded-xl flex items-center justify-center p-6">
+      <div class="absolute inset-0 bg-white/95 rounded-xl flex items-center justify-center p-6">
         <div class="text-center">
           <ExclamationTriangle class="w-12 h-12 mx-auto text-amber-500 mb-4" strokeWidth="2" />
           <h3 class="text-lg font-heading text-gray-900 mb-2">{$i18n.t('circles.unsavedChanges.title')}</h3>

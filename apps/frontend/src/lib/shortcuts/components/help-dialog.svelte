@@ -21,7 +21,7 @@ const i18n = createI18n();
 
 <!-- Help overlay -->
 <div
-  class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+  class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4"
   onclick={onclose}
   onkeydown={(e) => e.key === 'Escape' && onclose()}
   role="dialog"
