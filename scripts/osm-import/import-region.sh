@@ -180,24 +180,28 @@ run_osm2pgsql() {
     psql "$DATABASE_URL" -q -c "DROP TABLE IF EXISTS public.osm_addresses_staging CASCADE;"
 
     # Run osm2pgsql with flex output.
-    # --cache keeps node coords in RAM so way geometries resolve without random
-    # DB lookups into the middle tables (the cause of ~0.7k/s way processing).
-    # Sized to hold a full country's nodes (~7GB for Germany's ~430M nodes);
-    # override via OSM_CACHE_MB for larger regions or tighter hosts.
+    # --flat-nodes stores node coords in a single on-disk file instead of the DB
+    # middle tables, turning per-way random DB lookups into fast sequential file
+    # reads. Essential for full-country imports (~0.7k/s -> tens of k/s on ways).
+    # --cache 0 because flat-nodes replaces the in-RAM node cache (and an 8GB
+    # cache OOM-killed the process on this host).
     #
-    # NB: --flat-nodes is the usual full-planet alternative, but its file is
-    # sized by the *global* max node ID (~96GB), not by region size, so it
-    # needs far more disk than a single-country extract suggests. With ample
-    # RAM the in-memory cache is simpler and faster.
-    local cache_mb="${OSM_CACHE_MB:-8000}"
+    # NB: the flat-nodes file is sized by the *global* max OSM node ID
+    # (~12.5B x 8 bytes ~= 96GB), NOT by region size, so even a single-country
+    # extract needs a volume that can hold a ~96GB (sparse) file. It exists only
+    # for the duration of the import and is removed below.
     osm2pgsql \
         -d "$DATABASE_URL" \
         -O flex \
         -S "$SCRIPT_DIR/address-import.lua" \
         --slim \
         --drop \
-        --cache "$cache_mb" \
+        --cache 0 \
+        --flat-nodes "$DATA_DIR/flat-nodes.bin" \
         "$pbf_file"
+
+    # --drop wipes the middle tables but leaves the flat-nodes file behind
+    rm -f "$DATA_DIR/flat-nodes.bin"
 
     log_success "osm2pgsql import completed"
 }
