@@ -216,7 +216,7 @@ onMount(() => {
         </p>
       {/if}
       {#if friend.nickname}
-        <p class="text-gray-500 font-body text-sm mt-1">"{friend.nickname}"</p>
+        <p class="text-gray-700 font-body text-sm mt-1">"{friend.nickname}"</p>
       {/if}
 
       <!-- Last Encounter Badge -->
@@ -262,7 +262,7 @@ onMount(() => {
       <!-- Interests -->
       {#if friend.interests}
         <section class="space-y-2">
-          <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
+          <h2 class="text-lg font-heading bg-forest/10 text-forest px-3 py-1.5 rounded-lg flex items-center gap-2">
             <Heart class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('friendDetail.sections.interestsHobbies')}
           </h2>
@@ -275,7 +275,7 @@ onMount(() => {
       <!-- How We Met -->
       {#if friend.metInfo}
         <section class="space-y-2">
-          <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
+          <h2 class="text-lg font-heading bg-forest/10 text-forest px-3 py-1.5 rounded-lg flex items-center gap-2">
             <Users class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('friendDetail.sections.howWeMet')}
           </h2>
@@ -363,7 +363,7 @@ onMount(() => {
   />
 
   <!-- ==================== METADATA FOOTER ==================== -->
-  <section class="text-sm text-gray-500 font-body">
+  <section class="text-sm text-gray-600 font-body">
     <div class="flex flex-wrap gap-4">
       <span>{$i18n.t('friendDetail.metadata.created')} {new Date(friend.createdAt).toLocaleDateString()}</span>
       <span>{$i18n.t('friendDetail.metadata.updated')} {new Date(friend.updatedAt).toLocaleDateString()}</span>
@@ -425,7 +425,7 @@ onMount(() => {
 
 <!-- Delete friend confirmation modal -->
 {#if showDeleteConfirm}
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
       <h3 class="text-xl font-heading text-gray-900 mb-2">{$i18n.t('friendDetail.delete.title')}</h3>
       <p class="text-gray-600 font-body mb-6">

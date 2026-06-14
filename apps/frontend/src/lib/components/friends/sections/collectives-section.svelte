@@ -59,7 +59,7 @@ onMount(() => {
 
 {#if collectives.length > 0}
   <section class="space-y-2">
-    <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
+    <div class="flex items-center justify-between bg-forest/10 text-forest px-3 py-1.5 rounded-lg">
       <h2 class="text-lg font-heading flex items-center gap-2">
         <BuildingOffice class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('friendDetail.sections.collectives')}
@@ -67,8 +67,8 @@ onMount(() => {
       <button
         type="button"
         onclick={() => showAddToCollectiveModal = true}
-        class="text-sm font-body font-semibold text-white/90 hover:text-white
-               flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+        class="text-sm font-body font-semibold bg-forest text-white hover:bg-forest-light
+               flex items-center gap-1 px-2 py-1 rounded-md transition-colors"
       >
         <Plus class="w-4 h-4" strokeWidth="2" />
         {$i18n.t('friendDetail.actions.addCollective')}

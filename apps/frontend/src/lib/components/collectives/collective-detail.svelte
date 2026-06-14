@@ -798,7 +798,7 @@ onMount(() => {
 
 <!-- Delete collective confirmation -->
 {#if showDeleteConfirm}
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
       <h3 class="text-xl font-heading text-gray-900 mb-2">{$i18n.t('collectives.detail.deleteConfirmTitle')}</h3>
       <p class="text-gray-600 font-body mb-6">

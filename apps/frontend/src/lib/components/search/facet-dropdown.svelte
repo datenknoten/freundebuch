@@ -272,7 +272,7 @@ $effect(() => {
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_interactive_supports_focus -->
     <div
-      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4"
       onclick={closeKeyboardFilterMode}
       role="dialog"
       aria-modal="true"

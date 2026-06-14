@@ -334,11 +334,11 @@ async function handleSubmit(e: Event) {
       {/if}
 
       {#if isUploadingPhoto}
-        <div class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+        <div class="absolute inset-0 bg-gray-900/50 rounded-full flex items-center justify-center">
           <div class="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
         </div>
       {:else if isEditing}
-        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-full flex items-center justify-center transition-all">
+        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-full flex items-center justify-center transition-all">
           <Camera class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth="2" />
         </div>
       {/if}
