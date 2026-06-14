@@ -1,3 +1,7 @@
+## <small>2.84.6 (2026-06-14)</small>
+
+* fix(database): Stop set -e killing OSM import on osm2pgsql SIGPIPE ([5ab8d12](https://github.com/datenknoten/freundebuch/commit/5ab8d12))
+
 ## <small>2.84.5 (2026-06-14)</small>
 
 * fix(database): Gate OSM ways on tags before building geometry ([15221d0](https://github.com/datenknoten/freundebuch/commit/15221d0))
