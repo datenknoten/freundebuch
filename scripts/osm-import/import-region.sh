@@ -50,12 +50,16 @@ check_prerequisites() {
         exit 1
     fi
 
-    # Capture first, then parse — keeps osm2pgsql out of a SIGPIPE'd pipeline
-    # (head closing early + pipefail would otherwise corrupt the version string).
+    # Capture all of --version, then take the first line via parameter expansion.
+    # No pipe to head here: `osm2pgsql --version | head -1` lets head close the
+    # pipe early, which SIGPIPE-kills osm2pgsql (exit 141); under `set -o
+    # pipefail` that propagates and `set -e` silently exits the whole script
+    # before the import even starts (racy: fails when osm2pgsql is slow to flush).
     local version_raw
-    version_raw=$(osm2pgsql --version 2>&1 | head -1)
+    version_raw=$(osm2pgsql --version 2>&1) || true
+    version_raw=${version_raw%%$'\n'*}
     local version
-    version=$(printf '%s\n' "$version_raw" | grep -oE '[0-9]+\.[0-9]+' | head -1 || true)
+    version=$(printf '%s' "$version_raw" | grep -oE '[0-9]+\.[0-9]+' | head -1) || true
     version=${version:-0.0}
     local major=${version%%.*}
     local minor=${version##*.}
