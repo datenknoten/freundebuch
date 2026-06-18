@@ -7,6 +7,11 @@ import { isExemptFile, isIgnoredPath } from '../utils';
 // and names like 2fa-setup are valid kebab-case.
 const KEBAB_CASE_STEM = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
+// Markdown docs may use a fully UPPER_CASE name (e.g. README.md, AGENTS.md,
+// CODE_OF_CONDUCT.md) — but not mixed case (Readme.md still fails). Segments
+// are uppercase alphanumerics separated by single hyphens or underscores.
+const SCREAMING_CASE_STEM = /^[A-Z0-9]+([_-][A-Z0-9]+)*$/;
+
 // Migration files use a "<timestamp>_<name>" pattern — strip the prefix before checking
 const MIGRATION_PREFIX = /^\d+_/;
 
@@ -29,6 +34,10 @@ const kebabCaseFiles: DangerRule = () => {
 
     // Strip migration timestamp prefix (e.g. "1774799536929_fix-bug" -> "fix-bug")
     stem = stem.replace(MIGRATION_PREFIX, '');
+
+    // Markdown docs may instead be fully UPPER_CASE (README.md, AGENTS.md, ...).
+    const isMarkdown = basename.toLowerCase().endsWith('.md');
+    if (isMarkdown && SCREAMING_CASE_STEM.test(stem)) continue;
 
     if (!KEBAB_CASE_STEM.test(stem)) {
       const suggestion = toKebabCase(stem);
