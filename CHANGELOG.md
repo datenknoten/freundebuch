@@ -1,3 +1,11 @@
+## 2.85.0 (2026-06-18)
+
+* chore(dx): Add SessionStart hook to bootstrap mise toolchain on the web ([c0da05d](https://github.com/datenknoten/freundebuch/commit/c0da05d))
+* chore(dx): Bootstrap impeccable design context ([9e0839c](https://github.com/datenknoten/freundebuch/commit/9e0839c))
+* fix(frontend): Show a clear message when a phone number fails validation ([740ed26](https://github.com/datenknoten/freundebuch/commit/740ed26))
+* feat(dx): Relax kebab-case rule for markdown and impeccable artifacts ([6dcb372](https://github.com/datenknoten/freundebuch/commit/6dcb372))
+* feat(frontend): Soften friend detail headers, fix dead modal scrims ([d64d338](https://github.com/datenknoten/freundebuch/commit/d64d338))
+
 ## <small>2.84.6 (2026-06-14)</small>
 
 * fix(database): Stop set -e killing OSM import on osm2pgsql SIGPIPE ([5ab8d12](https://github.com/datenknoten/freundebuch/commit/5ab8d12))
