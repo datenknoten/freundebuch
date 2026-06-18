@@ -1,19 +1,20 @@
 import * as path from 'path';
 
-export const EXEMPT_BASENAMES = new Set([
-  'README.md',
-  'LICENSE',
-  'Dockerfile',
-  'Makefile',
-  'AGENTS.md',
-  'CHANGELOG.md',
-  'CONTRIBUTING.md',
-  'SECURITY.md',
-  'CODEOWNERS',
-  'MEMORY.md',
-]);
+// All-uppercase markdown docs (README.md, AGENTS.md, CHANGELOG.md, ...) are
+// allowed by the kebab-case rule's SCREAMING_CASE handling, so they don't need
+// listing here — only non-markdown exceptions belong below.
+export const EXEMPT_BASENAMES = new Set(['LICENSE', 'Dockerfile', 'Makefile', 'CODEOWNERS']);
 
-const IGNORED_DIRS = ['node_modules/', 'dist/', '.svelte-kit/', 'vendor/', 'build/'];
+const IGNORED_DIRS = [
+  'node_modules/',
+  'dist/',
+  '.svelte-kit/',
+  'vendor/',
+  'build/',
+  // Generated impeccable-design artifacts (e.g. timestamped critique files
+  // like 2026-06-14T08-26-30Z__<slug>.md) are not hand-authored source.
+  '.impeccable/',
+];
 
 export function isExemptFile(filePath: string): boolean {
   const basename = path.basename(filePath);
