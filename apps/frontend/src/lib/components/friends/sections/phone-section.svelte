@@ -80,7 +80,11 @@ async function handleSave() {
     }
     closeModal();
   } catch (err) {
-    if (err instanceof ApiError && err.statusCode === 400) {
+    if (err instanceof ApiError && err.code === 'PHONE_COUNTRY_UNKNOWN') {
+      // National-format number we couldn't pin to a country — point the user at
+      // international format or adding an address.
+      editError = $i18n.t('subresources.phone.unknownCountry');
+    } else if (err instanceof ApiError && err.statusCode === 400) {
       // A 400 from this form means the entered phone number failed validation.
       // Show a clear, actionable hint instead of the backend's terse "Invalid request".
       editError = $i18n.t('subresources.phone.invalidNumber');

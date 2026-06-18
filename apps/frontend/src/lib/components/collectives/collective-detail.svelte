@@ -12,6 +12,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import { ApiError } from '$lib/api/client';
 import {
   type AvailableCircleInfo,
   addAddress,
@@ -375,7 +376,11 @@ async function handleSave() {
     }
     closeEditModal();
   } catch (err) {
-    editError = (err as Error).message || 'Failed to save';
+    if (err instanceof ApiError && err.code === 'PHONE_COUNTRY_UNKNOWN') {
+      editError = $i18n.t('subresources.phone.unknownCountry');
+    } else {
+      editError = (err as Error).message || $i18n.t('subresources.common.failedToSave');
+    }
   } finally {
     isEditLoading = false;
   }

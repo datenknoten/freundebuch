@@ -1264,6 +1264,7 @@
       "phoneNumber": "Telefonnummer",
       "primaryPhone": "Primäre Telefonnummer",
       "invalidNumber": "Bitte gib eine gültige Telefonnummer ein, z. B. +49 176 12345678 oder mit führender 0 für eine lokale Nummer.",
+      "unknownCountry": "Wir konnten das Land dieser Nummer nicht erkennen. Gib sie im internationalen Format ein (z. B. +49 6709 426) oder hinterlege eine Adresse mit Land, damit wir es automatisch erkennen können.",
       "types": {
         "mobile": "Mobil",
         "home": "Privat",

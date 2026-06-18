@@ -213,6 +213,23 @@ export class ValidationError extends AppError {
 }
 
 /**
+ * Thrown when a phone number is entered in national format (no leading "+")
+ * but we can't determine which country it belongs to — so it can't be
+ * normalized to E.164 and validated. The dedicated code lets the frontend show
+ * actionable guidance (use international format, or add an address).
+ */
+export class PhoneCountryUnknownError extends AppError {
+  readonly statusCode = 400;
+
+  constructor() {
+    super(
+      'Could not determine the country for this phone number. Enter it in international format (e.g. +49 6709 426) or add an address to detect the country.',
+      { code: 'PHONE_COUNTRY_UNKNOWN' },
+    );
+  }
+}
+
+/**
  * Thrown when search parameters are invalid or missing required fields.
  */
 export class InvalidSearchParametersError extends AppError {
