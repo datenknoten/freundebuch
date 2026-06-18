@@ -29,6 +29,14 @@ export PATH="$LOCAL_BIN:$SHIMS_DIR:$PATH"
 export MISE_YES=1
 # mise reads GITHUB_TOKEN/MISE_GITHUB_TOKEN; also accept GH_TOKEN for convenience.
 export MISE_GITHUB_TOKEN="${MISE_GITHUB_TOKEN:-${GITHUB_TOKEN:-${GH_TOKEN:-}}}"
+# The web sandbox routes all egress through a TLS-intercepting proxy whose CA
+# lives in the system bundle (SSL_CERT_FILE/NODE_EXTRA_CA_CERTS) — curl and node
+# trust it, but aube's Rust TLS stack uses its own bundled roots and honors
+# neither that bundle nor an .npmrc `cafile`, so every HTTPS fetch to the
+# registry silently stalls at 0 B until timeout. Disabling aube's cert check
+# (scoped to this ephemeral sandbox, where the proxy is the trusted egress) lets
+# `aube install` reach the registry. Harmless outside the sandbox.
+export NPM_CONFIG_STRICT_SSL=false
 
 log() { printf '[session-start] %s\n' "$*"; }
 
@@ -39,6 +47,9 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -q 'mise/shims' "$CLAUDE_ENV_FILE" 2>
   {
     echo 'export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"'
     echo 'export HK_MISE=1'
+    # So manual `aube`/`pnpm` commands later in the session also clear the
+    # sandbox's TLS-intercepting proxy (see NPM_CONFIG_STRICT_SSL note above).
+    echo 'export NPM_CONFIG_STRICT_SSL=false'
   } >> "$CLAUDE_ENV_FILE"
 fi
 
@@ -68,11 +79,32 @@ fi
 log "mise $(mise --version 2>/dev/null)"
 
 # --- 3. Install the pinned toolchain + register git hooks (mise postinstall) ---
+# mise's postinstall (`hk install --mise`) evaluates hk.pkl, which makes pkl
+# fetch the remote `hk` pkl package over the sandbox's TLS-intercepting proxy.
+# pkl (native/JVM) trusts neither the system bundle nor SSL_CERT_FILE, so that
+# fetch fails cert validation and the git hooks never get registered — even
+# though `mise install` itself still returns 0. Work around it by priming pkl's
+# package cache with the proxy CA passed explicitly (`--ca-certificates`), then
+# (re)running `hk install --mise`, which now resolves hk.pkl from cache offline.
+register_hk_hooks() {
+  local ca="${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}"
+  command -v hk >/dev/null 2>&1 || return 1
+  if command -v pkl >/dev/null 2>&1 && [ -f "$ca" ]; then
+    pkl eval --ca-certificates "$ca" -f json "$PROJECT_DIR/hk.pkl" >/dev/null 2>&1 || true
+  fi
+  hk install --mise >/dev/null 2>&1
+}
+
 cd "$PROJECT_DIR" || exit 0
 mise trust "$PROJECT_DIR" >/dev/null 2>&1 || true
 if mise install; then
   mise reshim >/dev/null 2>&1 || true
-  log "toolchain installed (node, aube, hk, pkl); hk git hooks registered"
+  if register_hk_hooks; then
+    log "toolchain installed (node, aube, hk, pkl); hk git hooks registered"
+  else
+    log "toolchain installed; WARN: could not register hk git hooks (commit-msg/"
+    log "      pre-commit/pre-push won't run locally). The rest of the setup is fine."
+  fi
 else
   log "WARN: 'mise install' could not install every tool."
   if [ -z "${MISE_GITHUB_TOKEN}" ]; then
