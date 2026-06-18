@@ -1,3 +1,7 @@
+## <small>2.85.2 (2026-06-18)</small>
+
+* fix(backend): Clarify phone rejection when a number's country can't be inferred ([5928c91](https://github.com/datenknoten/freundebuch/commit/5928c91))
+
 ## <small>2.85.1 (2026-06-18)</small>
 
 * fix(frontend): Correct website and social add button translations ([a7cbb35](https://github.com/datenknoten/freundebuch/commit/a7cbb35))
