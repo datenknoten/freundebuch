@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
+import { ApiError } from '$lib/api/auth';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import {
@@ -79,7 +80,13 @@ async function handleSave() {
     }
     closeModal();
   } catch (err) {
-    editError = err instanceof Error ? err.message : $i18n.t('subresources.common.failedToSave');
+    if (err instanceof ApiError && err.statusCode === 400) {
+      // A 400 from this form means the entered phone number failed validation.
+      // Show a clear, actionable hint instead of the backend's terse "Invalid request".
+      editError = $i18n.t('subresources.phone.invalidNumber');
+    } else {
+      editError = err instanceof Error ? err.message : $i18n.t('subresources.common.failedToSave');
+    }
     isEditLoading = false;
   }
 }

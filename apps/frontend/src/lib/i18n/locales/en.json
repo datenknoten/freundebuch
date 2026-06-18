@@ -1263,6 +1263,7 @@
     "phone": {
       "phoneNumber": "Phone Number",
       "primaryPhone": "Primary phone number",
+      "invalidNumber": "Please enter a valid phone number, e.g. +49 176 12345678 or with a leading 0 for a local number.",
       "types": {
         "mobile": "Mobile",
         "home": "Home",
