@@ -1264,6 +1264,7 @@
       "phoneNumber": "Phone Number",
       "primaryPhone": "Primary phone number",
       "invalidNumber": "Please enter a valid phone number, e.g. +49 176 12345678 or with a leading 0 for a local number.",
+      "unknownCountry": "We couldn't tell which country this number belongs to. Enter it in international format (e.g. +49 6709 426), or add an address with a country so we can detect it automatically.",
       "types": {
         "mobile": "Mobile",
         "home": "Home",

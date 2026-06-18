@@ -7,6 +7,7 @@ import type { AppContext } from '../../../types/context.js';
 import { countryNameToCode, localeToCountry } from '../../../utils/country.js';
 import {
   FriendNotFoundError,
+  PhoneCountryUnknownError,
   ResourceNotFoundError,
   ValidationError,
 } from '../../../utils/errors.js';
@@ -47,7 +48,13 @@ app.post('/', async (c) => {
     const countryCode =
       (primaryAddress?.country && countryNameToCode(primaryAddress.country)) ??
       localeToCountry(c.req.header('Accept-Language'));
-    body.phone_number = normalizePhoneNumber(body.phone_number, countryCode);
+    const normalized = normalizePhoneNumber(body.phone_number, countryCode);
+    // If it still isn't in E.164 form, we couldn't pin down a country (no usable
+    // address, ambiguous locale, or the number is invalid for the guessed one).
+    if (!normalized.startsWith('+')) {
+      throw new PhoneCountryUnknownError();
+    }
+    body.phone_number = normalized;
   }
 
   const validated = PhoneInputSchema(body);
@@ -99,7 +106,13 @@ app.put('/:phoneId', async (c) => {
     const countryCode =
       (primaryAddress?.country && countryNameToCode(primaryAddress.country)) ??
       localeToCountry(c.req.header('Accept-Language'));
-    body.phone_number = normalizePhoneNumber(body.phone_number, countryCode);
+    const normalized = normalizePhoneNumber(body.phone_number, countryCode);
+    // If it still isn't in E.164 form, we couldn't pin down a country (no usable
+    // address, ambiguous locale, or the number is invalid for the guessed one).
+    if (!normalized.startsWith('+')) {
+      throw new PhoneCountryUnknownError();
+    }
+    body.phone_number = normalized;
   }
 
   const validated = PhoneInputSchema(body);
