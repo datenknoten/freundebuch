@@ -1,3 +1,7 @@
+## <small>2.85.1 (2026-06-18)</small>
+
+* fix(frontend): Correct website and social add button translations ([a7cbb35](https://github.com/datenknoten/freundebuch/commit/a7cbb35))
+
 ## 2.85.0 (2026-06-18)
 
 * chore(dx): Add SessionStart hook to bootstrap mise toolchain on the web ([c0da05d](https://github.com/datenknoten/freundebuch/commit/c0da05d))
