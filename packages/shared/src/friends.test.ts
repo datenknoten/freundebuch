@@ -23,7 +23,7 @@ describe('PhoneInputSchema', () => {
       phone_type: 'mobile',
     });
     expect(result.summary).toMatchInlineSnapshot(
-      `"must be a valid phone number (was {"phone_number":"not-a-number","phone_type":"mobile"})"`,
+      `"phone_number must be a valid phone number (was "not-a-number")"`,
     );
   });
 
