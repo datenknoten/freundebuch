@@ -2,7 +2,7 @@
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
-import { autoFocus } from '$lib/actions/auto-focus.js';
+import { autoFocus } from '$lib/actions/auto-focus';
 import { createI18n } from '$lib/i18n/index.js';
 import type { CollectiveListItem } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
@@ -145,9 +145,15 @@ function handleButtonKeydown(e: KeyboardEvent) {
 
 function handleClear() {
   query = '';
-  showDropdown = false;
   highlightedIndex = -1;
   onClear?.();
+  // Clearing unmounts the selected-value button (the focused element), so move
+  // focus to the search input that takes its place instead of letting focus
+  // fall back to the document body.
+  showDropdown = false;
+  requestAnimationFrame(() => {
+    inputElement?.focus();
+  });
 }
 </script>
 
