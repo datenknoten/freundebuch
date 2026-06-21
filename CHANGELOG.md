@@ -1,3 +1,7 @@
+## <small>2.86.1 (2026-06-21)</small>
+
+* fix(backend): Make auto-created member relationships visible on both contacts ([bad26ce](https://github.com/datenknoten/freundebuch/commit/bad26ce))
+
 ## 2.86.0 (2026-06-21)
 
 * fix(frontend): Satisfy noEmptyBlockStatements in session-expired modal ([ed2a83c](https://github.com/datenknoten/freundebuch/commit/ed2a83c))
