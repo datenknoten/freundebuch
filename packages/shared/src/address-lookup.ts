@@ -4,7 +4,7 @@
  */
 
 /**
- * Country information from ZipcodeBase
+ * Country information (static ISO 3166-1 alpha-2 list)
  */
 export interface CountryInfo {
   code: string; // ISO 3166-1 alpha-2 code (e.g., "DE", "US")
@@ -12,12 +12,22 @@ export interface CountryInfo {
 }
 
 /**
- * City information from ZipcodeBase postal code lookup
+ * City information from a postal code lookup (PostGIS / OSM address data).
+ * `state`/`stateCode` are optional and currently unpopulated — the geodata
+ * source has no state/province column.
  */
 export interface CityInfo {
   city: string;
   state?: string;
   stateCode?: string;
+}
+
+/**
+ * Postal-code suggestion for prefix autocomplete (PostGIS / OSM address data).
+ */
+export interface PostalCodeInfo {
+  postalCode: string;
+  city: string;
 }
 
 /**

@@ -1,14 +1,19 @@
 import type { Logger } from 'pino';
+import { type Country, SUPPORTED_COUNTRIES } from '../utils/countries.js';
 import type { GeocodedLocation } from './external/nominatim.client.js';
 import { NominatimClient } from './external/nominatim.client.js';
 import { type HouseNumber, OverpassClient, type Street } from './external/overpass.client.js';
 import type { PostGISAddressClient } from './external/postgis-address.client.js';
-import { type Country, ZipcodeBaseClient } from './external/zipcodebase.client.js';
 
 export interface CityInfo {
   city: string;
   state?: string;
   stateCode?: string;
+}
+
+export interface PostalCodeInfo {
+  postalCode: string;
+  city: string;
 }
 
 export type { Country, Street, HouseNumber };
@@ -17,7 +22,6 @@ export type { Country, Street, HouseNumber };
 const DACH_COUNTRIES = ['DE', 'AT', 'CH'];
 
 export interface AddressLookupServiceOptions {
-  zipcodeApiKey: string;
   overpassPrimaryUrl: string;
   overpassFallbackUrl: string;
   postgisClient?: PostGISAddressClient;
@@ -27,7 +31,6 @@ export interface AddressLookupServiceOptions {
 }
 
 export class AddressLookupService {
-  private zipcodeClient: ZipcodeBaseClient;
   private overpassClient: OverpassClient;
   private nominatimClient: NominatimClient;
   private postgisClient?: PostGISAddressClient;
@@ -38,7 +41,6 @@ export class AddressLookupService {
     options: AddressLookupServiceOptions,
     private logger: Logger,
   ) {
-    this.zipcodeClient = new ZipcodeBaseClient(options.zipcodeApiKey, logger);
     this.overpassClient = new OverpassClient(
       options.overpassPrimaryUrl,
       options.overpassFallbackUrl,
@@ -69,30 +71,57 @@ export class AddressLookupService {
    * Get list of supported countries
    */
   getCountries(): Country[] {
-    return this.zipcodeClient.getCountries();
+    return SUPPORTED_COUNTRIES;
   }
 
   /**
-   * Get cities for a postal code in a country
+   * Get cities for a postal code in a country.
+   *
+   * Backed entirely by PostGIS (DACH OSM data). For non-DACH countries, or when
+   * PostGIS is disabled or has no data for the postal code, an empty list is
+   * returned and the frontend falls back to free-text entry. PostGIS-sourced
+   * cities carry no state/province — the geodata schema has no such column.
    */
   async getCitiesByPostalCode(countryCode: string, postalCode: string): Promise<CityInfo[]> {
-    const results = await this.zipcodeClient.searchByPostalCode(postalCode, countryCode);
-
-    // Deduplicate cities (same postal code might return multiple entries)
-    const cityMap = new Map<string, CityInfo>();
-
-    for (const result of results) {
-      const key = `${result.city}:${result.state || ''}`;
-      if (!cityMap.has(key)) {
-        cityMap.set(key, {
-          city: result.city,
-          state: result.state || result.province,
-          stateCode: result.state_code,
-        });
-      }
+    if (!this.shouldUsePostGIS(countryCode) || !this.postgisClient) {
+      return [];
     }
 
-    return Array.from(cityMap.values());
+    try {
+      const cities = await this.postgisClient.getCitiesByPostalCode(countryCode, postalCode);
+      this.logger.debug(
+        { countryCode, postalCode, count: cities.length },
+        'PostGIS cities lookup completed',
+      );
+      return cities.map((c) => ({ city: c.city }));
+    } catch (error) {
+      this.logger.warn({ error, countryCode, postalCode }, 'PostGIS cities lookup failed');
+      return [];
+    }
+  }
+
+  /**
+   * Search postal codes by prefix for autocomplete (e.g. "55" -> "55116" Mainz).
+   *
+   * Backed entirely by PostGIS (DACH OSM data). Returns an empty list for
+   * non-DACH countries or when PostGIS is disabled / has no matching data.
+   */
+  async searchPostalCodes(countryCode: string, prefix: string): Promise<PostalCodeInfo[]> {
+    if (!this.shouldUsePostGIS(countryCode) || !this.postgisClient) {
+      return [];
+    }
+
+    try {
+      const matches = await this.postgisClient.searchPostalCodes(countryCode, prefix);
+      this.logger.debug(
+        { countryCode, prefix, count: matches.length },
+        'PostGIS postal code search completed',
+      );
+      return matches;
+    } catch (error) {
+      this.logger.warn({ error, countryCode, prefix }, 'PostGIS postal code search failed');
+      return [];
+    }
   }
 
   /**

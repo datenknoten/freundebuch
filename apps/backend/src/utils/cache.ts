@@ -18,22 +18,6 @@ let cacheLogger: Logger | null = null;
 // ============================================================================
 
 /**
- * Schema for ZipcodeResult from ZipcodeBase API
- */
-const ZipcodeResultSchema = type({
-  postal_code: 'string',
-  city: 'string',
-  'state?': 'string',
-  'state_code?': 'string',
-  'province?': 'string',
-  country_code: 'string',
-  'latitude?': 'string',
-  'longitude?': 'string',
-});
-
-const ZipcodeResultArraySchema = type(ZipcodeResultSchema, '[]');
-
-/**
  * Schema for Street from Overpass API
  */
 const StreetSchema = type({
@@ -54,7 +38,6 @@ const HouseNumberSchema = type({
 const HouseNumberArraySchema = type(HouseNumberSchema, '[]');
 
 // Type aliases for the validated types
-export type ZipcodeResultCached = typeof ZipcodeResultSchema.infer;
 export type StreetCached = typeof StreetSchema.infer;
 export type HouseNumberCached = typeof HouseNumberSchema.infer;
 
@@ -83,7 +66,6 @@ function createValidator<T>(
 
 // Pre-built validators for each cache type
 const validators = {
-  cities: createValidator(ZipcodeResultArraySchema, 'ZipcodeResult[]'),
   streets: createValidator(StreetArraySchema, 'Street[]'),
   houseNumbers: createValidator(HouseNumberArraySchema, 'HouseNumber[]'),
 };
@@ -275,14 +257,12 @@ export class AddressCache<T extends object> {
 // Cache configuration constants
 const CACHE_CONFIG = {
   countries: { ttlHours: 24 * 7, maxSize: 10 }, // Countries rarely change, cache 7 days
-  cities: { ttlHours: 24, maxSize: 500 },
   streets: { ttlHours: 24, maxSize: 1000 },
   houseNumbers: { ttlHours: 24, maxSize: 2000 },
 };
 
 // Singleton instances for different cache types
 let countriesCache: AddressCache<object> | null = null;
-let citiesCache: AddressCache<ZipcodeResultCached[]> | null = null;
 let streetsCache: AddressCache<StreetCached[]> | null = null;
 let houseNumbersCache: AddressCache<HouseNumberCached[]> | null = null;
 
@@ -298,20 +278,6 @@ export function getCountriesCache(): AddressCache<object> {
     );
   }
   return countriesCache;
-}
-
-/**
- * Get the cities cache with arktype validation
- */
-export function getCitiesCache(): AddressCache<ZipcodeResultCached[]> {
-  if (!citiesCache) {
-    citiesCache = new AddressCache<ZipcodeResultCached[]>(
-      CACHE_CONFIG.cities.ttlHours,
-      CACHE_CONFIG.cities.maxSize,
-      validators.cities,
-    );
-  }
-  return citiesCache;
 }
 
 /**
@@ -357,13 +323,6 @@ export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
       CACHE_CONFIG.countries.maxSize,
     );
   }
-  if (!citiesCache) {
-    citiesCache = new AddressCache<ZipcodeResultCached[]>(
-      CACHE_CONFIG.cities.ttlHours,
-      CACHE_CONFIG.cities.maxSize,
-      validators.cities,
-    );
-  }
   if (!streetsCache) {
     streetsCache = new AddressCache<StreetCached[]>(
       CACHE_CONFIG.streets.ttlHours,
@@ -381,7 +340,6 @@ export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
 
   // Set database pool on all caches
   countriesCache.setPool(pool);
-  citiesCache.setPool(pool);
   streetsCache.setPool(pool);
   houseNumbersCache.setPool(pool);
 
@@ -392,7 +350,7 @@ export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
  * Cleanup expired entries from all address caches
  */
 export async function cleanupAllAddressCaches(): Promise<void> {
-  const caches = [countriesCache, citiesCache, streetsCache, houseNumbersCache];
+  const caches = [countriesCache, streetsCache, houseNumbersCache];
   for (const cache of caches) {
     if (cache) {
       await cache.cleanupDatabase();

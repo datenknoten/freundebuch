@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { describe, expect, it } from 'vitest';
-import { SUPPORTED_COUNTRIES } from '../../src/services/external/zipcodebase.client.js';
+import { SUPPORTED_COUNTRIES } from '../../src/utils/countries.js';
 import {
   completeTestUserOnboarding,
   createBetterAuthSession,
@@ -336,13 +336,14 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
     });
   });
 
-  describe('Service Configuration', () => {
-    it('should return 503 when ZIPCODEBASE_API_KEY is not configured for cities endpoint', async () => {
+  describe('Cities lookup without PostGIS data', () => {
+    it('should return an empty list (200) when PostGIS is disabled in the test env', async () => {
       const { app } = getContext();
-      const { sessionCookies } = await createUserAndLogin('addr-nokey@test.com', 'TestPassword123');
+      const { sessionCookies } = await createUserAndLogin('addr-nopg@test.com', 'TestPassword123');
 
-      // Note: In test environment, the API key is not configured
-      // This test verifies the error handling when the service is not available
+      // Address lookup is PostGIS-only; with PostGIS disabled (default in the
+      // test env) there is no upstream fallback, so cities resolve to an empty
+      // list and the frontend falls back to free-text entry.
       const response = await app.fetch(
         new Request('http://localhost/api/address-lookup/cities?country=DE&postal_code=12345', {
           method: 'GET',
@@ -352,10 +353,47 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
         }),
       );
 
-      // Should return 503 when API key is not configured
-      expect(response.status).toBe(503);
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as Array<{ city: string }>;
+      expect(body).toEqual([]);
+    });
+  });
+
+  describe('GET /api/address-lookup/postal-codes - Validation', () => {
+    it('should return 400 when prefix is too short', async () => {
+      const { app } = getContext();
+      const { sessionCookies } = await createUserAndLogin('addr-pc1@test.com', 'TestPassword123');
+
+      const response = await app.fetch(
+        new Request('http://localhost/api/address-lookup/postal-codes?country=DE&prefix=5', {
+          method: 'GET',
+          headers: {
+            Cookie: sessionCookies,
+          },
+        }),
+      );
+
+      expect(response.status).toBe(400);
       const body = (await response.json()) as { error: string };
-      expect(body.error).toBe('Address lookup service not configured');
+      expect(body.error).toBe('Invalid query parameters');
+    });
+
+    it('should return an empty list (200) when PostGIS is disabled in the test env', async () => {
+      const { app } = getContext();
+      const { sessionCookies } = await createUserAndLogin('addr-pc2@test.com', 'TestPassword123');
+
+      const response = await app.fetch(
+        new Request('http://localhost/api/address-lookup/postal-codes?country=DE&prefix=55', {
+          method: 'GET',
+          headers: {
+            Cookie: sessionCookies,
+          },
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as Array<{ postalCode: string; city: string }>;
+      expect(body).toEqual([]);
     });
   });
 });

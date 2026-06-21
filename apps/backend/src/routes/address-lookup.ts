@@ -6,10 +6,10 @@ import { authMiddleware } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { AddressLookupService } from '../services/address-lookup.service.js';
 import { PostGISAddressClient } from '../services/external/postgis-address.client.js';
-import { SUPPORTED_COUNTRIES } from '../services/external/zipcodebase.client.js';
 import type { AppContext } from '../types/context.js';
 import { getConfig } from '../utils/config.js';
-import { ServiceNotConfiguredError, ValidationError } from '../utils/errors.js';
+import { SUPPORTED_COUNTRIES } from '../utils/countries.js';
+import { ValidationError } from '../utils/errors.js';
 
 const app = new Hono<AppContext>();
 
@@ -32,12 +32,8 @@ function getPostGISClient(pool: pg.Pool, logger: Logger): PostGISAddressClient {
 function getAddressService(pool: pg.Pool, logger: Logger): AddressLookupService {
   if (!addressLookupService) {
     const config = getConfig();
-    if (!config.ZIPCODEBASE_API_KEY) {
-      throw new ServiceNotConfiguredError('Address lookup service not configured');
-    }
     addressLookupService = new AddressLookupService(
       {
-        zipcodeApiKey: config.ZIPCODEBASE_API_KEY,
         overpassPrimaryUrl: config.OVERPASS_API_URL,
         overpassFallbackUrl: config.OVERPASS_FALLBACK_URL,
         postgisClient: config.POSTGIS_ADDRESS_ENABLED ? getPostGISClient(pool, logger) : undefined,
@@ -53,23 +49,16 @@ function getAddressService(pool: pg.Pool, logger: Logger): AddressLookupService 
 
 /**
  * Get the AddressLookupService singleton for geocoding.
- * Returns undefined when the service is not configured (e.g., missing API key).
- * Re-throws any other error so genuine bugs are not silently swallowed.
+ *
+ * Address lookup no longer depends on any API key (it uses PostGIS + Overpass +
+ * Nominatim), so this always returns a service instance. The return type stays
+ * optional for backwards compatibility with callers that tolerate `undefined`.
  */
 export function getAddressLookupService(
   pool: pg.Pool,
   logger: Logger,
 ): AddressLookupService | undefined {
-  try {
-    return getAddressService(pool, logger);
-  } catch (error) {
-    if (error instanceof ServiceNotConfiguredError) {
-      logger.debug({ error }, 'Address lookup service not configured, geocoding disabled');
-      return undefined;
-    }
-    logger.error({ error }, 'Unexpected error initializing address lookup service');
-    throw error;
-  }
+  return getAddressService(pool, logger);
 }
 
 // ============================================================================
@@ -84,6 +73,14 @@ const CountryCode = type(/^[A-Za-z]{2}$/);
 const CitiesQuerySchema = type({
   country: CountryCode,
   postal_code: 'string > 0',
+});
+
+// Postal-code prefix for autocomplete. Constrained to alphanumerics/space/dash
+// (real postal-code characters) so it is safe to interpolate into a SQL LIKE
+// prefix, and at least 2 chars to keep short-prefix scans cheap.
+const PostalCodesQuerySchema = type({
+  country: CountryCode,
+  prefix: type(/^[A-Za-z0-9 -]{2,10}$/),
 });
 
 const StreetsQuerySchema = type({
@@ -110,6 +107,25 @@ const HouseNumbersQuerySchema = type({
  */
 app.get('/countries', (c) => {
   return c.json(SUPPORTED_COUNTRIES);
+});
+
+/**
+ * GET /api/address-lookup/postal-codes
+ * Search postal codes by prefix (autocomplete). Returns postal-code/city pairs.
+ */
+app.get('/postal-codes', async (c) => {
+  const logger = c.get('logger');
+  const pool = c.get('db');
+  const query = c.req.query();
+
+  const validated = PostalCodesQuerySchema(query);
+  if (validated instanceof type.errors) {
+    throw new ValidationError('Invalid query parameters', validated);
+  }
+
+  const service = getAddressService(pool, logger);
+  const postalCodes = await service.searchPostalCodes(validated.country, validated.prefix);
+  return c.json(postalCodes);
 });
 
 /**

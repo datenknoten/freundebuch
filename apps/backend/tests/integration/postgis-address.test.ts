@@ -135,6 +135,130 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
     });
   });
 
+  describe('getCitiesByPostalCode', () => {
+    it('should return distinct cities for a postal code', async () => {
+      const { pool, client } = getContext();
+
+      await insertTestAddresses(pool, [
+        { countryCode: 'DE', postalCode: '10115', city: 'Berlin', street: 'Torstraße' },
+        { countryCode: 'DE', postalCode: '10115', city: 'Berlin', street: 'Invalidenstraße' },
+        { countryCode: 'DE', postalCode: '10115', city: 'Mitte', street: 'Chausseestraße' },
+      ]);
+
+      const cities = await client.getCitiesByPostalCode('DE', '10115');
+
+      expect(cities.map((c) => c.city)).toEqual(['Berlin', 'Mitte']);
+    });
+
+    it("should filter out the 'Unknown' placeholder city", async () => {
+      const { pool, client } = getContext();
+
+      await insertTestAddresses(pool, [
+        { countryCode: 'DE', postalCode: '55571', city: 'Odernheim am Glan', street: 'Hauptstraße' },
+        { countryCode: 'DE', postalCode: '55571', city: 'Unknown', street: 'Im Tal' },
+      ]);
+
+      const cities = await client.getCitiesByPostalCode('DE', '55571');
+
+      expect(cities.map((c) => c.city)).toEqual(['Odernheim am Glan']);
+    });
+
+    it('should return empty array for non-existent postal code', async () => {
+      const { client } = getContext();
+
+      const cities = await client.getCitiesByPostalCode('DE', '99999');
+
+      expect(cities).toHaveLength(0);
+    });
+
+    it('should handle case-insensitive country codes', async () => {
+      const { pool, client } = getContext();
+
+      await insertTestAddresses(pool, [
+        { countryCode: 'DE', postalCode: '10115', city: 'Berlin', street: 'Torstraße' },
+      ]);
+
+      const cities = await client.getCitiesByPostalCode('de', '10115');
+
+      expect(cities.map((c) => c.city)).toEqual(['Berlin']);
+    });
+  });
+
+  describe('searchPostalCodes', () => {
+    it('should return postal-code/city pairs matching a prefix', async () => {
+      const { pool, client } = getContext();
+
+      await insertTestAddresses(pool, [
+        { countryCode: 'DE', postalCode: '55116', city: 'Mainz', street: 'Schillerstraße' },
+        { countryCode: 'DE', postalCode: '55118', city: 'Mainz', street: 'Goethestraße' },
+        { countryCode: 'DE', postalCode: '55571', city: 'Odernheim am Glan', street: 'Hauptstraße' },
+        { countryCode: 'DE', postalCode: '10115', city: 'Berlin', street: 'Torstraße' },
+      ]);
+
+      const results = await client.searchPostalCodes('DE', '55');
+
+      expect(results).toEqual([
+        { postalCode: '55116', city: 'Mainz' },
+        { postalCode: '55118', city: 'Mainz' },
+        { postalCode: '55571', city: 'Odernheim am Glan' },
+      ]);
+    });
+
+    it("should exclude the 'Unknown' placeholder city", async () => {
+      const { pool, client } = getContext();
+
+      await insertTestAddresses(pool, [
+        { countryCode: 'DE', postalCode: '55116', city: 'Mainz', street: 'Schillerstraße' },
+        { countryCode: 'DE', postalCode: '55116', city: 'Unknown', street: 'Im Tal' },
+      ]);
+
+      const results = await client.searchPostalCodes('DE', '55');
+
+      expect(results).toEqual([{ postalCode: '55116', city: 'Mainz' }]);
+    });
+
+    it('should respect the limit', async () => {
+      const { pool, client } = getContext();
+
+      await insertTestAddresses(pool, [
+        { countryCode: 'DE', postalCode: '55116', city: 'Mainz', street: 'A' },
+        { countryCode: 'DE', postalCode: '55118', city: 'Mainz', street: 'B' },
+        { countryCode: 'DE', postalCode: '55120', city: 'Mainz', street: 'C' },
+      ]);
+
+      const results = await client.searchPostalCodes('DE', '55', 2);
+
+      expect(results).toHaveLength(2);
+      expect(results[0].postalCode).toBe('55116');
+      expect(results[1].postalCode).toBe('55118');
+    });
+
+    it('should return empty array when nothing matches the prefix', async () => {
+      const { pool, client } = getContext();
+
+      await insertTestAddresses(pool, [
+        { countryCode: 'DE', postalCode: '10115', city: 'Berlin', street: 'Torstraße' },
+      ]);
+
+      const results = await client.searchPostalCodes('DE', '99');
+
+      expect(results).toHaveLength(0);
+    });
+
+    it('should filter by country code', async () => {
+      const { pool, client } = getContext();
+
+      await insertTestAddresses(pool, [
+        { countryCode: 'DE', postalCode: '10115', city: 'Berlin', street: 'Torstraße' },
+        { countryCode: 'AT', postalCode: '10115', city: 'Wien', street: 'Kärntner Straße' },
+      ]);
+
+      const results = await client.searchPostalCodes('at', '10');
+
+      expect(results).toEqual([{ postalCode: '10115', city: 'Wien' }]);
+    });
+  });
+
   describe('getHouseNumbers', () => {
     it('should return house numbers for a street', async () => {
       const { pool, client } = getContext();

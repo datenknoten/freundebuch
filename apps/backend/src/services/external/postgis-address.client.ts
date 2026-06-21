@@ -20,6 +20,71 @@ export class PostGISAddressClient {
   ) {}
 
   /**
+   * Get distinct cities for a postal code.
+   *
+   * Uses the `cities_by_postal` materialized view, which already excludes the
+   * `'Unknown'` placeholder used for OSM rows without an `addr:city` tag (see
+   * scripts/osm-import/import-region.sh). The PostGIS data has no
+   * state/province column, so callers get city names only.
+   */
+  async getCitiesByPostalCode(countryCode: string, postalCode: string): Promise<{ city: string }[]> {
+    try {
+      const result = await this.pool.query<{ city: string }>(
+        `SELECT city
+         FROM geodata.cities_by_postal
+         WHERE country_code = $1 AND postal_code = $2
+         ORDER BY city`,
+        [countryCode.toUpperCase(), postalCode],
+      );
+
+      this.logger.debug(
+        { countryCode, postalCode, count: result.rowCount },
+        'PostGIS cities query completed',
+      );
+
+      return result.rows.map((row) => ({ city: row.city }));
+    } catch (error) {
+      this.logger.error({ error, countryCode, postalCode }, 'PostGIS cities query failed');
+      throw error;
+    }
+  }
+
+  /**
+   * Search postal codes by prefix, returning postal-code/city pairs.
+   *
+   * Backs the postal-code autocomplete (e.g. typing "55" suggests "55116 —
+   * Mainz"). Uses the `cities_by_postal` materialized view, which is indexed
+   * with `text_pattern_ops` so the prefix `LIKE` is index-backed. Results are
+   * capped by `limit` to keep short prefixes cheap.
+   */
+  async searchPostalCodes(
+    countryCode: string,
+    prefix: string,
+    limit = 20,
+  ): Promise<{ postalCode: string; city: string }[]> {
+    try {
+      const result = await this.pool.query<{ postal_code: string; city: string }>(
+        `SELECT postal_code, city
+         FROM geodata.cities_by_postal
+         WHERE country_code = $1 AND postal_code LIKE $2 || '%'
+         ORDER BY postal_code, city
+         LIMIT $3`,
+        [countryCode.toUpperCase(), prefix, limit],
+      );
+
+      this.logger.debug(
+        { countryCode, prefix, count: result.rowCount },
+        'PostGIS postal code search completed',
+      );
+
+      return result.rows.map((row) => ({ postalCode: row.postal_code, city: row.city }));
+    } catch (error) {
+      this.logger.error({ error, countryCode, prefix }, 'PostGIS postal code search failed');
+      throw error;
+    }
+  }
+
+  /**
    * Get streets for a postal code.
    * Uses the materialized view for fast distinct lookups.
    */
