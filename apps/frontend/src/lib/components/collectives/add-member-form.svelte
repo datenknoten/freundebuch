@@ -1,9 +1,7 @@
 <script lang="ts">
-import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { previewMemberRelationships } from '$lib/stores/collectives';
 import type { CollectiveRole, FriendSearchResult, RelationshipPreviewResponse } from '$shared';
-import FriendAvatar from '../friends/friend-avatar.svelte';
 import FriendSearchInput from '../friends/friend-search-input.svelte';
 import RelationshipPreview from './relationship-preview.svelte';
 
@@ -139,38 +137,21 @@ async function handleSubmit(e: Event) {
       {$i18n.t('collectives.addMember.friendLabel')} <span class="text-red-500">*</span>
     </label>
 
-    {#if selectedFriend}
-      <!-- Selected friend display -->
-      <div class="flex items-center justify-between bg-forest/5 border border-forest/20 rounded-lg p-3">
-        <div class="flex items-center gap-3">
-          <FriendAvatar
-            displayName={selectedFriend.displayName}
-            photoUrl={selectedFriend.photoThumbnailUrl}
-            size="sm"
-          />
-          <span class="font-body text-sm text-gray-900">{selectedFriend.displayName}</span>
-        </div>
-        <button
-          type="button"
-          onclick={clearSelection}
-          class="text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <XMark class="w-4 h-4" strokeWidth="2" />
-        </button>
-      </div>
-    {:else}
-      <FriendSearchInput
-        id="member-search"
-        placeholder={$i18n.t('collectives.addMember.searchPlaceholder')}
-        disabled={isSubmitting}
-        autofocus
-        disabledCheck={(friend) =>
-          existingMemberSet.has(friend.id)
-            ? $i18n.t('collectives.addMember.alreadyMember')
-            : null
-        }
-        onSelect={handleFriendSelect}
-      />
+    <FriendSearchInput
+      id="member-search"
+      placeholder={$i18n.t('collectives.addMember.searchPlaceholder')}
+      disabled={isSubmitting}
+      autofocus
+      selected={selectedFriend}
+      disabledCheck={(friend) =>
+        existingMemberSet.has(friend.id)
+          ? $i18n.t('collectives.addMember.alreadyMember')
+          : null
+      }
+      onSelect={handleFriendSelect}
+      onClear={clearSelection}
+    />
+    {#if !selectedFriend}
       <a
         href={createNewFriendHref}
         class="inline-block mt-2 text-sm text-forest hover:text-forest-light font-body underline"

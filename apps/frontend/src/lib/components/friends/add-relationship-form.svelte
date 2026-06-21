@@ -1,6 +1,5 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
@@ -106,27 +105,15 @@ async function handleSubmit(e: Event) {
       {$i18n.t('relationshipSection.relatedFriend')}
     </span>
 
-    {#if selectedFriend}
-      <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-        <span class="font-body text-sm text-gray-900">{selectedFriend.displayName}</span>
-        <button
-          type="button"
-          onclick={clearSelectedFriend}
-          class="text-gray-400 hover:text-gray-600"
-          aria-label={$i18n.t('common.clear')}
-        >
-          <XMark class="w-5 h-5" strokeWidth="2" />
-        </button>
-      </div>
-    {:else}
-      <FriendSearchInput
-        placeholder={$i18n.t('relationshipSection.searchPlaceholder')}
-        excludeFriendId={friendId}
-        disabled={isSubmitting}
-        {autofocus}
-        onSelect={handleFriendSelect}
-      />
-    {/if}
+    <FriendSearchInput
+      placeholder={$i18n.t('relationshipSection.searchPlaceholder')}
+      excludeFriendId={friendId}
+      disabled={isSubmitting}
+      {autofocus}
+      selected={selectedFriend}
+      onSelect={handleFriendSelect}
+      onClear={clearSelectedFriend}
+    />
   </div>
 
   <!-- Relationship Type -->
