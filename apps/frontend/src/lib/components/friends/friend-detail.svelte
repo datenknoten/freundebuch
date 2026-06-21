@@ -4,6 +4,7 @@ import Heart from 'svelte-heros-v2/Heart.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import { primeKeyboardFocus } from '$lib/actions/auto-focus';
 import { longPress } from '$lib/actions/long-press';
 import { getCollectivesForFriend } from '$lib/api/friends';
 import FabCreateMenu, {
@@ -406,6 +407,9 @@ onMount(() => {
   <MobileAddDetailModal
     onSelect={(type) => {
       showMobileAddModal = false;
+      // Prime the keyboard within this tap so iOS keeps it open when the
+      // auto-focused edit form mounts.
+      primeKeyboardFocus();
       dispatchAddEvent(type);
     }}
     onClose={() => showMobileAddModal = false}
