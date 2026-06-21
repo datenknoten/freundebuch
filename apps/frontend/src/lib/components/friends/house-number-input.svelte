@@ -93,6 +93,10 @@ function handleKeydown(e: KeyboardEvent) {
         showDropdown = false;
       } else if (highlightedIndex >= 0 && highlightedIndex < list.length) {
         selectNumber(list[highlightedIndex]);
+      } else if (query.trim() && list.length > 0) {
+        // No explicit highlight, but the user searched and there are matches:
+        // select the top match so Enter confirms the visible result.
+        selectNumber(list[0]);
       }
       break;
     case 'Escape':
