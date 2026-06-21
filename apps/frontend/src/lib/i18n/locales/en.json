@@ -290,7 +290,8 @@
   "auth": {
     "sessionExpired": {
       "title": "Your session expired",
-      "message": "You've been signed out. Sign back in to pick up right where you left off."
+      "message": "You've been signed out. Sign back in to pick up right where you left off.",
+      "logout": "Log out instead"
     },
     "login": {
       "title": "Sign In",

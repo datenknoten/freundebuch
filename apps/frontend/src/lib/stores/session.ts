@@ -8,6 +8,10 @@ import { writable } from 'svelte/store';
  * (or silently swallow the error), the API client funnels that 401 here so the
  * app can surface a re-login dialog *in place* — preserving whatever the user
  * was doing instead of bouncing them out to the login page.
+ *
+ * The client also *awaits* the outcome: if the user re-authenticates, the
+ * original request is replayed transparently; if they log out (or give up), the
+ * request rejects as usual.
  */
 
 // Lightweight snapshot of whether the user currently holds an authenticated
@@ -32,19 +36,50 @@ export function setHasSession(value: boolean): void {
  */
 export const sessionExpired = writable(false);
 
-/**
- * Notify that an API request was rejected as unauthorized (401).
- *
- * Only triggers the re-login prompt if the user actually had a session; a 401
- * while unauthenticated (e.g. the startup session probe) is ignored.
- */
-export function notifyUnauthorized(): void {
-  if (hasSession) {
-    sessionExpired.set(true);
+// Requests that hit a 401 park here, each waiting to learn whether the user
+// re-authenticated (true -> replay the request) or bailed out (false -> reject).
+let waiters: Array<(reAuthenticated: boolean) => void> = [];
+
+function settle(reAuthenticated: boolean): void {
+  const pending = waiters;
+  waiters = [];
+  for (const resolve of pending) {
+    resolve(reAuthenticated);
   }
 }
 
-/** Dismiss the session-expired prompt (e.g. after a successful re-login). */
-export function clearSessionExpired(): void {
+/**
+ * Notify that an API request was rejected as unauthorized (401).
+ *
+ * Resolves with `true` once the user re-authenticates (caller should replay the
+ * request) or `false` if they log out / abandon the prompt (caller should
+ * reject). A 401 while unauthenticated (e.g. the startup session probe) resolves
+ * immediately to `false` and never shows the prompt.
+ */
+export function notifyUnauthorized(): Promise<boolean> {
+  if (!hasSession) {
+    return Promise.resolve(false);
+  }
+  sessionExpired.set(true);
+  return new Promise<boolean>((resolve) => {
+    waiters.push(resolve);
+  });
+}
+
+/**
+ * Re-authentication succeeded: dismiss the prompt and let parked requests
+ * replay.
+ */
+export function resolveSessionExpired(): void {
   sessionExpired.set(false);
+  settle(true);
+}
+
+/**
+ * The user abandoned re-authentication (e.g. logged out): dismiss the prompt and
+ * let parked requests reject.
+ */
+export function abandonSessionExpired(): void {
+  sessionExpired.set(false);
+  settle(false);
 }
