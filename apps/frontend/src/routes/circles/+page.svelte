@@ -81,16 +81,18 @@ onMount(() => {
   };
 });
 
-function openCreateModal() {
-  // Prime the keyboard within this gesture so iOS keeps it open once the
-  // modal's auto-focused name input mounts.
-  primeKeyboardFocus();
+// `prime` should only be true when called from a real tap/click/swipe gesture,
+// so iOS keeps the keyboard open once the modal's auto-focused name input
+// mounts. Non-gesture callers (?new=1 auto-open, keyboard shortcuts) leave it
+// false to avoid stealing focus.
+function openCreateModal(prime = false) {
+  if (prime) primeKeyboardFocus();
   editingCircle = null;
   showEditModal = true;
 }
 
-function openEditModal(circle: Circle) {
-  primeKeyboardFocus();
+function openEditModal(circle: Circle, prime = false) {
+  if (prime) primeKeyboardFocus();
   editingCircle = circle;
   showEditModal = true;
 }
@@ -187,7 +189,7 @@ function getActualDepth(circle: Circle): number {
           <p class="text-gray-600 font-body mt-1">{$i18n.t('circles.subtitle')}</p>
         </div>
         <button
-          onclick={openCreateModal}
+          onclick={() => openCreateModal(true)}
           class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
           data-shortcut="n c"
           data-shortcut-label="shortcuts.newCircle"
@@ -250,7 +252,7 @@ function getActualDepth(circle: Circle): number {
           <h3 class="text-lg font-heading text-gray-600 mb-2">{$i18n.t('circles.noCircles')}</h3>
           <p class="text-gray-500 font-body mb-4">{$i18n.t('circles.noCirclesSubtitle')}</p>
           <button
-            onclick={openCreateModal}
+            onclick={() => openCreateModal(true)}
             class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
           >
             <Plus class="w-5 h-5" strokeWidth="2" />
@@ -273,7 +275,7 @@ function getActualDepth(circle: Circle): number {
             <!-- Mobile: Swipeable row -->
             <div class="sm:hidden" style:margin-left="{actualDepth * 16}px">
               <SwipeableRow
-                onSwipeRight={() => openEditModal(circle)}
+                onSwipeRight={() => openEditModal(circle, true)}
                 onSwipeLeft={() => openDeleteConfirm(circle)}
                 disabled={isDeleting}
               >
@@ -316,7 +318,7 @@ function getActualDepth(circle: Circle): number {
 
                   <!-- Actions (visible on mobile for accessibility) -->
                   <DetailActions
-                    onEdit={() => openEditModal(circle)}
+                    onEdit={() => openEditModal(circle, true)}
                     onDelete={() => openDeleteConfirm(circle)}
                     {isDeleting}
                     editLabel={$i18n.t('common.edit') + ' ' + circle.name}
@@ -371,7 +373,7 @@ function getActualDepth(circle: Circle): number {
 
                 <!-- Actions -->
                 <DetailActions
-                  onEdit={() => openEditModal(circle)}
+                  onEdit={() => openEditModal(circle, true)}
                   onDelete={() => openDeleteConfirm(circle)}
                   {isDeleting}
                   editLabel={$i18n.t('common.edit') + ' ' + circle.name}

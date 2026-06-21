@@ -2,6 +2,7 @@
 import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
+import { primeKeyboardFocus } from '$lib/actions/auto-focus';
 
 export type FabCreateChoice = 'friend' | 'encounter' | 'circle' | 'collective';
 
@@ -21,6 +22,10 @@ export function navigateForCreateChoice(choice: FabCreateChoice): void {
       // Circles are created via a modal. Open it in place when already on /circles,
       // otherwise navigate there with a flag the circles page uses to auto-open it.
       if (get(page).url.pathname === '/circles') {
+        // This runs inside the FAB tap, so prime the keyboard for the modal's
+        // auto-focused input (the page's event handler can't, as it's also
+        // reachable from non-gesture keyboard shortcuts).
+        primeKeyboardFocus();
         window.dispatchEvent(new CustomEvent('shortcut:new-circle'));
       } else {
         goto('/circles?new=1');

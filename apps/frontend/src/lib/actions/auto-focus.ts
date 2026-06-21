@@ -73,10 +73,11 @@ export function primeKeyboardFocus(): void {
  * <input use:autoFocus={shouldFocus} type="text" />
  */
 export function autoFocus(node: HTMLElement, enabled: boolean = true) {
-  if (!enabled) {
-    releasePrimedInput();
-    return;
-  }
+  // A disabled autofocus must be a pure no-op: it must not touch the global
+  // priming state, or a sibling non-autofocused field mounting first would
+  // release the throwaway input before the intended field takes focus. Stale
+  // primed inputs are handled by the timeout safety-net in primeKeyboardFocus().
+  if (!enabled) return;
 
   const frame = requestAnimationFrame(() => {
     node.focus();
