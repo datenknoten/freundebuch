@@ -1,8 +1,18 @@
+import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$shared', () => ({}));
 
+import { sessionExpired, setHasSession } from '../stores/session.js';
 import { ApiError, apiRequest } from './client.js';
+
+function mock401() {
+  vi.mocked(fetch).mockResolvedValue({
+    ok: false,
+    status: 401,
+    json: () => Promise.resolve({ error: 'Unauthorized' }),
+  } as unknown as Response);
+}
 
 describe('ApiError', () => {
   it('has correct properties', () => {
@@ -115,6 +125,31 @@ describe('apiRequest', () => {
     await expect(apiRequest('/api/test')).rejects.toMatchObject({
       statusCode: 500,
       message: 'An unknown error occurred',
+    });
+  });
+
+  describe('401 session expiry', () => {
+    afterEach(() => {
+      setHasSession(false);
+      sessionExpired.set(false);
+    });
+
+    it('flags the session as expired on 401 when a session was active', async () => {
+      setHasSession(true);
+      sessionExpired.set(false);
+      mock401();
+
+      await expect(apiRequest('/api/test')).rejects.toMatchObject({ statusCode: 401 });
+      expect(get(sessionExpired)).toBe(true);
+    });
+
+    it('does not flag session expiry on 401 when unauthenticated', async () => {
+      setHasSession(false);
+      sessionExpired.set(false);
+      mock401();
+
+      await expect(apiRequest('/api/test')).rejects.toMatchObject({ statusCode: 401 });
+      expect(get(sessionExpired)).toBe(false);
     });
   });
 });

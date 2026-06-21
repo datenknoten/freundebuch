@@ -288,6 +288,10 @@
     }
   },
   "auth": {
+    "sessionExpired": {
+      "title": "Your session expired",
+      "message": "You've been signed out. Sign back in to pick up right where you left off."
+    },
     "login": {
       "title": "Sign In",
       "subtitle": "Welcome back! Please sign in to continue.",
