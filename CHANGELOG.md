@@ -1,3 +1,8 @@
+## <small>2.87.1 (2026-06-21)</small>
+
+* fix(frontend): Select top match on Enter across search dropdowns ([f03835e](https://github.com/datenknoten/freundebuch/commit/f03835e))
+* fix(frontend): Select top match when confirming relationship type search ([1d8f438](https://github.com/datenknoten/freundebuch/commit/1d8f438))
+
 ## 2.87.0 (2026-06-21)
 
 * feat(all): PostGIS-only address lookup + postal-code autocomplete ([fa24597](https://github.com/datenknoten/freundebuch/commit/fa24597))
