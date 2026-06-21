@@ -168,6 +168,59 @@ describe('Collectives API - Integration', () => {
       const afterRemove = await json(await req('GET', `/api/collectives/${collectiveId}`));
       expect(afterRemove.memberCount).toBe(0);
     });
+
+    it('makes auto-created relationships visible on both contacts', async () => {
+      // Use the Family type, which defines parent/child auto-relationship rules.
+      const types = (await json(await req('GET', '/api/collectives/types'))).types;
+      // biome-ignore lint/suspicious/noExplicitAny: dynamically shaped test JSON
+      const family = types.find((t: any) => t.name === 'Family');
+      expect(family).toBeDefined();
+      // biome-ignore lint/suspicious/noExplicitAny: dynamically shaped test JSON
+      const parentRole = family.roles.find((r: any) => r.roleKey === 'parent');
+      // biome-ignore lint/suspicious/noExplicitAny: dynamically shaped test JSON
+      const childRole = family.roles.find((r: any) => r.roleKey === 'child');
+
+      const res = await req('POST', '/api/collectives', {
+        name: 'The Smiths',
+        collective_type_id: family.id,
+      });
+      expect(res.status).toBe(201);
+      const collectiveId = (await json(res)).id;
+
+      const parentId = await createTestFriend(poolOf(), user.externalId, 'Parent Smith');
+      const childId = await createTestFriend(poolOf(), user.externalId, 'Child Smith');
+
+      const addParent = await req('POST', `/api/collectives/${collectiveId}/members`, {
+        friend_id: parentId,
+        role_id: parentRole.id,
+      });
+      expect(addParent.status).toBe(201);
+
+      const addChild = await req('POST', `/api/collectives/${collectiveId}/members`, {
+        friend_id: childId,
+        role_id: childRole.id,
+      });
+      expect(addChild.status).toBe(201);
+
+      // The existing edge (parent --[parent]--> child) shows on the parent...
+      const parent = await json(await req('GET', `/api/friends/${parentId}`));
+      const parentToChild = parent.relationships.find(
+        // biome-ignore lint/suspicious/noExplicitAny: dynamically shaped test JSON
+        (r: any) => r.relatedFriendId === childId,
+      );
+      expect(parentToChild).toBeDefined();
+      expect(parentToChild.relationshipTypeId).toBe('parent');
+
+      // ...and, critically, the reciprocal edge (child --[child]--> parent) is
+      // now created so the relationship is also visible on the child.
+      const child = await json(await req('GET', `/api/friends/${childId}`));
+      const childToParent = child.relationships.find(
+        // biome-ignore lint/suspicious/noExplicitAny: dynamically shaped test JSON
+        (r: any) => r.relatedFriendId === parentId,
+      );
+      expect(childToParent).toBeDefined();
+      expect(childToParent.relationshipTypeId).toBe('child');
+    });
   });
 
   describe('sub-resources', () => {

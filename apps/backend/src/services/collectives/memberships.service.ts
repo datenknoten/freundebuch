@@ -567,7 +567,14 @@ export class MembershipsService {
   }
 
   /**
-   * Create relationships based on a single rule
+   * Create relationships based on a single rule.
+   *
+   * Relationships are stored as directed edges and a contact only sees edges
+   * where it is the "from" friend. To make the relationship visible on both
+   * contacts we always create the reciprocal edge using the relationship
+   * type's inverse, mirroring the manual relationship flow
+   * (RelationshipService.addRelationship). Without the inverse edge the
+   * relationship only shows up on one of the two contacts.
    */
   private async createRelationshipsForRule(
     client: PoolClient,
@@ -578,56 +585,65 @@ export class MembershipsService {
   ): Promise<void> {
     const direction = parseRelationshipDirection(rule.relationship_direction);
 
-    if (direction === 'new_member' || direction === 'both') {
-      // Skip if the inverse relationship already exists (prevents circular chains)
-      const inverseExists = await checkRelationshipExists.run(
+    // Look up the inverse type so we can create the reciprocal edge. Every
+    // seeded relationship type defines an inverse (symmetric types point to
+    // themselves), so this is expected to be present.
+    const typeInfo = await getRelationshipTypeInfo.run(
+      { relationshipTypeId: rule.relationship_type_id },
+      client,
+    );
+    const inverseTypeId = typeInfo[0]?.inverse_type_id ?? null;
+
+    // Determine which contact owns the primary edge. 'both' is only used for
+    // symmetric types (sibling, spouse) whose inverse equals the type itself,
+    // so a single primary + inverse pair yields the correct bidirectional
+    // result without creating duplicate rows.
+    const primaryFromId = direction === 'existing_member' ? existingContactId : newContactId;
+    const primaryToId = direction === 'existing_member' ? newContactId : existingContactId;
+
+    await this.createRelationshipPair(
+      client,
+      primaryFromId,
+      primaryToId,
+      rule.relationship_type_id,
+      inverseTypeId,
+      membershipId,
+    );
+  }
+
+  /**
+   * Create a directed relationship and its reciprocal edge so the relationship
+   * is visible on both contacts. Both inserts use ON CONFLICT DO UPDATE, so
+   * pre-existing edges are tolerated.
+   */
+  private async createRelationshipPair(
+    client: PoolClient,
+    fromContactId: number,
+    toContactId: number,
+    relationshipTypeId: string,
+    inverseTypeId: string | null,
+    membershipId: number,
+  ): Promise<void> {
+    await createRelationshipWithSource.run(
+      {
+        fromFriendId: fromContactId,
+        toFriendId: toContactId,
+        relationshipTypeId,
+        sourceMembershipId: membershipId,
+      },
+      client,
+    );
+
+    if (inverseTypeId) {
+      await createRelationshipWithSource.run(
         {
-          fromFriendId: existingContactId,
-          toFriendId: newContactId,
-          relationshipTypeId: rule.relationship_type_id,
+          fromFriendId: toContactId,
+          toFriendId: fromContactId,
+          relationshipTypeId: inverseTypeId,
+          sourceMembershipId: membershipId,
         },
         client,
       );
-
-      if ((inverseExists[0]?.count ?? 0) === 0) {
-        // New member is the "from" friend
-        await createRelationshipWithSource.run(
-          {
-            fromFriendId: newContactId,
-            toFriendId: existingContactId,
-            relationshipTypeId: rule.relationship_type_id,
-            sourceMembershipId: membershipId,
-          },
-          client,
-        );
-      }
-    }
-
-    if (direction === 'existing_member' || direction === 'both') {
-      // Existing member is the "from" friend - use the rule's relationship type directly
-      // (the rule already specifies the correct type for this direction)
-
-      // Skip if the inverse relationship already exists (prevents circular chains)
-      const inverseExists = await checkRelationshipExists.run(
-        {
-          fromFriendId: newContactId,
-          toFriendId: existingContactId,
-          relationshipTypeId: rule.relationship_type_id,
-        },
-        client,
-      );
-
-      if ((inverseExists[0]?.count ?? 0) === 0) {
-        await createRelationshipWithSource.run(
-          {
-            fromFriendId: existingContactId,
-            toFriendId: newContactId,
-            relationshipTypeId: rule.relationship_type_id,
-            sourceMembershipId: membershipId,
-          },
-          client,
-        );
-      }
     }
   }
 
