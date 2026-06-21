@@ -160,6 +160,7 @@ function handleClear() {
       >
         <button
           type="button"
+          {id}
           onclick={activateInput}
           onkeydown={handleButtonKeydown}
           {disabled}
@@ -190,6 +191,7 @@ function handleClear() {
       <!-- Show search input -->
       <input
         type="text"
+        {id}
         bind:this={inputElement}
         bind:value={query}
         use:autoFocus={autofocus}
