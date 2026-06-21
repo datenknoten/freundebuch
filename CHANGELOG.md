@@ -1,3 +1,9 @@
+## 2.88.0 (2026-06-21)
+
+* fix(frontend): Associate friend selector label with rendered control ([9cfea2e](https://github.com/datenknoten/freundebuch/commit/9cfea2e))
+* fix(frontend): Reliably autofocus friend search input in modals ([4cf8f03](https://github.com/datenknoten/freundebuch/commit/4cf8f03))
+* feat(frontend): Align friend selector with combobox dropdown pattern ([cba2297](https://github.com/datenknoten/freundebuch/commit/cba2297))
+
 ## <small>2.87.2 (2026-06-21)</small>
 
 * fix(frontend): Address PR review on mobile autofocus priming ([ad67c10](https://github.com/datenknoten/freundebuch/commit/ad67c10))
