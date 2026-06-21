@@ -1067,6 +1067,8 @@
       "title": "Add to Collective",
       "selectCollective": "Select Collective",
       "selectCollectivePlaceholder": "Choose a collective...",
+      "searchPlaceholder": "Search collectives...",
+      "noMatches": "No matching collectives found",
       "selectRole": "Role",
       "noCollectivesAvailable": "No collectives available. Create one first.",
       "alreadyInAll": "This friend is already in all collectives.",

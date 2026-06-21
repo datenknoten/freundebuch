@@ -1067,6 +1067,8 @@
       "title": "Zu Kollektiv hinzufügen",
       "selectCollective": "Kollektiv auswählen",
       "selectCollectivePlaceholder": "Kollektiv auswählen...",
+      "searchPlaceholder": "Kollektive suchen...",
+      "noMatches": "Keine passenden Kollektive gefunden",
       "selectRole": "Rolle",
       "noCollectivesAvailable": "Keine Kollektive verfügbar. Erstelle zuerst eines.",
       "alreadyInAll": "Dieser Freund ist bereits in allen Kollektiven.",

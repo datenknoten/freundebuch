@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
+import { primeKeyboardFocus } from '$lib/actions/auto-focus';
 import { removeMember } from '$lib/api/collectives';
 import { createI18n } from '$lib/i18n/index.js';
 import {
@@ -28,6 +29,13 @@ let { friendId, friendDisplayName, collectives, linkStartIndex, onCollectivesCha
 
 let showAddToCollectiveModal = $state(false);
 let removingCollectiveId = $state<string | null>(null);
+
+function openAddToCollectiveModal() {
+  // Prime the keyboard within this tap so iOS keeps it open when the
+  // auto-focused collective search input mounts inside the modal.
+  primeKeyboardFocus();
+  showAddToCollectiveModal = true;
+}
 
 function handleAddToCollectiveSuccess() {
   showAddToCollectiveModal = false;
@@ -66,7 +74,7 @@ onMount(() => {
       </h2>
       <button
         type="button"
-        onclick={() => showAddToCollectiveModal = true}
+        onclick={openAddToCollectiveModal}
         class="text-sm font-body font-semibold bg-forest text-white hover:bg-forest-light
                flex items-center gap-1 px-2 py-1 rounded-md transition-colors"
       >
