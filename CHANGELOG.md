@@ -1,3 +1,7 @@
+## 2.87.0 (2026-06-21)
+
+* feat(all): PostGIS-only address lookup + postal-code autocomplete ([fa24597](https://github.com/datenknoten/freundebuch/commit/fa24597))
+
 ## <small>2.86.1 (2026-06-21)</small>
 
 * fix(backend): Make auto-created member relationships visible on both contacts ([bad26ce](https://github.com/datenknoten/freundebuch/commit/bad26ce))
