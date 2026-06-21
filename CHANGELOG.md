@@ -1,3 +1,8 @@
+## <small>2.87.2 (2026-06-21)</small>
+
+* fix(frontend): Address PR review on mobile autofocus priming ([ad67c10](https://github.com/datenknoten/freundebuch/commit/ad67c10))
+* fix(frontend): Make autofocus work on mobile keyboards ([ce65bcd](https://github.com/datenknoten/freundebuch/commit/ce65bcd))
+
 ## <small>2.87.1 (2026-06-21)</small>
 
 * fix(frontend): Select top match on Enter across search dropdowns ([f03835e](https://github.com/datenknoten/freundebuch/commit/f03835e))
