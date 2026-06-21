@@ -1,3 +1,9 @@
+## 2.86.0 (2026-06-21)
+
+* fix(frontend): Satisfy noEmptyBlockStatements in session-expired modal ([ed2a83c](https://github.com/datenknoten/freundebuch/commit/ed2a83c))
+* feat(frontend): Prompt re-login in place when session expires ([4926e0f](https://github.com/datenknoten/freundebuch/commit/4926e0f))
+* feat(frontend): Replay failed request after re-login and add logout escape hatch ([002610d](https://github.com/datenknoten/freundebuch/commit/002610d))
+
 ## <small>2.85.3 (2026-06-21)</small>
 
 * fix(dx): Make web sandbox toolchain setup work behind the tls proxy ([f4cb697](https://github.com/datenknoten/freundebuch/commit/f4cb697))
