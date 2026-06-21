@@ -115,6 +115,10 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       if (highlightedIndex >= 0 && highlightedIndex < types.length) {
         selectType(types[highlightedIndex], true);
+      } else if (query.trim() && types.length > 0) {
+        // No explicit highlight, but the user searched and there are matches:
+        // select the top match so Enter confirms the visible result.
+        selectType(types[0], true);
       }
       break;
     case 'Escape':
