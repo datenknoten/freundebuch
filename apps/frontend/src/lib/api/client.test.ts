@@ -3,15 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$shared', () => ({}));
 
-import { sessionExpired, setHasSession } from '../stores/session.js';
+import {
+  abandonSessionExpired,
+  resolveSessionExpired,
+  sessionExpired,
+  setHasSession,
+} from '../stores/session.js';
 import { ApiError, apiRequest } from './client.js';
 
-function mock401() {
-  vi.mocked(fetch).mockResolvedValue({
+function response401() {
+  return {
     ok: false,
     status: 401,
     json: () => Promise.resolve({ error: 'Unauthorized' }),
-  } as unknown as Response);
+  } as unknown as Response;
 }
 
 describe('ApiError', () => {
@@ -130,23 +135,49 @@ describe('apiRequest', () => {
 
   describe('401 session expiry', () => {
     afterEach(() => {
+      // Release any request still parked on the prompt, then reset state.
+      abandonSessionExpired();
       setHasSession(false);
-      sessionExpired.set(false);
     });
 
-    it('flags the session as expired on 401 when a session was active', async () => {
+    it('prompts re-login and rejects when the user logs out', async () => {
       setHasSession(true);
       sessionExpired.set(false);
-      mock401();
+      vi.mocked(fetch).mockResolvedValue(response401());
 
-      await expect(apiRequest('/api/test')).rejects.toMatchObject({ statusCode: 401 });
-      expect(get(sessionExpired)).toBe(true);
+      const pending = apiRequest('/api/test');
+      // The prompt is shown while the request is parked awaiting re-auth.
+      await vi.waitFor(() => expect(get(sessionExpired)).toBe(true));
+
+      // User logs out -> the parked request rejects with the original 401.
+      abandonSessionExpired();
+      await expect(pending).rejects.toMatchObject({ statusCode: 401 });
+      expect(fetch).toHaveBeenCalledTimes(1);
     });
 
-    it('does not flag session expiry on 401 when unauthenticated', async () => {
+    it('replays the original request after the user re-authenticates', async () => {
+      setHasSession(true);
+      sessionExpired.set(false);
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(response401())
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ replayed: true }),
+        } as unknown as Response);
+
+      const pending = apiRequest('/api/test');
+      await vi.waitFor(() => expect(get(sessionExpired)).toBe(true));
+
+      // Re-auth succeeds -> the request is replayed and resolves normally.
+      resolveSessionExpired();
+      await expect(pending).resolves.toEqual({ replayed: true });
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not prompt on 401 when unauthenticated', async () => {
       setHasSession(false);
       sessionExpired.set(false);
-      mock401();
+      vi.mocked(fetch).mockResolvedValue(response401());
 
       await expect(apiRequest('/api/test')).rejects.toMatchObject({ statusCode: 401 });
       expect(get(sessionExpired)).toBe(false);

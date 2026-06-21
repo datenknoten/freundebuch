@@ -24,7 +24,13 @@ export class ApiError extends Error {
  * Helper function to make API requests with proper error handling.
  * Authentication is handled via Better Auth session cookies (credentials: 'include').
  */
-export async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  // Internal: whether a 401 should pause for re-login and replay the request.
+  // Disabled on the replay itself so a still-failing request can't loop.
+  retryOnUnauthorized = true,
+): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
   const headers: Record<string, string> = {
@@ -39,10 +45,15 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
   });
 
   if (!response.ok) {
-    // A 401 mid-session means the session expired. Surface a re-login prompt so
-    // the user can re-authenticate without losing their current page state.
-    if (response.status === 401) {
-      notifyUnauthorized();
+    // A 401 mid-session means the session expired. Surface a re-login prompt and
+    // wait for the outcome: if the user re-authenticates, replay the original
+    // request transparently so they don't lose the action; otherwise fall
+    // through and reject as usual.
+    if (response.status === 401 && retryOnUnauthorized) {
+      const reAuthenticated = await notifyUnauthorized();
+      if (reAuthenticated) {
+        return apiRequest<T>(endpoint, options, false);
+      }
     }
 
     const errorData: ErrorResponse = await response.json().catch(() => ({

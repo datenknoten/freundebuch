@@ -290,7 +290,8 @@
   "auth": {
     "sessionExpired": {
       "title": "Deine Sitzung ist abgelaufen",
-      "message": "Du wurdest abgemeldet. Melde dich erneut an, um genau dort weiterzumachen, wo du aufgehört hast."
+      "message": "Du wurdest abgemeldet. Melde dich erneut an, um genau dort weiterzumachen, wo du aufgehört hast.",
+      "logout": "Stattdessen abmelden"
     },
     "login": {
       "title": "Anmelden",
