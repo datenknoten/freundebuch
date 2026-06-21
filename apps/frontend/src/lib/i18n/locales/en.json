@@ -1066,7 +1066,6 @@
     "addToCollective": {
       "title": "Add to Collective",
       "selectCollective": "Select Collective",
-      "selectCollectivePlaceholder": "Choose a collective...",
       "searchPlaceholder": "Search collectives...",
       "noMatches": "No matching collectives found",
       "selectRole": "Role",
