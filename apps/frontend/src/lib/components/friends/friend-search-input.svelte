@@ -1,6 +1,6 @@
 <script lang="ts">
-import { onMount } from 'svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
+import { autoFocus } from '$lib/actions/auto-focus';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult } from '$shared';
@@ -41,21 +41,11 @@ let {
   id = 'friend-search',
 }: Props = $props();
 
-onMount(() => {
-  if (autofocus && inputElement) {
-    // Small delay to ensure the element is fully rendered
-    requestAnimationFrame(() => {
-      inputElement?.focus();
-    });
-  }
-});
-
 let query = $state('');
 let results = $state<FriendSearchResult[]>([]);
 let isSearching = $state(false);
 let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
-let inputElement: HTMLInputElement;
 let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function isItemDisabled(friend: FriendSearchResult): string | null {
@@ -165,7 +155,7 @@ function handleFocus() {
   <div class="relative">
     <input
       type="text"
-      bind:this={inputElement}
+      use:autoFocus={autofocus}
       bind:value={query}
       oninput={handleInput}
       onkeydown={handleKeydown}
