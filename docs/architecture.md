@@ -73,9 +73,9 @@ freundebuch2/
 Routes delegate to services, services handle business logic and database access. Sub-resources (addresses, emails, phones, URLs, dates) follow a consistent base pattern across both friends and collectives.
 
 **External integrations:**
-- PostGIS for spatial address queries
-- OpenStreetMap Overpass API for geocoding
-- ZipcodeBase for zip code validation
+- PostGIS for spatial address queries, city lookup and postal-code autocomplete (DACH OSM data)
+- OpenStreetMap Overpass API for street/house-number lookups
+- Nominatim for geocoding
 - Sentry for error tracking
 
 **Infrastructure:**

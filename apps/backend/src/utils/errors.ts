@@ -465,15 +465,6 @@ export class OverpassApiError extends ExternalServiceError {
 }
 
 /**
- * Thrown when the ZipcodeBase API returns an error.
- */
-export class ZipcodeBaseApiError extends ExternalServiceError {
-  constructor(message: string, originalStatus?: number) {
-    super('ZipcodeBase', message, originalStatus);
-  }
-}
-
-/**
  * Thrown when a notification delivery to an external messaging platform fails.
  */
 export class NotificationDeliveryError extends ExternalServiceError {

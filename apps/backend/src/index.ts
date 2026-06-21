@@ -157,11 +157,6 @@ export async function startServer() {
   // Initialize address caches with database pool for persistence
   initializeAddressCaches(pool, pinoLogger);
 
-  // Validate optional API keys at startup
-  if (!config.ZIPCODEBASE_API_KEY) {
-    pinoLogger.warn('ZIPCODEBASE_API_KEY not configured - address lookup will be disabled');
-  }
-
   // Setup cleanup scheduler for expired sessions, tokens, and cache
   const cleanupTask = setupCleanupScheduler(pool, pinoLogger);
 

@@ -1,4 +1,4 @@
-import type { CityInfo, CountryInfo, HouseNumberInfo, StreetInfo } from '$shared';
+import type { CityInfo, CountryInfo, HouseNumberInfo, PostalCodeInfo, StreetInfo } from '$shared';
 import { apiRequest } from './client.js';
 
 /**
@@ -6,6 +6,20 @@ import { apiRequest } from './client.js';
  */
 export async function getCountries(): Promise<CountryInfo[]> {
   return apiRequest('/api/address-lookup/countries');
+}
+
+/**
+ * Search postal codes by prefix (autocomplete), returning postal-code/city pairs
+ */
+export async function getPostalCodes(
+  countryCode: string,
+  prefix: string,
+): Promise<PostalCodeInfo[]> {
+  const params = new URLSearchParams({
+    country: countryCode,
+    prefix,
+  });
+  return apiRequest(`/api/address-lookup/postal-codes?${params}`);
 }
 
 /**

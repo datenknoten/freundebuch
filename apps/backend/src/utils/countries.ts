@@ -1,40 +1,16 @@
-import type { Logger } from 'pino';
-import { type AddressCache, getCitiesCache, type ZipcodeResultCached } from '../../utils/cache.js';
-import { ZipcodeBaseApiError } from '../../utils/errors.js';
+/**
+ * Static list of supported countries for the address-lookup country selector.
+ *
+ * This is a plain ISO 3166-1 alpha-2 reference list — it does not depend on any
+ * external API. (It previously lived alongside the ZipcodeBase client, which has
+ * since been removed in favour of PostGIS-only address lookups.)
+ */
 
 export interface Country {
   code: string; // ISO 3166-1 alpha-2
   name: string;
 }
 
-export type ZipcodeResult = ZipcodeResultCached;
-
-interface ZipcodeBaseSearchResponse {
-  query: {
-    codes: string[];
-    country: string;
-  };
-  results: Record<
-    string,
-    Array<{
-      postal_code: string;
-      country_code: string;
-      city: string;
-      state: string;
-      state_code: string;
-      province: string;
-      province_code: string;
-      community: string;
-      community_code: string;
-      latitude: string;
-      longitude: string;
-    }>
-  >;
-}
-
-// Static list of countries supported by ZipcodeBase
-// This is a subset - ZipcodeBase supports 200+ countries
-// Exported so it can be used directly without API key
 export const SUPPORTED_COUNTRIES: Country[] = [
   { code: 'AF', name: 'Afghanistan' },
   { code: 'AL', name: 'Albania' },
@@ -200,79 +176,3 @@ export const SUPPORTED_COUNTRIES: Country[] = [
   { code: 'ZM', name: 'Zambia' },
   { code: 'ZW', name: 'Zimbabwe' },
 ];
-
-export class ZipcodeBaseClient {
-  private apiKey: string;
-  private baseUrl = 'https://app.zipcodebase.com/api/v1';
-  private zipcodeCache: AddressCache<ZipcodeResultCached[]>;
-
-  constructor(
-    apiKey: string,
-    private logger: Logger,
-  ) {
-    this.apiKey = apiKey;
-    this.zipcodeCache = getCitiesCache();
-  }
-
-  /**
-   * Get list of supported countries
-   * Returns a static list since ZipcodeBase doesn't have a countries endpoint
-   */
-  getCountries(): Country[] {
-    return SUPPORTED_COUNTRIES;
-  }
-
-  /**
-   * Search for location info by postal code
-   */
-  async searchByPostalCode(postalCode: string, countryCode: string): Promise<ZipcodeResult[]> {
-    const cacheKey = `zipcode:${countryCode}:${postalCode}`;
-    const cached = await this.zipcodeCache.get(cacheKey);
-    if (cached) {
-      this.logger.debug({ postalCode, countryCode }, 'ZipcodeBase cache hit');
-      return cached;
-    }
-
-    // Log without exposing API key
-    this.logger.debug({ postalCode, countryCode, endpoint: '/search' }, 'ZipcodeBase API request');
-
-    const url = new URL(`${this.baseUrl}/search`);
-    url.searchParams.set('apikey', this.apiKey);
-    url.searchParams.set('codes', postalCode);
-    url.searchParams.set('country', countryCode);
-
-    const response = await fetch(url.toString());
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      // Log error without URL (which contains API key)
-      this.logger.error(
-        { status: response.status, error: errorText, endpoint: '/search', postalCode, countryCode },
-        'ZipcodeBase API error',
-      );
-      throw new ZipcodeBaseApiError(`ZipcodeBase API error: ${response.status}`, response.status);
-    }
-
-    const data = (await response.json()) as ZipcodeBaseSearchResponse;
-
-    // Extract results from the response
-    const results: ZipcodeResult[] = [];
-    for (const [_code, locations] of Object.entries(data.results)) {
-      for (const loc of locations) {
-        results.push({
-          postal_code: loc.postal_code,
-          city: loc.city,
-          state: loc.state || loc.province || undefined,
-          state_code: loc.state_code || loc.province_code || undefined,
-          province: loc.province || undefined,
-          country_code: loc.country_code,
-          latitude: loc.latitude,
-          longitude: loc.longitude,
-        });
-      }
-    }
-
-    await this.zipcodeCache.set(cacheKey, results);
-    return results;
-  }
-}

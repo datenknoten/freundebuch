@@ -1,4 +1,4 @@
-import { SUPPORTED_COUNTRIES } from '../services/external/zipcodebase.client.js';
+import { SUPPORTED_COUNTRIES } from './countries.js';
 
 const SUPPORTED_CODES = new Set(SUPPORTED_COUNTRIES.map((c) => c.code));
 

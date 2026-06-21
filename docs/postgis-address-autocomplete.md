@@ -75,9 +75,27 @@ docker compose -f docker-compose.prod.yml up -d backend
 
 ## How It Works
 
-1. **PostGIS First:** For DACH countries (DE, AT, CH), the system queries the local PostGIS database first
-2. **Automatic Fallback:** If PostGIS returns no results or fails, it falls back to the Overpass API
-3. **Non-DACH Countries:** Continue to use Overpass API directly
+City and postal-code lookups are served **entirely by PostGIS** (there is no
+external address API — ZipcodeBase was removed). Street and house-number lookups
+use PostGIS first and fall back to Overpass.
+
+1. **PostGIS First:** For DACH countries (DE, AT, CH), the system queries the local PostGIS database
+2. **Streets / house numbers:** fall back to the Overpass API when PostGIS has no data
+3. **Cities / postal codes:** PostGIS-only — when there is no data (non-DACH, un-imported postal code, or PostGIS disabled) the API returns an empty list and the frontend falls back to free-text entry
+
+### Lookups served by PostGIS
+
+| Lookup | PostGIS source | Fallback |
+|--------|----------------|----------|
+| Cities by postal code | `geodata.cities_by_postal` (distinct `city`, excludes the `'Unknown'` placeholder) | none (free text) |
+| Postal codes by prefix | `geodata.cities_by_postal` (prefix `LIKE`, returns code + city) | none (free text) |
+| Streets by postal code | `geodata.streets_by_postal` | Overpass |
+| House numbers by street | `geodata.housenumbers_by_street` | Overpass |
+
+> **Note:** PostGIS-sourced cities carry no state/province — the `geodata`
+> schema has no such column, so `state_province` is left empty for those
+> addresses. Non-DACH countries and un-imported postal codes have no city/postal
+> suggestions at all; users enter the city by hand.
 
 ## Maintenance
 
@@ -114,6 +132,7 @@ After imports, materialized views are automatically refreshed. To manually refre
 ```bash
 docker compose -f docker-compose.prod.yml exec postgres \
   psql -U freundebuch -d freundebuch -c "
+    REFRESH MATERIALIZED VIEW CONCURRENTLY geodata.cities_by_postal;
     REFRESH MATERIALIZED VIEW CONCURRENTLY geodata.streets_by_postal;
     REFRESH MATERIALIZED VIEW CONCURRENTLY geodata.housenumbers_by_street;
   "

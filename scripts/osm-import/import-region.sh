@@ -290,6 +290,7 @@ EOSQL
 refresh_views() {
     log_info "Refreshing materialized views..."
 
+    psql "$DATABASE_URL" -q -c "REFRESH MATERIALIZED VIEW CONCURRENTLY geodata.cities_by_postal;"
     psql "$DATABASE_URL" -q -c "REFRESH MATERIALIZED VIEW CONCURRENTLY geodata.streets_by_postal;"
     psql "$DATABASE_URL" -q -c "REFRESH MATERIALIZED VIEW CONCURRENTLY geodata.housenumbers_by_street;"
 

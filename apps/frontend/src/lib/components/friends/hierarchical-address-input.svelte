@@ -1,7 +1,14 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import * as addressApi from '$lib/api/address-lookup';
-import type { AddressType, CityInfo, CountryInfo, HouseNumberInfo, StreetInfo } from '$shared';
+import type {
+  AddressType,
+  CityInfo,
+  CountryInfo,
+  HouseNumberInfo,
+  PostalCodeInfo,
+  StreetInfo,
+} from '$shared';
 import CitySelect from './city-select.svelte';
 import CountrySelect from './country-select.svelte';
 import HouseNumberInput from './house-number-input.svelte';
@@ -69,6 +76,7 @@ let streetLine2 = $state((() => initialStreetLine2)());
 
 // Data from APIs
 let countries = $state<CountryInfo[]>([]);
+let postalCodeSuggestions = $state<PostalCodeInfo[]>([]);
 let cities = $state<CityInfo[]>([]);
 let streets = $state<StreetInfo[]>([]);
 let houseNumbers = $state<HouseNumberInfo[]>([]);
@@ -85,6 +93,7 @@ let houseNumberFreeText = $state(false);
 
 // Debounce timers
 let postalCodeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let postalSuggestDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let streetDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let houseNumberDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -263,6 +272,7 @@ function handleCountryChange(code: string, name: string, viaKeyboard: boolean = 
   selectedState = '';
   selectedStreet = '';
   houseNumber = '';
+  postalCodeSuggestions = [];
   cities = [];
   streets = [];
   houseNumbers = [];
@@ -275,6 +285,20 @@ function handleCountryChange(code: string, name: string, viaKeyboard: boolean = 
     requestAnimationFrame(() => {
       postalCodeInputRef?.focus();
     });
+  }
+}
+
+async function loadPostalCodeSuggestions() {
+  if (!selectedCountryCode || postalCode.length < 2) {
+    postalCodeSuggestions = [];
+    return;
+  }
+
+  try {
+    postalCodeSuggestions = await addressApi.getPostalCodes(selectedCountryCode, postalCode);
+  } catch (error) {
+    console.error('Failed to load postal code suggestions:', error);
+    postalCodeSuggestions = [];
   }
 }
 
@@ -295,6 +319,29 @@ function handlePostalCodeChange(value: string) {
     }, 300);
   }
 
+  // Debounce the postal-code prefix suggestions (separate, shorter trigger)
+  if (postalSuggestDebounceTimer) {
+    clearTimeout(postalSuggestDebounceTimer);
+  }
+  if (value.length >= 2 && selectedCountryCode) {
+    postalSuggestDebounceTimer = setTimeout(() => {
+      loadPostalCodeSuggestions();
+    }, 300);
+  } else {
+    postalCodeSuggestions = [];
+  }
+
+  emitChange();
+}
+
+function handlePostalCodeSuggestionSelect(code: string, city: string) {
+  postalCode = code;
+  postalCodeSuggestions = [];
+  selectedCity = city;
+  selectedState = '';
+  // Populate the city list for this postal code and load downstream data
+  loadCities();
+  scheduleStreetLoad();
   emitChange();
 }
 
@@ -372,8 +419,10 @@ function emitChange() {
     bind:this={postalCodeInputRef}
     bind:value={postalCode}
     isLoading={isLoadingCities}
+    suggestions={postalCodeSuggestions}
     {disabled}
     onChange={handlePostalCodeChange}
+    onSuggestionSelect={handlePostalCodeSuggestionSelect}
   />
 
   <!-- City -->

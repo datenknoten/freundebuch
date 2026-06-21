@@ -153,6 +153,7 @@ export async function insertTestAddresses(
   }
 
   // Refresh materialized views
+  await pool.query('REFRESH MATERIALIZED VIEW geodata.cities_by_postal');
   await pool.query('REFRESH MATERIALIZED VIEW geodata.streets_by_postal');
   await pool.query('REFRESH MATERIALIZED VIEW geodata.housenumbers_by_street');
 
@@ -165,6 +166,7 @@ export async function insertTestAddresses(
 export async function clearTestData(pool: pg.Pool): Promise<void> {
   await pool.query('DELETE FROM geodata.addresses');
   await pool.query('DELETE FROM geodata.import_batches');
+  await pool.query('REFRESH MATERIALIZED VIEW geodata.cities_by_postal');
   await pool.query('REFRESH MATERIALIZED VIEW geodata.streets_by_postal');
   await pool.query('REFRESH MATERIALIZED VIEW geodata.housenumbers_by_street');
 }

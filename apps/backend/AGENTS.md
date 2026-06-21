@@ -66,7 +66,6 @@ src/
 | `DatabaseConnectionError` | 500 | No database connection |
 | `ConfigurationError` | 500 | Invalid configuration |
 | `OverpassApiError` | 502 | Overpass API errors |
-| `ZipcodeBaseApiError` | 502 | ZipcodeBase API errors |
 
 ### Usage Pattern
 
