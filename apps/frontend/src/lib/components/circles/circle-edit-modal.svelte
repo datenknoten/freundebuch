@@ -1,6 +1,7 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import { autoFocus } from '$lib/actions/auto-focus';
 import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
 import { isModalOpen } from '$lib/stores/ui';
@@ -25,7 +26,6 @@ let formColor = $state<string>(CIRCLE_COLORS[5]);
 let formParentId = $state<string | null>(null);
 let formError = $state('');
 let isSubmitting = $state(false);
-let nameInputRef = $state<HTMLInputElement | null>(null);
 let showUnsavedWarning = $state(false);
 
 // Track which circle we initialized for (to detect when circle prop changes)
@@ -47,13 +47,6 @@ $effect(() => {
 $effect(() => {
   isModalOpen.set(true);
   return () => isModalOpen.set(false);
-});
-
-// Focus the name input when the modal opens
-$effect(() => {
-  if (nameInputRef) {
-    nameInputRef.focus();
-  }
 });
 
 // Get valid parent options (exclude the current circle and its children to prevent circular references)
@@ -217,7 +210,7 @@ function handleBackdropClick(e: MouseEvent) {
             {$i18n.t('circles.form.name')}
           </label>
           <input
-            bind:this={nameInputRef}
+            use:autoFocus
             type="text"
             id="circle-name"
             bind:value={formName}

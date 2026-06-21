@@ -5,6 +5,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { replaceState } from '$app/navigation';
 import { page } from '$app/stores';
+import { primeKeyboardFocus } from '$lib/actions/auto-focus';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import CircleEditModal from '$lib/components/circles/circle-edit-modal.svelte';
 import DeleteConfirmModal from '$lib/components/friends/subresources/delete-confirm-modal.svelte';
@@ -81,11 +82,15 @@ onMount(() => {
 });
 
 function openCreateModal() {
+  // Prime the keyboard within this gesture so iOS keeps it open once the
+  // modal's auto-focused name input mounts.
+  primeKeyboardFocus();
   editingCircle = null;
   showEditModal = true;
 }
 
 function openEditModal(circle: Circle) {
+  primeKeyboardFocus();
   editingCircle = circle;
   showEditModal = true;
 }
