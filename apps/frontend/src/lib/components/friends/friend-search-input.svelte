@@ -242,6 +242,7 @@ function handleFocus() {
       <div class="flex items-center gap-2">
         <button
           type="button"
+          {id}
           onclick={activateInput}
           onkeydown={handleButtonKeydown}
           {disabled}
@@ -271,6 +272,7 @@ function handleFocus() {
     {:else}
       <input
         type="text"
+        {id}
         use:autoFocus={autofocus && !selected}
         bind:this={inputElement}
         bind:value={query}
