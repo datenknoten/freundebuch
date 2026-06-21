@@ -1,3 +1,10 @@
+## 2.89.0 (2026-06-21)
+
+* chore(frontend): Remove unused selectCollectivePlaceholder i18n key ([a5298fe](https://github.com/datenknoten/freundebuch/commit/a5298fe))
+* fix(frontend): Associate collective combobox with its external label ([de88964](https://github.com/datenknoten/freundebuch/commit/de88964))
+* fix(frontend): Single auto-focus module instance and focus after clear ([992daa6](https://github.com/datenknoten/freundebuch/commit/992daa6))
+* feat(frontend): Combobox collective selector in friend "Add to collective" ([3315f97](https://github.com/datenknoten/freundebuch/commit/3315f97))
+
 ## 2.88.0 (2026-06-21)
 
 * fix(frontend): Associate friend selector label with rendered control ([9cfea2e](https://github.com/datenknoten/freundebuch/commit/9cfea2e))
