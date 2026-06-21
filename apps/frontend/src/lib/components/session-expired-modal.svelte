@@ -31,9 +31,11 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 // Re-login succeeded: the auth store already dismissed the prompt and released
-// any parked requests, so there's nothing left to do here (just don't navigate
-// away — keep the user on their current page).
-function handleReauthenticated() {}
+// any parked requests, so there's nothing left to do here.
+function handleReauthenticated() {
+  // Intentionally a no-op: unlike the standalone login page, we must NOT
+  // navigate away — the point is to keep the user on their current page.
+}
 
 async function handleLogout() {
   isLoggingOut = true;
