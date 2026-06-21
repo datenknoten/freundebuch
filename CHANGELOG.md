@@ -1,3 +1,7 @@
+## <small>2.85.3 (2026-06-21)</small>
+
+* fix(dx): Make web sandbox toolchain setup work behind the tls proxy ([f4cb697](https://github.com/datenknoten/freundebuch/commit/f4cb697))
+
 ## <small>2.85.2 (2026-06-18)</small>
 
 * fix(backend): Clarify phone rejection when a number's country can't be inferred ([5928c91](https://github.com/datenknoten/freundebuch/commit/5928c91))
