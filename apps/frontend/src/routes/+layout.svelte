@@ -14,6 +14,7 @@ import FabCreateMenu, {
 import Footer from '$lib/components/footer.svelte';
 import GlobalSearch from '$lib/components/global-search.svelte';
 import NavBar from '$lib/components/nav-bar.svelte';
+import SessionExpiredModal from '$lib/components/session-expired-modal.svelte';
 import type { SupportedLanguage } from '$lib/i18n/index.js';
 import { createI18n } from '$lib/i18n/index.js';
 import { KeyboardShortcuts } from '$lib/shortcuts';
@@ -26,6 +27,7 @@ import {
 } from '$lib/stores/auth';
 import { circles } from '$lib/stores/circles';
 import { isLocaleInitialized, locale } from '$lib/stores/locale';
+import { sessionExpired } from '$lib/stores/session';
 
 interface Props {
   children: Snippet;
@@ -155,5 +157,11 @@ function handleCreateSelect(choice: FabCreateChoice) {
 
 	{#if showFab && createMenuOpen}
 		<FabCreateMenu onSelect={handleCreateSelect} onClose={() => (createMenuOpen = false)} />
+	{/if}
+
+	<!-- Session-expired re-login prompt: shown when an API call returns 401 for a
+	     previously-authenticated user, letting them re-authenticate in place. -->
+	{#if $sessionExpired}
+		<SessionExpiredModal />
 	{/if}
 </div>

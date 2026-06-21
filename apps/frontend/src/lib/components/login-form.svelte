@@ -7,13 +7,35 @@ import AlertBanner from '$lib/components/alert-banner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
 
+interface Props {
+  /**
+   * Called after a successful sign-in. Defaults to navigating to the home page.
+   * The re-login modal overrides this to dismiss the prompt and keep the user
+   * on their current page instead.
+   */
+  onSuccess?: () => void;
+  /** Pre-fill the email field (e.g. the expired session's user). */
+  initialEmail?: string;
+}
+
+let { onSuccess, initialEmail = '' }: Props = $props();
+
 const i18n = createI18n();
 
-let email = $state('');
+let email = $state(initialEmail);
 let password = $state('');
 let isLoading = $state(false);
 let isPasskeyLoading = $state(false);
 let error = $state('');
+
+function handleSuccess() {
+  if (onSuccess) {
+    onSuccess();
+  } else {
+    // Redirect to home page after successful login
+    goto('/');
+  }
+}
 
 async function handleSubmit(e) {
   e.preventDefault();
@@ -22,8 +44,7 @@ async function handleSubmit(e) {
 
   try {
     await auth.login(email, password);
-    // Redirect to home page after successful login
-    goto('/');
+    handleSuccess();
   } catch (err) {
     error = (err as Error)?.message || $i18n.t('auth.login.error.generic');
     isLoading = false;
@@ -42,7 +63,7 @@ async function handlePasskeySignIn() {
     } else {
       // Refresh the auth store so the app has the user data
       await auth.initialize();
-      goto('/');
+      handleSuccess();
     }
   } catch (err) {
     error = (err as Error)?.message || $i18n.t('profile.passkeys.signInFailed');

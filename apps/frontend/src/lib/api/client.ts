@@ -1,4 +1,5 @@
 import type { ErrorResponse } from '$shared';
+import { notifyUnauthorized } from '../stores/session.js';
 
 // In production with single-domain deployment, use empty string for same-origin requests.
 // In development, VITE_API_URL can point to the backend server if needed.
@@ -38,6 +39,12 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
   });
 
   if (!response.ok) {
+    // A 401 mid-session means the session expired. Surface a re-login prompt so
+    // the user can re-authenticate without losing their current page state.
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
+
     const errorData: ErrorResponse = await response.json().catch(() => ({
       error: 'An unknown error occurred',
     }));

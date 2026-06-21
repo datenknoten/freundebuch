@@ -3,6 +3,7 @@ import type { User, UserPreferences } from '$shared';
 import * as authApi from '../api/auth.js';
 import { authClient } from '../auth-client.js';
 import { retryWithBackoff } from '../utils/retry.js';
+import { clearSessionExpired, setHasSession } from './session.js';
 
 /** Default user preferences */
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -81,6 +82,8 @@ function createAuthStore() {
         const userData = await fetchUserData();
 
         if (userData) {
+          setHasSession(true);
+          clearSessionExpired();
           update((state) => ({
             ...state,
             user: userData,
@@ -126,6 +129,8 @@ function createAuthStore() {
         const userData = await fetchUserData();
 
         if (userData) {
+          setHasSession(true);
+          clearSessionExpired();
           update((state) => ({
             ...state,
             user: userData,
@@ -159,6 +164,8 @@ function createAuthStore() {
 
       try {
         await authClient.signOut();
+        setHasSession(false);
+        clearSessionExpired();
         set(initialState);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Logout failed';
@@ -188,6 +195,8 @@ function createAuthStore() {
       const userData = await fetchUserData();
 
       if (userData) {
+        setHasSession(true);
+        clearSessionExpired();
         update((state) => ({
           ...state,
           user: userData,
@@ -201,6 +210,7 @@ function createAuthStore() {
       }
 
       // No valid session
+      setHasSession(false);
       update((state) => ({
         ...state,
         isLoading: false,
