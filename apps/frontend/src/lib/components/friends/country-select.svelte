@@ -77,6 +77,10 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       if (highlightedIndex >= 0 && highlightedIndex < list.length) {
         selectCountry(list[highlightedIndex], true);
+      } else if (query.trim() && list.length > 0) {
+        // No explicit highlight, but the user searched and there are matches:
+        // select the top match so Enter confirms the visible result.
+        selectCountry(list[0], true);
       }
       break;
     case 'Escape':

@@ -104,6 +104,10 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       if (highlightedIndex >= 0 && highlightedIndex < filteredResults.length) {
         addFriend(filteredResults[highlightedIndex]);
+      } else if (query.trim() && filteredResults.length > 0) {
+        // No explicit highlight, but the user searched and there are matches:
+        // add the top match so Enter confirms the visible result.
+        addFriend(filteredResults[0]);
       }
       break;
     case 'Escape':
