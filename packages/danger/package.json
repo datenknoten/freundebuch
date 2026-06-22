@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "danger": "12.3.3",
+    "danger-plugin-coverage": "1.6.2",
     "typescript": "5.9.3"
   }
 }

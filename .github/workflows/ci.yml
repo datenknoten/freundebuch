@@ -123,12 +123,36 @@ jobs:
       - name: Run unit and integration tests
         env:
           NODE_ENV: test
-        run: aube test
+        run: |
+          # Frontend and backend run with coverage so they emit clover.xml for
+          # the PR coverage report; the coverage run still executes their full
+          # suites. Other workspaces have no coverage script — run them directly.
+          aube --filter @freundebuch/frontend run test:coverage
+          aube --filter @freundebuch/backend run test:coverage
+          aube --filter @freundebuch/shared run test
+          aube --filter @freundebuch/mcp-server run test
+          aube test:php
+
+      - name: Upload coverage reports
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-clover
+          # Common ancestor is apps/, so the artifact stores
+          # frontend/coverage/clover.xml and backend/coverage/clover.xml.
+          path: |
+            apps/frontend/coverage/clover.xml
+            apps/backend/coverage/clover.xml
+          if-no-files-found: warn
+          retention-days: 1
 
   danger:
     name: Danger PR Checks
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # Wait for the test job so the coverage artifact it uploads is available for
+    # the coverage rule (danger-plugin-coverage).
+    needs: test
     permissions:
       pull-requests: write
       statuses: write
@@ -157,6 +181,14 @@ jobs:
 
       - name: Install dependencies
         run: aube ci
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-clover
+          # Restores the reports to apps/frontend/coverage/clover.xml and
+          # apps/backend/coverage/clover.xml, where the coverage rule expects them.
+          path: apps
 
       - name: Run Danger
         run: npx danger ci
