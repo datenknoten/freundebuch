@@ -147,7 +147,9 @@ export class AddressCache<T extends object> {
             return undefined;
           }
 
-          // biome-ignore lint/suspicious/noExplicitAny: Safe cast — this no-validator fallback path is only reached by countriesCache where T = object, and the typeof check above already narrows rawValue to object.
+          // Safe cast: this no-validator fallback path is only reached by
+          // countriesCache where T = object, and the typeof check above already
+          // narrowed rawValue to object.
           const value = rawValue as T;
           this.memoryCache.set(key, value);
           return value;
