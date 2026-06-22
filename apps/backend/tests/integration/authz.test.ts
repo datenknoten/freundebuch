@@ -65,7 +65,6 @@ describe('Cross-user authorization', () => {
     return app().fetch(new Request(`http://localhost${path}`, init));
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: tests read dynamically shaped JSON
   const json = (res: Response): Promise<any> => res.json();
 
   describe('friends', () => {
