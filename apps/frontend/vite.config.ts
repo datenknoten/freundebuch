@@ -44,6 +44,26 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,ts}'],
     globals: true,
     environment: 'jsdom',
+    coverage: {
+      // Requires @vitest/coverage-v8 (a pinned devDependency).
+      provider: 'v8',
+      // `clover` feeds the PR coverage report (danger-plugin-coverage); the
+      // others are for local inspection.
+      reporter: ['text', 'json', 'html', 'clover'],
+      include: ['src/**/*.{ts,svelte}'],
+      exclude: [
+        'node_modules/',
+        'dist/',
+        '.svelte-kit/',
+        'src/**/*.{test,spec}.ts',
+        'src/lib/test/**', // test helpers, not product code
+        'src/**/*.d.ts',
+        '**/*.config.{js,ts}',
+      ],
+      // Numeric thresholds are intentionally unset here: the coverage gate lives
+      // in Danger (packages/danger/src/rules/coverage.ts), scoped to the files
+      // changed in a PR, so we don't double-gate.
+    },
   },
   server: {
     port: 5173,
