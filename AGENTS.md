@@ -87,8 +87,11 @@ There is no per-app build step in the pre-commit hook; full builds run on pre-pu
 
 ### Code Quality
 - Biome for linting and formatting
-- Test coverage target: >80%
+- Test coverage target: >80% (gated on PRs via danger-plugin-coverage)
 - All tests must pass before merging
+- Prefer explicit conditionals over truthiness coercion on non-boolean values
+  (e.g. `x === undefined`, `arr.length === 0`, not bare `!x`) — see
+  [docs/principles.md](docs/principles.md) §7 "Say What You Mean"
 
 ### Implementation Plans
 Detailed implementation plans are in `project-management/epics/`.

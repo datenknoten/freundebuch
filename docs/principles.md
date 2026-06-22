@@ -58,6 +58,32 @@ Security is not an afterthought.
 - Session-based authentication via Better Auth, with passkey (WebAuthn) support
 - App-specific passwords for CalDAV/CardDAV clients
 
+## 7. Say What You Mean
+
+Conditionals should test the exact condition intended, not lean on truthiness
+coercion. This is slightly more verbose but more readable and avoids accidental
+matches.
+
+- Prefer explicit comparisons for non-boolean values:
+  - `if (value === undefined)` / `if (value === null)` (or `if (value == null)`
+    when both `null` and `undefined` are genuinely meant)
+  - `if (str === '')` for empty-string checks
+  - `if (arr.length === 0)` for empty-array checks
+  - `if (count === 0)` for numeric checks
+- Avoid a bare `if (!value)` on a value that can legitimately hold a falsy-but-
+  valid value (`0`, `''`, `false`), because `!value` silently matches all of
+  them as well as `null`/`undefined`/`NaN`.
+- A bare `if (flag)` / `if (!flag)` is fine for genuine booleans — the rule
+  targets truthiness coercion on non-boolean values, where it hides intent.
+
+```ts
+// Avoid — matches 0, '', false, null, undefined, NaN alike
+if (!user.middleName) { ... }
+
+// Prefer — states the actual condition
+if (user.middleName === undefined) { ... }
+```
+
 ## Design Constraints
 
 - Support for 10,000+ contacts per user
