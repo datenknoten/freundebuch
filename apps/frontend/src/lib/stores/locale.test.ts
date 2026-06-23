@@ -1,5 +1,5 @@
 import { get } from 'svelte/store';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // vi.mock factories are hoisted above module scope, so the shared mocks must be
 // created inside vi.hoisted() (which runs first) rather than as outer consts.
@@ -18,10 +18,10 @@ const mocks = vi.hoisted(() => {
     },
   };
   return {
-    initI18n: vi.fn(async () => {}),
-    changeLanguage: vi.fn(async () => {}),
+    initI18n: vi.fn(() => Promise.resolve()),
+    changeLanguage: vi.fn(() => Promise.resolve()),
     getCurrentLanguage: vi.fn(() => 'en'),
-    updatePreferences: vi.fn(async () => {}),
+    updatePreferences: vi.fn(() => Promise.resolve()),
     authStore,
   };
 });
@@ -88,7 +88,7 @@ describe('locale store', () => {
     it('swallows a failure to persist the preference', async () => {
       mocks.authStore.set({ user: { id: 'u-1' } });
       mocks.updatePreferences.mockRejectedValueOnce(new Error('network'));
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
       await expect(locale.setLanguage('de')).resolves.toBeUndefined();
       expect(warn).toHaveBeenCalled();
