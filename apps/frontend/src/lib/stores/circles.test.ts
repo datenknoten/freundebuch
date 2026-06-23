@@ -27,14 +27,11 @@ vi.mock('$shared', () => ({ buildCircleHierarchy: (circles: unknown) => circles 
 vi.mock('../api/circles.js', () => h.api);
 vi.mock('../api/auth.js', () => ({ ApiError: h.ApiError }));
 
+import type { Circle } from '$shared';
 import { circles, circlesList, getCirclePath } from './circles.js';
 
-const circle = (id: string, sortOrder: number, parentCircleId: string | null = null) => ({
-  id,
-  name: id.toUpperCase(),
-  sortOrder,
-  parentCircleId,
-});
+const circle = (id: string, sortOrder: number, parentCircleId: string | null = null): Circle =>
+  ({ id, name: id.toUpperCase(), sortOrder, parentCircleId }) as unknown as Circle;
 
 describe('circles store', () => {
   beforeEach(() => {

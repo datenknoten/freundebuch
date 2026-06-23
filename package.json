@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "aube --parallel --stream run dev",
     "build": "aube --filter @freundebuch/shared run build && aube --filter '!@freundebuch/shared' --recursive run build",
-    "test": "aube --recursive run test && aube run test:php",
+    "test": "aube --filter @freundebuch/shared run build && aube --recursive run test && aube run test:php",
     "test:php": "cd apps/sabredav && ./vendor/bin/phpunit",
     "test:unit": "aube --recursive run test:unit",
     "test:integration": "aube --recursive run test:integration",
