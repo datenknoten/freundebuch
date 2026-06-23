@@ -5,8 +5,13 @@ import type { DangerRule } from '../types';
  * Per-workspace clover.xml reports. Danger runs from the repo root and clover
  * stores absolute file paths, so the plugin's `path.relative(cwd, ...)` matching
  * lines up with Danger's repo-relative changed-file list automatically. Each
- * report is reported on independently; a PR that touches only one workspace
- * simply produces no table for the other (no relevant files).
+ * report is reported on independently; a missing report is skipped silently
+ * (warnOnNoReport: false).
+ *
+ * Only the frontend report is generated in CI today — backend coverage is
+ * deferred because v8 instrumentation slows its better-auth integration tests
+ * past their timeout. The backend path is kept here so it lights up
+ * automatically once that report is produced.
  */
 const CLOVER_REPORTS = ['apps/frontend/coverage/clover.xml', 'apps/backend/coverage/clover.xml'];
 
