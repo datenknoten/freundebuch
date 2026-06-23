@@ -164,7 +164,11 @@ jobs:
         # generated in CI yet: v8 instrumentation slows the better-auth
         # integration tests past their timeout (the danger coverage rule simply
         # reports nothing for the missing backend report).
-        run: aube --filter @freundebuch/frontend run test:coverage
+        # Build shared first: frontend tests import runtime values from $shared
+        # (-> shared/dist), which isn't built by `aube ci`.
+        run: |
+          aube --filter @freundebuch/shared run build
+          aube --filter @freundebuch/frontend run test:coverage
 
       - name: Run Danger
         run: npx danger ci
