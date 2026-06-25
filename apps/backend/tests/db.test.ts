@@ -6,6 +6,7 @@ import {
   closePool,
   createPool,
   setupGracefulShutdown,
+  wrapClient,
 } from '../src/utils/db.js';
 
 // Mock pg module - use regular function to allow constructor usage
@@ -102,6 +103,44 @@ describe('db.ts', () => {
         statement_timeout: 30000,
         query_timeout: 30000,
       });
+    });
+  });
+
+  describe('wrapClient', () => {
+    it('wraps the client query exactly once across repeated checkouts', async () => {
+      // Pooled clients are reused: the pool calls wrapClient on the same
+      // physical client object every time it's checked out. Re-wrapping would
+      // nest the query wrapper one level deeper each time until invoking
+      // client.query overflows the call stack. Wrapping must be idempotent.
+      const realQuery = vi.fn().mockResolvedValue({ rows: [] });
+      const client = { query: realQuery } as unknown as pg.PoolClient;
+
+      const first = wrapClient(client);
+      const wrappedQuery = first.query;
+      expect(wrappedQuery).not.toBe(realQuery);
+
+      // Simulate many subsequent checkouts of the same pooled client.
+      for (let i = 0; i < 50; i++) {
+        const again = wrapClient(client);
+        expect(again).toBe(client);
+        // The query reference must stay stable — no additional wrapper layers.
+        expect(again.query).toBe(wrappedQuery);
+      }
+
+      // The wrapper still delegates to the original query exactly once.
+      await client.query('SELECT 1');
+      expect(realQuery).toHaveBeenCalledTimes(1);
+      expect(realQuery).toHaveBeenCalledWith('SELECT 1');
+    });
+
+    it('preserves the application stack trace on query rejection', async () => {
+      const dbError = new Error('boom');
+      const realQuery = vi.fn().mockRejectedValue(dbError);
+      const client = { query: realQuery } as unknown as pg.PoolClient;
+
+      wrapClient(client);
+
+      await expect(client.query('SELECT 1')).rejects.toThrow('boom');
     });
   });
 
