@@ -29,7 +29,10 @@ function enhanceErrorWithStack(error: unknown, callSiteStack: string): Error {
 // client once it's wrapped prevents re-wrapping its `query` on every checkout,
 // which would otherwise nest the wrapper deeper each time until invoking
 // `client.query` overflows the call stack ("Maximum call stack size exceeded").
-const WRAPPED = Symbol('freundebuch.queryWrapped');
+// Symbol.for keeps the marker stable across module instances (e.g. tooling
+// resolving both db.js and db.ts), so a client wrapped by one instance is still
+// recognised as wrapped by another.
+const WRAPPED = Symbol.for('freundebuch.queryWrapped');
 
 /**
  * Wraps a pg.PoolClient to capture stack traces for query errors.
