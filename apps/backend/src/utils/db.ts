@@ -25,10 +25,25 @@ function enhanceErrorWithStack(error: unknown, callSiteStack: string): Error {
   return err;
 }
 
+// Pooled clients are long-lived and reused across many checkouts. Marking a
+// client once it's wrapped prevents re-wrapping its `query` on every checkout,
+// which would otherwise nest the wrapper deeper each time until invoking
+// `client.query` overflows the call stack ("Maximum call stack size exceeded").
+const WRAPPED = Symbol('freundebuch.queryWrapped');
+
 /**
- * Wraps a pg.PoolClient to capture stack traces for query errors
+ * Wraps a pg.PoolClient to capture stack traces for query errors.
+ * Idempotent: a client whose query is already wrapped is returned unchanged,
+ * so reusing a pooled client never stacks wrappers.
+ *
+ * Exported for testing.
  */
-function wrapClient(client: pg.PoolClient): pg.PoolClient {
+export function wrapClient(client: pg.PoolClient): pg.PoolClient {
+  // biome-ignore lint/suspicious/noExplicitAny: marker property on the pg client
+  if ((client as any)[WRAPPED]) {
+    return client;
+  }
+
   // biome-ignore lint/suspicious/noExplicitAny: preserving pg's query overload signature
   const originalQuery: (...args: any[]) => any = client.query.bind(client);
 
@@ -55,6 +70,8 @@ function wrapClient(client: pg.PoolClient): pg.PoolClient {
 
   // biome-ignore lint/suspicious/noExplicitAny: matching pg's query signature
   client.query = wrappedQuery as any;
+  // biome-ignore lint/suspicious/noExplicitAny: marker property on the pg client
+  (client as any)[WRAPPED] = true;
 
   return client;
 }
