@@ -21,14 +21,6 @@ vi.mock('pg', () => {
   };
 });
 
-// Mock the db module to reset pool between tests
-vi.mock('../src/utils/db.ts', async () => {
-  const actual = await vi.importActual('../src/utils/db.ts');
-  return {
-    ...actual,
-  };
-});
-
 describe('db.ts', () => {
   beforeEach(() => {
     // Set required environment variables
