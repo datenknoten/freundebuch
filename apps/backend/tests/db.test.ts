@@ -133,14 +133,28 @@ describe('db.ts', () => {
       expect(realQuery).toHaveBeenCalledWith('SELECT 1');
     });
 
-    it('preserves the application stack trace on query rejection', async () => {
+    it('enhances the rejection with the call-site stack trace', async () => {
       const dbError = new Error('boom');
       const realQuery = vi.fn().mockRejectedValue(dbError);
       const client = { query: realQuery } as unknown as pg.PoolClient;
 
       wrapClient(client);
 
-      await expect(client.query('SELECT 1')).rejects.toThrow('boom');
+      const rejection = await client.query('SELECT 1').then(
+        () => {
+          throw new Error('expected query to reject');
+        },
+        (err: unknown) => err as Error,
+      );
+
+      // The original DB error is preserved...
+      expect(rejection.message).toBe('boom');
+      // ...and the wrapper appended the call-site marker. Asserting only the
+      // message would still pass if enhanceErrorWithStack regressed.
+      expect(rejection.stack).toContain('--- Query initiated from ---');
+      // The appended section must carry real call-site frames, not just the marker.
+      const [, callSite = ''] = (rejection.stack ?? '').split('--- Query initiated from ---');
+      expect(callSite).toMatch(/\bat\b/);
     });
   });
 
