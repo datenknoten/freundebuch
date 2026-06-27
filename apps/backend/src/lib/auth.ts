@@ -17,15 +17,16 @@ function createAuth() {
 
   // Better Auth requires search_path=auth, so it needs its own pool.
   // Pool sizes are halved from the main pool to keep total connections in check.
-  _authPool = new Pool({
+  const authPool = new Pool({
     connectionString: config.DATABASE_URL,
     options: '-c search_path=auth',
     min: Math.max(1, Math.floor(config.DATABASE_POOL_MIN / 2)),
     max: Math.max(2, Math.floor(config.DATABASE_POOL_MAX / 2)),
   });
+  _authPool = authPool;
 
   return betterAuth({
-    database: _authPool,
+    database: authPool,
     basePath: '/api/auth',
     secret: config.BETTER_AUTH_SECRET,
     logger: {
@@ -157,7 +158,7 @@ function createAuth() {
             // Keep legacy auth.users in sync during transition period.
             // friends.friends.user_id is an integer FK to auth.users.id,
             // so new sign-ups need a legacy row until the FK is migrated.
-            await createLegacyUserForBetterAuth.run({ email: user.email }, _authPool!);
+            await createLegacyUserForBetterAuth.run({ email: user.email }, authPool);
           },
         },
       },

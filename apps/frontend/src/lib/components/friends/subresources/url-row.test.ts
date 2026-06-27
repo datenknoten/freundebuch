@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { aUrl, fireEvent, render, screen } from '$lib/test';
+import { aUrl, render, screen } from '$lib/test';
 import UrlRow from './url-row.svelte';
 
 // Renders twice (mobile + desktop), so queries use *All*.
