@@ -27,7 +27,7 @@ function createAuth() {
 
   // Better Auth requires search_path=auth, so it needs its own pool.
   // Pool sizes are halved from the main pool to keep total connections in check.
-  _authPool = new Pool({
+  const authPool = new Pool({
     connectionString: config.DATABASE_URL,
     options: '-c search_path=auth',
     min: Math.max(1, Math.floor(config.DATABASE_POOL_MIN / 2)),
@@ -38,15 +38,17 @@ function createAuth() {
     query_timeout: config.DATABASE_STATEMENT_TIMEOUT_MS,
   });
 
+  _authPool = authPool;
+
   // Without an 'error' listener, an idle-client error (DB restart, network
   // blip) is emitted as an unhandled 'error' event and crashes the process.
   const poolLogger = createLogger();
-  _authPool.on('error', (err) => {
+  authPool.on('error', (err) => {
     poolLogger.error({ err: toError(err) }, 'Idle pg client error');
   });
 
   return betterAuth({
-    database: _authPool,
+    database: authPool,
     basePath: '/api/auth',
     // The public origin where auth is reachable. Required for the OAuth/MCP
     // provider: the discovery metadata's `issuer` is derived from it, and the
@@ -326,7 +328,7 @@ function createAuth() {
           before: async () => {
             const {
               rows: [row],
-            } = await _authPool!.query<{ external_id: string }>(
+            } = await authPool.query<{ external_id: string }>(
               'INSERT INTO auth.users DEFAULT VALUES RETURNING external_id',
             );
             if (!row) {
@@ -340,9 +342,7 @@ function createAuth() {
           // cascades the user's friends, encounters and collectives. There is
           // no DB-level FK between the two identity tables to do this for us.
           after: async (user: { id: string }) => {
-            await _authPool!.query('DELETE FROM auth.users WHERE external_id = $1::uuid', [
-              user.id,
-            ]);
+            await authPool.query('DELETE FROM auth.users WHERE external_id = $1::uuid', [user.id]);
           },
         },
       },

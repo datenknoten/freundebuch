@@ -32,6 +32,9 @@ hk.local.pkl
 *.swo
 *~
 
+# Locally installed Claude Code skills (not project source)
+.claude/skills/
+
 # OS
 .DS_Store
 Thumbs.db

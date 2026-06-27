@@ -71,8 +71,11 @@ export function getData(): {
   relationship_type_id: RelationshipTypeId;
   notes?: string;
 } {
+  if (selectedFriend === null) {
+    throw new Error('getData() called without a selected friend; guard with isValid() first');
+  }
   return {
-    related_friend_id: selectedFriend!.id,
+    related_friend_id: selectedFriend.id,
     relationship_type_id: relationshipTypeId,
     notes: notes.trim() || undefined,
   };
