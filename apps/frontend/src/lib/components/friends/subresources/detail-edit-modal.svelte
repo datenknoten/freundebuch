@@ -14,6 +14,13 @@ interface Props {
   isDirty?: boolean;
   /** Hide the footer Cancel/Save buttons (useful when children have their own buttons) */
   hideFooter?: boolean;
+  /**
+   * Wrap the content in a `<form>` (default). Set to false when the children
+   * render their own `<form>`, to avoid invalid nested forms. The footer Save
+   * button stays functional either way: it submits the form when true, and
+   * calls `onSave` directly when false.
+   */
+  asForm?: boolean;
   onSave: () => void;
   onClose: () => void;
   children: Snippet;
@@ -26,6 +33,7 @@ let {
   error = null,
   isDirty = false,
   hideFooter = false,
+  asForm = true,
   onSave,
   onClose,
   children,
@@ -101,8 +109,9 @@ function handleSubmit(e: Event) {
       </button>
     </div>
 
-    <!-- Form -->
-    <form onsubmit={handleSubmit} class="flex flex-col flex-1 overflow-hidden">
+    <!-- Form body. Rendered inside a <form> by default, or a plain <div> when
+         asForm is false (children supply their own <form>) to avoid nesting. -->
+    {#snippet body()}
       <!-- Scrollable content area -->
       <div class="p-4 space-y-4 overflow-y-auto flex-1">
         {@render children()}
@@ -128,7 +137,8 @@ function handleSubmit(e: Event) {
           {$i18n.t('subresources.common.cancel')}
         </button>
         <button
-          type="submit"
+          type={asForm ? 'submit' : 'button'}
+          onclick={asForm ? undefined : onSave}
           disabled={isLoading}
           class="flex-1 px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold
                  hover:bg-forest-light transition-colors disabled:opacity-50
@@ -150,6 +160,16 @@ function handleSubmit(e: Event) {
         </button>
       </div>
       {/if}
-    </form>
+    {/snippet}
+
+    {#if asForm}
+      <form onsubmit={handleSubmit} class="flex flex-col flex-1 overflow-hidden">
+        {@render body()}
+      </form>
+    {:else}
+      <div class="flex flex-col flex-1 overflow-hidden">
+        {@render body()}
+      </div>
+    {/if}
   </div>
 </div>
