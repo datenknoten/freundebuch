@@ -1,3 +1,10 @@
+## <small>2.89.2 (2026-06-29)</small>
+
+* refactor(backend): Use Symbol.for for the query-wrapped marker ([d80d052](https://github.com/datenknoten/freundebuch/commit/d80d052))
+* refactor(frontend): Split collective-detail into data-driven sections (#187) ([f589a18](https://github.com/datenknoten/freundebuch/commit/f589a18)), closes [#187](https://github.com/datenknoten/freundebuch/issues/187) [#186](https://github.com/datenknoten/freundebuch/issues/186)
+* test(backend): Assert enhanced call-site stack on query rejection ([c9ebda8](https://github.com/datenknoten/freundebuch/commit/c9ebda8))
+* fix(backend): Prevent stack overflow from re-wrapping pooled pg clients ([bb31a40](https://github.com/datenknoten/freundebuch/commit/bb31a40))
+
 ## <small>2.89.1 (2026-06-23)</small>
 
 * test(frontend): Add reusable test infrastructure ([d230e57](https://github.com/datenknoten/freundebuch/commit/d230e57))
