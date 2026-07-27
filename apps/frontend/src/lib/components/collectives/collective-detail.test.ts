@@ -185,6 +185,12 @@ describe('CollectiveDetail', () => {
       // Tap the FAB → merged create menu → "add detail" → pick a type.
       await fireEvent.click(screen.getByLabelText('common.createNew'));
       await fireEvent.click(screen.getByText('friendDetail.addDetail'));
+
+      // The create menu closing and the picker opening happen in one update;
+      // the modal flag must stay set so global shortcuts remain suppressed
+      // (regression guard for the block ordering in the template).
+      expect(get(isModalOpen)).toBe(true);
+
       await fireEvent.click(screen.getByText('shortcuts.add.email'));
 
       expect(handler).toHaveBeenCalledTimes(1);
