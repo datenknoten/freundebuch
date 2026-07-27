@@ -1,4 +1,5 @@
 <script lang="ts" module>
+import { tick } from 'svelte';
 import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
@@ -24,9 +25,16 @@ export function navigateForCreateChoice(choice: FabCreateChoice): void {
       if (get(page).url.pathname === '/circles') {
         // This runs inside the FAB tap, so prime the keyboard for the modal's
         // auto-focused input (the page's event handler can't, as it's also
-        // reachable from non-gesture keyboard shortcuts).
+        // reachable from non-gesture keyboard shortcuts). Priming must stay
+        // synchronous within the gesture; the modal's real input is focused a
+        // frame later by the autoFocus action, so it survives the deferral below.
         primeKeyboardFocus();
-        window.dispatchEvent(new CustomEvent('shortcut:new-circle'));
+        // Defer opening the circle modal until after the caller's menu (this
+        // component) has finished unmounting. The menu's teardown clears the
+        // global `isModalOpen` flag; if the modal opened synchronously, that
+        // teardown would run *after* the modal set the flag and wrongly reset it
+        // to false, leaving keyboard shortcuts active behind the open modal.
+        tick().then(() => window.dispatchEvent(new CustomEvent('shortcut:new-circle')));
       } else {
         goto('/circles?new=1');
       }
