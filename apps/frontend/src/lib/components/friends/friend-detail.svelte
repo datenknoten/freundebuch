@@ -376,21 +376,12 @@ onMount(() => {
   <Plus class="w-6 h-6" strokeWidth="2" />
 </button>
 
-<!-- Mobile add detail modal -->
-{#if showMobileAddModal}
-  <MobileAddDetailModal
-    onSelect={(type) => {
-      showMobileAddModal = false;
-      // Prime the keyboard within this tap so iOS keeps it open when the
-      // auto-focused edit form mounts.
-      primeKeyboardFocus();
-      dispatchAddEvent(type);
-    }}
-    onClose={() => showMobileAddModal = false}
-  />
-{/if}
-
-<!-- Mobile create menu with a contextual "add detail" entry for this friend -->
+<!-- Mobile create menu with a contextual "add detail" entry for this friend.
+     This block is kept before the add-detail modal on purpose: selecting
+     "add detail" closes this menu and opens the modal in the same update.
+     Svelte tears down blocks top-to-bottom, so the create menu must unmount
+     (clearing isModalOpen) before the add-detail modal mounts (setting it),
+     otherwise the modal would open with global shortcuts still enabled. -->
 {#if showFabCreateMenu}
   <FabCreateMenu
     onSelect={(choice: FabCreateChoice) => {
@@ -402,6 +393,20 @@ onMount(() => {
       showMobileAddModal = true;
     }}
     onClose={() => (showFabCreateMenu = false)}
+  />
+{/if}
+
+<!-- Mobile add detail modal -->
+{#if showMobileAddModal}
+  <MobileAddDetailModal
+    onSelect={(type) => {
+      showMobileAddModal = false;
+      // Prime the keyboard within this tap so iOS keeps it open when the
+      // auto-focused edit form mounts.
+      primeKeyboardFocus();
+      dispatchAddEvent(type);
+    }}
+    onClose={() => showMobileAddModal = false}
   />
 {/if}
 

@@ -245,7 +245,11 @@ let address = $derived(formatAddress(collective));
   <Plus class="w-6 h-6" strokeWidth="2" />
 </button>
 
-<!-- Mobile create menu with a contextual "add detail" entry for this collective -->
+<!-- Mobile create menu with a contextual "add detail" entry for this collective.
+     Keep this block before the add-detail modal: selecting "add detail" closes
+     this menu and opens the modal in the same update, and Svelte tears down
+     blocks top-to-bottom, so the create menu must unmount (clearing
+     isModalOpen) before the modal mounts (setting it). -->
 {#if showFabCreateMenu}
   <FabCreateMenu
     onSelect={(choice: FabCreateChoice) => {
