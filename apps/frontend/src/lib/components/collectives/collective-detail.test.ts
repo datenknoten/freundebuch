@@ -159,4 +159,37 @@ describe('CollectiveDetail', () => {
     render(CollectiveDetail, { collective });
     expect(screen.getByText('collectives.detail.members')).toBeTruthy();
   });
+
+  it('opens a sub-resource add modal from the desktop "add detail" dropdown', async () => {
+    const handler = vi.fn();
+    window.addEventListener('shortcut:collective-add-phone', handler);
+    try {
+      render(CollectiveDetail, { collective: aCollective() });
+
+      // Open the dropdown, then pick the phone entry.
+      await fireEvent.click(screen.getByText('subresources.common.add'));
+      await fireEvent.click(screen.getByText('shortcuts.add.phone'));
+
+      expect(handler).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener('shortcut:collective-add-phone', handler);
+    }
+  });
+
+  it('reaches "add detail" through the mobile FAB create menu', async () => {
+    const handler = vi.fn();
+    window.addEventListener('shortcut:collective-add-email', handler);
+    try {
+      render(CollectiveDetail, { collective: aCollective() });
+
+      // Tap the FAB → merged create menu → "add detail" → pick a type.
+      await fireEvent.click(screen.getByLabelText('common.createNew'));
+      await fireEvent.click(screen.getByText('friendDetail.addDetail'));
+      await fireEvent.click(screen.getByText('shortcuts.add.email'));
+
+      expect(handler).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener('shortcut:collective-add-email', handler);
+    }
+  });
 });

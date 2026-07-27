@@ -39,6 +39,7 @@ export function navigateForCreateChoice(choice: FabCreateChoice): void {
 import { onMount } from 'svelte';
 import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
+import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import Swatch from 'svelte-heros-v2/Swatch.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
 import { createI18n } from '$lib/i18n/index.js';
@@ -49,9 +50,16 @@ const i18n = createI18n();
 interface Props {
   onSelect: (choice: FabCreateChoice) => void;
   onClose: () => void;
+  /**
+   * When provided, a contextual "Add detail" entry is shown at the top of the
+   * menu (used on friend/collective detail pages to add a sub-resource to the
+   * entity currently open). Omitted on non-detail pages, where the menu only
+   * offers the create-new options.
+   */
+  onAddDetail?: () => void;
 }
 
-let { onSelect, onClose }: Props = $props();
+let { onSelect, onClose, onAddDetail }: Props = $props();
 
 const options: { choice: FabCreateChoice; icon: typeof UserPlus; labelKey: string }[] = [
   { choice: 'friend', icon: UserPlus, labelKey: 'shortcuts.newFriend' },
@@ -61,8 +69,13 @@ const options: { choice: FabCreateChoice; icon: typeof UserPlus; labelKey: strin
 ];
 
 let modalRef = $state<HTMLDivElement | null>(null);
+let detailButton = $state<HTMLButtonElement | null>(null);
 let optionButtons = $state<HTMLButtonElement[]>([]);
 let cancelButton = $state<HTMLButtonElement | null>(null);
+
+// The first focusable element is the contextual "Add detail" entry when present,
+// otherwise the first create-new option.
+let firstButton = $derived(onAddDetail ? detailButton : optionButtons[0]);
 
 function handleBackdropClick(e: MouseEvent) {
   if (e.target === e.currentTarget) {
@@ -77,7 +90,6 @@ function handleKeydown(e: KeyboardEvent) {
 
   // Focus trapping
   if (e.key === 'Tab' && modalRef) {
-    const firstButton = optionButtons[0];
     if (!firstButton || !cancelButton) return;
 
     if (e.shiftKey && document.activeElement === firstButton) {
@@ -92,7 +104,7 @@ function handleKeydown(e: KeyboardEvent) {
 
 onMount(() => {
   isModalOpen.set(true);
-  optionButtons[0]?.focus();
+  firstButton?.focus();
 
   return () => {
     isModalOpen.set(false);
@@ -121,6 +133,29 @@ onMount(() => {
       </h2>
 
       <div class="space-y-3">
+        {#if onAddDetail}
+          <button
+            bind:this={detailButton}
+            type="button"
+            onclick={onAddDetail}
+            class="w-full flex items-center gap-4 p-4 rounded-xl
+                   bg-gray-50 hover:bg-forest/10 transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+          >
+            <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
+              <DocumentText class="w-6 h-6 text-forest" strokeWidth="2" />
+            </div>
+            <div class="text-left">
+              <span class="block text-base font-body font-semibold text-gray-900">
+                {$i18n.t('friendDetail.addDetail')}
+              </span>
+              <span class="block text-sm font-body text-gray-500">
+                {$i18n.t('friendDetail.addDetailSubtitle')}
+              </span>
+            </div>
+          </button>
+        {/if}
+
         {#each options as option, index (option.choice)}
           {@const Icon = option.icon}
           <button

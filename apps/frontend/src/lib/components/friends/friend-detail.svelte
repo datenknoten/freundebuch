@@ -5,7 +5,6 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import { primeKeyboardFocus } from '$lib/actions/auto-focus';
-import { longPress } from '$lib/actions/long-press';
 import { getCollectivesForFriend } from '$lib/api/friends';
 import FabCreateMenu, {
   type FabCreateChoice,
@@ -37,13 +36,7 @@ import {
   SocialProfileSection,
   UrlSection,
 } from './sections';
-import {
-  type AddChoice,
-  AddDetailDropdown,
-  MobileAddChoiceModal,
-  MobileAddDetailModal,
-  type SubresourceType,
-} from './subresources';
+import { AddDetailDropdown, MobileAddDetailModal, type SubresourceType } from './subresources';
 
 interface Props {
   friend: Friend;
@@ -139,7 +132,6 @@ let isDeleting = $state(false);
 let showDeleteConfirm = $state(false);
 
 // Mobile add modal state
-let showMobileAddChoiceModal = $state(false);
 let showMobileAddModal = $state(false);
 let showFabCreateMenu = $state(false);
 
@@ -372,35 +364,17 @@ onMount(() => {
   </section>
 </div>
 
-<!-- Mobile FAB: tap = add friend/detail choice, long-press = create menu -->
+<!-- Mobile FAB: tap = merged create menu (with a contextual "add detail" entry) -->
 <button
   type="button"
-  use:longPress={{
-    onShort: () => (showMobileAddChoiceModal = true),
-    onLong: () => (showFabCreateMenu = true),
-  }}
+  onclick={() => (showFabCreateMenu = true)}
   class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white
          rounded-full shadow-lg hover:bg-forest-light transition-colors
          flex items-center justify-center z-40 select-none touch-none [-webkit-touch-callout:none]"
-  aria-label={$i18n.t('subresources.common.add')}
+  aria-label={$i18n.t('common.createNew')}
 >
   <Plus class="w-6 h-6" strokeWidth="2" />
 </button>
-
-<!-- Mobile add choice modal -->
-{#if showMobileAddChoiceModal}
-  <MobileAddChoiceModal
-    onSelect={(choice: AddChoice) => {
-      showMobileAddChoiceModal = false;
-      if (choice === 'friend') {
-        goto('/friends/new');
-      } else {
-        showMobileAddModal = true;
-      }
-    }}
-    onClose={() => showMobileAddChoiceModal = false}
-  />
-{/if}
 
 <!-- Mobile add detail modal -->
 {#if showMobileAddModal}
@@ -416,12 +390,16 @@ onMount(() => {
   />
 {/if}
 
-<!-- Mobile long-press create menu -->
+<!-- Mobile create menu with a contextual "add detail" entry for this friend -->
 {#if showFabCreateMenu}
   <FabCreateMenu
     onSelect={(choice: FabCreateChoice) => {
       showFabCreateMenu = false;
       navigateForCreateChoice(choice);
+    }}
+    onAddDetail={() => {
+      showFabCreateMenu = false;
+      showMobileAddModal = true;
     }}
     onClose={() => (showFabCreateMenu = false)}
   />
