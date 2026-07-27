@@ -4,14 +4,22 @@ import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import Heart from 'svelte-heros-v2/Heart.svelte';
 import Home from 'svelte-heros-v2/Home.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
+import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import { primeKeyboardFocus } from '$lib/actions/auto-focus';
+import FabCreateMenu, {
+  type FabCreateChoice,
+  navigateForCreateChoice,
+} from '$lib/components/fab-create-menu.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
 import { isModalOpen } from '$lib/stores/ui';
 import { collectiveTypeI18nKey } from '$lib/utils/collective-types';
 import type { Collective } from '$shared';
+import AddDetailDropdown from './add-detail-dropdown.svelte';
 import MemberSection from './member-section.svelte';
+import MobileAddDetailModal from './mobile-add-detail-modal.svelte';
 import { circleDescriptor, contactDescriptors } from './subresource-descriptors';
 import SubresourceSection from './subresource-section.svelte';
 
@@ -27,6 +35,17 @@ let { collective, onEdit }: Props = $props();
 // Collective deletion
 let isDeleting = $state(false);
 let showDeleteConfirm = $state(false);
+
+// Mobile FAB / add-detail state
+let showFabCreateMenu = $state(false);
+let showMobileAddModal = $state(false);
+
+// Open a sub-resource's add modal. Each SubresourceSection (and MemberSection)
+// listens for its own window event, so dispatching it works even when the
+// section is currently hidden because it has no items yet.
+function dispatchAddEvent(shortcutEvent: string) {
+  window.dispatchEvent(new CustomEvent(shortcutEvent));
+}
 
 function openDeleteConfirm() {
   showDeleteConfirm = true;
@@ -128,6 +147,11 @@ let address = $derived(formatAddress(collective));
     </div>
 
     <div class="flex gap-2">
+      <!-- Desktop: Add detail dropdown (hidden on mobile; mobile uses the FAB) -->
+      <div class="hidden sm:block">
+        <AddDetailDropdown onAdd={dispatchAddEvent} />
+      </div>
+
       <button
         type="button"
         onclick={() => onEdit?.()}
@@ -207,4 +231,45 @@ let address = $derived(formatAddress(collective));
       </div>
     </div>
   </div>
+{/if}
+
+<!-- Mobile FAB: tap = merged create menu (with a contextual "add detail" entry) -->
+<button
+  type="button"
+  onclick={() => (showFabCreateMenu = true)}
+  class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white
+         rounded-full shadow-lg hover:bg-forest-light transition-colors
+         flex items-center justify-center z-40 select-none touch-none [-webkit-touch-callout:none]"
+  aria-label={$i18n.t('common.createNew')}
+>
+  <Plus class="w-6 h-6" strokeWidth="2" />
+</button>
+
+<!-- Mobile create menu with a contextual "add detail" entry for this collective -->
+{#if showFabCreateMenu}
+  <FabCreateMenu
+    onSelect={(choice: FabCreateChoice) => {
+      showFabCreateMenu = false;
+      navigateForCreateChoice(choice);
+    }}
+    onAddDetail={() => {
+      showFabCreateMenu = false;
+      showMobileAddModal = true;
+    }}
+    onClose={() => (showFabCreateMenu = false)}
+  />
+{/if}
+
+<!-- Mobile add detail modal -->
+{#if showMobileAddModal}
+  <MobileAddDetailModal
+    onSelect={(shortcutEvent) => {
+      showMobileAddModal = false;
+      // Prime the keyboard within this tap so iOS keeps it open when the
+      // auto-focused edit form mounts.
+      primeKeyboardFocus();
+      dispatchAddEvent(shortcutEvent);
+    }}
+    onClose={() => (showMobileAddModal = false)}
+  />
 {/if}

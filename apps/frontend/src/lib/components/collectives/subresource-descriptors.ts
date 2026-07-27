@@ -294,3 +294,13 @@ export const contactDescriptors: SubresourceDescriptor[] = [
 
 /** Circle — rendered as its own top-level section, matching the original layout. */
 export { circleDescriptor };
+
+/**
+ * Every sub-resource a collective can gain via the "add detail" entry point
+ * (FAB menu on mobile, dropdown on desktop), in display order. Members are
+ * intentionally excluded — the member section always renders its own add
+ * button, whereas these contact/circle sections hide when empty and would
+ * otherwise be unreachable. Each descriptor already carries the icon and the
+ * window event that opens its add modal, so the picker stays data-driven.
+ */
+export const detailDescriptors: SubresourceDescriptor[] = [...contactDescriptors, circleDescriptor];

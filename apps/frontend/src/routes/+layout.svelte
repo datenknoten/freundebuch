@@ -6,7 +6,6 @@ import { onMount } from 'svelte';
 import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-import { longPress } from '$lib/actions/long-press';
 import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
@@ -103,11 +102,13 @@ $effect(() => {
 
 // Hide the FAB while the user is creating a new entity (any /new route, e.g.
 // /friends/new, /encounters/new, /collectives/new) so an accidental tap can't
-// interrupt them, and on friend detail pages (which have their own FAB).
+// interrupt them, and on friend/collective detail pages (which render their own
+// FAB with a contextual "add detail" entry).
 const showFab = $derived(
   $isAuthenticated &&
     !$page.url.pathname.endsWith('/new') &&
-    !$page.url.pathname.match(/^\/friends\/[^/]+$/),
+    !$page.url.pathname.match(/^\/friends\/[^/]+$/) &&
+    !$page.url.pathname.match(/^\/collectives\/[^/]+$/),
 );
 
 let createMenuOpen = $state(false);
@@ -139,17 +140,14 @@ function handleCreateSelect(choice: FabCreateChoice) {
 	</main>
 	<Footer />
 
-	<!-- Floating Action Button for mobile: tap = new friend, long-press = create menu -->
+	<!-- Floating Action Button for mobile: tap = create menu -->
 	{#if showFab}
 		<button
 			type="button"
-			use:longPress={{
-				onShort: () => goto('/friends/new'),
-				onLong: () => (createMenuOpen = true),
-			}}
+			onclick={() => (createMenuOpen = true)}
 			class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white rounded-full shadow-lg hover:bg-forest-light transition-colors flex items-center justify-center z-50 select-none touch-none [-webkit-touch-callout:none]"
-			title={$i18n.t('friends.addNew')}
-			aria-label={$i18n.t('friends.addNew')}
+			title={$i18n.t('common.createNew')}
+			aria-label={$i18n.t('common.createNew')}
 		>
 			<Plus class="w-6 h-6" strokeWidth="2" />
 		</button>
