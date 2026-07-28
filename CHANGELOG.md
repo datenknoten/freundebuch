@@ -1,3 +1,9 @@
+## 2.90.0 (2026-07-28)
+
+* fix(frontend): Defer in-place circle modal so the FAB menu clears its flag first ([2d66d28](https://github.com/datenknoten/freundebuch/commit/2d66d28))
+* fix(frontend): Keep modal flag set during FAB create-menu to add-detail handoff ([c8f138c](https://github.com/datenknoten/freundebuch/commit/c8f138c))
+* feat(frontend): Merge FAB menus into one tap and add collective detail-adding ([b8d6770](https://github.com/datenknoten/freundebuch/commit/b8d6770))
+
 ## <small>2.89.2 (2026-06-29)</small>
 
 * refactor(backend): Use Symbol.for for the query-wrapped marker ([d80d052](https://github.com/datenknoten/freundebuch/commit/d80d052))
