@@ -5,7 +5,7 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
-import { getAuth } from '../lib/auth.js';
+import { getAuth, getOAuthClientInfo } from '../lib/auth.js';
 import { authMiddleware, getAuthSession, getAuthUser } from '../middleware/auth.js';
 import { passkeyListRateLimitMiddleware } from '../middleware/rate-limit.js';
 import {
@@ -14,7 +14,7 @@ import {
   updateUserPreferences,
 } from '../models/queries/users.queries.js';
 import type { AppContext } from '../types/context.js';
-import { UserNotFoundError, ValidationError } from '../utils/errors.js';
+import { AuthenticationError, UserNotFoundError, ValidationError } from '../utils/errors.js';
 import { parseUserPreferences, toJson } from '../utils/type-guards.js';
 
 const app = new Hono<AppContext>();
@@ -32,7 +32,9 @@ app.on(['POST', 'GET'], '/*', async (c, next) => {
     '/api/auth/preferences',
     '/api/auth/passkey/list-user-passkeys',
   ];
-  if (customPaths.some((p) => path === p)) {
+  // Prefixes for custom routes with dynamic path segments.
+  const customPrefixes = ['/api/auth/oauth2/client/'];
+  if (customPaths.some((p) => path === p) || customPrefixes.some((p) => path.startsWith(p))) {
     return next();
   }
 
@@ -163,5 +165,34 @@ app.get(
     return c.json(passkeys);
   },
 );
+
+/**
+ * GET /api/auth/oauth2/client/:id
+ * Resolve a registered OAuth client's display name (and icon) by client_id.
+ *
+ * The /oauth/consent screen calls this so it can show a friendly client name
+ * (e.g. "Claude") instead of the opaque, DCR-generated client id. The Better
+ * Auth `mcp` plugin does not expose the oidc-provider's `/oauth2/client/:id`
+ * endpoint (it only re-exports the consent endpoint), so we provide it here.
+ *
+ * Gated on a valid session: the consent flow only reaches the page after login,
+ * and this prevents anonymous enumeration of registered clients. We don't use
+ * authMiddleware because this read doesn't need the legacy-user bridge.
+ */
+app.get('/oauth2/client/:id', async (c) => {
+  const session = await getAuth().api.getSession({ headers: c.req.raw.headers });
+  if (!session) {
+    throw new AuthenticationError('Unauthorized');
+  }
+
+  const clientId = c.req.param('id');
+  const client = await getOAuthClientInfo(clientId);
+
+  if (!client) {
+    return c.json({ error: 'not_found', error_description: 'client not found' }, 404);
+  }
+
+  return c.json({ clientId, name: client.name, icon: client.icon });
+});
 
 export default app;
