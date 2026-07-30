@@ -25,6 +25,7 @@ export default {
         'all', // affects everything
         'backend', // Backend/API changes
         'frontend', // Frontend/UI changes
+        'mcp-server', // MCP server changes
         'shared', // Shared package changes
         'database', // Database migrations/schema changes
         'docs', // Documentation

@@ -9,6 +9,17 @@ const ConfigSchema = type({
   // No default: deploying to production without explicitly setting ENV would
   // silently use development defaults (e.g. pino-pretty transport). Fail closed.
   ENV: '"development" | "production" | "test"',
+  // Shared with the backend's Better Auth instance. The MCP server co-locates a
+  // Better Auth instance (imported from @freundebuch/backend) to validate OAuth
+  // bearer tokens via getMcpSession; it must use the same secret and database
+  // as the authorization server so token lookups resolve. Declared here so a
+  // missing secret fails fast at boot rather than on the first OAuth request.
+  BETTER_AUTH_SECRET: 'string',
+  // Public origin of this deployment (e.g. https://freundebuch.example.com),
+  // used to build the RFC 9728 `resource_metadata` URL in the 401 Bearer
+  // challenge. Optional: when unset, it is derived per-request from the
+  // X-Forwarded-Proto / Host headers set by nginx.
+  'BETTER_AUTH_URL?': 'string',
   '+': 'delete',
 });
 

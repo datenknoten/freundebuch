@@ -86,8 +86,9 @@ $effect(() => {
   }
 });
 
-// Routes exempt from onboarding redirect
-const onboardingExemptPaths = ['/onboarding', '/auth/'];
+// Routes exempt from onboarding redirect. `/oauth/` is exempt so the OAuth
+// consent step is not interrupted mid-flow (which would drop the consent code).
+const onboardingExemptPaths = ['/onboarding', '/auth/', '/oauth/'];
 
 // Redirect to onboarding if user needs to complete it
 $effect(() => {

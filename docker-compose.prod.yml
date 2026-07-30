@@ -10,6 +10,12 @@ services:
       MCP_PORT: 3100
       LOG_LEVEL: ${LOG_LEVEL:-info}
       ENV: production
+      # Shared with the backend so the co-located Better Auth instance can
+      # validate OAuth bearer tokens against the same database (same secret).
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      # Public origin, for the OAuth resource metadata URL. Must match the
+      # backend's issuer.
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://freundebuch.schumacher.im}
     networks:
       - internal
     healthcheck:
@@ -80,6 +86,9 @@ services:
       PORT: 3000
       FRONTEND_URL: https://freundebuch.schumacher.im
       BACKEND_URL: https://freundebuch.schumacher.im
+      # Public origin used as the OAuth issuer / MCP resource base for the
+      # claude.ai connector. Must match the mcp-server's BETTER_AUTH_URL.
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://freundebuch.schumacher.im}
 
       # Authentication
       JWT_SECRET: ${JWT_SECRET}
