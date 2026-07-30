@@ -1,3 +1,8 @@
+## <small>2.91.1 (2026-07-30)</small>
+
+* refactor(backend): Address PR review on the OAuth client lookup ([9488c4a](https://github.com/datenknoten/freundebuch/commit/9488c4a))
+* fix(backend): Resolve OAuth client name on the MCP consent screen ([6b68435](https://github.com/datenknoten/freundebuch/commit/6b68435))
+
 ## 2.91.0 (2026-07-30)
 
 * feat(mcp-server): Add OAuth 2.1 support for the claude.ai connector ([8b80225](https://github.com/datenknoten/freundebuch/commit/8b80225))
