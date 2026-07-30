@@ -5,16 +5,22 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
-import { getAuth, getOAuthClientInfo } from '../lib/auth.js';
+import { getAuth } from '../lib/auth.js';
 import { authMiddleware, getAuthSession, getAuthUser } from '../middleware/auth.js';
 import { passkeyListRateLimitMiddleware } from '../middleware/rate-limit.js';
+import { getOAuthClientByClientId } from '../models/queries/oauth.queries.js';
 import {
   getUserSelfProfile,
   getUserWithPreferences,
   updateUserPreferences,
 } from '../models/queries/users.queries.js';
 import type { AppContext } from '../types/context.js';
-import { AuthenticationError, UserNotFoundError, ValidationError } from '../utils/errors.js';
+import {
+  AuthenticationError,
+  ResourceNotFoundError,
+  UserNotFoundError,
+  ValidationError,
+} from '../utils/errors.js';
 import { parseUserPreferences, toJson } from '../utils/type-guards.js';
 
 const app = new Hono<AppContext>();
@@ -185,14 +191,15 @@ app.get('/oauth2/client/:id', async (c) => {
     throw new AuthenticationError('Unauthorized');
   }
 
+  const db = c.get('db');
   const clientId = c.req.param('id');
-  const client = await getOAuthClientInfo(clientId);
+  const [client] = await getOAuthClientByClientId.run({ clientId }, db);
 
   if (!client) {
-    return c.json({ error: 'not_found', error_description: 'client not found' }, 404);
+    throw new ResourceNotFoundError('OAuth client');
   }
 
-  return c.json({ clientId, name: client.name, icon: client.icon });
+  return c.json({ clientId, name: client.name, icon: client.icon ?? null });
 });
 
 export default app;
