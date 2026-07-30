@@ -5,8 +5,11 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { AppContext } from '../types/context.js';
 import { isAppError } from '../utils/errors.js';
 
-const mockGetSession = vi.fn();
-const mockHandler = vi.fn();
+const { mockGetSession, mockHandler, mockGetOAuthClientInfo } = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockHandler: vi.fn(),
+  mockGetOAuthClientInfo: vi.fn(),
+}));
 
 // Mock the Better Auth module
 vi.mock('../lib/auth.ts', () => ({
@@ -16,6 +19,7 @@ vi.mock('../lib/auth.ts', () => ({
     },
     handler: mockHandler,
   }),
+  getOAuthClientInfo: mockGetOAuthClientInfo,
 }));
 
 import authRoutes from './auth.js';
@@ -75,6 +79,45 @@ describe('Auth Routes', () => {
       expect(res.status).toBe(401);
       const data = await res.json();
       expect(data).toHaveProperty('error', 'Unauthorized');
+    });
+  });
+
+  describe('GET /api/auth/oauth2/client/:id', () => {
+    it('should return 401 when not authenticated', async () => {
+      mockGetSession.mockResolvedValue(null);
+
+      const res = await app.request('/api/auth/oauth2/client/abc123');
+
+      expect(res.status).toBe(401);
+      const data = await res.json();
+      expect(data).toHaveProperty('error', 'Unauthorized');
+      // The lookup must not run for unauthenticated callers.
+      expect(mockGetOAuthClientInfo).not.toHaveBeenCalled();
+    });
+
+    it('should return the client name when authenticated', async () => {
+      mockGetSession.mockResolvedValue({ user: { id: 'u1', email: 'u@example.com' } });
+      mockGetOAuthClientInfo.mockResolvedValue({ name: 'Claude', icon: null });
+
+      const res = await app.request('/api/auth/oauth2/client/abc123');
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).toEqual({ clientId: 'abc123', name: 'Claude', icon: null });
+      expect(mockGetOAuthClientInfo).toHaveBeenCalledWith('abc123');
+      // Must not fall through to the Better Auth handler.
+      expect(mockHandler).not.toHaveBeenCalled();
+    });
+
+    it('should return 404 when the client is unknown', async () => {
+      mockGetSession.mockResolvedValue({ user: { id: 'u1', email: 'u@example.com' } });
+      mockGetOAuthClientInfo.mockResolvedValue(null);
+
+      const res = await app.request('/api/auth/oauth2/client/missing');
+
+      expect(res.status).toBe(404);
+      const data = await res.json();
+      expect(data).toHaveProperty('error', 'not_found');
     });
   });
 
