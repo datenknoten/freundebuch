@@ -1,3 +1,4 @@
+import { ENCOUNTER_TITLE_MAX_LENGTH, ENCOUNTER_TYPES } from '@freundebuch/shared/index.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { Services } from '../utils/service-factory.js';
@@ -58,6 +59,50 @@ export function registerEncountersTools(
       if (!encounter) {
         return { content: [{ type: 'text' as const, text: 'Encounter not found.' }] };
       }
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(encounter, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    'create_encounter',
+    'Create a new encounter (meeting, event, or interaction) and associate it with one or more friends. Requires a date and at least one friend. Returns the created encounter with its ID and associated friends.',
+    {
+      encounterDate: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+        .describe('Date the encounter took place (ISO 8601 date, e.g. "2024-06-15")'),
+      friendIds: z
+        .array(z.string().uuid())
+        .min(1)
+        .describe('IDs (UUIDs) of the friends involved in the encounter; at least one is required'),
+      encounterType: z
+        .enum(ENCOUNTER_TYPES)
+        .default('in_person')
+        .describe('Kind of contact: in_person, phone_call, video_call, or message'),
+      title: z
+        .string()
+        .trim()
+        .min(1)
+        .max(ENCOUNTER_TITLE_MAX_LENGTH)
+        .optional()
+        .describe('Optional title; if omitted the UI derives a label for calls/messages'),
+      locationText: z
+        .string()
+        .optional()
+        .describe('Optional free-text location where the encounter took place'),
+      description: z.string().optional().describe('Optional notes or description of what happened'),
+    },
+    async ({ encounterDate, friendIds, encounterType, title, locationText, description }) => {
+      const encounter = await services.encounters.createEncounter(getUserId(), {
+        encounter_date: encounterDate,
+        friend_ids: friendIds,
+        encounter_type: encounterType,
+        title,
+        location_text: locationText,
+        description,
+      });
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(encounter, null, 2) }],
       };
