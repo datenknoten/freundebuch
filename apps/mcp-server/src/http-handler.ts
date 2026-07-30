@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import type pg from 'pg';
 import type { Logger } from 'pino';
 import { createMcpServer } from './server.js';
+import { getPublicBaseUrl, verifyBearerToken } from './utils/bearer-auth.js';
 import type { Services } from './utils/service-factory.js';
 
 // Brute-force / rate limiting is handled at the infrastructure layer — see
@@ -20,6 +22,10 @@ interface HandlerDeps {
   services: Services;
   logger: Logger;
   sessions: Map<string, Session>;
+  /** Shared pg pool — used to resolve OAuth subjects to the legacy external_id. */
+  pool: pg.Pool;
+  /** Public origin, for the OAuth protected-resource metadata URL in 401s. */
+  betterAuthUrl?: string;
   maxBodyBytes?: number;
 }
 
@@ -58,13 +64,60 @@ function sendJson(
   res.end(JSON.stringify(body));
 }
 
-function sendUnauthorized(res: ServerResponse) {
+/**
+ * 401 advertising the OAuth 2.1 flow. This is the default challenge for
+ * requests without credentials: the `WWW-Authenticate: Bearer` header with a
+ * `resource_metadata` pointer is what makes an MCP client (e.g. claude.ai)
+ * discover the authorization server and start the OAuth flow (RFC 9728).
+ */
+function sendBearerUnauthorized(res: ServerResponse, req: IncomingMessage, betterAuthUrl?: string) {
+  const base = getPublicBaseUrl(req, betterAuthUrl);
+  const resourceMetadata = `${base}/.well-known/oauth-protected-resource`;
+  sendJson(
+    res,
+    401,
+    { error: 'Unauthorized' },
+    {
+      'WWW-Authenticate': `Bearer resource_metadata="${resourceMetadata}"`,
+      // Browser-based MCP clients need to read the challenge to begin OAuth.
+      'Access-Control-Expose-Headers': 'WWW-Authenticate',
+    },
+  );
+}
+
+/**
+ * 401 with a Basic challenge. Only used when a client actually attempted Basic
+ * auth (app password) but failed, so existing CLI/DAV-style clients still get a
+ * Basic prompt instead of being pushed into the OAuth flow.
+ */
+function sendBasicUnauthorized(res: ServerResponse) {
   sendJson(
     res,
     401,
     { error: 'Unauthorized' },
     { 'WWW-Authenticate': 'Basic realm="Freundebuch MCP"' },
   );
+}
+
+/**
+ * 401 whose challenge scheme matches the credentials the client presented — a
+ * Bearer challenge for OAuth clients (so they can restart RFC 9728 discovery /
+ * reauth), a Basic challenge for app-password clients. Used for requests that
+ * authenticated successfully but are still rejected, e.g. a session id owned by
+ * a different user: re-challenging in the wrong scheme would push an OAuth
+ * client into Basic and break its reauth flow.
+ */
+function sendUnauthorizedForScheme(
+  res: ServerResponse,
+  req: IncomingMessage,
+  authHeader: string | undefined,
+  betterAuthUrl?: string,
+) {
+  if (authHeader?.startsWith('Bearer ')) {
+    sendBearerUnauthorized(res, req, betterAuthUrl);
+  } else {
+    sendBasicUnauthorized(res);
+  }
 }
 
 type ReadResult = { ok: true; body: string } | { ok: false; reason: 'too-large' | 'stream-error' };
@@ -162,7 +215,7 @@ function readSessionIdHeader(
 export function createMcpRequestHandler(
   deps: HandlerDeps,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
-  const { services, logger, sessions } = deps;
+  const { services, logger, sessions, pool, betterAuthUrl } = deps;
   const maxBodyBytes = deps.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
 
   return async function handleRequest(req, res) {
@@ -180,30 +233,57 @@ export function createMcpRequestHandler(
       return;
     }
 
-    // Authenticate every request
+    // Authenticate every request. Two schemes are accepted:
+    //  - Bearer: OAuth access tokens issued by the Better Auth authorization
+    //    server (used by claude.ai and other remote MCP clients).
+    //  - Basic: app passwords (used by existing CLI/desktop clients).
+    // Both resolve to the same `{ userId (legacy external_id), email }` shape.
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Basic ')) {
-      sendUnauthorized(res);
+    let authResult: { userId: string; email: string } | null = null;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      authResult = await verifyBearerToken(req, pool, logger);
+      if (!authResult) {
+        logger.warn(
+          { ip: getClientIp(req) },
+          'MCP bearer-auth failure (infrastructure rate limiting should throttle repeats)',
+        );
+        sendBearerUnauthorized(res, req, betterAuthUrl);
+        return;
+      }
+    } else if (authHeader?.startsWith('Basic ')) {
+      const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf-8');
+      const colonIndex = decoded.indexOf(':');
+      if (colonIndex === -1) {
+        sendBasicUnauthorized(res);
+        return;
+      }
+
+      const email = decoded.slice(0, colonIndex);
+      const password = decoded.slice(colonIndex + 1);
+
+      const basicResult = await services.appPasswords.verifyAppPassword(email, password);
+      if (!basicResult) {
+        logger.warn(
+          { ip: getClientIp(req), email },
+          'MCP basic-auth failure (infrastructure rate limiting should throttle repeats)',
+        );
+        sendBasicUnauthorized(res);
+        return;
+      }
+      authResult = { userId: basicResult.userId, email: basicResult.email };
+    } else {
+      // No credentials (or an unsupported scheme): advertise the OAuth flow so
+      // MCP clients begin discovery. App-password clients send Basic
+      // proactively and never reach this branch.
+      sendBearerUnauthorized(res, req, betterAuthUrl);
       return;
     }
 
-    const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf-8');
-    const colonIndex = decoded.indexOf(':');
-    if (colonIndex === -1) {
-      sendUnauthorized(res);
-      return;
-    }
-
-    const email = decoded.slice(0, colonIndex);
-    const password = decoded.slice(colonIndex + 1);
-
-    const authResult = await services.appPasswords.verifyAppPassword(email, password);
+    // Every non-returning branch above assigns authResult; this guard also
+    // narrows the type for the rest of the handler.
     if (!authResult) {
-      logger.warn(
-        { ip: getClientIp(req), email },
-        'MCP basic-auth failure (infrastructure rate limiting should throttle repeats)',
-      );
-      sendUnauthorized(res);
+      sendBearerUnauthorized(res, req, betterAuthUrl);
       return;
     }
 
@@ -233,7 +313,7 @@ export function createMcpRequestHandler(
       const existingSession = sessionId ? sessions.get(sessionId) : undefined;
       if (existingSession) {
         if (existingSession.userId !== authResult.userId) {
-          sendUnauthorized(res);
+          sendUnauthorizedForScheme(res, req, authHeader, betterAuthUrl);
           return;
         }
         await existingSession.transport.handleRequest(req, res, parsedBody);
@@ -271,7 +351,7 @@ export function createMcpRequestHandler(
         return;
       }
       if (getSession.userId !== authResult.userId) {
-        sendUnauthorized(res);
+        sendUnauthorizedForScheme(res, req, authHeader, betterAuthUrl);
         return;
       }
       await getSession.transport.handleRequest(req, res);
@@ -285,7 +365,7 @@ export function createMcpRequestHandler(
         return;
       }
       if (deleteSession.userId !== authResult.userId) {
-        sendUnauthorized(res);
+        sendUnauthorizedForScheme(res, req, authHeader, betterAuthUrl);
         return;
       }
       await deleteSession.transport.handleRequest(req, res);

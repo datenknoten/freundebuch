@@ -28,13 +28,39 @@ let isLoading = $state(false);
 let isPasskeyLoading = $state(false);
 let error = $state('');
 
+/**
+ * When the OAuth/MCP authorization server redirects an unauthenticated
+ * `authorize` request to this login page, it forwards the original authorize
+ * query (client_id, redirect_uri, response_type, ...). After a successful
+ * login we resume the flow by navigating back to the authorize endpoint with
+ * those same params. The target is a fixed same-origin backend path and the
+ * authorize endpoint re-validates redirect_uri against the registered client,
+ * so this cannot be turned into an open redirect.
+ */
+function resolveOAuthContinuation(): string | null {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('client_id') && params.get('redirect_uri') && params.get('response_type')) {
+    return `/api/auth/mcp/authorize?${params.toString()}`;
+  }
+  return null;
+}
+
 function handleSuccess() {
   if (onSuccess) {
     onSuccess();
-  } else {
-    // Redirect to home page after successful login
-    goto('/');
+    return;
   }
+
+  const oauthContinuation = resolveOAuthContinuation();
+  if (oauthContinuation) {
+    // Full navigation (not SPA goto): the authorize endpoint is a backend route.
+    window.location.href = oauthContinuation;
+    return;
+  }
+
+  // Redirect to home page after successful login
+  goto('/');
 }
 
 async function handleSubmit(e) {

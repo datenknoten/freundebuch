@@ -739,11 +739,20 @@
       "appPasswordRequired": "MCP access requires an app password. You can use the same app password for CardDAV and MCP, or create a separate one.",
       "manageAppPasswords": "Manage App Passwords",
       "tabs": {
+        "claudeAi": "claude.ai",
         "claudeDesktop": "Claude Desktop",
         "claudeCode": "Claude Code",
         "other": "Other Clients"
       },
       "steps": {
+        "claudeAi": {
+          "intro": "Add Freundebuch as a custom connector — no app password needed, you sign in through your browser:",
+          "step1": "In claude.ai, open Settings → Connectors and choose \"Add custom connector\".",
+          "step2": "Paste your MCP Server URL (above) as the Remote MCP server URL and give it a name.",
+          "step3": "Click Add. Claude opens a Freundebuch sign-in page — log in and approve access.",
+          "step4": "The connector is now linked to your account; enable it in a chat to use your Freundebuch data.",
+          "note": "Authentication uses OAuth, so you don't need to create or paste an app password."
+        },
         "claudeDesktop": {
           "intro": "Add this configuration to your Claude Desktop config file:",
           "step1": "Open Claude Desktop Settings",
@@ -1348,6 +1357,25 @@
       "circle": "Circle",
       "collective": "Collective",
       "employment": "Employment"
+    }
+  },
+  "oauth": {
+    "consent": {
+      "title": "Authorize access",
+      "subtitle": "{{client}} wants to access your Freundebuch account.",
+      "permissionsHeading": "This will allow it to:",
+      "scopes": {
+        "openid": "Verify your identity",
+        "profile": "Read your basic profile",
+        "email": "Read your email address",
+        "offline_access": "Stay connected when you're away"
+      },
+      "allow": "Allow",
+      "deny": "Deny",
+      "error": "Something went wrong. Please try again.",
+      "invalidTitle": "Invalid request",
+      "invalidBody": "This authorization link is invalid or has expired.",
+      "backHome": "Back to home"
     }
   }
 }

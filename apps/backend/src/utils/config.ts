@@ -35,6 +35,13 @@ const ConfigSchema = type({
 
   // Authentication (Better Auth)
   BETTER_AUTH_SECRET: SecretType,
+  // Public origin of the deployment (e.g. https://freundebuch.example.com).
+  // Better Auth reads process.env.BETTER_AUTH_URL directly for its issuer/base
+  // URL; we also declare it here so the OAuth `resource` audience and discovery
+  // metadata can be derived from config. Optional: when unset, Better Auth
+  // resolves the base URL per-request (preserving the existing dev behaviour)
+  // and we fall back to FRONTEND_URL for the resource value.
+  'BETTER_AUTH_URL?': 'string',
 
   // WebAuthn / Passkey
   'WEBAUTHN_RP_ID?': 'string',

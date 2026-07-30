@@ -18,7 +18,15 @@ const services = createServices(pool, logger);
 
 const sessions = new Map<string, Session>();
 
-const httpServer = createServer(createMcpRequestHandler({ services, logger, sessions }));
+const httpServer = createServer(
+  createMcpRequestHandler({
+    services,
+    logger,
+    sessions,
+    pool,
+    betterAuthUrl: config.BETTER_AUTH_URL,
+  }),
+);
 
 httpServer.listen(config.MCP_PORT, () => {
   logger.info({ port: config.MCP_PORT }, 'Freundebuch MCP server started');

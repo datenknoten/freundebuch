@@ -61,7 +61,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
       expect(response.status).toBe(405);
     });
 
-    it('should return 401 for /mcp without auth', async () => {
+    it('should return 401 with an OAuth Bearer challenge for /mcp without auth', async () => {
       const { baseUrl } = getContext();
       const response = await fetch(`${baseUrl}/mcp`, {
         method: 'POST',
@@ -69,7 +69,12 @@ describe('MCP Server', { timeout: 60000 }, () => {
         body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
       });
       expect(response.status).toBe(401);
-      expect(response.headers.get('www-authenticate')).toContain('Basic');
+      // Unauthenticated requests advertise the OAuth flow so MCP clients
+      // (e.g. claude.ai) begin discovery via the protected-resource metadata.
+      const challenge = response.headers.get('www-authenticate') ?? '';
+      expect(challenge).toContain('Bearer');
+      expect(challenge).toContain('resource_metadata=');
+      expect(challenge).toContain('/.well-known/oauth-protected-resource');
     });
 
     it('should return 413 for bodies exceeding the size cap', async () => {
@@ -253,17 +258,19 @@ describe('MCP Server', { timeout: 60000 }, () => {
       expect(response.status).toBe(401);
     });
 
-    it('should reject Bearer auth (only Basic is supported)', async () => {
+    it('should reject an invalid/unknown Bearer token with an OAuth challenge', async () => {
       const { baseUrl } = getContext();
       const response = await fetch(`${baseUrl}/mcp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer some-token',
+          // A token that is not a valid issued OAuth access token.
+          Authorization: 'Bearer some-invalid-token',
         },
         body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
       });
       expect(response.status).toBe(401);
+      expect(response.headers.get('www-authenticate') ?? '').toContain('Bearer');
     });
 
     it('should reject revoked app password', async () => {

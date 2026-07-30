@@ -7,7 +7,7 @@ const i18n = createI18n();
 
 const mcpUrl = $derived(`${typeof window !== 'undefined' ? window.location.origin : ''}/mcp`);
 
-let activeTab = $state<'claude-desktop' | 'claude-code' | 'other'>('claude-desktop');
+let activeTab = $state<'claude-ai' | 'claude-desktop' | 'claude-code' | 'other'>('claude-ai');
 let copied = $state(false);
 
 async function copyUrl() {
@@ -90,6 +90,12 @@ const claudeDesktopConfig = $derived(
   <div class="border border-gray-200 rounded-lg overflow-hidden">
     <div class="flex border-b border-gray-200">
       <button
+        onclick={() => activeTab = 'claude-ai'}
+        class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'claude-ai' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
+      >
+        {$i18n.t('profile.mcp.tabs.claudeAi')}
+      </button>
+      <button
         onclick={() => activeTab = 'claude-desktop'}
         class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'claude-desktop' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
       >
@@ -110,7 +116,22 @@ const claudeDesktopConfig = $derived(
     </div>
 
     <div class="p-6 bg-white">
-      {#if activeTab === 'claude-desktop'}
+      {#if activeTab === 'claude-ai'}
+        <div class="space-y-4">
+          <p class="font-body text-sm text-gray-700">
+            {$i18n.t('profile.mcp.steps.claudeAi.intro')}
+          </p>
+          <ol class="list-decimal list-inside space-y-2 font-body text-sm text-gray-700">
+            <li>{$i18n.t('profile.mcp.steps.claudeAi.step1')}</li>
+            <li>{$i18n.t('profile.mcp.steps.claudeAi.step2')}</li>
+            <li>{$i18n.t('profile.mcp.steps.claudeAi.step3')}</li>
+            <li>{$i18n.t('profile.mcp.steps.claudeAi.step4')}</li>
+          </ol>
+          <div class="bg-green-50 border border-green-200 rounded-lg p-3 font-body text-xs text-green-700">
+            {$i18n.t('profile.mcp.steps.claudeAi.note')}
+          </div>
+        </div>
+      {:else if activeTab === 'claude-desktop'}
         <div class="space-y-4">
           <p class="font-body text-sm text-gray-700">
             {$i18n.t('profile.mcp.steps.claudeDesktop.intro')}

@@ -122,10 +122,11 @@ async function createTestUserWithAppPassword(
 function startMcpHttpServer(
   services: Services,
   logger: Logger,
+  pool: pg.Pool,
 ): Promise<{ server: http.Server; baseUrl: string; sessions: Map<string, Session> }> {
   return new Promise((resolve) => {
     const sessions = new Map<string, Session>();
-    const handler = createMcpRequestHandler({ services, logger, sessions });
+    const handler = createMcpRequestHandler({ services, logger, sessions, pool });
     const httpServer = http.createServer(handler);
 
     httpServer.listen(0, () => {
@@ -336,7 +337,7 @@ export function setupMcpTestSuite() {
     const testUser = await createTestUserWithAppPassword(pool, 'mcp-test@example.com');
     const otherUser = await createTestUserWithAppPassword(pool, 'mcp-other@example.com');
 
-    const { server: httpServer, baseUrl } = await startMcpHttpServer(services, logger);
+    const { server: httpServer, baseUrl } = await startMcpHttpServer(services, logger, pool);
 
     context = {
       container,
