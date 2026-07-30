@@ -423,7 +423,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
       return { baseUrl, sessionId, email: testUser.email, password: testUser.appPassword };
     }
 
-    it('should list all 12 tools', async () => {
+    it('should list all 13 tools', async () => {
       const { baseUrl, testUser } = getContext();
       const sessionId = await initMcpSession(baseUrl, testUser.email, testUser.appPassword);
 
@@ -436,7 +436,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
       const result = body as { result?: { tools?: Array<{ name: string }> } };
       const toolNames = result.result?.tools?.map((t) => t.name) ?? [];
 
-      expect(toolNames.length).toBeGreaterThanOrEqual(12);
+      expect(toolNames.length).toBeGreaterThanOrEqual(13);
       expect(toolNames).toContain('list_friends');
       expect(toolNames).toContain('get_friend');
       expect(toolNames).toContain('search_friends');
@@ -449,6 +449,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
       expect(toolNames).toContain('get_collective');
       expect(toolNames).toContain('list_encounters');
       expect(toolNames).toContain('get_encounter');
+      expect(toolNames).toContain('create_encounter');
     });
 
     it('list_friends should return a paginated list', async () => {
@@ -573,6 +574,50 @@ describe('MCP Server', { timeout: 60000 }, () => {
       const result = body as { result?: { content?: Array<{ text?: string }> } };
       const data = JSON.parse(result.result?.content?.[0]?.text ?? '{}');
       expect(data.encounters.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('create_encounter should create an encounter with friends', async () => {
+      const { pool, testUser } = getContext();
+      const friendResult = await pool.query(
+        `INSERT INTO friends.friends (user_id, display_name)
+         SELECT u.id, 'Encounter Friend'
+         FROM auth.users u WHERE u.external_id = $1
+         RETURNING external_id`,
+        [testUser.externalId],
+      );
+      const friendId = friendResult.rows[0].external_id;
+
+      const { baseUrl, sessionId, email, password } = await getSessionAndAuth();
+      const { body } = await callTool(
+        baseUrl,
+        'create_encounter',
+        {
+          title: 'Lunch downtown',
+          encounterDate: '2024-07-01',
+          encounterType: 'in_person',
+          friendIds: [friendId],
+          locationText: 'The Diner',
+          description: 'Caught up over lunch.',
+        },
+        { email, password, sessionId },
+      );
+
+      const result = body as { result?: { content?: Array<{ text?: string }> } };
+      const encounter = JSON.parse(result.result?.content?.[0]?.text ?? '{}');
+      expect(encounter.id).toBeTruthy();
+      expect(encounter.title).toBe('Lunch downtown');
+      expect(encounter.encounterType).toBe('in_person');
+      expect(encounter.encounterDate).toBe('2024-07-01');
+      expect(encounter.locationText).toBe('The Diner');
+      expect(encounter.friends).toHaveLength(1);
+      expect(encounter.friends[0].id).toBe(friendId);
+
+      // Verify it was persisted
+      const persisted = await pool.query(
+        `SELECT title FROM encounters.encounters WHERE external_id = $1`,
+        [encounter.id],
+      );
+      expect(persisted.rows[0]?.title).toBe('Lunch downtown');
     });
 
     it('get_upcoming_dates should return dates array', async () => {
