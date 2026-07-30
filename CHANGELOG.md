@@ -1,3 +1,8 @@
+## 2.92.0 (2026-07-30)
+
+* fix(mcp-server): Accept null for optional create_encounter fields ([8f8c44c](https://github.com/datenknoten/freundebuch/commit/8f8c44c))
+* feat(mcp-server): Add create_encounter tool ([44aef65](https://github.com/datenknoten/freundebuch/commit/44aef65))
+
 ## <small>2.91.1 (2026-07-30)</small>
 
 * refactor(backend): Address PR review on the OAuth client lookup ([9488c4a](https://github.com/datenknoten/freundebuch/commit/9488c4a))
