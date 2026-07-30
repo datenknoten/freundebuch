@@ -86,20 +86,21 @@ export function registerEncountersTools(
         .trim()
         .min(1)
         .max(ENCOUNTER_TITLE_MAX_LENGTH)
-        .optional()
+        .nullish()
         .describe('Optional title; if omitted the UI derives a label for calls/messages'),
       locationText: z
         .string()
-        .optional()
+        .nullish()
         .describe('Optional free-text location where the encounter took place'),
-      description: z.string().optional().describe('Optional notes or description of what happened'),
+      description: z.string().nullish().describe('Optional notes or description of what happened'),
     },
     async ({ encounterDate, friendIds, encounterType, title, locationText, description }) => {
       const encounter = await services.encounters.createEncounter(getUserId(), {
         encounter_date: encounterDate,
         friend_ids: friendIds,
         encounter_type: encounterType,
-        title,
+        // `title` has no null variant in EncounterInput; treat an explicit null as unset.
+        title: title ?? undefined,
         location_text: locationText,
         description,
       });
