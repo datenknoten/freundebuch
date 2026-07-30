@@ -252,35 +252,6 @@ export function getAuth() {
 }
 
 /**
- * Look up a registered OAuth client's display name (and icon) by its client_id.
- *
- * Reads the `auth.oauth_application` table the `mcp` plugin populates during
- * Dynamic Client Registration. The consent screen uses this to show a friendly
- * client name (e.g. "Claude") instead of the opaque, generated client id.
- *
- * The `mcp` plugin does not surface the oidc-provider's `/oauth2/client/:id`
- * endpoint — it only re-exports the consent endpoint — so the lookup lives here
- * against the same table. `_authPool` runs with `search_path=auth`, so the
- * unqualified `oauth_application` resolves to `auth.oauth_application`.
- *
- * Returns null when no client matches.
- */
-export async function getOAuthClientInfo(
-  clientId: string,
-): Promise<{ name: string; icon: string | null } | null> {
-  // Ensure the auth instance (and its pool) is initialized.
-  getAuth();
-  if (!_authPool) return null;
-
-  const { rows } = await _authPool.query<{ name: string; icon: string | null }>(
-    'SELECT name, icon FROM oauth_application WHERE client_id = $1 LIMIT 1',
-    [clientId],
-  );
-  const row = rows[0];
-  return row ? { name: row.name, icon: row.icon ?? null } : null;
-}
-
-/**
  * Drain the auth pool and clear the singleton.
  * Must be called before stopping the database (e.g. in test teardown).
  */
