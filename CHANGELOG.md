@@ -1,3 +1,7 @@
+## 2.91.0 (2026-07-30)
+
+* feat(mcp-server): Add OAuth 2.1 support for the claude.ai connector ([8b80225](https://github.com/datenknoten/freundebuch/commit/8b80225))
+
 ## 2.90.0 (2026-07-28)
 
 * fix(frontend): Defer in-place circle modal so the FAB menu clears its flag first ([2d66d28](https://github.com/datenknoten/freundebuch/commit/2d66d28))
