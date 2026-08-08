@@ -193,7 +193,7 @@ chore(deps): Update dependencies to latest versions
 
 ### Database Conventions
 
-- Use logical schemas (`auth`, `contacts`, `collectives`, `encounters`, `system`) — never `public`
+- Use logical schemas (`auth`, `friends`, `encounters`, `collectives`, `geodata`, `system`) — never `public`
 - Internal IDs: `SERIAL` — never exposed via the API
 - External IDs: `UUID` — used in all API responses and URLs
 - Use `TEXT` instead of `VARCHAR`

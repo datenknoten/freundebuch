@@ -96,6 +96,7 @@ PostgreSQL with PostGIS extension. Each domain gets its own schema — the `publ
 | `encounters` | Encounter tracking | encounters, encounter_friends |
 | `collectives` | Collectives (families, companies, clubs) | collective_types, collective_roles, collectives, collective_memberships, collective_addresses, collective_emails, collective_phones, collective_urls, collective_circles |
 | `geodata` | OpenStreetMap address data | import_batches, addresses, address_search_index, housenumbers |
+| `system` | Cross-cutting infrastructure | address_cache, notification_channels |
 
 **Key conventions:**
 - Internal `id` (SERIAL) for foreign keys — never exposed via API
