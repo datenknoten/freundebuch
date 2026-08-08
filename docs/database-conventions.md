@@ -14,6 +14,8 @@ All database tables MUST be organized into logical PostgreSQL schemas. Never use
 - `encounters` - Encounter tracking (encounters, encounter participants)
 - `collectives` - Collective management (collective types, roles, collectives, memberships, sub-resources)
 - `geodata` - OpenStreetMap address data for autocomplete (addresses, house numbers, import batches)
+- `system` - Cross-cutting infrastructure (notification channels)
+- `data_quality` - Data-quality suggestions (field provenance, snoozes, index history)
 
 **Example:**
 ```sql
