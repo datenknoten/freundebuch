@@ -3,6 +3,7 @@
 export { default as AddressSection } from './address-section.svelte';
 export { default as CircleSection } from './circle-section.svelte';
 export { default as CollectivesSection } from './collectives-section.svelte';
+export { default as DataQualitySection } from './data-quality-section.svelte';
 export { default as DateSection } from './date-section.svelte';
 export { default as EmailSection } from './email-section.svelte';
 export { default as PhoneSection } from './phone-section.svelte';

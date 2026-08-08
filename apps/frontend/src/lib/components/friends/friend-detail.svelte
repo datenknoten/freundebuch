@@ -1,9 +1,10 @@
 <script lang="ts">
-import { onMount } from 'svelte';
+import { onMount, tick } from 'svelte';
 import Heart from 'svelte-heros-v2/Heart.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import { page } from '$app/stores';
 import { primeKeyboardFocus } from '$lib/actions/auto-focus';
 import { getCollectivesForFriend } from '$lib/api/friends';
 import FabCreateMenu, {
@@ -29,6 +30,7 @@ import {
   AddressSection,
   CircleSection,
   CollectivesSection,
+  DataQualitySection,
   DateSection,
   EmailSection,
   PhoneSection,
@@ -186,6 +188,34 @@ onMount(() => {
     window.removeEventListener('shortcut:log-encounter', handleLogEncounter);
     window.removeEventListener('shortcut:open-friend-link', handleOpenFriendLink);
   };
+});
+
+/**
+ * `?add=<target>` deep link, used by the data-quality dashboard card.
+ *
+ * The section components register their `shortcut:add-*` listener in `onMount`
+ * unconditionally, so firing the existing event bus works even for an empty
+ * section. A parent's `onMount` runs after its children's; `tick()` additionally
+ * covers sections that render asynchronously.
+ *
+ * Keep in sync with the non-null `addTarget` values in `DQ_FIELD_CATALOG`.
+ */
+const ADD_TARGETS = new Set([
+  'date',
+  'phone',
+  'address',
+  'email',
+  'relationship',
+  'social',
+  'professional',
+]);
+
+onMount(async () => {
+  const add = $page.url.searchParams.get('add');
+  if (add === null || !ADD_TARGETS.has(add)) return;
+
+  await tick();
+  window.dispatchEvent(new CustomEvent(`shortcut:add-${add}`));
 });
 </script>
 
@@ -354,6 +384,9 @@ onMount(() => {
     linkStartIndex={relationshipStartIndex}
     existingRelationshipFriendIds={friend.relationships?.map(r => r.relatedFriendId)}
   />
+
+  <!-- ==================== OPEN DATA-QUALITY FIELDS ==================== -->
+  <DataQualitySection friendId={friend.id} />
 
   <!-- ==================== METADATA FOOTER ==================== -->
   <section class="text-sm text-gray-600 font-body">
