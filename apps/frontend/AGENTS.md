@@ -32,7 +32,8 @@ src/
 ├── lib/
 │   ├── components/   # Reusable components
 │   ├── stores/       # Svelte stores
-│   └── api/          # API client functions
+│   ├── api/          # API client functions
+│   └── test/         # Shared test helpers (see Testing below)
 ```
 
 ### Components
@@ -57,6 +58,34 @@ src/
 Detail pages that repeat the same CRUD shape across sub-resource types are driven by descriptors, not by an `editingType` discriminator with parallel if/else chains. `components/collectives/subresource-descriptors.ts` is the reference: one descriptor per type (phone, email, address, URL, circle) carrying its icon, i18n keys, API calls, Row/Form components, and per-type quirks. `subresource-section.svelte` renders any of them branch-free and owns its own CRUD, modal, and shortcut state.
 
 A section instance is reused when the page switches to another entity without unmounting, so it must drop stale in-flight loads and reset its items and modals when the entity changes.
+
+## Testing
+
+Component and store tests share the helpers in `src/lib/test/` — one import surface, `$lib/test`:
+
+| Helper | Exports | Use for |
+|--------|---------|---------|
+| `render.ts` | `render`, `screen`, `fireEvent`, `waitFor`, `within`, `cleanup`, `tick` | Component rendering (re-exports `@testing-library/svelte`; `tick()` flushes pending state before assertions) |
+| `fetch-mock.ts` | `stubFetch`, `restoreFetch`, `jsonResponse`, `unauthorizedResponse`, `nonJsonResponse` | Stubbing API responses without touching the network |
+| `store-harness.ts` | `createUpdateRecorder` | Recording the states a store emits |
+| `fixtures.ts` | `aFriend`, `aPhone`, `anEmail`, `anAddress`, `aUrl`, `aCollective`, … | Override-friendly test data builders |
+
+Reach for these instead of importing `@testing-library/svelte` directly or hand-rolling a fetch stub. Svelte 5 component testing is enabled by the `svelteTesting()` Vite plugin — no per-file setup needed.
+
+i18n is the exception: `vi.mock` is hoisted per module, so each component test declares its own mock of `$lib/i18n/index.js` whose `t` echoes the key back. Assertions then target stable translation keys rather than translated strings:
+
+```ts
+vi.mock('$lib/i18n/index.js', () => ({
+  createI18n: () => ({
+    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
+      run({ t: (k: string) => k });
+      return () => {};
+    },
+  }),
+}));
+```
+
+Coverage is reported per PR at an 80% threshold — see [docs/development.md](../../docs/development.md#coverage-reporting).
 
 ## Internationalization (i18n)
 
