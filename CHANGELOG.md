@@ -1,3 +1,18 @@
+## <small>2.92.1 (2026-08-08)</small>
+
+* fix(backend): Return the stored calendar day for date columns ([135c745](https://github.com/datenknoten/freundebuch/commit/135c745))
+* test(backend): Isolate tests from the ambient environment ([4dedd26](https://github.com/datenknoten/freundebuch/commit/4dedd26))
+* test(frontend): Make date rendering tests locale-independent ([c463111](https://github.com/datenknoten/freundebuch/commit/c463111))
+* docs: Add a self-hosting guide ([03a94d5](https://github.com/datenknoten/freundebuch/commit/03a94d5))
+* docs: Correct the documented database schema list ([9771910](https://github.com/datenknoten/freundebuch/commit/9771910))
+* docs: Document PR-scoped coverage reporting ([90858a2](https://github.com/datenknoten/freundebuch/commit/90858a2))
+* docs: Document the MCP OAuth 2.1 authorization flow ([d3ed52a](https://github.com/datenknoten/freundebuch/commit/d3ed52a))
+* docs: Document the mcp-server commit scope ([30d88a4](https://github.com/datenknoten/freundebuch/commit/30d88a4))
+* docs: Note that noExplicitAny is now a CI error ([a3739b8](https://github.com/datenknoten/freundebuch/commit/a3739b8))
+* docs: Start recording architecture decisions as ADRs ([011f1af](https://github.com/datenknoten/freundebuch/commit/011f1af))
+* docs(frontend): Document the shared test helpers ([ce17422](https://github.com/datenknoten/freundebuch/commit/ce17422))
+* docs(frontend): Record the descriptor-driven section pattern ([46acfe4](https://github.com/datenknoten/freundebuch/commit/46acfe4))
+
 ## 2.92.0 (2026-07-30)
 
 * fix(mcp-server): Accept null for optional create_encounter fields ([8f8c44c](https://github.com/datenknoten/freundebuch/commit/8f8c44c))
