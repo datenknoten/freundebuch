@@ -9,6 +9,7 @@
 import bcrypt from 'bcrypt';
 import pg from 'pg';
 import { getConfig } from '../utils/config.js';
+import { formatDateOnly } from '../utils/date.js';
 
 const SALT_ROUNDS = 10;
 async function hashPassword(password: string): Promise<string> {
@@ -208,7 +209,7 @@ async function seed() {
       for (const encounter of DEMO_ENCOUNTERS) {
         const encounterDate = new Date();
         encounterDate.setDate(encounterDate.getDate() - encounter.daysAgo);
-        const dateStr = encounterDate.toISOString().split('T')[0];
+        const dateStr = formatDateOnly(encounterDate);
 
         const encounterResult = await client.query(
           `INSERT INTO encounters.encounters (user_id, title, encounter_date, location_text, description)

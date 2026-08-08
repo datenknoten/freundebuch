@@ -32,6 +32,7 @@ import {
   removeMembership,
   updateMembershipRole,
 } from '../../models/queries/collectives.queries.js';
+import { formatDateOnly } from '../../utils/date.js';
 import {
   CollectiveNotFoundError,
   DuplicateMembershipError,
@@ -703,15 +704,11 @@ export class MembershipsService {
       },
       isActive: row.is_active,
       inactiveReason: row.inactive_reason,
-      inactiveDate: row.inactive_date ? this.formatDate(row.inactive_date) : null,
-      joinedDate: row.joined_date ? this.formatDate(row.joined_date) : null,
+      inactiveDate: row.inactive_date ? formatDateOnly(row.inactive_date) : null,
+      joinedDate: row.joined_date ? formatDateOnly(row.joined_date) : null,
       notes: row.notes,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
     };
-  }
-
-  private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
   }
 }

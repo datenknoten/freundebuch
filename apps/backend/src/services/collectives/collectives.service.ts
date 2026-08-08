@@ -31,6 +31,7 @@ import {
   type IGetRolesForTypeResult,
   updateCollective,
 } from '../../models/queries/collectives.queries.js';
+import { formatDateOnly } from '../../utils/date.js';
 import { CollectiveCreationError, CollectiveNotFoundError } from '../../utils/errors.js';
 
 const PREVIEW_MEMBER_LIMIT = 3;
@@ -336,8 +337,8 @@ export class CollectivesService {
       },
       isActive: row.is_active,
       inactiveReason: row.inactive_reason,
-      inactiveDate: row.inactive_date ? this.formatDate(row.inactive_date) : null,
-      joinedDate: row.joined_date ? this.formatDate(row.joined_date) : null,
+      inactiveDate: row.inactive_date ? formatDateOnly(row.inactive_date) : null,
+      joinedDate: row.joined_date ? formatDateOnly(row.joined_date) : null,
       notes: row.notes,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
@@ -359,10 +360,6 @@ export class CollectivesService {
       label: row.label,
       sortOrder: row.sort_order,
     };
-  }
-
-  private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
   }
 
   private mapContactCollectiveSummary(

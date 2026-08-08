@@ -29,6 +29,7 @@ import {
   type IGetEncountersByUserIdResult,
   updateEncounter,
 } from '../models/queries/encounters.queries.js';
+import { formatDateOnly } from '../utils/date.js';
 import { EncounterCreationError } from '../utils/errors.js';
 
 const PREVIEW_FRIEND_LIMIT = 3;
@@ -288,7 +289,7 @@ export class EncountersService {
       id: row.external_id,
       title: row.title,
       encounterType: row.encounter_type as EncounterType,
-      encounterDate: this.formatDate(row.encounter_date),
+      encounterDate: formatDateOnly(row.encounter_date),
     };
   }
 
@@ -304,7 +305,7 @@ export class EncountersService {
       id: row.external_id,
       title: row.title,
       encounterType: row.encounter_type as EncounterType,
-      encounterDate: this.formatDate(row.encounter_date),
+      encounterDate: formatDateOnly(row.encounter_date),
       locationText: row.location_text,
       description: row.description,
       friends: friends.map((f) => ('id' in f ? f : this.mapFriendSummary(f))),
@@ -321,7 +322,7 @@ export class EncountersService {
       id: row.external_id,
       title: row.title,
       encounterType: row.encounter_type as EncounterType,
-      encounterDate: this.formatDate(row.encounter_date),
+      encounterDate: formatDateOnly(row.encounter_date),
       locationText: row.location_text,
       friendCount: row.friend_count ?? 0,
       friends: friends.map((f) => this.mapFriendSummary(f)),
@@ -349,9 +350,5 @@ export class EncountersService {
           ]
         : [],
     );
-  }
-
-  private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
   }
 }

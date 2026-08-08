@@ -119,6 +119,26 @@ updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 - Prevents timezone-related bugs
 - Enables correct time comparisons across zones
 
+### Calendar Dates
+
+Use `DATE` for a day with no time component — a birthday, an encounter date, a
+"met on" date. Do **not** reach for `TIMESTAMPTZ`: a birthday has no instant and
+no zone, and storing one invites the reader to convert it.
+
+```sql
+encounter_date DATE NOT NULL
+```
+
+**Never format a `DATE` value with `toISOString()`.** node-postgres parses it
+into a JS `Date` at *local* midnight, so `'2024-07-01'` becomes
+`Mon Jul 01 2024 00:00:00 GMT+0200` on a server in Berlin, and
+`.toISOString().split('T')[0]` converts that back to UTC — yielding
+`'2024-06-30'`. Every deployment east of UTC silently reads dates a day early,
+and CI (which runs in UTC) never notices.
+
+Use `formatDateOnly` from `apps/backend/src/utils/date.ts`, which reads the
+local calendar components and returns the day the database actually holds.
+
 ### Booleans
 
 Use proper BOOLEAN type, not integers or strings.

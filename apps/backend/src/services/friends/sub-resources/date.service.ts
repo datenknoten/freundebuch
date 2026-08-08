@@ -10,6 +10,7 @@ import {
   type IGetUpcomingDatesResult,
   updateDate,
 } from '../../../models/queries/friend-dates.queries.js';
+import { formatDateOnly } from '../../../utils/date.js';
 import { BirthdayAlreadyExistsError } from '../../../utils/errors.js';
 import { parseDateType } from '../../../utils/type-guards.js';
 
@@ -178,9 +179,7 @@ export class DateService {
    * Map a date row to the FriendDate type
    */
   mapDate(row: IGetDatesByFriendIdResult): FriendDate {
-    // date_value comes as a Date object from PostgreSQL
-    const dateValue =
-      row.date_value instanceof Date ? row.date_value.toISOString().split('T')[0] : row.date_value;
+    const dateValue = formatDateOnly(row.date_value);
     return {
       id: row.external_id,
       dateValue,
@@ -195,9 +194,7 @@ export class DateService {
    * Map an upcoming date row to the UpcomingDate type
    */
   private mapUpcomingDate(row: IGetUpcomingDatesResult): UpcomingDate {
-    // date_value comes as a Date object from PostgreSQL
-    const dateValue =
-      row.date_value instanceof Date ? row.date_value.toISOString().split('T')[0] : row.date_value;
+    const dateValue = formatDateOnly(row.date_value);
     return {
       id: row.date_external_id,
       dateValue,

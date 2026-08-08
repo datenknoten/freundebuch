@@ -6,6 +6,7 @@ import {
   type IGetMetInfoByFriendIdResult,
   upsertMetInfo,
 } from '../../../models/queries/friend-met-info.queries.js';
+import { formatDateOnly } from '../../../utils/date.js';
 
 export interface MetInfoServiceOptions {
   db: pg.Pool;
@@ -78,11 +79,7 @@ export class MetInfoService {
    * Map a met info row to the MetInfo type
    */
   mapMetInfo(row: IGetMetInfoByFriendIdResult): MetInfo {
-    // met_date comes as a Date object from PostgreSQL
-    const metDate =
-      row.met_date instanceof Date
-        ? row.met_date.toISOString().split('T')[0]
-        : (row.met_date ?? undefined);
+    const metDate = formatDateOnly(row.met_date);
     return {
       id: row.external_id,
       metDate,

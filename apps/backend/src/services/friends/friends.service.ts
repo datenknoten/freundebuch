@@ -49,6 +49,7 @@ import {
   updateFriend,
   updateFriendPhoto,
 } from '../../models/queries/friends.queries.js';
+import { formatDateOnly } from '../../utils/date.js';
 import {
   parseAddressesJson,
   parseCirclesJson,
@@ -922,10 +923,7 @@ export class FriendsService {
   private mapFriendListItem(row: IGetFriendsByUserIdResult): FriendListItem {
     const circlesRaw = parseCirclesJson(row.circles);
 
-    const birthday =
-      row.birthday instanceof Date
-        ? row.birthday.toISOString().split('T')[0]
-        : (row.birthday ?? undefined);
+    const birthday = formatDateOnly(row.birthday);
 
     return {
       id: row.external_id,
