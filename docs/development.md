@@ -123,7 +123,7 @@ Single tool for linting and formatting (replaces ESLint + Prettier):
 ### Type Safety
 
 - TypeScript strict mode enabled across all workspaces
-- No `any` types - use `unknown` and narrow appropriately
+- No `any` types - use `unknown` and narrow appropriately. Biome's `noExplicitAny` is an **error**, so an un-suppressed `any` fails CI; the few legitimate casts (pg's overloaded `query`/`connect` in `utils/db.ts`) carry documented `biome-ignore` comments
 - ArkType for runtime validation at API boundaries
 - PgTyped for type-safe SQL queries
 
