@@ -309,6 +309,84 @@ VCARD;
     }
 
     #[Test]
+    public function updateCardKeepsVerifiedAtWhenTheCardIsUnchanged(): void
+    {
+        $user = $this->createTestUser();
+        $friend = $this->createTestFriend((int) $user['id']);
+        $uri = $friend['external_id'] . '.vcf';
+
+        $vcard = $this->vcardWithPhone($friend['external_id'], '+1234567890');
+
+        $this->backend->updateCard($user['id'], $uri, $vcard);
+        $first = $this->readFieldMeta((int) $friend['id'], 'phone_mobile');
+
+        $this->assertNotFalse($first, 'The first PUT must record provenance');
+        $this->assertEquals('carddav', $first['source']);
+
+        // Byte-identical re-PUT. The sub-resources are deleted and reinserted,
+        // but the value fingerprint is unchanged.
+        $this->backend->updateCard($user['id'], $uri, $vcard);
+        $second = $this->readFieldMeta((int) $friend['id'], 'phone_mobile');
+
+        $this->assertEquals($first['verified_at'], $second['verified_at']);
+        $this->assertEquals($first['value_fingerprint'], $second['value_fingerprint']);
+    }
+
+    #[Test]
+    public function updateCardMovesVerifiedAtWhenTheValueChanges(): void
+    {
+        $user = $this->createTestUser();
+        $friend = $this->createTestFriend((int) $user['id']);
+        $uri = $friend['external_id'] . '.vcf';
+
+        $this->backend->updateCard(
+            $user['id'],
+            $uri,
+            $this->vcardWithPhone($friend['external_id'], '+1234567890')
+        );
+        $before = $this->readFieldMeta((int) $friend['id'], 'phone_mobile');
+
+        $this->backend->updateCard(
+            $user['id'],
+            $uri,
+            $this->vcardWithPhone($friend['external_id'], '+1999999999')
+        );
+        $after = $this->readFieldMeta((int) $friend['id'], 'phone_mobile');
+
+        $this->assertGreaterThan($before['verified_at'], $after['verified_at']);
+        $this->assertNotEquals($before['value_fingerprint'], $after['value_fingerprint']);
+        $this->assertEquals('carddav', $after['source']);
+    }
+
+    private function vcardWithPhone(string $uid, string $phoneNumber): string
+    {
+        return <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:$uid
+FN:Test Friend
+N:Friend;Test;;;
+TEL;TYPE=CELL:$phoneNumber
+END:VCARD
+VCARD;
+    }
+
+    /**
+     * @return array<string, mixed>|false
+     */
+    private function readFieldMeta(int $friendId, string $fieldKey): array|false
+    {
+        $stmt = $this->getPdo()->prepare('
+            SELECT value_fingerprint, verified_at, source
+            FROM data_quality.field_meta
+            WHERE friend_id = :friend_id AND field_key = :field_key
+        ');
+        $stmt->execute(['friend_id' => $friendId, 'field_key' => $fieldKey]);
+
+        return $stmt->fetch();
+    }
+
+    #[Test]
     public function getChangesForAddressBookReturnsEmptyForInitialSync(): void
     {
         $user = $this->createTestUser();

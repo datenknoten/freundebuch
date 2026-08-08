@@ -36,6 +36,7 @@ import type {
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { refreshFieldMeta } from '../../models/queries/data-quality.queries.js';
 import {
   archiveFriend,
   createFriend,
@@ -62,7 +63,7 @@ import {
   parseSocialProfilesJson,
   parseUrlsJson,
 } from '../../utils/db-json-schemas.js';
-import { FriendCreationError } from '../../utils/errors.js';
+import { FriendCreationError, toError } from '../../utils/errors.js';
 import {
   parseAddressType,
   parseDateType,
@@ -201,6 +202,22 @@ export class FriendsService {
       this._metInfoService = new MetInfoService({ db: this.db, logger: this.logger });
     }
     return this._metInfoService;
+  }
+
+  // ============================================================================
+  // Data Quality
+  // ============================================================================
+
+  /**
+   * Recompute data-quality provenance for a friend. Fingerprint-based, so it is a
+   * no-op when nothing actually changed. Never allowed to fail a user-facing write.
+   */
+  private async refreshFieldMeta(userExternalId: string, friendExternalId: string): Promise<void> {
+    try {
+      await refreshFieldMeta.run({ userExternalId, friendExternalId, source: 'manual' }, this.db);
+    } catch (error) {
+      this.logger.warn({ err: toError(error), friendExternalId }, 'Failed to refresh field meta');
+    }
   }
 
   // ============================================================================
@@ -380,6 +397,9 @@ export class FriendsService {
 
     this.logger.info({ friendExternalId: friend.external_id }, 'Friend created successfully');
 
+    // After COMMIT, so current_field_state sees the committed sub-resources.
+    await this.refreshFieldMeta(userExternalId, friend.external_id);
+
     return {
       id: friend.external_id,
       displayName: friend.display_name,
@@ -448,6 +468,8 @@ export class FriendsService {
       return null;
     }
 
+    await this.refreshFieldMeta(userExternalId, friendExternalId);
+
     this.logger.info({ friendExternalId }, 'Friend updated successfully');
 
     return this.getFriendById(userExternalId, friendExternalId);
@@ -487,7 +509,11 @@ export class FriendsService {
     friendExternalId: string,
     data: PhoneInput,
   ): Promise<Phone | null> {
-    return this.phoneService.add(userExternalId, friendExternalId, data);
+    const result = await this.phoneService.add(userExternalId, friendExternalId, data);
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async updatePhone(
@@ -496,7 +522,16 @@ export class FriendsService {
     phoneExternalId: string,
     data: PhoneInput,
   ): Promise<Phone | null> {
-    return this.phoneService.update(userExternalId, friendExternalId, phoneExternalId, data);
+    const result = await this.phoneService.update(
+      userExternalId,
+      friendExternalId,
+      phoneExternalId,
+      data,
+    );
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async deletePhone(
@@ -504,7 +539,15 @@ export class FriendsService {
     friendExternalId: string,
     phoneExternalId: string,
   ): Promise<boolean> {
-    return this.phoneService.delete(userExternalId, friendExternalId, phoneExternalId);
+    const deleted = await this.phoneService.delete(
+      userExternalId,
+      friendExternalId,
+      phoneExternalId,
+    );
+    if (deleted) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return deleted;
   }
 
   // ============================================================================
@@ -516,7 +559,11 @@ export class FriendsService {
     friendExternalId: string,
     data: EmailInput,
   ): Promise<Email | null> {
-    return this.emailService.add(userExternalId, friendExternalId, data);
+    const result = await this.emailService.add(userExternalId, friendExternalId, data);
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async updateEmail(
@@ -525,7 +572,16 @@ export class FriendsService {
     emailExternalId: string,
     data: EmailInput,
   ): Promise<Email | null> {
-    return this.emailService.update(userExternalId, friendExternalId, emailExternalId, data);
+    const result = await this.emailService.update(
+      userExternalId,
+      friendExternalId,
+      emailExternalId,
+      data,
+    );
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async deleteEmail(
@@ -533,7 +589,15 @@ export class FriendsService {
     friendExternalId: string,
     emailExternalId: string,
   ): Promise<boolean> {
-    return this.emailService.delete(userExternalId, friendExternalId, emailExternalId);
+    const deleted = await this.emailService.delete(
+      userExternalId,
+      friendExternalId,
+      emailExternalId,
+    );
+    if (deleted) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return deleted;
   }
 
   // ============================================================================
@@ -545,7 +609,11 @@ export class FriendsService {
     friendExternalId: string,
     data: AddressInput,
   ): Promise<Address | null> {
-    return this.addressService.add(userExternalId, friendExternalId, data);
+    const result = await this.addressService.add(userExternalId, friendExternalId, data);
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async updateAddress(
@@ -554,7 +622,16 @@ export class FriendsService {
     addressExternalId: string,
     data: AddressInput,
   ): Promise<Address | null> {
-    return this.addressService.update(userExternalId, friendExternalId, addressExternalId, data);
+    const result = await this.addressService.update(
+      userExternalId,
+      friendExternalId,
+      addressExternalId,
+      data,
+    );
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async deleteAddress(
@@ -562,7 +639,15 @@ export class FriendsService {
     friendExternalId: string,
     addressExternalId: string,
   ): Promise<boolean> {
-    return this.addressService.delete(userExternalId, friendExternalId, addressExternalId);
+    const deleted = await this.addressService.delete(
+      userExternalId,
+      friendExternalId,
+      addressExternalId,
+    );
+    if (deleted) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return deleted;
   }
 
   // ============================================================================
@@ -616,7 +701,12 @@ export class FriendsService {
       this.db,
     );
 
-    return result.length > 0;
+    const updated = result.length > 0;
+    if (updated) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+
+    return updated;
   }
 
   // ============================================================================
@@ -688,7 +778,11 @@ export class FriendsService {
     friendExternalId: string,
     data: DateInput,
   ): Promise<FriendDate | null> {
-    return this.dateService.add(userExternalId, friendExternalId, data);
+    const result = await this.dateService.add(userExternalId, friendExternalId, data);
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async updateDate(
@@ -697,7 +791,16 @@ export class FriendsService {
     dateExternalId: string,
     data: DateInput,
   ): Promise<FriendDate | null> {
-    return this.dateService.update(userExternalId, friendExternalId, dateExternalId, data);
+    const result = await this.dateService.update(
+      userExternalId,
+      friendExternalId,
+      dateExternalId,
+      data,
+    );
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async deleteDate(
@@ -705,7 +808,11 @@ export class FriendsService {
     friendExternalId: string,
     dateExternalId: string,
   ): Promise<boolean> {
-    return this.dateService.delete(userExternalId, friendExternalId, dateExternalId);
+    const deleted = await this.dateService.delete(userExternalId, friendExternalId, dateExternalId);
+    if (deleted) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return deleted;
   }
 
   async getUpcomingDates(
@@ -724,11 +831,19 @@ export class FriendsService {
     friendExternalId: string,
     data: MetInfoInput,
   ): Promise<MetInfo | null> {
-    return this.metInfoService.set(userExternalId, friendExternalId, data);
+    const result = await this.metInfoService.set(userExternalId, friendExternalId, data);
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async deleteMetInfo(userExternalId: string, friendExternalId: string): Promise<boolean> {
-    return this.metInfoService.delete(userExternalId, friendExternalId);
+    const deleted = await this.metInfoService.delete(userExternalId, friendExternalId);
+    if (deleted) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return deleted;
   }
 
   // ============================================================================
@@ -740,7 +855,11 @@ export class FriendsService {
     friendExternalId: string,
     data: SocialProfileInput,
   ): Promise<SocialProfile | null> {
-    return this.socialProfileService.add(userExternalId, friendExternalId, data);
+    const result = await this.socialProfileService.add(userExternalId, friendExternalId, data);
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async updateSocialProfile(
@@ -749,12 +868,16 @@ export class FriendsService {
     profileExternalId: string,
     data: SocialProfileInput,
   ): Promise<SocialProfile | null> {
-    return this.socialProfileService.update(
+    const result = await this.socialProfileService.update(
       userExternalId,
       friendExternalId,
       profileExternalId,
       data,
     );
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async deleteSocialProfile(
@@ -762,7 +885,15 @@ export class FriendsService {
     friendExternalId: string,
     profileExternalId: string,
   ): Promise<boolean> {
-    return this.socialProfileService.delete(userExternalId, friendExternalId, profileExternalId);
+    const deleted = await this.socialProfileService.delete(
+      userExternalId,
+      friendExternalId,
+      profileExternalId,
+    );
+    if (deleted) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return deleted;
   }
 
   // ============================================================================
@@ -774,7 +905,15 @@ export class FriendsService {
     friendExternalId: string,
     data: ProfessionalHistoryInput,
   ): Promise<ProfessionalHistory | null> {
-    return this.professionalHistoryService.add(userExternalId, friendExternalId, data);
+    const result = await this.professionalHistoryService.add(
+      userExternalId,
+      friendExternalId,
+      data,
+    );
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async updateProfessionalHistory(
@@ -783,12 +922,16 @@ export class FriendsService {
     historyExternalId: string,
     data: ProfessionalHistoryInput,
   ): Promise<ProfessionalHistory | null> {
-    return this.professionalHistoryService.update(
+    const result = await this.professionalHistoryService.update(
       userExternalId,
       friendExternalId,
       historyExternalId,
       data,
     );
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return result;
   }
 
   async deleteProfessionalHistory(
@@ -796,11 +939,15 @@ export class FriendsService {
     friendExternalId: string,
     historyExternalId: string,
   ): Promise<boolean> {
-    return this.professionalHistoryService.delete(
+    const deleted = await this.professionalHistoryService.delete(
       userExternalId,
       friendExternalId,
       historyExternalId,
     );
+    if (deleted) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return deleted;
   }
 
   // ============================================================================
@@ -816,7 +963,18 @@ export class FriendsService {
     friendExternalId: string,
     data: RelationshipInput,
   ): Promise<Relationship | null> {
-    return this.relationshipService.addRelationship(userExternalId, friendExternalId, data);
+    const result = await this.relationshipService.addRelationship(
+      userExternalId,
+      friendExternalId,
+      data,
+    );
+    if (result !== null) {
+      // An inverse edge is written on the other side too, so both friends'
+      // `family` presence can change.
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+      await this.refreshFieldMeta(userExternalId, result.relatedFriendId);
+    }
+    return result;
   }
 
   async updateRelationship(
@@ -825,12 +983,17 @@ export class FriendsService {
     relationshipExternalId: string,
     data: RelationshipUpdateInput,
   ): Promise<Relationship | null> {
-    return this.relationshipService.updateRelationship(
+    const result = await this.relationshipService.updateRelationship(
       userExternalId,
       friendExternalId,
       relationshipExternalId,
       data,
     );
+    if (result !== null) {
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+      await this.refreshFieldMeta(userExternalId, result.relatedFriendId);
+    }
+    return result;
   }
 
   async deleteRelationship(
@@ -838,11 +1001,20 @@ export class FriendsService {
     friendExternalId: string,
     relationshipExternalId: string,
   ): Promise<boolean> {
-    return this.relationshipService.deleteRelationship(
+    const deleted = await this.relationshipService.deleteRelationship(
       userExternalId,
       friendExternalId,
       relationshipExternalId,
     );
+    if (deleted) {
+      // Only this side is refreshed: the deleted row no longer identifies the
+      // other friend. The other side's `family` provenance is then merely
+      // conservative — it keeps a value that is gone, which suppresses a
+      // suggestion rather than raising a wrong one, and self-heals on the next
+      // write to that friend.
+      await this.refreshFieldMeta(userExternalId, friendExternalId);
+    }
+    return deleted;
   }
 
   async searchFriends(

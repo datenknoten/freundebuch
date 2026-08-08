@@ -279,6 +279,11 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             // Epic 4: Assign circles from CATEGORIES
             $this->insertCircles((int) $addressBookId, $friendId, $friendData['categories'] ?? []);
 
+            // Data quality: refresh field provenance. Fingerprint-based, so the
+            // delete-and-reinsert above does not count as a value change.
+            $this->pdo->prepare('SELECT data_quality.refresh_field_meta(:friend_id, :source)')
+                ->execute(['friend_id' => $friendId, 'source' => 'carddav']);
+
             $this->pdo->commit();
 
             return '"' . md5($externalId . $result['updated_at']) . '"';
@@ -373,6 +378,11 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
 
             // Epic 4: Reassign circles from CATEGORIES
             $this->insertCircles((int) $addressBookId, $friendId, $friendData['categories'] ?? []);
+
+            // Data quality: refresh field provenance. Fingerprint-based, so the
+            // delete-and-reinsert above does not count as a value change.
+            $this->pdo->prepare('SELECT data_quality.refresh_field_meta(:friend_id, :source)')
+                ->execute(['friend_id' => $friendId, 'source' => 'carddav']);
 
             $this->pdo->commit();
 
