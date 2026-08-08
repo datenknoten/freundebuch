@@ -16,6 +16,9 @@ use Testcontainers\Wait\WaitForExec;
  */
 abstract class IntegrationTestCase extends TestCase
 {
+    /** Postgres listens on its default port inside the container; nothing is published. */
+    protected const CONTAINER_POSTGRES_PORT = 5432;
+
     protected static ?Container $container = null;
     protected static ?PDO $pdo = null;
 
@@ -31,27 +34,33 @@ abstract class IntegrationTestCase extends TestCase
             self::markTestSkipped('Docker is not available. Integration tests require Docker.');
         }
 
-        // Check if pnpm is available (needed for migrations)
-        if (!self::isPnpmAvailable()) {
-            self::markTestSkipped('pnpm is not available. Integration tests require pnpm for migrations.');
+        // Check if the migration runner is available (needed to build the schema)
+        if (!self::isMigrationRunnerAvailable()) {
+            self::markTestSkipped('aube is not available. Integration tests require aube for migrations.');
         }
 
         try {
             // Start PostGIS container (required for geodata migration)
-            // Uses the same image as docker-compose.yml for consistency
+            // Uses the same image as docker-compose.yml for consistency.
+            // `withNetwork('bridge')` is required: Docker Engine >= 28 leaves the
+            // legacy top-level NetworkSettings.IPAddress null, so the address can
+            // only be resolved through the named network.
             self::$container = Container::make('imresamu/postgis:18-3.6.1-trixie')
+                ->withNetwork('bridge')
                 ->withEnvironment('POSTGRES_PASSWORD', 'test')
                 ->withEnvironment('POSTGRES_USER', 'test')
                 ->withEnvironment('POSTGRES_DB', 'test')
                 ->withWait(new WaitForExec(['pg_isready', '-h', '127.0.0.1', '-U', 'test']));
 
-            self::$container->start();
+            // `run()` creates the container; `start()` only restarts an existing one.
+            self::$container->run();
 
-            // Create PDO connection
+            // Create PDO connection. No port is published, so the container's own
+            // address and the default Postgres port are used.
             $dsn = sprintf(
                 'pgsql:host=%s;port=%d;dbname=test',
-                self::$container->getHost(),
-                self::$container->getFirstMappedPort()
+                self::$container->getAddress(),
+                self::CONTAINER_POSTGRES_PORT
             );
 
             self::$pdo = new PDO($dsn, 'test', 'test', [
@@ -78,13 +87,13 @@ abstract class IntegrationTestCase extends TestCase
     }
 
     /**
-     * Check if pnpm is available on the system.
+     * Check if the database migration runner is available on the system.
      */
-    private static function isPnpmAvailable(): bool
+    private static function isMigrationRunnerAvailable(): bool
     {
         $output = [];
         $exitCode = 0;
-        @exec('pnpm --version 2>/dev/null', $output, $exitCode);
+        @exec('aube --version 2>/dev/null', $output, $exitCode);
         return $exitCode === 0;
     }
 
@@ -96,16 +105,16 @@ abstract class IntegrationTestCase extends TestCase
         // Build DATABASE_URL for the test container
         $databaseUrl = sprintf(
             'postgresql://test:test@%s:%d/test',
-            self::$container->getHost(),
-            self::$container->getFirstMappedPort()
+            self::$container->getAddress(),
+            self::CONTAINER_POSTGRES_PORT
         );
 
         // Get the project root directory (4 levels up from tests/Integration)
         $projectRoot = dirname(__DIR__, 4);
 
-        // Run migrations using pnpm
+        // Run migrations using aube, the repository's only supported runner.
         $command = sprintf(
-            'cd %s && DATABASE_URL=%s pnpm migrate 2>&1',
+            'cd %s && DATABASE_URL=%s aube migrate 2>&1',
             escapeshellarg($projectRoot),
             escapeshellarg($databaseUrl)
         );
@@ -113,10 +122,13 @@ abstract class IntegrationTestCase extends TestCase
         $output = [];
         $exitCode = 0;
         exec($command, $output, $exitCode);
+        $combined = implode("\n", $output);
 
-        if ($exitCode !== 0) {
+        // `aube run` reports 0 even when the underlying script fails, so the
+        // runner's own success banner is the only reliable signal.
+        if ($exitCode !== 0 || !str_contains($combined, 'Migrations complete')) {
             throw new \RuntimeException(
-                "Failed to run migrations (exit code: $exitCode): " . implode("\n", $output)
+                "Failed to run migrations (exit code: $exitCode): " . $combined
             );
         }
     }
@@ -159,15 +171,26 @@ abstract class IntegrationTestCase extends TestCase
         self::$pdo->exec('DELETE FROM friends.friend_addresses');
         self::$pdo->exec('DELETE FROM friends.friend_emails');
         self::$pdo->exec('DELETE FROM friends.friend_phones');
+        self::$pdo->exec('DELETE FROM friends.friend_professional_history');
         self::$pdo->exec('DELETE FROM friends.friends');
         self::$pdo->exec('DELETE FROM auth.app_passwords');
         self::$pdo->exec('DELETE FROM auth.users');
 
-        // Reset sequences
-        self::$pdo->exec("SELECT setval('auth.users_id_seq', 1, false)");
-        self::$pdo->exec("SELECT setval('auth.app_passwords_id_seq', 1, false)");
-        self::$pdo->exec("SELECT setval('friends.friends_id_seq', 1, false)");
-        self::$pdo->exec("SELECT setval('friends.friend_changes_id_seq', 1, false)");
+        // Reset sequences. The contacts -> friends rename left the underlying
+        // sequences under their original names, so they are looked up rather
+        // than spelled out.
+        foreach (
+            [
+                'auth.users',
+                'auth.app_passwords',
+                'friends.friends',
+                'friends.friend_changes',
+            ] as $table
+        ) {
+            self::$pdo->exec(
+                "SELECT setval(pg_get_serial_sequence('$table', 'id'), 1, false)"
+            );
+        }
     }
 
     /**
@@ -235,11 +258,7 @@ abstract class IntegrationTestCase extends TestCase
             'name_suffix' => null,
             'nickname' => null,
             'photo_url' => null,
-            'job_title' => null,
-            'organization' => null,
-            'department' => null,
             'interests' => null,
-            'work_notes' => null,
         ];
 
         $data = array_merge($defaults, $data);
@@ -247,12 +266,10 @@ abstract class IntegrationTestCase extends TestCase
         $stmt = self::$pdo->prepare('
             INSERT INTO friends.friends (
                 user_id, display_name, name_prefix, name_first, name_middle,
-                name_last, name_suffix, nickname, photo_url, job_title,
-                organization, department, interests, work_notes
+                name_last, name_suffix, nickname, photo_url, interests
             ) VALUES (
                 :user_id, :display_name, :name_prefix, :name_first, :name_middle,
-                :name_last, :name_suffix, :nickname, :photo_url, :job_title,
-                :organization, :department, :interests, :work_notes
+                :name_last, :name_suffix, :nickname, :photo_url, :interests
             )
             RETURNING *
         ');
@@ -266,11 +283,7 @@ abstract class IntegrationTestCase extends TestCase
             'name_suffix' => $data['name_suffix'],
             'nickname' => $data['nickname'],
             'photo_url' => $data['photo_url'],
-            'job_title' => $data['job_title'],
-            'organization' => $data['organization'],
-            'department' => $data['department'],
             'interests' => $data['interests'],
-            'work_notes' => $data['work_notes'],
         ]);
 
         return $stmt->fetch();
@@ -290,7 +303,7 @@ abstract class IntegrationTestCase extends TestCase
             'friend_id' => $friendId,
             'phone_number' => $phoneNumber,
             'phone_type' => $phoneType,
-            'is_primary' => $isPrimary,
+            'is_primary' => self::boolParam($isPrimary),
         ]);
 
         return $stmt->fetch();
@@ -310,9 +323,54 @@ abstract class IntegrationTestCase extends TestCase
             'friend_id' => $friendId,
             'email_address' => $emailAddress,
             'email_type' => $emailType,
-            'is_primary' => $isPrimary,
+            'is_primary' => self::boolParam($isPrimary),
         ]);
 
         return $stmt->fetch();
+    }
+
+    /**
+     * Add a professional history entry to a friend.
+     *
+     * Job and organisation live here since migration 1768800000000 moved them
+     * off friends.friends.
+     */
+    protected function addProfessionalHistoryToFriend(
+        int $friendId,
+        ?string $organization = null,
+        ?string $jobTitle = null,
+        ?string $department = null,
+        bool $isPrimary = true
+    ): array {
+        $stmt = self::$pdo->prepare('
+            INSERT INTO friends.friend_professional_history (
+                friend_id, job_title, organization, department,
+                from_month, from_year, is_primary
+            ) VALUES (
+                :friend_id, :job_title, :organization, :department,
+                1, 2020, :is_primary
+            )
+            RETURNING *
+        ');
+        $stmt->execute([
+            'friend_id' => $friendId,
+            'job_title' => $jobTitle,
+            'organization' => $organization,
+            'department' => $department,
+            'is_primary' => self::boolParam($isPrimary),
+        ]);
+
+        return $stmt->fetch();
+    }
+
+    /**
+     * Render a boolean for a PDO parameter.
+     *
+     * PDO's pgsql driver stringifies parameters, turning `false` into an empty
+     * string, which Postgres rejects as a boolean literal.
+     */
+    protected static function boolParam(bool $value): string
+    {
+        return $value ? 'true' : 'false';
     }
 }

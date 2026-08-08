@@ -89,7 +89,7 @@ class CardDAVServerIntegrationTest extends IntegrationTestCase
 
         $this->server->httpRequest = $request;
         $this->server->httpResponse = new HTTP\Response();
-        $this->server->sapi = new HTTP\SapiMock();
+        $this->server->sapi = new SapiMock();
 
         $this->server->exec();
 
@@ -109,7 +109,7 @@ class CardDAVServerIntegrationTest extends IntegrationTestCase
 
         $this->server->httpRequest = $request;
         $this->server->httpResponse = new HTTP\Response();
-        $this->server->sapi = new HTTP\SapiMock();
+        $this->server->sapi = new SapiMock();
 
         $this->server->exec();
 
@@ -134,7 +134,7 @@ class CardDAVServerIntegrationTest extends IntegrationTestCase
 
         $this->server->httpRequest = $request;
         $this->server->httpResponse = new HTTP\Response();
-        $this->server->sapi = new HTTP\SapiMock();
+        $this->server->sapi = new SapiMock();
         $this->server->exec();
 
         $this->assertEquals(401, $this->server->httpResponse->getStatus());
@@ -230,12 +230,19 @@ XML;
             'display_name' => 'Jane Smith',
             'name_first' => 'Jane',
             'name_last' => 'Smith',
-            'organization' => 'Acme Inc',
         ]);
+        $this->addProfessionalHistoryToFriend((int) $friend['id'], 'Acme Inc');
         $this->addPhoneToFriend((int) $friend['id'], '+1234567890', 'mobile');
         $this->addEmailToFriend((int) $friend['id'], 'jane@example.com', 'work');
 
-        $response = $this->request('GET', '/addressbooks/test@example.com/friends/' . $friend['external_id'] . '.vcf');
+        // Without an Accept header Sabre downgrades the card to vCard 3.0 for
+        // maximum client compatibility, so 4.0 has to be asked for explicitly.
+        $response = $this->request(
+            'GET',
+            '/addressbooks/test@example.com/friends/' . $friend['external_id'] . '.vcf',
+            null,
+            ['Accept' => 'text/vcard; version=4.0']
+        );
 
         $this->assertEquals(200, $response->getStatus());
         $this->assertStringContainsString('text/vcard', $response->getHeader('Content-Type'));
@@ -262,10 +269,13 @@ XML;
     #[Test]
     public function putCreatesNewCard(): void
     {
+        // friends.friends.external_id is a uuid column, so the card URI must be one.
+        $uid = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+
         $vcardData = <<<VCARD
 BEGIN:VCARD
 VERSION:4.0
-UID:new-contact-12345
+UID:$uid
 FN:New Contact
 N:Contact;New;;;
 ORG:New Company
@@ -276,7 +286,7 @@ VCARD;
 
         $response = $this->request(
             'PUT',
-            '/addressbooks/test@example.com/friends/new-contact-12345.vcf',
+            '/addressbooks/test@example.com/friends/' . $uid . '.vcf',
             $vcardData,
             ['Content-Type' => 'text/vcard']
         );
@@ -285,18 +295,16 @@ VCARD;
         $this->assertNotEmpty($response->getHeader('ETag'));
 
         // Verify the contact was created in the database
-        $stmt = $this->getPdo()->prepare("
-            SELECT * FROM friends.friends
-            WHERE external_id = 'new-contact-12345'
-        ");
-        $stmt->execute();
+        $stmt = $this->getPdo()->prepare('
+            SELECT * FROM friends.friends WHERE external_id = :external_id
+        ');
+        $stmt->execute(['external_id' => $uid]);
         $friend = $stmt->fetch();
 
         $this->assertNotFalse($friend);
         $this->assertEquals('New Contact', $friend['display_name']);
         $this->assertEquals('New', $friend['name_first']);
         $this->assertEquals('Contact', $friend['name_last']);
-        $this->assertEquals('New Company', $friend['organization']);
     }
 
     #[Test]
@@ -336,7 +344,6 @@ VCARD;
         $this->assertEquals('Updated Name', $updated['display_name']);
         $this->assertEquals('Updated', $updated['name_first']);
         $this->assertEquals('Name', $updated['name_last']);
-        $this->assertEquals('Updated Company', $updated['organization']);
     }
 
     #[Test]
@@ -546,7 +553,12 @@ XML;
             'photo_url' => 'https://example.com/nonexistent-photo.jpg',
         ]);
 
-        $response = $this->request('GET', '/addressbooks/test@example.com/friends/' . $friend['external_id'] . '.vcf');
+        $response = $this->request(
+            'GET',
+            '/addressbooks/test@example.com/friends/' . $friend['external_id'] . '.vcf',
+            null,
+            ['Accept' => 'text/vcard; version=4.0']
+        );
 
         $this->assertEquals(200, $response->getStatus());
         $this->assertStringContainsString('text/vcard', $response->getHeader('Content-Type'));

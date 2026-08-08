@@ -7,6 +7,7 @@ namespace Freundebuch\DAV\CardDAV;
 use PDO;
 use Sabre\CardDAV\Backend\AbstractBackend;
 use Sabre\CardDAV\Backend\SyncSupport;
+use Sabre\DAV\Exception\BadRequest;
 use Sabre\DAV\PropPatch;
 use Freundebuch\DAV\VCard\Mapper;
 
@@ -24,6 +25,36 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     {
         $this->pdo = $pdo;
         $this->mapper = new Mapper($pdo);
+    }
+
+    /**
+     * Extract the friend external_id from a card URI.
+     *
+     * friends.friends.external_id is a uuid column, so a card URI that is not a
+     * UUID can never identify a stored card. Returning null lets the callers
+     * answer "not found" instead of letting Postgres raise a 22P02.
+     */
+    private function parseExternalId(string $cardUri): ?string
+    {
+        $externalId = str_replace('.vcf', '', $cardUri);
+
+        $isUuid = preg_match(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
+            $externalId
+        ) === 1;
+
+        return $isUuid ? $externalId : null;
+    }
+
+    /**
+     * Render a boolean for a PDO parameter.
+     *
+     * PDO's pgsql driver stringifies parameters, turning `false` into an empty
+     * string, which Postgres rejects as a boolean literal.
+     */
+    private function boolParam(bool $value): string
+    {
+        return $value ? 'true' : 'false';
     }
 
     /**
@@ -136,7 +167,11 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
      */
     public function getCard($addressBookId, $cardUri): array|false
     {
-        $externalId = str_replace('.vcf', '', $cardUri);
+        $externalId = $this->parseExternalId($cardUri);
+
+        if ($externalId === null) {
+            return false;
+        }
 
         $friend = $this->mapper->getFriendByExternalId((int) $addressBookId, $externalId);
 
@@ -182,10 +217,17 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
      * @param string $cardUri The card URI
      * @param string $cardData vCard data
      * @return string|null ETag of created card
+     *
+     * @throws BadRequest When the card URI is not a UUID
      */
     public function createCard($addressBookId, $cardUri, $cardData): ?string
     {
-        $externalId = str_replace('.vcf', '', $cardUri);
+        $externalId = $this->parseExternalId($cardUri);
+
+        if ($externalId === null) {
+            throw new BadRequest('Card URIs must be a UUID followed by .vcf');
+        }
+
         $friendData = $this->mapper->vcardToFriend($cardData, $externalId);
         $vcardJson = $this->mapper->vcardToJson($cardData);
 
@@ -197,13 +239,11 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 INSERT INTO friends.friends (
                     user_id, external_id, display_name, name_prefix, name_first,
                     name_middle, name_last, name_suffix, nickname, photo_url,
-                    job_title, organization, department, interests, work_notes,
-                    vcard_raw_json, is_favorite
+                    interests, vcard_raw_json, is_favorite
                 ) VALUES (
                     :user_id, :external_id, :display_name, :name_prefix, :name_first,
                     :name_middle, :name_last, :name_suffix, :nickname, :photo_url,
-                    :job_title, :organization, :department, :interests, :work_notes,
-                    :vcard_raw_json, :is_favorite
+                    :interests, :vcard_raw_json, :is_favorite
                 )
                 RETURNING id, updated_at
             ');
@@ -218,13 +258,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'name_suffix' => $friendData['name_suffix'] ?? null,
                 'nickname' => $friendData['nickname'] ?? null,
                 'photo_url' => $friendData['photo_url'] ?? null,
-                'job_title' => $friendData['job_title'] ?? null,
-                'organization' => $friendData['organization'] ?? null,
-                'department' => $friendData['department'] ?? null,
                 'interests' => $friendData['interests'] ?? null,
-                'work_notes' => $friendData['work_notes'] ?? null,
                 'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
-                'is_favorite' => !empty($friendData['is_favorite']),
+                'is_favorite' => $this->boolParam(!empty($friendData['is_favorite'])),
             ]);
             $result = $stmt->fetch();
             $friendId = (int) $result['id'];
@@ -262,7 +298,12 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
      */
     public function updateCard($addressBookId, $cardUri, $cardData): ?string
     {
-        $externalId = str_replace('.vcf', '', $cardUri);
+        $externalId = $this->parseExternalId($cardUri);
+
+        if ($externalId === null) {
+            return null;
+        }
+
         $friendData = $this->mapper->vcardToFriend($cardData, $externalId);
         $vcardJson = $this->mapper->vcardToJson($cardData);
 
@@ -296,11 +337,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                     name_suffix = :name_suffix,
                     nickname = :nickname,
                     photo_url = :photo_url,
-                    job_title = :job_title,
-                    organization = :organization,
-                    department = :department,
                     interests = :interests,
-                    work_notes = :work_notes,
                     vcard_raw_json = :vcard_raw_json,
                     is_favorite = :is_favorite
                 WHERE id = :id
@@ -316,13 +353,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'name_suffix' => $friendData['name_suffix'] ?? null,
                 'nickname' => $friendData['nickname'] ?? null,
                 'photo_url' => $friendData['photo_url'] ?? null,
-                'job_title' => $friendData['job_title'] ?? null,
-                'organization' => $friendData['organization'] ?? null,
-                'department' => $friendData['department'] ?? null,
                 'interests' => $friendData['interests'] ?? null,
-                'work_notes' => $friendData['work_notes'] ?? null,
                 'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
-                'is_favorite' => !empty($friendData['is_favorite']),
+                'is_favorite' => $this->boolParam(!empty($friendData['is_favorite'])),
             ]);
             $result = $stmt->fetch();
 
@@ -359,7 +392,11 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
      */
     public function deleteCard($addressBookId, $cardUri): bool
     {
-        $externalId = str_replace('.vcf', '', $cardUri);
+        $externalId = $this->parseExternalId($cardUri);
+
+        if ($externalId === null) {
+            return false;
+        }
 
         // Soft delete
         $stmt = $this->pdo->prepare('
@@ -503,7 +540,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'friend_id' => $friendId,
                 'phone_number' => $phone['phone_number'],
                 'phone_type' => $phone['phone_type'] ?? 'mobile',
-                'is_primary' => !empty($phone['is_primary']),
+                'is_primary' => $this->boolParam(!empty($phone['is_primary'])),
             ]);
         }
     }
@@ -519,7 +556,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'friend_id' => $friendId,
                 'email_address' => $email['email_address'],
                 'email_type' => $email['email_type'] ?? 'personal',
-                'is_primary' => !empty($email['is_primary']),
+                'is_primary' => $this->boolParam(!empty($email['is_primary'])),
             ]);
         }
     }
@@ -544,7 +581,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'postal_code' => $addr['postal_code'] ?? null,
                 'country' => $addr['country'] ?? null,
                 'address_type' => $addr['address_type'] ?? 'home',
-                'is_primary' => !empty($addr['is_primary']),
+                'is_primary' => $this->boolParam(!empty($addr['is_primary'])),
             ]);
         }
     }
@@ -574,7 +611,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             $stmt->execute([
                 'friend_id' => $friendId,
                 'date_value' => $date['date_value'],
-                'year_known' => !empty($date['year_known']),
+                'year_known' => $this->boolParam(!empty($date['year_known'])),
                 'date_type' => $date['date_type'],
             ]);
         }
