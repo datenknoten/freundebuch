@@ -52,6 +52,12 @@ src/
 - Token refresh handled automatically
 - Same-origin requests in production (empty `VITE_API_URL`)
 
+### Data-Driven Sections
+
+Detail pages that repeat the same CRUD shape across sub-resource types are driven by descriptors, not by an `editingType` discriminator with parallel if/else chains. `components/collectives/subresource-descriptors.ts` is the reference: one descriptor per type (phone, email, address, URL, circle) carrying its icon, i18n keys, API calls, Row/Form components, and per-type quirks. `subresource-section.svelte` renders any of them branch-free and owns its own CRUD, modal, and shortcut state.
+
+A section instance is reused when the page switches to another entity without unmounting, so it must drop stale in-flight loads and reset its items and modals when the entity changes.
+
 ## Internationalization (i18n)
 
 **All user-facing text must use the i18n system - never hardcode strings.**
