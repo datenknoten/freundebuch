@@ -10,6 +10,9 @@ export default defineConfig({
     // One shared PostGIS container for the whole integration run; each suite
     // clones a fresh database from a migrated template (see global-setup.ts).
     globalSetup: ['./tests/integration/global-setup.ts'],
+    // Strip inherited config variables before every test file, so a developer
+    // who has sourced .env runs the same suite as CI (see setup-env.ts).
+    setupFiles: ['./tests/setup-env.ts'],
     // Show console output for failing tests but stay quiet for passing ones.
     silent: 'passed-only',
     exclude: ['node_modules', 'dist', '.git', '.cache'],
