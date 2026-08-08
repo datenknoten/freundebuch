@@ -46,6 +46,7 @@ Frontend runs at `http://localhost:5173`, backend at `http://localhost:3000`.
 | [Design Language](docs/design-language.md) | Visual design system |
 | [Brand](docs/brand.md) | Brand guidelines, colors, typography |
 | [Principles](docs/principles.md) | Core design principles |
+| [Decisions](docs/decisions/) | Architecture Decision Records |
 | [Roadmap](project-management/epics/) | Planned features as epics |
 
 ## Contributing
