@@ -14,6 +14,7 @@ This is a personal relationship tool, not a business/sales CRM.
 | Backend | Node.js + Hono | Lightweight RESTful API |
 | Auth | Better Auth (+ passkey plugin) | Sessions, passkeys/WebAuthn, app passwords for DAV |
 | CalDAV/CardDAV | PHP + SabreDAV | Device sync via open protocols |
+| MCP | Node.js + @modelcontextprotocol/sdk | AI assistant access over Streamable HTTP |
 | Database | PostgreSQL + PostGIS + PgTyped | Type-safe spatial queries |
 | Shared | TypeScript + ArkType | Cross-app types and runtime validation |
 | Package Manager | aube (pnpm-compatible workspaces) | Monorepo management |
@@ -47,6 +48,11 @@ freundebuch2/
 │   │   │       ├── actions/  # Form actions
 │   │   │       ├── i18n/     # Translations
 │   │   │       └── utils/
+│   │   └── tests/
+│   ├── mcp-server/           # Model Context Protocol server (Node.js)
+│   │   ├── src/
+│   │   │   ├── tools/        # MCP tool definitions (friends, encounters, …)
+│   │   │   └── utils/        # Bearer/Basic auth, config
 │   │   └── tests/
 │   └── sabredav/             # CalDAV/CardDAV server (PHP)
 │       ├── src/
@@ -91,7 +97,7 @@ PostgreSQL with PostGIS extension. Each domain gets its own schema — the `publ
 
 | Schema | Purpose | Key Tables |
 |--------|---------|------------|
-| `auth` | Authentication and sessions | user, session, account, verification, passkey (Better Auth), app_passwords; legacy users/sessions tables pending removal |
+| `auth` | Authentication and sessions | user, session, account, verification, passkey (Better Auth), app_passwords, oauth_application, oauth_access_token, oauth_consent (MCP OAuth provider); legacy users/sessions tables pending removal |
 | `friends` | Friend management | friends, friend_phones, friend_emails, friend_addresses, friend_urls, friend_dates, friend_professional_history, friend_social_profiles, friend_met_info, friend_relationships, friend_changes, circles, friend_circles |
 | `encounters` | Encounter tracking | encounters, encounter_friends |
 | `collectives` | Collectives (families, companies, clubs) | collective_types, collective_roles, collectives, collective_memberships, collective_addresses, collective_emails, collective_phones, collective_urls, collective_circles |
@@ -113,8 +119,13 @@ PostgreSQL with PostGIS extension. Each domain gets its own schema — the `publ
 | iCalendar | RFC 5545 | Calendar/reminder format |
 | CardDAV | RFC 6352 | Contact sync protocol |
 | CalDAV | RFC 4791 | Calendar sync protocol |
+| OAuth 2.1 + PKCE | RFC 6749 / 7636 | Authorization for remote MCP clients |
+| Dynamic Client Registration | RFC 7591 | Self-registration of MCP clients (e.g. claude.ai) |
+| Protected Resource Metadata | RFC 9728 | MCP authorization-server discovery |
 
 The SabreDAV app provides CardDAV/CalDAV protocol support, allowing friends to sync with standard clients (iOS Contacts, macOS Contacts, DAVx5, Thunderbird, etc.).
+
+The MCP server speaks the [Model Context Protocol](https://modelcontextprotocol.io) over Streamable HTTP, so AI assistants can read friends, circles, collectives, and encounters — and create encounters. It accepts either an app password via Basic auth or an OAuth 2.1 bearer token; see [decisions/0001](./decisions/0001-better-auth-as-oauth-server-for-mcp.md).
 
 ## Deployment
 
@@ -124,8 +135,11 @@ Multi-container Docker setup with multi-arch builds (amd64 + arm64). Images publ
 - Backend (Node.js)
 - Frontend (static build served by nginx)
 - SabreDAV (PHP-FPM)
+- MCP server (Node.js)
 - Nginx (reverse proxy)
 - PostgreSQL with PostGIS
+
+Nginx also exposes the OAuth discovery metadata at the origin root, since MCP clients probe `/.well-known/*` there. Set `BETTER_AUTH_URL` to the deployment's public HTTPS origin — backend and MCP server must agree on it, or OAuth discovery breaks.
 
 ## Feature Status
 

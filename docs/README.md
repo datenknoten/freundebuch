@@ -30,7 +30,7 @@ Welcome! Here's a map of everything in this folder, so you can find what you nee
 
 | Document | What's inside |
 |----------|---------------|
-| [security-authentication.md](./security-authentication.md) | How authentication and app passwords keep credentials safe |
+| [security-authentication.md](./security-authentication.md) | How sessions, app passwords, and MCP OAuth tokens keep credentials safe |
 | [postgis-address-autocomplete.md](./postgis-address-autocomplete.md) | Local OSM address data import and lookup setup |
 | [decisions/](./decisions/) | Architecture Decision Records — why we chose what we chose |
 
