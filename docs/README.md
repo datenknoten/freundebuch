@@ -9,6 +9,7 @@ Welcome! Here's a map of everything in this folder, so you can find what you nee
 | [concept.md](./concept.md) | The full product vision - features, scope, and roadmap phases |
 | [architecture.md](./architecture.md) | Tech stack, monorepo layout, database schemas, and feature status |
 | [principles.md](./principles.md) | The key principles every decision should honor |
+| [self-hosting.md](./self-hosting.md) | Running your own instance - images, configuration, upgrades, backups |
 
 ## Building & Contributing
 

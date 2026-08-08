@@ -42,6 +42,7 @@ Frontend runs at `http://localhost:5173`, backend at `http://localhost:3000`.
 | [Concept](docs/concept.md) | Project vision and goals |
 | [Architecture](docs/architecture.md) | Tech stack and monorepo structure |
 | [Development](docs/development.md) | Local setup and workflow |
+| [Self-Hosting](docs/self-hosting.md) | Running your own instance |
 | [Database Conventions](docs/database-conventions.md) | Schema design and naming patterns |
 | [Design Language](docs/design-language.md) | Visual design system |
 | [Brand](docs/brand.md) | Brand guidelines, colors, typography |

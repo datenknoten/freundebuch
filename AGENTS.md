@@ -18,6 +18,7 @@ This file provides guidance for AI coding assistants working with this codebase.
 | [docs/database-conventions.md](docs/database-conventions.md) | Database design patterns |
 | [docs/git-workflow.md](docs/git-workflow.md) | Branching model, commit conventions, git hooks |
 | [docs/decisions/](docs/decisions/) | Architecture Decision Records (MADR) |
+| [docs/self-hosting.md](docs/self-hosting.md) | Deployment, configuration, upgrades, backups |
 
 ## Subproject Guidelines
 

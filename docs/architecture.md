@@ -141,6 +141,8 @@ Multi-container Docker setup with multi-arch builds (amd64 + arm64). Images publ
 
 Nginx also exposes the OAuth discovery metadata at the origin root, since MCP clients probe `/.well-known/*` there. Set `BETTER_AUTH_URL` to the deployment's public HTTPS origin — backend and MCP server must agree on it, or OAuth discovery breaks.
 
+Running your own instance: [self-hosting.md](./self-hosting.md).
+
 ## Feature Status
 
 Detailed epics live in [project-management/epics/](../project-management/epics/).
