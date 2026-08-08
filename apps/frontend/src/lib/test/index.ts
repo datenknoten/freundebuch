@@ -7,5 +7,6 @@
 
 export * from './fetch-mock.js';
 export * from './fixtures.js';
+export * from './locale.js';
 export * from './render.js';
 export * from './store-harness.js';

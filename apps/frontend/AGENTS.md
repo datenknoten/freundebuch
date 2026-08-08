@@ -69,8 +69,11 @@ Component and store tests share the helpers in `src/lib/test/` — one import su
 | `fetch-mock.ts` | `stubFetch`, `restoreFetch`, `jsonResponse`, `unauthorizedResponse`, `nonJsonResponse` | Stubbing API responses without touching the network |
 | `store-harness.ts` | `createUpdateRecorder` | Recording the states a store emits |
 | `fixtures.ts` | `aFriend`, `aPhone`, `anEmail`, `anAddress`, `aUrl`, `aCollective`, … | Override-friendly test data builders |
+| `locale.ts` | `withDefaultLocale` | Pinning the default locale around a render, for date/number formatting |
 
 Reach for these instead of importing `@testing-library/svelte` directly or hand-rolling a fetch stub. Svelte 5 component testing is enabled by the `svelteTesting()` Vite plugin — no per-file setup needed.
+
+Anything rendered through `toLocaleDateString` and friends depends on the machine: Node fixes its default locale from `LANG` at startup, so asserting a bare `"May"` passes in CI and fails on a `de_DE` laptop. Assert locale-independent facts, or wrap the render in `withDefaultLocale('en-US', …)` and assert the full formatted string. `TZ` is pinned to UTC in `vite.config.ts`, so date-only values do not drift a day in western timezones.
 
 i18n is the exception: `vi.mock` is hoisted per module, so each component test declares its own mock of `$lib/i18n/index.js` whose `t` echoes the key back. Assertions then target stable translation keys rather than translated strings:
 
