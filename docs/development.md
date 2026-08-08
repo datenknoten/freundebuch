@@ -62,6 +62,7 @@ aube test                   # Run all tests across workspaces
 aube test:unit              # Run unit tests (Vitest)
 aube test:integration       # Run integration tests (Vitest)
 aube test:e2e               # Run E2E tests (Playwright)
+aube --filter @freundebuch/frontend run test:coverage   # Unit tests with coverage
 
 # Code Quality
 aube check                  # Run Biome check (lint + format, auto-fixes)
@@ -134,3 +135,11 @@ Single tool for linting and formatting (replaces ESLint + Prettier):
 - Write tests for new features and bug fixes
 - Integration tests for API endpoints
 - E2E tests for critical user flows
+
+### Coverage reporting
+
+Coverage is reported per pull request rather than enforced per workspace: CI runs the tests with coverage, and a [Danger](https://danger.systems) rule (`packages/danger/src/rules/coverage.ts`) comments on the PR with the coverage of the files it changed, at an 80% threshold.
+
+It is **report-only** today — files below threshold are marked but the build still passes. The gate becomes blocking once the frontend baseline clears 80%. Backend coverage is not generated yet, because v8 instrumentation pushes its Better Auth integration tests past their timeout. See [ADR 0002](./decisions/0002-pr-coverage-via-danger.md).
+
+Frontend tests share the helpers in `apps/frontend/src/lib/test/` (render helpers, store harness, fetch mock, fixtures) — see [apps/frontend/AGENTS.md](../apps/frontend/AGENTS.md).
