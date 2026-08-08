@@ -172,6 +172,7 @@ Optional footer (e.g., Closes #42)
 |-------|------|
 | `frontend` | SvelteKit app |
 | `backend` | Hono API server |
+| `mcp-server` | MCP server for AI assistants |
 | `shared` | Shared package |
 | `database` | Migrations and schema |
 | `docs` | Documentation |
@@ -232,6 +233,7 @@ freundebuch2/
 ├── apps/
 │   ├── backend/        # Hono API server (Node.js)
 │   ├── frontend/       # SvelteKit application
+│   ├── mcp-server/     # MCP server for AI assistants (Node.js)
 │   └── sabredav/       # PHP CalDAV/CardDAV server
 ├── packages/
 │   └── shared/         # Shared types & utilities

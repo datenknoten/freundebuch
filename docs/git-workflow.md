@@ -60,6 +60,7 @@ The description should be sentence case, imperative mood, and not end with a per
 | `all` | Affects everything |
 | `backend` | `apps/backend` (Node/Hono) |
 | `frontend` | `apps/frontend` (SvelteKit) |
+| `mcp-server` | `apps/mcp-server` (Model Context Protocol) |
 | `shared` | `packages/shared` |
 | `database` | Database migrations and schema |
 | `docs` | Documentation files |
