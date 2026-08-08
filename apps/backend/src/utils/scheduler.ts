@@ -12,8 +12,10 @@ import {
 // Legacy table cleanup is kept during the transition period.
 import { deleteExpiredPasswordResetTokens } from '../models/queries/password-reset-tokens.queries.js';
 import { deleteExpiredSessions } from '../models/queries/sessions.queries.js';
+import { DataQualityService } from '../services/data-quality/index.js';
 import { dispatchNotification } from '../services/external/notification-dispatcher.js';
 import { getConfig } from './config.js';
+import { formatDateOnly } from './date.js';
 import { toError } from './errors.js';
 import { formatNotificationMessage } from './notification-messages.js';
 
@@ -92,6 +94,64 @@ export function setupNotificationScheduler(pool: pg.Pool, logger: Logger): Sched
 
   logger.info('Notification scheduler initialized - runs every minute');
   return task;
+}
+
+/**
+ * Setup the nightly data-quality index snapshot.
+ * Runs at 03:15 so it lands after the hourly cleanup and well outside peak use.
+ */
+export function setupDataQualityIndexScheduler(pool: pg.Pool, logger: Logger): ScheduledTask {
+  // node-cron does not await async callbacks; a slow run must not overlap.
+  let running = false;
+  const task = cron.schedule('15 3 * * *', async () => {
+    if (running) {
+      logger.warn('Data-quality snapshot still running from a previous tick, skipping');
+      return;
+    }
+    running = true;
+    try {
+      await snapshotDataQualityIndex(pool, logger);
+    } finally {
+      running = false;
+    }
+  });
+
+  logger.info('Data-quality index scheduler initialized - runs nightly at 03:15');
+  return task;
+}
+
+/**
+ * Write one data-quality index value per user for today.
+ *
+ * Idempotent: the upsert is keyed on (user_id, snapshot_date). A single user's
+ * failure must not abort the tick, so each is isolated.
+ */
+async function snapshotDataQualityIndex(pool: pg.Pool, logger: Logger): Promise<void> {
+  const service = new DataQualityService({ db: pool, logger });
+  const today = formatDateOnly(new Date());
+
+  let userExternalIds: string[];
+  try {
+    userExternalIds = await service.listUserExternalIds();
+  } catch (error) {
+    const err = toError(error);
+    logger.error({ err }, 'Failed to list users for the data-quality snapshot');
+    Sentry.captureException(err);
+    return;
+  }
+
+  for (const userExternalId of userExternalIds) {
+    try {
+      const value = await service.snapshotIndexForUser(userExternalId, today);
+      logger.debug({ userExternalId, value }, 'Data-quality index snapshot written');
+    } catch (error) {
+      const err = toError(error);
+      logger.error({ err, userExternalId }, 'Failed to snapshot the data-quality index');
+      Sentry.captureException(err);
+    }
+  }
+
+  logger.info({ userCount: userExternalIds.length }, 'Data-quality index snapshot completed');
 }
 
 /**
@@ -174,4 +234,12 @@ export async function runCleanupNow(pool: pg.Pool, logger: Logger): Promise<void
     Sentry.captureException(err);
     throw err;
   }
+}
+
+/**
+ * Run the data-quality index snapshot immediately (manual trigger / testing).
+ */
+export async function runDataQualitySnapshotNow(pool: pg.Pool, logger: Logger): Promise<void> {
+  logger.info('Running immediate data-quality index snapshot');
+  await snapshotDataQualityIndex(pool, logger);
 }

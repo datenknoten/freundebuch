@@ -16,6 +16,7 @@ import appPasswordsRoutes from './routes/app-passwords.js';
 import authRoutes from './routes/auth.js';
 import circlesRoutes from './routes/circles.js';
 import collectivesRoutes from './routes/collectives.js';
+import dataQualityRoutes from './routes/data-quality.js';
 import encountersRoutes from './routes/encounters.js';
 import friendsRoutes from './routes/friends/index.js';
 import healthRoutes from './routes/health.js';
@@ -30,7 +31,11 @@ import { getConfig } from './utils/config.js';
 import { checkDatabaseConnection, createPool, setupGracefulShutdown } from './utils/db.js';
 import { DatabaseConnectionError, isAppError, toError } from './utils/errors.js';
 import { createLogger } from './utils/logger.js';
-import { setupCleanupScheduler, setupNotificationScheduler } from './utils/scheduler.js';
+import {
+  setupCleanupScheduler,
+  setupDataQualityIndexScheduler,
+  setupNotificationScheduler,
+} from './utils/scheduler.js';
 
 Error.stackTraceLimit = 100;
 
@@ -94,6 +99,7 @@ export async function createApp(pool: pg.Pool) {
   app.route('/api/sentry-tunnel', sentryTunnelRoutes);
   app.route('/api/address-lookup', addressLookupRoutes);
   app.route('/api/notification-channels', notificationChannelsRoutes);
+  app.route('/api/data-quality', dataQualityRoutes);
 
   // Error handling
   app.onError((err, c) => {
@@ -163,6 +169,9 @@ export async function startServer() {
   // Setup notification scheduler for daily date digest messages
   const notificationTask = setupNotificationScheduler(pool, pinoLogger);
 
+  // Setup the nightly data-quality index snapshot that feeds the sparkline
+  const dataQualityTask = setupDataQualityIndexScheduler(pool, pinoLogger);
+
   pinoLogger.info(`Starting server on port ${port}`);
 
   const server = serve({
@@ -172,7 +181,11 @@ export async function startServer() {
 
   // Register graceful shutdown now that the server and cron tasks exist, so
   // SIGTERM/SIGINT stops cron, drains in-flight requests, then closes the pool.
-  setupGracefulShutdown({ pool, server, tasks: [cleanupTask, notificationTask] });
+  setupGracefulShutdown({
+    pool,
+    server,
+    tasks: [cleanupTask, notificationTask, dataQualityTask],
+  });
 
   return { app, port, logger: pinoLogger };
 }
