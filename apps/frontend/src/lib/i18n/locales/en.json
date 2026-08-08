@@ -1140,6 +1140,53 @@
       "nextWeek": "Next week"
     }
   },
+  "dataQuality": {
+    "title": "Fill in your data",
+    "tabs": {
+      "quickWins": "Quick wins",
+      "worthwhile": "Worth it"
+    },
+    "empty": "All set — there is nothing to fill in right now.",
+    "actions": {
+      "fill": "Add",
+      "later": "Later",
+      "notApplicable": "Doesn't apply"
+    },
+    "actionFailed": "That didn't work. Please try again.",
+    "state": {
+      "missing": "{{field}} is missing",
+      "stale_one": "{{field}}: not confirmed for a month",
+      "stale_other": "{{field}}: not confirmed for {{count}} months"
+    },
+    "reasons": {
+      "birthdaySoon_one": "Birthday tomorrow",
+      "birthdaySoon_other": "Birthday in {{count}} days",
+      "recentEncounter": "You met recently",
+      "newFriend": "Recently added",
+      "upcomingEncounter_one": "Meeting tomorrow",
+      "upcomingEncounter_other": "Meeting in {{count}} days"
+    },
+    "index": {
+      "title": "Data quality",
+      "empty": "No history yet"
+    },
+    "friendSection": {
+      "title": "Open details",
+      "empty": "Everything is filled in for this friend.",
+      "notApplicableHint": "Doesn't apply"
+    },
+    "fields": {
+      "birthday": "Birthday",
+      "phoneMobile": "Mobile number",
+      "addressPostal": "Postal address",
+      "relationshipContext": "How you know each other",
+      "email": "Email address",
+      "family": "Family (partner, children)",
+      "socialProfile": "Social media profile",
+      "employerRole": "Job and employer",
+      "photo": "Photo"
+    }
+  },
   "facets": {
     "location": "Location",
     "professional": "Professional",

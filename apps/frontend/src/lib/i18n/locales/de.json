@@ -1140,6 +1140,53 @@
       "nextWeek": "Nächste Woche"
     }
   },
+  "dataQuality": {
+    "title": "Daten ergänzen",
+    "tabs": {
+      "quickWins": "Schnell erledigt",
+      "worthwhile": "Lohnt sich"
+    },
+    "empty": "Alles beisammen – hier gibt es gerade nichts zu ergänzen.",
+    "actions": {
+      "fill": "Ergänzen",
+      "later": "Später",
+      "notApplicable": "Trifft nicht zu"
+    },
+    "actionFailed": "Das hat nicht geklappt. Versuch es noch einmal.",
+    "state": {
+      "missing": "{{field}} fehlt",
+      "stale_one": "{{field}}: seit einem Monat nicht bestätigt",
+      "stale_other": "{{field}}: seit {{count}} Monaten nicht bestätigt"
+    },
+    "reasons": {
+      "birthdaySoon_one": "Geburtstag morgen",
+      "birthdaySoon_other": "Geburtstag in {{count}} Tagen",
+      "recentEncounter": "Ihr habt euch gerade getroffen",
+      "newFriend": "Neu hinzugefügt",
+      "upcomingEncounter_one": "Treffen morgen",
+      "upcomingEncounter_other": "Treffen in {{count}} Tagen"
+    },
+    "index": {
+      "title": "Datenqualität",
+      "empty": "Noch keine Verlaufsdaten"
+    },
+    "friendSection": {
+      "title": "Offene Angaben",
+      "empty": "Bei diesem Freund ist alles ausgefüllt.",
+      "notApplicableHint": "Trifft nicht zu"
+    },
+    "fields": {
+      "birthday": "Geburtstag",
+      "phoneMobile": "Handynummer",
+      "addressPostal": "Postadresse",
+      "relationshipContext": "Wie ihr euch kennt",
+      "email": "E-Mail-Adresse",
+      "family": "Familie (Partner, Kinder)",
+      "socialProfile": "Social-Media-Profil",
+      "employerRole": "Job und Arbeitgeber",
+      "photo": "Foto"
+    }
+  },
   "facets": {
     "location": "Standort",
     "professional": "Beruflich",

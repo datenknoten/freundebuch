@@ -1,10 +1,18 @@
 <script lang="ts">
+import { getDqIndex, getDqSuggestions } from '$lib/api/data-quality';
 import { getDashboardData } from '$lib/api/friends';
+import DataQualityCard from '$lib/components/dashboard/data-quality-card.svelte';
+import DqSparkline from '$lib/components/dashboard/dq-sparkline.svelte';
 import NetworkGraph from '$lib/components/dashboard/network-graph.svelte';
 import UpcomingDates from '$lib/components/dashboard/upcoming-dates.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
-import type { NetworkGraphData, UpcomingDate } from '$shared';
+import type {
+  DqIndexResponse,
+  DqSuggestionsResponse,
+  NetworkGraphData,
+  UpcomingDate,
+} from '$shared';
 
 const i18n = createI18n();
 
@@ -17,11 +25,20 @@ let userDisplayName = $derived($currentUser?.displayName || $currentUser?.email 
 const UPCOMING_DAYS = 30;
 const UPCOMING_LIMIT = 10;
 
+/** The card renders at most this many suggestions, so asking for more is waste. */
+const DQ_LIMIT = 5;
+const DQ_INDEX_DAYS = 90;
+
 let upcomingDates = $state<UpcomingDate[]>([]);
 let networkGraph = $state<NetworkGraphData | null>(null);
 let isDashboardLoading = $state(true);
 let dashboardError = $state<string | null>(null);
 let dashboardLoaded = false;
+
+let dqSuggestions = $state<DqSuggestionsResponse | null>(null);
+let dqIndex = $state<DqIndexResponse | null>(null);
+let isDqLoading = $state(true);
+let dqError = $state<string | null>(null);
 
 $effect(() => {
   if (!$isAuthInitialized) return;
@@ -30,6 +47,7 @@ $effect(() => {
     if (dashboardLoaded) return;
     dashboardLoaded = true;
     loadDashboard();
+    loadDataQuality();
   } else {
     // Reset so re-authentication in the same SPA session reloads the dashboard
     // instead of showing the previous (or empty) state.
@@ -48,6 +66,27 @@ async function loadDashboard() {
     dashboardError = err instanceof Error ? err.message : 'Failed to load dashboard';
   } finally {
     isDashboardLoading = false;
+  }
+}
+
+/**
+ * Loaded separately and with its own error handling: a data-quality failure
+ * must not blank the rest of the dashboard.
+ */
+async function loadDataQuality() {
+  isDqLoading = true;
+  dqError = null;
+  try {
+    const [suggestions, index] = await Promise.all([
+      getDqSuggestions({ limit: DQ_LIMIT }),
+      getDqIndex(DQ_INDEX_DAYS),
+    ]);
+    dqSuggestions = suggestions;
+    dqIndex = index;
+  } catch (err) {
+    dqError = err instanceof Error ? err.message : 'Failed to load data quality';
+  } finally {
+    isDqLoading = false;
   }
 }
 </script>
@@ -82,6 +121,20 @@ async function loadDashboard() {
 					days={UPCOMING_DAYS}
 					limit={UPCOMING_LIMIT}
 				/>
+				<div>
+					<DataQualityCard
+						suggestions={dqSuggestions}
+						isLoading={isDqLoading}
+						error={dqError}
+						onRetry={loadDataQuality}
+						onChanged={loadDataQuality}
+					/>
+					{#if dqIndex}
+						<div class="mt-3 px-6">
+							<DqSparkline current={dqIndex.current} history={dqIndex.history} />
+						</div>
+					{/if}
+				</div>
 				<div class="bg-white rounded-xl shadow-lg p-6">
 					<h3 class="text-xl font-heading text-gray-800 mb-4">{$i18n.t('home.quickActions')}</h3>
 					<div class="space-y-3">
