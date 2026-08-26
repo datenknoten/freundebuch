@@ -1,3 +1,8 @@
+## 2.93.0 (2026-08-26)
+
+* docs: Mention encounter editing in the MCP server overview ([8960205](https://github.com/datenknoten/freundebuch/commit/8960205))
+* feat(mcp-server): Add edit_encounter tool ([9cf3683](https://github.com/datenknoten/freundebuch/commit/9cf3683))
+
 ## <small>2.92.1 (2026-08-08)</small>
 
 * fix(backend): Return the stored calendar day for date columns ([135c745](https://github.com/datenknoten/freundebuch/commit/135c745))
