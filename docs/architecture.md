@@ -125,7 +125,7 @@ PostgreSQL with PostGIS extension. Each domain gets its own schema — the `publ
 
 The SabreDAV app provides CardDAV/CalDAV protocol support, allowing friends to sync with standard clients (iOS Contacts, macOS Contacts, DAVx5, Thunderbird, etc.).
 
-The MCP server speaks the [Model Context Protocol](https://modelcontextprotocol.io) over Streamable HTTP, so AI assistants can read friends, circles, collectives, and encounters — and create encounters. It accepts either an app password via Basic auth or an OAuth 2.1 bearer token; see [decisions/0001](./decisions/0001-better-auth-as-oauth-server-for-mcp.md).
+The MCP server speaks the [Model Context Protocol](https://modelcontextprotocol.io) over Streamable HTTP, so AI assistants can read friends, circles, collectives, and encounters — and create or edit encounters. It accepts either an app password via Basic auth or an OAuth 2.1 bearer token; see [decisions/0001](./decisions/0001-better-auth-as-oauth-server-for-mcp.md).
 
 ## Deployment
 
