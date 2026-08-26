@@ -423,7 +423,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
       return { baseUrl, sessionId, email: testUser.email, password: testUser.appPassword };
     }
 
-    it('should list all 13 tools', async () => {
+    it('should list all 14 tools', async () => {
       const { baseUrl, testUser } = getContext();
       const sessionId = await initMcpSession(baseUrl, testUser.email, testUser.appPassword);
 
@@ -436,7 +436,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
       const result = body as { result?: { tools?: Array<{ name: string }> } };
       const toolNames = result.result?.tools?.map((t) => t.name) ?? [];
 
-      expect(toolNames.length).toBeGreaterThanOrEqual(13);
+      expect(toolNames.length).toBeGreaterThanOrEqual(14);
       expect(toolNames).toContain('list_friends');
       expect(toolNames).toContain('get_friend');
       expect(toolNames).toContain('search_friends');
@@ -450,6 +450,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
       expect(toolNames).toContain('list_encounters');
       expect(toolNames).toContain('get_encounter');
       expect(toolNames).toContain('create_encounter');
+      expect(toolNames).toContain('edit_encounter');
     });
 
     it('list_friends should return a paginated list', async () => {
@@ -618,6 +619,138 @@ describe('MCP Server', { timeout: 60000 }, () => {
         [encounter.id],
       );
       expect(persisted.rows[0]?.title).toBe('Lunch downtown');
+    });
+
+    /** Create a friend and an encounter with that friend, returning both IDs. */
+    async function seedEncounter(auth: {
+      baseUrl: string;
+      sessionId: string;
+      email: string;
+      password: string;
+    }) {
+      const { pool, testUser } = getContext();
+      const friendResult = await pool.query(
+        `INSERT INTO friends.friends (user_id, display_name)
+         SELECT u.id, 'Editable Friend'
+         FROM auth.users u WHERE u.external_id = $1
+         RETURNING external_id`,
+        [testUser.externalId],
+      );
+      const friendId = friendResult.rows[0].external_id;
+
+      const { body } = await callTool(
+        auth.baseUrl,
+        'create_encounter',
+        {
+          title: 'Original title',
+          encounterDate: '2024-07-01',
+          encounterType: 'in_person',
+          friendIds: [friendId],
+          locationText: 'The Diner',
+          description: 'Caught up over lunch.',
+        },
+        auth,
+      );
+      const created = JSON.parse(
+        (body as { result?: { content?: Array<{ text?: string }> } }).result?.content?.[0]?.text ??
+          '{}',
+      );
+      return { friendId, encounterId: created.id as string };
+    }
+
+    it('edit_encounter should update only the fields that were passed', async () => {
+      const { pool } = getContext();
+      const auth = await getSessionAndAuth();
+      const { encounterId } = await seedEncounter(auth);
+
+      const { body } = await callTool(
+        auth.baseUrl,
+        'edit_encounter',
+        {
+          encounterId,
+          title: 'Updated title',
+          encounterDate: '2024-08-15',
+          encounterType: 'video_call',
+        },
+        auth,
+      );
+
+      const result = body as { result?: { content?: Array<{ text?: string }> } };
+      const encounter = JSON.parse(result.result?.content?.[0]?.text ?? '{}');
+      expect(encounter.id).toBe(encounterId);
+      expect(encounter.title).toBe('Updated title');
+      expect(encounter.encounterDate).toBe('2024-08-15');
+      expect(encounter.encounterType).toBe('video_call');
+      // Untouched fields keep their previous values
+      expect(encounter.locationText).toBe('The Diner');
+      expect(encounter.description).toBe('Caught up over lunch.');
+      expect(encounter.friends).toHaveLength(1);
+
+      const persisted = await pool.query(
+        `SELECT title, location_text FROM encounters.encounters WHERE external_id = $1`,
+        [encounterId],
+      );
+      expect(persisted.rows[0]?.title).toBe('Updated title');
+      expect(persisted.rows[0]?.location_text).toBe('The Diner');
+    });
+
+    it('edit_encounter should clear nullable fields when passed null', async () => {
+      const auth = await getSessionAndAuth();
+      const { encounterId } = await seedEncounter(auth);
+
+      const { body } = await callTool(
+        auth.baseUrl,
+        'edit_encounter',
+        { encounterId, title: null, locationText: null, description: null },
+        auth,
+      );
+
+      const result = body as { result?: { content?: Array<{ text?: string }> } };
+      const encounter = JSON.parse(result.result?.content?.[0]?.text ?? '{}');
+      expect(encounter.title).toBeNull();
+      expect(encounter.locationText).toBeNull();
+      expect(encounter.description).toBeNull();
+      expect(encounter.encounterDate).toBe('2024-07-01');
+    });
+
+    it('edit_encounter should replace the associated friends', async () => {
+      const { pool, testUser } = getContext();
+      const auth = await getSessionAndAuth();
+      const { encounterId } = await seedEncounter(auth);
+
+      const replacement = await pool.query(
+        `INSERT INTO friends.friends (user_id, display_name)
+         SELECT u.id, 'Replacement Friend'
+         FROM auth.users u WHERE u.external_id = $1
+         RETURNING external_id`,
+        [testUser.externalId],
+      );
+      const replacementId = replacement.rows[0].external_id;
+
+      const { body } = await callTool(
+        auth.baseUrl,
+        'edit_encounter',
+        { encounterId, friendIds: [replacementId] },
+        auth,
+      );
+
+      const result = body as { result?: { content?: Array<{ text?: string }> } };
+      const encounter = JSON.parse(result.result?.content?.[0]?.text ?? '{}');
+      expect(encounter.friends).toHaveLength(1);
+      expect(encounter.friends[0].id).toBe(replacementId);
+    });
+
+    it('edit_encounter should return not found for a non-existent encounter', async () => {
+      const auth = await getSessionAndAuth();
+      const { body } = await callTool(
+        auth.baseUrl,
+        'edit_encounter',
+        { encounterId: '00000000-0000-0000-0000-000000000000', title: 'Nope' },
+        auth,
+      );
+
+      const result = body as { result?: { content?: Array<{ text?: string }> } };
+      expect(result.result?.content?.[0]?.text).toBe('Encounter not found.');
     });
 
     it('get_upcoming_dates should return dates array', async () => {
