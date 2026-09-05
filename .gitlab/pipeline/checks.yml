@@ -1,0 +1,58 @@
+# Code checks. Ported from .github/workflows/ci.yml, folded into one Node job:
+# GitHub's five separate JS jobs each paid a full `aube ci`, which dominates their
+# runtime.
+
+checks:
+  extends: .node
+  stage: check
+  # DAG: starts immediately, waits for nothing.
+  needs: []
+  # The checks belong to the code under review, not to the [skip ci] release commit
+  # that a release tag points at (release.yml behaves the same way).
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: on_success
+  # Testcontainers needs a daemon: apps/backend's vitest globalSetup and
+  # apps/mcp-server's test helpers start imresamu/postgis:18-3.6.1-trixie. A GitLab
+  # `services: postgres` would go unused — apps/backend/tests/setup-env.ts strips
+  # DATABASE_URL from the environment.
+  services:
+    - name: docker:29-dind
+      alias: docker
+  variables:
+    # The mise image has no docker-entrypoint auto-configuration, so point the
+    # client at the daemon explicitly and run it without TLS.
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    TESTCONTAINERS_HOST_OVERRIDE: docker
+    # Ryuk's reaper is pointless here: the dind service dies with the job.
+    TESTCONTAINERS_RYUK_DISABLED: "true"
+    NODE_ENV: test
+  # 18 integration files with fileParallelism disabled, 120 s container startup.
+  tags: [saas-linux-medium-amd64]
+  timeout: 1h
+  script:
+    # `aube run check`, never bare `aube check` — the latter is aube's dependency-tree
+    # verifier, not the biome script.
+    - aube run check
+    - aube type-check
+    # Runs before the tests on purpose: it produces packages/shared/dist, which the
+    # frontend suite imports through the $shared alias.
+    - aube build
+    - aube --recursive run test
+
+php:
+  stage: check
+  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: on_success
+  # apps/sabredav/vendor is committed and composer's platform_check only asserts
+  # PHP >= 8.4, so the stock image needs no extensions: the unit tests mock PDO and
+  # the Integration suite self-skips (it requires `docker info` *and* `pnpm`).
+  image: php:8.4-cli
+  script:
+    - cd apps/sabredav
+    - ./vendor/bin/phpunit

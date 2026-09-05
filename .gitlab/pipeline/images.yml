@@ -1,0 +1,140 @@
+# Container images. Ported from .github/workflows/release.yml's docker-build and
+# docker-manifest jobs, retargeted at this project's registry:
+# registry.gitlab.com/datenknoten/freundebuch/<image>. GitHub's dash-suffix naming
+# (freundebuch-backend) cannot be expressed inside one GitLab project.
+
+# Sequential build of all five images for one architecture. ARCH is supplied by the
+# concrete jobs below.
+.build-images:
+  # .buildx: the docker-container driver required by --cache-to type=registry.
+  extends: .buildx
+  stage: build
+  # DAG: tag pipelines contain no earlier jobs; start immediately.
+  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG
+  # A release must finish even when a newer pipeline appears (release.yml keeps
+  # cancel-in-progress: false for the same reason).
+  interruptible: false
+  timeout: 2h
+  script:
+    - VERSION="${CI_COMMIT_TAG#v}"
+    - |
+      for IMAGE in nginx backend mcp-server sabredav osm-import; do
+        TARGET=""
+        case "$IMAGE" in
+          nginx)      DOCKERFILE=docker/Dockerfile.nginx.prod ;;
+          backend)    DOCKERFILE=docker/Dockerfile.backend.prod ;;
+          mcp-server) DOCKERFILE=docker/Dockerfile.backend.prod; TARGET=mcp-server ;;
+          sabredav)   DOCKERFILE=docker/Dockerfile.sabredav.prod ;;
+          osm-import) DOCKERFILE=docker/Dockerfile.osm-import ;;
+        esac
+        IMG="$CI_REGISTRY_IMAGE/$IMAGE"
+        set --
+        # Only the nginx image bakes a frontend build arg (Dockerfile.nginx.prod).
+        if [ "$IMAGE" = "nginx" ]; then set -- --build-arg "VITE_SENTRY_DSN=$VITE_SENTRY_DSN"; fi
+        if [ -n "$TARGET" ]; then set -- "$@" --target "$TARGET"; fi
+        echo "=== building $IMAGE ($ARCH) ==="
+        # provenance/sbom off: they turn a single-platform build into a manifest
+        # list, which breaks the per-arch fan-in in the manifest job.
+        docker buildx build "$@" \
+          --platform "linux/$ARCH" \
+          --file "$DOCKERFILE" \
+          --tag "$IMG:$VERSION-$ARCH" \
+          --cache-from "type=registry,ref=$IMG:buildcache-$ARCH" \
+          --cache-to "type=registry,ref=$IMG:buildcache-$ARCH,mode=max" \
+          --provenance=false \
+          --sbom=false \
+          --push \
+          .
+      done
+
+build:amd64:
+  extends: .build-images
+  variables:
+    ARCH: amd64
+  tags: [saas-linux-medium-amd64]
+
+# Native arm64 instead of QEMU; medium is the smallest Premium arm64 machine type.
+build:arm64:
+  extends: .build-images
+  variables:
+    ARCH: arm64
+  tags: [saas-linux-medium-arm64]
+
+manifest:
+  extends: .docker
+  stage: manifest
+  needs: [build:amd64, build:arm64]
+  rules:
+    - if: $CI_COMMIT_TAG
+  interruptible: false
+  variables:
+    COSIGN_VERSION: v3.1.3
+    COSIGN_SHA256: "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71"
+  # Keyless signing: GitLab mints an OIDC token with aud=sigstore, and cosign picks
+  # it up from $SIGSTORE_ID_TOKEN automatically. No key material exists anywhere.
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
+  before_script:
+    - !reference [.docker, before_script]
+    # Pinned static binary: `apk add cosign` floats with the alpine base of
+    # docker:29-cli (3.24 ships v3.0.6, 3.22 shipped v2.4.3 — and v2/v3 store
+    # signatures in different places).
+    - wget -qO /usr/local/bin/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+    - echo "${COSIGN_SHA256}  /usr/local/bin/cosign" | sha256sum -c -
+    - chmod +x /usr/local/bin/cosign
+  script:
+    - VERSION="${CI_COMMIT_TAG#v}"
+    - |
+      for IMAGE in nginx backend mcp-server sabredav osm-import; do
+        IMG="$CI_REGISTRY_IMAGE/$IMAGE"
+        # Same tag set release.yml publishes: version, major.minor, major, latest.
+        docker buildx imagetools create \
+          --tag "$IMG:$VERSION" \
+          --tag "$IMG:${VERSION%.*}" \
+          --tag "$IMG:${VERSION%%.*}" \
+          --tag "$IMG:latest" \
+          "$IMG:$VERSION-amd64" "$IMG:$VERSION-arm64"
+        # Sign the fused index by digest; the index digest commits to both arch
+        # manifests, so --recursive is unnecessary. cosign v3 stores the signature
+        # as an OCI referrer, which lands as an extra `sha256-<hex>` tag here
+        # (GitLab's registry has no referrers listing API). cosign reuses the
+        # docker login above through the default docker-config keychain.
+        DIGEST="$(docker buildx imagetools inspect "$IMG:$VERSION" --format '{{.Manifest.Digest}}')"
+        cosign sign --yes "$IMG@$DIGEST"
+        # Verify in-job so a signature-storage regression fails this pipeline
+        # instead of a consumer. Identity = https:// + ci_config_ref_uri claim;
+        # the double slash is load-bearing, and the path names the top-level
+        # .gitlab-ci.yml even though this job is defined in an included file.
+        cosign verify \
+          --certificate-oidc-issuer "$CI_SERVER_URL" \
+          --certificate-identity "$CI_PROJECT_URL//.gitlab-ci.yml@refs/tags/$CI_COMMIT_TAG" \
+          "$IMG@$DIGEST" > /dev/null
+      done
+
+# MR-only, exactly like ci.yml's docker-smoke: pushes to main and tags build the
+# real images instead.
+docker-smoke:
+  extends: .buildx
+  stage: check
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  tags: [saas-linux-medium-amd64]
+  script:
+    - docker buildx build --load --file docker/Dockerfile.backend.prod --target backend
+      --tag freundebuch-backend:ci --platform linux/amd64
+      --cache-from "type=registry,ref=$CI_REGISTRY_IMAGE/backend:buildcache-amd64" .
+    - docker buildx build --load --file docker/Dockerfile.backend.prod --target mcp-server
+      --tag freundebuch-mcp-server:ci --platform linux/amd64
+      --cache-from "type=registry,ref=$CI_REGISTRY_IMAGE/mcp-server:buildcache-amd64" .
+    - docker buildx build --load --file docker/Dockerfile.nginx.prod
+      --tag freundebuch-nginx:ci --platform linux/amd64
+      --cache-from "type=registry,ref=$CI_REGISTRY_IMAGE/nginx:buildcache-amd64" .
+    # Resolve modules from each app's own directory, the way the real CMD does.
+    - docker run --rm -w /app/apps/backend freundebuch-backend:ci node -e "require('bcrypt'); require('sharp');"
+    - docker run --rm -w /app/apps/mcp-server freundebuch-mcp-server:ci node -e "require('bcrypt');"
+    - docker run --rm freundebuch-nginx:ci test -f /app/frontend/index.html
+    - echo "Docker smoke tests passed"
