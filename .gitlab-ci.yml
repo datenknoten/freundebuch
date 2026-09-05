@@ -1,0 +1,39 @@
+# GitLab CI — shadow-mode parity with .github/workflows/{ci,release}.yml.
+#
+# GitHub stays the source of truth: semantic-release, GitHub Releases and the
+# ghcr.io images keep running there. This pipeline (a) reproduces the ci.yml checks
+# on mirrored pushes to main and on GitLab MRs, and (b) publishes the five release
+# images to this project's container registry when a release tag arrives.
+#
+# Tag pipelines are created over the REST API by .github/workflows/gitlab-mirror.yml.
+# They cannot come from the tag push itself: every semantic-release commit says
+# "[skip ci]", and GitLab skips push-sourced pipelines on such commits, while
+# POST /projects/:id/pipeline sets ignore_skip_ci.
+#
+# Like release.yml, the checks run on the merge commit (branch/MR pipeline) and the
+# images are built from the tag, so the check stage is excluded from tag pipelines
+# rather than re-run against the release commit.
+
+include:
+  - local: .gitlab/pipeline/defaults.yml
+  - local: .gitlab/pipeline/checks.yml
+  - local: .gitlab/pipeline/images.yml
+
+stages:
+  - check
+  - build
+  - manifest
+
+workflow:
+  rules:
+    # A mirrored tag push is skipped anyway ([skip ci] release commit); refuse it
+    # explicitly so a hand-pushed tag can never produce a second publish pipeline
+    # next to the API-created one.
+    - if: $CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Suppress the duplicate branch pipeline while an MR is open for that branch.
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"

@@ -1,0 +1,66 @@
+name: Mirror to GitLab
+
+# semantic-release pushes the release commit and tag with GITHUB_TOKEN, and pushes
+# made with GITHUB_TOKEN do not trigger workflows — so `on: push` would miss every
+# release. Release runs on every push to main, so its completion is the reliable
+# signal that main (and any new tag) is final.
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: gitlab-mirror
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    name: Push main + tags to GitLab
+    runs-on: ubuntu-latest
+    env:
+      GITLAB_API: https://gitlab.com/api/v4/projects/datenknoten%2Ffreundebuch
+    steps:
+      - name: Checkout main with full history and tags
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push to GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
+        # No --force: GitLab's main only ever receives mirrored commits, so a
+        # non-fast-forward push means GitHub history was rewritten and should fail
+        # loudly. Pushing an already-present tag is a no-op.
+        run: |
+          git push "https://oauth2:${GITLAB_TOKEN}@gitlab.com/datenknoten/freundebuch.git" \
+            "HEAD:refs/heads/main" "refs/tags/*:refs/tags/*"
+
+      - name: Trigger the GitLab tag pipeline
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
+        # GitLab skips push-sourced pipelines whose commit message contains
+        # "[skip ci]" — which every semantic-release commit does. POST /pipeline
+        # sets ignore_skip_ci, so the publish pipeline is created explicitly here.
+        run: |
+          set -euo pipefail
+          TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)
+          if [ -z "$TAG" ]; then
+            echo "HEAD carries no release tag; the mirrored branch push already started the check pipeline."
+            exit 0
+          fi
+          EXISTING=$(curl -sSf -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+            "${GITLAB_API}/pipelines?ref=${TAG}" \
+            | jq '[.[] | select(.status != "skipped")] | length')
+          if [ "$EXISTING" -gt 0 ]; then
+            echo "A pipeline for ${TAG} already exists; nothing to do."
+            exit 0
+          fi
+          curl -sSf -X POST -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+            "${GITLAB_API}/pipeline?ref=${TAG}" \
+            | jq -r '"Created pipeline \(.id): \(.web_url)"'

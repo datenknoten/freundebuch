@@ -1,0 +1,66 @@
+# Pipeline-wide variables and job templates. Included by /.gitlab-ci.yml.
+
+variables:
+  # CI installs node + aube only; see mise.ci.toml. This variable replaces mise's
+  # whole config discovery, so mise.toml (and its hk postinstall hook) is not read.
+  MISE_OVERRIDE_CONFIG_FILENAMES: mise.ci.toml
+  MISE_TRUSTED_CONFIG_PATHS: $CI_PROJECT_DIR
+  MISE_YES: "1"
+  # Parity with jdx/mise-action's `experimental: true` in the GitHub workflows.
+  MISE_EXPERIMENTAL: "1"
+  # mise and aube must keep their state inside the project: GitLab can only cache
+  # paths under $CI_PROJECT_DIR. The image defaults to MISE_DATA_DIR=/mise.
+  MISE_DATA_DIR: $CI_PROJECT_DIR/.mise/data
+  AUBE_STORE_DIR: $CI_PROJECT_DIR/.aube/store
+
+default:
+  interruptible: true
+
+# Node/aube toolchain. node_modules is deliberately NOT cached — it is huge and
+# archiving it costs more than `aube ci` does when the content-addressed aube store
+# is warm. Only the store and mise's tool installs are cached.
+.node:
+  image:
+    # The image's ENTRYPOINT is mise itself; GitLab needs to run its own shell.
+    name: ghcr.io/jdx/mise:2026.8.10
+    entrypoint: [""]
+  before_script:
+    - mise install
+    # Relocating MISE_DATA_DIR moves the shims out of the image's PATH.
+    - export PATH="$MISE_DATA_DIR/shims:$PATH"
+    - aube ci
+  cache:
+    - key:
+        prefix: mise
+        files: [mise.ci.toml]
+      paths: [.mise/data]
+    - key:
+        prefix: aube
+        files: [pnpm-lock.yaml]
+      paths: [.aube/store]
+
+.docker:
+  image: docker:29-cli
+  services:
+    - name: docker:29-dind
+      alias: docker
+      # Arm64 hosted runners hit an MTU mismatch inside dind (gitlab#473739).
+      command: ["--mtu=1400"]
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+
+# Builds. buildx refuses to create a builder while the current context is the
+# env-derived `default` one and DOCKER_TLS_VERIFY/DOCKER_CERT_PATH are set
+# (buildx builder/builder.go: "could not create a builder instance with TLS data
+# loaded from environment"), which is exactly the dind-with-TLS setup above.
+# Persisting the same host + TLS material as a named context lifts the guard.
+.buildx:
+  extends: .docker
+  before_script:
+    - !reference [.docker, before_script]
+    # The context name must differ from the builder name, otherwise buildx says
+    # `instance name "ci" already exists as context builder`.
+    - docker context create builder-ctx
+    - docker buildx create --use --name ci --driver docker-container builder-ctx

@@ -1,0 +1,10 @@
+# mise configuration used exclusively by CI.
+#
+# `MISE_OVERRIDE_CONFIG_FILENAMES=mise.ci.toml` (set in .gitlab/pipeline/defaults.yml)
+# makes mise load this file *instead of* mise.toml, which keeps CI from installing
+# the git-hook toolchain (hk, pkl) and from running mise.toml's postinstall hook
+# (`hk install --mise`). Keep the versions here in lockstep with mise.toml.
+
+[tools]
+node = "24.9.0"
+aube = "1.2.0"

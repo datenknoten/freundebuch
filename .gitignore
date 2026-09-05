@@ -18,6 +18,13 @@ mise.local.toml
 hk.local.pkl
 .mise.local.toml
 
+# CI-local tool state: .gitlab/pipeline/defaults.yml points MISE_DATA_DIR and
+# AUBE_STORE_DIR here because GitLab can only cache paths inside the project.
+# Keeping them ignored also keeps biome (vcs.useIgnoreFile) from linting the
+# installed toolchains.
+.mise/
+.aube/
+
 # IDE
 .vscode/
 .idea/
