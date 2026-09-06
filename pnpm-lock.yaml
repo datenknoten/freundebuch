@@ -1390,9 +1390,6 @@ importers:
       jsdom:
         specifier: '*'
         version: 27.3.0
-      jsonwebtoken:
-        specifier: 9.0.3
-        version: 9.0.3
       kysely:
         specifier: ^0.28.5
         version: 0.28.17
@@ -1454,9 +1451,6 @@ importers:
       '@types/bcrypt':
         specifier: 6.0.0
         version: 6.0.0
-      '@types/jsonwebtoken':
-        specifier: 9.0.10
-        version: 9.0.10
       '@types/node':
         specifier: 25.0.3
         version: 25.0.3
@@ -1466,9 +1460,6 @@ importers:
       '@types/pg':
         specifier: 8.16.0
         version: 8.16.0
-      '@types/sharp':
-        specifier: 0.32.0
-        version: 0.32.0
       '@types/supertest':
         specifier: 6.0.3
         version: 6.0.3
