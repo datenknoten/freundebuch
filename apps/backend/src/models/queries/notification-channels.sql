@@ -138,9 +138,10 @@ SELECT
     nc.discord_webhook_url,
     nc.lookahead_days,
     u.external_id AS user_external_id,
-    COALESCE(u.preferences->>'language', 'en') AS user_language
+    COALESCE(bu.preferences->>'language', 'en') AS user_language
 FROM system.notification_channels nc
 INNER JOIN auth.users u ON nc.user_id = u.id
+INNER JOIN auth."user" bu ON bu.id = u.external_id::text
 -- notify_time <= now (not exact equality): if a tick is delayed past the
 -- minute boundary (GC pause, restart, deploy), the digest still fires on the
 -- next tick. The last_notified_date gate keeps it to once per day.
