@@ -1,7 +1,7 @@
 import { type } from 'arktype';
-import type { Paginated } from './pagination.js';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import type { CircleSummary } from './circles.js';
+import type { Paginated } from './pagination.js';
 
 /**
  * Friend types and validation schemas for Epic 1A & 1B: Friend CRUD & Extended Fields
