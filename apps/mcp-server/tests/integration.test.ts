@@ -402,8 +402,8 @@ describe('MCP Server', { timeout: 60000 }, () => {
       const friends1 = JSON.parse(r1.result?.content?.[0]?.text ?? '{}');
       const friends2 = JSON.parse(r2.result?.content?.[0]?.text ?? '{}');
 
-      const names1 = friends1.friends?.map((f: { displayName: string }) => f.displayName) ?? [];
-      const names2 = friends2.friends?.map((f: { displayName: string }) => f.displayName) ?? [];
+      const names1 = friends1.data?.map((f: { displayName: string }) => f.displayName) ?? [];
+      const names2 = friends2.data?.map((f: { displayName: string }) => f.displayName) ?? [];
 
       expect(names1).toContain('TestUser Only Friend');
       expect(names1).not.toContain('OtherUser Only Friend');
@@ -473,8 +473,8 @@ describe('MCP Server', { timeout: 60000 }, () => {
 
       const result = body as { result?: { content?: Array<{ text?: string }> } };
       const data = JSON.parse(result.result?.content?.[0]?.text ?? '{}');
-      expect(data.friends.length).toBeGreaterThanOrEqual(3);
-      expect(data.total).toBeGreaterThanOrEqual(3);
+      expect(data.data.length).toBeGreaterThanOrEqual(3);
+      expect(data.pagination.totalCount).toBeGreaterThanOrEqual(3);
     });
 
     it('get_friend should return friend details', async () => {
@@ -574,7 +574,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
 
       const result = body as { result?: { content?: Array<{ text?: string }> } };
       const data = JSON.parse(result.result?.content?.[0]?.text ?? '{}');
-      expect(data.encounters.length).toBeGreaterThanOrEqual(1);
+      expect(data.data.length).toBeGreaterThanOrEqual(1);
     });
 
     it('create_encounter should create an encounter with friends', async () => {

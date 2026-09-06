@@ -6,7 +6,7 @@ describe('EncounterInputSchema', () => {
     const data = {
       title: 'Coffee meetup',
       encounter_date: '2025-01-15',
-      friend_ids: ['abc-123'],
+      friend_ids: ['11111111-1111-4111-8111-111111111111'],
     };
     const result = EncounterInputSchema(data);
     expect(result).toEqual({ ...data, encounter_type: 'in_person' });
@@ -16,12 +16,12 @@ describe('EncounterInputSchema', () => {
     const result = EncounterInputSchema({
       encounter_date: '2025-01-15',
       encounter_type: 'phone_call',
-      friend_ids: ['abc-123'],
+      friend_ids: ['11111111-1111-4111-8111-111111111111'],
     });
     expect(result).toEqual({
       encounter_date: '2025-01-15',
       encounter_type: 'phone_call',
-      friend_ids: ['abc-123'],
+      friend_ids: ['11111111-1111-4111-8111-111111111111'],
     });
   });
 
@@ -29,7 +29,7 @@ describe('EncounterInputSchema', () => {
     const result = EncounterInputSchema({
       encounter_date: '2025-01-15',
       encounter_type: type,
-      friend_ids: ['abc-123'],
+      friend_ids: ['11111111-1111-4111-8111-111111111111'],
     });
     expect(result).toMatchObject({ encounter_type: type });
   });
@@ -38,7 +38,7 @@ describe('EncounterInputSchema', () => {
     const result = EncounterInputSchema({
       encounter_date: '2025-01-15',
       encounter_type: 'carrier_pigeon',
-      friend_ids: ['abc-123'],
+      friend_ids: ['11111111-1111-4111-8111-111111111111'],
     });
     expect(result.summary).toContain('encounter_type');
   });
@@ -47,7 +47,7 @@ describe('EncounterInputSchema', () => {
     const result = EncounterInputSchema({
       title: 'Coffee',
       encounter_date: '01/15/2025',
-      friend_ids: ['abc-123'],
+      friend_ids: ['11111111-1111-4111-8111-111111111111'],
     });
     expect(result.summary).toContain('valid date (YYYY-MM-DD format)');
   });
@@ -65,7 +65,7 @@ describe('EncounterInputSchema', () => {
     const result = EncounterInputSchema({
       title: '',
       encounter_date: '2025-01-15',
-      friend_ids: ['abc-123'],
+      friend_ids: ['11111111-1111-4111-8111-111111111111'],
     });
     expect(result.summary).toContain('title must be non-empty');
   });
@@ -74,7 +74,7 @@ describe('EncounterInputSchema', () => {
     const result = EncounterInputSchema({
       title: '   ',
       encounter_date: '2025-01-15',
-      friend_ids: ['abc-123'],
+      friend_ids: ['11111111-1111-4111-8111-111111111111'],
     });
     expect(result.summary).toContain('non-blank title');
   });
@@ -83,7 +83,7 @@ describe('EncounterInputSchema', () => {
     const result = EncounterInputSchema({
       title: 'x'.repeat(201),
       encounter_date: '2025-01-15',
-      friend_ids: ['abc-123'],
+      friend_ids: ['11111111-1111-4111-8111-111111111111'],
     });
     expect(result.summary).toContain('at most 200 characters');
   });
@@ -93,7 +93,7 @@ describe('EncounterInputSchema', () => {
       title: 'Dinner',
       encounter_date: '2025-03-20',
       encounter_type: 'in_person',
-      friend_ids: ['abc-123', 'def-456'],
+      friend_ids: ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222'],
       location_text: 'Restaurant',
       description: 'Great evening',
     };
