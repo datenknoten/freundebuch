@@ -18,6 +18,7 @@ abstract class IntegrationTestCase extends TestCase
 {
     protected static ?Container $container = null;
     protected static ?PDO $pdo = null;
+    private static ?string $databaseUrl = null;
 
     /**
      * Set up the PostgreSQL container once for all tests in the class.
@@ -26,44 +27,55 @@ abstract class IntegrationTestCase extends TestCase
     {
         parent::setUpBeforeClass();
 
-        // Check if Docker is available
-        if (!self::isDockerAvailable()) {
-            self::markTestSkipped('Docker is not available. Integration tests require Docker.');
+        $externalUrl = getenv('TEST_DATABASE_URL');
+        if (is_string($externalUrl) && $externalUrl !== '') {
+            self::$databaseUrl = $externalUrl;
+        } else {
+            if (!self::isDockerAvailable()) {
+                self::skipOrFail('Docker is not available. Integration tests require Docker or TEST_DATABASE_URL.');
+            }
+
+            try {
+                // Start PostGIS container (required for geodata migration)
+                // Uses the same image as docker-compose.yml for consistency
+                self::$container = Container::make('imresamu/postgis:18-3.6.1-trixie')
+                    ->withEnvironment('POSTGRES_PASSWORD', 'test')
+                    ->withEnvironment('POSTGRES_USER', 'test')
+                    ->withEnvironment('POSTGRES_DB', 'test')
+                    ->withWait(new WaitForExec(['pg_isready', '-h', '127.0.0.1', '-U', 'test']));
+
+                self::$container->start();
+
+                self::$databaseUrl = sprintf(
+                    'postgresql://test:test@%s:%d/test',
+                    self::$container->getHost(),
+                    self::$container->getFirstMappedPort()
+                );
+            } catch (\Throwable $e) {
+                // The container never came up; do not let tearDownAfterClass
+                // touch it and mask the real reason with a property error.
+                self::$container = null;
+                self::skipOrFail('Failed to start PostgreSQL container: ' . $e->getMessage());
+            }
         }
 
-        // Check if pnpm is available (needed for migrations)
-        if (!self::isPnpmAvailable()) {
-            self::markTestSkipped('pnpm is not available. Integration tests require pnpm for migrations.');
+        self::$pdo = self::connect(self::$databaseUrl);
+        self::runMigrations();
+    }
+
+    /**
+     * Skip locally, fail in CI.
+     *
+     * These tests are the only guard against the PHP SQL drifting away from the
+     * migrated schema, so a silent skip in CI is worse than no test at all.
+     */
+    private static function skipOrFail(string $reason): void
+    {
+        if (getenv('CI') === 'true') {
+            self::fail($reason);
         }
 
-        try {
-            // Start PostGIS container (required for geodata migration)
-            // Uses the same image as docker-compose.yml for consistency
-            self::$container = Container::make('imresamu/postgis:18-3.6.1-trixie')
-                ->withEnvironment('POSTGRES_PASSWORD', 'test')
-                ->withEnvironment('POSTGRES_USER', 'test')
-                ->withEnvironment('POSTGRES_DB', 'test')
-                ->withWait(new WaitForExec(['pg_isready', '-h', '127.0.0.1', '-U', 'test']));
-
-            self::$container->start();
-
-            // Create PDO connection
-            $dsn = sprintf(
-                'pgsql:host=%s;port=%d;dbname=test',
-                self::$container->getHost(),
-                self::$container->getFirstMappedPort()
-            );
-
-            self::$pdo = new PDO($dsn, 'test', 'test', [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]);
-
-            // Run Node.js migrations
-            self::runMigrations();
-        } catch (\Throwable $e) {
-            self::markTestSkipped('Failed to start PostgreSQL container: ' . $e->getMessage());
-        }
+        self::markTestSkipped($reason);
     }
 
     /**
@@ -78,14 +90,31 @@ abstract class IntegrationTestCase extends TestCase
     }
 
     /**
-     * Check if pnpm is available on the system.
+     * Open a PDO connection from a postgres:// connection URL.
      */
-    private static function isPnpmAvailable(): bool
+    private static function connect(string $databaseUrl): PDO
     {
-        $output = [];
-        $exitCode = 0;
-        @exec('pnpm --version 2>/dev/null', $output, $exitCode);
-        return $exitCode === 0;
+        $parts = parse_url($databaseUrl);
+        if ($parts === false || !isset($parts['host'])) {
+            throw new \RuntimeException("Unparseable database URL: $databaseUrl");
+        }
+
+        $dsn = sprintf(
+            'pgsql:host=%s;port=%d;dbname=%s',
+            $parts['host'],
+            $parts['port'] ?? 5432,
+            ltrim($parts['path'] ?? '/postgres', '/')
+        );
+
+        return new PDO(
+            $dsn,
+            urldecode($parts['user'] ?? ''),
+            urldecode($parts['pass'] ?? ''),
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]
+        );
     }
 
     /**
@@ -93,21 +122,16 @@ abstract class IntegrationTestCase extends TestCase
      */
     private static function runMigrations(): void
     {
-        // Build DATABASE_URL for the test container
-        $databaseUrl = sprintf(
-            'postgresql://test:test@%s:%d/test',
-            self::$container->getHost(),
-            self::$container->getFirstMappedPort()
-        );
-
         // Get the project root directory (4 levels up from tests/Integration)
         $projectRoot = dirname(__DIR__, 4);
 
-        // Run migrations using pnpm
+        // node-pg-migrate runs under tsx because the migrations are TypeScript.
+        // Mirrors the backend's `migrate` script; tsx is installed in the
+        // backend workspace, not at the repo root.
         $command = sprintf(
-            'cd %s && DATABASE_URL=%s pnpm migrate 2>&1',
-            escapeshellarg($projectRoot),
-            escapeshellarg($databaseUrl)
+            'cd %s && DATABASE_URL=%s ./node_modules/.bin/tsx ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize --migrations-dir ../../database/migrations up 2>&1',
+            escapeshellarg($projectRoot . '/apps/backend'),
+            escapeshellarg(self::$databaseUrl)
         );
 
         $output = [];
@@ -162,12 +186,21 @@ abstract class IntegrationTestCase extends TestCase
         self::$pdo->exec('DELETE FROM friends.friends');
         self::$pdo->exec('DELETE FROM auth.app_passwords');
         self::$pdo->exec('DELETE FROM auth.users');
+        // Better Auth tables: children first, then the identity row. There is no
+        // DB-level FK between auth.users and auth."user" (the link is
+        // auth."user".id = auth.users.external_id::text by convention), so the
+        // order relative to auth.users is free.
+        self::$pdo->exec('DELETE FROM auth.account');
+        self::$pdo->exec('DELETE FROM auth.session');
+        self::$pdo->exec('DELETE FROM auth."user"');
 
-        // Reset sequences
-        self::$pdo->exec("SELECT setval('auth.users_id_seq', 1, false)");
-        self::$pdo->exec("SELECT setval('auth.app_passwords_id_seq', 1, false)");
-        self::$pdo->exec("SELECT setval('friends.friends_id_seq', 1, false)");
-        self::$pdo->exec("SELECT setval('friends.friend_changes_id_seq', 1, false)");
+        // Reset sequences. Resolve them from the owning column: the tables were
+        // renamed contacts -> friends but their sequences kept the old names.
+        foreach ([['auth', 'users'], ['auth', 'app_passwords'], ['friends', 'friends'], ['friends', 'friend_changes']] as [$schema, $table]) {
+            self::$pdo->exec(
+                "SELECT setval(pg_get_serial_sequence('$schema.$table', 'id'), 1, false)"
+            );
+        }
     }
 
     /**
@@ -195,7 +228,21 @@ abstract class IntegrationTestCase extends TestCase
             'password_hash' => $passwordHash,
         ]);
 
-        return $stmt->fetch();
+        $user = $stmt->fetch();
+
+        // The Better Auth row is the identity of record; `auth."user".id` equals
+        // `auth.users.external_id` and the DAV lookups read the email from it.
+        $baStmt = self::$pdo->prepare('
+            INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
+            VALUES (:id, :name, :email, false, now(), now())
+        ');
+        $baStmt->execute([
+            'id' => $user['external_id'],
+            'name' => $email,
+            'email' => $email,
+        ]);
+
+        return $user;
     }
 
     /**
@@ -235,10 +282,11 @@ abstract class IntegrationTestCase extends TestCase
             'name_suffix' => null,
             'nickname' => null,
             'photo_url' => null,
+            'interests' => null,
+            // Professional fields live in friends.friend_professional_history.
             'job_title' => null,
             'organization' => null,
             'department' => null,
-            'interests' => null,
             'work_notes' => null,
         ];
 
@@ -247,12 +295,10 @@ abstract class IntegrationTestCase extends TestCase
         $stmt = self::$pdo->prepare('
             INSERT INTO friends.friends (
                 user_id, display_name, name_prefix, name_first, name_middle,
-                name_last, name_suffix, nickname, photo_url, job_title,
-                organization, department, interests, work_notes
+                name_last, name_suffix, nickname, photo_url, interests
             ) VALUES (
                 :user_id, :display_name, :name_prefix, :name_first, :name_middle,
-                :name_last, :name_suffix, :nickname, :photo_url, :job_title,
-                :organization, :department, :interests, :work_notes
+                :name_last, :name_suffix, :nickname, :photo_url, :interests
             )
             RETURNING *
         ');
@@ -266,12 +312,49 @@ abstract class IntegrationTestCase extends TestCase
             'name_suffix' => $data['name_suffix'],
             'nickname' => $data['nickname'],
             'photo_url' => $data['photo_url'],
-            'job_title' => $data['job_title'],
-            'organization' => $data['organization'],
-            'department' => $data['department'],
             'interests' => $data['interests'],
-            'work_notes' => $data['work_notes'],
         ]);
+
+        $friend = $stmt->fetch();
+
+        if (
+            $data['job_title'] !== null || $data['organization'] !== null
+            || $data['department'] !== null || $data['work_notes'] !== null
+        ) {
+            $historyStmt = self::$pdo->prepare('
+                INSERT INTO friends.friend_professional_history (
+                    friend_id, job_title, organization, department, notes,
+                    from_month, from_year, is_primary
+                ) VALUES (
+                    :friend_id, :job_title, :organization, :department, :notes,
+                    :from_month, :from_year, true
+                )
+            ');
+            $historyStmt->execute([
+                'friend_id' => $friend['id'],
+                'job_title' => $data['job_title'],
+                'organization' => $data['organization'],
+                'department' => $data['department'],
+                'notes' => $data['work_notes'],
+                'from_month' => (int) (new \DateTime())->format('n'),
+                'from_year' => (int) (new \DateTime())->format('Y'),
+            ]);
+        }
+
+        return $friend;
+    }
+
+    /**
+     * Fetch the primary professional-history row of a friend, or false.
+     */
+    protected function fetchPrimaryProfessionalHistory(int $friendId): array|false
+    {
+        $stmt = self::$pdo->prepare('
+            SELECT * FROM friends.friend_professional_history
+            WHERE friend_id = :friend_id AND is_primary = true
+            LIMIT 1
+        ');
+        $stmt->execute(['friend_id' => $friendId]);
 
         return $stmt->fetch();
     }
@@ -290,7 +373,7 @@ abstract class IntegrationTestCase extends TestCase
             'friend_id' => $friendId,
             'phone_number' => $phoneNumber,
             'phone_type' => $phoneType,
-            'is_primary' => $isPrimary,
+            'is_primary' => $isPrimary ? 'true' : 'false',
         ]);
 
         return $stmt->fetch();
@@ -310,7 +393,7 @@ abstract class IntegrationTestCase extends TestCase
             'friend_id' => $friendId,
             'email_address' => $emailAddress,
             'email_type' => $emailType,
-            'is_primary' => $isPrimary,
+            'is_primary' => $isPrimary ? 'true' : 'false',
         ]);
 
         return $stmt->fetch();

@@ -208,18 +208,16 @@ class AppPasswordBackendIntegrationTest extends IntegrationTestCase
     }
 
     #[Test]
-    public function validateUserPassIsEmailCaseSensitive(): void
+    public function validateUserPassIsEmailCaseInsensitive(): void
     {
-        $user = $this->createTestUser('User@Example.com');
+        // Addresses are stored lowercase (CHECK constraint); a DAV client sends
+        // whatever the user typed, so the lookup lowercases the input.
+        $user = $this->createTestUser('user@example.com');
         $this->createAppPassword((int) $user['id'], 'Test Device', 'abcd1234efgh5678');
 
-        // Different case should fail (emails are stored as-is)
-        $result = $this->callValidateUserPass('user@example.com', 'abcd1234efgh5678');
-        $this->assertFalse($result);
-
-        // Exact case should work
-        $result = $this->callValidateUserPass('User@Example.com', 'abcd1234efgh5678');
-        $this->assertTrue($result);
+        $this->assertTrue($this->callValidateUserPass('user@example.com', 'abcd1234efgh5678'));
+        $this->assertTrue($this->callValidateUserPass('User@Example.com', 'abcd1234efgh5678'));
+        $this->assertTrue($this->callValidateUserPass('USER@EXAMPLE.COM', 'abcd1234efgh5678'));
     }
 
     #[Test]

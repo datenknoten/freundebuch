@@ -151,14 +151,16 @@ class FreundebuchPrincipalBackendIntegrationTest extends IntegrationTestCase
     #[Test]
     public function searchPrincipalsIsCaseInsensitive(): void
     {
-        $this->createTestUser('Alice@Example.COM');
+        // Stored addresses are always lowercase (CHECK constraint); the query
+        // is what has to be case-insensitive.
+        $this->createTestUser('alice@example.com');
 
         $results = $this->backend->searchPrincipals('principals', [
-            '{http://sabredav.org/ns}email-address' => 'alice',
+            '{http://sabredav.org/ns}email-address' => 'ALICE@Example.COM',
         ]);
 
         $this->assertCount(1, $results);
-        $this->assertContains('principals/Alice@Example.COM', $results);
+        $this->assertContains('principals/alice@example.com', $results);
     }
 
     #[Test]

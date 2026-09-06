@@ -171,10 +171,11 @@ class FreundebuchCardDAVBackendIntegrationTest extends IntegrationTestCase
     {
         $user = $this->createTestUser();
 
+        $externalId = '11111111-2222-3333-4444-555555555555';
         $vcard = <<<VCARD
 BEGIN:VCARD
 VERSION:4.0
-UID:new-friend-uid
+UID:$externalId
 FN:New Friend
 N:Friend;New;;;
 ORG:Test Company
@@ -183,7 +184,7 @@ EMAIL;TYPE=HOME:new@example.com
 END:VCARD
 VCARD;
 
-        $etag = $this->backend->createCard($user['id'], 'new-friend-uid.vcf', $vcard);
+        $etag = $this->backend->createCard($user['id'], $externalId . '.vcf', $vcard);
 
         $this->assertNotNull($etag);
         $this->assertStringStartsWith('"', $etag);
@@ -196,7 +197,7 @@ VCARD;
         ');
         $stmt->execute([
             'user_id' => $user['id'],
-            'external_id' => 'new-friend-uid',
+            'external_id' => $externalId,
         ]);
         $friend = $stmt->fetch();
 
@@ -204,7 +205,10 @@ VCARD;
         $this->assertEquals('New Friend', $friend['display_name']);
         $this->assertEquals('New', $friend['name_first']);
         $this->assertEquals('Friend', $friend['name_last']);
-        $this->assertEquals('Test Company', $friend['organization']);
+        $this->assertEquals(
+            'Test Company',
+            $this->fetchPrimaryProfessionalHistory((int) $friend['id'])['organization']
+        );
 
         // Verify phone was created
         $stmt = $this->getPdo()->prepare('
@@ -258,7 +262,10 @@ VCARD;
         $this->assertEquals('Updated Name', $updated['display_name']);
         $this->assertEquals('Updated', $updated['name_first']);
         $this->assertEquals('Name', $updated['name_last']);
-        $this->assertEquals('New Company', $updated['organization']);
+        $this->assertEquals(
+            'New Company',
+            $this->fetchPrimaryProfessionalHistory((int) $updated['id'])['organization']
+        );
     }
 
     #[Test]

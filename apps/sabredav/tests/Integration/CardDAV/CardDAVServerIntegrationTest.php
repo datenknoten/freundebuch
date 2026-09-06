@@ -14,6 +14,7 @@ use Sabre\DAV;
 use Sabre\DAV\Auth;
 use Sabre\DAVACL;
 use Sabre\HTTP;
+use Freundebuch\DAV\Tests\Support\SapiMock;
 
 /**
  * HTTP-level integration tests for the CardDAV server.
@@ -89,7 +90,7 @@ class CardDAVServerIntegrationTest extends IntegrationTestCase
 
         $this->server->httpRequest = $request;
         $this->server->httpResponse = new HTTP\Response();
-        $this->server->sapi = new HTTP\SapiMock();
+        $this->server->sapi = new SapiMock();
 
         $this->server->exec();
 
@@ -109,7 +110,7 @@ class CardDAVServerIntegrationTest extends IntegrationTestCase
 
         $this->server->httpRequest = $request;
         $this->server->httpResponse = new HTTP\Response();
-        $this->server->sapi = new HTTP\SapiMock();
+        $this->server->sapi = new SapiMock();
 
         $this->server->exec();
 
@@ -134,7 +135,7 @@ class CardDAVServerIntegrationTest extends IntegrationTestCase
 
         $this->server->httpRequest = $request;
         $this->server->httpResponse = new HTTP\Response();
-        $this->server->sapi = new HTTP\SapiMock();
+        $this->server->sapi = new SapiMock();
         $this->server->exec();
 
         $this->assertEquals(401, $this->server->httpResponse->getStatus());
@@ -242,7 +243,9 @@ XML;
 
         $vcardData = $response->getBodyAsString();
         $this->assertStringContainsString('BEGIN:VCARD', $vcardData);
-        $this->assertStringContainsString('VERSION:4.0', $vcardData);
+        // sabre/dav negotiates the vCard version per client: without an Accept
+        // header advertising 4.0 it serves 3.0, which is what real clients get.
+        $this->assertStringContainsString('VERSION:3.0', $vcardData);
         $this->assertStringContainsString('FN:Jane Smith', $vcardData);
         $this->assertStringContainsString('N:Smith;Jane', $vcardData);
         $this->assertStringContainsString('ORG:Acme Inc', $vcardData);
@@ -265,7 +268,7 @@ XML;
         $vcardData = <<<VCARD
 BEGIN:VCARD
 VERSION:4.0
-UID:new-contact-12345
+UID:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
 FN:New Contact
 N:Contact;New;;;
 ORG:New Company
@@ -276,7 +279,7 @@ VCARD;
 
         $response = $this->request(
             'PUT',
-            '/addressbooks/test@example.com/friends/new-contact-12345.vcf',
+            '/addressbooks/test@example.com/friends/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.vcf',
             $vcardData,
             ['Content-Type' => 'text/vcard']
         );
@@ -287,7 +290,7 @@ VCARD;
         // Verify the contact was created in the database
         $stmt = $this->getPdo()->prepare("
             SELECT * FROM friends.friends
-            WHERE external_id = 'new-contact-12345'
+            WHERE external_id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
         ");
         $stmt->execute();
         $friend = $stmt->fetch();
@@ -296,7 +299,10 @@ VCARD;
         $this->assertEquals('New Contact', $friend['display_name']);
         $this->assertEquals('New', $friend['name_first']);
         $this->assertEquals('Contact', $friend['name_last']);
-        $this->assertEquals('New Company', $friend['organization']);
+        $this->assertEquals(
+            'New Company',
+            $this->fetchPrimaryProfessionalHistory((int) $friend['id'])['organization']
+        );
     }
 
     #[Test]
@@ -336,7 +342,10 @@ VCARD;
         $this->assertEquals('Updated Name', $updated['display_name']);
         $this->assertEquals('Updated', $updated['name_first']);
         $this->assertEquals('Name', $updated['name_last']);
-        $this->assertEquals('Updated Company', $updated['organization']);
+        $this->assertEquals(
+            'Updated Company',
+            $this->fetchPrimaryProfessionalHistory((int) $updated['id'])['organization']
+        );
     }
 
     #[Test]
@@ -553,7 +562,7 @@ XML;
 
         $vcardData = $response->getBodyAsString();
         $this->assertStringContainsString('BEGIN:VCARD', $vcardData);
-        $this->assertStringContainsString('VERSION:4.0', $vcardData);
+        $this->assertStringContainsString('VERSION:3.0', $vcardData);
         $this->assertStringContainsString('FN:Photo Test Friend', $vcardData);
         $this->assertStringContainsString('END:VCARD', $vcardData);
         // Note: We don't assert PHOTO is present because the URL is intentionally unreachable
