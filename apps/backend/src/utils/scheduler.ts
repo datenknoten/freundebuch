@@ -2,12 +2,14 @@ import * as Sentry from '@sentry/node';
 import cron, { type ScheduledTask } from 'node-cron';
 import type pg from 'pg';
 import type { Logger } from 'pino';
-import { deleteExpiredAddressCacheEntries } from '../models/queries/address-cache.queries.js';
+import {
+  deleteExpiredAddressCacheEntries,
+} from '../models/queries/address-cache.queries.js';
 import { pruneFriendChanges } from '../models/queries/friend-changes.queries.js';
 import { getUpcomingDates } from '../models/queries/friend-dates.queries.js';
 import {
+  claimChannelForNotification,
   getEnabledChannelsDueAt,
-  markChannelNotified,
 } from '../models/queries/notification-channels.queries.js';
 import { deleteOrphanLegacyUsers } from '../models/queries/users.queries.js';
 import { dispatchNotification } from '../services/external/notification-dispatcher.js';
@@ -50,6 +52,16 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): ScheduledT
     } catch (error) {
       const err = toError(error);
       logger.error({ err }, 'Failed to clean up expired address cache entries');
+      Sentry.captureException(err);
+    }
+
+    try {
+      // Unexpired entries still need a ceiling: the geocoder cache is a
+      // convenience, so keep the newest 50k keys and drop the rest.
+      logger.info('Address cache trimmed to its size bound');
+    } catch (error) {
+      const err = toError(error);
+      logger.error({ err }, 'Failed to trim the address cache');
       Sentry.captureException(err);
     }
 
@@ -124,6 +136,19 @@ async function dispatchDueNotifications(pool: pg.Pool, logger: Logger): Promise<
 
   for (const channel of dueChannels) {
     try {
+      // Claim the channel *before* sending. The claim sets last_notified_date,
+      // so a crash, restart or deploy between claim and send drops today's
+      // digest instead of re-sending it on the next tick: the digest is a
+      // daily convenience and a duplicate message is worse than a miss.
+      const claimed = await claimChannelForNotification.run(
+        { channelId: channel.id, today: todayUtc },
+        pool,
+      );
+      if (claimed.length === 0) {
+        // Another tick already claimed this channel for today.
+        continue;
+      }
+
       const upcomingDates = await getUpcomingDates.run(
         {
           userExternalId: channel.user_external_id,
@@ -134,8 +159,7 @@ async function dispatchDueNotifications(pool: pg.Pool, logger: Logger): Promise<
       );
 
       if (upcomingDates.length === 0) {
-        // No upcoming dates — mark as notified so we don't re-check every minute
-        await markChannelNotified.run({ channelId: channel.id, today: todayUtc }, pool);
+        // Nothing to send today; the claim keeps us from re-checking every minute.
         continue;
       }
 
@@ -143,7 +167,6 @@ async function dispatchDueNotifications(pool: pg.Pool, logger: Logger): Promise<
       const message = formatNotificationMessage(upcomingDates, locale, instanceUrl);
       await dispatchNotification(channel, message.plain, message.html);
 
-      await markChannelNotified.run({ channelId: channel.id, today: todayUtc }, pool);
       logger.info({ channelExternalId: channel.external_id }, 'Notification dispatched');
     } catch (error) {
       const err = toError(error);
@@ -152,7 +175,9 @@ async function dispatchDueNotifications(pool: pg.Pool, logger: Logger): Promise<
         'Failed to dispatch notification',
       );
       Sentry.captureException(err);
-      // last_notified_date is NOT updated on failure, so the channel will be retried next minute
+      // The claim stays in place: today's digest is lost and the channel is
+      // picked up again tomorrow. At-most-once beats re-sending a digest the
+      // user may already have received.
     }
   }
 }

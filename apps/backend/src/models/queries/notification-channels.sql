@@ -149,8 +149,12 @@ WHERE nc.is_enabled = true
   AND nc.notify_time <= :notifyTime::time
   AND (nc.last_notified_date IS NULL OR nc.last_notified_date < :today::date);
 
-/* @name MarkChannelNotified */
+/* @name ClaimChannelForNotification */
+-- Claimed *before* the digest is sent, so a crash between claim and send
+-- drops today's digest instead of re-sending it on the next tick. No row
+-- returned means another tick already claimed the channel today.
 UPDATE system.notification_channels
 SET last_notified_date = :today::date
 WHERE id = :channelId
-  AND (last_notified_date IS NULL OR last_notified_date < :today::date);
+  AND (last_notified_date IS NULL OR last_notified_date < :today::date)
+RETURNING id;

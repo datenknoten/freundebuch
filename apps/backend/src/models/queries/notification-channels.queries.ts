@@ -444,32 +444,39 @@ const getEnabledChannelsDueAtIR: any = {"usedParamSet":{"notifyTime":true,"today
 export const getEnabledChannelsDueAt = new PreparedQuery<IGetEnabledChannelsDueAtParams,IGetEnabledChannelsDueAtResult>(getEnabledChannelsDueAtIR);
 
 
-/** 'MarkChannelNotified' parameters type */
-export interface IMarkChannelNotifiedParams {
+/** 'ClaimChannelForNotification' parameters type */
+export interface IClaimChannelForNotificationParams {
   channelId?: number | null | void;
   today?: DateOrString | null | void;
 }
 
-/** 'MarkChannelNotified' return type */
-export type IMarkChannelNotifiedResult = void;
-
-/** 'MarkChannelNotified' query type */
-export interface IMarkChannelNotifiedQuery {
-  params: IMarkChannelNotifiedParams;
-  result: IMarkChannelNotifiedResult;
+/** 'ClaimChannelForNotification' return type */
+export interface IClaimChannelForNotificationResult {
+  /** Internal sequential ID (never expose in API) */
+  id: number;
 }
 
-const markChannelNotifiedIR: any = {"usedParamSet":{"today":true,"channelId":true},"params":[{"name":"today","required":false,"transform":{"type":"scalar"},"locs":[{"a":61,"b":66},{"a":154,"b":159}]},{"name":"channelId","required":false,"transform":{"type":"scalar"},"locs":[{"a":85,"b":94}]}],"statement":"UPDATE system.notification_channels\nSET last_notified_date = :today::date\nWHERE id = :channelId\n  AND (last_notified_date IS NULL OR last_notified_date < :today::date)"};
+/** 'ClaimChannelForNotification' query type */
+export interface IClaimChannelForNotificationQuery {
+  params: IClaimChannelForNotificationParams;
+  result: IClaimChannelForNotificationResult;
+}
+
+const claimChannelForNotificationIR: any = {"usedParamSet":{"today":true,"channelId":true},"params":[{"name":"today","required":false,"transform":{"type":"scalar"},"locs":[{"a":275,"b":280},{"a":368,"b":373}]},{"name":"channelId","required":false,"transform":{"type":"scalar"},"locs":[{"a":299,"b":308}]}],"statement":"-- Claimed *before* the digest is sent, so a crash between claim and send\n-- drops today's digest instead of re-sending it on the next tick. No row\n-- returned means another tick already claimed the channel today.\nUPDATE system.notification_channels\nSET last_notified_date = :today::date\nWHERE id = :channelId\n  AND (last_notified_date IS NULL OR last_notified_date < :today::date)\nRETURNING id"};
 
 /**
  * Query generated from SQL:
  * ```
+ * -- Claimed *before* the digest is sent, so a crash between claim and send
+ * -- drops today's digest instead of re-sending it on the next tick. No row
+ * -- returned means another tick already claimed the channel today.
  * UPDATE system.notification_channels
  * SET last_notified_date = :today::date
  * WHERE id = :channelId
  *   AND (last_notified_date IS NULL OR last_notified_date < :today::date)
+ * RETURNING id
  * ```
  */
-export const markChannelNotified = new PreparedQuery<IMarkChannelNotifiedParams,IMarkChannelNotifiedResult>(markChannelNotifiedIR);
+export const claimChannelForNotification = new PreparedQuery<IClaimChannelForNotificationParams,IClaimChannelForNotificationResult>(claimChannelForNotificationIR);
 
 

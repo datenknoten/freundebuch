@@ -50,8 +50,9 @@ const USER_OWNED = [
 const ALLOWLIST: Record<string, string> = {
   // Maintenance and cron work, never reached from a request.
   deleteExpiredAddressCacheEntries: 'maintenance: no user context',
+  TrimAddressCache: 'maintenance: size bound on the shared geocoder cache, no user context',
   PruneFriendChanges: 'maintenance: retention sweep across all users',
-  MarkChannelNotified: 'cron: channel already resolved by GetEnabledChannelsDueAt',
+  ClaimChannelForNotification: 'cron: channel already resolved by GetEnabledChannelsDueAt',
   GetEnabledChannelsDueAt: 'cron: deliberately spans all users',
   UpdateAppPasswordLastUsed: 'app password already authenticated by its hash',
   // Identity-keyed: the parameter *is* the authenticated auth."user".id, and the
