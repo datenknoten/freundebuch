@@ -1,6 +1,7 @@
 import { getConnInfo } from '@hono/node-server/conninfo';
 import type { Context, Next } from 'hono';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import type { AppContext } from '../types/context.js';
 import { getConfig } from '../utils/config.js';
 import { isRateLimiterRes } from '../utils/type-guards.js';
 
@@ -11,131 +12,75 @@ const isTestEnv =
   process.env.ENV === 'test' || process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 
 // Auth endpoint rate limiting is handled by Better Auth's rateLimit config
-// (5 req/min window). The authLimiter and passwordResetLimiter were removed
-// as part of Epic 18. The passkey list endpoint is handled separately below
-// with its own generous limit since it's a read-only listing.
+// (5 req/min window), plus an nginx `limit_req` zone in front of /api/auth/.
 
-// Rate limiter for friends API endpoints
-// 100 requests per minute in production, 500 in test
-let friendsLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 500 : 100,
-  duration: 60,
-  blockDuration: isTestEnv ? 1 : 60,
-});
+interface LimitSpec {
+  /** Requests per minute in production. */
+  points: number;
+  /** Requests per minute under test, where suites fire in bursts. */
+  test: number;
+  /** Seconds to block after exceeding; defaults to 60. */
+  blockDuration?: number;
+  /**
+   * Whether the bucket is keyed by user id. Authenticated routers key by user
+   * so one heavy client cannot exhaust the limit for everyone behind the same
+   * NAT; the limiter must therefore run *after* authMiddleware.
+   */
+  keyedByUser: boolean;
+  /** Response message when the limit trips. */
+  message?: string;
+}
 
-// Rate limiter for circles API endpoints
-// 60 requests per minute in production, 300 in test
-let circlesLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 300 : 60,
-  duration: 60,
-  blockDuration: isTestEnv ? 1 : 60,
-});
+/**
+ * Every limiter in one table. Eight near-identical `new RateLimiterMemory`
+ * blocks plus a second copy of all eight inside `resetRateLimiters` meant a
+ * changed limit had to be edited twice, and drift was invisible.
+ *
+ * Memory-backed buckets are correct for the single-instance deployment
+ * (see ADR 0004); a second replica would double every limit.
+ */
+const LIMITS = {
+  friends: { points: 100, test: 500, keyedByUser: true },
+  circles: { points: 60, test: 300, keyedByUser: true },
+  encounters: { points: 60, test: 300, keyedByUser: true },
+  collectives: { points: 120, test: 300, keyedByUser: true },
+  notificationChannels: { points: 30, test: 300, keyedByUser: true },
+  passkeyList: { points: 30, test: 300, keyedByUser: true },
+  notificationTest: {
+    points: 3,
+    test: 100,
+    blockDuration: 120,
+    keyedByUser: true,
+    message: 'Too many test messages. Please wait before trying again.',
+  },
+  addressLookup: { points: 60, test: 300, keyedByUser: true },
+  // Unauthenticated: there is no user to key by.
+  sentryTunnel: { points: 60, test: 300, keyedByUser: false },
+} as const satisfies Record<string, LimitSpec>;
 
-// Rate limiter for encounters API endpoints
-// 60 requests per minute in production, 300 in test
-let encountersLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 300 : 60,
-  duration: 60,
-  blockDuration: isTestEnv ? 1 : 60,
-});
+type LimiterName = keyof typeof LIMITS;
 
-// Rate limiter for collectives API endpoints
-// 120 requests per minute in production, 300 in test
-let collectivesLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 300 : 120,
-  duration: 60,
-  blockDuration: isTestEnv ? 1 : 60,
-});
+function buildLimiters(): Record<LimiterName, RateLimiterMemory> {
+  const entries = Object.entries(LIMITS).map(([name, spec]) => [
+    name,
+    new RateLimiterMemory({
+      points: isTestEnv ? spec.test : spec.points,
+      duration: 60,
+      blockDuration: isTestEnv
+        ? 1
+        : (('blockDuration' in spec ? spec.blockDuration : undefined) ?? 60),
+    }),
+  ]);
+  return Object.fromEntries(entries) as Record<LimiterName, RateLimiterMemory>;
+}
 
-// Rate limiter for notification channels API endpoints
-// 30 requests per minute in production, 300 in test
-let notificationChannelsLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 300 : 30,
-  duration: 60,
-  blockDuration: isTestEnv ? 1 : 60,
-});
-
-// Rate limiter for passkey listing endpoint
-// 30 requests per minute in production, 300 in test
-let passkeyListLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 300 : 30,
-  duration: 60,
-  blockDuration: isTestEnv ? 1 : 60,
-});
-
-// Rate limiter for notification test message endpoint
-// 3 attempts per minute in production, 100 in test
-let notificationTestLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 100 : 3,
-  duration: 60,
-  blockDuration: isTestEnv ? 1 : 120,
-});
-
-// Rate limiter for the unauthenticated Sentry tunnel endpoint
-// 60 requests per minute in production, 300 in test
-let sentryTunnelLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 300 : 60,
-  duration: 60,
-  blockDuration: isTestEnv ? 1 : 60,
-});
-
-// Rate limiter for address-lookup endpoints (proxied to Overpass/Nominatim)
-// 60 requests per minute in production, 300 in test
-let addressLookupLimiter = new RateLimiterMemory({
-  points: isTestEnv ? 300 : 60,
-  duration: 60,
-  blockDuration: isTestEnv ? 1 : 60,
-});
+let limiters = buildLimiters();
 
 /**
  * Reset all rate limiters (for testing purposes)
  */
 export function resetRateLimiters(): void {
-  friendsLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 500 : 100,
-    duration: 60,
-    blockDuration: isTestEnv ? 1 : 60,
-  });
-  circlesLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 300 : 60,
-    duration: 60,
-    blockDuration: isTestEnv ? 1 : 60,
-  });
-  encountersLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 300 : 60,
-    duration: 60,
-    blockDuration: isTestEnv ? 1 : 60,
-  });
-  collectivesLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 300 : 120,
-    duration: 60,
-    blockDuration: isTestEnv ? 1 : 60,
-  });
-  notificationChannelsLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 300 : 30,
-    duration: 60,
-    blockDuration: isTestEnv ? 1 : 60,
-  });
-  passkeyListLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 300 : 30,
-    duration: 60,
-    blockDuration: isTestEnv ? 1 : 60,
-  });
-  notificationTestLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 100 : 3,
-    duration: 60,
-    blockDuration: isTestEnv ? 1 : 120,
-  });
-  sentryTunnelLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 300 : 60,
-    duration: 60,
-    blockDuration: isTestEnv ? 1 : 60,
-  });
-  addressLookupLimiter = new RateLimiterMemory({
-    points: isTestEnv ? 300 : 60,
-    duration: 60,
-    blockDuration: isTestEnv ? 1 : 60,
-  });
+  limiters = buildLimiters();
 }
 
 /**
@@ -178,168 +123,41 @@ function getClientIdentifier(c: Context): string {
 }
 
 /**
- * Shared handler for rate-limiter rejections.
- * Validates that the caught value is a RateLimiterRes, calculates the
- * Retry-After header, logs a warning, and returns a 429 JSON response.
- */
-function handleRateLimitRejection(
-  c: Context,
-  error: unknown,
-  logMessage: string,
-  responseMessage = 'Too many requests. Please try again later.',
-): Response {
-  if (!isRateLimiterRes(error)) throw error;
-  const retryAfter = Math.ceil(error.msBeforeNext / 1000);
-  c.get('logger').warn({ clientId: getClientIdentifier(c), retryAfter }, logMessage);
-  return c.json({ error: responseMessage }, 429, {
-    'Retry-After': String(retryAfter),
-  });
-}
-
-/**
- * Rate limiting middleware for friends API endpoints
- * Limits: 100 requests per minute, 1 minute block after exceeding
- */
-export async function friendsRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
-
-  try {
-    await friendsLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(c, error, 'Rate limit exceeded on friends endpoint');
-  }
-}
-
-/**
- * Rate limiting middleware for circles API endpoints
- * Limits: 60 requests per minute, 1 minute block after exceeding
- */
-export async function circlesRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
-
-  try {
-    await circlesLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(c, error, 'Rate limit exceeded on circles endpoint');
-  }
-}
-
-/**
- * Rate limiting middleware for encounters API endpoints
- * Limits: 60 requests per minute, 1 minute block after exceeding
- */
-export async function encountersRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
-
-  try {
-    await encountersLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(c, error, 'Rate limit exceeded on encounters endpoint');
-  }
-}
-
-/**
- * Rate limiting middleware for collectives API endpoints
- * Limits: 120 requests per minute, 1 minute block after exceeding
- */
-export async function collectivesRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
-
-  try {
-    await collectivesLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(c, error, 'Rate limit exceeded on collectives endpoint');
-  }
-}
-
-/**
- * Rate limiting middleware for notification channels API endpoints
- * Limits: 30 requests per minute, 1 minute block after exceeding
- */
-export async function notificationChannelsRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
-
-  try {
-    await notificationChannelsLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(
-      c,
-      error,
-      'Rate limit exceeded on notification channels endpoint',
-    );
-  }
-}
-
-/**
- * Rate limiting middleware for the unauthenticated Sentry tunnel endpoint
- * Limits: 60 requests per minute, 1 minute block after exceeding
- */
-export async function sentryTunnelRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
-
-  try {
-    await sentryTunnelLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(c, error, 'Rate limit exceeded on sentry tunnel endpoint');
-  }
-}
-
-/**
- * Rate limiting middleware for passkey listing endpoint
- * Limits: 30 requests per minute, 1 minute block after exceeding
- */
-export async function passkeyListRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
-
-  try {
-    await passkeyListLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(c, error, 'Rate limit exceeded on passkey list endpoint');
-  }
-}
-
-/**
- * Rate limiting middleware for notification test message endpoint
- * Limits: 3 attempts per minute, 2 minute block after exceeding
- */
-export async function notificationTestRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
-
-  try {
-    await notificationTestLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(
-      c,
-      error,
-      'Rate limit exceeded on notification test endpoint',
-      'Too many test messages. Please wait before trying again.',
-    );
-  }
-}
-
-/**
- * Rate limiting middleware for address-lookup endpoints
- * Limits: 60 requests per minute, 1 minute block after exceeding
+ * Build the middleware for one named limiter.
  *
- * These handlers proxy to third-party geocoders (Overpass, Nominatim), whose
- * usage policies apply per deployment IP — an unbounded client would get the
- * whole instance banned.
+ * Authenticated limiters key by `user:<id>` when the request has already been
+ * authenticated, and fall back to the client address otherwise (the limiter
+ * mounted before authMiddleware, or an unauthenticated request).
  */
-export async function addressLookupRateLimitMiddleware(c: Context, next: Next) {
-  const clientId = getClientIdentifier(c);
+function rateLimit(name: LimiterName) {
+  const spec: LimitSpec = LIMITS[name];
 
-  try {
-    await addressLookupLimiter.consume(clientId);
-    return next();
-  } catch (error) {
-    return handleRateLimitRejection(c, error, 'Rate limit exceeded on address-lookup endpoint');
-  }
+  return async (c: Context<AppContext>, next: Next) => {
+    const userId = spec.keyedByUser ? c.get('user')?.userId : undefined;
+    const key = userId === undefined ? getClientIdentifier(c) : `user:${userId}`;
+
+    try {
+      await limiters[name].consume(key);
+      return next();
+    } catch (error) {
+      if (!isRateLimiterRes(error)) throw error;
+      const retryAfter = Math.ceil(error.msBeforeNext / 1000);
+      c.get('logger').warn({ key, retryAfter }, `Rate limit exceeded on ${name} endpoint`);
+      return c.json({ error: spec.message ?? 'Too many requests. Please try again later.' }, 429, {
+        'Retry-After': String(retryAfter),
+      });
+    }
+  };
 }
+
+// Exported under the names the routers already mount, so this stays a
+// middleware-layer change.
+export const friendsRateLimitMiddleware = rateLimit('friends');
+export const circlesRateLimitMiddleware = rateLimit('circles');
+export const encountersRateLimitMiddleware = rateLimit('encounters');
+export const collectivesRateLimitMiddleware = rateLimit('collectives');
+export const notificationChannelsRateLimitMiddleware = rateLimit('notificationChannels');
+export const passkeyListRateLimitMiddleware = rateLimit('passkeyList');
+export const notificationTestRateLimitMiddleware = rateLimit('notificationTest');
+export const sentryTunnelRateLimitMiddleware = rateLimit('sentryTunnel');
+export const addressLookupRateLimitMiddleware = rateLimit('addressLookup');
