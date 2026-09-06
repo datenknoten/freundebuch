@@ -123,11 +123,13 @@ export class SearchService {
     const total = results[0]?.total_count ?? 0;
 
     return {
-      results: results.map((r) => this.mapPaginatedSearchResult(r)),
-      total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      data: results.map((r) => this.mapPaginatedSearchResult(r)),
+      pagination: {
+        page,
+        pageSize,
+        totalCount: total,
+        totalPages: Math.ceil(total / pageSize),
+      },
     };
   }
 
@@ -180,11 +182,13 @@ export class SearchService {
     const total = results[0]?.total_count ?? 0;
 
     const response: FacetedSearchResponse = {
-      results: results.map((r) => this.mapFacetedSearchResult(r)),
-      total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      data: results.map((r) => this.mapFacetedSearchResult(r)),
+      pagination: {
+        page,
+        pageSize,
+        totalCount: total,
+        totalPages: Math.ceil(total / pageSize),
+      },
     };
 
     // Fetch facet counts if requested
@@ -237,11 +241,13 @@ export class SearchService {
     const total = results[0]?.total_count ?? 0;
 
     const response: FacetedSearchResponse = {
-      results: results.map((r) => this.mapFilterOnlyResult(r)),
-      total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      data: results.map((r) => this.mapFilterOnlyResult(r)),
+      pagination: {
+        page,
+        pageSize,
+        totalCount: total,
+        totalPages: Math.ceil(total / pageSize),
+      },
     };
 
     // Fetch facet counts if requested (uses all friends, not search-filtered)

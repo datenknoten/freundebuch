@@ -29,18 +29,14 @@ describe('Encounters API - Integration', () => {
     vi.stubEnv('LOG_LEVEL', 'silent');
 
     context = await setupAuthTests();
-    user = await createAuthenticatedUser(context.pool, 'encounters@example.com', 'Password123!');
-    await completeTestUserOnboarding(context.pool, user.externalId);
   }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
     resetRateLimiters();
-    await context.pool.query('DELETE FROM encounters.encounter_friends');
-    await context.pool.query('DELETE FROM encounters.encounters');
-    await context.pool.query(`
-      DELETE FROM friends.friends c
-      WHERE NOT EXISTS (SELECT 1 FROM auth."user" u WHERE u.self_profile_id = c.id)
-    `);
+    // Wipe every user-owned row and rebuild the fixture user, so no test
+    // inherits encounters or friends (or a session) from its predecessors.
+    user = await createAuthenticatedUser(context.pool, 'encounters@example.com', 'Password123!');
+    await completeTestUserOnboarding(context.pool, user.externalId);
   });
 
   afterAll(async () => {
@@ -92,9 +88,9 @@ describe('Encounters API - Integration', () => {
     const list = await req('GET', '/api/encounters?page=1&page_size=2');
     expect(list.status).toBe(200);
     const body = await json(list);
-    expect(body.encounters.length).toBe(2);
+    expect(body.data.length).toBe(2);
     expect(body.pagination.totalCount).toBe(3);
-    expect(body.encounters[0].friends[0].id).toBe(friendId);
+    expect(body.data[0].friends[0].id).toBe(friendId);
   });
 
   it('replaces the friend set on update', async () => {

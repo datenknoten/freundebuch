@@ -104,12 +104,12 @@ export class EncountersService {
       }
     }
 
-    const encounters: EncounterListItem[] = encountersResult.map((row) =>
+    const data: EncounterListItem[] = encountersResult.map((row) =>
       this.mapEncounterListItem(row, previewsByEncounter.get(row.external_id) ?? []),
     );
 
     return {
-      encounters,
+      data,
       pagination: {
         page: options.page,
         pageSize: options.pageSize,

@@ -31,9 +31,9 @@ export class NotificationChannelsService {
   /**
    * List all channels for a user (credentials masked)
    */
-  async listChannels(userExternalId: string): Promise<{ data: NotificationChannel[] }> {
+  async listChannels(userExternalId: string): Promise<NotificationChannel[]> {
     const results = await getChannelsByUserId.run({ userExternalId }, this.db);
-    return { data: results.map((row) => this.mapChannel(row)) };
+    return results.map((row) => this.mapChannel(row));
   }
 
   /**
@@ -42,7 +42,7 @@ export class NotificationChannelsService {
   async getChannel(
     userExternalId: string,
     channelExternalId: string,
-  ): Promise<{ data: NotificationChannel }> {
+  ): Promise<NotificationChannel> {
     const results = await getChannelByExternalId.run(
       { userExternalId, channelExternalId },
       this.db,
@@ -50,7 +50,7 @@ export class NotificationChannelsService {
     if (results.length === 0) {
       throw new NotificationChannelNotFoundError();
     }
-    return { data: this.mapChannel(results[0]) };
+    return this.mapChannel(results[0]);
   }
 
   /**
@@ -65,7 +65,7 @@ export class NotificationChannelsService {
       notifyTime?: string;
       credentials: Record<string, string>;
     },
-  ): Promise<{ data: NotificationChannel }> {
+  ): Promise<NotificationChannel> {
     try {
       const results = await createChannel.run(
         {
@@ -88,7 +88,7 @@ export class NotificationChannelsService {
         throw new NotificationChannelNotFoundError('Failed to create notification channel');
       }
 
-      return { data: this.mapChannel(results[0]) };
+      return this.mapChannel(results[0]);
     } catch (error) {
       rethrowUniqueViolation(error, {
         uq_notification_channels_user_platform: () =>
@@ -109,7 +109,7 @@ export class NotificationChannelsService {
       notifyTime?: string;
       credentials?: Record<string, string>;
     },
-  ): Promise<{ data: NotificationChannel }> {
+  ): Promise<NotificationChannel> {
     const results = await updateChannel.run(
       {
         userExternalId,
@@ -131,7 +131,7 @@ export class NotificationChannelsService {
       throw new NotificationChannelNotFoundError();
     }
 
-    return { data: this.mapChannel(results[0]) };
+    return this.mapChannel(results[0]);
   }
 
   /**
@@ -149,7 +149,7 @@ export class NotificationChannelsService {
     userExternalId: string,
     channelExternalId: string,
     isEnabled: boolean,
-  ): Promise<{ data: NotificationChannel }> {
+  ): Promise<NotificationChannel> {
     return this.updateChannel(userExternalId, channelExternalId, { isEnabled });
   }
 

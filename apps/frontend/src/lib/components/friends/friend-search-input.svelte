@@ -89,7 +89,7 @@ async function loadSuggestions() {
 
   isLoadingSuggestions = true;
   try {
-    const { friends: list } = await listFriends({
+    const { data: list } = await listFriends({
       pageSize: limit,
       sortBy: 'display_name',
       sortOrder: 'asc',

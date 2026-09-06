@@ -90,7 +90,7 @@ function createCollectivesStore() {
         update,
         () => collectivesApi.listCollectives(params),
         (_state, result) => ({
-          collectives: result.collectives,
+          collectives: result.data,
           pagination: result.pagination,
           filters: {
             typeId: params.typeId,

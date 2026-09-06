@@ -150,9 +150,9 @@ async function performSearch() {
       filters: activeFilters,
       includeFacets: true,
     });
-    searchResults = result.results;
-    searchTotal = result.total;
-    searchTotalPages = result.totalPages;
+    searchResults = result.data;
+    searchTotal = result.pagination.totalCount;
+    searchTotalPages = result.pagination.totalPages;
     facets = result.facets ?? null;
   } catch (error) {
     console.error('Search failed:', error);

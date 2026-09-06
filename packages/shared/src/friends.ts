@@ -1,4 +1,5 @@
 import { type } from 'arktype';
+import type { Paginated } from './pagination.js';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import type { CircleSummary } from './circles.js';
 
@@ -668,22 +669,10 @@ export function parseSearchQuery(query: SearchQuery): SearchOptions {
 }
 
 /** Paginated search response */
-export interface PaginatedSearchResponse {
-  results: GlobalSearchResult[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
+export type PaginatedSearchResponse = Paginated<GlobalSearchResult>;
 
 /** Paginated friend list response */
-export interface PaginatedFriendList {
-  friends: FriendListItem[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
+export type PaginatedFriendList = Paginated<FriendListItem>;
 
 /** Parsed query options for list endpoint */
 export interface FriendListOptions {
@@ -792,9 +781,9 @@ export interface FacetGroups {
 }
 
 /** Paginated search response with optional facet data */
-export interface FacetedSearchResponse extends PaginatedSearchResponse {
+export type FacetedSearchResponse = Paginated<GlobalSearchResult> & {
   facets?: FacetGroups;
-}
+};
 
 /** Schema for faceted search query parameters */
 export const FacetedSearchQuerySchema = type({

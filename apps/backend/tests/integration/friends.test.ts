@@ -24,12 +24,12 @@ describe('Friends API - Integration Tests', () => {
 
       expect(response.status).toBe(200);
       // Self-profile is always present (created during onboarding)
-      expect(body.friends.length).toBe(1);
-      expect(body.friends[0].displayName).toBe('Test User (Self)');
-      expect(body.total).toBe(1);
-      expect(body.page).toBe(1);
-      expect(body.pageSize).toBe(25);
-      expect(body.totalPages).toBe(1);
+      expect(body.data.length).toBe(1);
+      expect(body.data[0].displayName).toBe('Test User (Self)');
+      expect(body.pagination.totalCount).toBe(1);
+      expect(body.pagination.page).toBe(1);
+      expect(body.pagination.pageSize).toBe(25);
+      expect(body.pagination.totalPages).toBe(1);
     });
 
     it('should return paginated friends list', async () => {
@@ -49,12 +49,12 @@ describe('Friends API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.friends.length).toBe(2);
+      expect(body.data.length).toBe(2);
       // Total includes self-profile + 3 created friends
-      expect(body.total).toBe(4);
-      expect(body.page).toBe(1);
-      expect(body.pageSize).toBe(2);
-      expect(body.totalPages).toBe(2);
+      expect(body.pagination.totalCount).toBe(4);
+      expect(body.pagination.page).toBe(1);
+      expect(body.pagination.pageSize).toBe(2);
+      expect(body.pagination.totalPages).toBe(2);
     });
 
     it('should sort friends by display name', async () => {
@@ -76,9 +76,9 @@ describe('Friends API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.friends[0].displayName).toBe('Alice');
-      expect(body.friends[1].displayName).toBe('Bob');
-      expect(body.friends[2].displayName).toBe('Charlie');
+      expect(body.data[0].displayName).toBe('Alice');
+      expect(body.data[1].displayName).toBe('Bob');
+      expect(body.data[2].displayName).toBe('Charlie');
     });
 
     it('should require authentication', async () => {
@@ -372,8 +372,8 @@ describe('Friends API - Integration Tests', () => {
       const listResponse = await app.fetch(listRequest);
       const listBody: any = await listResponse.json();
 
-      expect(listBody.friends.length).toBe(1);
-      expect(listBody.friends[0].displayName).toBe('Test User (Self)');
+      expect(listBody.data.length).toBe(1);
+      expect(listBody.data[0].displayName).toBe('Test User (Self)');
     });
 
     it('should return 404 for non-existent friend', async () => {

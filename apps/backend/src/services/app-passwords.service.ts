@@ -15,6 +15,12 @@ import { AppError, AppPasswordCreationError } from '../utils/errors.js';
 const SALT_ROUNDS = 10;
 const PASSWORD_LENGTH = 24; // 24 bytes = 32 chars in base64url
 const MAX_APP_PASSWORDS_PER_USER = 20;
+const PREFIX_LENGTH = 8;
+
+// Every rejected verification spends exactly one bcrypt round, including the
+// paths that know the answer up front (unknown email, no stored prefix match).
+// Without it, response time reveals which addresses have app passwords.
+const DUMMY_HASH = bcrypt.hashSync('dummy', SALT_ROUNDS);
 
 // Format: raw base64url password split into CHUNK-char chunks joined by '-'.
 // A well-formatted input has length `chunks * CHUNK + (chunks - 1)` — i.e.
@@ -32,16 +38,31 @@ export class MaxAppPasswordsExceededError extends AppError {
   }
 }
 
+/**
+ * Lookup key stored in `auth.app_passwords.password_prefix`: the first 16 hex
+ * characters of sha256 over the first 8 characters of the raw password.
+ *
+ * The raw prefix is a third of the secret, so storing it in plaintext handed a
+ * database dump both a head start and an offline oracle for confirming
+ * guesses. Hashing keeps the indexed equality lookup while making the stored
+ * value useless on its own. `apps/sabredav` computes the same value with
+ * `substr(hash('sha256', $prefix), 0, 16)`.
+ */
+export function hashAppPasswordPrefix(prefix: string): string {
+  return crypto.createHash('sha256').update(prefix).digest('hex').slice(0, 16);
+}
+
 export interface AppPassword {
   externalId: string;
   name: string;
-  passwordPrefix: string;
   lastUsedAt: string | null;
   createdAt: string;
 }
 
 export interface AppPasswordWithSecret extends AppPassword {
   password: string; // Only returned at creation time
+  /** Raw (unhashed) password prefix — returned at creation time only. */
+  passwordPrefix: string;
 }
 
 export interface BasicAuthContext {
@@ -110,7 +131,6 @@ export class AppPasswordsService {
     return results.map((row) => ({
       externalId: row.external_id,
       name: row.name,
-      passwordPrefix: row.password_prefix,
       lastUsedAt: row.last_used_at?.toISOString() ?? null,
       createdAt: row.created_at.toISOString(),
     }));
@@ -137,7 +157,7 @@ export class AppPasswordsService {
     // Generate a random password
     const rawPassword = crypto.randomBytes(PASSWORD_LENGTH).toString('base64url');
     const password = this.formatPassword(rawPassword);
-    const passwordPrefix = rawPassword.substring(0, 8);
+    const passwordPrefix = rawPassword.substring(0, PREFIX_LENGTH);
     const passwordHash = await bcrypt.hash(rawPassword, SALT_ROUNDS);
 
     const results = await createAppPassword.run(
@@ -145,7 +165,7 @@ export class AppPasswordsService {
         userExternalId,
         name,
         passwordHash,
-        passwordPrefix,
+        passwordPrefix: hashAppPasswordPrefix(passwordPrefix),
       },
       this.db,
     );
@@ -164,7 +184,9 @@ export class AppPasswordsService {
     return {
       externalId: row.external_id,
       name: row.name,
-      passwordPrefix: row.password_prefix,
+      // The raw prefix, straight from the password we just generated — the
+      // stored column only holds its hash.
+      passwordPrefix,
       password, // Only returned once!
       lastUsedAt: null,
       createdAt: row.created_at.toISOString(),
@@ -216,7 +238,7 @@ export class AppPasswordsService {
     // '-' characters that are part of the base64url alphabet; only strip the
     // dashes inserted as separators by formatPassword.
     const rawPassword = this.unformatPassword(password);
-    const prefix = rawPassword.substring(0, 8);
+    const prefix = hashAppPasswordPrefix(rawPassword.substring(0, PREFIX_LENGTH));
 
     // Emails are stored lowercase (CHECK constraint on both identity tables);
     // DAV/MCP clients send whatever the user typed.
@@ -224,6 +246,8 @@ export class AppPasswordsService {
 
     const user = users[0];
     if (!user) {
+      // Spend the same bcrypt round a real candidate would have cost.
+      await bcrypt.compare(rawPassword, DUMMY_HASH);
       this.logger.warn('User not found for app password verification');
       return null;
     }
@@ -236,6 +260,12 @@ export class AppPasswordsService {
       },
       this.db,
     );
+
+    if (appPasswords.length === 0) {
+      await bcrypt.compare(rawPassword, DUMMY_HASH);
+      this.logger.warn('Invalid app password');
+      return null;
+    }
 
     // Try each matching password
     for (const ap of appPasswords) {

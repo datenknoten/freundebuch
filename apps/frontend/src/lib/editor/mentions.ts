@@ -72,12 +72,12 @@ async function searchMentionables(query: string): Promise<Mentionable[]> {
     }
   }
   if (collectives.status === 'fulfilled') {
-    for (const c of collectives.value.collectives) {
+    for (const c of collectives.value.data) {
       out.push({ label: c.name, url: `/collectives/${c.id}`, kind: 'collective' });
     }
   }
   if (encounters.status === 'fulfilled') {
-    for (const e of encounters.value.encounters) {
+    for (const e of encounters.value.data) {
       out.push({ label: encounterLabel(e), url: `/encounters/${e.id}`, kind: 'encounter' });
     }
   }

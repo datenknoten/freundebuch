@@ -50,7 +50,7 @@ const listItem = (id: string, date: string) => ({
 });
 
 const pageResult = (items: ReturnType<typeof listItem>[], totalCount = items.length) => ({
-  encounters: items,
+  data: items,
   pagination: { page: 1, pageSize: 20, totalCount, totalPages: 1 },
 });
 

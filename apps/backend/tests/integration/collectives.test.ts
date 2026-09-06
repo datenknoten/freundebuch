@@ -31,22 +31,21 @@ describe('Collectives API - Integration', () => {
     vi.stubEnv('LOG_LEVEL', 'silent');
 
     context = await setupAuthTests();
-    user = await createAuthenticatedUser(context.pool, 'collectives@example.com', 'Password123!');
-    await completeTestUserOnboarding(context.pool, user.externalId);
-
-    // A system-default collective type and one of its roles are needed for
-    // create + membership tests.
-    const typesRes = await req('GET', '/api/collectives/types');
-    const type = (await json(typesRes)).types[0];
-    typeId = type.id;
-    roleId = type.roles[0].id;
   }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
     resetRateLimiters();
-    // Wipe collectives (and their cascade) between tests; self-profile friend stays.
-    await context.pool.query('DELETE FROM collectives.collective_memberships');
-    await context.pool.query('DELETE FROM collectives.collectives');
+    // Wipe every user-owned row and rebuild the fixture user, so no test
+    // inherits collectives (or a session) from its predecessors. The
+    // system-default collective types have no owner and survive the wipe, but
+    // reading them needs a session, so resolve them here too.
+    user = await createAuthenticatedUser(context.pool, 'collectives@example.com', 'Password123!');
+    await completeTestUserOnboarding(context.pool, user.externalId);
+
+    const typesRes = await req('GET', '/api/collectives/types');
+    const type = (await json(typesRes)).types[0];
+    typeId = type.id;
+    roleId = type.roles[0].id;
   });
 
   afterAll(async () => {
@@ -99,7 +98,7 @@ describe('Collectives API - Integration', () => {
 
       // Soft-deleted: gone from the default listing.
       const list = await req('GET', '/api/collectives');
-      expect((await json(list)).collectives.some((c: { id: string }) => c.id === id)).toBe(false);
+      expect((await json(list)).data.some((c: { id: string }) => c.id === id)).toBe(false);
     });
 
     it('lists collectives with the shared pagination shape', async () => {
@@ -109,7 +108,7 @@ describe('Collectives API - Integration', () => {
       const list = await req('GET', '/api/collectives?page=1&page_size=1');
       expect(list.status).toBe(200);
       const body = await json(list);
-      expect(body.collectives.length).toBe(1);
+      expect(body.data.length).toBe(1);
       expect(body.pagination.totalCount).toBe(2);
       expect(body.pagination.totalPages).toBe(2);
       expect(body.pagination.page).toBe(1);

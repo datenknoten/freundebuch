@@ -76,7 +76,7 @@ describe('search store', () => {
     });
 
     it('uses faceted search when filters are active', async () => {
-      h.api.facetedSearch.mockResolvedValue({ results: [{ id: 'f-2' }], facets: null });
+      h.api.facetedSearch.mockResolvedValue({ data: [{ id: 'f-2' }], facets: null });
       search.setFilters({ city: ['Berlin'] });
 
       search.setQuery('ada');

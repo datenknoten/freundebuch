@@ -107,13 +107,13 @@ export class CollectivesService {
       previewsByCollective.set(preview.collective_external_id, existing);
     }
 
-    const collectives: CollectiveListItem[] = collectivesResult.map((row) => {
+    const data: CollectiveListItem[] = collectivesResult.map((row) => {
       const members = previewsByCollective.get(row.external_id) ?? [];
       return this.mapCollectiveListItem(row, members);
     });
 
     return {
-      collectives,
+      data,
       pagination: {
         page: options.page,
         pageSize: options.pageSize,

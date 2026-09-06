@@ -9,18 +9,14 @@ import { apiRequest } from './client.js';
  * List all notification channels for the authenticated user
  */
 export async function listChannels(): Promise<NotificationChannel[]> {
-  const result = await apiRequest<{ data: NotificationChannel[] }>('/api/notification-channels');
-  return result.data;
+  return apiRequest<NotificationChannel[]>('/api/notification-channels');
 }
 
 /**
  * Get a single notification channel by ID
  */
 export async function getChannel(channelId: string): Promise<NotificationChannel> {
-  const result = await apiRequest<{ data: NotificationChannel }>(
-    `/api/notification-channels/${channelId}`,
-  );
-  return result.data;
+  return apiRequest<NotificationChannel>(`/api/notification-channels/${channelId}`);
 }
 
 /**
@@ -29,11 +25,10 @@ export async function getChannel(channelId: string): Promise<NotificationChannel
 export async function createChannel(
   input: NotificationChannelCreateInput,
 ): Promise<NotificationChannel> {
-  const result = await apiRequest<{ data: NotificationChannel }>('/api/notification-channels', {
+  return apiRequest<NotificationChannel>('/api/notification-channels', {
     method: 'POST',
     body: JSON.stringify(input),
   });
-  return result.data;
 }
 
 /**
@@ -43,14 +38,10 @@ export async function updateChannel(
   channelId: string,
   input: NotificationChannelUpdateInput,
 ): Promise<NotificationChannel> {
-  const result = await apiRequest<{ data: NotificationChannel }>(
-    `/api/notification-channels/${channelId}`,
-    {
-      method: 'PUT',
-      body: JSON.stringify(input),
-    },
-  );
-  return result.data;
+  return apiRequest<NotificationChannel>(`/api/notification-channels/${channelId}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
 }
 
 /**
@@ -78,12 +69,8 @@ export async function toggleChannel(
   channelId: string,
   isEnabled: boolean,
 ): Promise<NotificationChannel> {
-  const result = await apiRequest<{ data: NotificationChannel }>(
-    `/api/notification-channels/${channelId}/toggle`,
-    {
-      method: 'PATCH',
-      body: JSON.stringify({ isEnabled }),
-    },
-  );
-  return result.data;
+  return apiRequest<NotificationChannel>(`/api/notification-channels/${channelId}/toggle`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isEnabled }),
+  });
 }

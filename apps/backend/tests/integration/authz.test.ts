@@ -263,7 +263,7 @@ describe('Cross-user authorization', () => {
         },
       });
       expect(created.status).toBe(201);
-      const channelId = (await json(created)).data.externalId;
+      const channelId = (await json(created)).externalId;
 
       expect((await asB('GET', `/api/notification-channels/${channelId}`)).status).toBe(404);
       expect(

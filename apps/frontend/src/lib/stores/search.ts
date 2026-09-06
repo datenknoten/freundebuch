@@ -99,7 +99,7 @@ function createSearchStore() {
         });
         update((state) => ({
           ...state,
-          results: response.results,
+          results: response.data,
           facets: response.facets ?? null,
           isSearching: false,
           facetsLoading: false,

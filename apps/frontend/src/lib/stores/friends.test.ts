@@ -34,12 +34,9 @@ vi.mock('./friend-subresources.js', () => ({ createSubresourceOps: h.subresource
 
 import { currentFriend, friendList, friends, isFriendsLoading } from './friends.js';
 
-const page = (friendsList: Array<{ id: string }>, total = friendsList.length) => ({
-  friends: friendsList,
-  total,
-  page: 1,
-  pageSize: 25,
-  totalPages: 1,
+const page = (friendsList: Array<{ id: string }>, totalCount = friendsList.length) => ({
+  data: friendsList,
+  pagination: { page: 1, pageSize: 25, totalCount, totalPages: 1 },
 });
 
 describe('friends store', () => {

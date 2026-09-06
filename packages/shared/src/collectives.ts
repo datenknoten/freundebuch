@@ -1,5 +1,5 @@
 import { type } from 'arktype';
-import type { PaginationInfo } from './pagination.js';
+import type { Paginated } from './pagination.js';
 
 /**
  * Collective types and validation schemas for Epic 12: Collectives
@@ -258,10 +258,7 @@ export interface CollectiveListItem {
 }
 
 /** Paginated collective list response */
-export interface CollectiveListResponse {
-  collectives: CollectiveListItem[];
-  pagination: PaginationInfo;
-}
+export type CollectiveListResponse = Paginated<CollectiveListItem>;
 
 /** Relationship type summary for preview items */
 export interface RelationshipTypeSummary {

@@ -12,7 +12,7 @@ describe('app-passwords API', () => {
   afterEach(restoreFetch);
 
   it('listAppPasswords GETs the collection and returns it', async () => {
-    const rows = [{ externalId: 'ap-1', name: 'CalDAV', passwordPrefix: 'fb_', createdAt: 't' }];
+    const rows = [{ externalId: 'ap-1', name: 'CalDAV', lastUsedAt: null, createdAt: 't' }];
     fetchMock.mockResolvedValue(jsonResponse(rows));
 
     const result = await listAppPasswords();
@@ -23,8 +23,12 @@ describe('app-passwords API', () => {
 
   it('createAppPassword POSTs the name and returns the one-time password', async () => {
     const created = {
-      appPassword: { externalId: 'ap-2', name: 'Phone', passwordPrefix: 'fb_', createdAt: 't' },
-      password: 'secret-once',
+      externalId: 'ap-2',
+      name: 'Phone',
+      passwordPrefix: 'abcd1234',
+      lastUsedAt: null,
+      createdAt: 't',
+      password: 'abcd-1234-efgh-5678',
     };
     fetchMock.mockResolvedValue(jsonResponse(created));
 
@@ -34,7 +38,8 @@ describe('app-passwords API', () => {
       '/api/app-passwords',
       expect.objectContaining({ method: 'POST', body: JSON.stringify({ name: 'Phone' }) }),
     );
-    expect(result.password).toBe('secret-once');
+    expect(result.password).toBe('abcd-1234-efgh-5678');
+    expect(result.passwordPrefix).toBe('abcd1234');
   });
 
   it('revokeAppPassword DELETEs the given id', async () => {

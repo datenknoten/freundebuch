@@ -52,7 +52,7 @@ function createEncountersStore() {
         update,
         () => encountersApi.listEncounters(params),
         (_state, result) => ({
-          encounters: result.encounters,
+          encounters: result.data,
           pagination: result.pagination,
           filters: {
             friendId: params.friendId,

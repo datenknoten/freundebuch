@@ -137,12 +137,7 @@ function formatDate(dateString: string | null): string {
       {#each passwords as password (password.externalId)}
         <div class="flex items-center justify-between p-4">
           <div class="flex-1">
-            <div class="flex items-center gap-2">
-              <span class="font-body font-semibold text-gray-800">{password.name}</span>
-              <code class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono text-gray-600">
-                {password.passwordPrefix}****
-              </code>
-            </div>
+            <span class="font-body font-semibold text-gray-800">{password.name}</span>
             <div class="text-sm font-body text-gray-500 mt-1">
               Created {formatDate(password.createdAt)}
               {#if password.lastUsedAt}

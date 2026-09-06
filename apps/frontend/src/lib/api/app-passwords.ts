@@ -3,19 +3,15 @@ import { apiRequest } from './client.js';
 export interface AppPassword {
   externalId: string;
   name: string;
-  passwordPrefix: string;
   lastUsedAt: string | null;
   createdAt: string;
 }
 
-export interface CreateAppPasswordResult {
-  appPassword: {
-    externalId: string;
-    name: string;
-    passwordPrefix: string;
-    createdAt: string;
-  };
+export interface CreateAppPasswordResult extends AppPassword {
+  /** The formatted password — shown once, right after creation. */
   password: string;
+  /** First 8 characters of the raw password; only the create response has it. */
+  passwordPrefix: string;
 }
 
 /**

@@ -161,7 +161,7 @@ app.put('/:channelId', async (c) => {
   if (validated.credentials) {
     const service = new NotificationChannelsService(db);
     const existing = await service.getChannel(user.userId, channelId);
-    credentials = validateCredentialsForUpdate(existing.data.platform, validated.credentials);
+    credentials = validateCredentialsForUpdate(existing.platform, validated.credentials);
   }
 
   const service = new NotificationChannelsService(db);

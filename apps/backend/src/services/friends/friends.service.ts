@@ -227,11 +227,13 @@ export class FriendsService {
     const total = friends[0]?.total_count ?? 0;
 
     return {
-      friends: friends.map((c) => this.mapFriendListItem(c)),
-      total,
-      page: options.page,
-      pageSize: options.pageSize,
-      totalPages: Math.ceil(total / options.pageSize),
+      data: friends.map((c) => this.mapFriendListItem(c)),
+      pagination: {
+        page: options.page,
+        pageSize: options.pageSize,
+        totalCount: total,
+        totalPages: Math.ceil(total / options.pageSize),
+      },
     };
   }
 

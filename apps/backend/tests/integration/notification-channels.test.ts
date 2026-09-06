@@ -30,13 +30,14 @@ describe('Notification Channels API - Integration', () => {
     vi.stubEnv('LOG_LEVEL', 'silent');
 
     context = await setupAuthTests();
-    user = await createAuthenticatedUser(context.pool, 'notif@example.com', 'Password123!');
-    await completeTestUserOnboarding(context.pool, user.externalId);
   }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
     resetRateLimiters();
-    await context.pool.query('DELETE FROM system.notification_channels');
+    // Wipe every user-owned row and rebuild the fixture user, so no test
+    // inherits channels (or a session) from its predecessors.
+    user = await createAuthenticatedUser(context.pool, 'notif@example.com', 'Password123!');
+    await completeTestUserOnboarding(context.pool, user.externalId);
   });
 
   afterAll(async () => {
@@ -64,7 +65,7 @@ describe('Notification Channels API - Integration', () => {
       credentials: { webhookUrl: DISCORD_WEBHOOK },
     });
     expect(res.status).toBe(201);
-    return (await json(res)).data.externalId;
+    return (await json(res)).externalId;
   }
 
   it('creates, lists, gets, updates and deletes a channel', async () => {
@@ -72,18 +73,18 @@ describe('Notification Channels API - Integration', () => {
 
     const list = await req('GET', '/api/notification-channels');
     expect(list.status).toBe(200);
-    expect((await json(list)).data.length).toBe(1);
+    expect((await json(list)).length).toBe(1);
 
     const got = await req('GET', `/api/notification-channels/${id}`);
     expect(got.status).toBe(200);
     const body = await json(got);
-    expect(body.data.platform).toBe('discord');
+    expect(body.platform).toBe('discord');
     // The webhook secret must be masked in responses, not echoed in full.
-    expect(body.data.credentials.webhookUrl).not.toBe(DISCORD_WEBHOOK);
+    expect(body.credentials.webhookUrl).not.toBe(DISCORD_WEBHOOK);
 
     const updated = await req('PUT', `/api/notification-channels/${id}`, { lookaheadDays: 14 });
     expect(updated.status).toBe(200);
-    expect((await json(updated)).data.lookaheadDays).toBe(14);
+    expect((await json(updated)).lookaheadDays).toBe(14);
 
     const deleted = await req('DELETE', `/api/notification-channels/${id}`);
     expect(deleted.status).toBe(200);
@@ -94,7 +95,7 @@ describe('Notification Channels API - Integration', () => {
     const id = await createDiscordChannel();
     const res = await req('PATCH', `/api/notification-channels/${id}/toggle`, { isEnabled: false });
     expect(res.status).toBe(200);
-    expect((await json(res)).data.isEnabled).toBe(false);
+    expect((await json(res)).isEnabled).toBe(false);
   });
 
   it('rejects an invalid notify time', async () => {

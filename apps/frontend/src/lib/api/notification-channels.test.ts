@@ -22,8 +22,8 @@ describe('notification-channels API', () => {
 
   afterEach(restoreFetch);
 
-  it('listChannels unwraps the data array', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: [{ id: 'ch-1' }] }));
+  it('listChannels returns the channel array', async () => {
+    fetchMock.mockResolvedValue(jsonResponse([{ id: 'ch-1' }]));
 
     const result = await listChannels();
 
@@ -34,14 +34,14 @@ describe('notification-channels API', () => {
     expect(result).toEqual([{ id: 'ch-1' }]);
   });
 
-  it('getChannel unwraps the single data object', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: { id: 'ch-1' } }));
+  it('getChannel returns the channel', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ id: 'ch-1' }));
     const result = await getChannel('ch-1');
     expect(result).toEqual({ id: 'ch-1' });
   });
 
-  it('createChannel POSTs the input and unwraps data', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: { id: 'ch-2' } }));
+  it('createChannel POSTs the input and returns the channel', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ id: 'ch-2' }));
 
     const result = await createChannel({ platform: 'telegram' } as never);
 
@@ -53,7 +53,7 @@ describe('notification-channels API', () => {
   });
 
   it('updateChannel PUTs to the id endpoint', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: { id: 'ch-1' } }));
+    fetchMock.mockResolvedValue(jsonResponse({ id: 'ch-1' }));
     await updateChannel('ch-1', { isEnabled: false } as never);
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/notification-channels/ch-1',
@@ -80,7 +80,7 @@ describe('notification-channels API', () => {
   });
 
   it('toggleChannel PATCHes isEnabled and unwraps data', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: { id: 'ch-1', isEnabled: true } }));
+    fetchMock.mockResolvedValue(jsonResponse({ id: 'ch-1', isEnabled: true }));
 
     const result = await toggleChannel('ch-1', true);
 

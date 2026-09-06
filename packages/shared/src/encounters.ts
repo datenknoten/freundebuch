@@ -1,5 +1,5 @@
 import { type } from 'arktype';
-import type { PaginationInfo } from './pagination.js';
+import type { Paginated } from './pagination.js';
 
 /**
  * Encounter types and validation schemas for Epic 2: Encounter Management
@@ -163,10 +163,7 @@ export interface EncounterListItem {
 }
 
 /** Paginated encounter list response */
-export interface EncounterListResponse {
-  encounters: EncounterListItem[];
-  pagination: PaginationInfo;
-}
+export type EncounterListResponse = Paginated<EncounterListItem>;
 
 /** Last encounter summary for friend detail page */
 export interface LastEncounterSummary {

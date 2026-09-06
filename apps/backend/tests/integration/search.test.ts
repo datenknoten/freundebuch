@@ -667,11 +667,11 @@ describe('Search API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.results.length).toBe(5);
-      expect(body.total).toBe(15);
-      expect(body.page).toBe(1);
-      expect(body.pageSize).toBe(5);
-      expect(body.totalPages).toBe(3);
+      expect(body.data.length).toBe(5);
+      expect(body.pagination.totalCount).toBe(15);
+      expect(body.pagination.page).toBe(1);
+      expect(body.pagination.pageSize).toBe(5);
+      expect(body.pagination.totalPages).toBe(3);
     });
 
     it('should support sorting by display name', async () => {
@@ -693,9 +693,9 @@ describe('Search API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.results[0].displayName).toBe('Alice A');
-      expect(body.results[1].displayName).toBe('Alice B');
-      expect(body.results[2].displayName).toBe('Alice C');
+      expect(body.data[0].displayName).toBe('Alice A');
+      expect(body.data[1].displayName).toBe('Alice B');
+      expect(body.data[2].displayName).toBe('Alice C');
     });
 
     it('should support sorting by relevance', async () => {
@@ -718,7 +718,7 @@ describe('Search API - Integration Tests', () => {
 
       expect(response.status).toBe(200);
       // Direct name match should be first
-      expect(body.results[0].displayName).toBe('Alice Smith');
+      expect(body.data[0].displayName).toBe('Alice Smith');
     });
 
     it('should return correct page of results', async () => {
@@ -741,12 +741,12 @@ describe('Search API - Integration Tests', () => {
       const body: any = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body.results.length).toBe(3);
-      expect(body.page).toBe(2);
+      expect(body.data.length).toBe(3);
+      expect(body.pagination.page).toBe(2);
       // Page 2 with pageSize 3 should have items 3, 4, 5 (0-indexed: 03, 04, 05)
-      expect(body.results[0].displayName).toBe('Alice 03');
-      expect(body.results[1].displayName).toBe('Alice 04');
-      expect(body.results[2].displayName).toBe('Alice 05');
+      expect(body.data[0].displayName).toBe('Alice 03');
+      expect(body.data[1].displayName).toBe('Alice 04');
+      expect(body.data[2].displayName).toBe('Alice 05');
     });
   });
 
@@ -781,8 +781,8 @@ describe('Search API - Integration Tests', () => {
         const body: any = await response.json();
 
         expect(response.status).toBe(200);
-        expect(body.results.length).toBe(1);
-        expect(body.results[0].displayName).toBe('Alice NYC');
+        expect(body.data.length).toBe(1);
+        expect(body.data[0].displayName).toBe('Alice NYC');
       });
 
       it('should filter by country', async () => {
@@ -810,8 +810,8 @@ describe('Search API - Integration Tests', () => {
         const body: any = await response.json();
 
         expect(response.status).toBe(200);
-        expect(body.results.length).toBe(1);
-        expect(body.results[0].displayName).toBe('Alice USA');
+        expect(body.data.length).toBe(1);
+        expect(body.data[0].displayName).toBe('Alice USA');
       });
 
       it('should filter by organization', async () => {
@@ -833,8 +833,8 @@ describe('Search API - Integration Tests', () => {
         const body: any = await response.json();
 
         expect(response.status).toBe(200);
-        expect(body.results.length).toBe(1);
-        expect(body.results[0].displayName).toBe('Alice Acme');
+        expect(body.data.length).toBe(1);
+        expect(body.data[0].displayName).toBe('Alice Acme');
       });
 
       it('should filter by job title', async () => {
@@ -874,8 +874,8 @@ describe('Search API - Integration Tests', () => {
         const body: any = await response.json();
 
         expect(response.status).toBe(200);
-        expect(body.results.length).toBe(1);
-        expect(body.results[0].displayName).toBe('Alice Eng');
+        expect(body.data.length).toBe(1);
+        expect(body.data[0].displayName).toBe('Alice Eng');
       });
 
       it('should filter by circle', async () => {
@@ -904,8 +904,8 @@ describe('Search API - Integration Tests', () => {
         const body: any = await response.json();
 
         expect(response.status).toBe(200);
-        expect(body.results.length).toBe(1);
-        expect(body.results[0].displayName).toBe('Alice Circle1');
+        expect(body.data.length).toBe(1);
+        expect(body.data[0].displayName).toBe('Alice Circle1');
       });
 
       it('should combine multiple filters with AND logic', async () => {
@@ -951,8 +951,8 @@ describe('Search API - Integration Tests', () => {
         const body: any = await response.json();
 
         expect(response.status).toBe(200);
-        expect(body.results.length).toBe(1);
-        expect(body.results[0].displayName).toBe('Alice Match');
+        expect(body.data.length).toBe(1);
+        expect(body.data[0].displayName).toBe('Alice Match');
       });
     });
 
@@ -978,8 +978,8 @@ describe('Search API - Integration Tests', () => {
 
         expect(response.status).toBe(200);
         // Should only return the one that matches BOTH query AND filter
-        expect(body.results.length).toBe(1);
-        expect(body.results[0].displayName).toBe('Alice Acme');
+        expect(body.data.length).toBe(1);
+        expect(body.data[0].displayName).toBe('Alice Acme');
       });
 
       it('should not return results that only match filter but not query', async () => {
@@ -1027,10 +1027,10 @@ describe('Search API - Integration Tests', () => {
 
         expect(response.status).toBe(200);
         // Should ONLY return people with "patsch" in their searchable data
-        expect(body.results.length).toBe(2);
-        expect(body.results.every((r: any) => r.displayName.includes('Patsch'))).toBe(true);
-        expect(body.results.some((r: any) => r.displayName.includes('Schumacher'))).toBe(false);
-        expect(body.results.some((r: any) => r.displayName.includes('Werner'))).toBe(false);
+        expect(body.data.length).toBe(2);
+        expect(body.data.every((r: any) => r.displayName.includes('Patsch'))).toBe(true);
+        expect(body.data.some((r: any) => r.displayName.includes('Schumacher'))).toBe(false);
+        expect(body.data.some((r: any) => r.displayName.includes('Werner'))).toBe(false);
       });
     });
 
@@ -1077,10 +1077,10 @@ describe('Search API - Integration Tests', () => {
         const body: any = await response.json();
 
         expect(response.status).toBe(200);
-        expect(body.results.length).toBe(1);
-        expect(body.results[0].circles).toBeDefined();
-        expect(body.results[0].circles.length).toBe(1);
-        expect(body.results[0].circles[0].name).toBe('Friends');
+        expect(body.data.length).toBe(1);
+        expect(body.data[0].circles).toBeDefined();
+        expect(body.data[0].circles.length).toBe(1);
+        expect(body.data[0].circles[0].name).toBe('Friends');
       });
     });
 
@@ -1104,8 +1104,8 @@ describe('Search API - Integration Tests', () => {
         const body: any = await response.json();
 
         expect(response.status).toBe(200);
-        expect(body.results.length).toBe(2);
-        expect(body.results.every((r: any) => r.organization === 'Acme Corp')).toBe(true);
+        expect(body.data.length).toBe(2);
+        expect(body.data.every((r: any) => r.organization === 'Acme Corp')).toBe(true);
       });
 
       it('should reject request with no query and no filters', async () => {
