@@ -27,6 +27,17 @@ export function createLogger() {
         'name',
         'address',
         '*.address',
+        // Nested and array forms: a logged friend (or a list of them) puts the
+        // sensitive fields two levels down, where the single-wildcard paths
+        // above no longer match.
+        '*.*.email',
+        '*.*.address',
+        '*.*.displayName',
+        '*.*.password',
+        '*.*.token',
+        '*[*].email',
+        '*[*].address',
+        '*[*].displayName',
       ],
     },
     transport:
