@@ -23,16 +23,6 @@ export async function getCurrentUser(): Promise<User> {
 }
 
 /**
- * Update the current user's profile
- */
-export async function updateCurrentUser(data: Partial<User>): Promise<User> {
-  return apiRequest<User>('/api/users/me', {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
  * Get the current user with preferences
  */
 export async function getUserWithPreferences(): Promise<{

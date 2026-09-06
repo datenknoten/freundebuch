@@ -1,8 +1,3 @@
-/* @name GetUserByExternalId */
-SELECT external_id, email, created_at, updated_at
-FROM auth.users
-WHERE external_id = :externalId;
-
 /* @name GetUserByEmailWithSelfProfile */
 SELECT
     u.id as external_id,
@@ -14,24 +9,6 @@ SELECT
 FROM auth."user" u
 LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
 WHERE u.email = :email;
-
-/* @name UpdateUser */
-UPDATE auth.users
-SET email = :email, updated_at = CURRENT_TIMESTAMP
-WHERE external_id = :externalId
-RETURNING external_id, email, created_at, updated_at;
-
-/* @name UpdateUserReturningWithSelfProfile */
-UPDATE auth.users u
-SET email = :email, updated_at = CURRENT_TIMESTAMP
-WHERE u.external_id = :externalId
-RETURNING
-    u.external_id,
-    u.email,
-    u.created_at,
-    u.updated_at,
-    (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id,
-    (SELECT c.display_name FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_display_name;
 
 /* @name GetUserWithPreferences */
 SELECT id as external_id, email, preferences, created_at, updated_at

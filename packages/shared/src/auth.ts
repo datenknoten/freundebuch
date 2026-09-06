@@ -113,13 +113,6 @@ export const RefreshRequestSchema = type({
 
 export type RefreshRequest = typeof RefreshRequestSchema.infer;
 
-// Update profile request schema
-export const UpdateProfileRequestSchema = type({
-  'email?': emailType,
-});
-
-export type UpdateProfileRequest = typeof UpdateProfileRequestSchema.infer;
-
 // Forgot password request schema
 export const ForgotPasswordRequestSchema = type({
   email: emailType,

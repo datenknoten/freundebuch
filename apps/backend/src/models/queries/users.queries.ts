@@ -3,39 +3,6 @@ import { PreparedQuery } from '@pgtyped/runtime';
 
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
-/** 'GetUserByExternalId' parameters type */
-export interface IGetUserByExternalIdParams {
-  externalId?: string | null | void;
-}
-
-/** 'GetUserByExternalId' return type */
-export interface IGetUserByExternalIdResult {
-  created_at: Date;
-  email: string;
-  /** Public UUID for API exposure (always use this in APIs) */
-  external_id: string;
-  updated_at: Date;
-}
-
-/** 'GetUserByExternalId' query type */
-export interface IGetUserByExternalIdQuery {
-  params: IGetUserByExternalIdParams;
-  result: IGetUserByExternalIdResult;
-}
-
-const getUserByExternalIdIR: any = {"usedParamSet":{"externalId":true},"params":[{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":86,"b":96}]}],"statement":"SELECT external_id, email, created_at, updated_at\nFROM auth.users\nWHERE external_id = :externalId"};
-
-/**
- * Query generated from SQL:
- * ```
- * SELECT external_id, email, created_at, updated_at
- * FROM auth.users
- * WHERE external_id = :externalId
- * ```
- */
-export const getUserByExternalId = new PreparedQuery<IGetUserByExternalIdParams,IGetUserByExternalIdResult>(getUserByExternalIdIR);
-
-
 /** 'GetUserByEmailWithSelfProfile' parameters type */
 export interface IGetUserByEmailWithSelfProfileParams {
   email?: string | null | void;
@@ -47,7 +14,7 @@ export interface IGetUserByEmailWithSelfProfileResult {
   email: string;
   /** UUID primary key (mapped from legacy external_id) */
   external_id: string;
-  /** Display name of the self-profile friend */
+  /** Primary name shown in lists */
   self_profile_display_name: string;
   /** Public UUID for API exposure (always use this in APIs) */
   self_profile_external_id: string;
@@ -78,84 +45,6 @@ const getUserByEmailWithSelfProfileIR: any = {"usedParamSet":{"email":true},"par
  * ```
  */
 export const getUserByEmailWithSelfProfile = new PreparedQuery<IGetUserByEmailWithSelfProfileParams,IGetUserByEmailWithSelfProfileResult>(getUserByEmailWithSelfProfileIR);
-
-
-/** 'UpdateUser' parameters type */
-export interface IUpdateUserParams {
-  email?: string | null | void;
-  externalId?: string | null | void;
-}
-
-/** 'UpdateUser' return type */
-export interface IUpdateUserResult {
-  created_at: Date;
-  email: string;
-  /** Public UUID for API exposure (always use this in APIs) */
-  external_id: string;
-  updated_at: Date;
-}
-
-/** 'UpdateUser' query type */
-export interface IUpdateUserQuery {
-  params: IUpdateUserParams;
-  result: IUpdateUserResult;
-}
-
-const updateUserIR: any = {"usedParamSet":{"email":true,"externalId":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":30,"b":35}]},{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":89,"b":99}]}],"statement":"UPDATE auth.users\nSET email = :email, updated_at = CURRENT_TIMESTAMP\nWHERE external_id = :externalId\nRETURNING external_id, email, created_at, updated_at"};
-
-/**
- * Query generated from SQL:
- * ```
- * UPDATE auth.users
- * SET email = :email, updated_at = CURRENT_TIMESTAMP
- * WHERE external_id = :externalId
- * RETURNING external_id, email, created_at, updated_at
- * ```
- */
-export const updateUser = new PreparedQuery<IUpdateUserParams,IUpdateUserResult>(updateUserIR);
-
-
-/** 'UpdateUserReturningWithSelfProfile' parameters type */
-export interface IUpdateUserReturningWithSelfProfileParams {
-  email?: string | null | void;
-  externalId?: string | null | void;
-}
-
-/** 'UpdateUserReturningWithSelfProfile' return type */
-export interface IUpdateUserReturningWithSelfProfileResult {
-  created_at: Date;
-  email: string;
-  /** Public UUID for API exposure (always use this in APIs) */
-  external_id: string;
-  self_profile_display_name: string | null;
-  self_profile_external_id: string | null;
-  updated_at: Date;
-}
-
-/** 'UpdateUserReturningWithSelfProfile' query type */
-export interface IUpdateUserReturningWithSelfProfileQuery {
-  params: IUpdateUserReturningWithSelfProfileParams;
-  result: IUpdateUserReturningWithSelfProfileResult;
-}
-
-const updateUserReturningWithSelfProfileIR: any = {"usedParamSet":{"email":true,"externalId":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":32,"b":37}]},{"name":"externalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":93,"b":103}]}],"statement":"UPDATE auth.users u\nSET email = :email, updated_at = CURRENT_TIMESTAMP\nWHERE u.external_id = :externalId\nRETURNING\n    u.external_id,\n    u.email,\n    u.created_at,\n    u.updated_at,\n    (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id,\n    (SELECT c.display_name FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_display_name"};
-
-/**
- * Query generated from SQL:
- * ```
- * UPDATE auth.users u
- * SET email = :email, updated_at = CURRENT_TIMESTAMP
- * WHERE u.external_id = :externalId
- * RETURNING
- *     u.external_id,
- *     u.email,
- *     u.created_at,
- *     u.updated_at,
- *     (SELECT c.external_id FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_external_id,
- *     (SELECT c.display_name FROM friends.friends c WHERE c.id = u.self_profile_id AND c.deleted_at IS NULL) as self_profile_display_name
- * ```
- */
-export const updateUserReturningWithSelfProfile = new PreparedQuery<IUpdateUserReturningWithSelfProfileParams,IUpdateUserReturningWithSelfProfileResult>(updateUserReturningWithSelfProfileIR);
 
 
 /** 'GetUserWithPreferences' parameters type */
@@ -238,7 +127,7 @@ export interface IGetUserSelfProfileParams {
 
 /** 'GetUserSelfProfile' return type */
 export interface IGetUserSelfProfileResult {
-  /** Display name of the self-profile friend */
+  /** Primary name shown in lists */
   self_profile_display_name: string;
   /** Public UUID for API exposure (always use this in APIs) */
   self_profile_external_id: string;

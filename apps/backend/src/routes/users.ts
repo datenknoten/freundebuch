@@ -1,8 +1,4 @@
-import {
-  FriendCreateSchema,
-  UpdateProfileRequestSchema,
-  type User,
-} from '@freundebuch/shared/index.js';
+import { FriendCreateSchema, type User } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
@@ -10,7 +6,6 @@ import {
   getUserByEmailWithSelfProfile,
   getUserSelfProfile,
   setUserSelfProfile,
-  updateUserReturningWithSelfProfile,
 } from '../models/queries/users.queries.js';
 import { FriendsService } from '../services/friends/index.js';
 import type { AppContext } from '../types/context.js';
@@ -45,71 +40,6 @@ app.get('/me', async (c) => {
     updatedAt: user.updated_at.toISOString(),
     selfProfileId: selfProfileExternalId ?? undefined,
     displayName: user.self_profile_display_name ?? undefined,
-    hasCompletedOnboarding: selfProfileExternalId !== null,
-  });
-});
-
-/**
- * PUT /api/users/me
- * Update the current user's profile
- */
-app.put('/me', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-
-  const authUser = getAuthUser(c);
-  const body = await c.req.json();
-  const validated = UpdateProfileRequestSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
-
-  // If no email update, return current user (single query)
-  if (!validated.email) {
-    const [user] = await getUserByEmailWithSelfProfile.run({ email: authUser.email }, db);
-
-    if (!user) {
-      throw new UserNotFoundError();
-    }
-
-    const selfProfileExternalId = user.self_profile_external_id;
-
-    return c.json<User>({
-      externalId: user.external_id,
-      email: user.email,
-      createdAt: user.created_at.toISOString(),
-      updatedAt: user.updated_at.toISOString(),
-      selfProfileId: selfProfileExternalId ?? undefined,
-      displayName: user.self_profile_display_name ?? undefined,
-      hasCompletedOnboarding: selfProfileExternalId !== null,
-    });
-  }
-
-  // Update user email and return with self-profile info (single query)
-  const [updatedUser] = await updateUserReturningWithSelfProfile.run(
-    {
-      externalId: authUser.userId,
-      email: validated.email,
-    },
-    db,
-  );
-
-  if (!updatedUser) {
-    throw new Error('Failed to update user');
-  }
-
-  logger.info({ userId: authUser.userId }, 'User profile updated');
-
-  const selfProfileExternalId = updatedUser.self_profile_external_id;
-
-  return c.json<User>({
-    externalId: updatedUser.external_id,
-    email: updatedUser.email,
-    createdAt: updatedUser.created_at.toISOString(),
-    updatedAt: updatedUser.updated_at.toISOString(),
-    selfProfileId: selfProfileExternalId ?? undefined,
-    displayName: updatedUser.self_profile_display_name ?? undefined,
     hasCompletedOnboarding: selfProfileExternalId !== null,
   });
 });
