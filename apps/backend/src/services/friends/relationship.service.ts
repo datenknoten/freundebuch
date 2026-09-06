@@ -19,6 +19,9 @@ import {
   searchFriends,
   updateRelationship,
 } from '../../models/queries/friend-relationships.queries.js';
+import { withTransaction } from '../../utils/db.js';
+import { ConflictError } from '../../utils/errors.js';
+import { rethrowUniqueViolation } from '../../utils/pg-errors.js';
 import { parseRelationshipCategory, parseRelationshipTypeId } from '../../utils/type-guards.js';
 import { createWildcardQuery } from './search.service.js';
 
@@ -88,52 +91,48 @@ export class RelationshipService {
     );
 
     // The primary relationship and its inverse must be created together; a
-    // failure in between previously left a one-way edge. Wrap both in one
-    // transaction.
-    const client = await this.db.connect();
-    let relationshipExternalId: string;
+    // failure in between previously left a one-way edge.
+    let relationshipExternalId: string | null;
     try {
-      await client.query('BEGIN');
+      relationshipExternalId = await withTransaction(this.db, async (client) => {
+        const [relationship] = await createRelationship.run(
+          {
+            userExternalId,
+            friendExternalId,
+            relatedFriendExternalId: data.related_friend_id,
+            relationshipTypeId: data.relationship_type_id,
+            notes: data.notes ?? null,
+          },
+          client,
+        );
 
-      const [relationship] = await createRelationship.run(
-        {
-          userExternalId,
-          friendExternalId,
-          relatedFriendExternalId: data.related_friend_id,
-          relationshipTypeId: data.relationship_type_id,
-          notes: data.notes ?? null,
-        },
-        client,
-      );
+        if (!relationship) {
+          return null;
+        }
 
-      if (!relationship) {
-        await client.query('ROLLBACK');
-        return null;
-      }
+        // Create the inverse relationship (if inverse type exists)
+        await createInverseRelationship.run(
+          {
+            userExternalId,
+            friendExternalId,
+            relatedFriendExternalId: data.related_friend_id,
+            relationshipTypeId: data.relationship_type_id,
+            notes: data.notes ?? null,
+          },
+          client,
+        );
 
-      // Create the inverse relationship (if inverse type exists)
-      await createInverseRelationship.run(
-        {
-          userExternalId,
-          friendExternalId,
-          relatedFriendExternalId: data.related_friend_id,
-          relationshipTypeId: data.relationship_type_id,
-          notes: data.notes ?? null,
-        },
-        client,
-      );
-
-      await client.query('COMMIT');
-      relationshipExternalId = relationship.external_id;
+        return relationship.external_id;
+      });
     } catch (error) {
-      try {
-        await client.query('ROLLBACK');
-      } catch {
-        // Ignore rollback failure to preserve the original error.
-      }
-      throw error;
-    } finally {
-      client.release();
+      // A pair can only be related once by a given type.
+      rethrowUniqueViolation(error, {
+        unique_relationship: () => new ConflictError('This relationship already exists'),
+      });
+    }
+
+    if (relationshipExternalId === null) {
+      return null;
     }
 
     // Fetch the full relationship with related friend info

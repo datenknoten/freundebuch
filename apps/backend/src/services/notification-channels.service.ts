@@ -14,6 +14,7 @@ import {
   NotificationChannelNotFoundError,
   NotificationDeliveryError,
 } from '../utils/errors.js';
+import { rethrowUniqueViolation } from '../utils/pg-errors.js';
 import { sendDiscordMessage } from './external/discord.client.js';
 import { sendMatrixMessage } from './external/matrix.client.js';
 import { sendTelegramMessage } from './external/telegram.client.js';
@@ -88,10 +89,10 @@ export class NotificationChannelsService {
 
       return { data: this.mapChannel(results[0]) };
     } catch (error) {
-      if (this.isUniqueViolation(error)) {
-        throw new NotificationChannelAlreadyExistsError(input.platform);
-      }
-      throw error;
+      rethrowUniqueViolation(error, {
+        uq_notification_channels_user_platform: () =>
+          new NotificationChannelAlreadyExistsError(input.platform),
+      });
     }
   }
 
@@ -235,9 +236,5 @@ export class NotificationChannelsService {
     if (!value) return undefined;
     if (value.length <= 4) return '****';
     return `...${value.slice(-4)}`;
-  }
-
-  private isUniqueViolation(error: unknown): boolean {
-    return typeof error === 'object' && error !== null && 'code' in error && error.code === '23505';
   }
 }

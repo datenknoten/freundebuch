@@ -223,6 +223,17 @@ export class InvalidSearchParametersError extends AppError {
 // ============================================================================
 
 /**
+ * Generic 409 for a uniqueness conflict that has no more specific class.
+ */
+export class ConflictError extends AppError {
+  readonly statusCode = 409;
+
+  constructor(message: string) {
+    super(message, { code: 'CONFLICT' });
+  }
+}
+
+/**
  * Thrown when attempting to add a birthday to a friend that already has one.
  */
 export class BirthdayAlreadyExistsError extends AppError {

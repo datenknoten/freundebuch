@@ -196,7 +196,7 @@ export type ProfessionalHistoryInput = typeof ProfessionalHistoryInputSchema.inf
 
 /** Schema for creating a relationship */
 export const RelationshipInputSchema = type({
-  related_friend_id: 'string > 0', // UUID of the related friend
+  related_friend_id: 'string.uuid',
   relationship_type_id: RelationshipTypeIdSchema,
   'notes?': 'string',
 });

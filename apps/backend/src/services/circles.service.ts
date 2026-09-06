@@ -25,6 +25,7 @@ import {
   CircleNotFoundError,
   CircularReferenceError,
 } from '../utils/errors.js';
+import { rethrowUniqueViolation } from '../utils/pg-errors.js';
 
 /**
  * Service for managing circles (categorization/organization feature)
@@ -78,21 +79,10 @@ export class CirclesService {
       // Fetch the full circle with friend count
       return this.getCircleById(userExternalId, results[0].external_id);
     } catch (error) {
-      // Handle unique constraint violation on circle name
-      if (this.isUniqueViolation(error)) {
-        throw new CircleNameExistsError();
-      }
-      throw error;
+      rethrowUniqueViolation(error, {
+        idx_circles_unique_name: () => new CircleNameExistsError(),
+      });
     }
-  }
-
-  /**
-   * Check if an error is a PostgreSQL unique constraint violation
-   */
-  private isUniqueViolation(error: unknown): boolean {
-    return (
-      typeof error === 'object' && error !== null && 'code' in error && error.code === '23505' // PostgreSQL unique_violation
-    );
   }
 
   /**
@@ -146,11 +136,9 @@ export class CirclesService {
       // Fetch the full circle with friend count
       return this.getCircleById(userExternalId, results[0].external_id);
     } catch (error) {
-      // Handle unique constraint violation on circle name
-      if (this.isUniqueViolation(error)) {
-        throw new CircleNameExistsError();
-      }
-      throw error;
+      rethrowUniqueViolation(error, {
+        idx_circles_unique_name: () => new CircleNameExistsError(),
+      });
     }
   }
 

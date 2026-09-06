@@ -1,10 +1,4 @@
-import {
-  type ErrorResponse,
-  type Relationship,
-  RelationshipInputSchema,
-  RelationshipUpdateSchema,
-} from '@freundebuch/shared/index.js';
-import { type } from 'arktype';
+import { RelationshipInputSchema, RelationshipUpdateSchema } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
@@ -14,40 +8,23 @@ import {
   ResourceNotFoundError,
   ValidationError,
 } from '../../../utils/errors.js';
-import { isValidUuid } from '../../../utils/security.js';
+import { parseBody, requireUuidParam } from '../../../utils/http.js';
 
 const app = new Hono<AppContext>();
 
 /**
  * POST /api/friends/:id/relationships
  * Add a relationship to a friend (creates inverse automatically)
+ *
+ * Hand-written rather than generated: the pair is symmetric (self-relationships
+ * are rejected, and the inverse edge is created in the same transaction), so it
+ * does not fit the sub-resource shape.
  */
 app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
-
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = RelationshipInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
-
-  // Validate related_friend_id is a valid UUID
-  if (!isValidUuid(validated.related_friend_id)) {
-    throw new ValidationError('Invalid related friend ID');
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
+  const validated = await parseBody(c, RelationshipInputSchema);
 
   // Prevent self-relationships
   if (validated.related_friend_id === friendId) {
@@ -55,17 +32,9 @@ app.post('/', async (c) => {
   }
 
   const friendsService = new FriendsService(db, c.get('logger'));
-
-  // Focused try-catch for unique constraint violation (duplicate relationship)
-  let relationship: Relationship | null;
-  try {
-    relationship = await friendsService.addRelationship(user.userId, friendId, validated);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('unique_relationship')) {
-      return c.json<ErrorResponse>({ error: 'This relationship already exists' }, 409);
-    }
-    throw error;
-  }
+  // A duplicate pair surfaces as ConflictError from the service, which the
+  // global handler renders as 409 { error, code: 'CONFLICT' }.
+  const relationship = await friendsService.addRelationship(user.userId, friendId, validated);
 
   if (!relationship) {
     throw new FriendNotFoundError();
@@ -81,25 +50,9 @@ app.post('/', async (c) => {
 app.put('/:relationshipId', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-  const relationshipId = c.req.param('relationshipId') ?? '';
-
-  if (!isValidUuid(friendId) || !isValidUuid(relationshipId)) {
-    throw new ValidationError('Invalid ID');
-  }
-
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = RelationshipUpdateSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
+  const friendId = requireUuidParam(c, 'id');
+  const relationshipId = requireUuidParam(c, 'relationshipId');
+  const validated = await parseBody(c, RelationshipUpdateSchema);
 
   const friendsService = new FriendsService(db, c.get('logger'));
   const relationship = await friendsService.updateRelationship(
@@ -123,12 +76,8 @@ app.put('/:relationshipId', async (c) => {
 app.delete('/:relationshipId', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-  const relationshipId = c.req.param('relationshipId') ?? '';
-
-  if (!isValidUuid(friendId) || !isValidUuid(relationshipId)) {
-    throw new ValidationError('Invalid ID');
-  }
+  const friendId = requireUuidParam(c, 'id');
+  const relationshipId = requireUuidParam(c, 'relationshipId');
 
   const friendsService = new FriendsService(db, c.get('logger'));
   const deleted = await friendsService.deleteRelationship(user.userId, friendId, relationshipId);

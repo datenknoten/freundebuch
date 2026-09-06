@@ -393,6 +393,66 @@ describe('Friends API - Integration Tests', () => {
     });
   });
 
+  describe('Relationship Routes', () => {
+    it('should return 409 when the same relationship is created twice', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const headers = authHeaders(testUser.sessionCookies);
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Rel Source');
+      const relatedId = await createTestFriend(pool, testUser.externalId, 'Rel Target');
+
+      const body = JSON.stringify({
+        related_friend_id: relatedId,
+        relationship_type_id: 'spouse',
+      });
+
+      const first = await app.fetch(
+        new Request(`http://localhost/api/friends/${friendId}/relationships`, {
+          method: 'POST',
+          headers,
+          body,
+        }),
+      );
+      expect(first.status).toBe(201);
+
+      const second = await app.fetch(
+        new Request(`http://localhost/api/friends/${friendId}/relationships`, {
+          method: 'POST',
+          headers,
+          body,
+        }),
+      );
+
+      expect(second.status).toBe(409);
+      expect(await second.json()).toMatchObject({
+        error: 'This relationship already exists',
+        code: 'CONFLICT',
+      });
+    });
+
+    it('should reject a relationship with self', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Self Rel');
+
+      const response = await app.fetch(
+        new Request(`http://localhost/api/friends/${friendId}/relationships`, {
+          method: 'POST',
+          headers: authHeaders(testUser.sessionCookies),
+          body: JSON.stringify({
+            related_friend_id: friendId,
+            relationship_type_id: 'spouse',
+          }),
+        }),
+      );
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error: 'Cannot create relationship with self',
+      });
+    });
+  });
+
   describe('Phone Sub-resource Routes', () => {
     it('should add a phone to a friend', async () => {
       const { app, pool, testUser } = getContext();
@@ -450,10 +510,9 @@ describe('Friends API - Integration Tests', () => {
       const { app, testUser } = getContext();
 
       const response = await app.fetch(
-        new Request(
-          'http://localhost/api/friends/00000000-0000-0000-0000-000000000000/phones',
-          { headers: authHeaders(testUser.sessionCookies) },
-        ),
+        new Request('http://localhost/api/friends/00000000-0000-0000-0000-000000000000/phones', {
+          headers: authHeaders(testUser.sessionCookies),
+        }),
       );
 
       // An unknown owner has no sub-resources; the list is simply empty.
