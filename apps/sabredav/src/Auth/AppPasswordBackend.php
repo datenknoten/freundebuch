@@ -78,7 +78,7 @@ class AppPasswordBackend extends AbstractBasic
         $stmt = $this->pdo->prepare('
             SELECT id, external_id, email
             FROM auth.users
-            WHERE email = :email
+            WHERE email = lower(:email)
         ');
         $stmt->execute(['email' => $username]);
         $user = $stmt->fetch();

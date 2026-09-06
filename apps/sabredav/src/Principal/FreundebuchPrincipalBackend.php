@@ -70,7 +70,7 @@ class FreundebuchPrincipalBackend extends AbstractBackend
         $stmt = $this->pdo->prepare('
             SELECT external_id, email
             FROM auth.users
-            WHERE email = :email
+            WHERE email = lower(:email)
         ');
         $stmt->execute(['email' => $email]);
         $row = $stmt->fetch();
@@ -167,7 +167,7 @@ class FreundebuchPrincipalBackend extends AbstractBackend
             $stmt = $this->pdo->prepare('
                 SELECT email
                 FROM auth.users
-                WHERE email = :email
+                WHERE email = lower(:email)
             ');
             $stmt->execute(['email' => $email]);
             $row = $stmt->fetch();

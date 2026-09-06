@@ -218,8 +218,9 @@ export class AppPasswordsService {
     const rawPassword = this.unformatPassword(password);
     const prefix = rawPassword.substring(0, 8);
 
-    // Get user by email
-    const users = await getUserByEmailWithInternalId.run({ email }, this.db);
+    // Emails are stored lowercase (CHECK constraint on both identity tables);
+    // DAV/MCP clients send whatever the user typed.
+    const users = await getUserByEmailWithInternalId.run({ email: email.toLowerCase() }, this.db);
 
     const user = users[0];
     if (!user) {

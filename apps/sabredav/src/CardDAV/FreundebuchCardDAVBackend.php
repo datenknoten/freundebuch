@@ -39,7 +39,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $stmt = $this->pdo->prepare('
             SELECT id, external_id, email
             FROM auth.users
-            WHERE email = :email
+            WHERE email = lower(:email)
         ');
         $stmt->execute(['email' => $email]);
         $user = $stmt->fetch();
