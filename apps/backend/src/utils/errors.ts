@@ -60,6 +60,17 @@ export class OnboardingRequiredError extends AppError {
   }
 }
 
+/**
+ * Thrown when registration is closed on this instance (DISABLE_SIGNUP=true).
+ */
+export class SignupDisabledError extends AppError {
+  readonly statusCode = 403;
+
+  constructor() {
+    super('Sign-up is disabled on this instance', { code: 'SIGNUP_DISABLED' });
+  }
+}
+
 // ============================================================================
 // Resource Not Found Errors (404)
 // ============================================================================

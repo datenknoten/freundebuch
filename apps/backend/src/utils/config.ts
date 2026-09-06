@@ -46,11 +46,20 @@ const ConfigSchema = type({
   // WebAuthn / Passkey
   'WEBAUTHN_RP_ID?': 'string',
 
-  // Email (optional, for later phases)
+  // Email. Without SMTP_HOST the mailer is disabled and password-reset /
+  // verification mails are logged instead of sent (see services/mailer.ts).
   'SMTP_HOST?': 'string',
   'SMTP_PORT?': 'string.integer.parse',
   'SMTP_USER?': 'string',
   'SMTP_PASSWORD?': 'string',
+  // Envelope sender. Defaults to no-reply@<FRONTEND_URL host> when unset.
+  'SMTP_FROM?': 'string',
+  // true for implicit TLS (port 465); false uses STARTTLS (587/25).
+  SMTP_SECURE: BooleanString.default(false),
+
+  // Close registration on a private instance. The sign-up endpoint then
+  // returns 403 and the frontend hides the register link.
+  DISABLE_SIGNUP: BooleanString.default(false),
 
   // Optional
   LOG_LEVEL: '"trace" | "debug" | "info" | "warn" | "error" | "fatal" | "silent" = "info"',

@@ -14,7 +14,13 @@ import {
   updateUserPreferences,
 } from '../models/queries/users.queries.js';
 import type { AppContext } from '../types/context.js';
-import { AuthenticationError, ResourceNotFoundError, UserNotFoundError } from '../utils/errors.js';
+import { getConfig } from '../utils/config.js';
+import {
+  AuthenticationError,
+  ResourceNotFoundError,
+  SignupDisabledError,
+  UserNotFoundError,
+} from '../utils/errors.js';
 import { parseBody } from '../utils/http.js';
 import { parseUserPreferences, toJson } from '../utils/type-guards.js';
 
@@ -37,6 +43,12 @@ app.on(['POST', 'GET'], '/*', async (c, next) => {
   const customPrefixes = ['/api/auth/oauth2/client/'];
   if (customPaths.some((p) => path === p) || customPrefixes.some((p) => path.startsWith(p))) {
     return next();
+  }
+
+  // Registration gate for private instances. Better Auth has no "disable
+  // sign-up" option, so the only place to stop it is in front of the handler.
+  if (getConfig().DISABLE_SIGNUP && path === '/api/auth/sign-up/email') {
+    throw new SignupDisabledError();
   }
 
   // Delegate to Better Auth handler

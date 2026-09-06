@@ -40,6 +40,10 @@ const CONFIG_ENV_KEYS = [
   'SMTP_PORT',
   'SMTP_USER',
   'SMTP_PASSWORD',
+  'SMTP_FROM',
+  'SMTP_SECURE',
+  // Sign-up gate
+  'DISABLE_SIGNUP',
   // Optional
   'LOG_LEVEL',
   'SENTRY_DSN',

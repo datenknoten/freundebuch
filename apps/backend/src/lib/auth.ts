@@ -3,7 +3,9 @@ import bcrypt from 'bcrypt';
 import { betterAuth } from 'better-auth';
 import { mcp } from 'better-auth/plugins';
 import { Pool } from 'pg';
+import { createMailer, isMailConfigured } from '../services/mailer.js';
 import { getConfig } from '../utils/config.js';
+import { ConfigurationError } from '../utils/errors.js';
 
 // Better Auth's Auth<T> generic is invariant, so Auth<SpecificOptions> cannot
 // be assigned to Auth<BetterAuthOptions>. ReturnType inference also fails due
@@ -75,9 +77,67 @@ function createAuth() {
       sendResetPassword: async ({ user, url }, _request) => {
         const logger = (await import('../utils/logger.js')).createLogger();
         logger.info({ userId: user.id }, 'Password reset requested');
-        // Only log the reset URL in non-production environments
-        if (config.ENV !== 'production') {
-          logger.debug({ resetUrl: url }, 'Reset URL (dev only)');
+        const mailer = createMailer(config, logger);
+        if (mailer === null) {
+          logger.warn({ kind: 'password-reset' }, 'SMTP not configured; email not sent');
+          // Only log the reset URL in non-production environments
+          if (config.ENV !== 'production') {
+            logger.debug({ resetUrl: url }, 'Reset URL (dev only)');
+          }
+          return;
+        }
+        try {
+          await mailer.send(
+            user.email,
+            'Passwort zurücksetzen / Reset your password',
+            [
+              'Setze dein Freundebuch-Passwort über diesen Link zurück:',
+              url,
+              '',
+              'Reset your Freundebuch password with this link:',
+              url,
+              '',
+              'Wenn du das nicht angefordert hast, ignoriere diese E-Mail.',
+              'If you did not request this, ignore this email.',
+            ].join('\n'),
+          );
+        } catch (error) {
+          // Swallow: Better Auth answers "forget password" generically so the
+          // endpoint cannot be used to probe which addresses exist. A delivery
+          // failure is an operator problem, not a caller problem.
+          logger.error({ err: error, kind: 'password-reset' }, 'Failed to send reset email');
+        }
+      },
+    },
+    // Verification mail is only offered when SMTP exists; requireEmailVerification
+    // stays off deliberately — turning it on would lock out every account that
+    // signed up while this instance had no mailer (all of them, historically).
+    emailVerification: {
+      sendOnSignUp: isMailConfigured(config),
+      sendVerificationEmail: async ({ user, url }, _request) => {
+        const logger = (await import('../utils/logger.js')).createLogger();
+        const mailer = createMailer(config, logger);
+        if (mailer === null) {
+          logger.warn({ kind: 'email-verification' }, 'SMTP not configured; email not sent');
+          if (config.ENV !== 'production') {
+            logger.debug({ verificationUrl: url }, 'Verification URL (dev only)');
+          }
+          return;
+        }
+        try {
+          await mailer.send(
+            user.email,
+            'E-Mail-Adresse bestätigen / Confirm your email address',
+            [
+              'Bestätige deine E-Mail-Adresse für Freundebuch:',
+              url,
+              '',
+              'Confirm your email address for Freundebuch:',
+              url,
+            ].join('\n'),
+          );
+        } catch (error) {
+          logger.error({ err: error, kind: 'email-verification' }, 'Failed to send verification email');
         }
       },
     },
@@ -278,6 +338,22 @@ export function getAuth() {
     _auth = createAuth();
   }
   return _auth;
+}
+
+/**
+ * The Better Auth pool (search_path=auth). Better Auth owns its own pool, so
+ * the readiness probe has to check it separately from the main pool: the main
+ * pool can be fine while auth queries fail.
+ */
+export function getAuthPool(): Pool {
+  if (!_authPool) {
+    // Creating the auth instance is what builds the pool.
+    getAuth();
+  }
+  if (!_authPool) {
+    throw new ConfigurationError('Better Auth pool is not initialised');
+  }
+  return _authPool;
 }
 
 /**

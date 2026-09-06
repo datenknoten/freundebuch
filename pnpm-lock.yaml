@@ -885,6 +885,7 @@ time:
   node-emoji@2.2.0: 2024-12-03T18:36:47.634Z
   node-fetch@2.7.0: 2023-08-23T17:18:39.396Z
   node-gyp-build@4.8.4: 2024-11-19T14:43:46.572Z
+  nodemailer@10.0.0: 2026-01-19T00:00:00.000Z
   node-pg-migrate@8.0.4: 2025-12-11T08:05:46.916Z
   node-releases@2.0.46: 2026-05-22T04:31:33.369Z
   normalize-package-data@6.0.2: 2024-06-25T20:15:02.964Z
@@ -1408,6 +1409,9 @@ importers:
       node-cron:
         specifier: 4.2.1
         version: 4.2.1
+      nodemailer:
+        specifier: 10.0.0
+        version: 10.0.0
       pg:
         specifier: 8.16.3
         version: 8.16.3
@@ -5781,6 +5785,10 @@ packages:
   node-cron@4.2.1:
     resolution: {integrity: sha512-lgimEHPE/QDgFlywTd8yTR61ptugX3Qer29efeyWw2rv259HtGBNn1vZVmp8lB9uo9wC0t/AT4iGqXxia+CJFg==}
     engines: {node: '>=6.0.0'}
+
+  nodemailer@10.0.0:
+    resolution: {integrity: sha512-wdv+hXBg0iIPIOf108FaZyTxqjQpCvQeAJt9pHHTooPy/y3vQtI9eiImM9AIVKR3e/0FeMA1oueNfBjFJcaK+Q==}
+    engines: {node: '>=20.0.0'}
 
   node-emoji@2.2.0:
     resolution: {integrity: sha512-Z3lTE9pLaJF47NyMhd4ww1yFTAP8YhYI8SleJiHzM46Fgpm5cnNzSl9XfzFNqbaz+VlJrIj3fXQ4DeN1Rjm6cw==}
@@ -10950,6 +10958,8 @@ snapshots:
   node-cleanup@2.1.2: {}
 
   node-cron@4.2.1: {}
+
+  nodemailer@10.0.0: {}
 
   node-emoji@2.2.0:
     dependencies:

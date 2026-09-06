@@ -261,6 +261,46 @@ describe('getConfig', () => {
       expect(config.SMTP_PORT).toBe(465);
       expect(typeof config.SMTP_PORT).toBe('number');
     });
+
+    it('should default SMTP_SECURE to false and accept boolean strings', () => {
+      expect(getConfig().SMTP_SECURE).toBe(false);
+
+      resetConfig();
+      vi.stubEnv('SMTP_SECURE', 'true');
+      expect(getConfig().SMTP_SECURE).toBe(true);
+
+      resetConfig();
+      vi.stubEnv('SMTP_SECURE', '0');
+      expect(getConfig().SMTP_SECURE).toBe(false);
+    });
+
+    it('should treat SMTP_FROM as optional', () => {
+      expect(getConfig().SMTP_FROM).toBeUndefined();
+
+      resetConfig();
+      vi.stubEnv('SMTP_FROM', 'Freundebuch <no-reply@example.com>');
+      expect(getConfig().SMTP_FROM).toBe('Freundebuch <no-reply@example.com>');
+    });
+  });
+
+  describe('DISABLE_SIGNUP handling', () => {
+    beforeEach(() => {
+      vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
+    });
+
+    it('should default to false so a fresh instance allows sign-up', () => {
+      expect(getConfig().DISABLE_SIGNUP).toBe(false);
+    });
+
+    it('should parse truthy strings', () => {
+      vi.stubEnv('DISABLE_SIGNUP', 'true');
+      expect(getConfig().DISABLE_SIGNUP).toBe(true);
+
+      resetConfig();
+      vi.stubEnv('DISABLE_SIGNUP', '1');
+      expect(getConfig().DISABLE_SIGNUP).toBe(true);
+    });
   });
 
   describe('caching behavior', () => {
