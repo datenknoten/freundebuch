@@ -53,16 +53,11 @@ src/
 | Error Class | Status Code | Use Case |
 |-------------|-------------|----------|
 | `AuthenticationError` | 401 | Invalid credentials |
-| `InvalidSessionError` | 401 | Invalid/expired sessions |
-| `InvalidTokenError` | 401 | Invalid/expired tokens |
 | `UserNotFoundError` | 404 | User not found |
 | `FriendNotFoundError` | 404 | Friend not found |
-| `UserAlreadyExistsError` | 409 | Registration conflicts |
 | `BirthdayAlreadyExistsError` | 409 | Duplicate birthday |
-| `UserCreationError` | 500 | User creation failed |
 | `FriendCreationError` | 500 | Friend creation failed |
 | `AppPasswordCreationError` | 500 | App password creation failed |
-| `PreferencesUpdateError` | 500 | Preferences update failed |
 | `DatabaseConnectionError` | 500 | No database connection |
 | `ConfigurationError` | 500 | Invalid configuration |
 | `OverpassApiError` | 502 | Overpass API errors |

@@ -42,7 +42,6 @@ const CONFIG_ENV_KEYS = [
   'SMTP_PASSWORD',
   // Optional
   'LOG_LEVEL',
-  'ENABLE_API_DOCS',
   'SENTRY_DSN',
   // Address lookup
   'OVERPASS_API_URL',

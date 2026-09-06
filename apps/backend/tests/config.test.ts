@@ -195,32 +195,32 @@ describe('getConfig', () => {
     });
   });
 
-  describe('ENABLE_API_DOCS boolean handling', () => {
+  describe('TRUST_PROXY boolean handling', () => {
     beforeEach(() => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
       vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
     });
 
     it('should parse "true" as boolean true', () => {
-      vi.stubEnv('ENABLE_API_DOCS', 'true');
+      vi.stubEnv('TRUST_PROXY', 'true');
 
       const config = getConfig();
 
-      expect(config.ENABLE_API_DOCS).toBe(true);
+      expect(config.TRUST_PROXY).toBe(true);
     });
 
     it('should parse "false" as boolean false', () => {
-      vi.stubEnv('ENABLE_API_DOCS', 'false');
+      vi.stubEnv('TRUST_PROXY', 'false');
 
       const config = getConfig();
 
-      expect(config.ENABLE_API_DOCS).toBe(false);
+      expect(config.TRUST_PROXY).toBe(false);
     });
 
-    it('should handle missing ENABLE_API_DOCS', () => {
+    it('should handle missing TRUST_PROXY', () => {
       const config = getConfig();
 
-      expect(config.ENABLE_API_DOCS).toBe(false);
+      expect(config.TRUST_PROXY).toBe(false);
     });
   });
 
@@ -315,7 +315,7 @@ describe('getConfig', () => {
       vi.stubEnv('SMTP_USER', 'user@gmail.com');
       vi.stubEnv('SMTP_PASSWORD', 'app-password');
       vi.stubEnv('LOG_LEVEL', 'warn');
-      vi.stubEnv('ENABLE_API_DOCS', 'false');
+      vi.stubEnv('TRUST_PROXY', 'true');
 
       const config = getConfig();
 
@@ -331,7 +331,7 @@ describe('getConfig', () => {
       expect(config.SMTP_USER).toBe('user@gmail.com');
       expect(config.SMTP_PASSWORD).toBe('app-password');
       expect(config.LOG_LEVEL).toBe('warn');
-      expect(config.ENABLE_API_DOCS).toBe(false);
+      expect(config.TRUST_PROXY).toBe(true);
     });
   });
 });

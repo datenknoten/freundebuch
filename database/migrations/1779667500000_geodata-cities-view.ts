@@ -1,3 +1,9 @@
+// NOTE: this file shares its timestamp with
+// 1779667500000_backfill-collective-inverse-relationships.ts. Both are already
+// applied in production, so renaming either one would make node-pg-migrate
+// re-run it. The collision is harmless (node-pg-migrate keys the pgmigrations
+// table on the full file name) and is left in place deliberately.
+
 import type { MigrationBuilder } from 'node-pg-migrate';
 
 /**

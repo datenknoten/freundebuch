@@ -45,28 +45,6 @@ export class AuthenticationError extends AppError {
   }
 }
 
-/**
- * Thrown when a session is invalid or has expired.
- */
-export class InvalidSessionError extends AppError {
-  readonly statusCode = 401;
-
-  constructor(message = 'Invalid or expired session') {
-    super(message);
-  }
-}
-
-/**
- * Thrown when a password reset token is invalid or has expired.
- */
-export class InvalidTokenError extends AppError {
-  readonly statusCode = 401;
-
-  constructor(message = 'Invalid or expired token') {
-    super(message);
-  }
-}
-
 // ============================================================================
 // Forbidden Errors (403)
 // ============================================================================
@@ -245,17 +223,6 @@ export class InvalidSearchParametersError extends AppError {
 // ============================================================================
 
 /**
- * Thrown when attempting to register a user that already exists.
- */
-export class UserAlreadyExistsError extends AppError {
-  readonly statusCode = 409;
-
-  constructor(message = 'User already exists') {
-    super(message);
-  }
-}
-
-/**
  * Thrown when attempting to add a birthday to a friend that already has one.
  */
 export class BirthdayAlreadyExistsError extends AppError {
@@ -314,17 +281,6 @@ export class NotificationChannelAlreadyExistsError extends AppError {
 // ============================================================================
 // Internal Server Errors (500)
 // ============================================================================
-
-/**
- * Thrown when user creation fails unexpectedly.
- */
-export class UserCreationError extends AppError {
-  readonly statusCode = 500;
-
-  constructor(message = 'Failed to create user') {
-    super(message);
-  }
-}
 
 /**
  * Thrown when friend creation fails unexpectedly.
@@ -393,17 +349,6 @@ export class AppPasswordCreationError extends AppError {
 }
 
 /**
- * Thrown when user preferences update fails unexpectedly.
- */
-export class PreferencesUpdateError extends AppError {
-  readonly statusCode = 500;
-
-  constructor(message = 'Failed to update preferences') {
-    super(message);
-  }
-}
-
-/**
  * Thrown when the database connection is not available.
  */
 export class DatabaseConnectionError extends AppError {
@@ -419,21 +364,6 @@ export class DatabaseConnectionError extends AppError {
  */
 export class ConfigurationError extends AppError {
   readonly statusCode = 500;
-}
-
-// ============================================================================
-// Service Not Configured Errors (503)
-// ============================================================================
-
-/**
- * Thrown when a required service/configuration is not available.
- */
-export class ServiceNotConfiguredError extends AppError {
-  readonly statusCode = 503;
-
-  constructor(message = 'Service not configured') {
-    super(message);
-  }
 }
 
 // ============================================================================
@@ -503,17 +433,6 @@ export class UnknownValueError extends AppError {
     super(String(value));
     this.originalValue = value;
   }
-}
-
-/**
- * Get the HTTP status code for an error.
- * Returns 500 for non-AppError errors.
- */
-export function getErrorStatusCode(error: unknown): ContentfulStatusCode {
-  if (isAppError(error)) {
-    return error.statusCode;
-  }
-  return 500;
 }
 
 /**

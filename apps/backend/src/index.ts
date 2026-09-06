@@ -23,7 +23,6 @@ import notificationChannelsRoutes from './routes/notification-channels.js';
 import sentryTunnelRoutes from './routes/sentry-tunnel.js';
 import uploadsRoutes from './routes/uploads.js';
 import usersRoutes from './routes/users.js';
-import { PhotoService } from './services/photo.service.js';
 import type { AppContext } from './types/context.js';
 import { initializeAddressCaches } from './utils/cache.js';
 import { getConfig } from './utils/config.js';
@@ -150,9 +149,6 @@ export async function startServer() {
     pinoLogger.error({ err }, 'Uncaught exception');
     Sentry.captureException(err);
   });
-
-  // Migrate uploads directory from legacy 'contacts' path to 'friends'
-  await PhotoService.migrateFromLegacyPath(pinoLogger);
 
   // Initialize address caches with database pool for persistence
   initializeAddressCaches(pool, pinoLogger);

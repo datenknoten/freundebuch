@@ -347,15 +347,3 @@ export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
 
   logger.debug('Address caches initialized with database pool and arktype validators');
 }
-
-/**
- * Cleanup expired entries from all address caches
- */
-export async function cleanupAllAddressCaches(): Promise<void> {
-  const caches = [countriesCache, streetsCache, houseNumbersCache];
-  for (const cache of caches) {
-    if (cache) {
-      await cache.cleanupDatabase();
-    }
-  }
-}
