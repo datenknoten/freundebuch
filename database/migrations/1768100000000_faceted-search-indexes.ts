@@ -67,27 +67,34 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 }
 
 export async function down(pgm: MigrationBuilder): Promise<void> {
-  // Drop trigram indexes
+  // `ifExists` throughout: the professional-history migration moved
+  // organization/job_title/department off contacts and dropped their indexes,
+  // so on a full rollback they are already gone by the time we get here.
   pgm.sql('DROP INDEX IF EXISTS contacts.idx_contact_met_info_met_context_trgm;');
   pgm.sql('DROP INDEX IF EXISTS contacts.idx_contact_relationships_notes_trgm;');
 
   // Drop professional facet indexes
   pgm.dropIndex({ schema: 'contacts', name: 'contacts' }, 'department', {
     name: 'idx_contacts_department',
+    ifExists: true,
   });
   pgm.dropIndex({ schema: 'contacts', name: 'contacts' }, 'job_title', {
     name: 'idx_contacts_job_title',
+    ifExists: true,
   });
   pgm.dropIndex({ schema: 'contacts', name: 'contacts' }, 'organization', {
     name: 'idx_contacts_organization',
+    ifExists: true,
   });
 
   // Drop location facet indexes
   pgm.dropIndex({ schema: 'contacts', name: 'contact_addresses' }, 'city', {
     name: 'idx_contact_addresses_city',
+    ifExists: true,
   });
   pgm.dropIndex({ schema: 'contacts', name: 'contact_addresses' }, 'country', {
     name: 'idx_contact_addresses_country',
+    ifExists: true,
   });
 
   // Note: We don't drop the pg_trgm extension as other parts of the system may use it

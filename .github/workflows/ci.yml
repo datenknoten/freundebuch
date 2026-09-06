@@ -137,6 +137,64 @@ jobs:
         # produces; otherwise a renamed column ships as a type lie.
         run: git diff --exit-code -- apps/backend/src/models/queries
 
+  migrations:
+    name: Migration Round-Trip
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: imresamu/postgis:18-3.6.1-trixie
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+        with:
+          experimental: true
+
+      - name: Resolve aube store path
+        shell: bash
+        run: echo "AUBE_STORE=$(aube store path 2>/dev/null || echo $HOME/.local/share/aube/store)" >> "$GITHUB_ENV"
+
+      - name: Setup aube cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.AUBE_STORE }}
+          key: ${{ runner.os }}-aube-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-aube-store-
+
+      - name: Install dependencies
+        run: aube ci
+
+      # A migration nobody ever rolls back is a migration whose down() is
+      # fiction. Rolling the whole chain back and forward keeps it honest, and
+      # keeps `migrate:down` usable during an incident.
+      - name: Migrate up
+        run: aube --filter @freundebuch/backend run migrate
+
+      - name: Migrate all the way down
+        run: |
+          count=$(ls database/migrations/*.ts | wc -l)
+          echo "Rolling back $count migrations"
+          aube --filter @freundebuch/backend run migrate:down "$count"
+
+      - name: Migrate up again
+        run: aube --filter @freundebuch/backend run migrate
+
   test:
     name: Unit and Integration Tests
     runs-on: ubuntu-latest
