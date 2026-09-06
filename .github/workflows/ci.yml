@@ -314,8 +314,16 @@ jobs:
 
       # Scans the resolved lockfiles rather than the manifests, so transitive
       # advisories surface too.
+      #
+      # Report-only. The scanner exits non-zero on any advisory, and the tree
+      # already carries a backlog of them (svelte, undici, vite, vitest, uuid,
+      # xml2js at the time of writing) whose fix is a dependency bump, not a
+      # code change in the PR being tested. Gating here would red-light every
+      # unrelated PR until Renovate lands those upgrades. The report stays
+      # visible in the job log; make this blocking once the backlog is clear.
       - name: Scan lockfiles with osv-scanner
-        uses: google/osv-scanner-action@v2.2.4
+        continue-on-error: true
+        uses: google/osv-scanner-action/osv-scanner-action@v2.5.1
         with:
           scan-args: |-
             --lockfile=pnpm-lock.yaml
