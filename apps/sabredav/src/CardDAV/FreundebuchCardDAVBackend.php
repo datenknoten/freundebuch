@@ -137,6 +137,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     public function getCard($addressBookId, $cardUri): array|false
     {
         $externalId = str_replace('.vcf', '', $cardUri);
+        if (!self::isUuid($externalId)) {
+            return false;
+        }
 
         $friend = $this->mapper->getFriendByExternalId((int) $addressBookId, $externalId);
 
@@ -186,6 +189,12 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     public function createCard($addressBookId, $cardUri, $cardData): ?string
     {
         $externalId = str_replace('.vcf', '', $cardUri);
+        if (!self::isUuid($externalId)) {
+            // external_id is a uuid column and the card URI is derived from it,
+            // so a card we cannot address by the client's own URI is useless.
+            throw new \Sabre\DAV\Exception\BadRequest('Card URI must be a UUID');
+        }
+
         $friendData = $this->mapper->vcardToFriend($cardData, $externalId);
         $vcardJson = $this->mapper->vcardToJson($cardData);
 
@@ -197,13 +206,11 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 INSERT INTO friends.friends (
                     user_id, external_id, display_name, name_prefix, name_first,
                     name_middle, name_last, name_suffix, nickname, photo_url,
-                    job_title, organization, department, interests, work_notes,
-                    vcard_raw_json, is_favorite
+                    interests, vcard_raw_json, is_favorite
                 ) VALUES (
                     :user_id, :external_id, :display_name, :name_prefix, :name_first,
                     :name_middle, :name_last, :name_suffix, :nickname, :photo_url,
-                    :job_title, :organization, :department, :interests, :work_notes,
-                    :vcard_raw_json, :is_favorite
+                    :interests, :vcard_raw_json, :is_favorite
                 )
                 RETURNING id, updated_at
             ');
@@ -218,13 +225,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'name_suffix' => $friendData['name_suffix'] ?? null,
                 'nickname' => $friendData['nickname'] ?? null,
                 'photo_url' => $friendData['photo_url'] ?? null,
-                'job_title' => $friendData['job_title'] ?? null,
-                'organization' => $friendData['organization'] ?? null,
-                'department' => $friendData['department'] ?? null,
                 'interests' => $friendData['interests'] ?? null,
-                'work_notes' => $friendData['work_notes'] ?? null,
                 'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
-                'is_favorite' => !empty($friendData['is_favorite']),
+                'is_favorite' => self::pgBool(!empty($friendData['is_favorite'])),
             ]);
             $result = $stmt->fetch();
             $friendId = (int) $result['id'];
@@ -236,6 +239,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             $this->insertUrls($friendId, $friendData['urls'] ?? []);
             $this->insertDates($friendId, $friendData['dates'] ?? []);
             $this->insertSocialProfiles($friendId, $friendData['social_profiles'] ?? []);
+            $this->insertProfessionalHistory($friendId, $friendData['professional_history'] ?? []);
             if (!empty($friendData['met_info'])) {
                 $this->insertMetInfo($friendId, $friendData['met_info']);
             }
@@ -263,6 +267,10 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     public function updateCard($addressBookId, $cardUri, $cardData): ?string
     {
         $externalId = str_replace('.vcf', '', $cardUri);
+        if (!self::isUuid($externalId)) {
+            return null;
+        }
+
         $friendData = $this->mapper->vcardToFriend($cardData, $externalId);
         $vcardJson = $this->mapper->vcardToJson($cardData);
 
@@ -296,11 +304,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                     name_suffix = :name_suffix,
                     nickname = :nickname,
                     photo_url = :photo_url,
-                    job_title = :job_title,
-                    organization = :organization,
-                    department = :department,
                     interests = :interests,
-                    work_notes = :work_notes,
                     vcard_raw_json = :vcard_raw_json,
                     is_favorite = :is_favorite
                 WHERE id = :id
@@ -316,13 +320,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'name_suffix' => $friendData['name_suffix'] ?? null,
                 'nickname' => $friendData['nickname'] ?? null,
                 'photo_url' => $friendData['photo_url'] ?? null,
-                'job_title' => $friendData['job_title'] ?? null,
-                'organization' => $friendData['organization'] ?? null,
-                'department' => $friendData['department'] ?? null,
                 'interests' => $friendData['interests'] ?? null,
-                'work_notes' => $friendData['work_notes'] ?? null,
                 'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
-                'is_favorite' => !empty($friendData['is_favorite']),
+                'is_favorite' => self::pgBool(!empty($friendData['is_favorite'])),
             ]);
             $result = $stmt->fetch();
 
@@ -334,6 +334,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             $this->insertUrls($friendId, $friendData['urls'] ?? []);
             $this->insertDates($friendId, $friendData['dates'] ?? []);
             $this->insertSocialProfiles($friendId, $friendData['social_profiles'] ?? []);
+            $this->insertProfessionalHistory($friendId, $friendData['professional_history'] ?? []);
             if (!empty($friendData['met_info'])) {
                 $this->insertMetInfo($friendId, $friendData['met_info']);
             }
@@ -360,6 +361,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     public function deleteCard($addressBookId, $cardUri): bool
     {
         $externalId = str_replace('.vcf', '', $cardUri);
+        if (!self::isUuid($externalId)) {
+            return false;
+        }
 
         // Soft delete
         $stmt = $this->pdo->prepare('
@@ -470,6 +474,25 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         return 'sync-' . ($row['max_id'] ?? 0);
     }
 
+    /**
+     * PDO's pgsql driver binds PHP `false` as an empty string, which Postgres
+     * rejects for a boolean column. Bind the literal instead.
+     */
+    private static function pgBool(bool $value): string
+    {
+        return $value ? 'true' : 'false';
+    }
+
+    /**
+     * Card URIs come straight from the client, but `external_id` is a uuid
+     * column: comparing a non-UUID string raises 22P02 (a 500) instead of
+     * missing cleanly.
+     */
+    private static function isUuid(string $value): bool
+    {
+        return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $value) === 1;
+    }
+
     private function deleteSubResources(int $friendId): void
     {
         // Use explicit DELETE queries for each table to avoid string concatenation
@@ -490,6 +513,8 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         // Epic 4: Remove circle assignments (they will be re-assigned)
         $this->pdo->prepare('DELETE FROM friends.friend_circles WHERE friend_id = :id')
             ->execute(['id' => $friendId]);
+        $this->pdo->prepare('DELETE FROM friends.friend_professional_history WHERE friend_id = :id')
+            ->execute(['id' => $friendId]);
     }
 
     private function insertPhones(int $friendId, array $phones): void
@@ -503,7 +528,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'friend_id' => $friendId,
                 'phone_number' => $phone['phone_number'],
                 'phone_type' => $phone['phone_type'] ?? 'mobile',
-                'is_primary' => !empty($phone['is_primary']),
+                'is_primary' => self::pgBool(!empty($phone['is_primary'])),
             ]);
         }
     }
@@ -519,7 +544,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'friend_id' => $friendId,
                 'email_address' => $email['email_address'],
                 'email_type' => $email['email_type'] ?? 'personal',
-                'is_primary' => !empty($email['is_primary']),
+                'is_primary' => self::pgBool(!empty($email['is_primary'])),
             ]);
         }
     }
@@ -544,7 +569,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'postal_code' => $addr['postal_code'] ?? null,
                 'country' => $addr['country'] ?? null,
                 'address_type' => $addr['address_type'] ?? 'home',
-                'is_primary' => !empty($addr['is_primary']),
+                'is_primary' => self::pgBool(!empty($addr['is_primary'])),
             ]);
         }
     }
@@ -574,7 +599,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             $stmt->execute([
                 'friend_id' => $friendId,
                 'date_value' => $date['date_value'],
-                'year_known' => !empty($date['year_known']),
+                'year_known' => self::pgBool(!empty($date['year_known'])),
                 'date_type' => $date['date_type'],
             ]);
         }
@@ -607,6 +632,38 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             'met_location' => $metInfo['met_location'] ?? null,
             'met_context' => $metInfo['met_context'] ?? null,
         ]);
+    }
+
+    /**
+     * Professional data lives in its own table since the professional-history
+     * migration; `friends.friends` no longer has job_title/organization/
+     * department/work_notes columns.
+     */
+    private function insertProfessionalHistory(int $friendId, array $entries): void
+    {
+        $stmt = $this->pdo->prepare('
+            INSERT INTO friends.friend_professional_history (
+                friend_id, job_title, organization, department, notes,
+                from_month, from_year, to_month, to_year, is_primary
+            ) VALUES (
+                :friend_id, :job_title, :organization, :department, :notes,
+                :from_month, :from_year, :to_month, :to_year, :is_primary
+            )
+        ');
+        foreach ($entries as $entry) {
+            $stmt->execute([
+                'friend_id' => $friendId,
+                'job_title' => $entry['job_title'] ?? null,
+                'organization' => $entry['organization'] ?? null,
+                'department' => $entry['department'] ?? null,
+                'notes' => $entry['notes'] ?? null,
+                'from_month' => $entry['from_month'] ?? null,
+                'from_year' => $entry['from_year'] ?? null,
+                'to_month' => $entry['to_month'] ?? null,
+                'to_year' => $entry['to_year'] ?? null,
+                'is_primary' => self::pgBool(!empty($entry['is_primary'])),
+            ]);
+        }
     }
 
     /**
