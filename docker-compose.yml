@@ -33,14 +33,11 @@ services:
       FRONTEND_URL: http://localhost:8080
       # Dev traffic also arrives through the compose nginx (port 8080).
       TRUST_PROXY: "true"
-      JWT_SECRET: invisible-carrot-black-drums-medium
-      JWT_EXPIRY: 604800
-      SESSION_SECRET: invisible-carrot-black-drums-medium
       LOG_LEVEL: debug
       # PostGIS Address Lookup (enable after running OSM import)
       POSTGIS_ADDRESS_ENABLED: ${POSTGIS_ADDRESS_ENABLED:-false}
       POSTGIS_ADDRESS_DACH_ONLY: ${POSTGIS_ADDRESS_DACH_ONLY:-true}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-better-auth-secret-change-in-prod}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-better-auth-secret-change-this-before-prod}
       # Public origin (nginx), used as the OAuth issuer / MCP resource base.
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
       WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-localhost}
@@ -91,7 +88,7 @@ services:
       ENV: development
       # Shared with the backend so the co-located Better Auth instance can
       # validate OAuth bearer tokens against the same database.
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-better-auth-secret-change-in-prod}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-better-auth-secret-change-this-before-prod}
       # Public origin (nginx) for the OAuth resource metadata URL.
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
     ports:
