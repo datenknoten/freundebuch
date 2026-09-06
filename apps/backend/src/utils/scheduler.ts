@@ -3,6 +3,7 @@ import cron, { type ScheduledTask } from 'node-cron';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { deleteExpiredAddressCacheEntries } from '../models/queries/address-cache.queries.js';
+import { pruneFriendChanges } from '../models/queries/friend-changes.queries.js';
 import { getUpcomingDates } from '../models/queries/friend-dates.queries.js';
 import {
   getEnabledChannelsDueAt,
@@ -49,6 +50,15 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): ScheduledT
     } catch (error) {
       const err = toError(error);
       logger.error({ err }, 'Failed to clean up expired address cache entries');
+      Sentry.captureException(err);
+    }
+
+    try {
+      await pruneFriendChanges.run(undefined, pool);
+      logger.info('Friend change log pruned successfully');
+    } catch (error) {
+      const err = toError(error);
+      logger.error({ err }, 'Failed to prune the friend change log');
       Sentry.captureException(err);
     } finally {
       running = false;
@@ -156,6 +166,7 @@ export async function runCleanupNow(pool: pg.Pool, logger: Logger): Promise<void
   try {
     await deleteOrphanLegacyUsers.run(undefined, pool);
     await deleteExpiredAddressCacheEntries.run(undefined, pool);
+    await pruneFriendChanges.run(undefined, pool);
     logger.info('Immediate cleanup completed');
   } catch (error) {
     const err = toError(error);

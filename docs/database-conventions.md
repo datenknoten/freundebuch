@@ -209,6 +209,15 @@ CREATE INDEX idx_sessions_user_id ON auth.sessions(user_id);
 3. **Timestamps** - Every table SHOULD have `created_at` and `updated_at`
 4. **Foreign Keys** - Always define with explicit ON DELETE behavior
 
+**Exemptions**, all deliberate:
+
+| Kind | Example | Exempt from | Why |
+|------|---------|-------------|-----|
+| Junction tables | `friends.friend_circles`, `encounters.encounter_friends`, `collectives.collective_circles` | `external_id`, `updated_at` | Never addressed by the API on their own; a row is created or deleted, never edited |
+| Better Auth tables | `auth."user"`, `auth.session`, `auth.account`, `auth.passkey`, `auth.verification`, `auth.oauth_*` | `id SERIAL`, `external_id` | Managed by Better Auth: `TEXT` primary key holding the public id |
+| Append-only logs | `friends.friend_changes` | `external_id`, `updated_at` | A log entry is written once and read by sync token; rows are pruned by age, never updated |
+| The identity anchor | `auth.users` | `updated_at` semantics | Holds no editable data — only `id`, `external_id` and timestamps (see [ADR 0003](./decisions/0003-single-identity-anchored-on-auth-users.md)) |
+
 ### Foreign Key Actions
 
 Be explicit about cascading behavior:
