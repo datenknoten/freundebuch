@@ -88,12 +88,14 @@ hooks {
         exclusive = true
         depends = List("type-check")
       }
+      // Unit suite only: `tests/Integration` starts a Postgres container, and
+      // a push must not require Docker (same reason as ["test"] above).
       ["test-php"] {
         check = """
           if [ ! -d apps/sabredav/vendor ]; then
             (cd apps/sabredav && composer install --no-interaction --prefer-dist --quiet)
           fi
-          aube test:php
+          aube test:php:unit
           """
         exclusive = true
         depends = List("test")

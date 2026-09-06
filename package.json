@@ -10,6 +10,7 @@
     "build": "aube --filter @freundebuch/shared run build && aube --filter '!@freundebuch/shared' --recursive run build",
     "test": "aube --filter @freundebuch/shared run build && aube --recursive run test && aube run test:php",
     "test:php": "cd apps/sabredav && ./vendor/bin/phpunit",
+    "test:php:unit": "cd apps/sabredav && ./vendor/bin/phpunit --testsuite Unit",
     "test:unit": "aube --recursive run test:unit",
     "test:integration": "aube --recursive run test:integration",
     "test:e2e": "aube --recursive run test:e2e",
