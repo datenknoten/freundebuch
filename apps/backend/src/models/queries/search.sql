@@ -15,10 +15,10 @@ WITH matching_friends AS (
         (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,
         (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,
         -- Calculate relevance score from full-text search
-        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
+        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('german', :query)), 0) as fts_rank,
         -- Determine match source (using joined tables for efficiency)
         CASE
-            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'
+            WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'
             WHEN e.id IS NOT NULL THEN 'email'
             WHEN p.id IS NOT NULL THEN 'phone'
             WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
@@ -32,8 +32,7 @@ WITH matching_friends AS (
     LEFT JOIN friends.friend_phones p
         ON p.friend_id = c.id
         AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
-        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+        AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
     LEFT JOIN friends.friend_relationships r
         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
     LEFT JOIN friends.friend_met_info m
@@ -42,7 +41,7 @@ WITH matching_friends AS (
       AND c.deleted_at IS NULL
       AND (
           -- Full-text search on friend fields
-          c.search_vector @@ websearch_to_tsquery('english', :query)
+          c.search_vector @@ websearch_to_tsquery('german', :query)
           -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
           OR c.display_name ILIKE :wildcardQuery
           -- OR matches from joined tables
@@ -51,33 +50,42 @@ WITH matching_friends AS (
           OR r.id IS NOT NULL
           OR m.id IS NOT NULL
       )
+    -- Deterministic winner per friend: without this ORDER BY the DISTINCT ON
+    -- row (and therefore match_source) is arbitrary between identical requests.
+    ORDER BY c.id, match_source
+),
+page AS (
+    -- Apply the row limit before the per-row headline work in the final SELECT
+    SELECT mc.*
+    FROM matching_friends mc
+    ORDER BY mc.fts_rank DESC, mc.display_name ASC
+    LIMIT :limit
 )
 SELECT
-    mc.external_id,
-    mc.display_name,
-    mc.photo_thumbnail_url,
-    mc.organization,
-    mc.job_title,
-    mc.fts_rank as rank,
-    mc.match_source,
-    -- Generate headline/snippet for matched content
+    sr.external_id,
+    sr.display_name,
+    sr.photo_thumbnail_url,
+    sr.organization,
+    sr.job_title,
+    sr.fts_rank as rank,
+    sr.match_source,
+    -- Generate headline/snippet for matched content (page rows only)
     ts_headline(
-        'english',
-        COALESCE(mc.display_name, '') || ' ' ||
-        COALESCE(mc.organization, '') || ' ' ||
-        COALESCE(mc.work_notes, ''),
-        websearch_to_tsquery('english', :query),
+        'german',
+        COALESCE(sr.display_name, '') || ' ' ||
+        COALESCE(sr.organization, '') || ' ' ||
+        COALESCE(sr.work_notes, ''),
+        websearch_to_tsquery('german', :query),
         'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
     ) as headline,
     -- Get primary email
     (SELECT e.email_address FROM friends.friend_emails e
-     WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
+     WHERE e.friend_id = sr.id AND e.is_primary = true LIMIT 1) as primary_email,
     -- Get primary phone
     (SELECT p.phone_number FROM friends.friend_phones p
-     WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
-FROM matching_friends mc
-ORDER BY mc.fts_rank DESC, mc.display_name ASC
-LIMIT :limit;
+     WHERE p.friend_id = sr.id AND p.is_primary = true LIMIT 1) as primary_phone
+FROM page sr
+ORDER BY sr.fts_rank DESC, sr.display_name ASC;
 
 
 /* @name PaginatedFullTextSearch */
@@ -94,10 +102,10 @@ WITH matching_friends AS (
         c.created_at,
         c.updated_at,
         -- Calculate relevance score from full-text search
-        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
+        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('german', :query)), 0) as fts_rank,
         -- Determine match source (using joined tables for efficiency)
         CASE
-            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'
+            WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'
             WHEN e.id IS NOT NULL THEN 'email'
             WHEN p.id IS NOT NULL THEN 'phone'
             WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
@@ -111,8 +119,7 @@ WITH matching_friends AS (
     LEFT JOIN friends.friend_phones p
         ON p.friend_id = c.id
         AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
-        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+        AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
     LEFT JOIN friends.friend_relationships r
         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
     LEFT JOIN friends.friend_met_info m
@@ -121,7 +128,7 @@ WITH matching_friends AS (
       AND c.deleted_at IS NULL
       AND (
           -- Full-text search on friend fields
-          c.search_vector @@ websearch_to_tsquery('english', :query)
+          c.search_vector @@ websearch_to_tsquery('german', :query)
           -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
           OR c.display_name ILIKE :wildcardQuery
           -- OR matches from joined tables
@@ -130,39 +137,30 @@ WITH matching_friends AS (
           OR r.id IS NOT NULL
           OR m.id IS NOT NULL
       )
+    -- Deterministic winner per friend (see FullTextSearchFriends)
+    ORDER BY c.id, match_source
 ),
 total_count AS (
     SELECT COUNT(*)::int as count FROM matching_friends
 ),
 sorted_results AS (
+    -- Only ids, rank and sort keys here; the headline runs after LIMIT/OFFSET
     SELECT
         mc.*,
-        -- Generate headline/snippet for matched content
-        ts_headline(
-            'english',
-            COALESCE(mc.display_name, '') || ' ' ||
-            COALESCE(mc.organization, '') || ' ' ||
-            COALESCE(mc.work_notes, ''),
-            websearch_to_tsquery('english', :query),
-            'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
-        ) as headline,
-        -- Get primary email
-        (SELECT e.email_address FROM friends.friend_emails e
-         WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
-        -- Get primary phone
-        (SELECT p.phone_number FROM friends.friend_phones p
-         WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
+        row_number() OVER (
+            ORDER BY
+                CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
+                CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,
+                CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,
+                CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,
+                CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,
+                CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,
+                CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,
+                CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,
+                mc.display_name ASC
+        ) as sort_position
     FROM matching_friends mc
-    ORDER BY
-        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
-        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,
-        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,
-        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,
-        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,
-        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,
-        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,
-        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,
-        mc.display_name ASC
+    ORDER BY sort_position
     LIMIT :pageSize
     OFFSET :offset
 )
@@ -174,12 +172,25 @@ SELECT
     sr.job_title,
     sr.fts_rank as rank,
     sr.match_source,
-    sr.headline,
-    sr.primary_email,
-    sr.primary_phone,
+    -- Generate headline/snippet for matched content (page rows only)
+    ts_headline(
+        'german',
+        COALESCE(sr.display_name, '') || ' ' ||
+        COALESCE(sr.organization, '') || ' ' ||
+        COALESCE(sr.work_notes, ''),
+        websearch_to_tsquery('german', :query),
+        'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
+    ) as headline,
+    -- Get primary email
+    (SELECT e.email_address FROM friends.friend_emails e
+     WHERE e.friend_id = sr.id AND e.is_primary = true LIMIT 1) as primary_email,
+    -- Get primary phone
+    (SELECT p.phone_number FROM friends.friend_phones p
+     WHERE p.friend_id = sr.id AND p.is_primary = true LIMIT 1) as primary_phone,
     tc.count as total_count
 FROM sorted_results sr
-CROSS JOIN total_count tc;
+CROSS JOIN total_count tc
+ORDER BY sr.sort_position;
 
 
 /* @name GetRecentSearches */
@@ -230,8 +241,7 @@ WITH base_matches AS (
     LEFT JOIN friends.friend_phones p
         ON p.friend_id = c.id
         AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
-        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+        AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
     LEFT JOIN friends.friend_relationships r
         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
     LEFT JOIN friends.friend_met_info m
@@ -239,7 +249,7 @@ WITH base_matches AS (
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
-          c.search_vector @@ websearch_to_tsquery('english', :query)
+          c.search_vector @@ websearch_to_tsquery('german', :query)
           -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
           OR c.display_name ILIKE :wildcardQuery
           OR e.id IS NOT NULL
@@ -313,9 +323,9 @@ matching_friends AS (
         (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,
         c.created_at,
         c.updated_at,
-        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
+        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('german', :query)), 0) as fts_rank,
         CASE
-            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'
+            WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'
             WHEN e.id IS NOT NULL THEN 'email'
             WHEN p.id IS NOT NULL THEN 'phone'
             ELSE 'notes'
@@ -328,48 +338,31 @@ matching_friends AS (
     LEFT JOIN friends.friend_phones p
         ON p.friend_id = c.id
         AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
-        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+        AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+    -- Deterministic winner per friend (see FullTextSearchFriends)
+    ORDER BY c.id, match_source
 ),
 total_count AS (
     SELECT COUNT(*)::int as count FROM matching_friends
 ),
 sorted_results AS (
+    -- Only ids, rank and sort keys here; headline/circles run after LIMIT/OFFSET
     SELECT
         mc.*,
-        ts_headline(
-            'english',
-            COALESCE(mc.display_name, '') || ' ' ||
-            COALESCE(mc.organization, '') || ' ' ||
-            COALESCE(mc.work_notes, ''),
-            websearch_to_tsquery('english', :query),
-            'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
-        ) as headline,
-        (SELECT e.email_address FROM friends.friend_emails e
-         WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
-        (SELECT p.phone_number FROM friends.friend_phones p
-         WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone,
-        -- Get circles for this friend
-        (SELECT COALESCE(json_agg(json_build_object(
-            'external_id', ci.external_id,
-            'name', ci.name,
-            'color', ci.color
-        ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)
-         FROM friends.circles ci
-         INNER JOIN friends.friend_circles fci ON fci.circle_id = ci.id
-         WHERE fci.friend_id = mc.id
-        ) as circles
+        row_number() OVER (
+            ORDER BY
+                CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
+                CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,
+                CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,
+                CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,
+                CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,
+                CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,
+                CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,
+                CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,
+                mc.display_name ASC
+        ) as sort_position
     FROM matching_friends mc
-    ORDER BY
-        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
-        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,
-        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,
-        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,
-        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,
-        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,
-        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,
-        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,
-        mc.display_name ASC
+    ORDER BY sort_position
     LIMIT :pageSize
     OFFSET :offset
 )
@@ -381,13 +374,32 @@ SELECT
     sr.job_title,
     sr.fts_rank as rank,
     sr.match_source,
-    sr.headline,
-    sr.primary_email,
-    sr.primary_phone,
-    sr.circles,
+    ts_headline(
+        'german',
+        COALESCE(sr.display_name, '') || ' ' ||
+        COALESCE(sr.organization, '') || ' ' ||
+        COALESCE(sr.work_notes, ''),
+        websearch_to_tsquery('german', :query),
+        'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
+    ) as headline,
+    (SELECT e.email_address FROM friends.friend_emails e
+     WHERE e.friend_id = sr.id AND e.is_primary = true LIMIT 1) as primary_email,
+    (SELECT p.phone_number FROM friends.friend_phones p
+     WHERE p.friend_id = sr.id AND p.is_primary = true LIMIT 1) as primary_phone,
+    -- Get circles for this friend
+    (SELECT COALESCE(json_agg(json_build_object(
+        'external_id', ci.external_id,
+        'name', ci.name,
+        'color', ci.color
+    ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)
+     FROM friends.circles ci
+     INNER JOIN friends.friend_circles fci ON fci.circle_id = ci.id
+     WHERE fci.friend_id = sr.id
+    ) as circles,
     tc.count as total_count
 FROM sorted_results sr
-CROSS JOIN total_count tc;
+CROSS JOIN total_count tc
+ORDER BY sr.sort_position;
 
 
 /* @name GetFacetCounts */
@@ -402,8 +414,7 @@ WITH base_matches AS (
     LEFT JOIN friends.friend_phones p
         ON p.friend_id = c.id
         AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
-        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
-            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+        AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
     LEFT JOIN friends.friend_relationships r
         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
     LEFT JOIN friends.friend_met_info m
@@ -411,7 +422,7 @@ WITH base_matches AS (
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
-          c.search_vector @@ websearch_to_tsquery('english', :query)
+          c.search_vector @@ websearch_to_tsquery('german', :query)
           -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
           OR c.display_name ILIKE :wildcardQuery
           OR e.id IS NOT NULL

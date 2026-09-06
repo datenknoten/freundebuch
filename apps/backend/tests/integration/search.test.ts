@@ -1,3 +1,4 @@
+import type pg from 'pg';
 import { describe, expect, it } from 'vitest';
 import {
   authHeaders,
@@ -13,6 +14,31 @@ import {
   createTestFriend,
   setupSearchTestSuite,
 } from './search.helpers.js';
+
+/** Subset of the search response used by the German-dictionary assertions */
+interface SearchResultItem {
+  displayName: string;
+  matchSource: string | null;
+}
+
+/**
+ * Create a friend with interests (weight C in the search vector)
+ */
+async function createFriendWithInterests(
+  pool: pg.Pool,
+  userExternalId: string,
+  displayName: string,
+  interests: string,
+): Promise<string> {
+  const friendExternalId = await createTestFriend(pool, userExternalId, displayName);
+
+  await pool.query('UPDATE friends.friends SET interests = $2 WHERE external_id = $1', [
+    friendExternalId,
+    interests,
+  ]);
+
+  return friendExternalId;
+}
 
 describe('Search API - Integration Tests', () => {
   const { getContext } = setupSearchTestSuite();
@@ -296,6 +322,67 @@ describe('Search API - Integration Tests', () => {
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
         expect(body[0].displayName).toBe('Alice');
+      });
+    });
+
+    describe('German Dictionary', () => {
+      it('should match a German stem across inflections', async () => {
+        const { app, pool, testUser } = getContext();
+
+        await createFriendWithInterests(pool, testUser.externalId, 'Anna Leser', 'Bücher lesen');
+        await createTestFriend(pool, testUser.externalId, 'Bob Jones');
+
+        const request = new Request('http://localhost/api/friends/search/full?q=Buch', {
+          method: 'GET',
+          headers: authHeaders(testUser.sessionCookies),
+        });
+
+        const response = await app.fetch(request);
+        const body = (await response.json()) as SearchResultItem[];
+
+        expect(response.status).toBe(200);
+        expect(body.length).toBe(1);
+        expect(body[0].displayName).toBe('Anna Leser');
+        expect(body[0].matchSource).toBe('friend');
+      });
+
+      it('should match a German verb regardless of conjugation', async () => {
+        const { app, pool, testUser } = getContext();
+
+        await createFriendWithInterests(pool, testUser.externalId, 'Anna Leser', 'Bücher lesen');
+        await createTestFriend(pool, testUser.externalId, 'Bob Jones');
+
+        const request = new Request('http://localhost/api/friends/search/full?q=Lesen', {
+          method: 'GET',
+          headers: authHeaders(testUser.sessionCookies),
+        });
+
+        const response = await app.fetch(request);
+        const body = (await response.json()) as SearchResultItem[];
+
+        expect(response.status).toBe(200);
+        expect(body.length).toBe(1);
+        expect(body[0].displayName).toBe('Anna Leser');
+      });
+
+      it('should match a formatted phone number by its digits alone', async () => {
+        const { app, pool, testUser } = getContext();
+
+        await createFriendWithPhone(pool, testUser.externalId, 'Bernd Berlin', '+49 30 1234 5678');
+        await createFriendWithPhone(pool, testUser.externalId, 'Bob Jones', '+49 89 9999 0000');
+
+        const request = new Request('http://localhost/api/friends/search/full?q=3012345678', {
+          method: 'GET',
+          headers: authHeaders(testUser.sessionCookies),
+        });
+
+        const response = await app.fetch(request);
+        const body = (await response.json()) as SearchResultItem[];
+
+        expect(response.status).toBe(200);
+        expect(body.length).toBe(1);
+        expect(body[0].displayName).toBe('Bernd Berlin');
+        expect(body[0].matchSource).toBe('phone');
       });
     });
 

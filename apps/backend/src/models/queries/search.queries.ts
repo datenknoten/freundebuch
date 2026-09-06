@@ -38,7 +38,7 @@ export interface IFullTextSearchFriendsQuery {
   result: IFullTextSearchFriendsResult;
 }
 
-const fullTextSearchFriendsIR: any = {"usedParamSet":{"query":true,"wildcardQuery":true,"userExternalId":true,"limit":true},"params":[{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":767,"b":772},{"a":945,"b":950},{"a":1529,"b":1534},{"a":1698,"b":1703},{"a":2142,"b":2147},{"a":2891,"b":2896}]},{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":1419,"b":1432},{"a":1825,"b":1838},{"a":1934,"b":1947},{"a":2280,"b":2293}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":1975,"b":1989}]},{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":3411,"b":3416}]}],"statement":"WITH matching_friends AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        -- Get primary professional info\n        (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as organization,\n        (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,\n        (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,\n        -- Calculate relevance score from full-text search\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,\n        -- Determine match source (using joined tables for efficiency)\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'\n            WHEN e.id IS NOT NULL THEN 'email'\n            WHEN p.id IS NOT NULL THEN 'phone'\n            WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'\n            ELSE NULL\n        END as match_source\n    FROM friends.friends c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    -- LEFT JOINs for efficient matching (avoids correlated subqueries)\n    LEFT JOIN friends.friend_emails e\n        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_phones p\n        ON p.friend_id = c.id\n        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits\n        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN friends.friend_relationships r\n        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_met_info m\n        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          -- Full-text search on friend fields\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          -- Partial/prefix matching on display_name (for queries like \"Kür\" matching \"Kürzer\")\n          OR c.display_name ILIKE :wildcardQuery\n          -- OR matches from joined tables\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n)\nSELECT\n    mc.external_id,\n    mc.display_name,\n    mc.photo_thumbnail_url,\n    mc.organization,\n    mc.job_title,\n    mc.fts_rank as rank,\n    mc.match_source,\n    -- Generate headline/snippet for matched content\n    ts_headline(\n        'english',\n        COALESCE(mc.display_name, '') || ' ' ||\n        COALESCE(mc.organization, '') || ' ' ||\n        COALESCE(mc.work_notes, ''),\n        websearch_to_tsquery('english', :query),\n        'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n    ) as headline,\n    -- Get primary email\n    (SELECT e.email_address FROM friends.friend_emails e\n     WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,\n    -- Get primary phone\n    (SELECT p.phone_number FROM friends.friend_phones p\n     WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone\nFROM matching_friends mc\nORDER BY mc.fts_rank DESC, mc.display_name ASC\nLIMIT :limit"};
+const fullTextSearchFriendsIR: any = {"usedParamSet":{"query":true,"wildcardQuery":true,"userExternalId":true,"limit":true},"params":[{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":766,"b":771},{"a":943,"b":948},{"a":1527,"b":1532},{"a":1649,"b":1654},{"a":2092,"b":2097},{"a":3253,"b":3258}]},{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":1417,"b":1430},{"a":1776,"b":1789},{"a":1885,"b":1898},{"a":2230,"b":2243}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":1926,"b":1940}]},{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":2806,"b":2811}]}],"statement":"WITH matching_friends AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        -- Get primary professional info\n        (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as organization,\n        (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,\n        (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,\n        -- Calculate relevance score from full-text search\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('german', :query)), 0) as fts_rank,\n        -- Determine match source (using joined tables for efficiency)\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'\n            WHEN e.id IS NOT NULL THEN 'email'\n            WHEN p.id IS NOT NULL THEN 'phone'\n            WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'\n            ELSE NULL\n        END as match_source\n    FROM friends.friends c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    -- LEFT JOINs for efficient matching (avoids correlated subqueries)\n    LEFT JOIN friends.friend_emails e\n        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_phones p\n        ON p.friend_id = c.id\n        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits\n        AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN friends.friend_relationships r\n        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_met_info m\n        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          -- Full-text search on friend fields\n          c.search_vector @@ websearch_to_tsquery('german', :query)\n          -- Partial/prefix matching on display_name (for queries like \"Kür\" matching \"Kürzer\")\n          OR c.display_name ILIKE :wildcardQuery\n          -- OR matches from joined tables\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n    -- Deterministic winner per friend: without this ORDER BY the DISTINCT ON\n    -- row (and therefore match_source) is arbitrary between identical requests.\n    ORDER BY c.id, match_source\n),\npage AS (\n    -- Apply the row limit before the per-row headline work in the final SELECT\n    SELECT mc.*\n    FROM matching_friends mc\n    ORDER BY mc.fts_rank DESC, mc.display_name ASC\n    LIMIT :limit\n)\nSELECT\n    sr.external_id,\n    sr.display_name,\n    sr.photo_thumbnail_url,\n    sr.organization,\n    sr.job_title,\n    sr.fts_rank as rank,\n    sr.match_source,\n    -- Generate headline/snippet for matched content (page rows only)\n    ts_headline(\n        'german',\n        COALESCE(sr.display_name, '') || ' ' ||\n        COALESCE(sr.organization, '') || ' ' ||\n        COALESCE(sr.work_notes, ''),\n        websearch_to_tsquery('german', :query),\n        'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n    ) as headline,\n    -- Get primary email\n    (SELECT e.email_address FROM friends.friend_emails e\n     WHERE e.friend_id = sr.id AND e.is_primary = true LIMIT 1) as primary_email,\n    -- Get primary phone\n    (SELECT p.phone_number FROM friends.friend_phones p\n     WHERE p.friend_id = sr.id AND p.is_primary = true LIMIT 1) as primary_phone\nFROM page sr\nORDER BY sr.fts_rank DESC, sr.display_name ASC"};
 
 /**
  * Query generated from SQL:
@@ -54,10 +54,10 @@ const fullTextSearchFriendsIR: any = {"usedParamSet":{"query":true,"wildcardQuer
  *         (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,
  *         (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,
  *         -- Calculate relevance score from full-text search
- *         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
+ *         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('german', :query)), 0) as fts_rank,
  *         -- Determine match source (using joined tables for efficiency)
  *         CASE
- *             WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'
+ *             WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'
  *             WHEN e.id IS NOT NULL THEN 'email'
  *             WHEN p.id IS NOT NULL THEN 'phone'
  *             WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
@@ -71,8 +71,7 @@ const fullTextSearchFriendsIR: any = {"usedParamSet":{"query":true,"wildcardQuer
  *     LEFT JOIN friends.friend_phones p
  *         ON p.friend_id = c.id
  *         AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
- *         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+ *         AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
  *     LEFT JOIN friends.friend_relationships r
  *         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
  *     LEFT JOIN friends.friend_met_info m
@@ -81,7 +80,7 @@ const fullTextSearchFriendsIR: any = {"usedParamSet":{"query":true,"wildcardQuer
  *       AND c.deleted_at IS NULL
  *       AND (
  *           -- Full-text search on friend fields
- *           c.search_vector @@ websearch_to_tsquery('english', :query)
+ *           c.search_vector @@ websearch_to_tsquery('german', :query)
  *           -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
  *           OR c.display_name ILIKE :wildcardQuery
  *           -- OR matches from joined tables
@@ -90,33 +89,42 @@ const fullTextSearchFriendsIR: any = {"usedParamSet":{"query":true,"wildcardQuer
  *           OR r.id IS NOT NULL
  *           OR m.id IS NOT NULL
  *       )
+ *     -- Deterministic winner per friend: without this ORDER BY the DISTINCT ON
+ *     -- row (and therefore match_source) is arbitrary between identical requests.
+ *     ORDER BY c.id, match_source
+ * ),
+ * page AS (
+ *     -- Apply the row limit before the per-row headline work in the final SELECT
+ *     SELECT mc.*
+ *     FROM matching_friends mc
+ *     ORDER BY mc.fts_rank DESC, mc.display_name ASC
+ *     LIMIT :limit
  * )
  * SELECT
- *     mc.external_id,
- *     mc.display_name,
- *     mc.photo_thumbnail_url,
- *     mc.organization,
- *     mc.job_title,
- *     mc.fts_rank as rank,
- *     mc.match_source,
- *     -- Generate headline/snippet for matched content
+ *     sr.external_id,
+ *     sr.display_name,
+ *     sr.photo_thumbnail_url,
+ *     sr.organization,
+ *     sr.job_title,
+ *     sr.fts_rank as rank,
+ *     sr.match_source,
+ *     -- Generate headline/snippet for matched content (page rows only)
  *     ts_headline(
- *         'english',
- *         COALESCE(mc.display_name, '') || ' ' ||
- *         COALESCE(mc.organization, '') || ' ' ||
- *         COALESCE(mc.work_notes, ''),
- *         websearch_to_tsquery('english', :query),
+ *         'german',
+ *         COALESCE(sr.display_name, '') || ' ' ||
+ *         COALESCE(sr.organization, '') || ' ' ||
+ *         COALESCE(sr.work_notes, ''),
+ *         websearch_to_tsquery('german', :query),
  *         'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
  *     ) as headline,
  *     -- Get primary email
  *     (SELECT e.email_address FROM friends.friend_emails e
- *      WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
+ *      WHERE e.friend_id = sr.id AND e.is_primary = true LIMIT 1) as primary_email,
  *     -- Get primary phone
  *     (SELECT p.phone_number FROM friends.friend_phones p
- *      WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
- * FROM matching_friends mc
- * ORDER BY mc.fts_rank DESC, mc.display_name ASC
- * LIMIT :limit
+ *      WHERE p.friend_id = sr.id AND p.is_primary = true LIMIT 1) as primary_phone
+ * FROM page sr
+ * ORDER BY sr.fts_rank DESC, sr.display_name ASC
  * ```
  */
 export const fullTextSearchFriends = new PreparedQuery<IFullTextSearchFriendsParams,IFullTextSearchFriendsResult>(fullTextSearchFriendsIR);
@@ -157,7 +165,7 @@ export interface IPaginatedFullTextSearchQuery {
   result: IPaginatedFullTextSearchResult;
 }
 
-const paginatedFullTextSearchIR: any = {"usedParamSet":{"query":true,"wildcardQuery":true,"userExternalId":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":811,"b":816},{"a":989,"b":994},{"a":1573,"b":1578},{"a":1742,"b":1747},{"a":2186,"b":2191},{"a":2924,"b":2929}]},{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":1463,"b":1476},{"a":1869,"b":1882},{"a":1978,"b":1991},{"a":2324,"b":2337}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":2019,"b":2033}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":3458,"b":3464},{"a":3549,"b":3555},{"a":3638,"b":3644},{"a":3734,"b":3740},{"a":3832,"b":3838},{"a":3926,"b":3932},{"a":4018,"b":4024},{"a":4112,"b":4118}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":3484,"b":3493},{"a":3575,"b":3584},{"a":3667,"b":3676},{"a":3763,"b":3772},{"a":3859,"b":3868},{"a":3953,"b":3962},{"a":4045,"b":4054},{"a":4139,"b":4148}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":4224,"b":4232}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":4245,"b":4251}]}],"statement":"WITH matching_friends AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        -- Get primary professional info\n        (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as organization,\n        (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,\n        (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,\n        c.created_at,\n        c.updated_at,\n        -- Calculate relevance score from full-text search\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,\n        -- Determine match source (using joined tables for efficiency)\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'\n            WHEN e.id IS NOT NULL THEN 'email'\n            WHEN p.id IS NOT NULL THEN 'phone'\n            WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'\n            ELSE NULL\n        END as match_source\n    FROM friends.friends c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    -- LEFT JOINs for efficient matching (avoids correlated subqueries)\n    LEFT JOIN friends.friend_emails e\n        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_phones p\n        ON p.friend_id = c.id\n        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits\n        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN friends.friend_relationships r\n        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_met_info m\n        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          -- Full-text search on friend fields\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          -- Partial/prefix matching on display_name (for queries like \"Kür\" matching \"Kürzer\")\n          OR c.display_name ILIKE :wildcardQuery\n          -- OR matches from joined tables\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n),\ntotal_count AS (\n    SELECT COUNT(*)::int as count FROM matching_friends\n),\nsorted_results AS (\n    SELECT\n        mc.*,\n        -- Generate headline/snippet for matched content\n        ts_headline(\n            'english',\n            COALESCE(mc.display_name, '') || ' ' ||\n            COALESCE(mc.organization, '') || ' ' ||\n            COALESCE(mc.work_notes, ''),\n            websearch_to_tsquery('english', :query),\n            'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n        ) as headline,\n        -- Get primary email\n        (SELECT e.email_address FROM friends.friend_emails e\n         WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,\n        -- Get primary phone\n        (SELECT p.phone_number FROM friends.friend_phones p\n         WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone\n    FROM matching_friends mc\n    ORDER BY\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,\n        mc.display_name ASC\n    LIMIT :pageSize\n    OFFSET :offset\n)\nSELECT\n    sr.external_id,\n    sr.display_name,\n    sr.photo_thumbnail_url,\n    sr.organization,\n    sr.job_title,\n    sr.fts_rank as rank,\n    sr.match_source,\n    sr.headline,\n    sr.primary_email,\n    sr.primary_phone,\n    tc.count as total_count\nFROM sorted_results sr\nCROSS JOIN total_count tc"};
+const paginatedFullTextSearchIR: any = {"usedParamSet":{"query":true,"wildcardQuery":true,"userExternalId":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":810,"b":815},{"a":987,"b":992},{"a":1571,"b":1576},{"a":1693,"b":1698},{"a":2136,"b":2141},{"a":4219,"b":4224}]},{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":1461,"b":1474},{"a":1820,"b":1833},{"a":1929,"b":1942},{"a":2274,"b":2287}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":1970,"b":1984}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":2837,"b":2843},{"a":2936,"b":2942},{"a":3033,"b":3039},{"a":3137,"b":3143},{"a":3243,"b":3249},{"a":3345,"b":3351},{"a":3445,"b":3451},{"a":3547,"b":3553}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":2863,"b":2872},{"a":2962,"b":2971},{"a":3062,"b":3071},{"a":3166,"b":3175},{"a":3270,"b":3279},{"a":3372,"b":3381},{"a":3472,"b":3481},{"a":3574,"b":3583}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":3750,"b":3758}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":3771,"b":3777}]}],"statement":"WITH matching_friends AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        -- Get primary professional info\n        (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as organization,\n        (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,\n        (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,\n        c.created_at,\n        c.updated_at,\n        -- Calculate relevance score from full-text search\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('german', :query)), 0) as fts_rank,\n        -- Determine match source (using joined tables for efficiency)\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'\n            WHEN e.id IS NOT NULL THEN 'email'\n            WHEN p.id IS NOT NULL THEN 'phone'\n            WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'\n            ELSE NULL\n        END as match_source\n    FROM friends.friends c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    -- LEFT JOINs for efficient matching (avoids correlated subqueries)\n    LEFT JOIN friends.friend_emails e\n        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_phones p\n        ON p.friend_id = c.id\n        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits\n        AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN friends.friend_relationships r\n        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_met_info m\n        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          -- Full-text search on friend fields\n          c.search_vector @@ websearch_to_tsquery('german', :query)\n          -- Partial/prefix matching on display_name (for queries like \"Kür\" matching \"Kürzer\")\n          OR c.display_name ILIKE :wildcardQuery\n          -- OR matches from joined tables\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n    -- Deterministic winner per friend (see FullTextSearchFriends)\n    ORDER BY c.id, match_source\n),\ntotal_count AS (\n    SELECT COUNT(*)::int as count FROM matching_friends\n),\nsorted_results AS (\n    -- Only ids, rank and sort keys here; the headline runs after LIMIT/OFFSET\n    SELECT\n        mc.*,\n        row_number() OVER (\n            ORDER BY\n                CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,\n                CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,\n                CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,\n                CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,\n                CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,\n                CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,\n                CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,\n                CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,\n                mc.display_name ASC\n        ) as sort_position\n    FROM matching_friends mc\n    ORDER BY sort_position\n    LIMIT :pageSize\n    OFFSET :offset\n)\nSELECT\n    sr.external_id,\n    sr.display_name,\n    sr.photo_thumbnail_url,\n    sr.organization,\n    sr.job_title,\n    sr.fts_rank as rank,\n    sr.match_source,\n    -- Generate headline/snippet for matched content (page rows only)\n    ts_headline(\n        'german',\n        COALESCE(sr.display_name, '') || ' ' ||\n        COALESCE(sr.organization, '') || ' ' ||\n        COALESCE(sr.work_notes, ''),\n        websearch_to_tsquery('german', :query),\n        'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n    ) as headline,\n    -- Get primary email\n    (SELECT e.email_address FROM friends.friend_emails e\n     WHERE e.friend_id = sr.id AND e.is_primary = true LIMIT 1) as primary_email,\n    -- Get primary phone\n    (SELECT p.phone_number FROM friends.friend_phones p\n     WHERE p.friend_id = sr.id AND p.is_primary = true LIMIT 1) as primary_phone,\n    tc.count as total_count\nFROM sorted_results sr\nCROSS JOIN total_count tc\nORDER BY sr.sort_position"};
 
 /**
  * Query generated from SQL:
@@ -175,10 +183,10 @@ const paginatedFullTextSearchIR: any = {"usedParamSet":{"query":true,"wildcardQu
  *         c.created_at,
  *         c.updated_at,
  *         -- Calculate relevance score from full-text search
- *         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
+ *         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('german', :query)), 0) as fts_rank,
  *         -- Determine match source (using joined tables for efficiency)
  *         CASE
- *             WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'
+ *             WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'
  *             WHEN e.id IS NOT NULL THEN 'email'
  *             WHEN p.id IS NOT NULL THEN 'phone'
  *             WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
@@ -192,8 +200,7 @@ const paginatedFullTextSearchIR: any = {"usedParamSet":{"query":true,"wildcardQu
  *     LEFT JOIN friends.friend_phones p
  *         ON p.friend_id = c.id
  *         AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
- *         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+ *         AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
  *     LEFT JOIN friends.friend_relationships r
  *         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
  *     LEFT JOIN friends.friend_met_info m
@@ -202,7 +209,7 @@ const paginatedFullTextSearchIR: any = {"usedParamSet":{"query":true,"wildcardQu
  *       AND c.deleted_at IS NULL
  *       AND (
  *           -- Full-text search on friend fields
- *           c.search_vector @@ websearch_to_tsquery('english', :query)
+ *           c.search_vector @@ websearch_to_tsquery('german', :query)
  *           -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
  *           OR c.display_name ILIKE :wildcardQuery
  *           -- OR matches from joined tables
@@ -211,39 +218,30 @@ const paginatedFullTextSearchIR: any = {"usedParamSet":{"query":true,"wildcardQu
  *           OR r.id IS NOT NULL
  *           OR m.id IS NOT NULL
  *       )
+ *     -- Deterministic winner per friend (see FullTextSearchFriends)
+ *     ORDER BY c.id, match_source
  * ),
  * total_count AS (
  *     SELECT COUNT(*)::int as count FROM matching_friends
  * ),
  * sorted_results AS (
+ *     -- Only ids, rank and sort keys here; the headline runs after LIMIT/OFFSET
  *     SELECT
  *         mc.*,
- *         -- Generate headline/snippet for matched content
- *         ts_headline(
- *             'english',
- *             COALESCE(mc.display_name, '') || ' ' ||
- *             COALESCE(mc.organization, '') || ' ' ||
- *             COALESCE(mc.work_notes, ''),
- *             websearch_to_tsquery('english', :query),
- *             'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
- *         ) as headline,
- *         -- Get primary email
- *         (SELECT e.email_address FROM friends.friend_emails e
- *          WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
- *         -- Get primary phone
- *         (SELECT p.phone_number FROM friends.friend_phones p
- *          WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone
+ *         row_number() OVER (
+ *             ORDER BY
+ *                 CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
+ *                 CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,
+ *                 CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,
+ *                 CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,
+ *                 CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,
+ *                 CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,
+ *                 CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,
+ *                 CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,
+ *                 mc.display_name ASC
+ *         ) as sort_position
  *     FROM matching_friends mc
- *     ORDER BY
- *         CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
- *         CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,
- *         CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,
- *         CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,
- *         CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,
- *         CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,
- *         CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,
- *         CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,
- *         mc.display_name ASC
+ *     ORDER BY sort_position
  *     LIMIT :pageSize
  *     OFFSET :offset
  * )
@@ -255,12 +253,25 @@ const paginatedFullTextSearchIR: any = {"usedParamSet":{"query":true,"wildcardQu
  *     sr.job_title,
  *     sr.fts_rank as rank,
  *     sr.match_source,
- *     sr.headline,
- *     sr.primary_email,
- *     sr.primary_phone,
+ *     -- Generate headline/snippet for matched content (page rows only)
+ *     ts_headline(
+ *         'german',
+ *         COALESCE(sr.display_name, '') || ' ' ||
+ *         COALESCE(sr.organization, '') || ' ' ||
+ *         COALESCE(sr.work_notes, ''),
+ *         websearch_to_tsquery('german', :query),
+ *         'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
+ *     ) as headline,
+ *     -- Get primary email
+ *     (SELECT e.email_address FROM friends.friend_emails e
+ *      WHERE e.friend_id = sr.id AND e.is_primary = true LIMIT 1) as primary_email,
+ *     -- Get primary phone
+ *     (SELECT p.phone_number FROM friends.friend_phones p
+ *      WHERE p.friend_id = sr.id AND p.is_primary = true LIMIT 1) as primary_phone,
  *     tc.count as total_count
  * FROM sorted_results sr
  * CROSS JOIN total_count tc
+ * ORDER BY sr.sort_position
  * ```
  */
 export const paginatedFullTextSearch = new PreparedQuery<IPaginatedFullTextSearchParams,IPaginatedFullTextSearchResult>(paginatedFullTextSearchIR);
@@ -450,7 +461,7 @@ export interface IFacetedSearchQuery {
   result: IFacetedSearchResult;
 }
 
-const facetedSearchIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,"userExternalId":true,"filterCountry":true,"filterCity":true,"filterOrganization":true,"filterJobTitle":true,"filterDepartment":true,"filterRelationshipCategory":true,"filterCircles":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":362,"b":375},{"a":768,"b":781},{"a":877,"b":890},{"a":1176,"b":1189},{"a":5130,"b":5143}]},{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":472,"b":477},{"a":641,"b":646},{"a":1038,"b":1043},{"a":4636,"b":4641},{"a":4743,"b":4748},{"a":5240,"b":5245},{"a":5409,"b":5414},{"a":5800,"b":5805}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":918,"b":932}]},{"name":"filterCountry","required":false,"transform":{"type":"scalar"},"locs":[{"a":1552,"b":1565},{"a":1705,"b":1718}]},{"name":"filterCity","required":false,"transform":{"type":"scalar"},"locs":[{"a":1768,"b":1778},{"a":1915,"b":1925}]},{"name":"filterOrganization","required":false,"transform":{"type":"scalar"},"locs":[{"a":2011,"b":2029},{"a":2188,"b":2206}]},{"name":"filterJobTitle","required":false,"transform":{"type":"scalar"},"locs":[{"a":2289,"b":2303},{"a":2459,"b":2473}]},{"name":"filterDepartment","required":false,"transform":{"type":"scalar"},"locs":[{"a":2557,"b":2573},{"a":2730,"b":2746}]},{"name":"filterRelationshipCategory","required":false,"transform":{"type":"scalar"},"locs":[{"a":2813,"b":2839},{"a":3078,"b":3104}]},{"name":"filterCircles","required":false,"transform":{"type":"scalar"},"locs":[{"a":3222,"b":3235},{"a":3333,"b":3346},{"a":3815,"b":3828}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":6698,"b":6704},{"a":6789,"b":6795},{"a":6878,"b":6884},{"a":6974,"b":6980},{"a":7072,"b":7078},{"a":7166,"b":7172},{"a":7258,"b":7264},{"a":7352,"b":7358}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":6724,"b":6733},{"a":6815,"b":6824},{"a":6907,"b":6916},{"a":7003,"b":7012},{"a":7099,"b":7108},{"a":7193,"b":7202},{"a":7285,"b":7294},{"a":7379,"b":7388}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":7464,"b":7472}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":7485,"b":7491}]}],"statement":"WITH base_matches AS (\n    -- Base query matching friends via FTS and other search methods\n    -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)\n    SELECT DISTINCT c.id\n    FROM friends.friends c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    LEFT JOIN friends.friend_emails e\n        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_phones p\n        ON p.friend_id = c.id\n        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits\n        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN friends.friend_relationships r\n        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_met_info m\n        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          -- Partial/prefix matching on display_name (for queries like \"Kür\" matching \"Kürzer\")\n          OR c.display_name ILIKE :wildcardQuery\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n),\nfiltered_matches AS (\n    -- Apply facet filters to base matches\n    SELECT bm.id\n    FROM base_matches bm\n    INNER JOIN friends.friends c ON c.id = bm.id\n    WHERE\n        -- Country filter (NULL array means no filter)\n        (:filterCountry::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_addresses a\n            WHERE a.friend_id = c.id AND a.country = ANY(:filterCountry)\n        ))\n        -- City filter\n        AND (:filterCity::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_addresses a\n            WHERE a.friend_id = c.id AND a.city = ANY(:filterCity)\n        ))\n        -- Organization filter (from professional history)\n        AND (:filterOrganization::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_professional_history ph\n            WHERE ph.friend_id = c.id AND ph.organization = ANY(:filterOrganization)\n        ))\n        -- Job title filter (from professional history)\n        AND (:filterJobTitle::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_professional_history ph\n            WHERE ph.friend_id = c.id AND ph.job_title = ANY(:filterJobTitle)\n        ))\n        -- Department filter (from professional history)\n        AND (:filterDepartment::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_professional_history ph\n            WHERE ph.friend_id = c.id AND ph.department = ANY(:filterDepartment)\n        ))\n        -- Relationship category filter\n        AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_relationships rel\n            INNER JOIN friends.relationship_types rt ON rel.relationship_type_id = rt.id\n            WHERE rel.friend_id = c.id AND rt.category = ANY(:filterRelationshipCategory)\n        ))\n        -- Circles filter: supports circle IDs and 'no-circle' for friends without circles\n        AND (:filterCircles::text[] IS NULL OR (\n            -- Check for 'no-circle' filter\n            ('no-circle' = ANY(:filterCircles::text[]) AND NOT EXISTS (\n                SELECT 1 FROM friends.friend_circles fc WHERE fc.friend_id = c.id\n            ))\n            OR\n            -- Check for specific circle IDs (filter out 'no-circle' from array)\n            EXISTS (\n                SELECT 1 FROM friends.friend_circles fc\n                INNER JOIN friends.circles cir ON fc.circle_id = cir.id\n                WHERE fc.friend_id = c.id\n                  AND cir.external_id = ANY(array_remove(:filterCircles::text[], 'no-circle')::uuid[])\n            )\n        ))\n),\nmatching_friends AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        -- Get primary professional info\n        (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as organization,\n        (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,\n        (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,\n        c.created_at,\n        c.updated_at,\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'\n            WHEN e.id IS NOT NULL THEN 'email'\n            WHEN p.id IS NOT NULL THEN 'phone'\n            ELSE 'notes'\n        END as match_source\n    FROM filtered_matches fm\n    INNER JOIN friends.friends c ON c.id = fm.id\n    -- Re-join for match_source determination\n    LEFT JOIN friends.friend_emails e\n        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_phones p\n        ON p.friend_id = c.id\n        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits\n        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n),\ntotal_count AS (\n    SELECT COUNT(*)::int as count FROM matching_friends\n),\nsorted_results AS (\n    SELECT\n        mc.*,\n        ts_headline(\n            'english',\n            COALESCE(mc.display_name, '') || ' ' ||\n            COALESCE(mc.organization, '') || ' ' ||\n            COALESCE(mc.work_notes, ''),\n            websearch_to_tsquery('english', :query),\n            'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n        ) as headline,\n        (SELECT e.email_address FROM friends.friend_emails e\n         WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,\n        (SELECT p.phone_number FROM friends.friend_phones p\n         WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone,\n        -- Get circles for this friend\n        (SELECT COALESCE(json_agg(json_build_object(\n            'external_id', ci.external_id,\n            'name', ci.name,\n            'color', ci.color\n        ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)\n         FROM friends.circles ci\n         INNER JOIN friends.friend_circles fci ON fci.circle_id = ci.id\n         WHERE fci.friend_id = mc.id\n        ) as circles\n    FROM matching_friends mc\n    ORDER BY\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,\n        CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,\n        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,\n        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,\n        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,\n        mc.display_name ASC\n    LIMIT :pageSize\n    OFFSET :offset\n)\nSELECT\n    sr.external_id,\n    sr.display_name,\n    sr.photo_thumbnail_url,\n    sr.organization,\n    sr.job_title,\n    sr.fts_rank as rank,\n    sr.match_source,\n    sr.headline,\n    sr.primary_email,\n    sr.primary_phone,\n    sr.circles,\n    tc.count as total_count\nFROM sorted_results sr\nCROSS JOIN total_count tc"};
+const facetedSearchIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,"userExternalId":true,"filterCountry":true,"filterCity":true,"filterOrganization":true,"filterJobTitle":true,"filterDepartment":true,"filterRelationshipCategory":true,"filterCircles":true,"sortBy":true,"sortOrder":true,"pageSize":true,"offset":true},"params":[{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":362,"b":375},{"a":721,"b":734},{"a":830,"b":843},{"a":1128,"b":1141},{"a":5080,"b":5093}]},{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":472,"b":477},{"a":594,"b":599},{"a":990,"b":995},{"a":4587,"b":4592},{"a":4693,"b":4698},{"a":5190,"b":5195},{"a":5312,"b":5317},{"a":7038,"b":7043}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":871,"b":885}]},{"name":"filterCountry","required":false,"transform":{"type":"scalar"},"locs":[{"a":1504,"b":1517},{"a":1657,"b":1670}]},{"name":"filterCity","required":false,"transform":{"type":"scalar"},"locs":[{"a":1720,"b":1730},{"a":1867,"b":1877}]},{"name":"filterOrganization","required":false,"transform":{"type":"scalar"},"locs":[{"a":1963,"b":1981},{"a":2140,"b":2158}]},{"name":"filterJobTitle","required":false,"transform":{"type":"scalar"},"locs":[{"a":2241,"b":2255},{"a":2411,"b":2425}]},{"name":"filterDepartment","required":false,"transform":{"type":"scalar"},"locs":[{"a":2509,"b":2525},{"a":2682,"b":2698}]},{"name":"filterRelationshipCategory","required":false,"transform":{"type":"scalar"},"locs":[{"a":2765,"b":2791},{"a":3030,"b":3056}]},{"name":"filterCircles","required":false,"transform":{"type":"scalar"},"locs":[{"a":3174,"b":3187},{"a":3285,"b":3298},{"a":3767,"b":3780}]},{"name":"sortBy","required":false,"transform":{"type":"scalar"},"locs":[{"a":5726,"b":5732},{"a":5825,"b":5831},{"a":5922,"b":5928},{"a":6026,"b":6032},{"a":6132,"b":6138},{"a":6234,"b":6240},{"a":6334,"b":6340},{"a":6436,"b":6442}]},{"name":"sortOrder","required":false,"transform":{"type":"scalar"},"locs":[{"a":5752,"b":5761},{"a":5851,"b":5860},{"a":5951,"b":5960},{"a":6055,"b":6064},{"a":6159,"b":6168},{"a":6261,"b":6270},{"a":6361,"b":6370},{"a":6463,"b":6472}]},{"name":"pageSize","required":false,"transform":{"type":"scalar"},"locs":[{"a":6639,"b":6647}]},{"name":"offset","required":false,"transform":{"type":"scalar"},"locs":[{"a":6660,"b":6666}]}],"statement":"WITH base_matches AS (\n    -- Base query matching friends via FTS and other search methods\n    -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)\n    SELECT DISTINCT c.id\n    FROM friends.friends c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    LEFT JOIN friends.friend_emails e\n        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_phones p\n        ON p.friend_id = c.id\n        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits\n        AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN friends.friend_relationships r\n        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_met_info m\n        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          c.search_vector @@ websearch_to_tsquery('german', :query)\n          -- Partial/prefix matching on display_name (for queries like \"Kür\" matching \"Kürzer\")\n          OR c.display_name ILIKE :wildcardQuery\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n),\nfiltered_matches AS (\n    -- Apply facet filters to base matches\n    SELECT bm.id\n    FROM base_matches bm\n    INNER JOIN friends.friends c ON c.id = bm.id\n    WHERE\n        -- Country filter (NULL array means no filter)\n        (:filterCountry::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_addresses a\n            WHERE a.friend_id = c.id AND a.country = ANY(:filterCountry)\n        ))\n        -- City filter\n        AND (:filterCity::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_addresses a\n            WHERE a.friend_id = c.id AND a.city = ANY(:filterCity)\n        ))\n        -- Organization filter (from professional history)\n        AND (:filterOrganization::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_professional_history ph\n            WHERE ph.friend_id = c.id AND ph.organization = ANY(:filterOrganization)\n        ))\n        -- Job title filter (from professional history)\n        AND (:filterJobTitle::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_professional_history ph\n            WHERE ph.friend_id = c.id AND ph.job_title = ANY(:filterJobTitle)\n        ))\n        -- Department filter (from professional history)\n        AND (:filterDepartment::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_professional_history ph\n            WHERE ph.friend_id = c.id AND ph.department = ANY(:filterDepartment)\n        ))\n        -- Relationship category filter\n        AND (:filterRelationshipCategory::text[] IS NULL OR EXISTS (\n            SELECT 1 FROM friends.friend_relationships rel\n            INNER JOIN friends.relationship_types rt ON rel.relationship_type_id = rt.id\n            WHERE rel.friend_id = c.id AND rt.category = ANY(:filterRelationshipCategory)\n        ))\n        -- Circles filter: supports circle IDs and 'no-circle' for friends without circles\n        AND (:filterCircles::text[] IS NULL OR (\n            -- Check for 'no-circle' filter\n            ('no-circle' = ANY(:filterCircles::text[]) AND NOT EXISTS (\n                SELECT 1 FROM friends.friend_circles fc WHERE fc.friend_id = c.id\n            ))\n            OR\n            -- Check for specific circle IDs (filter out 'no-circle' from array)\n            EXISTS (\n                SELECT 1 FROM friends.friend_circles fc\n                INNER JOIN friends.circles cir ON fc.circle_id = cir.id\n                WHERE fc.friend_id = c.id\n                  AND cir.external_id = ANY(array_remove(:filterCircles::text[], 'no-circle')::uuid[])\n            )\n        ))\n),\nmatching_friends AS (\n    SELECT DISTINCT ON (c.id)\n        c.id,\n        c.external_id,\n        c.display_name,\n        c.photo_thumbnail_url,\n        -- Get primary professional info\n        (SELECT ph.organization FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as organization,\n        (SELECT ph.job_title FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as job_title,\n        (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,\n        c.created_at,\n        c.updated_at,\n        COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('german', :query)), 0) as fts_rank,\n        CASE\n            WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'\n            WHEN e.id IS NOT NULL THEN 'email'\n            WHEN p.id IS NOT NULL THEN 'phone'\n            ELSE 'notes'\n        END as match_source\n    FROM filtered_matches fm\n    INNER JOIN friends.friends c ON c.id = fm.id\n    -- Re-join for match_source determination\n    LEFT JOIN friends.friend_emails e\n        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_phones p\n        ON p.friend_id = c.id\n        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits\n        AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    -- Deterministic winner per friend (see FullTextSearchFriends)\n    ORDER BY c.id, match_source\n),\ntotal_count AS (\n    SELECT COUNT(*)::int as count FROM matching_friends\n),\nsorted_results AS (\n    -- Only ids, rank and sort keys here; headline/circles run after LIMIT/OFFSET\n    SELECT\n        mc.*,\n        row_number() OVER (\n            ORDER BY\n                CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,\n                CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,\n                CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,\n                CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,\n                CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,\n                CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,\n                CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,\n                CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,\n                mc.display_name ASC\n        ) as sort_position\n    FROM matching_friends mc\n    ORDER BY sort_position\n    LIMIT :pageSize\n    OFFSET :offset\n)\nSELECT\n    sr.external_id,\n    sr.display_name,\n    sr.photo_thumbnail_url,\n    sr.organization,\n    sr.job_title,\n    sr.fts_rank as rank,\n    sr.match_source,\n    ts_headline(\n        'german',\n        COALESCE(sr.display_name, '') || ' ' ||\n        COALESCE(sr.organization, '') || ' ' ||\n        COALESCE(sr.work_notes, ''),\n        websearch_to_tsquery('german', :query),\n        'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'\n    ) as headline,\n    (SELECT e.email_address FROM friends.friend_emails e\n     WHERE e.friend_id = sr.id AND e.is_primary = true LIMIT 1) as primary_email,\n    (SELECT p.phone_number FROM friends.friend_phones p\n     WHERE p.friend_id = sr.id AND p.is_primary = true LIMIT 1) as primary_phone,\n    -- Get circles for this friend\n    (SELECT COALESCE(json_agg(json_build_object(\n        'external_id', ci.external_id,\n        'name', ci.name,\n        'color', ci.color\n    ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)\n     FROM friends.circles ci\n     INNER JOIN friends.friend_circles fci ON fci.circle_id = ci.id\n     WHERE fci.friend_id = sr.id\n    ) as circles,\n    tc.count as total_count\nFROM sorted_results sr\nCROSS JOIN total_count tc\nORDER BY sr.sort_position"};
 
 /**
  * Query generated from SQL:
@@ -466,8 +477,7 @@ const facetedSearchIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,
  *     LEFT JOIN friends.friend_phones p
  *         ON p.friend_id = c.id
  *         AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
- *         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+ *         AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
  *     LEFT JOIN friends.friend_relationships r
  *         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
  *     LEFT JOIN friends.friend_met_info m
@@ -475,7 +485,7 @@ const facetedSearchIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,
  *     WHERE u.external_id = :userExternalId
  *       AND c.deleted_at IS NULL
  *       AND (
- *           c.search_vector @@ websearch_to_tsquery('english', :query)
+ *           c.search_vector @@ websearch_to_tsquery('german', :query)
  *           -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
  *           OR c.display_name ILIKE :wildcardQuery
  *           OR e.id IS NOT NULL
@@ -549,9 +559,9 @@ const facetedSearchIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,
  *         (SELECT ph.notes FROM friends.friend_professional_history ph WHERE ph.friend_id = c.id AND ph.is_primary = true LIMIT 1) as work_notes,
  *         c.created_at,
  *         c.updated_at,
- *         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('english', :query)), 0) as fts_rank,
+ *         COALESCE(ts_rank(c.search_vector, websearch_to_tsquery('german', :query)), 0) as fts_rank,
  *         CASE
- *             WHEN c.search_vector @@ websearch_to_tsquery('english', :query) THEN 'friend'
+ *             WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'
  *             WHEN e.id IS NOT NULL THEN 'email'
  *             WHEN p.id IS NOT NULL THEN 'phone'
  *             ELSE 'notes'
@@ -564,48 +574,31 @@ const facetedSearchIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,
  *     LEFT JOIN friends.friend_phones p
  *         ON p.friend_id = c.id
  *         AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
- *         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+ *         AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+ *     -- Deterministic winner per friend (see FullTextSearchFriends)
+ *     ORDER BY c.id, match_source
  * ),
  * total_count AS (
  *     SELECT COUNT(*)::int as count FROM matching_friends
  * ),
  * sorted_results AS (
+ *     -- Only ids, rank and sort keys here; headline/circles run after LIMIT/OFFSET
  *     SELECT
  *         mc.*,
- *         ts_headline(
- *             'english',
- *             COALESCE(mc.display_name, '') || ' ' ||
- *             COALESCE(mc.organization, '') || ' ' ||
- *             COALESCE(mc.work_notes, ''),
- *             websearch_to_tsquery('english', :query),
- *             'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
- *         ) as headline,
- *         (SELECT e.email_address FROM friends.friend_emails e
- *          WHERE e.friend_id = mc.id AND e.is_primary = true LIMIT 1) as primary_email,
- *         (SELECT p.phone_number FROM friends.friend_phones p
- *          WHERE p.friend_id = mc.id AND p.is_primary = true LIMIT 1) as primary_phone,
- *         -- Get circles for this friend
- *         (SELECT COALESCE(json_agg(json_build_object(
- *             'external_id', ci.external_id,
- *             'name', ci.name,
- *             'color', ci.color
- *         ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)
- *          FROM friends.circles ci
- *          INNER JOIN friends.friend_circles fci ON fci.circle_id = ci.id
- *          WHERE fci.friend_id = mc.id
- *         ) as circles
+ *         row_number() OVER (
+ *             ORDER BY
+ *                 CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
+ *                 CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,
+ *                 CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,
+ *                 CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,
+ *                 CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,
+ *                 CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,
+ *                 CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,
+ *                 CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,
+ *                 mc.display_name ASC
+ *         ) as sort_position
  *     FROM matching_friends mc
- *     ORDER BY
- *         CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'desc' THEN mc.fts_rank END DESC,
- *         CASE WHEN :sortBy = 'relevance' AND :sortOrder = 'asc' THEN mc.fts_rank END ASC,
- *         CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN mc.display_name END ASC,
- *         CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN mc.display_name END DESC,
- *         CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN mc.created_at END DESC,
- *         CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN mc.created_at END ASC,
- *         CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN mc.updated_at END DESC,
- *         CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN mc.updated_at END ASC,
- *         mc.display_name ASC
+ *     ORDER BY sort_position
  *     LIMIT :pageSize
  *     OFFSET :offset
  * )
@@ -617,13 +610,32 @@ const facetedSearchIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,
  *     sr.job_title,
  *     sr.fts_rank as rank,
  *     sr.match_source,
- *     sr.headline,
- *     sr.primary_email,
- *     sr.primary_phone,
- *     sr.circles,
+ *     ts_headline(
+ *         'german',
+ *         COALESCE(sr.display_name, '') || ' ' ||
+ *         COALESCE(sr.organization, '') || ' ' ||
+ *         COALESCE(sr.work_notes, ''),
+ *         websearch_to_tsquery('german', :query),
+ *         'StartSel=<mark>, StopSel=</mark>, MaxWords=15, MinWords=5, HighlightAll=false'
+ *     ) as headline,
+ *     (SELECT e.email_address FROM friends.friend_emails e
+ *      WHERE e.friend_id = sr.id AND e.is_primary = true LIMIT 1) as primary_email,
+ *     (SELECT p.phone_number FROM friends.friend_phones p
+ *      WHERE p.friend_id = sr.id AND p.is_primary = true LIMIT 1) as primary_phone,
+ *     -- Get circles for this friend
+ *     (SELECT COALESCE(json_agg(json_build_object(
+ *         'external_id', ci.external_id,
+ *         'name', ci.name,
+ *         'color', ci.color
+ *     ) ORDER BY ci.sort_order ASC, ci.name ASC), '[]'::json)
+ *      FROM friends.circles ci
+ *      INNER JOIN friends.friend_circles fci ON fci.circle_id = ci.id
+ *      WHERE fci.friend_id = sr.id
+ *     ) as circles,
  *     tc.count as total_count
  * FROM sorted_results sr
  * CROSS JOIN total_count tc
+ * ORDER BY sr.sort_position
  * ```
  */
 export const facetedSearch = new PreparedQuery<IFacetedSearchParams,IFacetedSearchResult>(facetedSearchIR);
@@ -649,7 +661,7 @@ export interface IGetFacetCountsQuery {
   result: IGetFacetCountsResult;
 }
 
-const getFacetCountsIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,"userExternalId":true},"params":[{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":361,"b":374},{"a":767,"b":780},{"a":876,"b":889},{"a":1175,"b":1188}]},{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":471,"b":476},{"a":640,"b":645},{"a":1037,"b":1042}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":917,"b":931}]}],"statement":"WITH base_matches AS (\n    -- Base query matching friends via FTS (same as FacetedSearch)\n    -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)\n    SELECT DISTINCT c.id\n    FROM friends.friends c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    LEFT JOIN friends.friend_emails e\n        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_phones p\n        ON p.friend_id = c.id\n        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits\n        AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')\n            LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN friends.friend_relationships r\n        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_met_info m\n        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          c.search_vector @@ websearch_to_tsquery('english', :query)\n          -- Partial/prefix matching on display_name (for queries like \"Kür\" matching \"Kürzer\")\n          OR c.display_name ILIKE :wildcardQuery\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n)\n-- Country facet\nSELECT\n    'country' as facet_field,\n    a.country as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_addresses a ON a.friend_id = bm.id\nWHERE a.country IS NOT NULL\nGROUP BY a.country\n\nUNION ALL\n\n-- City facet\nSELECT\n    'city' as facet_field,\n    a.city as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_addresses a ON a.friend_id = bm.id\nWHERE a.city IS NOT NULL\nGROUP BY a.city\n\nUNION ALL\n\n-- Organization facet (from professional history)\nSELECT\n    'organization' as facet_field,\n    ph.organization as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_professional_history ph ON ph.friend_id = bm.id\nWHERE ph.organization IS NOT NULL\nGROUP BY ph.organization\n\nUNION ALL\n\n-- Job title facet (from professional history)\nSELECT\n    'job_title' as facet_field,\n    ph.job_title as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_professional_history ph ON ph.friend_id = bm.id\nWHERE ph.job_title IS NOT NULL\nGROUP BY ph.job_title\n\nUNION ALL\n\n-- Department facet (from professional history)\nSELECT\n    'department' as facet_field,\n    ph.department as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_professional_history ph ON ph.friend_id = bm.id\nWHERE ph.department IS NOT NULL\nGROUP BY ph.department\n\nUNION ALL\n\n-- Relationship category facet\nSELECT\n    'relationship_category' as facet_field,\n    rt.category as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_relationships r ON r.friend_id = bm.id\nINNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id\nGROUP BY rt.category\n\nORDER BY facet_field, count DESC, facet_value"};
+const getFacetCountsIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true,"userExternalId":true},"params":[{"name":"wildcardQuery","required":false,"transform":{"type":"scalar"},"locs":[{"a":361,"b":374},{"a":720,"b":733},{"a":829,"b":842},{"a":1127,"b":1140}]},{"name":"query","required":false,"transform":{"type":"scalar"},"locs":[{"a":471,"b":476},{"a":593,"b":598},{"a":989,"b":994}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":870,"b":884}]}],"statement":"WITH base_matches AS (\n    -- Base query matching friends via FTS (same as FacetedSearch)\n    -- Uses LEFT JOINs for efficient matching (avoids correlated subqueries)\n    SELECT DISTINCT c.id\n    FROM friends.friends c\n    INNER JOIN auth.users u ON c.user_id = u.id\n    LEFT JOIN friends.friend_emails e\n        ON e.friend_id = c.id AND e.email_address ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_phones p\n        ON p.friend_id = c.id\n        AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits\n        AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'\n    LEFT JOIN friends.friend_relationships r\n        ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery\n    LEFT JOIN friends.friend_met_info m\n        ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery\n    WHERE u.external_id = :userExternalId\n      AND c.deleted_at IS NULL\n      AND (\n          c.search_vector @@ websearch_to_tsquery('german', :query)\n          -- Partial/prefix matching on display_name (for queries like \"Kür\" matching \"Kürzer\")\n          OR c.display_name ILIKE :wildcardQuery\n          OR e.id IS NOT NULL\n          OR p.id IS NOT NULL\n          OR r.id IS NOT NULL\n          OR m.id IS NOT NULL\n      )\n)\n-- Country facet\nSELECT\n    'country' as facet_field,\n    a.country as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_addresses a ON a.friend_id = bm.id\nWHERE a.country IS NOT NULL\nGROUP BY a.country\n\nUNION ALL\n\n-- City facet\nSELECT\n    'city' as facet_field,\n    a.city as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_addresses a ON a.friend_id = bm.id\nWHERE a.city IS NOT NULL\nGROUP BY a.city\n\nUNION ALL\n\n-- Organization facet (from professional history)\nSELECT\n    'organization' as facet_field,\n    ph.organization as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_professional_history ph ON ph.friend_id = bm.id\nWHERE ph.organization IS NOT NULL\nGROUP BY ph.organization\n\nUNION ALL\n\n-- Job title facet (from professional history)\nSELECT\n    'job_title' as facet_field,\n    ph.job_title as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_professional_history ph ON ph.friend_id = bm.id\nWHERE ph.job_title IS NOT NULL\nGROUP BY ph.job_title\n\nUNION ALL\n\n-- Department facet (from professional history)\nSELECT\n    'department' as facet_field,\n    ph.department as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_professional_history ph ON ph.friend_id = bm.id\nWHERE ph.department IS NOT NULL\nGROUP BY ph.department\n\nUNION ALL\n\n-- Relationship category facet\nSELECT\n    'relationship_category' as facet_field,\n    rt.category as facet_value,\n    COUNT(DISTINCT bm.id)::int as count\nFROM base_matches bm\nINNER JOIN friends.friend_relationships r ON r.friend_id = bm.id\nINNER JOIN friends.relationship_types rt ON r.relationship_type_id = rt.id\nGROUP BY rt.category\n\nORDER BY facet_field, count DESC, facet_value"};
 
 /**
  * Query generated from SQL:
@@ -665,8 +677,7 @@ const getFacetCountsIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true
  *     LEFT JOIN friends.friend_phones p
  *         ON p.friend_id = c.id
  *         AND regexp_replace(:query, '[^0-9]', '', 'g') != ''  -- Only match if query has digits
- *         AND regexp_replace(p.phone_number, '[^0-9]', '', 'g')
- *             LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
+ *         AND p.phone_digits LIKE '%' || regexp_replace(:query, '[^0-9]', '', 'g') || '%'
  *     LEFT JOIN friends.friend_relationships r
  *         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
  *     LEFT JOIN friends.friend_met_info m
@@ -674,7 +685,7 @@ const getFacetCountsIR: any = {"usedParamSet":{"wildcardQuery":true,"query":true
  *     WHERE u.external_id = :userExternalId
  *       AND c.deleted_at IS NULL
  *       AND (
- *           c.search_vector @@ websearch_to_tsquery('english', :query)
+ *           c.search_vector @@ websearch_to_tsquery('german', :query)
  *           -- Partial/prefix matching on display_name (for queries like "Kür" matching "Kürzer")
  *           OR c.display_name ILIKE :wildcardQuery
  *           OR e.id IS NOT NULL
