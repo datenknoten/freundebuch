@@ -9,6 +9,7 @@ import {
   completeTestUserOnboarding,
   setupAuthTests,
   teardownAuthTests,
+  truncateUserData,
 } from './auth.helpers.js';
 import { authHeaders, createAuthenticatedUser, createTestFriend } from './friends.helpers.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
@@ -39,6 +40,7 @@ describe('Collectives API - Integration', () => {
     // inherits collectives (or a session) from its predecessors. The
     // system-default collective types have no owner and survive the wipe, but
     // reading them needs a session, so resolve them here too.
+    await truncateUserData(context.pool);
     user = await createAuthenticatedUser(context.pool, 'collectives@example.com', 'Password123!');
     await completeTestUserOnboarding(context.pool, user.externalId);
 

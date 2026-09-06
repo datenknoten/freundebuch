@@ -6,7 +6,16 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    fileParallelism: false,
+    // Safe now that every suite clones its own database from the shared
+    // template (global-setup.ts) and clears user data per test
+    // (truncateUserData in tests/integration/auth.helpers.ts).
+    fileParallelism: true,
+    // The integration suites hit a real database and bcrypt (cost 10) twice per
+    // sign-in; with several suites running at once that regularly exceeds
+    // vitest's 5s/10s defaults, which showed up as sporadic "Test timed out"
+    // failures that moved between files on every run.
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
     // One shared PostGIS container for the whole integration run; each suite
     // clones a fresh database from a migrated template (see global-setup.ts).
     globalSetup: ['./tests/integration/global-setup.ts'],

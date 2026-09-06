@@ -1,29 +1,27 @@
 import crypto from 'node:crypto';
 import http from 'node:http';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import bcrypt from 'bcrypt';
-import { runner } from 'node-pg-migrate';
 import pg from 'pg';
 import type { Logger } from 'pino';
 import pino from 'pino';
-import { Wait } from 'testcontainers';
-import { afterAll, beforeAll } from 'vitest';
+import { afterAll, beforeAll, inject } from 'vitest';
 import { createMcpRequestHandler, type Session } from '../src/http-handler.js';
 import { createServices, type Services } from '../src/utils/service-factory.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+/**
+ * Suite hooks only clone a database and boot an in-process HTTP server now, but
+ * the very first suite may still wait on global-setup's container start.
+ */
+const SUITE_HOOK_TIMEOUT_MS = 120_000;
 
 export interface TestContext {
-  container: StartedPostgreSqlContainer;
   pool: pg.Pool;
   services: Services;
   logger: Logger;
   baseUrl: string;
   httpServer: http.Server;
+  /** Name of the per-suite database cloned from the migrated template. */
+  databaseName: string;
   testUser: {
     externalId: string;
     email: string;
@@ -36,28 +34,47 @@ export interface TestContext {
   };
 }
 
-const silentLogger = {
-  info: () => undefined,
-  warn: () => undefined,
-  error: () => undefined,
-  debug: () => undefined,
-};
+/** Swap the database name in a postgres connection URI. */
+function withDatabase(uri: string, databaseName: string): string {
+  const url = new URL(uri);
+  url.pathname = `/${databaseName}`;
+  return url.toString();
+}
 
-async function runMigrations(pool: pg.Pool): Promise<void> {
-  const migrationsDir = path.resolve(__dirname, '../../../database/migrations');
-  const client = await pool.connect();
+/**
+ * Clone a fresh database from the template global-setup migrated once. The
+ * template carries the full schema, so this is near-instant compared to
+ * booting a container and replaying every migration per test file.
+ *
+ * The admin connection targets `postgres`, not the template: CREATE DATABASE
+ * ... TEMPLATE requires zero other sessions on the source database.
+ */
+async function cloneTemplateDatabase(): Promise<{ databaseName: string; databaseUri: string }> {
+  const serverUri = inject('pgContainerUri');
+  const databaseName = `test_${crypto.randomUUID().replace(/-/g, '')}`;
+
+  const adminPool = new pg.Pool({
+    connectionString: withDatabase(serverUri, 'postgres'),
+    max: 1,
+  });
   try {
-    await runner({
-      dbClient: client,
-      migrationsTable: 'pgmigrations',
-      dir: migrationsDir,
-      direction: 'up',
-      count: Infinity,
-      decamelize: true,
-      logger: silentLogger,
-    });
+    await adminPool.query(`CREATE DATABASE "${databaseName}" TEMPLATE test`);
   } finally {
-    client.release();
+    await adminPool.end();
+  }
+
+  return { databaseName, databaseUri: withDatabase(serverUri, databaseName) };
+}
+
+async function dropClonedDatabase(databaseName: string): Promise<void> {
+  const adminPool = new pg.Pool({
+    connectionString: withDatabase(inject('pgContainerUri'), 'postgres'),
+    max: 1,
+  });
+  try {
+    await adminPool.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`);
+  } finally {
+    await adminPool.end();
   }
 }
 
@@ -93,7 +110,12 @@ async function createTestUserWithAppPassword(
 
   // Create app password via direct SQL (matching the service's create logic exactly)
   const rawPassword = crypto.randomBytes(24).toString('base64url');
-  const passwordPrefix = rawPassword.substring(0, 8);
+  // Stored prefix is the hashed lookup key, not the raw characters (5.6).
+  const passwordPrefix = crypto
+    .createHash('sha256')
+    .update(rawPassword.substring(0, 8))
+    .digest('hex')
+    .slice(0, 16);
   const passwordHash = await bcrypt.hash(rawPassword, 10);
 
   await pool.query(
@@ -303,16 +325,10 @@ export function setupMcpTestSuite() {
   let context: TestContext;
 
   beforeAll(async () => {
-    const container = await new PostgreSqlContainer('imresamu/postgis:18-3.6.1-trixie')
-      .withDatabase('test')
-      .withUsername('test')
-      .withPassword('test')
-      .withStartupTimeout(120000)
-      .withWaitStrategy(Wait.forHealthCheck())
-      .start();
+    const { databaseName, databaseUri } = await cloneTemplateDatabase();
 
     const pool = new pg.Pool({
-      connectionString: container.getConnectionUri(),
+      connectionString: databaseUri,
       min: 1,
       max: 5,
     });
@@ -321,8 +337,6 @@ export function setupMcpTestSuite() {
     pool.on('error', (err) => {
       poolLogger.error({ err }, 'pg pool error during MCP integration test');
     });
-
-    await runMigrations(pool);
 
     const logger: Logger = pino({ level: 'silent' });
     const services = createServices(pool, logger);
@@ -333,7 +347,7 @@ export function setupMcpTestSuite() {
     const { server: httpServer, baseUrl } = await startMcpHttpServer(services, logger, pool);
 
     context = {
-      container,
+      databaseName,
       pool,
       services,
       logger,
@@ -342,7 +356,7 @@ export function setupMcpTestSuite() {
       testUser,
       otherUser,
     };
-  }, 120000);
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   afterAll(async () => {
     if (context?.httpServer) {
@@ -351,10 +365,10 @@ export function setupMcpTestSuite() {
     if (context?.pool) {
       await context.pool.end();
     }
-    if (context?.container) {
-      await context.container.stop();
+    if (context?.databaseName) {
+      await dropClonedDatabase(context.databaseName);
     }
-  }, 120000);
+  }, SUITE_HOOK_TIMEOUT_MS);
 
   return { getContext: () => context };
 }

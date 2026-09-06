@@ -1,23 +1,16 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { PostgreSqlContainer } from '@testcontainers/postgresql';
-import { runner } from 'node-pg-migrate';
 import pg from 'pg';
 import pino from 'pino';
-import { Wait } from 'testcontainers';
 import { afterAll, beforeAll, vi } from 'vitest';
 import { PostGISAddressClient } from '../../src/services/external/postgis-address.client.js';
 import { resetConfig } from '../../src/utils/config.js';
-import { CONTAINER_STARTUP_TIMEOUT_MS, SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { cloneTemplateDatabase, dropClonedDatabase } from './auth.helpers.js';
+import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 export interface PostGISTestContext {
-  container: StartedPostgreSqlContainer;
   pool: pg.Pool;
   client: PostGISAddressClient;
+  /** Name of the per-suite database cloned from the migrated template. */
+  databaseName: string;
 }
 
 /**
@@ -26,57 +19,30 @@ export interface PostGISTestContext {
 const silentLogger = pino({ level: 'silent' });
 
 /**
- * Silent logger for migrations
- */
-const silentMigrationLogger = {
-  info: () => undefined,
-  warn: () => undefined,
-  error: () => undefined,
-  debug: () => undefined,
-};
-
-/**
- * Set up test environment with PostGIS container
+ * Set up test environment on the shared Postgres server started by
+ * global-setup: clone the migrated template and hand back a PostGIS client
+ * bound to it. The geodata fixture is loaded per test via
+ * {@link insertTestAddresses}.
  */
 export async function setupPostGISTests(): Promise<PostGISTestContext> {
-  // Start PostGIS container (same image as docker-compose.yml)
-  const container = await new PostgreSqlContainer('imresamu/postgis:18-3.6.1-trixie')
-    .withDatabase('test')
-    .withUsername('test')
-    .withPassword('test')
-    .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT_MS)
-    .withWaitStrategy(Wait.forHealthCheck())
-    .start();
+  const { databaseName, databaseUri } = await cloneTemplateDatabase();
 
-  const connectionUri = container.getConnectionUri();
-
-  // Set DATABASE_URL from the container
-  vi.stubEnv('DATABASE_URL', connectionUri);
+  vi.stubEnv('DATABASE_URL', databaseUri);
   resetConfig();
 
-  // Create connection pool
-  const pool = new pg.Pool({
-    connectionString: connectionUri,
-    min: 2,
-    max: 10,
-  });
-
-  // Suppress pool errors during container shutdown
+  // Small pool: parallel workers share one server's connection budget.
+  const pool = new pg.Pool({ connectionString: databaseUri, min: 1, max: 4 });
   pool.on('error', () => {
-    // Ignore - expected during test teardown when container stops
+    // Ignore — expected during teardown.
   });
 
-  // Run migrations
-  await runMigrations(pool);
-
-  // Create PostGIS address client
   const client = new PostGISAddressClient(pool, silentLogger);
 
-  return { container, pool, client };
+  return { pool, client, databaseName };
 }
 
 /**
- * Tear down test environment
+ * Tear down test environment: drain the pool and drop the cloned database.
  */
 export async function teardownPostGISTests(context: PostGISTestContext): Promise<void> {
   if (!context) {
@@ -85,32 +51,7 @@ export async function teardownPostGISTests(context: PostGISTestContext): Promise
   if (context.pool) {
     await context.pool.end();
   }
-  if (context.container) {
-    await context.container.stop();
-  }
-}
-
-/**
- * Run database migrations using node-pg-migrate
- */
-async function runMigrations(pool: pg.Pool): Promise<void> {
-  const migrationsDir = path.resolve(__dirname, '../../../../database/migrations');
-
-  const pgClient = await pool.connect();
-
-  try {
-    await runner({
-      dbClient: pgClient,
-      migrationsTable: 'pgmigrations',
-      dir: migrationsDir,
-      direction: 'up',
-      count: Infinity,
-      decamelize: true,
-      logger: silentMigrationLogger,
-    });
-  } finally {
-    pgClient.release();
-  }
+  await dropClonedDatabase(context.databaseName);
 }
 
 /**

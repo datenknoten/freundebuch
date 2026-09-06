@@ -47,7 +47,9 @@ app.on(['POST', 'GET'], '/*', async (c, next) => {
 
   // Registration gate for private instances. Better Auth has no "disable
   // sign-up" option, so the only place to stop it is in front of the handler.
-  if (getConfig().DISABLE_SIGNUP && path === '/api/auth/sign-up/email') {
+  // The config is read only for that one path, so every other auth request
+  // stays a pure passthrough.
+  if (path === '/api/auth/sign-up/email' && getConfig().DISABLE_SIGNUP) {
     throw new SignupDisabledError();
   }
 

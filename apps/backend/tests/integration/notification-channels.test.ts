@@ -8,6 +8,7 @@ import {
   completeTestUserOnboarding,
   setupAuthTests,
   teardownAuthTests,
+  truncateUserData,
 } from './auth.helpers.js';
 import { authHeaders, createAuthenticatedUser } from './friends.helpers.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
@@ -36,6 +37,7 @@ describe('Notification Channels API - Integration', () => {
     resetRateLimiters();
     // Wipe every user-owned row and rebuild the fixture user, so no test
     // inherits channels (or a session) from its predecessors.
+    await truncateUserData(context.pool);
     user = await createAuthenticatedUser(context.pool, 'notif@example.com', 'Password123!');
     await completeTestUserOnboarding(context.pool, user.externalId);
   });

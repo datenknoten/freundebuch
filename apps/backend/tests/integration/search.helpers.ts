@@ -2,10 +2,15 @@ import type pg from 'pg';
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import { resetConfig } from '../../src/utils/config.js';
-import { completeTestUserOnboarding, setupAuthTests, teardownAuthTests } from './auth.helpers.js';
+import {
+  type AuthTestContext,
+  completeTestUserOnboarding,
+  setupAuthTests,
+  teardownAuthTests,
+  truncateUserData,
+} from './auth.helpers.js';
 import {
   authHeaders,
-  cleanupFriends,
   createAuthenticatedUser,
   createTestFriend,
   type FriendsTestContext,
@@ -271,32 +276,10 @@ export async function createFriendWithWorkNotes(
 }
 
 /**
- * Clean up search history between tests
- */
-export async function cleanupSearchHistory(pool: pg.Pool): Promise<void> {
-  await pool.query('DELETE FROM friends.search_history');
-}
-
-/**
- * Clean up circles between tests
- */
-export async function cleanupCircles(pool: pg.Pool): Promise<void> {
-  await pool.query('DELETE FROM friends.friend_circles');
-  await pool.query('DELETE FROM friends.circles');
-}
-
-/**
- * Clean up relationships created during tests
- */
-export async function cleanupRelationships(pool: pg.Pool): Promise<void> {
-  await pool.query('DELETE FROM friends.friend_relationships');
-  // Don't delete the seeded relationship_types - just the relationships
-}
-
-/**
  * Setup function for beforeAll in search test files
  */
 export function setupSearchTestSuite() {
+  let authContext: AuthTestContext;
   let context: SearchTestContext;
 
   beforeAll(async () => {
@@ -305,37 +288,25 @@ export function setupSearchTestSuite() {
     vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
     vi.stubEnv('LOG_LEVEL', 'silent');
 
-    const authContext = await setupAuthTests();
+    authContext = await setupAuthTests();
+  }, SUITE_HOOK_TIMEOUT_MS);
 
-    // Create a test user for search tests
+  beforeEach(async () => {
+    resetRateLimiters();
+    // Wipe every user-owned row, then rebuild the fixture user: search
+    // assertions count results, so an inherited friend silently breaks them.
+    await truncateUserData(authContext.pool);
     const testUser = await createAuthenticatedUser(
       authContext.pool,
       'search-test@example.com',
       'SecurePassword123',
     );
-
-    // Complete onboarding for the test user (required by onboarding middleware)
     await completeTestUserOnboarding(authContext.pool, testUser.externalId);
-
-    context = {
-      ...authContext,
-      testUser,
-    };
-  }, SUITE_HOOK_TIMEOUT_MS);
-
-  beforeEach(async () => {
-    resetRateLimiters();
-    // Clean up test data before each test
-    if (context?.pool) {
-      await cleanupSearchHistory(context.pool);
-      await cleanupCircles(context.pool);
-      await cleanupRelationships(context.pool);
-      await cleanupFriends(context.pool);
-    }
+    context = { ...authContext, testUser };
   });
 
   afterAll(async () => {
-    await teardownAuthTests(context);
+    await teardownAuthTests(authContext);
     vi.unstubAllEnvs();
     resetConfig();
   }, SUITE_HOOK_TIMEOUT_MS);

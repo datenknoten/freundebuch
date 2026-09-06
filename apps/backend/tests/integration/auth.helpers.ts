@@ -1,39 +1,30 @@
 import crypto from 'node:crypto';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import type { Hono } from 'hono';
-import { runner } from 'node-pg-migrate';
 import pg from 'pg';
-import { Wait } from 'testcontainers';
 import { afterAll, beforeAll, beforeEach, inject, vi } from 'vitest';
 import { createApp } from '../../src/index.js';
 import { resetAuth } from '../../src/lib/auth.js';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
 import { resetConfig } from '../../src/utils/config.js';
-import { CONTAINER_STARTUP_TIMEOUT_MS, SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 export interface AuthTestContext {
-  // Set only in the legacy per-file fallback (no shared container available).
-  container?: StartedPostgreSqlContainer;
   pool: pg.Pool;
   app: Hono<AppContext>;
-  // Set when this suite cloned its own database from the shared template.
-  databaseName?: string;
+  /** Name of the per-suite database cloned from the migrated template. */
+  databaseName: string;
 }
 
-/** Read the shared container URI provided by global-setup, if any. */
-function sharedContainerUri(): string | undefined {
-  try {
-    return inject('pgContainerUri');
-  } catch {
-    return undefined;
-  }
+/**
+ * Connection URI of the shared Postgres server provided by global-setup. Every
+ * integration suite goes through it — there is no per-file container fallback,
+ * because starting one container per test file is both slow and impossible on
+ * hosts where Docker cannot publish ports (global-setup accepts
+ * TEST_DATABASE_URL for exactly that case).
+ */
+export function sharedServerUri(): string {
+  return inject('pgContainerUri');
 }
 
 /** Swap the database name in a postgres connection URI. */
@@ -44,37 +35,77 @@ function withDatabase(uri: string, databaseName: string): string {
 }
 
 /**
- * Set up test environment. When the shared container from global-setup is
- * available, clone a fresh database from the migrated template (fast). Then
- * fall back to booting a dedicated container and migrating it per file.
+ * Clone a fresh database from the migrated `test` template. The template
+ * already carries the full schema, so CREATE DATABASE ... TEMPLATE is
+ * near-instant and every suite gets its own isolated database.
+ *
+ * The admin connection deliberately targets `postgres`, not the template:
+ * CREATE DATABASE ... TEMPLATE requires zero other sessions on the source, so
+ * connecting to `test` here would make concurrent workers fail with "source
+ * database is being accessed by other users".
  */
-export async function setupAuthTests(): Promise<AuthTestContext> {
-  const sharedUri = sharedContainerUri();
-  if (sharedUri) {
-    return setupFromSharedContainer(sharedUri);
-  }
-  return setupOwnContainer();
-}
-
-async function setupFromSharedContainer(sharedUri: string): Promise<AuthTestContext> {
-  // Unique database name per suite for isolation; the template already has the
-  // full migrated schema, so CREATE DATABASE ... TEMPLATE is near-instant.
+export async function cloneTemplateDatabase(): Promise<{
+  databaseName: string;
+  databaseUri: string;
+}> {
+  const serverUri = sharedServerUri();
   const databaseName = `test_${crypto.randomUUID().replace(/-/g, '')}`;
 
-  const adminPool = new pg.Pool({ connectionString: sharedUri, max: 1 });
+  const adminPool = new pg.Pool({
+    connectionString: withDatabase(serverUri, 'postgres'),
+    max: 1,
+  });
   try {
     await adminPool.query(`CREATE DATABASE "${databaseName}" TEMPLATE test`);
   } finally {
     await adminPool.end();
   }
 
-  const databaseUri = withDatabase(sharedUri, databaseName);
+  return { databaseName, databaseUri: withDatabase(serverUri, databaseName) };
+}
+
+/** Drop a database created by {@link cloneTemplateDatabase}. */
+export async function dropClonedDatabase(databaseName: string): Promise<void> {
+  const adminPool = new pg.Pool({
+    connectionString: withDatabase(sharedServerUri(), 'postgres'),
+    max: 1,
+  });
+  try {
+    await adminPool.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`);
+  } finally {
+    await adminPool.end();
+  }
+}
+
+/**
+ * Per-suite connection budget. With fileParallelism every worker runs its own
+ * app, so `workers × (app pool + Better Auth pool)` has to stay under the
+ * server's max_connections (100 by default): 4 + max(2, 4/2) = 6 per worker
+ * leaves room for a full CPU's worth of workers plus psql sessions. A suite
+ * never needs more — its requests are sequential.
+ */
+const TEST_POOL_MIN = 1;
+const TEST_POOL_MAX = 4;
+
+/**
+ * Set up test environment: clone a fresh database from the migrated template
+ * and boot the app against it.
+ */
+export async function setupAuthTests(): Promise<AuthTestContext> {
+  const { databaseName, databaseUri } = await cloneTemplateDatabase();
 
   await resetAuth();
   vi.stubEnv('DATABASE_URL', databaseUri);
+  // createApp derives the Better Auth pool from these, so stub them too.
+  vi.stubEnv('DATABASE_POOL_MIN', String(TEST_POOL_MIN));
+  vi.stubEnv('DATABASE_POOL_MAX', String(TEST_POOL_MAX));
   resetConfig();
 
-  const pool = new pg.Pool({ connectionString: databaseUri, min: 2, max: 10 });
+  const pool = new pg.Pool({
+    connectionString: databaseUri,
+    min: TEST_POOL_MIN,
+    max: TEST_POOL_MAX,
+  });
   pool.on('error', () => {
     // Ignore — expected during teardown.
   });
@@ -83,38 +114,8 @@ async function setupFromSharedContainer(sharedUri: string): Promise<AuthTestCont
   return { pool, app, databaseName };
 }
 
-async function setupOwnContainer(): Promise<AuthTestContext> {
-  // Uses the same image as docker-compose.yml for consistency.
-  const container = await new PostgreSqlContainer('imresamu/postgis:18-3.6.1-trixie')
-    .withDatabase('test')
-    .withUsername('test')
-    .withPassword('test')
-    .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT_MS)
-    .withWaitStrategy(Wait.forHealthCheck())
-    .start();
-
-  await resetAuth();
-  vi.stubEnv('DATABASE_URL', container.getConnectionUri());
-  resetConfig();
-
-  const pool = new pg.Pool({
-    connectionString: container.getConnectionUri(),
-    min: 2,
-    max: 10,
-  });
-  pool.on('error', () => {
-    // Ignore - expected during teardown when container stops.
-  });
-
-  await runMigrations(pool);
-  const app = await createApp(pool);
-
-  return { container, pool, app };
-}
-
 /**
- * Tear down test environment. Drops the cloned database (shared mode) or stops
- * the dedicated container (fallback mode).
+ * Tear down test environment: drain the pools and drop the cloned database.
  */
 export async function teardownAuthTests(context: AuthTestContext): Promise<void> {
   if (!context) {
@@ -125,55 +126,7 @@ export async function teardownAuthTests(context: AuthTestContext): Promise<void>
   if (context.pool) {
     await context.pool.end();
   }
-
-  if (context.databaseName) {
-    const sharedUri = sharedContainerUri();
-    if (sharedUri) {
-      const adminPool = new pg.Pool({ connectionString: sharedUri, max: 1 });
-      try {
-        await adminPool.query(`DROP DATABASE IF EXISTS "${context.databaseName}" WITH (FORCE)`);
-      } finally {
-        await adminPool.end();
-      }
-    }
-  }
-
-  if (context.container) {
-    await context.container.stop();
-  }
-}
-
-/**
- * Silent logger for migrations during tests - suppresses migration output
- */
-const silentLogger = {
-  info: () => undefined,
-  warn: () => undefined,
-  error: () => undefined,
-  debug: () => undefined,
-};
-
-/**
- * Run database migrations using node-pg-migrate
- */
-async function runMigrations(pool: pg.Pool): Promise<void> {
-  const migrationsDir = path.resolve(__dirname, '../../../../database/migrations');
-
-  const client = await pool.connect();
-
-  try {
-    await runner({
-      dbClient: client,
-      migrationsTable: 'pgmigrations',
-      dir: migrationsDir,
-      direction: 'up',
-      count: Infinity,
-      decamelize: true,
-      logger: silentLogger,
-    });
-  } finally {
-    client.release();
-  }
+  await dropClonedDatabase(context.databaseName);
 }
 
 /**
@@ -276,6 +229,35 @@ export async function completeTestUserOnboarding(
   ]);
 
   return friendId;
+}
+
+/**
+ * Delete every user-owned row, leaving the migrated schema (and the system
+ * collective types, which have no owner) intact.
+ *
+ * Suites share nothing but they do reuse one database across their own test
+ * cases, so without this a test inherits whatever its predecessors created and
+ * list/count assertions become order-dependent. Deletes are ordered
+ * parent-last so a table that ever loses its ON DELETE CASCADE fails here
+ * instead of leaking rows.
+ */
+export async function truncateUserData(pool: pg.Pool): Promise<void> {
+  await pool.query(`
+    DELETE FROM encounters.encounters;
+    DELETE FROM collectives.collective_memberships;
+    DELETE FROM collectives.collectives;
+    DELETE FROM collectives.collective_types WHERE user_id IS NOT NULL;
+    DELETE FROM friends.friend_relationships;
+    UPDATE auth."user" SET self_profile_id = NULL WHERE self_profile_id IS NOT NULL;
+    DELETE FROM friends.friends;
+    DELETE FROM friends.circles;
+    DELETE FROM friends.search_history;
+    DELETE FROM friends.friend_changes;
+    DELETE FROM system.notification_channels;
+    DELETE FROM auth.app_passwords;
+    DELETE FROM auth."user";
+    DELETE FROM auth.users;
+  `);
 }
 
 /**

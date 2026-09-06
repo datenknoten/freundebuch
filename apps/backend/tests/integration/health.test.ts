@@ -1,173 +1,160 @@
-import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { PostgreSqlContainer } from '@testcontainers/postgresql';
-import type { Hono } from 'hono';
+import { chmod, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { Hono } from 'hono';
 import pg from 'pg';
-import { Wait } from 'testcontainers';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { createApp } from '../../src/index.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import healthRoutes from '../../src/routes/health.js';
 import type { AppContext } from '../../src/types/context.js';
-import { resetConfig } from '../../src/utils/config.js';
-import { CONTAINER_STARTUP_TIMEOUT_MS, SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
+import { createLogger } from '../../src/utils/logger.js';
+import { setupAuthTestSuite } from './auth.helpers.js';
 
 describe('Health Endpoint Integration Tests', () => {
-  let container: StartedPostgreSqlContainer;
-  let pool: pg.Pool;
-  let app: Hono<AppContext>;
+  const { getContext } = setupAuthTestSuite();
 
-  beforeAll(async () => {
-    // Set required environment variables for tests
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
-    vi.stubEnv('LOG_LEVEL', 'silent');
-
-    // Start PostGIS container (required for geodata migration)
-    container = await new PostgreSqlContainer('imresamu/postgis:18-3.6.1-trixie')
-      .withDatabase('test')
-      .withUsername('test')
-      .withPassword('test')
-      .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT_MS)
-      .withWaitStrategy(Wait.forHealthCheck())
-      .start();
-
-    // Set DATABASE_URL from the container
-    vi.stubEnv('DATABASE_URL', container.getConnectionUri());
-    resetConfig();
-
-    // Create connection pool
-    pool = new pg.Pool({
-      connectionString: container.getConnectionUri(),
-      min: 2,
-      max: 10,
-    });
-
-    // Suppress pool errors during container shutdown
-    pool.on('error', () => {
-      // Ignore - expected during test teardown when container stops
-    });
-
-    // Create the Hono app
-    app = await createApp(pool);
-  }, SUITE_HOOK_TIMEOUT_MS);
-
-  afterAll(async () => {
-    // Clean up
-    if (pool) {
-      await pool.end();
-    }
-    if (container) {
-      await container.stop();
-    }
-    vi.unstubAllEnvs();
-    resetConfig();
-  }, SUITE_HOOK_TIMEOUT_MS);
-
-  describe('GET /health', () => {
-    it('should return 200 and healthy status when database is connected', async () => {
-      const request = new Request('http://localhost/health');
-      const response = await app.fetch(request);
-      const body = (await response.json()) as { uptime: number };
+  describe('GET /health (liveness)', () => {
+    it('should return 200 with status and release', async () => {
+      const { app } = getContext();
+      const response = await app.fetch(new Request('http://localhost/health'));
+      const body = (await response.json()) as { status: string; release: string };
 
       expect(response.status).toBe(200);
-      expect(body).toMatchObject({
-        status: 'healthy',
-        database: 'connected',
-      });
-      expect(body).toHaveProperty('timestamp');
-      expect(body).toHaveProperty('uptime');
-      expect(typeof body.uptime).toBe('number');
-      expect(body.uptime).toBeGreaterThanOrEqual(0);
+      expect(body.status).toBe('ok');
+      expect(typeof body.release).toBe('string');
+      expect(body.release.length).toBeGreaterThan(0);
     });
 
-    it('should return valid ISO timestamp', async () => {
-      const request = new Request('http://localhost/health');
-      const response = await app.fetch(request);
-      const body = (await response.json()) as { timestamp: string };
+    it('should not report uptime or database state any more', async () => {
+      const { app } = getContext();
+      const response = await app.fetch(new Request('http://localhost/health'));
+      const body = (await response.json()) as Record<string, unknown>;
+
+      expect(Object.keys(body).sort()).toEqual(['release', 'status']);
+    });
+
+    it('should not touch the database', async () => {
+      const { app, pool } = getContext();
+      const connect = vi.spyOn(pool, 'connect');
+
+      const response = await app.fetch(new Request('http://localhost/health'));
 
       expect(response.status).toBe(200);
-      const timestamp = new Date(body.timestamp);
-      expect(timestamp.toString()).not.toBe('Invalid Date');
-      expect(body.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      expect(connect).not.toHaveBeenCalled();
+      connect.mockRestore();
+    });
+  });
+
+  describe('GET /health/ready (readiness)', () => {
+    // The repo's own apps/backend/uploads is created by the dev container and
+    // owned by root, so the check has to run against a directory this process
+    // controls. UPLOAD_DIR is what the photo service reads.
+    let uploadDir: string;
+
+    beforeEach(async () => {
+      uploadDir = await mkdtemp(path.join(tmpdir(), 'fb-health-uploads-'));
+      vi.stubEnv('UPLOAD_DIR', uploadDir);
     });
 
-    it('should return consistent structure across multiple requests', async () => {
-      const request1 = new Request('http://localhost/health');
-      const response1 = await app.fetch(request1);
-      const body1 = (await response1.json()) as {
-        status: string;
-        database: string;
-        uptime: number;
-      };
-
-      const request2 = new Request('http://localhost/health');
-      const response2 = await app.fetch(request2);
-      const body2 = (await response2.json()) as {
-        status: string;
-        database: string;
-        uptime: number;
-      };
-
-      expect(response1.status).toBe(200);
-      expect(response2.status).toBe(200);
-
-      // Both should have the same keys
-      expect(Object.keys(body1).sort()).toEqual(Object.keys(body2).sort());
-
-      // Both should have the same status and database fields
-      expect(body1.status).toBe(body2.status);
-      expect(body1.database).toBe(body2.database);
-
-      // Timestamps should be different (unless they happen at exactly the same millisecond)
-      // Uptime should be increasing or equal
-      expect(body2.uptime).toBeGreaterThanOrEqual(body1.uptime);
+    afterEach(async () => {
+      await chmod(uploadDir, 0o700).catch(() => undefined);
+      await rm(uploadDir, { recursive: true, force: true });
     });
 
-    it('should return 503 and unhealthy status when database connection fails', async () => {
-      // Close the pool to simulate database failure
-      await pool.end();
+    it('should report every dependency healthy', async () => {
+      const { app } = getContext();
+      const response = await app.fetch(new Request('http://localhost/health/ready'));
+      const body = (await response.json()) as {
+        status: string;
+        checks: { db: boolean; authDb: boolean; uploads: boolean };
+        signupEnabled: boolean;
+        emailEnabled: boolean;
+      };
 
-      // Create a new pool that will fail to connect
+      // Assert the individual checks first: a failure then names the broken
+      // dependency instead of just reporting 503.
+      expect(body.checks).toEqual({ db: true, authDb: true, uploads: true });
+      expect(response.status).toBe(200);
+      expect(body.status).toBe('ready');
+      // No DISABLE_SIGNUP / SMTP_HOST in the test environment.
+      expect(body.signupEnabled).toBe(true);
+      expect(body.emailEnabled).toBe(false);
+    });
+
+    it('should return 503 when the uploads directory is not writable', async () => {
+      const { app } = getContext();
+      // Read+execute only: the photo service could not create a friend
+      // directory here, which is exactly the read-only-mount case.
+      await chmod(uploadDir, 0o500);
+
+      const response = await app.fetch(new Request('http://localhost/health/ready'));
+      const body = (await response.json()) as {
+        status: string;
+        checks: { db: boolean; authDb: boolean; uploads: boolean };
+      };
+
+      expect(body.checks).toEqual({ db: true, authDb: true, uploads: false });
+      expect(response.status).toBe(503);
+      expect(body.status).toBe('not_ready');
+    });
+
+    it('should return 503 and mark the failing check when the main pool is down', async () => {
+      // A dedicated app over an unreachable pool: the suite's own pool must
+      // stay usable for the remaining tests and for teardown.
       const failingPool = new pg.Pool({
         connectionString: 'postgresql://invalid:5432/invalid',
         connectionTimeoutMillis: 1000,
       });
-
-      const failingApp = await createApp(failingPool).catch(() => {
-        // If app creation fails due to DB check, create app without initial check
-        // by directly importing and using the health route
-        return null;
+      failingPool.on('error', () => {
+        // Expected while the pool fails to connect.
       });
+      const logger = createLogger();
+      const failingApp = new Hono<AppContext>();
+      failingApp.use('*', async (c, next) => {
+        c.set('db', failingPool);
+        c.set('logger', logger);
+        await next();
+      });
+      failingApp.route('/health', healthRoutes);
 
-      // If we couldn't create the app due to the initial DB check, skip this test
-      if (!failingApp) {
-        // Recreate the pool for cleanup
-        pool = new pg.Pool({
-          connectionString: container.getConnectionUri(),
-          min: 2,
-          max: 10,
-        });
-        return;
-      }
-
-      const request = new Request('http://localhost/health');
-      const response = await failingApp.fetch(request);
-      const body = await response.json();
+      const response = await failingApp.fetch(new Request('http://localhost/health/ready'));
+      const body = (await response.json()) as {
+        status: string;
+        checks: { db: boolean; authDb: boolean };
+      };
 
       expect(response.status).toBe(503);
-      expect(body).toMatchObject({
-        status: 'unhealthy',
-        database: 'disconnected',
-      });
+      expect(body.status).toBe('not_ready');
+      expect(body.checks.db).toBe(false);
+      // The auth pool is independent and still healthy.
+      expect(body.checks.authDb).toBe(true);
 
-      // Clean up the failing pool
       await failingPool.end().catch(() => {
-        // Ignore errors when ending an already failed pool
+        // Ignore errors from an already-failed pool.
       });
+    });
 
-      // Recreate the original pool for cleanup in afterAll
-      pool = new pg.Pool({
-        connectionString: container.getConnectionUri(),
-        min: 2,
-        max: 10,
+    it('should keep liveness green while readiness fails', async () => {
+      const failingPool = new pg.Pool({
+        connectionString: 'postgresql://invalid:5432/invalid',
+        connectionTimeoutMillis: 1000,
+      });
+      failingPool.on('error', () => {
+        // Expected while the pool fails to connect.
+      });
+      const logger = createLogger();
+      const failingApp = new Hono<AppContext>();
+      failingApp.use('*', async (c, next) => {
+        c.set('db', failingPool);
+        c.set('logger', logger);
+        await next();
+      });
+      failingApp.route('/health', healthRoutes);
+
+      const response = await failingApp.fetch(new Request('http://localhost/health'));
+
+      expect(response.status).toBe(200);
+      await failingPool.end().catch(() => {
+        // Ignore errors from an already-failed pool.
       });
     });
   });

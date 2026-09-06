@@ -9,6 +9,7 @@ import {
   createTestUser,
   setupAuthTests,
   teardownAuthTests,
+  truncateUserData,
 } from './auth.helpers.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
@@ -109,27 +110,10 @@ export function authHeaders(sessionCookies: string): Record<string, string> {
 }
 
 /**
- * Clean up friends between tests, preserving the self-profiles used for
- * onboarding. Deleting the non-self friend rows is enough: every friend
- * sub-resource (emails, phones, addresses, urls, dates, relationships,
- * social profiles, professional history, circle links, encounter links)
- * has an ON DELETE CASCADE foreign key to friends.friends, so this removes
- * them all in one statement — the previous version enumerated only four
- * sub-resource tables and silently leaked the rest.
- */
-export async function cleanupFriends(pool: pg.Pool): Promise<void> {
-  await pool.query(`
-    DELETE FROM friends.friends c
-    WHERE NOT EXISTS (
-      SELECT 1 FROM auth."user" u WHERE u.self_profile_id = c.id
-    )
-  `);
-}
-
-/**
  * Setup function for beforeAll in friends test files
  */
 export function setupFriendsTestSuite() {
+  let authContext: AuthTestContext;
   let context: FriendsTestContext;
 
   beforeAll(async () => {
@@ -138,34 +122,25 @@ export function setupFriendsTestSuite() {
     vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
     vi.stubEnv('LOG_LEVEL', 'silent');
 
-    const authContext = await setupAuthTests();
+    authContext = await setupAuthTests();
+  }, SUITE_HOOK_TIMEOUT_MS);
 
-    // Create a test user for friend tests
+  beforeEach(async () => {
+    resetRateLimiters();
+    // Wipe every user-owned row, then rebuild the fixture user: a test must not
+    // inherit rows (or a session) from its predecessors.
+    await truncateUserData(authContext.pool);
     const testUser = await createAuthenticatedUser(
       authContext.pool,
       'friends-test@example.com',
       'SecurePassword123',
     );
-
-    // Complete onboarding for the test user (required by onboarding middleware)
     await completeTestUserOnboarding(authContext.pool, testUser.externalId);
-
-    context = {
-      ...authContext,
-      testUser,
-    };
-  }, SUITE_HOOK_TIMEOUT_MS);
-
-  beforeEach(async () => {
-    resetRateLimiters();
-    // Clean up friends before each test
-    if (context?.pool) {
-      await cleanupFriends(context.pool);
-    }
+    context = { ...authContext, testUser };
   });
 
   afterAll(async () => {
-    await teardownAuthTests(context);
+    await teardownAuthTests(authContext);
     vi.unstubAllEnvs();
     resetConfig();
   }, SUITE_HOOK_TIMEOUT_MS);

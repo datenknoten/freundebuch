@@ -8,6 +8,7 @@ import {
   completeTestUserOnboarding,
   setupAuthTests,
   teardownAuthTests,
+  truncateUserData,
 } from './auth.helpers.js';
 import { authHeaders, createAuthenticatedUser } from './friends.helpers.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
@@ -26,14 +27,15 @@ describe('Circles API - Integration', () => {
     vi.stubEnv('LOG_LEVEL', 'silent');
 
     context = await setupAuthTests();
-    user = await createAuthenticatedUser(context.pool, 'circles@example.com', 'Password123!');
-    await completeTestUserOnboarding(context.pool, user.externalId);
   }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
     resetRateLimiters();
-    await context.pool.query('DELETE FROM friends.friend_circles');
-    await context.pool.query('DELETE FROM friends.circles');
+    // Wipe every user-owned row and rebuild the fixture user, so no test
+    // inherits circles (or a session) from its predecessors.
+    await truncateUserData(context.pool);
+    user = await createAuthenticatedUser(context.pool, 'circles@example.com', 'Password123!');
+    await completeTestUserOnboarding(context.pool, user.externalId);
   });
 
   afterAll(async () => {
