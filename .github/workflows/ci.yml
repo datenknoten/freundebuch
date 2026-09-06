@@ -316,18 +316,19 @@ jobs:
       - name: Install dependencies
         run: aube ci
 
-      # Unit, service and middleware suites only: v8 instrumentation pushes the
-      # Better Auth integration tests past their timeouts, and those already run
-      # uninstrumented in the `test` job.
+      # The whole suite, integration included. It was excluded while every
+      # integration file started its own container and the timeouts were
+      # vitest's 5s/10s defaults, which v8 instrumentation blew through. Both
+      # of those are gone (one shared template, 30s/60s timeouts), and
+      # excluding it made the coverage report actively misleading: `utils/
+      # http.ts` is used by all 14 route files and still reported 0%.
       - name: Run backend tests with coverage
         env:
           NODE_ENV: test
           # global-setup builds its template on this server instead of starting
           # its own container.
           TEST_DATABASE_URL: postgresql://test:test@localhost:5432/postgres
-        run: >-
-          aube --filter @freundebuch/backend exec vitest run --coverage
-          --exclude '**/tests/integration/**'
+        run: aube --filter @freundebuch/backend exec vitest run --coverage
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
