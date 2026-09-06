@@ -77,6 +77,12 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
+      // The readiness probe (used to hide the register link on a
+      // DISABLE_SIGNUP instance) lives outside /api.
+      '/health': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
 });
