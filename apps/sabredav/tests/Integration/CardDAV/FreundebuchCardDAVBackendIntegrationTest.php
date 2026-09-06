@@ -445,4 +445,50 @@ VCARD;
         $card = $this->backend->getCard($user1['id'], $friend2['external_id'] . '.vcf');
         $this->assertFalse($card);
     }
+
+    #[Test]
+    public function archivedFriendIsExcludedFromEveryReadPath(): void
+    {
+        $user = $this->createTestUser();
+        $visible = $this->createTestFriend((int) $user['id'], ['display_name' => 'Visible']);
+        $archived = $this->createTestFriend((int) $user['id'], ['display_name' => 'Archived']);
+
+        $this->getPdo()
+            ->prepare('UPDATE friends.friends SET archived_at = NOW() WHERE id = :id')
+            ->execute(['id' => $archived['id']]);
+
+        // getCards
+        $uris = array_column($this->backend->getCards($user['id']), 'uri');
+        $this->assertContains($visible['external_id'] . '.vcf', $uris);
+        $this->assertNotContains($archived['external_id'] . '.vcf', $uris);
+
+        // getCard
+        $this->assertFalse($this->backend->getCard($user['id'], $archived['external_id'] . '.vcf'));
+
+        // getChangesForAddressBook: the create entry is in the change log, but an
+        // archived friend must be reported as deleted, never as added/modified.
+        // (friend_change_trigger logs the insert and the archive update, so both
+        // friends really are in the log.)
+        $logged = $this->getPdo()->prepare(
+            'SELECT count(*) AS count FROM friends.friend_changes WHERE friend_external_id = :id'
+        );
+        $logged->execute(['id' => $archived['external_id']]);
+        $this->assertGreaterThan(0, (int) $logged->fetch()['count']);
+
+        $changes = $this->backend->getChangesForAddressBook($user['id'], null, 1);
+        $this->assertIsArray($changes);
+        $this->assertContains($visible['external_id'] . '.vcf', $changes['added']);
+        $this->assertNotContains($archived['external_id'] . '.vcf', $changes['added']);
+        $this->assertNotContains($archived['external_id'] . '.vcf', $changes['modified']);
+        $this->assertContains($archived['external_id'] . '.vcf', $changes['deleted']);
+
+        // Writes miss too, rather than editing an unreadable card.
+        $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:{$archived['external_id']}\r\nFN:Hacked\r\nEND:VCARD";
+        $this->assertNull(
+            $this->backend->updateCard($user['id'], $archived['external_id'] . '.vcf', $vcard)
+        );
+        $this->assertFalse(
+            $this->backend->deleteCard($user['id'], $archived['external_id'] . '.vcf')
+        );
+    }
 }

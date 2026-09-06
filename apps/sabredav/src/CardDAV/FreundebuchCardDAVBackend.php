@@ -276,11 +276,15 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $vcardJson = $this->mapper->vcardToJson($cardData);
 
         // Get existing friend ID (before transaction - read only)
+        // Same predicate as getCards/getCard: an archived friend is not part of
+        // the collection, so a PUT to it must miss rather than silently edit a
+        // card the client cannot read back.
         $stmt = $this->pdo->prepare('
             SELECT id FROM friends.friends
             WHERE user_id = :user_id
               AND external_id = :external_id
               AND deleted_at IS NULL
+              AND archived_at IS NULL
         ');
         $stmt->execute(['user_id' => $addressBookId, 'external_id' => $externalId]);
         $existing = $stmt->fetch();
@@ -373,6 +377,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             WHERE user_id = :user_id
               AND external_id = :external_id
               AND deleted_at IS NULL
+              AND archived_at IS NULL
         ');
         $stmt->execute([
             'user_id' => $addressBookId,
@@ -452,6 +457,19 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             }
         }
 
+        // The change log does not know about archiving, but getCards/getCard do:
+        // an archived friend that shows up as added or modified would be a card
+        // the client then cannot fetch. Report it as a deletion instead, which
+        // is what the client has to do with it anyway.
+        $visible = $this->filterVisibleUris($addressBookId, array_merge($added, $modified));
+        foreach (array_merge($added, $modified) as $uri) {
+            if (!in_array($uri, $visible, true) && !in_array($uri, $deleted, true)) {
+                $deleted[] = $uri;
+            }
+        }
+        $added = array_values(array_intersect($added, $visible));
+        $modified = array_values(array_intersect($modified, $visible));
+
         return [
             'syncToken' => 'sync-' . $maxId,
             'added' => array_values($added),
@@ -492,6 +510,48 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     private static function isUuid(string $value): bool
     {
         return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $value) === 1;
+    }
+
+    /**
+     * Of the given `<external_id>.vcf` URIs, the ones that are actually part of
+     * the address book (not deleted, not archived).
+     *
+     * @param array<string> $uris
+     * @return array<string>
+     */
+    private function filterVisibleUris(int $addressBookId, array $uris): array
+    {
+        if ($uris === []) {
+            return [];
+        }
+
+        $externalIds = [];
+        foreach ($uris as $uri) {
+            $externalId = str_replace('.vcf', '', $uri);
+            if (self::isUuid($externalId)) {
+                $externalIds[] = $externalId;
+            }
+        }
+        if ($externalIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($externalIds), '?'));
+        $stmt = $this->pdo->prepare(
+            'SELECT external_id FROM friends.friends
+               WHERE user_id = ?
+                 AND external_id::text IN (' . $placeholders . ')
+                 AND deleted_at IS NULL
+                 AND archived_at IS NULL'
+        );
+        $stmt->execute([$addressBookId, ...$externalIds]);
+
+        $visible = [];
+        while ($row = $stmt->fetch()) {
+            $visible[] = $row['external_id'] . '.vcf';
+        }
+
+        return $visible;
     }
 
     private function deleteSubResources(int $friendId): void
