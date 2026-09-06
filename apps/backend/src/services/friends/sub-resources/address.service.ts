@@ -23,6 +23,22 @@ export interface AddressServiceOptions extends SubResourceServiceOptions {
   addressLookupService?: AddressLookupService;
 }
 
+const mapRow = (row: IGetAddressesByFriendIdResult): Address => ({
+  id: row.external_id,
+  streetLine1: row.street_line1 ?? undefined,
+  streetLine2: row.street_line2 ?? undefined,
+  city: row.city ?? undefined,
+  stateProvince: row.state_province ?? undefined,
+  postalCode: row.postal_code ?? undefined,
+  country: row.country ?? undefined,
+  addressType: parseAddressType(row.address_type),
+  label: row.label ?? undefined,
+  isPrimary: row.is_primary,
+  latitude: row.latitude ?? undefined,
+  longitude: row.longitude ?? undefined,
+  createdAt: row.created_at.toISOString(),
+});
+
 /**
  * AddressService handles all address-related operations for friends.
  * Extends SubResourceService for common CRUD operations.
@@ -110,29 +126,17 @@ export class AddressService extends SubResourceService<
         return clearPrimaryAddress.run({ userExternalId, friendExternalId }, client);
       },
 
-      countFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return getAddressesByFriendId.run({ userExternalId, friendExternalId }, client);
-      },
-
       isPrimary: (input) => input.is_primary ?? false,
 
       setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
-      mapResult: (row): Address => ({
-        id: row.external_id,
-        streetLine1: row.street_line1 ?? undefined,
-        streetLine2: row.street_line2 ?? undefined,
-        city: row.city ?? undefined,
-        stateProvince: row.state_province ?? undefined,
-        postalCode: row.postal_code ?? undefined,
-        country: row.country ?? undefined,
-        addressType: parseAddressType(row.address_type),
-        label: row.label ?? undefined,
-        isPrimary: row.is_primary,
-        latitude: row.latitude ?? undefined,
-        longitude: row.longitude ?? undefined,
-        createdAt: row.created_at.toISOString(),
-      }),
+      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        return getAddressesByFriendId.run({ userExternalId, friendExternalId }, client);
+      },
+
+      mapListResult: mapRow,
+
+      mapResult: mapRow,
     });
 
     this.addressLookupService = options.addressLookupService;

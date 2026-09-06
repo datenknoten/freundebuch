@@ -13,6 +13,20 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
+const mapRow = (row: IGetProfessionalHistoryByFriendIdResult): ProfessionalHistory => ({
+  id: row.external_id,
+  jobTitle: row.job_title ?? undefined,
+  organization: row.organization ?? undefined,
+  department: row.department ?? undefined,
+  notes: row.notes ?? undefined,
+  fromMonth: row.from_month,
+  fromYear: row.from_year,
+  toMonth: row.to_month ?? undefined,
+  toYear: row.to_year ?? undefined,
+  isPrimary: row.is_primary,
+  createdAt: row.created_at.toISOString(),
+});
+
 /**
  * ProfessionalHistoryService handles all professional history operations for friends.
  * Extends SubResourceService for common CRUD operations.
@@ -89,27 +103,17 @@ export class ProfessionalHistoryService extends SubResourceService<
         return clearPrimaryProfessionalHistory.run({ userExternalId, friendExternalId }, client);
       },
 
-      countFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return getProfessionalHistoryByFriendId.run({ userExternalId, friendExternalId }, client);
-      },
-
       isPrimary: (input) => input.is_primary ?? false,
 
       setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
-      mapResult: (row): ProfessionalHistory => ({
-        id: row.external_id,
-        jobTitle: row.job_title ?? undefined,
-        organization: row.organization ?? undefined,
-        department: row.department ?? undefined,
-        notes: row.notes ?? undefined,
-        fromMonth: row.from_month,
-        fromYear: row.from_year,
-        toMonth: row.to_month ?? undefined,
-        toYear: row.to_year ?? undefined,
-        isPrimary: row.is_primary,
-        createdAt: row.created_at.toISOString(),
-      }),
+      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        return getProfessionalHistoryByFriendId.run({ userExternalId, friendExternalId }, client);
+      },
+
+      mapListResult: mapRow,
+
+      mapResult: mapRow,
     });
   }
 }

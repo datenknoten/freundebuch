@@ -2,6 +2,7 @@ import type { SocialProfile, SocialProfileInput } from '@freundebuch/shared/inde
 import {
   createSocialProfile,
   deleteSocialProfile,
+  getSocialProfilesByFriendId,
   type IDeleteSocialProfileResult,
   type IGetSocialProfilesByFriendIdResult,
   updateSocialProfile,
@@ -11,6 +12,14 @@ import {
   SubResourceService,
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
+
+const mapRow = (row: IGetSocialProfilesByFriendIdResult): SocialProfile => ({
+  id: row.external_id,
+  platform: parseSocialPlatform(row.platform),
+  profileUrl: row.profile_url ?? undefined,
+  username: row.username ?? undefined,
+  createdAt: row.created_at.toISOString(),
+});
 
 /**
  * SocialProfileService handles all social profile operations for friends.
@@ -73,13 +82,13 @@ export class SocialProfileService extends SubResourceService<
         );
       },
 
-      mapResult: (row): SocialProfile => ({
-        id: row.external_id,
-        platform: parseSocialPlatform(row.platform),
-        profileUrl: row.profile_url ?? undefined,
-        username: row.username ?? undefined,
-        createdAt: row.created_at.toISOString(),
-      }),
+      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        return getSocialProfilesByFriendId.run({ userExternalId, friendExternalId }, client);
+      },
+
+      mapListResult: mapRow,
+
+      mapResult: mapRow,
     });
   }
 }

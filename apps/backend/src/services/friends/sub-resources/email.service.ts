@@ -14,6 +14,15 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
+const mapRow = (row: IGetEmailsByFriendIdResult): Email => ({
+  id: row.external_id,
+  emailAddress: row.email_address,
+  emailType: parseEmailType(row.email_type),
+  label: row.label ?? undefined,
+  isPrimary: row.is_primary,
+  createdAt: row.created_at.toISOString(),
+});
+
 /**
  * EmailService handles all email-related operations for friends.
  * Extends SubResourceService for common CRUD operations.
@@ -80,22 +89,17 @@ export class EmailService extends SubResourceService<
         return clearPrimaryEmail.run({ userExternalId, friendExternalId }, client);
       },
 
-      countFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return getEmailsByFriendId.run({ userExternalId, friendExternalId }, client);
-      },
-
       isPrimary: (input) => input.is_primary ?? false,
 
       setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
-      mapResult: (row): Email => ({
-        id: row.external_id,
-        emailAddress: row.email_address,
-        emailType: parseEmailType(row.email_type),
-        label: row.label ?? undefined,
-        isPrimary: row.is_primary,
-        createdAt: row.created_at.toISOString(),
-      }),
+      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        return getEmailsByFriendId.run({ userExternalId, friendExternalId }, client);
+      },
+
+      mapListResult: mapRow,
+
+      mapResult: mapRow,
     });
   }
 }

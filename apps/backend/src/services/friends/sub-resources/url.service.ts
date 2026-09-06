@@ -2,6 +2,7 @@ import type { Url, UrlInput } from '@freundebuch/shared/index.js';
 import {
   createUrl,
   deleteUrl,
+  getUrlsByFriendId,
   type IDeleteUrlResult,
   type IGetUrlsByFriendIdResult,
   updateUrl,
@@ -11,6 +12,14 @@ import {
   SubResourceService,
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
+
+const mapRow = (row: IGetUrlsByFriendIdResult): Url => ({
+  id: row.external_id,
+  url: row.url,
+  urlType: parseUrlType(row.url_type),
+  label: row.label ?? undefined,
+  createdAt: row.created_at.toISOString(),
+});
 
 /**
  * UrlService handles all URL-related operations for friends.
@@ -73,13 +82,13 @@ export class UrlService extends SubResourceService<
         );
       },
 
-      mapResult: (row): Url => ({
-        id: row.external_id,
-        url: row.url,
-        urlType: parseUrlType(row.url_type),
-        label: row.label ?? undefined,
-        createdAt: row.created_at.toISOString(),
-      }),
+      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        return getUrlsByFriendId.run({ userExternalId, friendExternalId }, client);
+      },
+
+      mapListResult: mapRow,
+
+      mapResult: mapRow,
     });
   }
 }

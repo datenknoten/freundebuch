@@ -13,6 +13,14 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
+const mapRow = (row: IGetUrlsByCollectiveIdResult): Url => ({
+  id: row.external_id,
+  url: row.url,
+  urlType: parseUrlType(row.url_type),
+  label: row.label ?? undefined,
+  createdAt: row.created_at.toISOString(),
+});
+
 /**
  * UrlService handles all URL-related operations for collectives.
  * Extends SubResourceService for common CRUD operations.
@@ -28,18 +36,6 @@ export class CollectiveUrlService extends SubResourceService<
     super(options, {
       resourceName: 'collective url',
       hasPrimaryFlag: false,
-
-      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return getUrlsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      mapListResult: (row): Url => ({
-        id: row.external_id,
-        url: row.url,
-        urlType: parseUrlType(row.url_type),
-        label: row.label ?? undefined,
-        createdAt: row.created_at.toISOString(),
-      }),
 
       createFn: async (
         { userExternalId, ownerExternalId: collectiveExternalId, input },
@@ -88,13 +84,13 @@ export class CollectiveUrlService extends SubResourceService<
         );
       },
 
-      mapResult: (row): Url => ({
-        id: row.external_id,
-        url: row.url,
-        urlType: parseUrlType(row.url_type),
-        label: row.label ?? undefined,
-        createdAt: row.created_at.toISOString(),
-      }),
+      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+        return getUrlsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
+      },
+
+      mapListResult: mapRow,
+
+      mapResult: mapRow,
     });
   }
 }

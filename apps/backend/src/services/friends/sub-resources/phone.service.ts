@@ -14,6 +14,15 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
+const mapRow = (row: IGetPhonesByFriendIdResult): Phone => ({
+  id: row.external_id,
+  phoneNumber: row.phone_number,
+  phoneType: parsePhoneType(row.phone_type),
+  label: row.label ?? undefined,
+  isPrimary: row.is_primary,
+  createdAt: row.created_at.toISOString(),
+});
+
 /**
  * PhoneService handles all phone-related operations for friends.
  * Extends SubResourceService for common CRUD operations.
@@ -80,22 +89,17 @@ export class PhoneService extends SubResourceService<
         return clearPrimaryPhone.run({ userExternalId, friendExternalId }, client);
       },
 
-      countFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return getPhonesByFriendId.run({ userExternalId, friendExternalId }, client);
-      },
-
       isPrimary: (input) => input.is_primary ?? false,
 
       setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
-      mapResult: (row): Phone => ({
-        id: row.external_id,
-        phoneNumber: row.phone_number,
-        phoneType: parsePhoneType(row.phone_type),
-        label: row.label ?? undefined,
-        isPrimary: row.is_primary,
-        createdAt: row.created_at.toISOString(),
-      }),
+      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        return getPhonesByFriendId.run({ userExternalId, friendExternalId }, client);
+      },
+
+      mapListResult: mapRow,
+
+      mapResult: mapRow,
     });
   }
 }

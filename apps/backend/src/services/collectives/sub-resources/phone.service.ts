@@ -14,6 +14,15 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
+const mapRow = (row: IGetPhonesByCollectiveIdResult): Phone => ({
+  id: row.external_id,
+  phoneNumber: row.phone_number,
+  phoneType: parsePhoneType(row.phone_type),
+  label: row.label ?? undefined,
+  isPrimary: row.is_primary,
+  createdAt: row.created_at.toISOString(),
+});
+
 /**
  * PhoneService handles all phone-related operations for collectives.
  * Extends SubResourceService for common CRUD operations.
@@ -29,19 +38,6 @@ export class CollectivePhoneService extends SubResourceService<
     super(options, {
       resourceName: 'collective phone',
       hasPrimaryFlag: true,
-
-      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return getPhonesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      mapListResult: (row): Phone => ({
-        id: row.external_id,
-        phoneNumber: row.phone_number,
-        phoneType: parsePhoneType(row.phone_type),
-        label: row.label ?? undefined,
-        isPrimary: row.is_primary,
-        createdAt: row.created_at.toISOString(),
-      }),
 
       createFn: async (
         { userExternalId, ownerExternalId: collectiveExternalId, input },
@@ -100,14 +96,13 @@ export class CollectivePhoneService extends SubResourceService<
 
       setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
-      mapResult: (row): Phone => ({
-        id: row.external_id,
-        phoneNumber: row.phone_number,
-        phoneType: parsePhoneType(row.phone_type),
-        label: row.label ?? undefined,
-        isPrimary: row.is_primary,
-        createdAt: row.created_at.toISOString(),
-      }),
+      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+        return getPhonesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
+      },
+
+      mapListResult: mapRow,
+
+      mapResult: mapRow,
     });
   }
 }

@@ -23,6 +23,22 @@ export interface CollectiveAddressServiceOptions extends SubResourceServiceOptio
   addressLookupService?: AddressLookupService;
 }
 
+const mapRow = (row: IGetAddressesByCollectiveIdResult): Address => ({
+  id: row.external_id,
+  streetLine1: row.street_line1 ?? undefined,
+  streetLine2: row.street_line2 ?? undefined,
+  city: row.city ?? undefined,
+  stateProvince: row.state_province ?? undefined,
+  postalCode: row.postal_code ?? undefined,
+  country: row.country ?? undefined,
+  addressType: parseAddressType(row.address_type),
+  label: row.label ?? undefined,
+  isPrimary: row.is_primary,
+  latitude: row.latitude ?? undefined,
+  longitude: row.longitude ?? undefined,
+  createdAt: row.created_at.toISOString(),
+});
+
 /**
  * AddressService handles all address-related operations for collectives.
  * Extends SubResourceService for common CRUD operations.
@@ -43,26 +59,6 @@ export class CollectiveAddressService extends SubResourceService<
     super(options, {
       resourceName: 'collective address',
       hasPrimaryFlag: true,
-
-      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return getAddressesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      mapListResult: (row): Address => ({
-        id: row.external_id,
-        streetLine1: row.street_line1 ?? undefined,
-        streetLine2: row.street_line2 ?? undefined,
-        city: row.city ?? undefined,
-        stateProvince: row.state_province ?? undefined,
-        postalCode: row.postal_code ?? undefined,
-        country: row.country ?? undefined,
-        addressType: parseAddressType(row.address_type),
-        label: row.label ?? undefined,
-        isPrimary: row.is_primary,
-        latitude: row.latitude ?? undefined,
-        longitude: row.longitude ?? undefined,
-        createdAt: row.created_at.toISOString(),
-      }),
 
       createFn: async (
         { userExternalId, ownerExternalId: collectiveExternalId, input },
@@ -135,21 +131,13 @@ export class CollectiveAddressService extends SubResourceService<
 
       setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
-      mapResult: (row): Address => ({
-        id: row.external_id,
-        streetLine1: row.street_line1 ?? undefined,
-        streetLine2: row.street_line2 ?? undefined,
-        city: row.city ?? undefined,
-        stateProvince: row.state_province ?? undefined,
-        postalCode: row.postal_code ?? undefined,
-        country: row.country ?? undefined,
-        addressType: parseAddressType(row.address_type),
-        label: row.label ?? undefined,
-        isPrimary: row.is_primary,
-        latitude: row.latitude ?? undefined,
-        longitude: row.longitude ?? undefined,
-        createdAt: row.created_at.toISOString(),
-      }),
+      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+        return getAddressesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
+      },
+
+      mapListResult: mapRow,
+
+      mapResult: mapRow,
     });
 
     this.addressLookupService = options.addressLookupService;

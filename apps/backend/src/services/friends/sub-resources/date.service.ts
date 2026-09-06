@@ -5,6 +5,7 @@ import {
   countBirthdaysForFriend,
   createDate,
   deleteDate,
+  getDatesByFriendId,
   getUpcomingDates,
   type IGetDatesByFriendIdResult,
   type IGetUpcomingDatesResult,
@@ -31,6 +32,15 @@ export class DateService {
   constructor(options: DateServiceOptions) {
     this.db = options.db;
     this.logger = options.logger;
+  }
+
+  /**
+   * List a friend's important dates.
+   */
+  async list(userExternalId: string, friendExternalId: string): Promise<FriendDate[]> {
+    this.logger.debug({ friendExternalId }, 'Listing dates');
+    const rows = await getDatesByFriendId.run({ userExternalId, friendExternalId }, this.db);
+    return rows.map((row) => this.mapDate(row));
   }
 
   /**

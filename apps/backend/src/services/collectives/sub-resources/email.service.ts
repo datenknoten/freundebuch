@@ -14,6 +14,15 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
+const mapRow = (row: IGetEmailsByCollectiveIdResult): Email => ({
+  id: row.external_id,
+  emailAddress: row.email_address,
+  emailType: parseEmailType(row.email_type),
+  label: row.label ?? undefined,
+  isPrimary: row.is_primary,
+  createdAt: row.created_at.toISOString(),
+});
+
 /**
  * EmailService handles all email-related operations for collectives.
  * Extends SubResourceService for common CRUD operations.
@@ -29,19 +38,6 @@ export class CollectiveEmailService extends SubResourceService<
     super(options, {
       resourceName: 'collective email',
       hasPrimaryFlag: true,
-
-      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return getEmailsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      mapListResult: (row): Email => ({
-        id: row.external_id,
-        emailAddress: row.email_address,
-        emailType: parseEmailType(row.email_type),
-        label: row.label ?? undefined,
-        isPrimary: row.is_primary,
-        createdAt: row.created_at.toISOString(),
-      }),
 
       createFn: async (
         { userExternalId, ownerExternalId: collectiveExternalId, input },
@@ -100,14 +96,13 @@ export class CollectiveEmailService extends SubResourceService<
 
       setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 
-      mapResult: (row): Email => ({
-        id: row.external_id,
-        emailAddress: row.email_address,
-        emailType: parseEmailType(row.email_type),
-        label: row.label ?? undefined,
-        isPrimary: row.is_primary,
-        createdAt: row.created_at.toISOString(),
-      }),
+      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+        return getEmailsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
+      },
+
+      mapListResult: mapRow,
+
+      mapResult: mapRow,
     });
   }
 }

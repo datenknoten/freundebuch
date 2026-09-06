@@ -52,20 +52,14 @@ export interface SubResourceConfig<
     client: pg.Pool | pg.PoolClient,
   ) => Promise<unknown>;
 
-  /** Optional function to count existing resources (for auto-primary) */
-  countFn?: (
-    params: { userExternalId: string; ownerExternalId: string },
-    client: pg.Pool | pg.PoolClient,
-  ) => Promise<unknown[]>;
-
-  /** Optional function to list all resources for an owner */
-  listFn?: (
+  /** Function to list all resources for an owner */
+  listFn: (
     params: { userExternalId: string; ownerExternalId: string },
     client: pg.Pool | pg.PoolClient,
   ) => Promise<TListResult[]>;
 
-  /** Function to map a list result to output type (required if listFn is set) */
-  mapListResult?: (result: TListResult) => TOutput;
+  /** Function to map a list result to output type */
+  mapListResult: (result: TListResult) => TOutput;
 
   /** Function to check if input has primary flag set */
   isPrimary?: (input: TInput) => boolean;
@@ -124,13 +118,9 @@ export abstract class SubResourceService<
   }
 
   /**
-   * List all sub-resources for an owner. Only available when the config
-   * provides listFn + mapListResult.
+   * List all sub-resources for an owner.
    */
   async list(userExternalId: string, ownerExternalId: string): Promise<TOutput[]> {
-    if (!this.config.listFn || !this.config.mapListResult) {
-      throw new Error(`${this.config.resourceName} service does not support list()`);
-    }
     this.logger.debug({ ownerExternalId }, `Listing ${this.config.resourceName}s`);
     const rows = await this.config.listFn({ userExternalId, ownerExternalId }, this.db);
     return rows.map(this.config.mapListResult);
@@ -150,9 +140,8 @@ export abstract class SubResourceService<
     const dbClient = client ?? this.db;
 
     // Auto-set primary if this is the first entry.
-    const counter = this.config.countFn ?? this.config.listFn;
-    if (this.config.hasPrimaryFlag && counter && this.config.setIsPrimary) {
-      const existing = await counter({ userExternalId, ownerExternalId }, dbClient);
+    if (this.config.hasPrimaryFlag && this.config.setIsPrimary) {
+      const existing = await this.config.listFn({ userExternalId, ownerExternalId }, dbClient);
       if (existing.length === 0) {
         input = this.config.setIsPrimary(input, true);
       }
