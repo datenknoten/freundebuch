@@ -31,6 +31,8 @@ services:
       NODE_ENV: development
       PORT: 3000
       FRONTEND_URL: http://localhost:8080
+      # Dev traffic also arrives through the compose nginx (port 8080).
+      TRUST_PROXY: "true"
       JWT_SECRET: invisible-carrot-black-drums-medium
       JWT_EXPIRY: 604800
       SESSION_SECRET: invisible-carrot-black-drums-medium

@@ -86,6 +86,11 @@ services:
       PORT: 3000
       FRONTEND_URL: https://freundebuch.schumacher.im
       BACKEND_URL: https://freundebuch.schumacher.im
+      # nginx (and, in the maintainer's deployment, Traefik in front of it)
+      # append the real client IP to X-Forwarded-For. Without this every
+      # request keys the rate limiters off the proxy address, i.e. one bucket
+      # for the whole instance.
+      TRUST_PROXY: "true"
       # Public origin used as the OAuth issuer / MCP resource base for the
       # claude.ai connector. Must match the mcp-server's BETTER_AUTH_URL.
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://freundebuch.schumacher.im}

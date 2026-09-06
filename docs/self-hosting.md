@@ -46,7 +46,7 @@ will not work unmodified on your infrastructure:
 | `freundebuch.schumacher.im` | Hardcoded in the Traefik router labels and in `FRONTEND_URL` / `BACKEND_URL`. Replace every occurrence with your domain. |
 | The external `traefik` network | Remove it (and the `traefik.*` labels) if you terminate TLS differently, then publish the nginx port yourself. |
 | `ENV: production` on the backend | **Not set upstream.** Add it — see below. |
-| `TRUST_PROXY: "true"` on the backend | Not set upstream. Add it if a proxy sits in front, or rate limiting keys off the proxy's IP instead of the client's. |
+| `TRUST_PROXY: "true"` on the backend | Set upstream, because nginx always fronts the backend. Drop it only if you expose the backend directly, otherwise rate limiting keys off the proxy's IP instead of the client's. |
 | `WEBAUTHN_RP_ID` on the backend | Not set upstream. Set it to your bare domain (no scheme, no port) or passkey registration fails. |
 | `JWT_SECRET`, `SESSION_SECRET`, `JWT_EXPIRY`, `SESSION_EXPIRY_DAYS`, `PASSWORD_RESET_EXPIRY_HOURS` | Leftovers from the pre-Better-Auth session system. Nothing reads them any more; you can drop them. |
 

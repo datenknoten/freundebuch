@@ -4,6 +4,7 @@ import type pg from 'pg';
 import type { Logger } from 'pino';
 import { authMiddleware } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
+import { addressLookupRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { AddressLookupService } from '../services/address-lookup.service.js';
 import { PostGISAddressClient } from '../services/external/postgis-address.client.js';
 import type { AppContext } from '../types/context.js';
@@ -17,6 +18,9 @@ const app = new Hono<AppContext>();
 app.use('*', authMiddleware);
 // Apply onboarding middleware to require profile
 app.use('*', onboardingMiddleware);
+// Bound outbound geocoder traffic per client (Overpass/Nominatim usage policies
+// apply per deployment IP).
+app.use('*', addressLookupRateLimitMiddleware);
 
 // Singleton service instance (lazy init)
 let addressLookupService: AddressLookupService | null = null;

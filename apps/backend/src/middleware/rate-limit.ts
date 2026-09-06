@@ -79,6 +79,14 @@ let sentryTunnelLimiter = new RateLimiterMemory({
   blockDuration: isTestEnv ? 1 : 60,
 });
 
+// Rate limiter for address-lookup endpoints (proxied to Overpass/Nominatim)
+// 60 requests per minute in production, 300 in test
+let addressLookupLimiter = new RateLimiterMemory({
+  points: isTestEnv ? 300 : 60,
+  duration: 60,
+  blockDuration: isTestEnv ? 1 : 60,
+});
+
 /**
  * Reset all rate limiters (for testing purposes)
  */
@@ -119,6 +127,11 @@ export function resetRateLimiters(): void {
     blockDuration: isTestEnv ? 1 : 120,
   });
   sentryTunnelLimiter = new RateLimiterMemory({
+    points: isTestEnv ? 300 : 60,
+    duration: 60,
+    blockDuration: isTestEnv ? 1 : 60,
+  });
+  addressLookupLimiter = new RateLimiterMemory({
     points: isTestEnv ? 300 : 60,
     duration: 60,
     blockDuration: isTestEnv ? 1 : 60,
@@ -309,5 +322,24 @@ export async function notificationTestRateLimitMiddleware(c: Context, next: Next
       'Rate limit exceeded on notification test endpoint',
       'Too many test messages. Please wait before trying again.',
     );
+  }
+}
+
+/**
+ * Rate limiting middleware for address-lookup endpoints
+ * Limits: 60 requests per minute, 1 minute block after exceeding
+ *
+ * These handlers proxy to third-party geocoders (Overpass, Nominatim), whose
+ * usage policies apply per deployment IP — an unbounded client would get the
+ * whole instance banned.
+ */
+export async function addressLookupRateLimitMiddleware(c: Context, next: Next) {
+  const clientId = getClientIdentifier(c);
+
+  try {
+    await addressLookupLimiter.consume(clientId);
+    return next();
+  } catch (error) {
+    return handleRateLimitRejection(c, error, 'Rate limit exceeded on address-lookup endpoint');
   }
 }
