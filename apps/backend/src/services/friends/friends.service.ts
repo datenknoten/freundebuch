@@ -1,14 +1,8 @@
 import type {
-  Address,
-  AddressInput,
-  DateInput,
-  Email,
-  EmailInput,
   FacetedSearchOptions,
   FacetedSearchResponse,
   Friend,
   FriendCreateInput,
-  FriendDate,
   FriendListItem,
   FriendListOptions,
   FriendSearchResult,
@@ -19,20 +13,12 @@ import type {
   NetworkGraphData,
   PaginatedFriendList,
   PaginatedSearchResponse,
-  Phone,
-  PhoneInput,
-  ProfessionalHistory,
-  ProfessionalHistoryInput,
   Relationship,
   RelationshipInput,
   RelationshipTypesGrouped,
   RelationshipUpdateInput,
   SearchOptions,
-  SocialProfile,
-  SocialProfileInput,
   UpcomingDate,
-  Url,
-  UrlInput,
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
@@ -479,122 +465,6 @@ export class FriendsService {
   }
 
   // ============================================================================
-  // Phone Methods (delegated)
-  // ============================================================================
-
-  async addPhone(
-    userExternalId: string,
-    friendExternalId: string,
-    data: PhoneInput,
-  ): Promise<Phone | null> {
-    return this.phoneService.add(userExternalId, friendExternalId, data);
-  }
-
-  async updatePhone(
-    userExternalId: string,
-    friendExternalId: string,
-    phoneExternalId: string,
-    data: PhoneInput,
-  ): Promise<Phone | null> {
-    return this.phoneService.update(userExternalId, friendExternalId, phoneExternalId, data);
-  }
-
-  async deletePhone(
-    userExternalId: string,
-    friendExternalId: string,
-    phoneExternalId: string,
-  ): Promise<boolean> {
-    return this.phoneService.delete(userExternalId, friendExternalId, phoneExternalId);
-  }
-
-  // ============================================================================
-  // Email Methods (delegated)
-  // ============================================================================
-
-  async addEmail(
-    userExternalId: string,
-    friendExternalId: string,
-    data: EmailInput,
-  ): Promise<Email | null> {
-    return this.emailService.add(userExternalId, friendExternalId, data);
-  }
-
-  async updateEmail(
-    userExternalId: string,
-    friendExternalId: string,
-    emailExternalId: string,
-    data: EmailInput,
-  ): Promise<Email | null> {
-    return this.emailService.update(userExternalId, friendExternalId, emailExternalId, data);
-  }
-
-  async deleteEmail(
-    userExternalId: string,
-    friendExternalId: string,
-    emailExternalId: string,
-  ): Promise<boolean> {
-    return this.emailService.delete(userExternalId, friendExternalId, emailExternalId);
-  }
-
-  // ============================================================================
-  // Address Methods (delegated)
-  // ============================================================================
-
-  async addAddress(
-    userExternalId: string,
-    friendExternalId: string,
-    data: AddressInput,
-  ): Promise<Address | null> {
-    return this.addressService.add(userExternalId, friendExternalId, data);
-  }
-
-  async updateAddress(
-    userExternalId: string,
-    friendExternalId: string,
-    addressExternalId: string,
-    data: AddressInput,
-  ): Promise<Address | null> {
-    return this.addressService.update(userExternalId, friendExternalId, addressExternalId, data);
-  }
-
-  async deleteAddress(
-    userExternalId: string,
-    friendExternalId: string,
-    addressExternalId: string,
-  ): Promise<boolean> {
-    return this.addressService.delete(userExternalId, friendExternalId, addressExternalId);
-  }
-
-  // ============================================================================
-  // URL Methods (delegated)
-  // ============================================================================
-
-  async addUrl(
-    userExternalId: string,
-    friendExternalId: string,
-    data: UrlInput,
-  ): Promise<Url | null> {
-    return this.urlService.add(userExternalId, friendExternalId, data);
-  }
-
-  async updateUrl(
-    userExternalId: string,
-    friendExternalId: string,
-    urlExternalId: string,
-    data: UrlInput,
-  ): Promise<Url | null> {
-    return this.urlService.update(userExternalId, friendExternalId, urlExternalId, data);
-  }
-
-  async deleteUrl(
-    userExternalId: string,
-    friendExternalId: string,
-    urlExternalId: string,
-  ): Promise<boolean> {
-    return this.urlService.delete(userExternalId, friendExternalId, urlExternalId);
-  }
-
-  // ============================================================================
   // Photo Methods
   // ============================================================================
 
@@ -679,35 +549,6 @@ export class FriendsService {
     return true;
   }
 
-  // ============================================================================
-  // Date Methods (delegated)
-  // ============================================================================
-
-  async addDate(
-    userExternalId: string,
-    friendExternalId: string,
-    data: DateInput,
-  ): Promise<FriendDate | null> {
-    return this.dateService.add(userExternalId, friendExternalId, data);
-  }
-
-  async updateDate(
-    userExternalId: string,
-    friendExternalId: string,
-    dateExternalId: string,
-    data: DateInput,
-  ): Promise<FriendDate | null> {
-    return this.dateService.update(userExternalId, friendExternalId, dateExternalId, data);
-  }
-
-  async deleteDate(
-    userExternalId: string,
-    friendExternalId: string,
-    dateExternalId: string,
-  ): Promise<boolean> {
-    return this.dateService.delete(userExternalId, friendExternalId, dateExternalId);
-  }
-
   async getUpcomingDates(
     userExternalId: string,
     options: { days?: number; limit?: number } = {},
@@ -729,78 +570,6 @@ export class FriendsService {
 
   async deleteMetInfo(userExternalId: string, friendExternalId: string): Promise<boolean> {
     return this.metInfoService.delete(userExternalId, friendExternalId);
-  }
-
-  // ============================================================================
-  // Social Profile Methods (delegated)
-  // ============================================================================
-
-  async addSocialProfile(
-    userExternalId: string,
-    friendExternalId: string,
-    data: SocialProfileInput,
-  ): Promise<SocialProfile | null> {
-    return this.socialProfileService.add(userExternalId, friendExternalId, data);
-  }
-
-  async updateSocialProfile(
-    userExternalId: string,
-    friendExternalId: string,
-    profileExternalId: string,
-    data: SocialProfileInput,
-  ): Promise<SocialProfile | null> {
-    return this.socialProfileService.update(
-      userExternalId,
-      friendExternalId,
-      profileExternalId,
-      data,
-    );
-  }
-
-  async deleteSocialProfile(
-    userExternalId: string,
-    friendExternalId: string,
-    profileExternalId: string,
-  ): Promise<boolean> {
-    return this.socialProfileService.delete(userExternalId, friendExternalId, profileExternalId);
-  }
-
-  // ============================================================================
-  // Professional History Methods (delegated)
-  // ============================================================================
-
-  async addProfessionalHistory(
-    userExternalId: string,
-    friendExternalId: string,
-    data: ProfessionalHistoryInput,
-  ): Promise<ProfessionalHistory | null> {
-    return this.professionalHistoryService.add(userExternalId, friendExternalId, data);
-  }
-
-  async updateProfessionalHistory(
-    userExternalId: string,
-    friendExternalId: string,
-    historyExternalId: string,
-    data: ProfessionalHistoryInput,
-  ): Promise<ProfessionalHistory | null> {
-    return this.professionalHistoryService.update(
-      userExternalId,
-      friendExternalId,
-      historyExternalId,
-      data,
-    );
-  }
-
-  async deleteProfessionalHistory(
-    userExternalId: string,
-    friendExternalId: string,
-    historyExternalId: string,
-  ): Promise<boolean> {
-    return this.professionalHistoryService.delete(
-      userExternalId,
-      friendExternalId,
-      historyExternalId,
-    );
   }
 
   // ============================================================================

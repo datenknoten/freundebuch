@@ -1,158 +1,33 @@
-import { normalizePhoneNumber, PhoneInputSchema } from '@freundebuch/shared/index.js';
-import { type } from 'arktype';
-import { Hono } from 'hono';
-import { getAuthUser } from '../../../middleware/auth.js';
-import { FriendsService } from '../../../services/friends/index.js';
-import type { AppContext } from '../../../types/context.js';
-import { countryNameToCode, localeToCountry } from '../../../utils/country.js';
-import {
-  FriendNotFoundError,
-  PhoneCountryUnknownError,
-  ResourceNotFoundError,
-  ValidationError,
-} from '../../../utils/errors.js';
-import { isValidUuid } from '../../../utils/security.js';
-import { isRecord } from '../../../utils/type-guards.js';
-
-const app = new Hono<AppContext>();
+// Generated from one config by createSubResourceRouter.
+import { PhoneInputSchema } from '@freundebuch/shared/index.js';
+import { AddressService, PhoneService } from '../../../services/friends/index.js';
+import { normalizePhoneBody } from '../../../services/phone-normalization.js';
+import { FriendNotFoundError } from '../../../utils/errors.js';
+import { createSubResourceRouter } from '../../base/sub-resource.router.js';
 
 /**
- * POST /api/friends/:id/phones
- * Add a phone number to a friend
+ * Country for interpreting a national-format number: the friend's primary
+ * address. Loads only the addresses, not the whole friend.
  */
-app.post('/', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
+const friendPrimaryCountry = async (
+  c: Parameters<Parameters<typeof normalizePhoneBody>[0]>[0],
+  userId: string,
+  friendId: string,
+): Promise<string | null | undefined> => {
+  const addresses = await new AddressService({
+    db: c.get('db'),
+    logger: c.get('logger'),
+  }).list(userId, friendId);
+  return (addresses.find((address) => address.isPrimary) ?? addresses[0])?.country;
+};
 
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
-
-  let rawBody: unknown;
-  try {
-    rawBody = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-  if (!isRecord(rawBody)) {
-    throw new ValidationError('Invalid JSON');
-  }
-  const body = { ...rawBody };
-
-  // Normalize national-format phone numbers to E.164 before validation
-  if (typeof body.phone_number === 'string' && !body.phone_number.startsWith('+')) {
-    const friendsService = new FriendsService(db, c.get('logger'));
-    const friend = await friendsService.getFriendById(user.userId, friendId);
-    const primaryAddress = friend?.addresses.find((a) => a.isPrimary) ?? friend?.addresses[0];
-    const countryCode =
-      (primaryAddress?.country && countryNameToCode(primaryAddress.country)) ??
-      localeToCountry(c.req.header('Accept-Language'));
-    const normalized = normalizePhoneNumber(body.phone_number, countryCode);
-    // If it still isn't in E.164 form, we couldn't pin down a country (no usable
-    // address, ambiguous locale, or the number is invalid for the guessed one).
-    if (!normalized.startsWith('+')) {
-      throw new PhoneCountryUnknownError();
-    }
-    body.phone_number = normalized;
-  }
-
-  const validated = PhoneInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
-
-  const friendsService = new FriendsService(db, c.get('logger'));
-  const phone = await friendsService.addPhone(user.userId, friendId, validated);
-
-  if (!phone) {
-    throw new FriendNotFoundError();
-  }
-
-  return c.json(phone, 201);
+export default createSubResourceRouter({
+  ownerParam: 'id',
+  ownerLabel: 'friend ID',
+  resourceParam: 'phoneId',
+  resourceLabel: 'Phone',
+  schema: PhoneInputSchema,
+  ownerNotFound: () => new FriendNotFoundError(),
+  service: (c) => new PhoneService({ db: c.get('db'), logger: c.get('logger') }),
+  preprocess: normalizePhoneBody(friendPrimaryCountry),
 });
-
-/**
- * PUT /api/friends/:id/phones/:phoneId
- * Update a phone number
- */
-app.put('/:phoneId', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-  const phoneId = c.req.param('phoneId') ?? '';
-
-  if (!isValidUuid(friendId) || !isValidUuid(phoneId)) {
-    throw new ValidationError('Invalid ID');
-  }
-
-  let rawBody: unknown;
-  try {
-    rawBody = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-  if (!isRecord(rawBody)) {
-    throw new ValidationError('Invalid JSON');
-  }
-  const body = { ...rawBody };
-
-  // Normalize national-format phone numbers to E.164 before validation
-  if (typeof body.phone_number === 'string' && !body.phone_number.startsWith('+')) {
-    const friendsService = new FriendsService(db, c.get('logger'));
-    const friend = await friendsService.getFriendById(user.userId, friendId);
-    const primaryAddress = friend?.addresses.find((a) => a.isPrimary) ?? friend?.addresses[0];
-    const countryCode =
-      (primaryAddress?.country && countryNameToCode(primaryAddress.country)) ??
-      localeToCountry(c.req.header('Accept-Language'));
-    const normalized = normalizePhoneNumber(body.phone_number, countryCode);
-    // If it still isn't in E.164 form, we couldn't pin down a country (no usable
-    // address, ambiguous locale, or the number is invalid for the guessed one).
-    if (!normalized.startsWith('+')) {
-      throw new PhoneCountryUnknownError();
-    }
-    body.phone_number = normalized;
-  }
-
-  const validated = PhoneInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
-
-  const friendsService = new FriendsService(db, c.get('logger'));
-  const phone = await friendsService.updatePhone(user.userId, friendId, phoneId, validated);
-
-  if (!phone) {
-    throw new ResourceNotFoundError('Phone');
-  }
-
-  return c.json(phone);
-});
-
-/**
- * DELETE /api/friends/:id/phones/:phoneId
- * Delete a phone number
- */
-app.delete('/:phoneId', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-  const phoneId = c.req.param('phoneId') ?? '';
-
-  if (!isValidUuid(friendId) || !isValidUuid(phoneId)) {
-    throw new ValidationError('Invalid ID');
-  }
-
-  const friendsService = new FriendsService(db, c.get('logger'));
-  const deleted = await friendsService.deletePhone(user.userId, friendId, phoneId);
-
-  if (!deleted) {
-    throw new ResourceNotFoundError('Phone');
-  }
-
-  return c.json({ message: 'Phone deleted successfully' });
-});
-
-export default app;

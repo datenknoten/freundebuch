@@ -1,90 +1,15 @@
+// Generated from one config by createSubResourceRouter.
 import { EmailInputSchema } from '@freundebuch/shared/index.js';
-import { Hono } from 'hono';
-import { getAuthUser } from '../../../middleware/auth.js';
 import { CollectiveEmailService } from '../../../services/collectives/index.js';
-import type { AppContext } from '../../../types/context.js';
-import { CollectiveNotFoundError, ResourceNotFoundError } from '../../../utils/errors.js';
-import { parseBody, requireUuidParam } from '../../../utils/http.js';
+import { CollectiveNotFoundError } from '../../../utils/errors.js';
+import { createSubResourceRouter } from '../../base/sub-resource.router.js';
 
-const app = new Hono<AppContext>();
-
-/**
- * GET /api/collectives/:id/emails
- * List all emails for a collective
- */
-app.get('/', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
-
-  const emailService = new CollectiveEmailService({ db, logger });
-  const emails = await emailService.list(user.userId, collectiveId);
-  return c.json(emails);
+export default createSubResourceRouter({
+  ownerParam: 'id',
+  ownerLabel: 'collective ID',
+  resourceParam: 'emailId',
+  resourceLabel: 'Email',
+  schema: EmailInputSchema,
+  ownerNotFound: () => new CollectiveNotFoundError(),
+  service: (c) => new CollectiveEmailService({ db: c.get('db'), logger: c.get('logger') }),
 });
-
-/**
- * POST /api/collectives/:id/emails
- * Add an email to a collective
- */
-app.post('/', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
-  const validated = await parseBody(c, EmailInputSchema);
-
-  const emailService = new CollectiveEmailService({ db, logger });
-  const email = await emailService.add(user.userId, collectiveId, validated);
-
-  if (!email) {
-    throw new CollectiveNotFoundError();
-  }
-
-  return c.json(email, 201);
-});
-
-/**
- * PUT /api/collectives/:id/emails/:emailId
- * Update an email
- */
-app.put('/:emailId', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
-  const emailId = requireUuidParam(c, 'emailId', 'email ID');
-  const validated = await parseBody(c, EmailInputSchema);
-
-  const emailService = new CollectiveEmailService({ db, logger });
-  const email = await emailService.update(user.userId, collectiveId, emailId, validated);
-
-  if (!email) {
-    throw new ResourceNotFoundError('Email');
-  }
-
-  return c.json(email);
-});
-
-/**
- * DELETE /api/collectives/:id/emails/:emailId
- * Delete an email
- */
-app.delete('/:emailId', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
-  const emailId = requireUuidParam(c, 'emailId', 'email ID');
-
-  const emailService = new CollectiveEmailService({ db, logger });
-  const deleted = await emailService.delete(user.userId, collectiveId, emailId);
-
-  if (!deleted) {
-    throw new ResourceNotFoundError('Email');
-  }
-
-  return c.json({ message: 'Email deleted successfully' });
-});
-
-export default app;

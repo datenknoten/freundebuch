@@ -419,6 +419,78 @@ describe('Friends API - Integration Tests', () => {
       expect(body.isPrimary).toBe(true);
     });
 
+    it('should list a friend phones', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const friendId = await createTestFriend(pool, testUser.externalId, 'List Phones Friend');
+      const headers = authHeaders(testUser.sessionCookies);
+
+      const created = await app.fetch(
+        new Request(`http://localhost/api/friends/${friendId}/phones`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ phone_number: '+12125559999', phone_type: 'mobile' }),
+        }),
+      );
+      expect(created.status).toBe(201);
+
+      const listed = await app.fetch(
+        new Request(`http://localhost/api/friends/${friendId}/phones`, { headers }),
+      );
+      expect(listed.status).toBe(200);
+
+      const phones = (await listed.json()) as Array<{ phoneNumber: string; isPrimary: boolean }>;
+      expect(Array.isArray(phones)).toBe(true);
+      expect(phones.map((phone) => phone.phoneNumber)).toContain('+12125559999');
+      // First entry of an empty set becomes the primary automatically.
+      expect(phones[0]?.isPrimary).toBe(true);
+    });
+
+    it('should 404 listing phones of a non-existent friend', async () => {
+      const { app, testUser } = getContext();
+
+      const response = await app.fetch(
+        new Request(
+          'http://localhost/api/friends/00000000-0000-0000-0000-000000000000/phones',
+          { headers: authHeaders(testUser.sessionCookies) },
+        ),
+      );
+
+      // An unknown owner has no sub-resources; the list is simply empty.
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual([]);
+    });
+
+    it('should return 400 for a malformed JSON body', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Bad Body Friend');
+
+      const response = await app.fetch(
+        new Request(`http://localhost/api/friends/${friendId}/phones`, {
+          method: 'POST',
+          headers: authHeaders(testUser.sessionCookies),
+          body: 'not-json',
+        }),
+      );
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ error: 'Invalid JSON' });
+    });
+
+    it('should return 400 for a non-UUID friend id', async () => {
+      const { app, testUser } = getContext();
+
+      const response = await app.fetch(
+        new Request('http://localhost/api/friends/not-a-uuid/phones', {
+          headers: authHeaders(testUser.sessionCookies),
+        }),
+      );
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ error: 'Invalid friend ID' });
+    });
+
     it('should delete a phone from a friend', async () => {
       const { app, pool, testUser } = getContext();
 

@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { resetAddressService } from '../../src/routes/address-lookup.js';
+import { resetAddressService } from '../../src/services/address-lookup.registry.js';
 import { resetConfig } from '../../src/utils/config.js';
 import {
   completeTestUserOnboarding,
