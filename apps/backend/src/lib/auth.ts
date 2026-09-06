@@ -3,7 +3,6 @@ import bcrypt from 'bcrypt';
 import { betterAuth } from 'better-auth';
 import { mcp } from 'better-auth/plugins';
 import { Pool } from 'pg';
-import { createLegacyUserForBetterAuth } from '../models/queries/users.queries.js';
 import { getConfig } from '../utils/config.js';
 
 // Better Auth's Auth<T> generic is invariant, so Auth<SpecificOptions> cannot
@@ -127,6 +126,12 @@ function createAuth() {
           fieldName: 'preferences',
         },
       },
+      // Email is the account's only human-readable identifier and it is
+      // mirrored nowhere else now, but a change still needs the verified
+      // two-step flow before it can be enabled.
+      changeEmail: {
+        enabled: false,
+      },
       fields: {
         emailVerified: 'email_verified',
         createdAt: 'created_at',
@@ -232,11 +237,35 @@ function createAuth() {
     databaseHooks: {
       user: {
         create: {
-          after: async (user) => {
-            // Keep legacy auth.users in sync during transition period.
-            // friends.friends.user_id is an integer FK to auth.users.id,
-            // so new sign-ups need a legacy row until the FK is migrated.
-            await createLegacyUserForBetterAuth.run({ email: user.email }, _authPool!);
+          // Allocate the legacy row first and adopt its UUID as the Better
+          // Auth user id, so `auth."user".id = auth.users.external_id` holds
+          // from the first write. Better Auth merges `data` from `before` into
+          // the create payload and inserts with forceAllowId (see
+          // better-auth/dist/db/with-hooks.mjs).
+          //
+          // Raw pool.query rather than PgTyped: the auth pool runs with
+          // search_path=auth while the generated queries assume the main pool's
+          // default search_path.
+          before: async () => {
+            const {
+              rows: [row],
+            } = await _authPool!.query<{ external_id: string }>(
+              'INSERT INTO auth.users DEFAULT VALUES RETURNING external_id',
+            );
+            if (!row) {
+              throw new Error('Failed to allocate legacy user row');
+            }
+            return { data: { id: row.external_id } };
+          },
+        },
+        delete: {
+          // auth.users is the FK anchor for every domain table, so dropping it
+          // cascades the user's friends, encounters and collectives. There is
+          // no DB-level FK between the two identity tables to do this for us.
+          after: async (user: { id: string }) => {
+            await _authPool!.query('DELETE FROM auth.users WHERE external_id = $1::uuid', [
+              user.id,
+            ]);
           },
         },
       },

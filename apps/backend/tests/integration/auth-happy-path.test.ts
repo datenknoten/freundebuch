@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractCookies, setupAuthTestSuite } from './auth.helpers.js';
+import { completeTestUserOnboarding, extractCookies, setupAuthTestSuite } from './auth.helpers.js';
 
 describe('Auth Endpoints - Happy Path Integration Tests', () => {
   const { getContext } = setupAuthTestSuite();
@@ -128,6 +128,65 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(cookieHeader).toContain('HttpOnly');
       expect(cookieHeader).toContain('SameSite=Lax');
       expect(cookieHeader).toContain('Path=/');
+    });
+
+    it('should give the new user one identity across both tables', async () => {
+      const { app, pool } = getContext();
+      const { response, body } = await signUp('identity@example.com', 'SecurePassword123');
+      expect(response.status).toBe(200);
+
+      // ADR 0003: auth."user".id === auth.users.external_id::text.
+      const paired = await pool.query(
+        `SELECT bu.id AS ba_id, lu.external_id::text AS legacy_external_id
+           FROM auth."user" bu
+           JOIN auth.users lu ON lu.external_id::text = bu.id
+          WHERE bu.email = $1`,
+        ['identity@example.com'],
+      );
+      expect(paired.rows.length).toBe(1);
+      expect(paired.rows[0].ba_id).toBe(body.user.id);
+      expect(paired.rows[0].legacy_external_id).toBe(body.user.id);
+
+      // No orphan rows on either side.
+      const orphans = await pool.query(
+        `SELECT
+           (SELECT count(*) FROM auth."user" bu
+              WHERE NOT EXISTS (SELECT 1 FROM auth.users lu WHERE lu.external_id::text = bu.id))::int
+             AS ba_without_legacy,
+           (SELECT count(*) FROM auth.users lu
+              WHERE NOT EXISTS (SELECT 1 FROM auth."user" bu WHERE bu.id = lu.external_id::text))::int
+             AS legacy_without_ba`,
+      );
+      expect(orphans.rows[0]).toEqual({ ba_without_legacy: 0, legacy_without_ba: 0 });
+
+      // The session id resolves domain data with no bridge lookup: onboarding
+      // reads the self-profile from auth."user" keyed by that same id, and the
+      // friends list joins auth.users on external_id.
+      await completeTestUserOnboarding(pool, body.user.id);
+      const cookies = extractCookies(response);
+      const friends = await app.fetch(
+        new Request('http://localhost/api/friends', { headers: { Cookie: cookies } }),
+      );
+      expect(friends.status).toBe(200);
+    });
+
+    it('should cascade domain data when the user is deleted', async () => {
+      const { pool } = getContext();
+      const { body } = await signUp('cascade@example.com', 'SecurePassword123');
+
+      await pool.query(
+        `INSERT INTO friends.friends (user_id, display_name)
+           SELECT id, 'Doomed Friend' FROM auth.users WHERE external_id = $1::uuid`,
+        [body.user.id],
+      );
+
+      // Deleting the anchor row is what the user.delete.after hook does.
+      await pool.query('DELETE FROM auth.users WHERE external_id = $1::uuid', [body.user.id]);
+
+      const remaining = await pool.query(
+        `SELECT count(*)::int AS count FROM friends.friends WHERE display_name = 'Doomed Friend'`,
+      );
+      expect(remaining.rows[0].count).toBe(0);
     });
   });
 

@@ -71,15 +71,13 @@ app.get('/me', authMiddleware, async (c) => {
   // trusting session.user.selfProfileId: the session cookie cache (5 min) holds
   // a stale null right after onboarding sets the self-profile via SQL, which
   // trapped users in an onboarding redirect loop until the cache expired.
-  // We still avoid the legacy auth.users table because Better Auth user IDs
-  // are not UUIDs and the legacy external_id column is UUID-typed.
-  const result = await getUserSelfProfile.run({ userExternalId: authUser.betterAuthId }, db);
+  const result = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
   const selfProfileExternalId = result[0]?.self_profile_external_id ?? null;
   const selfProfileDisplayName = result[0]?.self_profile_display_name ?? null;
 
   const response: UserWithPreferencesResponse = {
     user: {
-      externalId: authUser.betterAuthId,
+      externalId: authUser.userId,
       email: authUser.email,
       selfProfileId: selfProfileExternalId ?? undefined,
       displayName: selfProfileDisplayName ?? undefined,
@@ -114,7 +112,7 @@ app.patch('/preferences', authMiddleware, async (c) => {
   }
 
   // Get current preferences
-  const users = await getUserWithPreferences.run({ externalId: authUser.betterAuthId }, db);
+  const users = await getUserWithPreferences.run({ externalId: authUser.userId }, db);
 
   if (users.length === 0) {
     throw new UserNotFoundError();
@@ -135,7 +133,7 @@ app.patch('/preferences', authMiddleware, async (c) => {
   // Update in database
   const result = await updateUserPreferences.run(
     {
-      externalId: authUser.betterAuthId,
+      externalId: authUser.userId,
       preferences: toJson(newPreferences),
     },
     db,

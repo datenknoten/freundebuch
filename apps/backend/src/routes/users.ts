@@ -3,8 +3,8 @@ import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import {
-  getUserByEmailWithSelfProfile,
   getUserSelfProfile,
+  getUserWithSelfProfile,
   setUserSelfProfile,
 } from '../models/queries/users.queries.js';
 import { FriendsService } from '../services/friends/index.js';
@@ -25,7 +25,7 @@ app.get('/me', async (c) => {
 
   const authUser = getAuthUser(c);
   // Single query to get user with self-profile info
-  const [user] = await getUserByEmailWithSelfProfile.run({ email: authUser.email }, db);
+  const [user] = await getUserWithSelfProfile.run({ userExternalId: authUser.userId }, db);
 
   if (!user) {
     throw new UserNotFoundError();
@@ -56,7 +56,7 @@ app.get('/me/self-profile', async (c) => {
   const db = c.get('db');
 
   const authUser = getAuthUser(c);
-  const result = await getUserSelfProfile.run({ userExternalId: authUser.betterAuthId }, db);
+  const result = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
   const selfProfileExternalId = result[0]?.self_profile_external_id ?? null;
 
   return c.json({ selfProfileId: selfProfileExternalId });
@@ -82,7 +82,7 @@ app.put('/me/self-profile', async (c) => {
 
   const result = await setUserSelfProfile.run(
     {
-      userExternalId: authUser.betterAuthId,
+      userExternalId: authUser.userId,
       friendExternalId: validated.friendId,
     },
     db,
@@ -119,10 +119,7 @@ app.post('/me/self-profile', async (c) => {
   }
 
   // Check if user already has a self-profile
-  const existingResult = await getUserSelfProfile.run(
-    { userExternalId: authUser.betterAuthId },
-    db,
-  );
+  const existingResult = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
   if (existingResult[0]?.self_profile_external_id) {
     throw new ValidationError('Self-profile already exists');
   }
@@ -134,7 +131,7 @@ app.post('/me/self-profile', async (c) => {
   // Set it as the self-profile (uses Better Auth user.id)
   const setResult = await setUserSelfProfile.run(
     {
-      userExternalId: authUser.betterAuthId,
+      userExternalId: authUser.userId,
       friendExternalId: newFriend.id,
     },
     db,

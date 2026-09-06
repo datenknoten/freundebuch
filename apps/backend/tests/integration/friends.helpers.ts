@@ -121,7 +121,7 @@ export async function cleanupFriends(pool: pg.Pool): Promise<void> {
   await pool.query(`
     DELETE FROM friends.friends c
     WHERE NOT EXISTS (
-      SELECT 1 FROM auth.users u WHERE u.self_profile_id = c.id
+      SELECT 1 FROM auth."user" u WHERE u.self_profile_id = c.id
     )
   `);
 }

@@ -202,22 +202,19 @@ export function extractCookies(response: Response): string {
 
 /**
  * Helper to create a test user directly in the database.
- * Inserts into both legacy auth.users and Better Auth auth.user/account tables.
+ *
+ * Allocates the legacy FK anchor first and reuses its UUID as the Better Auth
+ * user id, mirroring what the `user.create.before` hook does in production
+ * (ADR 0003).
  */
 export async function createTestUser(
   pool: pg.Pool,
   email: string,
   passwordHash: string,
 ): Promise<{ externalId: string; email: string }> {
-  // Insert into legacy table (still needed for FK references from other schemas)
-  const result = await pool.query(
-    'INSERT INTO auth.users (email, password_hash) VALUES ($1, $2) RETURNING external_id, email',
-    [email, passwordHash],
-  );
-
+  const result = await pool.query('INSERT INTO auth.users DEFAULT VALUES RETURNING external_id');
   const externalId = result.rows[0].external_id;
 
-  // Also insert into Better Auth tables
   await pool.query(
     `INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
      VALUES ($1, $2, $3, false, NOW(), NOW())`,
@@ -229,108 +226,26 @@ export async function createTestUser(
     [externalId, passwordHash],
   );
 
-  return {
-    externalId,
-    email: result.rows[0].email,
-  };
+  return { externalId, email };
 }
 
 /**
- * Helper to create a test session directly in the database
- */
-export async function createTestSession(
-  pool: pg.Pool,
-  userExternalId: string,
-  tokenHash: string,
-  expiresAt: Date,
-): Promise<void> {
-  // First get the internal user ID
-  const userResult = await pool.query('SELECT id FROM auth.users WHERE external_id = $1', [
-    userExternalId,
-  ]);
-
-  if (userResult.rows.length === 0) {
-    throw new Error(`User not found: ${userExternalId}`);
-  }
-
-  const userId = userResult.rows[0].id;
-
-  await pool.query(
-    'INSERT INTO auth.sessions (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
-    [userId, tokenHash, expiresAt],
-  );
-}
-
-/**
- * Helper to create a test password reset token directly in the database
- */
-export async function createTestPasswordResetToken(
-  pool: pg.Pool,
-  userExternalId: string,
-  tokenHash: string,
-  expiresAt: Date,
-): Promise<void> {
-  // First get the internal user ID
-  const userResult = await pool.query('SELECT id FROM auth.users WHERE external_id = $1', [
-    userExternalId,
-  ]);
-
-  if (userResult.rows.length === 0) {
-    throw new Error(`User not found: ${userExternalId}`);
-  }
-
-  const userId = userResult.rows[0].id;
-
-  await pool.query(
-    'INSERT INTO auth.password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
-    [userId, tokenHash, expiresAt],
-  );
-}
-
-/**
- * Helper to get user from database by email
+ * Helper to get a user's identity row by email
  */
 export async function getUserByEmail(
   pool: pg.Pool,
   email: string,
-): Promise<{ externalId: string; email: string; passwordHash: string } | null> {
-  const result = await pool.query(
-    'SELECT external_id, email, password_hash FROM auth.users WHERE email = $1',
-    [email],
-  );
+): Promise<{ externalId: string; email: string } | null> {
+  const result = await pool.query('SELECT id, email FROM auth."user" WHERE email = $1', [email]);
 
   if (result.rows.length === 0) {
     return null;
   }
 
   return {
-    externalId: result.rows[0].external_id,
+    externalId: result.rows[0].id,
     email: result.rows[0].email,
-    passwordHash: result.rows[0].password_hash,
   };
-}
-
-/**
- * Helper to count sessions for a user
- */
-export async function countUserSessions(pool: pg.Pool, userExternalId: string): Promise<number> {
-  const result = await pool.query(
-    'SELECT COUNT(*) FROM auth.sessions s JOIN auth.users u ON s.user_id = u.id WHERE u.external_id = $1',
-    [userExternalId],
-  );
-
-  return parseInt(result.rows[0].count, 10);
-}
-
-/**
- * Helper to check if session exists
- */
-export async function sessionExists(pool: pg.Pool, tokenHash: string): Promise<boolean> {
-  const result = await pool.query('SELECT id FROM auth.sessions WHERE token_hash = $1', [
-    tokenHash,
-  ]);
-
-  return result.rows.length > 0;
 }
 
 /**
@@ -346,7 +261,7 @@ export async function completeTestUserOnboarding(
     `INSERT INTO friends.friends (user_id, display_name)
      SELECT u.id, 'Test User (Self)'
      FROM auth.users u
-     WHERE u.external_id = $1
+     WHERE u.external_id = $1::uuid
      RETURNING id, external_id`,
     [userExternalId],
   );
@@ -354,17 +269,7 @@ export async function completeTestUserOnboarding(
   const friendInternalId = friendResult.rows[0].id;
   const friendId = friendResult.rows[0].external_id;
 
-  // Set it as the user's self-profile (legacy table)
-  await pool.query(
-    `UPDATE auth.users u
-     SET self_profile_id = f.id
-     FROM friends.friends f
-     WHERE u.external_id = $1
-       AND f.external_id = $2`,
-    [userExternalId, friendId],
-  );
-
-  // Also update Better Auth user table
+  // self_profile_id lives only on the Better Auth row (ADR 0003).
   await pool.query(`UPDATE auth."user" SET self_profile_id = $1 WHERE id = $2`, [
     friendInternalId,
     userExternalId,

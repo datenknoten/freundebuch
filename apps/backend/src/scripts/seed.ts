@@ -100,14 +100,14 @@ async function seed() {
 
   try {
     // Check if demo user already exists
-    const existingUser = await pool.query('SELECT external_id FROM auth.users WHERE email = $1', [
+    const existingUser = await pool.query('SELECT id FROM auth."user" WHERE email = $1', [
       DEMO_USER.email,
     ]);
 
     if (existingUser.rows.length > 0) {
       console.log(`Demo user (${DEMO_USER.email}) already exists. Skipping seed.`);
       console.log('\nTo reseed, delete the demo user first:');
-      console.log(`  DELETE FROM auth.users WHERE email = '${DEMO_USER.email}';`);
+      console.log(`  DELETE FROM auth."user" WHERE email = '${DEMO_USER.email}';`);
       return;
     }
 
@@ -116,14 +116,12 @@ async function seed() {
     try {
       await client.query('BEGIN');
 
-      // 1. Create demo user (both legacy and Better Auth tables)
+      // 1. Create demo user: allocate the legacy FK anchor, then adopt its UUID
+      //    as the Better Auth user id (ADR 0003).
       console.log('Creating demo user...');
       const passwordHash = await hashPassword(DEMO_USER.password);
       const userResult = await client.query(
-        `INSERT INTO auth.users (email, password_hash)
-         VALUES ($1, $2)
-         RETURNING id, external_id`,
-        [DEMO_USER.email, passwordHash],
+        'INSERT INTO auth.users DEFAULT VALUES RETURNING id, external_id',
       );
       const userId = userResult.rows[0].id;
       const userExternalId = userResult.rows[0].external_id;
@@ -151,9 +149,9 @@ async function seed() {
       );
       const selfProfileId = selfProfileResult.rows[0].id;
 
-      await client.query('UPDATE auth.users SET self_profile_id = $1 WHERE id = $2', [
+      await client.query('UPDATE auth."user" SET self_profile_id = $1 WHERE id = $2', [
         selfProfileId,
-        userId,
+        userExternalId,
       ]);
       console.log(`  Created self-profile: ${DEMO_USER.displayName}`);
 

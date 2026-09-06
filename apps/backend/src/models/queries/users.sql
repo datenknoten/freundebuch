@@ -1,4 +1,4 @@
-/* @name GetUserByEmailWithSelfProfile */
+/* @name GetUserWithSelfProfile */
 SELECT
     u.id as external_id,
     u.email,
@@ -8,7 +8,7 @@ SELECT
     c.display_name as self_profile_display_name
 FROM auth."user" u
 LEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL
-WHERE u.email = :email;
+WHERE u.id = :userExternalId;
 
 /* @name GetUserWithPreferences */
 SELECT id as external_id, email, preferences, created_at, updated_at
@@ -42,19 +42,14 @@ SET self_profile_id = c.id,
     updated_at = CURRENT_TIMESTAMP
 FROM friends.friends c, auth.users legacy_u
 WHERE ba_u.id = :userExternalId
-  AND legacy_u.email = ba_u.email
+  AND legacy_u.external_id::text = ba_u.id
   AND c.external_id = :friendExternalId
   AND c.user_id = legacy_u.id
   AND c.deleted_at IS NULL
 RETURNING ba_u.id as external_id, c.external_id as self_profile_external_id;
 
-/* @name GetLegacyExternalIdByEmail */
-SELECT external_id FROM auth.users WHERE email = :email;
-
-/* @name CreateLegacyUserForBetterAuth */
-INSERT INTO auth.users (email, password_hash)
-VALUES (:email, '')
-ON CONFLICT (email) DO NOTHING;
+/* @name DeleteOrphanLegacyUsers */
+SELECT auth.delete_orphan_legacy_users() as deleted_count;
 
 /* @name HasSelfProfile */
 SELECT
