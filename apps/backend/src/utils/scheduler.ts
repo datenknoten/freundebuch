@@ -4,6 +4,7 @@ import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
   deleteExpiredAddressCacheEntries,
+  trimAddressCache,
 } from '../models/queries/address-cache.queries.js';
 import { pruneFriendChanges } from '../models/queries/friend-changes.queries.js';
 import { getUpcomingDates } from '../models/queries/friend-dates.queries.js';
@@ -58,6 +59,7 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): ScheduledT
     try {
       // Unexpired entries still need a ceiling: the geocoder cache is a
       // convenience, so keep the newest 50k keys and drop the rest.
+      await trimAddressCache.run(undefined, pool);
       logger.info('Address cache trimmed to its size bound');
     } catch (error) {
       const err = toError(error);
@@ -191,6 +193,7 @@ export async function runCleanupNow(pool: pg.Pool, logger: Logger): Promise<void
   try {
     await deleteOrphanLegacyUsers.run(undefined, pool);
     await deleteExpiredAddressCacheEntries.run(undefined, pool);
+    await trimAddressCache.run(undefined, pool);
     await pruneFriendChanges.run(undefined, pool);
     logger.info('Immediate cleanup completed');
   } catch (error) {

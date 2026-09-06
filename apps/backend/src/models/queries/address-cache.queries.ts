@@ -40,6 +40,36 @@ const getAddressCacheEntryIR: any = {"usedParamSet":{"cacheKey":true},"params":[
 export const getAddressCacheEntry = new PreparedQuery<IGetAddressCacheEntryParams,IGetAddressCacheEntryResult>(getAddressCacheEntryIR);
 
 
+/** 'AddressCacheEntryExists' parameters type */
+export interface IAddressCacheEntryExistsParams {
+  cacheKey: string;
+}
+
+/** 'AddressCacheEntryExists' return type */
+export interface IAddressCacheEntryExistsResult {
+  present: number | null;
+}
+
+/** 'AddressCacheEntryExists' query type */
+export interface IAddressCacheEntryExistsQuery {
+  params: IAddressCacheEntryExistsParams;
+  result: IAddressCacheEntryExistsResult;
+}
+
+const addressCacheEntryExistsIR: any = {"usedParamSet":{"cacheKey":true},"params":[{"name":"cacheKey","required":true,"transform":{"type":"scalar"},"locs":[{"a":64,"b":73}]}],"statement":"SELECT 1 AS present\nFROM system.address_cache\nWHERE cache_key = :cacheKey!\n  AND expires_at > NOW()"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT 1 AS present
+ * FROM system.address_cache
+ * WHERE cache_key = :cacheKey!
+ *   AND expires_at > NOW()
+ * ```
+ */
+export const addressCacheEntryExists = new PreparedQuery<IAddressCacheEntryExistsParams,IAddressCacheEntryExistsResult>(addressCacheEntryExistsIR);
+
+
 /** 'UpsertAddressCacheEntry' parameters type */
 export interface IUpsertAddressCacheEntryParams {
   cacheKey: string;
@@ -143,5 +173,33 @@ const clearAddressCacheIR: any = {"usedParamSet":{},"params":[],"statement":"DEL
  * ```
  */
 export const clearAddressCache = new PreparedQuery<IClearAddressCacheParams,IClearAddressCacheResult>(clearAddressCacheIR);
+
+
+/** 'TrimAddressCache' parameters type */
+export type ITrimAddressCacheParams = void;
+
+/** 'TrimAddressCache' return type */
+export type ITrimAddressCacheResult = void;
+
+/** 'TrimAddressCache' query type */
+export interface ITrimAddressCacheQuery {
+  params: ITrimAddressCacheParams;
+  result: ITrimAddressCacheResult;
+}
+
+const trimAddressCacheIR: any = {"usedParamSet":{},"params":[],"statement":"-- Hard bound on the persisted tier: the geocoder cache is a convenience, so\n-- keep the 50k most recently written keys and drop the rest.\nDELETE FROM system.address_cache\nWHERE id IN (\n  SELECT id FROM system.address_cache ORDER BY updated_at DESC OFFSET 50000\n)"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * -- Hard bound on the persisted tier: the geocoder cache is a convenience, so
+ * -- keep the 50k most recently written keys and drop the rest.
+ * DELETE FROM system.address_cache
+ * WHERE id IN (
+ *   SELECT id FROM system.address_cache ORDER BY updated_at DESC OFFSET 50000
+ * )
+ * ```
+ */
+export const trimAddressCache = new PreparedQuery<ITrimAddressCacheParams,ITrimAddressCacheResult>(trimAddressCacheIR);
 
 

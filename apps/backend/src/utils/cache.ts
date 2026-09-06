@@ -3,12 +3,14 @@ import { LRUCache } from 'lru-cache';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
+  addressCacheEntryExists,
   clearAddressCache,
   deleteAddressCacheEntry,
   deleteExpiredAddressCacheEntries,
   getAddressCacheEntry,
   upsertAddressCacheEntry,
 } from '../models/queries/address-cache.queries.js';
+import { getConfig } from './config.js';
 
 // Global logger for cache operations, set during initialization
 let cacheLogger: Logger | null = null;
@@ -36,6 +38,12 @@ const HouseNumberSchema = type({
 });
 
 const HouseNumberArraySchema = type(HouseNumberSchema, '[]');
+
+/**
+ * Countries are a static list served as a plain object; only its shape as an
+ * object is contractual, so that is all the validator asserts.
+ */
+const CountriesSchema = type('object');
 
 // Type aliases for the validated types
 export type StreetCached = typeof StreetSchema.infer;
@@ -66,6 +74,7 @@ function createValidator<T>(
 
 // Pre-built validators for each cache type
 const validators = {
+  countries: createValidator(CountriesSchema, 'object'),
   streets: createValidator(StreetArraySchema, 'Street[]'),
   houseNumbers: createValidator(HouseNumberArraySchema, 'HouseNumber[]'),
 };
@@ -79,15 +88,16 @@ export class AddressCache<T extends object> {
   private memoryCache: LRUCache<string, T>;
   private ttlMs: number;
   private pool: pg.Pool | null = null;
-  private validator: Validator<T> | null;
+  private validator: Validator<T>;
 
   /**
    * Create a new cache instance
    * @param ttlHours Time-to-live in hours for cache entries
-   * @param maxSize Maximum number of entries to keep in memory (default: 1000)
-   * @param validator Optional arktype validator for deserializing from database
+   * @param maxSize Maximum number of entries to keep in memory
+   * @param validator Arktype validator applied to values read back from the
+   *   database; a value it rejects is treated as a miss, never as a T
    */
-  constructor(ttlHours: number, maxSize = 1000, validator: Validator<T> | null = null) {
+  constructor(ttlHours: number, maxSize: number, validator: Validator<T>) {
     this.ttlMs = ttlHours * 60 * 60 * 1000;
     this.validator = validator;
     this.memoryCache = new LRUCache<string, T>({
@@ -107,6 +117,22 @@ export class AddressCache<T extends object> {
   }
 
   /**
+   * Pool for the persisted tier, or `null` when that tier is switched off.
+   *
+   * With `POSTGIS_ADDRESS_ENABLED` a lookup miss is answered by a local
+   * PostGIS query, so round-tripping the result through `system.address_cache`
+   * costs more than the miss it saves. Reads, writes and existence checks skip
+   * the tier then; `delete`/`clear`/`cleanupDatabase` keep using `this.pool`
+   * directly so rows written before the flag was flipped still get purged.
+   */
+  private databaseTier(): pg.Pool | null {
+    if (this.pool === null) {
+      return null;
+    }
+    return getConfig().POSTGIS_ADDRESS_ENABLED ? null : this.pool;
+  }
+
+  /**
    * Get a value from cache (memory first, then database)
    */
   async get(key: string): Promise<T | undefined> {
@@ -116,50 +142,34 @@ export class AddressCache<T extends object> {
       return memValue;
     }
 
-    // Fall back to database if pool is available
-    if (this.pool) {
-      try {
-        const result = await getAddressCacheEntry.run({ cacheKey: key }, this.pool);
-        if (result.length > 0) {
-          const rawValue = result[0].cache_value;
-
-          // Validate with arktype if validator is available
-          if (this.validator) {
-            const validated = this.validator(rawValue);
-            if (validated === undefined) {
-              // Validation failed (log already happened in the validator).
-              // Delete the bad row so we don't re-read and re-reject it every
-              // miss until it expires.
-              await this.deleteFromDatabase(key);
-              return undefined;
-            }
-            // Populate memory cache with validated value
-            this.memoryCache.set(key, validated);
-            return validated;
-          }
-
-          // Fallback: basic type check if no validator
-          if (typeof rawValue !== 'object' || rawValue === null) {
-            cacheLogger?.warn(
-              { key, actualType: typeof rawValue },
-              'Invalid cache value type, expected object',
-            );
-            return undefined;
-          }
-
-          // Safe cast: this no-validator fallback path is only reached by
-          // countriesCache where T = object, and the typeof check above already
-          // narrowed rawValue to object.
-          const value = rawValue as T;
-          this.memoryCache.set(key, value);
-          return value;
-        }
-      } catch (error) {
-        cacheLogger?.error({ error, cacheKey: key }, 'Failed to read from address cache database');
-      }
+    const pool = this.databaseTier();
+    if (pool === null) {
+      return undefined;
     }
 
-    return undefined;
+    try {
+      const result = await getAddressCacheEntry.run({ cacheKey: key }, pool);
+      const row = result[0];
+      if (row === undefined) {
+        return undefined;
+      }
+
+      const validated = this.validator(row.cache_value);
+      if (validated === undefined) {
+        // Validation failed (log already happened in the validator).
+        // Delete the bad row so we don't re-read and re-reject it every
+        // miss until it expires.
+        await this.deleteFromDatabase(key);
+        return undefined;
+      }
+
+      // Populate memory cache with validated value
+      this.memoryCache.set(key, validated);
+      return validated;
+    } catch (error) {
+      cacheLogger?.error({ error, cacheKey: key }, 'Failed to read from address cache database');
+      return undefined;
+    }
   }
 
   /**
@@ -169,29 +179,48 @@ export class AddressCache<T extends object> {
     // Always set in memory cache
     this.memoryCache.set(key, value);
 
-    // Persist to database if pool is available
-    if (this.pool) {
-      try {
-        const expiresAt = new Date(Date.now() + this.ttlMs);
-        await upsertAddressCacheEntry.run(
-          {
-            cacheKey: key,
-            cacheValue: JSON.stringify(value),
-            expiresAt,
-          },
-          this.pool,
-        );
-      } catch (error) {
-        cacheLogger?.error({ error, cacheKey: key }, 'Failed to persist to address cache database');
-      }
+    const pool = this.databaseTier();
+    if (pool === null) {
+      return;
+    }
+
+    try {
+      const expiresAt = new Date(Date.now() + this.ttlMs);
+      await upsertAddressCacheEntry.run(
+        {
+          cacheKey: key,
+          cacheValue: JSON.stringify(value),
+          expiresAt,
+        },
+        pool,
+      );
+    } catch (error) {
+      cacheLogger?.error({ error, cacheKey: key }, 'Failed to persist to address cache database');
     }
   }
 
   /**
-   * Check if a key exists and is not expired
+   * Check if a key exists and is not expired. Consults the persisted tier as
+   * well, so a key that survived a deployment in the database but not in
+   * memory is not reported missing.
    */
-  has(key: string): boolean {
-    return this.memoryCache.has(key);
+  async has(key: string): Promise<boolean> {
+    if (this.memoryCache.has(key)) {
+      return true;
+    }
+
+    const pool = this.databaseTier();
+    if (pool === null) {
+      return false;
+    }
+
+    try {
+      const result = await addressCacheEntryExists.run({ cacheKey: key }, pool);
+      return result.length > 0;
+    } catch (error) {
+      cacheLogger?.error({ error, cacheKey: key }, 'Failed to probe address cache database');
+      return false;
+    }
   }
 
   /**
@@ -270,13 +299,13 @@ let houseNumbersCache: AddressCache<HouseNumberCached[]> | null = null;
 
 /**
  * Get the countries cache (must be initialized first)
- * Note: Countries use a static list, no validation needed
  */
 export function getCountriesCache(): AddressCache<object> {
   if (!countriesCache) {
     countriesCache = new AddressCache<object>(
       CACHE_CONFIG.countries.ttlHours,
       CACHE_CONFIG.countries.maxSize,
+      validators.countries,
     );
   }
   return countriesCache;
@@ -323,6 +352,7 @@ export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
     countriesCache = new AddressCache<object>(
       CACHE_CONFIG.countries.ttlHours,
       CACHE_CONFIG.countries.maxSize,
+      validators.countries,
     );
   }
   if (!streetsCache) {
