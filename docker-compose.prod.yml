@@ -95,12 +95,9 @@ services:
       # claude.ai connector. Must match the mcp-server's BETTER_AUTH_URL.
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://freundebuch.schumacher.im}
 
-      # Authentication
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRY: ${JWT_EXPIRY:-604800}
-      SESSION_SECRET: ${SESSION_SECRET}
-      SESSION_EXPIRY_DAYS: ${SESSION_EXPIRY_DAYS:-7}
-      PASSWORD_RESET_EXPIRY_HOURS: ${PASSWORD_RESET_EXPIRY_HOURS:-1}
+      # Authentication. BETTER_AUTH_SECRET is required — the backend refuses to
+      # boot without it — and must match the mcp-server's.
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
 
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-info}
@@ -118,6 +115,31 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  # One-shot schema upgrade. The maintainer's deploy.sh migrates before
+  # restarting the stack; third-party self-hosters had a manual step and a
+  # window where new code met an old schema. Uses the compiled migrations
+  # (database/dist) already baked into the backend image.
+  migrate:
+    image: ghcr.io/datenknoten/freundebuch-backend:${VERSION:-latest}
+    container_name: freundebuch-migrate
+    restart: "no"
+    command:
+      - node
+      - /app/node_modules/node-pg-migrate/bin/node-pg-migrate.js
+      - --decamelize
+      - --migrations-dir
+      - /app/database/dist
+      - up
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    networks:
+      - internal
     depends_on:
       postgres:
         condition: service_healthy

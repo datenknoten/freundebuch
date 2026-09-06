@@ -48,7 +48,7 @@ will not work unmodified on your infrastructure:
 | `ENV: production` on the backend | **Not set upstream.** Add it — see below. |
 | `TRUST_PROXY: "true"` on the backend | Set upstream, because nginx always fronts the backend. Drop it only if you expose the backend directly, otherwise rate limiting keys off the proxy's IP instead of the client's. |
 | `WEBAUTHN_RP_ID` on the backend | Not set upstream. Set it to your bare domain (no scheme, no port) or passkey registration fails. |
-| `JWT_SECRET`, `SESSION_SECRET`, `JWT_EXPIRY`, `SESSION_EXPIRY_DAYS`, `PASSWORD_RESET_EXPIRY_HOURS` | Leftovers from the pre-Better-Auth session system. Nothing reads them any more; you can drop them. |
+| `BETTER_AUTH_SECRET` on the backend | Now set upstream (it was only on the mcp-server). It is required and must be the same value for both, or MCP bearer tokens are rejected. |
 
 ## Configuration
 
@@ -97,29 +97,37 @@ cp .env.example .env        # then edit it
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-Migrations are **not** applied automatically. The backend image ships them
-compiled under `database/dist`; run them once the database is healthy, and again
-after every upgrade:
+Migrations run automatically: a one-shot `migrate` service applies the compiled
+migrations from `database/dist`, and `backend` waits for it
+(`service_completed_successfully`). A failed migration therefore keeps the old
+backend from being replaced by one that expects a schema it did not get.
+
+To run them by hand anyway — say, to see the SQL before it lands:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec backend \
-  node node_modules/node-pg-migrate/bin/node-pg-migrate.js \
-  --decamelize --migrations-dir database/dist up
+docker compose -f docker-compose.prod.yml run --rm migrate
 ```
-
-That is the `migrate:prod` script from the root `package.json`, spelled out so it
-runs without a package manager inside the container.
 
 Then open your domain and register the first account.
 
 ## Upgrading
 
+**Take a database dump first** (see [Backups](#backups)) — migrations are
+applied automatically and some drop columns.
+
 ```bash
 # Pin VERSION in .env to the release you want, then:
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
-# ...and run the migration command above.
 ```
+
+`up -d` runs `migrate` to completion before starting the new backend.
+
+Two migrations refuse to run on data they cannot interpret rather than guessing:
+`1779668000000_lowercase-emails` aborts if two accounts differ only in email
+case, and `1779668100000_unify-user-identity` aborts if either user table has a
+row the other cannot match. Both need a manual decision — see
+[ADR 0003](./decisions/0003-single-identity-anchored-on-auth-users.md).
 
 Releases are cut by semantic-release on every merge to `main`, so versions move
 quickly. [CHANGELOG.md](../CHANGELOG.md) is the authoritative list of what
@@ -191,7 +199,25 @@ Two volumes hold state you cannot regenerate:
 `osm_data` only caches downloaded PBF files and is safe to lose.
 
 Back up the database with `pg_dump` against the `postgres` container rather than
-copying the volume while it is running.
+copying the volume while it is running:
+
+```bash
+docker compose -f docker-compose.prod.yml exec -T postgres \
+  pg_dump -Fc -U "${POSTGRES_USER:-freundebuch}" "${POSTGRES_DB:-freundebuch}" \
+  > "freundebuch-$(date +%F).dump"
+```
+
+Restore into an empty (or to-be-overwritten) database:
+
+```bash
+docker compose -f docker-compose.prod.yml exec -T postgres \
+  pg_restore -U "${POSTGRES_USER:-freundebuch}" -d "${POSTGRES_DB:-freundebuch}" \
+  --clean --if-exists < freundebuch-2026-01-01.dump
+```
+
+**Dump before every upgrade.** Migrations run automatically now and some are
+destructive by design — `1779668100000_unify-user-identity` drops columns, and
+its `down()` cannot restore password hashes. A dump is the only way back.
 
 ## Health checks
 

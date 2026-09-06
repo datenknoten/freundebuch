@@ -332,9 +332,6 @@ export function setupAuthTestSuite() {
   beforeAll(async () => {
     // Set required environment variables for tests
     vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-    vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
-    vi.stubEnv('JWT_EXPIRY', '604800');
     vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
     vi.stubEnv('LOG_LEVEL', 'silent');
 

@@ -179,8 +179,6 @@ export function setupPostGISTestSuite() {
 
   beforeAll(async () => {
     // Set required environment variables for tests
-    vi.stubEnv('JWT_SECRET', 'test-jwt-secret-test-jwt-secret-1');
-    vi.stubEnv('SESSION_SECRET', 'test-session-secret-test-session-secret-1');
     vi.stubEnv('LOG_LEVEL', 'silent');
 
     context = await setupPostGISTests();
