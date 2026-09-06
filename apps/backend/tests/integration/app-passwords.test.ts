@@ -1,5 +1,10 @@
 import bcrypt from 'bcrypt';
+import pino from 'pino';
 import { describe, expect, it } from 'vitest';
+import {
+  AppPasswordsService,
+  hashAppPasswordPrefix,
+} from '../../src/services/app-passwords.service.js';
 import {
   completeTestUserOnboarding,
   createBetterAuthSession,
@@ -88,7 +93,8 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       expect(passwords).toHaveLength(1);
       expect(passwords[0]).toHaveProperty('externalId');
       expect(passwords[0]).toHaveProperty('name', 'Test iPhone');
-      expect(passwords[0]).toHaveProperty('passwordPrefix');
+      // The hashed lookup key must not be exposed to the client.
+      expect(passwords[0]).not.toHaveProperty('passwordPrefix');
       expect(passwords[0]).toHaveProperty('createdAt');
       // Password hash should NOT be returned
       expect(passwords[0]).not.toHaveProperty('password');
@@ -140,9 +146,11 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       // Password should be formatted with dashes (xxxx-xxxx-xxxx-...)
       expect(body.password).toMatch(/^[a-zA-Z0-9_-]{4}-[a-zA-Z0-9_-]{4}-/);
 
-      // Prefix should be 8 characters of valid base64url characters
-      // Note: base64url includes a-zA-Z0-9_- so the prefix may contain dashes
+      // Prefix is the raw first 8 base64url characters of the fresh password —
+      // returned only here, never by the list endpoint.
       expect(body.passwordPrefix).toMatch(/^[a-zA-Z0-9_-]{8}$/);
+      expect(body.password.slice(0, 4)).toBe(body.passwordPrefix.slice(0, 4));
+      expect(body.password.slice(5, 9)).toBe(body.passwordPrefix.slice(4, 8));
     });
 
     it('should return 400 for missing name', async () => {
@@ -386,7 +394,9 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       );
       expect(dbResult.rows.length).toBe(1);
       expect(dbResult.rows[0].password_hash).toMatch(/^\$2[aby]\$\d{2}\$/); // bcrypt format
-      expect(dbResult.rows[0].password_prefix).toBe(created.passwordPrefix);
+      // The stored prefix is sha256(raw prefix) truncated to 16 hex chars.
+      expect(dbResult.rows[0].password_prefix).toBe(hashAppPasswordPrefix(created.passwordPrefix));
+      expect(dbResult.rows[0].password_prefix).not.toBe(created.passwordPrefix);
 
       // 4. Revoke the password
       const revokeResponse = await app.fetch(
@@ -419,6 +429,44 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         [created.externalId],
       );
       expect(finalDbResult.rows[0].revoked_at).not.toBeNull();
+    });
+
+    it('should authenticate the created password against the hashed prefix in the database', async () => {
+      const { app, pool } = getContext();
+      const testEmail = 'apppw-verify@test.com';
+      const { sessionCookies } = await createUserAndLogin(testEmail, 'TestPassword123');
+
+      const createResponse = await app.fetch(
+        new Request('http://localhost/api/app-passwords', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: sessionCookies,
+          },
+          body: JSON.stringify({ name: 'Verify Test' }),
+        }),
+      );
+      const created = (await createResponse.json()) as {
+        externalId: string;
+        password: string;
+        passwordPrefix: string;
+      };
+
+      const service = new AppPasswordsService(pool, pino({ level: 'silent' }));
+
+      // The formatted password authenticates even though only the hashed
+      // prefix is stored, and the email is matched case-insensitively.
+      const context = await service.verifyAppPassword(testEmail.toUpperCase(), created.password);
+      expect(context).not.toBeNull();
+      expect(context?.appPasswordId).toBe(created.externalId);
+      expect(context?.email).toBe(testEmail);
+
+      // A wrong password with the same prefix is rejected.
+      const wrong = `${created.passwordPrefix.slice(0, 4)}-${created.passwordPrefix.slice(4, 8)}-0000-0000-0000-0000-0000-0000`;
+      expect(await service.verifyAppPassword(testEmail, wrong)).toBeNull();
+
+      // Unknown email is rejected too (and still pays a bcrypt round).
+      expect(await service.verifyAppPassword('nobody@test.com', created.password)).toBeNull();
     });
   });
 });

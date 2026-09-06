@@ -15,8 +15,6 @@ export interface IGetAppPasswordsByUserExternalIdResult {
   last_used_at: Date | null;
   /** User-friendly name (e.g., "My iPhone") */
   name: string;
-  /** First 8 chars for quick lookup */
-  password_prefix: string;
 }
 
 /** 'GetAppPasswordsByUserExternalId' query type */
@@ -25,7 +23,7 @@ export interface IGetAppPasswordsByUserExternalIdQuery {
   result: IGetAppPasswordsByUserExternalIdResult;
 }
 
-const getAppPasswordsByUserExternalIdIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":187,"b":201}]}],"statement":"SELECT\n  ap.external_id,\n  ap.name,\n  ap.password_prefix,\n  ap.last_used_at,\n  ap.created_at\nFROM auth.app_passwords ap\nINNER JOIN auth.users u ON ap.user_id = u.id\nWHERE u.external_id = :userExternalId\n  AND ap.revoked_at IS NULL\nORDER BY ap.created_at DESC"};
+const getAppPasswordsByUserExternalIdIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":165,"b":179}]}],"statement":"SELECT\n  ap.external_id,\n  ap.name,\n  ap.last_used_at,\n  ap.created_at\nFROM auth.app_passwords ap\nINNER JOIN auth.users u ON ap.user_id = u.id\nWHERE u.external_id = :userExternalId\n  AND ap.revoked_at IS NULL\nORDER BY ap.created_at DESC"};
 
 /**
  * Query generated from SQL:
@@ -33,7 +31,6 @@ const getAppPasswordsByUserExternalIdIR: any = {"usedParamSet":{"userExternalId"
  * SELECT
  *   ap.external_id,
  *   ap.name,
- *   ap.password_prefix,
  *   ap.last_used_at,
  *   ap.created_at
  * FROM auth.app_passwords ap
@@ -68,11 +65,13 @@ export interface IGetAppPasswordsByUserIdAndPrefixQuery {
   result: IGetAppPasswordsByUserIdAndPrefixResult;
 }
 
-const getAppPasswordsByUserIdAndPrefixIR: any = {"usedParamSet":{"userId":true,"prefix":true},"params":[{"name":"userId","required":false,"transform":{"type":"scalar"},"locs":[{"a":99,"b":105}]},{"name":"prefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":134,"b":140}]}],"statement":"SELECT\n  ap.id,\n  ap.external_id,\n  ap.password_hash\nFROM auth.app_passwords ap\nWHERE ap.user_id = :userId\n  AND ap.password_prefix = :prefix\n  AND ap.revoked_at IS NULL"};
+const getAppPasswordsByUserIdAndPrefixIR: any = {"usedParamSet":{"userId":true,"prefix":true},"params":[{"name":"userId","required":false,"transform":{"type":"scalar"},"locs":[{"a":226,"b":232}]},{"name":"prefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":261,"b":267}]}],"statement":"-- :prefix is the hashed lookup key (see hashAppPasswordPrefix in\n-- app-passwords.service.ts), never the raw password prefix.\nSELECT\n  ap.id,\n  ap.external_id,\n  ap.password_hash\nFROM auth.app_passwords ap\nWHERE ap.user_id = :userId\n  AND ap.password_prefix = :prefix\n  AND ap.revoked_at IS NULL"};
 
 /**
  * Query generated from SQL:
  * ```
+ * -- :prefix is the hashed lookup key (see hashAppPasswordPrefix in
+ * -- app-passwords.service.ts), never the raw password prefix.
  * SELECT
  *   ap.id,
  *   ap.external_id,
@@ -101,8 +100,6 @@ export interface ICreateAppPasswordResult {
   external_id: string;
   /** User-friendly name (e.g., "My iPhone") */
   name: string;
-  /** First 8 chars for quick lookup */
-  password_prefix: string;
 }
 
 /** 'CreateAppPassword' query type */
@@ -111,7 +108,7 @@ export interface ICreateAppPasswordQuery {
   result: ICreateAppPasswordResult;
 }
 
-const createAppPasswordIR: any = {"usedParamSet":{"name":true,"passwordHash":true,"passwordPrefix":true,"userExternalId":true},"params":[{"name":"name","required":false,"transform":{"type":"scalar"},"locs":[{"a":92,"b":96}]},{"name":"passwordHash","required":false,"transform":{"type":"scalar"},"locs":[{"a":99,"b":111}]},{"name":"passwordPrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":114,"b":128}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":170,"b":184}]}],"statement":"INSERT INTO auth.app_passwords (user_id, name, password_hash, password_prefix)\nSELECT u.id, :name, :passwordHash, :passwordPrefix\nFROM auth.users u\nWHERE u.external_id = :userExternalId\nRETURNING external_id, name, password_prefix, created_at"};
+const createAppPasswordIR: any = {"usedParamSet":{"name":true,"passwordHash":true,"passwordPrefix":true,"userExternalId":true},"params":[{"name":"name","required":false,"transform":{"type":"scalar"},"locs":[{"a":92,"b":96}]},{"name":"passwordHash","required":false,"transform":{"type":"scalar"},"locs":[{"a":99,"b":111}]},{"name":"passwordPrefix","required":false,"transform":{"type":"scalar"},"locs":[{"a":114,"b":128}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":170,"b":184}]}],"statement":"INSERT INTO auth.app_passwords (user_id, name, password_hash, password_prefix)\nSELECT u.id, :name, :passwordHash, :passwordPrefix\nFROM auth.users u\nWHERE u.external_id = :userExternalId\nRETURNING external_id, name, created_at"};
 
 /**
  * Query generated from SQL:
@@ -120,7 +117,7 @@ const createAppPasswordIR: any = {"usedParamSet":{"name":true,"passwordHash":tru
  * SELECT u.id, :name, :passwordHash, :passwordPrefix
  * FROM auth.users u
  * WHERE u.external_id = :userExternalId
- * RETURNING external_id, name, password_prefix, created_at
+ * RETURNING external_id, name, created_at
  * ```
  */
 export const createAppPassword = new PreparedQuery<ICreateAppPasswordParams,ICreateAppPasswordResult>(createAppPasswordIR);

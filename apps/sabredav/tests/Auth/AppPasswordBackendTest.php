@@ -308,6 +308,49 @@ class AppPasswordBackendTest extends TestCase
         $this->assertTrue($result);
     }
 
+    #[Test]
+    public function validateUserPassLooksUpTheHashedPrefix(): void
+    {
+        $userStmt = $this->createMock(PDOStatement::class);
+        $userStmt->method('execute')->willReturn(true);
+        $userStmt->method('fetch')->willReturn([
+            'id' => 1,
+            'external_id' => 'user-uuid',
+            'email' => 'user@example.com',
+        ]);
+
+        $passwordStmt = $this->createMock(PDOStatement::class);
+        // The stored column holds left(sha256(<raw 8-char prefix>), 16 hex chars),
+        // so that is what the lookup must send — never the plaintext prefix.
+        $passwordStmt->expects($this->once())
+            ->method('execute')
+            ->with(['user_id' => 1, 'prefix' => 'e9cee71ab932fde8'])
+            ->willReturn(true);
+        $passwordStmt->method('fetch')->willReturn(false);
+
+        $this->pdo->method('prepare')
+            ->willReturnOnConsecutiveCalls($userStmt, $passwordStmt);
+
+        // Raw prefix 'abcd1234' -> sha256 'e9cee71a…' (same value as the
+        // TypeScript hashAppPasswordPrefix() unit test asserts).
+        $this->assertSame('e9cee71ab932fde8', substr(hash('sha256', 'abcd1234'), 0, 16));
+        $this->assertFalse($this->callValidateUserPass('user@example.com', 'abcd-1234-efgh-5678'));
+    }
+
+    #[Test]
+    public function dummyHashIsAUsableBcryptHashAtTheProductionCost(): void
+    {
+        // The rejection paths compare against this constant so that an unknown
+        // email costs the same bcrypt round as a wrong password. A malformed or
+        // cheaper hash would defeat that.
+        $reflection = new ReflectionClass(AppPasswordBackend::class);
+        $dummyHash = $reflection->getConstant('DUMMY_HASH');
+
+        $this->assertIsString($dummyHash);
+        $this->assertTrue(password_verify('dummy', $dummyHash));
+        $this->assertSame(10, password_get_info($dummyHash)['options']['cost']);
+    }
+
     /**
      * Helper to call the protected validateUserPass method
      */

@@ -25,6 +25,15 @@ class AppPasswordBackend extends AbstractBasic
 {
     private const FORMAT_CHUNK_SIZE = 4;
     private const FORMAT_STRIDE = self::FORMAT_CHUNK_SIZE + 1;
+    private const PREFIX_LENGTH = 8;
+
+    /**
+     * Bcrypt hash of the string 'dummy' at cost 10 (the cost the backend uses
+     * for real app passwords). Compared against on the rejection paths that
+     * would otherwise return without any bcrypt work, so an unknown email
+     * costs the same as a wrong password.
+     */
+    private const DUMMY_HASH = '$2y$10$DN8Uky1VqK6OaPPi84DNAeMFrQ3TFJxWjLYkI1fr5nBMmHVItXd4i';
 
     private PDO $pdo;
 
@@ -72,7 +81,10 @@ class AppPasswordBackend extends AbstractBasic
     protected function validateUserPass($username, $password): bool
     {
         $rawPassword = $this->unformatPassword($password);
-        $prefix = substr($rawPassword, 0, 8);
+        // Stored lookup key: left(sha256(<raw 8-char prefix>), 16 hex chars).
+        // Must stay in sync with hashAppPasswordPrefix() in
+        // apps/backend/src/services/app-passwords.service.ts.
+        $prefix = substr(hash('sha256', substr($rawPassword, 0, self::PREFIX_LENGTH)), 0, 16);
 
         // Find user by email
         // auth."user" is the identity of record; auth.users only anchors the
@@ -87,13 +99,15 @@ class AppPasswordBackend extends AbstractBasic
         $user = $stmt->fetch();
 
         if (!$user) {
+            // Spend the same bcrypt round a real candidate would have cost.
+            password_verify($rawPassword, self::DUMMY_HASH);
             $this->logFailedAttempt($username, 'user_not_found');
             return false;
         }
 
         // Find matching app passwords by prefix
         $stmt = $this->pdo->prepare('
-            SELECT id, password_hash, password_prefix
+            SELECT id, password_hash
             FROM auth.app_passwords
             WHERE user_id = :user_id
               AND password_prefix = :prefix
@@ -105,7 +119,9 @@ class AppPasswordBackend extends AbstractBasic
         ]);
 
         // Try each matching password
+        $candidates = 0;
         while ($row = $stmt->fetch()) {
+            $candidates++;
             // Node.js bcrypt uses $2b$ prefix, PHP uses $2y$ - they are compatible
             $hash = str_replace('$2b$', '$2y$', $row['password_hash']);
             if (password_verify($rawPassword, $hash)) {
@@ -119,6 +135,12 @@ class AppPasswordBackend extends AbstractBasic
 
                 return true;
             }
+        }
+
+        if ($candidates === 0) {
+            // No stored prefix matched: spend the same bcrypt round a real
+            // candidate would have cost.
+            password_verify($rawPassword, self::DUMMY_HASH);
         }
 
         $this->logFailedAttempt($username, 'invalid_password');

@@ -1,7 +1,10 @@
 import bcrypt from 'bcrypt';
 import pino from 'pino';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppPasswordsService } from '../../src/services/app-passwords.service.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  AppPasswordsService,
+  hashAppPasswordPrefix,
+} from '../../src/services/app-passwords.service.js';
 
 // Mock the PgTyped queries
 vi.mock('../../src/models/queries/app-passwords.queries.js', () => ({
@@ -50,6 +53,22 @@ describe('AppPasswordsService', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('hashAppPasswordPrefix', () => {
+    it('matches the SabreDAV implementation for a known prefix', () => {
+      // apps/sabredav computes substr(hash('sha256', $prefix), 0, 16); the PHP
+      // test suite asserts the same literal for the same input.
+      expect(hashAppPasswordPrefix('abcd1234')).toBe('e9cee71ab932fde8');
+    });
+
+    it('produces a 16-char lowercase hex key', () => {
+      expect(hashAppPasswordPrefix('AAAA-BBB')).toMatch(/^[0-9a-f]{16}$/);
+    });
+  });
+
   describe('listAppPasswords', () => {
     it('should return empty array when no passwords exist', async () => {
       vi.mocked(getAppPasswordsByUserExternalId.run).mockResolvedValue([]);
@@ -69,14 +88,12 @@ describe('AppPasswordsService', () => {
         {
           external_id: VALID_PASSWORD_ID,
           name: 'My iPhone',
-          password_prefix: 'abcd1234',
           last_used_at: now,
           created_at: now,
         },
         {
           external_id: '6ba7b810-9dad-41d4-80b5-ec8bdd0e9ef1',
           name: 'Thunderbird',
-          password_prefix: 'efgh5678',
           last_used_at: null,
           created_at: now,
         },
@@ -88,10 +105,11 @@ describe('AppPasswordsService', () => {
       expect(result[0]).toEqual({
         externalId: VALID_PASSWORD_ID,
         name: 'My iPhone',
-        passwordPrefix: 'abcd1234',
         lastUsedAt: '2024-01-15T12:00:00.000Z',
         createdAt: '2024-01-15T12:00:00.000Z',
       });
+      // The stored prefix is a hash and never leaves the database.
+      expect(result[0]).not.toHaveProperty('passwordPrefix');
       expect(result[1].lastUsedAt).toBeNull();
     });
   });
@@ -108,7 +126,6 @@ describe('AppPasswordsService', () => {
         {
           external_id: VALID_PASSWORD_ID,
           name: 'My iPhone',
-          password_prefix: 'testpref',
           created_at: createdAt,
         },
       ]);
@@ -136,22 +153,47 @@ describe('AppPasswordsService', () => {
         {
           external_id: VALID_PASSWORD_ID,
           name: 'My iPhone',
-          password_prefix: 'testpref',
           created_at: createdAt,
         },
       ]);
 
-      await service.createAppPassword(VALID_USER_ID, 'My iPhone');
+      const result = await service.createAppPassword(VALID_USER_ID, 'My iPhone');
 
+      const rawPrefix = result.passwordPrefix;
       expect(createAppPassword.run).toHaveBeenCalledWith(
         expect.objectContaining({
           userExternalId: VALID_USER_ID,
           name: 'My iPhone',
           passwordHash: expect.stringMatching(/^\$2[aby]\$\d{2}\$/),
-          passwordPrefix: expect.any(String),
+          passwordPrefix: hashAppPasswordPrefix(rawPrefix),
         }),
         mockDb,
       );
+    });
+
+    it('should store a hashed prefix but return the raw one', async () => {
+      const createdAt = new Date('2024-01-15T12:00:00Z');
+      vi.mocked(createAppPassword.run).mockResolvedValue([
+        {
+          external_id: VALID_PASSWORD_ID,
+          name: 'My iPhone',
+          created_at: createdAt,
+        },
+      ]);
+
+      const result = await service.createAppPassword(VALID_USER_ID, 'My iPhone');
+
+      // formatPassword inserts a separator after every 4 chars, so the raw
+      // 8-char prefix is chunk 1 + chunk 2 of the formatted password. Derived
+      // by position, not by splitting on '-', because base64url itself
+      // contains '-'.
+      expect(result.passwordPrefix).toMatch(/^[a-zA-Z0-9_-]{8}$/);
+      expect(result.password.slice(0, 4)).toBe(result.passwordPrefix.slice(0, 4));
+      expect(result.password.slice(5, 9)).toBe(result.passwordPrefix.slice(4, 8));
+
+      const stored = vi.mocked(createAppPassword.run).mock.calls[0]?.[0].passwordPrefix;
+      expect(stored).toBe(hashAppPasswordPrefix(result.passwordPrefix));
+      expect(stored).toMatch(/^[0-9a-f]{16}$/);
     });
 
     it('should format password with dashes', async () => {
@@ -160,7 +202,6 @@ describe('AppPasswordsService', () => {
         {
           external_id: VALID_PASSWORD_ID,
           name: 'My iPhone',
-          password_prefix: 'testpref',
           created_at: createdAt,
         },
       ]);
@@ -217,6 +258,18 @@ describe('AppPasswordsService', () => {
       expect(result).toBeNull();
     });
 
+    it('should still spend one bcrypt compare for an unknown email', async () => {
+      // Otherwise the response time tells an attacker which addresses exist.
+      const compareSpy = vi.spyOn(bcrypt, 'compare');
+      vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([]);
+
+      const result = await service.verifyAppPassword(testEmail, testPassword);
+
+      expect(result).toBeNull();
+      expect(compareSpy).toHaveBeenCalledTimes(1);
+      expect(compareSpy).toHaveBeenCalledWith(testPassword, expect.stringMatching(/^\$2[aby]\$/));
+    });
+
     it('should return null when no matching prefix', async () => {
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
         { id: 1, external_id: VALID_USER_ID, email: testEmail },
@@ -226,6 +279,19 @@ describe('AppPasswordsService', () => {
       const result = await service.verifyAppPassword(testEmail, testPassword);
 
       expect(result).toBeNull();
+    });
+
+    it('should still spend one bcrypt compare when no stored prefix matches', async () => {
+      const compareSpy = vi.spyOn(bcrypt, 'compare');
+      vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
+        { id: 1, external_id: VALID_USER_ID, email: testEmail },
+      ]);
+      vi.mocked(getAppPasswordsByUserIdAndPrefix.run).mockResolvedValue([]);
+
+      const result = await service.verifyAppPassword(testEmail, testPassword);
+
+      expect(result).toBeNull();
+      expect(compareSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should return null for wrong password', async () => {
@@ -321,7 +387,7 @@ describe('AppPasswordsService', () => {
       expect(result).not.toBeNull();
       expect(result?.userId).toBe(VALID_USER_ID);
       expect(getAppPasswordsByUserIdAndPrefix.run).toHaveBeenCalledWith(
-        { userId: 1, prefix: 'AAAA-BBB' },
+        { userId: 1, prefix: hashAppPasswordPrefix('AAAA-BBB') },
         mockDb,
       );
     });
@@ -350,7 +416,7 @@ describe('AppPasswordsService', () => {
       expect(result).toBeNull();
       // Prefix derived from fallback: strip all dashes → "abcdXefghijklmnopqrstuvwxyz1234567890"
       expect(getAppPasswordsByUserIdAndPrefix.run).toHaveBeenCalledWith(
-        expect.objectContaining({ prefix: 'abcdXefg' }),
+        expect.objectContaining({ prefix: hashAppPasswordPrefix('abcdXefg') }),
         mockDb,
       );
     });
@@ -424,7 +490,7 @@ describe('AppPasswordsService', () => {
       expect(getAppPasswordsByUserIdAndPrefix.run).toHaveBeenCalledWith(
         {
           userId: 1,
-          prefix: 'abcd1234',
+          prefix: hashAppPasswordPrefix('abcd1234'),
         },
         mockDb,
       );

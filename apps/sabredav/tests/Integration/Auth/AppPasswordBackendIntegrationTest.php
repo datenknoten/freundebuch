@@ -177,7 +177,7 @@ class AppPasswordBackendIntegrationTest extends IntegrationTestCase
             'user_id' => $user['id'],
             'name' => 'Node.js Device',
             'password_hash' => $nodeJsHash,
-            'password_prefix' => 'abcd1234',
+            'password_prefix' => substr(hash('sha256', 'abcd1234'), 0, 16),
         ]);
 
         $result = $this->callValidateUserPass('user@example.com', 'abcd1234efgh5678');
@@ -248,6 +248,26 @@ class AppPasswordBackendIntegrationTest extends IntegrationTestCase
 
         // Should not work for user2
         $this->assertFalse($this->callValidateUserPass('user2@example.com', 'abcd1234efgh5678'));
+    }
+
+    #[Test]
+    public function storedPrefixIsHashedNotThePlaintextPrefix(): void
+    {
+        $user = $this->createTestUser('user@example.com');
+        $appPassword = $this->createAppPassword((int) $user['id'], 'Test Device', 'abcd1234efgh5678');
+
+        $stmt = $this->getPdo()->prepare('SELECT password_prefix FROM auth.app_passwords WHERE id = :id');
+        $stmt->execute(['id' => $appPassword['id']]);
+        $stored = $stmt->fetch()['password_prefix'];
+
+        // Cross-language contract: the backend's hashAppPasswordPrefix() produces
+        // the same value for the same input (see the TypeScript unit test).
+        $this->assertSame('e9cee71ab932fde8', substr(hash('sha256', 'abcd1234'), 0, 16));
+        $this->assertSame('e9cee71ab932fde8', $stored);
+        $this->assertNotSame('abcd1234', $stored);
+
+        // …and it still authenticates.
+        $this->assertTrue($this->callValidateUserPass('user@example.com', 'abcd1234efgh5678'));
     }
 
     /**

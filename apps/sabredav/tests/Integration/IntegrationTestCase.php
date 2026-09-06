@@ -245,7 +245,9 @@ abstract class IntegrationTestCase extends TestCase
     protected function createAppPassword(int $userId, string $name, string $rawPassword): array
     {
         $passwordHash = password_hash($rawPassword, PASSWORD_BCRYPT);
-        $prefix = substr($rawPassword, 0, 8);
+        // password_prefix stores left(sha256(<raw 8-char prefix>), 16 hex chars),
+        // matching hashAppPasswordPrefix() in the backend service.
+        $prefix = substr(hash('sha256', substr($rawPassword, 0, 8)), 0, 16);
 
         $stmt = self::$pdo->prepare('
             INSERT INTO auth.app_passwords (user_id, name, password_hash, password_prefix)

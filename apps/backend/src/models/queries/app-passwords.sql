@@ -2,7 +2,6 @@
 SELECT
   ap.external_id,
   ap.name,
-  ap.password_prefix,
   ap.last_used_at,
   ap.created_at
 FROM auth.app_passwords ap
@@ -12,6 +11,8 @@ WHERE u.external_id = :userExternalId
 ORDER BY ap.created_at DESC;
 
 /* @name GetAppPasswordsByUserIdAndPrefix */
+-- :prefix is the hashed lookup key (see hashAppPasswordPrefix in
+-- app-passwords.service.ts), never the raw password prefix.
 SELECT
   ap.id,
   ap.external_id,
@@ -26,7 +27,7 @@ INSERT INTO auth.app_passwords (user_id, name, password_hash, password_prefix)
 SELECT u.id, :name, :passwordHash, :passwordPrefix
 FROM auth.users u
 WHERE u.external_id = :userExternalId
-RETURNING external_id, name, password_prefix, created_at;
+RETURNING external_id, name, created_at;
 
 /* @name RevokeAppPassword */
 UPDATE auth.app_passwords ap
