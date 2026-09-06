@@ -6,6 +6,7 @@
  */
 
 import { type } from 'arktype';
+import type { Logger } from 'pino';
 
 // ============================================================================
 // ArkType Schemas (matching the JSON aggregates produced by SQL queries)
@@ -132,67 +133,82 @@ export type ProfessionalHistoryJsonRow = typeof ProfessionalHistoryJsonRowSchema
 
 /**
  * Validates each element of an array against an ArkType schema.
- * Non-array values become `[]`. Elements that fail validation are
- * silently dropped — this keeps the rest of the data usable when a
- * single row has an unexpected shape.
+ *
+ * Non-array values become `[]`, and elements that fail validation are dropped
+ * so one bad row does not blank the whole friend. Dropping used to be silent,
+ * which made a schema/column mismatch look like missing data to the user and
+ * left no trace anywhere; every drop is now logged with the resource and index.
  */
-function safeArray<T>(value: unknown, schema: { assert: (data: unknown) => T }): T[] {
+function safeArray<T>(
+  value: unknown,
+  schema: { assert: (data: unknown) => T },
+  logger: Logger,
+  resource: string,
+): T[] {
   if (!Array.isArray(value)) return [];
   const results: T[] = [];
-  for (const element of value) {
+  for (const [index, element] of value.entries()) {
     try {
       results.push(schema.assert(element));
-    } catch {
-      // Skip malformed element — DB constraints should prevent this,
-      // but if it happens we keep the valid rows rather than failing entirely.
+    } catch (error) {
+      logger.warn(
+        { resource, index, reason: error instanceof Error ? error.message : String(error) },
+        'Dropped malformed JSON aggregate element',
+      );
     }
   }
   return results;
 }
 
-export function parseCirclesJson(value: unknown): CircleJsonRow[] {
-  return safeArray(value, CircleJsonRowSchema);
+export function parseCirclesJson(value: unknown, logger: Logger): CircleJsonRow[] {
+  return safeArray(value, CircleJsonRowSchema, logger, 'circles');
 }
 
-export function parsePhonesJson(value: unknown): PhoneJsonRow[] {
-  return safeArray(value, PhoneJsonRowSchema);
+export function parsePhonesJson(value: unknown, logger: Logger): PhoneJsonRow[] {
+  return safeArray(value, PhoneJsonRowSchema, logger, 'phones');
 }
 
-export function parseEmailsJson(value: unknown): EmailJsonRow[] {
-  return safeArray(value, EmailJsonRowSchema);
+export function parseEmailsJson(value: unknown, logger: Logger): EmailJsonRow[] {
+  return safeArray(value, EmailJsonRowSchema, logger, 'emails');
 }
 
-export function parseAddressesJson(value: unknown): AddressJsonRow[] {
-  return safeArray(value, AddressJsonRowSchema);
+export function parseAddressesJson(value: unknown, logger: Logger): AddressJsonRow[] {
+  return safeArray(value, AddressJsonRowSchema, logger, 'addresses');
 }
 
-export function parseUrlsJson(value: unknown): UrlJsonRow[] {
-  return safeArray(value, UrlJsonRowSchema);
+export function parseUrlsJson(value: unknown, logger: Logger): UrlJsonRow[] {
+  return safeArray(value, UrlJsonRowSchema, logger, 'urls');
 }
 
-export function parseDatesJson(value: unknown): DateJsonRow[] {
-  return safeArray(value, DateJsonRowSchema);
+export function parseDatesJson(value: unknown, logger: Logger): DateJsonRow[] {
+  return safeArray(value, DateJsonRowSchema, logger, 'dates');
 }
 
-export function parseMetInfoJson(value: unknown): MetInfoJsonRow | null {
+export function parseMetInfoJson(value: unknown, logger: Logger): MetInfoJsonRow | null {
   try {
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       return MetInfoJsonRowSchema.assert(value);
     }
-  } catch {
-    // Malformed met_info object — return null rather than crashing
+  } catch (error) {
+    logger.warn(
+      { resource: 'metInfo', reason: error instanceof Error ? error.message : String(error) },
+      'Dropped malformed JSON aggregate element',
+    );
   }
   return null;
 }
 
-export function parseSocialProfilesJson(value: unknown): SocialProfileJsonRow[] {
-  return safeArray(value, SocialProfileJsonRowSchema);
+export function parseSocialProfilesJson(value: unknown, logger: Logger): SocialProfileJsonRow[] {
+  return safeArray(value, SocialProfileJsonRowSchema, logger, 'socialProfiles');
 }
 
-export function parseRelationshipsJson(value: unknown): RelationshipJsonRow[] {
-  return safeArray(value, RelationshipJsonRowSchema);
+export function parseRelationshipsJson(value: unknown, logger: Logger): RelationshipJsonRow[] {
+  return safeArray(value, RelationshipJsonRowSchema, logger, 'relationships');
 }
 
-export function parseProfessionalHistoryJson(value: unknown): ProfessionalHistoryJsonRow[] {
-  return safeArray(value, ProfessionalHistoryJsonRowSchema);
+export function parseProfessionalHistoryJson(
+  value: unknown,
+  logger: Logger,
+): ProfessionalHistoryJsonRow[] {
+  return safeArray(value, ProfessionalHistoryJsonRowSchema, logger, 'professionalHistory');
 }

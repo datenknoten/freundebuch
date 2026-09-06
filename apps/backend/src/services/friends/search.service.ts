@@ -337,7 +337,7 @@ export class SearchService {
 
   private mapFacetedSearchResult(row: IFacetedSearchResult): GlobalSearchResult {
     // Parse circles from JSON
-    const circlesRaw = parseCirclesJson(row.circles);
+    const circlesRaw = parseCirclesJson(row.circles, this.logger);
 
     return {
       id: row.external_id,
@@ -361,7 +361,7 @@ export class SearchService {
 
   private mapFilterOnlyResult(row: IFilterOnlyListResult): GlobalSearchResult {
     // Parse circles from JSON
-    const circlesRaw = parseCirclesJson(row.circles);
+    const circlesRaw = parseCirclesJson(row.circles, this.logger);
 
     return {
       id: row.external_id,

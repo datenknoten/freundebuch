@@ -294,6 +294,21 @@ export class NotificationChannelAlreadyExistsError extends AppError {
 // ============================================================================
 
 /**
+ * Thrown when a stored value cannot be interpreted — an enum column holding
+ * something outside the application's union, i.e. a schema/code mismatch.
+ *
+ * The offending value is deliberately not in the message: it is user data, and
+ * this message reaches the client.
+ */
+export class DataIntegrityError extends AppError {
+  readonly statusCode = 500;
+
+  constructor(label: string) {
+    super(`Unexpected ${label}`, { code: 'DATA_INTEGRITY' });
+  }
+}
+
+/**
  * Thrown when friend creation fails unexpectedly.
  */
 export class FriendCreationError extends AppError {

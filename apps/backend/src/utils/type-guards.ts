@@ -21,6 +21,7 @@ import {
 import { type } from 'arktype';
 import type { RateLimiterRes } from 'rate-limiter-flexible';
 import type { Json } from '../models/queries/users.queries.js';
+import { DataIntegrityError } from './errors.js';
 
 // ============================================================================
 // Type Guards
@@ -55,7 +56,10 @@ function makeEnumParser<T>(schema: { assert: (data: unknown) => T }, label: stri
     try {
       return schema.assert(value);
     } catch {
-      throw new TypeError(`Invalid ${label}: ${value}`);
+      // A stored value outside the union means the schema and the code
+      // disagree, which is a 500, not a client error. The raw value stays out
+      // of the message because that message is returned to the client.
+      throw new DataIntegrityError(label);
     }
   };
 }

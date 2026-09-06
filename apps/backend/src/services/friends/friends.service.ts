@@ -690,7 +690,7 @@ export class FriendsService {
   // ============================================================================
 
   private mapFriendListItem(row: IGetFriendsByUserIdResult): FriendListItem {
-    const circlesRaw = parseCirclesJson(row.circles);
+    const circlesRaw = parseCirclesJson(row.circles, this.logger);
 
     const birthday = formatDateOnly(row.birthday);
 
@@ -721,16 +721,19 @@ export class FriendsService {
   }
 
   private mapFriendWithEmbeddedRelations(friend: IGetFriendByIdResult): Friend {
-    const phones = parsePhonesJson(friend.phones);
-    const emails = parseEmailsJson(friend.emails);
-    const addresses = parseAddressesJson(friend.addresses);
-    const urls = parseUrlsJson(friend.urls);
-    const dates = parseDatesJson(friend.dates);
-    const metInfoRaw = parseMetInfoJson(friend.met_info);
-    const socialProfiles = parseSocialProfilesJson(friend.social_profiles);
-    const relationships = parseRelationshipsJson(friend.relationships);
-    const circles = parseCirclesJson(friend.circles);
-    const professionalHistory = parseProfessionalHistoryJson(friend.professional_history);
+    const phones = parsePhonesJson(friend.phones, this.logger);
+    const emails = parseEmailsJson(friend.emails, this.logger);
+    const addresses = parseAddressesJson(friend.addresses, this.logger);
+    const urls = parseUrlsJson(friend.urls, this.logger);
+    const dates = parseDatesJson(friend.dates, this.logger);
+    const metInfoRaw = parseMetInfoJson(friend.met_info, this.logger);
+    const socialProfiles = parseSocialProfilesJson(friend.social_profiles, this.logger);
+    const relationships = parseRelationshipsJson(friend.relationships, this.logger);
+    const circles = parseCirclesJson(friend.circles, this.logger);
+    const professionalHistory = parseProfessionalHistoryJson(
+      friend.professional_history,
+      this.logger,
+    );
 
     return {
       id: friend.external_id,
