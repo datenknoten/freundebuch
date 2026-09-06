@@ -773,6 +773,30 @@ describe('Friends API - Integration Tests', () => {
       expect(body.error).toBe('No photo file provided');
     });
 
+    it('should return 413 before buffering an oversized photo', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Photo Test');
+
+      const formData = new FormData();
+      // MAX_FILE_SIZE is 5 MiB; the route's bodyLimit allows 64 KiB of
+      // multipart overhead on top, so 6 MiB is over the limit either way.
+      const oversized = new Blob([new Uint8Array(6 * 1024 * 1024)], { type: 'image/jpeg' });
+      formData.append('photo', oversized, 'big.jpg');
+
+      const request = new Request(`http://localhost/api/friends/${friendId}/photo`, {
+        method: 'POST',
+        headers: {
+          Cookie: testUser.sessionCookies,
+        },
+        body: formData,
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(413);
+    });
+
     it('should return 404 for photo upload to non-existent friend', async () => {
       const { app, testUser } = getContext();
 

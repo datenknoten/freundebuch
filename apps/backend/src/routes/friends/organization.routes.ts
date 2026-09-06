@@ -1,6 +1,7 @@
-import { PhotoValidationErrors } from '@freundebuch/shared/index.js';
+import { MAX_FILE_SIZE, PhotoValidationErrors } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { getAuthUser } from '../../middleware/auth.js';
 import { CirclesService } from '../../services/circles.service.js';
 import { FriendsService } from '../../services/friends/index.js';
@@ -19,58 +20,68 @@ const app = new Hono<AppContext>();
  * POST /api/friends/:id/photo
  * Upload a profile photo
  */
-app.post('/:id/photo', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = c.req.param('id');
+app.post(
+  '/:id/photo',
+  // Reject oversized bodies before buffering them; the service-level size check
+  // only fires after the whole file is already in memory. The slack covers the
+  // multipart envelope around a MAX_FILE_SIZE payload.
+  bodyLimit({
+    maxSize: MAX_FILE_SIZE + 64 * 1024,
+    onError: (c) => c.json({ error: PhotoValidationErrors.FILE_TOO_LARGE }, 413),
+  }),
+  async (c) => {
+    const logger = c.get('logger');
+    const db = c.get('db');
+    const user = getAuthUser(c);
+    const friendId = c.req.param('id');
 
-  // Validate friendId is a valid UUID to prevent path traversal
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
-
-  const formData = await c.req.formData();
-  const file = formData.get('photo');
-
-  if (!file || !(file instanceof File)) {
-    throw new ValidationError(PhotoValidationErrors.NO_FILE_PROVIDED);
-  }
-
-  // Verify friend exists and belongs to user
-  const friendsService = new FriendsService(db, logger);
-  const friend = await friendsService.getFriendById(user.userId, friendId);
-
-  if (!friend) {
-    throw new FriendNotFoundError();
-  }
-
-  // Upload photo
-  const photoService = new PhotoService(logger);
-  const result = await photoService.uploadPhoto(friendId, file);
-
-  // Update friend with photo URLs
-  // If DB update fails, clean up the uploaded files to prevent orphaned files
-  try {
-    await friendsService.updatePhoto(
-      user.userId,
-      friendId,
-      result.photoUrl,
-      result.photoThumbnailUrl,
-    );
-  } catch (dbError) {
-    // Clean up uploaded files since DB update failed
-    logger.warn({ friendId }, 'DB update failed, cleaning up uploaded photo');
-    try {
-      await photoService.deletePhoto(friendId);
-    } catch (cleanupError) {
-      logger.error({ cleanupError, friendId }, 'Failed to clean up photo after DB error');
+    // Validate friendId is a valid UUID to prevent path traversal
+    if (!isValidUuid(friendId)) {
+      throw new ValidationError('Invalid friend ID');
     }
-    throw dbError;
-  }
 
-  return c.json(result, 201);
-});
+    const formData = await c.req.formData();
+    const file = formData.get('photo');
+
+    if (!file || !(file instanceof File)) {
+      throw new ValidationError(PhotoValidationErrors.NO_FILE_PROVIDED);
+    }
+
+    // Verify friend exists and belongs to user
+    const friendsService = new FriendsService(db, logger);
+    const friend = await friendsService.getFriendById(user.userId, friendId);
+
+    if (!friend) {
+      throw new FriendNotFoundError();
+    }
+
+    // Upload photo
+    const photoService = new PhotoService(logger);
+    const result = await photoService.uploadPhoto(friendId, file);
+
+    // Update friend with photo URLs
+    // If DB update fails, clean up the uploaded files to prevent orphaned files
+    try {
+      await friendsService.updatePhoto(
+        user.userId,
+        friendId,
+        result.photoUrl,
+        result.photoThumbnailUrl,
+      );
+    } catch (dbError) {
+      // Clean up uploaded files since DB update failed
+      logger.warn({ friendId }, 'DB update failed, cleaning up uploaded photo');
+      try {
+        await photoService.deletePhoto(friendId);
+      } catch (cleanupError) {
+        logger.error({ cleanupError, friendId }, 'Failed to clean up photo after DB error');
+      }
+      throw dbError;
+    }
+
+    return c.json(result, 201);
+  },
+);
 
 /**
  * DELETE /api/friends/:id/photo

@@ -9,11 +9,15 @@ const VALID_FRIEND_ID_2 = '6ba7b810-9dad-41d4-80b5-ec8bdd0e9ef0';
 
 // Mock sharp
 vi.mock('sharp', () => ({
-  default: vi.fn(() => ({
-    metadata: vi.fn().mockResolvedValue({ width: 1000, height: 1000 }),
-    resize: vi.fn().mockReturnThis(),
-    toFile: vi.fn().mockResolvedValue(undefined),
-  })),
+  default: vi.fn(() => {
+    const pipeline = {
+      metadata: vi.fn().mockResolvedValue({ width: 1000, height: 1000 }),
+      resize: vi.fn().mockReturnThis(),
+      toFile: vi.fn().mockResolvedValue(undefined),
+      clone: vi.fn(() => pipeline),
+    };
+    return pipeline;
+  }),
 }));
 
 // Mock fs/promises

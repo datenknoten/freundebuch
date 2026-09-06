@@ -15,6 +15,12 @@ import { AppError } from '../utils/errors.js';
 import { isPathWithinBase, isValidUuid } from '../utils/security.js';
 import { isNodeError } from '../utils/type-guards.js';
 
+/**
+ * Maximum number of pixels sharp will decode (50 MP ≈ 8660x5773). Well above
+ * any phone camera, far below what a decompression bomb asks for.
+ */
+const MAX_IMAGE_PIXELS = 50_000_000;
+
 export class PhotoService {
   private logger: Logger;
   private uploadDir: string;
@@ -116,10 +122,12 @@ export class PhotoService {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Validate it's actually an image using sharp
+    // Validate it's actually an image using sharp. `limitInputPixels` caps the
+    // decoded surface: a small, highly compressed file can otherwise expand to
+    // gigabytes of pixels (decompression bomb).
     let image: sharp.Sharp;
     try {
-      image = sharp(buffer);
+      image = sharp(buffer, { limitInputPixels: MAX_IMAGE_PIXELS, sequentialRead: true });
       await image.metadata();
     } catch {
       throw new PhotoUploadError(PhotoValidationErrors.INVALID_IMAGE, 'INVALID_IMAGE');
@@ -131,8 +139,10 @@ export class PhotoService {
     const originalPath = path.join(friendDir, originalFilename);
     const thumbnailPath = path.join(friendDir, thumbnailFilename);
 
-    // Save original (with reasonable max dimensions to prevent abuse)
+    // Save original (with reasonable max dimensions to prevent abuse). Both
+    // outputs clone the one decoded pipeline instead of decoding twice.
     await image
+      .clone()
       .resize(2000, 2000, {
         fit: 'inside',
         withoutEnlargement: true,
@@ -140,7 +150,8 @@ export class PhotoService {
       .toFile(originalPath);
 
     // Generate and save thumbnail
-    await sharp(buffer)
+    await image
+      .clone()
       .resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, {
         fit: 'cover',
         position: 'center',
