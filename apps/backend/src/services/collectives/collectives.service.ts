@@ -5,14 +5,13 @@ import type {
   CollectiveListItem,
   CollectiveListOptions,
   CollectiveListResponse,
-  CollectiveMember,
   CollectiveMemberContact,
-  CollectiveRole,
   CollectiveType,
   CollectiveUpdate,
   ContactCollectiveSummary,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
+import { mapMember, mapRole } from '../../models/mappers/collectives.mappers.js';
 import {
   countCollectivesByUserId,
   createCollective,
@@ -31,7 +30,6 @@ import {
   type IGetRolesForTypeResult,
   updateCollective,
 } from '../../models/queries/collectives.queries.js';
-import { formatDateOnly } from '../../utils/date.js';
 import { CollectiveCreationError, CollectiveNotFoundError } from '../../utils/errors.js';
 
 const PREVIEW_MEMBER_LIMIT = 3;
@@ -276,7 +274,7 @@ export class CollectivesService {
       name: row.type_name,
       description: row.type_description,
       isSystemDefault: row.type_is_system_default,
-      roles: roles.map((r) => this.mapRole(r)),
+      roles: roles.map((r) => mapRole(r)),
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
     };
@@ -300,7 +298,7 @@ export class CollectivesService {
       address,
       memberCount: row.member_count ?? 0,
       activeMemberCount: row.active_member_count ?? 0,
-      members: members.map((m) => this.mapMember(m)),
+      members: members.map((m) => mapMember(m)),
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
       deletedAt: row.deleted_at ? row.deleted_at.toISOString() : null,
@@ -328,44 +326,11 @@ export class CollectivesService {
     };
   }
 
-  private mapMember(row: IGetMembersByCollectiveIdResult): CollectiveMember {
-    return {
-      id: row.membership_external_id,
-      contact: {
-        id: row.contact_external_id,
-        displayName: row.display_name ?? 'Unknown',
-        photoUrl: row.photo_url,
-      },
-      role: {
-        id: row.role_external_id,
-        roleKey: row.role_key,
-        label: row.role_label,
-        sortOrder: row.role_sort_order,
-      },
-      isActive: row.is_active,
-      inactiveReason: row.inactive_reason,
-      inactiveDate: row.inactive_date ? formatDateOnly(row.inactive_date) : null,
-      joinedDate: row.joined_date ? formatDateOnly(row.joined_date) : null,
-      notes: row.notes,
-      createdAt: row.created_at.toISOString(),
-      updatedAt: row.updated_at.toISOString(),
-    };
-  }
-
   private mapMemberContact(row: IGetMemberPreviewBatchResult): CollectiveMemberContact {
     return {
       id: row.external_id,
       displayName: row.display_name ?? 'Unknown',
       photoUrl: row.photo_url,
-    };
-  }
-
-  private mapRole(row: IGetRolesForTypeResult): CollectiveRole {
-    return {
-      id: row.external_id,
-      roleKey: row.role_key,
-      label: row.label,
-      sortOrder: row.sort_order,
     };
   }
 

@@ -58,6 +58,12 @@ export const UpdatePreferencesRequestSchema = type({
 });
 export type UpdatePreferencesRequest = typeof UpdatePreferencesRequestSchema.infer;
 
+/** Body of PUT /api/users/me/self-profile */
+export const SetSelfProfileSchema = type({
+  friendId: 'string.uuid',
+});
+export type SetSelfProfileRequest = typeof SetSelfProfileSchema.infer;
+
 // User type
 export interface User {
   externalId: string;

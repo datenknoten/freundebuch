@@ -9,6 +9,7 @@ import type {
   RelationshipPreviewResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool, PoolClient } from 'pg';
+import { mapMember } from '../../models/mappers/collectives.mappers.js';
 import {
   addMembership,
   checkDuplicateActiveMembership,
@@ -26,13 +27,11 @@ import {
   getRoleByExternalId,
   getRoleInternalId,
   getRulesForTypeInternal,
-  type IGetMembershipByIdResult,
   type IGetRulesForTypeInternalResult,
   reactivateMembership,
   removeMembership,
   updateMembershipRole,
 } from '../../models/queries/collectives.queries.js';
-import { formatDateOnly } from '../../utils/date.js';
 import {
   CollectiveNotFoundError,
   DuplicateMembershipError,
@@ -135,7 +134,7 @@ export class MembershipsService {
         throw new MembershipCreationError('Failed to retrieve created membership');
       }
 
-      return this.mapMember(membership[0]);
+      return mapMember(membership[0]);
     } catch (error) {
       try {
         await client.query('ROLLBACK');
@@ -169,7 +168,7 @@ export class MembershipsService {
       return null;
     }
 
-    return this.mapMember(results[0]);
+    return mapMember(results[0]);
   }
 
   /**
@@ -213,7 +212,7 @@ export class MembershipsService {
       throw new MembershipNotFoundError();
     }
 
-    return this.mapMember(membership[0]);
+    return mapMember(membership[0]);
   }
 
   /**
@@ -249,7 +248,7 @@ export class MembershipsService {
       throw new MembershipNotFoundError();
     }
 
-    return this.mapMember(membership[0]);
+    return mapMember(membership[0]);
   }
 
   /**
@@ -278,7 +277,7 @@ export class MembershipsService {
       throw new MembershipNotFoundError();
     }
 
-    return this.mapMember(membership[0]);
+    return mapMember(membership[0]);
   }
 
   /**
@@ -694,28 +693,4 @@ export class MembershipsService {
   // ============================================================================
   // Mappers
   // ============================================================================
-
-  private mapMember(row: IGetMembershipByIdResult): CollectiveMember {
-    return {
-      id: row.membership_external_id,
-      contact: {
-        id: row.contact_external_id,
-        displayName: row.display_name ?? 'Unknown',
-        photoUrl: row.photo_url,
-      },
-      role: {
-        id: row.role_external_id,
-        roleKey: row.role_key,
-        label: row.role_label,
-        sortOrder: row.role_sort_order,
-      },
-      isActive: row.is_active,
-      inactiveReason: row.inactive_reason,
-      inactiveDate: row.inactive_date ? formatDateOnly(row.inactive_date) : null,
-      joinedDate: row.joined_date ? formatDateOnly(row.joined_date) : null,
-      notes: row.notes,
-      createdAt: row.created_at.toISOString(),
-      updatedAt: row.updated_at.toISOString(),
-    };
-  }
 }

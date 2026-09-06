@@ -1,47 +1,24 @@
-import { FriendCreateSchema, type User } from '@freundebuch/shared/index.js';
-import { type } from 'arktype';
-import { Hono } from 'hono';
+import { FriendCreateSchema, SetSelfProfileSchema } from '@freundebuch/shared/index.js';
+import { type Context, Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
-import {
-  getUserSelfProfile,
-  getUserWithSelfProfile,
-  setUserSelfProfile,
-} from '../models/queries/users.queries.js';
-import { FriendsService } from '../services/friends/index.js';
+import { UsersService } from '../services/users.service.js';
 import type { AppContext } from '../types/context.js';
-import { UserNotFoundError, ValidationError } from '../utils/errors.js';
+import { parseBody } from '../utils/http.js';
 
 const app = new Hono<AppContext>();
 
 // Apply auth middleware to all user routes
 app.use('*', authMiddleware);
 
+const usersService = (c: Context<AppContext>): UsersService =>
+  new UsersService({ db: c.get('db'), logger: c.get('logger') });
+
 /**
  * GET /api/users/me
  * Get the current user's profile
  */
 app.get('/me', async (c) => {
-  const db = c.get('db');
-
-  const authUser = getAuthUser(c);
-  // Single query to get user with self-profile info
-  const [user] = await getUserWithSelfProfile.run({ userExternalId: authUser.userId }, db);
-
-  if (!user) {
-    throw new UserNotFoundError();
-  }
-
-  const selfProfileExternalId = user.self_profile_external_id;
-
-  return c.json<User>({
-    externalId: user.external_id,
-    email: user.email,
-    createdAt: user.created_at.toISOString(),
-    updatedAt: user.updated_at.toISOString(),
-    selfProfileId: selfProfileExternalId ?? undefined,
-    displayName: user.self_profile_display_name ?? undefined,
-    hasCompletedOnboarding: selfProfileExternalId !== null,
-  });
+  return c.json(await usersService(c).getMe(getAuthUser(c).userId));
 });
 
 // ============================================================================
@@ -53,13 +30,8 @@ app.get('/me', async (c) => {
  * Get the current user's self-profile external ID
  */
 app.get('/me/self-profile', async (c) => {
-  const db = c.get('db');
-
-  const authUser = getAuthUser(c);
-  const result = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
-  const selfProfileExternalId = result[0]?.self_profile_external_id ?? null;
-
-  return c.json({ selfProfileId: selfProfileExternalId });
+  const selfProfileId = await usersService(c).getSelfProfileId(getAuthUser(c).userId);
+  return c.json({ selfProfileId });
 });
 
 /**
@@ -67,37 +39,10 @@ app.get('/me/self-profile', async (c) => {
  * Set an existing friend as the user's self-profile
  */
 app.put('/me/self-profile', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
+  const { friendId } = await parseBody(c, SetSelfProfileSchema);
+  const selfProfileId = await usersService(c).setSelfProfile(getAuthUser(c).userId, friendId);
 
-  const authUser = getAuthUser(c);
-  const body = await c.req.json();
-
-  const SetSelfProfileSchema = type({ friendId: 'string.uuid' });
-  const validated = SetSelfProfileSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
-
-  const result = await setUserSelfProfile.run(
-    {
-      userExternalId: authUser.userId,
-      friendExternalId: validated.friendId,
-    },
-    db,
-  );
-
-  if (result.length === 0) {
-    throw new UserNotFoundError('Friend not found or does not belong to user');
-  }
-
-  logger.info(
-    { userId: authUser.userId, friendId: validated.friendId },
-    'Self-profile set successfully',
-  );
-
-  return c.json({ selfProfileId: result[0]?.self_profile_external_id });
+  return c.json({ selfProfileId });
 });
 
 /**
@@ -106,47 +51,10 @@ app.put('/me/self-profile', async (c) => {
  * Used during onboarding
  */
 app.post('/me/self-profile', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
+  const input = await parseBody(c, FriendCreateSchema);
+  const friend = await usersService(c).createSelfProfile(getAuthUser(c).userId, input);
 
-  const authUser = getAuthUser(c);
-  const body = await c.req.json();
-
-  const validated = FriendCreateSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
-
-  // Check if user already has a self-profile
-  const existingResult = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
-  if (existingResult[0]?.self_profile_external_id) {
-    throw new ValidationError('Self-profile already exists');
-  }
-
-  // Create the friend (uses legacy auth.users.external_id)
-  const friendsService = new FriendsService(db, logger);
-  const newFriend = await friendsService.createFriend(authUser.userId, validated);
-
-  // Set it as the self-profile (uses Better Auth user.id)
-  const setResult = await setUserSelfProfile.run(
-    {
-      userExternalId: authUser.userId,
-      friendExternalId: newFriend.id,
-    },
-    db,
-  );
-
-  if (setResult.length === 0) {
-    throw new Error('Failed to set self-profile after creation');
-  }
-
-  logger.info(
-    { userId: authUser.userId, friendId: newFriend.id },
-    'Self-profile created and set successfully',
-  );
-
-  return c.json(newFriend, 201);
+  return c.json(friend, 201);
 });
 
 export default app;

@@ -1,10 +1,10 @@
 import type {
   CollectiveRelationshipRule,
-  CollectiveRole,
   CollectiveType,
   CollectiveTypeListResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
+import { mapRole } from '../../models/mappers/collectives.mappers.js';
 import {
   getCollectiveTypeById,
   getCollectiveTypes,
@@ -82,7 +82,7 @@ export class CollectiveTypesService {
       name: row.name,
       description: row.description,
       isSystemDefault: row.is_system_default,
-      roles: roles.map((r) => this.mapRole(r)),
+      roles: roles.map((r) => mapRole(r)),
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
     };
@@ -98,19 +98,10 @@ export class CollectiveTypesService {
       name: row.name,
       description: row.description,
       isSystemDefault: row.is_system_default,
-      roles: roles.map((r) => this.mapRole(r)),
+      roles: roles.map((r) => mapRole(r)),
       rules: rules.map((r) => this.mapRule(r)),
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
-    };
-  }
-
-  private mapRole(row: IGetRolesForTypeResult): CollectiveRole {
-    return {
-      id: row.external_id,
-      roleKey: row.role_key,
-      label: row.label,
-      sortOrder: row.sort_order,
     };
   }
 
