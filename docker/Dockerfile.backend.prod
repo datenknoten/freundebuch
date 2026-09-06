@@ -133,7 +133,9 @@ EXPOSE 3000
 # Drop to non-root user (node:slim ships a uid-1000 `node` user)
 USER node
 
+# /health/ready reports the pools and the uploads volume; /health is liveness
+# only and would stay green while the backend cannot serve a single request.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+    CMD node -e "require('http').get('http://localhost:3000/health/ready', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
 CMD ["node", "/app/apps/backend/dist/index.js"]

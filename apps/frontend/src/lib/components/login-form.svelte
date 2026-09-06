@@ -6,6 +6,7 @@ import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
+import { signupEnabled } from '$lib/stores/instance';
 
 interface Props {
   /**
@@ -188,10 +189,12 @@ async function handlePasskeySignIn() {
 		{isPasskeyLoading ? $i18n.t('profile.passkeys.signingIn') : $i18n.t('profile.passkeys.signIn')}
 	</button>
 
-	<p class="text-center text-sm font-body text-gray-600">
-		{$i18n.t('auth.login.noAccount')}
-		<a href="/auth/register" class="font-semibold text-forest hover:text-forest-light">
-			{$i18n.t('auth.login.registerLink')}
-		</a>
-	</p>
+	{#if $signupEnabled}
+		<p class="text-center text-sm font-body text-gray-600">
+			{$i18n.t('auth.login.noAccount')}
+			<a href="/auth/register" class="font-semibold text-forest hover:text-forest-light">
+				{$i18n.t('auth.login.registerLink')}
+			</a>
+		</p>
+	{/if}
 </form>

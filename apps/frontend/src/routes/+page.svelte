@@ -4,6 +4,7 @@ import NetworkGraph from '$lib/components/dashboard/network-graph.svelte';
 import UpcomingDates from '$lib/components/dashboard/upcoming-dates.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
+import { signupEnabled } from '$lib/stores/instance';
 import type { NetworkGraphData, UpcomingDate } from '$shared';
 
 const i18n = createI18n();
@@ -161,12 +162,14 @@ async function loadDashboard() {
 				</div>
 			</div>
 			<div class="flex gap-4 justify-center">
-				<a
-					href="/auth/register"
-					class="bg-forest text-white px-8 py-3 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors text-lg"
-				>
-					{$i18n.t('home.hero.cta')}
-				</a>
+				{#if $signupEnabled}
+					<a
+						href="/auth/register"
+						class="bg-forest text-white px-8 py-3 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors text-lg"
+					>
+						{$i18n.t('home.hero.cta')}
+					</a>
+				{/if}
 				<a
 					href="/auth/login"
 					class="bg-white border-2 border-forest text-forest px-8 py-3 rounded-lg font-body font-semibold hover:bg-gray-50 transition-colors text-lg"

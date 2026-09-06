@@ -74,6 +74,12 @@ in production:
 | `LOG_LEVEL` | no | `info` by default |
 | `SENTRY_DSN` | no | Error tracking, off when unset |
 | `POSTGIS_ADDRESS_ENABLED` | no | Turn on only after running the OSM import — see [postgis-address-autocomplete.md](./postgis-address-autocomplete.md) |
+| `SMTP_HOST` | for password reset | Hostname of your SMTP relay. **Without it no mail is ever sent**: "forgot password" still answers 200, but the reset link only reaches the log — and only outside production. Nobody can recover an account until you configure this |
+| `SMTP_PORT` | no | Defaults to `587` (`465` when `SMTP_SECURE=true`) |
+| `SMTP_USER` / `SMTP_PASSWORD` | for authenticated relays | Omit `SMTP_USER` for an unauthenticated relay on your own network |
+| `SMTP_FROM` | no | Envelope sender, e.g. `Freundebuch <no-reply@example.com>`. Defaults to `no-reply@<FRONTEND_URL host>`, which many relays reject — set it |
+| `SMTP_SECURE` | no | `true` for implicit TLS (port 465). `false` (default) connects in the clear and upgrades via STARTTLS, which is what 587 expects |
+| `DISABLE_SIGNUP` | no | `true` closes registration: `POST /api/auth/sign-up/email` returns 403 `SIGNUP_DISABLED` and the frontend hides the register link. Existing accounts are unaffected. Create your own account *before* setting it |
 
 ### MCP server
 
@@ -269,8 +275,13 @@ status. Manually:
 | Endpoint | Serves |
 |----------|--------|
 | `https://your-domain/health` | nginx |
-| `http://backend:3000/health` | Backend (internal network) |
+| `http://backend:3000/health` | Backend liveness — process is up. No database access, so a database blip never restarts a healthy container |
+| `http://backend:3000/health/ready` | Backend readiness — both connection pools plus the uploads volume. 200 `{"status":"ready","checks":{"db":true,"authDb":true,"uploads":true},"signupEnabled":true,"emailEnabled":true}` or 503 with the failing check `false`. This is what the container healthcheck watches |
 | `http://mcp-server:3100/health` | MCP server (internal network) |
+
+`emailEnabled` mirrors whether `SMTP_HOST` is set and `signupEnabled` mirrors
+`DISABLE_SIGNUP`, so a quick `curl` confirms both without shelling into the
+container.
 
 ## Troubleshooting
 
@@ -284,3 +295,5 @@ status. Manually:
 | MCP bearer tokens are always rejected | The MCP server's `BETTER_AUTH_SECRET` differs from the backend's, or it points at a different database |
 | Rate limiting throttles everyone at once | `TRUST_PROXY` is unset, so every request looks like it comes from the proxy |
 | Notification channels show `****` and digests stop arriving | `BETTER_AUTH_SECRET` changed, so the stored channel credentials no longer decrypt — users must re-enter them, see [Rotating `BETTER_AUTH_SECRET`](#rotating-better_auth_secret) |
+| Password-reset mails never arrive | `SMTP_HOST` is unset (nothing is sent at all), or the relay rejects the default `no-reply@<domain>` sender — set `SMTP_FROM`. Delivery failures are logged at `error` with `kind: "password-reset"` |
+| Container is marked unhealthy but the app responds | `/health/ready` is failing: `curl http://backend:3000/health/ready` and look at which `checks` entry is `false` (uploads volume read-only is the usual one) |

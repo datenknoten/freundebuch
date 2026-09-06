@@ -99,6 +99,18 @@ services:
       # boot without it — and must match the mcp-server's.
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
 
+      # Mail. Without SMTP_HOST password-reset and verification mails are not
+      # sent at all (the endpoints still answer 200).
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+
+      # Set to true to close registration on this instance.
+      DISABLE_SIGNUP: ${DISABLE_SIGNUP:-false}
+
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-info}
 
@@ -110,7 +122,7 @@ services:
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health/ready', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
       interval: 30s
       timeout: 10s
       retries: 3

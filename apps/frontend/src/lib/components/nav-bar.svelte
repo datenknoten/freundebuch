@@ -14,6 +14,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
+import { signupEnabled } from '$lib/stores/instance';
 import { search } from '$lib/stores/search';
 import UserMenu from './user-menu.svelte';
 
@@ -239,13 +240,15 @@ $effect(() => {
         >
           {$i18n.t('nav.login')}
         </a>
-        <a
-          href="/auth/register"
-          onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md bg-forest text-white hover:bg-forest-light font-body font-medium transition-colors duration-200"
-        >
-          {$i18n.t('nav.register')}
-        </a>
+        {#if $signupEnabled}
+          <a
+            href="/auth/register"
+            onclick={closeMobileMenu}
+            class="flex items-center gap-2 px-3 py-2 rounded-md bg-forest text-white hover:bg-forest-light font-body font-medium transition-colors duration-200"
+          >
+            {$i18n.t('nav.register')}
+          </a>
+        {/if}
       </div>
     {/if}
   </nav>
@@ -357,12 +360,14 @@ $effect(() => {
           >
             {$i18n.t('nav.login')}
           </a>
-          <a
-            href="/auth/register"
-            class="bg-forest text-white px-4 py-2 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200"
-          >
-            {$i18n.t('nav.register')}
-          </a>
+          {#if $signupEnabled}
+            <a
+              href="/auth/register"
+              class="bg-forest text-white px-4 py-2 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200"
+            >
+              {$i18n.t('nav.register')}
+            </a>
+          {/if}
         {/if}
       </div>
     </div>
