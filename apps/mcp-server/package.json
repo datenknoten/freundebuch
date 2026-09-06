@@ -9,6 +9,7 @@
     "build": "tsc --project tsconfig.build.json",
     "start": "node --env-file=../../.env dist/index.js",
     "test": "vitest run",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit"
   },

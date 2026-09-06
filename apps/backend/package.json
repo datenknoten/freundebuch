@@ -19,7 +19,7 @@
     "build": "tsc --project tsconfig.build.json",
     "start": "node --env-file=../../.env dist/index.js",
     "test": "vitest run",
-    "test:unit": "vitest run --reporter=verbose --exclude '**/tests/integration/**'",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:integration": "vitest run tests/integration",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",

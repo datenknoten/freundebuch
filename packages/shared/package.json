@@ -19,6 +19,7 @@
   "scripts": {
     "build": "tsc --build",
     "test": "vitest run --passWithNoTests",
+    "test:unit": "vitest run --passWithNoTests",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

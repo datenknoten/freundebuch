@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "test": "node --eval \"\"",
+    "test:unit": "node --eval \"\"",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
