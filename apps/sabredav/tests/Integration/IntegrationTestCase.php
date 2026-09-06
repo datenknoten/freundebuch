@@ -214,33 +214,27 @@ abstract class IntegrationTestCase extends TestCase
     /**
      * Create a test user and return their data.
      */
-    protected function createTestUser(string $email = 'test@example.com', string $password = 'password123'): array
+    protected function createTestUser(string $email = 'test@example.com'): array
     {
-        $passwordHash = password_hash($password, PASSWORD_BCRYPT);
-
-        $stmt = self::$pdo->prepare('
-            INSERT INTO auth.users (email, password_hash)
-            VALUES (:email, :password_hash)
-            RETURNING id, external_id, email, created_at, updated_at
+        // auth.users only anchors the integer FKs now; identity (email,
+        // credentials) lives on auth."user" (ADR 0003).
+        $stmt = self::$pdo->query('
+            INSERT INTO auth.users DEFAULT VALUES
+            RETURNING id, external_id, created_at, updated_at
         ');
-        $stmt->execute([
-            'email' => $email,
-            'password_hash' => $passwordHash,
-        ]);
-
         $user = $stmt->fetch();
 
-        // The Better Auth row is the identity of record; `auth."user".id` equals
-        // `auth.users.external_id` and the DAV lookups read the email from it.
         $baStmt = self::$pdo->prepare('
             INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
-            VALUES (:id, :name, :email, false, now(), now())
+            VALUES (:id, :name, :email, true, now(), now())
         ');
         $baStmt->execute([
             'id' => $user['external_id'],
             'name' => $email,
             'email' => $email,
         ]);
+
+        $user['email'] = $email;
 
         return $user;
     }

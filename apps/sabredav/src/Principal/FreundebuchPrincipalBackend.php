@@ -35,9 +35,10 @@ class FreundebuchPrincipalBackend extends AbstractBackend
         }
 
         $stmt = $this->pdo->query('
-            SELECT external_id, email
-            FROM auth.users
-            ORDER BY email
+            SELECT u.external_id, bu.email
+            FROM auth.users u
+            JOIN auth."user" bu ON bu.id = u.external_id::text
+            ORDER BY bu.email
         ');
 
         $principals = [];
@@ -68,9 +69,10 @@ class FreundebuchPrincipalBackend extends AbstractBackend
         $email = $parts[1];
 
         $stmt = $this->pdo->prepare('
-            SELECT external_id, email
-            FROM auth.users
-            WHERE email = lower(:email)
+            SELECT u.external_id, bu.email
+            FROM auth.users u
+            JOIN auth."user" bu ON bu.id = u.external_id::text
+            WHERE bu.email = lower(:email)
         ');
         $stmt->execute(['email' => $email]);
         $row = $stmt->fetch();
@@ -119,9 +121,10 @@ class FreundebuchPrincipalBackend extends AbstractBackend
             $email = $searchProperties['{http://sabredav.org/ns}email-address'];
 
             $stmt = $this->pdo->prepare('
-                SELECT email
-                FROM auth.users
-                WHERE email ILIKE :email
+                SELECT bu.email
+                FROM auth.users u
+                JOIN auth."user" bu ON bu.id = u.external_id::text
+                WHERE bu.email ILIKE :email
             ');
             $stmt->execute(['email' => '%' . $email . '%']);
 
@@ -135,9 +138,10 @@ class FreundebuchPrincipalBackend extends AbstractBackend
             $name = $searchProperties['{DAV:}displayname'];
 
             $stmt = $this->pdo->prepare('
-                SELECT email
-                FROM auth.users
-                WHERE email ILIKE :name
+                SELECT bu.email
+                FROM auth.users u
+                JOIN auth."user" bu ON bu.id = u.external_id::text
+                WHERE bu.email ILIKE :name
             ');
             $stmt->execute(['name' => '%' . $name . '%']);
 
@@ -165,9 +169,10 @@ class FreundebuchPrincipalBackend extends AbstractBackend
             $email = substr($uri, 7);
 
             $stmt = $this->pdo->prepare('
-                SELECT email
-                FROM auth.users
-                WHERE email = lower(:email)
+                SELECT bu.email
+                FROM auth.users u
+                JOIN auth."user" bu ON bu.id = u.external_id::text
+                WHERE bu.email = lower(:email)
             ');
             $stmt->execute(['email' => $email]);
             $row = $stmt->fetch();

@@ -193,7 +193,7 @@ XML;
     public function propfindOnAddressBookReturnsCards(): void
     {
         // Create a friend first
-        $user = $this->getPdo()->query("SELECT id FROM auth.users WHERE email = 'test@example.com'")->fetch();
+        $user = $this->getPdo()->query("SELECT u.id FROM auth.users u JOIN auth.\"user\" bu ON bu.id = u.external_id::text WHERE bu.email = 'test@example.com'")->fetch();
         $this->createTestFriend((int) $user['id'], [
             'display_name' => 'John Doe',
             'name_first' => 'John',
@@ -226,7 +226,7 @@ XML;
     public function getCardReturnsVCardData(): void
     {
         // Create a friend
-        $user = $this->getPdo()->query("SELECT id FROM auth.users WHERE email = 'test@example.com'")->fetch();
+        $user = $this->getPdo()->query("SELECT u.id FROM auth.users u JOIN auth.\"user\" bu ON bu.id = u.external_id::text WHERE bu.email = 'test@example.com'")->fetch();
         $friend = $this->createTestFriend((int) $user['id'], [
             'display_name' => 'Jane Smith',
             'name_first' => 'Jane',
@@ -309,7 +309,7 @@ VCARD;
     public function putUpdatesExistingCard(): void
     {
         // Create a friend first
-        $user = $this->getPdo()->query("SELECT id FROM auth.users WHERE email = 'test@example.com'")->fetch();
+        $user = $this->getPdo()->query("SELECT u.id FROM auth.users u JOIN auth.\"user\" bu ON bu.id = u.external_id::text WHERE bu.email = 'test@example.com'")->fetch();
         $friend = $this->createTestFriend((int) $user['id'], [
             'display_name' => 'Original Name',
             'name_first' => 'Original',
@@ -352,7 +352,7 @@ VCARD;
     public function deleteRemovesCard(): void
     {
         // Create a friend first
-        $user = $this->getPdo()->query("SELECT id FROM auth.users WHERE email = 'test@example.com'")->fetch();
+        $user = $this->getPdo()->query("SELECT u.id FROM auth.users u JOIN auth.\"user\" bu ON bu.id = u.external_id::text WHERE bu.email = 'test@example.com'")->fetch();
         $friend = $this->createTestFriend((int) $user['id']);
 
         $response = $this->request(
@@ -385,7 +385,7 @@ VCARD;
     public function reportAddressbookMultigetReturnsMultipleCards(): void
     {
         // Create multiple friends
-        $user = $this->getPdo()->query("SELECT id FROM auth.users WHERE email = 'test@example.com'")->fetch();
+        $user = $this->getPdo()->query("SELECT u.id FROM auth.users u JOIN auth.\"user\" bu ON bu.id = u.external_id::text WHERE bu.email = 'test@example.com'")->fetch();
         $friend1 = $this->createTestFriend((int) $user['id'], ['display_name' => 'Friend One']);
         $friend2 = $this->createTestFriend((int) $user['id'], ['display_name' => 'Friend Two']);
         $friend3 = $this->createTestFriend((int) $user['id'], ['display_name' => 'Friend Three']);
@@ -421,7 +421,7 @@ XML;
     public function reportSyncCollectionReturnsChanges(): void
     {
         // Create a friend to have initial data
-        $user = $this->getPdo()->query("SELECT id FROM auth.users WHERE email = 'test@example.com'")->fetch();
+        $user = $this->getPdo()->query("SELECT u.id FROM auth.users u JOIN auth.\"user\" bu ON bu.id = u.external_id::text WHERE bu.email = 'test@example.com'")->fetch();
         $friend = $this->createTestFriend((int) $user['id'], ['display_name' => 'Sync Test']);
 
         $body = <<<XML
@@ -547,7 +547,7 @@ XML;
         // Create a friend with a photo_url
         // This tests that the vCard generation doesn't crash when photo_url is set
         // (even if the URL can't be fetched, it should gracefully degrade)
-        $user = $this->getPdo()->query("SELECT id FROM auth.users WHERE email = 'test@example.com'")->fetch();
+        $user = $this->getPdo()->query("SELECT u.id FROM auth.users u JOIN auth.\"user\" bu ON bu.id = u.external_id::text WHERE bu.email = 'test@example.com'")->fetch();
         $friend = $this->createTestFriend((int) $user['id'], [
             'display_name' => 'Photo Test Friend',
             'name_first' => 'Photo',
@@ -574,7 +574,7 @@ XML;
     {
         // This test specifically targets the bug where sync-collection REPORT would fail
         // if a friend had a photo_url and curl extension was not available
-        $user = $this->getPdo()->query("SELECT id FROM auth.users WHERE email = 'test@example.com'")->fetch();
+        $user = $this->getPdo()->query("SELECT u.id FROM auth.users u JOIN auth.\"user\" bu ON bu.id = u.external_id::text WHERE bu.email = 'test@example.com'")->fetch();
         $this->createTestFriend((int) $user['id'], [
             'display_name' => 'Sync Photo Test',
             'photo_url' => 'https://example.com/test-photo.jpg',

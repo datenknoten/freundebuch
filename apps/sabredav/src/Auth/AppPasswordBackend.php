@@ -75,10 +75,13 @@ class AppPasswordBackend extends AbstractBasic
         $prefix = substr($rawPassword, 0, 8);
 
         // Find user by email
+        // auth."user" is the identity of record; auth.users only anchors the
+        // integer FKs (ADR 0003).
         $stmt = $this->pdo->prepare('
-            SELECT id, external_id, email
-            FROM auth.users
-            WHERE email = lower(:email)
+            SELECT u.id, u.external_id, bu.email
+            FROM auth.users u
+            JOIN auth."user" bu ON bu.id = u.external_id::text
+            WHERE bu.email = lower(:email)
         ');
         $stmt->execute(['email' => $username]);
         $user = $stmt->fetch();

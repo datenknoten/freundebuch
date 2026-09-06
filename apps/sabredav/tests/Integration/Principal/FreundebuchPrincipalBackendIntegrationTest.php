@@ -253,7 +253,7 @@ class FreundebuchPrincipalBackendIntegrationTest extends IntegrationTestCase
         $this->backend->updatePrincipal('principals/user@example.com', $propPatch);
 
         // Verify nothing changed in database
-        $stmt = $this->getPdo()->prepare('SELECT email FROM auth.users WHERE id = :id');
+        $stmt = $this->getPdo()->prepare('SELECT bu.email FROM auth.users u JOIN auth."user" bu ON bu.id = u.external_id::text WHERE u.id = :id');
         $stmt->execute(['id' => $user['id']]);
         $result = $stmt->fetch();
 
