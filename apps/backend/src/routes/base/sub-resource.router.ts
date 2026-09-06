@@ -27,7 +27,7 @@ export interface SubResourceOperations<TInput, TOutput> {
   ): Promise<unknown>;
 }
 
-export interface SubResourceRouterConfig<TInput, TOutput> {
+export interface SubResourceRouterConfig<TSchema extends Type, TOutput> {
   /** Path param carrying the owner id, as mounted by the parent router. */
   ownerParam: string;
   /** Human-readable owner name for the "Invalid …" validation message. */
@@ -36,10 +36,14 @@ export interface SubResourceRouterConfig<TInput, TOutput> {
   resourceParam: string;
   /** Human-readable resource name for 404s and the delete message. */
   resourceLabel: string;
-  schema: Type<TInput>;
+  /**
+   * Generic over the schema, not its input type, so schemas declaring ArkType
+   * defaults work: the service receives the *validated* shape.
+   */
+  schema: TSchema;
   /** Error to raise when the owner does not exist or is not the user's. */
   ownerNotFound: () => AppError;
-  service: (c: Context<AppContext>) => SubResourceOperations<TInput, TOutput>;
+  service: (c: Context<AppContext>) => SubResourceOperations<TSchema['infer'], TOutput>;
   /**
    * Optional body rewrite before validation, for inputs the client cannot be
    * expected to send in canonical form (phone numbers).
@@ -59,8 +63,8 @@ export interface SubResourceRouterConfig<TInput, TOutput> {
  * that are genuinely different — singleton met-info, relationships with their
  * inverse edges, collective circle join/leave verbs — stay hand-written.
  */
-export function createSubResourceRouter<TInput, TOutput>(
-  config: SubResourceRouterConfig<TInput, TOutput>,
+export function createSubResourceRouter<TSchema extends Type, TOutput>(
+  config: SubResourceRouterConfig<TSchema, TOutput>,
 ): Hono<AppContext> {
   const app = new Hono<AppContext>();
 
@@ -68,7 +72,7 @@ export function createSubResourceRouter<TInput, TOutput>(
     c: Context<AppContext>,
     userId: string,
     ownerId: string,
-  ): Promise<TInput> => {
+  ): Promise<TSchema['infer']> => {
     if (!config.preprocess) {
       return parseBody(c, config.schema);
     }

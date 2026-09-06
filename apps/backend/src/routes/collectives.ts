@@ -25,7 +25,7 @@ import {
   ResourceNotFoundError,
   ValidationError,
 } from '../utils/errors.js';
-import { isValidUuid } from '../utils/security.js';
+import { parseBody, requireUuidParam } from '../utils/http.js';
 
 // Sub-resource routes
 import {
@@ -69,11 +69,7 @@ app.get('/types', async (c) => {
 app.get('/types/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const typeId = c.req.param('id');
-
-  if (!isValidUuid(typeId)) {
-    throw new ValidationError('Invalid type ID');
-  }
+  const typeId = requireUuidParam(c, 'id', 'type ID');
 
   const typesService = new CollectiveTypesService(db);
   const collectiveType = await typesService.getTypeById(user.userId, typeId);
@@ -106,11 +102,6 @@ app.get('/', async (c) => {
 
   const options = parseCollectiveListQuery(validated);
 
-  // Validate type_id if provided
-  if (options.typeId && !isValidUuid(options.typeId)) {
-    throw new ValidationError('Invalid type_id');
-  }
-
   const collectivesService = new CollectivesService(db);
   const result = await collectivesService.listCollectives(user.userId, options);
 
@@ -125,17 +116,7 @@ app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const body = await c.req.json();
-  const validated = CollectiveInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
-
-  // Validate collective_type_id
-  if (!isValidUuid(validated.collective_type_id)) {
-    throw new ValidationError('Invalid collective_type_id');
-  }
+  const validated = await parseBody(c, CollectiveInputSchema);
 
   const collectivesService = new CollectivesService(db);
   const collective = await collectivesService.createCollective(user.userId, validated);
@@ -150,11 +131,7 @@ app.post('/', async (c) => {
 app.get('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id');
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
 
   const collectivesService = new CollectivesService(db);
   const collective = await collectivesService.getCollectiveById(user.userId, collectiveId);
@@ -173,18 +150,8 @@ app.get('/:id', async (c) => {
 app.put('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id');
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
-
-  const body = await c.req.json();
-  const validated = CollectiveUpdateSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
+  const validated = await parseBody(c, CollectiveUpdateSchema);
 
   const collectivesService = new CollectivesService(db);
   const collective = await collectivesService.updateCollective(
@@ -203,11 +170,7 @@ app.put('/:id', async (c) => {
 app.delete('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id');
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
 
   const collectivesService = new CollectivesService(db);
   const deleted = await collectivesService.deleteCollective(user.userId, collectiveId);
@@ -230,26 +193,8 @@ app.delete('/:id', async (c) => {
 app.post('/:id/members/preview', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id');
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
-
-  const body = await c.req.json();
-  const validated = RelationshipPreviewRequestSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
-
-  // Validate IDs
-  if (!isValidUuid(validated.friend_id)) {
-    throw new ValidationError('Invalid friend_id');
-  }
-  if (!isValidUuid(validated.role_id)) {
-    throw new ValidationError('Invalid role_id');
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
+  const validated = await parseBody(c, RelationshipPreviewRequestSchema);
 
   const membershipsService = new MembershipsService(db);
   const preview = await membershipsService.previewRelationships(
@@ -268,26 +213,8 @@ app.post('/:id/members/preview', async (c) => {
 app.post('/:id/members', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id');
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
-
-  const body = await c.req.json();
-  const validated = MembershipInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
-
-  // Validate IDs
-  if (!isValidUuid(validated.friend_id)) {
-    throw new ValidationError('Invalid friend_id');
-  }
-  if (!isValidUuid(validated.role_id)) {
-    throw new ValidationError('Invalid role_id');
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
+  const validated = await parseBody(c, MembershipInputSchema);
 
   const membershipsService = new MembershipsService(db);
   const member = await membershipsService.addMember(user.userId, collectiveId, validated);
@@ -302,15 +229,8 @@ app.post('/:id/members', async (c) => {
 app.delete('/:id/members/:memberId', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id');
-  const memberId = c.req.param('memberId');
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
-  if (!isValidUuid(memberId)) {
-    throw new ValidationError('Invalid member ID');
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
+  const memberId = requireUuidParam(c, 'memberId', 'member ID');
 
   const membershipsService = new MembershipsService(db);
   const deleted = await membershipsService.removeMember(user.userId, collectiveId, memberId);
@@ -329,28 +249,12 @@ app.delete('/:id/members/:memberId', async (c) => {
 app.put('/:id/members/:memberId/role', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id');
-  const memberId = c.req.param('memberId');
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
-  if (!isValidUuid(memberId)) {
-    throw new ValidationError('Invalid member ID');
-  }
-
-  const body = await c.req.json();
-  const validated = MembershipUpdateSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
+  const memberId = requireUuidParam(c, 'memberId', 'member ID');
+  const validated = await parseBody(c, MembershipUpdateSchema);
 
   if (!validated.role_id) {
     throw new ValidationError('role_id is required');
-  }
-  if (!isValidUuid(validated.role_id)) {
-    throw new ValidationError('Invalid role_id');
   }
 
   const membershipsService = new MembershipsService(db);
@@ -371,22 +275,9 @@ app.put('/:id/members/:memberId/role', async (c) => {
 app.post('/:id/members/:memberId/deactivate', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id');
-  const memberId = c.req.param('memberId');
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
-  if (!isValidUuid(memberId)) {
-    throw new ValidationError('Invalid member ID');
-  }
-
-  const body = await c.req.json();
-  const validated = MembershipDeactivateSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
+  const memberId = requireUuidParam(c, 'memberId', 'member ID');
+  const validated = await parseBody(c, MembershipDeactivateSchema);
 
   const membershipsService = new MembershipsService(db);
   const member = await membershipsService.deactivateMember(
@@ -406,15 +297,8 @@ app.post('/:id/members/:memberId/deactivate', async (c) => {
 app.post('/:id/members/:memberId/reactivate', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id');
-  const memberId = c.req.param('memberId');
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
-  if (!isValidUuid(memberId)) {
-    throw new ValidationError('Invalid member ID');
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
+  const memberId = requireUuidParam(c, 'memberId', 'member ID');
 
   const membershipsService = new MembershipsService(db);
   const member = await membershipsService.reactivateMember(user.userId, collectiveId, memberId);

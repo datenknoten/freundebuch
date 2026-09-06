@@ -1,3 +1,5 @@
+import { type } from 'arktype';
+
 /**
  * Notification channel types for messaging bot configurations
  */
@@ -57,3 +59,69 @@ export interface NotificationChannelUpdateInput {
   notifyTime?: string;
   credentials?: NotificationCredentials;
 }
+
+// ============================================================================
+// Input Schemas
+// ============================================================================
+
+/** Schema for creating a notification channel (top-level shape) */
+export const NotificationChannelCreateSchema = type({
+  platform: '"telegram" | "matrix" | "discord"',
+  'isEnabled?': 'boolean',
+  'lookaheadDays?': 'number.integer >= 1 & number.integer <= 30',
+  'notifyTime?': /^([01]\d|2[0-3]):[0-5]\d$/,
+  credentials: 'object',
+});
+
+/** Schema for updating a notification channel (top-level shape) */
+export const NotificationChannelUpdateSchema = type({
+  'isEnabled?': 'boolean',
+  'lookaheadDays?': 'number.integer >= 1 & number.integer <= 30',
+  'notifyTime?': /^([01]\d|2[0-3]):[0-5]\d$/,
+  'credentials?': 'object',
+});
+
+/** Schema for enabling/disabling a channel */
+export const NotificationChannelToggleSchema = type({
+  isEnabled: 'boolean',
+});
+
+// ============================================================================
+// Credential Schemas
+// ============================================================================
+
+/** Telegram credentials for channel creation (all fields required) */
+export const TelegramCredentialsSchema = type({
+  botToken: 'string > 0',
+  chatId: 'string > 0',
+});
+
+/** Telegram credentials for channel updates (tokens are never returned, so partial) */
+export const TelegramCredentialsUpdateSchema = type({
+  'botToken?': 'string > 0',
+  'chatId?': 'string > 0',
+});
+
+/** Matrix credentials for channel creation (all fields required) */
+export const MatrixCredentialsSchema = type({
+  homeserver: /^https?:\/\/.+/,
+  accessToken: 'string > 0',
+  roomId: /^!.+:.+/,
+});
+
+/** Matrix credentials for channel updates */
+export const MatrixCredentialsUpdateSchema = type({
+  'homeserver?': /^https?:\/\/.+/,
+  'accessToken?': 'string > 0',
+  'roomId?': /^!.+:.+/,
+});
+
+/** Discord credentials for channel creation */
+export const DiscordCredentialsSchema = type({
+  webhookUrl: /^https:\/\/discord(app)?\.com\/api\/webhooks\/.+\/.+/,
+});
+
+/** Discord credentials for channel updates */
+export const DiscordCredentialsUpdateSchema = type({
+  'webhookUrl?': /^https:\/\/discord(app)?\.com\/api\/webhooks\/.+\/.+/,
+});

@@ -2,6 +2,7 @@ import {
   FacetedSearchQuerySchema,
   parseFacetedSearchQuery,
   parseSearchQuery,
+  RecentSearchInputSchema,
   SearchQuerySchema,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
@@ -10,7 +11,10 @@ import { getAuthUser } from '../../middleware/auth.js';
 import { FriendsService } from '../../services/friends/index.js';
 import type { AppContext } from '../../types/context.js';
 import { ResourceNotFoundError, ValidationError } from '../../utils/errors.js';
-import { isValidUuid } from '../../utils/security.js';
+import { parseBody } from '../../utils/http.js';
+
+/** The `exclude` query parameter must be a friend external_id (UUID). */
+const ExcludeParamSchema = type('string.uuid');
 
 const app = new Hono<AppContext>();
 
@@ -31,7 +35,7 @@ app.get('/', async (c) => {
     throw new ValidationError('Query parameter "q" is required');
   }
 
-  if (exclude && !isValidUuid(exclude)) {
+  if (exclude && ExcludeParamSchema(exclude) instanceof type.errors) {
     throw new ValidationError('Invalid exclude parameter');
   }
 
@@ -180,12 +184,7 @@ app.post('/recent', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const body = await c.req.json();
-  const query = body?.query;
-
-  if (!query || typeof query !== 'string' || query.trim().length === 0) {
-    throw new ValidationError('Query is required');
-  }
+  const { query } = await parseBody(c, RecentSearchInputSchema);
 
   if (query.trim().length < 2) {
     throw new ValidationError('Query must be at least 2 characters');

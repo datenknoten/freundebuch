@@ -3,7 +3,6 @@ import {
   UpdatePreferencesRequestSchema,
   type UserWithPreferencesResponse,
 } from '@freundebuch/shared/index.js';
-import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuth } from '../lib/auth.js';
 import { authMiddleware, getAuthSession, getAuthUser } from '../middleware/auth.js';
@@ -15,12 +14,8 @@ import {
   updateUserPreferences,
 } from '../models/queries/users.queries.js';
 import type { AppContext } from '../types/context.js';
-import {
-  AuthenticationError,
-  ResourceNotFoundError,
-  UserNotFoundError,
-  ValidationError,
-} from '../utils/errors.js';
+import { AuthenticationError, ResourceNotFoundError, UserNotFoundError } from '../utils/errors.js';
+import { parseBody } from '../utils/http.js';
 import { parseUserPreferences, toJson } from '../utils/type-guards.js';
 
 const app = new Hono<AppContext>();
@@ -98,18 +93,7 @@ app.patch('/preferences', authMiddleware, async (c) => {
   const db = c.get('db');
   const authUser = getAuthUser(c);
 
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = UpdatePreferencesRequestSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
+  const validated = await parseBody(c, UpdatePreferencesRequestSchema);
 
   // Get current preferences
   const users = await getUserWithPreferences.run({ externalId: authUser.userId }, db);

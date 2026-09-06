@@ -1,4 +1,4 @@
-import { type } from 'arktype';
+import { AppPasswordCreateSchema } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
@@ -8,8 +8,8 @@ import {
   type AppPasswordWithSecret,
 } from '../services/app-passwords.service.js';
 import type { AppContext } from '../types/context.js';
-import { AppPasswordNotFoundError, ValidationError } from '../utils/errors.js';
-import { isValidUuid } from '../utils/security.js';
+import { AppPasswordNotFoundError } from '../utils/errors.js';
+import { parseBody, requireUuidParam } from '../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -17,11 +17,6 @@ const app = new Hono<AppContext>();
 app.use('*', authMiddleware);
 // Apply onboarding middleware to require profile
 app.use('*', onboardingMiddleware);
-
-// Validation schema for creating an app password
-const CreateAppPasswordSchema = type({
-  name: 'string >= 1 & string <= 100',
-});
 
 /**
  * GET /api/app-passwords
@@ -48,12 +43,7 @@ app.post('/', async (c) => {
   const db = c.get('db');
 
   const authUser = getAuthUser(c);
-  const body = await c.req.json();
-  const validated = CreateAppPasswordSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request: name is required and must be 1-100 characters');
-  }
+  const validated = await parseBody(c, AppPasswordCreateSchema);
 
   const service = new AppPasswordsService(db, logger);
   const result = await service.createAppPassword(authUser.userId, validated.name);
@@ -70,12 +60,7 @@ app.delete('/:id', async (c) => {
   const db = c.get('db');
 
   const authUser = getAuthUser(c);
-  const appPasswordId = c.req.param('id');
-
-  // Validate UUID format
-  if (!isValidUuid(appPasswordId)) {
-    throw new ValidationError('Invalid app password ID format');
-  }
+  const appPasswordId = requireUuidParam(c, 'id', 'app password ID format');
 
   const service = new AppPasswordsService(db, logger);
   const success = await service.revokeAppPassword(authUser.userId, appPasswordId);

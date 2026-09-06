@@ -1,15 +1,10 @@
 import { MetInfoInputSchema } from '@freundebuch/shared/index.js';
-import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import type { AppContext } from '../../../types/context.js';
-import {
-  FriendNotFoundError,
-  ResourceNotFoundError,
-  ValidationError,
-} from '../../../utils/errors.js';
-import { isValidUuid } from '../../../utils/security.js';
+import { FriendNotFoundError, ResourceNotFoundError } from '../../../utils/errors.js';
+import { parseBody, requireUuidParam } from '../../../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -20,24 +15,8 @@ const app = new Hono<AppContext>();
 app.put('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
-
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = MetInfoInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
+  const validated = await parseBody(c, MetInfoInputSchema);
 
   const friendsService = new FriendsService(db, c.get('logger'));
   const metInfo = await friendsService.setMetInfo(user.userId, friendId, validated);
@@ -56,11 +35,7 @@ app.put('/', async (c) => {
 app.delete('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
 
   const friendsService = new FriendsService(db, c.get('logger'));
   const deleted = await friendsService.deleteMetInfo(user.userId, friendId);

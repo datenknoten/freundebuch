@@ -33,7 +33,7 @@ export const EncounterInputSchema = type({
   'title?': 'string > 0', // optional; UI derives a label for calls/messages
   encounter_date: 'string', // ISO date string (YYYY-MM-DD)
   encounter_type: `(${encounterTypeDef}) = 'in_person'`,
-  friend_ids: 'string[]', // Array of friend external_ids
+  friend_ids: 'string.uuid[]', // Array of friend external_ids
   'location_text?': 'string | null',
   'description?': 'string | null',
 }).narrow((data, ctx) => {
@@ -61,7 +61,7 @@ export const EncounterUpdateSchema = type({
   'title?': 'string > 0 | null',
   'encounter_date?': 'string', // ISO date string (YYYY-MM-DD)
   'encounter_type?': encounterTypeDef,
-  'friend_ids?': 'string[]', // Array of friend external_ids
+  'friend_ids?': 'string.uuid[]', // Array of friend external_ids
   'location_text?': 'string | null',
   'description?': 'string | null',
 }).narrow((data, ctx) => {
@@ -88,7 +88,7 @@ export type EncounterUpdate = typeof EncounterUpdateSchema.infer;
 export const EncounterListQuerySchema = type({
   'page?': 'string',
   'page_size?': 'string',
-  'friend_id?': 'string', // Filter by specific friend
+  'friend_id?': '"" | string.uuid', // Filter by specific friend
   'from_date?': 'string', // Filter from date (YYYY-MM-DD)
   'to_date?': 'string', // Filter to date (YYYY-MM-DD)
   'search?': 'string', // Search in title/description

@@ -66,18 +66,7 @@ app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = FriendCreateSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
+  const validated = await parseBody(c, FriendCreateSchema);
 
   const friendsService = new FriendsService(db, logger);
   const friend = await friendsService.createFriend(user.userId, validated);

@@ -10,7 +10,7 @@ import { isRecord } from './type-guards.js';
  * into one call: throws ValidationError on malformed JSON or schema failure,
  * otherwise returns the validated value.
  */
-export async function parseBody<T>(c: Context, schema: Type<T>): Promise<T> {
+export async function parseBody<S extends Type>(c: Context, schema: S): Promise<S['infer']> {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -43,13 +43,17 @@ export async function parseRawObject(c: Context): Promise<Record<string, unknown
 
 /**
  * Validate an already-parsed value against an ArkType schema.
+ *
+ * Generic over the schema rather than its input type, so schemas that declare
+ * defaults work too: `Type<{ x: Default<A, B> }>` validates to a value where
+ * `x` is plain `A`, and `infer` is what says so.
  */
-export function validate<T>(schema: Type<T>, value: unknown): T {
+export function validate<S extends Type>(schema: S, value: unknown): S['infer'] {
   const result = schema(value);
   if (result instanceof type.errors) {
     throw new ValidationError('Invalid request', result);
   }
-  return result as T;
+  return result as S['infer'];
 }
 
 /**

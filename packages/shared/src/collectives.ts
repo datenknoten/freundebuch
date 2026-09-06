@@ -15,7 +15,7 @@ import type { PaginationInfo } from './pagination.js';
 /** Schema for creating a collective */
 export const CollectiveInputSchema = type({
   name: 'string > 0',
-  collective_type_id: 'string', // External ID of the collective type
+  collective_type_id: 'string.uuid', // External ID of the collective type
   'notes?': 'string | null',
   'photo_url?': 'string | null',
   'photo_thumbnail_url?': 'string | null',
@@ -69,8 +69,8 @@ export type CollectiveUpdate = typeof CollectiveUpdateSchema.infer;
 
 /** Schema for adding a member to a collective */
 export const MembershipInputSchema = type({
-  friend_id: 'string', // External ID of the friend
-  role_id: 'string', // External ID of the role
+  friend_id: 'string.uuid', // External ID of the friend
+  role_id: 'string.uuid', // External ID of the role
   'joined_date?': 'string | null', // ISO date string (YYYY-MM-DD)
   'notes?': 'string | null',
   'skip_auto_relationships?': 'boolean', // If true, skip auto-relationship creation
@@ -86,7 +86,7 @@ export type MembershipInput = typeof MembershipInputSchema.infer;
 
 /** Schema for updating a membership */
 export const MembershipUpdateSchema = type({
-  'role_id?': 'string', // External ID of the role
+  'role_id?': 'string.uuid', // External ID of the role
   'joined_date?': 'string | null',
   'notes?': 'string | null',
 }).narrow((data, ctx) => {
@@ -115,8 +115,8 @@ export type MembershipDeactivate = typeof MembershipDeactivateSchema.infer;
 
 /** Schema for relationship preview request */
 export const RelationshipPreviewRequestSchema = type({
-  friend_id: 'string', // External ID of the friend to add
-  role_id: 'string', // External ID of the role
+  friend_id: 'string.uuid', // External ID of the friend to add
+  role_id: 'string.uuid', // External ID of the role
 });
 export type RelationshipPreviewRequest = typeof RelationshipPreviewRequestSchema.infer;
 
@@ -124,7 +124,7 @@ export type RelationshipPreviewRequest = typeof RelationshipPreviewRequestSchema
 export const CollectiveListQuerySchema = type({
   'page?': 'string',
   'page_size?': 'string',
-  'type_id?': 'string', // Filter by collective type external_id
+  'type_id?': '"" | string.uuid', // Filter by collective type external_id
   'search?': 'string', // Search in name/notes
   'include_deleted?': 'string', // "true" to include soft-deleted collectives
 });

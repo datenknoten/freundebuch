@@ -45,26 +45,26 @@ export type CircleInput = typeof CircleInputSchema.infer;
 
 /** Single item in a circle reorder request */
 export const CircleReorderItemSchema = type({
-  id: 'string > 0', // external_id
-  sort_order: 'number >= 0',
+  id: 'string.uuid', // external_id
+  sort_order: 'number',
 });
 export type CircleReorderItem = typeof CircleReorderItemSchema.infer;
 
 /** Schema for reordering circles */
 export const CircleReorderSchema = type({
-  circles: CircleReorderItemSchema.array(),
+  order: CircleReorderItemSchema.array(),
 });
 export type CircleReorderInput = typeof CircleReorderSchema.infer;
 
 /** Schema for merging circles */
 export const CircleMergeSchema = type({
-  source_circle_id: 'string > 0', // UUID of circle to merge FROM (will be deleted)
+  source_circle_id: 'string.uuid', // UUID of circle to merge FROM (will be deleted)
 });
 export type CircleMergeInput = typeof CircleMergeSchema.infer;
 
 /** Schema for setting friend circles (replaces all) */
 export const SetFriendCirclesSchema = type({
-  circle_ids: 'string[]', // Array of circle external_ids
+  circle_ids: 'string.uuid[]', // Array of circle external_ids
 });
 export type SetFriendCirclesInput = typeof SetFriendCirclesSchema.infer;
 

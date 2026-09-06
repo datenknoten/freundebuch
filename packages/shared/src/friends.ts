@@ -633,6 +633,12 @@ export const SearchQuerySchema = type({
 });
 export type SearchQuery = typeof SearchQuerySchema.infer;
 
+/** Schema for the recent-search body (POST /api/friends/search/recent) */
+export const RecentSearchInputSchema = type({
+  query: 'string > 0',
+});
+export type RecentSearchInput = typeof RecentSearchInputSchema.infer;
+
 /** Parsed search options */
 export interface SearchOptions {
   query: string;

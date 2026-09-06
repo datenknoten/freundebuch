@@ -1,5 +1,9 @@
-import { MAX_FILE_SIZE, PhotoValidationErrors } from '@freundebuch/shared/index.js';
-import { type } from 'arktype';
+import {
+  ArchiveFriendSchema,
+  MAX_FILE_SIZE,
+  PhotoValidationErrors,
+  SetFriendCirclesSchema,
+} from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { getAuthUser } from '../../middleware/auth.js';
@@ -8,7 +12,7 @@ import { FriendsService } from '../../services/friends/index.js';
 import { PhotoService } from '../../services/photo.service.js';
 import type { AppContext } from '../../types/context.js';
 import { FriendNotFoundError, ResourceNotFoundError, ValidationError } from '../../utils/errors.js';
-import { isValidUuid } from '../../utils/security.js';
+import { parseBody, requireUuidParam, validate } from '../../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -33,12 +37,8 @@ app.post(
     const logger = c.get('logger');
     const db = c.get('db');
     const user = getAuthUser(c);
-    const friendId = c.req.param('id');
-
-    // Validate friendId is a valid UUID to prevent path traversal
-    if (!isValidUuid(friendId)) {
-      throw new ValidationError('Invalid friend ID');
-    }
+    // UUID-validated to prevent path traversal
+    const friendId = requireUuidParam(c, 'id', 'friend ID');
 
     const formData = await c.req.formData();
     const file = formData.get('photo');
@@ -91,12 +91,8 @@ app.delete('/:id/photo', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
-
-  // Validate friendId is a valid UUID to prevent path traversal
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
+  // UUID-validated to prevent path traversal
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
 
   const friendsService = new FriendsService(db, logger);
   const friend = await friendsService.getFriendById(user.userId, friendId);
@@ -126,11 +122,7 @@ app.delete('/:id/photo', async (c) => {
 app.get('/:id/circles', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
-
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
 
   const circlesService = new CirclesService(db);
   const circles = await circlesService.getCirclesForFriend(user.userId, friendId);
@@ -142,38 +134,11 @@ app.get('/:id/circles', async (c) => {
  * PUT /api/friends/:id/circles
  * Set circles for a friend (replaces all existing circle assignments)
  */
-const SetCirclesInputSchema = type({
-  circle_ids: 'string[]',
-});
-
 app.put('/:id/circles', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
-
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
-
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new ValidationError('Invalid JSON');
-  }
-
-  const validated = SetCirclesInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
-
-  // Validate all circle IDs are valid UUIDs
-  for (const circleId of validated.circle_ids) {
-    if (!isValidUuid(circleId)) {
-      throw new ValidationError(`Invalid circle ID: ${circleId}`);
-    }
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
+  const validated = await parseBody(c, SetFriendCirclesSchema);
 
   const circlesService = new CirclesService(db);
   const circles = await circlesService.setFriendCircles(
@@ -192,12 +157,8 @@ app.put('/:id/circles', async (c) => {
 app.post('/:id/circles/:circleId', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
-  const circleId = c.req.param('circleId');
-
-  if (!isValidUuid(friendId) || !isValidUuid(circleId)) {
-    throw new ValidationError('Invalid ID');
-  }
+  const friendId = requireUuidParam(c, 'id');
+  const circleId = requireUuidParam(c, 'circleId');
 
   const circlesService = new CirclesService(db);
   const circle = await circlesService.addFriendToCircle(user.userId, friendId, circleId);
@@ -216,12 +177,8 @@ app.post('/:id/circles/:circleId', async (c) => {
 app.delete('/:id/circles/:circleId', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
-  const circleId = c.req.param('circleId');
-
-  if (!isValidUuid(friendId) || !isValidUuid(circleId)) {
-    throw new ValidationError('Invalid ID');
-  }
+  const friendId = requireUuidParam(c, 'id');
+  const circleId = requireUuidParam(c, 'circleId');
 
   const circlesService = new CirclesService(db);
   const removed = await circlesService.removeFriendFromCircle(user.userId, friendId, circleId);
@@ -245,11 +202,7 @@ app.post('/:id/favorite', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
-
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
 
   const friendsService = new FriendsService(db, logger);
   const isFavorite = await friendsService.toggleFavorite(user.userId, friendId);
@@ -265,20 +218,14 @@ app.post('/:id/favorite', async (c) => {
  * POST /api/friends/:id/archive
  * Archive a friend
  */
-const ArchiveInputSchema = type({
-  'reason?': 'string',
-});
-
 app.post('/:id/archive', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
-
+  // The reason is optional, so an empty body is valid here — parseBody would
+  // reject it as malformed JSON.
   let body: unknown = {};
   try {
     const text = await c.req.text();
@@ -289,11 +236,7 @@ app.post('/:id/archive', async (c) => {
     throw new ValidationError('Invalid JSON');
   }
 
-  const validated = ArchiveInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid request', validated);
-  }
+  const validated = validate(ArchiveFriendSchema, body);
 
   const friendsService = new FriendsService(db, logger);
   const archived = await friendsService.archiveFriend(user.userId, friendId, validated.reason);
@@ -313,11 +256,7 @@ app.post('/:id/unarchive', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id');
-
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
 
   const friendsService = new FriendsService(db, logger);
   const unarchived = await friendsService.unarchiveFriend(user.userId, friendId);

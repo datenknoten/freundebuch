@@ -1,3 +1,14 @@
+import {
+  DiscordCredentialsSchema,
+  DiscordCredentialsUpdateSchema,
+  MatrixCredentialsSchema,
+  MatrixCredentialsUpdateSchema,
+  NotificationChannelCreateSchema,
+  NotificationChannelToggleSchema,
+  NotificationChannelUpdateSchema,
+  TelegramCredentialsSchema,
+  TelegramCredentialsUpdateSchema,
+} from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
@@ -9,7 +20,7 @@ import {
 import { NotificationChannelsService } from '../services/notification-channels.service.js';
 import type { AppContext } from '../types/context.js';
 import { NotificationChannelNotFoundError, ValidationError } from '../utils/errors.js';
-import { isValidUuid } from '../utils/security.js';
+import { parseBody, requireUuidParam } from '../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -18,67 +29,11 @@ app.use('*', authMiddleware);
 app.use('*', onboardingMiddleware);
 app.use('*', notificationChannelsRateLimitMiddleware);
 
-// ============================================================================
-// ArkType Schemas
-// ============================================================================
-
-const NotificationChannelCreateSchema = type({
-  platform: '"telegram" | "matrix" | "discord"',
-  'isEnabled?': 'boolean',
-  'lookaheadDays?': 'number.integer >= 1 & number.integer <= 30',
-  'notifyTime?': /^([01]\d|2[0-3]):[0-5]\d$/,
-  credentials: 'object',
-});
-
-const NotificationChannelUpdateSchema = type({
-  'isEnabled?': 'boolean',
-  'lookaheadDays?': 'number.integer >= 1 & number.integer <= 30',
-  'notifyTime?': /^([01]\d|2[0-3]):[0-5]\d$/,
-  'credentials?': 'object',
-});
-
-const TelegramCredentialsSchema = type({
-  botToken: 'string > 0',
-  chatId: 'string > 0',
-});
-
-const TelegramCredentialsUpdateSchema = type({
-  'botToken?': 'string > 0',
-  'chatId?': 'string > 0',
-});
-
-const MatrixCredentialsSchema = type({
-  homeserver: /^https?:\/\/.+/,
-  accessToken: 'string > 0',
-  roomId: /^!.+:.+/,
-});
-
-const MatrixCredentialsUpdateSchema = type({
-  'homeserver?': /^https?:\/\/.+/,
-  'accessToken?': 'string > 0',
-  'roomId?': /^!.+:.+/,
-});
-
-const DiscordCredentialsSchema = type({
-  webhookUrl: /^https:\/\/discord(app)?\.com\/api\/webhooks\/.+\/.+/,
-});
-
-const DiscordCredentialsUpdateSchema = type({
-  'webhookUrl?': /^https:\/\/discord(app)?\.com\/api\/webhooks\/.+\/.+/,
-});
-
-const ToggleSchema = type({
-  isEnabled: 'boolean',
-});
-
 /**
  * Validate platform-specific credentials (all fields required — for creation)
  */
 function validateCredentials(platform: string, credentials: object): Record<string, string> {
-  let validated:
-    | ReturnType<typeof TelegramCredentialsSchema>
-    | ReturnType<typeof MatrixCredentialsSchema>
-    | ReturnType<typeof DiscordCredentialsSchema>;
+  let validated: unknown;
   switch (platform) {
     case 'telegram':
       validated = TelegramCredentialsSchema(credentials);
@@ -108,10 +63,7 @@ function validateCredentialsForUpdate(
   platform: string,
   credentials: object,
 ): Record<string, string> {
-  let validated:
-    | ReturnType<typeof TelegramCredentialsUpdateSchema>
-    | ReturnType<typeof MatrixCredentialsUpdateSchema>
-    | ReturnType<typeof DiscordCredentialsUpdateSchema>;
+  let validated: unknown;
   switch (platform) {
     case 'telegram':
       validated = TelegramCredentialsUpdateSchema(credentials);
@@ -159,13 +111,8 @@ app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const body = await c.req.json();
-
   // First pass: validate top-level shape
-  const validated = NotificationChannelCreateSchema(body);
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
+  const validated = await parseBody(c, NotificationChannelCreateSchema);
 
   // Second pass: validate platform-specific credentials
   const credentials = validateCredentials(validated.platform, validated.credentials);
@@ -189,11 +136,7 @@ app.post('/', async (c) => {
 app.get('/:channelId', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const channelId = c.req.param('channelId');
-
-  if (!isValidUuid(channelId)) {
-    throw new ValidationError('Invalid channel ID');
-  }
+  const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
   const service = new NotificationChannelsService(db);
   const result = await service.getChannel(user.userId, channelId);
@@ -208,19 +151,10 @@ app.get('/:channelId', async (c) => {
 app.put('/:channelId', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const channelId = c.req.param('channelId');
-
-  if (!isValidUuid(channelId)) {
-    throw new ValidationError('Invalid channel ID');
-  }
-
-  const body = await c.req.json();
+  const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
   // First pass: validate top-level shape
-  const validated = NotificationChannelUpdateSchema(body);
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
+  const validated = await parseBody(c, NotificationChannelUpdateSchema);
 
   // If credentials provided, fetch existing channel to know the platform
   let credentials: Record<string, string> | undefined;
@@ -248,11 +182,7 @@ app.put('/:channelId', async (c) => {
 app.delete('/:channelId', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const channelId = c.req.param('channelId');
-
-  if (!isValidUuid(channelId)) {
-    throw new ValidationError('Invalid channel ID');
-  }
+  const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
   const service = new NotificationChannelsService(db);
   const deleted = await service.deleteChannel(user.userId, channelId);
@@ -271,11 +201,7 @@ app.delete('/:channelId', async (c) => {
 app.post('/:channelId/test', notificationTestRateLimitMiddleware, async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const channelId = c.req.param('channelId');
-
-  if (!isValidUuid(channelId)) {
-    throw new ValidationError('Invalid channel ID');
-  }
+  const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
   const service = new NotificationChannelsService(db);
   await service.sendTestMessage(user.userId, channelId);
@@ -290,17 +216,8 @@ app.post('/:channelId/test', notificationTestRateLimitMiddleware, async (c) => {
 app.patch('/:channelId/toggle', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const channelId = c.req.param('channelId');
-
-  if (!isValidUuid(channelId)) {
-    throw new ValidationError('Invalid channel ID');
-  }
-
-  const body = await c.req.json();
-  const validated = ToggleSchema(body);
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
+  const channelId = requireUuidParam(c, 'channelId', 'channel ID');
+  const validated = await parseBody(c, NotificationChannelToggleSchema);
 
   const service = new NotificationChannelsService(db);
   const result = await service.toggleChannel(user.userId, channelId, validated.isEnabled);

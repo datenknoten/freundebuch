@@ -5,7 +5,7 @@ import { getAuthUser } from '../../../middleware/auth.js';
 import { EncountersService } from '../../../services/encounters.service.js';
 import type { AppContext } from '../../../types/context.js';
 import { ResourceNotFoundError, ValidationError } from '../../../utils/errors.js';
-import { isValidUuid } from '../../../utils/security.js';
+import { requireUuidParam } from '../../../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -16,11 +16,7 @@ const app = new Hono<AppContext>();
 app.get('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
 
   const query = c.req.query();
   const validated = EncounterListQuerySchema(query);
@@ -45,11 +41,7 @@ app.get('/', async (c) => {
 app.get('/last', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('id') ?? '';
-
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
+  const friendId = requireUuidParam(c, 'id', 'friend ID');
 
   const encountersService = new EncountersService(db);
   const lastEncounter = await encountersService.getLastEncounterForFriend(user.userId, friendId);

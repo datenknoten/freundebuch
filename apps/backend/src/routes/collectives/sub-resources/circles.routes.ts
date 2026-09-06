@@ -3,7 +3,7 @@ import { getAuthUser } from '../../../middleware/auth.js';
 import { CollectiveCircleService } from '../../../services/collectives/index.js';
 import type { AppContext } from '../../../types/context.js';
 import { ResourceNotFoundError, ValidationError } from '../../../utils/errors.js';
-import { isValidUuid } from '../../../utils/security.js';
+import { requireUuidParam } from '../../../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -15,11 +15,7 @@ app.get('/', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id') ?? '';
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
 
   const circleService = new CollectiveCircleService({ db, logger });
   const circles = await circleService.getCircles(user.userId, collectiveId);
@@ -35,11 +31,7 @@ app.get('/available', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id') ?? '';
-
-  if (!isValidUuid(collectiveId)) {
-    throw new ValidationError('Invalid collective ID');
-  }
+  const collectiveId = requireUuidParam(c, 'id', 'collective ID');
 
   const circleService = new CollectiveCircleService({ db, logger });
   const circles = await circleService.getAvailableCircles(user.userId, collectiveId);
@@ -55,12 +47,8 @@ app.post('/:circleId', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id') ?? '';
-  const circleId = c.req.param('circleId') ?? '';
-
-  if (!isValidUuid(collectiveId) || !isValidUuid(circleId)) {
-    throw new ValidationError('Invalid ID');
-  }
+  const collectiveId = requireUuidParam(c, 'id');
+  const circleId = requireUuidParam(c, 'circleId');
 
   const circleService = new CollectiveCircleService({ db, logger });
   const added = await circleService.addToCircle(user.userId, collectiveId, circleId);
@@ -80,12 +68,8 @@ app.delete('/:circleId', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const collectiveId = c.req.param('id') ?? '';
-  const circleId = c.req.param('circleId') ?? '';
-
-  if (!isValidUuid(collectiveId) || !isValidUuid(circleId)) {
-    throw new ValidationError('Invalid ID');
-  }
+  const collectiveId = requireUuidParam(c, 'id');
+  const circleId = requireUuidParam(c, 'circleId');
 
   const circleService = new CollectiveCircleService({ db, logger });
   const removed = await circleService.removeFromCircle(user.userId, collectiveId, circleId);

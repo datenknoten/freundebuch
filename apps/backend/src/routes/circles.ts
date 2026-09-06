@@ -1,5 +1,8 @@
-import { CircleInputSchema } from '@freundebuch/shared/index.js';
-import { type } from 'arktype';
+import {
+  CircleInputSchema,
+  CircleMergeSchema,
+  CircleReorderSchema,
+} from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { etag } from 'hono/etag';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
@@ -8,7 +11,7 @@ import { circlesRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { CirclesService } from '../services/circles.service.js';
 import type { AppContext } from '../types/context.js';
 import { CircleCreationError, CircleNotFoundError, ValidationError } from '../utils/errors.js';
-import { isValidUuid } from '../utils/security.js';
+import { parseBody, requireUuidParam } from '../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -47,12 +50,7 @@ app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const body = await c.req.json();
-  const validated = CircleInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
+  const validated = await parseBody(c, CircleInputSchema);
 
   const circlesService = new CirclesService(db);
   const circle = await circlesService.createCircle(user.userId, validated);
@@ -69,27 +67,11 @@ app.post('/', async (c) => {
  * Batch reorder circles by updating their sort_order
  * NOTE: This must be defined before /:id to avoid being caught by the wildcard
  */
-const ReorderInputSchema = type({
-  order: type({ id: 'string', sort_order: 'number' }).array(),
-});
-
 app.put('/reorder', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const body = await c.req.json();
-  const validated = ReorderInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
-
-  // Validate all IDs are valid UUIDs
-  for (const item of validated.order) {
-    if (!isValidUuid(item.id)) {
-      throw new ValidationError(`Invalid circle ID: ${item.id}`);
-    }
-  }
+  const validated = await parseBody(c, CircleReorderSchema);
 
   const circlesService = new CirclesService(db);
   await circlesService.reorderCircles(user.userId, validated.order);
@@ -104,11 +86,7 @@ app.put('/reorder', async (c) => {
 app.get('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const circleId = c.req.param('id');
-
-  if (!isValidUuid(circleId)) {
-    throw new ValidationError('Invalid circle ID');
-  }
+  const circleId = requireUuidParam(c, 'id', 'circle ID');
 
   const circlesService = new CirclesService(db);
   const circle = await circlesService.getCircleById(user.userId, circleId);
@@ -127,18 +105,8 @@ app.get('/:id', async (c) => {
 app.put('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const circleId = c.req.param('id');
-
-  if (!isValidUuid(circleId)) {
-    throw new ValidationError('Invalid circle ID');
-  }
-
-  const body = await c.req.json();
-  const validated = CircleInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
+  const circleId = requireUuidParam(c, 'id', 'circle ID');
+  const validated = await parseBody(c, CircleInputSchema);
 
   const circlesService = new CirclesService(db);
   const circle = await circlesService.updateCircle(user.userId, circleId, validated);
@@ -157,11 +125,7 @@ app.put('/:id', async (c) => {
 app.delete('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const circleId = c.req.param('id');
-
-  if (!isValidUuid(circleId)) {
-    throw new ValidationError('Invalid circle ID');
-  }
+  const circleId = requireUuidParam(c, 'id', 'circle ID');
 
   const circlesService = new CirclesService(db);
   const deleted = await circlesService.deleteCircle(user.userId, circleId);
@@ -177,29 +141,11 @@ app.delete('/:id', async (c) => {
  * POST /api/circles/:id/merge
  * Merge another circle into this one (move all friends from source, then delete source)
  */
-const MergeInputSchema = type({
-  source_circle_id: 'string',
-});
-
 app.post('/:id/merge', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const targetCircleId = c.req.param('id');
-
-  if (!isValidUuid(targetCircleId)) {
-    throw new ValidationError('Invalid target circle ID');
-  }
-
-  const body = await c.req.json();
-  const validated = MergeInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
-
-  if (!isValidUuid(validated.source_circle_id)) {
-    throw new ValidationError('Invalid source circle ID');
-  }
+  const targetCircleId = requireUuidParam(c, 'id', 'target circle ID');
+  const validated = await parseBody(c, CircleMergeSchema);
 
   if (targetCircleId === validated.source_circle_id) {
     throw new ValidationError('Cannot merge a circle into itself');

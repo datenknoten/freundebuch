@@ -12,7 +12,7 @@ import { encountersRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { EncountersService } from '../services/encounters.service.js';
 import type { AppContext } from '../types/context.js';
 import { EncounterNotFoundError, ValidationError } from '../utils/errors.js';
-import { isValidUuid } from '../utils/security.js';
+import { parseBody, requireUuidParam } from '../utils/http.js';
 
 const app = new Hono<AppContext>();
 
@@ -44,11 +44,6 @@ app.get('/', async (c) => {
 
   const options = parseEncounterListQuery(validated);
 
-  // Validate friend_id if provided
-  if (options.friendId && !isValidUuid(options.friendId)) {
-    throw new ValidationError('Invalid friend_id');
-  }
-
   const encountersService = new EncountersService(db);
   const result = await encountersService.listEncounters(user.userId, options);
 
@@ -63,19 +58,7 @@ app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const body = await c.req.json();
-  const validated = EncounterInputSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
-
-  // Validate all friend IDs
-  for (const friendId of validated.friend_ids) {
-    if (!isValidUuid(friendId)) {
-      throw new ValidationError(`Invalid friend ID: ${friendId}`);
-    }
-  }
+  const validated = await parseBody(c, EncounterInputSchema);
 
   const encountersService = new EncountersService(db);
   const encounter = await encountersService.createEncounter(user.userId, validated);
@@ -90,11 +73,7 @@ app.post('/', async (c) => {
 app.get('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const encounterId = c.req.param('id');
-
-  if (!isValidUuid(encounterId)) {
-    throw new ValidationError('Invalid encounter ID');
-  }
+  const encounterId = requireUuidParam(c, 'id', 'encounter ID');
 
   const encountersService = new EncountersService(db);
   const encounter = await encountersService.getEncounterById(user.userId, encounterId);
@@ -113,27 +92,8 @@ app.get('/:id', async (c) => {
 app.put('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const encounterId = c.req.param('id');
-
-  if (!isValidUuid(encounterId)) {
-    throw new ValidationError('Invalid encounter ID');
-  }
-
-  const body = await c.req.json();
-  const validated = EncounterUpdateSchema(body);
-
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid input', validated);
-  }
-
-  // Validate all friend IDs if provided
-  if (validated.friend_ids) {
-    for (const friendId of validated.friend_ids) {
-      if (!isValidUuid(friendId)) {
-        throw new ValidationError(`Invalid friend ID: ${friendId}`);
-      }
-    }
-  }
+  const encounterId = requireUuidParam(c, 'id', 'encounter ID');
+  const validated = await parseBody(c, EncounterUpdateSchema);
 
   const encountersService = new EncountersService(db);
   const encounter = await encountersService.updateEncounter(user.userId, encounterId, validated);
@@ -152,11 +112,7 @@ app.put('/:id', async (c) => {
 app.delete('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
-  const encounterId = c.req.param('id');
-
-  if (!isValidUuid(encounterId)) {
-    throw new ValidationError('Invalid encounter ID');
-  }
+  const encounterId = requireUuidParam(c, 'id', 'encounter ID');
 
   const encountersService = new EncountersService(db);
   const deleted = await encountersService.deleteEncounter(user.userId, encounterId);

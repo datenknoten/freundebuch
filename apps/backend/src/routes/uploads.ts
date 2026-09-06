@@ -7,7 +7,7 @@ import { FriendsService } from '../services/friends/index.js';
 import { PhotoService } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
 import { FriendNotFoundError, ValidationError } from '../utils/errors.js';
-import { isValidUuid } from '../utils/security.js';
+import { requireUuidParam } from '../utils/http.js';
 import { isNodeError } from '../utils/type-guards.js';
 
 const app = new Hono<AppContext>();
@@ -25,13 +25,8 @@ app.get('/friends/:friendId/:filename', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
   const user = getAuthUser(c);
-  const friendId = c.req.param('friendId');
+  const friendId = requireUuidParam(c, 'friendId', 'friend ID');
   const filename = c.req.param('filename');
-
-  // Validate friendId is a valid UUID to prevent path traversal
-  if (!isValidUuid(friendId)) {
-    throw new ValidationError('Invalid friend ID');
-  }
 
   // Verify the user owns this friend
   const friendsService = new FriendsService(db, logger);
