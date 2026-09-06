@@ -53,6 +53,8 @@ id BIGSERIAL PRIMARY KEY
 Every table MUST have an `external_id` column with type `UUID` for API exposure.
 
 > **Exception:** The Better Auth tables in the `auth` schema (`user`, `session`, `account`, `verification`, `passkey`) are managed by Better Auth and follow its conventions instead: singular table names and a `TEXT` primary key (`id`) that holds the public UUID directly. Do not "fix" them to match this guide. All Freundebuch-owned tables follow the rules below.
+>
+> **Identity invariant:** `auth."user".id` always equals `auth.users.external_id::text`. `auth.users` exists only as the integer FK anchor for the domain tables and holds no identity data — email, credentials, `self_profile_id` and `preferences` live on `auth."user"`. Postgres cannot enforce the equality (`text` vs `uuid`), so every writer creates both rows together; see [ADR 0003](./decisions/0003-single-identity-anchored-on-auth-users.md).
 
 ```sql
 external_id UUID NOT NULL UNIQUE DEFAULT gen_random_uuid()
