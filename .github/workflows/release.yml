@@ -252,7 +252,65 @@ jobs:
           subject-digest: ${{ steps.manifest.outputs.digest }}
           push-to-registry: true
 
-  # Job 5: Build and attach frontend assets
+  # Job 5: Generate and attest an SBOM per published image. Split from
+  # docker-manifest because the manifest job pushes the multi-arch list and the
+  # SBOM must describe that final list, resolved back from the registry.
+  sbom:
+    name: Attest ${{ matrix.image }} SBOM
+    needs: [release, docker-manifest]
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - nginx
+          - backend
+          - mcp-server
+          - sabredav
+          - osm-import
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve manifest digest
+        id: digest
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.image }}
+          VERSION: ${{ needs.release.outputs.new_release_version }}
+        run: |
+          DIGEST=$(docker buildx imagetools inspect "${IMAGE}:${VERSION}" \
+            --format '{{json .Manifest}}' | jq -r .digest)
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/${{ github.repository }}-${{ matrix.image }}:${{ needs.release.outputs.new_release_version }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Attest SBOM
+        # Mirrors the provenance attestation: push-to-registry needs a public
+        # package to be readable by verifiers.
+        if: ${{ github.event.repository.visibility == 'public' }}
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: ghcr.io/${{ github.repository }}-${{ matrix.image }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          sbom-path: sbom.spdx.json
+          push-to-registry: true
+
+  # Job 6: Build and attach frontend assets
   assets:
     name: Build Frontend Assets
     needs: release
@@ -312,7 +370,7 @@ jobs:
           tag_name: v${{ needs.release.outputs.new_release_version }}
           files: frontend-${{ needs.release.outputs.new_release_version }}.tar.gz
 
-  # Job 6: Deploy to production server
+  # Job 7: Deploy to production server
   deploy:
     name: Deploy to Production
     needs: [release, docker-manifest]
@@ -359,7 +417,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"text\": \"✅ **Deployment successful**\n\n**Version:** v${VERSION}\n**Repository:** ${REPO}\n**Release:** https://github.com/${REPO}/releases/tag/v${VERSION}\"}"
 
-  # Job 7: Notify on failure
+  # Job 8: Notify on failure
   notify-failure:
     name: Notify Failure
     needs: [ci, release, docker-build, docker-manifest, assets, deploy]

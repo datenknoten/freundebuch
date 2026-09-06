@@ -238,8 +238,92 @@ jobs:
           NODE_ENV: test
         run: aube test
 
+      # Advisories in the PHP tree are as production-relevant as the JS ones;
+      # this is the only place composer.lock is installed.
+      - name: Audit PHP dependencies
+        run: composer audit --no-interaction
+        working-directory: apps/sabredav
+
+  backend-coverage:
+    name: Backend Coverage
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: imresamu/postgis:18-3.6.1-trixie
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+        with:
+          experimental: true
+
+      - name: Resolve aube store path
+        shell: bash
+        run: echo "AUBE_STORE=$(aube store path 2>/dev/null || echo $HOME/.local/share/aube/store)" >> "$GITHUB_ENV"
+
+      - name: Setup aube cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.AUBE_STORE }}
+          key: ${{ runner.os }}-aube-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-aube-store-
+
+      - name: Install dependencies
+        run: aube ci
+
+      # Unit, service and middleware suites only: v8 instrumentation pushes the
+      # Better Auth integration tests past their timeouts, and those already run
+      # uninstrumented in the `test` job.
+      - name: Run backend tests with coverage
+        env:
+          NODE_ENV: test
+          # global-setup builds its template on this server instead of starting
+          # its own container.
+          TEST_DATABASE_URL: postgresql://test:test@localhost:5432/postgres
+        run: >-
+          aube --filter @freundebuch/backend exec vitest run --coverage
+          --exclude '**/tests/integration/**'
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: apps/backend/coverage/clover.xml
+          if-no-files-found: error
+
+  dependency-audit:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Scans the resolved lockfiles rather than the manifests, so transitive
+      # advisories surface too.
+      - name: Scan lockfiles with osv-scanner
+        uses: google/osv-scanner-action@v2.2.4
+        with:
+          scan-args: |-
+            --lockfile=pnpm-lock.yaml
+            --lockfile=apps/sabredav/composer.lock
+
   danger:
     name: Danger PR Checks
+    needs: backend-coverage
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -273,15 +357,21 @@ jobs:
 
       - name: Generate frontend coverage
         # Fast (jsdom, no DB/Docker), so produce the clover report here rather
-        # than ferrying an artifact from the test job. Backend coverage is not
-        # generated in CI yet: v8 instrumentation slows the better-auth
-        # integration tests past their timeout (the danger coverage rule simply
-        # reports nothing for the missing backend report).
+        # than ferrying an artifact around.
         # Build shared first: frontend tests import runtime values from $shared
         # (-> shared/dist), which isn't built by `aube ci`.
         run: |
           aube --filter @freundebuch/shared run build
           aube --filter @freundebuch/frontend run test:coverage
+
+      # The backend report needs a Postgres service and v8 instrumentation, so
+      # it is produced by `backend-coverage` and ferried in here — the coverage
+      # rule reads both clover files from the workspace paths.
+      - name: Download backend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: apps/backend/coverage
 
       - name: Run Danger
         run: npx danger ci
