@@ -198,6 +198,30 @@ jobs:
   test:
     name: Unit and Integration Tests
     runs-on: ubuntu-latest
+    # Both suites need Postgres. The PHP integration tests used to start their
+    # own testcontainer, which fails on the runner inside the PHP client
+    # ("Container::$id must not be accessed before initialization"), and the JS
+    # suites paid for a container start too. One service for both, selected via
+    # TEST_DATABASE_URL, which each suite already honours.
+    services:
+      postgres:
+        image: imresamu/postgis:18-3.6.1-trixie
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          # Not "test": the JS global-setup drops and recreates a database of
+          # that exact name as its clone template and drops it again on
+          # teardown, which would delete the database the PHP suite migrates
+          # into. Both suites take this URL and use it differently — the JS one
+          # as a server pointer, the PHP one as its actual database.
+          POSTGRES_DB: sabredav
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d sabredav"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -236,6 +260,7 @@ jobs:
       - name: Run unit and integration tests
         env:
           NODE_ENV: test
+          TEST_DATABASE_URL: postgresql://test:test@localhost:5432/sabredav
         run: aube test
 
       # Advisories in the PHP tree are as production-relevant as the JS ones;
