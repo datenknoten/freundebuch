@@ -9,6 +9,7 @@ import {
   type IGetChannelsByUserIdResult,
   updateChannel,
 } from '../models/queries/notification-channels.queries.js';
+import { decrypt, encryptOptional, tryDecrypt } from '../utils/credentials-crypto.js';
 import {
   NotificationChannelAlreadyExistsError,
   NotificationChannelNotFoundError,
@@ -71,12 +72,12 @@ export class NotificationChannelsService {
           userExternalId,
           platform: input.platform,
           isEnabled: input.isEnabled ?? true,
-          telegramBotToken: input.credentials.botToken ?? null,
+          telegramBotToken: encryptOptional(input.credentials.botToken),
           telegramChatId: input.credentials.chatId ?? null,
           matrixHomeserver: input.credentials.homeserver ?? null,
-          matrixAccessToken: input.credentials.accessToken ?? null,
+          matrixAccessToken: encryptOptional(input.credentials.accessToken),
           matrixRoomId: input.credentials.roomId ?? null,
-          discordWebhookUrl: input.credentials.webhookUrl ?? null,
+          discordWebhookUrl: encryptOptional(input.credentials.webhookUrl),
           lookaheadDays: input.lookaheadDays ?? null,
           notifyTime: input.notifyTime ?? null,
         },
@@ -114,12 +115,12 @@ export class NotificationChannelsService {
         userExternalId,
         channelExternalId,
         isEnabled: input.isEnabled ?? null,
-        telegramBotToken: input.credentials?.botToken ?? null,
+        telegramBotToken: encryptOptional(input.credentials?.botToken),
         telegramChatId: input.credentials?.chatId ?? null,
         matrixHomeserver: input.credentials?.homeserver ?? null,
-        matrixAccessToken: input.credentials?.accessToken ?? null,
+        matrixAccessToken: encryptOptional(input.credentials?.accessToken),
         matrixRoomId: input.credentials?.roomId ?? null,
-        discordWebhookUrl: input.credentials?.webhookUrl ?? null,
+        discordWebhookUrl: encryptOptional(input.credentials?.webhookUrl),
         lookaheadDays: input.lookaheadDays ?? null,
         notifyTime: input.notifyTime ?? null,
       },
@@ -172,7 +173,7 @@ export class NotificationChannelsService {
     switch (channel.platform) {
       case 'telegram':
         await sendTelegramMessage(
-          channel.telegram_bot_token ?? '',
+          decrypt(channel.telegram_bot_token ?? ''),
           channel.telegram_chat_id ?? '',
           testMessage,
         );
@@ -180,14 +181,14 @@ export class NotificationChannelsService {
       case 'matrix':
         await sendMatrixMessage(
           channel.matrix_homeserver ?? '',
-          channel.matrix_access_token ?? '',
+          decrypt(channel.matrix_access_token ?? ''),
           channel.matrix_room_id ?? '',
           testMessage,
           testHtml,
         );
         break;
       case 'discord':
-        await sendDiscordMessage(channel.discord_webhook_url ?? '', testMessage);
+        await sendDiscordMessage(decrypt(channel.discord_webhook_url ?? ''), testMessage);
         break;
       default:
         throw new NotificationDeliveryError(channel.platform, 'Unknown platform');
@@ -232,9 +233,16 @@ export class NotificationChannelsService {
     };
   }
 
+  /**
+   * Last-4 hint for a credential stored encrypted at rest. The hint is derived
+   * from the plaintext so it stays stable across the encryption cutover; a
+   * credential that no longer decrypts (rotated `BETTER_AUTH_SECRET`) degrades
+   * to `****` instead of failing the read, so the user can re-enter it.
+   */
   private maskSecret(value: string | null | undefined): string | undefined {
     if (!value) return undefined;
-    if (value.length <= 4) return '****';
-    return `...${value.slice(-4)}`;
+    const plain = tryDecrypt(value);
+    if (plain === null || plain.length <= 4) return '****';
+    return `...${plain.slice(-4)}`;
   }
 }

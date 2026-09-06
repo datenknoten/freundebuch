@@ -26,6 +26,7 @@ import usersRoutes from './routes/users.js';
 import type { AppContext } from './types/context.js';
 import { initializeAddressCaches } from './utils/cache.js';
 import { getConfig } from './utils/config.js';
+import { encryptLegacyNotificationCredentials } from './utils/credentials-crypto.js';
 import { checkDatabaseConnection, createPool, setupGracefulShutdown } from './utils/db.js';
 import { DatabaseConnectionError, isAppError, toError } from './utils/errors.js';
 import { createLogger } from './utils/logger.js';
@@ -152,6 +153,10 @@ export async function startServer() {
 
   // Initialize address caches with database pool for persistence
   initializeAddressCaches(pool, pinoLogger);
+
+  // One-shot conversion of credentials written before encryption at rest
+  // existed. Idempotent, so it stays harmless on every later boot.
+  await encryptLegacyNotificationCredentials(pool, pinoLogger);
 
   // Setup cleanup scheduler for expired sessions, tokens, and cache
   const cleanupTask = setupCleanupScheduler(pool, pinoLogger);
