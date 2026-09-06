@@ -3,7 +3,8 @@
  *
  * Creates a demo user with friends, circles, and encounters for testing purposes.
  *
- * Usage: pnpm seed
+ * Usage: aube seed
+ *        aube seed --reset   (delete the existing demo user first)
  */
 
 import bcrypt from 'bcrypt';
@@ -98,17 +99,30 @@ async function seed() {
 
   console.log('Starting database seeding...\n');
 
+  const reset = process.argv.includes('--reset');
+
   try {
     // Check if demo user already exists
-    const existingUser = await pool.query('SELECT id FROM auth."user" WHERE email = $1', [
-      DEMO_USER.email,
-    ]);
+    const existingUser = await pool.query<{ id: string }>(
+      'SELECT id FROM auth."user" WHERE email = $1',
+      [DEMO_USER.email],
+    );
 
     if (existingUser.rows.length > 0) {
-      console.log(`Demo user (${DEMO_USER.email}) already exists. Skipping seed.`);
-      console.log('\nTo reseed, delete the demo user first:');
-      console.log(`  DELETE FROM auth."user" WHERE email = '${DEMO_USER.email}';`);
-      return;
+      if (!reset) {
+        console.log(`Demo user (${DEMO_USER.email}) already exists. Skipping seed.`);
+        console.log('\nRe-run with --reset to delete and re-seed it:');
+        console.log('  aube seed --reset');
+        return;
+      }
+
+      console.log(`Removing existing demo user (${DEMO_USER.email})...`);
+      // Mirrors the Better Auth delete hook: the Better Auth row cascades its
+      // sessions/accounts, and the legacy anchor cascades every domain row
+      // (ADR 0003) — dropping only one of the two would orphan the other.
+      const userExternalId = existingUser.rows[0].id;
+      await pool.query('DELETE FROM auth."user" WHERE id = $1', [userExternalId]);
+      await pool.query('DELETE FROM auth.users WHERE external_id = $1::uuid', [userExternalId]);
     }
 
     // Start transaction

@@ -64,8 +64,7 @@ freundebuch2/
 ├── packages/
 │   └── shared/               # Shared types, ArkType schemas, utilities
 ├── database/
-│   ├── migrations/           # SQL migrations (TypeScript)
-│   └── seeds/                # Seed data
+│   └── migrations/           # SQL migrations (TypeScript)
 ├── docker/                   # Dockerfiles and nginx configs
 ├── scripts/
 │   └── osm-import/           # OpenStreetMap address data import

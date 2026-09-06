@@ -33,19 +33,20 @@ DAV clients can't do cookie-based login, so each device gets its own app-specifi
 2. Format it for humans in dash-separated chunks (`xxxx-xxxx-…`) — shown to the user **exactly once**
 3. Store:
    - `password_hash` — a **bcrypt** hash of the raw password
-   - `password_prefix` — the first 8 characters in plaintext, used as an indexed lookup key and shown in the UI so users can tell their app passwords apart
+   - `password_prefix` — `left(sha256(<first 8 characters of the raw password>), 16 hex chars)`, an indexed lookup key. The plaintext prefix is *not* stored: a database dump would otherwise hand out a third of the secret plus an offline oracle for confirming guesses. The create response returns the raw prefix once (alongside the password); the list endpoint never returns it.
 4. The plaintext password is never stored and cannot be retrieved later
 
 ### Verification
 
 1. The DAV client sends the password via HTTP Basic Auth
-2. The server strips the display formatting, then looks up candidate rows by `password_prefix`
+2. The server strips the display formatting, hashes the first 8 characters the same way, then looks up candidate rows by `password_prefix` (SabreDAV computes the key with `substr(hash('sha256', $prefix), 0, 16)`)
 3. Each candidate is checked with `bcrypt.compare`
-4. On success, `last_used_at` is updated
+4. Rejections that have no candidate to check (unknown email, no prefix match) still compare against a module-level dummy hash, so every failure costs one bcrypt round and response time does not reveal which addresses have app passwords
+5. On success, `last_used_at` is updated
 
 ### Why bcrypt here (but not for the old session tokens)?
 
-App passwords are long random values, so SHA-256 would technically suffice — but unlike per-request session validation, DAV authentication is comparatively infrequent, so bcrypt's cost is affordable and buys defense in depth. The prefix index keeps lookups fast: bcrypt only runs against the handful of rows sharing the same 8-character prefix.
+App passwords are long random values, so SHA-256 would technically suffice — but unlike per-request session validation, DAV authentication is comparatively infrequent, so bcrypt's cost is affordable and buys defense in depth. The prefix index keeps lookups fast: bcrypt only runs against the handful of rows sharing the same (hashed) 8-character prefix.
 
 ### Limits
 

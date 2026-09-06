@@ -82,7 +82,9 @@ hooks {
         depends = List("check")
       }
       ["test"] {
-        check = "aube --recursive run test"
+        // Unit tests only: the integration suites need Docker/Postgres and add
+        // minutes to every push. CI runs the full suite.
+        check = "aube test:unit"
         exclusive = true
         depends = List("type-check")
       }

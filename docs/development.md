@@ -79,6 +79,9 @@ aube pgtyped:watch          # Watch and regenerate types
                             # environment, which wins) — pgtyped.config.json
                             # holds no credentials.
 aube seed                   # Seed database with test data
+aube --filter @freundebuch/backend run seed --reset
+                            # Replace an existing demo user instead of skipping
+                            # (what `mise run db:reset` uses)
 
 # Docker
 aube docker:up              # Start Docker services
@@ -143,6 +146,8 @@ Single tool for linting and formatting (replaces ESLint + Prettier):
 
 Coverage is reported per pull request rather than enforced per workspace: CI runs the tests with coverage, and a [Danger](https://danger.systems) rule (`packages/danger/src/rules/coverage.ts`) comments on the PR with the coverage of the files it changed, at an 80% threshold.
 
-It is **report-only** today — files below threshold are marked but the build still passes. The gate becomes blocking once the frontend baseline clears 80%. Backend coverage is not generated yet, because v8 instrumentation pushes its Better Auth integration tests past their timeout. See [ADR 0002](./decisions/0002-pr-coverage-via-danger.md).
+It is **report-only** today — files below threshold are marked but the build still passes. The gate becomes blocking once the frontend baseline clears 80%. See [ADR 0002](./decisions/0002-pr-coverage-via-danger.md).
+
+Both workspaces produce a report: the frontend one in the `danger` job, the backend one in the `backend-coverage` job (unit, service and middleware suites only — v8 instrumentation pushes the Better Auth integration tests past their timeouts, and those run uninstrumented in the `test` job), ferried into `danger` as an artifact.
 
 Frontend tests share the helpers in `apps/frontend/src/lib/test/` (render helpers, store harness, fetch mock, fixtures) — see [apps/frontend/AGENTS.md](../apps/frontend/AGENTS.md).

@@ -65,7 +65,10 @@ run = "docker exec -it freundebuch-postgres psql -U freundebuch -d freundebuch_d
 
 [tasks."db:reset"]
 description = "Drop and recreate the dev database, then re-run migrations + seed"
-depends = ["docker:down", "docker:up", "migrate", "seed"]
+depends = ["docker:down", "docker:up", "migrate"]
+# --reset so re-seeding an existing dev database replaces the demo user instead
+# of skipping.
+run = "aube --filter @freundebuch/backend run seed --reset"
 
 [tasks."docker:up"]
 description = "Start Docker services"
