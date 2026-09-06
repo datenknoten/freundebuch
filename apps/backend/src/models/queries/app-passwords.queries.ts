@@ -209,7 +209,7 @@ export interface IGetUserByEmailWithInternalIdQuery {
   result: IGetUserByEmailWithInternalIdResult;
 }
 
-const getUserByEmailWithInternalIdIR: any = {"usedParamSet":{"email":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":76,"b":81}]}],"statement":"SELECT\n  u.id,\n  u.external_id,\n  u.email\nFROM auth.users u\nWHERE u.email = :email"};
+const getUserByEmailWithInternalIdIR: any = {"usedParamSet":{"email":true},"params":[{"name":"email","required":false,"transform":{"type":"scalar"},"locs":[{"a":141,"b":146}]}],"statement":"SELECT\n  u.id,\n  u.external_id,\n  bu.email\nFROM auth.users u\nINNER JOIN auth.\"user\" bu ON bu.id = u.external_id::text\nWHERE bu.email = lower(:email)"};
 
 /**
  * Query generated from SQL:
@@ -217,9 +217,10 @@ const getUserByEmailWithInternalIdIR: any = {"usedParamSet":{"email":true},"para
  * SELECT
  *   u.id,
  *   u.external_id,
- *   u.email
+ *   bu.email
  * FROM auth.users u
- * WHERE u.email = :email
+ * INNER JOIN auth."user" bu ON bu.id = u.external_id::text
+ * WHERE bu.email = lower(:email)
  * ```
  */
 export const getUserByEmailWithInternalId = new PreparedQuery<IGetUserByEmailWithInternalIdParams,IGetUserByEmailWithInternalIdResult>(getUserByEmailWithInternalIdIR);

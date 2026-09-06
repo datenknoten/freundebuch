@@ -8,10 +8,7 @@ import {
   getEnabledChannelsDueAt,
   markChannelNotified,
 } from '../models/queries/notification-channels.queries.js';
-// Note: Session and password reset token cleanup is now handled by Better Auth.
-// Legacy table cleanup is kept during the transition period.
-import { deleteExpiredPasswordResetTokens } from '../models/queries/password-reset-tokens.queries.js';
-import { deleteExpiredSessions } from '../models/queries/sessions.queries.js';
+import { deleteOrphanLegacyUsers } from '../models/queries/users.queries.js';
 import { dispatchNotification } from '../services/external/notification-dispatcher.js';
 import { getConfig } from './config.js';
 import { toError } from './errors.js';
@@ -33,23 +30,16 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): ScheduledT
       return;
     }
     running = true;
-    logger.info('Running scheduled cleanup of expired sessions, tokens, and cache');
+    logger.info('Running scheduled cleanup of orphan identity rows and expired cache');
 
     try {
-      await deleteExpiredSessions.run(undefined, pool);
-      logger.info('Expired sessions cleaned up successfully');
+      // Sign-ups allocate the legacy auth.users row before the Better Auth
+      // transaction commits, so a failure can leave one behind.
+      const [result] = await deleteOrphanLegacyUsers.run(undefined, pool);
+      logger.info({ deleted: result?.deleted_count ?? 0 }, 'Orphan legacy user rows cleaned up');
     } catch (error) {
       const err = toError(error);
-      logger.error({ err }, 'Failed to clean up expired sessions');
-      Sentry.captureException(err);
-    }
-
-    try {
-      await deleteExpiredPasswordResetTokens.run(undefined, pool);
-      logger.info('Expired password reset tokens cleaned up successfully');
-    } catch (error) {
-      const err = toError(error);
-      logger.error({ err }, 'Failed to clean up expired password reset tokens');
+      logger.error({ err }, 'Failed to clean up orphan legacy user rows');
       Sentry.captureException(err);
     }
 
@@ -161,11 +151,10 @@ async function dispatchDueNotifications(pool: pg.Pool, logger: Logger): Promise<
  * Run cleanup immediately (useful for testing or manual trigger)
  */
 export async function runCleanupNow(pool: pg.Pool, logger: Logger): Promise<void> {
-  logger.info('Running immediate cleanup of expired sessions, tokens, and cache');
+  logger.info('Running immediate cleanup of orphan identity rows and expired cache');
 
   try {
-    await deleteExpiredSessions.run(undefined, pool);
-    await deleteExpiredPasswordResetTokens.run(undefined, pool);
+    await deleteOrphanLegacyUsers.run(undefined, pool);
     await deleteExpiredAddressCacheEntries.run(undefined, pool);
     logger.info('Immediate cleanup completed');
   } catch (error) {

@@ -47,6 +47,7 @@ WHERE id = :id;
 SELECT
   u.id,
   u.external_id,
-  u.email
+  bu.email
 FROM auth.users u
-WHERE u.email = :email;
+INNER JOIN auth."user" bu ON bu.id = u.external_id::text
+WHERE bu.email = lower(:email);
