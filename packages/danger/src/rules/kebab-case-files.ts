@@ -15,6 +15,13 @@ const SCREAMING_CASE_STEM = /^[A-Z0-9]+([_-][A-Z0-9]+)*$/;
 // Migration files use a "<timestamp>_<name>" pattern — strip the prefix before checking
 const MIGRATION_PREFIX = /^\d+_/;
 
+// PSR-4 (apps/sabredav) resolves a class to a file of the same name, so
+// `Freundebuch\DAV\Auth\AppPasswordBackend` *must* live in
+// `src/Auth/AppPasswordBackend.php`. Renaming those to kebab-case would break
+// autoloading outright, so PHP sources follow PascalCase by requirement rather
+// than by preference.
+const PSR4_EXTENSION = '.php';
+
 function toKebabCase(name: string): string {
   return name
     .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
@@ -26,6 +33,7 @@ const kebabCaseFiles: DangerRule = () => {
   for (const filePath of danger.git.created_files) {
     if (isIgnoredPath(filePath)) continue;
     if (isExemptFile(filePath)) continue;
+    if (filePath.toLowerCase().endsWith(PSR4_EXTENSION)) continue;
 
     const basename = path.basename(filePath);
 
