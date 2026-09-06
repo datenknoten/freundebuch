@@ -7,7 +7,6 @@
     }
   ],
   "srcDir": "./src/",
-  "failOnError": false,
-  "camelCaseColumnNames": false,
-  "dbUrl": "postgresql://freundebuch:dev_password@localhost:5432/freundebuch_dev"
+  "failOnError": true,
+  "camelCaseColumnNames": false
 }

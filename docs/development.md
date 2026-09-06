@@ -75,6 +75,9 @@ aube migrate                # Run database migrations
 aube migrate:create         # Create new migration
 aube pgtyped                # Generate TypeScript types from SQL queries
 aube pgtyped:watch          # Watch and regenerate types
+                            # Both read DATABASE_URL (from .env, or the
+                            # environment, which wins) — pgtyped.config.json
+                            # holds no credentials.
 aube seed                   # Seed database with test data
 
 # Docker
