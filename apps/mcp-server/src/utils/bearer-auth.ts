@@ -4,40 +4,14 @@ import type pg from 'pg';
 import type { Logger } from 'pino';
 
 export interface BearerAuthContext {
-  /** Legacy auth.users.external_id (UUID) — what the MCP tools expect. */
+  /** The user's single identity: auth."user".id = auth.users.external_id. */
   userId: string;
   email: string;
 }
 
 /**
- * Resolve a Better Auth user id to the legacy auth.users.external_id (UUID).
- *
- * The MCP tools scope every query by the legacy external_id, but OAuth tokens
- * resolve to a Better Auth user id (an opaque string). Bridge the two by email,
- * exactly as apps/backend/src/middleware/auth.ts does via
- * getLegacyExternalIdByEmail — the difference here is we start from the Better
- * Auth user id (from the token) rather than a validated session.
- */
-async function resolveLegacyExternalId(
-  pool: pg.Pool,
-  betterAuthUserId: string,
-): Promise<{ externalId: string; email: string } | null> {
-  const result = await pool.query<{ external_id: string; email: string }>(
-    `SELECT lu.external_id, bu.email
-       FROM auth."user" bu
-       JOIN auth.users lu ON lu.email = bu.email
-      WHERE bu.id = $1
-      LIMIT 1`,
-    [betterAuthUserId],
-  );
-  const row = result.rows[0];
-  return row ? { externalId: row.external_id, email: row.email } : null;
-}
-
-/**
  * Validate an `Authorization: Bearer <token>` header against the OAuth access
- * tokens issued by the co-located Better Auth authorization server, and resolve
- * the token to the legacy external_id the MCP tools expect.
+ * tokens issued by the co-located Better Auth authorization server.
  *
  * Returns null when the token is missing, unknown, or expired. getMcpSession
  * only checks that the token exists — it does NOT enforce expiry — so we check
@@ -78,13 +52,19 @@ export async function verifyBearerToken(
     return null;
   }
 
-  const resolved = await resolveLegacyExternalId(pool, session.userId);
-  if (!resolved) {
-    logger.warn({ betterAuthUserId: session.userId }, 'No legacy user for OAuth token subject');
+  // The OAuth subject *is* the domain user id (ADR 0003); only the address for
+  // the session log still needs a lookup.
+  const result = await pool.query<{ email: string }>(
+    'SELECT email FROM auth."user" WHERE id = $1 LIMIT 1',
+    [session.userId],
+  );
+  const row = result.rows[0];
+  if (!row) {
+    logger.warn({ userId: session.userId }, 'No user row for OAuth token subject');
     return null;
   }
 
-  return { userId: resolved.externalId, email: resolved.email };
+  return { userId: session.userId, email: row.email };
 }
 
 /**

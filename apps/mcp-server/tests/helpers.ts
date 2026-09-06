@@ -65,17 +65,14 @@ async function createTestUserWithAppPassword(
   pool: pg.Pool,
   email: string,
 ): Promise<{ externalId: string; email: string; appPassword: string }> {
-  const userPasswordHash = await bcrypt.hash('not-used-for-mcp', 10);
-
-  // Create user in legacy table
+  // Allocate the legacy FK anchor, then adopt its UUID as the Better Auth user
+  // id (ADR 0003).
   const userResult = await pool.query(
-    'INSERT INTO auth.users (email, password_hash) VALUES ($1, $2) RETURNING id, external_id, email',
-    [email, userPasswordHash],
+    'INSERT INTO auth.users DEFAULT VALUES RETURNING id, external_id',
   );
   const userId = userResult.rows[0].id;
   const externalId = userResult.rows[0].external_id;
 
-  // Create user in Better Auth tables
   await pool.query(
     `INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
      VALUES ($1, $2, $3, false, NOW(), NOW())`,
@@ -89,10 +86,6 @@ async function createTestUserWithAppPassword(
      RETURNING id, external_id`,
     [userId, `${email.split('@')[0]} (Self)`],
   );
-  await pool.query('UPDATE auth.users SET self_profile_id = $1 WHERE id = $2', [
-    profileResult.rows[0].id,
-    userId,
-  ]);
   await pool.query('UPDATE auth."user" SET self_profile_id = $1 WHERE id = $2', [
     profileResult.rows[0].id,
     externalId,
@@ -301,7 +294,7 @@ export async function cleanupUserData(pool: pg.Pool, userExternalIds: string[]):
   await pool.query(
     `DELETE FROM friends.friends f
        WHERE f.user_id IN (SELECT id FROM auth.users WHERE external_id = ANY($1::uuid[]))
-         AND f.id NOT IN (SELECT self_profile_id FROM auth.users WHERE self_profile_id IS NOT NULL)`,
+         AND f.id NOT IN (SELECT self_profile_id FROM auth."user" WHERE self_profile_id IS NOT NULL)`,
     [userExternalIds],
   );
 }
