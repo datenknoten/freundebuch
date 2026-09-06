@@ -8,6 +8,7 @@ it might be worth revisiting. Format is [MADR](https://adr.github.io/madr/) 4.x.
 | [0001](./0001-better-auth-as-oauth-server-for-mcp.md) | Use Better Auth as the OAuth 2.1 authorization server for MCP | accepted |
 | [0002](./0002-pr-coverage-via-danger.md) | Report PR test coverage via Danger instead of per-app Vitest thresholds | accepted |
 | [0003](./0003-single-identity-anchored-on-auth-users.md) | Anchor one user identity on `auth.users.external_id` | accepted |
+| [0004](./0004-single-instance-deployment.md) | Run the backend as a single instance | accepted |
 
 ## Writing a new one
 

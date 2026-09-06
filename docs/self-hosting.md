@@ -63,7 +63,7 @@ in production:
 | Variable | Required | Notes |
 |----------|----------|-------|
 | `DATABASE_URL` | yes | Must start with `postgres://` or `postgresql://`; validated at boot |
-| `BETTER_AUTH_SECRET` | yes | **At least 32 characters**, and it must not contain `change-this`, `your-secret`, or `REPLACE` — the config schema rejects placeholder secrets outright. `openssl rand -base64 48` is fine |
+| `BETTER_AUTH_SECRET` | yes | **At least 32 characters**, and it must not contain `change-this`, `your-secret`, or `REPLACE` — the config schema rejects placeholder secrets outright. `openssl rand -base64 48` is fine. Not rotatable without user-visible loss — see [Rotating `BETTER_AUTH_SECRET`](#rotating-better_auth_secret) |
 | `ENV` | yes | `production`. The backend's config reads `ENV`, **not** `NODE_ENV`; leaving it unset silently gives you development behaviour (pretty-printed logs, `development` as the Sentry environment, password-reset URLs written to the debug log) |
 | `FRONTEND_URL` | yes | Your public HTTPS origin. Also the Better Auth trusted origin |
 | `BACKEND_URL` | yes | Same origin — everything is served from one host behind nginx |
@@ -89,6 +89,48 @@ in production:
 
 `POSTGRES_PASSWORD` has no default and must be set. `POSTGRES_DB` and
 `POSTGRES_USER` both default to `freundebuch`.
+
+### Rotating `BETTER_AUTH_SECRET`
+
+Notification-channel credentials (Telegram bot token, Matrix access token,
+Discord webhook URL) are encrypted at rest with a key derived from
+`BETTER_AUTH_SECRET`. The secret never enters the database, so **rotating it
+makes those stored credentials undecryptable.** Nothing crashes: the channel
+list keeps loading and shows `****` instead of the usual last-4 hint, but test
+messages and the daily digest fail until each affected user re-enters the
+credential under *Profile → Notifications*.
+
+So rotate only when you mean to — a leaked secret, say — and tell your users to
+re-save their channels afterwards. Change it in **both** the backend and the
+MCP server at the same time; they must stay byte-identical.
+
+## Connection budget
+
+Postgres's default `max_connections` is 100 and the compose files do not raise
+it, so the pools have to fit. With the shipped defaults:
+
+| Consumer | Connections | Where it comes from |
+|----------|-------------|---------------------|
+| Backend, main pool | up to 10 | `DATABASE_POOL_MAX`, default `10` (`apps/backend/src/utils/config.ts`) |
+| Backend, Better Auth pool | up to 5 | Better Auth needs `search_path=auth`, so it gets its own pool at half the main sizes — `max(2, ⌊DATABASE_POOL_MAX/2⌋)` (`apps/backend/src/lib/auth.ts`) |
+| MCP server, main pool | up to 5 | Its own `DATABASE_POOL_MAX`, default `5` (`apps/mcp-server/src/config.ts`) |
+| MCP server, Better Auth pool | up to 2 | It co-locates the backend's Better Auth instance to validate OAuth tokens, so the same halved pool is built — but from the MCP container's `DATABASE_POOL_MAX` of `5`, i.e. `max(2, ⌊5/2⌋)` |
+| SabreDAV | up to 20 | One non-persistent PDO connection per busy PHP-FPM worker, and `pm.max_children = 20` (`docker/Dockerfile.sabredav.prod`) |
+| **Total** | **≈ 42** | of 100, three of which Postgres reserves for superusers |
+
+That leaves room for `psql`, `pg_dump` and a migration run. Two things to watch
+when tuning:
+
+- `DATABASE_POOL_MIN`/`DATABASE_POOL_MAX` are read by the backend **and** the
+  MCP server. `docker-compose.prod.yml` passes the same `.env` value to both
+  (with different fallbacks: `10` for the backend, `5` for the MCP server), so
+  setting `DATABASE_POOL_MAX: 20` gives you 30 backend + 30 MCP + 20 SabreDAV
+  = 80, not 42.
+- Raising `pm.max_children` in a SabreDAV image raises its ceiling one
+  connection at a time; DAV clients are chatty but each request is short.
+
+The budget assumes exactly one of each container — see
+[ADR 0004](./decisions/0004-single-instance-deployment.md).
 
 ## First run
 
@@ -241,3 +283,4 @@ status. Manually:
 | claude.ai cannot connect, but Claude Desktop with an app password can | OAuth discovery — check the `issuer` with the `curl` above, and that both containers share `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET` |
 | MCP bearer tokens are always rejected | The MCP server's `BETTER_AUTH_SECRET` differs from the backend's, or it points at a different database |
 | Rate limiting throttles everyone at once | `TRUST_PROXY` is unset, so every request looks like it comes from the proxy |
+| Notification channels show `****` and digests stop arriving | `BETTER_AUTH_SECRET` changed, so the stored channel credentials no longer decrypt — users must re-enter them, see [Rotating `BETTER_AUTH_SECRET`](#rotating-better_auth_secret) |
