@@ -27,7 +27,10 @@ export class PostGISAddressClient {
    * scripts/osm-import/import-region.sh). The PostGIS data has no
    * state/province column, so callers get city names only.
    */
-  async getCitiesByPostalCode(countryCode: string, postalCode: string): Promise<{ city: string }[]> {
+  async getCitiesByPostalCode(
+    countryCode: string,
+    postalCode: string,
+  ): Promise<{ city: string }[]> {
     try {
       const result = await this.pool.query<{ city: string }>(
         `SELECT city

@@ -39,11 +39,19 @@ function escapeIlike(input: string): string {
   return input.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
 }
 
+export interface CollectivesServiceOptions {
+  db: Pool;
+}
+
 /**
  * Service for managing collectives (families, companies, clubs, friend groups)
  */
 export class CollectivesService {
-  constructor(private db: Pool) {}
+  private db: Pool;
+
+  constructor(options: CollectivesServiceOptions) {
+    this.db = options.db;
+  }
 
   // ============================================================================
   // Collective CRUD

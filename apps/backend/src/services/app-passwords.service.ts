@@ -71,13 +71,18 @@ export interface BasicAuthContext {
   appPasswordId: string; // App password external_id
 }
 
+export interface AppPasswordsServiceOptions {
+  db: pg.Pool;
+  logger: Logger;
+}
+
 export class AppPasswordsService {
   private db: pg.Pool;
   private logger: Logger;
 
-  constructor(db: pg.Pool, logger: Logger) {
-    this.db = db;
-    this.logger = logger;
+  constructor(options: AppPasswordsServiceOptions) {
+    this.db = options.db;
+    this.logger = options.logger;
   }
 
   /**

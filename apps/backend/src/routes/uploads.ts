@@ -1,5 +1,5 @@
-import { createReadStream } from 'node:fs';
 import type { Stats } from 'node:fs';
+import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
@@ -32,7 +32,7 @@ app.get('/friends/:friendId/:filename', async (c) => {
   const filename = c.req.param('filename');
 
   // Verify the user owns this friend
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const friend = await friendsService.getFriendById(user.userId, friendId);
 
   if (!friend) {
@@ -57,7 +57,7 @@ app.get('/friends/:friendId/:filename', async (c) => {
     throw new ValidationError('Invalid filename');
   }
 
-  const photoService = new PhotoService(logger);
+  const photoService = new PhotoService({ logger: logger });
   const uploadDir = photoService.getUploadDir();
   const filePath = path.join(uploadDir, friendId, filename);
 

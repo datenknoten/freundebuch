@@ -48,7 +48,7 @@ app.post(
     }
 
     // Verify friend exists and belongs to user
-    const friendsService = new FriendsService(db, logger);
+    const friendsService = new FriendsService({ db: db, logger: logger });
     const friend = await friendsService.getFriendById(user.userId, friendId);
 
     if (!friend) {
@@ -56,7 +56,7 @@ app.post(
     }
 
     // Upload photo
-    const photoService = new PhotoService(logger);
+    const photoService = new PhotoService({ logger: logger });
     const result = await photoService.uploadPhoto(friendId, file);
 
     // Update friend with photo URLs
@@ -94,7 +94,7 @@ app.delete('/:id/photo', async (c) => {
   // UUID-validated to prevent path traversal
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const friend = await friendsService.getFriendById(user.userId, friendId);
 
   if (!friend) {
@@ -102,7 +102,7 @@ app.delete('/:id/photo', async (c) => {
   }
 
   // Delete photo files
-  const photoService = new PhotoService(logger);
+  const photoService = new PhotoService({ logger: logger });
   await photoService.deletePhoto(friendId);
 
   // Clear photo URLs from friend
@@ -124,7 +124,7 @@ app.get('/:id/circles', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   const circles = await circlesService.getCirclesForFriend(user.userId, friendId);
 
   return c.json(circles);
@@ -140,7 +140,7 @@ app.put('/:id/circles', async (c) => {
   const friendId = requireUuidParam(c, 'id', 'friend ID');
   const validated = await parseBody(c, SetFriendCirclesSchema);
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   const circles = await circlesService.setFriendCircles(
     user.userId,
     friendId,
@@ -160,7 +160,7 @@ app.post('/:id/circles/:circleId', async (c) => {
   const friendId = requireUuidParam(c, 'id');
   const circleId = requireUuidParam(c, 'circleId');
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   const circle = await circlesService.addFriendToCircle(user.userId, friendId, circleId);
 
   if (!circle) {
@@ -180,7 +180,7 @@ app.delete('/:id/circles/:circleId', async (c) => {
   const friendId = requireUuidParam(c, 'id');
   const circleId = requireUuidParam(c, 'circleId');
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   const removed = await circlesService.removeFriendFromCircle(user.userId, friendId, circleId);
 
   if (!removed) {
@@ -204,7 +204,7 @@ app.post('/:id/favorite', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const isFavorite = await friendsService.toggleFavorite(user.userId, friendId);
 
   if (isFavorite === null) {
@@ -238,7 +238,7 @@ app.post('/:id/archive', async (c) => {
 
   const validated = validate(ArchiveFriendSchema, body);
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const archived = await friendsService.archiveFriend(user.userId, friendId, validated.reason);
 
   if (!archived) {
@@ -258,7 +258,7 @@ app.post('/:id/unarchive', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const unarchived = await friendsService.unarchiveFriend(user.userId, friendId);
 
   if (!unarchived) {

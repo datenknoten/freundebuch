@@ -27,7 +27,7 @@ app.get('/', async (c) => {
   const db = c.get('db');
 
   const authUser = getAuthUser(c);
-  const service = new AppPasswordsService(db, logger);
+  const service = new AppPasswordsService({ db: db, logger: logger });
   const passwords = await service.listAppPasswords(authUser.userId);
 
   return c.json<AppPassword[]>(passwords);
@@ -45,7 +45,7 @@ app.post('/', async (c) => {
   const authUser = getAuthUser(c);
   const validated = await parseBody(c, AppPasswordCreateSchema);
 
-  const service = new AppPasswordsService(db, logger);
+  const service = new AppPasswordsService({ db: db, logger: logger });
   const result = await service.createAppPassword(authUser.userId, validated.name);
 
   return c.json<AppPasswordWithSecret>(result, 201);
@@ -62,7 +62,7 @@ app.delete('/:id', async (c) => {
   const authUser = getAuthUser(c);
   const appPasswordId = requireUuidParam(c, 'id', 'app password ID format');
 
-  const service = new AppPasswordsService(db, logger);
+  const service = new AppPasswordsService({ db: db, logger: logger });
   const success = await service.revokeAppPassword(authUser.userId, appPasswordId);
 
   if (!success) {

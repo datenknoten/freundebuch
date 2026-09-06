@@ -44,7 +44,7 @@ app.get('/', async (c) => {
 
   const options = parseEncounterListQuery(validated);
 
-  const encountersService = new EncountersService(db);
+  const encountersService = new EncountersService({ db: db });
   const result = await encountersService.listEncounters(user.userId, options);
 
   return c.json(result);
@@ -60,7 +60,7 @@ app.post('/', async (c) => {
 
   const validated = await parseBody(c, EncounterInputSchema);
 
-  const encountersService = new EncountersService(db);
+  const encountersService = new EncountersService({ db: db });
   const encounter = await encountersService.createEncounter(user.userId, validated);
 
   return c.json(encounter, 201);
@@ -75,7 +75,7 @@ app.get('/:id', async (c) => {
   const user = getAuthUser(c);
   const encounterId = requireUuidParam(c, 'id', 'encounter ID');
 
-  const encountersService = new EncountersService(db);
+  const encountersService = new EncountersService({ db: db });
   const encounter = await encountersService.getEncounterById(user.userId, encounterId);
 
   if (!encounter) {
@@ -95,7 +95,7 @@ app.put('/:id', async (c) => {
   const encounterId = requireUuidParam(c, 'id', 'encounter ID');
   const validated = await parseBody(c, EncounterUpdateSchema);
 
-  const encountersService = new EncountersService(db);
+  const encountersService = new EncountersService({ db: db });
   const encounter = await encountersService.updateEncounter(user.userId, encounterId, validated);
 
   if (!encounter) {
@@ -114,7 +114,7 @@ app.delete('/:id', async (c) => {
   const user = getAuthUser(c);
   const encounterId = requireUuidParam(c, 'id', 'encounter ID');
 
-  const encountersService = new EncountersService(db);
+  const encountersService = new EncountersService({ db: db });
   const deleted = await encountersService.deleteEncounter(user.userId, encounterId);
 
   if (!deleted) {

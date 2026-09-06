@@ -8,11 +8,11 @@ import type { Logger } from 'pino';
 
 export function createServices(pool: pg.Pool, logger: Logger) {
   return {
-    friends: new FriendsService(pool, logger),
-    circles: new CirclesService(pool),
-    collectives: new CollectivesService(pool),
-    encounters: new EncountersService(pool),
-    appPasswords: new AppPasswordsService(pool, logger),
+    friends: new FriendsService({ db: pool, logger: logger }),
+    circles: new CirclesService({ db: pool }),
+    collectives: new CollectivesService({ db: pool }),
+    encounters: new EncountersService({ db: pool }),
+    appPasswords: new AppPasswordsService({ db: pool, logger: logger }),
   };
 }
 

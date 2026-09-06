@@ -21,13 +21,17 @@ import { isNodeError } from '../utils/type-guards.js';
  */
 const MAX_IMAGE_PIXELS = 50_000_000;
 
+export interface PhotoServiceOptions {
+  logger: Logger;
+}
+
 export class PhotoService {
   private logger: Logger;
   private uploadDir: string;
   private baseUrl: string;
 
-  constructor(logger: Logger) {
-    this.logger = logger;
+  constructor(options: PhotoServiceOptions) {
+    this.logger = options.logger;
     const config = getConfig();
     // Use environment variable or default to local uploads directory
     this.uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'friends');

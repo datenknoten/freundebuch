@@ -18,7 +18,7 @@ app.put('/', async (c) => {
   const friendId = requireUuidParam(c, 'id', 'friend ID');
   const validated = await parseBody(c, MetInfoInputSchema);
 
-  const friendsService = new FriendsService(db, c.get('logger'));
+  const friendsService = new FriendsService({ db: db, logger: c.get('logger') });
   const metInfo = await friendsService.setMetInfo(user.userId, friendId, validated);
 
   if (!metInfo) {
@@ -37,7 +37,7 @@ app.delete('/', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const friendsService = new FriendsService(db, c.get('logger'));
+  const friendsService = new FriendsService({ db: db, logger: c.get('logger') });
   const deleted = await friendsService.deleteMetInfo(user.userId, friendId);
 
   if (!deleted) {

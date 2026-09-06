@@ -15,7 +15,7 @@ app.get('/', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const collectivesService = new CollectivesService(db);
+  const collectivesService = new CollectivesService({ db: db });
   const collectives = await collectivesService.getCollectivesForContact(user.userId, friendId);
 
   return c.json(collectives);

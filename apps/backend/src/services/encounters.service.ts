@@ -34,11 +34,19 @@ import { EncounterCreationError } from '../utils/errors.js';
 
 const PREVIEW_FRIEND_LIMIT = 3;
 
+export interface EncountersServiceOptions {
+  db: Pool;
+}
+
 /**
  * Service for managing encounters (meeting tracking feature)
  */
 export class EncountersService {
-  constructor(private db: Pool) {}
+  private db: Pool;
+
+  constructor(options: EncountersServiceOptions) {
+    this.db = options.db;
+  }
 
   // ============================================================================
   // Encounter CRUD

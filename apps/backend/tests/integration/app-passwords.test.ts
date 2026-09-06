@@ -452,7 +452,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         passwordPrefix: string;
       };
 
-      const service = new AppPasswordsService(pool, pino({ level: 'silent' }));
+      const service = new AppPasswordsService({ db: pool, logger: pino({ level: 'silent' }) });
 
       // The formatted password authenticates even though only the hashed
       // prefix is stored, and the email is matched case-insensitively.

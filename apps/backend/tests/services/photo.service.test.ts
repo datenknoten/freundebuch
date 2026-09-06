@@ -43,7 +43,7 @@ describe('PhotoService', () => {
     vi.stubEnv('UPLOAD_DIR', '/tmp/test-uploads');
 
     mockLogger = pino({ level: 'silent' });
-    photoService = new PhotoService(mockLogger);
+    photoService = new PhotoService({ logger: mockLogger });
 
     vi.clearAllMocks();
   });

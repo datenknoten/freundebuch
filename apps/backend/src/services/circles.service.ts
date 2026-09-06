@@ -27,11 +27,19 @@ import {
 } from '../utils/errors.js';
 import { rethrowUniqueViolation } from '../utils/pg-errors.js';
 
+export interface CirclesServiceOptions {
+  db: Pool;
+}
+
 /**
  * Service for managing circles (categorization/organization feature)
  */
 export class CirclesService {
-  constructor(private db: Pool) {}
+  private db: Pool;
+
+  constructor(options: CirclesServiceOptions) {
+    this.db = options.db;
+  }
 
   // ============================================================================
   // Circle CRUD

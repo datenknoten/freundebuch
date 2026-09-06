@@ -67,7 +67,7 @@ health.get('/ready', async (c) => {
   const logger = c.get('logger');
   const config = getConfig();
 
-  const uploadDir = new PhotoService(logger).getUploadDir();
+  const uploadDir = new PhotoService({ logger: logger }).getUploadDir();
 
   const [db, authDb, uploads] = await Promise.all([
     poolReachable(c.get('db')).catch((error: unknown) => {

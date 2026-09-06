@@ -28,7 +28,7 @@ app.get('/', async (c) => {
   // Force filter by this friend
   const options = parseEncounterListQuery({ ...validated, friend_id: friendId });
 
-  const encountersService = new EncountersService(db);
+  const encountersService = new EncountersService({ db: db });
   const result = await encountersService.listEncounters(user.userId, options);
 
   return c.json(result);
@@ -43,7 +43,7 @@ app.get('/last', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const encountersService = new EncountersService(db);
+  const encountersService = new EncountersService({ db: db });
   const lastEncounter = await encountersService.getLastEncounterForFriend(user.userId, friendId);
 
   if (!lastEncounter) {

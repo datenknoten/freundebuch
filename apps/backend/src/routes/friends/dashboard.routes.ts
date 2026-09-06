@@ -40,7 +40,7 @@ app.get('/dates/upcoming', async (c) => {
   const days = parseDays(c.req.query('days'));
   const limit = parseLimit(c.req.query('limit'));
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const upcomingDates = await friendsService.getUpcomingDates(user.userId, { days, limit });
 
   return c.json(upcomingDates);
@@ -59,7 +59,7 @@ app.get('/dashboard', async (c) => {
   const days = parseDays(c.req.query('days'));
   const limit = parseLimit(c.req.query('limit'));
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const [upcomingDates, networkGraph] = await Promise.all([
     friendsService.getUpcomingDates(user.userId, { days, limit }),
     friendsService.getNetworkGraphData(user.userId),
@@ -78,7 +78,7 @@ app.get('/network-graph', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const graphData = await friendsService.getNetworkGraphData(user.userId);
 
   return c.json(graphData);
@@ -92,7 +92,7 @@ app.get('/relationship-types', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const types = await friendsService.getRelationshipTypes();
 
   return c.json(types);

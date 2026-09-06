@@ -22,11 +22,19 @@ import { sendTelegramMessage } from './external/telegram.client.js';
 
 type ChannelRow = IGetChannelsByUserIdResult | IGetChannelByExternalIdResult;
 
+export interface NotificationChannelsServiceOptions {
+  db: Pool;
+}
+
 /**
  * Service for managing notification channels (messaging bot configurations)
  */
 export class NotificationChannelsService {
-  constructor(private db: Pool) {}
+  private db: Pool;
+
+  constructor(options: NotificationChannelsServiceOptions) {
+    this.db = options.db;
+  }
 
   /**
    * List all channels for a user (credentials masked)

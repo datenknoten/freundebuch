@@ -69,7 +69,7 @@ export class UsersService {
       throw new ValidationError('Self-profile already exists');
     }
 
-    const friendsService = new FriendsService(this.db, this.logger);
+    const friendsService = new FriendsService({ db: this.db, logger: this.logger });
     const newFriend = await friendsService.createFriend(userId, input);
 
     const setResult = await setUserSelfProfile.run(

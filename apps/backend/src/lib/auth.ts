@@ -137,7 +137,10 @@ function createAuth() {
             ].join('\n'),
           );
         } catch (error) {
-          logger.error({ err: error, kind: 'email-verification' }, 'Failed to send verification email');
+          logger.error(
+            { err: error, kind: 'email-verification' },
+            'Failed to send verification email',
+          );
         }
       },
     },

@@ -57,7 +57,7 @@ app.get('/types', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const typesService = new CollectiveTypesService(db);
+  const typesService = new CollectiveTypesService({ db: db });
   const result = await typesService.listTypes(user.userId);
   return c.json(result);
 });
@@ -71,7 +71,7 @@ app.get('/types/:id', async (c) => {
   const user = getAuthUser(c);
   const typeId = requireUuidParam(c, 'id', 'type ID');
 
-  const typesService = new CollectiveTypesService(db);
+  const typesService = new CollectiveTypesService({ db: db });
   const collectiveType = await typesService.getTypeById(user.userId, typeId);
 
   if (!collectiveType) {
@@ -102,7 +102,7 @@ app.get('/', async (c) => {
 
   const options = parseCollectiveListQuery(validated);
 
-  const collectivesService = new CollectivesService(db);
+  const collectivesService = new CollectivesService({ db: db });
   const result = await collectivesService.listCollectives(user.userId, options);
 
   return c.json(result);
@@ -118,7 +118,7 @@ app.post('/', async (c) => {
 
   const validated = await parseBody(c, CollectiveInputSchema);
 
-  const collectivesService = new CollectivesService(db);
+  const collectivesService = new CollectivesService({ db: db });
   const collective = await collectivesService.createCollective(user.userId, validated);
 
   return c.json(collective, 201);
@@ -133,7 +133,7 @@ app.get('/:id', async (c) => {
   const user = getAuthUser(c);
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
 
-  const collectivesService = new CollectivesService(db);
+  const collectivesService = new CollectivesService({ db: db });
   const collective = await collectivesService.getCollectiveById(user.userId, collectiveId);
 
   if (!collective) {
@@ -153,7 +153,7 @@ app.put('/:id', async (c) => {
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
   const validated = await parseBody(c, CollectiveUpdateSchema);
 
-  const collectivesService = new CollectivesService(db);
+  const collectivesService = new CollectivesService({ db: db });
   const collective = await collectivesService.updateCollective(
     user.userId,
     collectiveId,
@@ -172,7 +172,7 @@ app.delete('/:id', async (c) => {
   const user = getAuthUser(c);
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
 
-  const collectivesService = new CollectivesService(db);
+  const collectivesService = new CollectivesService({ db: db });
   const deleted = await collectivesService.deleteCollective(user.userId, collectiveId);
 
   if (!deleted) {
@@ -196,7 +196,7 @@ app.post('/:id/members/preview', async (c) => {
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
   const validated = await parseBody(c, RelationshipPreviewRequestSchema);
 
-  const membershipsService = new MembershipsService(db);
+  const membershipsService = new MembershipsService({ db: db });
   const preview = await membershipsService.previewRelationships(
     user.userId,
     collectiveId,
@@ -216,7 +216,7 @@ app.post('/:id/members', async (c) => {
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
   const validated = await parseBody(c, MembershipInputSchema);
 
-  const membershipsService = new MembershipsService(db);
+  const membershipsService = new MembershipsService({ db: db });
   const member = await membershipsService.addMember(user.userId, collectiveId, validated);
 
   return c.json(member, 201);
@@ -232,7 +232,7 @@ app.delete('/:id/members/:memberId', async (c) => {
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
   const memberId = requireUuidParam(c, 'memberId', 'member ID');
 
-  const membershipsService = new MembershipsService(db);
+  const membershipsService = new MembershipsService({ db: db });
   const deleted = await membershipsService.removeMember(user.userId, collectiveId, memberId);
 
   if (!deleted) {
@@ -257,7 +257,7 @@ app.put('/:id/members/:memberId/role', async (c) => {
     throw new ValidationError('role_id is required');
   }
 
-  const membershipsService = new MembershipsService(db);
+  const membershipsService = new MembershipsService({ db: db });
   const member = await membershipsService.updateMemberRole(
     user.userId,
     collectiveId,
@@ -279,7 +279,7 @@ app.post('/:id/members/:memberId/deactivate', async (c) => {
   const memberId = requireUuidParam(c, 'memberId', 'member ID');
   const validated = await parseBody(c, MembershipDeactivateSchema);
 
-  const membershipsService = new MembershipsService(db);
+  const membershipsService = new MembershipsService({ db: db });
   const member = await membershipsService.deactivateMember(
     user.userId,
     collectiveId,
@@ -300,7 +300,7 @@ app.post('/:id/members/:memberId/reactivate', async (c) => {
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
   const memberId = requireUuidParam(c, 'memberId', 'member ID');
 
-  const membershipsService = new MembershipsService(db);
+  const membershipsService = new MembershipsService({ db: db });
   const member = await membershipsService.reactivateMember(user.userId, collectiveId, memberId);
 
   return c.json(member);

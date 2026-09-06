@@ -73,6 +73,12 @@ import { ProfessionalHistoryService } from './sub-resources/professional-history
 import { SocialProfileService } from './sub-resources/social-profile.service.js';
 import { UrlService } from './sub-resources/url.service.js';
 
+export interface FriendsServiceOptions {
+  db: pg.Pool;
+  logger: Logger;
+  addressLookupService?: AddressLookupService;
+}
+
 /**
  * FriendsService is the main orchestrator for friend-related operations.
  * It delegates to specialized services for specific functionality.
@@ -95,10 +101,10 @@ export class FriendsService {
   private _professionalHistoryService?: ProfessionalHistoryService;
   private _metInfoService?: MetInfoService;
 
-  constructor(db: pg.Pool, logger: Logger, addressLookupService?: AddressLookupService) {
-    this.db = db;
-    this.logger = logger;
-    this._addressLookupService = addressLookupService;
+  constructor(options: FriendsServiceOptions) {
+    this.db = options.db;
+    this.logger = options.logger;
+    this._addressLookupService = options.addressLookupService;
   }
 
   // ============================================================================
@@ -457,7 +463,7 @@ export class FriendsService {
     // deleteFriend cleans them up. Best-effort: a missing file must not fail
     // the delete.
     try {
-      await new PhotoService(this.logger).deletePhoto(friendExternalId);
+      await new PhotoService({ logger: this.logger }).deletePhoto(friendExternalId);
     } catch (error) {
       this.logger.warn({ error, friendExternalId }, 'Failed to delete friend photos');
     }

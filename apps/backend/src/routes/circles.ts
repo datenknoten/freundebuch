@@ -36,7 +36,7 @@ app.get('/', etag(), async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   const circles = await circlesService.listCircles(user.userId);
 
   return c.json(circles);
@@ -52,7 +52,7 @@ app.post('/', async (c) => {
 
   const validated = await parseBody(c, CircleInputSchema);
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   const circle = await circlesService.createCircle(user.userId, validated);
 
   if (!circle) {
@@ -73,7 +73,7 @@ app.put('/reorder', async (c) => {
 
   const validated = await parseBody(c, CircleReorderSchema);
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   await circlesService.reorderCircles(user.userId, validated.order);
 
   return c.json({ success: true });
@@ -88,7 +88,7 @@ app.get('/:id', async (c) => {
   const user = getAuthUser(c);
   const circleId = requireUuidParam(c, 'id', 'circle ID');
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   const circle = await circlesService.getCircleById(user.userId, circleId);
 
   if (!circle) {
@@ -108,7 +108,7 @@ app.put('/:id', async (c) => {
   const circleId = requireUuidParam(c, 'id', 'circle ID');
   const validated = await parseBody(c, CircleInputSchema);
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   const circle = await circlesService.updateCircle(user.userId, circleId, validated);
 
   if (!circle) {
@@ -127,7 +127,7 @@ app.delete('/:id', async (c) => {
   const user = getAuthUser(c);
   const circleId = requireUuidParam(c, 'id', 'circle ID');
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   const deleted = await circlesService.deleteCircle(user.userId, circleId);
 
   if (!deleted) {
@@ -151,7 +151,7 @@ app.post('/:id/merge', async (c) => {
     throw new ValidationError('Cannot merge a circle into itself');
   }
 
-  const circlesService = new CirclesService(db);
+  const circlesService = new CirclesService({ db: db });
   const circle = await circlesService.mergeCircles(
     user.userId,
     targetCircleId,

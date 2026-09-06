@@ -154,7 +154,12 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
-        { countryCode: 'DE', postalCode: '55571', city: 'Odernheim am Glan', street: 'Hauptstraße' },
+        {
+          countryCode: 'DE',
+          postalCode: '55571',
+          city: 'Odernheim am Glan',
+          street: 'Hauptstraße',
+        },
         { countryCode: 'DE', postalCode: '55571', city: 'Unknown', street: 'Im Tal' },
       ]);
 
@@ -191,7 +196,12 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       await insertTestAddresses(pool, [
         { countryCode: 'DE', postalCode: '55116', city: 'Mainz', street: 'Schillerstraße' },
         { countryCode: 'DE', postalCode: '55118', city: 'Mainz', street: 'Goethestraße' },
-        { countryCode: 'DE', postalCode: '55571', city: 'Odernheim am Glan', street: 'Hauptstraße' },
+        {
+          countryCode: 'DE',
+          postalCode: '55571',
+          city: 'Odernheim am Glan',
+          street: 'Hauptstraße',
+        },
         { countryCode: 'DE', postalCode: '10115', city: 'Berlin', street: 'Torstraße' },
       ]);
 

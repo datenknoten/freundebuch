@@ -42,11 +42,19 @@ import {
 } from '../../utils/errors.js';
 import { parseRelationshipDirection } from '../../utils/type-guards.js';
 
+export interface MembershipsServiceOptions {
+  db: Pool;
+}
+
 /**
  * Service for managing collective memberships and auto-relationships
  */
 export class MembershipsService {
-  constructor(private db: Pool) {}
+  private db: Pool;
+
+  constructor(options: MembershipsServiceOptions) {
+    this.db = options.db;
+  }
 
   // ============================================================================
   // Membership Operations

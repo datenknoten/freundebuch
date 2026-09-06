@@ -31,7 +31,7 @@ app.get('/', async (c) => {
   }
 
   const options = parseFriendListQuery(validated);
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const result = await friendsService.listFriends(user.userId, options);
 
   return c.json(result);
@@ -47,7 +47,7 @@ app.get('/:id', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const friend = await friendsService.getFriendById(user.userId, friendId);
 
   if (!friend) {
@@ -68,7 +68,7 @@ app.post('/', async (c) => {
 
   const validated = await parseBody(c, FriendCreateSchema);
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const friend = await friendsService.createFriend(user.userId, validated);
 
   return c.json(friend, 201);
@@ -85,7 +85,7 @@ app.put('/:id', async (c) => {
   const friendId = requireUuidParam(c, 'id', 'friend ID');
   const validated = await parseBody(c, FriendUpdateSchema);
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const friend = await friendsService.updateFriend(user.userId, friendId, validated);
 
   if (!friend) {
@@ -105,7 +105,7 @@ app.delete('/:id', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const friendsService = new FriendsService(db, logger);
+  const friendsService = new FriendsService({ db: db, logger: logger });
   const deleted = await friendsService.deleteFriend(user.userId, friendId);
 
   if (!deleted) {

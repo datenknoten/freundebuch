@@ -49,7 +49,7 @@ describe('AppPasswordsService', () => {
   beforeEach(() => {
     mockDb = {};
     mockLogger = pino({ level: 'silent' });
-    service = new AppPasswordsService(mockDb, mockLogger);
+    service = new AppPasswordsService({ db: mockDb, logger: mockLogger });
     vi.clearAllMocks();
   });
 

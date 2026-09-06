@@ -16,11 +16,19 @@ import {
 } from '../../models/queries/collectives.queries.js';
 import { parseRelationshipDirection } from '../../utils/type-guards.js';
 
+export interface CollectiveTypesServiceOptions {
+  db: Pool;
+}
+
 /**
  * Service for managing collective types (family, company, club, friend_group)
  */
 export class CollectiveTypesService {
-  constructor(private db: Pool) {}
+  private db: Pool;
+
+  constructor(options: CollectiveTypesServiceOptions) {
+    this.db = options.db;
+  }
 
   /**
    * List all collective types available to a user (system defaults + custom)
