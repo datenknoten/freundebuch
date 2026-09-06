@@ -28,6 +28,7 @@ WHERE ct.external_id = :typeExternalId::uuid
   );
 
 /* @name GetRolesForType */
+-- System types are visible to everyone; custom types only to their owner.
 SELECT
     cr.external_id,
     cr.role_key,
@@ -36,9 +37,14 @@ SELECT
 FROM collectives.collective_roles cr
 INNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id
 WHERE ct.external_id = :typeExternalId::uuid
+  AND (
+    ct.is_system_default = TRUE
+    OR ct.user_id = (SELECT id FROM auth.users WHERE external_id = :userExternalId::uuid)
+  )
 ORDER BY cr.sort_order ASC, cr.label ASC;
 
 /* @name GetRulesForType */
+-- System types are visible to everyone; custom types only to their owner.
 SELECT
     nr.external_id AS new_member_role_id,
     nr.role_key AS new_member_role_key,
@@ -50,7 +56,11 @@ FROM collectives.collective_relationship_rules crr
 INNER JOIN collectives.collective_types ct ON crr.collective_type_id = ct.id
 INNER JOIN collectives.collective_roles nr ON crr.new_member_role_id = nr.id
 INNER JOIN collectives.collective_roles er ON crr.existing_member_role_id = er.id
-WHERE ct.external_id = :typeExternalId::uuid;
+WHERE ct.external_id = :typeExternalId::uuid
+  AND (
+    ct.is_system_default = TRUE
+    OR ct.user_id = (SELECT id FROM auth.users WHERE external_id = :userExternalId::uuid)
+  );
 
 /* @name GetCollectivesByUserId */
 SELECT
@@ -141,21 +151,6 @@ GROUP BY c.id, c.external_id, c.name, ct.external_id, ct.name, ct.description, c
          c.address_state_province, c.address_postal_code, c.address_country,
          c.created_at, c.updated_at, c.deleted_at;
 
-/* @name GetMemberPreview */
--- Gets first N members for list preview
-SELECT
-    f.external_id,
-    COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,
-    f.photo_url
-FROM friends.friends f
-INNER JOIN collectives.collective_memberships cm ON cm.contact_id = f.id
-INNER JOIN collectives.collectives c ON cm.collective_id = c.id
-WHERE c.external_id = :collectiveExternalId::uuid
-  AND cm.is_active = TRUE
-  AND f.deleted_at IS NULL
-ORDER BY display_name ASC
-LIMIT :limit;
-
 /* @name GetMemberPreviewBatch */
 -- Gets first N members for each collective in a batch (avoids N+1)
 SELECT
@@ -164,6 +159,7 @@ SELECT
     sub.display_name,
     sub.photo_url
 FROM collectives.collectives c
+INNER JOIN auth.users u ON c.user_id = u.id
 CROSS JOIN LATERAL (
     SELECT
         f.external_id,
@@ -177,7 +173,8 @@ CROSS JOIN LATERAL (
     ORDER BY display_name ASC
     LIMIT :limit
 ) sub
-WHERE c.external_id = ANY(:collectiveExternalIds::uuid[]);
+WHERE c.external_id = ANY(:collectiveExternalIds::uuid[])
+  AND u.external_id = :userExternalId::uuid;
 
 /* @name GetMembersByCollectiveId */
 SELECT
@@ -338,16 +335,20 @@ WHERE c.external_id = :collectiveExternalId::uuid
   AND u.external_id = :userExternalId::uuid;
 
 /* @name GetRoleInternalId */
--- Helper to get internal ID for a role
+-- Helper to get internal ID for a role.
+-- Scoped to the collective's owner: the role external_id alone says nothing
+-- about who may see it.
 SELECT cr.id
 FROM collectives.collective_roles cr
 INNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id
 INNER JOIN collectives.collectives c ON c.collective_type_id = ct.id
+INNER JOIN auth.users u ON c.user_id = u.id
 WHERE cr.external_id = :roleExternalId::uuid
-  AND c.external_id = :collectiveExternalId::uuid;
+  AND c.external_id = :collectiveExternalId::uuid
+  AND u.external_id = :userExternalId::uuid;
 
 /* @name GetRoleByExternalId */
--- Gets full role info by external ID within a collective
+-- Gets full role info by external ID within a collective owned by the user
 SELECT
     cr.external_id,
     cr.role_key,
@@ -356,8 +357,10 @@ SELECT
 FROM collectives.collective_roles cr
 INNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id
 INNER JOIN collectives.collectives c ON c.collective_type_id = ct.id
+INNER JOIN auth.users u ON c.user_id = u.id
 WHERE cr.external_id = :roleExternalId::uuid
-  AND c.external_id = :collectiveExternalId::uuid;
+  AND c.external_id = :collectiveExternalId::uuid
+  AND u.external_id = :userExternalId::uuid;
 
 /* @name GetContactInternalId */
 -- Helper to get internal ID for a contact

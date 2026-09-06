@@ -92,7 +92,11 @@ export class CollectivesService {
     const allPreviews =
       collectiveIds.length > 0
         ? await getMemberPreviewBatch.run(
-            { collectiveExternalIds: collectiveIds, limit: PREVIEW_MEMBER_LIMIT },
+            {
+              userExternalId,
+              collectiveExternalIds: collectiveIds,
+              limit: PREVIEW_MEMBER_LIMIT,
+            },
             this.db,
           )
         : [];
@@ -142,7 +146,10 @@ export class CollectivesService {
         { userExternalId, collectiveExternalId, includeInactive: true },
         this.db,
       ),
-      getRolesForType.run({ typeExternalId: collectiveRow.type_external_id }, this.db),
+      getRolesForType.run(
+        { typeExternalId: collectiveRow.type_external_id, userExternalId },
+        this.db,
+      ),
     ]);
 
     return this.mapCollective(collectiveRow, membersResult, rolesResult);

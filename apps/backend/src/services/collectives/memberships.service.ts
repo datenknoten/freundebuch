@@ -79,7 +79,10 @@ export class MembershipsService {
       const [collectiveResult, contactResult, roleResult] = await Promise.all([
         getCollectiveInternalId.run({ userExternalId, collectiveExternalId }, client),
         getContactInternalId.run({ userExternalId, contactExternalId: input.friend_id }, client),
-        getRoleInternalId.run({ collectiveExternalId, roleExternalId: input.role_id }, client),
+        getRoleInternalId.run(
+          { userExternalId, collectiveExternalId, roleExternalId: input.role_id },
+          client,
+        ),
       ]);
 
       if (collectiveResult.length === 0) {
@@ -179,7 +182,7 @@ export class MembershipsService {
     roleExternalId: string,
   ): Promise<CollectiveMember> {
     const roleResult = await getRoleInternalId.run(
-      { collectiveExternalId, roleExternalId },
+      { userExternalId, collectiveExternalId, roleExternalId },
       this.db,
     );
 
@@ -390,7 +393,7 @@ export class MembershipsService {
 
     // Get role info
     const roleResult = await getRoleInternalId.run(
-      { collectiveExternalId, roleExternalId: input.role_id },
+      { userExternalId, collectiveExternalId, roleExternalId: input.role_id },
       this.db,
     );
 
@@ -505,7 +508,7 @@ export class MembershipsService {
     }
 
     // We need to fetch role info - get from collective
-    const roleInfo = await this.getRoleInfo(collectiveExternalId, input.role_id);
+    const roleInfo = await this.getRoleInfo(userExternalId, collectiveExternalId, input.role_id);
 
     return {
       newContact,
@@ -667,10 +670,14 @@ export class MembershipsService {
    * Get role info for preview response
    */
   private async getRoleInfo(
+    userExternalId: string,
     collectiveExternalId: string,
     roleExternalId: string,
   ): Promise<CollectiveRole> {
-    const result = await getRoleByExternalId.run({ collectiveExternalId, roleExternalId }, this.db);
+    const result = await getRoleByExternalId.run(
+      { userExternalId, collectiveExternalId, roleExternalId },
+      this.db,
+    );
 
     if (result.length === 0) {
       throw new RoleNotFoundError();

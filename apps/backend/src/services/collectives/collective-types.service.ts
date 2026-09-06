@@ -32,7 +32,7 @@ export class CollectiveTypesService {
     const types = await Promise.all(
       typesResult.map(async (typeRow) => {
         const rolesResult = await getRolesForType.run(
-          { typeExternalId: typeRow.external_id },
+          { typeExternalId: typeRow.external_id, userExternalId },
           this.db,
         );
         return this.mapCollectiveType(typeRow, rolesResult);
@@ -62,8 +62,8 @@ export class CollectiveTypesService {
 
     // Fetch roles and rules in parallel
     const [rolesResult, rulesResult] = await Promise.all([
-      getRolesForType.run({ typeExternalId }, this.db),
-      getRulesForType.run({ typeExternalId }, this.db),
+      getRolesForType.run({ typeExternalId, userExternalId }, this.db),
+      getRulesForType.run({ typeExternalId, userExternalId }, this.db),
     ]);
 
     return this.mapCollectiveTypeWithRules(typeRow, rolesResult, rulesResult);

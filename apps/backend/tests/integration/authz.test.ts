@@ -177,6 +177,80 @@ describe('Cross-user authorization', () => {
     });
   });
 
+  describe('collective types', () => {
+    it('hides another user custom type, including its roles and rules', async () => {
+      // Custom types have no API to create them yet, so insert one for A.
+      const inserted = await pool().query<{ external_id: string }>(
+        `INSERT INTO collectives.collective_types (user_id, name, is_system_default)
+           SELECT u.id, 'A Private Type', false
+           FROM auth.users u WHERE u.external_id = $1::uuid
+           RETURNING external_id`,
+        [userA.externalId],
+      );
+      const typeId = inserted.rows[0]?.external_id;
+      expect(typeId).toBeTruthy();
+
+      await pool().query(
+        `INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
+           SELECT ct.id, 'secret', 'Secret Role', 1
+           FROM collectives.collective_types ct WHERE ct.external_id = $1::uuid`,
+        [typeId],
+      );
+
+      // A sees the type and its role.
+      const owner = await asA('GET', `/api/collectives/types/${typeId}`);
+      expect(owner.status).toBe(200);
+      expect((await json(owner)).roles.map((r: { label: string }) => r.label)).toContain(
+        'Secret Role',
+      );
+
+      // B must not, and must not learn the role labels either.
+      expect((await asB('GET', `/api/collectives/types/${typeId}`)).status).toBe(404);
+
+      const listed = await asB('GET', '/api/collectives/types');
+      const ids = (await json(listed)).types.map((t: { id: string }) => t.id);
+      expect(ids).not.toContain(typeId);
+    });
+
+    it('rejects a role id from another user private type when adding a member', async () => {
+      const inserted = await pool().query<{ external_id: string }>(
+        `INSERT INTO collectives.collective_types (user_id, name, is_system_default)
+           SELECT u.id, 'A Role Donor Type', false
+           FROM auth.users u WHERE u.external_id = $1::uuid
+           RETURNING external_id`,
+        [userA.externalId],
+      );
+      const donorTypeId = inserted.rows[0]?.external_id;
+
+      const role = await pool().query<{ external_id: string }>(
+        `INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
+           SELECT ct.id, 'donor', 'Donor Role', 1
+           FROM collectives.collective_types ct WHERE ct.external_id = $1::uuid
+           RETURNING external_id`,
+        [donorTypeId],
+      );
+      const foreignRoleId = role.rows[0]?.external_id;
+
+      // B builds a legitimate collective of a system type and a friend of their own.
+      const typesRes = await asB('GET', '/api/collectives/types');
+      const systemTypeId = (await json(typesRes)).types[0].id;
+      const createdCollective = await asB('POST', '/api/collectives', {
+        name: 'B Collective',
+        collective_type_id: systemTypeId,
+      });
+      expect(createdCollective.status).toBe(201);
+      const bCollectiveId = (await json(createdCollective)).id;
+      const bFriendId = await createTestFriend(pool(), userB.externalId, 'B Friend');
+
+      // The role belongs to A's type, so it must not resolve for B.
+      const res = await asB('POST', `/api/collectives/${bCollectiveId}/members`, {
+        friend_id: bFriendId,
+        role_id: foreignRoleId,
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
   describe('notification channels', () => {
     it('hides another user channel from GET/PUT/DELETE', async () => {
       const created = await asA('POST', '/api/notification-channels', {

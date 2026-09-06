@@ -245,16 +245,22 @@ the user-facing behavior explicit.
 
 ## Security Considerations
 
-### Row-Level Security (RLS)
+### Tenancy is enforced in SQL
 
-Enable RLS on multi-tenant tables:
+RLS is **not** used. The application connects as a single role, so a policy
+would need `current_setting('app.current_user_id')` to be set per request and
+every code path to be trusted to set it — a second enforcement point that can
+disagree with the first.
 
-```sql
-ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
+Instead the rule is: **every query that touches a user-owned table joins
+`auth.users` and filters on `external_id`**, either directly or through the
+owning parent row. Internal-id helpers are exempt only when the caller already
+resolved ownership.
 
-CREATE POLICY user_isolation ON auth.users
-  USING (id = current_setting('app.current_user_id')::integer);
-```
+`apps/backend/tests/sql-tenancy.test.ts` enforces this by parsing every
+`*.sql` file. A query that legitimately cannot scope by user must be added to
+that test's allowlist with a reason, which makes the exception reviewable
+instead of invisible.
 
 ### Sensitive Data
 

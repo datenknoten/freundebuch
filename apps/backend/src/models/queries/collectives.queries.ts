@@ -106,6 +106,7 @@ export const getCollectiveTypeById = new PreparedQuery<IGetCollectiveTypeByIdPar
 /** 'GetRolesForType' parameters type */
 export interface IGetRolesForTypeParams {
   typeExternalId?: string | null | void;
+  userExternalId?: string | null | void;
 }
 
 /** 'GetRolesForType' return type */
@@ -126,11 +127,12 @@ export interface IGetRolesForTypeQuery {
   result: IGetRolesForTypeResult;
 }
 
-const getRolesForTypeIR: any = {"usedParamSet":{"typeExternalId":true},"params":[{"name":"typeExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":212,"b":226}]}],"statement":"SELECT\n    cr.external_id,\n    cr.role_key,\n    cr.label,\n    cr.sort_order\nFROM collectives.collective_roles cr\nINNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id\nWHERE ct.external_id = :typeExternalId::uuid\nORDER BY cr.sort_order ASC, cr.label ASC"};
+const getRolesForTypeIR: any = {"usedParamSet":{"typeExternalId":true,"userExternalId":true},"params":[{"name":"typeExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":287,"b":301}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":416,"b":430}]}],"statement":"-- System types are visible to everyone; custom types only to their owner.\nSELECT\n    cr.external_id,\n    cr.role_key,\n    cr.label,\n    cr.sort_order\nFROM collectives.collective_roles cr\nINNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id\nWHERE ct.external_id = :typeExternalId::uuid\n  AND (\n    ct.is_system_default = TRUE\n    OR ct.user_id = (SELECT id FROM auth.users WHERE external_id = :userExternalId::uuid)\n  )\nORDER BY cr.sort_order ASC, cr.label ASC"};
 
 /**
  * Query generated from SQL:
  * ```
+ * -- System types are visible to everyone; custom types only to their owner.
  * SELECT
  *     cr.external_id,
  *     cr.role_key,
@@ -139,6 +141,10 @@ const getRolesForTypeIR: any = {"usedParamSet":{"typeExternalId":true},"params":
  * FROM collectives.collective_roles cr
  * INNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id
  * WHERE ct.external_id = :typeExternalId::uuid
+ *   AND (
+ *     ct.is_system_default = TRUE
+ *     OR ct.user_id = (SELECT id FROM auth.users WHERE external_id = :userExternalId::uuid)
+ *   )
  * ORDER BY cr.sort_order ASC, cr.label ASC
  * ```
  */
@@ -148,6 +154,7 @@ export const getRolesForType = new PreparedQuery<IGetRolesForTypeParams,IGetRole
 /** 'GetRulesForType' parameters type */
 export interface IGetRulesForTypeParams {
   typeExternalId?: string | null | void;
+  userExternalId?: string | null | void;
 }
 
 /** 'GetRulesForType' return type */
@@ -172,11 +179,12 @@ export interface IGetRulesForTypeQuery {
   result: IGetRulesForTypeResult;
 }
 
-const getRulesForTypeIR: any = {"usedParamSet":{"typeExternalId":true},"params":[{"name":"typeExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":552,"b":566}]}],"statement":"SELECT\n    nr.external_id AS new_member_role_id,\n    nr.role_key AS new_member_role_key,\n    er.external_id AS existing_member_role_id,\n    er.role_key AS existing_member_role_key,\n    crr.relationship_type_id,\n    crr.relationship_direction\nFROM collectives.collective_relationship_rules crr\nINNER JOIN collectives.collective_types ct ON crr.collective_type_id = ct.id\nINNER JOIN collectives.collective_roles nr ON crr.new_member_role_id = nr.id\nINNER JOIN collectives.collective_roles er ON crr.existing_member_role_id = er.id\nWHERE ct.external_id = :typeExternalId::uuid"};
+const getRulesForTypeIR: any = {"usedParamSet":{"typeExternalId":true,"userExternalId":true},"params":[{"name":"typeExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":627,"b":641}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":756,"b":770}]}],"statement":"-- System types are visible to everyone; custom types only to their owner.\nSELECT\n    nr.external_id AS new_member_role_id,\n    nr.role_key AS new_member_role_key,\n    er.external_id AS existing_member_role_id,\n    er.role_key AS existing_member_role_key,\n    crr.relationship_type_id,\n    crr.relationship_direction\nFROM collectives.collective_relationship_rules crr\nINNER JOIN collectives.collective_types ct ON crr.collective_type_id = ct.id\nINNER JOIN collectives.collective_roles nr ON crr.new_member_role_id = nr.id\nINNER JOIN collectives.collective_roles er ON crr.existing_member_role_id = er.id\nWHERE ct.external_id = :typeExternalId::uuid\n  AND (\n    ct.is_system_default = TRUE\n    OR ct.user_id = (SELECT id FROM auth.users WHERE external_id = :userExternalId::uuid)\n  )"};
 
 /**
  * Query generated from SQL:
  * ```
+ * -- System types are visible to everyone; custom types only to their owner.
  * SELECT
  *     nr.external_id AS new_member_role_id,
  *     nr.role_key AS new_member_role_key,
@@ -189,6 +197,10 @@ const getRulesForTypeIR: any = {"usedParamSet":{"typeExternalId":true},"params":
  * INNER JOIN collectives.collective_roles nr ON crr.new_member_role_id = nr.id
  * INNER JOIN collectives.collective_roles er ON crr.existing_member_role_id = er.id
  * WHERE ct.external_id = :typeExternalId::uuid
+ *   AND (
+ *     ct.is_system_default = TRUE
+ *     OR ct.user_id = (SELECT id FROM auth.users WHERE external_id = :userExternalId::uuid)
+ *   )
  * ```
  */
 export const getRulesForType = new PreparedQuery<IGetRulesForTypeParams,IGetRulesForTypeResult>(getRulesForTypeIR);
@@ -415,54 +427,11 @@ const getCollectiveByIdIR: any = {"usedParamSet":{"collectiveExternalId":true,"u
 export const getCollectiveById = new PreparedQuery<IGetCollectiveByIdParams,IGetCollectiveByIdResult>(getCollectiveByIdIR);
 
 
-/** 'GetMemberPreview' parameters type */
-export interface IGetMemberPreviewParams {
-  collectiveExternalId?: string | null | void;
-  limit?: NumberOrString | null | void;
-}
-
-/** 'GetMemberPreview' return type */
-export interface IGetMemberPreviewResult {
-  display_name: string | null;
-  /** Public UUID for API exposure (always use this in APIs) */
-  external_id: string;
-  /** URL to original profile picture */
-  photo_url: string | null;
-}
-
-/** 'GetMemberPreview' query type */
-export interface IGetMemberPreviewQuery {
-  params: IGetMemberPreviewParams;
-  result: IGetMemberPreviewResult;
-}
-
-const getMemberPreviewIR: any = {"usedParamSet":{"collectiveExternalId":true,"limit":true},"params":[{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":334,"b":354}]},{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":447,"b":452}]}],"statement":"-- Gets first N members for list preview\nSELECT\n    f.external_id,\n    COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,\n    f.photo_url\nFROM friends.friends f\nINNER JOIN collectives.collective_memberships cm ON cm.contact_id = f.id\nINNER JOIN collectives.collectives c ON cm.collective_id = c.id\nWHERE c.external_id = :collectiveExternalId::uuid\n  AND cm.is_active = TRUE\n  AND f.deleted_at IS NULL\nORDER BY display_name ASC\nLIMIT :limit"};
-
-/**
- * Query generated from SQL:
- * ```
- * -- Gets first N members for list preview
- * SELECT
- *     f.external_id,
- *     COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,
- *     f.photo_url
- * FROM friends.friends f
- * INNER JOIN collectives.collective_memberships cm ON cm.contact_id = f.id
- * INNER JOIN collectives.collectives c ON cm.collective_id = c.id
- * WHERE c.external_id = :collectiveExternalId::uuid
- *   AND cm.is_active = TRUE
- *   AND f.deleted_at IS NULL
- * ORDER BY display_name ASC
- * LIMIT :limit
- * ```
- */
-export const getMemberPreview = new PreparedQuery<IGetMemberPreviewParams,IGetMemberPreviewResult>(getMemberPreviewIR);
-
-
 /** 'GetMemberPreviewBatch' parameters type */
 export interface IGetMemberPreviewBatchParams {
   collectiveExternalIds?: stringArray | null | void;
   limit?: NumberOrString | null | void;
+  userExternalId?: string | null | void;
 }
 
 /** 'GetMemberPreviewBatch' return type */
@@ -482,7 +451,7 @@ export interface IGetMemberPreviewBatchQuery {
   result: IGetMemberPreviewBatchResult;
 }
 
-const getMemberPreviewBatchIR: any = {"usedParamSet":{"limit":true,"collectiveExternalIds":true},"params":[{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":599,"b":604}]},{"name":"collectiveExternalIds","required":false,"transform":{"type":"scalar"},"locs":[{"a":638,"b":659}]}],"statement":"-- Gets first N members for each collective in a batch (avoids N+1)\nSELECT\n    c.external_id AS collective_external_id,\n    sub.external_id,\n    sub.display_name,\n    sub.photo_url\nFROM collectives.collectives c\nCROSS JOIN LATERAL (\n    SELECT\n        f.external_id,\n        COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,\n        f.photo_url\n    FROM friends.friends f\n    INNER JOIN collectives.collective_memberships cm ON cm.contact_id = f.id\n    WHERE cm.collective_id = c.id\n      AND cm.is_active = TRUE\n      AND f.deleted_at IS NULL\n    ORDER BY display_name ASC\n    LIMIT :limit\n) sub\nWHERE c.external_id = ANY(:collectiveExternalIds::uuid[])"};
+const getMemberPreviewBatchIR: any = {"usedParamSet":{"limit":true,"collectiveExternalIds":true,"userExternalId":true},"params":[{"name":"limit","required":false,"transform":{"type":"scalar"},"locs":[{"a":643,"b":648}]},{"name":"collectiveExternalIds","required":false,"transform":{"type":"scalar"},"locs":[{"a":682,"b":703}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":736,"b":750}]}],"statement":"-- Gets first N members for each collective in a batch (avoids N+1)\nSELECT\n    c.external_id AS collective_external_id,\n    sub.external_id,\n    sub.display_name,\n    sub.photo_url\nFROM collectives.collectives c\nINNER JOIN auth.users u ON c.user_id = u.id\nCROSS JOIN LATERAL (\n    SELECT\n        f.external_id,\n        COALESCE(f.display_name, f.nickname, 'Unknown') AS display_name,\n        f.photo_url\n    FROM friends.friends f\n    INNER JOIN collectives.collective_memberships cm ON cm.contact_id = f.id\n    WHERE cm.collective_id = c.id\n      AND cm.is_active = TRUE\n      AND f.deleted_at IS NULL\n    ORDER BY display_name ASC\n    LIMIT :limit\n) sub\nWHERE c.external_id = ANY(:collectiveExternalIds::uuid[])\n  AND u.external_id = :userExternalId::uuid"};
 
 /**
  * Query generated from SQL:
@@ -494,6 +463,7 @@ const getMemberPreviewBatchIR: any = {"usedParamSet":{"limit":true,"collectiveEx
  *     sub.display_name,
  *     sub.photo_url
  * FROM collectives.collectives c
+ * INNER JOIN auth.users u ON c.user_id = u.id
  * CROSS JOIN LATERAL (
  *     SELECT
  *         f.external_id,
@@ -508,6 +478,7 @@ const getMemberPreviewBatchIR: any = {"usedParamSet":{"limit":true,"collectiveEx
  *     LIMIT :limit
  * ) sub
  * WHERE c.external_id = ANY(:collectiveExternalIds::uuid[])
+ *   AND u.external_id = :userExternalId::uuid
  * ```
  */
 export const getMemberPreviewBatch = new PreparedQuery<IGetMemberPreviewBatchParams,IGetMemberPreviewBatchResult>(getMemberPreviewBatchIR);
@@ -899,6 +870,7 @@ export const getCollectiveInternalId = new PreparedQuery<IGetCollectiveInternalI
 export interface IGetRoleInternalIdParams {
   collectiveExternalId?: string | null | void;
   roleExternalId?: string | null | void;
+  userExternalId?: string | null | void;
 }
 
 /** 'GetRoleInternalId' return type */
@@ -913,18 +885,22 @@ export interface IGetRoleInternalIdQuery {
   result: IGetRoleInternalIdResult;
 }
 
-const getRoleInternalIdIR: any = {"usedParamSet":{"roleExternalId":true,"collectiveExternalId":true},"params":[{"name":"roleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":258,"b":272}]},{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":302,"b":322}]}],"statement":"-- Helper to get internal ID for a role\nSELECT cr.id\nFROM collectives.collective_roles cr\nINNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id\nINNER JOIN collectives.collectives c ON c.collective_type_id = ct.id\nWHERE cr.external_id = :roleExternalId::uuid\n  AND c.external_id = :collectiveExternalId::uuid"};
+const getRoleInternalIdIR: any = {"usedParamSet":{"roleExternalId":true,"collectiveExternalId":true,"userExternalId":true},"params":[{"name":"roleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":405,"b":419}]},{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":449,"b":469}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":499,"b":513}]}],"statement":"-- Helper to get internal ID for a role.\n-- Scoped to the collective's owner: the role external_id alone says nothing\n-- about who may see it.\nSELECT cr.id\nFROM collectives.collective_roles cr\nINNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id\nINNER JOIN collectives.collectives c ON c.collective_type_id = ct.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE cr.external_id = :roleExternalId::uuid\n  AND c.external_id = :collectiveExternalId::uuid\n  AND u.external_id = :userExternalId::uuid"};
 
 /**
  * Query generated from SQL:
  * ```
- * -- Helper to get internal ID for a role
+ * -- Helper to get internal ID for a role.
+ * -- Scoped to the collective's owner: the role external_id alone says nothing
+ * -- about who may see it.
  * SELECT cr.id
  * FROM collectives.collective_roles cr
  * INNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id
  * INNER JOIN collectives.collectives c ON c.collective_type_id = ct.id
+ * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE cr.external_id = :roleExternalId::uuid
  *   AND c.external_id = :collectiveExternalId::uuid
+ *   AND u.external_id = :userExternalId::uuid
  * ```
  */
 export const getRoleInternalId = new PreparedQuery<IGetRoleInternalIdParams,IGetRoleInternalIdResult>(getRoleInternalIdIR);
@@ -934,6 +910,7 @@ export const getRoleInternalId = new PreparedQuery<IGetRoleInternalIdParams,IGet
 export interface IGetRoleByExternalIdParams {
   collectiveExternalId?: string | null | void;
   roleExternalId?: string | null | void;
+  userExternalId?: string | null | void;
 }
 
 /** 'GetRoleByExternalId' return type */
@@ -954,12 +931,12 @@ export interface IGetRoleByExternalIdQuery {
   result: IGetRoleByExternalIdResult;
 }
 
-const getRoleByExternalIdIR: any = {"usedParamSet":{"roleExternalId":true,"collectiveExternalId":true},"params":[{"name":"roleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":339,"b":353}]},{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":383,"b":403}]}],"statement":"-- Gets full role info by external ID within a collective\nSELECT\n    cr.external_id,\n    cr.role_key,\n    cr.label,\n    cr.sort_order\nFROM collectives.collective_roles cr\nINNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id\nINNER JOIN collectives.collectives c ON c.collective_type_id = ct.id\nWHERE cr.external_id = :roleExternalId::uuid\n  AND c.external_id = :collectiveExternalId::uuid"};
+const getRoleByExternalIdIR: any = {"usedParamSet":{"roleExternalId":true,"collectiveExternalId":true,"userExternalId":true},"params":[{"name":"roleExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":401,"b":415}]},{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":445,"b":465}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":495,"b":509}]}],"statement":"-- Gets full role info by external ID within a collective owned by the user\nSELECT\n    cr.external_id,\n    cr.role_key,\n    cr.label,\n    cr.sort_order\nFROM collectives.collective_roles cr\nINNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id\nINNER JOIN collectives.collectives c ON c.collective_type_id = ct.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE cr.external_id = :roleExternalId::uuid\n  AND c.external_id = :collectiveExternalId::uuid\n  AND u.external_id = :userExternalId::uuid"};
 
 /**
  * Query generated from SQL:
  * ```
- * -- Gets full role info by external ID within a collective
+ * -- Gets full role info by external ID within a collective owned by the user
  * SELECT
  *     cr.external_id,
  *     cr.role_key,
@@ -968,8 +945,10 @@ const getRoleByExternalIdIR: any = {"usedParamSet":{"roleExternalId":true,"colle
  * FROM collectives.collective_roles cr
  * INNER JOIN collectives.collective_types ct ON cr.collective_type_id = ct.id
  * INNER JOIN collectives.collectives c ON c.collective_type_id = ct.id
+ * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE cr.external_id = :roleExternalId::uuid
  *   AND c.external_id = :collectiveExternalId::uuid
+ *   AND u.external_id = :userExternalId::uuid
  * ```
  */
 export const getRoleByExternalId = new PreparedQuery<IGetRoleByExternalIdParams,IGetRoleByExternalIdResult>(getRoleByExternalIdIR);
