@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isPathWithinBase, isValidUuid, sanitizeSearchHeadline } from '../src/utils/security.js';
+import {
+  isPathWithinBase,
+  isPrivateAddress,
+  isValidUuid,
+  sanitizeSearchHeadline,
+} from '../src/utils/security.js';
 
 describe('security.ts', () => {
   describe('isValidUuid', () => {
@@ -20,6 +25,48 @@ describe('security.ts', () => {
       expect(isValidUuid('550e8400-e29b-41d4-a716')).toBe(false);
       expect(isValidUuid('')).toBe(false);
       expect(isValidUuid('550e8400e29b41d4a716446655440000')).toBe(false);
+    });
+  });
+
+  describe('isPrivateAddress', () => {
+    it('should flag the cloud metadata address', () => {
+      expect(isPrivateAddress('169.254.169.254')).toBe(true);
+    });
+
+    it('should flag every private IPv4 range', () => {
+      for (const address of [
+        '0.0.0.0',
+        '10.1.2.3',
+        '127.0.0.1',
+        '100.64.0.1',
+        '172.16.0.1',
+        '172.31.255.255',
+        '192.168.1.1',
+      ]) {
+        expect(isPrivateAddress(address), address).toBe(true);
+      }
+    });
+
+    it('should allow public IPv4', () => {
+      expect(isPrivateAddress('8.8.8.8')).toBe(false);
+      expect(isPrivateAddress('172.32.0.1')).toBe(false);
+      expect(isPrivateAddress('100.128.0.1')).toBe(false);
+      expect(isPrivateAddress('192.169.1.1')).toBe(false);
+    });
+
+    it('should flag IPv4-mapped IPv6 forms', () => {
+      expect(isPrivateAddress('::ffff:10.0.0.1')).toBe(true);
+      expect(isPrivateAddress('[::ffff:127.0.0.1]')).toBe(true);
+      expect(isPrivateAddress('::ffff:8.8.8.8')).toBe(false);
+    });
+
+    it('should flag IPv6 loopback, unique-local and link-local', () => {
+      expect(isPrivateAddress('::1')).toBe(true);
+      expect(isPrivateAddress('[::1]')).toBe(true);
+      expect(isPrivateAddress('fc00::1')).toBe(true);
+      expect(isPrivateAddress('fd12:3456::1')).toBe(true);
+      expect(isPrivateAddress('fe80::1')).toBe(true);
+      expect(isPrivateAddress('2001:4860:4860::8888')).toBe(false);
     });
   });
 

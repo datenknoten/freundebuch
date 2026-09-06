@@ -31,6 +31,56 @@ export function isPathWithinBase(basePath: string, ...untrustedPath: string[]): 
 }
 
 /**
+ * True when an IP literal belongs to a range that must never be reached by an
+ * outbound request driven by user input (SSRF guard).
+ *
+ * Covers loopback, link-local (including the cloud metadata address), RFC-1918,
+ * RFC-6598 carrier NAT, "this network", IPv6 unique-local/link-local and
+ * IPv4-mapped IPv6 forms of all of the above.
+ */
+export function isPrivateAddress(address: string): boolean {
+  const value = address
+    .trim()
+    .toLowerCase()
+    .replace(/^\[|]$/g, '');
+
+  // IPv4-mapped IPv6 (::ffff:10.0.0.1) delegates to the IPv4 rules.
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(value);
+  if (mapped?.[1] !== undefined) {
+    return isPrivateAddress(mapped[1]);
+  }
+
+  const ipv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(value);
+  if (ipv4 !== null) {
+    const [a, b] = ipv4.slice(1, 3).map(Number) as [number, number];
+    return (
+      a === 0 || // 0.0.0.0/8 "this network"
+      a === 10 ||
+      a === 127 ||
+      (a === 100 && b >= 64 && b <= 127) || // RFC 6598 CGNAT
+      (a === 169 && b === 254) || // link-local, incl. 169.254.169.254
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168)
+    );
+  }
+
+  if (value === '::' || value === '::1') {
+    return true;
+  }
+
+  // fc00::/7 (unique local) and fe80::/10 (link local).
+  const firstHextet = value.split(':')[0];
+  if (firstHextet === undefined || firstHextet === '') {
+    return false;
+  }
+  const high = Number.parseInt(firstHextet.padStart(4, '0').slice(0, 2), 16);
+  if (Number.isNaN(high)) {
+    return false;
+  }
+  return (high & 0xfe) === 0xfc || (high & 0xff) === 0xfe;
+}
+
+/**
  * Sanitizes HTML content from PostgreSQL's ts_headline function to prevent XSS attacks.
  *
  * The ts_headline function wraps matching search terms in <mark> tags.
