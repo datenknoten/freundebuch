@@ -390,20 +390,48 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
     /**
      * Returns changes since a sync token (RFC 6578).
      *
+     * Returns null when the token is unknown or expired, which SabreDAV turns
+     * into a full resync. That is not optional: the retention sweep deletes
+     * tombstones, so answering a token from before the sweep with the rows
+     * that happen to be left would silently drop deletions and leave the
+     * client showing friends that no longer exist.
+     *
      * @param mixed $addressBookId The address book ID
      * @param string $syncToken Previous sync token (or empty for full sync)
      * @param int $syncLevel Sync level (1 = immediate children)
      * @param int|null $limit Maximum number of results
-     * @return array Changes with new sync token
+     * @return array|null Changes with new sync token, or null to force a full resync
      */
-    public function getChangesForAddressBook($addressBookId, $syncToken, $syncLevel, $limit = null): array
+    public function getChangesForAddressBook($addressBookId, $syncToken, $syncLevel, $limit = null): ?array
     {
-        // Parse sync token to get last change ID
-        $lastChangeId = 0;
-        if ($syncToken && preg_match('/^sync-(\d+)$/', $syncToken, $matches)) {
-            $lastChangeId = (int) $matches[1];
+        // An initial sync must report every current member, per the
+        // SyncSupport contract. Deriving it from the change log instead would
+        // hand a fresh client an empty address book whenever the log has been
+        // pruned - the log records history, not the present state.
+        if (!$syncToken) {
+            $uris = [];
+            foreach ($this->getCards($addressBookId) as $card) {
+                $uris[] = $card['uri'];
+            }
+
+            return [
+                'syncToken' => $this->getSyncToken((int) $addressBookId),
+                'added' => $uris,
+                'modified' => [],
+                'deleted' => [],
+            ];
         }
 
+        if (!preg_match('/^sync-(\d+)$/', $syncToken, $matches)) {
+            // Not a token this backend ever issued.
+            return null;
+        }
+        $lastChangeId = (int) $matches[1];
+
+        // Everything the client is missing may already have been pruned.
+        if ($lastChangeId > 0 && $lastChangeId < $this->getPrunedThroughId((int) $addressBookId)) {
+            return null;
+        }
         $sql = '
             SELECT id, friend_external_id, change_type
             FROM friends.friend_changes
@@ -470,6 +498,11 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $added = array_values(array_intersect($added, $visible));
         $modified = array_values(array_intersect($modified, $visible));
 
+        // Floored at the prune watermark: with the log swept empty there is no
+        // row to raise $maxId above the client's own token, and handing back a
+        // lower one than was issued reads as "never synced".
+        $maxId = max($maxId, $this->getPrunedThroughId((int) $addressBookId));
+
         return [
             'syncToken' => 'sync-' . $maxId,
             'added' => array_values($added),
@@ -480,12 +513,40 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
 
     // Helper methods
 
-    private function getSyncToken(int $userId): string
+    /**
+     * The highest change id the retention sweep has removed for this user, or
+     * 0 if nothing has been pruned yet.
+     */
+    private function getPrunedThroughId(int $userId): int
     {
         $stmt = $this->pdo->prepare('
-            SELECT COALESCE(MAX(id), 0) as max_id
-            FROM friends.friend_changes
+            SELECT pruned_through_id
+            FROM friends.friend_changes_pruned
             WHERE user_id = :user_id
+        ');
+        $stmt->execute(['user_id' => $userId]);
+        $row = $stmt->fetch();
+
+        return $row === false ? 0 : (int) $row['pruned_through_id'];
+    }
+
+    /**
+     * The token advertised to clients.
+     *
+     * Floored at the prune watermark so it cannot go backwards: once the sweep
+     * removes a user's last log row, `MAX(id)` is null and the naive token
+     * would fall back to `sync-0`, which every client reads as "never synced".
+     */
+    private function getSyncToken(int $userId): string
+    {
+        // The id is bound once and joined in: PDO's pgsql driver uses native
+        // prepares, where repeating a named placeholder is an error.
+        $stmt = $this->pdo->prepare('
+            SELECT GREATEST(
+                     COALESCE((SELECT MAX(id) FROM friends.friend_changes WHERE user_id = u.id), 0),
+                     COALESCE((SELECT pruned_through_id FROM friends.friend_changes_pruned WHERE user_id = u.id), 0)
+                   ) AS max_id
+            FROM (SELECT CAST(:user_id AS integer) AS id) u
         ');
         $stmt->execute(['user_id' => $userId]);
         $row = $stmt->fetch();

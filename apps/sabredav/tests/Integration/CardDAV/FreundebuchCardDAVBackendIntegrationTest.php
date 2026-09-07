@@ -465,22 +465,24 @@ VCARD;
         // getCard
         $this->assertFalse($this->backend->getCard($user['id'], $archived['external_id'] . '.vcf'));
 
-        // getChangesForAddressBook: the create entry is in the change log, but an
-        // archived friend must be reported as deleted, never as added/modified.
-        // (friend_change_trigger logs the insert and the archive update, so both
-        // friends really are in the log.)
+        // The change log still holds the friend's create and archive entries
+        // (friend_change_trigger writes both), so any read path derived from it
+        // has to filter them out rather than inherit them.
         $logged = $this->getPdo()->prepare(
             'SELECT count(*) AS count FROM friends.friend_changes WHERE friend_external_id = :id'
         );
         $logged->execute(['id' => $archived['external_id']]);
         $this->assertGreaterThan(0, (int) $logged->fetch()['count']);
 
-        $changes = $this->backend->getChangesForAddressBook($user['id'], null, 1);
-        $this->assertIsArray($changes);
-        $this->assertContains($visible['external_id'] . '.vcf', $changes['added']);
-        $this->assertNotContains($archived['external_id'] . '.vcf', $changes['added']);
-        $this->assertNotContains($archived['external_id'] . '.vcf', $changes['modified']);
-        $this->assertContains($archived['external_id'] . '.vcf', $changes['deleted']);
+        // Initial sync reports current members, so the archived friend is
+        // simply absent. It is not reported as deleted: the client holds
+        // nothing yet, so there is nothing for it to remove.
+        $initial = $this->backend->getChangesForAddressBook($user['id'], null, 1);
+        $this->assertIsArray($initial);
+        $this->assertContains($visible['external_id'] . '.vcf', $initial['added']);
+        $this->assertNotContains($archived['external_id'] . '.vcf', $initial['added']);
+        $this->assertNotContains($archived['external_id'] . '.vcf', $initial['modified']);
+        $this->assertSame([], $initial['deleted']);
 
         // Writes miss too, rather than editing an unreadable card.
         $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:{$archived['external_id']}\r\nFN:Hacked\r\nEND:VCARD";
@@ -490,5 +492,126 @@ VCARD;
         $this->assertFalse(
             $this->backend->deleteCard($user['id'], $archived['external_id'] . '.vcf')
         );
+    }
+
+    /**
+     * The case that actually matters for archiving: a client that already holds
+     * the card. It synced before the archive, so it must be told to remove it -
+     * an incremental sync is the only place a deletion means anything.
+     */
+    #[Test]
+    public function archivingAFriendDeletesItForAClientThatAlreadySynced(): void
+    {
+        $user = $this->createTestUser('archive-sync@example.com');
+        $friend = $this->createTestFriend((int) $user['id'], ['display_name' => 'Soon Archived']);
+
+        $before = $this->backend->getChangesForAddressBook($user['id'], null, 1);
+        $this->assertIsArray($before);
+        $this->assertContains($friend['external_id'] . '.vcf', $before['added']);
+        $token = $before['syncToken'];
+
+        $this->getPdo()
+            ->prepare('UPDATE friends.friends SET archived_at = NOW() WHERE id = :id')
+            ->execute(['id' => $friend['id']]);
+
+        $after = $this->backend->getChangesForAddressBook($user['id'], $token, 1);
+        $this->assertIsArray($after);
+        $this->assertContains($friend['external_id'] . '.vcf', $after['deleted']);
+        $this->assertNotContains($friend['external_id'] . '.vcf', $after['added']);
+        $this->assertNotContains($friend['external_id'] . '.vcf', $after['modified']);
+    }
+
+    /**
+     * The retention sweep deletes tombstones. A client holding a token from
+     * before the sweep can no longer be told what was deleted, and RFC 6578
+     * requires the server to say so rather than answer with what happens to be
+     * left - otherwise the client keeps showing friends that no longer exist.
+     */
+    #[Test]
+    public function expiredSyncTokenForcesFullResync(): void
+    {
+        $user = $this->createTestUser('prune@example.com');
+        $kept = $this->createTestFriend((int) $user['id'], ['display_name' => 'Kept']);
+        $doomed = $this->createTestFriend((int) $user['id'], ['display_name' => 'Doomed']);
+
+        // The token a client would be holding before anything is pruned.
+        $before = $this->backend->getChangesForAddressBook($user['id'], null, 1);
+        $this->assertIsArray($before);
+        $tokenBeforePrune = $before['syncToken'];
+
+        // Delete the friend, then age the whole log past the retention window
+        // and run the real sweep.
+        $this->assertTrue(
+            $this->backend->deleteCard($user['id'], $doomed['external_id'] . '.vcf')
+        );
+        $this->getPdo()->exec(
+            "UPDATE friends.friend_changes SET changed_at = now() - interval '91 days'"
+        );
+        $this->runRetentionSweep();
+
+        // The tombstone is gone, so the old token cannot be answered honestly.
+        $this->assertNull(
+            $this->backend->getChangesForAddressBook($user['id'], $tokenBeforePrune, 1)
+        );
+
+        // A full resync still reports the surviving friend and not the deleted one.
+        $full = $this->backend->getChangesForAddressBook($user['id'], null, 1);
+        $this->assertIsArray($full);
+        $this->assertContains($kept['external_id'] . '.vcf', $full['added']);
+        $this->assertNotContains($doomed['external_id'] . '.vcf', $full['added']);
+    }
+
+    #[Test]
+    public function syncTokenDoesNotRegressAfterPruning(): void
+    {
+        $user = $this->createTestUser('noregress@example.com');
+        $this->createTestFriend((int) $user['id'], ['display_name' => 'Only']);
+
+        $before = $this->backend->getChangesForAddressBook($user['id'], null, 1);
+        $this->assertIsArray($before);
+        $tokenBefore = (int) substr((string) $before['syncToken'], strlen('sync-'));
+        $this->assertGreaterThan(0, $tokenBefore);
+
+        // Sweep every row this user has: MAX(id) becomes null.
+        $this->getPdo()->exec(
+            "UPDATE friends.friend_changes SET changed_at = now() - interval '91 days'"
+        );
+        $this->runRetentionSweep();
+
+        $rows = $this->getPdo()->prepare(
+            'SELECT count(*) AS count FROM friends.friend_changes WHERE user_id = :id'
+        );
+        $rows->execute(['id' => $user['id']]);
+        $this->assertSame(0, (int) $rows->fetch()['count']);
+
+        // A token of sync-0 reads as "never synced" to every client.
+        $after = $this->backend->getChangesForAddressBook($user['id'], null, 1);
+        $this->assertIsArray($after);
+        $tokenAfter = (int) substr((string) $after['syncToken'], strlen('sync-'));
+        $this->assertGreaterThanOrEqual($tokenBefore, $tokenAfter);
+    }
+
+    #[Test]
+    public function unparseableSyncTokenForcesFullResync(): void
+    {
+        $user = $this->createTestUser('badtoken@example.com');
+        $this->createTestFriend((int) $user['id'], ['display_name' => 'Someone']);
+
+        $this->assertNull(
+            $this->backend->getChangesForAddressBook($user['id'], 'not-a-token', 1)
+        );
+    }
+
+    /**
+     * The production retention query, kept in one place so the tests exercise
+     * the same SQL the scheduler runs.
+     */
+    private function runRetentionSweep(): void
+    {
+        $sql = file_get_contents(
+            __DIR__ . '/../../../../backend/src/models/queries/friend-changes.sql'
+        );
+        $this->assertNotFalse($sql);
+        $this->getPdo()->exec($sql);
     }
 }
