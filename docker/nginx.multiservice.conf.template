@@ -51,6 +51,15 @@ http {
     # Brute-force throttle for the MCP Basic Auth endpoint.
     limit_req_zone $binary_remote_addr zone=mcp_auth:10m rate=30r/m;
 
+    # Sign-in/sign-up/password-reset. Better Auth also limits in-process
+    # (5/min), but that bucket is per-process and shared with every other
+    # caller; this one is per source address and costs the backend nothing.
+    limit_req_zone $binary_remote_addr zone=auth:10m rate=10r/m;
+
+    # CardDAV/CalDAV: app-password Basic Auth, so the same brute-force
+    # exposure as MCP. Sync clients poll, hence the higher rate.
+    limit_req_zone $binary_remote_addr zone=dav:10m rate=60r/m;
+
     server {
         listen 80;
         listen [::]:80;
@@ -122,6 +131,8 @@ http {
 
         # CardDAV/CalDAV - route to SabreDAV (PHP-FPM)
         location ~ ^/(carddav|caldav)(/.*)?$ {
+            limit_req zone=dav burst=30 nodelay;
+
             fastcgi_pass sabredav;
             fastcgi_param SCRIPT_FILENAME /app/public/index.php;
             fastcgi_param SCRIPT_NAME /index.php;
@@ -140,8 +151,12 @@ http {
             fastcgi_param HTTP_AUTHORIZATION $http_authorization;
         }
 
-        # Health check endpoint (directly from backend)
-        location = /health {
+        # Health check endpoints (directly from backend): /health (liveness)
+        # and /health/ready (readiness) - a prefix match covers both. With an
+        # exact match /health/ready fell through to the SPA, which answers
+        # index.html: the readiness probe never saw the backend and the
+        # frontend's signupEnabled lookup failed open.
+        location /health {
             proxy_pass http://backend;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -175,6 +190,27 @@ http {
         }
 
         # API routes - proxy to Node.js backend
+        # Auth endpoints - throttled harder than the rest of the API
+        location ^~ /api/auth/ {
+            limit_req zone=auth burst=5 nodelay;
+
+            proxy_pass http://backend;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # Timeouts
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 60s;
+
+            # Don't buffer for streaming
+            proxy_buffering off;
+        }
         location ^~ /api/ {
             proxy_pass http://backend;
             proxy_http_version 1.1;
