@@ -32,7 +32,7 @@ export const CircleInputSchema = type({
   name: 'string > 0',
   'color?': 'string | null', // hex color code (from palette or custom)
   'parent_circle_id?': 'string | null', // UUID of parent circle for hierarchy
-  'sort_order?': 'number',
+  'sort_order?': 'number.integer >= 0', // integer column; see CircleReorderItemSchema
 }).narrow((data, ctx) => {
   // Validate hex color format if provided
   if (data.color && !/^#[0-9A-Fa-f]{6}$/.test(data.color)) {
@@ -43,10 +43,17 @@ export const CircleInputSchema = type({
 });
 export type CircleInput = typeof CircleInputSchema.infer;
 
-/** Single item in a circle reorder request */
+/**
+ * Single item in a circle reorder request.
+ *
+ * `sort_order` must be an integer: the column is `integer`, and node-postgres
+ * sends parameters as text, so Postgres rejects "1.5" with `invalid input
+ * syntax for type integer` - a driver error surfacing as a 500 for what is
+ * plainly a bad request.
+ */
 export const CircleReorderItemSchema = type({
   id: 'string.uuid', // external_id
-  sort_order: 'number',
+  sort_order: 'number.integer >= 0',
 });
 export type CircleReorderItem = typeof CircleReorderItemSchema.infer;
 

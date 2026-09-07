@@ -98,6 +98,27 @@ describe('Circles API - Integration', () => {
     expect(byId[c]).toBe(1);
   });
 
+  /**
+   * `sort_order` lands in an `integer` column. node-postgres sends parameters
+   * as text, so Postgres rejects "1.5" with `invalid input syntax for type
+   * integer` - an unhandled driver error, i.e. a 500 for what is plainly a bad
+   * request. The boundary has to reject it instead.
+   */
+  it('rejects a non-integer sort_order with 400 rather than failing in the driver', async () => {
+    const a = await createCircle('A', 0);
+
+    const res = await req('PUT', '/api/circles/reorder', {
+      order: [{ id: a, sort_order: 1.5 }],
+    });
+
+    expect(res.status).toBe(400);
+
+    // The circle keeps its original position.
+    const list = await json(await req('GET', '/api/circles'));
+    const row = list.find((x: { id: string }) => x.id === a);
+    expect(row.sortOrder).toBe(0);
+  });
+
   it('merges one circle into another', async () => {
     const target = await createCircle('Target');
     const source = await createCircle('Source');
