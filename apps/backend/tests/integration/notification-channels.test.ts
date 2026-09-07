@@ -118,4 +118,40 @@ describe('Notification Channels API - Integration', () => {
     );
     expect(res.status).toBe(404);
   });
+
+  /**
+   * `sendMatrixMessage` rejects any protocol other than https as part of its
+   * SSRF guard, and nothing validates the URL when the channel is created. An
+   * `http://` homeserver therefore used to be accepted and stored, and the
+   * failure only surfaced later - once a day, inside the digest scheduler.
+   */
+  it('rejects an http matrix homeserver at creation', async () => {
+    const res = await req('POST', '/api/notification-channels', {
+      platform: 'matrix',
+      isEnabled: true,
+      lookaheadDays: 7,
+      notifyTime: '09:00',
+      credentials: {
+        homeserver: 'http://matrix.example.com',
+        accessToken: 'syt_token',
+        roomId: '!room:example.com',
+      },
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts an https matrix homeserver', async () => {
+    const res = await req('POST', '/api/notification-channels', {
+      platform: 'matrix',
+      isEnabled: true,
+      lookaheadDays: 7,
+      notifyTime: '09:00',
+      credentials: {
+        homeserver: 'https://matrix.example.com',
+        accessToken: 'syt_token',
+        roomId: '!room:example.com',
+      },
+    });
+    expect(res.status).toBe(201);
+  });
 });
