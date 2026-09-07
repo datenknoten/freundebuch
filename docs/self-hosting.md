@@ -45,7 +45,7 @@ will not work unmodified on your infrastructure:
 |------|-----|
 | `freundebuch.schumacher.im` | Hardcoded in the Traefik router labels and in `FRONTEND_URL` / `BACKEND_URL`. Replace every occurrence with your domain. |
 | The external `traefik` network | Remove it (and the `traefik.*` labels) if you terminate TLS differently, then publish the nginx port yourself. |
-| `ENV: production` on the backend | Now set upstream. `ConfigSchema` reads `ENV`, not `NODE_ENV`, and it defaults to `development` — without it you get dev logging, Sentry's production guards off, and reset links written to the debug log. |
+| `ENV: production` on the backend | Now set upstream, alongside `NODE_ENV`. **Both are needed**: `ConfigSchema` reads `ENV` (default `development`), so without it you get dev logging, Sentry's production guards off, and reset links in the debug log — while `NODE_ENV` is Node's own switch that package managers and libraries branch on. Neither replaces the other. |
 | `TRUST_PROXY: "true"` on the backend | Set upstream, because nginx always fronts the backend. Drop it only if you expose the backend directly, otherwise rate limiting keys off the proxy's IP instead of the client's. |
 | `TRUSTED_PROXY_HOPS: "2"` on the backend | Set upstream for the Traefik → nginx → backend chain. **Set it to `1` if nginx is your only proxy**, or anonymous rate limiting keys off the wrong entry. |
 | `WEBAUTHN_RP_ID` on the backend | Not set upstream. Set it to your bare domain (no scheme, no port) or passkey registration fails. |
@@ -54,9 +54,9 @@ will not work unmodified on your infrastructure:
 ## Configuration
 
 [`.env.example`](../.env.example) is a useful starting point, but it describes a
-*development* environment: it sets `NODE_ENV` (which the backend does not read —
-see `ENV` below) and omits `ENV`, `TRUST_PROXY`, `POSTGRES_PASSWORD`, and
-`VERSION`, all of which a production deployment needs. The variables that matter
+*development* environment: it sets `ENV` and `NODE_ENV` to `development` and
+omits `TRUST_PROXY`, `POSTGRES_PASSWORD` and `VERSION`, all of which a
+production deployment needs. The variables that matter
 in production:
 
 ### Backend
@@ -65,7 +65,8 @@ in production:
 |----------|----------|-------|
 | `DATABASE_URL` | yes | Must start with `postgres://` or `postgresql://`; validated at boot |
 | `BETTER_AUTH_SECRET` | yes | **At least 32 characters**, and it must not contain `change-this`, `your-secret`, or `REPLACE` — the config schema rejects placeholder secrets outright. `openssl rand -base64 48` is fine. Not rotatable without user-visible loss — see [Rotating `BETTER_AUTH_SECRET`](#rotating-better_auth_secret) |
-| `ENV` | yes | `production`. The backend's config reads `ENV`, **not** `NODE_ENV`; leaving it unset silently gives you development behaviour (pretty-printed logs, `development` as the Sentry environment, password-reset URLs written to the debug log) |
+| `ENV` | yes | `production`. This is the one the backend's config reads; leaving it unset silently gives you development behaviour (pretty-printed logs, `development` as the Sentry environment, password-reset URLs written to the debug log) |
+| `NODE_ENV` | yes | `production`. Separate from `ENV` and **not interchangeable with it**: `NODE_ENV` is Node's own switch, which package managers use to prune devDependencies and libraries use to pick dev-only warnings and slow paths. Set both |
 | `FRONTEND_URL` | yes | Your public HTTPS origin. Also the Better Auth trusted origin |
 | `BACKEND_URL` | yes | Same origin — everything is served from one host behind nginx |
 | `BETTER_AUTH_URL` | for MCP OAuth | Your public HTTPS origin. See [Connecting AI assistants](#connecting-ai-assistants-mcp) |

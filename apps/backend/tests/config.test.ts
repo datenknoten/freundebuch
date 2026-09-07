@@ -164,6 +164,29 @@ describe('getConfig', () => {
 
       expect(() => getConfig()).toThrow('Configuration validation failed');
     });
+
+    /**
+     * ENV and NODE_ENV are separate on purpose and neither stands in for the
+     * other: NODE_ENV drives Node and the ecosystem (devDependency pruning,
+     * library dev branches), ENV drives this application's behaviour. A
+     * deployment that sets only NODE_ENV — which is what the production
+     * compose file did — runs the app as a development deployment: dev log
+     * format, Sentry's production guards off, and reset links in the debug
+     * log.
+     */
+    it('does not infer the deployment from NODE_ENV', () => {
+      vi.stubEnv('ENV', undefined);
+      vi.stubEnv('NODE_ENV', 'production');
+
+      expect(getConfig().ENV).toBe('development');
+    });
+
+    it('reads ENV independently of NODE_ENV', () => {
+      vi.stubEnv('ENV', 'production');
+      vi.stubEnv('NODE_ENV', 'development');
+
+      expect(getConfig().ENV).toBe('production');
+    });
   });
 
   describe('LOG_LEVEL validation', () => {

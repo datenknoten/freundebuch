@@ -82,10 +82,14 @@ services:
       DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-10}
 
       # Server
-      # ENV is the variable ConfigSchema reads and it defaults to
-      # "development". Without it this deployment ran with pretty-printed dev
-      # logging, Sentry's production-only guards off, and the reset-link debug
-      # log enabled. NODE_ENV stays for the Node ecosystem's own conventions.
+      #
+      # Both are required and neither substitutes for the other.
+      #   ENV      - what ConfigSchema reads; defaults to "development".
+      #              Without it this ran with dev log format, Sentry's
+      #              production guards off, and reset links in the debug log.
+      #   NODE_ENV - Node's and the ecosystem's own switch: package managers
+      #              prune devDependencies on it and libraries branch on it.
+      # Deleting either one changes behaviour the other does not cover.
       ENV: production
       NODE_ENV: production
       PORT: 3000

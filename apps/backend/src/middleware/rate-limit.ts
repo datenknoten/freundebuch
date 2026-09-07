@@ -6,8 +6,11 @@ import { getConfig } from '../utils/config.js';
 import { isRateLimiterRes } from '../utils/type-guards.js';
 
 // Use higher limits in test environment to allow concurrent operation tests.
-// Honor ENV (the canonical config var) as well as NODE_ENV so test detection
-// can't diverge from the rest of the app.
+//
+// The one place ENV and NODE_ENV are deliberately OR'd. Elsewhere they mean
+// different things and are kept apart, but "am I under test" is answered by
+// whichever of the three a given runner happens to set: vitest sets VITEST, CI
+// sets NODE_ENV, and the app's own config uses ENV.
 const isTestEnv =
   process.env.ENV === 'test' || process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 

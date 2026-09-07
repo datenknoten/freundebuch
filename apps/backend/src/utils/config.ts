@@ -24,6 +24,16 @@ const ConfigSchema = type({
   DATABASE_STATEMENT_TIMEOUT_MS: 'string.integer.parse = "30000"',
 
   // Server
+  //
+  // ENV describes the deployment: log format, Sentry environment and sample
+  // rate, and whether the dev-only guards in lib/auth.ts (which would
+  // otherwise write reset links to the log) are open.
+  //
+  // It is deliberately NOT NODE_ENV, and neither replaces the other. NODE_ENV
+  // is Node's and the ecosystem's own switch: package managers prune
+  // devDependencies on it, and libraries branch on it for dev-only warnings
+  // and slow paths. A deployment sets both, and dropping either changes
+  // behaviour somewhere unrelated to the other.
   ENV: '"development" | "production" | "test" = "development"',
   PORT: 'string.integer.parse = "3000"',
   FRONTEND_URL: 'string = "http://localhost:5173"',

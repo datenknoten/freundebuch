@@ -31,6 +31,9 @@ services:
       DATABASE_URL: postgresql://freundebuch:dev_password@postgres:5432/freundebuch_dev
       DATABASE_POOL_MIN: 2
       DATABASE_POOL_MAX: 10
+      # Both, spelled out: ENV is what the backend's config reads, NODE_ENV is
+      # Node's own switch. They are separate variables, not aliases.
+      ENV: development
       NODE_ENV: development
       PORT: 3000
       FRONTEND_URL: http://localhost:8080

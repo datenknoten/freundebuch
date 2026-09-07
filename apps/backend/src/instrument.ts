@@ -15,11 +15,16 @@ const require = createRequire(import.meta.url);
 const pkg: Record<string, unknown> = require('../package.json');
 const pkgVersion = typeof pkg.version === 'string' ? pkg.version : 'unknown';
 
-// Read directly from process.env to avoid config validation during tests
+// Read directly from process.env to avoid config validation during tests.
+//
+// APP_ENV comes from ENV, not NODE_ENV. The two are deliberately separate:
+// NODE_ENV drives Node and the ecosystem (dependency pruning at install,
+// library dev/prod branches) while ENV describes the deployment this process
+// is part of. Sentry wants the latter.
 const SENTRY_DSN = process.env.SENTRY_DSN;
-const NODE_ENV = process.env.ENV || 'development';
+const APP_ENV = process.env.ENV || 'development';
 
-const IS_PRODUCTION = NODE_ENV === 'production';
+const IS_PRODUCTION = APP_ENV === 'production';
 
 // Attribute keys that must never leave the process. Backstop for the pino
 // redaction in utils/logger.ts — forwarded log attributes are scrubbed here
@@ -37,7 +42,7 @@ const SENSITIVE_LOG_KEYS = [
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
-    environment: NODE_ENV,
+    environment: APP_ENV,
     release: `freundebuch-backend@${pkgVersion}`,
 
     // Full tracing in dev for debugging; sample in production to bound cost.
