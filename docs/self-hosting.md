@@ -45,8 +45,9 @@ will not work unmodified on your infrastructure:
 |------|-----|
 | `freundebuch.schumacher.im` | Hardcoded in the Traefik router labels and in `FRONTEND_URL` / `BACKEND_URL`. Replace every occurrence with your domain. |
 | The external `traefik` network | Remove it (and the `traefik.*` labels) if you terminate TLS differently, then publish the nginx port yourself. |
-| `ENV: production` on the backend | **Not set upstream.** Add it — see below. |
+| `ENV: production` on the backend | Now set upstream. `ConfigSchema` reads `ENV`, not `NODE_ENV`, and it defaults to `development` — without it you get dev logging, Sentry's production guards off, and reset links written to the debug log. |
 | `TRUST_PROXY: "true"` on the backend | Set upstream, because nginx always fronts the backend. Drop it only if you expose the backend directly, otherwise rate limiting keys off the proxy's IP instead of the client's. |
+| `TRUSTED_PROXY_HOPS: "2"` on the backend | Set upstream for the Traefik → nginx → backend chain. **Set it to `1` if nginx is your only proxy**, or anonymous rate limiting keys off the wrong entry. |
 | `WEBAUTHN_RP_ID` on the backend | Not set upstream. Set it to your bare domain (no scheme, no port) or passkey registration fails. |
 | `BETTER_AUTH_SECRET` on the backend | Now set upstream (it was only on the mcp-server). It is required and must be the same value for both, or MCP bearer tokens are rejected. |
 
@@ -69,6 +70,7 @@ in production:
 | `BACKEND_URL` | yes | Same origin — everything is served from one host behind nginx |
 | `BETTER_AUTH_URL` | for MCP OAuth | Your public HTTPS origin. See [Connecting AI assistants](#connecting-ai-assistants-mcp) |
 | `TRUST_PROXY` | behind a proxy | `true` so rate limiting uses the real client IP from `X-Forwarded-For` |
+| `TRUSTED_PROXY_HOPS` | behind 2+ proxies | How many proxies front the app; the client is that many entries from the right of `X-Forwarded-For`. Default `1` (nginx only); use `2` for Traefik → nginx |
 | `WEBAUTHN_RP_ID` | for passkeys | Bare domain, e.g. `freundebuch.example.com` |
 | `NOMINATIM_CONTACT_EMAIL` | recommended | OSM's usage policy wants a contact address; without one, geocoding may get rate-limited |
 | `LOG_LEVEL` | no | `info` by default |
@@ -293,7 +295,7 @@ container.
 | Passkey registration fails | `WEBAUTHN_RP_ID` is missing or does not match the browser's origin |
 | claude.ai cannot connect, but Claude Desktop with an app password can | OAuth discovery — check the `issuer` with the `curl` above, and that both containers share `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET` |
 | MCP bearer tokens are always rejected | The MCP server's `BETTER_AUTH_SECRET` differs from the backend's, or it points at a different database |
-| Rate limiting throttles everyone at once | `TRUST_PROXY` is unset, so every request looks like it comes from the proxy |
+| Rate limiting throttles everyone at once | `TRUST_PROXY` is unset, so every request looks like it comes from the proxy — or `TRUSTED_PROXY_HOPS` is too low for your chain, so the key is an inner proxy's address rather than the client's |
 | Notification channels show `****` and digests stop arriving | `BETTER_AUTH_SECRET` changed, so the stored channel credentials no longer decrypt — users must re-enter them, see [Rotating `BETTER_AUTH_SECRET`](#rotating-better_auth_secret) |
 | Password-reset mails never arrive | `SMTP_HOST` is unset (nothing is sent at all), or the relay rejects the default `no-reply@<domain>` sender — set `SMTP_FROM`. Delivery failures are logged at `error` with `kind: "password-reset"` |
 | Container is marked unhealthy but the app responds | `/health/ready` is failing: `curl http://backend:3000/health/ready` and look at which `checks` entry is `false` (uploads volume read-only is the usual one) |

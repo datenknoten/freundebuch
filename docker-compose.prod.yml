@@ -82,15 +82,24 @@ services:
       DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-10}
 
       # Server
+      # ENV is the variable ConfigSchema reads and it defaults to
+      # "development". Without it this deployment ran with pretty-printed dev
+      # logging, Sentry's production-only guards off, and the reset-link debug
+      # log enabled. NODE_ENV stays for the Node ecosystem's own conventions.
+      ENV: production
       NODE_ENV: production
       PORT: 3000
       FRONTEND_URL: https://freundebuch.schumacher.im
       BACKEND_URL: https://freundebuch.schumacher.im
-      # nginx (and, in the maintainer's deployment, Traefik in front of it)
-      # append the real client IP to X-Forwarded-For. Without this every
-      # request keys the rate limiters off the proxy address, i.e. one bucket
-      # for the whole instance.
+      # Rate limiters key off X-Forwarded-For rather than the socket peer,
+      # which would be the proxy and give the whole instance one bucket.
       TRUST_PROXY: "true"
+      # Each proxy appends its own peer, so the client is this many entries
+      # from the right. This deployment is Traefik -> nginx -> backend, so the
+      # header reads "client, traefik" and the default of 1 would key every
+      # anonymous request to the shared Traefik address. Set it to 1 if you
+      # run nginx on its own, and raise it for every extra proxy in front.
+      TRUSTED_PROXY_HOPS: "2"
       # Public origin used as the OAuth issuer / MCP resource base for the
       # claude.ai connector. Must match the mcp-server's BETTER_AUTH_URL.
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://freundebuch.schumacher.im}
