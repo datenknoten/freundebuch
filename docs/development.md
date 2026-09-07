@@ -148,6 +148,6 @@ Coverage is reported per pull request rather than enforced per workspace: CI run
 
 It is **report-only** today — files below threshold are marked but the build still passes. The gate becomes blocking once the frontend baseline clears 80%. See [ADR 0002](./decisions/0002-pr-coverage-via-danger.md).
 
-Both workspaces produce a report: the frontend one in the `danger` job, the backend one in the `backend-coverage` job (unit, service and middleware suites only — v8 instrumentation pushes the Better Auth integration tests past their timeouts, and those run uninstrumented in the `test` job), ferried into `danger` as an artifact.
+Both workspaces produce a report: the frontend one in the `danger` job, the backend one in the `backend-coverage` job (the whole suite, integration included), ferried into `danger` as an artifact.
 
 Frontend tests share the helpers in `apps/frontend/src/lib/test/` (render helpers, store harness, fetch mock, fixtures) — see [apps/frontend/AGENTS.md](../apps/frontend/AGENTS.md).
