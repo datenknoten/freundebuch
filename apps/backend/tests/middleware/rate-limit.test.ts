@@ -163,5 +163,44 @@ describe('rate limiting', () => {
       const otherClient = await app.request('/', { headers: { 'X-Real-IP': '198.51.100.5' } });
       expect(otherClient.status).toBe(200);
     });
+
+    /**
+     * The maintainer's topology is Traefik -> nginx -> backend. Traefik appends
+     * the client, nginx appends Traefik, so the header reads
+     * "client, traefik" and the rightmost entry is a single shared address.
+     * Keying on it would throttle every anonymous visitor together — the exact
+     * collapse TRUST_PROXY exists to prevent.
+     */
+    it('keys by the client hop, not the inner proxy, with two trusted proxies', async () => {
+      vi.stubEnv('TRUST_PROXY', 'true');
+      vi.stubEnv('TRUSTED_PROXY_HOPS', '2');
+      resetConfig();
+      const app = tunnelApp();
+
+      // Drain one client; the inner proxy address is identical for everyone.
+      expect(await drainWith(app, { 'X-Forwarded-For': '203.0.113.7, 10.0.0.2' }, 400)).toBe(429);
+
+      // A second client behind the same proxy keeps its own bucket.
+      const otherClient = await app.request('/', {
+        headers: { 'X-Forwarded-For': '203.0.113.8, 10.0.0.2' },
+      });
+      expect(otherClient.status).toBe(200);
+    });
+
+    it('never keys past the leftmost hop when the chain is shorter than configured', async () => {
+      vi.stubEnv('TRUST_PROXY', 'true');
+      vi.stubEnv('TRUSTED_PROXY_HOPS', '2');
+      resetConfig();
+      const app = tunnelApp();
+
+      // A request that reached the app with only one hop recorded: the single
+      // entry is all there is, and it must not index out of the array.
+      expect(await drainWith(app, { 'X-Forwarded-For': '203.0.113.9' }, 400)).toBe(429);
+
+      const otherClient = await app.request('/', {
+        headers: { 'X-Forwarded-For': '203.0.113.10' },
+      });
+      expect(otherClient.status).toBe(200);
+    });
   });
 });

@@ -87,12 +87,24 @@ export function resetRateLimiters(): void {
  * Get the client identifier used as the rate-limit key.
  *
  * By default this is the socket peer address, which a client cannot spoof.
- * Only when TRUST_PROXY is set (i.e. a reverse proxy fronts the app) do we
- * read X-Forwarded-For, and then we take the LAST hop — the value the trusted
- * proxy appended — rather than the leftmost, client-controlled entry.
+ * Only when TRUST_PROXY is set (i.e. a reverse proxy fronts the app) is
+ * X-Forwarded-For read at all.
+ *
+ * Which entry is the client depends on how many proxies append to the header.
+ * Each hop appends its own peer, so with N trusted proxies the client sits N
+ * entries from the right: nginx alone yields "client", while Traefik in front
+ * of nginx yields "client, traefik" and taking the last entry would key every
+ * anonymous request to one shared address - the exact collapse TRUST_PROXY is
+ * meant to prevent.
+ *
+ * Anything further left is client-supplied and never trusted: if the header is
+ * shorter than the configured hop count, the leftmost entry is the closest
+ * thing to a real address available, and a client that forges extra entries
+ * only ever pushes itself further from the key it wants to spoof.
  */
 function getClientIdentifier(c: Context): string {
-  if (getConfig().TRUST_PROXY) {
+  const config = getConfig();
+  if (config.TRUST_PROXY) {
     const forwarded = c.req.header('X-Forwarded-For');
     if (forwarded) {
       const hops = forwarded
@@ -100,7 +112,8 @@ function getClientIdentifier(c: Context): string {
         .map((part) => part.trim())
         .filter(Boolean);
       if (hops.length > 0) {
-        return hops[hops.length - 1];
+        const index = Math.max(0, hops.length - config.TRUSTED_PROXY_HOPS);
+        return hops[index];
       }
     }
     const realIp = c.req.header('X-Real-IP');

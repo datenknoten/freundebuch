@@ -29,9 +29,18 @@ const ConfigSchema = type({
   FRONTEND_URL: 'string = "http://localhost:5173"',
   BACKEND_URL: 'string = "http://localhost:3000"',
   // Set true only when the app runs behind a reverse proxy that appends the
-  // real client IP as the last X-Forwarded-For hop. When false, rate limiting
-  // keys off the socket peer address, which clients cannot spoof.
+  // real client IP to X-Forwarded-For. When false, rate limiting keys off the
+  // socket peer address, which clients cannot spoof.
   TRUST_PROXY: BooleanString.default(false),
+  // How many proxies sit in front of the app, counted from the app outwards.
+  //
+  // Each one appends its own peer to X-Forwarded-For, so the client address is
+  // that many entries from the right - not simply the last one. With nginx
+  // alone the header is "client" and 1 is correct; with Traefik in front of
+  // nginx it is "client, traefik" and 1 would key every anonymous request to
+  // the shared Traefik address, which is the collapse TRUST_PROXY exists to
+  // avoid. Only consulted when TRUST_PROXY is set.
+  TRUSTED_PROXY_HOPS: type('string.integer.parse').to('number >= 1').default('1'),
 
   // Authentication (Better Auth)
   BETTER_AUTH_SECRET: SecretType,
