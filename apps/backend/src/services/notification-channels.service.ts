@@ -9,7 +9,13 @@ import {
   type IGetChannelsByUserIdResult,
   updateChannel,
 } from '../models/queries/notification-channels.queries.js';
-import { decrypt, encryptOptional, tryDecrypt } from '../utils/credentials-crypto.js';
+import {
+  type CredentialColumn,
+  credentialContext,
+  decrypt,
+  encryptOptional,
+  tryDecrypt,
+} from '../utils/credentials-crypto.js';
 import {
   NotificationChannelAlreadyExistsError,
   NotificationChannelNotFoundError,
@@ -41,7 +47,7 @@ export class NotificationChannelsService {
    */
   async listChannels(userExternalId: string): Promise<NotificationChannel[]> {
     const results = await getChannelsByUserId.run({ userExternalId }, this.db);
-    return results.map((row) => this.mapChannel(row));
+    return results.map((row) => this.mapChannel(userExternalId, row));
   }
 
   /**
@@ -58,7 +64,7 @@ export class NotificationChannelsService {
     if (results.length === 0) {
       throw new NotificationChannelNotFoundError();
     }
-    return this.mapChannel(results[0]);
+    return this.mapChannel(userExternalId, results[0]);
   }
 
   /**
@@ -80,12 +86,21 @@ export class NotificationChannelsService {
           userExternalId,
           platform: input.platform,
           isEnabled: input.isEnabled ?? true,
-          telegramBotToken: encryptOptional(input.credentials.botToken),
+          telegramBotToken: encryptOptional(
+            input.credentials.botToken,
+            credentialContext(userExternalId, 'telegram_bot_token'),
+          ),
           telegramChatId: input.credentials.chatId ?? null,
           matrixHomeserver: input.credentials.homeserver ?? null,
-          matrixAccessToken: encryptOptional(input.credentials.accessToken),
+          matrixAccessToken: encryptOptional(
+            input.credentials.accessToken,
+            credentialContext(userExternalId, 'matrix_access_token'),
+          ),
           matrixRoomId: input.credentials.roomId ?? null,
-          discordWebhookUrl: encryptOptional(input.credentials.webhookUrl),
+          discordWebhookUrl: encryptOptional(
+            input.credentials.webhookUrl,
+            credentialContext(userExternalId, 'discord_webhook_url'),
+          ),
           lookaheadDays: input.lookaheadDays ?? null,
           notifyTime: input.notifyTime ?? null,
         },
@@ -96,7 +111,7 @@ export class NotificationChannelsService {
         throw new NotificationChannelNotFoundError('Failed to create notification channel');
       }
 
-      return this.mapChannel(results[0]);
+      return this.mapChannel(userExternalId, results[0]);
     } catch (error) {
       rethrowUniqueViolation(error, {
         uq_notification_channels_user_platform: () =>
@@ -123,12 +138,21 @@ export class NotificationChannelsService {
         userExternalId,
         channelExternalId,
         isEnabled: input.isEnabled ?? null,
-        telegramBotToken: encryptOptional(input.credentials?.botToken),
+        telegramBotToken: encryptOptional(
+          input.credentials?.botToken,
+          credentialContext(userExternalId, 'telegram_bot_token'),
+        ),
         telegramChatId: input.credentials?.chatId ?? null,
         matrixHomeserver: input.credentials?.homeserver ?? null,
-        matrixAccessToken: encryptOptional(input.credentials?.accessToken),
+        matrixAccessToken: encryptOptional(
+          input.credentials?.accessToken,
+          credentialContext(userExternalId, 'matrix_access_token'),
+        ),
         matrixRoomId: input.credentials?.roomId ?? null,
-        discordWebhookUrl: encryptOptional(input.credentials?.webhookUrl),
+        discordWebhookUrl: encryptOptional(
+          input.credentials?.webhookUrl,
+          credentialContext(userExternalId, 'discord_webhook_url'),
+        ),
         lookaheadDays: input.lookaheadDays ?? null,
         notifyTime: input.notifyTime ?? null,
       },
@@ -139,7 +163,7 @@ export class NotificationChannelsService {
       throw new NotificationChannelNotFoundError();
     }
 
-    return this.mapChannel(results[0]);
+    return this.mapChannel(userExternalId, results[0]);
   }
 
   /**
@@ -181,7 +205,10 @@ export class NotificationChannelsService {
     switch (channel.platform) {
       case 'telegram':
         await sendTelegramMessage(
-          decrypt(channel.telegram_bot_token ?? ''),
+          decrypt(
+            channel.telegram_bot_token ?? '',
+            credentialContext(userExternalId, 'telegram_bot_token'),
+          ),
           channel.telegram_chat_id ?? '',
           testMessage,
         );
@@ -189,14 +216,23 @@ export class NotificationChannelsService {
       case 'matrix':
         await sendMatrixMessage(
           channel.matrix_homeserver ?? '',
-          decrypt(channel.matrix_access_token ?? ''),
+          decrypt(
+            channel.matrix_access_token ?? '',
+            credentialContext(userExternalId, 'matrix_access_token'),
+          ),
           channel.matrix_room_id ?? '',
           testMessage,
           testHtml,
         );
         break;
       case 'discord':
-        await sendDiscordMessage(decrypt(channel.discord_webhook_url ?? ''), testMessage);
+        await sendDiscordMessage(
+          decrypt(
+            channel.discord_webhook_url ?? '',
+            credentialContext(userExternalId, 'discord_webhook_url'),
+          ),
+          testMessage,
+        );
         break;
       default:
         throw new NotificationDeliveryError(channel.platform, 'Unknown platform');
@@ -207,21 +243,33 @@ export class NotificationChannelsService {
   // Private Helpers
   // ============================================================================
 
-  private mapChannel(row: ChannelRow): NotificationChannel {
+  private mapChannel(userExternalId: string, row: ChannelRow): NotificationChannel {
     const credentials: NotificationChannel['credentials'] = {};
 
     switch (row.platform) {
       case 'telegram':
-        credentials.botToken = this.maskSecret(row.telegram_bot_token);
+        credentials.botToken = this.maskSecret(
+          userExternalId,
+          'telegram_bot_token',
+          row.telegram_bot_token,
+        );
         credentials.chatId = row.telegram_chat_id ?? undefined;
         break;
       case 'matrix':
         credentials.homeserver = row.matrix_homeserver ?? undefined;
-        credentials.accessToken = this.maskSecret(row.matrix_access_token);
+        credentials.accessToken = this.maskSecret(
+          userExternalId,
+          'matrix_access_token',
+          row.matrix_access_token,
+        );
         credentials.roomId = row.matrix_room_id ?? undefined;
         break;
       case 'discord':
-        credentials.webhookUrl = this.maskSecret(row.discord_webhook_url);
+        credentials.webhookUrl = this.maskSecret(
+          userExternalId,
+          'discord_webhook_url',
+          row.discord_webhook_url,
+        );
         break;
     }
 
@@ -247,9 +295,13 @@ export class NotificationChannelsService {
    * credential that no longer decrypts (rotated `BETTER_AUTH_SECRET`) degrades
    * to `****` instead of failing the read, so the user can re-enter it.
    */
-  private maskSecret(value: string | null | undefined): string | undefined {
-    if (!value) return undefined;
-    const plain = tryDecrypt(value);
+  private maskSecret(
+    userExternalId: string,
+    column: CredentialColumn,
+    value: string | null | undefined,
+  ): string | undefined {
+    if (value === null || value === undefined || value === '') return undefined;
+    const plain = tryDecrypt(value, credentialContext(userExternalId, column));
     if (plain === null || plain.length <= 4) return '****';
     return `...${plain.slice(-4)}`;
   }
