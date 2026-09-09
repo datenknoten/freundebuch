@@ -27,6 +27,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   nginx:
     image: ghcr.io/datenknoten/freundebuch-nginx:${VERSION:-latest}
@@ -186,6 +188,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   postgres:
     image: imresamu/postgis:18-3.6.1-trixie  # PostGIS 3.6 + PostgreSQL 18, arm64 support
