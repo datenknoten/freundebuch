@@ -42,6 +42,21 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     `);
   }
 
+  // 2a. Credential accounts mirror the user id in account_id. Better Auth only
+  //     reads it for OAuth providers, so keeping it in sync is cosmetic, but a
+  //     stale value is a dangling reference. Must run before the re-key below,
+  //     while account_id still matches the old auth."user".id.
+  pgm.sql(`
+    UPDATE auth.account a
+    SET account_id = lu.external_id::text
+    FROM auth."user" bu
+    JOIN auth.users lu ON lu.email = bu.email
+    WHERE a.user_id = bu.id
+      AND a.provider_id = 'credential'
+      AND a.account_id = bu.id
+      AND bu.id <> lu.external_id::text;
+  `);
+
   // 2. Re-key the Better Auth rows whose id diverged from the legacy UUID.
   pgm.sql(`
     UPDATE auth."user" bu
