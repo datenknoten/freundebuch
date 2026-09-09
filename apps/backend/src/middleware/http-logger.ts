@@ -17,8 +17,8 @@ export const httpLoggerMiddleware: MiddlewareHandler<AppContext> = async (c, nex
   const logger = c.get('logger');
 
   // Log completed requests at info so production has access logs; keep the
-  // noisy health probe at debug.
-  const level = path === '/health' ? 'debug' : 'info';
+  // noisy health probes at debug.
+  const level = path === '/health' || path === '/health/ready' ? 'debug' : 'info';
   logger[level](
     {
       method,

@@ -28,7 +28,8 @@ const IS_PRODUCTION = APP_ENV === 'production';
 
 // Attribute keys that must never leave the process. Backstop for the pino
 // redaction in utils/logger.ts — forwarded log attributes are scrubbed here
-// too, since this is a personal CRM (names, emails, addresses).
+// too, since this is a personal CRM (names, emails, addresses) and the
+// notification channels hold credentials that grant access on their own.
 const SENSITIVE_LOG_KEYS = [
   'email',
   'newEmail',
@@ -37,7 +38,35 @@ const SENSITIVE_LOG_KEYS = [
   'address',
   'password',
   'token',
+  'accessToken',
+  'botToken',
+  'webhookUrl',
+  'resetUrl',
+  'verificationUrl',
+  'authorization',
 ];
+
+// Telegram puts the bot token in the request path
+// (https://api.telegram.org/bot<token>/sendMessage), so the outgoing-HTTP spans
+// carry it in their description and url attributes.
+const BOT_TOKEN_IN_PATH = /\/bot[^/\s]+\//g;
+const URL_ATTRIBUTES = ['http.url', 'url'];
+
+function redactBotToken(value: string): string {
+  return value.replace(BOT_TOKEN_IN_PATH, '/bot[redacted]/');
+}
+
+function redactUrlAttributes(data: Record<string, unknown> | undefined): void {
+  if (data === undefined) {
+    return;
+  }
+  for (const key of URL_ATTRIBUTES) {
+    const value = data[key];
+    if (typeof value === 'string') {
+      data[key] = redactBotToken(value);
+    }
+  }
+}
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -58,6 +87,10 @@ if (SENTRY_DSN) {
     ],
     enableLogs: true,
 
+    // The health probes run every few seconds and say nothing about user-facing
+    // latency.
+    ignoreTransactions: [/^GET \/health(\/ready)?$/],
+
     // Strip sensitive attributes from forwarded logs before they leave the process.
     beforeSendLog: (log) => {
       if (log.attributes) {
@@ -68,6 +101,22 @@ if (SENTRY_DSN) {
         }
       }
       return log;
+    },
+
+    // Spans are not covered by beforeSendLog; scrub the credential-bearing
+    // request paths out of the trace itself.
+    beforeSendTransaction: (event) => {
+      for (const span of event.spans ?? []) {
+        if (span.description !== undefined) {
+          span.description = redactBotToken(span.description);
+        }
+        redactUrlAttributes(span.data);
+      }
+      if (event.transaction !== undefined) {
+        event.transaction = redactBotToken(event.transaction);
+      }
+      redactUrlAttributes(event.contexts?.trace?.data);
+      return event;
     },
   });
 }
