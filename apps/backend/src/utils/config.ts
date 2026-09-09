@@ -44,12 +44,14 @@ const ConfigSchema = type({
   TRUST_PROXY: BooleanString.default(false),
   // How many proxies sit in front of the app, counted from the app outwards.
   //
-  // Each one appends its own peer to X-Forwarded-For, so the client address is
-  // that many entries from the right - not simply the last one. With nginx
-  // alone the header is "client" and 1 is correct; with Traefik in front of
-  // nginx it is "client, traefik" and 1 would key every anonymous request to
-  // the shared Traefik address, which is the collapse TRUST_PROXY exists to
-  // avoid. Only consulted when TRUST_PROXY is set.
+  // Each hop appends its own peer to X-Forwarded-For, so the client address is
+  // that many entries from the right - not simply the last one. The nginx
+  // images run the realip module whenever NGINX_REAL_IP_FROM lists the proxies
+  // in front of them (default: RFC1918 in the multi-service nginx image, empty
+  // in the all-in-one image). With realip active nginx appends the resolved
+  // client rather than its own peer, so the client is the last entry and 1 is
+  // correct even behind Traefik; without it the count is the number of proxies
+  // (2 for Traefik -> nginx). Only consulted when TRUST_PROXY is set.
   TRUSTED_PROXY_HOPS: type('string.integer.parse').to('number >= 1').default('1'),
 
   // Authentication (Better Auth)

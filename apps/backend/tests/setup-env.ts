@@ -31,6 +31,7 @@ const CONFIG_ENV_KEYS = [
   'FRONTEND_URL',
   'BACKEND_URL',
   'TRUST_PROXY',
+  'TRUSTED_PROXY_HOPS',
   // Authentication
   'BETTER_AUTH_SECRET',
   'BETTER_AUTH_URL',

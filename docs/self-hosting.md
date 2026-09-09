@@ -47,7 +47,7 @@ will not work unmodified on your infrastructure:
 | The external `traefik` network | Remove it (and the `traefik.*` labels) if you terminate TLS differently, then publish the nginx port yourself. |
 | `ENV: production` on the backend | Now set upstream, alongside `NODE_ENV`. **Both are needed**: `ConfigSchema` reads `ENV` (default `development`), so without it you get dev logging, Sentry's production guards off, and reset links in the debug log — while `NODE_ENV` is Node's own switch that package managers and libraries branch on. Neither replaces the other. |
 | `TRUST_PROXY: "true"` on the backend | Set upstream, because nginx always fronts the backend. Drop it only if you expose the backend directly, otherwise rate limiting keys off the proxy's IP instead of the client's. |
-| `TRUSTED_PROXY_HOPS: "2"` on the backend | Set upstream for the Traefik → nginx → backend chain. **Set it to `1` if nginx is your only proxy**, or anonymous rate limiting keys off the wrong entry. |
+| `TRUSTED_PROXY_HOPS: "1"` on the backend | Correct for Traefik → nginx → backend *because* the bundled nginx runs the realip module and appends the resolved client to `X-Forwarded-For`. Raise it by one per extra proxy only if you set `NGINX_REAL_IP_FROM=""` on the nginx container, which turns realip off. |
 | `WEBAUTHN_RP_ID` on the backend | Not set upstream. Set it to your bare domain (no scheme, no port) or passkey registration fails. |
 | `BETTER_AUTH_SECRET` on the backend | Now set upstream (it was only on the mcp-server). It is required and must be the same value for both, or MCP bearer tokens are rejected. |
 
@@ -71,7 +71,7 @@ in production:
 | `BACKEND_URL` | yes | Same origin — everything is served from one host behind nginx |
 | `BETTER_AUTH_URL` | for MCP OAuth | Your public HTTPS origin. See [Connecting AI assistants](#connecting-ai-assistants-mcp) |
 | `TRUST_PROXY` | behind a proxy | `true` so rate limiting uses the real client IP from `X-Forwarded-For` |
-| `TRUSTED_PROXY_HOPS` | behind 2+ proxies | How many proxies front the app; the client is that many entries from the right of `X-Forwarded-For`. Default `1` (nginx only); use `2` for Traefik → nginx |
+| `TRUSTED_PROXY_HOPS` | rarely | How many proxies front the app; the client is that many entries from the right of `X-Forwarded-For`. Default `1`, which is right whenever nginx resolves the client itself (see [nginx](#nginx)). Only raise it when realip is off, e.g. `2` for Traefik → nginx |
 | `WEBAUTHN_RP_ID` | for passkeys | Bare domain, e.g. `freundebuch.example.com` |
 | `NOMINATIM_CONTACT_EMAIL` | recommended | OSM's usage policy wants a contact address; without one, geocoding may get rate-limited |
 | `LOG_LEVEL` | no | `info` by default |
@@ -83,6 +83,14 @@ in production:
 | `SMTP_FROM` | no | Envelope sender, e.g. `Freundebuch <no-reply@example.com>`. Defaults to `no-reply@<FRONTEND_URL host>`, which many relays reject — set it |
 | `SMTP_SECURE` | no | `true` for implicit TLS (port 465). `false` (default) connects in the clear and upgrades via STARTTLS, which is what 587 expects |
 | `DISABLE_SIGNUP` | no | `true` closes registration: `POST /api/auth/sign-up/email` returns 403 `SIGNUP_DISABLED` and the frontend hides the register link. Existing accounts are unaffected. Create your own account *before* setting it |
+
+### nginx
+
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `NGINX_REAL_IP_FROM` | no | Space-separated CIDRs of the proxies in front of nginx, whose `X-Forwarded-For` it may believe. Defaults to the RFC1918 ranges (`10.0.0.0/8 172.16.0.0/12 192.168.0.0/16`) in the standalone nginx image, and to empty in the all-in-one image. nginx then rewrites `$remote_addr` to the real client, which is what the auth/DAV/MCP rate-limit zones key on and what it appends to `X-Forwarded-For` for the backend. Set it to your proxy's address to narrow the trust, or to `""` to turn realip off — then raise `TRUSTED_PROXY_HOPS` accordingly |
+| `NGINX_ACCESS_LOG` | no | `off` by default; set a path such as `/dev/stdout` to enable |
+| `NGINX_ERROR_LOG_LEVEL` | no | `warn` by default |
 
 ### MCP server
 
@@ -296,7 +304,7 @@ container.
 | Passkey registration fails | `WEBAUTHN_RP_ID` is missing or does not match the browser's origin |
 | claude.ai cannot connect, but Claude Desktop with an app password can | OAuth discovery — check the `issuer` with the `curl` above, and that both containers share `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET` |
 | MCP bearer tokens are always rejected | The MCP server's `BETTER_AUTH_SECRET` differs from the backend's, or it points at a different database |
-| Rate limiting throttles everyone at once | `TRUST_PROXY` is unset, so every request looks like it comes from the proxy — or `TRUSTED_PROXY_HOPS` is too low for your chain, so the key is an inner proxy's address rather than the client's |
+| Rate limiting throttles everyone at once | `TRUST_PROXY` is unset, so every request looks like it comes from the proxy — or `TRUSTED_PROXY_HOPS` does not match your chain, so the key is an inner proxy's address rather than the client's. With the bundled nginx resolving the client (`NGINX_REAL_IP_FROM`), `1` is correct even behind Traefik |
 | Notification channels show `****` and digests stop arriving | `BETTER_AUTH_SECRET` changed, so the stored channel credentials no longer decrypt — users must re-enter them, see [Rotating `BETTER_AUTH_SECRET`](#rotating-better_auth_secret) |
 | Password-reset mails never arrive | `SMTP_HOST` is unset (nothing is sent at all), or the relay rejects the default `no-reply@<domain>` sender — set `SMTP_FROM`. Delivery failures are logged at `error` with `kind: "password-reset"` |
 | Container is marked unhealthy but the app responds | `/health/ready` is failing: `curl http://backend:3000/health/ready` and look at which `checks` entry is `false` (uploads volume read-only is the usual one) |

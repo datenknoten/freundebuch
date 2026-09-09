@@ -99,11 +99,11 @@ services:
       # which would be the proxy and give the whole instance one bucket.
       TRUST_PROXY: "true"
       # Each proxy appends its own peer, so the client is this many entries
-      # from the right. This deployment is Traefik -> nginx -> backend, so the
-      # header reads "client, traefik" and the default of 1 would key every
-      # anonymous request to the shared Traefik address. Set it to 1 if you
-      # run nginx on its own, and raise it for every extra proxy in front.
-      TRUSTED_PROXY_HOPS: "2"
+      # from the right. nginx's realip module (see NGINX_REAL_IP_FROM) resolves
+      # the real client behind Traefik and appends that address, so the client
+      # is always the last entry. Raise this only if you turn realip off
+      # (NGINX_REAL_IP_FROM empty), where every proxy appends its own peer.
+      TRUSTED_PROXY_HOPS: "1"
       # Public origin used as the OAuth issuer / MCP resource base for the
       # claude.ai connector. Must match the mcp-server's BETTER_AUTH_URL.
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://freundebuch.schumacher.im}
