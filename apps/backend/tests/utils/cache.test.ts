@@ -55,21 +55,6 @@ describe('AddressCache database tier', () => {
     expect(statements(query).some((sql) => sql.includes('SELECT 1 AS present'))).toBe(true);
   });
 
-  it('skips the database tier entirely when PostGIS is enabled', async () => {
-    vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'true');
-    const { pool, query } = mockPool(async () => ({ rows: [{ present: 1 }] }));
-    const cache = getStreetsCache();
-    cache.setPool(pool);
-
-    await cache.set('streets:on:1', [{ name: 'Hauptstrasse' }]);
-    await expect(cache.get('streets:on:unknown')).resolves.toBeUndefined();
-    await expect(cache.has('streets:on:unknown')).resolves.toBe(false);
-
-    expect(query).not.toHaveBeenCalled();
-    // The memory tier is unaffected.
-    await expect(cache.get('streets:on:1')).resolves.toEqual([{ name: 'Hauptstrasse' }]);
-  });
-
   it('treats a malformed cached row as a miss and deletes it', async () => {
     vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'false');
     const { pool, query } = mockPool(async (text) =>
@@ -104,8 +89,8 @@ describe('AddressCache database tier', () => {
   });
 
   it('clears the database tier even when PostGIS answers lookups locally', async () => {
-    // `clear` uses the pool directly rather than the gated tier: rows written
-    // before the flag was flipped still have to be purged.
+    // The persisted tier is not gated on POSTGIS_ADDRESS_ENABLED: rows written
+    // by any instance still have to be purged.
     vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'true');
     const { pool, query } = mockPool(async () => ({ rows: [] }));
     const cache = getStreetsCache();

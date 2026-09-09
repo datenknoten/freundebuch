@@ -10,7 +10,6 @@ import {
   getAddressCacheEntry,
   upsertAddressCacheEntry,
 } from '../models/queries/address-cache.queries.js';
-import { getConfig } from './config.js';
 
 // Global logger for cache operations, set during initialization
 let cacheLogger: Logger | null = null;
@@ -111,25 +110,12 @@ export class AddressCache<T extends object> {
   /**
    * Set the database pool for persistence
    * Must be called before using database-backed features
+   *
+   * The persisted tier is always on: this cache only fronts Overpass, which is
+   * queried exactly when PostGIS is not used.
    */
   setPool(pool: pg.Pool): void {
     this.pool = pool;
-  }
-
-  /**
-   * Pool for the persisted tier, or `null` when that tier is switched off.
-   *
-   * With `POSTGIS_ADDRESS_ENABLED` a lookup miss is answered by a local
-   * PostGIS query, so round-tripping the result through `system.address_cache`
-   * costs more than the miss it saves. Reads, writes and existence checks skip
-   * the tier then; `delete`/`clear`/`cleanupDatabase` keep using `this.pool`
-   * directly so rows written before the flag was flipped still get purged.
-   */
-  private databaseTier(): pg.Pool | null {
-    if (this.pool === null) {
-      return null;
-    }
-    return getConfig().POSTGIS_ADDRESS_ENABLED ? null : this.pool;
   }
 
   /**
@@ -142,7 +128,7 @@ export class AddressCache<T extends object> {
       return memValue;
     }
 
-    const pool = this.databaseTier();
+    const pool = this.pool;
     if (pool === null) {
       return undefined;
     }
@@ -179,7 +165,7 @@ export class AddressCache<T extends object> {
     // Always set in memory cache
     this.memoryCache.set(key, value);
 
-    const pool = this.databaseTier();
+    const pool = this.pool;
     if (pool === null) {
       return;
     }
@@ -209,7 +195,7 @@ export class AddressCache<T extends object> {
       return true;
     }
 
-    const pool = this.databaseTier();
+    const pool = this.pool;
     if (pool === null) {
       return false;
     }
