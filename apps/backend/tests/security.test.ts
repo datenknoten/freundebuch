@@ -58,6 +58,8 @@ describe('security.ts', () => {
       expect(isPrivateAddress('::ffff:10.0.0.1')).toBe(true);
       expect(isPrivateAddress('[::ffff:127.0.0.1]')).toBe(true);
       expect(isPrivateAddress('::ffff:8.8.8.8')).toBe(false);
+      expect(isPrivateAddress('::ffff:7f00:1')).toBe(true);
+      expect(isPrivateAddress('[::ffff:7f00:1]')).toBe(true);
     });
 
     it('should flag IPv6 loopback, unique-local and link-local', () => {
@@ -67,6 +69,13 @@ describe('security.ts', () => {
       expect(isPrivateAddress('fd12:3456::1')).toBe(true);
       expect(isPrivateAddress('fe80::1')).toBe(true);
       expect(isPrivateAddress('2001:4860:4860::8888')).toBe(false);
+    });
+
+    it('should flag NAT64, multicast and reserved space', () => {
+      expect(isPrivateAddress('64:ff9b::a00:1')).toBe(true);
+      expect(isPrivateAddress('224.0.0.1')).toBe(true);
+      expect(isPrivateAddress('255.255.255.255')).toBe(true);
+      expect(isPrivateAddress('ff02::1')).toBe(true);
     });
   });
 
