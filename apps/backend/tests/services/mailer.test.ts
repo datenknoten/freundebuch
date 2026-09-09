@@ -17,11 +17,14 @@ interface Sink {
   port: number;
   /** Full DATA payloads, one per accepted message. */
   messages: string[];
+  /** Every command verb the client sent, in order. */
+  commands: string[];
   close: () => Promise<void>;
 }
 
 async function startSink(): Promise<Sink> {
   const messages: string[] = [];
+  const commands: string[] = [];
 
   const server = net.createServer((socket) => {
     let inData = false;
@@ -44,8 +47,13 @@ async function startSink(): Promise<Sink> {
       }
 
       for (const line of text.split('\r\n').filter(Boolean)) {
+        commands.push(line.split(' ')[0].toUpperCase());
         if (line.startsWith('EHLO') || line.startsWith('HELO')) {
           socket.write('250-sink\r\n250 OK\r\n');
+        } else if (line.startsWith('STARTTLS')) {
+          // A relay without TLS: the sink cannot complete a handshake, so it
+          // refuses the upgrade the way such a server does.
+          socket.write('454 TLS not available\r\n');
         } else if (line.startsWith('MAIL') || line.startsWith('RCPT')) {
           socket.write('250 OK\r\n');
         } else if (line.startsWith('DATA')) {
@@ -67,6 +75,7 @@ async function startSink(): Promise<Sink> {
   return {
     port,
     messages,
+    commands,
     close: () =>
       new Promise<void>((resolve) => {
         server.close(() => resolve());
@@ -186,5 +195,30 @@ describe('SMTP mailer', () => {
 
     await mailer.send('user@example.com', 'With html', 'fallback', '<p>rich</p>');
     expect(sink.messages[1]).toContain('text/html');
+  });
+
+  it('refuses to send credentials over a relay that cannot upgrade to TLS', async () => {
+    configureSmtp();
+    vi.stubEnv('SMTP_USER', 'relay-user');
+    vi.stubEnv('SMTP_PASSWORD', 'relay-password');
+    resetConfig();
+
+    const mailer = createMailer(getConfig(), silentLogger());
+    if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
+
+    await expect(mailer.send('user@example.com', 'Subject', 'body')).rejects.toThrow(/STARTTLS/i);
+    expect(sink.commands).toContain('STARTTLS');
+    expect(sink.messages).toHaveLength(0);
+  });
+
+  it('does not demand STARTTLS when no credentials are configured', async () => {
+    configureSmtp();
+    const mailer = createMailer(getConfig(), silentLogger());
+    if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
+
+    await mailer.send('user@example.com', 'Subject', 'body');
+
+    expect(sink.commands).not.toContain('STARTTLS');
+    expect(sink.messages).toHaveLength(1);
   });
 });

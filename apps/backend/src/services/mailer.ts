@@ -31,6 +31,7 @@ interface SmtpTransportOptions {
   host: string;
   port: number;
   secure: boolean;
+  requireTLS?: boolean;
   auth?: { user: string; pass: string };
 }
 
@@ -118,13 +119,17 @@ export function createMailer(config: Config, logger: Logger): Mailer | null {
   // Port 465 is implicit TLS; 587/25 upgrade via STARTTLS. SMTP_SECURE lets an
   // operator override the guess for a non-standard port.
   const port = config.SMTP_PORT ?? (config.SMTP_SECURE ? 465 : 587);
+  const user = config.SMTP_USER;
+  const authenticated = user !== undefined && user !== '';
   const options: SmtpTransportOptions = {
     host,
     port,
     secure: config.SMTP_SECURE,
-    ...(config.SMTP_USER !== undefined && config.SMTP_USER !== ''
-      ? { auth: { user: config.SMTP_USER, pass: config.SMTP_PASSWORD ?? '' } }
-      : {}),
+    // Credentials never go over a connection that failed to upgrade: on a
+    // plaintext port an authenticated relay must complete STARTTLS or the
+    // send fails instead of sending the password in the clear.
+    requireTLS: !config.SMTP_SECURE && authenticated,
+    ...(authenticated ? { auth: { user, pass: config.SMTP_PASSWORD ?? '' } } : {}),
   };
   const from = config.SMTP_FROM ?? defaultFrom(config);
 
