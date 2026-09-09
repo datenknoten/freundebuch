@@ -96,22 +96,33 @@ export class PhotoService {
 
     // Save original (with reasonable max dimensions to prevent abuse). Both
     // outputs clone the one decoded pipeline instead of decoding twice.
-    await image
-      .clone()
-      .resize(2000, 2000, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .toFile(originalPath);
+    //
+    // metadata() only reads the header, so a truncated or lying file (an IHDR
+    // that claims 20000x20000) fails here, at decode time. That is a bad
+    // upload, not a server fault - only a real filesystem error propagates.
+    try {
+      await image
+        .clone()
+        .resize(2000, 2000, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .toFile(originalPath);
 
-    // Generate and save thumbnail
-    await image
-      .clone()
-      .resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, {
-        fit: 'cover',
-        position: 'center',
-      })
-      .toFile(thumbnailPath);
+      // Generate and save thumbnail
+      await image
+        .clone()
+        .resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, {
+          fit: 'cover',
+          position: 'center',
+        })
+        .toFile(thumbnailPath);
+    } catch (error) {
+      if (isNodeError(error) && error.code !== undefined) {
+        throw error;
+      }
+      throw new PhotoUploadError(PhotoValidationErrors.INVALID_IMAGE, 'INVALID_IMAGE');
+    }
 
     this.logger.info({ friendExternalId }, 'Photo uploaded successfully');
 
