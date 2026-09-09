@@ -155,14 +155,6 @@ export interface ForgotPasswordResponse {
   resetToken?: string;
 }
 
-/** Response from GET /api/health */
-export interface HealthCheckResponse {
-  status: 'healthy' | 'unhealthy';
-  timestamp: string;
-  uptime: number;
-  database: 'connected' | 'disconnected';
-}
-
 // Error response
 export interface ErrorResponse {
   error: string;
