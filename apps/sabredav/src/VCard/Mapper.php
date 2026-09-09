@@ -367,6 +367,17 @@ class Mapper
             }
         }
 
+        // The partial unique indexes idx_friend_phones_single_primary,
+        // idx_friend_emails_single_primary and idx_friend_addresses_single_primary
+        // (migration 1779668200000) reject a second primary per friend, while
+        // vCard 4 clients happily emit PREF=n on several entries of the same
+        // type. The first one wins; the rest are ordinary entries.
+        foreach (['phones', 'emails', 'addresses'] as $key) {
+            if (isset($friend[$key])) {
+                $friend[$key] = $this->keepFirstPrimary($friend[$key]);
+            }
+        }
+
         // Create professional history entry if any professional data was parsed
         $hasProfessionalData = !empty($professionalData['job_title']) ||
                                !empty($professionalData['organization']) ||
@@ -808,6 +819,31 @@ class Mapper
     private function hasPref(array $params): bool
     {
         return isset($params['PREF']) || str_contains(strtolower($params['TYPE'] ?? ''), 'pref');
+    }
+
+    /**
+     * Keeps `is_primary` on the first entry that claims it and clears it on
+     * every later one, so a card with several PREF parameters still satisfies
+     * the single-primary index.
+     *
+     * @param array<int, array<string, mixed>> $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function keepFirstPrimary(array $items): array
+    {
+        $seen = false;
+        foreach ($items as $index => $item) {
+            if (($item['is_primary'] ?? false) !== true) {
+                continue;
+            }
+            if ($seen) {
+                $items[$index]['is_primary'] = false;
+                continue;
+            }
+            $seen = true;
+        }
+
+        return $items;
     }
 
     private function formatVCardDate(string $date, bool $yearKnown): string

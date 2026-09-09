@@ -335,6 +335,33 @@ VCARD;
     }
 
     #[Test]
+    public function vcardToFriendKeepsOnlyTheFirstPrimaryPerType(): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:test-uuid
+FN:Jane Smith
+TEL;TYPE=cell;PREF=1:+1
+TEL;TYPE=home;PREF=2:+2
+EMAIL;TYPE=pref:a@example.com
+EMAIL;TYPE=pref:b@example.com
+END:VCARD
+VCARD;
+
+        $friend = $this->mapper->vcardToFriend($vcard);
+
+        $this->assertSame(
+            [true, false],
+            array_column($friend['phones'], 'is_primary'),
+        );
+        $this->assertSame(
+            [true, false],
+            array_column($friend['emails'], 'is_primary'),
+        );
+    }
+
+    #[Test]
     public function vcardToFriendParsesAddresses(): void
     {
         $vcard = <<<VCARD
