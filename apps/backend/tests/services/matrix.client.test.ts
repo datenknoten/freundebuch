@@ -1,7 +1,7 @@
 import dns from 'node:dns';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sendMatrixMessage } from '../../src/services/external/matrix.client.js';
-import { ValidationError } from '../../src/utils/errors.js';
+import { NotificationDeliveryError, ValidationError } from '../../src/utils/errors.js';
 
 /**
  * The SSRF guard has to survive a *public* hostname that resolves to a private
@@ -86,5 +86,30 @@ describe('sendMatrixMessage', () => {
     expect(fetchSpy).toHaveBeenCalledOnce();
     const [url] = fetchSpy.mock.calls[0] ?? [];
     expect(String(url)).toContain('https://matrix.example.com/_matrix/client/v3/rooms/');
+  });
+
+  it('does not follow a redirect away from the checked homeserver', async () => {
+    stubLookup('93.184.216.34');
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        new Response(null, { status: 307, headers: { location: 'http://127.0.0.1/' } }),
+      );
+
+    await expect(
+      sendMatrixMessage(
+        'https://matrix.example.com',
+        'token',
+        '!room:example.com',
+        'hi',
+        '<b>hi</b>',
+      ),
+    ).rejects.toThrow(NotificationDeliveryError);
+
+    expect(fetchSpy).toHaveBeenCalledOnce();
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ redirect: 'manual' }),
+    );
   });
 });

@@ -74,6 +74,10 @@ export async function sendMatrixMessage(
       format: 'org.matrix.custom.html',
       formatted_body: html,
     }),
+    // The SSRF guard above checked the first hop only; following a redirect
+    // would carry the access token to an unchecked target. A 3xx now fails the
+    // `response.ok` check below and turns into a delivery error.
+    redirect: 'manual',
     signal: AbortSignal.timeout(10_000),
   });
 
