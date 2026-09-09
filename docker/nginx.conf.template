@@ -61,7 +61,15 @@ http {
     # Sign-in/sign-up/password-reset. Better Auth also limits in-process
     # (5/min), but that bucket is per-process and shared with every other
     # caller; this one is per source address and costs the backend nothing.
-    limit_req_zone $binary_remote_addr zone=auth:10m rate=10r/m;
+    #
+    # Only the endpoints that take a credential are throttled; the rest of
+    # /api/auth/ (get-session, /me, preferences, OAuth) is hit on every page
+    # load and must not share this bucket. An empty key is not counted.
+    map $uri $auth_limit_key {
+        default "";
+        "~^/api/auth/(sign-in/email|sign-up/email|request-password-reset|reset-password|passkey/verify-authentication)(/|$)" $binary_remote_addr;
+    }
+    limit_req_zone $auth_limit_key zone=auth:10m rate=10r/m;
 
     # CardDAV/CalDAV: app-password Basic Auth, so the same brute-force
     # exposure as MCP. Sync clients poll, hence the higher rate.
