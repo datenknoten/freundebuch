@@ -53,6 +53,35 @@ describe('GET /api/uploads/friends/:friendId/:filename', () => {
     expect(await second.text()).toBe('');
   });
 
+  it('honours a weak validator inside an If-None-Match list, and *', async () => {
+    const { app, pool, testUser } = getContext();
+    const friendId = await createTestFriend(pool, testUser.externalId, 'List Match Friend');
+    await writePhoto(friendId);
+
+    const url = `http://localhost/api/uploads/friends/${friendId}/photo.jpg`;
+    const first = await app.fetch(
+      new Request(url, { headers: authHeaders(testUser.sessionCookies) }),
+    );
+    const etag = first.headers.get('ETag') as string;
+
+    const list = await app.fetch(
+      new Request(url, {
+        headers: {
+          ...authHeaders(testUser.sessionCookies),
+          'If-None-Match': `W/${etag}, "zzz"`,
+        },
+      }),
+    );
+    expect(list.status).toBe(304);
+
+    const wildcard = await app.fetch(
+      new Request(url, {
+        headers: { ...authHeaders(testUser.sessionCookies), 'If-None-Match': '*' },
+      }),
+    );
+    expect(wildcard.status).toBe(304);
+  });
+
   it('returns 404 when the file is missing', async () => {
     const { app, pool, testUser } = getContext();
     const friendId = await createTestFriend(pool, testUser.externalId, 'No Photo');

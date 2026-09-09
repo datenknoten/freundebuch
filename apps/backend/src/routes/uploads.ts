@@ -21,6 +21,22 @@ app.use('*', authMiddleware);
 app.use('*', onboardingMiddleware);
 
 /**
+ * RFC 9110 If-None-Match: a comma-separated list, `*`, or weak validators.
+ * Comparing the raw header against the ETag missed every browser that sends
+ * more than one candidate or the `W/` prefix, so those clients re-downloaded
+ * an unchanged photo on each request.
+ */
+function etagMatches(header: string | undefined, etag: string): boolean {
+  if (header === undefined) {
+    return false;
+  }
+  if (header.trim() === '*') {
+    return true;
+  }
+  return header.split(',').some((candidate) => candidate.trim().replace(/^W\//, '') === etag);
+}
+
+/**
  * GET /api/uploads/friends/:friendId/:filename
  * Serve uploaded friend photos (only to the owner)
  */
@@ -95,7 +111,7 @@ app.get('/friends/:friendId/:filename', async (c) => {
   c.header('Cache-Control', 'private, max-age=86400'); // 1 day cache, browser only
   c.header('Last-Modified', fileStat.mtime.toUTCString());
 
-  if (c.req.header('If-None-Match') === etag) {
+  if (etagMatches(c.req.header('If-None-Match'), etag)) {
     return c.body(null, 304);
   }
 
