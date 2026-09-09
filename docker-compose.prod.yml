@@ -196,7 +196,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-freundebuch}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # PostgreSQL 18 images keep PGDATA under /var/lib/postgresql/18/; mount
+      # the parent (the image's declared VOLUME) or the cluster lands in an
+      # anonymous volume. Existing deployments must copy the cluster over once
+      # (see docs/self-hosting.md, "Upgrading from a /var/lib/postgresql/data
+      # mount").
+      - postgres_data:/var/lib/postgresql
     networks:
       - internal
     healthcheck:

@@ -278,6 +278,33 @@ docker compose -f docker-compose.prod.yml exec -T postgres \
 destructive by design — `1779668100000_unify-user-identity` drops columns, and
 its `down()` cannot restore password hashes. A dump is the only way back.
 
+### Upgrading from a `/var/lib/postgresql/data` mount
+
+Up to and including the previous release, both compose files mounted
+`postgres_data` at `/var/lib/postgresql/data`. PostgreSQL 18 images keep
+`PGDATA` at `/var/lib/postgresql/18/docker`, so that mount persisted nothing:
+the cluster lives in the anonymous volume Docker creates for the image's
+declared `VOLUME /var/lib/postgresql`, which `docker compose up` re-attaches but
+`docker compose down -v` (or removing the container) destroys.
+
+The compose files now mount `postgres_data:/var/lib/postgresql`. **Copy the
+cluster over before you start the new stack, or Postgres initialises an empty
+database and your data stays behind in the anonymous volume:**
+
+```bash
+# 1. find the anonymous volume that currently holds the cluster
+old=$(docker inspect freundebuch-postgres --format '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql"}}{{.Name}}{{end}}{{end}}')
+# 2. stop postgres, copy the cluster into the named volume
+docker compose -f docker-compose.prod.yml stop postgres
+docker run --rm -v "$old":/from -v "$(basename "$PWD")_postgres_data":/to alpine sh -c 'cp -a /from/. /to/'
+# 3. pull the new compose file and start; verify with \l before removing $old
+docker compose -f docker-compose.prod.yml up -d postgres
+```
+
+Verify with `docker compose -f docker-compose.prod.yml exec postgres psql -U
+"${POSTGRES_USER:-freundebuch}" -l` that your database is listed, and only then
+`docker volume rm "$old"`.
+
 ## Health checks
 
 Every service defines a Docker healthcheck, so `docker compose ps` shows real

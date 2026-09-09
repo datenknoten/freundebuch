@@ -9,10 +9,10 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # Mount the data directory itself, matching docker-compose.prod.yml: the
-      # image's PGDATA lives here, and mounting the parent hides the rest of
-      # /var/lib/postgresql that the image ships.
-      - postgres_data:/var/lib/postgresql/data
+      # PostgreSQL 18 images keep PGDATA under /var/lib/postgresql/18/; mount
+      # the parent (the image's declared VOLUME) or the cluster lands in an
+      # anonymous volume.
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U freundebuch -d freundebuch_dev"]
       interval: 10s
