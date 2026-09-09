@@ -1,6 +1,22 @@
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { withTransaction } from '../../utils/db.js';
+import { ConflictError } from '../../utils/errors.js';
+import { rethrowUniqueViolation } from '../../utils/pg-errors.js';
+
+/**
+ * Partial unique indexes that allow exactly one primary row per owner
+ * (migration 1779668200000). Every sub-resource write can trip one of them.
+ */
+const SINGLE_PRIMARY_INDEXES = [
+  'idx_friend_phones_single_primary',
+  'idx_friend_emails_single_primary',
+  'idx_friend_addresses_single_primary',
+  'idx_friend_professional_history_single_primary',
+  'idx_collective_phones_single_primary',
+  'idx_collective_emails_single_primary',
+  'idx_collective_addresses_single_primary',
+] as const;
 
 /**
  * Configuration for a sub-resource service.
@@ -157,11 +173,10 @@ export abstract class SubResourceService<
     if (needsPrimaryUpdate && !client) {
       return withTransaction(this.db, async (txClient) => {
         await this.config.clearPrimaryFn?.({ userExternalId, ownerExternalId }, txClient);
-        const [result] = await this.config.createFn(
-          { userExternalId, ownerExternalId, input },
-          txClient,
+        const result = await this.write(() =>
+          this.config.createFn({ userExternalId, ownerExternalId, input }, txClient),
         );
-        return result ? this.config.mapResult(result) : null;
+        return result === undefined ? null : this.config.mapResult(result);
       });
     }
 
@@ -169,11 +184,10 @@ export abstract class SubResourceService<
       await this.config.clearPrimaryFn?.({ userExternalId, ownerExternalId }, dbClient);
     }
 
-    const [result] = await this.config.createFn(
-      { userExternalId, ownerExternalId, input },
-      dbClient,
+    const result = await this.write(() =>
+      this.config.createFn({ userExternalId, ownerExternalId, input }, dbClient),
     );
-    if (!result) {
+    if (result === undefined) {
       return null;
     }
     return this.config.mapResult(result);
@@ -201,11 +215,13 @@ export abstract class SubResourceService<
     if (needsPrimaryUpdate && !client) {
       return withTransaction(this.db, async (txClient) => {
         await this.config.clearPrimaryFn?.({ userExternalId, ownerExternalId }, txClient);
-        const [result] = await this.config.updateFn(
-          { userExternalId, ownerExternalId, resourceExternalId, input },
-          txClient,
+        const result = await this.write(() =>
+          this.config.updateFn(
+            { userExternalId, ownerExternalId, resourceExternalId, input },
+            txClient,
+          ),
         );
-        return result ? this.config.mapResult(result) : null;
+        return result === undefined ? null : this.config.mapResult(result);
       });
     }
 
@@ -215,11 +231,13 @@ export abstract class SubResourceService<
       await this.config.clearPrimaryFn?.({ userExternalId, ownerExternalId }, dbClient);
     }
 
-    const [result] = await this.config.updateFn(
-      { userExternalId, ownerExternalId, resourceExternalId, input },
-      dbClient,
+    const result = await this.write(() =>
+      this.config.updateFn(
+        { userExternalId, ownerExternalId, resourceExternalId, input },
+        dbClient,
+      ),
     );
-    if (!result) {
+    if (result === undefined) {
       return null;
     }
     return this.config.mapResult(result);
@@ -245,6 +263,34 @@ export abstract class SubResourceService<
       dbClient,
     );
     return result.length > 0;
+  }
+
+  /**
+   * Run a write and turn a single-primary index violation into a 409.
+   *
+   * Clearing the previous primary and inserting the new one is atomic, but two
+   * transactions can still interleave so that both insert a primary row; the
+   * loser hits the partial unique index. That is a conflict the client can
+   * retry, not the 500 an unhandled driver error produces.
+   */
+  private async write<T>(fn: () => Promise<T[]>): Promise<T | undefined> {
+    try {
+      const [row] = await fn();
+      return row;
+    } catch (error) {
+      rethrowUniqueViolation(
+        error,
+        Object.fromEntries(
+          SINGLE_PRIMARY_INDEXES.map((index) => [
+            index,
+            () =>
+              new ConflictError(
+                `Another primary ${this.config.resourceName} was set concurrently; retry`,
+              ),
+          ]),
+        ),
+      );
+    }
   }
 
   /**
