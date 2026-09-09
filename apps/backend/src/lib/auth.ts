@@ -60,6 +60,8 @@ function createAuth() {
     },
     emailAndPassword: {
       enabled: true,
+      // Belt and braces behind the route-level gate in routes/auth.ts.
+      disableSignUp: config.DISABLE_SIGNUP,
       requireEmailVerification: false,
       autoSignIn: true,
       minPasswordLength: 8,

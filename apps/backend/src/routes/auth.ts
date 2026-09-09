@@ -45,10 +45,10 @@ app.on(['POST', 'GET'], '/*', async (c, next) => {
     return next();
   }
 
-  // Registration gate for private instances. Better Auth has no "disable
-  // sign-up" option, so the only place to stop it is in front of the handler.
-  // The config is read only for that one path, so every other auth request
-  // stays a pure passthrough.
+  // Registration gate for private instances. Better Auth's `disableSignUp`
+  // answers 400; this gate runs first so the client gets the documented 403
+  // SIGNUP_DISABLED. The config is read only for that one path, so every other
+  // auth request stays a pure passthrough.
   if (path === '/api/auth/sign-up/email' && getConfig().DISABLE_SIGNUP) {
     throw new SignupDisabledError();
   }
