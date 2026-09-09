@@ -429,7 +429,10 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $lastChangeId = (int) $matches[1];
 
         // Everything the client is missing may already have been pruned.
-        if ($lastChangeId > 0 && $lastChangeId < $this->getPrunedThroughId((int) $addressBookId)) {
+        // sync-0 is an issued token too (a client that synced a fresh, empty
+        // account); with a watermark of 0 the comparison is false and nothing
+        // changes for accounts that were never pruned.
+        if ($lastChangeId < $this->getPrunedThroughId((int) $addressBookId)) {
             return null;
         }
         $sql = '

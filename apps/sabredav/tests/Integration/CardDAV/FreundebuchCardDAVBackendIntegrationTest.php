@@ -328,6 +328,21 @@ VCARD;
     }
 
     #[Test]
+    public function getChangesForAddressBookExpiresSyncZeroWhenTheLogWasPruned(): void
+    {
+        $user = $this->createTestUser();
+        $stmt = self::$pdo->prepare('
+            INSERT INTO friends.friend_changes_pruned (user_id, pruned_through_id)
+            VALUES (:user_id, 5)
+        ');
+        $stmt->execute(['user_id' => $user['id']]);
+
+        // sync-0 is an issued token, not "never synced": the client holding it
+        // missed everything the sweep removed and must resync in full.
+        $this->assertNull($this->backend->getChangesForAddressBook($user['id'], 'sync-0', 1));
+    }
+
+    #[Test]
     public function getChangesForAddressBookTracksCreatedFriends(): void
     {
         $user = $this->createTestUser();

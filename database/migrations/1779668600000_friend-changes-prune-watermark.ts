@@ -14,7 +14,8 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * token from one whose changes are gone, so the sweep stores the highest id it
  * removed per user. Two invariants depend on it:
  *
- *   - a token at or below the watermark is expired -> full resync
+ *   - a token below the watermark is expired -> full resync (a token equal to
+ *     the watermark has already seen everything the sweep removed)
  *   - the advertised sync token never regresses, even when a user's last log
  *     row is swept away (`MAX(id)` would fall back to 0 and re-advertise
  *     `sync-0`, which clients treat as "never synced")
@@ -44,7 +45,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     },
     {
       comment:
-        'Retention watermark for the CardDAV sync log: a sync token at or below pruned_through_id is expired and must trigger a full resync',
+        'Retention watermark for the CardDAV sync log: a sync token below pruned_through_id is expired and must trigger a full resync',
     },
   );
 

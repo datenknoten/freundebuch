@@ -4,7 +4,7 @@
 --
 -- Deleting a tombstone destroys information a client may still ask for, so the
 -- sweep records the highest id it removed per user. `getChangesForAddressBook`
--- answers any token at or below that watermark with a full resync (required by
+-- answers any token below that watermark with a full resync (required by
 -- RFC 6578 and SabreDAV's SyncSupport contract for an expired token), and the
 -- advertised token is floored at it so it cannot regress to sync-0 once a
 -- user's last log row is gone.
