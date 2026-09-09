@@ -326,6 +326,26 @@ describe('getConfig', () => {
     });
   });
 
+  describe('empty values', () => {
+    beforeEach(() => {
+      vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
+      vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
+    });
+
+    it('should treat an empty SMTP_PORT as unset instead of failing to parse', () => {
+      vi.stubEnv('SMTP_PORT', '');
+
+      expect(() => getConfig()).not.toThrow();
+      expect(getConfig().SMTP_PORT).toBeUndefined();
+    });
+
+    it('should treat an empty SMTP_FROM as unset so the default sender applies', () => {
+      vi.stubEnv('SMTP_FROM', '');
+
+      expect(getConfig().SMTP_FROM).toBeUndefined();
+    });
+  });
+
   describe('caching behavior', () => {
     it('should cache config after first call', () => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');

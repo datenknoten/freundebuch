@@ -117,7 +117,14 @@ export function getConfig(): Config {
     return cachedConfig;
   }
 
-  const result = ConfigSchema(process.env);
+  // Docker compose's `${VAR:-}` interpolation and `.env` files with a bare
+  // `KEY=` deliver "", which for every key in this schema means "unset" - an
+  // empty SMTP_PORT would otherwise fail integer parsing and crash the boot.
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([, value]) => value !== undefined && value !== ''),
+  );
+
+  const result = ConfigSchema(env);
 
   if (result instanceof type.errors) {
     const errorMessage = result.summary;
