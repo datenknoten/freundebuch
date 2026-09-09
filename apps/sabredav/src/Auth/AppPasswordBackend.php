@@ -6,6 +6,8 @@ namespace Freundebuch\DAV\Auth;
 
 use PDO;
 use Sabre\DAV\Auth\Backend\AbstractBasic;
+use Sabre\HTTP\RequestInterface;
+use Sabre\HTTP\ResponseInterface;
 
 /**
  * HTTP Basic Auth backend using app-specific passwords.
@@ -40,6 +42,24 @@ class AppPasswordBackend extends AbstractBasic
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
+    }
+
+    /**
+     * The principal backend exposes principals/<stored lowercase email>, while
+     * Basic Auth carries whatever casing the client typed. The ACL plugin
+     * compares principal URIs byte-for-byte, so an upper-case login would
+     * authenticate and then be denied access to its own address book.
+     *
+     * @return array{0: bool, 1: string}
+     */
+    public function check(RequestInterface $request, ResponseInterface $response): array
+    {
+        $result = parent::check($request, $response);
+        if ($result[0] === true) {
+            $result[1] = strtolower($result[1]);
+        }
+
+        return $result;
     }
 
     /**

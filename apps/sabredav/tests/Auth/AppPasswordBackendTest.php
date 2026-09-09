@@ -11,6 +11,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Sabre\HTTP\Request;
+use Sabre\HTTP\Response;
 
 class AppPasswordBackendTest extends TestCase
 {
@@ -349,6 +351,46 @@ class AppPasswordBackendTest extends TestCase
         $this->assertIsString($dummyHash);
         $this->assertTrue(password_verify('dummy', $dummyHash));
         $this->assertSame(10, password_get_info($dummyHash)['options']['cost']);
+    }
+
+    #[Test]
+    public function checkReturnsALowercasePrincipalUri(): void
+    {
+        $rawPassword = 'abcd1234efgh5678';
+
+        $userStmt = $this->createMock(PDOStatement::class);
+        $userStmt->method('execute')->willReturn(true);
+        $userStmt->method('fetch')->willReturn([
+            'id' => 1,
+            'external_id' => 'user-uuid',
+            'email' => 'user@example.com',
+        ]);
+
+        $passwordStmt = $this->createMock(PDOStatement::class);
+        $passwordStmt->method('execute')->willReturn(true);
+        $passwordStmt->method('fetch')->willReturnOnConsecutiveCalls(
+            ['id' => 1, 'password_hash' => password_hash($rawPassword, PASSWORD_BCRYPT)],
+            false
+        );
+
+        $updateStmt = $this->createMock(PDOStatement::class);
+        $updateStmt->method('execute')->willReturn(true);
+
+        $this->pdo->method('prepare')
+            ->willReturnOnConsecutiveCalls($userStmt, $passwordStmt, $updateStmt);
+
+        $request = new Request('PROPFIND', '/addressbooks');
+        $request->addHeader(
+            'Authorization',
+            'Basic ' . base64_encode('User@Example.com:' . $rawPassword)
+        );
+
+        // The principal backend only knows the stored lowercase email, and the
+        // ACL plugin compares principal URIs byte-for-byte.
+        $this->assertSame(
+            [true, 'principals/user@example.com'],
+            $this->backend->check($request, new Response())
+        );
     }
 
     /**
