@@ -5,7 +5,8 @@ import { mcp } from 'better-auth/plugins';
 import { Pool } from 'pg';
 import { createMailer, isMailConfigured } from '../services/mailer.js';
 import { getConfig } from '../utils/config.js';
-import { ConfigurationError } from '../utils/errors.js';
+import { ConfigurationError, toError } from '../utils/errors.js';
+import { createLogger } from '../utils/logger.js';
 
 // Better Auth's Auth<T> generic is invariant, so Auth<SpecificOptions> cannot
 // be assigned to Auth<BetterAuthOptions>. ReturnType inference also fails due
@@ -31,6 +32,17 @@ function createAuth() {
     options: '-c search_path=auth',
     min: Math.max(1, Math.floor(config.DATABASE_POOL_MIN / 2)),
     max: Math.max(2, Math.floor(config.DATABASE_POOL_MAX / 2)),
+    connectionTimeoutMillis: config.DATABASE_CONNECTION_TIMEOUT_MS,
+    idleTimeoutMillis: config.DATABASE_IDLE_TIMEOUT_MS,
+    statement_timeout: config.DATABASE_STATEMENT_TIMEOUT_MS,
+    query_timeout: config.DATABASE_STATEMENT_TIMEOUT_MS,
+  });
+
+  // Without an 'error' listener, an idle-client error (DB restart, network
+  // blip) is emitted as an unhandled 'error' event and crashes the process.
+  const poolLogger = createLogger();
+  _authPool.on('error', (err) => {
+    poolLogger.error({ err: toError(err) }, 'Idle pg client error');
   });
 
   return betterAuth({
