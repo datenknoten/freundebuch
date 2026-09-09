@@ -125,7 +125,10 @@ COPY --chown=node:node --from=builder /app ./
 # Create uploads directory owned by the runtime user
 RUN mkdir -p /app/uploads && chown node:node /app/uploads
 
+# ENV is what config.ts reads and it defaults to "development"; NODE_ENV is
+# Node's own switch. Both, spelled out (mirrors the mcp-server stage).
 ENV NODE_ENV=production
+ENV ENV=production
 ENV PORT=3000
 
 EXPOSE 3000
