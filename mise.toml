@@ -100,4 +100,6 @@ run = "hk install --mise"
 
 [tasks.ci]
 description = "Run the same checks CI runs (lint, types, tests, build)"
-run = "aube check && aube type-check && aube test && aube build"
+# `aube run check`, not `aube check`: the latter is aube's built-in
+# dependency-tree verifier and never invokes biome.
+run = "aube run check && aube type-check && aube test && aube build"

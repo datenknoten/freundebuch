@@ -72,7 +72,10 @@ hooks {
         exclusive = true
       }
       ["check"] {
-        check = "aube check"
+        // `aube run check` explicitly: bare `aube check` is aube's own
+        // dependency-tree verifier, not the repo's biome script, so the lint
+        // step silently checked nothing. Same wording as ci.yml.
+        check = "aube run check"
         exclusive = true
         depends = List("danger")
       }
