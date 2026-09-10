@@ -42,14 +42,15 @@ describe('app-passwords API', () => {
     expect(result.passwordPrefix).toBe('abcd1234');
   });
 
-  it('revokeAppPassword DELETEs the given id', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ message: 'revoked' }));
+  it('revokeAppPassword DELETEs the given id and returns the success envelope', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
 
-    await revokeAppPassword('ap-1');
+    const result = await revokeAppPassword('ap-1');
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/app-passwords/ap-1',
       expect.objectContaining({ method: 'DELETE' }),
     );
+    expect(result).toEqual({ success: true });
   });
 });

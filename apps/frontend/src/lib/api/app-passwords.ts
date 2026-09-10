@@ -33,10 +33,11 @@ export async function createAppPassword(name: string): Promise<CreateAppPassword
 }
 
 /**
- * Revoke an app password
+ * Revoke an app password.
+ * DELETE /api/app-passwords/:id answers `{ success: true }`; a missing password is a 404.
  */
-export async function revokeAppPassword(id: string): Promise<{ message: string }> {
-  return apiRequest<{ message: string }>(`/api/app-passwords/${id}`, {
+export async function revokeAppPassword(id: string): Promise<{ success: boolean }> {
+  return apiRequest<{ success: boolean }>(`/api/app-passwords/${id}`, {
     method: 'DELETE',
   });
 }
