@@ -584,17 +584,22 @@ sorted_results AS (
          FROM friends.circles ci
          INNER JOIN friends.friend_circles fci ON fci.circle_id = ci.id
          WHERE fci.friend_id = c.id
-        ) as circles
+        ) as circles,
+        -- Materialise the page order (as PaginatedFullTextSearch/FacetedSearch
+        -- do): the CROSS JOIN below is free to reorder the CTE's rows.
+        row_number() OVER (
+            ORDER BY
+                CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN c.display_name END ASC,
+                CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN c.display_name END DESC,
+                CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN c.created_at END DESC,
+                CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN c.created_at END ASC,
+                CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN c.updated_at END DESC,
+                CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN c.updated_at END ASC,
+                c.display_name ASC
+        ) as sort_position
     FROM filtered_friends fc
     INNER JOIN friends.friends c ON c.id = fc.id
-    ORDER BY
-        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'asc' THEN c.display_name END ASC,
-        CASE WHEN :sortBy = 'display_name' AND :sortOrder = 'desc' THEN c.display_name END DESC,
-        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'desc' THEN c.created_at END DESC,
-        CASE WHEN :sortBy = 'created_at' AND :sortOrder = 'asc' THEN c.created_at END ASC,
-        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'desc' THEN c.updated_at END DESC,
-        CASE WHEN :sortBy = 'updated_at' AND :sortOrder = 'asc' THEN c.updated_at END ASC,
-        c.display_name ASC
+    ORDER BY sort_position
     LIMIT :pageSize
     OFFSET :offset
 )
@@ -609,7 +614,8 @@ SELECT
     sr.circles,
     tc.count as total_count
 FROM sorted_results sr
-CROSS JOIN total_count tc;
+CROSS JOIN total_count tc
+ORDER BY sr.sort_position;
 
 
 /* @name GetAllFacetCounts */

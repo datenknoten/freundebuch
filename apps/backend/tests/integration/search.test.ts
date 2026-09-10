@@ -1108,6 +1108,34 @@ describe('Search API - Integration Tests', () => {
         expect(body.data.every((r: any) => r.organization === 'Acme Corp')).toBe(true);
       });
 
+      /**
+       * The page order lives in a CTE that the final CROSS JOIN is free to
+       * reorder, so the query has to carry it out as sort_position and order
+       * the result by it — the same way the two query-based siblings do.
+       */
+      it('should return a filter-only listing in the requested order', async () => {
+        const { app, pool, testUser } = getContext();
+
+        await createFriendWithOrganization(pool, testUser.externalId, 'Charlie', 'Acme Corp');
+        await createFriendWithOrganization(pool, testUser.externalId, 'Alice', 'Acme Corp');
+        await createFriendWithOrganization(pool, testUser.externalId, 'Bob', 'Acme Corp');
+
+        const listing = async (sortOrder: 'asc' | 'desc'): Promise<string[]> => {
+          const response = await app.fetch(
+            new Request(
+              `http://localhost/api/friends/search/faceted?organization=Acme Corp&sortBy=display_name&sortOrder=${sortOrder}`,
+              { method: 'GET', headers: authHeaders(testUser.sessionCookies) },
+            ),
+          );
+          expect(response.status).toBe(200);
+          const body = (await response.json()) as { data: Array<{ displayName: string }> };
+          return body.data.map((row) => row.displayName);
+        };
+
+        expect(await listing('asc')).toEqual(['Alice', 'Bob', 'Charlie']);
+        expect(await listing('desc')).toEqual(['Charlie', 'Bob', 'Alice']);
+      });
+
       it('should reject request with no query and no filters', async () => {
         const { app, testUser } = getContext();
 
