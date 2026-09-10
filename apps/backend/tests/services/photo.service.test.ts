@@ -7,13 +7,16 @@ import { PhotoService, PhotoUploadError } from '../../src/services/photo.service
 const VALID_FRIEND_ID = '550e8400-e29b-41d4-a716-446655440000';
 const VALID_FRIEND_ID_2 = '6ba7b810-9dad-41d4-80b5-ec8bdd0e9ef0';
 
-// Mock sharp
+// Mock sharp. uploadPhoto decodes to buffers and writes them itself, so the
+// stub ends at toBuffer(); a filesystem failure is a writeFile rejection, not
+// a sharp one (see photo.service.decode.test.ts).
 vi.mock('sharp', () => ({
   default: vi.fn(() => {
     const pipeline = {
       metadata: vi.fn().mockResolvedValue({ width: 1000, height: 1000 }),
       resize: vi.fn().mockReturnThis(),
-      toFile: vi.fn().mockResolvedValue(undefined),
+      toFormat: vi.fn().mockReturnThis(),
+      toBuffer: vi.fn().mockResolvedValue(Buffer.from('encoded')),
       clone: vi.fn(() => pipeline),
     };
     return pipeline;
@@ -25,6 +28,7 @@ vi.mock('node:fs/promises', () => ({
   mkdir: vi.fn().mockResolvedValue(undefined),
   rm: vi.fn().mockResolvedValue(undefined),
   stat: vi.fn(),
+  writeFile: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock config

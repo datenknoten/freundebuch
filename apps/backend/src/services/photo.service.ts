@@ -1,4 +1,4 @@
-import { mkdir, rm, stat } from 'node:fs/promises';
+import { mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
   MAX_FILE_SIZE,
@@ -94,35 +94,50 @@ export class PhotoService {
     const originalPath = path.join(friendDir, originalFilename);
     const thumbnailPath = path.join(friendDir, thumbnailFilename);
 
-    // Save original (with reasonable max dimensions to prevent abuse). Both
-    // outputs clone the one decoded pipeline instead of decoding twice.
+    // Decode both outputs into memory first, then write. Keeping the two
+    // failure modes apart is the point: sharp rejects with a plain Error (no
+    // errno) for a bad image, so a filesystem failure inside toFile() - a
+    // read-only uploads mount, ENOSPC - used to be reported to the client as
+    // `400 Invalid image file` and never reached Sentry.
     //
     // metadata() only reads the header, so a truncated or lying file (an IHDR
     // that claims 20000x20000) fails here, at decode time. That is a bad
-    // upload, not a server fault - only a real filesystem error propagates.
+    // upload, not a server fault.
+    //
+    // toFormat() pins the encoder that toFile() used to pick from the
+    // extension, so the bytes on disk still match the filename.
+    const format = this.getFormat(file.type);
+    let original: Buffer;
+    let thumbnail: Buffer;
     try {
-      await image
-        .clone()
-        .resize(2000, 2000, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .toFile(originalPath);
-
-      // Generate and save thumbnail
-      await image
-        .clone()
-        .resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, {
-          fit: 'cover',
-          position: 'center',
-        })
-        .toFile(thumbnailPath);
-    } catch (error) {
-      if (isNodeError(error) && error.code !== undefined) {
-        throw error;
-      }
+      [original, thumbnail] = await Promise.all([
+        // Reasonable max dimensions to prevent abuse. Both outputs clone the
+        // one decoded pipeline instead of decoding twice.
+        image
+          .clone()
+          .resize(2000, 2000, {
+            fit: 'inside',
+            withoutEnlargement: true,
+          })
+          .toFormat(format)
+          .toBuffer(),
+        image
+          .clone()
+          .resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, {
+            fit: 'cover',
+            position: 'center',
+          })
+          .toFormat(format)
+          .toBuffer(),
+      ]);
+    } catch {
       throw new PhotoUploadError(PhotoValidationErrors.INVALID_IMAGE, 'INVALID_IMAGE');
     }
+
+    // Filesystem errors propagate with their errno, so index.ts turns them
+    // into a 500 and captures them.
+    await writeFile(originalPath, original);
+    await writeFile(thumbnailPath, thumbnail);
 
     this.logger.info({ friendExternalId }, 'Photo uploaded successfully');
 
@@ -180,6 +195,22 @@ export class PhotoService {
         return 'webp';
       default:
         return 'jpg';
+    }
+  }
+
+  /**
+   * The sharp encoder matching getExtension(). toFile() derives the format
+   * from the filename; writing buffers has to pin it explicitly, or a
+   * mislabelled upload would land as e.g. JPEG bytes in a `.png` file.
+   */
+  private getFormat(mimeType: string): 'jpeg' | 'png' | 'webp' {
+    switch (mimeType) {
+      case 'image/png':
+        return 'png';
+      case 'image/webp':
+        return 'webp';
+      default:
+        return 'jpeg';
     }
   }
 }

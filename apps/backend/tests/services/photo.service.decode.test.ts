@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import pino from 'pino';
@@ -81,8 +81,44 @@ describe('PhotoService decode failures', () => {
     );
 
     expect(result.photoUrl).toContain('photo.png');
-    expect(await readdir(path.join(uploadDir, VALID_FRIEND_ID))).toEqual(
+    const friendDir = path.join(uploadDir, VALID_FRIEND_ID);
+    expect(await readdir(friendDir)).toEqual(
       expect.arrayContaining(['photo.png', 'photo_thumb.png']),
     );
+    // The buffers are encoded explicitly now that toFile() no longer derives
+    // the format from the filename, so the bytes must still match the name.
+    expect((await sharp(path.join(friendDir, 'photo.png')).metadata()).format).toBe('png');
+    expect((await sharp(path.join(friendDir, 'photo_thumb.png')).metadata()).format).toBe('png');
+  });
+
+  /**
+   * A read-only uploads volume is an operator problem, not a bad upload. It
+   * used to be reported as `400 Invalid image file` and logged below warn, so
+   * the operator got no signal at all.
+   */
+  it('propagates a filesystem failure instead of blaming the image', async () => {
+    const valid = await sharp({
+      create: { width: 64, height: 64, channels: 3, background: { r: 1, g: 2, b: 3 } },
+    })
+      .png()
+      .toBuffer();
+
+    // The friend directory already exists (a previous upload), so the
+    // recursive mkdir succeeds and the write is what fails.
+    const friendDir = path.join(uploadDir, VALID_FRIEND_ID);
+    await mkdir(friendDir, { recursive: true });
+    await chmod(friendDir, 0o500);
+
+    try {
+      const upload = photoService.uploadPhoto(
+        VALID_FRIEND_ID,
+        new File([new Uint8Array(valid)], 'photo.png', { type: 'image/png' }),
+      );
+
+      await expect(upload).rejects.not.toBeInstanceOf(PhotoUploadError);
+      await expect(upload).rejects.toMatchObject({ code: 'EACCES' });
+    } finally {
+      await chmod(friendDir, 0o700);
+    }
   });
 });
