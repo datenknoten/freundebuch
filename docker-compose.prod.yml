@@ -114,6 +114,15 @@ services:
       # boot without it — and must match the mcp-server's.
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
 
+      # WebAuthn relying-party id: the bare registration domain, no scheme and
+      # no port. Required, and deliberately without a `:-` default: unset, the
+      # backend falls back to `localhost` (lib/auth.ts), which every browser
+      # rejects against an https origin — so the misconfiguration would only
+      # surface when a user tries to register a passkey. The maintainer's own
+      # domain would be just as silently wrong on someone else's host, so
+      # compose refuses to start instead.
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:?set it to your bare domain (no scheme, no port), e.g. freundebuch.example.com}
+
       # Mail. Without SMTP_HOST password-reset and verification mails are not
       # sent at all (the endpoints still answer 200).
       SMTP_HOST: ${SMTP_HOST:-}

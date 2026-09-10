@@ -48,7 +48,7 @@ will not work unmodified on your infrastructure:
 | `ENV: production` on the backend | Now set upstream, alongside `NODE_ENV`. **Both are needed**: `ConfigSchema` reads `ENV` (default `development`), so without it you get dev logging, Sentry's production guards off, and reset links in the debug log — while `NODE_ENV` is Node's own switch that package managers and libraries branch on. Neither replaces the other. |
 | `TRUST_PROXY: "true"` on the backend | Set upstream, because nginx always fronts the backend. Drop it only if you expose the backend directly, otherwise rate limiting keys off the proxy's IP instead of the client's. |
 | `TRUSTED_PROXY_HOPS: "1"` on the backend | Correct for Traefik → nginx → backend *because* the bundled nginx runs the realip module and appends the resolved client to `X-Forwarded-For`. Raise it by one per extra proxy only if you set `NGINX_REAL_IP_FROM=""` on the nginx container, which turns realip off. |
-| `WEBAUTHN_RP_ID` on the backend | Not set upstream. Set it to your bare domain (no scheme, no port) or passkey registration fails. |
+| `WEBAUTHN_RP_ID` on the backend | Now referenced upstream, but with no default: compose refuses to start until you set it to your bare domain (no scheme, no port). A default would be silently wrong — unset, the backend falls back to `localhost` and browsers reject every passkey registration against an https origin. |
 | `BETTER_AUTH_SECRET` on the backend | Now set upstream (it was only on the mcp-server). It is required and must be the same value for both, or MCP bearer tokens are rejected. |
 
 ## Configuration
@@ -72,7 +72,7 @@ in production:
 | `BETTER_AUTH_URL` | for MCP OAuth | Your public HTTPS origin. See [Connecting AI assistants](#connecting-ai-assistants-mcp) |
 | `TRUST_PROXY` | behind a proxy | `true` so rate limiting uses the real client IP from `X-Forwarded-For` |
 | `TRUSTED_PROXY_HOPS` | rarely | How many proxies front the app; the client is that many entries from the right of `X-Forwarded-For`. Default `1`, which is right whenever nginx resolves the client itself (see [nginx](#nginx)). Only raise it when realip is off, e.g. `2` for Traefik → nginx |
-| `WEBAUTHN_RP_ID` | for passkeys | Bare domain, e.g. `freundebuch.example.com` |
+| `WEBAUTHN_RP_ID` | yes | Bare domain, e.g. `freundebuch.example.com` — no scheme, no port. Only passkeys read it, but `docker-compose.prod.yml` requires it because the fallback (`localhost`) fails in a way nobody notices until a user tries to register one |
 | `NOMINATIM_CONTACT_EMAIL` | recommended | OSM's usage policy wants a contact address; without one, geocoding may get rate-limited |
 | `LOG_LEVEL` | no | `info` by default |
 | `SENTRY_DSN` | no | Error tracking, off when unset |
@@ -334,7 +334,7 @@ seconds before `curl` reflects it.
 | Backend exits at boot with a config validation error | `BETTER_AUTH_SECRET` is under 32 characters or still contains a placeholder phrase |
 | MCP server exits at boot | `ENV` is unset — it has no default on purpose |
 | Logs are pretty-printed and colourful in production | `ENV` is not `production` on the backend |
-| Passkey registration fails | `WEBAUTHN_RP_ID` is missing or does not match the browser's origin |
+| Passkey registration fails | `WEBAUTHN_RP_ID` does not match the browser's origin — it must be the bare domain, no scheme and no port. Compose refuses to start when it is unset, so it cannot simply be absent |
 | claude.ai cannot connect, but Claude Desktop with an app password can | OAuth discovery — check the `issuer` with the `curl` above, and that both containers share `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET` |
 | MCP bearer tokens are always rejected | The MCP server's `BETTER_AUTH_SECRET` differs from the backend's, or it points at a different database |
 | Rate limiting throttles everyone at once | `TRUST_PROXY` is unset, so every request looks like it comes from the proxy — or `TRUSTED_PROXY_HOPS` does not match your chain, so the key is an inner proxy's address rather than the client's. With the bundled nginx resolving the client (`NGINX_REAL_IP_FROM`), `1` is correct even behind Traefik |
