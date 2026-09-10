@@ -74,7 +74,7 @@ export class MembershipsService {
 
       // Check for duplicate active membership (inside transaction for consistency)
       const duplicateCheck = await checkDuplicateActiveMembership.run(
-        { collectiveExternalId, contactExternalId: input.friend_id },
+        { userExternalId, collectiveExternalId, contactExternalId: input.friend_id },
         client,
       );
 
@@ -354,7 +354,7 @@ export class MembershipsService {
   ): Promise<RelationshipPreviewResponse> {
     // Check if the contact is already an active member
     const duplicateCheck = await checkDuplicateActiveMembership.run(
-      { collectiveExternalId, contactExternalId: input.friend_id },
+      { userExternalId, collectiveExternalId, contactExternalId: input.friend_id },
       this.db,
     );
 

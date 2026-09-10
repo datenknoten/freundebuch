@@ -606,11 +606,19 @@ WHERE f.external_id = :contactExternalId::uuid
 ORDER BY c.name ASC;
 
 /* @name CheckDuplicateActiveMembership */
--- Check if a contact already has an active membership in the collective
+-- Check if a contact already has an active membership in the collective.
+--
+-- Scoped to the collective's owner: both external ids arrive straight from the
+-- request and this runs *before* the ownership lookups in addMember /
+-- previewRelationships, so without the join a foreign collective+contact pair
+-- answers "duplicate" (409) instead of "not found" (404) and leaks whether
+-- someone else's friend is in someone else's collective.
 SELECT COUNT(*)::int AS count
 FROM collectives.collective_memberships cm
 INNER JOIN collectives.collectives c ON cm.collective_id = c.id
 INNER JOIN friends.friends f ON cm.contact_id = f.id
+INNER JOIN auth.users u ON c.user_id = u.id
 WHERE c.external_id = :collectiveExternalId::uuid
   AND f.external_id = :contactExternalId::uuid
+  AND u.external_id = :userExternalId::uuid
   AND cm.is_active = TRUE;

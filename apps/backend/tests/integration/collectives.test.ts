@@ -290,6 +290,70 @@ describe('Collectives API - Integration', () => {
       expect(rows.map((row) => row.source_membership_id)).toEqual([null]);
     });
 
+    it('rejects adding the same friend twice', async () => {
+      const collectiveId = await createCollective();
+      const friendId = await createTestFriend(poolOf(), user.externalId, 'Member Twice');
+
+      const first = await req('POST', `/api/collectives/${collectiveId}/members`, {
+        friend_id: friendId,
+        role_id: roleId,
+      });
+      expect(first.status).toBe(201);
+
+      const second = await req('POST', `/api/collectives/${collectiveId}/members`, {
+        friend_id: friendId,
+        role_id: roleId,
+      });
+      expect(second.status).toBe(409);
+    });
+
+    /**
+     * The duplicate check runs before the ownership lookups, so an unscoped
+     * version answered "duplicate" (409) for someone else's collective and
+     * contact — disclosing that a stranger's friend is in a stranger's
+     * collective. It must be a plain 404 instead.
+     */
+    it('does not disclose another user\u2019s membership as a duplicate', async () => {
+      const otherUser = await createAuthenticatedUser(
+        poolOf(),
+        'collectives-other@example.com',
+        'Password123!',
+      );
+      await completeTestUserOnboarding(poolOf(), otherUser.externalId);
+
+      // The other user's own collective and member, created with their session.
+      const otherTypes = await appOf().fetch(
+        new Request('http://localhost/api/collectives/types', {
+          headers: authHeaders(otherUser.sessionCookies),
+        }),
+      );
+      const otherType = (await json(otherTypes)).types[0];
+      const otherCollective = await appOf().fetch(
+        new Request('http://localhost/api/collectives', {
+          method: 'POST',
+          headers: authHeaders(otherUser.sessionCookies),
+          body: JSON.stringify({ name: 'Their Club', collective_type_id: otherType.id }),
+        }),
+      );
+      expect(otherCollective.status).toBe(201);
+      const otherCollectiveId = (await json(otherCollective)).id;
+      const otherFriendId = await createTestFriend(poolOf(), otherUser.externalId, 'Their Member');
+      const otherAdd = await appOf().fetch(
+        new Request(`http://localhost/api/collectives/${otherCollectiveId}/members`, {
+          method: 'POST',
+          headers: authHeaders(otherUser.sessionCookies),
+          body: JSON.stringify({ friend_id: otherFriendId, role_id: otherType.roles[0].id }),
+        }),
+      );
+      expect(otherAdd.status).toBe(201);
+
+      // Our user asks about that pair: not found, never "duplicate".
+      const probe = await req('POST', `/api/collectives/${otherCollectiveId}/members`, {
+        friend_id: otherFriendId,
+        role_id: roleId,
+      });
+      expect(probe.status).toBe(404);
+    });
   });
 
   describe('sub-resources', () => {

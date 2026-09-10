@@ -1725,6 +1725,7 @@ export const getCollectivesForContact = new PreparedQuery<IGetCollectivesForCont
 export interface ICheckDuplicateActiveMembershipParams {
   collectiveExternalId?: string | null | void;
   contactExternalId?: string | null | void;
+  userExternalId?: string | null | void;
 }
 
 /** 'CheckDuplicateActiveMembership' return type */
@@ -1738,18 +1739,26 @@ export interface ICheckDuplicateActiveMembershipQuery {
   result: ICheckDuplicateActiveMembershipResult;
 }
 
-const checkDuplicateActiveMembershipIR: any = {"usedParamSet":{"collectiveExternalId":true,"contactExternalId":true},"params":[{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":285,"b":305}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":335,"b":352}]}],"statement":"-- Check if a contact already has an active membership in the collective\nSELECT COUNT(*)::int AS count\nFROM collectives.collective_memberships cm\nINNER JOIN collectives.collectives c ON cm.collective_id = c.id\nINNER JOIN friends.friends f ON cm.contact_id = f.id\nWHERE c.external_id = :collectiveExternalId::uuid\n  AND f.external_id = :contactExternalId::uuid\n  AND cm.is_active = TRUE"};
+const checkDuplicateActiveMembershipIR: any = {"usedParamSet":{"collectiveExternalId":true,"contactExternalId":true,"userExternalId":true},"params":[{"name":"collectiveExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":697,"b":717}]},{"name":"contactExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":747,"b":764}]},{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":794,"b":808}]}],"statement":"-- Check if a contact already has an active membership in the collective.\n--\n-- Scoped to the collective's owner: both external ids arrive straight from the\n-- request and this runs *before* the ownership lookups in addMember /\n-- previewRelationships, so without the join a foreign collective+contact pair\n-- answers \"duplicate\" (409) instead of \"not found\" (404) and leaks whether\n-- someone else's friend is in someone else's collective.\nSELECT COUNT(*)::int AS count\nFROM collectives.collective_memberships cm\nINNER JOIN collectives.collectives c ON cm.collective_id = c.id\nINNER JOIN friends.friends f ON cm.contact_id = f.id\nINNER JOIN auth.users u ON c.user_id = u.id\nWHERE c.external_id = :collectiveExternalId::uuid\n  AND f.external_id = :contactExternalId::uuid\n  AND u.external_id = :userExternalId::uuid\n  AND cm.is_active = TRUE"};
 
 /**
  * Query generated from SQL:
  * ```
- * -- Check if a contact already has an active membership in the collective
+ * -- Check if a contact already has an active membership in the collective.
+ * --
+ * -- Scoped to the collective's owner: both external ids arrive straight from the
+ * -- request and this runs *before* the ownership lookups in addMember /
+ * -- previewRelationships, so without the join a foreign collective+contact pair
+ * -- answers "duplicate" (409) instead of "not found" (404) and leaks whether
+ * -- someone else's friend is in someone else's collective.
  * SELECT COUNT(*)::int AS count
  * FROM collectives.collective_memberships cm
  * INNER JOIN collectives.collectives c ON cm.collective_id = c.id
  * INNER JOIN friends.friends f ON cm.contact_id = f.id
+ * INNER JOIN auth.users u ON c.user_id = u.id
  * WHERE c.external_id = :collectiveExternalId::uuid
  *   AND f.external_id = :contactExternalId::uuid
+ *   AND u.external_id = :userExternalId::uuid
  *   AND cm.is_active = TRUE
  * ```
  */
