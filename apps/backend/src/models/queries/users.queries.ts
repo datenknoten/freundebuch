@@ -127,6 +127,8 @@ export interface IGetUserSelfProfileParams {
 
 /** 'GetUserSelfProfile' return type */
 export interface IGetUserSelfProfileResult {
+  /** User preferences (page size, birthday format, language, etc.) */
+  preferences: Json;
   /** Primary name shown in lists */
   self_profile_display_name: string;
   /** Public UUID for API exposure (always use this in APIs) */
@@ -141,13 +143,16 @@ export interface IGetUserSelfProfileQuery {
   result: IGetUserSelfProfileResult;
 }
 
-const getUserSelfProfileIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":238,"b":252}]}],"statement":"SELECT\n    u.self_profile_id,\n    c.external_id as self_profile_external_id,\n    c.display_name as self_profile_display_name\nFROM auth.\"user\" u\nLEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL\nWHERE u.id = :userExternalId"};
+const getUserSelfProfileIR: any = {"usedParamSet":{"userExternalId":true},"params":[{"name":"userExternalId","required":false,"transform":{"type":"scalar"},"locs":[{"a":400,"b":414}]}],"statement":"SELECT\n    u.self_profile_id,\n    -- Read fresh, not from the session: the Better Auth cookie cache holds a\n    -- 5-minute-old copy of both columns (see GET /api/auth/me).\n    u.preferences,\n    c.external_id as self_profile_external_id,\n    c.display_name as self_profile_display_name\nFROM auth.\"user\" u\nLEFT JOIN friends.friends c ON u.self_profile_id = c.id AND c.deleted_at IS NULL\nWHERE u.id = :userExternalId"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT
  *     u.self_profile_id,
+ *     -- Read fresh, not from the session: the Better Auth cookie cache holds a
+ *     -- 5-minute-old copy of both columns (see GET /api/auth/me).
+ *     u.preferences,
  *     c.external_id as self_profile_external_id,
  *     c.display_name as self_profile_display_name
  * FROM auth."user" u

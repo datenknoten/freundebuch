@@ -76,10 +76,11 @@ app.get('/me', authMiddleware, async (c) => {
     throw new UserNotFoundError();
   }
 
-  // Look up the self-profile external_id from auth."user" directly instead of
-  // trusting session.user.selfProfileId: the session cookie cache (5 min) holds
-  // a stale null right after onboarding sets the self-profile via SQL, which
-  // trapped users in an onboarding redirect loop until the cache expired.
+  // Look up the self-profile external_id and preferences from auth."user"
+  // directly instead of trusting the session: the session cookie cache (5 min)
+  // holds a stale null right after onboarding sets the self-profile via SQL,
+  // which trapped users in an onboarding redirect loop until the cache expired,
+  // and it serves stale preferences right after a PATCH.
   const result = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
   const selfProfileExternalId = result[0]?.self_profile_external_id ?? null;
   const selfProfileDisplayName = result[0]?.self_profile_display_name ?? null;
@@ -92,7 +93,9 @@ app.get('/me', authMiddleware, async (c) => {
       displayName: selfProfileDisplayName ?? undefined,
       hasCompletedOnboarding: selfProfileExternalId !== null,
     },
-    preferences: parseUserPreferences(session.user.preferences ?? {}),
+    // Same reason as selfProfileId above: session.user.preferences is the
+    // cached copy, so a language change reverted on reload until it expired.
+    preferences: parseUserPreferences(result[0]?.preferences ?? {}),
   };
 
   return c.json(response);

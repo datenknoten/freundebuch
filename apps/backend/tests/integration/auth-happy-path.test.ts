@@ -421,6 +421,42 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(meBody.user).toHaveProperty('email', email);
     });
 
+    /**
+     * The session (and therefore session.user.preferences) is cookie-cached for
+     * five minutes, so reading preferences off it made a language change revert
+     * on the next page load until the cache expired.
+     */
+    it('should return preferences written moments ago, not the cookie-cached copy', async () => {
+      const { app } = getContext();
+
+      const { response: regResponse } = await signUp('me-prefs@example.com', 'SecurePassword123');
+      const cookies = extractCookies(regResponse);
+      expect(cookies).toContain('better-auth.session_data=');
+
+      const patched = await app.fetch(
+        new Request('http://localhost/api/auth/preferences', {
+          method: 'PATCH',
+          headers: { Cookie: cookies, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ language: 'de', friendsPageSize: 50 }),
+        }),
+      );
+      expect(patched.status).toBe(200);
+
+      // Same cookies, so the cached session still carries the old preferences.
+      const meResponse = await app.fetch(
+        new Request('http://localhost/api/auth/me', {
+          method: 'GET',
+          headers: { Cookie: cookies },
+        }),
+      );
+      expect(meResponse.status).toBe(200);
+      const meBody = (await meResponse.json()) as {
+        preferences: { language?: string; friendsPageSize?: number };
+      };
+      expect(meBody.preferences.language).toBe('de');
+      expect(meBody.preferences.friendsPageSize).toBe(50);
+    });
+
     it('should return 401 without a session cookie', async () => {
       const { app } = getContext();
 

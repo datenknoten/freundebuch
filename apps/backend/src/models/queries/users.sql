@@ -25,6 +25,9 @@ RETURNING id as external_id, email, preferences, created_at, updated_at;
 /* @name GetUserSelfProfile */
 SELECT
     u.self_profile_id,
+    -- Read fresh, not from the session: the Better Auth cookie cache holds a
+    -- 5-minute-old copy of both columns (see GET /api/auth/me).
+    u.preferences,
     c.external_id as self_profile_external_id,
     c.display_name as self_profile_display_name
 FROM auth."user" u
