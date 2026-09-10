@@ -196,6 +196,19 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             throw new \Sabre\DAV\Exception\BadRequest('Card URI must be a UUID');
         }
 
+        // getCard/getCards exclude archived and soft-deleted friends, so
+        // SabreDAV's httpPut finds no node and falls through to createFile for
+        // a card the client still holds. external_id is globally unique, so
+        // the INSERT below would raise 23505 and surface as a 500. Answer 403
+        // instead: the client drops the edit and picks up the `delete` change
+        // the archive trigger already logged on its next sync. Deliberately
+        // not user-scoped - the uniqueness that would break is global.
+        $stmt = $this->pdo->prepare('SELECT 1 FROM friends.friends WHERE external_id = :external_id');
+        $stmt->execute(['external_id' => $externalId]);
+        if ($stmt->fetch() !== false) {
+            throw new \Sabre\DAV\Exception\Forbidden('Card belongs to an archived or deleted friend');
+        }
+
         $friendData = $this->mapper->vcardToFriend($cardData, $externalId);
         $vcardJson = $this->mapper->vcardToJson($cardData);
 

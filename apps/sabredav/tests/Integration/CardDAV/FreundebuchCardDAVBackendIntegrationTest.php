@@ -729,6 +729,44 @@ VCARD;
         $this->assertSame('CEO', $primary['job_title']);
         $this->assertSame(2019, (int) $primary['from_year']);
     }
+
+    /**
+     * getCard excludes archived friends, so SabreDAV's httpPut falls through to
+     * createFile. external_id is globally unique, so an INSERT would raise
+     * 23505 and reach the client as a 500 on every write it attempts.
+     */
+    #[Test]
+    public function createCardOnAnArchivedFriendsUriIsForbiddenNotAConflict(): void
+    {
+        $user = $this->createTestUser('archived-put@example.com');
+        $friend = $this->createTestFriend((int) $user['id'], ['display_name' => 'Archived']);
+        $this->getPdo()
+            ->prepare('UPDATE friends.friends SET archived_at = NOW() WHERE id = :id')
+            ->execute(['id' => $friend['id']]);
+
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:{$friend['external_id']}
+FN:Hacked
+END:VCARD
+VCARD;
+
+        $this->expectException(\Sabre\DAV\Exception\Forbidden::class);
+
+        try {
+            $this->backend->createCard($user['id'], $friend['external_id'] . '.vcf', $vcard);
+        } finally {
+            $stmt = $this->getPdo()->prepare(
+                'SELECT display_name, archived_at FROM friends.friends WHERE external_id = :id'
+            );
+            $stmt->execute(['id' => $friend['external_id']]);
+            $rows = $stmt->fetchAll();
+            $this->assertCount(1, $rows, 'no duplicate friend row may be inserted');
+            $this->assertSame('Archived', $rows[0]['display_name']);
+            $this->assertNotNull($rows[0]['archived_at']);
+        }
+    }
     /**
      * @return list<array<string, mixed>>
      */
