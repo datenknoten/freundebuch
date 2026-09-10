@@ -618,6 +618,133 @@ VCARD;
     }
 
     /**
+     * A vCard carries one ORG/TITLE slot, so a PUT must reconcile the primary
+     * position - not replace the table. Clients re-PUT the whole card for any
+     * trivial edit, so replacing would destroy every past position and re-date
+     * the current one to today.
+     */
+    #[Test]
+    public function updateCardKeepsProfessionalHistoryAndItsDates(): void
+    {
+        $user = $this->createTestUser('history@example.com');
+        $friend = $this->createTestFriend((int) $user['id'], ['display_name' => 'Has History']);
+
+        $insert = $this->getPdo()->prepare('
+            INSERT INTO friends.friend_professional_history (
+                friend_id, job_title, organization, from_month, from_year,
+                to_month, to_year, is_primary
+            ) VALUES (
+                :friend_id, :job_title, :organization, :from_month, :from_year,
+                :to_month, :to_year, :is_primary
+            )
+        ');
+        $insert->execute([
+            'friend_id' => $friend['id'],
+            'job_title' => 'CEO',
+            'organization' => 'Old GmbH',
+            'from_month' => 3,
+            'from_year' => 2019,
+            'to_month' => null,
+            'to_year' => null,
+            'is_primary' => 'true',
+        ]);
+        $insert->execute([
+            'friend_id' => $friend['id'],
+            'job_title' => 'Intern',
+            'organization' => 'Older AG',
+            'from_month' => 1,
+            'from_year' => 2015,
+            'to_month' => 2,
+            'to_year' => 2019,
+            'is_primary' => 'false',
+        ]);
+
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:{$friend['external_id']}
+FN:Has History
+ORG:New GmbH
+TITLE:CTO
+END:VCARD
+VCARD;
+
+        $this->assertNotNull(
+            $this->backend->updateCard($user['id'], $friend['external_id'] . '.vcf', $vcard)
+        );
+
+        $rows = $this->fetchProfessionalHistory((int) $friend['id']);
+        $this->assertCount(2, $rows, 'past positions must survive a PUT');
+
+        $primary = $this->fetchPrimaryProfessionalHistory((int) $friend['id']);
+        $this->assertSame('New GmbH', $primary['organization']);
+        $this->assertSame('CTO', $primary['job_title']);
+        $this->assertSame(3, (int) $primary['from_month'], 'start date must not be re-dated');
+        $this->assertSame(2019, (int) $primary['from_year']);
+
+        $past = array_values(array_filter(
+            $rows,
+            static fn (array $row): bool => $row['organization'] === 'Older AG'
+        ));
+        $this->assertCount(1, $past);
+        $this->assertSame('Intern', $past[0]['job_title']);
+        $this->assertSame(2019, (int) $past[0]['to_year']);
+    }
+
+    /**
+     * No ORG/TITLE/NOTE means "this client cannot represent history", not
+     * "the friend never had a job".
+     */
+    #[Test]
+    public function updateCardWithoutProfessionalDataLeavesHistoryUntouched(): void
+    {
+        $user = $this->createTestUser('nohistory@example.com');
+        $friend = $this->createTestFriend((int) $user['id'], ['display_name' => 'Keeps History']);
+
+        $this->getPdo()->prepare('
+            INSERT INTO friends.friend_professional_history (
+                friend_id, job_title, organization, from_month, from_year, is_primary
+            ) VALUES (:friend_id, :job_title, :organization, 3, 2019, true)
+        ')->execute([
+            'friend_id' => $friend['id'],
+            'job_title' => 'CEO',
+            'organization' => 'Old GmbH',
+        ]);
+
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:{$friend['external_id']}
+FN:Renamed Only
+END:VCARD
+VCARD;
+
+        $this->assertNotNull(
+            $this->backend->updateCard($user['id'], $friend['external_id'] . '.vcf', $vcard)
+        );
+
+        $primary = $this->fetchPrimaryProfessionalHistory((int) $friend['id']);
+        $this->assertIsArray($primary);
+        $this->assertSame('Old GmbH', $primary['organization']);
+        $this->assertSame('CEO', $primary['job_title']);
+        $this->assertSame(2019, (int) $primary['from_year']);
+    }
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function fetchProfessionalHistory(int $friendId): array
+    {
+        $stmt = $this->getPdo()->prepare('
+            SELECT * FROM friends.friend_professional_history
+            WHERE friend_id = :friend_id
+            ORDER BY id
+        ');
+        $stmt->execute(['friend_id' => $friendId]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
      * The production retention query, kept in one place so the tests exercise
      * the same SQL the scheduler runs.
      */

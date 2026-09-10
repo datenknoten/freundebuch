@@ -339,7 +339,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             $this->insertUrls($friendId, $friendData['urls'] ?? []);
             $this->insertDates($friendId, $friendData['dates'] ?? []);
             $this->insertSocialProfiles($friendId, $friendData['social_profiles'] ?? []);
-            $this->insertProfessionalHistory($friendId, $friendData['professional_history'] ?? []);
+            $this->syncPrimaryProfessionalHistory($friendId, $friendData['professional_history'][0] ?? null);
             if (!empty($friendData['met_info'])) {
                 $this->insertMetInfo($friendId, $friendData['met_info']);
             }
@@ -638,8 +638,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         // Epic 4: Remove circle assignments (they will be re-assigned)
         $this->pdo->prepare('DELETE FROM friends.friend_circles WHERE friend_id = :id')
             ->execute(['id' => $friendId]);
-        $this->pdo->prepare('DELETE FROM friends.friend_professional_history WHERE friend_id = :id')
-            ->execute(['id' => $friendId]);
+        // friends.friend_professional_history is deliberately absent: a vCard
+        // cannot represent a history, so a PUT must reconcile the primary row
+        // (syncPrimaryProfessionalHistory) rather than replace the table.
     }
 
     private function insertPhones(int $friendId, array $phones): void
@@ -789,6 +790,59 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'is_primary' => self::pgBool(!empty($entry['is_primary'])),
             ]);
         }
+    }
+
+    /**
+     * Reconciles the primary professional-history entry with the single entry
+     * a vCard can carry, without ever deleting rows.
+     *
+     * A vCard has one ORG/TITLE/ROLE slot, so absence of professional data
+     * means "not representable by this client", not "the friend never had a
+     * job" - and most clients re-PUT the whole card for any trivial edit.
+     * Replacing the table would destroy every past position and re-date the
+     * current one to today.
+     *
+     * @param array|null $entry The entry synthesised by Mapper::vcardToFriend
+     */
+    private function syncPrimaryProfessionalHistory(int $friendId, ?array $entry): void
+    {
+        if ($entry === null) {
+            return;
+        }
+
+        $stmt = $this->pdo->prepare('
+            SELECT id FROM friends.friend_professional_history
+            WHERE friend_id = :friend_id AND is_primary = true
+            LIMIT 1
+        ');
+        $stmt->execute(['friend_id' => $friendId]);
+        $primary = $stmt->fetch();
+
+        if ($primary === false) {
+            // No current position on record; the synthesised entry becomes it,
+            // dated from today as the Mapper already assumes.
+            $this->insertProfessionalHistory($friendId, [$entry]);
+
+            return;
+        }
+
+        // Only vCard-representable fields are touched; from_*/to_* keep the
+        // dates the user entered in the app.
+        $update = $this->pdo->prepare('
+            UPDATE friends.friend_professional_history SET
+                job_title = :job_title,
+                organization = :organization,
+                department = :department,
+                notes = :notes
+            WHERE id = :id
+        ');
+        $update->execute([
+            'id' => (int) $primary['id'],
+            'job_title' => $entry['job_title'] ?? null,
+            'organization' => $entry['organization'] ?? null,
+            'department' => $entry['department'] ?? null,
+            'notes' => $entry['notes'] ?? null,
+        ]);
     }
 
     /**
