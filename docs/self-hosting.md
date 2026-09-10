@@ -253,6 +253,24 @@ Sync is served at `https://your-domain/carddav/` and `/caldav/`, with
 that autodiscover. Clients authenticate with an app password, not the account
 password — see [security-authentication.md](./security-authentication.md#app-passwords-caldavcarddav).
 
+### What a sync can and cannot change
+
+A vCard is narrower than the app's data model, so an edit arriving over CardDAV
+is applied as "change what this card can express", never as "replace
+everything". Three cases are worth knowing before you field a support question:
+
+- **Employment history.** A vCard has one `ORG`/`TITLE` slot. A sync updates the
+  current position's job title, organization, department and notes, and leaves
+  its start date and every past position alone. A card with no `ORG`/`TITLE` at
+  all leaves the history untouched rather than clearing it.
+- **Photos.** Only an `http(s)` `PHOTO` URL is stored. Apple clients send the
+  image inline (`data:` or vCard 3 `ENCODING=b`), which is not a URL — that is
+  ignored and the photo already on the friend is kept. A consequence: a photo
+  cannot be removed over CardDAV, only in the app.
+- **Archived friends.** An archived friend leaves the address book. A client
+  that still holds the card and tries to save an edit gets a `403` once, then
+  drops the card on its next sync.
+
 ## Address autocomplete
 
 PostGIS-backed address lookup needs a one-off OpenStreetMap import (the
