@@ -156,6 +156,13 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 
   // 9. The legacy row is allocated before the Better Auth user exists, so a
   //    failed sign-up can leave one behind. Reaped by the hourly cleanup.
+  //
+  //    The `no friends` guard is the safety belt: auth.users is the ON DELETE
+  //    CASCADE anchor for friends, encounters and collectives, and the
+  //    `bu.id = lu.external_id::text` pairing is a convention, not a
+  //    constraint. If it ever breaks for an established account this function
+  //    would delete that user's entire domain data. A failed sign-up — the
+  //    only intended target — never has friends, so the guard costs nothing.
   pgm.sql(`
     CREATE OR REPLACE FUNCTION auth.delete_orphan_legacy_users() RETURNS integer AS $$
     DECLARE
@@ -163,14 +170,15 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     BEGIN
       DELETE FROM auth.users lu
       WHERE NOT EXISTS (SELECT 1 FROM auth."user" bu WHERE bu.id = lu.external_id::text)
-        AND lu.created_at < now() - interval '1 day';
+        AND lu.created_at < now() - interval '1 day'
+        AND NOT EXISTS (SELECT 1 FROM friends.friends f WHERE f.user_id = lu.id);
       GET DIAGNOSTICS deleted = ROW_COUNT;
       RETURN deleted;
     END;
     $$ LANGUAGE plpgsql;
 
     COMMENT ON FUNCTION auth.delete_orphan_legacy_users() IS
-      'Removes auth.users rows with no Better Auth counterpart older than a day (failed sign-ups)';
+      'Removes auth.users rows with no Better Auth counterpart, no friends, older than a day (failed sign-ups)';
   `);
 }
 

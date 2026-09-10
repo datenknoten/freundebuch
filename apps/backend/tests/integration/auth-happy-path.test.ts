@@ -188,6 +188,45 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       );
       expect(remaining.rows[0].count).toBe(0);
     });
+
+    /**
+     * The hourly reaper (utils/scheduler.ts) exists for the legacy row a
+     * failed sign-up leaves behind. auth.users is the ON DELETE CASCADE anchor
+     * for friends, encounters and collectives, and the
+     * `auth."user".id = auth.users.external_id::text` pairing is a convention
+     * rather than a constraint, so the reaper must never touch a row that has
+     * domain data no matter how the pairing broke.
+     */
+    it('should not reap a legacy row that owns friends', async () => {
+      const { pool } = getContext();
+
+      // An established account whose Better Auth counterpart has gone missing.
+      const established = await pool.query(
+        `INSERT INTO auth.users (created_at) VALUES (now() - interval '2 days')
+         RETURNING id`,
+      );
+      const establishedId = established.rows[0].id as number;
+      await pool.query(
+        `INSERT INTO friends.friends (user_id, display_name) VALUES ($1, 'Not Doomed')`,
+        [establishedId],
+      );
+
+      // A failed sign-up: same age, no domain data. The only intended target.
+      const failedSignUp = await pool.query(
+        `INSERT INTO auth.users (created_at) VALUES (now() - interval '2 days')
+         RETURNING id`,
+      );
+      const failedSignUpId = failedSignUp.rows[0].id as number;
+
+      const reaped = await pool.query(`SELECT auth.delete_orphan_legacy_users() AS deleted`);
+      expect(reaped.rows[0].deleted).toBe(1);
+
+      const survivors = await pool.query(
+        `SELECT id FROM auth.users WHERE id = ANY($1::int[]) ORDER BY id`,
+        [[establishedId, failedSignUpId]],
+      );
+      expect(survivors.rows.map((row) => row.id)).toEqual([establishedId]);
+    });
   });
 
   // ── Sign-In ──────────────────────────────────────────────────────────
