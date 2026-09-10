@@ -126,6 +126,8 @@ WHERE nc.external_id = :channelExternalId::uuid
 RETURNING nc.external_id;
 
 /* @name GetEnabledChannelsDueAt */
+-- Cron, not a request: deliberately spans every user. The auth.users join is
+-- here to return the owner's external id and language, not to scope.
 SELECT
     nc.id,
     nc.external_id,

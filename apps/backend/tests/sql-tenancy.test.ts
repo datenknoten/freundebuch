@@ -33,7 +33,9 @@ const USER_OWNED = [
   'encounters.encounter_friends',
   'collectives.collectives',
   'collectives.collective_types',
-  'collectives.collective_members',
+  'collectives.collective_memberships',
+  'collectives.collective_roles',
+  'collectives.collective_relationship_rules',
   'collectives.collective_phones',
   'collectives.collective_emails',
   'collectives.collective_addresses',
@@ -53,7 +55,6 @@ const ALLOWLIST: Record<string, string> = {
   TrimAddressCache: 'maintenance: size bound on the shared geocoder cache, no user context',
   PruneFriendChanges: 'maintenance: retention sweep across all users',
   ClaimChannelForNotification: 'cron: channel already resolved by GetEnabledChannelsDueAt',
-  GetEnabledChannelsDueAt: 'cron: deliberately spans all users',
   UpdateAppPasswordLastUsed: 'app password already authenticated by its hash',
   // Identity-keyed: the parameter *is* the authenticated auth."user".id, and the
   // only user-owned table reached is that row's own self-profile.
@@ -66,9 +67,7 @@ const ALLOWLIST: Record<string, string> = {
   GetRulesForTypeInternal: 'internal type id resolved by an ownership-checked query',
   GetCollectiveTypeIdForCollective: 'internal collective id already ownership-checked',
   GetOtherActiveMembers: 'internal collective id already ownership-checked',
-  CheckDuplicateActiveMembership: 'collective external id checked by the same caller',
   AddMembership: 'internal ids already ownership-checked in the same transaction',
-  ReactivateMembership: 'internal ids already ownership-checked in the same transaction',
   CheckRelationshipExists: 'internal friend ids already ownership-checked',
   CreateRelationshipWithSource: 'internal friend ids already ownership-checked',
   DeleteRelationshipsByMembershipId: 'internal membership id already ownership-checked',
@@ -115,9 +114,18 @@ describe('SQL tenancy', () => {
     expect(offenders).toEqual([]);
   });
 
+  /**
+   * An entry is stale in two ways: the query is gone, or the query has since
+   * grown its own `auth.users` join and no longer needs the exemption. The
+   * second case is the dangerous one — a leftover entry keeps the query
+   * exempt if the join is ever removed again.
+   */
   it('keeps the allowlist free of stale entries', () => {
-    const names = new Set(blocks.map((block) => block.name));
-    const stale = Object.keys(ALLOWLIST).filter((name) => !names.has(name));
+    const byName = new Map(blocks.map((block) => [block.name, block]));
+    const stale = Object.keys(ALLOWLIST).filter((name) => {
+      const block = byName.get(name);
+      return block === undefined || block.sql.includes('auth.users');
+    });
 
     expect(stale).toEqual([]);
   });

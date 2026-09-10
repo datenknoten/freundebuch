@@ -412,11 +412,13 @@ export interface IGetEnabledChannelsDueAtQuery {
   result: IGetEnabledChannelsDueAtResult;
 }
 
-const getEnabledChannelsDueAtIR: any = {"usedParamSet":{"notifyTime":true,"today":true},"params":[{"name":"notifyTime","required":false,"transform":{"type":"scalar"},"locs":[{"a":749,"b":759}]},{"name":"today","required":false,"transform":{"type":"scalar"},"locs":[{"a":831,"b":836}]}],"statement":"SELECT\n    nc.id,\n    nc.external_id,\n    nc.platform,\n    nc.telegram_bot_token,\n    nc.telegram_chat_id,\n    nc.matrix_homeserver,\n    nc.matrix_access_token,\n    nc.matrix_room_id,\n    nc.discord_webhook_url,\n    nc.lookahead_days,\n    u.external_id AS user_external_id,\n    COALESCE(bu.preferences->>'language', 'en') AS user_language\nFROM system.notification_channels nc\nINNER JOIN auth.users u ON nc.user_id = u.id\nINNER JOIN auth.\"user\" bu ON bu.id = u.external_id::text\n-- notify_time <= now (not exact equality): if a tick is delayed past the\n-- minute boundary (GC pause, restart, deploy), the digest still fires on the\n-- next tick. The last_notified_date gate keeps it to once per day.\nWHERE nc.is_enabled = true\n  AND nc.notify_time <= :notifyTime::time\n  AND (nc.last_notified_date IS NULL OR nc.last_notified_date < :today::date)"};
+const getEnabledChannelsDueAtIR: any = {"usedParamSet":{"notifyTime":true,"today":true},"params":[{"name":"notifyTime","required":false,"transform":{"type":"scalar"},"locs":[{"a":897,"b":907}]},{"name":"today","required":false,"transform":{"type":"scalar"},"locs":[{"a":979,"b":984}]}],"statement":"-- Cron, not a request: deliberately spans every user. The auth.users join is\n-- here to return the owner's external id and language, not to scope.\nSELECT\n    nc.id,\n    nc.external_id,\n    nc.platform,\n    nc.telegram_bot_token,\n    nc.telegram_chat_id,\n    nc.matrix_homeserver,\n    nc.matrix_access_token,\n    nc.matrix_room_id,\n    nc.discord_webhook_url,\n    nc.lookahead_days,\n    u.external_id AS user_external_id,\n    COALESCE(bu.preferences->>'language', 'en') AS user_language\nFROM system.notification_channels nc\nINNER JOIN auth.users u ON nc.user_id = u.id\nINNER JOIN auth.\"user\" bu ON bu.id = u.external_id::text\n-- notify_time <= now (not exact equality): if a tick is delayed past the\n-- minute boundary (GC pause, restart, deploy), the digest still fires on the\n-- next tick. The last_notified_date gate keeps it to once per day.\nWHERE nc.is_enabled = true\n  AND nc.notify_time <= :notifyTime::time\n  AND (nc.last_notified_date IS NULL OR nc.last_notified_date < :today::date)"};
 
 /**
  * Query generated from SQL:
  * ```
+ * -- Cron, not a request: deliberately spans every user. The auth.users join is
+ * -- here to return the owner's external id and language, not to scope.
  * SELECT
  *     nc.id,
  *     nc.external_id,
