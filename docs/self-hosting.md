@@ -53,11 +53,11 @@ will not work unmodified on your infrastructure:
 
 ## Configuration
 
-[`.env.example`](../.env.example) is a useful starting point, but it describes a
-*development* environment: it sets `ENV` and `NODE_ENV` to `development` and
-omits `TRUST_PROXY`, `POSTGRES_PASSWORD` and `VERSION`, all of which a
-production deployment needs. The variables that matter
-in production:
+[`.env.example`](../.env.example) lists every variable the compose files read,
+but with *development* values: it sets `ENV` and `NODE_ENV` to `development`,
+`WEBAUTHN_RP_ID` to `localhost`, the Postgres credentials to the dev ones, and
+omits `TRUST_PROXY`, which a production deployment needs. The variables that
+matter in production:
 
 ### Backend
 

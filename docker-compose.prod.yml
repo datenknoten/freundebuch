@@ -132,6 +132,11 @@ services:
       SMTP_FROM: ${SMTP_FROM:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
 
+      # Geocoding fallback when the local OSM data is not loaded. OSM's usage
+      # policy wants a contact address; without one Nominatim may throttle or
+      # block the instance (services/external/nominatim.client.ts warns once).
+      NOMINATIM_CONTACT_EMAIL: ${NOMINATIM_CONTACT_EMAIL:-}
+
       # Set to true to close registration on this instance.
       DISABLE_SIGNUP: ${DISABLE_SIGNUP:-false}
 
