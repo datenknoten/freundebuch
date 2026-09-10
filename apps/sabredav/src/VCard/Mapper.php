@@ -315,7 +315,16 @@ class Mapper
                     break;
 
                 case 'PHOTO':
-                    $friend['photo_url'] = $value;
+                    // friends.photo_url holds a URL the frontend puts in <img
+                    // src>. Apple clients answer our exported inline photo with
+                    // an inline payload of their own ("data:image/jpeg;base64,…"
+                    // in vCard 4, ENCODING=b in vCard 3), which is megabytes of
+                    // base64 and renders as a broken image. Such a value is not
+                    // representable here, so the key is left unset and the
+                    // update path keeps whatever the user uploaded in the app.
+                    if ($this->isFetchableUrl($value)) {
+                        $friend['photo_url'] = $value;
+                    }
                     break;
 
                 case 'X-SOCIALPROFILE':
@@ -705,6 +714,22 @@ class Mapper
             ['\\\\', '\\,', '\\;', '\\n'],
             $value
         );
+    }
+
+    /**
+     * True only for an absolute http(s) URL, i.e. something the frontend can
+     * put into an <img src> and the backend can fetch back out again.
+     */
+    private function isFetchableUrl(string $value): bool
+    {
+        $scheme = parse_url($value, PHP_URL_SCHEME);
+        if (!is_string($scheme)) {
+            return false;
+        }
+        $scheme = strtolower($scheme);
+
+        return ($scheme === 'http' || $scheme === 'https')
+            && is_string(parse_url($value, PHP_URL_HOST));
     }
 
     private function unescape(string $value): string

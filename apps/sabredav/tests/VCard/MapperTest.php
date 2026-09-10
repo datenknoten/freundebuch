@@ -721,4 +721,57 @@ VCARD;
         $this->assertGreaterThanOrEqual(strtotime($before), $parsedAt);
         $this->assertLessThanOrEqual(strtotime($after), $parsedAt);
     }
+
+    #[Test]
+    public function vcardToFriendKeepsAnHttpsPhotoAsTheUrl(): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:test-uuid
+FN:Jane Smith
+PHOTO:https://cdn.example.com/photos/jane.jpg
+END:VCARD
+VCARD;
+
+        $friend = $this->mapper->vcardToFriend($vcard);
+
+        $this->assertSame('https://cdn.example.com/photos/jane.jpg', $friend['photo_url']);
+    }
+
+    #[Test]
+    public function vcardToFriendDropsAnInlineDataUriPhoto(): void
+    {
+        // photo_url feeds an <img src>; an inline payload is megabytes of
+        // base64. Leaving the key unset makes updateCard keep the stored value.
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:test-uuid
+FN:Jane Smith
+PHOTO:data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD
+END:VCARD
+VCARD;
+
+        $friend = $this->mapper->vcardToFriend($vcard);
+
+        $this->assertArrayNotHasKey('photo_url', $friend);
+    }
+
+    #[Test]
+    public function vcardToFriendDropsAVCard3EncodedPhoto(): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+UID:test-uuid
+FN:Jane Smith
+PHOTO;ENCODING=b;TYPE=JPEG:/9j/4AAQSkZJRgABAQAAAQABAAD
+END:VCARD
+VCARD;
+
+        $friend = $this->mapper->vcardToFriend($vcard);
+
+        $this->assertArrayNotHasKey('photo_url', $friend);
+    }
 }

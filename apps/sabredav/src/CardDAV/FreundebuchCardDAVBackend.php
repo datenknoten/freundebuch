@@ -293,7 +293,7 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         // the collection, so a PUT to it must miss rather than silently edit a
         // card the client cannot read back.
         $stmt = $this->pdo->prepare('
-            SELECT id FROM friends.friends
+            SELECT id, photo_url FROM friends.friends
             WHERE user_id = :user_id
               AND external_id = :external_id
               AND deleted_at IS NULL
@@ -337,7 +337,12 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                 'name_last' => $friendData['name_last'] ?? null,
                 'name_suffix' => $friendData['name_suffix'] ?? null,
                 'nickname' => $friendData['nickname'] ?? null,
-                'photo_url' => $friendData['photo_url'] ?? null,
+                // The mapper only sets photo_url for an http(s) PHOTO value;
+                // an inline base64 payload (what Apple clients echo back) and a
+                // missing PHOTO both leave the key unset. Falling back to the
+                // stored value keeps a photo the user uploaded in the app from
+                // being wiped by a round-trip sync that cannot represent it.
+                'photo_url' => $friendData['photo_url'] ?? $existing['photo_url'],
                 'interests' => $friendData['interests'] ?? null,
                 'vcard_raw_json' => json_encode($vcardJson, JSON_THROW_ON_ERROR),
                 'is_favorite' => self::pgBool(!empty($friendData['is_favorite'])),

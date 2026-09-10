@@ -767,6 +767,71 @@ VCARD;
             $this->assertNotNull($rows[0]['archived_at']);
         }
     }
+
+    /**
+     * friendToVCard exports the stored photo inline, so a client round-trips an
+     * inline payload back at us. Writing that into photo_url replaced the URL of
+     * an in-app upload with megabytes of base64 and broke the <img src>.
+     */
+    #[Test]
+    public function updateCardKeepsTheStoredPhotoWhenTheClientSendsAnInlineOne(): void
+    {
+        $user = $this->createTestUser('photo@example.com');
+        $friend = $this->createTestFriend((int) $user['id'], [
+            'display_name' => 'Has Photo',
+            'photo_url' => 'https://cdn.example.com/uploads/has-photo.jpg',
+        ]);
+
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:{$friend['external_id']}
+FN:Has Photo
+PHOTO:data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD
+END:VCARD
+VCARD;
+
+        $this->assertNotNull(
+            $this->backend->updateCard($user['id'], $friend['external_id'] . '.vcf', $vcard)
+        );
+
+        $stmt = $this->getPdo()->prepare('SELECT photo_url FROM friends.friends WHERE id = :id');
+        $stmt->execute(['id' => $friend['id']]);
+
+        $this->assertSame(
+            'https://cdn.example.com/uploads/has-photo.jpg',
+            $stmt->fetch()['photo_url']
+        );
+    }
+
+    #[Test]
+    public function updateCardStoresAnHttpsPhotoUrl(): void
+    {
+        $user = $this->createTestUser('photo-url@example.com');
+        $friend = $this->createTestFriend((int) $user['id'], [
+            'display_name' => 'Has Photo',
+            'photo_url' => 'https://cdn.example.com/uploads/old.jpg',
+        ]);
+
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:{$friend['external_id']}
+FN:Has Photo
+PHOTO:https://cdn.example.com/uploads/new.jpg
+END:VCARD
+VCARD;
+
+        $this->assertNotNull(
+            $this->backend->updateCard($user['id'], $friend['external_id'] . '.vcf', $vcard)
+        );
+
+        $stmt = $this->getPdo()->prepare('SELECT photo_url FROM friends.friends WHERE id = :id');
+        $stmt->execute(['id' => $friend['id']]);
+
+        $this->assertSame('https://cdn.example.com/uploads/new.jpg', $stmt->fetch()['photo_url']);
+    }
+
     /**
      * @return list<array<string, mixed>>
      */
