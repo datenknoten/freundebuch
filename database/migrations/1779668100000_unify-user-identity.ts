@@ -57,6 +57,19 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
       AND bu.id <> lu.external_id::text;
   `);
 
+  // 2b. auth.verification.value holds the user id for `reset-password:` and
+  //     e-mail-change tokens, with no FK, so the re-key below does not reach
+  //     it. Without this a token issued before the upgrade stops resolving and
+  //     the user's reset link silently fails.
+  pgm.sql(`
+    UPDATE auth.verification v
+    SET value = lu.external_id::text
+    FROM auth."user" bu
+    JOIN auth.users lu ON lu.email = bu.email
+    WHERE v.value = bu.id
+      AND bu.id <> lu.external_id::text;
+  `);
+
   // 2. Re-key the Better Auth rows whose id diverged from the legacy UUID.
   pgm.sql(`
     UPDATE auth."user" bu
