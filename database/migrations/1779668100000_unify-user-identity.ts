@@ -82,15 +82,22 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   // 3. Refuse to continue on rows that cannot be paired: silently dropping or
   //    inventing an identity would orphan a user's friends.
   pgm.sql(`
-    DO $$ BEGIN
-      IF EXISTS (
-        SELECT 1 FROM auth."user" bu
+    DO $$
+    DECLARE
+      ba_only text := (
+        SELECT string_agg(bu.id || ' <' || bu.email || '>', ', ')
+        FROM auth."user" bu
         WHERE NOT EXISTS (SELECT 1 FROM auth.users lu WHERE lu.external_id::text = bu.id)
-      ) OR EXISTS (
-        SELECT 1 FROM auth.users lu
+      );
+      legacy_only text := (
+        SELECT string_agg(lu.id || ' <' || lu.email || '>', ', ')
+        FROM auth.users lu
         WHERE NOT EXISTS (SELECT 1 FROM auth."user" bu WHERE bu.id = lu.external_id::text)
-      )
-      THEN RAISE EXCEPTION 'orphan identity rows; resolve manually before upgrading';
+      );
+    BEGIN
+      IF ba_only IS NOT NULL OR legacy_only IS NOT NULL THEN
+        RAISE EXCEPTION 'orphan identity rows; resolve manually before upgrading. auth."user" without auth.users: [%]. auth.users without auth."user": [%]',
+          COALESCE(ba_only, ''), COALESCE(legacy_only, '');
       END IF;
     END $$;
   `);
