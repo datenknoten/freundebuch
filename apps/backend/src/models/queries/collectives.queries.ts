@@ -1472,13 +1472,20 @@ export interface ICreateRelationshipWithSourceQuery {
   result: ICreateRelationshipWithSourceResult;
 }
 
-const createRelationshipWithSourceIR: any = {"usedParamSet":{"fromFriendId":true,"toFriendId":true,"relationshipTypeId":true,"sourceMembershipId":true},"params":[{"name":"fromFriendId","required":false,"transform":{"type":"scalar"},"locs":[{"a":293,"b":305}]},{"name":"toFriendId","required":false,"transform":{"type":"scalar"},"locs":[{"a":312,"b":322}]},{"name":"relationshipTypeId","required":false,"transform":{"type":"scalar"},"locs":[{"a":329,"b":347}]},{"name":"sourceMembershipId","required":false,"transform":{"type":"scalar"},"locs":[{"a":354,"b":372}]}],"statement":"-- Create a relationship with source_membership_id set.\n-- On conflict, update the source to track the latest membership that triggered creation.\nINSERT INTO friends.friend_relationships (\n    friend_id,\n    related_friend_id,\n    relationship_type_id,\n    source_membership_id\n)\nVALUES (\n    :fromFriendId,\n    :toFriendId,\n    :relationshipTypeId,\n    :sourceMembershipId\n)\nON CONFLICT (friend_id, related_friend_id, relationship_type_id)\nDO UPDATE SET source_membership_id = EXCLUDED.source_membership_id\nRETURNING external_id, id"};
+const createRelationshipWithSourceIR: any = {"usedParamSet":{"fromFriendId":true,"toFriendId":true,"relationshipTypeId":true,"sourceMembershipId":true},"params":[{"name":"fromFriendId","required":false,"transform":{"type":"scalar"},"locs":[{"a":695,"b":707}]},{"name":"toFriendId","required":false,"transform":{"type":"scalar"},"locs":[{"a":714,"b":724}]},{"name":"relationshipTypeId","required":false,"transform":{"type":"scalar"},"locs":[{"a":731,"b":749}]},{"name":"sourceMembershipId","required":false,"transform":{"type":"scalar"},"locs":[{"a":756,"b":774}]}],"statement":"-- Create a relationship with source_membership_id set.\n--\n-- On conflict the edge already exists, so its owner is kept as-is: a manual\n-- edge (source NULL) or the first membership that derived it must not lose\n-- ownership to a later membership, otherwise removing that later membership\n-- deletes an edge it never created (see DeleteRelationshipsByMembershipId).\n-- COALESCE(existing, EXCLUDED) would not do: NULL is exactly the manual case.\n-- The self-assignment keeps RETURNING answering with the existing row, which\n-- DO NOTHING would not.\nINSERT INTO friends.friend_relationships (\n    friend_id,\n    related_friend_id,\n    relationship_type_id,\n    source_membership_id\n)\nVALUES (\n    :fromFriendId,\n    :toFriendId,\n    :relationshipTypeId,\n    :sourceMembershipId\n)\nON CONFLICT (friend_id, related_friend_id, relationship_type_id)\nDO UPDATE SET source_membership_id = friend_relationships.source_membership_id\nRETURNING external_id, id"};
 
 /**
  * Query generated from SQL:
  * ```
  * -- Create a relationship with source_membership_id set.
- * -- On conflict, update the source to track the latest membership that triggered creation.
+ * --
+ * -- On conflict the edge already exists, so its owner is kept as-is: a manual
+ * -- edge (source NULL) or the first membership that derived it must not lose
+ * -- ownership to a later membership, otherwise removing that later membership
+ * -- deletes an edge it never created (see DeleteRelationshipsByMembershipId).
+ * -- COALESCE(existing, EXCLUDED) would not do: NULL is exactly the manual case.
+ * -- The self-assignment keeps RETURNING answering with the existing row, which
+ * -- DO NOTHING would not.
  * INSERT INTO friends.friend_relationships (
  *     friend_id,
  *     related_friend_id,
@@ -1492,7 +1499,7 @@ const createRelationshipWithSourceIR: any = {"usedParamSet":{"fromFriendId":true
  *     :sourceMembershipId
  * )
  * ON CONFLICT (friend_id, related_friend_id, relationship_type_id)
- * DO UPDATE SET source_membership_id = EXCLUDED.source_membership_id
+ * DO UPDATE SET source_membership_id = friend_relationships.source_membership_id
  * RETURNING external_id, id
  * ```
  */

@@ -212,6 +212,84 @@ describe('Collectives API - Integration', () => {
       expect(childToParent).toBeDefined();
       expect(childToParent.relationshipTypeId).toBe('child');
     });
+
+    /**
+     * A rule-derived edge collides with an identical manual one, and the
+     * membership insert used to take ownership of it (ON CONFLICT ... SET
+     * source_membership_id = EXCLUDED...). Removing that membership then
+     * deleted a relationship the user had entered by hand.
+     */
+    it('keeps a manual relationship when a membership that re-derived it is removed', async () => {
+      const types = (await json(await req('GET', '/api/collectives/types'))).types;
+      const family = types.find((t: { name: string }) => t.name === 'Family');
+      const parentRole = family.roles.find((r: { roleKey: string }) => r.roleKey === 'parent');
+      const childRole = family.roles.find((r: { roleKey: string }) => r.roleKey === 'child');
+
+      const res = await req('POST', '/api/collectives', {
+        name: 'The Manuals',
+        collective_type_id: family.id,
+      });
+      expect(res.status).toBe(201);
+      const collectiveId = (await json(res)).id;
+
+      const parentId = await createTestFriend(poolOf(), user.externalId, 'Parent Manual');
+      const childId = await createTestFriend(poolOf(), user.externalId, 'Child Manual');
+
+      // Entered by hand, before any collective exists: parent --[parent]--> child
+      // plus the reciprocal child --[child]--> parent.
+      const manual = await req('POST', `/api/friends/${parentId}/relationships`, {
+        related_friend_id: childId,
+        relationship_type_id: 'parent',
+      });
+      expect(manual.status).toBe(201);
+
+      const addParent = await req('POST', `/api/collectives/${collectiveId}/members`, {
+        friend_id: parentId,
+        role_id: parentRole.id,
+      });
+      expect(addParent.status).toBe(201);
+
+      // Adding the child re-derives exactly the manual pair from the Family rules.
+      const addChild = await req('POST', `/api/collectives/${collectiveId}/members`, {
+        friend_id: childId,
+        role_id: childRole.id,
+      });
+      expect(addChild.status).toBe(201);
+      const childMembershipId = (await json(addChild)).id;
+
+      const removed = await req(
+        'DELETE',
+        `/api/collectives/${collectiveId}/members/${childMembershipId}`,
+      );
+      expect(removed.status).toBe(200);
+
+      const parent = await json(await req('GET', `/api/friends/${parentId}`));
+      expect(
+        parent.relationships.some(
+          (r: { relatedFriendId: string; relationshipTypeId: string }) =>
+            r.relatedFriendId === childId && r.relationshipTypeId === 'parent',
+        ),
+      ).toBe(true);
+
+      const child = await json(await req('GET', `/api/friends/${childId}`));
+      expect(
+        child.relationships.some(
+          (r: { relatedFriendId: string; relationshipTypeId: string }) =>
+            r.relatedFriendId === parentId && r.relationshipTypeId === 'child',
+        ),
+      ).toBe(true);
+
+      // Still owned by nobody, so a future membership cannot claim it either.
+      const { rows } = await poolOf().query<{ source_membership_id: number | null }>(
+        `SELECT r.source_membership_id
+           FROM friends.friend_relationships r
+           INNER JOIN friends.friends f ON f.id = r.friend_id
+          WHERE f.external_id = $1`,
+        [parentId],
+      );
+      expect(rows.map((row) => row.source_membership_id)).toEqual([null]);
+    });
+
   });
 
   describe('sub-resources', () => {

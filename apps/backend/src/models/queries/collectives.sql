@@ -521,7 +521,14 @@ WHERE c.id = :collectiveId;
 
 /* @name CreateRelationshipWithSource */
 -- Create a relationship with source_membership_id set.
--- On conflict, update the source to track the latest membership that triggered creation.
+--
+-- On conflict the edge already exists, so its owner is kept as-is: a manual
+-- edge (source NULL) or the first membership that derived it must not lose
+-- ownership to a later membership, otherwise removing that later membership
+-- deletes an edge it never created (see DeleteRelationshipsByMembershipId).
+-- COALESCE(existing, EXCLUDED) would not do: NULL is exactly the manual case.
+-- The self-assignment keeps RETURNING answering with the existing row, which
+-- DO NOTHING would not.
 INSERT INTO friends.friend_relationships (
     friend_id,
     related_friend_id,
@@ -535,7 +542,7 @@ VALUES (
     :sourceMembershipId
 )
 ON CONFLICT (friend_id, related_friend_id, relationship_type_id)
-DO UPDATE SET source_membership_id = EXCLUDED.source_membership_id
+DO UPDATE SET source_membership_id = friend_relationships.source_membership_id
 RETURNING external_id, id;
 
 /* @name CheckRelationshipExists */
