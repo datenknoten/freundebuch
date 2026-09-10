@@ -39,24 +39,39 @@ class AppPasswordBackend extends AbstractBasic
 
     private PDO $pdo;
 
+    /**
+     * Address of the row that validateUserPass() last matched, exactly as
+     * auth."user".email stores it.
+     */
+    private ?string $canonicalEmail = null;
+
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
     }
 
     /**
-     * The principal backend exposes principals/<stored lowercase email>, while
-     * Basic Auth carries whatever casing the client typed. The ACL plugin
-     * compares principal URIs byte-for-byte, so an upper-case login would
-     * authenticate and then be denied access to its own address book.
+     * The principal backend exposes principals/<stored email>, while Basic Auth
+     * carries whatever casing the client typed. The ACL plugin compares
+     * principal URIs byte-for-byte, so an upper-case login would authenticate
+     * and then be denied access to its own address book.
+     *
+     * The canonical form is the stored address itself, not strtolower() of the
+     * typed one: auth."user" is constrained to `email = lower(email)` with
+     * Postgres' locale-aware lower(), and the lookup below matches through the
+     * same function. PHP strtolower() is byte-wise ASCII-only, so it maps
+     * 'MÜLLER@example.com' to 'mÜller@example.com' and produced a principal URI
+     * no principal backend row could ever match. Echoing the matched row makes
+     * both sides identical by construction.
      *
      * @return array{0: bool, 1: string}
      */
     public function check(RequestInterface $request, ResponseInterface $response): array
     {
+        $this->canonicalEmail = null;
         $result = parent::check($request, $response);
-        if ($result[0] === true) {
-            $result[1] = strtolower($result[1]);
+        if ($result[0] === true && $this->canonicalEmail !== null) {
+            $result[1] = $this->principalPrefix . $this->canonicalEmail;
         }
 
         return $result;
@@ -152,6 +167,8 @@ class AppPasswordBackend extends AbstractBasic
                     WHERE id = :id
                 ');
                 $updateStmt->execute(['id' => $row['id']]);
+
+                $this->canonicalEmail = (string) $user['email'];
 
                 return true;
             }

@@ -393,6 +393,47 @@ class AppPasswordBackendTest extends TestCase
         );
     }
 
+    #[Test]
+    public function checkReturnsTheStoredPrincipalForANonAsciiUppercaseLogin(): void
+    {
+        $rawPassword = 'abcd1234efgh5678';
+
+        $userStmt = $this->createMock(PDOStatement::class);
+        $userStmt->method('execute')->willReturn(true);
+        $userStmt->method('fetch')->willReturn([
+            'id' => 1,
+            'external_id' => 'user-uuid',
+            'email' => 'müller@example.com',
+        ]);
+
+        $passwordStmt = $this->createMock(PDOStatement::class);
+        $passwordStmt->method('execute')->willReturn(true);
+        $passwordStmt->method('fetch')->willReturnOnConsecutiveCalls(
+            ['id' => 1, 'password_hash' => password_hash($rawPassword, PASSWORD_BCRYPT)],
+            false
+        );
+
+        $updateStmt = $this->createMock(PDOStatement::class);
+        $updateStmt->method('execute')->willReturn(true);
+
+        $this->pdo->method('prepare')
+            ->willReturnOnConsecutiveCalls($userStmt, $passwordStmt, $updateStmt);
+
+        $request = new Request('PROPFIND', '/addressbooks');
+        $request->addHeader(
+            'Authorization',
+            'Basic ' . base64_encode('MÜLLER@example.com:' . $rawPassword)
+        );
+
+        // strtolower() is byte-wise: it would answer principals/mÜller@… and
+        // the ACL plugin would deny the user their own address book. The
+        // matched row is the only form the principal backend ever exposes.
+        $this->assertSame(
+            [true, 'principals/müller@example.com'],
+            $this->backend->check($request, new Response())
+        );
+    }
+
     /**
      * Helper to call the protected validateUserPass method
      */

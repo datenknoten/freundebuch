@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Freundebuch\DAV\Tests\Integration\Auth;
 
 use Freundebuch\DAV\Auth\AppPasswordBackend;
+use Freundebuch\DAV\Principal\FreundebuchPrincipalBackend;
 use Freundebuch\DAV\Tests\Integration\IntegrationTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionClass;
+use Sabre\HTTP\Request;
+use Sabre\HTTP\Response;
 
 /**
  * Integration tests for AppPasswordBackend.
@@ -218,6 +221,35 @@ class AppPasswordBackendIntegrationTest extends IntegrationTestCase
         $this->assertTrue($this->callValidateUserPass('user@example.com', 'abcd1234efgh5678'));
         $this->assertTrue($this->callValidateUserPass('User@Example.com', 'abcd1234efgh5678'));
         $this->assertTrue($this->callValidateUserPass('USER@EXAMPLE.COM', 'abcd1234efgh5678'));
+    }
+
+    #[Test]
+    public function nonAsciiUppercaseLoginAuthenticatesAndMatchesItsPrincipal(): void
+    {
+        // Postgres lower() is locale-aware (the datcollate is a UTF-8 locale)
+        // and auth."user" is constrained to `email = lower(email)`; PHP
+        // strtolower() is byte-wise. A login as MÜLLER@… therefore used to
+        // authenticate and then be handed principals/mÜller@…, which no
+        // principal row matches, so the ACL plugin denied every resource.
+        $user = $this->createTestUser('müller@example.com');
+        $this->createAppPassword((int) $user['id'], 'Test Device', 'abcd1234efgh5678');
+
+        $this->assertTrue($this->callValidateUserPass('MÜLLER@example.com', 'abcd1234efgh5678'));
+
+        $request = new Request('PROPFIND', '/addressbooks');
+        $request->addHeader(
+            'Authorization',
+            'Basic ' . base64_encode('MÜLLER@example.com:abcd1234efgh5678')
+        );
+
+        $principal = (new FreundebuchPrincipalBackend($this->getPdo()))
+            ->getPrincipalByPath('principals/müller@example.com');
+
+        $this->assertNotNull($principal);
+        $this->assertSame(
+            [true, $principal['uri']],
+            $this->backend->check($request, new Response())
+        );
     }
 
     #[Test]
