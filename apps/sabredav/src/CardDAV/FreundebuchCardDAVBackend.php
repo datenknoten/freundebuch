@@ -422,13 +422,18 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         // hand a fresh client an empty address book whenever the log has been
         // pruned - the log records history, not the present state.
         if (!$syncToken) {
+            // Token before card list: a friend created between the two reads
+            // is then merely reported twice (a duplicate `added` on the next
+            // incremental sync is harmless) instead of being missing from
+            // this sync and from every later one.
+            $currentSyncToken = $this->getSyncToken((int) $addressBookId);
             $uris = [];
             foreach ($this->getCards($addressBookId) as $card) {
                 $uris[] = $card['uri'];
             }
 
             return [
-                'syncToken' => $this->getSyncToken((int) $addressBookId),
+                'syncToken' => $currentSyncToken,
                 'added' => $uris,
                 'modified' => [],
                 'deleted' => [],
