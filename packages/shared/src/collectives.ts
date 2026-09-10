@@ -1,4 +1,5 @@
 import { type } from 'arktype';
+import { IsoDateString } from './dates.js';
 import type { Paginated } from './pagination.js';
 
 /**
@@ -75,8 +76,9 @@ export const MembershipInputSchema = type({
   'notes?': 'string | null',
   'skip_auto_relationships?': 'boolean', // If true, skip auto-relationship creation
 }).narrow((data, ctx) => {
-  // Validate date format if provided
-  if (data.joined_date && !/^\d{4}-\d{2}-\d{2}$/.test(data.joined_date)) {
+  // A provided (non-null) date must be YYYY-MM-DD. Testing the string for truthiness
+  // instead let `joined_date: ''` reach Postgres as an invalid date literal.
+  if (typeof data.joined_date === 'string' && !IsoDateString.allows(data.joined_date)) {
     ctx.mustBe('a membership with a valid date (YYYY-MM-DD format)');
     return false;
   }
@@ -90,8 +92,8 @@ export const MembershipUpdateSchema = type({
   'joined_date?': 'string | null',
   'notes?': 'string | null',
 }).narrow((data, ctx) => {
-  // Validate date format if provided
-  if (data.joined_date && !/^\d{4}-\d{2}-\d{2}$/.test(data.joined_date)) {
+  // A provided (non-null) date must be YYYY-MM-DD; `''` is not "no date", it is a 400.
+  if (typeof data.joined_date === 'string' && !IsoDateString.allows(data.joined_date)) {
     ctx.mustBe('a membership with a valid date (YYYY-MM-DD format)');
     return false;
   }
@@ -104,8 +106,8 @@ export const MembershipDeactivateSchema = type({
   'reason?': 'string | null',
   'inactive_date?': 'string | null', // ISO date string (YYYY-MM-DD)
 }).narrow((data, ctx) => {
-  // Validate date format if provided
-  if (data.inactive_date && !/^\d{4}-\d{2}-\d{2}$/.test(data.inactive_date)) {
+  // A provided (non-null) date must be YYYY-MM-DD; `''` is not "no date", it is a 400.
+  if (typeof data.inactive_date === 'string' && !IsoDateString.allows(data.inactive_date)) {
     ctx.mustBe('a deactivation with a valid date (YYYY-MM-DD format)');
     return false;
   }

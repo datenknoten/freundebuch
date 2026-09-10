@@ -1,4 +1,5 @@
 import { type } from 'arktype';
+import { IsoDateFilter, IsoDateString } from './dates.js';
 import type { Paginated } from './pagination.js';
 
 /**
@@ -38,7 +39,7 @@ export const EncounterInputSchema = type({
   'description?': 'string | null',
 }).narrow((data, ctx) => {
   // Validate date format
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(data.encounter_date)) {
+  if (!IsoDateString.allows(data.encounter_date)) {
     ctx.mustBe('an encounter with a valid date (YYYY-MM-DD format)');
     return false;
   }
@@ -65,8 +66,9 @@ export const EncounterUpdateSchema = type({
   'location_text?': 'string | null',
   'description?': 'string | null',
 }).narrow((data, ctx) => {
-  // Validate date format if provided
-  if (data.encounter_date && !/^\d{4}-\d{2}-\d{2}$/.test(data.encounter_date)) {
+  // Validate the date format whenever the key is present. Testing the string for truthiness
+  // instead let `encounter_date: ''` through the boundary and into Postgres.
+  if (data.encounter_date !== undefined && !IsoDateString.allows(data.encounter_date)) {
     ctx.mustBe('an encounter with a valid date (YYYY-MM-DD format)');
     return false;
   }
@@ -89,8 +91,8 @@ export const EncounterListQuerySchema = type({
   'page?': 'string',
   'page_size?': 'string',
   'friend_id?': '"" | string.uuid', // Filter by specific friend
-  'from_date?': 'string', // Filter from date (YYYY-MM-DD)
-  'to_date?': 'string', // Filter to date (YYYY-MM-DD)
+  'from_date?': IsoDateFilter, // Filter from date (YYYY-MM-DD)
+  'to_date?': IsoDateFilter, // Filter to date (YYYY-MM-DD)
   'search?': 'string', // Search in title/description
   'type?': encounterTypeDef, // Filter by interaction type
 });

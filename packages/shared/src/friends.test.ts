@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DateInputSchema,
   EmailInputSchema,
+  MetInfoInputSchema,
   PhoneInputSchema,
   ProfessionalHistoryInputSchema,
   SocialProfileInputSchema,
@@ -124,6 +125,52 @@ describe('DateInputSchema', () => {
     expect(result.summary).toMatchInlineSnapshot(
       `"date_type must be "anniversary", "birthday" or "other" (was "graduation")"`,
     );
+  });
+
+  it('rejects an empty date_value instead of forwarding it to the date column', () => {
+    const result = DateInputSchema({ date_value: '', date_type: 'birthday' });
+    expect(result.summary).toContain('valid date (YYYY-MM-DD format)');
+  });
+
+  it('rejects a non-ISO date_value', () => {
+    const result = DateInputSchema({ date_value: '15.05.1990', date_type: 'birthday' });
+    expect(result.summary).toContain('valid date (YYYY-MM-DD format)');
+  });
+
+  it('accepts a full date whose year is not known (year_known carries that, not the string)', () => {
+    const result = DateInputSchema({
+      date_value: '1900-05-15',
+      year_known: false,
+      date_type: 'birthday',
+    });
+    expect(result).toEqual({ date_value: '1900-05-15', year_known: false, date_type: 'birthday' });
+  });
+});
+
+describe('MetInfoInputSchema', () => {
+  it('accepts an ISO met_date', () => {
+    const result = MetInfoInputSchema({ met_date: '2019-08-01', met_location: 'Berlin' });
+    expect(result).toEqual({ met_date: '2019-08-01', met_location: 'Berlin' });
+  });
+
+  it('accepts null to clear the date', () => {
+    const result = MetInfoInputSchema({ met_date: null });
+    expect(result).toEqual({ met_date: null });
+  });
+
+  it('accepts an omitted date', () => {
+    const result = MetInfoInputSchema({ met_location: 'Berlin' });
+    expect(result).toEqual({ met_location: 'Berlin' });
+  });
+
+  it('rejects an empty met_date instead of forwarding it to the date column', () => {
+    const result = MetInfoInputSchema({ met_date: '' });
+    expect(result.summary).toContain('valid date (YYYY-MM-DD format)');
+  });
+
+  it('rejects a non-ISO met_date', () => {
+    const result = MetInfoInputSchema({ met_date: 'summer 2019' });
+    expect(result.summary).toContain('valid date (YYYY-MM-DD format)');
   });
 });
 

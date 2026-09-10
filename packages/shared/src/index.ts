@@ -5,6 +5,7 @@ export * from './auth.js';
 export * from './circles.js';
 export * from './collectives.js';
 export * from './columns.js';
+export * from './dates.js';
 export * from './encounters.js';
 export * from './friends.js';
 export * from './notification-channels.js';
