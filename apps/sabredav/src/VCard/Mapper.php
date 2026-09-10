@@ -748,18 +748,31 @@ class Mapper
         return array_filter(explode("\n", str_replace("\r", '', $vcard)));
     }
 
+    /**
+     * Splits one unfolded content line into property, parameters and value.
+     *
+     * RFC 6350 §3.3 allows every content line to carry a group prefix
+     * ("item1.EMAIL:…"); Apple Contacts emits one for any property it attaches
+     * an X-ABLabel to, which is most of them. The prefix is stripped here so
+     * every caller can match on the bare property name — previously the whole
+     * line failed the regex and the email/phone/url was silently dropped.
+     *
+     * @return array{0: string, 1: array<string, string>, 2: string, 3: ?string}|null
+     *         property, params, value, group (null when ungrouped)
+     */
     private function parseLine(string $line): ?array
     {
-        // Match: PROPERTY;PARAM1=value;PARAM2=value:VALUE
-        if (!preg_match('/^([A-Za-z0-9-]+)(;[^:]*)?:(.*)$/s', $line, $matches)) {
+        // Match: [GROUP.]PROPERTY;PARAM1=value;PARAM2=value:VALUE
+        if (!preg_match('/^(?:([A-Za-z0-9-]+)\.)?([A-Za-z0-9-]+)(;[^:]*)?:(.*)$/s', $line, $matches)) {
             return null;
         }
 
-        $property = $matches[1];
+        $group = $matches[1] !== '' ? $matches[1] : null;
+        $property = $matches[2];
         $params = [];
 
-        if (!empty($matches[2])) {
-            $paramStr = substr($matches[2], 1); // Remove leading ;
+        if (!empty($matches[3])) {
+            $paramStr = substr($matches[3], 1); // Remove leading ;
             preg_match_all('/([A-Za-z0-9-]+)=([^;]*)/', $paramStr, $paramMatches, PREG_SET_ORDER);
             foreach ($paramMatches as $match) {
                 $params[strtoupper($match[1])] = $match[2];
@@ -771,7 +784,7 @@ class Mapper
             }
         }
 
-        return [$property, $params, $matches[3]];
+        return [$property, $params, $matches[4], $group];
     }
 
     private function mapPhoneType(string $type): string
@@ -934,7 +947,7 @@ class Mapper
                 continue;
             }
 
-            [$property, $params, $value] = $parsed;
+            [$property, $params, $value, $group] = $parsed;
             $propertyUpper = strtoupper($property);
 
             // Skip BEGIN/END markers
@@ -949,6 +962,13 @@ class Mapper
             // Include parameters if present
             if (!empty($params)) {
                 $entry['params'] = $params;
+            }
+
+            // Grouped lines are keyed by their bare property name, so keep the
+            // group ("item1") here — it is what ties a property to its
+            // X-ABLabel in Apple-authored cards.
+            if ($group !== null) {
+                $entry['group'] = $group;
             }
 
             // Group properties that can appear multiple times

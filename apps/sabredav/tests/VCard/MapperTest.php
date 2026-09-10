@@ -774,4 +774,51 @@ VCARD;
 
         $this->assertArrayNotHasKey('photo_url', $friend);
     }
+
+    #[Test]
+    public function vcardToFriendImportsAppleGroupedProperties(): void
+    {
+        // Apple Contacts groups every property it labels: "item1.EMAIL" plus
+        // "item1.X-ABLabel". Matching property names exactly dropped all of it.
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+UID:test-uuid
+FN:Jane Smith
+item1.EMAIL;type=INTERNET;type=pref:jane@example.com
+item1.X-ABLabel:_\$!<HomePage>!\$_
+item2.TEL;type=CELL:+1-555-0100
+item2.X-ABLabel:_\$!<Main>!\$_
+item3.URL:https://jane.example.com
+END:VCARD
+VCARD;
+
+        $friend = $this->mapper->vcardToFriend($vcard);
+
+        $this->assertCount(1, $friend['emails']);
+        $this->assertSame('jane@example.com', $friend['emails'][0]['email_address']);
+        $this->assertCount(1, $friend['phones']);
+        $this->assertSame('+1-555-0100', $friend['phones'][0]['phone_number']);
+        $this->assertSame('mobile', $friend['phones'][0]['phone_type']);
+        $this->assertCount(1, $friend['urls']);
+        $this->assertSame('https://jane.example.com', $friend['urls'][0]['url']);
+    }
+
+    #[Test]
+    public function vcardToJsonKeepsTheGroupOfAGroupedProperty(): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+UID:test-uuid
+FN:Jane Smith
+item1.EMAIL;type=INTERNET:jane@example.com
+END:VCARD
+VCARD;
+
+        $json = $this->mapper->vcardToJson($vcard);
+
+        $this->assertSame('jane@example.com', $json['properties']['EMAIL']['value']);
+        $this->assertSame('item1', $json['properties']['EMAIL']['group']);
+    }
 }
