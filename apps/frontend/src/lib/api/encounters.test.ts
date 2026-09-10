@@ -16,6 +16,12 @@ import {
 describe('encounters API', () => {
   let fetchMock: ReturnType<typeof stubFetch>;
 
+  /** The envelope every paginated endpoint returns (`Paginated<T>` in @freundebuch/shared). */
+  const emptyPage = {
+    data: [],
+    pagination: { page: 1, pageSize: 20, totalCount: 0, totalPages: 0 },
+  };
+
   beforeEach(() => {
     fetchMock = stubFetch();
   });
@@ -23,7 +29,7 @@ describe('encounters API', () => {
   afterEach(restoreFetch);
 
   it('listEncounters serializes filter params into a query string', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ encounters: [], pagination: {} }));
+    fetchMock.mockResolvedValue(jsonResponse(emptyPage));
 
     await listEncounters({ page: 2, pageSize: 25, friendId: 'f-1', type: 'in_person' as never });
 
@@ -36,9 +42,10 @@ describe('encounters API', () => {
   });
 
   it('listEncounters omits the query string when no params are given', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ encounters: [], pagination: {} }));
-    await listEncounters();
+    fetchMock.mockResolvedValue(jsonResponse(emptyPage));
+    const result = await listEncounters();
     expect(fetchMock).toHaveBeenCalledWith('/api/encounters', expect.objectContaining({}));
+    expect(result).toEqual(emptyPage);
   });
 
   it('getEncounter / createEncounter / updateEncounter / deleteEncounter hit the right endpoints', async () => {
@@ -66,7 +73,7 @@ describe('encounters API', () => {
   });
 
   it('getFriendEncounters drops friendId from the query and uses the nested path', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ encounters: [], pagination: {} }));
+    fetchMock.mockResolvedValue(jsonResponse(emptyPage));
 
     await getFriendEncounters('f-1', { page: 1 });
 

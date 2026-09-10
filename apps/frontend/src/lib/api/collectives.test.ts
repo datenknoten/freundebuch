@@ -25,15 +25,25 @@ describe('collectives API', () => {
 
   describe('listCollectives', () => {
     it('requests the collectives endpoint with no query string by default', async () => {
-      fetchMock.mockResolvedValue(jsonResponse({ collectives: [], pagination: {} }));
+      const envelope = {
+        data: [],
+        pagination: { page: 1, pageSize: 20, totalCount: 0, totalPages: 0 },
+      };
+      fetchMock.mockResolvedValue(jsonResponse(envelope));
 
-      await listCollectives();
+      const result = await listCollectives();
 
       expect(fetchMock).toHaveBeenCalledWith('/api/collectives', expect.objectContaining({}));
+      expect(result).toEqual(envelope);
     });
 
     it('serializes pagination and filter params into a query string', async () => {
-      fetchMock.mockResolvedValue(jsonResponse({ collectives: [], pagination: {} }));
+      fetchMock.mockResolvedValue(
+        jsonResponse({
+          data: [],
+          pagination: { page: 2, pageSize: 50, totalCount: 0, totalPages: 0 },
+        }),
+      );
 
       await listCollectives({ page: 2, pageSize: 50, typeId: 'club-1', includeDeleted: true });
 
