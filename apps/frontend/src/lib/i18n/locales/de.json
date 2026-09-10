@@ -1272,7 +1272,8 @@
       "failedToDelete": "Löschen fehlgeschlagen",
       "failedToSave": "Speichern fehlgeschlagen",
       "cannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden.",
-      "unsavedChanges": "Du hast ungespeicherte Änderungen. Bist du sicher, dass du schließen möchtest?"
+      "unsavedChanges": "Du hast ungespeicherte Änderungen. Bist du sicher, dass du schließen möchtest?",
+      "primary": "Primär"
     },
     "phone": {
       "phoneNumber": "Telefonnummer",
@@ -1285,7 +1286,9 @@
         "work": "Arbeit",
         "fax": "Fax",
         "other": "Sonstige"
-      }
+      },
+      "editAria": "Telefonnummer bearbeiten",
+      "deleteAria": "Telefonnummer löschen"
     },
     "email": {
       "emailAddress": "E-Mail-Adresse",
@@ -1294,7 +1297,9 @@
         "personal": "Privat",
         "work": "Arbeit",
         "other": "Sonstige"
-      }
+      },
+      "editAria": "E-Mail-Adresse bearbeiten",
+      "deleteAria": "E-Mail-Adresse löschen"
     },
     "address": {
       "address": "Adresse",
@@ -1306,7 +1311,9 @@
         "home": "Privat",
         "work": "Arbeit",
         "other": "Sonstige"
-      }
+      },
+      "editAria": "Adresse bearbeiten",
+      "deleteAria": "Adresse löschen"
     },
     "url": {
       "url": "URL",
@@ -1315,7 +1322,9 @@
         "work": "Arbeit",
         "blog": "Blog",
         "other": "Sonstige"
-      }
+      },
+      "editAria": "URL bearbeiten",
+      "deleteAria": "URL löschen"
     },
     "date": {
       "date": "Datum",
@@ -1324,7 +1333,9 @@
         "birthday": "Geburtstag",
         "anniversary": "Jahrestag",
         "other": "Sonstige"
-      }
+      },
+      "editAria": "Datum bearbeiten",
+      "deleteAria": "Datum löschen"
     },
     "social": {
       "platform": "Plattform",
@@ -1338,13 +1349,20 @@
         "instagram": "Instagram",
         "github": "GitHub",
         "other": "Sonstige"
-      }
+      },
+      "editAria": "Soziales Profil bearbeiten",
+      "deleteAria": "Soziales Profil löschen"
     },
     "employment": {
       "primaryEmployment": "Als primär festlegen (wird in Kontaktkarten angezeigt)",
       "notes": "Notizen",
       "notesPlaceholder": "Zusätzliche Details zu dieser Position...",
-      "hint": "Gib mindestens eine Berufsbezeichnung oder Organisation an."
+      "hint": "Gib mindestens eine Berufsbezeichnung oder Organisation an.",
+      "editAria": "Berufserfahrung bearbeiten",
+      "deleteAria": "Berufserfahrung löschen",
+      "present": "Heute",
+      "atOrganization": "{{jobTitle}} bei {{organization}}",
+      "untitled": "Berufserfahrung"
     },
     "dropdown": {
       "phoneNumber": "Telefonnummer",
@@ -1356,6 +1374,12 @@
       "circle": "Freundeskreis",
       "collective": "Kollektiv",
       "employment": "Berufserfahrung"
+    },
+    "circle": {
+      "removeAria": "Aus Freundeskreis entfernen"
+    },
+    "collective": {
+      "removeAria": "Aus Kollektiv entfernen"
     }
   },
   "oauth": {

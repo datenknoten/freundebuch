@@ -1,4 +1,5 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import type { Email, EmailType } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
@@ -13,17 +14,20 @@ interface Props {
 
 let { email, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $props();
 
-function formatEmailType(type: EmailType): string {
-  const typeLabels: Record<EmailType, string> = {
-    personal: 'Personal',
-    work: 'Work',
-    other: 'Other',
-  };
-  return typeLabels[type] || type;
+const i18n = createI18n();
+
+function emailTypeLabel(type: EmailType): string {
+  return $i18n.t(`subresources.email.types.${type}`);
 }
 </script>
 
-<SubresourceRow {onEdit} {onDelete} {isDeleting} editLabel="Edit email" deleteLabel="Delete email">
+<SubresourceRow
+  {onEdit}
+  {onDelete}
+  {isDeleting}
+  editLabel={$i18n.t('subresources.email.editAria')}
+  deleteLabel={$i18n.t('subresources.email.deleteAria')}
+>
   <div class="flex-1 min-w-0">
     <a
       href="mailto:{email.emailAddress}"
@@ -34,10 +38,12 @@ function formatEmailType(type: EmailType): string {
       {email.emailAddress}
     </a>
     <span class="text-sm text-gray-500 block sm:inline sm:ml-2">
-      {formatEmailType(email.emailType)}
+      {emailTypeLabel(email.emailType)}
       {#if email.label} - {email.label}{/if}
       {#if email.isPrimary}
-        <span class="ml-1 px-2 py-0.5 bg-forest text-white text-xs rounded">Primary</span>
+        <span class="ml-1 px-2 py-0.5 bg-forest text-white text-xs rounded">
+          {$i18n.t('subresources.common.primary')}
+        </span>
       {/if}
     </span>
   </div>

@@ -6,8 +6,10 @@ interface Props {
   onEdit?: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
+  /** Accessible label for the edit action; required whenever `onEdit` is given. */
   editLabel?: string;
-  deleteLabel?: string;
+  /** Accessible label for the delete action; callers pass a translated string. */
+  deleteLabel: string;
   /** Keyboard chord for the edit action (e.g. "e 2"), shown as a hint on click */
   editShortcutHint?: string;
   /** Keyboard chord for the delete action (e.g. "d 2"), shown as a hint on click */
@@ -18,8 +20,8 @@ let {
   onEdit,
   onDelete,
   isDeleting = false,
-  editLabel = 'Edit',
-  deleteLabel = 'Delete',
+  editLabel,
+  deleteLabel,
   editShortcutHint,
   deleteShortcutHint,
 }: Props = $props();

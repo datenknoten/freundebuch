@@ -1,4 +1,5 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import type { Phone, PhoneType } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
@@ -13,19 +14,20 @@ interface Props {
 
 let { phone, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $props();
 
-function formatPhoneType(type: PhoneType): string {
-  const typeLabels: Record<PhoneType, string> = {
-    mobile: 'Mobile',
-    home: 'Home',
-    work: 'Work',
-    fax: 'Fax',
-    other: 'Other',
-  };
-  return typeLabels[type] || type;
+const i18n = createI18n();
+
+function phoneTypeLabel(type: PhoneType): string {
+  return $i18n.t(`subresources.phone.types.${type}`);
 }
 </script>
 
-<SubresourceRow {onEdit} {onDelete} {isDeleting} editLabel="Edit phone" deleteLabel="Delete phone">
+<SubresourceRow
+  {onEdit}
+  {onDelete}
+  {isDeleting}
+  editLabel={$i18n.t('subresources.phone.editAria')}
+  deleteLabel={$i18n.t('subresources.phone.deleteAria')}
+>
   <div class="flex-1 min-w-0">
     <a
       href="tel:{phone.phoneNumber}"
@@ -36,10 +38,12 @@ function formatPhoneType(type: PhoneType): string {
       {phone.phoneNumber}
     </a>
     <span class="text-sm text-gray-500 block sm:inline sm:ml-2">
-      {formatPhoneType(phone.phoneType)}
+      {phoneTypeLabel(phone.phoneType)}
       {#if phone.label} - {phone.label}{/if}
       {#if phone.isPrimary}
-        <span class="ml-1 px-2 py-0.5 bg-forest text-white text-xs rounded">Primary</span>
+        <span class="ml-1 px-2 py-0.5 bg-forest text-white text-xs rounded">
+          {$i18n.t('subresources.common.primary')}
+        </span>
       {/if}
     </span>
   </div>

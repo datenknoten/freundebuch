@@ -15,25 +15,30 @@ describe('DetailActions', () => {
   });
 
   it('omits the edit button when no onEdit handler is given', () => {
-    render(DetailActions, { onDelete: vi.fn() });
-    expect(screen.queryByLabelText('Edit')).toBeNull();
-    expect(screen.getByLabelText('Delete')).toBeTruthy();
+    render(DetailActions, { onDelete: vi.fn(), deleteLabel: 'Delete phone' });
+    expect(screen.queryByLabelText('Edit phone')).toBeNull();
+    expect(screen.getByLabelText('Delete phone')).toBeTruthy();
   });
 
   it('fires onEdit and onDelete when pressed', async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
-    render(DetailActions, { onEdit, onDelete });
+    render(DetailActions, {
+      onEdit,
+      onDelete,
+      editLabel: 'Edit phone',
+      deleteLabel: 'Delete phone',
+    });
 
-    await fireEvent.click(screen.getByLabelText('Edit'));
-    await fireEvent.click(screen.getByLabelText('Delete'));
+    await fireEvent.click(screen.getByLabelText('Edit phone'));
+    await fireEvent.click(screen.getByLabelText('Delete phone'));
 
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
   it('disables the delete button while deleting', () => {
-    render(DetailActions, { onDelete: vi.fn(), isDeleting: true });
-    expect((screen.getByLabelText('Delete') as HTMLButtonElement).disabled).toBe(true);
+    render(DetailActions, { onDelete: vi.fn(), isDeleting: true, deleteLabel: 'Delete phone' });
+    expect((screen.getByLabelText('Delete phone') as HTMLButtonElement).disabled).toBe(true);
   });
 });

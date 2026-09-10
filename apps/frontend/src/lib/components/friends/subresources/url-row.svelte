@@ -1,4 +1,5 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import type { Url, UrlType } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
@@ -13,14 +14,10 @@ interface Props {
 
 let { url, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $props();
 
-function formatUrlType(type: UrlType): string {
-  const typeLabels: Record<UrlType, string> = {
-    personal: 'Personal',
-    work: 'Work',
-    blog: 'Blog',
-    other: 'Other',
-  };
-  return typeLabels[type] || type;
+const i18n = createI18n();
+
+function urlTypeLabel(type: UrlType): string {
+  return $i18n.t(`subresources.url.types.${type}`);
 }
 
 function formatUrl(rawUrl: string): string {
@@ -33,7 +30,13 @@ function formatUrl(rawUrl: string): string {
 }
 </script>
 
-<SubresourceRow {onEdit} {onDelete} {isDeleting} editLabel="Edit URL" deleteLabel="Delete URL">
+<SubresourceRow
+  {onEdit}
+  {onDelete}
+  {isDeleting}
+  editLabel={$i18n.t('subresources.url.editAria')}
+  deleteLabel={$i18n.t('subresources.url.deleteAria')}
+>
   <div class="flex-1 min-w-0">
     <a
       href={url.url}
@@ -46,7 +49,7 @@ function formatUrl(rawUrl: string): string {
       {formatUrl(url.url)}
     </a>
     <span class="text-sm text-gray-500 block sm:inline sm:ml-2">
-      {formatUrlType(url.urlType)}
+      {urlTypeLabel(url.urlType)}
       {#if url.label} - {url.label}{/if}
     </span>
   </div>

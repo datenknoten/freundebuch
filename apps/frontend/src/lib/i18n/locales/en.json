@@ -1272,7 +1272,8 @@
       "failedToDelete": "Failed to delete",
       "failedToSave": "Failed to save",
       "cannotBeUndone": "This action cannot be undone.",
-      "unsavedChanges": "You have unsaved changes. Are you sure you want to close?"
+      "unsavedChanges": "You have unsaved changes. Are you sure you want to close?",
+      "primary": "Primary"
     },
     "phone": {
       "phoneNumber": "Phone Number",
@@ -1285,7 +1286,9 @@
         "work": "Work",
         "fax": "Fax",
         "other": "Other"
-      }
+      },
+      "editAria": "Edit phone",
+      "deleteAria": "Delete phone"
     },
     "email": {
       "emailAddress": "Email Address",
@@ -1294,7 +1297,9 @@
         "personal": "Personal",
         "work": "Work",
         "other": "Other"
-      }
+      },
+      "editAria": "Edit email",
+      "deleteAria": "Delete email"
     },
     "address": {
       "address": "Address",
@@ -1306,7 +1311,9 @@
         "home": "Home",
         "work": "Work",
         "other": "Other"
-      }
+      },
+      "editAria": "Edit address",
+      "deleteAria": "Delete address"
     },
     "url": {
       "url": "URL",
@@ -1315,7 +1322,9 @@
         "work": "Work",
         "blog": "Blog",
         "other": "Other"
-      }
+      },
+      "editAria": "Edit URL",
+      "deleteAria": "Delete URL"
     },
     "date": {
       "date": "Date",
@@ -1324,7 +1333,9 @@
         "birthday": "Birthday",
         "anniversary": "Anniversary",
         "other": "Other"
-      }
+      },
+      "editAria": "Edit date",
+      "deleteAria": "Delete date"
     },
     "social": {
       "platform": "Platform",
@@ -1338,13 +1349,20 @@
         "instagram": "Instagram",
         "github": "GitHub",
         "other": "Other"
-      }
+      },
+      "editAria": "Edit social profile",
+      "deleteAria": "Delete social profile"
     },
     "employment": {
       "primaryEmployment": "Set as primary (shown in contact cards)",
       "notes": "Notes",
       "notesPlaceholder": "Additional details about this position...",
-      "hint": "Provide at least a job title or organization."
+      "hint": "Provide at least a job title or organization.",
+      "editAria": "Edit employment",
+      "deleteAria": "Delete employment",
+      "present": "Present",
+      "atOrganization": "{{jobTitle}} at {{organization}}",
+      "untitled": "Employment"
     },
     "dropdown": {
       "phoneNumber": "Phone Number",
@@ -1356,6 +1374,12 @@
       "circle": "Circle",
       "collective": "Collective",
       "employment": "Employment"
+    },
+    "circle": {
+      "removeAria": "Remove from circle"
+    },
+    "collective": {
+      "removeAria": "Remove from collective"
     }
   },
   "oauth": {

@@ -1,7 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '$lib/test';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import en from '$lib/i18n/locales/en.json';
+import { render, screen, useLanguage } from '$lib/test';
 import type { SocialProfile } from '$shared';
 import SocialProfileRow from './social-profile-row.svelte';
+
+const strings = en.subresources;
 
 const profile = (overrides: Partial<SocialProfile> = {}): SocialProfile => ({
   id: 'sp-1',
@@ -12,6 +15,10 @@ const profile = (overrides: Partial<SocialProfile> = {}): SocialProfile => ({
 
 // Renders twice (mobile + desktop), so queries use *All*.
 describe('SocialProfileRow', () => {
+  beforeEach(async () => {
+    await useLanguage('en');
+  });
+
   it('shows @username and the platform label when a username is set', () => {
     render(SocialProfileRow, {
       profile: profile({ username: 'ada', platform: 'github' }),
@@ -20,7 +27,7 @@ describe('SocialProfileRow', () => {
     });
 
     expect(screen.getAllByText('@ada').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('GitHub').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(strings.social.platforms.github).length).toBeGreaterThan(0);
   });
 
   it('links to the profile URL when there is no username', () => {
@@ -41,6 +48,17 @@ describe('SocialProfileRow', () => {
     });
 
     expect(screen.queryByRole('link')).toBeNull();
-    expect(screen.getAllByText('Other').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(strings.social.platforms.other).length).toBeGreaterThan(0);
+  });
+
+  it('translates the fallback platform label', async () => {
+    await useLanguage('de');
+    render(SocialProfileRow, {
+      profile: profile({ platform: 'other', username: undefined, profileUrl: undefined }),
+      onEdit: vi.fn(),
+      onDelete: vi.fn(),
+    });
+
+    expect(screen.getAllByText('Sonstige').length).toBeGreaterThan(0);
   });
 });

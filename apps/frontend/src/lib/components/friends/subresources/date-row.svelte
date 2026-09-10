@@ -1,4 +1,5 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import type { DateType, FriendDate } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
@@ -11,14 +12,7 @@ interface Props {
 
 let { date, onEdit, onDelete, isDeleting = false }: Props = $props();
 
-function formatDateType(type: DateType): string {
-  const typeLabels: Record<DateType, string> = {
-    birthday: 'Birthday',
-    anniversary: 'Anniversary',
-    other: 'Other',
-  };
-  return typeLabels[type] || type;
-}
+const i18n = createI18n();
 
 function formatDate(dateValue: string, yearKnown: boolean): string {
   try {
@@ -39,15 +33,25 @@ function formatDate(dateValue: string, yearKnown: boolean): string {
     return dateValue;
   }
 }
+
+function dateTypeLabel(type: DateType): string {
+  return $i18n.t(`subresources.date.types.${type}`);
+}
 </script>
 
-<SubresourceRow {onEdit} {onDelete} {isDeleting} editLabel="Edit date" deleteLabel="Delete date">
+<SubresourceRow
+  {onEdit}
+  {onDelete}
+  {isDeleting}
+  editLabel={$i18n.t('subresources.date.editAria')}
+  deleteLabel={$i18n.t('subresources.date.deleteAria')}
+>
   <div class="flex-1 min-w-0">
     <span class="text-gray-900 font-body font-semibold">
       {formatDate(date.dateValue, date.yearKnown)}
     </span>
     <span class="text-sm text-gray-500 block sm:inline sm:ml-2">
-      {formatDateType(date.dateType)}
+      {dateTypeLabel(date.dateType)}
       {#if date.label} - {date.label}{/if}
     </span>
   </div>

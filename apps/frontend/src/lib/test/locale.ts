@@ -1,3 +1,18 @@
+import { changeLanguage, initI18n, type SupportedLanguage } from '$lib/i18n/index.js';
+
+/**
+ * Load the real locale bundles and switch to `lang`.
+ *
+ * Components that translate through `createI18n()` render raw key paths until i18next is
+ * initialised, so a test that wants to assert user-visible text has to boot it. Asserting
+ * against the bundle (rather than a literal) is what keeps a hard-coded English string
+ * from sneaking back into a component.
+ */
+export async function useLanguage(lang: SupportedLanguage): Promise<void> {
+  await initI18n(lang);
+  await changeLanguage(lang);
+}
+
 /**
  * Substitute the runtime's *default* locale for the duration of a callback.
  *

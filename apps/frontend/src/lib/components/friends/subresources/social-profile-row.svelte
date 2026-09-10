@@ -1,4 +1,5 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import type { SocialPlatform, SocialProfile } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
@@ -13,17 +14,10 @@ interface Props {
 
 let { profile, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $props();
 
-const platformLabels: Record<SocialPlatform, string> = {
-  linkedin: 'LinkedIn',
-  twitter: 'Twitter/X',
-  facebook: 'Facebook',
-  instagram: 'Instagram',
-  github: 'GitHub',
-  other: 'Other',
-};
+const i18n = createI18n();
 
-function formatPlatform(platform: SocialPlatform): string {
-  return platformLabels[platform] || platform;
+function platformLabel(platform: SocialPlatform): string {
+  return $i18n.t(`subresources.social.platforms.${platform}`);
 }
 
 function getDisplayText(): string {
@@ -38,7 +32,7 @@ function getDisplayText(): string {
       return profile.profileUrl;
     }
   }
-  return formatPlatform(profile.platform);
+  return platformLabel(profile.platform);
 }
 
 function getLink(): string | null {
@@ -46,7 +40,13 @@ function getLink(): string | null {
 }
 </script>
 
-<SubresourceRow {onEdit} {onDelete} {isDeleting} editLabel="Edit social profile" deleteLabel="Delete social profile">
+<SubresourceRow
+  {onEdit}
+  {onDelete}
+  {isDeleting}
+  editLabel={$i18n.t('subresources.social.editAria')}
+  deleteLabel={$i18n.t('subresources.social.deleteAria')}
+>
   <div class="flex-1 min-w-0">
     {#if getLink()}
       <a
@@ -65,7 +65,7 @@ function getLink(): string | null {
       </span>
     {/if}
     <span class="text-sm text-gray-500 block sm:inline sm:ml-2">
-      {formatPlatform(profile.platform)}
+      {platformLabel(profile.platform)}
     </span>
   </div>
 </SubresourceRow>

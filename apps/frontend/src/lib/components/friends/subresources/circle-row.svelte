@@ -1,5 +1,6 @@
 <script lang="ts">
 import CircleChip from '$lib/components/circles/circle-chip.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import type { CircleSummary } from '$shared';
 import DetailActions from './detail-actions.svelte';
 import SwipeableRow from './swipeable-row.svelte';
@@ -11,6 +12,8 @@ interface Props {
 }
 
 let { circle, onDelete, isDeleting = false }: Props = $props();
+
+const i18n = createI18n();
 </script>
 
 <!-- Mobile: Swipeable row (only swipe left for delete, no edit) -->
@@ -23,7 +26,7 @@ let { circle, onDelete, isDeleting = false }: Props = $props();
       <DetailActions
         onDelete={onDelete}
         {isDeleting}
-        deleteLabel="Remove from circle"
+        deleteLabel={$i18n.t('subresources.circle.removeAria')}
       />
     </div>
   </SwipeableRow>
@@ -38,7 +41,7 @@ let { circle, onDelete, isDeleting = false }: Props = $props();
     <DetailActions
       onDelete={onDelete}
       {isDeleting}
-      deleteLabel="Remove from circle"
+      deleteLabel={$i18n.t('subresources.circle.removeAria')}
     />
   </div>
 </div>

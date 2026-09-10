@@ -44,7 +44,7 @@ let { collective, onRemove, isRemoving = false, shortcutHint }: Props = $props()
       <DetailActions
         onDelete={() => onRemove(collective.id, collective.membershipId)}
         isDeleting={isRemoving}
-        deleteLabel="Remove from collective"
+        deleteLabel={$i18n.t('subresources.collective.removeAria')}
       />
     </div>
   </SwipeableRow>
@@ -78,7 +78,7 @@ let { collective, onRemove, isRemoving = false, shortcutHint }: Props = $props()
     <DetailActions
       onDelete={() => onRemove(collective.id, collective.membershipId)}
       isDeleting={isRemoving}
-      deleteLabel="Remove from collective"
+      deleteLabel={$i18n.t('subresources.collective.removeAria')}
     />
   </div>
 </div>

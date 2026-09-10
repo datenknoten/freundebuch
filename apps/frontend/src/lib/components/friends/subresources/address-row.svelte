@@ -19,13 +19,8 @@ let showMap = $state(false);
 
 const hasCoordinates = $derived(address.latitude != null && address.longitude != null);
 
-function formatAddressType(type: AddressType): string {
-  const typeLabels: Record<AddressType, string> = {
-    home: 'Home',
-    work: 'Work',
-    other: 'Other',
-  };
-  return typeLabels[type] || type;
+function addressTypeLabel(type: AddressType): string {
+  return $i18n.t(`subresources.address.types.${type}`);
 }
 
 function formatAddress(addr: Address): string[] {
@@ -46,7 +41,13 @@ function formatAddressLabel(addr: Address): string {
 const addressLines = $derived(formatAddress(address));
 </script>
 
-<SubresourceRow {onEdit} {onDelete} {isDeleting} editLabel="Edit address" deleteLabel="Delete address">
+<SubresourceRow
+  {onEdit}
+  {onDelete}
+  {isDeleting}
+  editLabel={$i18n.t('subresources.address.editAria')}
+  deleteLabel={$i18n.t('subresources.address.deleteAria')}
+>
   <div class="flex-1 min-w-0">
     <div class="flex items-start justify-between gap-2 sm:gap-4">
       <div class="font-body min-w-0">
@@ -56,11 +57,13 @@ const addressLines = $derived(formatAddress(address));
       </div>
       <div class="flex flex-col items-end gap-1 shrink-0">
         <span class="text-sm text-gray-500 whitespace-nowrap">
-          {formatAddressType(address.addressType)}
+          {addressTypeLabel(address.addressType)}
           {#if address.label} - {address.label}{/if}
         </span>
         {#if address.isPrimary}
-          <span class="px-2 py-0.5 bg-forest text-white text-xs rounded">Primary</span>
+          <span class="px-2 py-0.5 bg-forest text-white text-xs rounded">
+            {$i18n.t('subresources.common.primary')}
+          </span>
         {/if}
       </div>
     </div>

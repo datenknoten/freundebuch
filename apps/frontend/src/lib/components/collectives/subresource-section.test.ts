@@ -119,7 +119,7 @@ describe('SubresourceSection', () => {
     });
     renderSection(descriptor);
 
-    await fireEvent.click((await screen.findAllByLabelText('Edit phone'))[0]);
+    await fireEvent.click((await screen.findAllByLabelText('subresources.phone.editAria'))[0]);
     expect(await screen.findByText('friendDetail.modal.edit modal.type')).toBeTruthy();
 
     await fireEvent.input(await screen.findByLabelText(/subresources\.phone\.phoneNumber/), {
@@ -146,7 +146,7 @@ describe('SubresourceSection', () => {
     });
     renderSection(descriptor);
 
-    await fireEvent.click((await screen.findAllByLabelText('Delete phone'))[0]);
+    await fireEvent.click((await screen.findAllByLabelText('subresources.phone.deleteAria'))[0]);
     expect(await screen.findByText('Delete Phone Number')).toBeTruthy();
 
     await fireEvent.click(screen.getByText('subresources.common.delete'));
@@ -178,7 +178,7 @@ describe('SubresourceSection', () => {
     expect((await screen.findAllByText('+1 555 0200')).length).toBeGreaterThan(0);
 
     // Delete -> remove() then reload() drops it again.
-    await fireEvent.click((await screen.findAllByLabelText('Delete phone'))[0]);
+    await fireEvent.click((await screen.findAllByLabelText('subresources.phone.deleteAria'))[0]);
     await fireEvent.click(screen.getByText('subresources.common.delete'));
     await waitFor(() => expect(remove).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.queryAllByText('+1 555 0200')).toHaveLength(0));
@@ -229,7 +229,7 @@ describe('SubresourceSection', () => {
     });
 
     // Open the edit modal on the first collective.
-    await fireEvent.click((await screen.findAllByLabelText('Edit phone'))[0]);
+    await fireEvent.click((await screen.findAllByLabelText('subresources.phone.editAria'))[0]);
     expect(await screen.findByText('friendDetail.modal.edit modal.type')).toBeTruthy();
 
     // Navigate to another collective without unmounting the component.
@@ -327,7 +327,9 @@ describe('SubresourceSection', () => {
     renderSection(descriptor);
 
     // CircleRow exposes only a remove action, no edit button.
-    expect((await screen.findAllByLabelText('Remove from circle')).length).toBeGreaterThan(0);
-    expect(screen.queryByLabelText('Edit phone')).toBeNull();
+    expect(
+      (await screen.findAllByLabelText('subresources.circle.removeAria')).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByLabelText('subresources.phone.editAria')).toBeNull();
   });
 });

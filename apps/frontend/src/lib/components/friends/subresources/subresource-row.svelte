@@ -7,19 +7,14 @@ interface Props {
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
-  editLabel?: string;
-  deleteLabel?: string;
+  /** Accessible label for the edit action; callers pass a translated string. */
+  editLabel: string;
+  /** Accessible label for the delete action; callers pass a translated string. */
+  deleteLabel: string;
   children: Snippet;
 }
 
-let {
-  onEdit,
-  onDelete,
-  isDeleting = false,
-  editLabel = 'Edit',
-  deleteLabel = 'Delete',
-  children,
-}: Props = $props();
+let { onEdit, onDelete, isDeleting = false, editLabel, deleteLabel, children }: Props = $props();
 </script>
 
 {#snippet rowContent()}
