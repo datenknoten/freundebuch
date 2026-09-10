@@ -140,6 +140,19 @@ jobs:
             dockerfile: docker/Dockerfile.osm-import
             platform: linux/arm64
             arch: arm64
+          # all-in-one - amd64 (root Dockerfile: nginx + frontend + backend +
+          # mcp-server + php-fpm under supervisord, for single-container hosts)
+          - image: all-in-one
+            dockerfile: Dockerfile
+            target: production
+            platform: linux/amd64
+            arch: amd64
+          # all-in-one - arm64
+          - image: all-in-one
+            dockerfile: Dockerfile
+            target: production
+            platform: linux/arm64
+            arch: arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -183,7 +196,8 @@ jobs:
           # which break docker manifest create. Attestation is done at manifest level.
           provenance: false
           sbom: false
-          build-args: ${{ matrix.image == 'nginx' && format('VITE_SENTRY_DSN={0}', secrets.VITE_SENTRY_DSN) || '' }}
+          # Both images build the static frontend, so both take the DSN.
+          build-args: ${{ (matrix.image == 'nginx' || matrix.image == 'all-in-one') && format('VITE_SENTRY_DSN={0}', secrets.VITE_SENTRY_DSN) || '' }}
           # Multi-layer caching strategy for maximum cache hits
           cache-from: |
             type=gha,scope=${{ matrix.image }}-${{ matrix.arch }}
@@ -207,6 +221,7 @@ jobs:
           - mcp-server
           - sabredav
           - osm-import
+          - all-in-one
     steps:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -269,6 +284,7 @@ jobs:
           - mcp-server
           - sabredav
           - osm-import
+          - all-in-one
     steps:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3

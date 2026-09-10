@@ -499,6 +499,23 @@ jobs:
           cache-from: type=gha,scope=ci-nginx
           cache-to: type=gha,mode=max,scope=ci-nginx
 
+      # Different toolchain path from the others: this one installs mise via
+      # the shell installer on node:24-bookworm-slim (the mise base image has
+      # no php8.2), so it breaks independently of Dockerfile.backend.prod.
+      # Without a build here the first attempt happens in release.yml, after
+      # semantic-release has already tagged and published.
+      - name: Build all-in-one image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          target: production
+          load: true
+          tags: freundebuch-all-in-one:ci
+          platforms: linux/amd64
+          cache-from: type=gha,scope=ci-all-in-one
+          cache-to: type=gha,mode=max,scope=ci-all-in-one
+
       - name: Smoke test images
         run: |
           # Resolve modules from each app's own directory: in the pnpm/aube
@@ -509,5 +526,13 @@ jobs:
           docker run --rm -w /app/apps/mcp-server freundebuch-mcp-server:ci node -e "require('bcrypt');"
           # Frontend build produced static assets served by nginx.
           docker run --rm freundebuch-nginx:ci test -f /app/frontend/index.html
+          # The all-in-one entrypoint migrates before starting supervisord, so
+          # the migrator has to run inside the pruned production tree: its `pg`
+          # peer is only a root devDependency and is reachable through the
+          # virtual store alone. Point it at a dead port — a refused connection
+          # proves the CLI, `pg` and database/dist are all there.
+          docker run --rm -e DATABASE_URL=postgresql://u:p@127.0.0.1:1/none freundebuch-all-in-one:ci \
+            node /app/node_modules/node-pg-migrate/bin/node-pg-migrate.js \
+            --decamelize --migrations-dir /app/database/dist up 2>&1 | grep -q ECONNREFUSED
           echo "Docker smoke tests passed"
 
