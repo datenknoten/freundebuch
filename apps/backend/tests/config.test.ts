@@ -27,9 +27,23 @@ describe('getConfig', () => {
       expect(() => getConfig()).toThrow('Configuration validation failed');
     });
 
-    it('should throw an error when BETTER_AUTH_SECRET contains change-this', () => {
+    it('should throw an actionable error when BETTER_AUTH_SECRET is a placeholder', () => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
       vi.stubEnv('BETTER_AUTH_SECRET', 'test-change-this-test-better-auth-secret-1');
+
+      // The rejection is deliberate (a copied dev secret must not reach
+      // production), so the message has to say what to do instead of showing
+      // the negative lookahead.
+      expect(() => getConfig()).toThrow('Configuration validation failed');
+      expect(() => getConfig()).toThrow('openssl rand -hex 32');
+    });
+
+    it.each([
+      'your-secret',
+      'REPLACE',
+    ])('should reject the %s placeholder too', (placeholder: string) => {
+      vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
+      vi.stubEnv('BETTER_AUTH_SECRET', `prefix-${placeholder}-suffix-padding-to-32-chars`);
 
       expect(() => getConfig()).toThrow('Configuration validation failed');
     });

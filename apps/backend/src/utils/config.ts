@@ -5,7 +5,16 @@ const BooleanString = type('"true" | "false" | "TRUE" | "FALSE" | "1" | "0" | bo
   (result) => result === 'true' || result === '1' || result === 'TRUE' || result === true,
 );
 
-const SecretType = type('string >= 32').and(/^(?!.*(?:change-this|your-secret|REPLACE)).*$/);
+// The dev compose default and .env.example placeholders are rejected on
+// purpose, so a copied dev secret cannot reach production. narrow() rather
+// than and(/regex/) because the arktype summary for a negative lookahead is
+// `must be matched by /^(?!...)/`, which tells the operator nothing.
+const PLACEHOLDER_SECRET = /change-this|your-secret|REPLACE/;
+const SecretType = type('string >= 32').narrow(
+  (value, ctx) =>
+    !PLACEHOLDER_SECRET.test(value) ||
+    ctx.mustBe('a generated secret (e.g. `openssl rand -hex 32`), not the placeholder'),
+);
 
 // Validate the connection string shape at boot rather than failing on first
 // connect with an opaque error.
