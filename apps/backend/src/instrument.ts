@@ -30,7 +30,11 @@ const IS_PRODUCTION = APP_ENV === 'production';
 // redaction in utils/logger.ts — forwarded log attributes are scrubbed here
 // too, since this is a personal CRM (names, emails, addresses) and the
 // notification channels hold credentials that grant access on their own.
-const SENSITIVE_LOG_KEYS = [
+//
+// resetUrl/verificationUrl are deliberately still here even though
+// LOG_REDACT_PATHS no longer redacts them: the local debug log is the
+// documented no-SMTP recovery path, Sentry is not.
+export const SENSITIVE_LOG_KEYS = [
   'email',
   'newEmail',
   'displayName',
@@ -52,11 +56,11 @@ const SENSITIVE_LOG_KEYS = [
 const BOT_TOKEN_IN_PATH = /\/bot[^/\s]+\//g;
 const URL_ATTRIBUTES = ['http.url', 'url'];
 
-function redactBotToken(value: string): string {
+export function redactBotToken(value: string): string {
   return value.replace(BOT_TOKEN_IN_PATH, '/bot[redacted]/');
 }
 
-function redactUrlAttributes(data: Record<string, unknown> | undefined): void {
+export function redactUrlAttributes(data: Record<string, unknown> | undefined): void {
   if (data === undefined) {
     return;
   }
@@ -66,6 +70,51 @@ function redactUrlAttributes(data: Record<string, unknown> | undefined): void {
       data[key] = redactBotToken(value);
     }
   }
+}
+
+/**
+ * Breadcrumbs are attached to *error* events, which pass through neither
+ * `beforeSendLog` nor `beforeSendTransaction`. Sentry's HTTP instrumentation
+ * records every outgoing request as a breadcrumb, so an unrelated exception
+ * captured after a Telegram delivery ships the bot token in
+ * `data.url`.
+ */
+export function scrubBreadcrumb(crumb: Sentry.Breadcrumb): Sentry.Breadcrumb {
+  const url = crumb.data?.url;
+  if (typeof url === 'string' && crumb.data !== undefined) {
+    crumb.data.url = redactBotToken(url);
+  }
+  if (typeof crumb.message === 'string') {
+    crumb.message = redactBotToken(crumb.message);
+  }
+  return crumb;
+}
+
+/**
+ * `beforeSend` runs for error events only; the transaction hook never sees
+ * them. Covers the same three carriers a captured exception has: the trace
+ * context it inherits, its own request URL, and the breadcrumb trail.
+ */
+export function scrubErrorEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
+  redactUrlAttributes(event.contexts?.trace?.data);
+
+  if (typeof event.request?.url === 'string') {
+    event.request.url = redactBotToken(event.request.url);
+  }
+
+  for (const crumb of event.breadcrumbs ?? []) {
+    scrubBreadcrumb(crumb);
+  }
+
+  if (event.extra !== undefined) {
+    for (const key of SENSITIVE_LOG_KEYS) {
+      if (key in event.extra) {
+        delete event.extra[key];
+      }
+    }
+  }
+
+  return event;
 }
 
 if (SENTRY_DSN) {
@@ -118,5 +167,10 @@ if (SENTRY_DSN) {
       redactUrlAttributes(event.contexts?.trace?.data);
       return event;
     },
+
+    // Error events bypass both hooks above; scrub their breadcrumbs on the way
+    // in and the event itself on the way out.
+    beforeBreadcrumb: scrubBreadcrumb,
+    beforeSend: scrubErrorEvent,
   });
 }
