@@ -158,6 +158,14 @@ WORKDIR /app
 # Copy PHP-FPM pool configuration for logging
 COPY docker/php-fpm-pool.conf /etc/php/8.2/fpm/pool.d/zz-logging.conf
 
+# The pool config sends worker errors to stderr, but FPM's own master log is
+# set in the [global] section and defaults to /var/log/php8.2-fpm.log. /var/log
+# is root-owned 0755 and supervisord runs php-fpm as www-data, so FPM could not
+# create the file and died at startup with "failed to open error_log" before
+# serving a single DAV request. Point it at stderr too, which is where
+# supervisord already forwards this program's output.
+RUN sed -i 's#^error_log = .*#error_log = /proc/self/fd/2#' /etc/php/8.2/fpm/php-fpm.conf
+
 # Copy workspace configuration for production dependencies
 COPY mise.toml ./
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
