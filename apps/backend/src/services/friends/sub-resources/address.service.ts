@@ -142,14 +142,18 @@ export class AddressService extends SubResourceService<
     this.addressLookupService = options.addressLookupService;
   }
 
-  override async add(
+  /**
+   * Geocoding hooks into `addWithin` (not `add`) so it also runs for addresses
+   * written during friend creation, which uses the caller's transaction.
+   */
+  protected override async addWithin(
+    client: pg.Pool | pg.PoolClient,
     userExternalId: string,
     friendExternalId: string,
     input: AddressInput,
-    client?: pg.Pool | pg.PoolClient,
   ): Promise<Address | null> {
-    const result = await super.add(userExternalId, friendExternalId, input, client);
-    if (result) {
+    const result = await super.addWithin(client, userExternalId, friendExternalId, input);
+    if (result !== null) {
       this.scheduleBackgroundGeocode(userExternalId, result.id, input);
     }
     return result;
@@ -160,22 +164,13 @@ export class AddressService extends SubResourceService<
     friendExternalId: string,
     resourceExternalId: string,
     input: AddressInput,
-    client?: pg.Pool | pg.PoolClient,
   ): Promise<Address | null> {
-    const dbClient = client ?? this.db;
-
     const [existing] = await getAddressById.run(
       { addressExternalId: resourceExternalId, friendExternalId, userExternalId },
-      dbClient,
+      this.db,
     );
 
-    const result = await super.update(
-      userExternalId,
-      friendExternalId,
-      resourceExternalId,
-      input,
-      client,
-    );
+    const result = await super.update(userExternalId, friendExternalId, resourceExternalId, input);
     if (!result) {
       return result;
     }
@@ -196,7 +191,7 @@ export class AddressService extends SubResourceService<
           latitude: existing.latitude,
           longitude: existing.longitude,
         },
-        dbClient,
+        this.db,
       );
       return {
         ...result,
@@ -208,9 +203,11 @@ export class AddressService extends SubResourceService<
   }
 
   /**
-   * Fire-and-forget geocode that runs after the write transaction has
-   * committed. Errors are logged and never propagate to the caller — saving
-   * an address must never fail because a third-party geocode failed.
+   * Fire-and-forget geocode, scheduled while the write transaction is still
+   * open: the deferred callback geocodes over the network before it touches the
+   * row, so the commit has long landed by then. Errors are logged and never
+   * propagate to the caller — saving an address must never fail because a
+   * third-party geocode failed.
    */
   private scheduleBackgroundGeocode(
     userExternalId: string,

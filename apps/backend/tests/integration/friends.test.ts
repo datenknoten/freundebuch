@@ -506,6 +506,55 @@ describe('Friends API - Integration Tests', () => {
       expect(phones[0]?.isPrimary).toBe(true);
     });
 
+    /**
+     * Setting is_primary clears the owner's current primary first. When the
+     * updated id does not exist, that clear used to be committed anyway, so a
+     * 404 left the friend with no primary phone at all.
+     */
+    it('keeps the existing primary when updating a phone id that does not exist', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Primary Keeper');
+      const headers = authHeaders(testUser.sessionCookies);
+
+      const created = await app.fetch(
+        new Request(`http://localhost/api/friends/${friendId}/phones`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            phone_number: '+12125550001',
+            phone_type: 'mobile',
+            is_primary: true,
+          }),
+        }),
+      );
+      expect(created.status).toBe(201);
+
+      const missing = await app.fetch(
+        new Request(
+          `http://localhost/api/friends/${friendId}/phones/00000000-0000-0000-0000-000000000000`,
+          {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify({
+              phone_number: '+12125550002',
+              phone_type: 'work',
+              is_primary: true,
+            }),
+          },
+        ),
+      );
+      expect(missing.status).toBe(404);
+
+      const listed = await app.fetch(
+        new Request(`http://localhost/api/friends/${friendId}/phones`, { headers }),
+      );
+      const phones = (await listed.json()) as Array<{ phoneNumber: string; isPrimary: boolean }>;
+      expect(phones.length).toBe(1);
+      expect(phones[0]?.phoneNumber).toBe('+12125550001');
+      expect(phones[0]?.isPrimary).toBe(true);
+    });
+
     it('should 404 listing phones of a non-existent friend', async () => {
       const { app, testUser } = getContext();
 

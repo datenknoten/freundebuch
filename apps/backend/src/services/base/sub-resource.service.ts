@@ -19,6 +19,14 @@ const SINGLE_PRIMARY_INDEXES = [
 ] as const;
 
 /**
+ * Signals "the write matched no row" from inside a transaction so that the
+ * transaction rolls back. Without it, the primary-flag clear for an unknown
+ * owner or resource id gets committed and leaves the owner with zero primary
+ * rows while the client still receives a 404.
+ */
+class NoRowWrittenError extends Error {}
+
+/**
  * Configuration for a sub-resource service.
  *
  * "Owner" is the parent the sub-resource belongs to — a friend or a
@@ -144,103 +152,110 @@ export abstract class SubResourceService<
 
   /**
    * Add a new sub-resource to an owner.
+   *
+   * Always runs in its own transaction: clearing the previous primary and
+   * writing the new row must either both happen or neither.
    */
   async add(
     userExternalId: string,
     ownerExternalId: string,
     input: TInput,
-    client?: pg.Pool | pg.PoolClient,
   ): Promise<TOutput | null> {
     this.logger.debug({ ownerExternalId }, `Adding ${this.config.resourceName}`);
 
-    const dbClient = client ?? this.db;
+    try {
+      return await withTransaction(this.db, async (txClient) => {
+        const created = await this.addWithin(txClient, userExternalId, ownerExternalId, input);
+        if (created === null) {
+          throw new NoRowWrittenError();
+        }
+        return created;
+      });
+    } catch (error) {
+      if (error instanceof NoRowWrittenError) {
+        return null;
+      }
+      throw error;
+    }
+  }
 
+  /**
+   * Add a sub-resource on a caller-supplied client. The caller owns the
+   * transaction (see `createMany`, used while a friend is being created), so
+   * this never begins or rolls back one and reports a missing row as `null`.
+   */
+  protected async addWithin(
+    client: pg.Pool | pg.PoolClient,
+    userExternalId: string,
+    ownerExternalId: string,
+    input: TInput,
+  ): Promise<TOutput | null> {
     // Auto-set primary if this is the first entry.
-    if (this.config.hasPrimaryFlag && this.config.setIsPrimary) {
-      const existing = await this.config.listFn({ userExternalId, ownerExternalId }, dbClient);
+    if (this.config.hasPrimaryFlag && this.config.setIsPrimary !== undefined) {
+      const existing = await this.config.listFn({ userExternalId, ownerExternalId }, client);
       if (existing.length === 0) {
         input = this.config.setIsPrimary(input, true);
       }
     }
 
-    const needsPrimaryUpdate = Boolean(
-      this.config.hasPrimaryFlag && this.config.clearPrimaryFn && this.config.isPrimary?.(input),
-    );
-
-    // Clearing the old primary and creating the new row must be atomic to
-    // avoid leaving zero or two primaries under concurrent writes. If a caller
-    // already supplied a transaction client, run inline within it.
-    if (needsPrimaryUpdate && !client) {
-      return withTransaction(this.db, async (txClient) => {
-        await this.config.clearPrimaryFn?.({ userExternalId, ownerExternalId }, txClient);
-        const result = await this.write(() =>
-          this.config.createFn({ userExternalId, ownerExternalId, input }, txClient),
-        );
-        return result === undefined ? null : this.config.mapResult(result);
-      });
-    }
-
-    if (needsPrimaryUpdate) {
-      await this.config.clearPrimaryFn?.({ userExternalId, ownerExternalId }, dbClient);
+    if (
+      this.config.hasPrimaryFlag &&
+      this.config.clearPrimaryFn !== undefined &&
+      this.config.isPrimary?.(input) === true
+    ) {
+      await this.config.clearPrimaryFn({ userExternalId, ownerExternalId }, client);
     }
 
     const result = await this.write(() =>
-      this.config.createFn({ userExternalId, ownerExternalId, input }, dbClient),
+      this.config.createFn({ userExternalId, ownerExternalId, input }, client),
     );
-    if (result === undefined) {
-      return null;
-    }
-    return this.config.mapResult(result);
+    return result === undefined ? null : this.config.mapResult(result);
   }
 
   /**
    * Update an existing sub-resource.
+   *
+   * Always runs in its own transaction, and rolls back when the update matched
+   * no row so a cleared primary flag is never left behind.
    */
   async update(
     userExternalId: string,
     ownerExternalId: string,
     resourceExternalId: string,
     input: TInput,
-    client?: pg.Pool | pg.PoolClient,
   ): Promise<TOutput | null> {
     this.logger.debug(
       { ownerExternalId, resourceExternalId },
       `Updating ${this.config.resourceName}`,
     );
 
-    const needsPrimaryUpdate = Boolean(
-      this.config.hasPrimaryFlag && this.config.clearPrimaryFn && this.config.isPrimary?.(input),
-    );
+    try {
+      return await withTransaction(this.db, async (txClient) => {
+        if (
+          this.config.hasPrimaryFlag &&
+          this.config.clearPrimaryFn !== undefined &&
+          this.config.isPrimary?.(input) === true
+        ) {
+          await this.config.clearPrimaryFn({ userExternalId, ownerExternalId }, txClient);
+        }
 
-    if (needsPrimaryUpdate && !client) {
-      return withTransaction(this.db, async (txClient) => {
-        await this.config.clearPrimaryFn?.({ userExternalId, ownerExternalId }, txClient);
         const result = await this.write(() =>
           this.config.updateFn(
             { userExternalId, ownerExternalId, resourceExternalId, input },
             txClient,
           ),
         );
-        return result === undefined ? null : this.config.mapResult(result);
+        if (result === undefined) {
+          throw new NoRowWrittenError();
+        }
+        return this.config.mapResult(result);
       });
+    } catch (error) {
+      if (error instanceof NoRowWrittenError) {
+        return null;
+      }
+      throw error;
     }
-
-    const dbClient = client ?? this.db;
-
-    if (needsPrimaryUpdate) {
-      await this.config.clearPrimaryFn?.({ userExternalId, ownerExternalId }, dbClient);
-    }
-
-    const result = await this.write(() =>
-      this.config.updateFn(
-        { userExternalId, ownerExternalId, resourceExternalId, input },
-        dbClient,
-      ),
-    );
-    if (result === undefined) {
-      return null;
-    }
-    return this.config.mapResult(result);
   }
 
   /**
@@ -294,18 +309,21 @@ export abstract class SubResourceService<
   }
 
   /**
-   * Create multiple sub-resources for an owner.
+   * Create multiple sub-resources for an owner on the caller's transaction
+   * (friend creation writes the friend row and all sub-resources atomically),
+   * so the client is required: without it the rows would land outside that
+   * transaction and could not see the uncommitted owner.
    */
   async createMany(
     userExternalId: string,
     ownerExternalId: string,
     inputs: TInput[],
-    client?: pg.Pool | pg.PoolClient,
+    client: pg.Pool | pg.PoolClient,
   ): Promise<TOutput[]> {
     const results: TOutput[] = [];
     for (const input of inputs) {
-      const created = await this.add(userExternalId, ownerExternalId, input, client);
-      if (created) {
+      const created = await this.addWithin(client, userExternalId, ownerExternalId, input);
+      if (created !== null) {
         results.push(created);
       }
     }

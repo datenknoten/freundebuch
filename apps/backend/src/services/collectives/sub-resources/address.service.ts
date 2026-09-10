@@ -143,14 +143,18 @@ export class CollectiveAddressService extends SubResourceService<
     this.addressLookupService = options.addressLookupService;
   }
 
-  override async add(
+  /**
+   * Geocoding hooks into `addWithin` (not `add`) so it also runs for addresses
+   * written on a caller-supplied transaction via `createMany`.
+   */
+  protected override async addWithin(
+    client: pg.Pool | pg.PoolClient,
     userExternalId: string,
     collectiveExternalId: string,
     input: AddressInput,
-    client?: pg.Pool | pg.PoolClient,
   ): Promise<Address | null> {
-    const result = await super.add(userExternalId, collectiveExternalId, input, client);
-    if (result) {
+    const result = await super.addWithin(client, userExternalId, collectiveExternalId, input);
+    if (result !== null) {
       this.scheduleBackgroundGeocode(userExternalId, result.id, input);
     }
     return result;
@@ -161,13 +165,10 @@ export class CollectiveAddressService extends SubResourceService<
     collectiveExternalId: string,
     resourceExternalId: string,
     input: AddressInput,
-    client?: pg.Pool | pg.PoolClient,
   ): Promise<Address | null> {
-    const dbClient = client ?? this.db;
-
     const [existing] = await getAddressById.run(
       { addressExternalId: resourceExternalId, collectiveExternalId, userExternalId },
-      dbClient,
+      this.db,
     );
 
     const result = await super.update(
@@ -175,7 +176,6 @@ export class CollectiveAddressService extends SubResourceService<
       collectiveExternalId,
       resourceExternalId,
       input,
-      client,
     );
     if (!result) {
       return result;
@@ -196,7 +196,7 @@ export class CollectiveAddressService extends SubResourceService<
           latitude: existing.latitude,
           longitude: existing.longitude,
         },
-        dbClient,
+        this.db,
       );
       return {
         ...result,
