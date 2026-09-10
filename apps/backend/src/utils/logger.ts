@@ -33,7 +33,9 @@ export const LOG_REDACT_PATHS = [
   '*.*.email',
   '*.*.address',
   '*.*.displayName',
+  '*.password',
   '*.*.password',
+  '*.token',
   '*.*.token',
   '*[*].email',
   '*[*].address',
@@ -45,11 +47,18 @@ export const LOG_REDACT_PATHS = [
   '*.botToken',
   'webhookUrl',
   '*.webhookUrl',
-  'resetUrl',
-  'verificationUrl',
+  'cookie',
+  '*.cookie',
+  'set-cookie',
+  '*.set-cookie',
   'authorization',
   '*.authorization',
   'passwordPrefix',
+  // Deliberately NOT redacted: `resetUrl` / `verificationUrl`. Their only
+  // writers are the `ENV !== 'production'` branches in lib/auth.ts, which log
+  // at debug level when SMTP is unconfigured — the documented recovery path
+  // for an instance without mail (docs/self-hosting.md). Production never logs
+  // them. instrument.ts still strips them from anything reaching Sentry.
 ];
 
 export function createLogger() {
