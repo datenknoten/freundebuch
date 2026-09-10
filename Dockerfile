@@ -166,9 +166,17 @@ COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install the toolchain pinned in mise.toml, then production dependencies only.
+#
+# --disable-global-virtual-store is required, not an optimisation: by default
+# aube symlinks node_modules into the shared store under ~/.cache/aube, i.e.
+# /root/.cache here, and /root is 0700. supervisord runs backend, mcp-server
+# and php-fpm as `node`, which therefore cannot traverse into the store and
+# every import fails with ERR_MODULE_NOT_FOUND at startup. The flag
+# materialises the packages inside /app/node_modules/.aube instead, which the
+# chown below hands to `node` along with the rest of /app.
 RUN mise install
 RUN --mount=type=cache,id=aube,target=/root/.local/share/aube/store \
-    aube install --prod
+    aube install --prod --disable-global-virtual-store
 
 # Copy built artifacts from parallel build stages
 COPY --from=shared-builder /app/packages/shared/dist ./packages/shared/dist
