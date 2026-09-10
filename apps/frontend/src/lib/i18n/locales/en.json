@@ -591,6 +591,7 @@
       "title": "App Passwords",
       "subtitle": "Create app-specific passwords to sync your friends with mobile devices and desktop apps.",
       "created": "App Password Created",
+      "dismiss": "Dismiss",
       "copyNow": "Copy this password now. You won't be able to see it again!",
       "useWith": "Use this password with your email address to sign in to CardDAV clients.",
       "namePlaceholder": "Password name (e.g., My iPhone)",
@@ -601,8 +602,12 @@
       "noPasswordsSubtitle": "Create one to sync friends with your devices",
       "createdAt": "Created {{date}}",
       "lastUsed": "Last used {{date}}",
+      "never": "Never",
       "revoking": "Revoking...",
-      "revoke": "Revoke"
+      "revoke": "Revoke",
+      "failedToLoad": "Failed to load app passwords",
+      "failedToCreate": "Failed to create app password",
+      "failedToRevoke": "Failed to revoke app password"
     },
     "passkeys": {
       "title": "Passkeys",
