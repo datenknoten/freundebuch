@@ -76,6 +76,19 @@ WORKDIR /app
 # ============================================
 FROM base AS deps
 
+# Build toolchain for native modules. `aube ci` installs the full tree,
+# including devDependencies, and testcontainers pulls ssh2 -> cpu-features,
+# whose install script compiles a probe and fails with "Unable to detect
+# compiler type" on a slim image. Only this builder stage needs it: the
+# production stage runs `aube install --prod`, which prunes testcontainers
+# away, so the runtime image stays without a compiler.
+# Mirrors docker/Dockerfile.backend.prod, which installs the same three.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy workspace configuration
 COPY mise.toml ./
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
