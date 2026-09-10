@@ -26,5 +26,17 @@ export NGINX_REAL_IP_FROM="${NGINX_REAL_IP_FROM:-}"
 # Generate nginx config from template
 envsubst '${NGINX_ACCESS_LOG_LINE} ${NGINX_ERROR_LOG_LEVEL}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
+# Apply pending migrations before any service starts. The multi-container
+# deployment does this with a one-shot `migrate` service that the backend waits
+# on (docker-compose.prod.yml); this image has no such ordering primitive, so
+# the entrypoint runs the same compiled migrations from database/dist. `set -e`
+# makes a failed migration exit the container rather than leave it serving
+# requests against a schema the code does not match.
+echo "Applying database migrations from /app/database/dist"
+node /app/node_modules/node-pg-migrate/bin/node-pg-migrate.js \
+    --decamelize \
+    --migrations-dir /app/database/dist \
+    up
+
 # Start supervisord
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

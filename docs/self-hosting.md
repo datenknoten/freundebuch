@@ -6,8 +6,9 @@ pieces fit together, this one explains how to run them.
 
 ## What you're deploying
 
-Five containers, all published to `ghcr.io` as multi-arch images (amd64 + arm64)
-on every release:
+The default deployment is five containers, all published to `ghcr.io` as
+multi-arch images (amd64 + arm64) on every release — plus a single-container
+alternative, described below:
 
 | Image | Role |
 |-------|------|
@@ -25,6 +26,19 @@ series (`2.92`), the major series (`2`), and `latest`. Pin `VERSION` to a full
 version or a series rather than tracking `latest`, so upgrades are something you
 choose. Manifests carry build-provenance attestations, verifiable with
 `gh attestation verify oci://ghcr.io/datenknoten/freundebuch-backend:<tag> --owner datenknoten`.
+
+### The all-in-one alternative
+
+`ghcr.io/datenknoten/freundebuch-all-in-one` (built from the repository root
+`Dockerfile`, same tags and attestations) packs nginx, the frontend, the
+backend, the MCP server and PHP-FPM into one container under supervisord. It
+brings no database: point `DATABASE_URL` at your own Postgres 18 + PostGIS and
+publish the container's port 80. Its entrypoint applies the pending migrations
+before starting supervisord and exits if they fail, so it needs no separate
+`migrate` step. It also trusts no proxy by default — see `NGINX_REAL_IP_FROM`
+under [nginx](#nginx). Everything else on this page applies unchanged; the
+five-container split is what the maintainer runs and what
+`docker-compose.prod.yml` describes.
 
 ## Before you start
 
