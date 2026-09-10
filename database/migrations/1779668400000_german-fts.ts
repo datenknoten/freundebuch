@@ -55,8 +55,19 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     $$ LANGUAGE plpgsql;
   `);
 
-  // Rebuild every stored vector by firing the BEFORE UPDATE trigger.
-  pgm.sql(`UPDATE friends.friends SET updated_at = updated_at;`);
+  // Rebuild every stored vector by firing the BEFORE UPDATE trigger
+  // friends_search_vector_update, which overwrites NEW.search_vector - the
+  // NULL is only a way to produce an UPDATE.
+  //
+  // update_friends_updated_at is disabled for the duration: it would set
+  // updated_at = CURRENT_TIMESTAMP on every row, which changes every CardDAV
+  // ETag (md5(external_id || updated_at)) and every "last modified" value in
+  // the app, table-wide, for a change no user made.
+  pgm.sql(`
+    ALTER TABLE friends.friends DISABLE TRIGGER update_friends_updated_at;
+    UPDATE friends.friends SET search_vector = NULL;
+    ALTER TABLE friends.friends ENABLE TRIGGER update_friends_updated_at;
+  `);
 
   // Backs the display_name ILIKE prefix fallback in search.sql.
   pgm.sql(`
@@ -130,5 +141,10 @@ export async function down(pgm: MigrationBuilder): Promise<void> {
     $$ LANGUAGE plpgsql;
   `);
 
-  pgm.sql(`UPDATE friends.friends SET updated_at = updated_at;`);
+  // Same as in up(): rebuild the vectors without re-dating every friend.
+  pgm.sql(`
+    ALTER TABLE friends.friends DISABLE TRIGGER update_friends_updated_at;
+    UPDATE friends.friends SET search_vector = NULL;
+    ALTER TABLE friends.friends ENABLE TRIGGER update_friends_updated_at;
+  `);
 }
