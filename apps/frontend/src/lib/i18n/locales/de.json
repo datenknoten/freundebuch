@@ -565,7 +565,6 @@
     "userIdHelp": "Deine eindeutige Benutzerkennung",
     "email": "E-Mail",
     "emailAddress": "E-Mail-Adresse",
-    "memberSince": "Mitglied seit",
     "password": "Passwort",
     "changePassword": "Passwort ändern",
     "displayPreferences": {
@@ -790,7 +789,7 @@
       "cards": {
         "account": {
           "title": "Konto",
-          "description": "E-Mail, Benutzer-ID und Mitgliedschaftsinfos"
+          "description": "E-Mail-Adresse und Benutzer-ID"
         },
         "display": {
           "title": "Anzeigeeinstellungen",
@@ -819,7 +818,6 @@
       },
       "status": {
         "email": "{{email}}",
-        "memberSince": "Mitglied seit {{date}}",
         "language": "Sprache: {{language}} · Geburtstag: {{format}}",
         "birthdayFormat": "Geburtstag: {{format}}",
         "passkeyCount_one": "{{count}} Passkey registriert",

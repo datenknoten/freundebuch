@@ -52,16 +52,5 @@ const i18n = createI18n();
         class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 font-body text-gray-600"
       />
     </div>
-
-    {#if $currentUser?.createdAt}
-      <div>
-        <p class="block text-sm font-body font-semibold text-gray-700 mb-2">
-          {$i18n.t('profile.memberSince')}
-        </p>
-        <p class="font-body text-gray-600">
-          {new Date($currentUser.createdAt).toLocaleDateString()}
-        </p>
-      </div>
-    {/if}
   </div>
 </div>
