@@ -99,6 +99,16 @@ export async function setupAuthTests(): Promise<AuthTestContext> {
   // createApp derives the Better Auth pool from these, so stub them too.
   vi.stubEnv('DATABASE_POOL_MIN', String(TEST_POOL_MIN));
   vi.stubEnv('DATABASE_POOL_MAX', String(TEST_POOL_MAX));
+  // The budget above is deliberately small, so a suite that fires concurrent
+  // requests queues on the Better Auth pool's two clients by design. Waiting
+  // is correct; timing out is not. The 5s production default is far too tight
+  // under v8 coverage instrumentation, which stretches a bcrypt-bound sign-in
+  // roughly 15x (`should handle concurrent sign-in attempts`: 1.1s plain,
+  // 17.8s instrumented) and turned queuing into a 500. With the wait
+  // effectively unbounded, vitest's 30s testTimeout is the real limit, so a
+  // pool that genuinely never yields a client fails as a timeout naming the
+  // test rather than as an HTTP 500 that looks like a product bug.
+  vi.stubEnv('DATABASE_CONNECTION_TIMEOUT_MS', '60000');
   resetConfig();
 
   const pool = new pg.Pool({

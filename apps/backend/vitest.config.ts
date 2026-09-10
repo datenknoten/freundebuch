@@ -14,7 +14,14 @@ export default defineConfig({
     // sign-in; with several suites running at once that regularly exceeds
     // vitest's 5s/10s defaults, which showed up as sporadic "Test timed out"
     // failures that moved between files on every run.
-    testTimeout: 30_000,
+    //
+    // 30s was still too tight for the worst case under `--coverage`: v8
+    // instrumentation stretches a hashing-bound flow roughly 15x, and
+    // `should handle concurrent sign-in attempts` (five at once, serialized on
+    // the CPU) lands near 30s on its own. Matched to hookTimeout so the
+    // coverage job has real headroom instead of passing by a fraction of a
+    // second.
+    testTimeout: 60_000,
     hookTimeout: 60_000,
     // One shared PostGIS container for the whole integration run; each suite
     // clones a fresh database from a migrated template (see global-setup.ts).
