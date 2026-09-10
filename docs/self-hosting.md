@@ -321,6 +321,12 @@ status. Manually:
 `DISABLE_SIGNUP`, so a quick `curl` confirms both without shelling into the
 container.
 
+The readiness body is cached for five seconds. It is a public endpoint that the
+frontend fetches on every page load, and each check takes a client out of both
+connection pools, so without the cache a burst of anonymous requests would
+compete with sign-in. When you are fixing a failing check, allow up to five
+seconds before `curl` reflects it.
+
 ## Troubleshooting
 
 | Symptom | Likely cause |

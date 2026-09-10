@@ -1,6 +1,6 @@
 import { access, constants, mkdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import type pg from 'pg';
 import { getAuthPool } from '../lib/auth.js';
 import { isMailConfigured } from '../services/mailer.js';
@@ -59,11 +59,31 @@ async function poolReachable(pool: pg.Pool): Promise<boolean> {
 }
 
 /**
+ * The readiness body is memoised for a few seconds: it is public, the frontend
+ * fetches it on every page load (stores/instance.ts), nginx does not throttle
+ * /health, and each computation takes a client out of both pools (main max 10,
+ * auth max 5) plus an mkdir/access. Without the cache a handful of concurrent
+ * anonymous requests starves sign-in.
+ *
+ * Concurrent callers share the in-flight promise, so a burst costs one check.
+ * A not_ready result is cached too — five seconds of stale "not ready" is
+ * harmless next to a 30s probe interval.
+ */
+const READINESS_TTL_MS = 5_000;
+
+let cachedReadiness: { at: number; result: Promise<ReadinessResponse> } | null = null;
+
+/** Drops the memoised readiness body. For tests that change the environment. */
+export function resetReadinessCache(): void {
+  cachedReadiness = null;
+}
+
+/**
  * Readiness: can this instance actually serve requests? Checks both pools (the
  * main one and Better Auth's, which is separate) plus the uploads volume, which
  * is a bind mount in production and silently read-only when misconfigured.
  */
-health.get('/ready', async (c) => {
+async function computeReadiness(c: Context<AppContext>): Promise<ReadinessResponse> {
   const logger = c.get('logger');
   const config = getConfig();
 
@@ -98,14 +118,31 @@ health.get('/ready', async (c) => {
   ]);
 
   const ready = db && authDb && uploads;
-  const body: ReadinessResponse = {
+  return {
     status: ready ? 'ready' : 'not_ready',
     checks: { db, authDb, uploads },
     signupEnabled: !config.DISABLE_SIGNUP,
     emailEnabled: isMailConfigured(config),
   };
+}
 
-  return c.json(body, ready ? 200 : 503);
+health.get('/ready', async (c) => {
+  if (cachedReadiness === null || Date.now() - cachedReadiness.at >= READINESS_TTL_MS) {
+    const entry = { at: Date.now(), result: computeReadiness(c) };
+    cachedReadiness = entry;
+    // computeReadiness turns dependency failures into `false`, but getConfig()
+    // and getUploadDir() can still throw. A rejection must not stick for the
+    // whole TTL, so drop the entry and let the next caller re-check.
+    entry.result.catch(() => {
+      if (cachedReadiness === entry) {
+        cachedReadiness = null;
+      }
+    });
+  }
+
+  const body = await cachedReadiness.result;
+
+  return c.json(body, body.status === 'ready' ? 200 : 503);
 });
 
 export default health;

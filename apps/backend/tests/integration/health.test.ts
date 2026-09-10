@@ -4,7 +4,7 @@ import path from 'node:path';
 import { Hono } from 'hono';
 import pg from 'pg';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import healthRoutes from '../../src/routes/health.js';
+import healthRoutes, { resetReadinessCache } from '../../src/routes/health.js';
 import type { AppContext } from '../../src/types/context.js';
 import { createLogger } from '../../src/utils/logger.js';
 import { setupAuthTestSuite } from './auth.helpers.js';
@@ -53,6 +53,9 @@ describe('Health Endpoint Integration Tests', () => {
     beforeEach(async () => {
       uploadDir = await mkdtemp(path.join(tmpdir(), 'fb-health-uploads-'));
       vi.stubEnv('UPLOAD_DIR', uploadDir);
+      // The readiness body is memoised for a few seconds; every case below
+      // changes the environment it reports on, so it needs a fresh check.
+      resetReadinessCache();
     });
 
     afterEach(async () => {
@@ -156,6 +159,31 @@ describe('Health Endpoint Integration Tests', () => {
       await failingPool.end().catch(() => {
         // Ignore errors from an already-failed pool.
       });
+    });
+
+    /**
+     * /health/ready is public and the frontend fetches it on every page load,
+     * so an uncached check would take a client out of both pools per anonymous
+     * request and starve sign-in under a burst.
+     */
+    it('should compute the readiness body at most once per TTL', async () => {
+      const { app, pool } = getContext();
+      const connect = vi.spyOn(pool, 'connect');
+
+      const [first, second] = await Promise.all([
+        app.fetch(new Request('http://localhost/health/ready')),
+        app.fetch(new Request('http://localhost/health/ready')),
+      ]);
+      const third = await app.fetch(new Request('http://localhost/health/ready'));
+
+      expect([first.status, second.status, third.status]).toEqual([200, 200, 200]);
+      expect(connect).toHaveBeenCalledTimes(1);
+
+      resetReadinessCache();
+      await app.fetch(new Request('http://localhost/health/ready'));
+      expect(connect).toHaveBeenCalledTimes(2);
+
+      connect.mockRestore();
     });
   });
 });
