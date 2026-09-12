@@ -12,3 +12,4 @@ export * from './notification-channels.js';
 export * from './pagination.js';
 export * from './phone-utils.js';
 export * from './photo.js';
+export * from './sorting.js';

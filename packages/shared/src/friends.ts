@@ -2,7 +2,16 @@ import { type } from 'arktype';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import type { CircleSummary } from './circles.js';
 import { IsoDateString } from './dates.js';
-import type { Paginated } from './pagination.js';
+import {
+  type Paginated,
+  type PaginationOptions,
+  PaginationQuerySchema,
+  parsePaginationQuery,
+} from './pagination.js';
+import { parseSortQuery, type SortOptions, type SortOrder, sortQueryFields } from './sorting.js';
+
+/** Rows per page when a client does not ask for a size. */
+const DEFAULT_FRIEND_PAGE_SIZE = 25;
 
 /**
  * Friend types and validation schemas for Epic 1A & 1B: Friend CRUD & Extended Fields
@@ -323,12 +332,14 @@ export type FriendUpdateInput = typeof FriendUpdateSchema.infer;
 // Query Schemas
 // ============================================================================
 
+/** Fields a friend list can be sorted by. */
+export const FriendSortBySchema = type('"display_name" | "created_at" | "updated_at"');
+export type FriendSortBy = typeof FriendSortBySchema.infer;
+
 /** Schema for friend list query parameters */
-export const FriendListQuerySchema = type({
-  'page?': 'string',
-  'pageSize?': 'string',
-  'sortBy?': '"display_name" | "created_at" | "updated_at"',
-  'sortOrder?': '"asc" | "desc"',
+export const FriendListQuerySchema = PaginationQuerySchema.merge(
+  sortQueryFields(FriendSortBySchema),
+).merge({
   // Epic 4: Categorization & Organization filters
   'favorites?': 'string', // 'true' to show only favorites
   'archived?': 'string', // 'true' to include archived, 'only' to show only archived
@@ -644,13 +655,19 @@ export const SearchSortBySchema = type(
 );
 export type SearchSortBy = typeof SearchSortBySchema.infer;
 
+/**
+ * Default direction for a search sort: relevance reads best-first, a name
+ * reads A-to-Z. Shared by the plain and faceted search parsers.
+ */
+export function searchSortOrderFor(sortBy: SearchSortBy): SortOrder {
+  return sortBy === 'display_name' ? 'asc' : 'desc';
+}
+
 /** Schema for search query parameters */
-export const SearchQuerySchema = type({
+export const SearchQuerySchema = PaginationQuerySchema.merge(
+  sortQueryFields(SearchSortBySchema),
+).merge({
   q: 'string > 0',
-  'page?': 'string',
-  'pageSize?': 'string',
-  'sortBy?': SearchSortBySchema,
-  'sortOrder?': '"asc" | "desc"',
 });
 export type SearchQuery = typeof SearchQuerySchema.infer;
 
@@ -661,30 +678,18 @@ export const RecentSearchInputSchema = type({
 export type RecentSearchInput = typeof RecentSearchInputSchema.infer;
 
 /** Parsed search options */
-export interface SearchOptions {
+export interface SearchOptions extends PaginationOptions, SortOptions<SearchSortBy> {
   query: string;
-  page: number;
-  pageSize: number;
-  sortBy: SearchSortBy;
-  sortOrder: 'asc' | 'desc';
 }
 
 /**
  * Parse and validate search query parameters
  */
 export function parseSearchQuery(query: SearchQuery): SearchOptions {
-  const sortBy = query.sortBy || 'relevance';
   return {
     query: query.q.trim(),
-    page: query.page ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1,
-    pageSize: query.pageSize
-      ? Math.min(100, Math.max(1, Number.parseInt(query.pageSize, 10) || 25))
-      : 25,
-    sortBy,
-    // Default sort order: desc for relevance (best first), asc for name
-    sortOrder:
-      query.sortOrder ||
-      (sortBy === 'relevance' ? 'desc' : sortBy === 'display_name' ? 'asc' : 'desc'),
+    ...parsePaginationQuery(query, DEFAULT_FRIEND_PAGE_SIZE),
+    ...parseSortQuery(query, { sortBy: 'relevance', sortOrder: searchSortOrderFor }),
   };
 }
 
@@ -695,11 +700,7 @@ export type PaginatedSearchResponse = Paginated<GlobalSearchResult>;
 export type PaginatedFriendList = Paginated<FriendListItem>;
 
 /** Parsed query options for list endpoint */
-export interface FriendListOptions {
-  page: number;
-  pageSize: number;
-  sortBy: 'display_name' | 'created_at' | 'updated_at';
-  sortOrder: 'asc' | 'desc';
+export interface FriendListOptions extends PaginationOptions, SortOptions<FriendSortBy> {
   // Epic 4: Categorization & Organization filters
   favorites?: boolean;
   archived?: boolean | 'only'; // true = include, 'only' = only archived, undefined/false = exclude
@@ -718,12 +719,8 @@ export function parseFriendListQuery(query: FriendListQuery): FriendListOptions 
   }
 
   return {
-    page: query.page ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1,
-    pageSize: query.pageSize
-      ? Math.min(100, Math.max(1, Number.parseInt(query.pageSize, 10) || 25))
-      : 25,
-    sortBy: query.sortBy || 'display_name',
-    sortOrder: query.sortOrder || 'asc',
+    ...parsePaginationQuery(query, DEFAULT_FRIEND_PAGE_SIZE),
+    ...parseSortQuery(query, { sortBy: 'display_name', sortOrder: 'asc' }),
     // Epic 4: Categorization & Organization filters
     favorites: query.favorites === 'true',
     archived,
@@ -806,12 +803,10 @@ export type FacetedSearchResponse = Paginated<GlobalSearchResult> & {
 };
 
 /** Schema for faceted search query parameters */
-export const FacetedSearchQuerySchema = type({
+export const FacetedSearchQuerySchema = PaginationQuerySchema.merge(
+  sortQueryFields(SearchSortBySchema),
+).merge({
   'q?': 'string', // Optional - can search with query OR filter-only
-  'page?': 'string',
-  'pageSize?': 'string',
-  'sortBy?': SearchSortBySchema,
-  'sortOrder?': '"asc" | "desc"',
   // Facet filters (comma-separated values)
   'country?': 'string',
   'city?': 'string',
@@ -824,17 +819,13 @@ export const FacetedSearchQuerySchema = type({
   'favorites?': 'string', // 'true' to filter favorites only
   'archived?': 'string', // 'include', 'exclude' (default), or 'only'
   // Whether to include facet counts in response
-  'includeFacets?': 'string',
+  'include_facets?': 'string',
 });
 export type FacetedSearchQuery = typeof FacetedSearchQuerySchema.infer;
 
 /** Parsed faceted search options */
-export interface FacetedSearchOptions {
+export interface FacetedSearchOptions extends PaginationOptions, SortOptions<SearchSortBy> {
   query?: string; // Optional - can search with query OR filter-only
-  page: number;
-  pageSize: number;
-  sortBy: SearchSortBy;
-  sortOrder: 'asc' | 'desc';
   filters: FacetFilters;
   includeFacets: boolean;
 }
@@ -880,8 +871,6 @@ export interface DashboardData {
 }
 
 export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearchOptions {
-  const sortBy = query.sortBy || (query.q ? 'relevance' : 'display_name');
-
   // Parse comma-separated filter values
   const parseFilterArray = (value: string | undefined): string[] | undefined => {
     if (!value) return undefined;
@@ -904,14 +893,13 @@ export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearc
 
   return {
     query: query.q?.trim(), // Optional query
-    page: query.page ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1,
-    pageSize: query.pageSize
-      ? Math.min(100, Math.max(1, Number.parseInt(query.pageSize, 10) || 25))
-      : 25,
-    sortBy,
-    sortOrder:
-      query.sortOrder ||
-      (sortBy === 'relevance' ? 'desc' : sortBy === 'display_name' ? 'asc' : 'desc'),
+    ...parsePaginationQuery(query, DEFAULT_FRIEND_PAGE_SIZE),
+    ...parseSortQuery(query, {
+      // Relevance only makes sense when there is a query to be relevant to;
+      // a filter-only listing sorts by name.
+      sortBy: query.q === undefined || query.q === '' ? 'display_name' : 'relevance',
+      sortOrder: searchSortOrderFor,
+    }),
     filters: {
       country: parseFilterArray(query.country),
       city: parseFilterArray(query.city),
@@ -926,6 +914,6 @@ export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearc
       favorites: query.favorites === 'true' ? true : undefined,
       archived: parseArchivedFilter(query.archived),
     },
-    includeFacets: query.includeFacets === 'true',
+    includeFacets: query.include_facets === 'true',
   };
 }

@@ -57,9 +57,9 @@ export async function listFriends(params: FriendListParams = {}): Promise<Pagina
   const searchParams = new URLSearchParams();
 
   if (params.page) searchParams.set('page', params.page.toString());
-  if (params.pageSize) searchParams.set('pageSize', params.pageSize.toString());
-  if (params.sortBy) searchParams.set('sortBy', params.sortBy);
-  if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+  if (params.pageSize) searchParams.set('page_size', params.pageSize.toString());
+  if (params.sortBy) searchParams.set('sort_by', params.sortBy);
+  if (params.sortOrder) searchParams.set('sort_order', params.sortOrder);
   // Epic 4: Categorization & Organization filters
   if (params.favorites) searchParams.set('favorites', 'true');
   if (params.archived === true) searchParams.set('archived', 'true');
@@ -557,9 +557,9 @@ export async function paginatedSearch(
   const searchParams = new URLSearchParams();
   searchParams.set('q', params.query);
   if (params.page) searchParams.set('page', params.page.toString());
-  if (params.pageSize) searchParams.set('pageSize', params.pageSize.toString());
-  if (params.sortBy) searchParams.set('sortBy', params.sortBy);
-  if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+  if (params.pageSize) searchParams.set('page_size', params.pageSize.toString());
+  if (params.sortBy) searchParams.set('sort_by', params.sortBy);
+  if (params.sortOrder) searchParams.set('sort_order', params.sortOrder);
 
   return apiRequest<PaginatedSearchResponse>(
     `/api/friends/search/paginated?${searchParams.toString()}`,
@@ -588,10 +588,10 @@ export async function facetedSearch(params: FacetedSearchParams): Promise<Facete
   // Query is optional - can search with query, filters, or just get facets
   if (params.query) searchParams.set('q', params.query);
   if (params.page) searchParams.set('page', params.page.toString());
-  if (params.pageSize) searchParams.set('pageSize', params.pageSize.toString());
-  if (params.sortBy) searchParams.set('sortBy', params.sortBy);
-  if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
-  if (params.includeFacets) searchParams.set('includeFacets', 'true');
+  if (params.pageSize) searchParams.set('page_size', params.pageSize.toString());
+  if (params.sortBy) searchParams.set('sort_by', params.sortBy);
+  if (params.sortOrder) searchParams.set('sort_order', params.sortOrder);
+  if (params.includeFacets) searchParams.set('include_facets', 'true');
 
   // Add filter parameters (comma-separated values)
   if (params.filters?.country?.length) {

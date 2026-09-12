@@ -138,10 +138,10 @@ app.get('/faceted', async (c) => {
     validated.relationship_category ||
     validated.circles;
 
-  // Require at least a query, filters, or includeFacets
-  if (!hasQuery && !hasFilters && validated.includeFacets !== 'true') {
+  // Require at least a query, filters, or include_facets
+  if (!hasQuery && !hasFilters && validated.include_facets !== 'true') {
     throw new ValidationError(
-      'Either a search query (2+ characters), filters, or includeFacets=true is required',
+      'Either a search query (2+ characters), filters, or include_facets=true is required',
     );
   }
 

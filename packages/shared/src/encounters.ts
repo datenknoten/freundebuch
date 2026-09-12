@@ -1,6 +1,14 @@
 import { type } from 'arktype';
 import { IsoDateFilter, IsoDateString } from './dates.js';
-import type { Paginated } from './pagination.js';
+import {
+  type Paginated,
+  type PaginationOptions,
+  PaginationQuerySchema,
+  parsePaginationQuery,
+} from './pagination.js';
+
+/** Rows per page when a client does not ask for a size. */
+const DEFAULT_ENCOUNTER_PAGE_SIZE = 20;
 
 /**
  * Encounter types and validation schemas for Epic 2: Encounter Management
@@ -87,9 +95,7 @@ export const EncounterUpdateSchema = type({
 export type EncounterUpdate = typeof EncounterUpdateSchema.infer;
 
 /** Schema for encounter list query parameters */
-export const EncounterListQuerySchema = type({
-  'page?': 'string',
-  'page_size?': 'string',
+export const EncounterListQuerySchema = PaginationQuerySchema.merge({
   'friend_id?': '"" | string.uuid', // Filter by specific friend
   'from_date?': IsoDateFilter, // Filter from date (YYYY-MM-DD)
   'to_date?': IsoDateFilter, // Filter to date (YYYY-MM-DD)
@@ -99,9 +105,7 @@ export const EncounterListQuerySchema = type({
 export type EncounterListQuery = typeof EncounterListQuerySchema.infer;
 
 /** Parsed encounter list options */
-export interface EncounterListOptions {
-  page: number;
-  pageSize: number;
+export interface EncounterListOptions extends PaginationOptions {
   friendId?: string;
   fromDate?: string;
   toDate?: string;
@@ -113,12 +117,8 @@ export interface EncounterListOptions {
  * Parse and validate encounter list query parameters
  */
 export function parseEncounterListQuery(query: EncounterListQuery): EncounterListOptions {
-  const page = query.page ? parseInt(query.page, 10) : 1;
-  const pageSize = query.page_size ? parseInt(query.page_size, 10) : 20;
-
   return {
-    page: Number.isNaN(page) || page < 1 ? 1 : page,
-    pageSize: Number.isNaN(pageSize) || pageSize < 1 ? 20 : Math.min(pageSize, 100),
+    ...parsePaginationQuery(query, DEFAULT_ENCOUNTER_PAGE_SIZE),
     friendId: query.friend_id || undefined,
     fromDate: query.from_date || undefined,
     toDate: query.to_date || undefined,

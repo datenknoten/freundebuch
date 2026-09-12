@@ -656,7 +656,7 @@ describe('Search API - Integration Tests', () => {
       }
 
       const request = new Request(
-        'http://localhost/api/friends/search/paginated?q=alice&page=1&pageSize=5',
+        'http://localhost/api/friends/search/paginated?q=alice&page=1&page_size=5',
         {
           method: 'GET',
           headers: authHeaders(testUser.sessionCookies),
@@ -682,7 +682,7 @@ describe('Search API - Integration Tests', () => {
       await createTestFriend(pool, testUser.externalId, 'Alice B');
 
       const request = new Request(
-        'http://localhost/api/friends/search/paginated?q=alice&sortBy=display_name&sortOrder=asc',
+        'http://localhost/api/friends/search/paginated?q=alice&sort_by=display_name&sort_order=asc',
         {
           method: 'GET',
           headers: authHeaders(testUser.sessionCookies),
@@ -706,7 +706,7 @@ describe('Search API - Integration Tests', () => {
       await createFriendWithOrganization(pool, testUser.externalId, 'Bob Jones', 'Alice Corp');
 
       const request = new Request(
-        'http://localhost/api/friends/search/paginated?q=alice&sortBy=relevance&sortOrder=desc',
+        'http://localhost/api/friends/search/paginated?q=alice&sort_by=relevance&sort_order=desc',
         {
           method: 'GET',
           headers: authHeaders(testUser.sessionCookies),
@@ -730,7 +730,7 @@ describe('Search API - Integration Tests', () => {
       }
 
       const request = new Request(
-        'http://localhost/api/friends/search/paginated?q=alice&page=2&pageSize=3&sortBy=display_name&sortOrder=asc',
+        'http://localhost/api/friends/search/paginated?q=alice&page=2&page_size=3&sort_by=display_name&sort_order=asc',
         {
           method: 'GET',
           headers: authHeaders(testUser.sessionCookies),
@@ -1035,7 +1035,7 @@ describe('Search API - Integration Tests', () => {
     });
 
     describe('Facet Counts', () => {
-      it('should return facet counts when includeFacets=true', async () => {
+      it('should return facet counts when include_facets=true', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithOrganization(pool, testUser.externalId, 'Alice 1', 'Acme Corp');
@@ -1043,7 +1043,7 @@ describe('Search API - Integration Tests', () => {
         await createFriendWithOrganization(pool, testUser.externalId, 'Alice 3', 'Tech Inc');
 
         const request = new Request(
-          'http://localhost/api/friends/search/faceted?q=alice&includeFacets=true',
+          'http://localhost/api/friends/search/faceted?q=alice&include_facets=true',
           {
             method: 'GET',
             headers: authHeaders(testUser.sessionCookies),
@@ -1123,7 +1123,7 @@ describe('Search API - Integration Tests', () => {
         const listing = async (sortOrder: 'asc' | 'desc'): Promise<string[]> => {
           const response = await app.fetch(
             new Request(
-              `http://localhost/api/friends/search/faceted?organization=Acme Corp&sortBy=display_name&sortOrder=${sortOrder}`,
+              `http://localhost/api/friends/search/faceted?organization=Acme Corp&sort_by=display_name&sort_order=${sortOrder}`,
               { method: 'GET', headers: authHeaders(testUser.sessionCookies) },
             ),
           );

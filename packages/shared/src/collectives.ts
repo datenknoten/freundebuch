@@ -1,6 +1,14 @@
 import { type } from 'arktype';
 import { IsoDateString } from './dates.js';
-import type { Paginated } from './pagination.js';
+import {
+  type Paginated,
+  type PaginationOptions,
+  PaginationQuerySchema,
+  parsePaginationQuery,
+} from './pagination.js';
+
+/** Rows per page when a client does not ask for a size. */
+const DEFAULT_COLLECTIVE_PAGE_SIZE = 20;
 
 /**
  * Collective types and validation schemas for Epic 12: Collectives
@@ -123,9 +131,7 @@ export const RelationshipPreviewRequestSchema = type({
 export type RelationshipPreviewRequest = typeof RelationshipPreviewRequestSchema.infer;
 
 /** Schema for collective list query parameters */
-export const CollectiveListQuerySchema = type({
-  'page?': 'string',
-  'page_size?': 'string',
+export const CollectiveListQuerySchema = PaginationQuerySchema.merge({
   'type_id?': '"" | string.uuid', // Filter by collective type external_id
   'search?': 'string', // Search in name/notes
   'include_deleted?': 'string', // "true" to include soft-deleted collectives
@@ -133,9 +139,7 @@ export const CollectiveListQuerySchema = type({
 export type CollectiveListQuery = typeof CollectiveListQuerySchema.infer;
 
 /** Parsed collective list options */
-export interface CollectiveListOptions {
-  page: number;
-  pageSize: number;
+export interface CollectiveListOptions extends PaginationOptions {
   typeId?: string;
   search?: string;
   includeDeleted?: boolean;
@@ -145,12 +149,8 @@ export interface CollectiveListOptions {
  * Parse and validate collective list query parameters
  */
 export function parseCollectiveListQuery(query: CollectiveListQuery): CollectiveListOptions {
-  const page = query.page ? parseInt(query.page, 10) : 1;
-  const pageSize = query.page_size ? parseInt(query.page_size, 10) : 20;
-
   return {
-    page: Number.isNaN(page) || page < 1 ? 1 : page,
-    pageSize: Number.isNaN(pageSize) || pageSize < 1 ? 20 : Math.min(pageSize, 100),
+    ...parsePaginationQuery(query, DEFAULT_COLLECTIVE_PAGE_SIZE),
     typeId: query.type_id || undefined,
     search: query.search || undefined,
     includeDeleted: query.include_deleted === 'true',

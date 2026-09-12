@@ -40,7 +40,7 @@ describe('Friends API - Integration Tests', () => {
       await createTestFriend(pool, testUser.externalId, 'Bob');
       await createTestFriend(pool, testUser.externalId, 'Charlie');
 
-      const request = new Request('http://localhost/api/friends?page=1&pageSize=2', {
+      const request = new Request('http://localhost/api/friends?page=1&page_size=2', {
         method: 'GET',
         headers: authHeaders(testUser.sessionCookies),
       });
@@ -65,7 +65,7 @@ describe('Friends API - Integration Tests', () => {
       await createTestFriend(pool, testUser.externalId, 'Bob');
 
       const request = new Request(
-        'http://localhost/api/friends?sortBy=display_name&sortOrder=asc',
+        'http://localhost/api/friends?sort_by=display_name&sort_order=asc',
         {
           method: 'GET',
           headers: authHeaders(testUser.sessionCookies),
