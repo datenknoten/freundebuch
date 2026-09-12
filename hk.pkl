@@ -72,10 +72,14 @@ hooks {
         exclusive = true
       }
       ["check"] {
-        // `aube run check` explicitly: bare `aube check` is aube's own
+        // `aube run check:ci`, for two reasons. Bare `aube check` is aube's own
         // dependency-tree verifier, not the repo's biome script, so the lint
-        // step silently checked nothing. Same wording as ci.yml.
-        check = "aube run check"
+        // step silently checked nothing. And `check` itself is
+        // `biome check --write`, which fixes the working tree and exits 0 — in
+        // a pre-push hook that writes the fix *after* the commit was made, so
+        // the unformatted commit still gets pushed and the hook reports
+        // success. `check:ci` only reports.
+        check = "aube run check:ci"
         exclusive = true
         depends = List("danger")
       }

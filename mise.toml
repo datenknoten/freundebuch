@@ -100,6 +100,7 @@ run = "hk install --mise"
 
 [tasks.ci]
 description = "Run the same checks CI runs (lint, types, tests, build)"
-# `aube run check`, not `aube check`: the latter is aube's built-in
-# dependency-tree verifier and never invokes biome.
-run = "aube run check && aube type-check && aube test && aube build"
+# `aube run check:ci`, not `check`: `check` is `biome check --write`, which
+# fixes and exits 0, so it can never fail this task. And `aube run` is
+# explicit because bare `aube check` is aube's dependency-tree verifier.
+run = "aube run check:ci && aube type-check && aube test && aube build"

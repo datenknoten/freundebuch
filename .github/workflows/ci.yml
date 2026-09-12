@@ -47,10 +47,14 @@ jobs:
         run: aube ci
 
       - name: Run Biome check
-        # Use `aube run check` explicitly: bare `aube check` resolves to aube's
-        # built-in dependency-tree verifier (`Verify that every installed package
-        # can resolve its declared deps...`), not our biome script.
-        run: aube run check
+        # `aube run check:ci`, not `check`: `check` is `biome check --write`, so
+        # in CI it fixed the checkout and exited 0 — this job could not fail on
+        # a formatting or lint violation, which is how unformatted code reached
+        # main. `check:ci` is the same Biome run without `--write`.
+        #
+        # Explicitly `aube run`, because bare `aube check` resolves to aube's
+        # built-in dependency-tree verifier rather than our script.
+        run: aube run check:ci
 
   type-check:
     name: TypeScript Type Check

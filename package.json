@@ -18,6 +18,7 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome check --write .",
+    "check:ci": "biome check .",
     "type-check": "aube --filter @freundebuch/shared run build && aube --recursive run type-check",
     "migrate": "aube --filter @freundebuch/backend run migrate",
     "migrate:build": "tsc --project database/tsconfig.json",
