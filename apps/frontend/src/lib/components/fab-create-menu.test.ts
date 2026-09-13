@@ -28,11 +28,14 @@ vi.mock('$app/stores', () => ({
   },
 }));
 
-const primeKeyboardFocus = vi.fn();
-vi.mock('$lib/actions/auto-focus', () => ({
-  primeKeyboardFocus: () => primeKeyboardFocus(),
-  autoFocus: () => ({ destroy: () => undefined }),
-}));
+// Spy on flushSync (keeping the real implementation) so the circle branch's
+// two synchronous flushes can be ordered against the modal-open event.
+const flushSync = vi.hoisted(() => vi.fn());
+vi.mock('svelte', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('svelte')>();
+  flushSync.mockImplementation(actual.flushSync);
+  return { ...actual, flushSync: (...args: unknown[]) => flushSync(...args) };
+});
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -93,22 +96,20 @@ describe('FabCreateMenu', () => {
       expect(goto).toHaveBeenCalledWith('/friends/new');
     });
 
-    it('primes the keyboard synchronously but defers opening the circle modal', async () => {
-      const dispatched: string[] = [];
-      const listener = (e: Event) => dispatched.push((e as CustomEvent).type);
+    // The modal must open inside the FAB tap (iOS raises the keyboard only for
+    // a focus() within the gesture), but only after the menu's teardown has
+    // flushed, or its cleanup would clear isModalOpen behind the open modal.
+    it('opens the circle modal synchronously, flushing the menu teardown first', () => {
+      const flushesBeforeDispatch: number[] = [];
+      const listener = () => flushesBeforeDispatch.push(flushSync.mock.calls.length);
       window.addEventListener('shortcut:new-circle', listener);
       try {
         navigateForCreateChoice('circle');
 
-        // Priming stays inside the gesture so iOS keeps the keyboard.
-        expect(primeKeyboardFocus).toHaveBeenCalledTimes(1);
-        // The modal open is deferred so the caller's menu unmounts first
-        // (its teardown clears isModalOpen); it must not fire synchronously.
-        expect(dispatched).toEqual([]);
-
-        // Once pending updates flush, the circle modal opens.
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        expect(dispatched).toEqual(['shortcut:new-circle']);
+        // Dispatched within the call itself — no deferral out of the gesture.
+        expect(flushesBeforeDispatch).toEqual([1]);
+        // ...and the modal mount is flushed right after, still synchronously.
+        expect(flushSync).toHaveBeenCalledTimes(2);
         expect(goto).not.toHaveBeenCalled();
       } finally {
         window.removeEventListener('shortcut:new-circle', listener);

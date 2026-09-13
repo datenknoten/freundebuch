@@ -1,60 +1,35 @@
 /**
  * Mobile keyboard focus helpers.
  *
- * On iOS Safari the on-screen keyboard only opens when `.focus()` runs
- * synchronously inside a user gesture (tap/click). Modals and views mount their
- * input *after* the gesture has unwound, so focusing on mount is too late and
- * the keyboard stays closed. To work around this, a tap handler that will open
- * such a view calls {@link primeKeyboardFocus} synchronously: it focuses a
- * throwaway off-screen input during the gesture, claiming the keyboard. When the
- * real input mounts, the {@link autoFocus} action moves focus to it and the
- * keyboard stays open.
+ * iOS only raises the on-screen keyboard for a `focus()` that runs inside the
+ * user's gesture (tap/click). A modal that mounts its input on the next Svelte
+ * flush therefore focuses too late — the gesture has unwound and the keyboard
+ * stays closed. The remedy is to make the mount itself happen inside the
+ * gesture: {@link openWithKeyboard} applies the state change and flushes it
+ * synchronously, so the input mounts — and, via {@link autoFocus}, is focused —
+ * while the tap is still being handled.
+ *
+ * (An earlier approach focused a throwaway input during the tap and handed
+ * focus to the real input a frame later. iOS did not keep the keyboard open
+ * across that hand-over, so it is gone.)
  */
 
-let primedInput: HTMLInputElement | null = null;
-
-function isTouchDevice(): boolean {
-  return (
-    typeof window !== 'undefined' && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window)
-  );
-}
-
-/** Remove any input created by {@link primeKeyboardFocus}. */
-function releasePrimedInput(): void {
-  if (primedInput) {
-    primedInput.remove();
-    primedInput = null;
-  }
-}
+import { flushSync } from 'svelte';
 
 /**
- * Call this synchronously inside a tap/click handler that opens a modal or view
- * whose input is auto-focused on mount. On touch devices it primes the
- * on-screen keyboard by focusing a throwaway off-screen input during the
- * gesture, so the keyboard stays open once focus transfers to the real input
- * (see {@link autoFocus}). It is a no-op on non-touch devices.
+ * Open a modal or view from a tap/click handler so that its auto-focused input
+ * claims the on-screen keyboard. `open` makes the state change (e.g. sets the
+ * flag the modal is rendered on); the pending update is then flushed
+ * synchronously, still inside the gesture.
+ *
+ * Call this only from event handlers. Svelte does not allow a synchronous
+ * flush from inside an effect (`onMount`, `$effect`), and non-gesture callers
+ * (keyboard shortcuts, auto-open on navigation) have no keyboard to claim
+ * anyway — they can set the state directly.
  */
-export function primeKeyboardFocus(): void {
-  if (!isTouchDevice()) return;
-  releasePrimedInput();
-
-  const input = document.createElement('input');
-  input.setAttribute('aria-hidden', 'true');
-  input.tabIndex = -1;
-  // The element must stay focusable, so it can't use display:none or
-  // visibility:hidden. A 16px font-size keeps iOS from auto-zooming.
-  input.style.cssText =
-    'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;' +
-    'margin:0;opacity:0;font-size:16px;pointer-events:none;z-index:-1;';
-  document.body.appendChild(input);
-  input.focus();
-  primedInput = input;
-
-  // Safety net: if no auto-focused input claims it (e.g. the target focuses
-  // itself without the action), remove the throwaway input shortly after.
-  setTimeout(() => {
-    if (primedInput === input) releasePrimedInput();
-  }, 1500);
+export function openWithKeyboard(open: () => void): void {
+  open();
+  flushSync();
 }
 
 /**
@@ -62,26 +37,21 @@ export function primeKeyboardFocus(): void {
  * Use with `use:autoFocus` on any focusable element.
  * Pass `false` to skip focusing.
  *
- * Focus is deferred to the next animation frame so the element is laid out and
- * visible (e.g. inside a modal or transition) before focusing — this makes
- * autofocus reliable on mobile, where focusing a not-yet-painted element is a
- * silent no-op. If the keyboard was primed via {@link primeKeyboardFocus}, the
- * throwaway input is released once the real element takes focus.
+ * Focus happens synchronously: when the mount was triggered inside a tap (see
+ * {@link openWithKeyboard}) this is the call that claims the mobile keyboard.
+ * A frame later it is retried for elements that were not focusable yet at
+ * mount time (e.g. still inside an intro transition).
  *
  * @example
  * <input use:autoFocus type="text" />
  * <input use:autoFocus={shouldFocus} type="text" />
  */
 export function autoFocus(node: HTMLElement, enabled: boolean = true) {
-  // A disabled autofocus must be a pure no-op: it must not touch the global
-  // priming state, or a sibling non-autofocused field mounting first would
-  // release the throwaway input before the intended field takes focus. Stale
-  // primed inputs are handled by the timeout safety-net in primeKeyboardFocus().
   if (!enabled) return;
 
+  node.focus();
   const frame = requestAnimationFrame(() => {
-    node.focus();
-    releasePrimedInput();
+    if (document.activeElement !== node) node.focus();
   });
 
   return {
