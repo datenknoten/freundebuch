@@ -1,3 +1,7 @@
+## <small>3.1.1 (2026-09-13)</small>
+
+* fix(frontend): Focus the mounted search input inside the tap ([78c1934](https://github.com/datenknoten/freundebuch/commit/78c1934)), closes [#199](https://github.com/datenknoten/freundebuch/issues/199)
+
 ## 3.1.0 (2026-09-13)
 
 * feat(frontend): Mention friends in collective notes ([7cdbf3c](https://github.com/datenknoten/freundebuch/commit/7cdbf3c))
