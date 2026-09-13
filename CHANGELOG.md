@@ -1,3 +1,7 @@
+## <small>3.1.2 (2026-09-13)</small>
+
+* fix(frontend): Mount tap-opened modals inside the gesture for the keyboard ([497493e](https://github.com/datenknoten/freundebuch/commit/497493e)), closes [#201](https://github.com/datenknoten/freundebuch/issues/201)
+
 ## <small>3.1.1 (2026-09-13)</small>
 
 * fix(frontend): Focus the mounted search input inside the tap ([78c1934](https://github.com/datenknoten/freundebuch/commit/78c1934)), closes [#199](https://github.com/datenknoten/freundebuch/issues/199)
