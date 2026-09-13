@@ -8,6 +8,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
+import { autoFocus } from '$lib/actions/auto-focus';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   hasActiveFilters,
@@ -29,7 +30,6 @@ function sanitizeHeadline(html: string | null | undefined): string {
   return DOMPurify.sanitize(html, { ALLOWED_TAGS: ['mark'] });
 }
 
-let inputElement = $state<HTMLInputElement | undefined>(undefined);
 let containerElement = $state<HTMLDivElement | undefined>(undefined);
 
 // Get store values reactively
@@ -38,13 +38,10 @@ let facets = $derived($searchFacets);
 let facetsLoading = $derived($isFacetsLoading);
 let showFilters = $derived($hasActiveFilters);
 
-// Focus input when modal opens
+// Load recent searches when the modal opens. Focusing the input is handled by
+// the autoFocus action so the on-screen keyboard opens on mobile too.
 $effect(() => {
-  if ($isSearchOpen && inputElement) {
-    requestAnimationFrame(() => {
-      inputElement?.focus();
-    });
-    // Load recent searches when opening
+  if ($isSearchOpen) {
     search.loadRecentSearches();
   }
 });
@@ -195,7 +192,7 @@ onMount(() => {
       <div class="relative border-b border-gray-200">
         <MagnifyingGlass class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth="2" />
         <input
-          bind:this={inputElement}
+          use:autoFocus
           type="text"
           value={searchState.query}
           oninput={(e) => search.setQuery(e.currentTarget.value, { loadFacets: true })}
