@@ -53,6 +53,16 @@ describe('CollectiveDetail', () => {
     expect(screen.getByText('collectives.detail.notes')).toBeTruthy();
   });
 
+  it('renders @-mention links in notes as in-app anchors', () => {
+    const collective = aCollective({ notes: 'Founded by [Anja](/friends/abc-123)' });
+    render(CollectiveDetail, { collective });
+
+    const link = screen.getByRole('link', { name: 'Anja' });
+    expect(link.getAttribute('href')).toBe('/friends/abc-123');
+    // No target: SvelteKit's client router must intercept the click.
+    expect(link.getAttribute('target')).toBeNull();
+  });
+
   it('renders a formatted address when one is present', () => {
     const collective = aCollective({
       address: {
