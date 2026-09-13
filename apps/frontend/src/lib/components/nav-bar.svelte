@@ -12,7 +12,6 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-import { primeKeyboardFocus } from '$lib/actions/auto-focus';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
@@ -25,13 +24,6 @@ const i18n = createI18n();
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
 let mobileMenuOpen = $state(false);
-
-// The search modal — and with it its input — only mounts after this handler has
-// run, so priming during the tap is what makes the mobile keyboard open.
-function openSearch() {
-  primeKeyboardFocus();
-  search.open();
-}
 
 const version = __APP_VERSION__;
 
@@ -316,7 +308,7 @@ $effect(() => {
       {#if $isAuthenticated && $currentUser}
         <button
           class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-          onclick={openSearch}
+          onclick={() => search.open()}
           aria-label="Search"
           data-shortcut="/"
           data-shortcut-label="shortcuts.help.focusSearch"
@@ -331,7 +323,7 @@ $effect(() => {
       {#if $isAuthenticated && $currentUser}
         <div class="hidden sm:flex flex-1 justify-center px-4">
           <button
-            onclick={openSearch}
+            onclick={() => search.open()}
             class="w-full max-w-md flex items-center gap-3 px-4 py-2 text-gray-400 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors duration-200 cursor-text"
             title="{$i18n.t('common.search')} ({isMac ? 'Cmd' : 'Ctrl'}+K)"
             data-shortcut="/"

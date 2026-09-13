@@ -32,21 +32,15 @@ vi.mock('$lib/stores/search', () => ({
   search: { open: () => searchOpen(), close: vi.fn(), subscribe: writable({}).subscribe },
 }));
 
-const primeKeyboardFocus = vi.fn();
-vi.mock('$lib/actions/auto-focus', () => ({
-  primeKeyboardFocus: () => primeKeyboardFocus(),
-  autoFocus: () => ({ destroy: () => undefined }),
-}));
-
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
 describe('NavBar search trigger', () => {
-  // The modal input only mounts after the tap handler has unwound, so iOS opens
-  // the on-screen keyboard only if the gesture itself claims focus first.
-  it('primes the keyboard before opening the search modal', async () => {
+  // open() focuses the modal's input itself; the trigger must call it directly
+  // inside the click so that focus still counts as part of the user's tap.
+  it('opens the search store from the search button', async () => {
     render(NavBar);
 
     const triggers = screen.getAllByLabelText('Search');
@@ -54,10 +48,6 @@ describe('NavBar search trigger', () => {
 
     await fireEvent.click(triggers[0]);
 
-    expect(primeKeyboardFocus).toHaveBeenCalledTimes(1);
     expect(searchOpen).toHaveBeenCalledTimes(1);
-    expect(primeKeyboardFocus.mock.invocationCallOrder[0]).toBeLessThan(
-      searchOpen.mock.invocationCallOrder[0],
-    );
   });
 });

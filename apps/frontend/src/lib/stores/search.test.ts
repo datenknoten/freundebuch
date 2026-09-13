@@ -50,6 +50,30 @@ describe('search store', () => {
       search.toggle();
       expect(get(isSearchOpen)).toBe(false);
     });
+
+    // The focus has to move inside the same call as open(): on iOS a focus()
+    // that runs after the tap handler returns never raises the keyboard.
+    it('focuses the attached input on open and blurs it on close', () => {
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+      search.attachInput(input);
+
+      search.open();
+      expect(document.activeElement).toBe(input);
+
+      search.close();
+      expect(document.activeElement).not.toBe(input);
+
+      search.toggle();
+      expect(document.activeElement).toBe(input);
+      search.toggle();
+      expect(document.activeElement).not.toBe(input);
+
+      search.detachInput(input);
+      search.open();
+      expect(document.activeElement).not.toBe(input);
+      input.remove();
+    });
   });
 
   describe('setQuery', () => {

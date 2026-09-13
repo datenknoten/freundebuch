@@ -1,4 +1,4 @@
-import { derived, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 import type { ArrayFacetField, FacetFilters, FacetGroups, GlobalSearchResult } from '$shared';
 import * as friendsApi from '../api/friends.js';
 
@@ -153,53 +153,70 @@ function createSearchStore() {
     }
   }, 500);
 
+  // The modal's text input. The modal keeps it mounted (hidden) while closed and
+  // registers it here so open() can focus it synchronously: iOS raises the
+  // on-screen keyboard only for a focus() that runs inside the user's tap, and
+  // an input that is mounted after the tap is always too late.
+  let inputElement: HTMLInputElement | null = null;
+
+  const open = () => {
+    update((state) => ({ ...state, isOpen: true }));
+    inputElement?.focus();
+  };
+
+  const close = () => {
+    // Drop focus first so the mobile keyboard goes away with the modal — the
+    // input stays mounted, so nothing else would blur it.
+    inputElement?.blur();
+    update((state) => ({
+      ...state,
+      isOpen: false,
+      query: '',
+      results: [],
+      selectedIndex: 0,
+      error: null,
+      filters: {},
+      facets: null,
+      facetsLoading: false,
+    }));
+  };
+
   return {
     subscribe,
 
     /**
-     * Open the search modal
+     * Register the modal's input so open() and close() can move focus
      */
-    open: () => {
-      update((state) => ({ ...state, isOpen: true }));
+    attachInput: (element: HTMLInputElement) => {
+      inputElement = element;
     },
+
+    /**
+     * Forget the modal's input (call when the element is destroyed)
+     */
+    detachInput: (element: HTMLInputElement) => {
+      if (inputElement === element) inputElement = null;
+    },
+
+    /**
+     * Open the search modal and focus its input
+     */
+    open,
 
     /**
      * Close the search modal and reset state
      */
-    close: () => {
-      update((state) => ({
-        ...state,
-        isOpen: false,
-        query: '',
-        results: [],
-        selectedIndex: 0,
-        error: null,
-        filters: {},
-        facets: null,
-        facetsLoading: false,
-      }));
-    },
+    close,
 
     /**
      * Toggle the search modal
      */
     toggle: () => {
-      update((state) => {
-        if (state.isOpen) {
-          return {
-            ...state,
-            isOpen: false,
-            query: '',
-            results: [],
-            selectedIndex: 0,
-            error: null,
-            filters: {},
-            facets: null,
-            facetsLoading: false,
-          };
-        }
-        return { ...state, isOpen: true };
-      });
+      if (get({ subscribe }).isOpen) {
+        close();
+      } else {
+        open();
+      }
     },
 
     /**
