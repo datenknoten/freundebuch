@@ -8,7 +8,6 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
-import { autoFocus } from '$lib/actions/auto-focus';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   hasActiveFilters,
@@ -38,13 +37,23 @@ let facets = $derived($searchFacets);
 let facetsLoading = $derived($isFacetsLoading);
 let showFilters = $derived($hasActiveFilters);
 
-// Load recent searches when the modal opens. Focusing the input is handled by
-// the autoFocus action so the on-screen keyboard opens on mobile too.
+// Load recent searches when the modal opens. Focus is not handled here: the
+// store focuses the input itself, synchronously inside whatever opened it.
 $effect(() => {
   if ($isSearchOpen) {
     search.loadRecentSearches();
   }
 });
+
+// Hand the input to the store so open() can focus it inside the user's tap.
+function registerInput(node: HTMLInputElement) {
+  search.attachInput(node);
+  return {
+    destroy() {
+      search.detachInput(node);
+    },
+  };
+}
 
 // Handle click outside to close
 function handleBackdropClick(e: MouseEvent) {
@@ -172,46 +181,54 @@ onMount(() => {
 });
 </script>
 
-{#if $isSearchOpen}
-  <!-- Backdrop -->
+<!--
+  The backdrop, card and input stay mounted while the modal is closed — only
+  hidden, never display:none or visibility:hidden, which would make the input
+  unfocusable. iOS shows the on-screen keyboard only for a focus() that runs
+  inside the user's tap; the store focuses this input synchronously in open(),
+  which is only possible because it already exists at that point.
+-->
+<div
+  class="fixed inset-0 z-50 bg-black/50 flex items-start justify-center pt-[10vh] {$isSearchOpen ? '' : 'opacity-0 pointer-events-none'}"
+  onclick={handleBackdropClick}
+  onkeydown={handleKeydown}
+  role="dialog"
+  aria-modal={$isSearchOpen}
+  aria-hidden={!$isSearchOpen}
+  aria-label={$i18n.t('aria.searchFriends')}
+  tabindex="-1"
+>
+  <!-- Modal container -->
   <div
-    class="fixed inset-0 z-50 bg-black/50 flex items-start justify-center pt-[10vh]"
-    onclick={handleBackdropClick}
-    onkeydown={handleKeydown}
-    role="dialog"
-    aria-modal="true"
-    aria-label={$i18n.t('aria.searchFriends')}
-    tabindex="-1"
+    bind:this={containerElement}
+    class="w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden"
   >
-    <!-- Modal container -->
-    <div
-      bind:this={containerElement}
-      class="w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden"
-    >
-      <!-- Search input -->
-      <div class="relative border-b border-gray-200">
-        <MagnifyingGlass class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth="2" />
-        <input
-          use:autoFocus
-          type="text"
-          value={searchState.query}
-          oninput={(e) => search.setQuery(e.currentTarget.value, { loadFacets: true })}
-          placeholder={$i18n.t('globalSearch.placeholder')}
-          class="w-full pl-12 pr-4 py-4 text-lg font-body text-gray-900 placeholder-gray-400 focus:outline-none"
-          autocomplete="off"
-          role="combobox"
-          aria-expanded={showResults || showRecentSearches}
-          aria-controls="global-search-listbox"
-          aria-haspopup="listbox"
-          aria-autocomplete="list"
-        />
-        {#if searchState.isSearching}
-          <div class="absolute right-4 top-1/2 -translate-y-1/2">
-            <div class="animate-spin rounded-full h-5 w-5 border-2 border-forest border-t-transparent"></div>
-          </div>
-        {/if}
-      </div>
+    <!-- Search input -->
+    <div class="relative border-b border-gray-200">
+      <MagnifyingGlass class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth="2" />
+      <input
+        use:registerInput
+        type="text"
+        value={searchState.query}
+        oninput={(e) => search.setQuery(e.currentTarget.value, { loadFacets: true })}
+        placeholder={$i18n.t('globalSearch.placeholder')}
+        class="w-full pl-12 pr-4 py-4 text-lg font-body text-gray-900 placeholder-gray-400 focus:outline-none"
+        autocomplete="off"
+        role="combobox"
+        aria-expanded={showResults || showRecentSearches}
+        aria-controls="global-search-listbox"
+        aria-haspopup="listbox"
+        aria-autocomplete="list"
+        tabindex={$isSearchOpen ? undefined : -1}
+      />
+      {#if searchState.isSearching}
+        <div class="absolute right-4 top-1/2 -translate-y-1/2">
+          <div class="animate-spin rounded-full h-5 w-5 border-2 border-forest border-t-transparent"></div>
+        </div>
+      {/if}
+    </div>
 
+    {#if $isSearchOpen}
       <!-- Facet filters bar (shown when query has results or filters are active) -->
       {#if (showResults || showFilters) && searchState.query.trim().length >= 2}
         <div class="border-b border-gray-200 px-4 py-2 flex flex-wrap items-center gap-2">
@@ -428,9 +445,9 @@ onMount(() => {
           </button>
         </div>
       </div>
-    </div>
+    {/if}
   </div>
-{/if}
+</div>
 
 <style>
   /* Style for highlighted search terms from ts_headline */

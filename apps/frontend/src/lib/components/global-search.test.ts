@@ -42,22 +42,47 @@ afterEach(() => {
 });
 
 describe('GlobalSearch', () => {
-  it('stays unmounted while the search store is closed', () => {
+  // The input must exist before the modal opens (see the store's open()), so
+  // the closed modal is hidden rather than unmounted.
+  it('keeps the input mounted but hidden while the search store is closed', async () => {
     render(GlobalSearch);
 
-    expect(screen.queryByPlaceholderText('globalSearch.placeholder')).toBeNull();
+    const dialog = screen.getByRole('dialog', { hidden: true });
+    expect(dialog.getAttribute('aria-hidden')).toBe('true');
+    expect(dialog.className).toContain('pointer-events-none');
+    const input = screen.getByPlaceholderText('globalSearch.placeholder');
+    expect(input.getAttribute('tabindex')).toBe('-1');
+    expect(screen.queryByText('globalSearch.recentSearches')).toBeNull();
+
+    search.open();
+    await waitFor(() => {
+      expect(dialog.getAttribute('aria-hidden')).toBe('false');
+    });
+    expect(dialog.className).not.toContain('pointer-events-none');
+    expect(input.getAttribute('tabindex')).toBeNull();
   });
 
-  // Without focus on mount, mobile users get the modal but no keyboard — the
-  // regression this component's autoFocus action guards against.
-  it('focuses the input when the modal opens', async () => {
+  // iOS shows the keyboard only for a focus() inside the user's tap, so the
+  // focus has to happen synchronously in open() — not on mount, not a frame
+  // later.
+  it('focuses the input synchronously when the modal opens', () => {
     render(GlobalSearch);
+    const input = screen.getByPlaceholderText('globalSearch.placeholder');
+
     search.open();
 
-    const input = await screen.findByPlaceholderText('globalSearch.placeholder');
-    await waitFor(() => {
-      expect(document.activeElement).toBe(input);
-    });
+    expect(document.activeElement).toBe(input);
+  });
+
+  it('blurs the input when the modal closes so the keyboard goes away', () => {
+    render(GlobalSearch);
+    const input = screen.getByPlaceholderText('globalSearch.placeholder');
+    search.open();
+    expect(document.activeElement).toBe(input);
+
+    search.close();
+
+    expect(document.activeElement).not.toBe(input);
   });
 
   it('loads and lists the recent searches on open', async () => {
