@@ -4,6 +4,7 @@ import Camera from 'svelte-heros-v2/Camera.svelte';
 import { goto } from '$app/navigation';
 import * as collectivesApi from '$lib/api/collectives.js';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import MarkdownEditor from '$lib/editor/markdown-editor.svelte';
 import { friends } from '$lib/stores/friends';
 import type { Friend, FriendCreateInput } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
@@ -438,13 +439,12 @@ async function handleSubmit(e: Event) {
   <!-- Epic 1B: Interests -->
   <div class="space-y-2">
     <h3 class="text-lg font-heading text-gray-900">Interests & Hobbies</h3>
-    <textarea
+    <MarkdownEditor
       bind:value={interests}
-      rows="2"
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none"
+      ariaLabel="Interests & Hobbies"
       placeholder="Interests, hobbies, topics they enjoy discussing..."
       disabled={isLoading}
-    ></textarea>
+    />
   </div>
 
   <!-- Epic 1B: How/Where Met -->
@@ -465,13 +465,12 @@ async function handleSubmit(e: Event) {
         disabled={isLoading}
       />
     </div>
-    <textarea
+    <MarkdownEditor
       bind:value={metContext}
-      rows="2"
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none"
+      ariaLabel="How We Met"
       placeholder="Context or story of how you met..."
       disabled={isLoading}
-    ></textarea>
+    />
   </div>
 
   <!-- Form Actions -->

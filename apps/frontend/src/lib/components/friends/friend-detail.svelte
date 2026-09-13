@@ -10,6 +10,7 @@ import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
+import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import {
@@ -259,8 +260,8 @@ onMount(() => {
             <Heart class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('friendDetail.sections.interestsHobbies')}
           </h2>
-          <div class="p-3 bg-gray-50 rounded-lg font-body text-gray-700">
-            {friend.interests}
+          <div class="p-3 bg-gray-50 rounded-lg">
+            <MarkdownView source={friend.interests} />
           </div>
         </section>
       {/if}
@@ -285,7 +286,7 @@ onMount(() => {
               </div>
             {/if}
             {#if friend.metInfo.metContext}
-              <div class="text-gray-700">{friend.metInfo.metContext}</div>
+              <MarkdownView source={friend.metInfo.metContext} />
             {/if}
           </div>
         </section>
