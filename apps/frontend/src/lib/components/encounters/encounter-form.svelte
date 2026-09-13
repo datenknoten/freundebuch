@@ -1,7 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { autoFocus } from '$lib/actions/auto-focus';
-import MarkdownEditor from '$lib/editor/markdown-editor.svelte';
+import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
 import {
@@ -215,20 +215,13 @@ function handleCancel() {
   {/if}
 
   <!-- Description -->
-  <div>
-    <!-- Field label, associated to the editor via aria-labelledby. The editor
-         box is large and click/tab focusable, so no label click-to-focus
-         handler (which would need a role + a11y suppression on a static span). -->
-    <span id="notes-label" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('encounters.form.notesLabel')} <span class="text-gray-400">{$i18n.t('encounters.form.optional')}</span>
-    </span>
-    <MarkdownEditor
-      bind:value={description}
-      labelledBy="notes-label"
-      placeholder={$i18n.t('encounters.form.notesPlaceholder')}
-      disabled={isSubmitting}
-    />
-  </div>
+  <MarkdownField
+    bind:value={description}
+    label={$i18n.t('encounters.form.notesLabel')}
+    hint={$i18n.t('encounters.form.optional')}
+    placeholder={$i18n.t('encounters.form.notesPlaceholder')}
+    disabled={isSubmitting}
+  />
 
   <!-- Form Actions -->
   <div class="flex gap-3 pt-2">
