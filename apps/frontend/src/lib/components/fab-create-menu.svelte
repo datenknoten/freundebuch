@@ -1,9 +1,9 @@
 <script lang="ts" module>
-import { tick } from 'svelte';
+import { flushSync } from 'svelte';
 import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-import { primeKeyboardFocus } from '$lib/actions/auto-focus';
+import { openWithKeyboard } from '$lib/actions/auto-focus';
 
 export type FabCreateChoice = 'friend' | 'encounter' | 'circle' | 'collective';
 
@@ -23,18 +23,15 @@ export function navigateForCreateChoice(choice: FabCreateChoice): void {
       // Circles are created via a modal. Open it in place when already on /circles,
       // otherwise navigate there with a flag the circles page uses to auto-open it.
       if (get(page).url.pathname === '/circles') {
-        // This runs inside the FAB tap, so prime the keyboard for the modal's
-        // auto-focused input (the page's event handler can't, as it's also
-        // reachable from non-gesture keyboard shortcuts). Priming must stay
-        // synchronous within the gesture; the modal's real input is focused a
-        // frame later by the autoFocus action, so it survives the deferral below.
-        primeKeyboardFocus();
-        // Defer opening the circle modal until after the caller's menu (this
-        // component) has finished unmounting. The menu's teardown clears the
-        // global `isModalOpen` flag; if the modal opened synchronously, that
-        // teardown would run *after* the modal set the flag and wrongly reset it
-        // to false, leaving keyboard shortcuts active behind the open modal.
-        tick().then(() => window.dispatchEvent(new CustomEvent('shortcut:new-circle')));
+        // The caller has already closed this menu. Flush that first so the
+        // menu's teardown (which clears the global `isModalOpen` flag) runs
+        // before the modal mounts and sets it — otherwise the flag would end
+        // up false behind an open modal, leaving keyboard shortcuts active.
+        flushSync();
+        // Then open the modal, still inside the FAB tap, so its auto-focused
+        // name input claims the mobile keyboard. The page's event handler
+        // cannot flush itself: it is also reachable from keyboard shortcuts.
+        openWithKeyboard(() => window.dispatchEvent(new CustomEvent('shortcut:new-circle')));
       } else {
         goto('/circles?new=1');
       }

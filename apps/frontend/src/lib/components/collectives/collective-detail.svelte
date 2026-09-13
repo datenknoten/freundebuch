@@ -7,7 +7,7 @@ import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
-import { primeKeyboardFocus } from '$lib/actions/auto-focus';
+import { openWithKeyboard } from '$lib/actions/auto-focus';
 import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
@@ -269,11 +269,12 @@ let address = $derived(formatAddress(collective));
 {#if showMobileAddModal}
   <MobileAddDetailModal
     onSelect={(shortcutEvent) => {
-      showMobileAddModal = false;
-      // Prime the keyboard within this tap so iOS keeps it open when the
-      // auto-focused edit form mounts.
-      primeKeyboardFocus();
-      dispatchAddEvent(shortcutEvent);
+      // Close this picker and mount the edit form in one synchronous flush,
+      // inside the tap, so the form's auto-focused field claims the keyboard.
+      openWithKeyboard(() => {
+        showMobileAddModal = false;
+        dispatchAddEvent(shortcutEvent);
+      });
     }}
     onClose={() => (showMobileAddModal = false)}
   />

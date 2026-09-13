@@ -5,7 +5,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { replaceState } from '$app/navigation';
 import { page } from '$app/stores';
-import { primeKeyboardFocus } from '$lib/actions/auto-focus';
+import { openWithKeyboard } from '$lib/actions/auto-focus';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import CircleEditModal from '$lib/components/circles/circle-edit-modal.svelte';
 import DeleteConfirmModal from '$lib/components/friends/subresources/delete-confirm-modal.svelte';
@@ -81,18 +81,17 @@ onMount(() => {
   };
 });
 
-// `prime` should only be true when called from a real tap/click/swipe gesture,
-// so iOS keeps the keyboard open once the modal's auto-focused name input
-// mounts. Non-gesture callers (?new=1 auto-open, keyboard shortcuts) leave it
-// false to avoid stealing focus.
-function openCreateModal(prime = false) {
-  if (prime) primeKeyboardFocus();
+// Tap/click/swipe callers wrap these in openWithKeyboard() so the modal mounts
+// inside the gesture and its auto-focused name input claims the mobile
+// keyboard. Non-gesture callers (?new=1 auto-open, keyboard shortcuts) call
+// them directly: there is no keyboard to claim, and a synchronous flush is not
+// allowed from onMount anyway.
+function openCreateModal() {
   editingCircle = null;
   showEditModal = true;
 }
 
-function openEditModal(circle: Circle, prime = false) {
-  if (prime) primeKeyboardFocus();
+function openEditModal(circle: Circle) {
   editingCircle = circle;
   showEditModal = true;
 }
@@ -189,7 +188,7 @@ function getActualDepth(circle: Circle): number {
           <p class="text-gray-600 font-body mt-1">{$i18n.t('circles.subtitle')}</p>
         </div>
         <button
-          onclick={() => openCreateModal(true)}
+          onclick={() => openWithKeyboard(openCreateModal)}
           class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
           data-shortcut="n c"
           data-shortcut-label="shortcuts.newCircle"
@@ -252,7 +251,7 @@ function getActualDepth(circle: Circle): number {
           <h3 class="text-lg font-heading text-gray-600 mb-2">{$i18n.t('circles.noCircles')}</h3>
           <p class="text-gray-500 font-body mb-4">{$i18n.t('circles.noCirclesSubtitle')}</p>
           <button
-            onclick={() => openCreateModal(true)}
+            onclick={() => openWithKeyboard(openCreateModal)}
             class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
           >
             <Plus class="w-5 h-5" strokeWidth="2" />
@@ -275,7 +274,7 @@ function getActualDepth(circle: Circle): number {
             <!-- Mobile: Swipeable row -->
             <div class="sm:hidden" style:margin-left="{actualDepth * 16}px">
               <SwipeableRow
-                onSwipeRight={() => openEditModal(circle, true)}
+                onSwipeRight={() => openWithKeyboard(() => openEditModal(circle))}
                 onSwipeLeft={() => openDeleteConfirm(circle)}
                 disabled={isDeleting}
               >
@@ -318,7 +317,7 @@ function getActualDepth(circle: Circle): number {
 
                   <!-- Actions (visible on mobile for accessibility) -->
                   <DetailActions
-                    onEdit={() => openEditModal(circle, true)}
+                    onEdit={() => openWithKeyboard(() => openEditModal(circle))}
                     onDelete={() => openDeleteConfirm(circle)}
                     {isDeleting}
                     editLabel={$i18n.t('common.edit') + ' ' + circle.name}
@@ -373,7 +372,7 @@ function getActualDepth(circle: Circle): number {
 
                 <!-- Actions -->
                 <DetailActions
-                  onEdit={() => openEditModal(circle, true)}
+                  onEdit={() => openWithKeyboard(() => openEditModal(circle))}
                   onDelete={() => openDeleteConfirm(circle)}
                   {isDeleting}
                   editLabel={$i18n.t('common.edit') + ' ' + circle.name}
