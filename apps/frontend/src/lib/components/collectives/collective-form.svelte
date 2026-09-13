@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
+import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectiveTypes } from '$lib/stores/collectives';
 import type { Collective, CollectiveInput, CollectiveType, CollectiveUpdate } from '$shared';
@@ -154,19 +155,13 @@ function handleCancel() {
   {/if}
 
   <!-- Notes -->
-  <div>
-    <label for="notes" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('collectives.form.notesLabel')} <span class="text-gray-400">{$i18n.t('collectives.form.optional')}</span>
-    </label>
-    <textarea
-      id="notes"
-      bind:value={notes}
-      rows="3"
-      placeholder={$i18n.t('collectives.form.notesPlaceholder')}
-      disabled={isSubmitting}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none disabled:opacity-50"
-    ></textarea>
-  </div>
+  <MarkdownField
+    bind:value={notes}
+    label={$i18n.t('collectives.form.notesLabel')}
+    hint={$i18n.t('collectives.form.optional')}
+    placeholder={$i18n.t('collectives.form.notesPlaceholder')}
+    disabled={isSubmitting}
+  />
 
   <!-- Form Actions -->
   <div class="flex gap-3 pt-2">

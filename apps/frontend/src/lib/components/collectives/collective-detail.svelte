@@ -12,6 +12,7 @@ import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
+import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
 import { isModalOpen } from '$lib/stores/ui';
@@ -177,8 +178,8 @@ let address = $derived(formatAddress(collective));
         <DocumentText class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('collectives.detail.notes')}
       </h2>
-      <div class="p-3 bg-gray-50 rounded-lg font-body text-gray-700 whitespace-pre-wrap">
-        {collective.notes}
+      <div class="p-3 bg-gray-50 rounded-lg">
+        <MarkdownView source={collective.notes} />
       </div>
     </section>
   {/if}
