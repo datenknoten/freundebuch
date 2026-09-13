@@ -1,3 +1,8 @@
+## <small>3.0.1 (2026-09-13)</small>
+
+* test(frontend): Cover the global search modal ([c2e98cd](https://github.com/datenknoten/freundebuch/commit/c2e98cd))
+* fix(frontend): Open the mobile keyboard with the global search ([a98520b](https://github.com/datenknoten/freundebuch/commit/a98520b))
+
 ## 3.0.0 (2026-09-12)
 
 * fix(backend): Answer a lost single-primary race with 409 ([7b1b26a](https://github.com/datenknoten/freundebuch/commit/7b1b26a))
