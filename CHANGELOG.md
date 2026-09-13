@@ -1,3 +1,9 @@
+## 3.1.0 (2026-09-13)
+
+* feat(frontend): Mention friends in collective notes ([7cdbf3c](https://github.com/datenknoten/freundebuch/commit/7cdbf3c))
+* feat(frontend): Mention friends in interests and how-we-met ([91172d5](https://github.com/datenknoten/freundebuch/commit/91172d5))
+* refactor(frontend): Extract MarkdownField from the encounter form ([e9d3451](https://github.com/datenknoten/freundebuch/commit/e9d3451))
+
 ## <small>3.0.1 (2026-09-13)</small>
 
 * test(frontend): Cover the global search modal ([c2e98cd](https://github.com/datenknoten/freundebuch/commit/c2e98cd))
