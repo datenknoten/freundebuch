@@ -2,6 +2,9 @@
 import Cropper, { type CropArea, type OnCropCompleteEvent } from 'svelte-easy-crop';
 import Button from '$lib/components/ui/button.svelte';
 import Modal from '$lib/components/ui/modal.svelte';
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 
 interface Props {
   imageUrl: string;
@@ -95,7 +98,7 @@ async function handleConfirm() {
 
 {#snippet footer()}
   <Button variant="secondary" class="flex-1" disabled={isProcessing} onclick={onClose}>
-    Cancel
+    {$i18n.t('common.cancel')}
   </Button>
   <Button
     class="flex-1"
@@ -103,11 +106,11 @@ async function handleConfirm() {
     disabled={croppedAreaPixels === null}
     onclick={handleConfirm}
   >
-    Use Photo
+    {$i18n.t('imageCrop.usePhoto')}
   </Button>
 {/snippet}
 
-<Modal title="Crop Photo" size="lg" closable={!isProcessing} {onClose} {footer}>
+<Modal title={$i18n.t('imageCrop.title')} size="lg" closable={!isProcessing} {onClose} {footer}>
   <!-- Crop area -->
   <div class="relative w-full h-80 bg-gray-900 rounded-lg overflow-hidden">
     <Cropper
@@ -123,7 +126,7 @@ async function handleConfirm() {
 
   <!-- Zoom slider -->
   <label class="mt-4 flex items-center gap-3">
-    <span class="text-sm font-body text-gray-600">Zoom</span>
+    <span class="text-sm font-body text-gray-600">{$i18n.t('imageCrop.zoom')}</span>
     <input
       type="range"
       min="1"

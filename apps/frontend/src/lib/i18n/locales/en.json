@@ -1282,7 +1282,12 @@
     "adding": "Adding...",
     "pleaseSelectFriend": "Please select a friend",
     "failedToLoadTypes": "Failed to load relationship types",
-    "failedToAdd": "Failed to add relationship"
+    "failedToAdd": "Failed to add relationship",
+    "categories": {
+      "family": "Family",
+      "professional": "Professional",
+      "social": "Social"
+    }
   },
   "employment": {
     "jobTitle": "Job Title",
@@ -1371,7 +1376,11 @@
         "other": "Other"
       },
       "editAria": "Edit phone",
-      "deleteAria": "Delete phone"
+      "deleteAria": "Delete phone",
+      "placeholder": {
+        "number": "+49 151 12345678",
+        "label": "e.g. Personal cell, Work direct"
+      }
     },
     "email": {
       "emailAddress": "Email Address",
@@ -1382,7 +1391,11 @@
         "other": "Other"
       },
       "editAria": "Edit email",
-      "deleteAria": "Delete email"
+      "deleteAria": "Delete email",
+      "placeholder": {
+        "address": "name@example.com",
+        "label": "e.g. Main, Newsletter"
+      }
     },
     "address": {
       "address": "Address",
@@ -1396,7 +1409,10 @@
         "other": "Other"
       },
       "editAria": "Edit address",
-      "deleteAria": "Delete address"
+      "deleteAria": "Delete address",
+      "placeholder": {
+        "label": "e.g. Main residence, Summer house"
+      }
     },
     "url": {
       "url": "URL",
@@ -1407,7 +1423,11 @@
         "other": "Other"
       },
       "editAria": "Edit URL",
-      "deleteAria": "Delete URL"
+      "deleteAria": "Delete URL",
+      "placeholder": {
+        "url": "https://example.com",
+        "label": "e.g. Portfolio, LinkedIn"
+      }
     },
     "date": {
       "date": "Date",
@@ -1418,7 +1438,10 @@
         "other": "Other"
       },
       "editAria": "Edit date",
-      "deleteAria": "Delete date"
+      "deleteAria": "Delete date",
+      "placeholder": {
+        "label": "e.g. Wedding anniversary, First met"
+      }
     },
     "social": {
       "platform": "Platform",
@@ -1434,7 +1457,11 @@
         "other": "Other"
       },
       "editAria": "Edit social profile",
-      "deleteAria": "Delete social profile"
+      "deleteAria": "Delete social profile",
+      "placeholder": {
+        "username": "@username",
+        "profileUrl": "https://linkedin.com/in/username"
+      }
     },
     "employment": {
       "primaryEmployment": "Set as primary (shown in contact cards)",
@@ -1477,5 +1504,29 @@
     "englishOnly": "This document is only available in English.",
     "privacyTitle": "Privacy Policy",
     "termsTitle": "Terms of Service"
+  },
+  "address": {
+    "street": "Street",
+    "streetPlaceholder": "Search streets…",
+    "streetManualPlaceholder": "Enter street name",
+    "houseNumber": "House Number",
+    "houseNumberPlaceholder": "Search or select…",
+    "houseNumberManualPlaceholder": "Enter house number",
+    "postalCode": "Postal Code",
+    "postalCodePlaceholder": "Enter postal code",
+    "enterManually": "Enter manually",
+    "streetLine2Placeholder": "Apartment, suite, floor, etc.",
+    "relationshipTypePlaceholder": "Search relationship types…",
+    "streetLine2": "Additional address info",
+    "postalCodeHint": "Enter at least 3 characters",
+    "noMatchingStreets": "No matching streets found",
+    "noMatchingNumbers": "No matching numbers found",
+    "noMatchingTypes": "No matching types found"
+  },
+  "imageCrop": {
+    "title": "Crop Photo",
+    "zoom": "Zoom",
+    "usePhoto": "Use Photo",
+    "processing": "Processing…"
   }
 }

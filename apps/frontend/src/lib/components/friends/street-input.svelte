@@ -3,7 +3,10 @@ import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
 import type { StreetInfo } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   /** Available streets to select from */
@@ -159,7 +162,7 @@ function enableManualEntry() {
 </script>
 
 <div class="relative">
-  <label for="street-input" class={formClasses.label}>Street</label>
+  <label for="street-input" class={formClasses.label}>{$i18n.t('address.street')}</label>
 
   <div class="relative">
     {#if value && !showDropdown && !manualEntry && streets.length > 0 && !freeTextMode}
@@ -193,7 +196,9 @@ function enableManualEntry() {
           onkeydown={handleKeydown}
           onblur={handleBlur}
           onfocus={handleFocus}
-          placeholder={freeTextMode || manualEntry ? 'Enter street name' : 'Search streets...'}
+          placeholder={freeTextMode || manualEntry
+            ? $i18n.t('address.streetManualPlaceholder')
+            : $i18n.t('address.streetPlaceholder')}
           {disabled}
           class="{formClasses.inputSm} pr-10"
           autocomplete="off"
@@ -244,12 +249,14 @@ function enableManualEntry() {
           class="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 transition-colors text-left {highlightedIndex === filteredStreets().length ? 'bg-gray-100' : ''}"
         >
           <PencilSquare class="w-4 h-4 text-gray-400" strokeWidth="2" />
-          <span class="font-body text-sm text-gray-600">Enter manually</span>
+          <span class="font-body text-sm text-gray-600">{$i18n.t('address.enterManually')}</span>
         </button>
       </li>
 
       {#if filteredStreets().length === 0}
-        <li class="px-3 py-2 text-sm text-gray-500 font-body">No matching streets found</li>
+        <li class="px-3 py-2 text-sm text-gray-500 font-body">
+          {$i18n.t('address.noMatchingStreets')}
+        </li>
       {/if}
     </ul>
   {/if}

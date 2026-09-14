@@ -59,7 +59,7 @@ export function isValid(): boolean {
     bind:value={phoneNumber}
     type="tel"
     {disabled}
-    placeholder="+1 555-123-4567"
+    placeholder={$i18n.t('subresources.phone.placeholder.number')}
     required
     autofocus
   />
@@ -77,7 +77,7 @@ export function isValid(): boolean {
     label={$i18n.t('subresources.common.label')}
     bind:value={label}
     {disabled}
-    placeholder="e.g., Personal cell, Work direct"
+    placeholder={$i18n.t('subresources.phone.placeholder.label')}
     optional
     optionalText={$i18n.t('common.optional')}
   />

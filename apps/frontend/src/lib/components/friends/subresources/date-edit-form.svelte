@@ -73,7 +73,7 @@ export function isValid(): boolean {
     label={$i18n.t('subresources.common.label')}
     bind:value={label}
     {disabled}
-    placeholder="e.g., Wedding anniversary, First met"
+    placeholder={$i18n.t('subresources.date.placeholder.label')}
     optional
     optionalText={$i18n.t('common.optional')}
   />

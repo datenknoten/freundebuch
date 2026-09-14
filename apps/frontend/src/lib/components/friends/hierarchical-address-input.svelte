@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import * as addressApi from '$lib/api/address-lookup';
 import { formClasses } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
 import type {
   AddressType,
   CityInfo,
@@ -15,6 +16,8 @@ import CountrySelect from './country-select.svelte';
 import HouseNumberInput from './house-number-input.svelte';
 import PostalCodeInput from './postal-code-input.svelte';
 import StreetInput from './street-input.svelte';
+
+const i18n = createI18n();
 
 interface AddressOutput {
   country: string;
@@ -465,7 +468,7 @@ function emitChange() {
       type="text"
       value={streetLine2}
       oninput={handleStreetLine2Change}
-      placeholder="Apartment, suite, floor, etc."
+      placeholder={$i18n.t('address.streetLine2Placeholder')}
       {disabled}
       class={formClasses.inputSm}
     />
