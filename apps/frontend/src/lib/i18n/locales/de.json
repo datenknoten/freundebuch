@@ -600,7 +600,9 @@
       "save": "Freundekreis speichern",
       "saving": "Speichern...",
       "saveChanges": "Änderungen speichern",
-      "createCircle": "Freundekreis erstellen"
+      "createCircle": "Freundekreis erstellen",
+      "nameRequired": "Der Name des Freundekreises ist erforderlich",
+      "saveError": "Freundekreis konnte nicht gespeichert werden"
     },
     "delete": {
       "title": "Freundekreis löschen",
@@ -1502,7 +1504,14 @@
       "untitled": "Berufserfahrung"
     },
     "circle": {
-      "removeAria": "Aus Freundeskreis entfernen"
+      "removeAria": "Aus Freundeskreis entfernen",
+      "loading": "Kreise werden geladen …",
+      "noneCreated": "Noch keine Kreise angelegt.",
+      "noneCreatedHint": "Lege auf der Kreise-Seite Kreise an, um deine Freund:innen zu ordnen.",
+      "allAssigned": "Bereits in allen verfügbaren Kreisen.",
+      "select": "Kreis auswählen",
+      "selectPlaceholder": "Kreis wählen …",
+      "preview": "Vorschau:"
     },
     "collective": {
       "removeAria": "Aus Kollektiv entfernen"

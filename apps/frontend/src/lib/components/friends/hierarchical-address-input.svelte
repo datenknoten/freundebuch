@@ -461,7 +461,8 @@ function emitChange() {
   <!-- Street Line 2 (always available) -->
   <div class="relative">
     <label for="street-line-2-input" class={formClasses.label}>
-      Additional Address Info (optional)
+      {$i18n.t('address.streetLine2')}
+      <span class="text-gray-400">({$i18n.t('common.optional')})</span>
     </label>
     <input
       id="street-line-2-input"
