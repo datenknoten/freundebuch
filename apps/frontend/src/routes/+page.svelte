@@ -77,22 +77,16 @@ async function loadDashboard() {
 				limit={UPCOMING_LIMIT}
 			/>
 			<div class={surfaceClasses.page}>
-				<h2 class={headingClasses.widget}>{$i18n.t('home.quickActions')}</h2>
-				<div class="space-y-3 mt-4">
-					<a
-						href="/friends/new"
-						class="flex items-center gap-3 p-3 rounded-lg bg-forest text-white hover:bg-forest-light transition-colors"
-					>
+				<h2 class="{headingClasses.widget} mb-4">{$i18n.t('home.quickActions')}</h2>
+				<div class="space-y-3">
+					<Button href="/friends/new" block class="justify-start">
 						<Plus class="w-5 h-5" strokeWidth="2" />
-						<span class="font-body font-medium">{$i18n.t('home.addNewFriend')}</span>
-					</a>
-					<a
-						href="/friends"
-						class="flex items-center gap-3 p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-					>
+						{$i18n.t('home.addNewFriend')}
+					</Button>
+					<Button href="/friends" variant="secondary" block class="justify-start">
 						<UserGroup class="w-5 h-5" strokeWidth="2" />
-						<span class="font-body font-medium">{$i18n.t('home.viewAllFriends')}</span>
-					</a>
+						{$i18n.t('home.viewAllFriends')}
+					</Button>
 				</div>
 			</div>
 			<div class="lg:col-span-2">
