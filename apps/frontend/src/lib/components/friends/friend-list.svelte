@@ -11,6 +11,7 @@ import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
 import EmptyState from '$lib/components/ui/empty-state.svelte';
 import SearchInput from '$lib/components/ui/search-input.svelte';
@@ -421,9 +422,7 @@ function openFirstResult() {
   />
 
   {#if searchError}
-    <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-body" role="alert">
-      {searchError}
-    </div>
+    <AlertBanner variant="error">{searchError}</AlertBanner>
   {/if}
 
   <!-- Facet filters bar (always visible) -->
