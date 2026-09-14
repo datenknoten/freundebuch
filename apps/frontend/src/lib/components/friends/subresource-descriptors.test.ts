@@ -4,6 +4,7 @@ import { friends } from '$lib/stores/friends';
 import type { SocialProfile } from '$shared';
 import {
   addressDescriptor,
+  friendAddDetailOptions,
   hasProfileUrl,
   phoneDescriptor,
   socialProfileDescriptor,
@@ -67,5 +68,20 @@ describe('friend subresource descriptors', () => {
       socialProfileDescriptor.linkable?.(aSocialProfile({ profileUrl: 'https://x.dev/@ada' })),
     ).toBe(true);
     expect(socialProfileDescriptor.linkable?.(aSocialProfile({ username: 'ada' }))).toBe(false);
+  });
+
+  it('offers every friend sub-resource in the add-detail menu', () => {
+    expect(friendAddDetailOptions.map((option) => option.key)).toEqual([
+      'phone',
+      'email',
+      'address',
+      'url',
+      'date',
+      'social',
+      'circle',
+      'collective',
+      'professional',
+      'relationship',
+    ]);
   });
 });

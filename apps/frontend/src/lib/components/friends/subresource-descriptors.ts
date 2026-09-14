@@ -16,6 +16,7 @@ import Briefcase from 'svelte-heros-v2/Briefcase.svelte';
 import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import Envelope from 'svelte-heros-v2/Envelope.svelte';
+import Heart from 'svelte-heros-v2/Heart.svelte';
 import Link from 'svelte-heros-v2/Link.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
@@ -43,6 +44,8 @@ import type {
   UrlInput,
 } from '$shared';
 import {
+  type AddDetailOption,
+  addDetailOption,
   asFormComponent,
   type FormPropsContext,
   itemAs,
@@ -87,6 +90,8 @@ export const phoneDescriptor: SubresourceDescriptor = {
   icon: PhoneIcon,
   sectionTitleKey: 'friendDetail.sections.phoneNumbers',
   addLabelKey: 'friendDetail.actions.addPhone',
+  addShortcut: 'a p',
+  addShortcutLabel: 'shortcuts.add.phone',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.phoneNumber',
   create: (friendId, data: PhoneInput) => friends.addPhone(friendId, data),
@@ -116,6 +121,8 @@ export const emailDescriptor: SubresourceDescriptor = {
   icon: Envelope,
   sectionTitleKey: 'friendDetail.sections.emailAddresses',
   addLabelKey: 'friendDetail.actions.addEmail',
+  addShortcut: 'a e',
+  addShortcutLabel: 'shortcuts.add.email',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.emailAddress',
   create: (friendId, data: EmailInput) => friends.addEmail(friendId, data),
@@ -137,6 +144,8 @@ export const addressDescriptor: SubresourceDescriptor = {
   icon: MapPin,
   sectionTitleKey: 'friendDetail.sections.addresses',
   addLabelKey: 'friendDetail.actions.addAddress',
+  addShortcut: 'a a',
+  addShortcutLabel: 'shortcuts.add.address',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.address',
   create: (friendId, data: AddressInput) => friends.addAddress(friendId, data),
@@ -174,6 +183,8 @@ export const urlDescriptor: SubresourceDescriptor = {
   icon: Link,
   sectionTitleKey: 'friendDetail.sections.websites',
   addLabelKey: 'friendDetail.actions.addUrl',
+  addShortcut: 'a u',
+  addShortcutLabel: 'shortcuts.add.url',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.websiteUrl',
   create: (friendId, data: UrlInput) => friends.addUrl(friendId, data),
@@ -204,6 +215,8 @@ export const socialProfileDescriptor: SubresourceDescriptor = {
   icon: Share,
   sectionTitleKey: 'friendDetail.sections.socialProfiles',
   addLabelKey: 'friendDetail.actions.addSocial',
+  addShortcut: 'a s',
+  addShortcutLabel: 'shortcuts.add.socialProfile',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.socialProfile',
   create: (friendId, data: SocialProfileInput) => friends.addSocialProfile(friendId, data),
@@ -232,6 +245,8 @@ export const dateDescriptor: SubresourceDescriptor = {
   icon: Calendar,
   sectionTitleKey: 'friendDetail.sections.importantDates',
   addLabelKey: 'friendDetail.actions.addDate',
+  addShortcut: 'a d',
+  addShortcutLabel: 'shortcuts.add.date',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.importantDate',
   create: (friendId, data: DateInput) => friends.addDate(friendId, data),
@@ -253,6 +268,8 @@ export const professionalHistoryDescriptor: SubresourceDescriptor = {
   icon: Briefcase,
   sectionTitleKey: 'friendDetail.sections.employmentHistory',
   addLabelKey: 'friendDetail.actions.addEmployment',
+  addShortcut: 'a w',
+  addShortcutLabel: 'shortcuts.add.workExperience',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.employment',
   create: (friendId, data: ProfessionalHistoryInput) =>
@@ -279,6 +296,8 @@ export const circleDescriptor: SubresourceDescriptor = {
   icon: Users,
   sectionTitleKey: 'friendDetail.sections.circles',
   addLabelKey: 'friendDetail.actions.addCircle',
+  addShortcut: 'a c',
+  addShortcutLabel: 'shortcuts.add.circle',
   // A friend joins an existing circle; there is nothing to edit in place.
   editable: false,
   modalTypeNameKey: 'friendDetail.modal.circle',
@@ -310,6 +329,8 @@ export function createCollectiveDescriptor(onChanged: () => void): SubresourceDe
     icon: BuildingOffice,
     sectionTitleKey: 'friendDetail.sections.collectives',
     addLabelKey: 'friendDetail.actions.addCollective',
+    addShortcut: 'a o',
+    addShortcutLabel: 'shortcuts.add.collective',
     editable: false,
     // Unused: AddComponent owns creation, so the section never calls this.
     create: () => Promise.resolve(),
@@ -333,3 +354,36 @@ export function createCollectiveDescriptor(onChanged: () => void): SubresourceDe
     deleteDescriptionKey: 'friendDetail.modal.confirmRemoveCollective',
   };
 }
+
+/**
+ * Entries of the friend's "add detail" dropdown and mobile sheet, in display
+ * order. Shortcut chords mirror FRIEND_DETAIL_ACTIONS in
+ * `$lib/shortcuts/config.ts` ("a" + key). Relationships are listed too even
+ * though they are not a descriptor-driven section — the menu is the entry
+ * point for every detail a friend can gain.
+ */
+export const friendAddDetailOptions: AddDetailOption[] = [
+  addDetailOption(phoneDescriptor, 'shortcuts.add.phone'),
+  addDetailOption(emailDescriptor, 'shortcuts.add.email'),
+  addDetailOption(addressDescriptor, 'shortcuts.add.address'),
+  addDetailOption(urlDescriptor, 'shortcuts.add.url'),
+  addDetailOption(dateDescriptor, 'shortcuts.add.date'),
+  addDetailOption(socialProfileDescriptor, 'shortcuts.add.socialProfile'),
+  addDetailOption(circleDescriptor, 'shortcuts.add.circle'),
+  // The collective descriptor is built per friend detail page (it closes over
+  // the page's reload); the menu only needs its icon, event and chord, so a
+  // throwaway instance stands in.
+  addDetailOption(
+    createCollectiveDescriptor(() => {}),
+    'shortcuts.add.collective',
+  ),
+  addDetailOption(professionalHistoryDescriptor, 'shortcuts.add.workExperience'),
+  {
+    key: 'relationship',
+    icon: Heart,
+    labelKey: 'shortcuts.add.relationship',
+    event: 'shortcut:add-relationship',
+    shortcut: 'a r',
+    shortcutLabel: 'shortcuts.add.relationship',
+  },
+];

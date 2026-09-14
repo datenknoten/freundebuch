@@ -1410,17 +1410,6 @@
       "atOrganization": "{{jobTitle}} bei {{organization}}",
       "untitled": "Berufserfahrung"
     },
-    "dropdown": {
-      "phoneNumber": "Telefonnummer",
-      "emailAddress": "E-Mail-Adresse",
-      "address": "Adresse",
-      "websiteUrl": "Webseite/URL",
-      "importantDate": "Wichtiger Termin",
-      "socialProfile": "Soziales Profil",
-      "circle": "Freundeskreis",
-      "collective": "Kollektiv",
-      "employment": "Berufserfahrung"
-    },
     "circle": {
       "removeAria": "Aus Freundeskreis entfernen"
     },

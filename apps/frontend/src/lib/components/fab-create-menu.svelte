@@ -120,7 +120,4 @@ const options: { choice: FabCreateChoice; icon: typeof UserPlus; labelKey: strin
   <Button variant="ghost" block class="mt-4" onclick={onClose}>
     {$i18n.t('common.cancel')}
   </Button>
-
-  <!-- Safe area padding for iOS -->
-  <div class="h-safe-area-inset-bottom"></div>
 </Modal>
