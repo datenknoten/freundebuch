@@ -12,11 +12,10 @@ import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
-import { Button } from '$lib/components/ui';
+import { Button, ConfirmDialog } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
-import { isModalOpen } from '$lib/stores/ui';
 import { collectiveTypeI18nKey } from '$lib/utils/collective-types';
 import type { Collective } from '$shared';
 import AddDetailDropdown from './add-detail-dropdown.svelte';
@@ -34,8 +33,7 @@ interface Props {
 
 let { collective, onEdit }: Props = $props();
 
-// Collective deletion
-let isDeleting = $state(false);
+// Collective deletion (ConfirmDialog owns the in-flight and error state)
 let showDeleteConfirm = $state(false);
 
 // Mobile FAB / add-detail state
@@ -47,16 +45,6 @@ let showMobileAddModal = $state(false);
 // section is currently hidden because it has no items yet.
 function dispatchAddEvent(shortcutEvent: string) {
   window.dispatchEvent(new CustomEvent(shortcutEvent));
-}
-
-function openDeleteConfirm() {
-  showDeleteConfirm = true;
-  isModalOpen.set(true);
-}
-
-function closeDeleteConfirm() {
-  showDeleteConfirm = false;
-  isModalOpen.set(false);
 }
 
 // Icon component mapping for collective types
@@ -101,22 +89,11 @@ function formatAddress(c: Collective): string | null {
   return parts.length > 0 ? parts.join(', ') : null;
 }
 
+// Rejections propagate to ConfirmDialog, which keeps itself open and shows the
+// reason; on success it closes itself and we navigate away.
 async function handleDelete() {
-  isDeleting = true;
-  try {
-    await collectives.deleteCollective(collective.id);
-    // Clear the modal flag before navigating; goto() may not unmount us
-    // (or could fail), which would otherwise leave shortcuts suppressed.
-    closeDeleteConfirm();
-    goto('/collectives');
-  } catch (err) {
-    console.error('Failed to delete collective:', err);
-    closeDeleteConfirm();
-  } finally {
-    // Reset independently of navigation: if goto() fails or doesn't unmount
-    // us, the UI must not stay stuck in a permanently-deleting state.
-    isDeleting = false;
-  }
+  await collectives.deleteCollective(collective.id);
+  goto('/collectives');
 }
 
 let address = $derived(formatAddress(collective));
@@ -162,7 +139,7 @@ let address = $derived(formatAddress(collective));
       >
         {$i18n.t('common.edit')}
       </Button>
-      <Button variant="dangerOutline" onclick={openDeleteConfirm}>
+      <Button variant="dangerOutline" onclick={() => (showDeleteConfirm = true)}>
         {$i18n.t('common.delete')}
       </Button>
     </div>
@@ -205,32 +182,13 @@ let address = $derived(formatAddress(collective));
 
 <!-- Delete collective confirmation -->
 {#if showDeleteConfirm}
-  <div class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-(--z-overlay)">
-    <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
-      <h3 class="text-xl font-heading text-gray-900 mb-2">{$i18n.t('collectives.detail.deleteConfirmTitle')}</h3>
-      <p class="text-gray-600 font-body mb-6">
-        {$i18n.t('collectives.detail.deleteConfirmMessage', { name: collective.name })}
-      </p>
-      <div class="flex gap-3">
-        <Button
-          variant="secondary"
-          class="flex-1"
-          onclick={closeDeleteConfirm}
-          disabled={isDeleting}
-        >
-          {$i18n.t('collectives.form.cancel')}
-        </Button>
-        <Button
-          variant="danger"
-          class="flex-1"
-          onclick={handleDelete}
-          loading={isDeleting}
-        >
-          {$i18n.t('collectives.detail.delete')}
-        </Button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$i18n.t('collectives.detail.deleteConfirmTitle')}
+    description={$i18n.t('collectives.detail.deleteConfirmMessage')}
+    itemPreview={collective.name}
+    onConfirm={handleDelete}
+    onClose={() => (showDeleteConfirm = false)}
+  />
 {/if}
 
 <!-- Mobile FAB: tap = merged create menu (with a contextual "add detail" entry) -->

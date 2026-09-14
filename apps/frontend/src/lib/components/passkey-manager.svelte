@@ -5,6 +5,7 @@ import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/index.js';
 
@@ -31,6 +32,8 @@ let isAdding = $state(false);
 let deletingId = $state<string | null>(null);
 let editingId = $state<string | null>(null);
 let editName = $state('');
+let deleteConfirmId = $state<string | null>(null);
+let deleteConfirmName = $state('');
 
 onMount(async () => {
   await loadPasskeys();
@@ -66,18 +69,29 @@ async function handleAdd() {
   }
 }
 
-async function handleDelete(id: string) {
+function openDeleteConfirm(pk: Passkey) {
+  deleteConfirmId = pk.id;
+  deleteConfirmName = pk.name || $i18n.t('profile.passkeys.unnamedPasskey');
+}
+
+function closeDeleteConfirm() {
+  deleteConfirmId = null;
+  deleteConfirmName = '';
+}
+
+// Rejections stay inside ConfirmDialog, which keeps itself open and shows the
+// reason, so the failure is visible where the action was taken.
+async function handleDelete() {
+  const id = deleteConfirmId;
+  if (id === null) return;
   deletingId = id;
   error = '';
   try {
     const result = await authClient.passkey.deletePasskey({ id });
     if (result?.error) {
-      error = result.error.message || $i18n.t('profile.passkeys.failedToDelete');
-    } else {
-      await loadPasskeys();
+      throw new Error(result.error.message || $i18n.t('profile.passkeys.failedToDelete'));
     }
-  } catch (err) {
-    error = (err as Error)?.message || $i18n.t('profile.passkeys.failedToDelete');
+    await loadPasskeys();
   } finally {
     deletingId = null;
   }
@@ -192,7 +206,7 @@ function deviceTypeLabel(type: string | null): string {
             <Button
               variant="dangerOutline"
               size="sm"
-              onclick={() => handleDelete(pk.id)}
+              onclick={() => openDeleteConfirm(pk)}
               disabled={deletingId === pk.id}
             >
               {deletingId === pk.id ? $i18n.t('profile.passkeys.deleting') : $i18n.t('common.delete')}
@@ -203,3 +217,13 @@ function deviceTypeLabel(type: string | null): string {
     </div>
   {/if}
 </div>
+
+{#if deleteConfirmId !== null}
+  <ConfirmDialog
+    title={$i18n.t('profile.passkeys.deleteTitle')}
+    description={$i18n.t('profile.passkeys.deleteDescription')}
+    itemPreview={deleteConfirmName}
+    onConfirm={handleDelete}
+    onClose={closeDeleteConfirm}
+  />
+{/if}

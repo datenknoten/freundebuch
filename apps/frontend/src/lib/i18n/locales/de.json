@@ -5,6 +5,7 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Löschen",
+    "remove": "Entfernen",
     "edit": "Bearbeiten",
     "close": "Schließen",
     "confirm": "Bestätigen",
@@ -135,7 +136,7 @@
       "notFoundSubtitle": "Diese Begegnung wurde möglicherweise gelöscht oder existiert nicht.",
       "returnToEncounters": "Zurück zu Begegnungen",
       "deleteConfirmTitle": "Begegnung löschen?",
-      "deleteConfirmMessage": "Bist du sicher, dass du \"{{title}}\" löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+      "deleteConfirmMessage": "Bist du sicher, dass du diese Begegnung löschen möchtest?"
     }
   },
   "collectives": {
@@ -234,7 +235,7 @@
       "notFoundSubtitle": "Dieses Kollektiv wurde möglicherweise gelöscht oder existiert nicht.",
       "returnToCollectives": "Zurück zu Kollektiven",
       "deleteConfirmTitle": "Kollektiv löschen?",
-      "deleteConfirmMessage": "Bist du sicher, dass du \"{{name}}\" löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+      "deleteConfirmMessage": "Bist du sicher, dass du dieses Kollektiv löschen möchtest?"
     },
     "addMember": {
       "title": "Mitglied hinzufügen",
@@ -606,7 +607,9 @@
       "revoke": "Widerrufen",
       "failedToLoad": "App-Passwörter konnten nicht geladen werden",
       "failedToCreate": "App-Passwort konnte nicht erstellt werden",
-      "failedToRevoke": "App-Passwort konnte nicht widerrufen werden"
+      "failedToRevoke": "App-Passwort konnte nicht widerrufen werden",
+      "revokeTitle": "App-Passwort widerrufen",
+      "revokeDescription": "Bist du sicher, dass du dieses App-Passwort widerrufen möchtest? Geräte, die es verwenden, synchronisieren dann nicht mehr."
     },
     "passkeys": {
       "title": "Passkeys",
@@ -632,7 +635,9 @@
       "failedToLoad": "Passkeys konnten nicht geladen werden",
       "failedToRegister": "Passkey konnte nicht registriert werden",
       "failedToDelete": "Passkey konnte nicht gelöscht werden",
-      "failedToRename": "Passkey konnte nicht umbenannt werden"
+      "failedToRename": "Passkey konnte nicht umbenannt werden",
+      "deleteTitle": "Passkey löschen",
+      "deleteDescription": "Bist du sicher, dass du diesen Passkey löschen möchtest? Du kannst dich dann nicht mehr damit anmelden."
     },
     "messagingReminders": {
       "title": "Messaging-Erinnerungen",
@@ -1067,7 +1072,7 @@
     "addDetailSubtitle": "Telefon, E-Mail, Adresse und mehr hinzufügen",
     "delete": {
       "title": "Freund löschen",
-      "confirmMessage": "Bist du sicher, dass du löschen möchtest",
+      "confirmMessage": "Bist du sicher, dass du diesen Freund löschen möchtest?",
       "cannotUndo": "Diese Aktion kann nicht rückgängig gemacht werden.",
       "deleting": "Wird gelöscht..."
     },
@@ -1186,6 +1191,7 @@
     "relationship": "Beziehung",
     "addRelationship": "Beziehung hinzufügen",
     "confirmRemove": "Bist du sicher, dass du diese Beziehung entfernen möchtest?",
+    "removeTitle": "Beziehung entfernen",
     "addNotes": "Notizen hinzufügen...",
     "saving": "Speichern...",
     "save": "Speichern",

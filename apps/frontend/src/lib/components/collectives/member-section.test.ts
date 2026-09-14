@@ -1,7 +1,15 @@
 import { get } from 'svelte/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isModalOpen } from '$lib/stores/ui';
-import { aCollective, aCollectiveMember, fireEvent, render, screen, waitFor } from '$lib/test';
+import {
+  aCollective,
+  aCollectiveMember,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '$lib/test';
 import MemberSection from './member-section.svelte';
 
 vi.mock('$lib/i18n/index.js', () => ({
@@ -121,16 +129,18 @@ describe('MemberSection', () => {
     errorSpy.mockRestore();
   });
 
-  it('logs when removal rejects', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+  it('keeps the removal dialog open and logs when removal rejects', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     removeMember.mockRejectedValueOnce(new Error('boom'));
     const { collective } = aCollectiveWithMembers();
     render(MemberSection, { collective });
 
     await fireEvent.click(screen.getAllByTitle('collectives.removeMember')[0]);
+    await fireEvent.click(screen.getByText('common.remove'));
+
     await waitFor(() => expect(errorSpy).toHaveBeenCalled());
-    confirmSpy.mockRestore();
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('boom'));
+    expect(screen.getByRole('dialog')).toBeTruthy();
     errorSpy.mockRestore();
   });
 
@@ -142,24 +152,29 @@ describe('MemberSection', () => {
     await waitFor(() => expect(reactivateMember).toHaveBeenCalledWith(collective.id, inactive.id));
   });
 
-  it('removes a member after the confirm prompt', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+  it('removes a member after confirming in the dialog', async () => {
     const { collective, active } = aCollectiveWithMembers();
     render(MemberSection, { collective });
 
     await fireEvent.click(screen.getAllByTitle('collectives.removeMember')[0]);
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText(active.contact.displayName)).toBeTruthy();
+
+    await fireEvent.click(within(dialog).getByText('common.remove'));
     await waitFor(() => expect(removeMember).toHaveBeenCalledWith(collective.id, active.id));
-    confirmSpy.mockRestore();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
-  it('does not remove a member when the confirm prompt is cancelled', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('does not remove a member when the dialog is cancelled', async () => {
     const { collective } = aCollectiveWithMembers();
     render(MemberSection, { collective });
 
     await fireEvent.click(screen.getAllByTitle('collectives.removeMember')[0]);
+    await fireEvent.click(screen.getByText('common.cancel'));
+
     expect(removeMember).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(get(isModalOpen)).toBe(false);
   });
 
   it('opens the add-member modal', async () => {

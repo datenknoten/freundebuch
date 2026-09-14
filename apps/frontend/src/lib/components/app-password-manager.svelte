@@ -6,6 +6,7 @@ import type { AppPassword, CreateAppPasswordResult } from '$lib/api/app-password
 import * as appPasswordsApi from '$lib/api/app-passwords';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/index.js';
 
@@ -18,6 +19,8 @@ let newPasswordName = $state('');
 let isCreating = $state(false);
 let createdPassword = $state<CreateAppPasswordResult | null>(null);
 let revokingId = $state<string | null>(null);
+let revokeConfirmId = $state<string | null>(null);
+let revokeConfirmName = $state('');
 
 onMount(async () => {
   await loadPasswords();
@@ -52,14 +55,26 @@ async function handleCreate(event: SubmitEvent) {
   }
 }
 
-async function handleRevoke(id: string) {
+function openRevokeConfirm(password: AppPassword) {
+  revokeConfirmId = password.externalId;
+  revokeConfirmName = password.name;
+}
+
+function closeRevokeConfirm() {
+  revokeConfirmId = null;
+  revokeConfirmName = '';
+}
+
+// Rejections stay inside ConfirmDialog, which keeps itself open and shows the
+// reason, so the failure is visible where the action was taken.
+async function handleRevoke() {
+  const id = revokeConfirmId;
+  if (id === null) return;
   revokingId = id;
   error = '';
   try {
     await appPasswordsApi.revokeAppPassword(id);
     await loadPasswords();
-  } catch (err) {
-    error = (err as Error)?.message || $i18n.t('profile.appPasswords.failedToRevoke');
   } finally {
     revokingId = null;
   }
@@ -150,7 +165,7 @@ function formatDate(dateString: string | null): string {
           <Button
             variant="dangerOutline"
             size="sm"
-            onclick={() => handleRevoke(password.externalId)}
+            onclick={() => openRevokeConfirm(password)}
             disabled={revokingId === password.externalId}
           >
             {revokingId === password.externalId
@@ -162,3 +177,14 @@ function formatDate(dateString: string | null): string {
     </div>
   {/if}
 </div>
+
+{#if revokeConfirmId !== null}
+  <ConfirmDialog
+    title={$i18n.t('profile.appPasswords.revokeTitle')}
+    description={$i18n.t('profile.appPasswords.revokeDescription')}
+    itemPreview={revokeConfirmName}
+    confirmLabel={$i18n.t('profile.appPasswords.revoke')}
+    onConfirm={handleRevoke}
+    onClose={closeRevokeConfirm}
+  />
+{/if}

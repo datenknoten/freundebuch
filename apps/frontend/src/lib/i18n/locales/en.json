@@ -5,6 +5,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
+    "remove": "Remove",
     "edit": "Edit",
     "close": "Close",
     "confirm": "Confirm",
@@ -135,7 +136,7 @@
       "notFoundSubtitle": "This encounter may have been deleted or doesn't exist.",
       "returnToEncounters": "Return to encounters",
       "deleteConfirmTitle": "Delete Encounter?",
-      "deleteConfirmMessage": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone."
+      "deleteConfirmMessage": "Are you sure you want to delete this encounter?"
     }
   },
   "collectives": {
@@ -234,7 +235,7 @@
       "notFoundSubtitle": "This collective may have been deleted or doesn't exist.",
       "returnToCollectives": "Return to collectives",
       "deleteConfirmTitle": "Delete Collective?",
-      "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone."
+      "deleteConfirmMessage": "Are you sure you want to delete this collective?"
     },
     "addMember": {
       "title": "Add Member",
@@ -606,7 +607,9 @@
       "revoke": "Revoke",
       "failedToLoad": "Failed to load app passwords",
       "failedToCreate": "Failed to create app password",
-      "failedToRevoke": "Failed to revoke app password"
+      "failedToRevoke": "Failed to revoke app password",
+      "revokeTitle": "Revoke App Password",
+      "revokeDescription": "Are you sure you want to revoke this app password? Devices using it will stop syncing."
     },
     "passkeys": {
       "title": "Passkeys",
@@ -632,7 +635,9 @@
       "failedToLoad": "Failed to load passkeys",
       "failedToRegister": "Failed to register passkey",
       "failedToDelete": "Failed to delete passkey",
-      "failedToRename": "Failed to rename passkey"
+      "failedToRename": "Failed to rename passkey",
+      "deleteTitle": "Delete Passkey",
+      "deleteDescription": "Are you sure you want to delete this passkey? You will no longer be able to sign in with it."
     },
     "messagingReminders": {
       "title": "Messaging Reminders",
@@ -1067,7 +1072,7 @@
     "addDetailSubtitle": "Add phone, email, address, and more",
     "delete": {
       "title": "Delete Friend",
-      "confirmMessage": "Are you sure you want to delete",
+      "confirmMessage": "Are you sure you want to delete this friend?",
       "cannotUndo": "This action cannot be undone.",
       "deleting": "Deleting..."
     },
@@ -1186,6 +1191,7 @@
     "relationship": "Relationship",
     "addRelationship": "Add Relationship",
     "confirmRemove": "Are you sure you want to remove this relationship?",
+    "removeTitle": "Remove Relationship",
     "addNotes": "Add notes...",
     "saving": "Saving...",
     "save": "Save",
