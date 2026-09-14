@@ -15,6 +15,10 @@ import {
   isOpenFriendLinkModeActive,
   openFriendLinkModePrefix,
 } from '$lib/stores/ui';
+import {
+  RELATIONSHIP_CATEGORIES,
+  RELATIONSHIP_CATEGORY_STYLE,
+} from '$lib/utils/relationship-categories';
 import type { Relationship, RelationshipCategory, RelationshipTypeId } from '$shared';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 import FriendAvatar from './friend-avatar.svelte';
@@ -82,7 +86,7 @@ let relationshipBadgeIndex = $derived.by(() => {
   const groups = groupedRelationships();
   const map = new Map<string, number>();
   let counter = 0;
-  for (const category of ['family', 'professional', 'social'] as const) {
+  for (const category of RELATIONSHIP_CATEGORIES) {
     for (const rel of groups[category]) {
       map.set(rel.id, linkStartIndex + counter);
       counter++;
@@ -90,28 +94,6 @@ let relationshipBadgeIndex = $derived.by(() => {
   }
   return map;
 });
-
-// Category colors
-const categoryConfig: Record<
-  RelationshipCategory,
-  { labelKey: string; bgColor: string; textColor: string }
-> = {
-  family: {
-    labelKey: 'dashboard.legend.family',
-    bgColor: 'bg-rose-50',
-    textColor: 'text-rose-700',
-  },
-  professional: {
-    labelKey: 'dashboard.legend.professional',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700',
-  },
-  social: {
-    labelKey: 'dashboard.legend.social',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700',
-  },
-};
 
 function startEditing(relationship: Relationship) {
   editingRelationshipId = relationship.id;
@@ -215,11 +197,12 @@ onMount(() => {
   </div>
 
   <div class="space-y-4">
-    {#each Object.entries(groupedRelationships()) as [category, rels]}
+    {#each RELATIONSHIP_CATEGORIES as category}
+      {@const rels = groupedRelationships()[category]}
       {#if rels.length > 0}
         <div class="space-y-2">
-          <h4 class="text-sm font-body font-semibold {categoryConfig[category as RelationshipCategory].textColor}">
-            {$i18n.t(categoryConfig[category as RelationshipCategory].labelKey)}
+          <h4 class="text-sm font-body font-semibold {RELATIONSHIP_CATEGORY_STYLE[category].textColor}">
+            {$i18n.t(RELATIONSHIP_CATEGORY_STYLE[category].labelKey)}
           </h4>
 
           <div class="space-y-2">
@@ -228,7 +211,7 @@ onMount(() => {
               {#if linkStartIndex !== undefined && relationshipBadgeIndex.has(relationship.id)}
                 <KeyboardHintBadge index={relationshipBadgeIndex.get(relationship.id) ?? 0} isActive={$isOpenFriendLinkModeActive} prefix={$openFriendLinkModePrefix} />
               {/if}
-              <div class="flex items-start gap-3 p-3 {categoryConfig[category as RelationshipCategory].bgColor} rounded-lg">
+              <div class="flex items-start gap-3 p-3 {RELATIONSHIP_CATEGORY_STYLE[category].bgColor} rounded-lg">
                 <a
                   href="/friends/{relationship.relatedFriendId}"
                   class="flex-shrink-0 hover:opacity-80 transition-opacity"

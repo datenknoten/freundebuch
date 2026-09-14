@@ -1,4 +1,5 @@
 <script lang="ts">
+import { chipClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { ProfessionalHistory } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
@@ -69,7 +70,7 @@ function getSubText(): string {
         {getMainText()}
       </span>
       {#if history.isPrimary}
-        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-forest/10 text-forest">
+        <span class="{chipClasses.base} {chipClasses.tint}">
           {$i18n.t('subresources.common.primary')}
         </span>
       {/if}

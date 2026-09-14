@@ -30,6 +30,7 @@ import {
   isEditCircleModeActive,
   visibleCircleIds,
 } from '$lib/stores/ui';
+import { DEFAULT_CIRCLE_COLOR } from '$lib/utils/circle-colors';
 import type { Circle } from '$shared';
 
 const i18n = createI18n();
@@ -279,12 +280,13 @@ function getActualDepth(circle: Circle): number {
                 {index}
                 isActive={showKeyboardHints}
                 prefix={currentPrefix}
+                tone={$isDeleteCircleModeActive ? 'danger' : 'forest'}
               />
 
               <!-- Color indicator -->
               <div
                 class="w-4 h-4 rounded-full shrink-0"
-                style:background-color={circle.color ?? '#6B7280'}
+                style:background-color={circle.color ?? DEFAULT_CIRCLE_COLOR}
               ></div>
 
               <!-- Circle info -->
@@ -333,12 +335,13 @@ function getActualDepth(circle: Circle): number {
               {index}
               isActive={showKeyboardHints}
               prefix={currentPrefix}
+              tone={$isDeleteCircleModeActive ? 'danger' : 'forest'}
             />
 
             <!-- Color indicator -->
             <div
               class="w-4 h-4 rounded-full shrink-0"
-              style:background-color={circle.color ?? '#6B7280'}
+              style:background-color={circle.color ?? DEFAULT_CIRCLE_COLOR}
             ></div>
 
             <!-- Circle info -->

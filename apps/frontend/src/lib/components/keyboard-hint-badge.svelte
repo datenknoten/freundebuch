@@ -10,15 +10,27 @@ interface Props {
   prefix: string | null;
   /** Position variant: 'table-row' for left-aligned in table, 'card' for top-left overlay on card */
   variant?: 'table-row' | 'card';
+  /** Colour of the badge; 'danger' marks a destructive mode (delete-by-key). */
+  tone?: 'forest' | 'danger';
 }
 
-let { index, isActive, prefix, variant = 'table-row' }: Props = $props();
+let { index, isActive, prefix, variant = 'table-row', tone = 'forest' }: Props = $props();
+
+const positionClasses = {
+  'table-row': '-left-6 top-1/2 -translate-y-1/2 min-w-5 h-5',
+  card: '-left-1 -top-1 min-w-6 h-6',
+} as const;
+
+const toneClasses = {
+  forest: 'bg-forest text-white',
+  danger: 'bg-red-600 text-white',
+} as const;
 
 let keyHint = $derived(getKeyboardHint(index));
 
 let shouldShow = $derived.by(() => {
   if (!isActive) return false;
-  if (!keyHint) return false;
+  if (keyHint.length === 0) return false;
 
   if (prefix === null) {
     // No prefix selected yet - show all hints
@@ -30,14 +42,12 @@ let shouldShow = $derived.by(() => {
 });
 </script>
 
-{#if shouldShow && keyHint}
-  {#if variant === 'table-row'}
-    <div class="absolute -left-6 top-1/2 -translate-y-1/2 min-w-5 h-5 px-1 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">
-      {keyHint}
-    </div>
-  {:else}
-    <div class="absolute -left-1 -top-1 min-w-6 h-6 px-1 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">
-      {keyHint}
-    </div>
-  {/if}
+{#if shouldShow}
+  <div
+    class="absolute px-1 rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-(--z-popover) {positionClasses[
+      variant
+    ]} {toneClasses[tone]}"
+  >
+    {keyHint}
+  </div>
 {/if}

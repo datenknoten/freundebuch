@@ -12,7 +12,7 @@ import { focusTrap } from '$lib/actions/focus-trap';
 import Button from '$lib/components/ui/button.svelte';
 import EmptyState from '$lib/components/ui/empty-state.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
-import { surfaceClasses } from '$lib/components/ui/styles';
+import { codeClasses, surfaceClasses } from '$lib/components/ui/styles';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   hasActiveFilters,
@@ -21,6 +21,7 @@ import {
   search,
   searchFacets,
 } from '$lib/stores/search';
+import { matchSourceBadge } from '$lib/utils/match-source';
 import type { ArrayFacetField, FacetFilters } from '$shared';
 import FriendAvatar from './friends/friend-avatar.svelte';
 import FacetChips from './search/facet-chips.svelte';
@@ -297,6 +298,7 @@ onMount(() => {
           <!-- Search results -->
           <ul id="global-search-listbox" role="listbox" class="p-2">
             {#each searchState.results as friend, index}
+              {@const matchBadge = matchSourceBadge(friend.matchSource)}
               <li
                 role="option"
                 aria-selected={searchState.selectedIndex === index}
@@ -337,13 +339,9 @@ onMount(() => {
                       </div>
                     {/if}
                   </div>
-                  {#if friend.matchSource && friend.matchSource !== 'friend'}
-                    <span class="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full {
-                      friend.matchSource === 'email' ? 'bg-blue-100 text-blue-700' :
-                      friend.matchSource === 'phone' ? 'bg-green-100 text-green-700' :
-                      'bg-purple-100 text-purple-700'
-                    }">
-                      {friend.matchSource}
+                  {#if matchBadge}
+                    <span class="shrink-0 {matchBadge.class}">
+                      {$i18n.t(matchBadge.labelKey)}
                     </span>
                   {/if}
                 </button>
@@ -392,16 +390,16 @@ onMount(() => {
       <div class="hidden sm:flex border-t border-gray-200 px-4 py-2 items-center justify-between text-xs text-gray-400">
         <div class="flex items-center gap-4">
           <span class="flex items-center gap-1">
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">↑</kbd>
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">↓</kbd>
+            <kbd class={codeClasses.kbd}>↑</kbd>
+            <kbd class={codeClasses.kbd}>↓</kbd>
             <span>{$i18n.t('globalSearch.navigate')}</span>
           </span>
           <span class="flex items-center gap-1">
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">↵</kbd>
+            <kbd class={codeClasses.kbd}>↵</kbd>
             <span>{$i18n.t('globalSearch.select')}</span>
           </span>
           <span class="flex items-center gap-1">
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">Esc</kbd>
+            <kbd class={codeClasses.kbd}>Esc</kbd>
             <span>{$i18n.t('globalSearch.close')}</span>
           </span>
         </div>
@@ -411,7 +409,7 @@ onMount(() => {
             onclick={navigateToNewFriend}
             class="flex items-center gap-1.5 text-gray-500 hover:text-forest font-body transition-colors"
           >
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">
+            <kbd class={codeClasses.kbd}>
               {isMac ? '⌥' : 'Alt'}↵
             </kbd>
             <span>{$i18n.t('globalSearch.newFriend')}</span>
@@ -421,7 +419,7 @@ onMount(() => {
             onclick={navigateToFriendsList}
             class="flex items-center gap-1.5 text-gray-500 hover:text-forest font-body transition-colors"
           >
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">
+            <kbd class={codeClasses.kbd}>
               {isMac ? '⌘' : 'Ctrl'}↵
             </kbd>
             <span>{$i18n.t('globalSearch.friendsList')}</span>

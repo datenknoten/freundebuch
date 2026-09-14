@@ -1,22 +1,22 @@
 <script lang="ts">
-import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
-import Heart from 'svelte-heros-v2/Heart.svelte';
-import Home from 'svelte-heros-v2/Home.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
-import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import { openWithKeyboard } from '$lib/actions/auto-focus';
 import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
-import { Button, ConfirmDialog } from '$lib/components/ui';
+import { Button, ConfirmDialog, chipClasses } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
-import { collectiveTypeI18nKey } from '$lib/utils/collective-types';
+import {
+  collectiveTypeI18nKey,
+  getTypeBadgeColor,
+  getTypeIconComponent,
+} from '$lib/utils/collective-types';
 import type { Collective } from '$shared';
 import AddDetailDropdown from '../subresources/add-detail-dropdown.svelte';
 import AddDetailSheet from '../subresources/add-detail-sheet.svelte';
@@ -51,37 +51,6 @@ function dispatchAddEvent(shortcutEvent: string) {
   window.dispatchEvent(new CustomEvent(shortcutEvent));
 }
 
-// Icon component mapping for collective types
-function getTypeIconComponent(typeName: string): typeof Home {
-  switch (typeName.toLowerCase()) {
-    case 'family':
-      return Home;
-    case 'company':
-      return BuildingOffice;
-    case 'club':
-      return Users;
-    case 'friend group':
-      return Heart;
-    default:
-      return Users;
-  }
-}
-
-function getTypeBadgeColor(typeName: string): string {
-  switch (typeName.toLowerCase()) {
-    case 'family':
-      return 'bg-rose-100 text-rose-800';
-    case 'company':
-      return 'bg-blue-100 text-blue-800';
-    case 'club':
-      return 'bg-green-100 text-green-800';
-    case 'friend group':
-      return 'bg-purple-100 text-purple-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-}
-
 function formatAddress(c: Collective): string | null {
   const parts = [
     c.address.streetLine1,
@@ -101,20 +70,22 @@ async function handleDelete() {
 }
 
 let address = $derived(formatAddress(collective));
+let TypeIcon = $derived(getTypeIconComponent(collective.type.name));
+let typeBadgeColor = $derived(getTypeBadgeColor(collective.type.name));
 </script>
 
 <div class="space-y-6">
   <!-- Header with type icon and actions -->
   <div class="flex flex-col sm:flex-row items-center gap-6">
     <!-- Type icon as avatar -->
-    <div class="flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center {getTypeBadgeColor(collective.type.name)}">
-      <svelte:component this={getTypeIconComponent(collective.type.name)} class="w-10 h-10" strokeWidth="2" />
+    <div class="flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center {typeBadgeColor}">
+      <TypeIcon class="w-10 h-10" strokeWidth="2" />
     </div>
 
     <div class="flex-1 text-center sm:text-left">
       <h1 class="text-3xl font-heading text-gray-900">{collective.name}</h1>
       <div class="mt-1 flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-sm font-body font-medium {getTypeBadgeColor(collective.type.name)}">
+        <span class="{chipClasses.base} {typeBadgeColor}">
           {$i18n.t(collectiveTypeI18nKey(collective.type.name), { defaultValue: collective.type.name })}
         </span>
         <span class="text-sm text-gray-500 font-body">

@@ -1,4 +1,5 @@
 <script lang="ts">
+import { chipClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { Email, EmailType } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
@@ -41,7 +42,7 @@ function emailTypeLabel(type: EmailType): string {
       {emailTypeLabel(email.emailType)}
       {#if email.label} - {email.label}{/if}
       {#if email.isPrimary}
-        <span class="ml-1 px-2 py-0.5 bg-forest text-white text-xs rounded">
+        <span class="ml-1 {chipClasses.base} {chipClasses.forest}">
           {$i18n.t('subresources.common.primary')}
         </span>
       {/if}
