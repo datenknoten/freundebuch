@@ -83,12 +83,12 @@ async function copyUrl() {
     >
       {#if activeTab === 'ios'}
         <ol class="list-decimal list-inside space-y-3 font-body text-gray-700">
-          <li>{@html $i18n.t('profile.carddav.steps.ios.1')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.ios.2')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.ios.3')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.ios.4')}</li>
+          <li>{$i18n.t('profile.carddav.steps.ios.1')}</li>
+          <li>{$i18n.t('profile.carddav.steps.ios.2')}</li>
+          <li>{$i18n.t('profile.carddav.steps.ios.3')}</li>
+          <li>{$i18n.t('profile.carddav.steps.ios.4')}</li>
           <li>
-            {@html $i18n.t('profile.carddav.steps.ios.5')}
+            {$i18n.t('profile.carddav.steps.ios.5')}
             <ul class="list-disc list-inside ml-4 mt-2 space-y-1 text-sm text-gray-600">
               <li><strong>{$i18n.t('profile.carddav.fields.server')}</strong> {carddavUrl}</li>
               <li><strong>{$i18n.t('profile.carddav.fields.userName')}</strong> {$currentUser?.email}</li>
@@ -96,16 +96,16 @@ async function copyUrl() {
               <li><strong>{$i18n.t('profile.carddav.fields.description')}</strong> Freundebuch</li>
             </ul>
           </li>
-          <li>{@html $i18n.t('profile.carddav.steps.ios.6')}</li>
+          <li>{$i18n.t('profile.carddav.steps.ios.6')}</li>
         </ol>
       {:else if activeTab === 'macos'}
         <ol class="list-decimal list-inside space-y-3 font-body text-gray-700">
-          <li>{@html $i18n.t('profile.carddav.steps.macos.1')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.macos.2')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.macos.3')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.macos.4')}</li>
+          <li>{$i18n.t('profile.carddav.steps.macos.1')}</li>
+          <li>{$i18n.t('profile.carddav.steps.macos.2')}</li>
+          <li>{$i18n.t('profile.carddav.steps.macos.3')}</li>
+          <li>{$i18n.t('profile.carddav.steps.macos.4')}</li>
           <li>
-            {@html $i18n.t('profile.carddav.steps.macos.5')}
+            {$i18n.t('profile.carddav.steps.macos.5')}
             <ul class="list-disc list-inside ml-4 mt-2 space-y-1 text-sm text-gray-600">
               <li><strong>{$i18n.t('profile.carddav.fields.accountType')}</strong> {$i18n.t('profile.carddav.fields.manual')}</li>
               <li><strong>{$i18n.t('profile.carddav.fields.userName')}</strong> {$currentUser?.email}</li>
@@ -113,25 +113,25 @@ async function copyUrl() {
               <li><strong>{$i18n.t('profile.carddav.fields.serverAddress')}</strong> {carddavUrl}</li>
             </ul>
           </li>
-          <li>{@html $i18n.t('profile.carddav.steps.macos.6')}</li>
+          <li>{$i18n.t('profile.carddav.steps.macos.6')}</li>
         </ol>
       {:else if activeTab === 'thunderbird'}
         <ol class="list-decimal list-inside space-y-3 font-body text-gray-700">
-          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.1')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.2')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.3')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.4')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.5')}</li>
+          <li>{$i18n.t('profile.carddav.steps.thunderbird.1')}</li>
+          <li>{$i18n.t('profile.carddav.steps.thunderbird.2')}</li>
+          <li>{$i18n.t('profile.carddav.steps.thunderbird.3')}</li>
+          <li>{$i18n.t('profile.carddav.steps.thunderbird.4')}</li>
+          <li>{$i18n.t('profile.carddav.steps.thunderbird.5')}</li>
           <li>
-            {@html $i18n.t('profile.carddav.steps.thunderbird.6')}
+            {$i18n.t('profile.carddav.steps.thunderbird.6')}
             <ul class="list-disc list-inside ml-4 mt-2 space-y-1 text-sm text-gray-600">
               <li><strong>{$i18n.t('profile.carddav.fields.url')}</strong> {carddavUrl}</li>
               <li><strong>{$i18n.t('profile.carddav.fields.user')}</strong> {$currentUser?.email}</li>
               <li><strong>{$i18n.t('profile.carddav.fields.password')}</strong> {$i18n.t('profile.carddav.fields.yourAppPassword')}</li>
             </ul>
           </li>
-          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.7')}</li>
-          <li>{@html $i18n.t('profile.carddav.steps.thunderbird.8')}</li>
+          <li>{$i18n.t('profile.carddav.steps.thunderbird.7')}</li>
+          <li>{$i18n.t('profile.carddav.steps.thunderbird.8')}</li>
         </ol>
       {/if}
     </div>
@@ -140,7 +140,7 @@ async function copyUrl() {
   <AlertBanner variant="warning" title={$i18n.t('profile.carddav.important')}>
     <div class="flex items-start gap-2">
       <ExclamationTriangle class="w-5 h-5 shrink-0 mt-0.5" strokeWidth="2" />
-      <p>{@html $i18n.t('profile.carddav.importantNote')}</p>
+      <p>{$i18n.t('profile.carddav.importantNote')}</p>
     </div>
   </AlertBanner>
 </div>

@@ -61,7 +61,7 @@ async function handleSubmitForm(
     showForm = false;
     editingChannel = undefined;
   } catch (err) {
-    formError = (err as Error)?.message || 'Failed to save channel';
+    formError = (err as Error)?.message ?? $i18n.t('profile.messagingReminders.saveError');
   } finally {
     isSubmitting = false;
   }

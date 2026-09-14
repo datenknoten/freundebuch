@@ -25,7 +25,9 @@ const platformLabels: Record<string, string> = {
 const credentialSummary = $derived(() => {
   switch (channel.platform) {
     case 'telegram':
-      return channel.credentials.chatId ? `Chat: ${channel.credentials.chatId}` : '';
+      return channel.credentials.chatId === undefined
+        ? ''
+        : $i18n.t('profile.messagingReminders.chatSummary', { chat: channel.credentials.chatId });
     case 'matrix':
       return channel.credentials.roomId ?? '';
     case 'discord':

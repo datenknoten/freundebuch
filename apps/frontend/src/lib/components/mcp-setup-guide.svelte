@@ -10,6 +10,10 @@ import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
 
 const i18n = createI18n();
 
+// The guide shows the address the user signs in with; before it loads (or in
+// the docs case) a translated sample stands in.
+const displayEmail = $derived($currentUser?.email ?? $i18n.t('profile.mcp.emailPlaceholder'));
+
 const mcpUrl = $derived(`${typeof window !== 'undefined' ? window.location.origin : ''}/mcp`);
 
 type McpTab = 'claude-ai' | 'claude-desktop' | 'claude-code' | 'other';
@@ -54,7 +58,7 @@ const claudeDesktopConfig = $derived(
           type: 'streamable-http',
           url: mcpUrl,
           headers: {
-            Authorization: `Basic <base64(${$currentUser?.email ?? 'your@email.com'}:your-app-password)>`,
+            Authorization: `Basic <base64(${displayEmail}:your-app-password)>`,
           },
         },
       },
@@ -77,7 +81,7 @@ const claudeDesktopConfig = $derived(
       </Button>
     </div>
     <p class="text-xs mt-2">
-      {$i18n.t('profile.mcp.useCredentials', { email: $currentUser?.email ?? 'your@email.com' })}
+      {$i18n.t('profile.mcp.useCredentials', { email: displayEmail })}
     </p>
   </AlertBanner>
 
@@ -150,7 +154,7 @@ const claudeDesktopConfig = $derived(
   --url {mcpUrl} \
   --header "Authorization: Basic &lt;base64-credentials&gt;"</pre>
           <p class="font-body text-xs text-gray-500">
-            {$i18n.t('profile.mcp.steps.claudeCode.note', { email: $currentUser?.email ?? 'your@email.com' })}
+            {$i18n.t('profile.mcp.steps.claudeCode.note', { email: displayEmail })}
           </p>
         </div>
       {:else}
@@ -162,7 +166,7 @@ const claudeDesktopConfig = $derived(
             <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.transport')}:</span> <code class={codeClasses.inline}>Streamable HTTP</code></div>
             <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.url')}:</span> <code class="{codeClasses.inline} break-all">{mcpUrl}</code></div>
             <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.auth')}:</span> <code class={codeClasses.inline}>HTTP Basic Auth</code></div>
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.username')}:</span> <code class="{codeClasses.inline} break-all">{$currentUser?.email ?? 'your@email.com'}</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.username')}:</span> <code class="{codeClasses.inline} break-all">{displayEmail}</code></div>
             <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.password')}:</span> <code class={codeClasses.inline}>{$i18n.t('profile.mcp.steps.other.passwordValue')}</code></div>
           </div>
         </div>

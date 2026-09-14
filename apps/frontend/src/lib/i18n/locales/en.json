@@ -739,7 +739,10 @@
       },
       "delete": {
         "confirm": "Confirm?"
-      }
+      },
+      "unchanged": "(unchanged)",
+      "saveError": "Failed to save channel. Please try again.",
+      "chatSummary": "Chat: {{chat}}"
     },
     "carddav": {
       "title": "CardDAV Setup",
@@ -754,7 +757,7 @@
       "setupGuide": "Setup Guide",
       "useCredentials": "Use your email {{email}} and an app password to sign in.",
       "important": "Important",
-      "importantNote": "Always use an <strong>app password</strong> instead of your regular account password. App passwords can be revoked individually without changing your main password.",
+      "importantNote": "Always use an app password instead of your regular account password. App passwords can be revoked individually without changing your main password.",
       "ios": "iOS / iPadOS",
       "macos": "macOS",
       "thunderbird": "Thunderbird",
@@ -772,29 +775,29 @@
       },
       "steps": {
         "ios": {
-          "1": "Open <strong>Settings</strong> and tap <strong>Contacts</strong>",
-          "2": "Tap <strong>Accounts</strong>, then <strong>Add Account</strong>",
-          "3": "Select <strong>Other</strong> at the bottom",
-          "4": "Tap <strong>Add CardDAV Account</strong>",
+          "1": "Open Settings and tap Contacts",
+          "2": "Tap Accounts, then Add Account",
+          "3": "Select Other at the bottom",
+          "4": "Tap Add CardDAV Account",
           "5": "Enter your details:",
-          "6": "Tap <strong>Next</strong> to verify and save"
+          "6": "Tap Next to verify and save"
         },
         "macos": {
-          "1": "Open <strong>System Settings</strong> (or System Preferences)",
-          "2": "Click <strong>Internet Accounts</strong>",
-          "3": "Click <strong>Add Account</strong>, then select <strong>Other Contacts Account</strong>",
-          "4": "Select <strong>CardDAV</strong> as the account type",
+          "1": "Open System Settings (or System Preferences)",
+          "2": "Click Internet Accounts",
+          "3": "Click Add Account, then select Other Contacts Account",
+          "4": "Select CardDAV as the account type",
           "5": "Enter your details:",
-          "6": "Click <strong>Sign In</strong>"
+          "6": "Click Sign In"
         },
         "thunderbird": {
-          "1": "Install the <strong>CardBook</strong> add-on from Thunderbird Add-ons",
-          "2": "Open <strong>CardBook</strong> from the Thunderbird menu",
-          "3": "Click <strong>Address Book</strong> &rarr; <strong>New Address Book</strong>",
-          "4": "Select <strong>Remote</strong> and click <strong>Next</strong>",
-          "5": "Select <strong>CardDAV</strong> and click <strong>Next</strong>",
+          "1": "Install the CardBook add-on from Thunderbird Add-ons",
+          "2": "Open CardBook from the Thunderbird menu",
+          "3": "Click Address Book → New Address Book",
+          "4": "Select Remote and click Next",
+          "5": "Select CardDAV and click Next",
           "6": "Enter your details:",
-          "7": "Click <strong>Validate</strong> to verify the connection",
+          "7": "Click Validate to verify the connection",
           "8": "Select the address book and complete the setup"
         }
       }
@@ -843,7 +846,8 @@
           "password": "Password",
           "passwordValue": "Your app password"
         }
-      }
+      },
+      "emailPlaceholder": "your@email.com"
     },
     "danger": {
       "title": "Danger Zone",
