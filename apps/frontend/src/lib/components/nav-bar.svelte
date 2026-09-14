@@ -125,21 +125,15 @@ $effect(() => {
     transition:fade={{ duration: 200 }}
     class="fixed inset-0 bg-gray-900/50 z-40 sm:hidden"
     onclick={closeMobileMenu}
-    onkeydown={(e) => {
-      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        closeMobileMenu();
-      }
-    }}
-    role="button"
-    tabindex="0"
-    aria-label="Close menu"
+    role="presentation"
   ></div>
 {/if}
 
 <!-- Mobile slide-out menu -->
 <div
   bind:this={menuElement}
+  inert={!mobileMenuOpen}
+  aria-hidden={!mobileMenuOpen}
   class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-200 ease-in-out sm:hidden {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
 >
   <div class="p-4 border-b border-gray-200">
