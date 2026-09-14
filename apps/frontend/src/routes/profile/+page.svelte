@@ -10,6 +10,7 @@ import User from 'svelte-heros-v2/User.svelte';
 import { listAppPasswords } from '$lib/api/app-passwords';
 import { authClient } from '$lib/auth-client';
 import ProfileCard from '$lib/components/profile-card.svelte';
+import { PageShell } from '$lib/components/ui';
 import { createI18n, languageNames } from '$lib/i18n/index.js';
 import { birthdayFormat, currentUser } from '$lib/stores/auth';
 import { currentLanguage } from '$lib/stores/locale';
@@ -84,10 +85,11 @@ const mcpStatus = $derived(
   <title>{pageTitle}</title>
 </svelte:head>
 
-<div>
-  <h1 class="text-3xl font-heading text-forest mb-2">{$i18n.t('profile.yourProfile')}</h1>
-  <p class="text-gray-600 font-body mb-8">{$i18n.t('profile.subtitle')}</p>
-
+<PageShell
+  width="list"
+  title={$i18n.t('profile.yourProfile')}
+  subtitle={$i18n.t('profile.subtitle')}
+>
   <section class="mb-10">
     <h2 class="text-lg font-heading text-gray-800 mb-4">{$i18n.t('profile.hub.categories.account')}</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -165,4 +167,4 @@ const mcpStatus = $derived(
       </ProfileCard>
     </div>
   </section>
-</div>
+</PageShell>
