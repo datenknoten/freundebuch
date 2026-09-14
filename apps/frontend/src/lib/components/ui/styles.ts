@@ -14,18 +14,18 @@
  */
 
 /**
- * The focus treatment every text control shares. Non-text controls use
- * `focusRing` below instead, which adds a ring offset a boxed control has no
- * room for.
+ * The focus treatment every text control shares: a ring plus a matching
+ * border, and no ring offset — a boxed control has no gap to place one in.
+ * Non-text controls use `focusRing` below instead.
  */
-const inputFocus = 'focus:ring-2 focus:ring-forest focus:border-transparent';
+const inputFocus = 'focus-visible:ring-2 focus-visible:ring-forest focus-visible:border-forest';
 
 export const formClasses = {
   input: `w-full px-3 py-2 border border-gray-300 rounded-lg ${inputFocus} font-body disabled:opacity-50 disabled:cursor-not-allowed`,
   inputSm: `w-full px-3 py-2 text-sm border border-gray-300 rounded-lg ${inputFocus} font-body disabled:opacity-50 disabled:cursor-not-allowed`,
   select: `w-full px-3 py-2 border border-gray-300 rounded-lg ${inputFocus} font-body disabled:opacity-50 disabled:cursor-not-allowed`,
   checkbox:
-    'w-4 h-4 text-forest border-gray-300 rounded focus:ring-forest disabled:opacity-50 disabled:cursor-not-allowed',
+    'w-4 h-4 text-forest border-gray-300 rounded focus-visible:ring-forest disabled:opacity-50 disabled:cursor-not-allowed',
   textarea: `w-full px-3 py-2 border border-gray-300 rounded-lg ${inputFocus} font-body disabled:opacity-50 disabled:cursor-not-allowed resize-none`,
   label: 'block text-sm font-body font-medium text-gray-700 mb-1',
   checkboxLabel: 'text-sm font-body text-gray-700',

@@ -12,13 +12,13 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-import { codeClasses } from '$lib/components/ui';
+import { codeClasses, focusRing } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
-import LegalLinks from './legal-links.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
 import { search } from '$lib/stores/search';
+import LegalLinks from './legal-links.svelte';
 import UserMenu from './user-menu.svelte';
 
 const i18n = createI18n();
@@ -27,7 +27,6 @@ const i18n = createI18n();
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
 let mobileMenuOpen = $state(false);
-
 
 // Derive page title from current route
 const pageTitle = $derived.by(() => {
@@ -274,7 +273,7 @@ $effect(() => {
     <div class="flex items-center h-(--nav-h) gap-4">
       <!-- Mobile: Hamburger menu button -->
       <button
-        class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+        class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors {focusRing}"
         onclick={() => mobileMenuOpen = !mobileMenuOpen}
         aria-label="Toggle menu"
         aria-expanded={mobileMenuOpen}
@@ -301,7 +300,7 @@ $effect(() => {
       <!-- Mobile: Search button (authenticated) or spacer -->
       {#if $isAuthenticated && $currentUser}
         <button
-          class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+          class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors {focusRing}"
           onclick={() => search.open()}
           aria-label="Search"
           data-shortcut="/"

@@ -4,7 +4,7 @@ import Camera from 'svelte-heros-v2/Camera.svelte';
 import { goto } from '$app/navigation';
 import * as collectivesApi from '$lib/api/collectives.js';
 import AlertBanner from '$lib/components/alert-banner.svelte';
-import { Button, FormInput, headingClasses, Spinner } from '$lib/components/ui';
+import { Button, FormInput, focusRing, headingClasses, Spinner } from '$lib/components/ui';
 import MarkdownEditor from '$lib/editor/markdown-editor.svelte';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
@@ -327,7 +327,7 @@ async function handleSubmit(e: Event) {
       type="button"
       onclick={triggerPhotoUpload}
       disabled={isLoading || isUploadingPhoto || !isEditing}
-      class="relative group rounded-full focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 disabled:cursor-not-allowed"
+      class="relative group rounded-full {focusRing} disabled:cursor-not-allowed"
       title={isEditing
         ? $i18n.t('friendForm.photo.uploadTitle')
         : $i18n.t('friendForm.photo.saveFirstTitle')}

@@ -1,6 +1,7 @@
 <script lang="ts">
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import Trash from 'svelte-heros-v2/Trash.svelte';
+import { focusRing } from '$lib/components/ui';
 import Spinner from '$lib/components/ui/spinner.svelte';
 
 interface Props {
@@ -53,7 +54,7 @@ let {
       }}
       class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-forest
              transition-colors min-w-[28px] min-h-[28px] flex items-center justify-center
-             sm:min-w-[44px] sm:min-h-[44px]"
+             sm:min-w-[44px] sm:min-h-[44px] {focusRing}"
       aria-label={editLabel}
       data-shortcut={editShortcutHint}
       data-shortcut-label={editShortcutLabel}
@@ -71,7 +72,7 @@ let {
     class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600
            transition-colors min-w-[28px] min-h-[28px] flex items-center justify-center
            sm:min-w-[44px] sm:min-h-[44px]
-           disabled:opacity-50 disabled:cursor-not-allowed"
+           disabled:opacity-50 disabled:cursor-not-allowed {focusRing}"
     aria-label={deleteLabel}
     data-shortcut={deleteShortcutHint}
     data-shortcut-label={deleteShortcutLabel}
