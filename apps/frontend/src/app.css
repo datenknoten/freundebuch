@@ -61,6 +61,9 @@
   --z-popover: 40;
   --z-fab: 40;
   --z-overlay: 50;
+
+  /* Fixed navigation height; the layout spacer must match it exactly. */
+  --nav-h: 4rem;
 }
 
 @layer base {

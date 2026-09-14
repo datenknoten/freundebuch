@@ -12,6 +12,7 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
+import { codeClasses } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
@@ -56,6 +57,23 @@ async function handleLogout() {
   } catch (error) {
     console.error('Logout failed:', error);
   }
+}
+
+// A drawer entry is current when the route matches it exactly, or sits
+// underneath it ("/friends/123" marks "Friends"). "/" only ever matches itself.
+function isActive(href: string): boolean {
+  const path = $page.url.pathname;
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(`${href}/`);
+}
+
+const drawerLink =
+  'flex items-center gap-2 px-3 py-2 rounded-md font-body font-medium transition-colors';
+
+function drawerLinkClass(href: string): string {
+  return isActive(href)
+    ? `${drawerLink} bg-forest/10 text-forest`
+    : `${drawerLink} text-gray-700 hover:bg-gray-100 hover:text-forest`;
 }
 
 function closeMobileMenu() {
@@ -152,7 +170,8 @@ $effect(() => {
           data-shortcut="n f"
           data-shortcut-label="shortcuts.newFriend"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors"
+          class={drawerLinkClass('/friends/new')}
+          aria-current={isActive('/friends/new') ? 'page' : undefined}
         >
           <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('friends.addNew')}
@@ -163,7 +182,8 @@ $effect(() => {
           data-shortcut="g f"
           data-shortcut-label="shortcuts.goFriends"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors"
+          class={drawerLinkClass('/friends')}
+          aria-current={isActive('/friends') ? 'page' : undefined}
         >
           <Users class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.friends')}
@@ -174,7 +194,8 @@ $effect(() => {
           data-shortcut="g c"
           data-shortcut-label="shortcuts.goCircles"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors"
+          class={drawerLinkClass('/circles')}
+          aria-current={isActive('/circles') ? 'page' : undefined}
         >
           <Swatch class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.circles')}
@@ -185,7 +206,8 @@ $effect(() => {
           data-shortcut="g e"
           data-shortcut-label="shortcuts.goEncounters"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors"
+          class={drawerLinkClass('/encounters')}
+          aria-current={isActive('/encounters') ? 'page' : undefined}
         >
           <Calendar class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.encounters')}
@@ -196,7 +218,8 @@ $effect(() => {
           data-shortcut="g o"
           data-shortcut-label="shortcuts.goCollectives"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors"
+          class={drawerLinkClass('/collectives')}
+          aria-current={isActive('/collectives') ? 'page' : undefined}
         >
           <BuildingOffice class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.collectives')}
@@ -207,7 +230,8 @@ $effect(() => {
           data-shortcut="g p"
           data-shortcut-label="shortcuts.goProfile"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors"
+          class={drawerLinkClass('/profile')}
+          aria-current={isActive('/profile') ? 'page' : undefined}
         >
           <User class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.profile')}
@@ -318,7 +342,7 @@ $effect(() => {
           >
             <MagnifyingGlass class="w-5 h-5 shrink-0" strokeWidth="2" />
             <span class="flex-1 text-left font-body text-sm">{$i18n.t('friends.search')}</span>
-            <kbd class="hidden md:inline-block px-2 py-1 text-xs bg-white border border-gray-200 rounded font-mono text-gray-400">
+            <kbd class="hidden md:inline-block {codeClasses.kbd}">
               {isMac ? '⌘' : 'Ctrl'}K
             </kbd>
           </button>
@@ -356,4 +380,4 @@ $effect(() => {
 </nav>
 
 <!-- Spacer to prevent content from being hidden behind fixed navbar -->
-<div class="h-16"></div>
+<div class="h-(--nav-h)"></div>
