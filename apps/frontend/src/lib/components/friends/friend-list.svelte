@@ -13,6 +13,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
 import Button from '$lib/components/ui/button.svelte';
+import EmptyState from '$lib/components/ui/empty-state.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
@@ -582,59 +583,43 @@ function openFirstResult() {
       <Spinner size="lg" label={$i18n.t('common.loadingResults')} />
     </div>
   {:else if (isSearchMode || isFilterMode) && showNoResults}
-    <!-- No results -->
-    <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <FaceSmile class="mx-auto h-12 w-12 text-gray-300" strokeWidth="2" />
-      <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('friendList.noFriendsFound')}</h3>
-      <p class="mt-2 text-sm text-gray-600 font-body">
-        {#if isSearchMode}
-          {$i18n.t('friendList.noResultsFor', { query: searchQuery })}{#if hasActiveFilters} {$i18n.t('friendList.noResultsWithFilters')}{/if}
-        {:else}
-          {$i18n.t('friendList.noMatchFilters')}
-        {/if}
-      </p>
-      <p class="mt-1 text-xs text-gray-400 font-body">
-        {#if isSearchMode}
-          {$i18n.t('friendList.tryDifferentTerm')}
-        {:else}
-          {$i18n.t('friendList.tryAdjustFilters')}
-        {/if}
-      </p>
+    <EmptyState
+      icon={FaceSmile}
+      title={$i18n.t('friendList.noFriendsFound')}
+      description={isSearchMode
+        ? `${$i18n.t('friendList.noResultsFor', { query: searchQuery })}${hasActiveFilters ? ` ${$i18n.t('friendList.noResultsWithFilters')}` : ''}`
+        : $i18n.t('friendList.noMatchFilters')}
+      hint={isSearchMode
+        ? $i18n.t('friendList.tryDifferentTerm')
+        : $i18n.t('friendList.tryAdjustFilters')}
+    >
       {#if hasActiveFilters}
-        <button
-          onclick={handleClearAllFilters}
-          class="mt-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
-        >
+        <Button variant="ghostAccent" size="sm" onclick={handleClearAllFilters}>
           {$i18n.t('friendList.clearFilters')}
-        </button>
+        </Button>
       {/if}
       {#if isSearchMode}
-        <button
-          onclick={clearSearch}
-          class="mt-4 ml-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
-        >
+        <Button variant="ghostAccent" size="sm" onclick={clearSearch}>
           <XMark class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('friendList.clearSearch')}
-        </button>
+        </Button>
       {/if}
-    </div>
+    </EmptyState>
   {:else if !isSearchMode && !isFilterMode && $isFriendsLoading}
     <div class="flex justify-center py-12">
       <Spinner size="lg" label={$i18n.t('common.loadingFriends')} />
     </div>
   {:else if !isSearchMode && !isFilterMode && $friendList.length === 0}
-    <!-- Empty state -->
-    <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <Users class="mx-auto h-12 w-12 text-gray-400" strokeWidth="2" />
-      <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('friendList.noFriendsYet')}</h3>
-      <p class="mt-2 text-sm text-gray-600 font-body">
-        {$i18n.t('friendList.getStarted')}
-      </p>
-      <Button href="/friends/new" class="mt-4">
+    <EmptyState
+      icon={Users}
+      title={$i18n.t('friendList.noFriendsYet')}
+      description={$i18n.t('friendList.getStarted')}
+    >
+      <Button href="/friends/new">
         <Plus class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('friendList.addFriend')}
       </Button>
-    </div>
+    </EmptyState>
   {:else if gridItems.length > 0}
     <!-- Unified Friend Grid - same component for both normal and search modes -->
     <FriendGrid

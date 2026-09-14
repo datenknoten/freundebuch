@@ -1,5 +1,7 @@
 <script lang="ts">
+import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import FriendAvatar from '$lib/components/friends/friend-avatar.svelte';
+import EmptyState from '$lib/components/ui/empty-state.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type { DateType, UpcomingDate } from '$shared';
 
@@ -98,11 +100,11 @@ function getDaysUntilClass(daysUntil: number): string {
       </button>
     {/if}
   {:else if upcomingDates.length === 0}
-    <div class="text-center py-6">
-      <div class="text-gray-400 text-4xl mb-2">&#128197;</div>
-      <p class="text-gray-500 font-body">{$i18n.t('dashboard.noUpcomingDates', { days })}</p>
-      <p class="text-gray-400 text-sm mt-1">{$i18n.t('dashboard.addBirthdays')}</p>
-    </div>
+    <EmptyState
+      icon={Calendar}
+      title={$i18n.t('dashboard.noUpcomingDates', { days })}
+      description={$i18n.t('dashboard.addBirthdays')}
+    />
   {:else}
     <div class="space-y-3">
       {#each upcomingDates as date (date.id)}

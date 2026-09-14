@@ -5,7 +5,7 @@ import FaceSmile from 'svelte-heros-v2/FaceSmile.svelte';
 import { page } from '$app/stores';
 import CollectiveDetail from '$lib/components/collectives/collective-detail.svelte';
 import CollectiveForm from '$lib/components/collectives/collective-form.svelte';
-import { Spinner } from '$lib/components/ui';
+import { Button, EmptyState, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { collectives } from '$lib/stores/collectives';
@@ -88,30 +88,27 @@ $effect(() => {
         </div>
       {:else if error}
         <!-- Error state -->
-        <div class="text-center py-12">
-          <ExclamationTriangle class="mx-auto h-12 w-12 text-red-400" strokeWidth="2" />
-          <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('collectives.detail.loadError')}</h3>
-          <p class="mt-2 text-sm text-gray-600 font-body">{error}</p>
-          <a
-            href="/collectives"
-            class="mt-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
-          >
+        <EmptyState
+          icon={ExclamationTriangle}
+          tone="error"
+          title={$i18n.t('collectives.detail.loadError')}
+          description={error}
+        >
+          <Button variant="secondary" href="/collectives">
             {$i18n.t('collectives.detail.returnToCollectives')}
-          </a>
-        </div>
+          </Button>
+        </EmptyState>
       {:else if !collective}
         <!-- Not found state -->
-        <div class="text-center py-12">
-          <FaceSmile class="mx-auto h-12 w-12 text-gray-400" strokeWidth="2" />
-          <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('collectives.detail.notFound')}</h3>
-          <p class="mt-2 text-sm text-gray-600 font-body">{$i18n.t('collectives.detail.notFoundSubtitle')}</p>
-          <a
-            href="/collectives"
-            class="mt-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
-          >
+        <EmptyState
+          icon={FaceSmile}
+          title={$i18n.t('collectives.detail.notFound')}
+          description={$i18n.t('collectives.detail.notFoundSubtitle')}
+        >
+          <Button variant="secondary" href="/collectives">
             {$i18n.t('collectives.detail.returnToCollectives')}
-          </a>
-        </div>
+          </Button>
+        </EmptyState>
       {:else if isEditing}
         <!-- Edit form -->
         <div>
