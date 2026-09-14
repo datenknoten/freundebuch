@@ -2,6 +2,7 @@
 import { goto } from '$app/navigation';
 import { autoFocus } from '$lib/actions/auto-focus';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
 
@@ -124,13 +125,9 @@ async function handleSubmit(e) {
 		</label>
 	</div>
 
-	<button
-		type="submit"
-		disabled={isLoading}
-		class="w-full bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-	>
-		{isLoading ? $i18n.t('auth.register.creating') : $i18n.t('auth.register.submit')}
-	</button>
+	<Button type="submit" block loading={isLoading}>
+		{$i18n.t('auth.register.submit')}
+	</Button>
 
 	<p class="text-center text-sm font-body text-gray-600">
 		{$i18n.t('auth.register.hasAccount')}

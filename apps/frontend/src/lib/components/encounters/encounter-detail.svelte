@@ -4,6 +4,7 @@ import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import { Button } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
@@ -99,22 +100,17 @@ async function handleDelete() {
     </div>
 
     <div class="flex gap-2">
-      <button
-        type="button"
+      <Button
+        variant="secondary"
         onclick={() => onEdit?.()}
-        class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         data-shortcut="e"
         data-shortcut-label="shortcuts.help.editEncounter"
       >
         {$i18n.t('common.edit')}
-      </button>
-      <button
-        type="button"
-        onclick={() => showDeleteConfirm = true}
-        class="px-4 py-2 border border-red-300 text-red-600 rounded-lg font-body font-semibold hover:bg-red-50 transition-colors"
-      >
+      </Button>
+      <Button variant="dangerOutline" onclick={() => showDeleteConfirm = true}>
         {$i18n.t('common.delete')}
-      </button>
+      </Button>
     </div>
   </div>
 
@@ -185,22 +181,22 @@ async function handleDelete() {
         {$i18n.t('encounters.detail.deleteConfirmMessage', { title: displayTitle })}
       </p>
       <div class="flex gap-3">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          class="flex-1"
           onclick={() => showDeleteConfirm = false}
           disabled={isDeleting}
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           {$i18n.t('encounters.form.cancel')}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="danger"
+          class="flex-1"
           onclick={handleDelete}
-          disabled={isDeleting}
-          class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-body font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
+          loading={isDeleting}
         >
-          {isDeleting ? $i18n.t('encounters.detail.deleting') : $i18n.t('common.delete')}
-        </button>
+          {$i18n.t('common.delete')}
+        </Button>
       </div>
     </div>
   </div>

@@ -4,6 +4,7 @@ import Camera from 'svelte-heros-v2/Camera.svelte';
 import { goto } from '$app/navigation';
 import * as collectivesApi from '$lib/api/collectives.js';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import MarkdownEditor from '$lib/editor/markdown-editor.svelte';
 import { friends } from '$lib/stores/friends';
 import type { Friend, FriendCreateInput } from '$shared';
@@ -475,33 +476,32 @@ async function handleSubmit(e: Event) {
 
   <!-- Form Actions -->
   <div class="flex gap-4 pt-4 border-t border-gray-200">
-    <button
+    <Button
       type="submit"
-      disabled={isLoading || !displayName.trim()}
-      class="flex-1 bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="flex-1"
+      loading={isLoading}
+      disabled={displayName.trim().length === 0}
     >
-      {#if isLoading}
-        Saving...
-      {:else if submitLabel}
+      {#if submitLabel !== undefined && submitLabel.length > 0}
         {submitLabel}
       {:else if isEditing}
         Save Changes
       {:else}
         Create Friend
       {/if}
-    </button>
+    </Button>
 
     {#if !isOnboarding}
-      <a
+      <Button
+        variant="secondary"
         href={isEditing && friend
           ? `/friends/${friend.id}`
           : addToCollective
             ? `/collectives/${addToCollective.id}`
             : '/friends'}
-        class="px-6 py-3 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors text-center"
       >
         Cancel
-      </a>
+      </Button>
     {/if}
   </div>
 </form>

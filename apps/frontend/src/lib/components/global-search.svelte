@@ -8,6 +8,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   hasActiveFilters,
@@ -354,14 +355,10 @@ onMount(() => {
             <p class="mt-1 font-body text-xs text-gray-400">
               {$i18n.t('globalSearch.tryDifferent')}
             </p>
-            <button
-              type="button"
-              onclick={navigateToNewFriend}
-              class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-forest text-white rounded-lg font-body text-sm font-medium hover:bg-forest-light transition-colors"
-            >
+            <Button size="sm" class="mt-4" onclick={navigateToNewFriend}>
               <Plus class="w-4 h-4" strokeWidth="2" />
               {$i18n.t('globalSearch.addNewFriend')}
-            </button>
+            </Button>
           </div>
         {:else if searchState.query.trim().length < 2 && searchState.recentSearches.length === 0}
           <!-- Initial state with no recent searches -->
@@ -379,30 +376,18 @@ onMount(() => {
 
       <!-- Footer: Mobile action buttons -->
       <div class="sm:hidden border-t border-gray-200 p-2 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onclick={() => search.close()}
-          class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-body text-sm transition-colors"
-        >
+        <Button variant="ghost" size="sm" class="flex-1" onclick={() => search.close()}>
           <XMark class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('globalSearch.close')}
-        </button>
-        <button
-          type="button"
-          onclick={navigateToNewFriend}
-          class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-forest hover:bg-gray-100 rounded-lg font-body text-sm font-medium transition-colors"
-        >
+        </Button>
+        <Button variant="ghostAccent" size="sm" class="flex-1" onclick={navigateToNewFriend}>
           <Plus class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('common.new')}
-        </button>
-        <button
-          type="button"
-          onclick={navigateToFriendsList}
-          class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-forest hover:bg-gray-100 rounded-lg font-body text-sm font-medium transition-colors"
-        >
+        </Button>
+        <Button variant="ghostAccent" size="sm" class="flex-1" onclick={navigateToFriendsList}>
           <Users class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('userMenu.friends')}
-        </button>
+        </Button>
       </div>
 
       <!-- Footer: Desktop keyboard hints -->

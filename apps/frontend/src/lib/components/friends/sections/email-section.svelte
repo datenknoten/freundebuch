@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import Envelope from 'svelte-heros-v2/Envelope.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import {
@@ -120,15 +121,10 @@ onMount(() => {
         <Envelope class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('friendDetail.sections.emailAddresses')}
       </h2>
-      <button
-        type="button"
-        onclick={openAdd}
-        class="text-sm font-body font-semibold bg-forest text-white hover:bg-forest-light
-               flex items-center gap-1 px-2 py-1 rounded-md transition-colors"
-      >
+      <Button variant="ghost" size="xs" class="text-forest!" onclick={openAdd}>
         <Plus class="w-4 h-4" strokeWidth="2" />
         {$i18n.t('friendDetail.actions.addEmail')}
-      </button>
+      </Button>
     </div>
     <div class="space-y-2">
       {#each emails as email, i (email.id)}

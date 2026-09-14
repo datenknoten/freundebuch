@@ -11,6 +11,7 @@ import CircleEditModal from '$lib/components/circles/circle-edit-modal.svelte';
 import DeleteConfirmModal from '$lib/components/friends/subresources/delete-confirm-modal.svelte';
 import DetailActions from '$lib/components/friends/subresources/detail-actions.svelte';
 import SwipeableRow from '$lib/components/friends/subresources/swipeable-row.svelte';
+import { Button } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { circles, circlesList } from '$lib/stores/circles';
@@ -187,15 +188,14 @@ function getActualDepth(circle: Circle): number {
           <h1 class="text-3xl font-heading text-forest">{$i18n.t('circles.title')}</h1>
           <p class="text-gray-600 font-body mt-1">{$i18n.t('circles.subtitle')}</p>
         </div>
-        <button
+        <Button
           onclick={() => openWithKeyboard(openCreateModal)}
-          class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
           data-shortcut="n c"
           data-shortcut-label="shortcuts.newCircle"
         >
           <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('circles.newCircle')}
-        </button>
+        </Button>
       </div>
 
       <!-- Search + count toolbar -->
@@ -250,13 +250,10 @@ function getActualDepth(circle: Circle): number {
           <Users class="w-16 h-16 mx-auto text-gray-300 mb-4" strokeWidth="2" />
           <h3 class="text-lg font-heading text-gray-600 mb-2">{$i18n.t('circles.noCircles')}</h3>
           <p class="text-gray-500 font-body mb-4">{$i18n.t('circles.noCirclesSubtitle')}</p>
-          <button
-            onclick={() => openWithKeyboard(openCreateModal)}
-            class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-          >
+          <Button onclick={() => openWithKeyboard(openCreateModal)}>
             <Plus class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('circles.createFirst')}
-          </button>
+          </Button>
         </div>
       {:else if isSearching && visibleCircles.length === 0}
         <div class="text-center py-12">

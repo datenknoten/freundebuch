@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
+import { Button, headingClasses, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
 import { isModalOpen, visibleMemberContactIds } from '$lib/stores/ui';
@@ -120,23 +121,22 @@ onMount(() => {
 </script>
 
 <section class="space-y-2">
-  <div class="flex items-center justify-between bg-forest text-white px-3 py-1.5 rounded-lg">
-    <h2 class="text-lg font-heading flex items-center gap-2">
+  <div class={surfaceClasses.section}>
+    <h2 class="{headingClasses.section} flex items-center gap-2">
       <UserPlus class="w-5 h-5" strokeWidth="2" />
       {$i18n.t('collectives.detail.members')}
-      <span class="text-sm font-body font-normal text-white/80">({collective.activeMemberCount})</span>
+      <span class="text-sm font-body font-normal text-forest/70">({collective.activeMemberCount})</span>
     </h2>
-    <button
-      type="button"
+    <Button
+      variant="ghostAccent"
+      size="xs"
       onclick={() => { showAddMember = true; isModalOpen.set(true); }}
-      class="text-sm font-body font-semibold text-white/90 hover:text-white
-             flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors"
       data-shortcut="a m"
       data-shortcut-label="shortcuts.add.member"
     >
       <Plus class="w-4 h-4" strokeWidth="2" />
       {$i18n.t('collectives.addMember.button')}
-    </button>
+    </Button>
   </div>
 
   <MemberList
@@ -213,20 +213,12 @@ onMount(() => {
       </div>
 
       <div class="mt-6 flex gap-3 justify-end">
-        <button
-          type="button"
-          onclick={closeDeactivateModal}
-          class="px-4 py-2 border border-gray-300 rounded-lg font-body text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-        >
+        <Button variant="secondary" size="sm" onclick={closeDeactivateModal}>
           {$i18n.t('collectives.form.cancel')}
-        </button>
-        <button
-          type="button"
-          onclick={handleDeactivateConfirm}
-          class="px-4 py-2 bg-amber-600 text-white rounded-lg font-body text-sm font-semibold hover:bg-amber-700 transition-colors"
-        >
+        </Button>
+        <Button variant="caution" size="sm" onclick={handleDeactivateConfirm}>
           {$i18n.t('collectives.deactivate.confirm')}
-        </button>
+        </Button>
       </div>
     </div>
   </div>

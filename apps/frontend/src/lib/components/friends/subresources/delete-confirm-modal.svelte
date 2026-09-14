@@ -1,4 +1,5 @@
 <script lang="ts">
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isModalOpen } from '$lib/stores/ui';
 
@@ -80,37 +81,22 @@ function handleBackdropClick(e: MouseEvent) {
     {/if}
 
     <div class="flex gap-3">
-      <button
-        type="button"
-        onclick={onClose}
+      <Button
+        variant="secondary"
+        class="flex-1"
         disabled={isDeleting}
-        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold
-               text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+        onclick={onClose}
       >
         {$i18n.t('subresources.common.cancel')}
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="danger"
+        class="flex-1"
+        loading={isDeleting}
         onclick={handleDelete}
-        disabled={isDeleting}
-        class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-body font-semibold
-               hover:bg-red-700 transition-colors disabled:opacity-50
-               flex items-center justify-center gap-2"
       >
-        {#if isDeleting}
-          <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-          {$i18n.t('subresources.common.deleting')}
-        {:else}
-          {$i18n.t('subresources.common.delete')}
-        {/if}
-      </button>
+        {$i18n.t('subresources.common.delete')}
+      </Button>
     </div>
   </div>
 </div>

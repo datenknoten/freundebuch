@@ -10,6 +10,7 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import type { CollectiveListParams } from '$lib/api/collectives';
+import { Button } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectivesList, collectiveTypes } from '$lib/stores/collectives';
 import { visibleCollectiveIds } from '$lib/stores/ui';
@@ -229,9 +230,10 @@ function openFirstResult() {
           <option value="member_count">{$i18n.t('collectives.sortByMembers')}</option>
         </select>
 
-        <button
+        <Button
+          variant="secondary"
+          size="xs"
           onclick={toggleSortOrder}
-          class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
           title={sortOrder === 'asc' ? $i18n.t('common.ascending') : $i18n.t('common.descending')}
           aria-label={sortOrder === 'asc' ? $i18n.t('common.ascending') : $i18n.t('common.descending')}
         >
@@ -240,31 +242,33 @@ function openFirstResult() {
           {:else}
             <BarsArrowDown class="w-4 h-4 text-gray-600" strokeWidth="2" />
           {/if}
-        </button>
+        </Button>
       </div>
 
       <!-- Pagination controls (inline) -->
       {#if pagination.totalPages > 1}
         <div class="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200">
-          <button
+          <Button
+            variant="secondary"
+            size="xs"
             onclick={() => goToPage(pagination.page - 1)}
             disabled={pagination.page <= 1 || isLoading}
-            class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             aria-label={$i18n.t('aria.previousPage')}
           >
             <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
-          </button>
+          </Button>
           <span class="text-sm text-gray-600 font-body px-2 whitespace-nowrap">
             {pagination.page} / {pagination.totalPages}
           </span>
-          <button
+          <Button
+            variant="secondary"
+            size="xs"
             onclick={() => goToPage(pagination.page + 1)}
             disabled={pagination.page >= pagination.totalPages || isLoading}
-            class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             aria-label={$i18n.t('aria.nextPage')}
           >
             <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
-          </button>
+          </Button>
         </div>
       {/if}
     </div>
@@ -294,13 +298,10 @@ function openFirstResult() {
           {$i18n.t('collectives.noCollectivesSubtitle')}
         {/if}
       </p>
-      <a
-        href="/collectives/new"
-        class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-      >
+      <Button href="/collectives/new" class="mt-4">
         <Plus class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('collectives.createNew')}
-      </a>
+      </Button>
     </div>
   {:else}
     <!-- Collective Grid (table + cards) -->
