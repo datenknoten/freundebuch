@@ -1,5 +1,6 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser } from '$lib/stores/auth';
@@ -44,9 +45,8 @@ async function copyUrl() {
 </script>
 
 <div class="space-y-6">
-  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-    <h4 class="font-body font-semibold text-blue-800 mb-2">{$i18n.t('profile.carddav.serverUrl')}</h4>
-    <div class="flex items-center gap-2">
+  <AlertBanner variant="info" title={$i18n.t('profile.carddav.serverUrl')}>
+    <div class="flex items-center gap-2 mt-2">
       <code class="flex-1 bg-white border border-blue-200 rounded px-3 py-2 font-mono text-sm break-all">
         {carddavUrl}
       </code>
@@ -54,10 +54,10 @@ async function copyUrl() {
         {copied ? $i18n.t('profile.carddav.copied') : $i18n.t('profile.carddav.copy')}
       </Button>
     </div>
-    <p class="font-body text-xs text-blue-600 mt-2">
+    <p class="text-xs mt-2">
       {$i18n.t('profile.carddav.useCredentials', { email: $currentUser?.email })}
     </p>
-  </div>
+  </AlertBanner>
 
   <div class="border border-gray-200 rounded-lg overflow-hidden">
     <div class="flex border-b border-gray-200">
@@ -138,15 +138,10 @@ async function copyUrl() {
     </div>
   </div>
 
-  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+  <AlertBanner variant="warning" title={$i18n.t('profile.carddav.important')}>
     <div class="flex items-start gap-2">
-      <ExclamationTriangle class="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" strokeWidth="2" />
-      <div>
-        <h4 class="font-body font-semibold text-yellow-800">{$i18n.t('profile.carddav.important')}</h4>
-        <p class="font-body text-sm text-yellow-700 mt-1">
-          {@html $i18n.t('profile.carddav.importantNote')}
-        </p>
-      </div>
+      <ExclamationTriangle class="w-5 h-5 shrink-0 mt-0.5" strokeWidth="2" />
+      <p>{@html $i18n.t('profile.carddav.importantNote')}</p>
     </div>
-  </div>
+  </AlertBanner>
 </div>

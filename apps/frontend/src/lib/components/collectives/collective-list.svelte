@@ -8,6 +8,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import type { CollectiveListParams } from '$lib/api/collectives';
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import { Button, EmptyState, formClasses, SearchInput, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectivesList, collectiveTypes } from '$lib/stores/collectives';
@@ -258,9 +259,7 @@ function openFirstResult() {
 
   <!-- Error state -->
   {#if error}
-    <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm" role="alert">
-      {error}
-    </div>
+    <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
   <!-- Loading state -->

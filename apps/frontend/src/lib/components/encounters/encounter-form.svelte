@@ -1,5 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import { Button, FormInput, formClasses } from '$lib/components/ui';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
@@ -119,12 +120,7 @@ function handleCancel() {
 
 <form onsubmit={handleSubmit} class="space-y-6">
   {#if error}
-    <div
-      class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm"
-      role="alert"
-    >
-      {error}
-    </div>
+    <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
   <!-- Type -->
