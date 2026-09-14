@@ -66,6 +66,26 @@ describe('Modal', () => {
     expect(get(isModalOpen)).toBe(false);
   });
 
+  // The blocking session-expiry dialog mounts on top of whatever is already
+  // open; if the flag were a boolean, the first unmount would re-arm the
+  // global shortcuts while the other dialog still covers the page.
+  it('keeps shortcuts suppressed until the last of two stacked dialogs closes', () => {
+    const first = render(Modal, { title: 'Edit email', onClose: () => undefined, children: body });
+    const second = render(Modal, {
+      title: 'Session expired',
+      closable: false,
+      onClose: () => undefined,
+      children: body,
+    });
+    expect(get(isModalOpen)).toBe(true);
+
+    second.unmount();
+    expect(get(isModalOpen)).toBe(true);
+
+    first.unmount();
+    expect(get(isModalOpen)).toBe(false);
+  });
+
   // Chrome's close-watcher anti-abuse rule makes `cancel` non-cancelable on a
   // second Escape without user activation, so the dialog can close without
   // `cancel` ever reaching us — as can any script close().

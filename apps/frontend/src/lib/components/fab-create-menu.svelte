@@ -24,9 +24,9 @@ export function navigateForCreateChoice(choice: FabCreateChoice): void {
       // otherwise navigate there with a flag the circles page uses to auto-open it.
       if (get(page).url.pathname === '/circles') {
         // The caller has already closed this menu. Flush that first so the
-        // menu's teardown (which clears the global `isModalOpen` flag) runs
-        // before the modal mounts and sets it — otherwise the flag would end
-        // up false behind an open modal, leaving keyboard shortcuts active.
+        // menu's <dialog> closes — and restores focus to the FAB — before the
+        // circle modal mounts; otherwise that focus restore would run after
+        // the modal's autofocus and steal the mobile keyboard.
         flushSync();
         // Then open the modal, still inside the FAB tap, so its auto-focused
         // name input claims the mobile keyboard. The page's event handler
