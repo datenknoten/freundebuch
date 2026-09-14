@@ -3,6 +3,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import { page } from '$app/stores';
 import FriendDetail from '$lib/components/friends/friend-detail.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { currentFriend, friends, isFriendsLoading } from '$lib/stores/friends';
@@ -50,7 +51,7 @@ const backUrl = $derived.by(() => {
 
       {#if $isFriendsLoading && !$currentFriend}
         <div class="flex justify-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+          <Spinner size="lg" />
         </div>
       {:else if $currentFriend}
         <FriendDetail friend={$currentFriend} />

@@ -5,6 +5,7 @@ import { goto } from '$app/navigation';
 import * as collectivesApi from '$lib/api/collectives.js';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import MarkdownEditor from '$lib/editor/markdown-editor.svelte';
 import { friends } from '$lib/stores/friends';
 import type { Friend, FriendCreateInput } from '$shared';
@@ -337,7 +338,7 @@ async function handleSubmit(e: Event) {
 
       {#if isUploadingPhoto}
         <div class="absolute inset-0 bg-gray-900/50 rounded-full flex items-center justify-center">
-          <div class="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+          <Spinner tone="white" />
         </div>
       {:else if isEditing}
         <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-full flex items-center justify-center transition-all">

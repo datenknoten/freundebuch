@@ -2,7 +2,7 @@
 import { onMount } from 'svelte';
 import { autoFocus } from '$lib/actions/auto-focus';
 import CircleChip from '$lib/components/circles/circle-chip.svelte';
-import { createDirtyTracker, formClasses } from '$lib/components/ui';
+import { createDirtyTracker, formClasses, Spinner } from '$lib/components/ui';
 import { circles, circlesList } from '$lib/stores/circles';
 import type { Circle, CircleSummary } from '$shared';
 
@@ -73,10 +73,7 @@ export function getSelectedCircle(): Circle | undefined {
 <div class="space-y-4">
   {#if $circles.isLoading}
     <div class="flex items-center gap-2 text-gray-500 font-body">
-      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <Spinner size="sm" tone="current" />
       Loading circles...
     </div>
   {:else if availableCircles.length === 0}

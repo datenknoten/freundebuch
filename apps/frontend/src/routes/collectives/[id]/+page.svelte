@@ -5,6 +5,7 @@ import FaceSmile from 'svelte-heros-v2/FaceSmile.svelte';
 import { page } from '$app/stores';
 import CollectiveDetail from '$lib/components/collectives/collective-detail.svelte';
 import CollectiveForm from '$lib/components/collectives/collective-form.svelte';
+import { Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { collectives } from '$lib/stores/collectives';
@@ -83,7 +84,7 @@ $effect(() => {
       {#if isLoading && !collective}
         <!-- Loading state -->
         <div class="flex justify-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+          <Spinner size="lg" />
         </div>
       {:else if error}
         <!-- Error state -->
