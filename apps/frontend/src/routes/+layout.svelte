@@ -14,6 +14,7 @@ import Footer from '$lib/components/footer.svelte';
 import GlobalSearch from '$lib/components/global-search.svelte';
 import NavBar from '$lib/components/nav-bar.svelte';
 import SessionExpiredModal from '$lib/components/session-expired-modal.svelte';
+import { Fab } from '$lib/components/ui';
 import type { SupportedLanguage } from '$lib/i18n/index.js';
 import { createI18n } from '$lib/i18n/index.js';
 import { KeyboardShortcuts } from '$lib/shortcuts';
@@ -154,15 +155,9 @@ function handleCreateSelect(choice: FabCreateChoice) {
 
 	<!-- Floating Action Button for mobile: tap = create menu -->
 	{#if showFab}
-		<button
-			type="button"
-			onclick={() => (createMenuOpen = true)}
-			class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white rounded-full shadow-lg hover:bg-forest-light transition-colors flex items-center justify-center z-(--z-fab) select-none touch-none [-webkit-touch-callout:none]"
-			title={$i18n.t('common.createNew')}
-			aria-label={$i18n.t('common.createNew')}
-		>
+		<Fab onclick={() => (createMenuOpen = true)} label={$i18n.t('common.createNew')}>
 			<Plus class="w-6 h-6" strokeWidth="2" />
-		</button>
+		</Fab>
 	{/if}
 
 	{#if showFab && createMenuOpen}
