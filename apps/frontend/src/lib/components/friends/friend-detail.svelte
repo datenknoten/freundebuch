@@ -26,19 +26,21 @@ const i18n = createI18n();
 
 import type { ContactCollectiveSummary, Friend } from '$shared';
 import LastEncounterBadge from '../encounters/last-encounter-badge.svelte';
+import SubresourceSection from '../subresources/subresource-section.svelte';
 import FriendAvatar from './friend-avatar.svelte';
 import RelationshipsSection from './relationships-section.svelte';
 import {
-  AddressSection,
-  CircleSection,
-  CollectivesSection,
-  DateSection,
-  EmailSection,
-  PhoneSection,
-  ProfessionalHistorySection,
-  SocialProfileSection,
-  UrlSection,
-} from './sections';
+  addressDescriptor,
+  circleDescriptor,
+  createCollectiveDescriptor,
+  dateDescriptor,
+  emailDescriptor,
+  hasProfileUrl,
+  phoneDescriptor,
+  professionalHistoryDescriptor,
+  socialProfileDescriptor,
+  urlDescriptor,
+} from './subresource-descriptors';
 import { AddDetailDropdown, MobileAddDetailModal, type SubresourceType } from './subresources';
 
 interface Props {
@@ -58,6 +60,12 @@ $effect(() => {
   }
 });
 
+// The collective descriptor removes a membership through the collectives API,
+// so it has to tell this page to refetch afterwards.
+const collectiveDescriptor = createCollectiveDescriptor(() => {
+  loadCollectives().catch((err) => console.error('Failed to reload collectives:', err));
+});
+
 async function loadCollectives() {
   collectivesLoading = true;
   try {
@@ -74,7 +82,7 @@ let emailStartIndex = $derived(friend.phones.length);
 let urlStartIndex = $derived(friend.phones.length + friend.emails.length);
 let socialStartIndex = $derived(friend.phones.length + friend.emails.length + friend.urls.length);
 let filteredSocialCount = $derived(
-  friend.socialProfiles ? friend.socialProfiles.filter((p) => p.profileUrl).length : 0,
+  (friend.socialProfiles ?? []).filter((profile) => hasProfileUrl(profile)).length,
 );
 let collectiveStartIndex = $derived(
   friend.phones.length + friend.emails.length + friend.urls.length + filteredSocialCount,
@@ -100,11 +108,9 @@ let friendDetailLinks = $derived.by(() => {
   for (const url of friend.urls) {
     links.push({ url: url.url, type: 'external' });
   }
-  if (friend.socialProfiles) {
-    for (const profile of friend.socialProfiles) {
-      if (profile.profileUrl) {
-        links.push({ url: profile.profileUrl, type: 'external' });
-      }
+  for (const profile of friend.socialProfiles ?? []) {
+    if (hasProfileUrl(profile)) {
+      links.push({ url: profile.profileUrl, type: 'external' });
     }
   }
   for (const collective of collectives) {
@@ -237,9 +243,11 @@ onMount(() => {
   <!-- ==================== PROFESSIONAL HISTORY SECTION ==================== -->
   <!-- Always mounted so the add-work-experience shortcut/listener is registered
        even when the friend has no employment entries yet -->
-  <ProfessionalHistorySection
-    friendId={friend.id}
-    professionalHistory={friend.professionalHistory ?? []}
+  <SubresourceSection
+    descriptor={professionalHistoryDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.professionalHistory ?? []}
   />
 
   <!-- ==================== ABOUT SECTION ==================== -->
@@ -287,57 +295,68 @@ onMount(() => {
   {/if}
 
   <!-- ==================== CONTACT DETAILS SECTION ==================== -->
-  <div class="space-y-4">
-    <PhoneSection
-      friendId={friend.id}
-      phones={friend.phones}
-      linkStartIndex={0}
-    />
+  <SubresourceSection
+    descriptor={phoneDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.phones}
+    linkStartIndex={0}
+  />
 
-    <EmailSection
-      friendId={friend.id}
-      emails={friend.emails}
-      linkStartIndex={emailStartIndex}
-    />
+  <SubresourceSection
+    descriptor={emailDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.emails}
+    linkStartIndex={emailStartIndex}
+  />
 
-    <AddressSection
-      friendId={friend.id}
-      addresses={friend.addresses}
-    />
+  <SubresourceSection
+    descriptor={addressDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.addresses}
+  />
 
-    <UrlSection
-      friendId={friend.id}
-      urls={friend.urls}
-      linkStartIndex={urlStartIndex}
-    />
+  <SubresourceSection
+    descriptor={urlDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.urls}
+    linkStartIndex={urlStartIndex}
+  />
 
-    <SocialProfileSection
-      friendId={friend.id}
-      socialProfiles={friend.socialProfiles ?? []}
-      linkStartIndex={socialStartIndex}
-    />
-  </div>
+  <SubresourceSection
+    descriptor={socialProfileDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.socialProfiles ?? []}
+    linkStartIndex={socialStartIndex}
+  />
 
   <!-- ==================== IMPORTANT DATES SECTION ==================== -->
-  <DateSection
-    friendId={friend.id}
-    dates={friend.dates ?? []}
+  <SubresourceSection
+    descriptor={dateDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.dates ?? []}
   />
 
   <!-- ==================== CIRCLES SECTION ==================== -->
-  <CircleSection
-    friendId={friend.id}
-    circles={friend.circles ?? []}
-    existingCircles={friend.circles ?? []}
+  <SubresourceSection
+    descriptor={circleDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.circles ?? []}
   />
 
   <!-- ==================== COLLECTIVES SECTION ==================== -->
-  <CollectivesSection
-    friendId={friend.id}
-    friendDisplayName={friend.displayName}
-    {collectives}
+  <SubresourceSection
+    descriptor={collectiveDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={collectives}
     linkStartIndex={collectiveStartIndex}
-    onCollectivesChanged={loadCollectives}
   />
 
   <!-- ==================== RELATIONSHIPS SECTION ==================== -->
