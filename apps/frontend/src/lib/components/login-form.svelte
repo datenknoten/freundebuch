@@ -143,17 +143,7 @@ async function handlePasskeySignIn() {
 		/>
 	</div>
 
-	<div class="flex items-center justify-between">
-		<div class="flex items-center">
-			<input
-				type="checkbox"
-				id="remember"
-				class="h-4 w-4 text-forest focus:ring-forest border-gray-300 rounded"
-			/>
-			<label for="remember" class="ml-2 block text-sm font-body text-gray-700">
-				{$i18n.t('auth.login.rememberMe')}
-			</label>
-		</div>
+	<div class="flex items-center justify-end">
 		<a
 			href="/auth/forgot-password"
 			class="text-sm font-body font-semibold text-forest hover:text-forest-light"
