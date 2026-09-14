@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isModalOpen } from '$lib/stores/ui';
+import { isModalOpen, resetOpenOverlays } from '$lib/stores/ui';
 import {
   aCollective,
   aCollectiveMember,
@@ -49,7 +49,7 @@ function aCollectiveWithMembers() {
 
 afterEach(() => {
   vi.clearAllMocks();
-  isModalOpen.set(false);
+  resetOpenOverlays();
 });
 
 describe('MemberSection', () => {

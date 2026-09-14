@@ -12,7 +12,7 @@ import {
 } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
-import { isModalOpen, visibleMemberContactIds } from '$lib/stores/ui';
+import { visibleMemberContactIds } from '$lib/stores/ui';
 import type { Collective, MembershipDeactivate } from '$shared';
 import { DetailEditModal } from '../friends/subresources';
 import AddMemberForm from './add-member-form.svelte';
@@ -54,15 +54,11 @@ let activeCollectiveId: string | undefined;
 $effect(() => {
   const id = collective.id;
   if (activeCollectiveId !== undefined && id !== activeCollectiveId) {
-    // The deactivate modal and the remove confirmation clear `isModalOpen`
-    // themselves when they unmount; only the add-member flag is manual.
-    const hadAddMemberOpen = showAddMember;
     showAddMember = false;
     showDeactivateModal = false;
     deactivatingMemberId = null;
     deactivateReason = '';
     removeConfirmMemberId = null;
-    if (hadAddMemberOpen) isModalOpen.set(false);
   }
   activeCollectiveId = id;
 });
@@ -74,7 +70,6 @@ async function handleAddMember(contactId: string, roleId: string, skipAutoRelati
     skip_auto_relationships: skipAutoRelationships,
   });
   showAddMember = false;
-  isModalOpen.set(false);
 }
 
 function handleDeactivateClick(memberId: string) {
@@ -90,7 +85,7 @@ function closeDeactivateModal() {
 }
 
 async function handleDeactivateConfirm() {
-  if (!deactivatingMemberId) return;
+  if (deactivatingMemberId === null) return;
   const trimmedReason = deactivateReason.trim();
   const input: MembershipDeactivate = {
     reason: trimmedReason.length > 0 ? trimmedReason : null,
@@ -132,7 +127,6 @@ async function handleRemoveConfirm() {
 onMount(() => {
   function handleAddMemberShortcut() {
     showAddMember = true;
-    isModalOpen.set(true);
   }
   window.addEventListener('shortcut:collective-add-member', handleAddMemberShortcut);
   return () => {
@@ -151,7 +145,7 @@ onMount(() => {
     <Button
       variant="ghostAccent"
       size="xs"
-      onclick={() => { showAddMember = true; isModalOpen.set(true); }}
+      onclick={() => (showAddMember = true)}
       data-shortcut="a m"
       data-shortcut-label="shortcuts.add.member"
     >
@@ -173,7 +167,7 @@ onMount(() => {
   <DetailEditModal
     title={$i18n.t('collectives.addMember.title')}
     subtitle={collective.name}
-    onClose={() => { showAddMember = false; isModalOpen.set(false); }}
+    onClose={() => (showAddMember = false)}
     footer={null}
     asForm={false}
   >
@@ -183,7 +177,7 @@ onMount(() => {
       roles={collective.type.roles}
       existingMemberContactIds={collective.members.map((m) => m.contact.id)}
       onAdd={handleAddMember}
-      onCancel={() => { showAddMember = false; isModalOpen.set(false); }}
+      onCancel={() => (showAddMember = false)}
     />
   </DetailEditModal>
 {/if}

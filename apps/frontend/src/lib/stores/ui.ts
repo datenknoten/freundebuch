@@ -1,9 +1,39 @@
-import { writable } from 'svelte/store';
+import { derived, writable } from 'svelte/store';
 
 /**
- * Tracks if a modal or form overlay is open that should suppress keyboard shortcuts
+ * How many overlays (modal dialogs, sheets, the search panel) are open.
+ *
+ * A boolean could not express nesting: the blocking session-expiry dialog can
+ * mount on top of an open modal, and whichever unmounts first would clear the
+ * flag while the other is still covering the page — re-arming global keyboard
+ * shortcuts behind it.
  */
-export const isModalOpen = writable(false);
+const openOverlayCount = writable(0);
+
+/**
+ * True while any overlay is open; keyboard shortcuts stay suppressed until the
+ * last one closes.
+ */
+export const isModalOpen = derived(openOverlayCount, (count) => count > 0);
+
+/**
+ * Register an open overlay. Returns the release function, which is safe to
+ * call more than once.
+ */
+export function registerOpenOverlay(): () => void {
+  openOverlayCount.update((count) => count + 1);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    openOverlayCount.update((count) => Math.max(0, count - 1));
+  };
+}
+
+/** Drop every registration; for tests that render overlays in isolation. */
+export function resetOpenOverlays(): void {
+  openOverlayCount.set(0);
+}
 
 /**
  * Tracks if "open mode" is active for quick keyboard navigation to list items
