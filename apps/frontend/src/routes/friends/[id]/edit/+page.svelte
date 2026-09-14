@@ -4,8 +4,11 @@ import { page } from '$app/stores';
 import FriendForm from '$lib/components/friends/friend-form.svelte';
 import { Button, EmptyState, PageShell } from '$lib/components/ui';
 import Spinner from '$lib/components/ui/spinner.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { currentFriend, friends, isFriendsLoading } from '$lib/stores/friends';
+
+const i18n = createI18n();
 
 // Load friend when auth is ready and page params change
 $effect(() => {
@@ -17,21 +20,23 @@ $effect(() => {
 
 // Dynamic page title based on friend name
 const pageTitle = $derived(
-  $currentFriend ? `Edit ${$currentFriend.displayName} | Freundebuch` : 'Edit Friend | Freundebuch',
+  $currentFriend === null
+    ? $i18n.t('friends.editFriend')
+    : $i18n.t('friends.editFriendTitle', { name: $currentFriend.displayName }),
 );
 </script>
 
 <svelte:head>
-  <title>{pageTitle}</title>
+  <title>{pageTitle} | Freundebuch</title>
 </svelte:head>
 
 <PageShell
   width="form"
-  title={$currentFriend === null ? undefined : 'Edit Friend'}
+  title={$currentFriend === null ? undefined : $i18n.t('friends.editFriend')}
   subtitle={$currentFriend === null
     ? undefined
-    : `Update ${$currentFriend.displayName}'s information`}
-  back={{ href: `/friends/${$page.params.id}`, label: 'Back to Friend' }}
+    : $i18n.t('friends.editFriendSubtitle', { name: $currentFriend.displayName })}
+  back={{ href: `/friends/${$page.params.id}`, label: $i18n.t('friends.backToFriend') }}
 >
   {#if $isFriendsLoading}
     <div class="flex justify-center py-12">
@@ -43,10 +48,10 @@ const pageTitle = $derived(
     <EmptyState
       icon={ExclamationTriangle}
       tone="error"
-      title="Friend not found"
+      title={$i18n.t('friends.friendNotFound')}
       description={$friends.error}
     >
-      <Button variant="secondary" href="/friends">Return to friends</Button>
+      <Button variant="secondary" href="/friends">{$i18n.t('friends.returnToFriends')}</Button>
     </EmptyState>
   {/if}
 </PageShell>

@@ -3,6 +3,9 @@ import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
 import FormInput from '$lib/components/ui/form-input.svelte';
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 
 let email = $state('');
 let isLoading = $state(false);
@@ -22,7 +25,7 @@ async function handleSubmit(e: SubmitEvent) {
     });
 
     if (result.error) {
-      error = result.error.message || 'Failed to send reset email';
+      error = result.error.message ?? $i18n.t('auth.forgotPassword.error.generic');
       isLoading = false;
       return;
     }
@@ -30,7 +33,7 @@ async function handleSubmit(e: SubmitEvent) {
     success = true;
     isLoading = false;
   } catch (err) {
-    error = (err as Error)?.message || 'Failed to send reset email';
+    error = (err as Error)?.message ?? $i18n.t('auth.forgotPassword.error.generic');
     isLoading = false;
   }
 }
@@ -43,8 +46,8 @@ async function handleSubmit(e: SubmitEvent) {
 
 	{#if success}
 		<AlertBanner variant="success">
-			<p class="font-semibold mb-2">Password reset link sent!</p>
-			<p>If the email exists, a password reset link has been sent. Please check your inbox.</p>
+			<p class="font-semibold mb-2">{$i18n.t('auth.forgotPassword.successTitle')}</p>
+			<p>{$i18n.t('auth.forgotPassword.successBody')}</p>
 		</AlertBanner>
 	{/if}
 
@@ -52,21 +55,21 @@ async function handleSubmit(e: SubmitEvent) {
 		<FormInput
 			id="email"
 			type="email"
-			label="Email address"
+			label={$i18n.t('auth.forgotPassword.emailLabel')}
 			bind:value={email}
-			placeholder="you@example.com"
+			placeholder={$i18n.t('auth.forgotPassword.emailPlaceholder')}
 			autocomplete="email"
 			disabled={isLoading}
 			required
 		/>
 
-		<Button type="submit" block loading={isLoading}>Send reset link</Button>
+		<Button type="submit" block loading={isLoading}>{$i18n.t('auth.forgotPassword.submit')}</Button>
 	{/if}
 
 	<p class="text-center text-sm font-body text-gray-600">
-		Remember your password?
+		{$i18n.t('auth.forgotPassword.rememberPassword')}
 		<a href="/auth/login" class="font-semibold text-forest hover:text-forest-light">
-			Sign in
+			{$i18n.t('auth.forgotPassword.signIn')}
 		</a>
 	</p>
 </form>
