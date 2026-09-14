@@ -600,7 +600,9 @@
       "save": "Save Circle",
       "saving": "Saving...",
       "saveChanges": "Save Changes",
-      "createCircle": "Create Circle"
+      "createCircle": "Create Circle",
+      "nameRequired": "Circle name is required",
+      "saveError": "Failed to save circle"
     },
     "delete": {
       "title": "Delete Circle",
@@ -1502,7 +1504,14 @@
       "untitled": "Employment"
     },
     "circle": {
-      "removeAria": "Remove from circle"
+      "removeAria": "Remove from circle",
+      "loading": "Loading circles…",
+      "noneCreated": "No circles created yet.",
+      "noneCreatedHint": "Create circles on the circles page to organise your friends.",
+      "allAssigned": "Already in every available circle.",
+      "select": "Select Circle",
+      "selectPlaceholder": "Choose a circle…",
+      "preview": "Preview:"
     },
     "collective": {
       "removeAria": "Remove from collective"

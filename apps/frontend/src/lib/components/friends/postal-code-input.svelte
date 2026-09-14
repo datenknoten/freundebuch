@@ -154,6 +154,6 @@ export function focus() {
   {/if}
 
   {#if value && value.length < 3 && !disabled}
-    <p class={formClasses.helper}>Enter at least 3 characters</p>
+    <p class={formClasses.helper}>{$i18n.t('address.postalCodeHint')}</p>
   {/if}
 </div>

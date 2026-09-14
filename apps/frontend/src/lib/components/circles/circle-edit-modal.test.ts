@@ -18,7 +18,7 @@ describe('CircleEditModal', () => {
 
     const dialog = screen.getByRole('dialog') as HTMLDialogElement;
     expect(dialog.open).toBe(true);
-    expect(screen.getByLabelText('circles.form.name')).toBeTruthy();
+    expect(screen.getByLabelText(/circles\.form\.name/)).toBeTruthy();
     expect(screen.getByText('circles.form.createCircle')).toBeTruthy();
   });
 
@@ -26,7 +26,7 @@ describe('CircleEditModal', () => {
     const onClose = vi.fn();
     render(CircleEditModal, { onClose });
 
-    const input = screen.getByLabelText('circles.form.name');
+    const input = screen.getByLabelText(/circles\.form\.name/);
     await fireEvent.input(input, { target: { value: 'Family' } });
 
     // Escape reaches the dialog as the native `cancel` event.
@@ -42,5 +42,16 @@ describe('CircleEditModal', () => {
     await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
     await fireEvent.click(screen.getByText('circles.unsavedChanges.discard'));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports the empty name on the field itself', async () => {
+    render(CircleEditModal, { onClose: vi.fn() });
+
+    await fireEvent.submit(screen.getByRole('dialog').querySelector('form') as HTMLFormElement);
+
+    const input = screen.getByLabelText(/circles\.form\.name/);
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+    expect(input.getAttribute('aria-describedby')).toContain('circle-name-error');
+    expect(screen.getByText('circles.form.nameRequired')).toBeTruthy();
   });
 });
