@@ -52,6 +52,15 @@
   /* Custom fonts */
   --font-heading: "Yanone Kaffeesatz", sans-serif;
   --font-body: Merriweather, serif;
+
+  /* Z-index layers. Every fixed/absolute surface picks one of these so two
+     concerns can never collide at the same literal value again:
+     nav < popover = fab < overlay. Native <dialog> modals are not in this
+     scale at all — the top layer stacks them by showModal() order. */
+  --z-nav: 30;
+  --z-popover: 40;
+  --z-fab: 40;
+  --z-overlay: 50;
 }
 
 @layer base {

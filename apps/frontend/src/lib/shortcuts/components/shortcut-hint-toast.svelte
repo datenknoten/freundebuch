@@ -26,7 +26,7 @@ let keyParts = $derived($activeHint ? $activeHint.keys.split(' ') : []);
     role="status"
     aria-live="polite"
     transition:fly={{ y: 16, duration: 200 }}
-    class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden max-w-xs"
+    class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-(--z-overlay) border border-gray-200 overflow-hidden max-w-xs"
   >
     <div class="px-4 py-3 font-body text-sm text-gray-700">
       <div class="flex items-center gap-1.5 flex-wrap">

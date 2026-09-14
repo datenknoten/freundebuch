@@ -189,7 +189,7 @@ onMount(() => {
   which is only possible because it already exists at that point.
 -->
 <div
-  class="fixed inset-0 z-50 bg-black/50 flex items-start justify-center pt-[10vh] {$isSearchOpen ? '' : 'opacity-0 pointer-events-none'}"
+  class="fixed inset-0 z-(--z-overlay) bg-black/50 flex items-start justify-center pt-[10vh] {$isSearchOpen ? '' : 'opacity-0 pointer-events-none'}"
   onclick={handleBackdropClick}
   onkeydown={handleKeydown}
   role="dialog"

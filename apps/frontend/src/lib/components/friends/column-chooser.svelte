@@ -89,7 +89,7 @@ $effect(() => {
 
   {#if isOpen}
     <div
-      class="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2"
+      class="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-(--z-popover) py-2"
     >
       <div class="px-3 pb-2 border-b border-gray-100">
         <div class="flex items-center justify-between">

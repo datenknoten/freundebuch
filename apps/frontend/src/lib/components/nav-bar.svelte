@@ -123,7 +123,7 @@ $effect(() => {
 {#if mobileMenuOpen}
   <div
     transition:fade={{ duration: 200 }}
-    class="fixed inset-0 bg-gray-900/50 z-40 sm:hidden"
+    class="fixed inset-0 bg-gray-900/50 z-(--z-overlay) sm:hidden"
     onclick={closeMobileMenu}
     role="presentation"
   ></div>
@@ -134,7 +134,7 @@ $effect(() => {
   bind:this={menuElement}
   inert={!mobileMenuOpen}
   aria-hidden={!mobileMenuOpen}
-  class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-200 ease-in-out sm:hidden {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
+  class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-(--z-overlay) transform transition-transform duration-200 ease-in-out sm:hidden {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
 >
   <div class="p-4 border-b border-gray-200">
     <a href="/" onclick={closeMobileMenu}>
@@ -269,7 +269,7 @@ $effect(() => {
   </div>
 </div>
 
-<nav class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30">
+<nav class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-(--z-nav)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center h-16 gap-4">
       <!-- Mobile: Hamburger menu button -->
