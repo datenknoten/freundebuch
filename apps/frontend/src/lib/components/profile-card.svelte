@@ -14,7 +14,7 @@ let { href, title, description, status, icon }: Props = $props();
 
 <a
   {href}
-  class="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 transition-all hover:shadow-md hover:border-forest/30"
+  class="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 transition-[border-color,box-shadow] duration-150 hover:shadow-md hover:border-forest/30"
 >
   <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest/10 text-forest">
     {@render icon()}
