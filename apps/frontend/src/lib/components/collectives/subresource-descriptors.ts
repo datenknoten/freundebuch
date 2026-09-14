@@ -104,10 +104,14 @@ const phoneDescriptor: SubresourceDescriptor = {
   deleteName: (item) => itemAs<Phone>(item).phoneNumber,
   deleteTitleKey: 'friendDetail.modal.deletePhoneNumber',
   deleteDescriptionKey: 'friendDetail.modal.confirmDeletePhone',
-  mapError: (err, t) =>
-    err instanceof ApiError && err.code === 'PHONE_COUNTRY_UNKNOWN'
-      ? t('subresources.phone.unknownCountry')
-      : undefined,
+  mapError: (err, t) => {
+    if (!(err instanceof ApiError)) return undefined;
+    if (err.code === 'PHONE_COUNTRY_UNKNOWN') return t('subresources.phone.unknownCountry');
+    // The backend rejects unparseable numbers with a 400 and a message meant
+    // for developers; show the field hint instead.
+    if (err.statusCode === 400) return t('subresources.phone.invalidNumber');
+    return undefined;
+  },
 };
 
 const emailDescriptor: SubresourceDescriptor = {
