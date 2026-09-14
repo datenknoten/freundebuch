@@ -22,12 +22,12 @@ async function handleSubmit(e: SubmitEvent) {
 
   // Client-side validation
   if (password !== confirmPassword) {
-    error = 'Passwords do not match';
+    error = $i18n.t('auth.resetPassword.error.mismatch');
     return;
   }
 
   if (password.length < 8) {
-    error = 'Password must be at least 8 characters';
+    error = $i18n.t('auth.resetPassword.error.tooShort');
     return;
   }
 
@@ -40,7 +40,7 @@ async function handleSubmit(e: SubmitEvent) {
     });
 
     if (result.error) {
-      error = result.error.message || 'Password reset failed';
+      error = result.error.message ?? $i18n.t('auth.resetPassword.error.generic');
       isLoading = false;
       return;
     }
@@ -53,7 +53,7 @@ async function handleSubmit(e: SubmitEvent) {
       goto('/auth/login');
     }, 2000);
   } catch (err) {
-    error = (err as Error)?.message || 'Password reset failed';
+    error = (err as Error)?.message ?? $i18n.t('auth.resetPassword.error.generic');
     isLoading = false;
   }
 }
@@ -66,14 +66,14 @@ async function handleSubmit(e: SubmitEvent) {
 
 	{#if success}
 		<AlertBanner variant="success">
-			<p class="font-semibold mb-2">Password reset successful!</p>
-			<p>Your password has been reset. Redirecting to login...</p>
+			<p class="font-semibold mb-2">{$i18n.t('auth.resetPassword.successTitle')}</p>
+			<p>{$i18n.t('auth.resetPassword.successBody')}</p>
 		</AlertBanner>
 	{:else}
 		<FormInput
 			id="password"
 			type="password"
-			label="New password"
+			label={$i18n.t('auth.resetPassword.newPassword')}
 			bind:value={password}
 			placeholder="••••••••"
 			autocomplete="new-password"
@@ -86,7 +86,7 @@ async function handleSubmit(e: SubmitEvent) {
 		<FormInput
 			id="confirm-password"
 			type="password"
-			label="Confirm new password"
+			label={$i18n.t('auth.resetPassword.confirmNewPassword')}
 			bind:value={confirmPassword}
 			placeholder="••••••••"
 			autocomplete="new-password"
@@ -96,13 +96,13 @@ async function handleSubmit(e: SubmitEvent) {
 			required
 		/>
 
-		<Button type="submit" block loading={isLoading}>Reset password</Button>
+		<Button type="submit" block loading={isLoading}>{$i18n.t('auth.resetPassword.submit')}</Button>
 	{/if}
 
 	<p class="text-center text-sm font-body text-gray-600">
-		Remember your password?
+		{$i18n.t('auth.forgotPassword.rememberPassword')}
 		<a href="/auth/login" class="font-semibold text-forest hover:text-forest-light">
-			Sign in
+			{$i18n.t('auth.forgotPassword.signIn')}
 		</a>
 	</p>
 </form>
