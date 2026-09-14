@@ -1,5 +1,6 @@
 <script lang="ts">
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
+import { formClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { ArrayFacetField, FacetFilters, FacetGroups } from '$shared';
 
@@ -87,7 +88,7 @@ let hasFacets = $derived(
                         type="checkbox"
                         checked={isFilterActive(group.field, facet.value)}
                         onchange={() => toggleFilter(group.field, facet.value)}
-                        class="rounded border-gray-300 text-forest focus:ring-forest"
+                        class={formClasses.checkbox}
                       />
                       <span class="text-sm text-gray-700 flex-1">{facet.value}</span>
                       <span class="text-xs text-gray-400">{facet.count}</span>
@@ -126,7 +127,7 @@ let hasFacets = $derived(
                         type="checkbox"
                         checked={isFilterActive(group.field, facet.value)}
                         onchange={() => toggleFilter(group.field, facet.value)}
-                        class="rounded border-gray-300 text-forest focus:ring-forest"
+                        class={formClasses.checkbox}
                       />
                       <span class="text-sm text-gray-700 flex-1 truncate">{facet.value}</span>
                       <span class="text-xs text-gray-400">{facet.count}</span>
@@ -160,7 +161,7 @@ let hasFacets = $derived(
                     type="checkbox"
                     checked={isFilterActive(group.field, facet.value)}
                     onchange={() => toggleFilter(group.field, facet.value)}
-                    class="rounded border-gray-300 text-forest focus:ring-forest"
+                    class={formClasses.checkbox}
                   />
                   <span class="text-sm text-gray-700 flex-1 capitalize">{facet.value}</span>
                   <span class="text-xs text-gray-400">{facet.count}</span>

@@ -6,7 +6,7 @@ import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import type { EncounterListParams } from '$lib/api/encounters';
-import { Button, EmptyState, SearchInput, Spinner } from '$lib/components/ui';
+import { Button, EmptyState, formClasses, SearchInput, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters, encountersList } from '$lib/stores/encounters';
 import { visibleEncounterIds } from '$lib/stores/ui';
@@ -114,7 +114,7 @@ function goToPage(page: number) {
   <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
     <!-- Search input -->
     <div class="flex-1">
-      <label for="encounter-search" class="block text-sm font-body font-medium text-gray-700 mb-1">
+      <label for="encounter-search" class={formClasses.label}>
         {$i18n.t('encounters.search')}
       </label>
       <SearchInput
@@ -129,14 +129,14 @@ function goToPage(page: number) {
 
     <!-- Type filter -->
     <div>
-      <label for="type-filter" class="block text-sm font-body font-medium text-gray-700 mb-1">
+      <label for="type-filter" class={formClasses.label}>
         {$i18n.t('encounters.typeFilter')}
       </label>
       <select
         id="type-filter"
         bind:value={selectedType}
         onchange={() => loadEncounters()}
-        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm bg-white"
+        class="{formClasses.inputSm} bg-white"
       >
         <option value="">{$i18n.t('encounters.allTypes')}</option>
         {#each ENCOUNTER_TYPES as type (type)}
@@ -148,7 +148,7 @@ function goToPage(page: number) {
     <!-- Date filters -->
     <div class="flex gap-2">
       <div>
-        <label for="from-date" class="block text-sm font-body font-medium text-gray-700 mb-1">
+        <label for="from-date" class={formClasses.label}>
           {$i18n.t('encounters.fromDate')}
         </label>
         <input
@@ -156,11 +156,11 @@ function goToPage(page: number) {
           type="date"
           bind:value={fromDate}
           onchange={handleDateChange}
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+          class={formClasses.inputSm}
         />
       </div>
       <div>
-        <label for="to-date" class="block text-sm font-body font-medium text-gray-700 mb-1">
+        <label for="to-date" class={formClasses.label}>
           {$i18n.t('encounters.toDate')}
         </label>
         <input
@@ -168,7 +168,7 @@ function goToPage(page: number) {
           type="date"
           bind:value={toDate}
           onchange={handleDateChange}
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+          class={formClasses.inputSm}
         />
       </div>
     </div>

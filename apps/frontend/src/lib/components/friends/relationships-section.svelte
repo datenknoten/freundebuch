@@ -4,6 +4,7 @@ import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import { formClasses } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
@@ -264,7 +265,7 @@ onMount(() => {
                         bind:value={editNotes}
                         rows="2"
                         disabled={isSavingNotes}
-                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm font-body resize-none focus:ring-2 focus:ring-forest focus:border-transparent disabled:opacity-50"
+                        class={formClasses.inputSm}
                         placeholder={$i18n.t('relationshipSection.addNotes')}
                       ></textarea>
                       <div class="flex gap-2">

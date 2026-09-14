@@ -2,7 +2,14 @@
 import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
-import { Button, ConfirmDialog, headingClasses, Modal, surfaceClasses } from '$lib/components/ui';
+import {
+  Button,
+  ConfirmDialog,
+  FormInput,
+  headingClasses,
+  Modal,
+  surfaceClasses,
+} from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
 import { isModalOpen, visibleMemberContactIds } from '$lib/stores/ui';
@@ -193,30 +200,23 @@ onMount(() => {
     </p>
 
     <div class="mt-4 space-y-4">
-      <div>
-        <label for="deactivate-reason" class="block text-sm font-body font-medium text-gray-700 mb-1">
-          {$i18n.t('collectives.deactivate.reasonLabel')} <span class="text-gray-400">{$i18n.t('collectives.form.optional')}</span>
-        </label>
-        <input
-          id="deactivate-reason"
-          type="text"
-          bind:value={deactivateReason}
-          placeholder={$i18n.t('collectives.deactivate.reasonPlaceholder')}
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-        />
-      </div>
+      <FormInput
+        id="deactivate-reason"
+        size="sm"
+        label={$i18n.t('collectives.deactivate.reasonLabel')}
+        optional
+        optionalText={$i18n.t('collectives.form.optional')}
+        bind:value={deactivateReason}
+        placeholder={$i18n.t('collectives.deactivate.reasonPlaceholder')}
+      />
 
-      <div>
-        <label for="deactivate-date" class="block text-sm font-body font-medium text-gray-700 mb-1">
-          {$i18n.t('collectives.deactivate.dateLabel')}
-        </label>
-        <input
-          id="deactivate-date"
-          type="date"
-          bind:value={deactivateDate}
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-        />
-      </div>
+      <FormInput
+        id="deactivate-date"
+        size="sm"
+        type="date"
+        label={$i18n.t('collectives.deactivate.dateLabel')}
+        bind:value={deactivateDate}
+      />
     </div>
 
     {#snippet footer()}
