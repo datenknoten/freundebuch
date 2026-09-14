@@ -5,6 +5,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
@@ -42,6 +43,8 @@ let editingRelationshipId = $state<string | null>(null);
 let editNotes = $state('');
 let isDeleting = $state<string | null>(null);
 let isSavingNotes = $state(false);
+let deleteConfirmId = $state<string | null>(null);
+let deleteConfirmName = $state('');
 
 // Add relationship modal state
 let isAddingRelationship = $state(false);
@@ -134,16 +137,21 @@ async function saveNotes(relationshipId: string) {
   }
 }
 
-async function deleteRelationship(relationshipId: string) {
-  if (!confirm($i18n.t('relationshipSection.confirmRemove'))) {
-    return;
-  }
+function openDeleteConfirm(relationshipId: string, name: string) {
+  deleteConfirmId = relationshipId;
+  deleteConfirmName = name;
+}
 
-  isDeleting = relationshipId;
+function closeDeleteConfirm() {
+  deleteConfirmId = null;
+  deleteConfirmName = '';
+}
+
+async function handleDelete() {
+  if (deleteConfirmId === null) return;
+  isDeleting = deleteConfirmId;
   try {
-    await friends.deleteRelationship(friendId, relationshipId);
-  } catch {
-    // Error is handled by the store
+    await friends.deleteRelationship(friendId, deleteConfirmId);
   } finally {
     isDeleting = null;
   }
@@ -295,7 +303,8 @@ onMount(() => {
                   </button>
                   <button
                     type="button"
-                    onclick={() => deleteRelationship(relationship.id)}
+                    onclick={() =>
+                      openDeleteConfirm(relationship.id, relationship.relatedFriendDisplayName)}
                     disabled={isDeleting === relationship.id}
                     class="p-1 text-gray-400 hover:text-red-600 rounded hover:bg-white/50 transition-colors disabled:opacity-50"
                     aria-label={$i18n.t('aria.removeRelationship')}
@@ -336,4 +345,15 @@ onMount(() => {
       onchange={() => isDirty = true}
     />
   </DetailEditModal>
+{/if}
+
+{#if deleteConfirmId !== null}
+  <ConfirmDialog
+    title={$i18n.t('relationshipSection.removeTitle')}
+    description={$i18n.t('relationshipSection.confirmRemove')}
+    itemPreview={deleteConfirmName}
+    confirmLabel={$i18n.t('common.remove')}
+    onConfirm={handleDelete}
+    onClose={closeDeleteConfirm}
+  />
 {/if}

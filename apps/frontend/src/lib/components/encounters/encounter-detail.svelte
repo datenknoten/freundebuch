@@ -4,7 +4,7 @@ import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
-import { Button } from '$lib/components/ui';
+import { Button, ConfirmDialog } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
@@ -29,7 +29,7 @@ interface Props {
 
 let { encounter, onEdit }: Props = $props();
 
-let isDeleting = $state(false);
+// ConfirmDialog owns the in-flight and error state
 let showDeleteConfirm = $state(false);
 
 let displayTitle = $derived(encounterDisplayTitle($i18n.t, encounter));
@@ -60,16 +60,11 @@ function formatTimestamp(isoStr: string): string {
   });
 }
 
+// Rejections propagate to ConfirmDialog, which keeps itself open and shows the
+// reason; on success it closes itself and we navigate away.
 async function handleDelete() {
-  isDeleting = true;
-  try {
-    await encounters.deleteEncounter(encounter.id);
-    goto('/encounters');
-  } catch (err) {
-    console.error('Failed to delete encounter:', err);
-    isDeleting = false;
-    showDeleteConfirm = false;
-  }
+  await encounters.deleteEncounter(encounter.id);
+  goto('/encounters');
 }
 </script>
 
@@ -165,39 +160,13 @@ async function handleDelete() {
   </section>
 </div>
 
-<!-- Delete confirmation modal -->
+<!-- Delete encounter confirmation -->
 {#if showDeleteConfirm}
-  <div
-    class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-(--z-overlay)"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="delete-modal-title"
-  >
-    <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
-      <h3 id="delete-modal-title" class="text-xl font-heading text-gray-900 mb-2">
-        {$i18n.t('encounters.detail.deleteConfirmTitle')}
-      </h3>
-      <p class="text-gray-600 font-body mb-6">
-        {$i18n.t('encounters.detail.deleteConfirmMessage', { title: displayTitle })}
-      </p>
-      <div class="flex gap-3">
-        <Button
-          variant="secondary"
-          class="flex-1"
-          onclick={() => showDeleteConfirm = false}
-          disabled={isDeleting}
-        >
-          {$i18n.t('encounters.form.cancel')}
-        </Button>
-        <Button
-          variant="danger"
-          class="flex-1"
-          onclick={handleDelete}
-          loading={isDeleting}
-        >
-          {$i18n.t('common.delete')}
-        </Button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$i18n.t('encounters.detail.deleteConfirmTitle')}
+    description={$i18n.t('encounters.detail.deleteConfirmMessage')}
+    itemPreview={displayTitle}
+    onConfirm={handleDelete}
+    onClose={() => (showDeleteConfirm = false)}
+  />
 {/if}

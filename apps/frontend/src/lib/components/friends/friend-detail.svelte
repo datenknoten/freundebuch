@@ -11,6 +11,7 @@ import FabCreateMenu, {
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
@@ -129,25 +130,18 @@ $effect(() => {
   };
 });
 
-// Friend deletion state
-let isDeleting = $state(false);
+// Friend deletion state (ConfirmDialog owns the in-flight and error state)
 let showDeleteConfirm = $state(false);
 
 // Mobile add modal state
 let showMobileAddModal = $state(false);
 let showFabCreateMenu = $state(false);
 
-// Friend delete handler
+// Friend delete handler. Rejections propagate to ConfirmDialog, which keeps
+// itself open and shows the reason.
 async function handleDelete() {
-  isDeleting = true;
-  try {
-    await friends.deleteFriend(friend.id);
-    goto('/friends');
-  } catch (error) {
-    console.error('Failed to delete friend:', error);
-    isDeleting = false;
-    showDeleteConfirm = false;
-  }
+  await friends.deleteFriend(friend.id);
+  goto('/friends');
 }
 
 // Dispatch add event for desktop dropdown and mobile modal
@@ -410,27 +404,13 @@ onMount(() => {
   />
 {/if}
 
-<!-- Delete friend confirmation modal -->
+<!-- Delete friend confirmation -->
 {#if showDeleteConfirm}
-  <div class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-(--z-overlay)">
-    <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
-      <h3 class="text-xl font-heading text-gray-900 mb-2">{$i18n.t('friendDetail.delete.title')}</h3>
-      <p class="text-gray-600 font-body mb-6">
-        {$i18n.t('friendDetail.delete.confirmMessage')} <strong>{friend.displayName}</strong>? {$i18n.t('friendDetail.delete.cannotUndo')}
-      </p>
-      <div class="flex gap-3">
-        <Button
-          variant="secondary"
-          class="flex-1"
-          disabled={isDeleting}
-          onclick={() => showDeleteConfirm = false}
-        >
-          {$i18n.t('common.cancel')}
-        </Button>
-        <Button variant="danger" class="flex-1" loading={isDeleting} onclick={handleDelete}>
-          {$i18n.t('common.delete')}
-        </Button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$i18n.t('friendDetail.delete.title')}
+    description={$i18n.t('friendDetail.delete.confirmMessage')}
+    itemPreview={friend.displayName}
+    onConfirm={handleDelete}
+    onClose={() => (showDeleteConfirm = false)}
+  />
 {/if}

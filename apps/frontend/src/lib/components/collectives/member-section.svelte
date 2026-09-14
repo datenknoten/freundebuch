@@ -2,7 +2,7 @@
 import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
-import { Button, headingClasses, surfaceClasses } from '$lib/components/ui';
+import { Button, ConfirmDialog, headingClasses, Modal, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
 import { isModalOpen, visibleMemberContactIds } from '$lib/stores/ui';
@@ -26,6 +26,12 @@ let deactivatingMemberId = $state<string | null>(null);
 let deactivateReason = $state('');
 let deactivateDate = $state(new Date().toISOString().split('T')[0]);
 
+// Member removal confirmation (ConfirmDialog owns the in-flight state)
+let removeConfirmMemberId = $state<string | null>(null);
+let removeConfirmMemberName = $derived(
+  collective.members.find((m) => m.id === removeConfirmMemberId)?.contact.displayName,
+);
+
 // Track visible member contact IDs for keyboard open mode
 $effect(() => {
   const activeMembers = collective.members.filter((m) => m.isActive);
@@ -41,12 +47,15 @@ let activeCollectiveId: string | undefined;
 $effect(() => {
   const id = collective.id;
   if (activeCollectiveId !== undefined && id !== activeCollectiveId) {
-    const hadModalOpen = showAddMember || showDeactivateModal;
+    // The deactivate modal and the remove confirmation clear `isModalOpen`
+    // themselves when they unmount; only the add-member flag is manual.
+    const hadAddMemberOpen = showAddMember;
     showAddMember = false;
     showDeactivateModal = false;
     deactivatingMemberId = null;
     deactivateReason = '';
-    if (hadModalOpen) isModalOpen.set(false);
+    removeConfirmMemberId = null;
+    if (hadAddMemberOpen) isModalOpen.set(false);
   }
   activeCollectiveId = id;
 });
@@ -66,13 +75,11 @@ function handleDeactivateClick(memberId: string) {
   deactivateReason = '';
   deactivateDate = new Date().toISOString().split('T')[0];
   showDeactivateModal = true;
-  isModalOpen.set(true);
 }
 
 function closeDeactivateModal() {
   showDeactivateModal = false;
   deactivatingMemberId = null;
-  isModalOpen.set(false);
 }
 
 async function handleDeactivateConfirm() {
@@ -98,12 +105,19 @@ async function handleReactivate(memberId: string) {
   }
 }
 
-async function handleRemove(memberId: string) {
-  if (!confirm($i18n.t('collectives.removeMemberConfirm'))) return;
+function openRemoveConfirm(memberId: string) {
+  removeConfirmMemberId = memberId;
+}
+
+async function handleRemoveConfirm() {
+  const memberId = removeConfirmMemberId;
+  if (memberId === null) return;
   try {
     await collectives.removeMember(collective.id, memberId);
   } catch (err) {
     console.error('Failed to remove member:', err);
+    // Rethrow so the dialog stays open and shows the reason.
+    throw err;
   }
 }
 
@@ -143,7 +157,7 @@ onMount(() => {
     members={collective.members}
     onDeactivate={handleDeactivateClick}
     onReactivate={handleReactivate}
-    onRemove={handleRemove}
+    onRemove={openRemoveConfirm}
   />
 </section>
 
@@ -167,57 +181,63 @@ onMount(() => {
   </DetailEditModal>
 {/if}
 
-<!-- Deactivate member modal -->
+<!-- Deactivate member modal: two fields, so a Modal rather than a ConfirmDialog -->
 {#if showDeactivateModal}
-  <div
-    class="fixed inset-0 z-(--z-overlay) flex items-center justify-center bg-black/50"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="deactivate-modal-title"
+  <Modal
+    title={$i18n.t('collectives.deactivate.title')}
+    size="md"
+    onClose={closeDeactivateModal}
   >
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-      <h3 id="deactivate-modal-title" class="text-lg font-heading font-semibold text-gray-900">
-        {$i18n.t('collectives.deactivate.title')}
-      </h3>
-      <p class="mt-2 text-sm text-gray-600 font-body">
-        {$i18n.t('collectives.deactivate.message')}
-      </p>
+    <p class="text-sm text-gray-600 font-body">
+      {$i18n.t('collectives.deactivate.message')}
+    </p>
 
-      <div class="mt-4 space-y-4">
-        <div>
-          <label for="deactivate-reason" class="block text-sm font-body font-medium text-gray-700 mb-1">
-            {$i18n.t('collectives.deactivate.reasonLabel')} <span class="text-gray-400">{$i18n.t('collectives.form.optional')}</span>
-          </label>
-          <input
-            id="deactivate-reason"
-            type="text"
-            bind:value={deactivateReason}
-            placeholder={$i18n.t('collectives.deactivate.reasonPlaceholder')}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          />
-        </div>
-
-        <div>
-          <label for="deactivate-date" class="block text-sm font-body font-medium text-gray-700 mb-1">
-            {$i18n.t('collectives.deactivate.dateLabel')}
-          </label>
-          <input
-            id="deactivate-date"
-            type="date"
-            bind:value={deactivateDate}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          />
-        </div>
+    <div class="mt-4 space-y-4">
+      <div>
+        <label for="deactivate-reason" class="block text-sm font-body font-medium text-gray-700 mb-1">
+          {$i18n.t('collectives.deactivate.reasonLabel')} <span class="text-gray-400">{$i18n.t('collectives.form.optional')}</span>
+        </label>
+        <input
+          id="deactivate-reason"
+          type="text"
+          bind:value={deactivateReason}
+          placeholder={$i18n.t('collectives.deactivate.reasonPlaceholder')}
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+        />
       </div>
 
-      <div class="mt-6 flex gap-3 justify-end">
-        <Button variant="secondary" size="sm" onclick={closeDeactivateModal}>
-          {$i18n.t('collectives.form.cancel')}
-        </Button>
-        <Button variant="caution" size="sm" onclick={handleDeactivateConfirm}>
-          {$i18n.t('collectives.deactivate.confirm')}
-        </Button>
+      <div>
+        <label for="deactivate-date" class="block text-sm font-body font-medium text-gray-700 mb-1">
+          {$i18n.t('collectives.deactivate.dateLabel')}
+        </label>
+        <input
+          id="deactivate-date"
+          type="date"
+          bind:value={deactivateDate}
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+        />
       </div>
     </div>
-  </div>
+
+    {#snippet footer()}
+      <Button variant="secondary" size="sm" class="ml-auto" onclick={closeDeactivateModal}>
+        {$i18n.t('collectives.form.cancel')}
+      </Button>
+      <Button variant="caution" size="sm" onclick={handleDeactivateConfirm}>
+        {$i18n.t('collectives.deactivate.confirm')}
+      </Button>
+    {/snippet}
+  </Modal>
+{/if}
+
+<!-- Remove member confirmation -->
+{#if removeConfirmMemberId !== null}
+  <ConfirmDialog
+    title={$i18n.t('collectives.removeMember')}
+    description={$i18n.t('collectives.removeMemberConfirm')}
+    itemPreview={removeConfirmMemberName}
+    confirmLabel={$i18n.t('common.remove')}
+    onConfirm={handleRemoveConfirm}
+    onClose={() => (removeConfirmMemberId = null)}
+  />
 {/if}
