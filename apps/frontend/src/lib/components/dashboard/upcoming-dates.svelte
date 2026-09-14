@@ -2,6 +2,7 @@
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import FriendAvatar from '$lib/components/friends/friend-avatar.svelte';
 import EmptyState from '$lib/components/ui/empty-state.svelte';
+import { chipClasses } from '$lib/components/ui/styles';
 import { createI18n } from '$lib/i18n/index.js';
 import type { DateType, UpcomingDate } from '$shared';
 
@@ -62,13 +63,17 @@ function formatDaysUntil(daysUntil: number): string {
   }
 }
 
+/**
+ * Tone of the countdown chip. `amber-warm` is the palette's "needs attention
+ * soon" accent and has no `chipClasses` tone of its own.
+ */
 function getDaysUntilClass(daysUntil: number): string {
   if (daysUntil === 0) {
-    return 'bg-forest text-white';
+    return chipClasses.forest;
   } else if (daysUntil <= 7) {
     return 'bg-amber-warm/30 text-forest';
   } else {
-    return 'bg-gray-100 text-gray-600';
+    return chipClasses.neutral;
   }
 }
 </script>
@@ -122,7 +127,7 @@ function getDaysUntilClass(daysUntil: number): string {
               <span class="font-body font-medium text-gray-900 truncate">
                 {date.friend.displayName}
               </span>
-              <span class="text-xs px-2 py-0.5 rounded-full font-body {getDaysUntilClass(date.daysUntil)}">
+              <span class="{chipClasses.base} {getDaysUntilClass(date.daysUntil)}">
                 {formatDaysUntil(date.daysUntil)}
               </span>
             </div>

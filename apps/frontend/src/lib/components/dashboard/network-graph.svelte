@@ -4,12 +4,11 @@ import { onDestroy } from 'svelte';
 import Share from 'svelte-heros-v2/Share.svelte';
 import EmptyState from '$lib/components/ui/empty-state.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import type {
-  NetworkGraphData,
-  NetworkGraphLink,
-  NetworkGraphNode,
-  RelationshipCategory,
-} from '$shared';
+import {
+  RELATIONSHIP_CATEGORIES,
+  RELATIONSHIP_CATEGORY_STYLE,
+} from '$lib/utils/relationship-categories';
+import type { NetworkGraphData, NetworkGraphLink, NetworkGraphNode } from '$shared';
 
 const i18n = createI18n();
 
@@ -35,13 +34,6 @@ type SimulationNode = NetworkGraphNode & d3.SimulationNodeDatum;
 type SimulationLink = Omit<NetworkGraphLink, 'source' | 'target'> & {
   source: SimulationNode | string;
   target: SimulationNode | string;
-};
-
-// Category colors matching the design system
-const categoryColors: Record<RelationshipCategory, string> = {
-  family: '#2D5016', // Forest green
-  professional: '#D4A574', // Warm amber
-  social: '#8B9D83', // Sage green
 };
 
 function initializeGraph() {
@@ -96,7 +88,7 @@ function initializeGraph() {
   // Create arrow markers for directed edges
   const defs = svg.append('defs');
 
-  Object.entries(categoryColors).forEach(([category, color]) => {
+  for (const category of RELATIONSHIP_CATEGORIES) {
     defs
       .append('marker')
       .attr('id', `arrow-${category}`)
@@ -107,9 +99,9 @@ function initializeGraph() {
       .attr('markerHeight', 6)
       .attr('orient', 'auto')
       .append('path')
-      .attr('fill', color)
+      .attr('fill', RELATIONSHIP_CATEGORY_STYLE[category].hex)
       .attr('d', 'M0,-5L10,0L0,5');
-  });
+  }
 
   // Create links
   const link = g
@@ -118,7 +110,7 @@ function initializeGraph() {
     .selectAll('line')
     .data(links)
     .join('line')
-    .attr('stroke', (d) => categoryColors[d.relationshipCategory])
+    .attr('stroke', (d) => RELATIONSHIP_CATEGORY_STYLE[d.relationshipCategory].hex)
     .attr('stroke-opacity', 0.6)
     .attr('stroke-width', 2);
 

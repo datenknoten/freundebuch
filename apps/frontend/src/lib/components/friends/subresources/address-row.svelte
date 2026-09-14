@@ -1,5 +1,6 @@
 <script lang="ts">
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
+import { chipClasses } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type { Address, AddressType } from '$shared';
@@ -62,7 +63,7 @@ const addressLines = $derived(formatAddress(address));
           {#if address.label} - {address.label}{/if}
         </span>
         {#if address.isPrimary}
-          <span class="px-2 py-0.5 bg-forest text-white text-xs rounded">
+          <span class="{chipClasses.base} {chipClasses.forest}">
             {$i18n.t('subresources.common.primary')}
           </span>
         {/if}

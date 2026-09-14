@@ -2,6 +2,7 @@
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
+import { surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   getKeyboardHint,
@@ -10,6 +11,7 @@ import {
 } from '$lib/stores/ui';
 import type { EncounterListItem } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
+import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display';
 import EncounterTypeIcon from './encounter-type-icon.svelte';
 
@@ -26,31 +28,10 @@ let { encounter, href = `/encounters/${encounter.id}`, index }: Props = $props()
 
 let displayTitle = $derived(encounterDisplayTitle($i18n.t, encounter));
 
-// Keyboard hint logic
-function getKeyHint(): string | null {
-  if (index === undefined) return null;
-  return getKeyboardHint(index);
-}
-
-function shouldShowKeyHint(): boolean {
-  if (index === undefined || !$isOpenEncounterModeActive) return false;
-
-  const keyHint = getKeyHint();
-  if (!keyHint) return false;
-
-  const prefix = $openEncounterModePrefix;
-
-  if (prefix === null) {
-    // No prefix selected yet - show all hints
-    return true;
-  }
-
-  // Prefix selected - only show hints that match this prefix
-  return keyHint.length === 2 && keyHint[0] === prefix;
-}
-
-let showHint = $derived(shouldShowKeyHint());
-let keyHint = $derived(getKeyHint());
+// The badge decides for itself whether it is visible; the card only needs the
+// hint text to build its shortcut attributes.
+let keyHint = $derived(index === undefined ? '' : getKeyboardHint(index));
+let openShortcut = $derived(keyHint.length > 0 ? `o ${keyHint}` : undefined);
 
 // Format date for display
 function formatDate(dateStr: string): string {
@@ -65,14 +46,17 @@ function formatDate(dateStr: string): string {
 
 <a
   {href}
-  class="block bg-white border border-gray-200 rounded-lg p-4 hover:border-forest hover:shadow-sm transition-all relative"
-  data-shortcut={keyHint ? `o ${keyHint}` : undefined}
-  data-shortcut-label={keyHint ? 'shortcuts.panels.openEncounter' : undefined}
+  class="block {surfaceClasses.cardInteractive} relative"
+  data-shortcut={openShortcut}
+  data-shortcut-label={openShortcut === undefined ? undefined : 'shortcuts.panels.openEncounter'}
 >
-  {#if showHint && keyHint}
-    <div class="absolute -left-1 -top-1 min-w-6 h-6 px-1 bg-forest text-white rounded-full flex items-center justify-center text-xs font-mono font-bold shadow-md z-10">
-      {keyHint}
-    </div>
+  {#if index !== undefined}
+    <KeyboardHintBadge
+      {index}
+      isActive={$isOpenEncounterModeActive}
+      prefix={$openEncounterModePrefix}
+      variant="card"
+    />
   {/if}
   <div class="flex items-start justify-between gap-4">
     <div class="flex-1 min-w-0">

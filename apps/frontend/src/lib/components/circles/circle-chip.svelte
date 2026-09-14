@@ -1,6 +1,8 @@
 <script lang="ts">
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import { chipClasses } from '$lib/components/ui';
 import { circlesById } from '$lib/stores/circles';
+import { DEFAULT_CIRCLE_COLOR } from '$lib/utils/circle-colors';
 import type { Circle, CircleSummary } from '$shared';
 
 interface Props {
@@ -61,7 +63,13 @@ function getTextColor(hexColor: string | null): string {
 }
 
 let textColorClass = $derived(getTextColor(circle.color));
-let sizeClasses = $derived(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm');
+// The chip recipe with the one deviation it needs: a larger size step.
+let chipClass = $derived(
+  size === 'sm'
+    ? chipClasses.base
+    : 'inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-body font-medium',
+);
+let backgroundColor = $derived(circle.color ?? DEFAULT_CIRCLE_COLOR);
 </script>
 
 {#snippet chipContent()}
@@ -90,8 +98,8 @@ let sizeClasses = $derived(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 te
   <span
     role="button"
     tabindex="0"
-    class="inline-flex items-center gap-1 rounded-full font-medium transition-opacity hover:opacity-80 cursor-pointer {sizeClasses} {textColorClass}"
-    style:background-color={circle.color ?? '#e5e7eb'}
+    class="{chipClass} {textColorClass} transition-opacity hover:opacity-80 cursor-pointer"
+    style:background-color={backgroundColor}
     onclick={onclick}
     onkeydown={(e) => e.key === 'Enter' && onclick?.()}
   >
@@ -99,8 +107,8 @@ let sizeClasses = $derived(size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 te
   </span>
 {:else}
   <span
-    class="inline-flex items-center gap-1 rounded-full font-medium {sizeClasses} {textColorClass}"
-    style:background-color={circle.color ?? '#e5e7eb'}
+    class="{chipClass} {textColorClass}"
+    style:background-color={backgroundColor}
   >
     {@render chipContent()}
   </span>
