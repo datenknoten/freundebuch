@@ -14,6 +14,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { codeClasses } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
+import LegalLinks from './legal-links.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
@@ -28,7 +29,6 @@ const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(na
 
 let mobileMenuOpen = $state(false);
 
-const version = __APP_VERSION__;
 
 // Derive page title from current route
 const pageTitle = $derived.by(() => {
@@ -266,30 +266,13 @@ $effect(() => {
   </nav>
 
   <div class="absolute bottom-4 left-0 right-0 px-4">
-    <div class="flex justify-center gap-3 mb-2">
-      <a
-        href="/privacy"
-        onclick={closeMobileMenu}
-        class="text-gray-400 hover:text-forest text-xs font-body transition-colors"
-      >
-        {$i18n.t('footer.privacy')}
-      </a>
-      <span class="text-gray-300">|</span>
-      <a
-        href="/terms"
-        onclick={closeMobileMenu}
-        class="text-gray-400 hover:text-forest text-xs font-body transition-colors"
-      >
-        {$i18n.t('footer.terms')}
-      </a>
-    </div>
-    <p class="text-center text-gray-400 text-xs font-body"><a href="https://github.com/datenknoten/freundebuch" class="hover:text-forest transition-colors" target="_blank" rel="noopener noreferrer">v{version}</a></p>
+    <LegalLinks size="sm" onnavigate={closeMobileMenu} />
   </div>
 </div>
 
 <nav class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-(--z-nav)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center h-16 gap-4">
+    <div class="flex items-center h-(--nav-h) gap-4">
       <!-- Mobile: Hamburger menu button -->
       <button
         class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
