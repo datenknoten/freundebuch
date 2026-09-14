@@ -1,5 +1,6 @@
 <script lang="ts">
 import * as channelsApi from '$lib/api/notification-channels';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -34,17 +35,13 @@ async function handleTest() {
 </script>
 
 <span class="inline-flex items-center gap-2">
-  <button
-    onclick={handleTest}
-    disabled={isLoading}
-    class="text-sm font-body text-forest hover:text-forest-light disabled:opacity-50 disabled:cursor-not-allowed"
-  >
+  <Button variant="ghostAccent" size="sm" onclick={handleTest} disabled={isLoading}>
     {#if isLoading}
       {$i18n.t('profile.messagingReminders.test.sending')}
     {:else}
       {$i18n.t('profile.messagingReminders.test.button')}
     {/if}
-  </button>
+  </Button>
   {#if result === 'success'}
     <span class="text-sm text-green-600 font-body">{$i18n.t('profile.messagingReminders.test.success')}</span>
   {:else if result === 'error'}

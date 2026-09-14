@@ -2,6 +2,7 @@
 import LockClosed from 'svelte-heros-v2/LockClosed.svelte';
 import { goto } from '$app/navigation';
 import LoginForm from '$lib/components/login-form.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser } from '$lib/stores/auth';
 import { abandonSessionExpired } from '$lib/stores/session';
@@ -81,14 +82,9 @@ async function handleLogout() {
     <LoginForm initialEmail={email} onSuccess={handleReauthenticated} />
 
     <div class="mt-6 pt-6 border-t border-gray-200 text-center">
-      <button
-        type="button"
-        onclick={handleLogout}
-        disabled={isLoggingOut}
-        class="text-sm font-body font-semibold text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isLoggingOut ? $i18n.t('common.loading') : $i18n.t('auth.sessionExpired.logout')}
-      </button>
+      <Button variant="ghost" size="sm" loading={isLoggingOut} onclick={handleLogout}>
+        {$i18n.t('auth.sessionExpired.logout')}
+      </Button>
     </div>
   </div>
 </div>

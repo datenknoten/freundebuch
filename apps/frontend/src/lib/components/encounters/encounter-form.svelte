@@ -1,6 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import { autoFocus } from '$lib/actions/auto-focus';
+import { Button } from '$lib/components/ui';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
@@ -134,16 +135,17 @@ function handleCancel() {
     </span>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
       {#each ENCOUNTER_TYPES as type (type)}
-        <button
-          type="button"
-          onclick={() => (encounterType = type)}
+        <Button
+          variant={encounterType === type ? 'secondaryAccent' : 'secondary'}
+          size="sm"
           disabled={isSubmitting}
           aria-pressed={encounterType === type}
-          class="flex items-center justify-center gap-2 px-3 py-2 border rounded-lg font-body text-sm transition-colors disabled:opacity-50 {encounterType === type ? 'border-forest bg-forest/10 text-forest font-semibold' : 'border-gray-300 text-gray-700 hover:border-forest'}"
+          onclick={() => (encounterType = type)}
+          class={encounterType === type ? 'font-semibold' : ''}
         >
           <EncounterTypeIcon {type} class="w-4 h-4 flex-shrink-0" />
           <span class="truncate">{encounterTypeLabel($i18n.t, type)}</span>
-        </button>
+        </Button>
       {/each}
     </div>
   </div>
@@ -225,28 +227,17 @@ function handleCancel() {
 
   <!-- Form Actions -->
   <div class="flex gap-3 pt-2">
-    <button
+    <Button
       type="submit"
-      disabled={isSubmitting || !isValid}
-      class="flex-1 bg-forest text-white py-2 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="flex-1"
+      loading={isSubmitting}
+      disabled={!isValid}
     >
-      {#if isSubmitting}
-        <span class="inline-flex items-center gap-2">
-          <span class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-          {$i18n.t('encounters.form.saving')}
-        </span>
-      {:else}
-        {isEditMode ? $i18n.t('encounters.updateEncounter') : $i18n.t('encounters.logNew')}
-      {/if}
-    </button>
+      {isEditMode ? $i18n.t('encounters.updateEncounter') : $i18n.t('encounters.logNew')}
+    </Button>
 
-    <button
-      type="button"
-      onclick={handleCancel}
-      disabled={isSubmitting}
-      class="px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-    >
+    <Button variant="secondary" onclick={handleCancel} disabled={isSubmitting}>
       {$i18n.t('encounters.form.cancel')}
-    </button>
+    </Button>
   </div>
 </form>

@@ -2,6 +2,7 @@
 import { tick } from 'svelte';
 import Funnel from 'svelte-heros-v2/Funnel.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import { Button } from '$lib/components/ui';
 import {
   FILTER_CATEGORY_LABELS,
   filterModeCategory,
@@ -227,35 +228,16 @@ $effect(() => {
 />
 
 <div class="relative facet-dropdown">
-  <button
-    type="button"
+  <Button
+    variant={activeCount > 0 ? 'secondaryAccent' : 'secondary'}
+    size="sm"
+    loading={isLoading && !hasFacets}
     onclick={(e) => {
       e.stopPropagation();
       isOpen = !isOpen;
     }}
-    class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 transition-colors"
-    class:border-forest={activeCount > 0}
-    class:text-forest={activeCount > 0}
-    class:border-gray-300={activeCount === 0}
-    disabled={isLoading && !hasFacets}
   >
-    {#if isLoading && !hasFacets}
-      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-        <circle
-          class="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          stroke-width="4"
-        ></circle>
-        <path
-          class="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        ></path>
-      </svg>
-    {:else}
+    {#if !(isLoading && !hasFacets)}
       <Funnel class="w-4 h-4" strokeWidth="2" />
     {/if}
     <span>Filters</span>
@@ -264,7 +246,7 @@ $effect(() => {
         {activeCount}
       </span>
     {/if}
-  </button>
+  </Button>
 
   <!-- Modal overlay for keyboard mode (independent of isOpen) -->
   {#if hasFacets && $isFilterModeActive && $filterModeCategory}
@@ -286,13 +268,14 @@ $effect(() => {
       >
         <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <h2 class="text-lg font-heading text-forest">Filters</h2>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onclick={closeKeyboardFilterMode}
-            class="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
             aria-label="Close"
           >
             <XMark class="w-5 h-5" strokeWidth="2" />
-          </button>
+          </Button>
         </div>
         <div class="p-4">
           <!-- Location Facets -->

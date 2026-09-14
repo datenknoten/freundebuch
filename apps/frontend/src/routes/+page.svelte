@@ -2,6 +2,7 @@
 import { getDashboardData } from '$lib/api/friends';
 import NetworkGraph from '$lib/components/dashboard/network-graph.svelte';
 import UpcomingDates from '$lib/components/dashboard/upcoming-dates.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
@@ -163,19 +164,11 @@ async function loadDashboard() {
 			</div>
 			<div class="flex gap-4 justify-center">
 				{#if $signupEnabled}
-					<a
-						href="/auth/register"
-						class="bg-forest text-white px-8 py-3 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors text-lg"
-					>
-						{$i18n.t('home.hero.cta')}
-					</a>
+					<Button href="/auth/register" size="lg">{$i18n.t('home.hero.cta')}</Button>
 				{/if}
-				<a
-					href="/auth/login"
-					class="bg-white border-2 border-forest text-forest px-8 py-3 rounded-lg font-body font-semibold hover:bg-gray-50 transition-colors text-lg"
-				>
+				<Button href="/auth/login" variant="secondary" size="lg">
 					{$i18n.t('home.hero.loginCta')}
-				</a>
+				</Button>
 			</div>
 		{/if}
 	</div>

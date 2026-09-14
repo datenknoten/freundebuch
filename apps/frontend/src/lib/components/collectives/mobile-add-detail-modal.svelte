@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { Button } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { isModalOpen } from '$lib/stores/ui';
 import { detailDescriptors } from './subresource-descriptors';
@@ -15,7 +16,6 @@ interface Props {
 let { onSelect, onClose }: Props = $props();
 
 let modalRef = $state<HTMLDivElement | null>(null);
-let cancelButton = $state<HTMLButtonElement | null>(null);
 let optionButtons = $state<HTMLButtonElement[]>([]);
 
 function handleBackdropClick(e: MouseEvent) {
@@ -29,12 +29,13 @@ function handleKeydown(e: KeyboardEvent) {
     onClose();
   }
 
-  // Focus trapping
-  if (e.key === 'Tab' && modalRef) {
+  // Focus trapping: the cancel button is the last focusable element in the sheet.
+  if (e.key === 'Tab' && modalRef !== null) {
     const firstFocusable = optionButtons[0];
-    const lastFocusable = cancelButton;
+    const focusables = modalRef.querySelectorAll<HTMLButtonElement>('button');
+    const lastFocusable = focusables[focusables.length - 1];
 
-    if (!firstFocusable || !lastFocusable) return;
+    if (firstFocusable === undefined || lastFocusable === undefined) return;
 
     if (e.shiftKey && document.activeElement === firstFocusable) {
       e.preventDefault();
@@ -95,16 +96,9 @@ onMount(() => {
         {/each}
       </div>
 
-      <button
-        bind:this={cancelButton}
-        type="button"
-        onclick={onClose}
-        class="w-full mt-4 py-3 text-center font-body font-semibold text-gray-600
-               hover:bg-gray-100 rounded-xl transition-colors
-               focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
-      >
+      <Button variant="ghost" block class="mt-4" onclick={onClose}>
         {$i18n.t('common.cancel')}
-      </button>
+      </Button>
     </div>
 
     <!-- Safe area padding for iOS -->

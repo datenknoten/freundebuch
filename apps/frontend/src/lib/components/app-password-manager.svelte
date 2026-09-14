@@ -5,6 +5,7 @@ import XMark from 'svelte-heros-v2/XMark.svelte';
 import type { AppPassword, CreateAppPasswordResult } from '$lib/api/app-passwords';
 import * as appPasswordsApi from '$lib/api/app-passwords';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -116,13 +117,9 @@ function formatDate(dateString: string | null): string {
       disabled={isCreating}
       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:bg-gray-100"
     />
-    <button
-      type="submit"
-      disabled={isCreating || newPasswordName.trim().length === 0}
-      class="bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {isCreating ? $i18n.t('profile.appPasswords.creating') : $i18n.t('profile.appPasswords.create')}
-    </button>
+    <Button type="submit" loading={isCreating} disabled={newPasswordName.trim().length === 0}>
+      {$i18n.t('profile.appPasswords.create')}
+    </Button>
   </form>
 
   {#if isLoading}
@@ -149,15 +146,16 @@ function formatDate(dateString: string | null): string {
               {/if}
             </div>
           </div>
-          <button
+          <Button
+            variant="dangerOutline"
+            size="sm"
             onclick={() => handleRevoke(password.externalId)}
             disabled={revokingId === password.externalId}
-            class="text-red-600 hover:text-red-800 font-body text-sm font-medium disabled:opacity-50"
           >
             {revokingId === password.externalId
               ? $i18n.t('profile.appPasswords.revoking')
               : $i18n.t('profile.appPasswords.revoke')}
-          </button>
+          </Button>
         </div>
       {/each}
     </div>

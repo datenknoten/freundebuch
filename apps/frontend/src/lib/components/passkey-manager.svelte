@@ -4,6 +4,7 @@ import Key from 'svelte-heros-v2/Key.svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -129,13 +130,9 @@ function deviceTypeLabel(type: string | null): string {
     <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
-  <button
-    onclick={handleAdd}
-    disabled={isAdding}
-    class="bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-  >
-    {isAdding ? $i18n.t('profile.passkeys.registering') : $i18n.t('profile.passkeys.add')}
-  </button>
+  <Button loading={isAdding} onclick={handleAdd}>
+    {$i18n.t('profile.passkeys.add')}
+  </Button>
 
   {#if isLoading}
     <div class="text-center py-4">
@@ -163,19 +160,12 @@ function deviceTypeLabel(type: string | null): string {
                   placeholder={$i18n.t('profile.passkeys.namePlaceholder')}
                   class="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
                 />
-                <button
-                  type="submit"
-                  class="text-forest hover:text-forest-light font-body text-sm font-medium"
-                >
+                <Button type="submit" variant="ghostAccent" size="sm">
                   {$i18n.t('common.save')}
-                </button>
-                <button
-                  type="button"
-                  onclick={cancelEdit}
-                  class="text-gray-500 hover:text-gray-700 font-body text-sm"
-                >
+                </Button>
+                <Button variant="ghost" size="sm" onclick={cancelEdit}>
                   {$i18n.t('common.cancel')}
-                </button>
+                </Button>
               </form>
             {:else}
               <div class="flex items-center gap-2">
@@ -198,13 +188,14 @@ function deviceTypeLabel(type: string | null): string {
             {/if}
           </div>
           {#if editingId !== pk.id}
-            <button
+            <Button
+              variant="dangerOutline"
+              size="sm"
               onclick={() => handleDelete(pk.id)}
               disabled={deletingId === pk.id}
-              class="text-red-600 hover:text-red-800 font-body text-sm font-medium disabled:opacity-50"
             >
               {deletingId === pk.id ? $i18n.t('profile.passkeys.deleting') : $i18n.t('common.delete')}
-            </button>
+            </Button>
           {/if}
         </div>
       {/each}

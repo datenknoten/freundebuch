@@ -1,5 +1,6 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser } from '$lib/stores/auth';
 
@@ -58,12 +59,9 @@ const claudeDesktopConfig = $derived(
       <code class="flex-1 bg-white border border-blue-200 rounded px-3 py-2 font-mono text-sm break-all">
         {mcpUrl}
       </code>
-      <button
-        onclick={copyUrl}
-        class="shrink-0 bg-blue-600 text-white px-3 py-2 rounded font-body text-sm hover:bg-blue-700 transition-colors"
-      >
+      <Button size="sm" onclick={copyUrl} class="shrink-0">
         {copied ? $i18n.t('profile.mcp.copied') : $i18n.t('profile.mcp.copy')}
-      </button>
+      </Button>
     </div>
     <p class="font-body text-xs text-blue-600 mt-2">
       {$i18n.t('profile.mcp.useCredentials', { email: $currentUser?.email ?? 'your@email.com' })}

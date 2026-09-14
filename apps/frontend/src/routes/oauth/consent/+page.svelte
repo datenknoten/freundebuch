@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import { page } from '$app/stores';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -86,12 +87,7 @@ async function submitConsent(accept: boolean) {
 			<div class="text-center">
 				<h2 class="text-3xl font-heading text-forest mb-4">{$i18n.t('oauth.consent.invalidTitle')}</h2>
 				<p class="text-gray-600 font-body mb-6">{$i18n.t('oauth.consent.invalidBody')}</p>
-				<a
-					href="/"
-					class="inline-block bg-forest text-white py-3 px-6 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-				>
-					{$i18n.t('oauth.consent.backHome')}
-				</a>
+				<Button href="/">{$i18n.t('oauth.consent.backHome')}</Button>
 			</div>
 		{:else}
 			<h2 class="text-3xl font-heading text-forest mb-2">{$i18n.t('oauth.consent.title')}</h2>
@@ -120,22 +116,17 @@ async function submitConsent(accept: boolean) {
 			</div>
 
 			<div class="flex gap-3">
-				<button
-					type="button"
+				<Button
+					variant="secondary"
+					class="flex-1"
 					onclick={() => submitConsent(false)}
 					disabled={isSubmitting}
-					class="flex-1 bg-white text-gray-800 py-3 px-4 rounded-lg font-body font-semibold border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					{$i18n.t('oauth.consent.deny')}
-				</button>
-				<button
-					type="button"
-					onclick={() => submitConsent(true)}
-					disabled={isSubmitting}
-					class="flex-1 bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-				>
-					{isSubmitting ? $i18n.t('common.loading') : $i18n.t('oauth.consent.allow')}
-				</button>
+				</Button>
+				<Button class="flex-1" loading={isSubmitting} onclick={() => submitConsent(true)}>
+					{$i18n.t('oauth.consent.allow')}
+				</Button>
 			</div>
 		{/if}
 	</div>
