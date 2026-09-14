@@ -1234,6 +1234,21 @@
       "department": "Abteilung",
       "relationshipCategory": "Beziehung",
       "circles": "Freundekreis"
+    },
+    "sections": {
+      "location": "Ort",
+      "professional": "Beruflich",
+      "relationship": "Beziehung",
+      "circles": "Kreise"
+    },
+    "categories": {
+      "country": "Land",
+      "city": "Stadt",
+      "organization": "Organisation",
+      "jobTitle": "Position",
+      "department": "Abteilung",
+      "relationship": "Beziehung",
+      "circles": "Kreise"
     }
   },
   "friendList": {
