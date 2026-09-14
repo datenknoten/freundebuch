@@ -2,7 +2,7 @@
 import type { Snippet } from 'svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import { isModalOpen } from '$lib/stores/ui';
+import { registerOpenOverlay } from '$lib/stores/ui';
 import { focusRing, headingClasses, surfaceClasses } from './styles';
 
 interface Props {
@@ -62,14 +62,14 @@ $effect(() => {
   const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
   if (!element.open) element.showModal();
-  isModalOpen.set(true);
+  const releaseOverlay = registerOpenOverlay();
 
   return () => {
     if (element.open) {
       tearingDown = true;
       element.close();
     }
-    isModalOpen.set(false);
+    releaseOverlay();
     if (opener?.isConnected === true) opener.focus();
   };
 });
