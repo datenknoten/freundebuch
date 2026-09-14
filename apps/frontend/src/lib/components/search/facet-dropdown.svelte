@@ -2,6 +2,7 @@
 import { tick } from 'svelte';
 import Funnel from 'svelte-heros-v2/Funnel.svelte';
 import { Button, codeClasses, formClasses, Modal } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
 import {
   FILTER_CATEGORY_LABELS,
   filterModeCategory,
@@ -17,6 +18,8 @@ import {
   isArrayFacetField,
 } from '$shared';
 import CircleChip from '../circles/circle-chip.svelte';
+
+const i18n = createI18n();
 
 interface Props {
   facets: FacetGroups | null;
@@ -234,7 +237,7 @@ $effect(() => {
     {#if !(isLoading && !hasFacets)}
       <Funnel class="w-4 h-4" strokeWidth="2" />
     {/if}
-    <span>Filters</span>
+    <span>{$i18n.t('search.filtersTitle')}</span>
     {#if activeCount > 0}
       <span class="bg-forest text-white text-xs rounded-full px-1.5 min-w-[1.25rem] text-center">
         {activeCount}
@@ -245,13 +248,13 @@ $effect(() => {
   <!-- Keyboard filter mode shows the whole facet list as a modal dialog
        (independent of the anchored dropdown's own `isOpen`). -->
   {#if hasFacets && $isFilterModeActive && $filterModeCategory}
-    <Modal title="Filters" size="lg" onClose={closeKeyboardFilterMode}>
+    <Modal title={$i18n.t('search.filtersTitle')} size="lg" onClose={closeKeyboardFilterMode}>
       <div bind:this={modalContentRef}>
         <!-- Location Facets -->
         {#if facets && facets.location.length > 0}
           <div class="mb-4" bind:this={locationSectionRef}>
             <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Location
+              {$i18n.t('facets.sections.location')}
             </h4>
             {#each facets.location as group}
               {@const isKeyboardCategory = $filterModeCategory === group.field}
@@ -285,7 +288,7 @@ $effect(() => {
         {#if facets && facets.professional.length > 0}
           <div class="mb-4 pt-2 border-t border-gray-100" bind:this={professionalSectionRef}>
             <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Professional
+              {$i18n.t('facets.sections.professional')}
             </h4>
             {#each facets.professional as group}
               {@const isKeyboardCategory = $filterModeCategory === group.field}
@@ -319,7 +322,7 @@ $effect(() => {
         {#if facets && facets.relationship.length > 0}
           <div class="pt-2 border-t border-gray-100 mb-4" bind:this={relationshipSectionRef}>
             <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Relationship
+              {$i18n.t('facets.sections.relationship')}
             </h4>
             {#each facets.relationship as group}
               {@const isKeyboardCategory = $filterModeCategory === group.field}
@@ -351,7 +354,7 @@ $effect(() => {
           {@const isKeyboardCategory = $filterModeCategory === 'circles'}
           <div class="pt-2 border-t border-gray-100" bind:this={circlesSectionRef}>
             <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Circles
+              {$i18n.t('facets.sections.circles')}
             </h4>
             <div class="space-y-1" class:bg-amber-50={isKeyboardCategory} class:rounded={isKeyboardCategory} class:p-2={isKeyboardCategory}>
               <!-- No Circle option -->
@@ -405,7 +408,7 @@ $effect(() => {
       {#if facets && facets.location.length > 0}
         <div class="mb-4">
           <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Location
+            {$i18n.t('facets.sections.location')}
           </h4>
           {#each facets.location as group}
             <div class="mb-2">
@@ -436,7 +439,7 @@ $effect(() => {
       {#if facets && facets.professional.length > 0}
         <div class="mb-4 pt-2 border-t border-gray-100">
           <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Professional
+            {$i18n.t('facets.sections.professional')}
           </h4>
           {#each facets.professional as group}
             <div class="mb-2">
@@ -467,7 +470,7 @@ $effect(() => {
       {#if facets && facets.relationship.length > 0}
         <div class="pt-2 border-t border-gray-100">
           <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Relationship
+            {$i18n.t('facets.sections.relationship')}
           </h4>
           {#each facets.relationship as group}
             <div class="space-y-1">
@@ -495,7 +498,7 @@ $effect(() => {
       {#if circlesWithMembers.length > 0}
         <div class="pt-2 border-t border-gray-100">
           <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Circles
+            {$i18n.t('facets.sections.circles')}
           </h4>
           <div class="space-y-1">
             <!-- No Circle option -->

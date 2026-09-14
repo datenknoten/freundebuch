@@ -1234,6 +1234,21 @@
       "department": "Department",
       "relationshipCategory": "Relationship",
       "circles": "Circle"
+    },
+    "sections": {
+      "location": "Location",
+      "professional": "Professional",
+      "relationship": "Relationship",
+      "circles": "Circles"
+    },
+    "categories": {
+      "country": "Country",
+      "city": "City",
+      "organization": "Organization",
+      "jobTitle": "Job Title",
+      "department": "Department",
+      "relationship": "Relationship",
+      "circles": "Circles"
     }
   },
   "friendList": {
