@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
 import Modal from '$lib/components/ui/modal.svelte';
 import { createI18n } from '$lib/i18n/index.js';
@@ -99,11 +100,8 @@ function handleSubmit(e: Event) {
   {/if}
 
   {#if error !== null && error.length > 0}
-    <div
-      role="alert"
-      class="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
-    >
-      {error}
+    <div class="mt-4">
+      <AlertBanner variant="error">{error}</AlertBanner>
     </div>
   {/if}
 

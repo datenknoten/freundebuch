@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import * as collectivesApi from '$lib/api/collectives.js';
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import CollectiveSearchInput from '$lib/components/collectives/collective-search-input.svelte';
 import RelationshipPreview from '$lib/components/collectives/relationship-preview.svelte';
 import { FormCheckbox, FormSelect, formClasses } from '$lib/components/ui';
@@ -203,12 +204,7 @@ let roleOptions = $derived(rolesForSelected.map((role) => ({ value: role.id, lab
   {:else}
     <div class="space-y-4">
       {#if error}
-        <div
-          class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm"
-          role="alert"
-        >
-          {error}
-        </div>
+        <AlertBanner variant="error">{error}</AlertBanner>
       {/if}
 
       <!-- Collective select -->

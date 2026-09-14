@@ -1,4 +1,5 @@
 <script lang="ts">
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import Button from './button.svelte';
 import Modal from './modal.svelte';
@@ -61,11 +62,8 @@ async function handleConfirm() {
   {/if}
 
   {#if error !== null}
-    <div
-      role="alert"
-      class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mt-4"
-    >
-      {error}
+    <div class="mt-4">
+      <AlertBanner variant="error">{error}</AlertBanner>
     </div>
   {/if}
 

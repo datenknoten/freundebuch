@@ -1,6 +1,7 @@
 <script lang="ts">
 import LockClosed from 'svelte-heros-v2/LockClosed.svelte';
 import { goto } from '$app/navigation';
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import LoginForm from '$lib/components/login-form.svelte';
 import Button from '$lib/components/ui/button.svelte';
 import Modal from '$lib/components/ui/modal.svelte';
@@ -51,12 +52,13 @@ async function handleLogout() {
      opens last by construction (the interceptor mounts it on a 401), so it
      covers whatever was already open. -->
 <Modal title={$i18n.t('auth.sessionExpired.title')} size="md" closable={false} onClose={() => {}} {footer}>
-  <!-- Explanatory banner -->
-  <div class="flex items-start gap-3 mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
-    <LockClosed class="w-6 h-6 text-amber-500 flex-shrink-0" strokeWidth="2" />
-    <p class="text-sm font-body text-gray-600">
-      {$i18n.t('auth.sessionExpired.message')}
-    </p>
+  <div class="mb-6">
+    <AlertBanner variant="warning">
+      <div class="flex items-start gap-3">
+        <LockClosed class="w-6 h-6 flex-shrink-0" strokeWidth="2" />
+        <p>{$i18n.t('auth.sessionExpired.message')}</p>
+      </div>
+    </AlertBanner>
   </div>
 
   <LoginForm initialEmail={email} onSuccess={handleReauthenticated} />
