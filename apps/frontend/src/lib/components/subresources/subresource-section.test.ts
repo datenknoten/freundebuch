@@ -1,9 +1,11 @@
 import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
 import { describe, expect, it, vi } from 'vitest';
+import { addMember } from '$lib/api/collectives';
 import { aPhone, fireEvent, render, screen, waitFor } from '$lib/test';
+import { createCollectiveDescriptor } from '../friends/subresource-descriptors';
 import { CircleRow, PhoneEditForm, PhoneRow } from '../friends/subresources';
-import type { SubresourceDescriptor, SubresourceItem } from './subresource-descriptors';
 import SubresourceSection from './subresource-section.svelte';
+import type { SubresourceDescriptor, SubresourceItem } from './types';
 
 // Echo i18n keys so titles/labels are assertable without translation files.
 vi.mock('$lib/i18n/index.js', () => ({
@@ -13,6 +15,41 @@ vi.mock('$lib/i18n/index.js', () => ({
       return () => undefined;
     },
   }),
+}));
+
+// The collective descriptor mounts the real AddToCollectiveModal, which reads
+// its options from the collectives store and posts through the API module.
+vi.mock('$lib/stores/collectives', () => {
+  const readableOf = <T>(value: T) => ({
+    subscribe: (run: (v: T) => void) => {
+      run(value);
+      return () => undefined;
+    },
+  });
+  return {
+    collectives: {
+      loadCollectives: vi.fn().mockResolvedValue(undefined),
+      loadTypes: vi.fn().mockResolvedValue(undefined),
+    },
+    collectivesList: readableOf([
+      {
+        id: 'col-1',
+        name: 'Book Club',
+        type: { id: 'type-1', name: 'Club' },
+        photoThumbnailUrl: null,
+        deletedAt: null,
+      },
+    ]),
+    collectiveTypes: readableOf([
+      { id: 'type-1', name: 'Club', roles: [{ id: 'role-1', label: 'Member', sortOrder: 0 }] },
+    ]),
+    previewMemberRelationships: vi.fn().mockResolvedValue({ relationships: [] }),
+  };
+});
+
+vi.mock('$lib/api/collectives', () => ({
+  addMember: vi.fn().mockResolvedValue({ id: 'membership-1' }),
+  removeMember: vi.fn().mockResolvedValue({ message: 'removed' }),
 }));
 
 /**
@@ -42,8 +79,8 @@ function fakePhoneDescriptor(
     RowComponent: PhoneRow as unknown as SubresourceDescriptor['RowComponent'],
     rowProps: (item) => ({ phone: item }),
     deleteName: (item) => (item as ReturnType<typeof aPhone>).phoneNumber,
-    deleteTitle: 'Delete Phone Number',
-    deleteDescription: 'Are you sure?',
+    deleteTitleKey: 'modal.deletePhone',
+    deleteDescriptionKey: 'modal.confirmDeletePhone',
     ...overrides,
   } as SubresourceDescriptor;
 }
@@ -51,8 +88,8 @@ function fakePhoneDescriptor(
 function renderSection(descriptor: SubresourceDescriptor) {
   return render(SubresourceSection, {
     descriptor,
-    collectiveId: 'c1',
-    collectiveName: 'Test Collective',
+    ownerId: 'c1',
+    ownerName: 'Test Collective',
   });
 }
 
@@ -147,10 +184,12 @@ describe('SubresourceSection', () => {
     renderSection(descriptor);
 
     await fireEvent.click((await screen.findAllByLabelText('subresources.phone.deleteAria'))[0]);
-    expect(await screen.findByText('Delete Phone Number')).toBeTruthy();
+    expect(await screen.findByText('modal.deletePhone')).toBeTruthy();
 
     await fireEvent.click(screen.getByText('common.delete'));
-    await waitFor(() => expect(remove).toHaveBeenCalledWith('c1', phone.id));
+    await waitFor(() =>
+      expect(remove).toHaveBeenCalledWith('c1', expect.objectContaining({ id: phone.id })),
+    );
     await waitFor(() => expect(screen.queryAllByText('+1 555 0100')).toHaveLength(0));
   });
 
@@ -200,12 +239,12 @@ describe('SubresourceSection', () => {
 
     const { rerender } = render(SubresourceSection, {
       descriptor,
-      collectiveId: 'c1',
-      collectiveName: 'Test Collective',
+      ownerId: 'c1',
+      ownerName: 'Test Collective',
     });
 
     // Switch to a new collective; its (faster) response lands first.
-    await rerender({ descriptor, collectiveId: 'c2', collectiveName: 'Test Collective' });
+    await rerender({ descriptor, ownerId: 'c2', ownerName: 'Test Collective' });
     second.resolve([aPhone({ phoneNumber: '+2 222' })]);
     expect((await screen.findAllByText('+2 222')).length).toBeGreaterThan(0);
 
@@ -224,8 +263,8 @@ describe('SubresourceSection', () => {
 
     const { rerender } = render(SubresourceSection, {
       descriptor,
-      collectiveId: 'c1',
-      collectiveName: 'Test Collective',
+      ownerId: 'c1',
+      ownerName: 'Test Collective',
     });
 
     // Open the edit modal on the first collective.
@@ -233,7 +272,7 @@ describe('SubresourceSection', () => {
     expect(await screen.findByText('friendDetail.modal.edit modal.type')).toBeTruthy();
 
     // Navigate to another collective without unmounting the component.
-    await rerender({ descriptor, collectiveId: 'c2', collectiveName: 'Test Collective' });
+    await rerender({ descriptor, ownerId: 'c2', ownerName: 'Test Collective' });
 
     // Stale modal is closed, the previous item is gone, the new one is loaded.
     await waitFor(() =>
@@ -331,5 +370,70 @@ describe('SubresourceSection', () => {
       (await screen.findAllByLabelText('subresources.circle.removeAria')).length,
     ).toBeGreaterThan(0);
     expect(screen.queryByLabelText('subresources.phone.editAria')).toBeNull();
+  });
+
+  it('numbers hint badges over linkable rows only, so a non-linkable row shifts nothing', async () => {
+    const descriptor = fakePhoneDescriptor({
+      linkable: (item) => item.id !== 'b',
+      load: vi
+        .fn()
+        .mockResolvedValue([
+          aPhone({ id: 'a', phoneNumber: '+1 111 0000' }),
+          aPhone({ id: 'b', phoneNumber: '+1 222 0000' }),
+          aPhone({ id: 'c', phoneNumber: '+1 333 0000' }),
+        ]),
+    });
+    render(SubresourceSection, {
+      descriptor,
+      ownerId: 'c1',
+      ownerName: 'Test Collective',
+      linkStartIndex: 5,
+    });
+
+    const shortcutFor = async (number: string) => {
+      const matches = await screen.findAllByText(number);
+      const link = matches.map((el) => el.closest('a')).find((el) => el !== null);
+      return link?.getAttribute('data-shortcut') ?? null;
+    };
+
+    // getKeyboardHint(5) === '6', getKeyboardHint(6) === '7'.
+    expect(await shortcutFor('+1 111 0000')).toBe('o 6');
+    expect(await shortcutFor('+1 222 0000')).toBeNull();
+    expect(await shortcutFor('+1 333 0000')).toBe('o 7');
+  });
+
+  it('closes the custom add component after a successful add', async () => {
+    const onChanged = vi.fn();
+    render(SubresourceSection, {
+      descriptor: createCollectiveDescriptor(onChanged),
+      ownerId: 'f1',
+      ownerName: 'Ada Lovelace',
+      items: [
+        {
+          id: 'col-9',
+          membershipId: 'm-9',
+          name: 'Chess Club',
+          typeName: 'Club',
+          isActive: true,
+          role: { id: 'role-9', label: 'Member' },
+        } as unknown as SubresourceItem,
+      ],
+    });
+
+    await fireEvent.click(await screen.findByText('friendDetail.actions.addCollective'));
+
+    const search = await screen.findByRole('combobox');
+    await fireEvent.focus(search);
+    await fireEvent.click(await screen.findByText('Book Club'));
+    await fireEvent.click(await screen.findByText('friendDetail.addToCollective.submit'));
+
+    await waitFor(() =>
+      expect(vi.mocked(addMember)).toHaveBeenCalledWith(
+        'col-1',
+        expect.objectContaining({ friend_id: 'f1', role_id: 'role-1' }),
+      ),
+    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(onChanged).toHaveBeenCalledTimes(1);
   });
 });

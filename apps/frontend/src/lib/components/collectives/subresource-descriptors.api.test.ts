@@ -36,10 +36,10 @@ afterEach(() => {
 describe('descriptor CRUD delegation', () => {
   it('wires phone load/create/update/remove to the phone API', async () => {
     const data = { phone_number: '+1 555 0100' } as never;
-    await byKey.phone.load('c1');
+    await byKey.phone.load?.('c1');
     await byKey.phone.create('c1', data);
     await byKey.phone.update?.('c1', 'p1', data);
-    await byKey.phone.remove('c1', 'p1');
+    await byKey.phone.remove('c1', { id: 'p1' });
     expect(api.listPhones).toHaveBeenCalledWith('c1');
     expect(api.addPhone).toHaveBeenCalledWith('c1', data);
     expect(api.updatePhone).toHaveBeenCalledWith('c1', 'p1', data);
@@ -48,10 +48,10 @@ describe('descriptor CRUD delegation', () => {
 
   it('wires email load/create/update/remove to the email API', async () => {
     const data = { email_address: 'a@b.com' } as never;
-    await byKey.email.load('c1');
+    await byKey.email.load?.('c1');
     await byKey.email.create('c1', data);
     await byKey.email.update?.('c1', 'e1', data);
-    await byKey.email.remove('c1', 'e1');
+    await byKey.email.remove('c1', { id: 'e1' });
     expect(api.listEmails).toHaveBeenCalledWith('c1');
     expect(api.addEmail).toHaveBeenCalledWith('c1', data);
     expect(api.updateEmail).toHaveBeenCalledWith('c1', 'e1', data);
@@ -60,10 +60,10 @@ describe('descriptor CRUD delegation', () => {
 
   it('wires address load/create/update/remove to the address API', async () => {
     const data = { street_line_1: '1 Main St' } as never;
-    await byKey.address.load('c1');
+    await byKey.address.load?.('c1');
     await byKey.address.create('c1', data);
     await byKey.address.update?.('c1', 'a1', data);
-    await byKey.address.remove('c1', 'a1');
+    await byKey.address.remove('c1', { id: 'a1' });
     expect(api.listAddresses).toHaveBeenCalledWith('c1');
     expect(api.addAddress).toHaveBeenCalledWith('c1', data);
     expect(api.updateAddress).toHaveBeenCalledWith('c1', 'a1', data);
@@ -72,10 +72,10 @@ describe('descriptor CRUD delegation', () => {
 
   it('wires url load/create/update/remove to the url API', async () => {
     const data = { url: 'https://x.dev' } as never;
-    await byKey.url.load('c1');
+    await byKey.url.load?.('c1');
     await byKey.url.create('c1', data);
     await byKey.url.update?.('c1', 'u1', data);
-    await byKey.url.remove('c1', 'u1');
+    await byKey.url.remove('c1', { id: 'u1' });
     expect(api.listUrls).toHaveBeenCalledWith('c1');
     expect(api.addUrl).toHaveBeenCalledWith('c1', data);
     expect(api.updateUrl).toHaveBeenCalledWith('c1', 'u1', data);
@@ -83,9 +83,9 @@ describe('descriptor CRUD delegation', () => {
   });
 
   it('unwraps the circle id on create and delegates load/remove (add-only)', async () => {
-    await circleDescriptor.load('c1');
+    await circleDescriptor.load?.('c1');
     await circleDescriptor.create('c1', { circleId: 'circle-9' } as never);
-    await circleDescriptor.remove('c1', 'circle-9');
+    await circleDescriptor.remove('c1', { id: 'circle-9' });
     expect(api.getCollectiveCircles).toHaveBeenCalledWith('c1');
     expect(api.addCollectiveToCircle).toHaveBeenCalledWith('c1', 'circle-9');
     expect(api.removeCollectiveFromCircle).toHaveBeenCalledWith('c1', 'circle-9');
@@ -141,7 +141,7 @@ describe('address afterSave geocoding refetch', () => {
 
   it('reloads three times on the geocoding backoff schedule', () => {
     const reload = vi.fn().mockResolvedValue(undefined);
-    byKey.address.afterSave?.(reload);
+    byKey.address.afterSave?.(reload, 'c1');
     expect(reload).not.toHaveBeenCalled();
     vi.advanceTimersByTime(800);
     expect(reload).toHaveBeenCalledTimes(1);
