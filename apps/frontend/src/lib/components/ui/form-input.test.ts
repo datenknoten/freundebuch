@@ -34,4 +34,31 @@ describe('FormInput', () => {
     render(FormInput, { id: 'x', label: 'X', value: '', disabled: true });
     expect((screen.getByLabelText('X') as HTMLInputElement).disabled).toBe(true);
   });
+
+  it('renders a helper hint the input points at', () => {
+    render(FormInput, { id: 'pw', label: 'Password', value: '', helper: 'At least 8 characters' });
+
+    const input = screen.getByLabelText('Password');
+    expect(input.getAttribute('aria-invalid')).toBeNull();
+    expect(input.getAttribute('aria-describedby')).toBe('pw-helper');
+    expect(screen.getByText('At least 8 characters').id).toBe('pw-helper');
+  });
+
+  it('marks the input invalid and describes it by both the error and the helper', () => {
+    render(FormInput, {
+      id: 'pw',
+      label: 'Password',
+      value: 'short',
+      helper: 'At least 8 characters',
+      error: 'Password is too short',
+    });
+
+    const input = screen.getByLabelText('Password');
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+    expect(input.getAttribute('aria-describedby')?.split(' ').sort()).toEqual([
+      'pw-error',
+      'pw-helper',
+    ]);
+    expect(screen.getByText('Password is too short').id).toBe('pw-error');
+  });
 });
