@@ -3,10 +3,11 @@ import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { CircleSummary } from '$shared';
-import { CircleEditForm, CircleRow, DeleteConfirmModal, DetailEditModal } from '../subresources';
+import { CircleEditForm, CircleRow, DetailEditModal } from '../subresources';
 
 const i18n = createI18n();
 
@@ -131,7 +132,7 @@ onMount(() => {
 {/if}
 
 {#if deleteConfirmId}
-  <DeleteConfirmModal
+  <ConfirmDialog
     title={$i18n.t('friendDetail.modal.removeFromCircleTitle')}
     description={$i18n.t('friendDetail.modal.confirmRemoveCircle')}
     itemPreview={deleteConfirmName}

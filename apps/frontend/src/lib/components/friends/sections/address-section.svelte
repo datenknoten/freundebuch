@@ -3,10 +3,11 @@ import { onMount } from 'svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { Address, AddressInput } from '$shared';
-import { AddressEditForm, AddressRow, DeleteConfirmModal, DetailEditModal } from '../subresources';
+import { AddressEditForm, AddressRow, DetailEditModal } from '../subresources';
 
 const i18n = createI18n();
 
@@ -174,7 +175,7 @@ onMount(() => {
 {/if}
 
 {#if deleteConfirmId}
-  <DeleteConfirmModal
+  <ConfirmDialog
     title={$i18n.t('friendDetail.modal.deleteAddress')}
     description={$i18n.t('friendDetail.modal.confirmDeleteAddress')}
     itemPreview={deleteConfirmName}
