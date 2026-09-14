@@ -16,6 +16,7 @@ import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
 import { search } from '$lib/stores/search';
+import { motionDuration } from '$lib/utils/motion';
 import UserMenu from './user-menu.svelte';
 
 const i18n = createI18n();
@@ -122,7 +123,7 @@ $effect(() => {
 <!-- Mobile menu overlay -->
 {#if mobileMenuOpen}
   <div
-    transition:fade={{ duration: 200 }}
+    transition:fade={{ duration: motionDuration(200) }}
     class="fixed inset-0 bg-gray-900/50 z-(--z-overlay) sm:hidden"
     onclick={closeMobileMenu}
     role="presentation"

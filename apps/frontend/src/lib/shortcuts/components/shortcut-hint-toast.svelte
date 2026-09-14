@@ -1,6 +1,7 @@
 <script lang="ts">
 import { fly } from 'svelte/transition';
 import { createI18n } from '$lib/i18n/index.js';
+import { motionDuration } from '$lib/utils/motion';
 import { activeHint, dismissHint } from '../hint-store.js';
 
 const i18n = createI18n();
@@ -25,7 +26,7 @@ let keyParts = $derived($activeHint ? $activeHint.keys.split(' ') : []);
   <div
     role="status"
     aria-live="polite"
-    transition:fly={{ y: 16, duration: 200 }}
+    transition:fly={{ y: 16, duration: motionDuration(200) }}
     class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-(--z-overlay) border border-gray-200 overflow-hidden max-w-xs"
   >
     <div class="px-4 py-3 font-body text-sm text-gray-700">
