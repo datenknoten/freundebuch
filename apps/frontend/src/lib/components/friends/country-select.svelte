@@ -200,7 +200,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
   {#if showDropdown && !isLoading}
     <ul
       id="country-select-listbox"
-      class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-(--z-popover) w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       role="listbox"
     >
       {#each filteredCountries() as country, index}

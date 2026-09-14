@@ -272,7 +272,7 @@ $effect(() => {
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_interactive_supports_focus -->
     <div
-      class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4"
+      class="fixed inset-0 bg-gray-900/50 z-(--z-overlay) flex items-center justify-center p-4"
       onclick={closeKeyboardFilterMode}
       role="dialog"
       aria-modal="true"
@@ -448,7 +448,7 @@ $effect(() => {
   <!-- Regular dropdown for non-keyboard mode -->
   {#if isOpen && hasFacets && !$isFilterModeActive}
     <div
-      class="absolute left-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 p-4 max-h-80 overflow-y-auto"
+      class="absolute left-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-(--z-popover) p-4 max-h-80 overflow-y-auto"
     >
       <!-- Location Facets -->
       {#if facets && facets.location.length > 0}

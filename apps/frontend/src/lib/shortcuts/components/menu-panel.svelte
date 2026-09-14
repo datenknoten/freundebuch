@@ -13,7 +13,7 @@ let { title, items, dangerItem }: Props = $props();
 const i18n = createI18n();
 </script>
 
-<div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+<div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-(--z-overlay) border border-gray-200 overflow-hidden min-w-48">
   <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
     <span class="text-sm font-medium text-gray-700">{title}</span>
     <span class="text-xs text-gray-500 ml-2">{$i18n.t('shortcuts.panels.pressKeyOrEsc')}</span>

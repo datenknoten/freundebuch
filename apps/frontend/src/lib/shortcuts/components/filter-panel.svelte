@@ -12,7 +12,7 @@ const categoryLabel = $derived(
 );
 </script>
 
-<div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-64">
+<div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-(--z-overlay) border border-gray-200 overflow-hidden min-w-64">
   <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
     <span class="text-sm font-medium text-gray-700">
       {#if category}

@@ -58,7 +58,7 @@ async function handleLogout() {
 <!-- Modal backdrop. Intentionally not dismissible by backdrop click: the
      session is gone, so re-authentication (or logout) is the only path forward. -->
 <div
-  class="fixed inset-0 bg-gray-900/50 z-[60] flex items-center justify-center p-4"
+  class="fixed inset-0 bg-gray-900/50 z-(--z-blocking) flex items-center justify-center p-4"
   role="dialog"
   aria-modal="true"
   aria-labelledby="session-expired-title"

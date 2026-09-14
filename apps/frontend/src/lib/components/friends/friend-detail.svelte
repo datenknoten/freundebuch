@@ -371,7 +371,7 @@ onMount(() => {
   onclick={() => (showFabCreateMenu = true)}
   class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white
          rounded-full shadow-lg hover:bg-forest-light transition-colors
-         flex items-center justify-center z-40 select-none touch-none [-webkit-touch-callout:none]"
+         flex items-center justify-center z-(--z-fab) select-none touch-none [-webkit-touch-callout:none]"
   aria-label={$i18n.t('common.createNew')}
 >
   <Plus class="w-6 h-6" strokeWidth="2" />
@@ -414,7 +414,7 @@ onMount(() => {
 
 <!-- Delete friend confirmation modal -->
 {#if showDeleteConfirm}
-  <div class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
+  <div class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-(--z-overlay)">
     <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
       <h3 class="text-xl font-heading text-gray-900 mb-2">{$i18n.t('friendDetail.delete.title')}</h3>
       <p class="text-gray-600 font-body mb-6">

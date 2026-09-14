@@ -216,7 +216,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
   {#if showDropdown}
     <ul
       id="relationship-type-listbox"
-      class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-(--z-popover) w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
       role="listbox"
     >
       {#each filteredTypes() as type, index}

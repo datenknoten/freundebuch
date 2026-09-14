@@ -75,7 +75,7 @@ function handleClickOutside(e: MouseEvent) {
   {#if isOpen}
     <div
       bind:this={menuRef}
-      class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+      class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-(--z-popover)"
       role="menu"
       aria-orientation="vertical"
     >
