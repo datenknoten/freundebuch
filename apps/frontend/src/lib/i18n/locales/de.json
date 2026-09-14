@@ -235,7 +235,9 @@
       "notFoundSubtitle": "Dieses Kollektiv wurde möglicherweise gelöscht oder existiert nicht.",
       "returnToCollectives": "Zurück zu Kollektiven",
       "deleteConfirmTitle": "Kollektiv löschen?",
-      "deleteConfirmMessage": "Bist du sicher, dass du dieses Kollektiv löschen möchtest?"
+      "deleteConfirmMessage": "Bist du sicher, dass du dieses Kollektiv löschen möchtest?",
+      "removeFromCircleTitle": "Aus Freundekreis entfernen",
+      "confirmRemoveCircle": "Bist du sicher, dass du dieses Kollektiv aus diesem Freundekreis entfernen möchtest?"
     },
     "addMember": {
       "title": "Mitglied hinzufügen",
@@ -1095,6 +1097,7 @@
       "deleteDate": "Termin löschen",
       "deleteEmployment": "Beschäftigung löschen",
       "removeFromCircleTitle": "Aus Freundekreis entfernen",
+      "removeFromCollectiveTitle": "Aus Kollektiv entfernen",
       "confirmDeletePhone": "Bist du sicher, dass du diese Telefonnummer löschen möchtest?",
       "confirmDeleteEmail": "Bist du sicher, dass du diese E-Mail-Adresse löschen möchtest?",
       "confirmDeleteAddress": "Bist du sicher, dass du diese Adresse löschen möchtest?",
@@ -1102,7 +1105,8 @@
       "confirmDeleteSocial": "Bist du sicher, dass du dieses soziale Profil löschen möchtest?",
       "confirmDeleteDate": "Bist du sicher, dass du diesen Termin löschen möchtest?",
       "confirmDeleteEmployment": "Bist du sicher, dass du diesen Beschäftigungseintrag löschen möchtest?",
-      "confirmRemoveCircle": "Bist du sicher, dass du diesen Freund aus diesem Freundekreis entfernen möchtest?"
+      "confirmRemoveCircle": "Bist du sicher, dass du diesen Freund aus diesem Freundekreis entfernen möchtest?",
+      "confirmRemoveCollective": "Bist du sicher, dass du diesen Freund aus diesem Kollektiv entfernen möchtest?"
     },
     "addDetail": "Detail hinzufügen",
     "addDetailSubtitle": "Telefon, E-Mail, Adresse und mehr hinzufügen",

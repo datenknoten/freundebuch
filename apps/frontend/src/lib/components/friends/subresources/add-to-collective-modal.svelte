@@ -155,6 +155,7 @@ async function handleSubmit() {
       skip_auto_relationships: skipAutoRelationships,
     });
     onSuccess();
+    onClose();
   } catch (err) {
     error = (err as Error)?.message || $i18n.t('friendDetail.addToCollective.error');
   } finally {
@@ -177,9 +178,7 @@ function selectRole(roleId: string) {
   skipAutoRelationships = false;
 }
 
-let roleOptions = $derived(
-  rolesForSelected.map((role) => ({ value: role.id, label: role.label })),
-);
+let roleOptions = $derived(rolesForSelected.map((role) => ({ value: role.id, label: role.label })));
 </script>
 
 <DetailEditModal

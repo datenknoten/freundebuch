@@ -235,7 +235,9 @@
       "notFoundSubtitle": "This collective may have been deleted or doesn't exist.",
       "returnToCollectives": "Return to collectives",
       "deleteConfirmTitle": "Delete Collective?",
-      "deleteConfirmMessage": "Are you sure you want to delete this collective?"
+      "deleteConfirmMessage": "Are you sure you want to delete this collective?",
+      "removeFromCircleTitle": "Remove from Circle",
+      "confirmRemoveCircle": "Are you sure you want to remove this collective from this circle?"
     },
     "addMember": {
       "title": "Add Member",
@@ -1095,6 +1097,7 @@
       "deleteDate": "Delete Date",
       "deleteEmployment": "Delete Employment",
       "removeFromCircleTitle": "Remove from Circle",
+      "removeFromCollectiveTitle": "Remove from Collective",
       "confirmDeletePhone": "Are you sure you want to delete this phone number?",
       "confirmDeleteEmail": "Are you sure you want to delete this email address?",
       "confirmDeleteAddress": "Are you sure you want to delete this address?",
@@ -1102,7 +1105,8 @@
       "confirmDeleteSocial": "Are you sure you want to delete this social profile?",
       "confirmDeleteDate": "Are you sure you want to delete this important date?",
       "confirmDeleteEmployment": "Are you sure you want to delete this employment record?",
-      "confirmRemoveCircle": "Are you sure you want to remove this friend from this circle?"
+      "confirmRemoveCircle": "Are you sure you want to remove this friend from this circle?",
+      "confirmRemoveCollective": "Are you sure you want to remove this friend from this collective?"
     },
     "addDetail": "Add Detail",
     "addDetailSubtitle": "Add phone, email, address, and more",

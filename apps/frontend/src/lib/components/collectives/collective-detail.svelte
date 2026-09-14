@@ -18,11 +18,11 @@ import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
 import { collectiveTypeI18nKey } from '$lib/utils/collective-types';
 import type { Collective } from '$shared';
+import SubresourceSection from '../subresources/subresource-section.svelte';
 import AddDetailDropdown from './add-detail-dropdown.svelte';
 import MemberSection from './member-section.svelte';
 import MobileAddDetailModal from './mobile-add-detail-modal.svelte';
 import { circleDescriptor, contactDescriptors } from './subresource-descriptors';
-import SubresourceSection from './subresource-section.svelte';
 
 const i18n = createI18n();
 
@@ -161,12 +161,16 @@ let address = $derived(formatAddress(collective));
   <!-- ==================== CONTACT DETAILS SECTION ==================== -->
   <div class="space-y-4">
     {#each contactDescriptors as descriptor (descriptor.key)}
-      <SubresourceSection {descriptor} collectiveId={collective.id} collectiveName={collective.name} />
+      <SubresourceSection {descriptor} ownerId={collective.id} ownerName={collective.name} />
     {/each}
   </div>
 
   <!-- ==================== CIRCLES SECTION ==================== -->
-  <SubresourceSection descriptor={circleDescriptor} collectiveId={collective.id} collectiveName={collective.name} />
+  <SubresourceSection
+    descriptor={circleDescriptor}
+    ownerId={collective.id}
+    ownerName={collective.name}
+  />
 
   <!-- ==================== MEMBERS SECTION ==================== -->
   <MemberSection {collective} />
