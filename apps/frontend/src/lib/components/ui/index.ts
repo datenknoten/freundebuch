@@ -3,4 +3,15 @@ export { default as FormCheckbox } from './form-checkbox.svelte';
 export { default as FormInput } from './form-input.svelte';
 export { default as FormSelect } from './form-select.svelte';
 export { default as FormTextarea } from './form-textarea.svelte';
-export { formClasses } from './styles';
+export {
+  type ButtonSize,
+  type ButtonVariant,
+  buttonClasses,
+  chipClasses,
+  codeClasses,
+  focusRing,
+  formClasses,
+  headingClasses,
+  linkClasses,
+  surfaceClasses,
+} from './styles';
