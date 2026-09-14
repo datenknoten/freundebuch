@@ -6,6 +6,7 @@ import type { AppPassword, CreateAppPasswordResult } from '$lib/api/app-password
 import * as appPasswordsApi from '$lib/api/app-passwords';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -123,8 +124,8 @@ function formatDate(dateString: string | null): string {
   </form>
 
   {#if isLoading}
-    <div class="text-center py-4">
-      <p class="text-gray-500 font-body">{$i18n.t('profile.appPasswords.loading')}</p>
+    <div class="flex justify-center py-12">
+      <Spinner size="lg" label={$i18n.t('profile.appPasswords.loading')} />
     </div>
   {:else if passwords.length === 0}
     <div class="text-center py-8 bg-gray-50 rounded-lg">

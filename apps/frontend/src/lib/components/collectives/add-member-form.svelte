@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button } from '$lib/components/ui';
+import { Button, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { previewMemberRelationships } from '$lib/stores/collectives';
 import type { CollectiveRole, FriendSearchResult, RelationshipPreviewResponse } from '$shared';
@@ -189,7 +189,7 @@ async function handleSubmit(e: Event) {
 
       {#if isLoadingPreview}
         <div class="flex justify-center py-4">
-          <div class="animate-spin rounded-full h-6 w-6 border-2 border-forest border-t-transparent"></div>
+          <Spinner size="md" />
         </div>
       {:else if preview}
         <RelationshipPreview {preview} />

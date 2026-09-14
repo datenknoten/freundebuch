@@ -3,6 +3,7 @@ import { onMount } from 'svelte';
 import Bell from 'svelte-heros-v2/Bell.svelte';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { notificationChannels } from '$lib/stores/notification-channels';
 import type {
@@ -108,8 +109,8 @@ async function handleDelete(channelId: string) {
   {/if}
 
   {#if $notificationChannels.isLoading}
-    <div class="text-center py-4">
-      <p class="text-gray-500 font-body">{$i18n.t('common.loading')}</p>
+    <div class="flex justify-center py-12">
+      <Spinner size="lg" label={$i18n.t('common.loading')} />
     </div>
   {:else if $notificationChannels.channels.length === 0 && !showForm}
     <div class="text-center py-8 bg-gray-50 rounded-lg">

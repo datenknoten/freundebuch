@@ -7,7 +7,7 @@ import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import type { EncounterListParams } from '$lib/api/encounters';
-import { Button } from '$lib/components/ui';
+import { Button, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters, encountersList } from '$lib/stores/encounters';
 import { visibleEncounterIds } from '$lib/stores/ui';
@@ -205,7 +205,7 @@ function goToPage(page: number) {
   <!-- Loading state -->
   {#if isLoading && encounterItems.length === 0}
     <div class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+      <Spinner size="lg" />
     </div>
   {:else if encounterItems.length === 0}
     <!-- Empty state -->

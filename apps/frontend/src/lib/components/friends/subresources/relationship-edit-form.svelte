@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { createDirtyTracker, FormTextarea, formClasses } from '$lib/components/ui';
+import { createDirtyTracker, FormTextarea, formClasses, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
@@ -127,7 +127,7 @@ export function isValid(): boolean {
         />
       {:else if !loadError}
         <div class="flex items-center gap-2 text-sm text-gray-500">
-          <div class="animate-spin rounded-full h-4 w-4 border-2 border-forest border-t-transparent"></div>
+          <Spinner size="sm" tone="current" />
           <span>{$i18n.t('relationshipSection.loadingTypes')}</span>
         </div>
       {/if}
