@@ -4,7 +4,7 @@ import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
-import { Button, ConfirmDialog } from '$lib/components/ui';
+import { Button, ConfirmDialog, headingClasses, surfaceClasses } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
@@ -77,7 +77,7 @@ async function handleDelete() {
     </div>
 
     <div class="flex-1 text-center sm:text-left">
-      <h1 class="text-3xl font-heading text-gray-900">{displayTitle}</h1>
+      <h1 class={headingClasses.entity}>{displayTitle}</h1>
       <div class="mt-1 flex items-center gap-2 text-gray-600 font-body justify-center sm:justify-start">
         <EncounterTypeIcon type={encounter.encounterType} class="w-4 h-4 flex-shrink-0" />
         <span>{encounterTypeLabel($i18n.t, encounter.encounterType)}</span>
@@ -111,10 +111,10 @@ async function handleDelete() {
 
   <!-- ==================== FRIENDS SECTION ==================== -->
   <section class="space-y-2">
-    <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
+    <h2 class="{surfaceClasses.sectionHeading} {headingClasses.section}">
       <Users class="w-5 h-5" strokeWidth="2" />
       {$i18n.t('encounters.detail.friends')}
-      <span class="text-sm font-body font-normal text-white/80">({encounter.friends.length})</span>
+      <span class="text-sm font-body font-normal text-forest/70">({encounter.friends.length})</span>
     </h2>
     <div class="flex flex-wrap gap-3 p-3 bg-gray-50 rounded-lg">
       {#each encounter.friends as friend, index (friend.id)}
@@ -141,7 +141,7 @@ async function handleDelete() {
   <!-- ==================== NOTES SECTION ==================== -->
   {#if encounter.description}
     <section class="space-y-2">
-      <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
+      <h2 class="{surfaceClasses.sectionHeading} {headingClasses.section}">
         <DocumentText class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('encounters.detail.notes')}
       </h2>

@@ -59,6 +59,8 @@ export const surfaceClasses = {
   sheet: 'bg-white rounded-t-2xl shadow-xl',
   /** Tinted header strip above a group of detail rows. */
   section: 'flex items-center justify-between bg-forest/10 text-forest px-3 py-1.5 rounded-lg',
+  /** The same tinted strip when the heading is the whole bar (no action beside it). */
+  sectionHeading: 'flex items-center gap-2 bg-forest/10 text-forest px-3 py-1.5 rounded-lg',
   /** A single detail row inside a section. */
   row: 'flex items-center justify-between p-3 bg-gray-50 rounded-lg group',
 } as const;

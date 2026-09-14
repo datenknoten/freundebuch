@@ -8,7 +8,14 @@ import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
-import { Button, ConfirmDialog, chipClasses, Fab } from '$lib/components/ui';
+import {
+  Button,
+  ConfirmDialog,
+  chipClasses,
+  Fab,
+  headingClasses,
+  surfaceClasses,
+} from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
@@ -83,7 +90,7 @@ let typeBadgeColor = $derived(getTypeBadgeColor(collective.type.name));
     </div>
 
     <div class="flex-1 text-center sm:text-left">
-      <h1 class="text-3xl font-heading text-gray-900">{collective.name}</h1>
+      <h1 class={headingClasses.entity}>{collective.name}</h1>
       <div class="mt-1 flex flex-wrap items-center gap-2 justify-center sm:justify-start">
         <span class="{chipClasses.base} {typeBadgeColor}">
           {$i18n.t(collectiveTypeI18nKey(collective.type.name), { defaultValue: collective.type.name })}
@@ -123,7 +130,7 @@ let typeBadgeColor = $derived(getTypeBadgeColor(collective.type.name));
   <!-- ==================== NOTES SECTION ==================== -->
   {#if collective.notes}
     <section class="space-y-2">
-      <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
+      <h2 class="{surfaceClasses.sectionHeading} {headingClasses.section}">
         <DocumentText class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('collectives.detail.notes')}
       </h2>
