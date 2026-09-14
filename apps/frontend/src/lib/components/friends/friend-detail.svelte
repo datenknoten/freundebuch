@@ -10,8 +10,7 @@ import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
-import Button from '$lib/components/ui/button.svelte';
-import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
+import { Button, ConfirmDialog, Fab } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
@@ -380,23 +379,11 @@ onMount(() => {
 </div>
 
 <!-- Mobile FAB: tap = merged create menu (with a contextual "add detail" entry) -->
-<button
-  type="button"
-  onclick={() => (showFabCreateMenu = true)}
-  class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white
-         rounded-full shadow-lg hover:bg-forest-light transition-colors
-         flex items-center justify-center z-(--z-fab) select-none touch-none [-webkit-touch-callout:none]"
-  aria-label={$i18n.t('common.createNew')}
->
+<Fab onclick={() => (showFabCreateMenu = true)} label={$i18n.t('common.createNew')}>
   <Plus class="w-6 h-6" strokeWidth="2" />
-</button>
+</Fab>
 
-<!-- Mobile create menu with a contextual "add detail" entry for this friend.
-     This block is kept before the add-detail modal on purpose: selecting
-     "add detail" closes this menu and opens the modal in the same update.
-     Svelte tears down blocks top-to-bottom, so the create menu must unmount
-     (clearing isModalOpen) before the add-detail modal mounts (setting it),
-     otherwise the modal would open with global shortcuts still enabled. -->
+<!-- Mobile create menu with a contextual "add detail" entry for this friend. -->
 {#if showFabCreateMenu}
   <FabCreateMenu
     onSelect={(choice: FabCreateChoice) => {
