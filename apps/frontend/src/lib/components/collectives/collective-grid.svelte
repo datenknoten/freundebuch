@@ -4,7 +4,7 @@ import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
-import { chipClasses, surfaceClasses } from '$lib/components/ui';
+import { chipClasses, focusRing, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   getKeyboardHint,
@@ -58,6 +58,11 @@ let columns = $derived<ColumnDef[]>([
 
 function handleRowClick(itemId: string) {
   goto(`/collectives/${itemId}`);
+}
+
+function handleLinkClick(e: MouseEvent) {
+  // The cell's own link navigates; stop the row handler from doing it twice.
+  e.stopPropagation();
 }
 
 function handleSort(column: ColumnDef) {
@@ -116,21 +121,27 @@ function formatDate(dateString: string | undefined): string {
     <tbody>
       {#each items as item, index (item.id)}
         {@const TypeIcon = getTypeIconComponent(item.type.name)}
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
+        <!-- The row is a mouse convenience; the name cell holds the real link,
+             so keyboard users get a focusable anchor instead of a fake one. -->
         <tr
           onclick={() => handleRowClick(item.id)}
-          onkeydown={(e) => e.key === 'Enter' && handleRowClick(item.id)}
           class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
           class:opacity-60={item.deletedAt}
-          tabindex="0"
-          role="link"
-          aria-label="View {item.name}"
-          data-shortcut="o {getKeyboardHint(index)}"
-          data-shortcut-label="shortcuts.panels.openCollective"
         >
           <!-- Name -->
           <td class="py-2 px-3 relative">
             <KeyboardHintBadge {index} isActive={$isOpenCollectiveModeActive} prefix={$openCollectiveModePrefix} variant="table-row" />
-            <span class="font-body text-gray-900 font-medium">{item.name}</span>
+            <a
+              href="/collectives/{item.id}"
+              onclick={handleLinkClick}
+              class="font-body text-gray-900 font-medium hover:text-forest hover:underline rounded {focusRing}"
+              data-sveltekit-preload-data="tap"
+              data-shortcut="o {getKeyboardHint(index)}"
+              data-shortcut-label="shortcuts.panels.openCollective"
+            >
+              {item.name}
+            </a>
           </td>
 
           <!-- Type -->
@@ -184,12 +195,13 @@ function formatDate(dateString: string | undefined): string {
 </div>
 
 <!-- Mobile: Card view -->
-<div class="md:hidden space-y-2" role="list" aria-label="Collectives">
+<ul class="md:hidden space-y-2">
   {#each items as item, index (item.id)}
     {@const TypeIcon = getTypeIconComponent(item.type.name)}
+    <li>
     <a
       href="/collectives/{item.id}"
-      class="flex items-start gap-4 {surfaceClasses.cardInteractive} relative"
+      class="flex items-start gap-4 {surfaceClasses.cardInteractive} relative {focusRing}"
       class:opacity-60={item.deletedAt}
       data-sveltekit-preload-data="tap"
       data-shortcut="o {getKeyboardHint(index)}"
@@ -248,5 +260,6 @@ function formatDate(dateString: string | undefined): string {
 
       <ChevronRight class="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" strokeWidth="2" />
     </a>
+    </li>
   {/each}
-</div>
+</ul>

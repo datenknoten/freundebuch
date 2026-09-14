@@ -173,7 +173,7 @@ function handleClear() {
           onclick={activateInput}
           onkeydown={handleButtonKeydown}
           {disabled}
-          class="flex items-center gap-2 min-w-0 flex-1 text-left rounded focus:outline-none focus:ring-2 focus:ring-forest {disabled ? 'cursor-not-allowed' : 'cursor-pointer'}"
+          class="flex items-center gap-2 min-w-0 flex-1 text-left rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest {disabled ? 'cursor-not-allowed' : 'cursor-pointer'}"
         >
           <FriendAvatar
             displayName={selectedCollective.name}
