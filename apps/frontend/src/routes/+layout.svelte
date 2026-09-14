@@ -147,7 +147,7 @@ function handleCreateSelect(choice: FabCreateChoice) {
 
 <div class="min-h-screen flex flex-col">
 	<NavBar />
-	<main class="flex-1">
+	<main class="flex-1 bg-gray-50 flex flex-col">
 		{@render children()}
 	</main>
 	<Footer />

@@ -1,7 +1,7 @@
 <script lang="ts">
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import EncounterList from '$lib/components/encounters/encounter-list.svelte';
-import { Button } from '$lib/components/ui';
+import { Button, PageShell } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -11,25 +11,21 @@ const i18n = createI18n();
   <title>{$i18n.t('encounters.title')} | Freundebuch</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 p-4">
-  <div class="max-w-7xl mx-auto mt-8">
-    <div class="bg-white rounded-xl shadow-lg p-8">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 class="text-3xl font-heading text-forest">{$i18n.t('encounters.title')}</h1>
-          <p class="text-gray-600 font-body mt-1">{$i18n.t('encounters.subtitle')}</p>
-        </div>
-        <Button
-          href="/encounters/new"
-          data-shortcut="n e"
-          data-shortcut-label="shortcuts.newEncounter"
-        >
-          <Plus class="w-5 h-5" strokeWidth="2" />
-          {$i18n.t('encounters.logNew')}
-        </Button>
-      </div>
+<PageShell
+  width="list"
+  title={$i18n.t('encounters.title')}
+  subtitle={$i18n.t('encounters.subtitle')}
+>
+  {#snippet actions()}
+    <Button
+      href="/encounters/new"
+      data-shortcut="n e"
+      data-shortcut-label="shortcuts.newEncounter"
+    >
+      <Plus class="w-5 h-5" strokeWidth="2" />
+      {$i18n.t('encounters.logNew')}
+    </Button>
+  {/snippet}
 
-      <EncounterList />
-    </div>
-  </div>
-</div>
+  <EncounterList />
+</PageShell>

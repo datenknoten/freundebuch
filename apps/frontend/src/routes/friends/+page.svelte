@@ -5,7 +5,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 // biome-ignore lint/style/useImportType: FriendList is used both as type and value (bind:this)
 import FriendList from '$lib/components/friends/friend-list.svelte';
-import Button from '$lib/components/ui/button.svelte';
+import { Button, PageShell } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { friendsPageSize, isAuthInitialized } from '$lib/stores/auth';
 import { friendListFilter, friends } from '$lib/stores/friends';
@@ -126,27 +126,23 @@ onMount(() => {
   <title>{initialQuery ? `${$i18n.t('search.placeholder')}: ${initialQuery}` : $i18n.t('friends.title')} | Freundebuch</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 p-4">
-  <div class="max-w-7xl mx-auto mt-8">
-    <div class="bg-white rounded-xl shadow-lg p-8">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 class="text-3xl font-heading text-forest">{$i18n.t('friends.title')}</h1>
-          <p class="text-gray-600 font-body mt-1">{$i18n.t('friends.subtitle')}</p>
-        </div>
-        <Button href="/friends/new">
-          <Plus class="w-5 h-5" strokeWidth="2" />
-          {$i18n.t('friends.addFriend')}
-        </Button>
-      </div>
+<PageShell
+  width="list"
+  title={$i18n.t('friends.title')}
+  subtitle={$i18n.t('friends.subtitle')}
+>
+  {#snippet actions()}
+    <Button href="/friends/new">
+      <Plus class="w-5 h-5" strokeWidth="2" />
+      {$i18n.t('friends.addFriend')}
+    </Button>
+  {/snippet}
 
-      <FriendList
-        bind:this={friendListRef}
-        {initialQuery}
-        {initialFilters}
-        onQueryChange={handleQueryChange}
-        onFiltersChange={handleFiltersChange}
-      />
-    </div>
-  </div>
-</div>
+  <FriendList
+    bind:this={friendListRef}
+    {initialQuery}
+    {initialFilters}
+    onQueryChange={handleQueryChange}
+    onFiltersChange={handleFiltersChange}
+  />
+</PageShell>

@@ -1,13 +1,17 @@
 <script lang="ts">
 import ForgotPasswordForm from '$lib/components/forgot-password-form.svelte';
+import { PageShell } from '$lib/components/ui';
 </script>
 
 <svelte:head>
-	<title>Forgot Password | Freundebuch</title>
+	<title>Reset Password | Freundebuch</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-	<div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-		<ForgotPasswordForm />
-	</div>
-</div>
+<PageShell
+	width="narrow"
+	centered
+	title="Reset your password"
+	subtitle="Enter your email to receive a password reset link"
+>
+	<ForgotPasswordForm />
+</PageShell>
