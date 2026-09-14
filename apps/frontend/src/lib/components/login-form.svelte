@@ -1,10 +1,10 @@
 <script lang="ts">
 import Key from 'svelte-heros-v2/Key.svelte';
 import { goto } from '$app/navigation';
-import { autoFocus } from '$lib/actions/auto-focus';
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import FormInput from '$lib/components/ui/form-input.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
@@ -65,7 +65,7 @@ function handleSuccess() {
   goto('/');
 }
 
-async function handleSubmit(e) {
+async function handleSubmit(e: SubmitEvent) {
   e.preventDefault();
   error = '';
   isLoading = true;
@@ -106,43 +106,34 @@ async function handlePasskeySignIn() {
 		<p class="text-gray-600 font-body">{$i18n.t('auth.login.subtitle')}</p>
 	</div>
 
-	{#if error}
+	{#if error.length > 0}
 		<AlertBanner variant="error">{error}</AlertBanner>
 	{/if}
 
-	<div>
-		<label for="email" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-			{$i18n.t('auth.login.email')}
-		</label>
-		<input
-			type="email"
-			id="email"
-			bind:value={email}
-			required
-			autocomplete="username webauthn"
-            use:autoFocus
-			class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-			placeholder={$i18n.t('auth.login.emailPlaceholder')}
-			disabled={isLoading}
-		/>
-	</div>
+	<FormInput
+		id="email"
+		type="email"
+		label={$i18n.t('auth.login.email')}
+		bind:value={email}
+		placeholder={$i18n.t('auth.login.emailPlaceholder')}
+		autocomplete="username webauthn"
+		disabled={isLoading}
+		required
+		autofocus
+	/>
 
-	<div>
-		<label for="password" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-			{$i18n.t('auth.login.password')}
-		</label>
-		<input
-			type="password"
-			id="password"
-			bind:value={password}
-			required
-			autocomplete="current-password"
-			minlength="8"
-			class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-			placeholder={$i18n.t('auth.login.passwordPlaceholder')}
-			disabled={isLoading}
-		/>
-	</div>
+	<FormInput
+		id="password"
+		type="password"
+		label={$i18n.t('auth.login.password')}
+		bind:value={password}
+		placeholder="••••••••"
+		autocomplete="current-password"
+		minlength={8}
+		helper={$i18n.t('auth.passwordHelp')}
+		disabled={isLoading}
+		required
+	/>
 
 	<div class="flex items-center justify-end">
 		<a

@@ -21,7 +21,7 @@ interface Props {
 
 let { channel, onsubmit, oncancel, isLoading = false }: Props = $props();
 
-const isEditMode = $derived(!!channel);
+const isEditMode = $derived(channel !== undefined);
 
 let platform = $state<NotificationPlatform>(channel?.platform ?? 'telegram');
 let isEnabled = $state(channel?.isEnabled ?? true);
@@ -57,22 +57,26 @@ const platformOptions = [
   },
 ];
 
+const platformLabel = $derived(
+  platformOptions.find((option) => option.value === platform)?.label ?? platform,
+);
+
 function handleSubmit(event: SubmitEvent) {
   event.preventDefault();
 
   const credentials: Record<string, string> = {};
   switch (platform) {
     case 'telegram':
-      if (botToken) credentials.botToken = botToken;
-      if (chatId) credentials.chatId = chatId;
+      if (botToken.length > 0) credentials.botToken = botToken;
+      if (chatId.length > 0) credentials.chatId = chatId;
       break;
     case 'matrix':
-      if (homeserver) credentials.homeserver = homeserver;
-      if (accessToken) credentials.accessToken = accessToken;
-      if (roomId) credentials.roomId = roomId;
+      if (homeserver.length > 0) credentials.homeserver = homeserver;
+      if (accessToken.length > 0) credentials.accessToken = accessToken;
+      if (roomId.length > 0) credentials.roomId = roomId;
       break;
     case 'discord':
-      if (webhookUrl) credentials.webhookUrl = webhookUrl;
+      if (webhookUrl.length > 0) credentials.webhookUrl = webhookUrl;
       break;
   }
 
@@ -109,12 +113,12 @@ function handleSubmit(event: SubmitEvent) {
       required
     />
   {:else}
-    <div>
-      <span class="block text-sm font-body font-semibold text-gray-700 mb-1">
-        {$i18n.t('profile.messagingReminders.fields.platform')}
-      </span>
-      <span class="font-body text-gray-600 capitalize">{platform}</span>
-    </div>
+    <FormInput
+      id="platform"
+      label={$i18n.t('profile.messagingReminders.fields.platform')}
+      value={platformLabel}
+      disabled
+    />
   {/if}
 
   {#if platform === 'telegram'}

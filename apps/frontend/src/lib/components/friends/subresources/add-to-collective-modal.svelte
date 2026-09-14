@@ -3,6 +3,7 @@ import { onMount } from 'svelte';
 import * as collectivesApi from '$lib/api/collectives.js';
 import CollectiveSearchInput from '$lib/components/collectives/collective-search-input.svelte';
 import RelationshipPreview from '$lib/components/collectives/relationship-preview.svelte';
+import { FormCheckbox, FormSelect, formClasses } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
@@ -171,12 +172,14 @@ function handleCollectiveClear() {
   skipAutoRelationships = false;
 }
 
-function handleRoleChange(e: Event) {
-  const select = e.target as HTMLSelectElement;
-  selectedRoleId = select.value;
+function selectRole(roleId: string) {
+  selectedRoleId = roleId;
   skipAutoRelationships = false;
 }
 
+let roleOptions = $derived(
+  rolesForSelected.map((role) => ({ value: role.id, label: role.label })),
+);
 </script>
 
 <DetailEditModal
@@ -211,7 +214,7 @@ function handleRoleChange(e: Event) {
 
       <!-- Collective select -->
       <div>
-        <label for="collective-select" class="block text-sm font-body font-medium text-gray-700 mb-1">
+        <label for="collective-select" class={formClasses.label}>
           {$i18n.t('friendDetail.addToCollective.selectCollective')} <span class="text-red-500">*</span>
         </label>
         <CollectiveSearchInput
@@ -227,22 +230,14 @@ function handleRoleChange(e: Event) {
 
       <!-- Role select (only shown when collective is selected) -->
       {#if selectedCollective && rolesForSelected.length > 0}
-        <div>
-          <label for="role-select" class="block text-sm font-body font-medium text-gray-700 mb-1">
-            {$i18n.t('friendDetail.addToCollective.selectRole')} <span class="text-red-500">*</span>
-          </label>
-          <select
-            id="role-select"
-            value={selectedRoleId}
-            onchange={handleRoleChange}
-            disabled={isSubmitting}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-          >
-            {#each rolesForSelected as role (role.id)}
-              <option value={role.id}>{role.label}</option>
-            {/each}
-          </select>
-        </div>
+        <FormSelect
+          id="role-select"
+          label={$i18n.t('friendDetail.addToCollective.selectRole')}
+          bind:value={() => selectedRoleId, selectRole}
+          options={roleOptions}
+          disabled={isSubmitting}
+          required
+        />
       {/if}
 
       <!-- Relationship preview -->
@@ -260,17 +255,14 @@ function handleRoleChange(e: Event) {
             <RelationshipPreview {preview} />
 
             {#if preview.relationships.some((r) => !r.alreadyExists)}
-              <label class="mt-3 flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
+              <div class="mt-3">
+                <FormCheckbox
+                  id="skip-auto-relationships"
+                  label={$i18n.t('collectives.addMember.skipRelationships')}
                   bind:checked={skipAutoRelationships}
                   disabled={isSubmitting}
-                  class="rounded border-gray-300 text-forest focus:ring-forest"
                 />
-                <span class="text-sm text-gray-600 font-body">
-                  {$i18n.t('collectives.addMember.skipRelationships')}
-                </span>
-              </label>
+              </div>
             {/if}
           {:else}
             <p class="text-sm text-gray-500 font-body italic py-2">

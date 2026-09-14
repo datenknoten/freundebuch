@@ -290,6 +290,7 @@
     }
   },
   "auth": {
+    "passwordHelp": "Must be at least 8 characters long",
     "sessionExpired": {
       "title": "Your session expired",
       "message": "You've been signed out. Sign back in to pick up right where you left off.",
@@ -319,7 +320,6 @@
       "emailPlaceholder": "you@example.com",
       "password": "Password",
       "passwordPlaceholder": "Create a password",
-      "passwordHelp": "Must be at least 8 characters long",
       "confirmPassword": "Confirm password",
       "confirmPasswordPlaceholder": "Repeat your password",
       "submit": "Create account",

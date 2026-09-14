@@ -1,7 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
-import { autoFocus } from '$lib/actions/auto-focus';
-import { Button } from '$lib/components/ui';
+import { Button, FormInput, formClasses } from '$lib/components/ui';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
@@ -32,7 +31,7 @@ interface Props {
 
 let { encounter, preSelectedFriend, onSuccess, onCancel }: Props = $props();
 
-let isEditMode = $derived(!!encounter);
+let isEditMode = $derived(encounter !== undefined);
 
 // Form state
 let title = $state(encounter?.title ?? '');
@@ -130,7 +129,7 @@ function handleCancel() {
 
   <!-- Type -->
   <div>
-    <span class="block text-sm font-body font-medium text-gray-700 mb-1">
+    <span class={formClasses.label}>
       {$i18n.t('encounters.form.typeLabel')}
     </span>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -151,41 +150,34 @@ function handleCancel() {
   </div>
 
   <!-- Title -->
-  <div>
-    <label for="title" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('encounters.form.titleLabel')} <span class="text-gray-400">{$i18n.t('encounters.form.optional')}</span>
-    </label>
-    <input
-      use:autoFocus
-      id="title"
-      type="text"
-      bind:value={title}
-      placeholder={$i18n.t('encounters.form.titlePlaceholder')}
-      disabled={isSubmitting}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-    />
-  </div>
+  <FormInput
+    id="title"
+    label={$i18n.t('encounters.form.titleLabel')}
+    bind:value={title}
+    placeholder={$i18n.t('encounters.form.titlePlaceholder')}
+    disabled={isSubmitting}
+    optional
+    optionalText={$i18n.t('common.optional')}
+    autofocus
+    size="sm"
+  />
 
   <!-- Date -->
-  <div>
-    <label for="encounter-date" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('encounters.form.dateLabel')} <span class="text-red-500">{$i18n.t('encounters.form.required')}</span>
-    </label>
-    <input
-      id="encounter-date"
-      type="date"
-      bind:value={encounterDate}
-      disabled={isSubmitting}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-      required
-    />
-  </div>
+  <FormInput
+    id="encounter-date"
+    type="date"
+    label={$i18n.t('encounters.form.dateLabel')}
+    bind:value={encounterDate}
+    disabled={isSubmitting}
+    size="sm"
+    required
+  />
 
   <!-- Friends -->
   <div>
-    <label class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('encounters.form.friendsLabel')} <span class="text-red-500">{$i18n.t('encounters.form.required')}</span>
-    </label>
+    <span class={formClasses.label}>
+      {$i18n.t('encounters.form.friendsLabel')} <span class="text-red-500" aria-hidden="true">{$i18n.t('encounters.form.required')}</span>
+    </span>
     <FriendMultiSelect
       {selectedFriends}
       placeholder={$i18n.t('encounters.form.friendsPlaceholder')}
@@ -201,19 +193,16 @@ function handleCancel() {
 
   <!-- Location (in-person only) -->
   {#if showLocation}
-    <div>
-      <label for="location" class="block text-sm font-body font-medium text-gray-700 mb-1">
-        {$i18n.t('encounters.form.locationLabel')} <span class="text-gray-400">{$i18n.t('encounters.form.optional')}</span>
-      </label>
-      <input
-        id="location"
-        type="text"
-        bind:value={locationText}
-        placeholder={$i18n.t('encounters.form.locationPlaceholder')}
-        disabled={isSubmitting}
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-      />
-    </div>
+    <FormInput
+      id="location"
+      label={$i18n.t('encounters.form.locationLabel')}
+      bind:value={locationText}
+      placeholder={$i18n.t('encounters.form.locationPlaceholder')}
+      disabled={isSubmitting}
+      optional
+      optionalText={$i18n.t('common.optional')}
+      size="sm"
+    />
   {/if}
 
   <!-- Description -->

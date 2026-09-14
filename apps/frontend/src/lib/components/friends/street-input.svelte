@@ -2,7 +2,7 @@
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
-import Spinner from '$lib/components/ui/spinner.svelte';
+import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
 import type { StreetInfo } from '$shared';
 
 interface Props {
@@ -159,7 +159,7 @@ function enableManualEntry() {
 </script>
 
 <div class="relative">
-  <label for="street-input" class="block text-sm font-medium text-gray-700 font-body mb-1">Street</label>
+  <label for="street-input" class={formClasses.label}>Street</label>
 
   <div class="relative">
     {#if value && !showDropdown && !manualEntry && streets.length > 0 && !freeTextMode}
@@ -169,7 +169,10 @@ function enableManualEntry() {
         onclick={activateInput}
         onkeydown={handleButtonKeydown}
         disabled={disabled || isLoading}
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg font-body text-sm flex items-center justify-between text-left focus:ring-2 focus:ring-forest focus:border-transparent {disabled || isLoading ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white cursor-pointer hover:border-gray-400'}"
+        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled ||
+        isLoading
+          ? 'opacity-50 cursor-not-allowed bg-gray-50'
+          : 'bg-white cursor-pointer hover:border-gray-400'}"
       >
         <span class="text-gray-900">{value}</span>
         {#if isLoading}
@@ -192,7 +195,7 @@ function enableManualEntry() {
           onfocus={handleFocus}
           placeholder={freeTextMode || manualEntry ? 'Enter street name' : 'Search streets...'}
           {disabled}
-          class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          class="{formClasses.inputSm} pr-10"
           autocomplete="off"
           role={freeTextMode || manualEntry ? 'textbox' : 'combobox'}
           aria-expanded={showDropdown}
@@ -211,7 +214,7 @@ function enableManualEntry() {
 
   {#if showDropdown && !isLoading && !freeTextMode && !manualEntry}
     <ul
-      class="absolute z-(--z-popover) w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
       role="listbox"
     >
       {#each filteredStreets() as street, index}

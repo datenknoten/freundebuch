@@ -1,4 +1,5 @@
 <script lang="ts">
+import type { HTMLInputAttributes } from 'svelte/elements';
 import { autoFocus } from '$lib/actions/auto-focus';
 import { formClasses } from './styles';
 
@@ -13,6 +14,10 @@ interface Props {
   optional?: boolean;
   optionalText?: string;
   autofocus?: boolean;
+  /** Browser autofill hint; auth forms rely on it for password managers and passkeys. */
+  autocomplete?: HTMLInputAttributes['autocomplete'];
+  /** Native minimum length, mirrored by server-side validation. */
+  minlength?: number;
   /** Validation message; also marks the control invalid. */
   error?: string;
   /** Static hint (format, password rules) rendered below the control. */
@@ -31,6 +36,8 @@ let {
   optional = false,
   optionalText = '',
   autofocus = false,
+  autocomplete,
+  minlength,
   error,
   helper,
   size = 'md',
@@ -56,6 +63,8 @@ const describedBy = $derived(
     bind:value
     {disabled}
     {placeholder}
+    {autocomplete}
+    {minlength}
     class="{size === 'sm' ? formClasses.inputSm : formClasses.input}{error !== undefined
       ? ` ${formClasses.inputError}`
       : ''}"

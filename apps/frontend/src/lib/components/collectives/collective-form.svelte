@@ -1,12 +1,11 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
-import { Button } from '$lib/components/ui';
+import { Button, FormInput, FormSelect } from '$lib/components/ui';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectiveTypes } from '$lib/stores/collectives';
-import type { Collective, CollectiveInput, CollectiveType, CollectiveUpdate } from '$shared';
-import CollectiveTypeSelect from './collective-type-select.svelte';
+import type { Collective, CollectiveInput, CollectiveUpdate } from '$shared';
 
 const i18n = createI18n();
 
@@ -33,6 +32,8 @@ let error = $state('');
 
 // Load types on mount
 let types = $derived($collectiveTypes);
+let isLoadingTypes = $derived($collectives.isLoadingTypes);
+let typeOptions = $derived(types.map((type) => ({ value: type.id, label: type.name })));
 
 onMount(async () => {
   if (types.length === 0) {
@@ -42,10 +43,6 @@ onMount(async () => {
 
 // Validation
 let isValid = $derived(name.trim().length > 0 && (isEditMode || selectedTypeId.length > 0));
-
-function handleTypeChange(type: CollectiveType | null) {
-  selectedTypeId = type?.id ?? '';
-}
 
 async function handleSubmit(e: Event) {
   e.preventDefault();
@@ -107,52 +104,40 @@ function handleCancel() {
     </div>
   {/if}
 
-  <!-- Name -->
-  <div>
-    <label for="name" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('collectives.form.nameLabel')} <span class="text-red-500">{$i18n.t('collectives.form.required')}</span>
-    </label>
-    <!-- svelte-ignore a11y_autofocus -->
-    <input
-      id="name"
-      type="text"
-      bind:value={name}
-      placeholder={$i18n.t('collectives.form.namePlaceholder')}
-      disabled={isSubmitting}
-      autofocus={!isEditMode}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
+  <FormInput
+    id="name"
+    label={$i18n.t('collectives.form.nameLabel')}
+    bind:value={name}
+    placeholder={$i18n.t('collectives.form.namePlaceholder')}
+    disabled={isSubmitting}
+    autofocus={!isEditMode}
+    size="sm"
+    required
+  />
+
+  {#if isEditMode}
+    <FormInput
+      id="type"
+      label={$i18n.t('collectives.form.typeLabel')}
+      value={collective?.type.name ?? ''}
+      helper={$i18n.t('collectives.form.typeCannotChange')}
+      size="sm"
+      disabled
+    />
+  {:else}
+    <FormSelect
+      id="type"
+      label={$i18n.t('collectives.form.typeLabel')}
+      bind:value={selectedTypeId}
+      options={typeOptions}
+      placeholderOption={isLoadingTypes
+        ? $i18n.t('collectives.loadingTypes')
+        : $i18n.t('collectives.form.typePlaceholder')}
+      helper={$i18n.t('collectives.form.typeHelp')}
+      disabled={isSubmitting || isLoadingTypes}
+      size="sm"
       required
     />
-  </div>
-
-  <!-- Type (only for create mode) -->
-  {#if !isEditMode}
-    <div>
-      <label for="type" class="block text-sm font-body font-medium text-gray-700 mb-1">
-        {$i18n.t('collectives.form.typeLabel')} <span class="text-red-500">{$i18n.t('collectives.form.required')}</span>
-      </label>
-      <CollectiveTypeSelect
-        value={selectedTypeId}
-        placeholder={$i18n.t('collectives.form.typePlaceholder')}
-        disabled={isSubmitting}
-        onChange={handleTypeChange}
-      />
-      <p class="mt-1 text-xs text-gray-500 font-body">
-        {$i18n.t('collectives.form.typeHelp')}
-      </p>
-    </div>
-  {:else}
-    <div>
-      <label class="block text-sm font-body font-medium text-gray-700 mb-1">
-        {$i18n.t('collectives.form.typeLabel')}
-      </label>
-      <div class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 font-body">
-        {collective?.type.name}
-      </div>
-      <p class="mt-1 text-xs text-gray-500 font-body">
-        {$i18n.t('collectives.form.typeCannotChange')}
-      </p>
-    </div>
   {/if}
 
   <!-- Notes -->
