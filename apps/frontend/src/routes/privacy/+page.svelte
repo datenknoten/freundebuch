@@ -1,5 +1,9 @@
-<script>
+<script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
+import { createI18n } from '$lib/i18n/index.js';
+import { currentLanguage } from '$lib/stores/locale';
+
+const i18n = createI18n();
 </script>
 
 <svelte:head>
@@ -9,15 +13,18 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 <div class="bg-gray-50 min-h-screen py-12">
 	<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="bg-white rounded-xl shadow-lg p-8">
-			<h1 class="text-4xl font-heading text-forest mb-8">Privacy Policy</h1>
+			<h1 class="text-3xl font-heading text-forest mb-8">Privacy Policy</h1>
+			{#if $currentLanguage !== 'en'}
+				<p class="text-sm text-gray-500 font-body mb-6">{$i18n.t('legal.englishOnly')}</p>
+			{/if}
 
-			<div class="prose prose-gray max-w-none font-body space-y-6">
+			<div class="max-w-none font-body space-y-6">
 				<p class="text-gray-600">
 					Last updated: January 2026
 				</p>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">1. Introduction</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">1. Introduction</h2>
 					<p class="text-gray-700">
 						Welcome to Freundebuch. We respect your privacy and are committed to protecting your personal data
 						in accordance with the General Data Protection Regulation (GDPR) and other applicable data protection laws.
@@ -27,7 +34,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">2. Data Controller</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">2. Data Controller</h2>
 					<p class="text-gray-700">
 						The data controller responsible for your personal data is the operator of this Freundebuch instance.
 						For self-hosted installations, the individual or organization hosting the application acts as the data controller.
@@ -35,7 +42,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">3. Data We Collect</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">3. Data We Collect</h2>
 					<p class="text-gray-700">We collect the following types of information:</p>
 					<ul class="list-disc pl-6 text-gray-700 space-y-2 mt-3">
 						<li><strong>Account Information:</strong> Email address and password (encrypted using industry-standard hashing) when you create an account</li>
@@ -47,7 +54,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">4. Legal Basis for Processing</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">4. Legal Basis for Processing</h2>
 					<p class="text-gray-700">We process your personal data based on the following legal grounds under GDPR:</p>
 					<ul class="list-disc pl-6 text-gray-700 space-y-2 mt-3">
 						<li><strong>Contract Performance (Art. 6(1)(b) GDPR):</strong> Processing necessary to provide the Freundebuch service, including account management and storing your contact data</li>
@@ -57,7 +64,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">5. How We Use Your Data</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">5. How We Use Your Data</h2>
 					<p class="text-gray-700">Your data is used to:</p>
 					<ul class="list-disc pl-6 text-gray-700 space-y-2 mt-3">
 						<li>Provide and maintain the Freundebuch service</li>
@@ -70,7 +77,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">6. Data Storage and Security</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">6. Data Storage and Security</h2>
 					<p class="text-gray-700">
 						Freundebuch is designed to be self-hosted, giving you full control over your data. When self-hosted:
 					</p>
@@ -86,13 +93,13 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">7. Error Monitoring and Session Replay (Sentry)</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">7. Error Monitoring and Session Replay (Sentry)</h2>
 					<p class="text-gray-700">
 						We use <strong>Sentry</strong>, a third-party error monitoring service provided by Functional Software, Inc.,
 						to help us identify and fix technical issues. This is essential for maintaining a reliable service.
 					</p>
 
-					<h3 class="text-xl font-heading text-gray-800 mt-6 mb-3">What Sentry Collects</h3>
+					<h3 class="text-xl font-heading text-gray-900 mt-6 mb-2">What Sentry Collects</h3>
 					<ul class="list-disc pl-6 text-gray-700 space-y-2">
 						<li><strong>Error Reports:</strong> When an error occurs, we collect stack traces, error messages, and the state of the application at the time of the error</li>
 						<li><strong>Performance Data:</strong> Page load times, API response times, and other performance metrics</li>
@@ -100,7 +107,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 						<li><strong>Session Replay:</strong> Visual recordings of user sessions to help debug issues. This may include mouse movements, clicks, scrolls, and page content. Sensitive data (passwords, personal data) is masked automatically</li>
 					</ul>
 
-					<h3 class="text-xl font-heading text-gray-800 mt-6 mb-3">Session Replay Details</h3>
+					<h3 class="text-xl font-heading text-gray-900 mt-6 mb-2">Session Replay Details</h3>
 					<p class="text-gray-700">
 						Session Replay records approximately <strong>10% of normal user sessions</strong> and <strong>100% of sessions where an error occurs</strong>.
 						These recordings help us understand how errors happen and improve the user experience. The recordings:
@@ -111,7 +118,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 						<li>Are stored securely by Sentry and deleted according to their retention policy</li>
 					</ul>
 
-					<h3 class="text-xl font-heading text-gray-800 mt-6 mb-3">Sentry Data Processing</h3>
+					<h3 class="text-xl font-heading text-gray-900 mt-6 mb-2">Sentry Data Processing</h3>
 					<p class="text-gray-700">
 						Sentry acts as a data processor on our behalf. Sentry is based in the United States and is certified under
 						the EU-U.S. Data Privacy Framework. For more information, see
@@ -120,7 +127,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">8. International Data Transfers</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">8. International Data Transfers</h2>
 					<p class="text-gray-700">
 						When using Sentry for error monitoring, your data may be transferred to and processed in the United States.
 						These transfers are protected by:
@@ -133,7 +140,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">9. Data Sharing and Third-Party Processors</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">9. Data Sharing and Third-Party Processors</h2>
 					<p class="text-gray-700">
 						We do not sell, trade, or share your personal contact data with third parties for marketing purposes.
 						We use the following third-party processors:
@@ -148,7 +155,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">10. CalDAV/CardDAV Sync</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">10. CalDAV/CardDAV Sync</h2>
 					<p class="text-gray-700">
 						Freundebuch supports syncing with CalDAV and CardDAV services. When you enable sync:
 					</p>
@@ -161,7 +168,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">11. Data Retention</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">11. Data Retention</h2>
 					<p class="text-gray-700">We retain your data for the following periods:</p>
 					<ul class="list-disc pl-6 text-gray-700 space-y-2 mt-3">
 						<li><strong>Account and Contact Data:</strong> Retained until you delete your account or request deletion</li>
@@ -172,7 +179,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">12. Your Rights Under GDPR</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">12. Your Rights Under GDPR</h2>
 					<p class="text-gray-700">Under the General Data Protection Regulation, you have the following rights:</p>
 					<ul class="list-disc pl-6 text-gray-700 space-y-2 mt-3">
 						<li><strong>Right of Access (Art. 15):</strong> Request a copy of all personal data we hold about you</li>
@@ -190,7 +197,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">13. Right to Lodge a Complaint</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">13. Right to Lodge a Complaint</h2>
 					<p class="text-gray-700">
 						If you believe your data protection rights have been violated, you have the right to lodge a complaint
 						with a supervisory authority. In the EU, you can contact the data protection authority in your country
@@ -199,7 +206,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">14. Cookies and Local Storage</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">14. Cookies and Local Storage</h2>
 					<p class="text-gray-700">Freundebuch uses the following technologies:</p>
 					<ul class="list-disc pl-6 text-gray-700 space-y-2 mt-3">
 						<li><strong>Essential Cookies:</strong> Required for authentication and session management. These cannot be disabled as they are necessary for the service to function</li>
@@ -212,7 +219,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">15. Children's Privacy</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">15. Children's Privacy</h2>
 					<p class="text-gray-700">
 						Freundebuch is not intended for use by children under the age of 16. We do not knowingly collect
 						personal data from children. If you believe we have collected data from a child, please contact us
@@ -221,7 +228,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">16. Changes to This Policy</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">16. Changes to This Policy</h2>
 					<p class="text-gray-700">
 						We may update this privacy policy from time to time. We will notify you of any significant changes by
 						posting the new policy on this page, updating the "Last updated" date, and where appropriate, notifying
@@ -230,7 +237,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">17. Contact Us</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">17. Contact Us</h2>
 					<p class="text-gray-700">
 						If you have any questions about this privacy policy, our data practices, or wish to exercise your rights,
 						please contact the operator of this Freundebuch instance or reach out through the project's
@@ -242,10 +249,10 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 			<div class="mt-10 pt-6 border-t border-gray-200">
 				<a
 					href="/"
-					class="text-sm text-gray-500 hover:text-forest font-body flex items-center gap-1"
+					class="inline-flex items-center gap-2 text-gray-600 hover:text-forest font-body text-sm transition-colors"
 				>
 					<ChevronLeft class="w-4 h-4" strokeWidth="2" />
-					Back to Home
+					{$i18n.t('common.backToHome')}
 				</a>
 			</div>
 		</div>

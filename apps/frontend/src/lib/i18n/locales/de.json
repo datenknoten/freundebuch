@@ -36,7 +36,8 @@
     "loadingResults": "Ergebnisse werden geladen...",
     "loadingFriends": "Freunde werden geladen...",
     "adding": "Wird hinzugefügt...",
-    "loadingRelationshipTypes": "Beziehungstypen werden geladen..."
+    "loadingRelationshipTypes": "Beziehungstypen werden geladen...",
+    "backToHome": "Zurück zur Startseite"
   },
   "nav": {
     "home": "Startseite",
@@ -1399,5 +1400,8 @@
       "invalidBody": "Dieser Autorisierungslink ist ungültig oder abgelaufen.",
       "backHome": "Zurück zur Startseite"
     }
+  },
+  "legal": {
+    "englishOnly": "Dieses Dokument ist nur auf Englisch verfügbar."
   }
 }
