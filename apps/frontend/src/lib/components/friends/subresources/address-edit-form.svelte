@@ -125,7 +125,7 @@ const parsedStreet = (() => parseStreetLine1(initialData?.streetLine1))();
     label={$i18n.t('subresources.common.label')}
     bind:value={label}
     {disabled}
-    placeholder="e.g., Main residence, Summer house"
+    placeholder={$i18n.t('subresources.address.placeholder.label')}
     optional
     optionalText={$i18n.t('common.optional')}
   />

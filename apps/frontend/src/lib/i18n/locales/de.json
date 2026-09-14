@@ -1282,7 +1282,12 @@
     "adding": "Wird hinzugefügt...",
     "pleaseSelectFriend": "Bitte wähle einen Freund aus",
     "failedToLoadTypes": "Beziehungstypen konnten nicht geladen werden",
-    "failedToAdd": "Beziehung konnte nicht hinzugefügt werden"
+    "failedToAdd": "Beziehung konnte nicht hinzugefügt werden",
+    "categories": {
+      "family": "Familie",
+      "professional": "Beruflich",
+      "social": "Sozial"
+    }
   },
   "employment": {
     "jobTitle": "Berufsbezeichnung",
@@ -1371,7 +1376,11 @@
         "other": "Sonstige"
       },
       "editAria": "Telefonnummer bearbeiten",
-      "deleteAria": "Telefonnummer löschen"
+      "deleteAria": "Telefonnummer löschen",
+      "placeholder": {
+        "number": "+49 151 12345678",
+        "label": "z. B. Privathandy, Durchwahl"
+      }
     },
     "email": {
       "emailAddress": "E-Mail-Adresse",
@@ -1382,7 +1391,11 @@
         "other": "Sonstige"
       },
       "editAria": "E-Mail-Adresse bearbeiten",
-      "deleteAria": "E-Mail-Adresse löschen"
+      "deleteAria": "E-Mail-Adresse löschen",
+      "placeholder": {
+        "address": "name@beispiel.de",
+        "label": "z. B. Haupt, Newsletter"
+      }
     },
     "address": {
       "address": "Adresse",
@@ -1396,7 +1409,10 @@
         "other": "Sonstige"
       },
       "editAria": "Adresse bearbeiten",
-      "deleteAria": "Adresse löschen"
+      "deleteAria": "Adresse löschen",
+      "placeholder": {
+        "label": "z. B. Hauptwohnsitz, Ferienhaus"
+      }
     },
     "url": {
       "url": "URL",
@@ -1407,7 +1423,11 @@
         "other": "Sonstige"
       },
       "editAria": "URL bearbeiten",
-      "deleteAria": "URL löschen"
+      "deleteAria": "URL löschen",
+      "placeholder": {
+        "url": "https://beispiel.de",
+        "label": "z. B. Portfolio, LinkedIn"
+      }
     },
     "date": {
       "date": "Datum",
@@ -1418,7 +1438,10 @@
         "other": "Sonstige"
       },
       "editAria": "Datum bearbeiten",
-      "deleteAria": "Datum löschen"
+      "deleteAria": "Datum löschen",
+      "placeholder": {
+        "label": "z. B. Hochzeitstag, Kennenlerntag"
+      }
     },
     "social": {
       "platform": "Plattform",
@@ -1434,7 +1457,11 @@
         "other": "Sonstige"
       },
       "editAria": "Soziales Profil bearbeiten",
-      "deleteAria": "Soziales Profil löschen"
+      "deleteAria": "Soziales Profil löschen",
+      "placeholder": {
+        "username": "@benutzername",
+        "profileUrl": "https://linkedin.com/in/benutzername"
+      }
     },
     "employment": {
       "primaryEmployment": "Als primär festlegen (wird in Kontaktkarten angezeigt)",
@@ -1477,5 +1504,29 @@
     "englishOnly": "Dieses Dokument ist nur auf Englisch verfügbar.",
     "privacyTitle": "Datenschutzerklärung",
     "termsTitle": "Nutzungsbedingungen"
+  },
+  "address": {
+    "street": "Straße",
+    "streetPlaceholder": "Straße suchen …",
+    "streetManualPlaceholder": "Straßennamen eingeben",
+    "houseNumber": "Hausnummer",
+    "houseNumberPlaceholder": "Suchen oder auswählen …",
+    "houseNumberManualPlaceholder": "Hausnummer eingeben",
+    "postalCode": "Postleitzahl",
+    "postalCodePlaceholder": "Postleitzahl eingeben",
+    "enterManually": "Manuell eingeben",
+    "streetLine2Placeholder": "Wohnung, Etage, Zusatz usw.",
+    "relationshipTypePlaceholder": "Beziehungsart suchen …",
+    "streetLine2": "Adresszusatz",
+    "postalCodeHint": "Gib mindestens 3 Zeichen ein",
+    "noMatchingStreets": "Keine passenden Straßen gefunden",
+    "noMatchingNumbers": "Keine passenden Hausnummern gefunden",
+    "noMatchingTypes": "Keine passenden Beziehungsarten gefunden"
+  },
+  "imageCrop": {
+    "title": "Foto zuschneiden",
+    "zoom": "Zoom",
+    "usePhoto": "Foto verwenden",
+    "processing": "Wird verarbeitet …"
   }
 }
