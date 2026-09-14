@@ -1,5 +1,9 @@
-<script>
+<script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
+import { createI18n } from '$lib/i18n/index.js';
+import { currentLanguage } from '$lib/stores/locale';
+
+const i18n = createI18n();
 </script>
 
 <svelte:head>
@@ -9,15 +13,18 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 <div class="bg-gray-50 min-h-screen py-12">
 	<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="bg-white rounded-xl shadow-lg p-8">
-			<h1 class="text-4xl font-heading text-forest mb-8">Terms of Service</h1>
+			<h1 class="text-3xl font-heading text-forest mb-8">Terms of Service</h1>
+			{#if $currentLanguage !== 'en'}
+				<p class="text-sm text-gray-500 font-body mb-6">{$i18n.t('legal.englishOnly')}</p>
+			{/if}
 
-			<div class="prose prose-gray max-w-none font-body space-y-6">
+			<div class="max-w-none font-body space-y-6">
 				<p class="text-gray-600">
 					Last updated: January 2026
 				</p>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">1. Acceptance of Terms</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">1. Acceptance of Terms</h2>
 					<p class="text-gray-700">
 						By accessing or using Freundebuch, you agree to be bound by these Terms of Service and all applicable
 						laws and regulations. If you do not agree with any of these terms, you are prohibited from using or
@@ -27,7 +34,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">2. Description of Service</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">2. Description of Service</h2>
 					<p class="text-gray-700">
 						Freundebuch is a personal relationship management application designed to help you maintain and
 						nurture your personal relationships. The service allows you to:
@@ -42,7 +49,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">3. User Accounts</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">3. User Accounts</h2>
 					<p class="text-gray-700">
 						To use Freundebuch, you must create an account. You are responsible for:
 					</p>
@@ -58,7 +65,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">4. Acceptable Use</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">4. Acceptable Use</h2>
 					<p class="text-gray-700">
 						You agree to use Freundebuch only for lawful purposes and in accordance with these Terms. You agree not to:
 					</p>
@@ -73,7 +80,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">5. User Content</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">5. User Content</h2>
 					<p class="text-gray-700">
 						You retain ownership of all content you create, upload, or store in Freundebuch ("User Content").
 						By using the service, you grant the service operator a limited license to process, store, and display
@@ -91,7 +98,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">6. Self-Hosted Instances</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">6. Self-Hosted Instances</h2>
 					<p class="text-gray-700">
 						Freundebuch is designed to be self-hosted. For self-hosted installations:
 					</p>
@@ -104,7 +111,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">7. Third-Party Services</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">7. Third-Party Services</h2>
 					<p class="text-gray-700">
 						Freundebuch may integrate with third-party services such as:
 					</p>
@@ -119,7 +126,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">8. Intellectual Property</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">8. Intellectual Property</h2>
 					<p class="text-gray-700">
 						The Freundebuch application, including its original content, features, and functionality, is owned
 						by its creators and is protected by international copyright, trademark, patent, trade secret, and
@@ -133,7 +140,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">9. Disclaimer of Warranties</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">9. Disclaimer of Warranties</h2>
 					<p class="text-gray-700">
 						THE SERVICE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT ANY WARRANTIES OF ANY KIND,
 						EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
@@ -147,7 +154,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">10. Limitation of Liability</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">10. Limitation of Liability</h2>
 					<p class="text-gray-700">
 						TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE SERVICE OPERATORS, DEVELOPERS, OR
 						CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES,
@@ -162,7 +169,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">11. Data Portability and Export</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">11. Data Portability and Export</h2>
 					<p class="text-gray-700">
 						You have the right to export your data at any time. Freundebuch supports standard data formats
 						including vCard for contacts. You can export your data through the application's settings or by
@@ -171,7 +178,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">12. Account Termination</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">12. Account Termination</h2>
 					<p class="text-gray-700">
 						You may terminate your account at any time by contacting the administrator of your Freundebuch instance
 						or using the account deletion feature if available. Upon termination:
@@ -188,7 +195,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">13. Governing Law</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">13. Governing Law</h2>
 					<p class="text-gray-700">
 						These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in
 						which the Freundebuch instance is hosted, without regard to its conflict of law provisions.
@@ -197,7 +204,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">14. Changes to Terms</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">14. Changes to Terms</h2>
 					<p class="text-gray-700">
 						We reserve the right to modify or replace these Terms at any time. If a revision is material, we
 						will provide at least 30 days' notice prior to any new terms taking effect. What constitutes a
@@ -210,7 +217,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">15. Severability</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">15. Severability</h2>
 					<p class="text-gray-700">
 						If any provision of these Terms is held to be unenforceable or invalid, such provision will be
 						changed and interpreted to accomplish the objectives of such provision to the greatest extent
@@ -219,7 +226,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 				</section>
 
 				<section>
-					<h2 class="text-2xl font-heading text-gray-800 mt-8 mb-4">16. Contact Us</h2>
+					<h2 class="text-2xl font-heading text-gray-900 mt-8 mb-4">16. Contact Us</h2>
 					<p class="text-gray-700">
 						If you have any questions about these Terms of Service, please contact the operator of this
 						Freundebuch instance or reach out through the project's
@@ -231,10 +238,10 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 			<div class="mt-10 pt-6 border-t border-gray-200">
 				<a
 					href="/"
-					class="text-sm text-gray-500 hover:text-forest font-body flex items-center gap-1"
+					class="inline-flex items-center gap-2 text-gray-600 hover:text-forest font-body text-sm transition-colors"
 				>
 					<ChevronLeft class="w-4 h-4" strokeWidth="2" />
-					Back to Home
+					{$i18n.t('common.backToHome')}
 				</a>
 			</div>
 		</div>

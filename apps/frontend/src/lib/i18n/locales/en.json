@@ -36,7 +36,8 @@
     "loadingResults": "Loading results...",
     "loadingFriends": "Loading friends...",
     "adding": "Adding...",
-    "loadingRelationshipTypes": "Loading relationship types..."
+    "loadingRelationshipTypes": "Loading relationship types...",
+    "backToHome": "Back to home"
   },
   "nav": {
     "home": "Home",
@@ -1399,5 +1400,8 @@
       "invalidBody": "This authorization link is invalid or has expired.",
       "backHome": "Back to home"
     }
+  },
+  "legal": {
+    "englishOnly": "This document is only available in English."
   }
 }
