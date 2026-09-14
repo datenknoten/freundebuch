@@ -1,7 +1,7 @@
 <script lang="ts">
-import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import { page } from '$app/stores';
 import EncounterForm from '$lib/components/encounters/encounter-form.svelte';
+import { PageShell } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { FriendSearchResult } from '$shared';
 
@@ -27,22 +27,11 @@ let preSelectedFriend = $derived.by<FriendSearchResult | undefined>(() => {
   <title>{$i18n.t('encounters.logNew')} | Freundebuch</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 p-4">
-  <div class="max-w-2xl mx-auto mt-8">
-    <div class="bg-white rounded-xl shadow-lg p-8">
-      <div class="mb-8">
-        <a
-          href="/encounters"
-          class="inline-flex items-center gap-2 text-gray-600 hover:text-forest font-body text-sm transition-colors"
-        >
-          <ChevronLeft class="w-4 h-4" strokeWidth="2" />
-          {$i18n.t('encounters.backToEncounters')}
-        </a>
-        <h1 class="text-3xl font-heading text-forest mt-4">{$i18n.t('encounters.logNew')}</h1>
-        <p class="text-gray-600 font-body mt-1">{$i18n.t('encounters.logNewSubtitle')}</p>
-      </div>
-
-      <EncounterForm {preSelectedFriend} />
-    </div>
-  </div>
-</div>
+<PageShell
+  width="form"
+  title={$i18n.t('encounters.logNew')}
+  subtitle={$i18n.t('encounters.logNewSubtitle')}
+  back={{ href: '/encounters', label: $i18n.t('encounters.backToEncounters') }}
+>
+  <EncounterForm {preSelectedFriend} />
+</PageShell>

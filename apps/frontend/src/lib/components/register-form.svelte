@@ -44,11 +44,6 @@ async function handleSubmit(e: SubmitEvent) {
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-6">
-	<div>
-		<h2 class="text-3xl font-heading text-forest mb-2">{$i18n.t('auth.register.title')}</h2>
-		<p class="text-gray-600 font-body">{$i18n.t('auth.register.subtitle')}</p>
-	</div>
-
 	{#if error.length > 0}
 		<AlertBanner variant="error">{error}</AlertBanner>
 	{/if}

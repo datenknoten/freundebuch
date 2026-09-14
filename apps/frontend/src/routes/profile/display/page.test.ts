@@ -1,6 +1,6 @@
 import { readable } from 'svelte/store';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { control, fireEvent, render, tick, useLanguage } from '$lib/test';
+import { control, fireEvent, render, screen, tick, useLanguage, waitFor } from '$lib/test';
 import DisplayPage from './+page.svelte';
 
 const updatePreferences = vi.fn().mockResolvedValue(undefined);
@@ -36,6 +36,9 @@ describe('profile display page', () => {
     await fireEvent.change(format, { target: { value: 'long' } });
     await tick();
     expect(updatePreferences).toHaveBeenCalledWith({ birthdayFormat: 'long' });
+    await waitFor(() => {
+      expect(screen.getByRole('status').textContent?.trim().length).toBeGreaterThan(0);
+    });
 
     await fireEvent.click(hints);
     await tick();

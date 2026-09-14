@@ -609,6 +609,9 @@
       "title": "Display Preferences",
       "subtitle": "Customize how information is displayed throughout the app."
     },
+    "display": {
+      "saved": "Preferences saved"
+    },
     "preferences": {
       "title": "Preferences",
       "language": "Language",
@@ -1206,6 +1209,11 @@
     "searchPlaceholder": "Search friends by name, email, phone, or notes...",
     "resultsFor_one": "{{count}} result for \"{{query}}\"",
     "resultsFor_other": "{{count}} results for \"{{query}}\"",
+    "matchSource": {
+      "email": "Email",
+      "phone": "Phone",
+      "notes": "Notes"
+    },
     "filtered": "(filtered)",
     "friendCount_one": "{{count}} friend",
     "friendCount_other": "{{count}} friends",
@@ -1439,6 +1447,8 @@
     }
   },
   "legal": {
-    "englishOnly": "This document is only available in English."
+    "englishOnly": "This document is only available in English.",
+    "privacyTitle": "Privacy Policy",
+    "termsTitle": "Terms of Service"
   }
 }

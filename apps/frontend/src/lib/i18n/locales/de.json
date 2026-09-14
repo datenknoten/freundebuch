@@ -609,6 +609,9 @@
       "title": "Anzeigeeinstellungen",
       "subtitle": "Passe an, wie Informationen in der App angezeigt werden."
     },
+    "display": {
+      "saved": "Einstellungen gespeichert"
+    },
     "preferences": {
       "title": "Einstellungen",
       "language": "Sprache",
@@ -1206,6 +1209,11 @@
     "searchPlaceholder": "Freunde nach Name, E-Mail, Telefon oder Notizen suchen...",
     "resultsFor_one": "{{count}} Ergebnis für \"{{query}}\"",
     "resultsFor_other": "{{count}} Ergebnisse für \"{{query}}\"",
+    "matchSource": {
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "notes": "Notizen"
+    },
     "filtered": "(gefiltert)",
     "friendCount_one": "{{count}} Freund",
     "friendCount_other": "{{count}} Freunde",
@@ -1439,6 +1447,8 @@
     }
   },
   "legal": {
-    "englishOnly": "Dieses Dokument ist nur auf Englisch verfügbar."
+    "englishOnly": "Dieses Dokument ist nur auf Englisch verfügbar.",
+    "privacyTitle": "Datenschutzerklärung",
+    "termsTitle": "Nutzungsbedingungen"
   }
 }

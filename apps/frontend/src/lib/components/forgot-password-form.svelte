@@ -37,11 +37,6 @@ async function handleSubmit(e: SubmitEvent) {
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-6">
-	<div>
-		<h2 class="text-3xl font-heading text-forest mb-2">Reset your password</h2>
-		<p class="text-gray-600 font-body">Enter your email to receive a password reset link</p>
-	</div>
-
 	{#if error.length > 0}
 		<AlertBanner variant="error">{error}</AlertBanner>
 	{/if}
