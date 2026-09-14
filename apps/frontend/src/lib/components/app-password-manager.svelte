@@ -5,7 +5,7 @@ import XMark from 'svelte-heros-v2/XMark.svelte';
 import type { AppPassword, CreateAppPasswordResult } from '$lib/api/app-passwords';
 import * as appPasswordsApi from '$lib/api/app-passwords';
 import AlertBanner from '$lib/components/alert-banner.svelte';
-import { FormInput } from '$lib/components/ui';
+import { codeClasses, FormInput } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import EmptyState from '$lib/components/ui/empty-state.svelte';
@@ -104,9 +104,9 @@ function formatDate(dateString: string | null): string {
   {/if}
 
   {#if createdPassword}
-    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+    <AlertBanner variant="success">
       <div class="flex justify-between items-start mb-2">
-        <h4 class="font-body font-semibold text-green-800">{$i18n.t('profile.appPasswords.created')}</h4>
+        <p class="font-semibold">{$i18n.t('profile.appPasswords.created')}</p>
         <button
           onclick={dismissCreatedPassword}
           class="text-green-600 hover:text-green-800"
@@ -115,16 +115,16 @@ function formatDate(dateString: string | null): string {
           <XMark class="w-5 h-5" strokeWidth="2" />
         </button>
       </div>
-      <p class="font-body text-sm text-green-700 mb-3">
+      <p class="mb-3">
         {$i18n.t('profile.appPasswords.copyNow')}
       </p>
-      <div class="bg-white border border-green-300 rounded px-3 py-2 font-mono text-lg select-all">
+      <code class="block {codeClasses.blockLg} select-all">
         {createdPassword.password}
-      </div>
-      <p class="font-body text-xs text-green-600 mt-2">
+      </code>
+      <p class="text-xs mt-2">
         {$i18n.t('profile.appPasswords.useWith')}
       </p>
-    </div>
+    </AlertBanner>
   {/if}
 
   <form onsubmit={handleCreate} class="flex items-end gap-2">

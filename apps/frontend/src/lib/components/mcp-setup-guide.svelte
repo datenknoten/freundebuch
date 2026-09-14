@@ -1,23 +1,40 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import TabNav from '$lib/components/tab-nav.svelte';
+import { codeClasses } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser } from '$lib/stores/auth';
+import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
 
 const i18n = createI18n();
 
 const mcpUrl = $derived(`${typeof window !== 'undefined' ? window.location.origin : ''}/mcp`);
 
-let activeTab = $state<'claude-ai' | 'claude-desktop' | 'claude-code' | 'other'>('claude-ai');
+type McpTab = 'claude-ai' | 'claude-desktop' | 'claude-code' | 'other';
+
+let activeTab = $state<McpTab>('claude-ai');
 let copied = $state(false);
+
+const tabs = $derived([
+  { id: 'claude-ai' as const, label: $i18n.t('profile.mcp.tabs.claudeAi') },
+  { id: 'claude-desktop' as const, label: $i18n.t('profile.mcp.tabs.claudeDesktop') },
+  { id: 'claude-code' as const, label: $i18n.t('profile.mcp.tabs.claudeCode') },
+  { id: 'other' as const, label: $i18n.t('profile.mcp.tabs.other') },
+]);
+
+function flagCopied() {
+  copied = true;
+  setTimeout(() => {
+    copied = false;
+  }, TRANSIENT_FEEDBACK_MS);
+}
 
 async function copyUrl() {
   try {
     await navigator.clipboard.writeText(mcpUrl);
-    copied = true;
-    setTimeout(() => {
-      copied = false;
-    }, 2000);
+    flagCopied();
   } catch {
     const input = document.createElement('input');
     input.value = mcpUrl;
@@ -25,10 +42,7 @@ async function copyUrl() {
     input.select();
     document.execCommand('copy');
     document.body.removeChild(input);
-    copied = true;
-    setTimeout(() => {
-      copied = false;
-    }, 2000);
+    flagCopied();
   }
 }
 
@@ -53,67 +67,49 @@ const claudeDesktopConfig = $derived(
 
 <div class="space-y-6">
   <!-- MCP Endpoint URL -->
-  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-    <h4 class="font-body font-semibold text-blue-800 mb-2">{$i18n.t('profile.mcp.endpointUrl')}</h4>
-    <div class="flex items-center gap-2">
-      <code class="flex-1 bg-white border border-blue-200 rounded px-3 py-2 font-mono text-sm break-all">
+  <AlertBanner variant="info" title={$i18n.t('profile.mcp.endpointUrl')}>
+    <div class="flex items-center gap-2 mt-2">
+      <code class="flex-1 {codeClasses.inline} break-all">
         {mcpUrl}
       </code>
       <Button size="sm" onclick={copyUrl} class="shrink-0">
         {copied ? $i18n.t('profile.mcp.copied') : $i18n.t('profile.mcp.copy')}
       </Button>
     </div>
-    <p class="font-body text-xs text-blue-600 mt-2">
+    <p class="text-xs mt-2">
       {$i18n.t('profile.mcp.useCredentials', { email: $currentUser?.email ?? 'your@email.com' })}
     </p>
-  </div>
+  </AlertBanner>
 
   <!-- App Password Reminder -->
-  <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-    <ExclamationTriangle class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" strokeWidth="2" />
-    <div>
-      <p class="font-body text-sm text-amber-800">
-        {$i18n.t('profile.mcp.appPasswordRequired')}
-      </p>
-      <a
-        href="/profile/app-passwords"
-        class="font-body text-sm text-amber-700 underline hover:text-amber-900 mt-1 inline-block"
-      >
-        {$i18n.t('profile.mcp.manageAppPasswords')}
-      </a>
+  <AlertBanner variant="warning">
+    <div class="flex items-start gap-3">
+      <ExclamationTriangle class="w-5 h-5 shrink-0 mt-0.5" strokeWidth="2" />
+      <div>
+        <p>
+          {$i18n.t('profile.mcp.appPasswordRequired')}
+        </p>
+        <a
+          href="/profile/app-passwords"
+          class="underline hover:text-yellow-900 mt-1 inline-block"
+        >
+          {$i18n.t('profile.mcp.manageAppPasswords')}
+        </a>
+      </div>
     </div>
-  </div>
+  </AlertBanner>
 
   <!-- Tabbed Setup Instructions -->
   <div class="border border-gray-200 rounded-lg overflow-hidden">
-    <div class="flex border-b border-gray-200">
-      <button
-        onclick={() => activeTab = 'claude-ai'}
-        class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'claude-ai' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
-      >
-        {$i18n.t('profile.mcp.tabs.claudeAi')}
-      </button>
-      <button
-        onclick={() => activeTab = 'claude-desktop'}
-        class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'claude-desktop' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
-      >
-        {$i18n.t('profile.mcp.tabs.claudeDesktop')}
-      </button>
-      <button
-        onclick={() => activeTab = 'claude-code'}
-        class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'claude-code' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
-      >
-        {$i18n.t('profile.mcp.tabs.claudeCode')}
-      </button>
-      <button
-        onclick={() => activeTab = 'other'}
-        class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'other' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
-      >
-        {$i18n.t('profile.mcp.tabs.other')}
-      </button>
-    </div>
+    <TabNav {tabs} active={activeTab} onselect={(id) => (activeTab = id)} />
 
-    <div class="p-6 bg-white">
+    <div
+      id="tabpanel-{activeTab}"
+      role="tabpanel"
+      aria-labelledby="tab-{activeTab}"
+      tabindex="-1"
+      class="p-6 bg-white"
+    >
       {#if activeTab === 'claude-ai'}
         <div class="space-y-4">
           <p class="font-body text-sm text-gray-700">
@@ -125,9 +121,9 @@ const claudeDesktopConfig = $derived(
             <li>{$i18n.t('profile.mcp.steps.claudeAi.step3')}</li>
             <li>{$i18n.t('profile.mcp.steps.claudeAi.step4')}</li>
           </ol>
-          <div class="bg-green-50 border border-green-200 rounded-lg p-3 font-body text-xs text-green-700">
+          <AlertBanner variant="success">
             {$i18n.t('profile.mcp.steps.claudeAi.note')}
-          </div>
+          </AlertBanner>
         </div>
       {:else if activeTab === 'claude-desktop'}
         <div class="space-y-4">
@@ -139,7 +135,7 @@ const claudeDesktopConfig = $derived(
             <li>{$i18n.t('profile.mcp.steps.claudeDesktop.step2')}</li>
             <li>{$i18n.t('profile.mcp.steps.claudeDesktop.step3')}</li>
           </ol>
-          <pre class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs font-mono overflow-x-auto">{claudeDesktopConfig}</pre>
+          <pre class={codeClasses.block}>{claudeDesktopConfig}</pre>
           <p class="font-body text-xs text-gray-500">
             {$i18n.t('profile.mcp.steps.claudeDesktop.note')}
           </p>
@@ -149,7 +145,7 @@ const claudeDesktopConfig = $derived(
           <p class="font-body text-sm text-gray-700">
             {$i18n.t('profile.mcp.steps.claudeCode.intro')}
           </p>
-          <pre class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs font-mono overflow-x-auto">claude mcp add freundebuch \
+          <pre class={codeClasses.block}>claude mcp add freundebuch \
   --transport http \
   --url {mcpUrl} \
   --header "Authorization: Basic &lt;base64-credentials&gt;"</pre>
@@ -163,11 +159,11 @@ const claudeDesktopConfig = $derived(
             {$i18n.t('profile.mcp.steps.other.intro')}
           </p>
           <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2 font-body text-sm">
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.transport')}:</span> <code class="text-xs">Streamable HTTP</code></div>
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.url')}:</span> <code class="text-xs">{mcpUrl}</code></div>
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.auth')}:</span> <code class="text-xs">HTTP Basic Auth</code></div>
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.username')}:</span> <code class="text-xs">{$currentUser?.email ?? 'your@email.com'}</code></div>
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.password')}:</span> <code class="text-xs">{$i18n.t('profile.mcp.steps.other.passwordValue')}</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.transport')}:</span> <code class={codeClasses.inline}>Streamable HTTP</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.url')}:</span> <code class="{codeClasses.inline} break-all">{mcpUrl}</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.auth')}:</span> <code class={codeClasses.inline}>HTTP Basic Auth</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.username')}:</span> <code class="{codeClasses.inline} break-all">{$currentUser?.email ?? 'your@email.com'}</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.password')}:</span> <code class={codeClasses.inline}>{$i18n.t('profile.mcp.steps.other.passwordValue')}</code></div>
           </div>
         </div>
       {/if}

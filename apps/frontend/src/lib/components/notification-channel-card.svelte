@@ -1,6 +1,7 @@
 <script lang="ts">
 import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
+import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
 import type { NotificationChannel } from '$shared';
 import TestMessageButton from './test-message-button.svelte';
 
@@ -48,7 +49,7 @@ function handleDelete() {
     confirmingDelete = true;
     setTimeout(() => {
       confirmingDelete = false;
-    }, 5000);
+    }, TRANSIENT_FEEDBACK_MS);
   }
 }
 </script>

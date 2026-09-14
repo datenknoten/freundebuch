@@ -1,9 +1,12 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import TabNav from '$lib/components/tab-nav.svelte';
+import { codeClasses } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser } from '$lib/stores/auth';
+import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
 
 const i18n = createI18n();
 
@@ -18,16 +21,28 @@ const carddavUrl = $derived(
   serverUrl || `${typeof window !== 'undefined' ? window.location.origin : ''}/carddav/`,
 );
 
-let activeTab = $state<'ios' | 'macos' | 'thunderbird'>('ios');
+type CardDavTab = 'ios' | 'macos' | 'thunderbird';
+
+let activeTab = $state<CardDavTab>('ios');
 let copied = $state(false);
+
+const tabs = $derived([
+  { id: 'ios' as const, label: $i18n.t('profile.carddav.ios') },
+  { id: 'macos' as const, label: $i18n.t('profile.carddav.macos') },
+  { id: 'thunderbird' as const, label: $i18n.t('profile.carddav.thunderbird') },
+]);
+
+function flagCopied() {
+  copied = true;
+  setTimeout(() => {
+    copied = false;
+  }, TRANSIENT_FEEDBACK_MS);
+}
 
 async function copyUrl() {
   try {
     await navigator.clipboard.writeText(carddavUrl);
-    copied = true;
-    setTimeout(() => {
-      copied = false;
-    }, 2000);
+    flagCopied();
   } catch {
     // Fallback for older browsers
     const input = document.createElement('input');
@@ -36,10 +51,7 @@ async function copyUrl() {
     input.select();
     document.execCommand('copy');
     document.body.removeChild(input);
-    copied = true;
-    setTimeout(() => {
-      copied = false;
-    }, 2000);
+    flagCopied();
   }
 }
 </script>
@@ -47,7 +59,7 @@ async function copyUrl() {
 <div class="space-y-6">
   <AlertBanner variant="info" title={$i18n.t('profile.carddav.serverUrl')}>
     <div class="flex items-center gap-2 mt-2">
-      <code class="flex-1 bg-white border border-blue-200 rounded px-3 py-2 font-mono text-sm break-all">
+      <code class="flex-1 {codeClasses.inline} break-all">
         {carddavUrl}
       </code>
       <Button size="sm" onclick={copyUrl} class="shrink-0">
@@ -60,28 +72,15 @@ async function copyUrl() {
   </AlertBanner>
 
   <div class="border border-gray-200 rounded-lg overflow-hidden">
-    <div class="flex border-b border-gray-200">
-      <button
-        onclick={() => activeTab = 'ios'}
-        class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'ios' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
-      >
-        {$i18n.t('profile.carddav.ios')}
-      </button>
-      <button
-        onclick={() => activeTab = 'macos'}
-        class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'macos' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
-      >
-        {$i18n.t('profile.carddav.macos')}
-      </button>
-      <button
-        onclick={() => activeTab = 'thunderbird'}
-        class="flex-1 px-4 py-3 font-body font-medium text-sm transition-colors {activeTab === 'thunderbird' ? 'bg-white text-forest border-b-2 border-forest' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
-      >
-        {$i18n.t('profile.carddav.thunderbird')}
-      </button>
-    </div>
+    <TabNav {tabs} active={activeTab} onselect={(id) => (activeTab = id)} />
 
-    <div class="p-4">
+    <div
+      id="tabpanel-{activeTab}"
+      role="tabpanel"
+      aria-labelledby="tab-{activeTab}"
+      tabindex="-1"
+      class="p-4"
+    >
       {#if activeTab === 'ios'}
         <ol class="list-decimal list-inside space-y-3 font-body text-gray-700">
           <li>{@html $i18n.t('profile.carddav.steps.ios.1')}</li>
