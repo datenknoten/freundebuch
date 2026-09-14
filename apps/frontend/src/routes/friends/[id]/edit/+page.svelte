@@ -3,6 +3,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import { page } from '$app/stores';
 import FriendForm from '$lib/components/friends/friend-form.svelte';
+import { Button, EmptyState } from '$lib/components/ui';
 import Spinner from '$lib/components/ui/spinner.svelte';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { currentFriend, friends, isFriendsLoading } from '$lib/stores/friends';
@@ -48,19 +49,14 @@ const pageTitle = $derived(
 
         <FriendForm friend={$currentFriend} />
       {:else if $friends.error}
-        <div class="text-center py-12">
-          <ExclamationTriangle class="mx-auto h-12 w-12 text-red-400" strokeWidth="2" />
-          <h3 class="mt-4 text-lg font-heading text-gray-900">Friend not found</h3>
-          <p class="mt-2 text-sm text-gray-600 font-body">
-            {$friends.error}
-          </p>
-          <a
-            href="/friends"
-            class="mt-4 inline-flex items-center gap-2 text-forest font-body font-semibold hover:text-forest-light"
-          >
-            Return to friends
-          </a>
-        </div>
+        <EmptyState
+          icon={ExclamationTriangle}
+          tone="error"
+          title="Friend not found"
+          description={$friends.error}
+        >
+          <Button variant="secondary" href="/friends">Return to friends</Button>
+        </EmptyState>
       {/if}
     </div>
   </div>
