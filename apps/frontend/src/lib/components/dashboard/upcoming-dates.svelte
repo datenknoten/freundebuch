@@ -1,8 +1,14 @@
 <script lang="ts">
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import FriendAvatar from '$lib/components/friends/friend-avatar.svelte';
-import EmptyState from '$lib/components/ui/empty-state.svelte';
-import { chipClasses } from '$lib/components/ui/styles';
+import {
+  Button,
+  chipClasses,
+  EmptyState,
+  headingClasses,
+  surfaceClasses,
+} from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { DateType, UpcomingDate } from '$shared';
 
@@ -78,8 +84,8 @@ function getDaysUntilClass(daysUntil: number): string {
 }
 </script>
 
-<div class="bg-white rounded-xl shadow-lg p-6">
-  <h3 class="text-xl font-heading text-gray-800 mb-4">{$i18n.t('dashboard.upcomingDates')}</h3>
+<div class={surfaceClasses.page}>
+  <h2 class="{headingClasses.widget} mb-4">{$i18n.t('dashboard.upcomingDates')}</h2>
 
   {#if isLoading}
     <div class="animate-pulse space-y-3">
@@ -94,15 +100,11 @@ function getDaysUntilClass(daysUntil: number): string {
       {/each}
     </div>
   {:else if error}
-    <div class="text-red-600 text-sm">{error}</div>
+    <AlertBanner variant="error">{error}</AlertBanner>
     {#if onRetry}
-      <button
-        type="button"
-        onclick={onRetry}
-        class="mt-3 text-sm font-body text-forest hover:text-forest-light"
-      >
+      <Button variant="ghostAccent" size="sm" class="mt-3" onclick={onRetry}>
         {$i18n.t('common.retry')}
-      </button>
+      </Button>
     {/if}
   {:else if upcomingDates.length === 0}
     <EmptyState

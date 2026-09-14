@@ -2,7 +2,8 @@
 import * as d3 from 'd3';
 import { onDestroy } from 'svelte';
 import Share from 'svelte-heros-v2/Share.svelte';
-import EmptyState from '$lib/components/ui/empty-state.svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import { Button, EmptyState, headingClasses, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   RELATIONSHIP_CATEGORIES,
@@ -254,8 +255,8 @@ onDestroy(() => {
 });
 </script>
 
-<div class="bg-white rounded-xl shadow-lg p-6">
-  <h3 class="text-xl font-heading text-gray-800 mb-4">{$i18n.t('dashboard.relationshipNetwork')}</h3>
+<div class={surfaceClasses.page}>
+  <h2 class="{headingClasses.widget} mb-4">{$i18n.t('dashboard.relationshipNetwork')}</h2>
 
   {#if isLoading}
     <div class="h-[400px] flex items-center justify-center">
@@ -265,36 +266,24 @@ onDestroy(() => {
       </div>
     </div>
   {:else if error}
-    <div class="h-[400px] flex items-center justify-center">
-      <div class="text-center">
-        <div class="text-red-600 text-sm">{error}</div>
-        {#if onRetry}
-          <button
-            type="button"
-            onclick={onRetry}
-            class="mt-3 text-sm font-body text-forest hover:text-forest-light"
-          >
-            {$i18n.t('common.retry')}
-          </button>
-        {/if}
-      </div>
-    </div>
+    <AlertBanner variant="error">{error}</AlertBanner>
+    {#if onRetry}
+      <Button variant="ghostAccent" size="sm" class="mt-3" onclick={onRetry}>
+        {$i18n.t('common.retry')}
+      </Button>
+    {/if}
   {:else if !graphData || graphData.nodes.length === 0}
-    <div class="h-[400px] flex items-center justify-center">
-      <EmptyState
-        icon={Share}
-        title={$i18n.t('dashboard.noRelationships')}
-        description={$i18n.t('dashboard.addRelationshipsHint')}
-      />
-    </div>
+    <EmptyState
+      icon={Share}
+      title={$i18n.t('dashboard.noRelationships')}
+      description={$i18n.t('dashboard.addRelationshipsHint')}
+    />
   {:else if graphData.links.length === 0}
-    <div class="h-[400px] flex items-center justify-center">
-      <EmptyState
-        icon={Share}
-        title={$i18n.t('dashboard.noConnections')}
-        description={$i18n.t('dashboard.addConnectionsHint')}
-      />
-    </div>
+    <EmptyState
+      icon={Share}
+      title={$i18n.t('dashboard.noConnections')}
+      description={$i18n.t('dashboard.addConnectionsHint')}
+    />
   {:else}
     <div bind:this={container} class="w-full h-[400px] overflow-hidden"></div>
 
