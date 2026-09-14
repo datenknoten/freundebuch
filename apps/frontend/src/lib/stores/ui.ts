@@ -250,12 +250,12 @@ export const FILTER_CATEGORY_KEYS: Record<string, string> = {
 /**
  * Reverse mapping: filter field names to keyboard keys (for display)
  */
-export const FILTER_CATEGORY_LABELS: Record<string, { key: string; label: string }> = {
-  country: { key: 'c', label: 'Country' },
-  city: { key: 'i', label: 'City' },
-  organization: { key: 'o', label: 'Organization' },
-  job_title: { key: 'j', label: 'Job Title' },
-  department: { key: 'd', label: 'Department' },
-  relationship_category: { key: 'r', label: 'Relationship' },
-  circles: { key: 'l', label: 'Circles' },
+export const FILTER_CATEGORY_LABELS: Record<string, { key: string; labelKey: string }> = {
+  country: { key: 'c', labelKey: 'facets.categories.country' },
+  city: { key: 'i', labelKey: 'facets.categories.city' },
+  organization: { key: 'o', labelKey: 'facets.categories.organization' },
+  job_title: { key: 'j', labelKey: 'facets.categories.jobTitle' },
+  department: { key: 'd', labelKey: 'facets.categories.department' },
+  relationship_category: { key: 'r', labelKey: 'facets.categories.relationship' },
+  circles: { key: 'l', labelKey: 'facets.categories.circles' },
 };
