@@ -7,6 +7,7 @@ export { default as FormInput } from './form-input.svelte';
 export { default as FormSelect } from './form-select.svelte';
 export { default as FormTextarea } from './form-textarea.svelte';
 export { default as Modal } from './modal.svelte';
+export { default as SearchInput } from './search-input.svelte';
 export { default as Spinner } from './spinner.svelte';
 export {
   type ButtonSize,

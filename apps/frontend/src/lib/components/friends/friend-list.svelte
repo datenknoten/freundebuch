@@ -5,7 +5,6 @@ import BarsArrowUp from 'svelte-heros-v2/BarsArrowUp.svelte';
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import FaceSmile from 'svelte-heros-v2/FaceSmile.svelte';
-import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
@@ -14,6 +13,7 @@ import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
 import Button from '$lib/components/ui/button.svelte';
 import EmptyState from '$lib/components/ui/empty-state.svelte';
+import SearchInput from '$lib/components/ui/search-input.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
@@ -408,37 +408,17 @@ function openFirstResult() {
 
 <div class="space-y-4">
   <!-- Search input (prominent) -->
-  <div class="relative">
-    <MagnifyingGlass class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth="2" />
-    <input
-      bind:this={inputElement}
-      type="text"
-      value={searchQuery}
-      oninput={(e) => handleSearchInput(e.currentTarget.value)}
-      onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); openFirstResult(); } }}
-      placeholder={$i18n.t('friendList.searchPlaceholder')}
-      class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
-      autocomplete="off"
-      data-search-input
-      aria-label={$i18n.t('aria.searchFriends')}
-    />
-    {#if isSearching}
-      <Spinner
-        size="md"
-        label={$i18n.t('common.searching')}
-        class="absolute right-4 top-1/2 -translate-y-1/2"
-      />
-    {:else if searchQuery}
-      <button
-        type="button"
-        onclick={clearSearch}
-        class="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-        aria-label={$i18n.t('aria.clearSearch')}
-      >
-        <XMark class="w-5 h-5" strokeWidth="2" />
-      </button>
-    {/if}
-  </div>
+  <SearchInput
+    bind:element={inputElement}
+    value={searchQuery}
+    oninput={handleSearchInput}
+    onsubmit={openFirstResult}
+    onclear={clearSearch}
+    busy={isSearching}
+    busyLabel={$i18n.t('common.searching')}
+    placeholder={$i18n.t('friendList.searchPlaceholder')}
+    ariaLabel={$i18n.t('aria.searchFriends')}
+  />
 
   {#if searchError}
     <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-body" role="alert">
