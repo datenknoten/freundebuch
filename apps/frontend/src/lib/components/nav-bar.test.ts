@@ -43,7 +43,7 @@ describe('NavBar search trigger', () => {
   it('opens the search store from the search button', async () => {
     render(NavBar);
 
-    const triggers = screen.getAllByLabelText('Search');
+    const triggers = screen.getAllByLabelText('aria.search');
     expect(triggers.length).toBeGreaterThan(0);
 
     await fireEvent.click(triggers[0]);

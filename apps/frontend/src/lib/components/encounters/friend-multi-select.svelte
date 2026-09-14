@@ -2,9 +2,12 @@
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
+
+const i18n = createI18n();
 
 interface Props {
   /** Selected friend IDs */
@@ -149,7 +152,7 @@ function handleFocus() {
             onclick={() => removeFriend(friend.id)}
             {disabled}
             class="text-forest hover:text-forest-dark transition-colors disabled:opacity-50"
-            aria-label="Remove {friend.displayName}"
+            aria-label={$i18n.t('aria.removeItem', { name: friend.displayName })}
           >
             <XMark class="w-4 h-4" strokeWidth="2" />
           </button>

@@ -65,7 +65,7 @@ function handleClickOutside(e: MouseEvent) {
     class="flex items-center gap-1.5 p-1 rounded-full hover:bg-gray-100 transition-colors {focusRing}"
     aria-expanded={isOpen}
     aria-haspopup="menu"
-    aria-label="User menu"
+    aria-label={$i18n.t('aria.userMenu')}
   >
     {#if $currentUser}
       <UserAvatar email={$currentUser.email} size="sm" />

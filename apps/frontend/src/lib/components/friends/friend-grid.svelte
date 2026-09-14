@@ -216,7 +216,7 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
         {/each}
         {#if isSearchMode}
           <th class="py-3 px-3 text-left w-24">
-            <span class="text-sm font-semibold text-gray-700 font-body">Match</span>
+            <span class="text-sm font-semibold text-gray-700 font-body">{$i18n.t('friendList.matchLabel')}</span>
           </th>
         {/if}
       </tr>
@@ -351,7 +351,7 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
               <Star class="w-4 h-4 text-amber-500" variation="solid" />
             {/if}
             {#if item.archivedAt}
-              <span class="{chipClasses.base} {chipClasses.neutral}">Archived</span>
+              <span class="{chipClasses.base} {chipClasses.neutral}">{$i18n.t('friendList.archived')}</span>
             {/if}
             {#if matchBadge}
               <span class={matchBadge.class}>

@@ -286,7 +286,7 @@ onMount(() => {
                     type="button"
                     onclick={(e) => handleDeleteRecentSearch(e, recentQuery)}
                     class="p-1 text-gray-400 hover:text-gray-600 rounded"
-                    aria-label="Remove from recent searches"
+                    aria-label={$i18n.t('aria.removeRecentSearch')}
                   >
                     <XMark class="w-4 h-4" strokeWidth="2" />
                   </button>
@@ -320,7 +320,10 @@ onMount(() => {
                     {#if friend.organization || friend.jobTitle}
                       <div class="font-body text-xs text-gray-500 truncate">
                         {#if friend.jobTitle && friend.organization}
-                          {friend.jobTitle} at {friend.organization}
+                          {$i18n.t('globalSearch.jobAtOrg', {
+                            jobTitle: friend.jobTitle,
+                            organization: friend.organization,
+                          })}
                         {:else if friend.jobTitle}
                           {friend.jobTitle}
                         {:else if friend.organization}
