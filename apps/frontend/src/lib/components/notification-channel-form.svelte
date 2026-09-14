@@ -126,7 +126,7 @@ function handleSubmit(event: SubmitEvent) {
       id="botToken"
       label={$i18n.t('profile.messagingReminders.fields.botToken')}
       bind:value={botToken}
-      placeholder={isEditMode ? '(unchanged)' : ''}
+      placeholder={isEditMode ? $i18n.t('profile.messagingReminders.unchanged') : ''}
       required={!isEditMode}
     />
     <FormInput
@@ -148,7 +148,7 @@ function handleSubmit(event: SubmitEvent) {
       id="accessToken"
       label={$i18n.t('profile.messagingReminders.fields.accessToken')}
       bind:value={accessToken}
-      placeholder={isEditMode ? '(unchanged)' : ''}
+      placeholder={isEditMode ? $i18n.t('profile.messagingReminders.unchanged') : ''}
       required={!isEditMode}
     />
     <FormInput
@@ -164,7 +164,9 @@ function handleSubmit(event: SubmitEvent) {
       label={$i18n.t('profile.messagingReminders.fields.webhookUrl')}
       bind:value={webhookUrl}
       type="url"
-      placeholder={isEditMode ? '(unchanged)' : 'https://discord.com/api/webhooks/...'}
+      placeholder={isEditMode
+        ? $i18n.t('profile.messagingReminders.unchanged')
+        : 'https://discord.com/api/webhooks/...'}
       required={!isEditMode}
     />
   {/if}
