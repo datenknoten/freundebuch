@@ -1,19 +1,21 @@
 <script lang="ts">
-import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
-import Heart from 'svelte-heros-v2/Heart.svelte';
-import Home from 'svelte-heros-v2/Home.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import { chipClasses, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   getKeyboardHint,
   isOpenCollectiveModeActive,
   openCollectiveModePrefix,
 } from '$lib/stores/ui';
-import { collectiveTypeI18nKey } from '$lib/utils/collective-types';
+import {
+  collectiveTypeI18nKey,
+  getTypeBadgeColor,
+  getTypeIconComponent,
+} from '$lib/utils/collective-types';
 import type { CollectiveListItem } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
@@ -68,37 +70,6 @@ function handleSort(column: ColumnDef) {
   }
 }
 
-// Icon component mapping for collective types
-function getTypeIconComponent(typeName: string): typeof Home {
-  switch (typeName.toLowerCase()) {
-    case 'family':
-      return Home;
-    case 'company':
-      return BuildingOffice;
-    case 'club':
-      return Users;
-    case 'friend group':
-      return Heart;
-    default:
-      return Users;
-  }
-}
-
-function getTypeBadgeColor(typeName: string): string {
-  switch (typeName.toLowerCase()) {
-    case 'family':
-      return 'bg-rose-100 text-rose-800';
-    case 'company':
-      return 'bg-blue-100 text-blue-800';
-    case 'club':
-      return 'bg-green-100 text-green-800';
-    case 'friend group':
-      return 'bg-purple-100 text-purple-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-}
-
 function formatDate(dateString: string | undefined): string {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -144,6 +115,7 @@ function formatDate(dateString: string | undefined): string {
     </thead>
     <tbody>
       {#each items as item, index (item.id)}
+        {@const TypeIcon = getTypeIconComponent(item.type.name)}
         <tr
           onclick={() => handleRowClick(item.id)}
           onkeydown={(e) => e.key === 'Enter' && handleRowClick(item.id)}
@@ -163,8 +135,8 @@ function formatDate(dateString: string | undefined): string {
 
           <!-- Type -->
           <td class="py-2 px-3">
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-body font-medium {getTypeBadgeColor(item.type.name)}">
-              <svelte:component this={getTypeIconComponent(item.type.name)} class="w-3 h-3" strokeWidth="2" />
+            <span class="{chipClasses.base} {getTypeBadgeColor(item.type.name)}">
+              <TypeIcon class="w-3 h-3" strokeWidth="2" />
               {$i18n.t(collectiveTypeI18nKey(item.type.name), { defaultValue: item.type.name })}
             </span>
           </td>
@@ -214,9 +186,10 @@ function formatDate(dateString: string | undefined): string {
 <!-- Mobile: Card view -->
 <div class="md:hidden space-y-2" role="list" aria-label="Collectives">
   {#each items as item, index (item.id)}
+    {@const TypeIcon = getTypeIconComponent(item.type.name)}
     <a
       href="/collectives/{item.id}"
-      class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all relative"
+      class="flex items-start gap-4 {surfaceClasses.cardInteractive} relative"
       class:opacity-60={item.deletedAt}
       data-sveltekit-preload-data="tap"
       data-shortcut="o {getKeyboardHint(index)}"
@@ -226,7 +199,7 @@ function formatDate(dateString: string | undefined): string {
 
       <!-- Type icon as avatar stand-in -->
       <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center {getTypeBadgeColor(item.type.name)}">
-        <svelte:component this={getTypeIconComponent(item.type.name)} class="w-5 h-5" strokeWidth="2" />
+        <TypeIcon class="w-5 h-5" strokeWidth="2" />
       </div>
 
       <div class="flex-1 min-w-0">
@@ -235,11 +208,11 @@ function formatDate(dateString: string | undefined): string {
             {item.name}
           </h3>
           <div class="flex items-center gap-2 shrink-0">
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-body font-medium {getTypeBadgeColor(item.type.name)}">
+            <span class="{chipClasses.base} {getTypeBadgeColor(item.type.name)}">
               {$i18n.t(collectiveTypeI18nKey(item.type.name), { defaultValue: item.type.name })}
             </span>
             {#if item.deletedAt}
-              <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{$i18n.t('collectives.deleted')}</span>
+              <span class="{chipClasses.base} {chipClasses.neutral}">{$i18n.t('collectives.deleted')}</span>
             {/if}
           </div>
         </div>
