@@ -1,8 +1,9 @@
 <script lang="ts">
-import { Button, Spinner } from '$lib/components/ui';
+import { Button, FormCheckbox, FormSelect, formClasses, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { previewMemberRelationships } from '$lib/stores/collectives';
 import type { CollectiveRole, FriendSearchResult, RelationshipPreviewResponse } from '$shared';
+import AlertBanner from '../alert-banner.svelte';
 import FriendSearchInput from '../friends/friend-search-input.svelte';
 import RelationshipPreview from './relationship-preview.svelte';
 
@@ -32,6 +33,11 @@ let existingMemberSet = $derived(new Set(existingMemberContactIds));
 // Form state
 let selectedFriend = $state<FriendSearchResult | null>(null);
 let selectedRoleId = $state(roles[0]?.id ?? '');
+let roleOptions = $derived(
+  [...roles]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((role) => ({ value: role.id, label: role.label })),
+);
 let skipAutoRelationships = $state(false);
 let preview = $state<RelationshipPreviewResponse | null>(null);
 
@@ -52,24 +58,15 @@ let createNewFriendHref = $derived.by(() => {
   return `/friends/new?${params.toString()}`;
 });
 
-async function handleFriendSelect(friend: FriendSearchResult, _viaKeyboard: boolean) {
+function handleFriendSelect(friend: FriendSearchResult, _viaKeyboard: boolean) {
   selectedFriend = friend;
-
-  // Load preview
-  await loadPreview();
 }
 
 function clearSelection() {
   selectedFriend = null;
-  preview = null;
 }
 
-async function loadPreview() {
-  if (!selectedFriend || !selectedRoleId) {
-    preview = null;
-    return;
-  }
-
+async function loadPreview(friend: FriendSearchResult, roleId: string) {
   previewAbortController?.abort();
   previewAbortController = new AbortController();
   const signal = previewAbortController.signal;
@@ -78,7 +75,7 @@ async function loadPreview() {
   try {
     const result = await previewMemberRelationships(
       collectiveId,
-      { friend_id: selectedFriend.id, role_id: selectedRoleId },
+      { friend_id: friend.id, role_id: roleId },
       { signal },
     );
     if (!signal.aborted) preview = result;
@@ -92,14 +89,19 @@ async function loadPreview() {
   }
 }
 
-async function handleRoleChange(e: Event) {
-  const select = e.target as HTMLSelectElement;
-  selectedRoleId = select.value;
+// The preview depends on both the friend and the role, so it is derived from
+// them rather than reloaded from each control's change handler.
+$effect(() => {
+  const friend = selectedFriend;
+  const roleId = selectedRoleId;
 
-  if (selectedFriend) {
-    await loadPreview();
+  if (friend === null || roleId === '') {
+    preview = null;
+    return;
   }
-}
+
+  void loadPreview(friend, roleId);
+});
 
 async function handleSubmit(e: Event) {
   e.preventDefault();
@@ -115,7 +117,10 @@ async function handleSubmit(e: Event) {
   try {
     await onAdd(selectedFriend.id, selectedRoleId, skipAutoRelationships);
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('collectives.addMember.error');
+    error =
+      err instanceof Error && err.message.length > 0
+        ? err.message
+        : $i18n.t('collectives.addMember.error');
   } finally {
     isSubmitting = false;
   }
@@ -123,19 +128,14 @@ async function handleSubmit(e: Event) {
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-4">
-  {#if error}
-    <div
-      class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm"
-      role="alert"
-    >
-      {error}
-    </div>
+  {#if error.length > 0}
+    <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
   <!-- Friend search -->
   <div>
-    <label for="member-search" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('collectives.addMember.friendLabel')} <span class="text-red-500">*</span>
+    <label for="member-search" class={formClasses.label}>
+      {$i18n.t('collectives.addMember.friendLabel')} <span class="text-red-500" aria-hidden="true">*</span>
     </label>
 
     <FriendSearchInput
@@ -163,22 +163,15 @@ async function handleSubmit(e: Event) {
   </div>
 
   <!-- Role select -->
-  <div>
-    <label for="role" class="block text-sm font-body font-medium text-gray-700 mb-1">
-      {$i18n.t('collectives.addMember.roleLabel')} <span class="text-red-500">*</span>
-    </label>
-    <select
-      id="role"
-      value={selectedRoleId}
-      onchange={handleRoleChange}
-      disabled={isSubmitting}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50"
-    >
-      {#each roles.sort((a, b) => a.sortOrder - b.sortOrder) as role (role.id)}
-        <option value={role.id}>{role.label}</option>
-      {/each}
-    </select>
-  </div>
+  <FormSelect
+    id="role"
+    label={$i18n.t('collectives.addMember.roleLabel')}
+    bind:value={selectedRoleId}
+    options={roleOptions}
+    disabled={isSubmitting}
+    size="sm"
+    required
+  />
 
   <!-- Relationship preview -->
   {#if selectedFriend && selectedRoleId}
@@ -196,16 +189,13 @@ async function handleSubmit(e: Event) {
 
         <!-- Skip auto-relationships checkbox (only when there are new relationships to create) -->
         {#if preview.relationships.some((r) => !r.alreadyExists)}
-          <label class="mt-3 flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
+          <div class="mt-3">
+            <FormCheckbox
+              id="skip-relationships"
+              label={$i18n.t('collectives.addMember.skipRelationships')}
               bind:checked={skipAutoRelationships}
-              class="rounded border-gray-300 text-forest focus:ring-forest"
             />
-            <span class="text-sm text-gray-600 font-body">
-              {$i18n.t('collectives.addMember.skipRelationships')}
-            </span>
-          </label>
+          </div>
         {/if}
       {:else}
         <p class="text-sm text-gray-500 font-body italic py-2">

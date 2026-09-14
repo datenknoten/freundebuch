@@ -1,6 +1,6 @@
 <script lang="ts">
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
-import Spinner from '$lib/components/ui/spinner.svelte';
+import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
 import type { PostalCodeInfo } from '$shared';
 
 interface Props {
@@ -101,7 +101,7 @@ export function focus() {
 </script>
 
 <div class="relative">
-  <label for="postal-code-input" class="block text-sm font-medium text-gray-700 font-body mb-1">Postal Code</label>
+  <label for="postal-code-input" class={formClasses.label}>Postal Code</label>
 
   <div class="relative">
     <input
@@ -115,7 +115,7 @@ export function focus() {
       onblur={handleBlur}
       placeholder="Enter postal code"
       {disabled}
-      class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+      class="{formClasses.inputSm} pr-10"
       autocomplete="off"
       role="combobox"
       aria-expanded={showDropdown}
@@ -132,7 +132,7 @@ export function focus() {
 
   {#if showDropdown && !isLoading && suggestions.length > 0}
     <ul
-      class="absolute z-(--z-popover) w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
       role="listbox"
     >
       {#each suggestions as suggestion, index}
@@ -151,6 +151,6 @@ export function focus() {
   {/if}
 
   {#if value && value.length < 3 && !disabled}
-    <p class="mt-1 text-xs text-gray-500 font-body">Enter at least 3 characters</p>
+    <p class={formClasses.helper}>Enter at least 3 characters</p>
   {/if}
 </div>

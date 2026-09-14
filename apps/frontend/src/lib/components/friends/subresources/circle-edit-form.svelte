@@ -1,8 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { autoFocus } from '$lib/actions/auto-focus';
 import CircleChip from '$lib/components/circles/circle-chip.svelte';
-import { createDirtyTracker, formClasses, Spinner } from '$lib/components/ui';
+import { createDirtyTracker, FormSelect, Spinner } from '$lib/components/ui';
 import { circles, circlesList } from '$lib/stores/circles';
 import type { Circle, CircleSummary } from '$shared';
 
@@ -48,6 +47,13 @@ let availableCirclesTree = $derived.by(() => {
   return buildTree(null, 0);
 });
 
+let circleOptions = $derived(
+  availableCirclesTree.map(({ circle, depth }) => ({
+    value: circle.id,
+    label: `${'\u00A0\u00A0\u00A0'.repeat(depth)}${circle.name}`,
+  })),
+);
+
 createDirtyTracker(
   () => {
     selectedCircleId;
@@ -86,24 +92,16 @@ export function getSelectedCircle(): Circle | undefined {
       {/if}
     </div>
   {:else}
-    <div>
-      <label for="circle-select" class={formClasses.label}>
-        Select Circle <span class="text-red-500">*</span>
-      </label>
-      <select
-        use:autoFocus
-        id="circle-select"
-        bind:value={selectedCircleId}
-        {disabled}
-        class={formClasses.select}
-        required
-      >
-        <option value="">Choose a circle...</option>
-        {#each availableCirclesTree as { circle, depth } (circle.id)}
-          <option value={circle.id}>{'\u00A0\u00A0\u00A0'.repeat(depth)}{circle.name}</option>
-        {/each}
-      </select>
-    </div>
+    <FormSelect
+      id="circle-select"
+      label="Select Circle"
+      bind:value={selectedCircleId}
+      options={circleOptions}
+      {disabled}
+      required
+      autofocus
+      placeholderOption="Choose a circle..."
+    />
 
     <!-- Preview of selected circle -->
     {#if selectedCircleId}

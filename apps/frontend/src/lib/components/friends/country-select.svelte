@@ -1,7 +1,7 @@
 <script lang="ts">
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
-import Spinner from '$lib/components/ui/spinner.svelte';
+import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { CountryInfo } from '$shared';
 
@@ -127,7 +127,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
 </script>
 
 <div class="relative">
-  <label for="country-input" class="block text-sm font-medium text-gray-700 font-body mb-1">{$i18n.t('countrySelect.label')}</label>
+  <label for="country-input" class={formClasses.label}>{$i18n.t('countrySelect.label')}</label>
 
   <div class="relative">
     {#if value && !showDropdown}
@@ -137,7 +137,10 @@ function handleButtonKeydown(e: KeyboardEvent) {
         onclick={activateInput}
         onkeydown={handleButtonKeydown}
         disabled={disabled || isLoading}
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg font-body text-sm flex items-center justify-between text-left focus:ring-2 focus:ring-forest focus:border-transparent {disabled || isLoading ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white cursor-pointer hover:border-gray-400'}"
+        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled ||
+        isLoading
+          ? 'opacity-50 cursor-not-allowed bg-gray-50'
+          : 'bg-white cursor-pointer hover:border-gray-400'}"
       >
         <div class="flex items-center gap-2">
           <span class="text-gray-500">{value}</span>
@@ -159,7 +162,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
           onfocus={handleFocus}
           placeholder={isLoading ? $i18n.t('countrySelect.loadingCountries') : $i18n.t('countrySelect.searchCountries')}
           disabled={disabled || isLoading}
-          class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          class="{formClasses.inputSm} pr-10"
           autocomplete="off"
           role="combobox"
           aria-expanded={showDropdown}
@@ -180,7 +183,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
   {#if showDropdown && !isLoading}
     <ul
       id="country-select-listbox"
-      class="absolute z-(--z-popover) w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
       role="listbox"
     >
       {#each filteredCountries() as country, index}

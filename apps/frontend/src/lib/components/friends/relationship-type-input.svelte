@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
+import { formClasses, surfaceClasses } from '$lib/components/ui';
 import type { RelationshipType, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
 
 interface Props {
@@ -174,7 +175,9 @@ function handleButtonKeydown(e: KeyboardEvent) {
         onclick={activateInput}
         onkeydown={handleButtonKeydown}
         {disabled}
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg font-body text-sm flex items-center justify-between text-left focus:ring-2 focus:ring-forest focus:border-transparent {disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white cursor-pointer hover:border-gray-400'}"
+        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled
+          ? 'opacity-50 cursor-not-allowed bg-gray-50'
+          : 'bg-white cursor-pointer hover:border-gray-400'}"
       >
         <div class="flex items-center gap-2">
           {#each allTypes().filter((t) => t.id === value) as type}
@@ -200,7 +203,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
         onfocus={handleFocus}
         placeholder="Search relationship types..."
         {disabled}
-        class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        class="{formClasses.inputSm} pr-10"
         autocomplete="off"
         role="combobox"
         aria-expanded={showDropdown}
@@ -216,7 +219,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
   {#if showDropdown}
     <ul
       id="relationship-type-listbox"
-      class="absolute z-(--z-popover) w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
       role="listbox"
     >
       {#each filteredTypes() as type, index}

@@ -1,5 +1,6 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
+import { FormInput } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser } from '$lib/stores/auth';
 
@@ -26,31 +27,20 @@ const i18n = createI18n();
   </div>
 
   <div class="space-y-6">
-    <div>
-      <label for="user-id" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-        {$i18n.t('profile.userId')}
-      </label>
-      <input
-        type="text"
-        id="user-id"
-        value={$currentUser?.externalId || ''}
-        disabled
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 font-body text-gray-600"
-      />
-      <p class="mt-1 text-xs font-body text-gray-500">{$i18n.t('profile.userIdHelp')}</p>
-    </div>
+    <FormInput
+      id="user-id"
+      label={$i18n.t('profile.userId')}
+      value={$currentUser?.externalId ?? ''}
+      helper={$i18n.t('profile.userIdHelp')}
+      disabled
+    />
 
-    <div>
-      <label for="email" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-        {$i18n.t('profile.emailAddress')}
-      </label>
-      <input
-        type="email"
-        id="email"
-        value={$currentUser?.email || ''}
-        disabled
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 font-body text-gray-600"
-      />
-    </div>
+    <FormInput
+      id="email"
+      type="email"
+      label={$i18n.t('profile.emailAddress')}
+      value={$currentUser?.email ?? ''}
+      disabled
+    />
   </div>
 </div>

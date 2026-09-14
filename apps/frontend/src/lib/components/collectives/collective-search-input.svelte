@@ -3,6 +3,7 @@ import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { autoFocus } from '$lib/actions/auto-focus';
+import { formClasses, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { CollectiveListItem } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
@@ -162,7 +163,9 @@ function handleClear() {
     {#if selectedCollective && !showDropdown}
       <!-- Show selected collective inline as a focusable control -->
       <div
-        class="w-full pl-3 pr-2 py-2 border border-gray-300 rounded-lg font-body text-sm flex items-center justify-between gap-2 {disabled ? 'opacity-50 bg-gray-50' : 'bg-white'}"
+        class="{formClasses.inputSm} pl-3 pr-2 flex items-center justify-between gap-2 {disabled
+          ? 'opacity-50 bg-gray-50'
+          : 'bg-white'}"
       >
         <button
           type="button"
@@ -207,7 +210,7 @@ function handleClear() {
         onfocus={handleFocus}
         placeholder={placeholder ?? $i18n.t('friendDetail.addToCollective.searchPlaceholder')}
         {disabled}
-        class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        class="{formClasses.inputSm} pr-10"
         autocomplete="off"
         role="combobox"
         aria-expanded={showDropdown}
@@ -223,7 +226,7 @@ function handleClear() {
   {#if showDropdown}
     <ul
       id="{id}-listbox"
-      class="absolute z-(--z-popover) w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
       role="listbox"
     >
       {#each filteredCollectives as collective, index (collective.id)}

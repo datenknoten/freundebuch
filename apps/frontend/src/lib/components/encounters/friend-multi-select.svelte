@@ -1,7 +1,7 @@
 <script lang="ts">
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
-import Spinner from '$lib/components/ui/spinner.svelte';
+import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
@@ -171,7 +171,7 @@ function handleFocus() {
         onfocus={handleFocus}
         {placeholder}
         {disabled}
-        class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        class="{formClasses.inputSm} pr-10"
         autocomplete="off"
         role="combobox"
         aria-expanded={showDropdown}
@@ -192,7 +192,7 @@ function handleFocus() {
     {#if showDropdown}
       <ul
         id="friend-multi-select-listbox"
-        class="absolute z-(--z-popover) w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
         role="listbox"
       >
         {#each filteredResults as friend, index (friend.id)}

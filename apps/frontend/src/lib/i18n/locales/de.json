@@ -290,6 +290,7 @@
     }
   },
   "auth": {
+    "passwordHelp": "Muss mindestens 8 Zeichen lang sein",
     "sessionExpired": {
       "title": "Deine Sitzung ist abgelaufen",
       "message": "Du wurdest abgemeldet. Melde dich erneut an, um genau dort weiterzumachen, wo du aufgehört hast.",
@@ -319,7 +320,6 @@
       "emailPlaceholder": "du@beispiel.de",
       "password": "Passwort",
       "passwordPlaceholder": "Erstelle ein Passwort",
-      "passwordHelp": "Muss mindestens 8 Zeichen lang sein",
       "confirmPassword": "Passwort bestätigen",
       "confirmPasswordPlaceholder": "Passwort wiederholen",
       "submit": "Konto erstellen",
