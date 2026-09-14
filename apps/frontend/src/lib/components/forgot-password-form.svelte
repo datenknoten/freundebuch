@@ -2,13 +2,14 @@
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import FormInput from '$lib/components/ui/form-input.svelte';
 
 let email = $state('');
 let isLoading = $state(false);
 let error = $state('');
 let success = $state(false);
 
-async function handleSubmit(e) {
+async function handleSubmit(e: SubmitEvent) {
   e.preventDefault();
   error = '';
   isLoading = true;
@@ -41,7 +42,7 @@ async function handleSubmit(e) {
 		<p class="text-gray-600 font-body">Enter your email to receive a password reset link</p>
 	</div>
 
-	{#if error}
+	{#if error.length > 0}
 		<AlertBanner variant="error">{error}</AlertBanner>
 	{/if}
 
@@ -53,21 +54,16 @@ async function handleSubmit(e) {
 	{/if}
 
 	{#if !success}
-		<div>
-			<label for="email" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-				Email address
-			</label>
-			<input
-				type="email"
-				id="email"
-				bind:value={email}
-				required
-				autocomplete="email"
-				class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-				placeholder="you@example.com"
-				disabled={isLoading}
-			/>
-		</div>
+		<FormInput
+			id="email"
+			type="email"
+			label="Email address"
+			bind:value={email}
+			placeholder="you@example.com"
+			autocomplete="email"
+			disabled={isLoading}
+			required
+		/>
 
 		<Button type="submit" block loading={isLoading}>Send reset link</Button>
 	{/if}

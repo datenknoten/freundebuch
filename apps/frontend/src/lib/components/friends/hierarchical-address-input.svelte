@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import * as addressApi from '$lib/api/address-lookup';
+import { formClasses } from '$lib/components/ui';
 import type {
   AddressType,
   CityInfo,
@@ -456,7 +457,7 @@ function emitChange() {
 
   <!-- Street Line 2 (always available) -->
   <div class="relative">
-    <label for="street-line-2-input" class="block text-sm font-medium text-gray-700 font-body mb-1">
+    <label for="street-line-2-input" class={formClasses.label}>
       Additional Address Info (optional)
     </label>
     <input
@@ -466,7 +467,7 @@ function emitChange() {
       oninput={handleStreetLine2Change}
       placeholder="Apartment, suite, floor, etc."
       {disabled}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+      class={formClasses.inputSm}
     />
   </div>
 </div>

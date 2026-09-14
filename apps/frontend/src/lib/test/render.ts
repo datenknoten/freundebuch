@@ -9,3 +9,21 @@
 export { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
 // `tick()` flushes pending Svelte state updates before assertions.
 export { tick } from 'svelte';
+
+/**
+ * Look up a form control by its `id`. Component tests assert against the id
+ * the form actually renders, so a missing control fails with the id rather
+ * than a null dereference several lines later.
+ */
+export function control(id: string): HTMLInputElement | HTMLSelectElement {
+  const el = document.querySelector(`#${id}`);
+  if (el === null) throw new Error(`no control with id ${id}`);
+  return el as HTMLInputElement | HTMLSelectElement;
+}
+
+/** The text of the `<label for=id>` bound to {@link control}'s field. */
+export function labelFor(id: string): string {
+  const el = document.querySelector(`label[for="${id}"]`);
+  if (el === null) throw new Error(`no label for ${id}`);
+  return el.textContent ?? '';
+}

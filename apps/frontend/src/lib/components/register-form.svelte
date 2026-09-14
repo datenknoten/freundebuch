@@ -1,8 +1,9 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
-import { autoFocus } from '$lib/actions/auto-focus';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import FormInput from '$lib/components/ui/form-input.svelte';
+import { formClasses } from '$lib/components/ui/styles';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
 
@@ -14,7 +15,7 @@ let confirmPassword = $state('');
 let isLoading = $state(false);
 let error = $state('');
 
-async function handleSubmit(e) {
+async function handleSubmit(e: SubmitEvent) {
   e.preventDefault();
   error = '';
 
@@ -48,72 +49,51 @@ async function handleSubmit(e) {
 		<p class="text-gray-600 font-body">{$i18n.t('auth.register.subtitle')}</p>
 	</div>
 
-	{#if error}
+	{#if error.length > 0}
 		<AlertBanner variant="error">{error}</AlertBanner>
 	{/if}
 
-	<div>
-		<label for="email" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-			{$i18n.t('auth.register.emailAddress')}
-		</label>
-		<input
-            use:autoFocus
-			type="email"
-			id="email"
-			bind:value={email}
-			required
-			autocomplete="email"
-			class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-			placeholder={$i18n.t('auth.register.emailPlaceholder')}
-			disabled={isLoading}
-		/>
-	</div>
+	<FormInput
+		id="email"
+		type="email"
+		label={$i18n.t('auth.register.emailAddress')}
+		bind:value={email}
+		placeholder={$i18n.t('auth.register.emailPlaceholder')}
+		autocomplete="email"
+		disabled={isLoading}
+		required
+		autofocus
+	/>
 
-	<div>
-		<label for="password" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-			{$i18n.t('auth.register.password')}
-		</label>
-		<input
-			type="password"
-			id="password"
-			bind:value={password}
-			required
-			autocomplete="new-password"
-			minlength="8"
-			class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-			placeholder="••••••••"
-			disabled={isLoading}
-		/>
-		<p class="mt-1 text-xs font-body text-gray-500">
-			{$i18n.t('auth.register.passwordHelp')}
-		</p>
-	</div>
+	<FormInput
+		id="password"
+		type="password"
+		label={$i18n.t('auth.register.password')}
+		bind:value={password}
+		placeholder="••••••••"
+		autocomplete="new-password"
+		minlength={8}
+		helper={$i18n.t('auth.passwordHelp')}
+		disabled={isLoading}
+		required
+	/>
 
-	<div>
-		<label for="confirm-password" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-			{$i18n.t('auth.register.confirmPassword')}
-		</label>
-		<input
-			type="password"
-			id="confirm-password"
-			bind:value={confirmPassword}
-			required
-			autocomplete="new-password"
-			minlength="8"
-			class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-			placeholder="••••••••"
-			disabled={isLoading}
-		/>
-	</div>
+	<FormInput
+		id="confirm-password"
+		type="password"
+		label={$i18n.t('auth.register.confirmPassword')}
+		bind:value={confirmPassword}
+		placeholder="••••••••"
+		autocomplete="new-password"
+		minlength={8}
+		helper={$i18n.t('auth.passwordHelp')}
+		disabled={isLoading}
+		required
+	/>
 
-	<div class="flex items-start">
-		<input
-			type="checkbox"
-			id="terms"
-			required
-			class="h-4 w-4 text-forest focus:ring-forest border-gray-300 rounded mt-1"
-		/>
-		<label for="terms" class="ml-2 block text-sm font-body text-gray-700">
+	<div class="flex items-start gap-2">
+		<input type="checkbox" id="terms" required class="{formClasses.checkbox} mt-1" />
+		<label for="terms" class={formClasses.checkboxLabel}>
 			{$i18n.t('auth.register.termsAgree')}
 			<a href="/terms" class="font-semibold text-forest hover:text-forest-light">
 				{$i18n.t('auth.register.termsOfService')}

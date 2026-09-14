@@ -1,5 +1,6 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
+import { FormCheckbox, FormSelect } from '$lib/components/ui';
 import { createI18n, languageNames } from '$lib/i18n/index.js';
 import { auth, birthdayFormat, showShortcutHints } from '$lib/stores/auth';
 import {
@@ -23,6 +24,17 @@ function handleLanguageChange(lang: SupportedLanguage) {
 function handleShortcutHintsChange(enabled: boolean) {
   auth.updatePreferences({ showShortcutHints: enabled });
 }
+
+let languageOptions = $derived(
+  supportedLanguages.map((lang) => ({ value: lang, label: languageNames[lang] })),
+);
+
+let birthdayFormatOptions = $derived([
+  { value: 'iso' as BirthdayFormat, label: $i18n.t('profile.preferences.birthdayFormats.iso') },
+  { value: 'us' as BirthdayFormat, label: $i18n.t('profile.preferences.birthdayFormats.us') },
+  { value: 'eu' as BirthdayFormat, label: $i18n.t('profile.preferences.birthdayFormats.eu') },
+  { value: 'long' as BirthdayFormat, label: $i18n.t('profile.preferences.birthdayFormats.long') },
+]);
 </script>
 
 <svelte:head>
@@ -43,55 +55,32 @@ function handleShortcutHintsChange(enabled: boolean) {
   </div>
 
   <div class="space-y-4">
-    <div>
-      <label for="language" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-        {$i18n.t('profile.preferences.language')}
-      </label>
-      <select
+    <div class="max-w-xs">
+      <FormSelect
         id="language"
-        value={$currentLanguage}
-        onchange={(e) => handleLanguageChange(e.currentTarget.value as SupportedLanguage)}
-        class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-      >
-        {#each supportedLanguages as lang}
-          <option value={lang}>{languageNames[lang]}</option>
-        {/each}
-      </select>
+        label={$i18n.t('profile.preferences.language')}
+        bind:value={() => $currentLanguage, handleLanguageChange}
+        options={languageOptions}
+      />
     </div>
 
-    <div>
-      <label for="birthday-format" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-        {$i18n.t('profile.preferences.birthdayFormat')}
-      </label>
-      <select
+    <div class="max-w-xs">
+      <FormSelect
         id="birthday-format"
-        value={$birthdayFormat}
-        onchange={(e) => handleBirthdayFormatChange(e.currentTarget.value as BirthdayFormat)}
-        class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-      >
-        <option value="iso">{$i18n.t('profile.preferences.birthdayFormats.iso')}</option>
-        <option value="us">{$i18n.t('profile.preferences.birthdayFormats.us')}</option>
-        <option value="eu">{$i18n.t('profile.preferences.birthdayFormats.eu')}</option>
-        <option value="long">{$i18n.t('profile.preferences.birthdayFormats.long')}</option>
-      </select>
-      <p class="mt-1 text-xs font-body text-gray-500">
-        {$i18n.t('profile.preferences.birthdayFormatHelp')}
-      </p>
+        label={$i18n.t('profile.preferences.birthdayFormat')}
+        bind:value={() => $birthdayFormat, handleBirthdayFormatChange}
+        options={birthdayFormatOptions}
+        helper={$i18n.t('profile.preferences.birthdayFormatHelp')}
+      />
     </div>
 
     <div>
-      <label class="flex items-center gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={$showShortcutHints}
-          onchange={(e) => handleShortcutHintsChange(e.currentTarget.checked)}
-          class="rounded border-gray-300 text-forest focus:ring-forest"
-        />
-        <span class="text-sm font-body font-semibold text-gray-700">
-          {$i18n.t('profile.preferences.shortcutHints')}
-        </span>
-      </label>
-      <p class="mt-1 text-xs font-body text-gray-500 ml-7">
+      <FormCheckbox
+        id="shortcut-hints"
+        label={$i18n.t('profile.preferences.shortcutHints')}
+        bind:checked={() => $showShortcutHints, handleShortcutHintsChange}
+      />
+      <p class="mt-1 text-xs font-body text-gray-500 ml-6">
         {$i18n.t('profile.preferences.shortcutHintsHelp')}
       </p>
     </div>

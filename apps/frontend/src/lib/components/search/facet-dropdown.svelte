@@ -1,7 +1,7 @@
 <script lang="ts">
 import { tick } from 'svelte';
 import Funnel from 'svelte-heros-v2/Funnel.svelte';
-import { Button, Modal } from '$lib/components/ui';
+import { Button, formClasses, Modal } from '$lib/components/ui';
 import {
   FILTER_CATEGORY_LABELS,
   filterModeCategory,
@@ -269,7 +269,7 @@ $effect(() => {
                         type="checkbox"
                         checked={isFilterActive(group.field, facet.value)}
                         onchange={() => toggleFilter(group.field, facet.value)}
-                        class="rounded border-gray-300 text-forest focus:ring-forest"
+                        class={formClasses.checkbox}
                       />
                       <span class="flex-1 truncate">{facet.value}</span>
                       <span class="text-xs text-gray-400">{facet.count}</span>
@@ -303,7 +303,7 @@ $effect(() => {
                         type="checkbox"
                         checked={isFilterActive(group.field, facet.value)}
                         onchange={() => toggleFilter(group.field, facet.value)}
-                        class="rounded border-gray-300 text-forest focus:ring-forest"
+                        class={formClasses.checkbox}
                       />
                       <span class="flex-1 truncate">{facet.value}</span>
                       <span class="text-xs text-gray-400">{facet.count}</span>
@@ -335,7 +335,7 @@ $effect(() => {
                       type="checkbox"
                       checked={isFilterActive(group.field, facet.value)}
                       onchange={() => toggleFilter(group.field, facet.value)}
-                      class="rounded border-gray-300 text-forest focus:ring-forest"
+                      class={formClasses.checkbox}
                     />
                     <span class="flex-1 capitalize">{facet.value}</span>
                     <span class="text-xs text-gray-400">{facet.count}</span>
@@ -365,7 +365,7 @@ $effect(() => {
                   type="checkbox"
                   checked={isFilterActive('circles', 'no-circle')}
                   onchange={() => toggleFilter('circles', 'no-circle')}
-                  class="rounded border-gray-300 text-forest focus:ring-forest"
+                  class={formClasses.checkbox}
                 />
                 <span class="flex-1 italic text-gray-500">No Circle</span>
               </label>
@@ -380,7 +380,7 @@ $effect(() => {
                     type="checkbox"
                     checked={isFilterActive('circles', circle.value)}
                     onchange={() => toggleFilter('circles', circle.value)}
-                    class="rounded border-gray-300 text-forest focus:ring-forest"
+                    class={formClasses.checkbox}
                   />
                   <CircleChip
                     circle={{ id: circle.value, name: circle.label, color: circle.color }}
@@ -420,7 +420,7 @@ $effect(() => {
                       type="checkbox"
                       checked={isFilterActive(group.field, facet.value)}
                       onchange={() => toggleFilter(group.field, facet.value)}
-                      class="rounded border-gray-300 text-forest focus:ring-forest"
+                      class={formClasses.checkbox}
                     />
                     <span class="flex-1 truncate">{facet.value}</span>
                     <span class="text-xs text-gray-400">{facet.count}</span>
@@ -451,7 +451,7 @@ $effect(() => {
                       type="checkbox"
                       checked={isFilterActive(group.field, facet.value)}
                       onchange={() => toggleFilter(group.field, facet.value)}
-                      class="rounded border-gray-300 text-forest focus:ring-forest"
+                      class={formClasses.checkbox}
                     />
                     <span class="flex-1 truncate">{facet.value}</span>
                     <span class="text-xs text-gray-400">{facet.count}</span>
@@ -480,7 +480,7 @@ $effect(() => {
                     type="checkbox"
                     checked={isFilterActive(group.field, facet.value)}
                     onchange={() => toggleFilter(group.field, facet.value)}
-                    class="rounded border-gray-300 text-forest focus:ring-forest"
+                    class={formClasses.checkbox}
                   />
                   <span class="flex-1 capitalize">{facet.value}</span>
                   <span class="text-xs text-gray-400">{facet.count}</span>
@@ -507,7 +507,7 @@ $effect(() => {
                 type="checkbox"
                 checked={isFilterActive('circles', 'no-circle')}
                 onchange={() => toggleFilter('circles', 'no-circle')}
-                class="rounded border-gray-300 text-forest focus:ring-forest"
+                class={formClasses.checkbox}
               />
               <span class="flex-1 italic text-gray-500">No Circle</span>
             </label>
@@ -520,7 +520,7 @@ $effect(() => {
                   type="checkbox"
                   checked={isFilterActive('circles', circle.value)}
                   onchange={() => toggleFilter('circles', circle.value)}
-                  class="rounded border-gray-300 text-forest focus:ring-forest"
+                  class={formClasses.checkbox}
                 />
                 <CircleChip
                   circle={{ id: circle.value, name: circle.label, color: circle.color }}
