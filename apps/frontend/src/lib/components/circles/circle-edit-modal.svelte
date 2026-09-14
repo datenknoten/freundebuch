@@ -1,7 +1,7 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import { autoFocus } from '$lib/actions/auto-focus';
-import { Button, Modal } from '$lib/components/ui';
+import { Button, formClasses, Modal } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
 import type { Circle, CircleInput } from '$shared';
@@ -196,7 +196,7 @@ function handleDismiss() {
     <form id={formId} onsubmit={handleSubmit} class="space-y-4">
       <!-- Name -->
       <div>
-        <label for="circle-name" class="block text-sm font-body font-semibold text-gray-700 mb-2">
+        <label for="circle-name" class={formClasses.label}>
           {$i18n.t('circles.form.name')}
         </label>
         <input
@@ -208,13 +208,13 @@ function handleDismiss() {
           maxlength="100"
           required
           disabled={isSubmitting}
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:bg-gray-100"
+          class={formClasses.input}
         />
       </div>
 
       <!-- Color -->
       <fieldset>
-        <legend class="block text-sm font-body font-semibold text-gray-700 mb-2">
+        <legend class={formClasses.label}>
           {$i18n.t('circles.form.color')}
         </legend>
         <div class="flex flex-wrap gap-2" role="radiogroup" aria-label={$i18n.t('aria.circleColor')}>
@@ -235,14 +235,14 @@ function handleDismiss() {
 
       <!-- Parent Circle -->
       <div>
-        <label for="parent-circle" class="block text-sm font-body font-semibold text-gray-700 mb-2">
+        <label for="parent-circle" class={formClasses.label}>
           {$i18n.t('circles.form.parentCircleOptional')}
         </label>
         <select
           id="parent-circle"
           bind:value={formParentId}
           disabled={isSubmitting}
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:bg-gray-100"
+          class={formClasses.input}
         >
           <option value={null}>{$i18n.t('circles.form.noParent')}</option>
           {#each getParentOptionsTree() as { circle: parentCircle, depth }}
@@ -256,7 +256,7 @@ function handleDismiss() {
 
       <!-- Preview -->
       <div>
-        <span class="block text-sm font-body font-semibold text-gray-700 mb-2">
+        <span class={formClasses.label}>
           {$i18n.t('circles.form.preview')}
         </span>
         <CircleChip circle={{ id: 'preview', name: formName || $i18n.t('circles.form.defaultName'), color: formColor }} size="md" />

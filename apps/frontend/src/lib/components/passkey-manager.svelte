@@ -4,6 +4,7 @@ import Key from 'svelte-heros-v2/Key.svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import { FormInput } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import EmptyState from '$lib/components/ui/empty-state.svelte';
@@ -164,14 +165,17 @@ function deviceTypeLabel(type: string | null): string {
             {#if editingId === pk.id}
               <form
                 onsubmit={(e) => { e.preventDefault(); saveEdit(pk.id); }}
-                class="flex items-center gap-2"
+                class="flex items-end gap-2"
               >
-                <input
-                  type="text"
-                  bind:value={editName}
-                  placeholder={$i18n.t('profile.passkeys.namePlaceholder')}
-                  class="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-                />
+                <div class="flex-1">
+                  <FormInput
+                    id="passkey-name-{pk.id}"
+                    label={$i18n.t('profile.passkeys.nameLabel')}
+                    bind:value={editName}
+                    placeholder={$i18n.t('profile.passkeys.namePlaceholder')}
+                    size="sm"
+                  />
+                </div>
                 <Button type="submit" variant="ghostAccent" size="sm">
                   {$i18n.t('common.save')}
                 </Button>

@@ -8,7 +8,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import type { CollectiveListParams } from '$lib/api/collectives';
-import { Button, EmptyState, SearchInput, Spinner } from '$lib/components/ui';
+import { Button, EmptyState, formClasses, SearchInput, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectivesList, collectiveTypes } from '$lib/stores/collectives';
 import { visibleCollectiveIds } from '$lib/stores/ui';
@@ -185,7 +185,7 @@ function openFirstResult() {
           id="type-filter"
           value={selectedTypeId}
           onchange={handleTypeChange}
-          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
+          class={formClasses.inputSm}
           aria-label={$i18n.t('aria.filterByType')}
         >
           <option value="">{$i18n.t('collectives.allTypes')}</option>
@@ -204,7 +204,7 @@ function openFirstResult() {
           onchange={(e) => {
             sortBy = e.currentTarget.value as 'name' | 'created_at' | 'member_count';
           }}
-          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
+          class={formClasses.inputSm}
           aria-label={$i18n.t('aria.sortBy')}
         >
           <option value="name">{$i18n.t('friendList.name')}</option>

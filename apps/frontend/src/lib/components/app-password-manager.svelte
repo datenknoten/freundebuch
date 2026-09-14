@@ -5,6 +5,7 @@ import XMark from 'svelte-heros-v2/XMark.svelte';
 import type { AppPassword, CreateAppPasswordResult } from '$lib/api/app-passwords';
 import * as appPasswordsApi from '$lib/api/app-passwords';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import { FormInput } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import EmptyState from '$lib/components/ui/empty-state.svelte';
@@ -126,14 +127,16 @@ function formatDate(dateString: string | null): string {
     </div>
   {/if}
 
-  <form onsubmit={handleCreate} class="flex gap-2">
-    <input
-      type="text"
-      bind:value={newPasswordName}
-      placeholder={$i18n.t('profile.appPasswords.namePlaceholder')}
-      disabled={isCreating}
-      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:bg-gray-100"
-    />
+  <form onsubmit={handleCreate} class="flex items-end gap-2">
+    <div class="flex-1">
+      <FormInput
+        id="app-password-name"
+        label={$i18n.t('profile.appPasswords.nameLabel')}
+        bind:value={newPasswordName}
+        placeholder={$i18n.t('profile.appPasswords.namePlaceholder')}
+        disabled={isCreating}
+      />
+    </div>
     <Button type="submit" loading={isCreating} disabled={newPasswordName.trim().length === 0}>
       {$i18n.t('profile.appPasswords.create')}
     </Button>
