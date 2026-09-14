@@ -3,11 +3,10 @@ import { onMount } from 'svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
-import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import type { EncounterListParams } from '$lib/api/encounters';
-import { Button, EmptyState, Spinner } from '$lib/components/ui';
+import { Button, EmptyState, SearchInput, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters, encountersList } from '$lib/stores/encounters';
 import { visibleEncounterIds } from '$lib/stores/ui';
@@ -118,19 +117,14 @@ function goToPage(page: number) {
       <label for="encounter-search" class="block text-sm font-body font-medium text-gray-700 mb-1">
         {$i18n.t('encounters.search')}
       </label>
-      <div class="relative">
-        <MagnifyingGlass class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth="2" />
-        <input
-          id="encounter-search"
-          type="text"
-          value={searchQuery}
-          oninput={(e) => handleSearchInput(e.currentTarget.value)}
-          onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); openFirstResult(); } }}
-          placeholder={$i18n.t('encounters.searchPlaceholder')}
-          class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          data-search-input
-        />
-      </div>
+      <SearchInput
+        id="encounter-search"
+        value={searchQuery}
+        oninput={handleSearchInput}
+        onsubmit={openFirstResult}
+        placeholder={$i18n.t('encounters.searchPlaceholder')}
+        ariaLabel={$i18n.t('encounters.search')}
+      />
     </div>
 
     <!-- Type filter -->

@@ -13,17 +13,20 @@
  *   shadow finish together
  */
 
+/**
+ * The focus treatment every text control shares. Non-text controls use
+ * `focusRing` below instead, which adds a ring offset a boxed control has no
+ * room for.
+ */
+const inputFocus = 'focus:ring-2 focus:ring-forest focus:border-transparent';
+
 export const formClasses = {
-  input:
-    'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:opacity-50 disabled:cursor-not-allowed',
-  inputSm:
-    'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:opacity-50 disabled:cursor-not-allowed',
-  select:
-    'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:opacity-50 disabled:cursor-not-allowed',
+  input: `w-full px-3 py-2 border border-gray-300 rounded-lg ${inputFocus} font-body disabled:opacity-50 disabled:cursor-not-allowed`,
+  inputSm: `w-full px-3 py-2 text-sm border border-gray-300 rounded-lg ${inputFocus} font-body disabled:opacity-50 disabled:cursor-not-allowed`,
+  select: `w-full px-3 py-2 border border-gray-300 rounded-lg ${inputFocus} font-body disabled:opacity-50 disabled:cursor-not-allowed`,
   checkbox:
     'w-4 h-4 text-forest border-gray-300 rounded focus:ring-forest disabled:opacity-50 disabled:cursor-not-allowed',
-  textarea:
-    'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:opacity-50 disabled:cursor-not-allowed resize-none',
+  textarea: `w-full px-3 py-2 border border-gray-300 rounded-lg ${inputFocus} font-body disabled:opacity-50 disabled:cursor-not-allowed resize-none`,
   label: 'block text-sm font-body font-medium text-gray-700 mb-1',
   checkboxLabel: 'text-sm font-body text-gray-700',
   /** Field-level validation message, rendered below the control. */
@@ -32,6 +35,8 @@ export const formClasses = {
   inputError: 'border-red-500 focus-visible:ring-red-500',
   /** Static hint below a control (password rules, formats, examples). */
   helper: 'mt-1 text-xs text-gray-500 font-body',
+  /** For a text control built outside these recipes (the page search field). */
+  inputFocus,
 } as const;
 
 /** Keyboard-only focus ring for controls that are not text inputs. */

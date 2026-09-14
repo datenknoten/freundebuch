@@ -1,6 +1,5 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { replaceState } from '$app/navigation';
@@ -10,7 +9,7 @@ import AlertBanner from '$lib/components/alert-banner.svelte';
 import CircleEditModal from '$lib/components/circles/circle-edit-modal.svelte';
 import DetailActions from '$lib/components/friends/subresources/detail-actions.svelte';
 import SwipeableRow from '$lib/components/friends/subresources/swipeable-row.svelte';
-import { Button, EmptyState, Spinner } from '$lib/components/ui';
+import { Button, EmptyState, SearchInput, Spinner } from '$lib/components/ui';
 import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
@@ -201,16 +200,12 @@ function getActualDepth(circle: Circle): number {
       <!-- Search + count toolbar -->
       {#if hasLoaded && $circlesList.length > 0}
         <div class="mb-6">
-          <div class="relative">
-            <MagnifyingGlass class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth="2" />
-            <input
-              type="search"
-              bind:value={searchQuery}
-              placeholder={$i18n.t('circles.searchPlaceholder')}
-              aria-label={$i18n.t('circles.searchPlaceholder')}
-              class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg font-body text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
-            />
-          </div>
+          <SearchInput
+            bind:value={searchQuery}
+            onclear={() => (searchQuery = '')}
+            placeholder={$i18n.t('circles.searchPlaceholder')}
+            ariaLabel={$i18n.t('circles.searchPlaceholder')}
+          />
           <div class="mt-3 text-sm font-body text-gray-600">
             {$i18n.t('circles.circleCount', { count: visibleCircles.length })}
             {#if isSearching}

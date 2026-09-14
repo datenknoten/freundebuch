@@ -4,13 +4,11 @@ import BarsArrowDown from 'svelte-heros-v2/BarsArrowDown.svelte';
 import BarsArrowUp from 'svelte-heros-v2/BarsArrowUp.svelte';
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
-import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
-import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import type { CollectiveListParams } from '$lib/api/collectives';
-import { Button, EmptyState, Spinner } from '$lib/components/ui';
+import { Button, EmptyState, SearchInput, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectivesList, collectiveTypes } from '$lib/stores/collectives';
 import { visibleCollectiveIds } from '$lib/stores/ui';
@@ -156,31 +154,15 @@ function openFirstResult() {
 
 <div class="space-y-4">
   <!-- Search input (prominent, matching friend list style) -->
-  <div class="relative">
-    <MagnifyingGlass class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth="2" />
-    <input
-      id="collective-search"
-      type="text"
-      value={searchQuery}
-      oninput={(e) => handleSearchInput(e.currentTarget.value)}
-      onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); openFirstResult(); } }}
-      placeholder={$i18n.t('collectives.searchPlaceholder')}
-      class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
-      autocomplete="off"
-      data-search-input
-      aria-label={$i18n.t('aria.searchCollectives')}
-    />
-    {#if searchQuery}
-      <button
-        type="button"
-        onclick={clearFilters}
-        class="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-        aria-label={$i18n.t('aria.clearSearch')}
-      >
-        <XMark class="w-5 h-5" strokeWidth="2" />
-      </button>
-    {/if}
-  </div>
+  <SearchInput
+    id="collective-search"
+    value={searchQuery}
+    oninput={handleSearchInput}
+    onsubmit={openFirstResult}
+    onclear={clearFilters}
+    placeholder={$i18n.t('collectives.searchPlaceholder')}
+    ariaLabel={$i18n.t('aria.searchCollectives')}
+  />
 
   <!-- Unified Control Bar (matching friend list style) -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-2 border-b border-gray-200">
