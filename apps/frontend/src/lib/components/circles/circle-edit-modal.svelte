@@ -1,7 +1,7 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
-import { autoFocus } from '$lib/actions/auto-focus';
-import { Button, formClasses, Modal } from '$lib/components/ui';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import { Button, FormInput, formClasses, headingClasses, Modal } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
 import type { Circle, CircleInput } from '$shared';
@@ -27,6 +27,7 @@ let formName = $state('');
 let formColor = $state<string>(CIRCLE_COLORS[5]);
 let formParentId = $state<string | null>(null);
 let formError = $state('');
+let nameError = $state<string | undefined>(undefined);
 let isSubmitting = $state(false);
 let showUnsavedWarning = $state(false);
 
@@ -41,6 +42,7 @@ $effect(() => {
     formColor = circle?.color ?? CIRCLE_COLORS[5];
     formParentId = circle?.parentCircleId ?? null;
     formError = '';
+    nameError = undefined;
     initializedForCircleId = circleId;
   }
 });
@@ -88,9 +90,10 @@ function getParentOptionsTree(): Array<{ circle: Circle; depth: number }> {
 async function handleSubmit(e: SubmitEvent) {
   e.preventDefault();
   formError = '';
+  nameError = undefined;
 
-  if (!formName.trim()) {
-    formError = 'Circle name is required';
+  if (formName.trim().length === 0) {
+    nameError = $i18n.t('circles.form.nameRequired');
     return;
   }
 
@@ -111,7 +114,10 @@ async function handleSubmit(e: SubmitEvent) {
 
     onClose();
   } catch (err) {
-    formError = (err as Error)?.message || 'Failed to save circle';
+    formError =
+      err instanceof Error && err.message.length > 0
+        ? err.message
+        : $i18n.t('circles.form.saveError');
   } finally {
     isSubmitting = false;
   }
@@ -187,7 +193,7 @@ function handleDismiss() {
   {#if showUnsavedWarning}
     <div class="text-center">
       <ExclamationTriangle class="w-12 h-12 mx-auto text-amber-500 mb-4" strokeWidth="2" />
-      <h3 class="text-lg font-heading text-gray-900 mb-2">
+      <h3 class="{headingClasses.sub} mb-2">
         {$i18n.t('circles.unsavedChanges.title')}
       </h3>
       <p class="text-gray-600 font-body">{$i18n.t('circles.unsavedChanges.message')}</p>
@@ -195,22 +201,17 @@ function handleDismiss() {
   {:else}
     <form id={formId} onsubmit={handleSubmit} class="space-y-4">
       <!-- Name -->
-      <div>
-        <label for="circle-name" class={formClasses.label}>
-          {$i18n.t('circles.form.name')}
-        </label>
-        <input
-          use:autoFocus
-          type="text"
-          id="circle-name"
-          bind:value={formName}
-          placeholder={$i18n.t('circles.form.namePlaceholder')}
-          maxlength="100"
-          required
-          disabled={isSubmitting}
-          class={formClasses.input}
-        />
-      </div>
+      <FormInput
+        id="circle-name"
+        label={$i18n.t('circles.form.name')}
+        bind:value={formName}
+        placeholder={$i18n.t('circles.form.namePlaceholder')}
+        disabled={isSubmitting}
+        error={nameError}
+        autofocus
+        maxlength={100}
+        required
+      />
 
       <!-- Color -->
       <fieldset>
@@ -223,7 +224,7 @@ function handleDismiss() {
               type="button"
               onclick={() => formColor = color}
               disabled={isSubmitting}
-              class="w-8 h-8 rounded-full border-2 transition-all {formColor === color ? 'border-gray-800 scale-110' : 'border-transparent hover:border-gray-400'}"
+              class="w-8 h-8 rounded-full border-2 transition-colors {formColor === color ? 'border-gray-800 scale-110' : 'border-transparent hover:border-gray-400'}"
               style:background-color={color}
               aria-label={$i18n.t('aria.selectColor', { color })}
               aria-pressed={formColor === color}
@@ -263,10 +264,8 @@ function handleDismiss() {
       </div>
 
       <!-- Error message -->
-      {#if formError}
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {formError}
-        </div>
+      {#if formError.length > 0}
+        <AlertBanner variant="error">{formError}</AlertBanner>
       {/if}
     </form>
   {/if}

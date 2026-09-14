@@ -18,6 +18,8 @@ interface Props {
   autocomplete?: HTMLInputAttributes['autocomplete'];
   /** Native minimum length, mirrored by server-side validation. */
   minlength?: number;
+  /** Native maximum length, mirrored by server-side validation. */
+  maxlength?: number;
   /** Validation message; also marks the control invalid. */
   error?: string;
   /** Static hint (format, password rules) rendered below the control. */
@@ -38,6 +40,7 @@ let {
   autofocus = false,
   autocomplete,
   minlength,
+  maxlength,
   error,
   helper,
   size = 'md',
@@ -65,6 +68,7 @@ const describedBy = $derived(
     {placeholder}
     {autocomplete}
     {minlength}
+    {maxlength}
     class="{size === 'sm' ? formClasses.inputSm : formClasses.input}{error !== undefined
       ? ` ${formClasses.inputError}`
       : ''}"

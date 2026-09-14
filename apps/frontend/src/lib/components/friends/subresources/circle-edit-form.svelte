@@ -2,11 +2,14 @@
 import { onMount } from 'svelte';
 import CircleChip from '$lib/components/circles/circle-chip.svelte';
 import { createDirtyTracker, FormSelect, Spinner } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
 import type { Circle, CircleSummary } from '$shared';
 
+const i18n = createI18n();
+
 interface Props {
-  /** Circles the friend is already assigned to (to exclude from selection) */
+  /** Circles the owner (friend or collective) already belongs to. */
   existingCircles?: CircleSummary[];
   disabled?: boolean;
   onchange?: () => void;
@@ -80,27 +83,27 @@ export function getSelectedCircle(): Circle | undefined {
   {#if $circles.isLoading}
     <div class="flex items-center gap-2 text-gray-500 font-body">
       <Spinner size="sm" tone="current" />
-      Loading circles...
+      {$i18n.t('subresources.circle.loading')}
     </div>
   {:else if availableCircles.length === 0}
     <div class="text-gray-500 font-body">
       {#if $circlesList.length === 0}
-        <p>No circles created yet.</p>
-        <p class="text-sm mt-1">Create circles in the Circles management page to organize your friends.</p>
+        <p>{$i18n.t('subresources.circle.noneCreated')}</p>
+        <p class="text-sm mt-1">{$i18n.t('subresources.circle.noneCreatedHint')}</p>
       {:else}
-        <p>This friend is already in all available circles.</p>
+        <p>{$i18n.t('subresources.circle.allAssigned')}</p>
       {/if}
     </div>
   {:else}
     <FormSelect
       id="circle-select"
-      label="Select Circle"
+      label={$i18n.t('subresources.circle.select')}
       bind:value={selectedCircleId}
       options={circleOptions}
       {disabled}
       required
       autofocus
-      placeholderOption="Choose a circle..."
+      placeholderOption={$i18n.t('subresources.circle.selectPlaceholder')}
     />
 
     <!-- Preview of selected circle -->
@@ -108,7 +111,7 @@ export function getSelectedCircle(): Circle | undefined {
       {@const selectedCircle = availableCircles.find((c) => c.id === selectedCircleId)}
       {#if selectedCircle}
         <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-500 font-body">Preview:</span>
+          <span class="text-sm text-gray-500 font-body">{$i18n.t('subresources.circle.preview')}</span>
           <CircleChip circle={selectedCircle} size="md" />
         </div>
       {/if}
