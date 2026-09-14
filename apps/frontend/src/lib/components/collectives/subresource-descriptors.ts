@@ -61,7 +61,13 @@ import {
   UrlEditForm,
   UrlRow,
 } from '../friends/subresources';
-import { asFormComponent, itemAs, type SubresourceDescriptor } from '../subresources/types';
+import {
+  type AddDetailOption,
+  addDetailOption,
+  asFormComponent,
+  itemAs,
+  type SubresourceDescriptor,
+} from '../subresources/types';
 
 /**
  * The descriptor shape, the item/form types and the `itemAs` reader all live in
@@ -244,3 +250,8 @@ export { circleDescriptor };
  * window event that opens its add modal, so the picker stays data-driven.
  */
 export const detailDescriptors: SubresourceDescriptor[] = [...contactDescriptors, circleDescriptor];
+
+/** The same set as menu entries for the shared add-detail dropdown and sheet. */
+export const collectiveAddDetailOptions: AddDetailOption[] = detailDescriptors.map((descriptor) =>
+  addDetailOption(descriptor, `shortcuts.add.${descriptor.key}`),
+);
