@@ -1,8 +1,7 @@
 <script lang="ts">
 import Cropper, { type CropArea, type OnCropCompleteEvent } from 'svelte-easy-crop';
-import XMark from 'svelte-heros-v2/XMark.svelte';
 import Button from '$lib/components/ui/button.svelte';
-import { isModalOpen } from '$lib/stores/ui';
+import Modal from '$lib/components/ui/modal.svelte';
 
 interface Props {
   imageUrl: string;
@@ -17,26 +16,8 @@ let zoom = $state(1);
 let croppedAreaPixels = $state<CropArea | null>(null);
 let isProcessing = $state(false);
 
-// Mark modal as open for keyboard shortcut handling
-$effect(() => {
-  isModalOpen.set(true);
-  return () => isModalOpen.set(false);
-});
-
 function handleCropComplete(event: OnCropCompleteEvent) {
   croppedAreaPixels = event.pixels;
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && !isProcessing) {
-    onClose();
-  }
-}
-
-function handleBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget && !isProcessing) {
-    onClose();
-  }
 }
 
 /**
@@ -112,83 +93,44 @@ async function handleConfirm() {
 }
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+{#snippet footer()}
+  <Button variant="secondary" class="flex-1" disabled={isProcessing} onclick={onClose}>
+    Cancel
+  </Button>
+  <Button
+    class="flex-1"
+    loading={isProcessing}
+    disabled={croppedAreaPixels === null}
+    onclick={handleConfirm}
+  >
+    Use Photo
+  </Button>
+{/snippet}
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- Modal backdrop -->
-<div
-  class="fixed inset-0 bg-gray-900/50 z-(--z-overlay) flex items-center justify-center p-4"
-  onclick={handleBackdropClick}
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="crop-modal-title"
-  tabindex="-1"
->
-  <!-- Modal content -->
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col">
-    <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-      <h2 id="crop-modal-title" class="text-xl font-heading text-gray-900">
-        Crop Photo
-      </h2>
-      <button
-        type="button"
-        onclick={onClose}
-        disabled={isProcessing}
-        class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100
-               disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label="Close"
-      >
-        <XMark class="w-5 h-5" strokeWidth="2" />
-      </button>
-    </div>
-
-    <!-- Crop area -->
-    <div class="relative w-full h-80 bg-gray-900">
-      <Cropper
-        image={imageUrl}
-        bind:crop
-        bind:zoom
-        aspect={1}
-        cropShape="round"
-        showGrid={false}
-        oncropcomplete={handleCropComplete}
-      />
-    </div>
-
-    <!-- Zoom slider -->
-    <div class="p-4 border-t border-gray-200">
-      <label class="flex items-center gap-3">
-        <span class="text-sm font-body text-gray-600">Zoom</span>
-        <input
-          type="range"
-          min="1"
-          max="3"
-          step="0.1"
-          bind:value={zoom}
-          class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-forest"
-        />
-      </label>
-    </div>
-
-    <!-- Footer buttons -->
-    <div class="flex gap-3 p-4 border-t border-gray-200 flex-shrink-0">
-      <Button
-        variant="secondary"
-        class="flex-1"
-        disabled={isProcessing}
-        onclick={onClose}
-      >
-        Cancel
-      </Button>
-      <Button
-        class="flex-1"
-        loading={isProcessing}
-        disabled={croppedAreaPixels === null}
-        onclick={handleConfirm}
-      >
-        Use Photo
-      </Button>
-    </div>
+<Modal title="Crop Photo" size="lg" closable={!isProcessing} {onClose} {footer}>
+  <!-- Crop area -->
+  <div class="relative w-full h-80 bg-gray-900 rounded-lg overflow-hidden">
+    <Cropper
+      image={imageUrl}
+      bind:crop
+      bind:zoom
+      aspect={1}
+      cropShape="round"
+      showGrid={false}
+      oncropcomplete={handleCropComplete}
+    />
   </div>
-</div>
+
+  <!-- Zoom slider -->
+  <label class="mt-4 flex items-center gap-3">
+    <span class="text-sm font-body text-gray-600">Zoom</span>
+    <input
+      type="range"
+      min="1"
+      max="3"
+      step="0.1"
+      bind:value={zoom}
+      class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-forest"
+    />
+  </label>
+</Modal>

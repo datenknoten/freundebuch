@@ -80,9 +80,8 @@ const addressLines = $derived(formatAddress(address));
         {$i18n.t('subresources.address.showMap')}
       </Button>
     {/if}
-    {#if address.latitude != null && address.longitude != null}
+    {#if showMap && address.latitude != null && address.longitude != null}
       <AddressMapModal
-        open={showMap}
         latitude={address.latitude}
         longitude={address.longitude}
         addressLabel={formatAddressLabel(address)}
