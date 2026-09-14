@@ -505,6 +505,41 @@
       "cancel": "Abbrechen"
     }
   },
+  "friendForm": {
+    "nameHeading": "Name",
+    "prefix": "Titel/Anrede",
+    "prefixPlaceholder": "Dr., Herr",
+    "firstName": "Vorname",
+    "middleName": "Zweiter Vorname",
+    "lastName": "Nachname",
+    "suffix": "Namenszusatz",
+    "suffixPlaceholder": "Jr., PhD",
+    "maidenName": "Geburtsname",
+    "displayName": "Anzeigename",
+    "displayNameHelper": "Wird aus den Namensteilen gebildet, bis du ihn selbst schreibst.",
+    "nickname": "Spitzname",
+    "interestsPlaceholder": "Interessen, Hobbys, Themen, über die sie gerne sprechen...",
+    "metDate": "Datum",
+    "metLocation": "Ort",
+    "metLocationPlaceholder": "Konferenz, Café",
+    "metContext": "Geschichte",
+    "metContextPlaceholder": "Zusammenhang oder Geschichte eures Kennenlernens...",
+    "photo": {
+      "uploadTitle": "Klicken, um ein Foto hochzuladen",
+      "saveFirstTitle": "Freund zuerst speichern, um ein Foto hochzuladen",
+      "previewAlt": "Fotovorschau",
+      "remove": "Foto entfernen",
+      "saveFirstHint": "Freund speichern, um ein Foto hochzuladen",
+      "uploadHint": "Klicken, um ein Foto hochzuladen (max. 5 MB)",
+      "invalidType": "Ungültiger Dateityp. Erlaubt: {{types}}",
+      "tooLarge": "Datei zu groß. Maximale Größe: {{size}} MB",
+      "uploadError": "Foto konnte nicht hochgeladen werden",
+      "deleteError": "Foto konnte nicht gelöscht werden"
+    },
+    "saveChanges": "Änderungen speichern",
+    "create": "Freund erstellen",
+    "saveError": "Freund konnte nicht gespeichert werden"
+  },
   "circles": {
     "title": "Freundekreise",
     "subtitle": "Organisiere deine Freunde in Freundekreisen",
