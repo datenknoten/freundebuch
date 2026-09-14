@@ -1,6 +1,6 @@
 <script lang="ts">
-import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
-import { FormCheckbox, FormSelect } from '$lib/components/ui';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import { FormCheckbox, FormSelect, PageShell } from '$lib/components/ui';
 import { createI18n, languageNames } from '$lib/i18n/index.js';
 import { auth, birthdayFormat, showShortcutHints } from '$lib/stores/auth';
 import {
@@ -9,20 +9,35 @@ import {
   type SupportedLanguage,
   supportedLanguages,
 } from '$lib/stores/locale';
-import type { BirthdayFormat } from '$shared';
+import type { BirthdayFormat, UserPreferences } from '$shared';
 
 const i18n = createI18n();
 
+let saved = $state(false);
+
+async function persistPreferences(newPreferences: Partial<UserPreferences>) {
+  saved = false;
+  try {
+    await auth.updatePreferences(newPreferences);
+    saved = true;
+  } catch {
+    // The store retries with backoff and then gives up: no confirmation to show.
+  }
+}
+
 function handleBirthdayFormatChange(format: BirthdayFormat) {
-  auth.updatePreferences({ birthdayFormat: format });
+  void persistPreferences({ birthdayFormat: format });
 }
 
 function handleLanguageChange(lang: SupportedLanguage) {
-  locale.setLanguage(lang);
+  // The interface switching language is its own confirmation, and the store
+  // swallows persistence failures, so there is nothing to confirm here.
+  saved = false;
+  void locale.setLanguage(lang);
 }
 
 function handleShortcutHintsChange(enabled: boolean) {
-  auth.updatePreferences({ showShortcutHints: enabled });
+  void persistPreferences({ showShortcutHints: enabled });
 }
 
 let languageOptions = $derived(
@@ -41,18 +56,17 @@ let birthdayFormatOptions = $derived([
   <title>{$i18n.t('profile.hub.cards.display.title')} | Freundebuch</title>
 </svelte:head>
 
-<div class="bg-white rounded-xl shadow-lg p-8">
-  <div class="mb-8">
-    <a
-      href="/profile"
-      class="inline-flex items-center gap-2 text-gray-600 hover:text-forest font-body text-sm transition-colors"
-    >
-      <ChevronLeft class="w-4 h-4" strokeWidth="2" />
-      {$i18n.t('profile.hub.backToProfile')}
-    </a>
-    <h1 class="text-3xl font-heading text-forest mt-4">{$i18n.t('profile.hub.cards.display.title')}</h1>
-    <p class="text-gray-600 font-body mt-1">{$i18n.t('profile.hub.cards.display.description')}</p>
-  </div>
+<PageShell
+  width="detail"
+  title={$i18n.t('profile.hub.cards.display.title')}
+  subtitle={$i18n.t('profile.hub.cards.display.description')}
+  back={{ href: '/profile', label: $i18n.t('profile.hub.backToProfile') }}
+>
+  {#if saved}
+    <div class="mb-4">
+      <AlertBanner variant="success">{$i18n.t('profile.display.saved')}</AlertBanner>
+    </div>
+  {/if}
 
   <div class="space-y-4">
     <div class="max-w-xs">
@@ -85,4 +99,4 @@ let birthdayFormatOptions = $derived([
       </p>
     </div>
   </div>
-</div>
+</PageShell>
