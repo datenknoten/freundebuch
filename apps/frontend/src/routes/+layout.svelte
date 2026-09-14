@@ -112,9 +112,12 @@ $effect(() => {
 // Hide the FAB while the user is creating a new entity (any /new route, e.g.
 // /friends/new, /encounters/new, /collectives/new) so an accidental tap can't
 // interrupt them, and on friend/collective detail pages (which render their own
-// FAB with a contextual "add detail" entry).
+// FAB with a contextual "add detail" entry). The onboarding-exempt routes hide
+// it too: every create target is behind the onboarding guard, so the FAB would
+// only bounce the user straight back.
 const showFab = $derived(
   $isAuthenticated &&
+    !onboardingExemptPaths.some((path) => $page.url.pathname.startsWith(path)) &&
     !$page.url.pathname.endsWith('/new') &&
     !$page.url.pathname.match(/^\/friends\/[^/]+$/) &&
     !$page.url.pathname.match(/^\/collectives\/[^/]+$/),
