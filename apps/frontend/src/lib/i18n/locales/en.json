@@ -350,7 +350,14 @@
       "success": "If an account exists with this email, you will receive a reset link.",
       "error": {
         "generic": "Failed to send reset link. Please try again."
-      }
+      },
+      "heading": "Reset your password",
+      "description": "Enter your email to receive a password reset link",
+      "emailLabel": "Email address",
+      "successTitle": "Password reset link sent!",
+      "successBody": "If the email exists, a password reset link has been sent. Please check your inbox.",
+      "rememberPassword": "Remember your password?",
+      "signIn": "Sign in"
     },
     "resetPassword": {
       "title": "Set New Password",
@@ -363,8 +370,19 @@
       "success": "Password reset successfully! You can now sign in.",
       "error": {
         "invalidToken": "Invalid or expired reset link",
-        "generic": "Failed to reset password. Please try again."
-      }
+        "generic": "Failed to reset password. Please try again.",
+        "mismatch": "Passwords do not match",
+        "tooShort": "Password must be at least 8 characters"
+      },
+      "heading": "Create new password",
+      "description": "Enter your new password below",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "successTitle": "Password reset successful!",
+      "successBody": "Your password has been reset. Redirecting to login…",
+      "invalidTitle": "Invalid reset link",
+      "invalidBody": "This password reset link is invalid or has expired.",
+      "requestNew": "Request a new reset link"
     }
   },
   "home": {
@@ -505,7 +523,11 @@
       "message": "Are you sure you want to delete {{name}}? This action cannot be undone.",
       "confirm": "Delete",
       "cancel": "Cancel"
-    }
+    },
+    "editFriend": "Edit Friend",
+    "editFriendSubtitle": "Update {{name}}'s information",
+    "backToFriend": "Back to friend",
+    "editFriendTitle": "Edit {{name}}"
   },
   "friendForm": {
     "nameHeading": "Name",
@@ -901,7 +923,12 @@
       "description": "Start adding your friends"
     },
     "skip": "Skip for now",
-    "complete": "Complete Setup"
+    "complete": "Complete Setup",
+    "firstEntry": "The first entry in your friendbook is you! Fill in your details to get started.",
+    "error": {
+      "generic": "Failed to create your profile. Please try again."
+    },
+    "pageTitle": "Welcome"
   },
   "friendSearch": {
     "noResults": "No friends found"

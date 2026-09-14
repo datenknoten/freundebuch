@@ -7,7 +7,7 @@ const i18n = createI18n();
 </script>
 
 <svelte:head>
-	<title>Create Account | Freundebuch</title>
+	<title>{$i18n.t('auth.register.title')} | Freundebuch</title>
 </svelte:head>
 
 <PageShell
