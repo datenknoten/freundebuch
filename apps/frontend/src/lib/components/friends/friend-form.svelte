@@ -58,6 +58,11 @@ let cropImageUrl = $state<string | null>(null);
 
 // Form state - initialize with functions to capture initial values
 let displayName = $state((() => friend?.displayName ?? '')());
+// The avatar derives initials from this string, so it must stay a string even
+// during SSR, where i18next has not been initialised and `t()` yields nothing.
+const avatarName = $derived(
+  displayName.length > 0 ? displayName : ($i18n.t('friends.newFriend') ?? ''),
+);
 let nickname = $state((() => friend?.nickname ?? '')());
 let namePrefix = $state((() => friend?.namePrefix ?? '')());
 let nameFirst = $state((() => friend?.nameFirst ?? '')());
@@ -334,11 +339,7 @@ async function handleSubmit(e: Event) {
           class="w-24 h-24 rounded-full object-cover"
         />
       {:else}
-        <FriendAvatar
-          displayName={displayName.length > 0 ? displayName : $i18n.t('friends.newFriend')}
-          photoUrl={photoUrl}
-          size="lg"
-        />
+        <FriendAvatar displayName={avatarName} photoUrl={photoUrl} size="lg" />
       {/if}
 
       {#if isUploadingPhoto}
