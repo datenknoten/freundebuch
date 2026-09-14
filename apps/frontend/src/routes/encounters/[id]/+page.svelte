@@ -7,6 +7,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import EncounterDetail from '$lib/components/encounters/encounter-detail.svelte';
 import EncounterForm from '$lib/components/encounters/encounter-form.svelte';
+import { Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { encounters } from '$lib/stores/encounters';
@@ -85,7 +86,7 @@ function handleEditCancel() {
       {#if isLoading && !encounter}
         <!-- Loading state -->
         <div class="flex justify-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+          <Spinner size="lg" />
         </div>
       {:else if error}
         <!-- Error state -->

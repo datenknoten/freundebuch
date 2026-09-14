@@ -1,6 +1,7 @@
 <script lang="ts">
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
@@ -181,7 +182,7 @@ function handleFocus() {
 
       {#if isSearching}
         <div class="absolute right-3 top-1/2 -translate-y-1/2">
-          <div class="animate-spin rounded-full h-4 w-4 border-2 border-forest border-t-transparent"></div>
+          <Spinner size="sm" />
         </div>
       {:else}
         <MagnifyingGlass class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth="2" />

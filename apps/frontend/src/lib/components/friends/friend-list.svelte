@@ -13,6 +13,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
 import Button from '$lib/components/ui/button.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -421,11 +422,11 @@ function openFirstResult() {
       aria-label={$i18n.t('aria.searchFriends')}
     />
     {#if isSearching}
-      <div class="absolute right-4 top-1/2 -translate-y-1/2" aria-live="polite">
-        <div class="animate-spin rounded-full h-5 w-5 border-2 border-forest border-t-transparent" role="status">
-          <span class="sr-only">{$i18n.t('common.searching')}</span>
-        </div>
-      </div>
+      <Spinner
+        size="md"
+        label={$i18n.t('common.searching')}
+        class="absolute right-4 top-1/2 -translate-y-1/2"
+      />
     {:else if searchQuery}
       <button
         type="button"
@@ -577,10 +578,8 @@ function openFirstResult() {
 
   <!-- Content area -->
   {#if (isSearchMode || isFilterMode) && isSearching && searchResults.length === 0}
-    <div class="flex justify-center py-12" aria-live="polite">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
-        <span class="sr-only">{$i18n.t('common.loadingResults')}</span>
-      </div>
+    <div class="flex justify-center py-12">
+      <Spinner size="lg" label={$i18n.t('common.loadingResults')} />
     </div>
   {:else if (isSearchMode || isFilterMode) && showNoResults}
     <!-- No results -->
@@ -620,10 +619,8 @@ function openFirstResult() {
       {/if}
     </div>
   {:else if !isSearchMode && !isFilterMode && $isFriendsLoading}
-    <div class="flex justify-center py-12" aria-live="polite">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
-        <span class="sr-only">{$i18n.t('common.loadingFriends')}</span>
-      </div>
+    <div class="flex justify-center py-12">
+      <Spinner size="lg" label={$i18n.t('common.loadingFriends')} />
     </div>
   {:else if !isSearchMode && !isFilterMode && $friendList.length === 0}
     <!-- Empty state -->

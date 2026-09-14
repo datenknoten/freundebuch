@@ -10,7 +10,7 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import type { CollectiveListParams } from '$lib/api/collectives';
-import { Button } from '$lib/components/ui';
+import { Button, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectivesList, collectiveTypes } from '$lib/stores/collectives';
 import { visibleCollectiveIds } from '$lib/stores/ui';
@@ -284,7 +284,7 @@ function openFirstResult() {
   <!-- Loading state -->
   {#if isLoading && collectiveItems.length === 0}
     <div class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+      <Spinner size="lg" />
     </div>
   {:else if collectiveItems.length === 0}
     <!-- Empty state -->

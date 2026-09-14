@@ -5,6 +5,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import {
@@ -301,7 +302,7 @@ onMount(() => {
                     title={$i18n.t('aria.removeRelationship')}
                   >
                     {#if isDeleting === relationship.id}
-                      <div class="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div>
+                      <Spinner size="sm" tone="current" />
                     {:else}
                       <XMark class="w-4 h-4" strokeWidth="2" />
                     {/if}

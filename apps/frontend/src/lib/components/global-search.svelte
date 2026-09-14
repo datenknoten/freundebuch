@@ -9,6 +9,7 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import Button from '$lib/components/ui/button.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   hasActiveFilters,
@@ -224,7 +225,7 @@ onMount(() => {
       />
       {#if searchState.isSearching}
         <div class="absolute right-4 top-1/2 -translate-y-1/2">
-          <div class="animate-spin rounded-full h-5 w-5 border-2 border-forest border-t-transparent"></div>
+          <Spinner size="md" />
         </div>
       {/if}
     </div>
