@@ -10,7 +10,7 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import type { CollectiveListParams } from '$lib/api/collectives';
-import { Button, Spinner } from '$lib/components/ui';
+import { Button, EmptyState, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectivesList, collectiveTypes } from '$lib/stores/collectives';
 import { visibleCollectiveIds } from '$lib/stores/ui';
@@ -287,22 +287,18 @@ function openFirstResult() {
       <Spinner size="lg" />
     </div>
   {:else if collectiveItems.length === 0}
-    <!-- Empty state -->
-    <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <Users class="mx-auto h-12 w-12 text-gray-400" strokeWidth="2" />
-      <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('collectives.noCollectives')}</h3>
-      <p class="mt-2 text-sm text-gray-600 font-body">
-        {#if searchQuery || selectedTypeId}
-          {$i18n.t('collectives.noCollectivesFiltered')}
-        {:else}
-          {$i18n.t('collectives.noCollectivesSubtitle')}
-        {/if}
-      </p>
-      <Button href="/collectives/new" class="mt-4">
+    <EmptyState
+      icon={Users}
+      title={$i18n.t('collectives.noCollectives')}
+      description={searchQuery.length > 0 || selectedTypeId.length > 0
+        ? $i18n.t('collectives.noCollectivesFiltered')
+        : $i18n.t('collectives.noCollectivesSubtitle')}
+    >
+      <Button href="/collectives/new">
         <Plus class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('collectives.createNew')}
       </Button>
-    </div>
+    </EmptyState>
   {:else}
     <!-- Collective Grid (table + cards) -->
     <CollectiveGrid

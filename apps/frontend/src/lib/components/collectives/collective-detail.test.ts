@@ -151,7 +151,8 @@ describe('CollectiveDetail', () => {
     // dialog must offer an actionable button, not one stuck in "deleting".
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     await fireEvent.click(screen.getByText('common.delete'));
-    const confirm = within(screen.getByRole('dialog')).getByText('common.delete')
+    const confirm = within(screen.getByRole('dialog'))
+      .getByText('common.delete')
       .closest('button') as HTMLButtonElement;
     expect(confirm.disabled).toBe(false);
   });

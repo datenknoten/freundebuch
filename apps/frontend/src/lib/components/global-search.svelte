@@ -10,6 +10,7 @@ import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { focusTrap } from '$lib/actions/focus-trap';
 import Button from '$lib/components/ui/button.svelte';
+import EmptyState from '$lib/components/ui/empty-state.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
 import { surfaceClasses } from '$lib/components/ui/styles';
 import { createI18n } from '$lib/i18n/index.js';
@@ -351,30 +352,23 @@ onMount(() => {
           </ul>
         {:else if showEmptyState}
           <!-- No results -->
-          <div class="p-6 text-center">
-            <FaceSmile class="mx-auto w-12 h-12 text-gray-300" strokeWidth="2" />
-            <p class="mt-3 font-body text-sm text-gray-600">
-              {$i18n.t('globalSearch.noMatch', { query: searchState.query })}
-            </p>
-            <p class="mt-1 font-body text-xs text-gray-400">
-              {$i18n.t('globalSearch.tryDifferent')}
-            </p>
-            <Button size="sm" class="mt-4" onclick={navigateToNewFriend}>
+          <EmptyState
+            icon={FaceSmile}
+            title={$i18n.t('globalSearch.noMatch', { query: searchState.query })}
+            hint={$i18n.t('globalSearch.tryDifferent')}
+          >
+            <Button size="sm" onclick={navigateToNewFriend}>
               <Plus class="w-4 h-4" strokeWidth="2" />
               {$i18n.t('globalSearch.addNewFriend')}
             </Button>
-          </div>
+          </EmptyState>
         {:else if searchState.query.trim().length < 2 && searchState.recentSearches.length === 0}
           <!-- Initial state with no recent searches -->
-          <div class="p-8 text-center">
-            <MagnifyingGlass class="mx-auto w-12 h-12 text-gray-300" strokeWidth="2" />
-            <p class="mt-2 font-body text-sm text-gray-500">
-              {$i18n.t('globalSearch.findFriends')}
-            </p>
-            <p class="mt-1 font-body text-xs text-gray-400">
-              {$i18n.t('globalSearch.typeToSearch')}
-            </p>
-          </div>
+          <EmptyState
+            icon={MagnifyingGlass}
+            title={$i18n.t('globalSearch.findFriends')}
+            hint={$i18n.t('globalSearch.typeToSearch')}
+          />
         {/if}
       </div>
 

@@ -7,7 +7,7 @@ import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import type { EncounterListParams } from '$lib/api/encounters';
-import { Button, Spinner } from '$lib/components/ui';
+import { Button, EmptyState, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters, encountersList } from '$lib/stores/encounters';
 import { visibleEncounterIds } from '$lib/stores/ui';
@@ -208,24 +208,23 @@ function goToPage(page: number) {
       <Spinner size="lg" />
     </div>
   {:else if encounterItems.length === 0}
-    <!-- Empty state -->
-    <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <Calendar class="mx-auto h-12 w-12 text-gray-400" strokeWidth="2" />
-      <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('encounters.noEncounters')}</h3>
-      <p class="mt-2 text-sm text-gray-600 font-body">
-        {#if searchQuery || fromDate || toDate || selectedType}
-          {$i18n.t('encounters.noEncountersFiltered')}
-        {:else}
-          {$i18n.t('encounters.noEncountersSubtitle')}
-        {/if}
-      </p>
-      {#if !friendId}
-        <Button href="/encounters/new" class="mt-4">
+    <EmptyState
+      icon={Calendar}
+      title={$i18n.t('encounters.noEncounters')}
+      description={searchQuery.length > 0 ||
+      fromDate.length > 0 ||
+      toDate.length > 0 ||
+      selectedType.length > 0
+        ? $i18n.t('encounters.noEncountersFiltered')
+        : $i18n.t('encounters.noEncountersSubtitle')}
+    >
+      {#if friendId === undefined}
+        <Button href="/encounters/new">
           <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('encounters.logNew')}
         </Button>
       {/if}
-    </div>
+    </EmptyState>
   {:else}
     <!-- Encounter cards -->
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

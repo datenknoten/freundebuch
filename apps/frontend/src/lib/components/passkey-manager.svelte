@@ -6,6 +6,7 @@ import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
 import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
+import EmptyState from '$lib/components/ui/empty-state.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/index.js';
 
@@ -154,11 +155,7 @@ function deviceTypeLabel(type: string | null): string {
       <Spinner size="lg" label={$i18n.t('profile.passkeys.loading')} />
     </div>
   {:else if passkeys.length === 0}
-    <div class="text-center py-8 bg-gray-50 rounded-lg">
-      <Key class="w-12 h-12 mx-auto text-gray-400 mb-3" strokeWidth="2" />
-      <p class="text-gray-600 font-body">{$i18n.t('profile.passkeys.noPasskeys')}</p>
-      <p class="text-gray-500 font-body text-sm mt-1">{$i18n.t('profile.passkeys.noPasskeysHint')}</p>
-    </div>
+    <EmptyState icon={Key} title={$i18n.t('profile.passkeys.noPasskeys')} description={$i18n.t('profile.passkeys.noPasskeysHint')} />
   {:else}
     <div class="divide-y divide-gray-200 border border-gray-200 rounded-lg">
       {#each passkeys as pk (pk.id)}

@@ -1,6 +1,8 @@
 <script lang="ts">
 import * as d3 from 'd3';
 import { onDestroy } from 'svelte';
+import Share from 'svelte-heros-v2/Share.svelte';
+import EmptyState from '$lib/components/ui/empty-state.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type {
   NetworkGraphData,
@@ -287,19 +289,19 @@ onDestroy(() => {
     </div>
   {:else if !graphData || graphData.nodes.length === 0}
     <div class="h-[400px] flex items-center justify-center">
-      <div class="text-center py-6">
-        <div class="text-gray-400 text-4xl mb-2">&#128279;</div>
-        <p class="text-gray-500 font-body">{$i18n.t('dashboard.noRelationships')}</p>
-        <p class="text-gray-400 text-sm mt-1">{$i18n.t('dashboard.addRelationshipsHint')}</p>
-      </div>
+      <EmptyState
+        icon={Share}
+        title={$i18n.t('dashboard.noRelationships')}
+        description={$i18n.t('dashboard.addRelationshipsHint')}
+      />
     </div>
   {:else if graphData.links.length === 0}
     <div class="h-[400px] flex items-center justify-center">
-      <div class="text-center py-6">
-        <div class="text-gray-400 text-4xl mb-2">&#128279;</div>
-        <p class="text-gray-500 font-body">{$i18n.t('dashboard.noConnections')}</p>
-        <p class="text-gray-400 text-sm mt-1">{$i18n.t('dashboard.addConnectionsHint')}</p>
-      </div>
+      <EmptyState
+        icon={Share}
+        title={$i18n.t('dashboard.noConnections')}
+        description={$i18n.t('dashboard.addConnectionsHint')}
+      />
     </div>
   {:else}
     <div bind:this={container} class="w-full h-[400px] overflow-hidden"></div>

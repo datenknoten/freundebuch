@@ -3,6 +3,7 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import { page } from '$app/stores';
 import FriendDetail from '$lib/components/friends/friend-detail.svelte';
+import { Button, EmptyState } from '$lib/components/ui';
 import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
@@ -56,19 +57,14 @@ const backUrl = $derived.by(() => {
       {:else if $currentFriend}
         <FriendDetail friend={$currentFriend} />
       {:else if $friends.error}
-        <div class="text-center py-12">
-          <ExclamationTriangle class="mx-auto h-12 w-12 text-red-400" strokeWidth="2" />
-          <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('friends.friendNotFound')}</h3>
-          <p class="mt-2 text-sm text-gray-600 font-body">
-            {$friends.error}
-          </p>
-          <a
-            href={backUrl}
-            class="mt-4 inline-flex items-center gap-2 text-forest font-body font-semibold hover:text-forest-light"
-          >
-            {$i18n.t('friends.returnToFriends')}
-          </a>
-        </div>
+        <EmptyState
+          icon={ExclamationTriangle}
+          tone="error"
+          title={$i18n.t('friends.friendNotFound')}
+          description={$friends.error}
+        >
+          <Button variant="secondary" href={backUrl}>{$i18n.t('friends.returnToFriends')}</Button>
+        </EmptyState>
       {/if}
     </div>
   </div>

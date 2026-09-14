@@ -10,7 +10,7 @@ import AlertBanner from '$lib/components/alert-banner.svelte';
 import CircleEditModal from '$lib/components/circles/circle-edit-modal.svelte';
 import DetailActions from '$lib/components/friends/subresources/detail-actions.svelte';
 import SwipeableRow from '$lib/components/friends/subresources/swipeable-row.svelte';
-import { Button, Spinner } from '$lib/components/ui';
+import { Button, EmptyState, Spinner } from '$lib/components/ui';
 import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
@@ -246,20 +246,18 @@ function getActualDepth(circle: Circle): number {
       {:else if $circles.error}
         <AlertBanner variant="error">{$circles.error}</AlertBanner>
       {:else if $circlesList.length === 0}
-        <div class="text-center py-12">
-          <Users class="w-16 h-16 mx-auto text-gray-300 mb-4" strokeWidth="2" />
-          <h3 class="text-lg font-heading text-gray-600 mb-2">{$i18n.t('circles.noCircles')}</h3>
-          <p class="text-gray-500 font-body mb-4">{$i18n.t('circles.noCirclesSubtitle')}</p>
+        <EmptyState
+          icon={Users}
+          title={$i18n.t('circles.noCircles')}
+          description={$i18n.t('circles.noCirclesSubtitle')}
+        >
           <Button onclick={() => openWithKeyboard(openCreateModal)}>
             <Plus class="w-5 h-5" strokeWidth="2" />
             {$i18n.t('circles.createFirst')}
           </Button>
-        </div>
+        </EmptyState>
       {:else if isSearching && visibleCircles.length === 0}
-        <div class="text-center py-12">
-          <Users class="w-12 h-12 mx-auto text-gray-300 mb-3" strokeWidth="2" />
-          <p class="text-gray-500 font-body">{$i18n.t('circles.noMatches')}</p>
-        </div>
+        <EmptyState icon={Users} title={$i18n.t('circles.noMatches')} />
       {:else}
         <div class="space-y-2">
           {#each visibleCircles as circle, index (circle.id)}
