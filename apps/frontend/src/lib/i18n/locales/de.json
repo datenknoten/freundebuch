@@ -326,7 +326,6 @@
       "confirmPassword": "Passwort bestätigen",
       "confirmPasswordPlaceholder": "Passwort wiederholen",
       "submit": "Konto erstellen",
-      "creating": "Konto wird erstellt...",
       "hasAccount": "Bereits ein Konto?",
       "loginLink": "Anmelden",
       "termsAgree": "Ich stimme den",
@@ -695,7 +694,6 @@
         "unknown": "Unbekannt"
       },
       "signIn": "Mit Passkey anmelden",
-      "signingIn": "Anmeldung läuft...",
       "signInFailed": "Passkey-Anmeldung fehlgeschlagen",
       "failedToLoad": "Passkeys konnten nicht geladen werden",
       "failedToRegister": "Passkey konnte nicht registriert werden",
@@ -1332,8 +1330,6 @@
     "searchCollectives": "Kollektive suchen",
     "filterByType": "Nach Typ filtern",
     "chooseColumns": "Spalten auswählen",
-    "selectLanguage": "Sprache auswählen",
-    "availableLanguages": "Verfügbare Sprachen",
     "editNotes": "Notizen bearbeiten",
     "removeRelationship": "Beziehung entfernen",
     "circleColor": "Freundekreisfarbe",
@@ -1349,9 +1345,7 @@
     "mobileNavigation": "Mobiles Navigationsmenü",
     "toggleMenu": "Menü umschalten",
     "search": "Suchen",
-    "removeRecentSearch": "Aus den letzten Suchen entfernen",
-    "addToFavorites": "Zu Favoriten hinzufügen",
-    "removeFromFavorites": "Aus Favoriten entfernen"
+    "removeRecentSearch": "Aus letzten Suchen entfernen"
   },
   "countrySelect": {
     "label": "Land",
