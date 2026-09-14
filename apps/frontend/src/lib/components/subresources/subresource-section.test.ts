@@ -1,7 +1,7 @@
 import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { addMember } from '$lib/api/collectives';
-import { aPhone, fireEvent, render, screen, waitFor } from '$lib/test';
+import { aPhone, fireEvent, render, screen, waitFor, within } from '$lib/test';
 import { createCollectiveDescriptor } from '../friends/subresource-descriptors';
 import { CircleRow, PhoneEditForm, PhoneRow } from '../friends/subresources';
 import SubresourceSection from './subresource-section.svelte';
@@ -186,7 +186,7 @@ describe('SubresourceSection', () => {
     await fireEvent.click((await screen.findAllByLabelText('subresources.phone.deleteAria'))[0]);
     expect(await screen.findByText('modal.deletePhone')).toBeTruthy();
 
-    await fireEvent.click(screen.getByText('common.delete'));
+    await fireEvent.click(within(screen.getByRole('dialog')).getByText('common.delete'));
     await waitFor(() =>
       expect(remove).toHaveBeenCalledWith('c1', expect.objectContaining({ id: phone.id })),
     );
@@ -218,7 +218,7 @@ describe('SubresourceSection', () => {
 
     // Delete -> remove() then reload() drops it again.
     await fireEvent.click((await screen.findAllByLabelText('subresources.phone.deleteAria'))[0]);
-    await fireEvent.click(screen.getByText('common.delete'));
+    await fireEvent.click(within(screen.getByRole('dialog')).getByText('common.delete'));
     await waitFor(() => expect(remove).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.queryAllByText('+1 555 0200')).toHaveLength(0));
   });
