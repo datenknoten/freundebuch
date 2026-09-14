@@ -1,6 +1,6 @@
 <script lang="ts">
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
-import XMark from 'svelte-heros-v2/XMark.svelte';
+import Trash from 'svelte-heros-v2/Trash.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
 
 interface Props {
@@ -13,8 +13,12 @@ interface Props {
   deleteLabel: string;
   /** Keyboard chord for the edit action (e.g. "e 2"), shown as a hint on click */
   editShortcutHint?: string;
+  /** i18n key naming the edit action in the shortcut hint; the label is owner-specific. */
+  editShortcutLabel?: string;
   /** Keyboard chord for the delete action (e.g. "d 2"), shown as a hint on click */
   deleteShortcutHint?: string;
+  /** i18n key naming the delete action in the shortcut hint. */
+  deleteShortcutLabel?: string;
 }
 
 let {
@@ -24,7 +28,9 @@ let {
   editLabel,
   deleteLabel,
   editShortcutHint,
+  editShortcutLabel,
   deleteShortcutHint,
+  deleteShortcutLabel,
 }: Props = $props();
 </script>
 
@@ -34,7 +40,7 @@ let {
 -->
 <div
   class="flex gap-1 items-center
-         opacity-0 group-hover:opacity-100
+         opacity-0 group-hover:opacity-100 group-focus-within:opacity-100
          sm:opacity-50 sm:hover:opacity-100
          transition-opacity duration-150"
 >
@@ -50,7 +56,7 @@ let {
              sm:min-w-[44px] sm:min-h-[44px]"
       aria-label={editLabel}
       data-shortcut={editShortcutHint}
-      data-shortcut-label={editShortcutHint ? 'shortcuts.panels.editCircle' : undefined}
+      data-shortcut-label={editShortcutLabel}
     >
       <PencilSquare class="w-4 h-4" strokeWidth="2" />
     </button>
@@ -68,12 +74,12 @@ let {
            disabled:opacity-50 disabled:cursor-not-allowed"
     aria-label={deleteLabel}
     data-shortcut={deleteShortcutHint}
-    data-shortcut-label={deleteShortcutHint ? 'shortcuts.panels.deleteCircle' : undefined}
+    data-shortcut-label={deleteShortcutLabel}
   >
     {#if isDeleting}
       <Spinner size="sm" tone="current" />
     {:else}
-      <XMark class="w-4 h-4" strokeWidth="2" />
+      <Trash class="w-4 h-4" strokeWidth="2" />
     {/if}
   </button>
 </div>
