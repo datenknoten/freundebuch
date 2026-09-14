@@ -2,15 +2,25 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '$lib/test';
 import FavoriteButton from './favorite-button.svelte';
 
+// i18n echoes keys so the assertions target stable label keys, not English.
+vi.mock('$lib/i18n/index.js', () => ({
+  createI18n: () => ({
+    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
+      run({ t: (k: string) => k });
+      return () => undefined;
+    },
+  }),
+}));
+
 describe('FavoriteButton', () => {
   it('labels itself for adding when not a favorite', () => {
     render(FavoriteButton, { isFavorite: false });
-    expect(screen.getByRole('button').getAttribute('aria-label')).toBe('Add to favorites');
+    expect(screen.getByRole('button').getAttribute('aria-label')).toBe('aria.addToFavorites');
   });
 
   it('labels itself for removing when already a favorite', () => {
     render(FavoriteButton, { isFavorite: true });
-    expect(screen.getByRole('button').getAttribute('aria-label')).toBe('Remove from favorites');
+    expect(screen.getByRole('button').getAttribute('aria-label')).toBe('aria.removeFromFavorites');
   });
 
   it('calls onclick when pressed', async () => {

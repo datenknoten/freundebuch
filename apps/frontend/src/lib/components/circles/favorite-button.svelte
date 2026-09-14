@@ -1,5 +1,8 @@
 <script lang="ts">
 import Star from 'svelte-heros-v2/Star.svelte';
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 
 interface Props {
   isFavorite: boolean;
@@ -35,8 +38,10 @@ let buttonSizeClasses = $derived(
   class="rounded-full transition-colors {buttonSizeClasses} {isFavorite ? 'text-amber-500 hover:text-amber-600' : 'text-gray-400 hover:text-amber-500'} {disabled ? 'opacity-50 cursor-not-allowed' : ''}"
   onclick={onclick}
   {disabled}
-  aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-  title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+  aria-label={isFavorite
+    ? $i18n.t('aria.removeFromFavorites')
+    : $i18n.t('aria.addToFavorites')}
+  title={isFavorite ? $i18n.t('aria.removeFromFavorites') : $i18n.t('aria.addToFavorites')}
 >
   {#if isFavorite}
     <!-- Filled star -->

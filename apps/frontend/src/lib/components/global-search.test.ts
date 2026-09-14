@@ -114,7 +114,7 @@ describe('GlobalSearch', () => {
     search.open();
 
     await screen.findByText('Dori');
-    const [removeDori] = screen.getAllByLabelText('Remove from recent searches');
+    const [removeDori] = screen.getAllByLabelText('aria.removeRecentSearch');
     await fireEvent.click(removeDori);
 
     await waitFor(() => {

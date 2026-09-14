@@ -38,7 +38,8 @@
     "loadingFriends": "Loading friends...",
     "adding": "Adding...",
     "loadingRelationshipTypes": "Loading relationship types...",
-    "backToHome": "Back to home"
+    "backToHome": "Back to home",
+    "showMore": "+{{count}} more"
   },
   "nav": {
     "home": "Home",
@@ -1186,7 +1187,8 @@
     "select": "Select",
     "close": "Close",
     "newFriend": "New friend",
-    "friendsList": "Friends list"
+    "friendsList": "Friends list",
+    "jobAtOrg": "{{jobTitle}} at {{organization}}"
   },
   "dashboard": {
     "upcomingDates": "Upcoming Dates",
@@ -1261,7 +1263,9 @@
     "clearSearch": "Clear search",
     "noFriendsYet": "No friends yet",
     "getStarted": "Get started by adding your first friend.",
-    "addFriend": "Add Friend"
+    "addFriend": "Add Friend",
+    "matchLabel": "Match",
+    "archived": "Archived"
   },
   "relationshipSection": {
     "relationships": "Relationships",
@@ -1333,7 +1337,17 @@
     "startYear": "Start year",
     "endMonth": "End month",
     "endYear": "End year",
-    "logEncounter": "Log an encounter with this friend"
+    "logEncounter": "Log an encounter with this friend",
+    "selectColor": "Select {{color}}",
+    "removeItem": "Remove {{name}}",
+    "userMenu": "User menu",
+    "userAvatarFor": "User avatar for {{email}}",
+    "mobileNavigation": "Mobile navigation menu",
+    "toggleMenu": "Toggle menu",
+    "search": "Search",
+    "removeRecentSearch": "Remove from recent searches",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites"
   },
   "countrySelect": {
     "label": "Country",

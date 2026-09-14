@@ -38,7 +38,8 @@
     "loadingFriends": "Freunde werden geladen...",
     "adding": "Wird hinzugefügt...",
     "loadingRelationshipTypes": "Beziehungstypen werden geladen...",
-    "backToHome": "Zurück zur Startseite"
+    "backToHome": "Zurück zur Startseite",
+    "showMore": "+{{count}} weitere"
   },
   "nav": {
     "home": "Startseite",
@@ -1186,7 +1187,8 @@
     "select": "Auswählen",
     "close": "Schließen",
     "newFriend": "Neuer Freund",
-    "friendsList": "Freundeliste"
+    "friendsList": "Freundeliste",
+    "jobAtOrg": "{{jobTitle}} bei {{organization}}"
   },
   "dashboard": {
     "upcomingDates": "Anstehende Termine",
@@ -1261,7 +1263,9 @@
     "clearSearch": "Suche löschen",
     "noFriendsYet": "Noch keine Freunde",
     "getStarted": "Beginne, indem du deinen ersten Freund hinzufügst.",
-    "addFriend": "Freund hinzufügen"
+    "addFriend": "Freund hinzufügen",
+    "matchLabel": "Treffer",
+    "archived": "Archiviert"
   },
   "relationshipSection": {
     "relationships": "Beziehungen",
@@ -1333,7 +1337,17 @@
     "startYear": "Startjahr",
     "endMonth": "Endmonat",
     "endYear": "Endjahr",
-    "logEncounter": "Begegnung mit diesem Freund erfassen"
+    "logEncounter": "Begegnung mit diesem Freund erfassen",
+    "selectColor": "{{color}} auswählen",
+    "removeItem": "{{name}} entfernen",
+    "userMenu": "Benutzermenü",
+    "userAvatarFor": "Profilbild von {{email}}",
+    "mobileNavigation": "Mobiles Navigationsmenü",
+    "toggleMenu": "Menü umschalten",
+    "search": "Suchen",
+    "removeRecentSearch": "Aus den letzten Suchen entfernen",
+    "addToFavorites": "Zu Favoriten hinzufügen",
+    "removeFromFavorites": "Aus Favoriten entfernen"
   },
   "countrySelect": {
     "label": "Land",
