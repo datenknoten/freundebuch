@@ -44,6 +44,9 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,ts}'],
     globals: true,
     environment: 'jsdom',
+    // jsdom has no HTMLDialogElement methods; the shim keeps components built
+    // on the native modal dialog testable without a test-only branch.
+    setupFiles: ['src/lib/test/setup.ts'],
     // `new Date('1990-05-15')` is UTC midnight; in a zone behind UTC it renders
     // as the previous day. Pin the zone so rendered dates are deterministic.
     env: {

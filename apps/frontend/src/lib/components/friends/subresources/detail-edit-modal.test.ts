@@ -46,4 +46,20 @@ describe('DetailEditModal', () => {
     await fireEvent.click(screen.getByText('subresources.common.save'));
     expect(onSave).toHaveBeenCalledTimes(1);
   });
+
+  // The add-member body renders its own form and submit button; a modal footer
+  // would duplicate them.
+  it('drops the footer entirely for footer={null}', () => {
+    render(DetailEditModal, {
+      title: 'Add member',
+      asForm: false,
+      footer: null,
+      onClose: vi.fn(),
+      children,
+    });
+
+    expect(screen.queryByText('subresources.common.save')).toBeNull();
+    expect(screen.queryByText('subresources.common.cancel')).toBeNull();
+    expect(screen.getByText('body content')).toBeTruthy();
+  });
 });

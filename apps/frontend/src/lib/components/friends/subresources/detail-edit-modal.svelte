@@ -1,9 +1,8 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import XMark from 'svelte-heros-v2/XMark.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import Modal from '$lib/components/ui/modal.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import { isModalOpen } from '$lib/stores/ui';
 
 const i18n = createI18n();
 
@@ -13,8 +12,6 @@ interface Props {
   isLoading?: boolean;
   error?: string | null;
   isDirty?: boolean;
-  /** Hide the footer Cancel/Save buttons (useful when children have their own buttons) */
-  hideFooter?: boolean;
   /**
    * Wrap the content in a `<form>` (default). Set to false when the children
    * render their own `<form>`, to avoid invalid nested forms. The footer Save
@@ -22,9 +19,16 @@ interface Props {
    * calls `onSave` directly when false.
    */
   asForm?: boolean;
-  onSave: () => void;
+  /** Required unless the body owns its own actions (`footer={null}`). */
+  onSave?: () => void;
   onClose: () => void;
   children: Snippet;
+  /**
+   * Replaces the default Cancel/Save pair in the pinned footer. `null` drops
+   * the footer entirely — for bodies that render their own form and actions
+   * (the add-member form), where a modal footer would duplicate them.
+   */
+  footer?: Snippet | null;
 }
 
 let {
@@ -33,129 +37,74 @@ let {
   isLoading = false,
   error = null,
   isDirty = false,
-  hideFooter = false,
   asForm = true,
   onSave,
   onClose,
   children,
+  footer: footerActions,
 }: Props = $props();
 
-// Mark modal as open for keyboard shortcut handling
-$effect(() => {
-  isModalOpen.set(true);
-  return () => isModalOpen.set(false);
-});
+const uid = $props.id();
+const formId = `detail-edit-form-${uid}`;
 
 function handleClose() {
-  if (isDirty && !isLoading) {
-    if (confirm($i18n.t('subresources.common.unsavedChanges'))) {
-      onClose();
-    }
-  } else if (!isLoading) {
-    onClose();
-  }
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    handleClose();
-  }
-}
-
-function handleBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget) {
-    handleClose();
-  }
+  if (isLoading) return;
+  // A native confirm inside a modal dialog is deliberate: stacking a second
+  // <dialog> on top of this one to ask a yes/no question buys nothing.
+  if (isDirty && !confirm($i18n.t('subresources.common.unsavedChanges'))) return;
+  onClose();
 }
 
 function handleSubmit(e: Event) {
   e.preventDefault();
-  onSave();
+  onSave?.();
 }
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+{#snippet modalFooter()}
+  {#if footerActions !== undefined && footerActions !== null}
+    {@render footerActions()}
+  {:else}
+    <Button variant="secondary" class="flex-1" disabled={isLoading} onclick={handleClose}>
+      {$i18n.t('subresources.common.cancel')}
+    </Button>
+    <Button
+      type={asForm ? 'submit' : 'button'}
+      form={asForm ? formId : undefined}
+      class="flex-1"
+      loading={isLoading}
+      onclick={asForm ? undefined : onSave}
+    >
+      {$i18n.t('subresources.common.save')}
+    </Button>
+  {/if}
+{/snippet}
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- Modal backdrop -->
-<div
-  class="fixed inset-0 bg-gray-900/50 z-(--z-overlay) flex items-center justify-center p-4"
-  onclick={handleBackdropClick}
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="edit-modal-title"
-  tabindex="-1"
+<Modal
+  {title}
+  {subtitle}
+  size="md"
+  closable={!isLoading}
+  onClose={handleClose}
+  footer={footerActions === null ? undefined : modalFooter}
 >
-  <!-- Modal content -->
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
-    <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-      <div>
-        <h2 id="edit-modal-title" class="text-xl font-heading text-gray-900">
-          {title}
-        </h2>
-        {#if subtitle}
-          <p class="text-sm text-gray-500 font-body">{subtitle}</p>
-        {/if}
-      </div>
-      <button
-        type="button"
-        onclick={handleClose}
-        disabled={isLoading}
-        class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100
-               disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label={$i18n.t('subresources.common.close')}
-      >
-        <XMark class="w-5 h-5" strokeWidth="2" />
-      </button>
+  {#if asForm}
+    <form id={formId} onsubmit={handleSubmit} class="space-y-4">
+      {@render children()}
+    </form>
+  {:else}
+    <div class="space-y-4">
+      {@render children()}
     </div>
+  {/if}
 
-    <!-- Form body. Rendered inside a <form> by default, or a plain <div> when
-         asForm is false (children supply their own <form>) to avoid nesting. -->
-    {#snippet body()}
-      <!-- Scrollable content area -->
-      <div class="p-4 space-y-4 overflow-y-auto flex-1">
-        {@render children()}
+  {#if error !== null && error.length > 0}
+    <div
+      role="alert"
+      class="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
+    >
+      {error}
+    </div>
+  {/if}
 
-        <!-- Error message -->
-        {#if error}
-          <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-            {error}
-          </div>
-        {/if}
-      </div>
-
-      <!-- Footer buttons (fixed) -->
-      {#if !hideFooter}
-      <div class="flex gap-3 p-4 border-t border-gray-200 flex-shrink-0">
-        <Button
-          variant="secondary"
-          class="flex-1"
-          disabled={isLoading}
-          onclick={handleClose}
-        >
-          {$i18n.t('subresources.common.cancel')}
-        </Button>
-        <Button
-          type={asForm ? 'submit' : 'button'}
-          class="flex-1"
-          loading={isLoading}
-          onclick={asForm ? undefined : onSave}
-        >
-          {$i18n.t('subresources.common.save')}
-        </Button>
-      </div>
-      {/if}
-    {/snippet}
-
-    {#if asForm}
-      <form onsubmit={handleSubmit} class="flex flex-col flex-1 overflow-hidden">
-        {@render body()}
-      </form>
-    {:else}
-      <div class="flex flex-col flex-1 overflow-hidden">
-        {@render body()}
-      </div>
-    {/if}
-  </div>
-</div>
+</Modal>

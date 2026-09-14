@@ -76,6 +76,13 @@
     @apply overflow-x-hidden font-body text-gray-900;
   }
 
+  /* showModal() makes the background inert but still lets wheel and touch
+     scroll the page behind ::backdrop, so a long list keeps moving under an
+     open dialog. The nav drawer is not a <dialog> and locks scroll itself. */
+  body:has(dialog[open]) {
+    @apply overflow-hidden;
+  }
+
   h1,
   h2,
   h3,

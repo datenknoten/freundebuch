@@ -152,10 +152,8 @@ onMount(() => {
   <DetailEditModal
     title={$i18n.t('collectives.addMember.title')}
     subtitle={collective.name}
-    isLoading={false}
-    onSave={() => {}}
     onClose={() => { showAddMember = false; isModalOpen.set(false); }}
-    hideFooter
+    footer={null}
     asForm={false}
   >
     <AddMemberForm

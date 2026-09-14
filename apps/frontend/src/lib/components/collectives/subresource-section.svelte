@@ -2,8 +2,9 @@
 import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { Button } from '$lib/components/ui';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import { DeleteConfirmModal, DetailEditModal } from '../friends/subresources';
+import { DetailEditModal } from '../friends/subresources';
 import type {
   SubresourceDescriptor,
   SubresourceFormExports,
@@ -236,7 +237,7 @@ onMount(() => {
 {/if}
 
 {#if deleteConfirmId}
-  <DeleteConfirmModal
+  <ConfirmDialog
     title={descriptor.deleteTitle}
     description={descriptor.deleteDescription}
     itemPreview={deleteConfirmName}

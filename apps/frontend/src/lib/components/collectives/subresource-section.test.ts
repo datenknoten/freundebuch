@@ -149,7 +149,7 @@ describe('SubresourceSection', () => {
     await fireEvent.click((await screen.findAllByLabelText('subresources.phone.deleteAria'))[0]);
     expect(await screen.findByText('Delete Phone Number')).toBeTruthy();
 
-    await fireEvent.click(screen.getByText('subresources.common.delete'));
+    await fireEvent.click(screen.getByText('common.delete'));
     await waitFor(() => expect(remove).toHaveBeenCalledWith('c1', phone.id));
     await waitFor(() => expect(screen.queryAllByText('+1 555 0100')).toHaveLength(0));
   });
@@ -179,7 +179,7 @@ describe('SubresourceSection', () => {
 
     // Delete -> remove() then reload() drops it again.
     await fireEvent.click((await screen.findAllByLabelText('subresources.phone.deleteAria'))[0]);
-    await fireEvent.click(screen.getByText('subresources.common.delete'));
+    await fireEvent.click(screen.getByText('common.delete'));
     await waitFor(() => expect(remove).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.queryAllByText('+1 555 0200')).toHaveLength(0));
   });
@@ -253,7 +253,7 @@ describe('SubresourceSection', () => {
       target: { value: '+1 555 9999' },
     });
     // Close via the modal X. Without tracksDirty the modal must not prompt.
-    await fireEvent.click(screen.getByLabelText('subresources.common.close'));
+    await fireEvent.click(screen.getByLabelText('common.close'));
 
     expect(confirmSpy).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.queryByText('friendDetail.modal.add modal.type')).toBeNull());
@@ -270,7 +270,7 @@ describe('SubresourceSection', () => {
     await fireEvent.input(await screen.findByLabelText(/subresources\.phone\.phoneNumber/), {
       target: { value: '+1 555 9999' },
     });
-    await fireEvent.click(screen.getByLabelText('subresources.common.close'));
+    await fireEvent.click(screen.getByLabelText('common.close'));
 
     // Dirty -> DetailEditModal asks before discarding (confirm stubbed to cancel).
     expect(confirmSpy).toHaveBeenCalled();
