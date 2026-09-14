@@ -64,13 +64,16 @@
 }
 
 @layer base {
-  html,
-  body {
+  html {
+    /* The app ships a single light theme; declaring it keeps user-agent
+       widgets (form controls, scrollbars) light instead of letting OS dark
+       mode render dark controls on white surfaces. */
+    color-scheme: light;
     @apply overflow-x-hidden;
   }
 
   body {
-    @apply font-body text-gray-900;
+    @apply overflow-x-hidden font-body text-gray-900;
   }
 
   h1,
@@ -96,8 +99,21 @@
   animation: slide-up 0.3s ease-out;
 }
 
+/* Honour the OS motion preference for everything, not just the bottom sheet:
+   spinners, skeleton pulses, the drawer transform and every CSS transition
+   collapse to an imperceptible duration while staying observable in the DOM.
+   Svelte's JS transitions run through the Web Animations API, out of reach of
+   this reset, and read the preference themselves via `motionDuration()` in
+   `lib/utils/motion.ts`. */
 @media (prefers-reduced-motion: reduce) {
-  .animate-slide-up {
-    animation: none;
+  *,
+  ::before,
+  ::after {
+    /* biome-ignore-start lint/complexity/noImportantStyles: the reduced-motion reset must beat every utility, animation class and inline style */
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+    /* biome-ignore-end lint/complexity/noImportantStyles: end of the reduced-motion reset */
   }
 }
