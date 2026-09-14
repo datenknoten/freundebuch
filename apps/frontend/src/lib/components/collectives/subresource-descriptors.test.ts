@@ -53,10 +53,14 @@ describe('collective subresource descriptors', () => {
     }
   });
 
-  it('maps the phone unknown-country error and only registers it on the phone descriptor', async () => {
+  it('maps the phone validation errors and only registers them on the phone descriptor', async () => {
     const { ApiError } = await import('$lib/api/client');
     const err = new ApiError(422, 'nope', 'PHONE_COUNTRY_UNKNOWN');
     expect(byKey.phone.mapError?.(err, t)).toBe('subresources.phone.unknownCountry');
+    expect(byKey.phone.mapError?.(new ApiError(400, 'Invalid phone number'), t)).toBe(
+      'subresources.phone.invalidNumber',
+    );
+    expect(byKey.phone.mapError?.(new ApiError(500, 'boom'), t)).toBeUndefined();
     expect(byKey.phone.mapError?.(new Error('other'), t)).toBeUndefined();
     expect(byKey.email.mapError).toBeUndefined();
   });
