@@ -8,8 +8,10 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
+import { focusTrap } from '$lib/actions/focus-trap';
 import Button from '$lib/components/ui/button.svelte';
 import Spinner from '$lib/components/ui/spinner.svelte';
+import { surfaceClasses } from '$lib/components/ui/styles';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   hasActiveFilters,
@@ -191,7 +193,7 @@ onMount(() => {
   which is only possible because it already exists at that point.
 -->
 <div
-  class="fixed inset-0 z-(--z-overlay) bg-black/50 flex items-start justify-center pt-[10vh] {$isSearchOpen ? '' : 'opacity-0 pointer-events-none'}"
+  class="fixed inset-0 z-(--z-overlay) bg-gray-900/50 flex items-start justify-center pt-[10vh] {$isSearchOpen ? '' : 'opacity-0 pointer-events-none'}"
   onclick={handleBackdropClick}
   onkeydown={handleKeydown}
   role="dialog"
@@ -203,7 +205,8 @@ onMount(() => {
   <!-- Modal container -->
   <div
     bind:this={containerElement}
-    class="w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden"
+    use:focusTrap={$isSearchOpen}
+    class="w-full max-w-xl overflow-hidden {surfaceClasses.modal}"
   >
     <!-- Search input -->
     <div class="relative border-b border-gray-200">
