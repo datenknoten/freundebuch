@@ -24,10 +24,14 @@ export function handleGuards(
     showHelp: boolean;
   },
 ): { suppress: boolean } {
-  // Handle Cmd/Ctrl+K to open global search (works even in inputs)
+  // Handle Cmd/Ctrl+K to open global search (works even in inputs). Behind a
+  // modal the panel stays closed — it is a plain fixed element, so it would
+  // render underneath the top-layer dialog, unfocusable, while `isSearchOpen`
+  // suppressed every other shortcut — but the event is still prevented: the
+  // browser's own Cmd+K focuses the URL bar, which is worse than nothing.
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
     e.preventDefault();
-    if (get(isAuthenticated)) {
+    if (!get(isModalOpen) && get(isAuthenticated)) {
       search.toggle();
     }
     return { suppress: true };
@@ -52,13 +56,12 @@ export function handleGuards(
     return { suppress: true };
   }
 
-  // When a modal/form is open, only allow Escape to close it
+  // While a modal is open, shortcuts stay off. Escape is deliberately left
+  // alone: every modal is a native <dialog> opened with showModal(), and the
+  // browser turns an unprevented Escape into the `cancel` event the dialog
+  // listens for. Calling preventDefault() here would swallow that request and
+  // leave the dialog open.
   if (get(isModalOpen)) {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      isModalOpen.set(false);
-      window.dispatchEvent(new CustomEvent('shortcut:close-modal'));
-    }
     return { suppress: true };
   }
 
