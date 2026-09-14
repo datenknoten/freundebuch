@@ -505,6 +505,41 @@
       "cancel": "Cancel"
     }
   },
+  "friendForm": {
+    "nameHeading": "Name",
+    "prefix": "Prefix",
+    "prefixPlaceholder": "Dr., Mr.",
+    "firstName": "First Name",
+    "middleName": "Middle Name",
+    "lastName": "Last Name",
+    "suffix": "Suffix",
+    "suffixPlaceholder": "Jr., PhD",
+    "maidenName": "Maiden Name",
+    "displayName": "Display Name",
+    "displayNameHelper": "Built from the name parts until you write your own.",
+    "nickname": "Nickname",
+    "interestsPlaceholder": "Interests, hobbies, topics they enjoy discussing...",
+    "metDate": "Date",
+    "metLocation": "Location",
+    "metLocationPlaceholder": "Conference, Coffee shop",
+    "metContext": "Story",
+    "metContextPlaceholder": "Context or story of how you met...",
+    "photo": {
+      "uploadTitle": "Click to upload photo",
+      "saveFirstTitle": "Save friend first to upload photo",
+      "previewAlt": "Photo preview",
+      "remove": "Remove photo",
+      "saveFirstHint": "Save friend to upload photo",
+      "uploadHint": "Click to upload photo (max 5MB)",
+      "invalidType": "Invalid file type. Allowed: {{types}}",
+      "tooLarge": "File too large. Maximum size: {{size}}MB",
+      "uploadError": "Failed to upload photo",
+      "deleteError": "Failed to delete photo"
+    },
+    "saveChanges": "Save Changes",
+    "create": "Create Friend",
+    "saveError": "Failed to save friend"
+  },
   "circles": {
     "title": "Circles",
     "subtitle": "Organize your friends into circles",

@@ -1,17 +1,23 @@
 <script lang="ts">
-import { onMount } from 'svelte';
+import { untrack } from 'svelte';
 import Camera from 'svelte-heros-v2/Camera.svelte';
 import { goto } from '$app/navigation';
 import * as collectivesApi from '$lib/api/collectives.js';
 import AlertBanner from '$lib/components/alert-banner.svelte';
-import Button from '$lib/components/ui/button.svelte';
-import Spinner from '$lib/components/ui/spinner.svelte';
+import { Button, FormInput, headingClasses, Spinner } from '$lib/components/ui';
 import MarkdownEditor from '$lib/editor/markdown-editor.svelte';
+import MarkdownField from '$lib/editor/markdown-field.svelte';
+import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { Friend, FriendCreateInput } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
 import FriendAvatar from './friend-avatar.svelte';
 import ImageCropModal from './image-crop-modal.svelte';
+
+const i18n = createI18n();
+
+// The interests editor is labelled by its visible section heading.
+const interestsLabelId = $props.id();
 
 interface Props {
   friend?: Friend;
@@ -45,14 +51,10 @@ let photoFile = $state<File | null>(null);
 let photoError = $state('');
 let isUploadingPhoto = $state(false);
 let fileInput: HTMLInputElement;
-let firstNameInput: HTMLInputElement;
 
 // Crop modal state
 let showCropModal = $state(false);
 let cropImageUrl = $state<string | null>(null);
-
-// Track if user has manually edited the display name
-let displayNameManuallyEdited = $state(false);
 
 // Form state - initialize with functions to capture initial values
 let displayName = $state((() => friend?.displayName ?? '')());
@@ -64,26 +66,34 @@ let nameLast = $state((() => friend?.nameLast ?? '')());
 let nameSuffix = $state((() => friend?.nameSuffix ?? '')());
 let maidenName = $state((() => friend?.maidenName ?? '')());
 
-// Auto-generate display name from parts
-function generateDisplayName(): string {
-  const parts = [namePrefix, nameFirst, nameMiddle, nameLast, nameSuffix].filter(Boolean);
-  return parts.join(' ').trim();
-}
+// The display name mirrors the name parts until the user types their own.
+// `lastAutoDisplayName` records what the sync last wrote, so a display name
+// that no longer matches it is a manual edit and the sync steps back.
+const generatedDisplayName = $derived(
+  [namePrefix, nameFirst, nameMiddle, nameLast, nameSuffix]
+    .filter((part) => part.length > 0)
+    .join(' ')
+    .trim(),
+);
 
-// Update display name when name parts change (only if not manually edited)
-function updateDisplayNameFromParts() {
-  if (!displayNameManuallyEdited || !displayName.trim()) {
-    const generated = generateDisplayName();
-    if (generated) {
-      displayName = generated;
+let lastAutoDisplayName = (() => friend?.displayName ?? '')();
+let displayNameSyncPrimed = false;
+
+$effect(() => {
+  const generated = generatedDisplayName;
+  untrack(() => {
+    // The first run only primes the baseline: an existing friend keeps the
+    // display name it was saved with, however its name parts read.
+    if (!displayNameSyncPrimed) {
+      displayNameSyncPrimed = true;
+      return;
     }
-  }
-}
-
-// Track manual edits to display name
-function onDisplayNameInput() {
-  displayNameManuallyEdited = true;
-}
+    if (generated.length === 0) return;
+    if (displayName !== lastAutoDisplayName && displayName.trim().length > 0) return;
+    displayName = generated;
+    lastAutoDisplayName = generated;
+  });
+});
 
 // Epic 1B: Interests field - initialize with function to capture initial value
 // Note: Professional information (job, org, dept) is now managed in the Professional History subresource
@@ -97,15 +107,6 @@ let metContext = $state((() => friend?.metInfo?.metContext ?? '')());
 let internalIsLoading = $state(false);
 const isLoading = $derived(externalIsLoading ?? internalIsLoading);
 let error = $state('');
-
-// Focus firstname input when form opens
-// Use requestAnimationFrame to ensure the browser has completed layout
-// before focusing, which is required for mobile keyboards to open reliably
-onMount(() => {
-  requestAnimationFrame(() => {
-    firstNameInput?.focus();
-  });
-});
 
 // Photo handling
 function triggerPhotoUpload() {
@@ -121,13 +122,15 @@ async function handlePhotoSelect(e: Event) {
 
   // Validate file type
   if (!ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number])) {
-    photoError = `Invalid file type. Allowed: ${ALLOWED_MIME_TYPES.map((t) => t.replace('image/', '')).join(', ')}`;
+    photoError = $i18n.t('friendForm.photo.invalidType', {
+      types: ALLOWED_MIME_TYPES.map((t) => t.replace('image/', '')).join(', '),
+    });
     return;
   }
 
   // Validate file size
   if (file.size > MAX_FILE_SIZE) {
-    photoError = `File too large. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`;
+    photoError = $i18n.t('friendForm.photo.tooLarge', { size: MAX_FILE_SIZE / 1024 / 1024 });
     return;
   }
 
@@ -177,7 +180,7 @@ async function uploadPhoto() {
     photoPreview = null;
     photoFile = null;
   } catch (err) {
-    photoError = (err as Error)?.message || 'Failed to upload photo';
+    photoError = (err as Error)?.message || $i18n.t('friendForm.photo.uploadError');
   } finally {
     isUploadingPhoto = false;
   }
@@ -195,7 +198,7 @@ async function handleDeletePhoto() {
     photoPreview = null;
     photoFile = null;
   } catch (err) {
-    photoError = (err as Error)?.message || 'Failed to delete photo';
+    photoError = (err as Error)?.message || $i18n.t('friendForm.photo.deleteError');
   } finally {
     isUploadingPhoto = false;
   }
@@ -293,7 +296,7 @@ async function handleSubmit(e: Event) {
       goto(`/friends/${newFriend.id}`);
     }
   } catch (err) {
-    error = (err as Error)?.message || 'Failed to save friend';
+    error = (err as Error)?.message || $i18n.t('friendForm.saveError');
     internalIsLoading = false;
   }
 }
@@ -320,17 +323,19 @@ async function handleSubmit(e: Event) {
       onclick={triggerPhotoUpload}
       disabled={isLoading || isUploadingPhoto || !isEditing}
       class="relative group rounded-full focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 disabled:cursor-not-allowed"
-      title={isEditing ? 'Click to upload photo' : 'Save friend first to upload photo'}
+      title={isEditing
+        ? $i18n.t('friendForm.photo.uploadTitle')
+        : $i18n.t('friendForm.photo.saveFirstTitle')}
     >
       {#if photoPreview}
         <img
           src={photoPreview}
-          alt="Preview"
+          alt={$i18n.t('friendForm.photo.previewAlt')}
           class="w-24 h-24 rounded-full object-cover"
         />
       {:else}
         <FriendAvatar
-          displayName={displayName || 'New Friend'}
+          displayName={displayName.length > 0 ? displayName : $i18n.t('friends.newFriend')}
           photoUrl={photoUrl}
           size="lg"
         />
@@ -354,12 +359,12 @@ async function handleSubmit(e: Event) {
         disabled={isLoading || isUploadingPhoto}
         class="text-sm text-red-600 hover:text-red-700 font-body disabled:opacity-50"
       >
-        Remove photo
+        {$i18n.t('friendForm.photo.remove')}
       </button>
     {:else if !isEditing}
-      <p class="text-xs text-gray-500 font-body">Save friend to upload photo</p>
+      <p class="text-xs text-gray-500 font-body">{$i18n.t('friendForm.photo.saveFirstHint')}</p>
     {:else}
-      <p class="text-xs text-gray-500 font-body">Click to upload photo (max 5MB)</p>
+      <p class="text-xs text-gray-500 font-body">{$i18n.t('friendForm.photo.uploadHint')}</p>
     {/if}
 
     {#if photoError}
@@ -367,131 +372,112 @@ async function handleSubmit(e: Event) {
     {/if}
   </div>
 
-  <!-- Name Parts -->
-  <div class="space-y-2">
-    <h3 class="text-lg font-heading text-gray-900">Name</h3>
+  <!-- Name parts -->
+  <div class="space-y-4">
+    <h3 class={headingClasses.sub}>{$i18n.t('friendForm.nameHeading')}</h3>
 
-    <input
-      type="text"
-      bind:value={namePrefix}
-      oninput={updateDisplayNameFromParts}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="Prefix (e.g. Dr., Mr.)"
-      disabled={isLoading}
-    />
-    <input
-      type="text"
-      bind:value={nameFirst}
-      bind:this={firstNameInput}
-      oninput={updateDisplayNameFromParts}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="First Name"
-      disabled={isLoading}
-    />
-    <input
-      type="text"
-      bind:value={nameMiddle}
-      oninput={updateDisplayNameFromParts}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="Middle Name"
-      disabled={isLoading}
-    />
-    <input
-      type="text"
-      bind:value={nameLast}
-      oninput={updateDisplayNameFromParts}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="Last Name"
-      disabled={isLoading}
-    />
-    <input
-      type="text"
-      bind:value={nameSuffix}
-      oninput={updateDisplayNameFromParts}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="Suffix (e.g. Jr., PhD)"
-      disabled={isLoading}
-    />
-    <input
-      type="text"
-      bind:value={maidenName}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="Maiden Name"
-      disabled={isLoading}
-    />
-    <input
-      type="text"
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <FormInput
+        id="namePrefix"
+        label={$i18n.t('friendForm.prefix')}
+        bind:value={namePrefix}
+        placeholder={$i18n.t('friendForm.prefixPlaceholder')}
+        disabled={isLoading}
+      />
+      <FormInput
+        id="nameFirst"
+        label={$i18n.t('friendForm.firstName')}
+        bind:value={nameFirst}
+        disabled={isLoading}
+        autofocus
+      />
+      <FormInput
+        id="nameMiddle"
+        label={$i18n.t('friendForm.middleName')}
+        bind:value={nameMiddle}
+        disabled={isLoading}
+      />
+      <FormInput
+        id="nameLast"
+        label={$i18n.t('friendForm.lastName')}
+        bind:value={nameLast}
+        disabled={isLoading}
+      />
+      <FormInput
+        id="nameSuffix"
+        label={$i18n.t('friendForm.suffix')}
+        bind:value={nameSuffix}
+        placeholder={$i18n.t('friendForm.suffixPlaceholder')}
+        disabled={isLoading}
+      />
+      <FormInput
+        id="maidenName"
+        label={$i18n.t('friendForm.maidenName')}
+        bind:value={maidenName}
+        disabled={isLoading}
+      />
+    </div>
+
+    <FormInput
       id="displayName"
+      label={$i18n.t('friendForm.displayName')}
       bind:value={displayName}
-      oninput={onDisplayNameInput}
       required
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="Display Name *"
+      helper={$i18n.t('friendForm.displayNameHelper')}
       disabled={isLoading}
     />
-    <input
-      type="text"
+    <FormInput
+      id="nickname"
+      label={$i18n.t('friendForm.nickname')}
       bind:value={nickname}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-      placeholder="Nickname"
       disabled={isLoading}
     />
   </div>
 
   <!-- Epic 1B: Interests -->
   <div class="space-y-2">
-    <h3 class="text-lg font-heading text-gray-900">Interests & Hobbies</h3>
+    <h3 id={interestsLabelId} class={headingClasses.sub}>
+      {$i18n.t('friendDetail.sections.interestsHobbies')}
+    </h3>
     <MarkdownEditor
       bind:value={interests}
-      ariaLabel="Interests & Hobbies"
-      placeholder="Interests, hobbies, topics they enjoy discussing..."
+      labelledBy={interestsLabelId}
+      placeholder={$i18n.t('friendForm.interestsPlaceholder')}
       disabled={isLoading}
     />
   </div>
 
   <!-- Epic 1B: How/Where Met -->
-  <div class="space-y-2">
-    <h3 class="text-lg font-heading text-gray-900">How We Met</h3>
-    <div class="flex gap-2">
-      <input
+  <div class="space-y-4">
+    <h3 class={headingClasses.sub}>{$i18n.t('friendDetail.sections.howWeMet')}</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <FormInput
+        id="metDate"
         type="date"
+        label={$i18n.t('friendForm.metDate')}
         bind:value={metDate}
-        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
         disabled={isLoading}
       />
-      <input
-        type="text"
+      <FormInput
+        id="metLocation"
+        label={$i18n.t('friendForm.metLocation')}
         bind:value={metLocation}
-        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-        placeholder="Location (e.g., Conference, Coffee shop)"
+        placeholder={$i18n.t('friendForm.metLocationPlaceholder')}
         disabled={isLoading}
       />
     </div>
-    <MarkdownEditor
+    <MarkdownField
       bind:value={metContext}
-      ariaLabel="How We Met"
-      placeholder="Context or story of how you met..."
+      label={$i18n.t('friendForm.metContext')}
+      placeholder={$i18n.t('friendForm.metContextPlaceholder')}
       disabled={isLoading}
     />
   </div>
 
-  <!-- Form Actions -->
-  <div class="flex gap-4 pt-4 border-t border-gray-200">
-    <Button
-      type="submit"
-      class="flex-1"
-      loading={isLoading}
-      disabled={displayName.trim().length === 0}
-    >
-      {#if submitLabel !== undefined && submitLabel.length > 0}
-        {submitLabel}
-      {:else if isEditing}
-        Save Changes
-      {:else}
-        Create Friend
-      {/if}
-    </Button>
-
+  <!-- Form actions -->
+  <div
+    class="sticky bottom-0 bg-white border-t border-gray-200 py-4 -mx-8 px-8 flex gap-3 justify-end"
+  >
     {#if !isOnboarding}
       <Button
         variant="secondary"
@@ -501,9 +487,19 @@ async function handleSubmit(e: Event) {
             ? `/collectives/${addToCollective.id}`
             : '/friends'}
       >
-        Cancel
+        {$i18n.t('common.cancel')}
       </Button>
     {/if}
+
+    <Button type="submit" loading={isLoading} disabled={displayName.trim().length === 0}>
+      {#if submitLabel !== undefined && submitLabel.length > 0}
+        {submitLabel}
+      {:else if isEditing}
+        {$i18n.t('friendForm.saveChanges')}
+      {:else}
+        {$i18n.t('friendForm.create')}
+      {/if}
+    </Button>
   </div>
 </form>
 
