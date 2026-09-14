@@ -8,10 +8,10 @@ import { page } from '$app/stores';
 import { openWithKeyboard } from '$lib/actions/auto-focus';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import CircleEditModal from '$lib/components/circles/circle-edit-modal.svelte';
-import DeleteConfirmModal from '$lib/components/friends/subresources/delete-confirm-modal.svelte';
 import DetailActions from '$lib/components/friends/subresources/detail-actions.svelte';
 import SwipeableRow from '$lib/components/friends/subresources/swipeable-row.svelte';
-import { Button } from '$lib/components/ui';
+import { Button, Spinner } from '$lib/components/ui';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { circles, circlesList } from '$lib/stores/circles';
@@ -227,7 +227,7 @@ function getActualDepth(circle: Circle): number {
 
       <!-- Delete Confirmation Modal -->
       {#if deleteConfirmCircle}
-        <DeleteConfirmModal
+        <ConfirmDialog
           title={$i18n.t('circles.delete.title')}
           description={deleteConfirmCircle.friendCount > 0
             ? $i18n.t('circles.delete.messageWithCount', { count: deleteConfirmCircle.friendCount })
@@ -241,7 +241,7 @@ function getActualDepth(circle: Circle): number {
       <!-- Circles List -->
       {#if $circles.isLoading && !hasLoaded}
         <div class="flex items-center justify-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+          <Spinner size="lg" />
         </div>
       {:else if $circles.error}
         <AlertBanner variant="error">{$circles.error}</AlertBanner>

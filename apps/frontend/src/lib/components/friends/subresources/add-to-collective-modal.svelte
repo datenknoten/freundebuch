@@ -4,6 +4,7 @@ import * as collectivesApi from '$lib/api/collectives.js';
 import CollectiveSearchInput from '$lib/components/collectives/collective-search-input.svelte';
 import RelationshipPreview from '$lib/components/collectives/relationship-preview.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   collectives,
@@ -176,22 +177,18 @@ function handleRoleChange(e: Event) {
   skipAutoRelationships = false;
 }
 
-// No-op for DetailEditModal's required onSave (we use hideFooter and our own buttons)
-function noop() {
-  // intentionally empty - modal uses custom submit buttons
-}
 </script>
 
 <DetailEditModal
   title={$i18n.t('friendDetail.addToCollective.title')}
   subtitle={friendDisplayName}
-  hideFooter={true}
-  onSave={noop}
-  onClose={() => { if (!isSubmitting) onClose(); }}
+  onClose={() => {
+    if (!isSubmitting) onClose();
+  }}
 >
   {#if isLoadingData}
     <div class="flex justify-center py-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-2 border-forest border-t-transparent"></div>
+      <Spinner size="lg" />
     </div>
   {:else if availableCollectives.length === 0 && allCollectives.length === 0}
     <p class="text-sm text-gray-500 font-body py-4">
@@ -257,7 +254,7 @@ function noop() {
 
           {#if isLoadingPreview}
             <div class="flex justify-center py-4">
-              <div class="animate-spin rounded-full h-6 w-6 border-2 border-forest border-t-transparent"></div>
+              <Spinner />
             </div>
           {:else if preview}
             <RelationshipPreview {preview} />
@@ -285,21 +282,15 @@ function noop() {
     </div>
   {/if}
 
-  <!-- Custom footer buttons -->
-  {#if !isLoadingData && availableCollectives.length > 0}
-    <div class="flex gap-3 pt-4">
-      <Button
-        class="flex-1"
-        loading={isSubmitting}
-        disabled={!isValid}
-        onclick={handleSubmit}
-      >
+  {#snippet footer()}
+    {#if !isLoadingData && availableCollectives.length > 0}
+      <Button class="flex-1" loading={isSubmitting} disabled={!isValid} onclick={handleSubmit}>
         {$i18n.t('friendDetail.addToCollective.submit')}
       </Button>
 
       <Button variant="secondary" disabled={isSubmitting} onclick={onClose}>
         {$i18n.t('common.cancel')}
       </Button>
-    </div>
-  {/if}
+    {/if}
+  {/snippet}
 </DetailEditModal>

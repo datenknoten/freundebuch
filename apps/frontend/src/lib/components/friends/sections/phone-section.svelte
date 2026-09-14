@@ -4,6 +4,7 @@ import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { ApiError } from '$lib/api/auth';
 import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import {
@@ -13,7 +14,7 @@ import {
 } from '$lib/stores/ui';
 import type { Phone, PhoneInput } from '$shared';
 import KeyboardHintBadge from '../../keyboard-hint-badge.svelte';
-import { DeleteConfirmModal, DetailEditModal, PhoneEditForm, PhoneRow } from '../subresources';
+import { DetailEditModal, PhoneEditForm, PhoneRow } from '../subresources';
 
 const i18n = createI18n();
 
@@ -180,7 +181,7 @@ onMount(() => {
 {/if}
 
 {#if deleteConfirmId}
-  <DeleteConfirmModal
+  <ConfirmDialog
     title={$i18n.t('friendDetail.modal.deletePhoneNumber')}
     description={$i18n.t('friendDetail.modal.confirmDeletePhone')}
     itemPreview={deleteConfirmName}

@@ -3,6 +3,7 @@ import { onMount } from 'svelte';
 import Link from 'svelte-heros-v2/Link.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import {
@@ -12,7 +13,7 @@ import {
 } from '$lib/stores/ui';
 import type { Url, UrlInput } from '$shared';
 import KeyboardHintBadge from '../../keyboard-hint-badge.svelte';
-import { DeleteConfirmModal, DetailEditModal, UrlEditForm, UrlRow } from '../subresources';
+import { DetailEditModal, UrlEditForm, UrlRow } from '../subresources';
 
 const i18n = createI18n();
 
@@ -166,7 +167,7 @@ onMount(() => {
 {/if}
 
 {#if deleteConfirmId}
-  <DeleteConfirmModal
+  <ConfirmDialog
     title={$i18n.t('friendDetail.modal.deleteWebsite')}
     description={$i18n.t('friendDetail.modal.confirmDeleteWebsite')}
     itemPreview={deleteConfirmName}

@@ -3,10 +3,11 @@ import { onMount } from 'svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { DateInput, FriendDate } from '$shared';
-import { DateEditForm, DateRow, DeleteConfirmModal, DetailEditModal } from '../subresources';
+import { DateEditForm, DateRow, DetailEditModal } from '../subresources';
 
 const i18n = createI18n();
 
@@ -151,7 +152,7 @@ onMount(() => {
 {/if}
 
 {#if deleteConfirmId}
-  <DeleteConfirmModal
+  <ConfirmDialog
     title={$i18n.t('friendDetail.modal.deleteDate')}
     description={$i18n.t('friendDetail.modal.confirmDeleteDate')}
     itemPreview={deleteConfirmName}

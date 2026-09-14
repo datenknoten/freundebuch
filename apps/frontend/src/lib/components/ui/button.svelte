@@ -9,6 +9,8 @@ interface Props {
   /** Renders a SvelteKit link that looks and behaves like the button. */
   href?: string;
   type?: 'button' | 'submit';
+  /** Submits the form with this id — for a submit button outside its form. */
+  form?: string;
   /** Full-width button (form submits, drawer actions). */
   block?: boolean;
   /** Disables the button and renders a spinner before its label. */
@@ -35,6 +37,7 @@ let {
   size = 'md',
   href,
   type = 'button',
+  form,
   block = false,
   loading = false,
   disabled = false,
@@ -79,6 +82,7 @@ function handleClick(event: MouseEvent) {
   <button
     bind:this={element}
     {type}
+    {form}
     class={classes}
     disabled={inert}
     aria-busy={loading ? 'true' : undefined}
