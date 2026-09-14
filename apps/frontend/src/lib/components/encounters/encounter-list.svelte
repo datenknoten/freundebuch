@@ -7,6 +7,7 @@ import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import type { EncounterListParams } from '$lib/api/encounters';
+import { Button } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters, encountersList } from '$lib/stores/encounters';
 import { visibleEncounterIds } from '$lib/stores/ui';
@@ -180,13 +181,9 @@ function goToPage(page: number) {
 
     <!-- Clear filters -->
     {#if searchQuery || fromDate || toDate || selectedType}
-      <button
-        type="button"
-        onclick={clearFilters}
-        class="px-3 py-2 text-sm text-forest hover:text-forest-dark font-body font-medium transition-colors"
-      >
+      <Button variant="ghostAccent" size="sm" onclick={clearFilters}>
         {$i18n.t('encounters.clearFilters')}
-      </button>
+      </Button>
     {/if}
   </div>
 
@@ -223,13 +220,10 @@ function goToPage(page: number) {
         {/if}
       </p>
       {#if !friendId}
-        <a
-          href="/encounters/new"
-          class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-        >
+        <Button href="/encounters/new" class="mt-4">
           <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('encounters.logNew')}
-        </a>
+        </Button>
       {/if}
     </div>
   {:else}
@@ -243,27 +237,29 @@ function goToPage(page: number) {
     <!-- Pagination -->
     {#if pagination.totalPages > 1}
       <div class="flex items-center justify-center gap-2 pt-4">
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onclick={() => goToPage(pagination.page - 1)}
           disabled={pagination.page <= 1 || isLoading}
-          class="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           aria-label={$i18n.t('aria.previousPage')}
         >
           <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
-        </button>
+        </Button>
 
         <span class="text-sm text-gray-600 font-body px-2">
           {$i18n.t('encounters.pageOf', { page: pagination.page, total: pagination.totalPages })}
         </span>
 
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onclick={() => goToPage(pagination.page + 1)}
           disabled={pagination.page >= pagination.totalPages || isLoading}
-          class="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           aria-label={$i18n.t('aria.nextPage')}
         >
           <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
-        </button>
+        </Button>
       </div>
     {/if}
   {/if}

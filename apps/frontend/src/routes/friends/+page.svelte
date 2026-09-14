@@ -5,6 +5,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 // biome-ignore lint/style/useImportType: FriendList is used both as type and value (bind:this)
 import FriendList from '$lib/components/friends/friend-list.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friendsPageSize, isAuthInitialized } from '$lib/stores/auth';
 import { friendListFilter, friends } from '$lib/stores/friends';
@@ -133,13 +134,10 @@ onMount(() => {
           <h1 class="text-3xl font-heading text-forest">{$i18n.t('friends.title')}</h1>
           <p class="text-gray-600 font-body mt-1">{$i18n.t('friends.subtitle')}</p>
         </div>
-        <a
-          href="/friends/new"
-          class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-        >
+        <Button href="/friends/new">
           <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('friends.addFriend')}
-        </a>
+        </Button>
       </div>
 
       <FriendList

@@ -4,6 +4,7 @@ import { goto } from '$app/navigation';
 import { autoFocus } from '$lib/actions/auto-focus';
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
@@ -152,13 +153,9 @@ async function handlePasskeySignIn() {
 		</a>
 	</div>
 
-	<button
-		type="submit"
-		disabled={isLoading || isPasskeyLoading}
-		class="w-full bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-	>
-		{isLoading ? $i18n.t('common.loading') : $i18n.t('auth.login.submit')}
-	</button>
+	<Button type="submit" block loading={isLoading} disabled={isPasskeyLoading}>
+		{$i18n.t('auth.login.submit')}
+	</Button>
 
 	<div class="relative">
 		<div class="absolute inset-0 flex items-center">
@@ -169,15 +166,16 @@ async function handlePasskeySignIn() {
 		</div>
 	</div>
 
-	<button
-		type="button"
+	<Button
+		variant="secondary"
+		block
+		loading={isPasskeyLoading}
+		disabled={isLoading}
 		onclick={handlePasskeySignIn}
-		disabled={isPasskeyLoading || isLoading}
-		class="w-full flex items-center justify-center gap-2 bg-white text-gray-800 py-3 px-4 rounded-lg font-body font-semibold border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 	>
 		<Key class="w-5 h-5" strokeWidth="2" />
-		{isPasskeyLoading ? $i18n.t('profile.passkeys.signingIn') : $i18n.t('profile.passkeys.signIn')}
-	</button>
+		{$i18n.t('profile.passkeys.signIn')}
+	</Button>
 
 	{#if $signupEnabled}
 		<p class="text-center text-sm font-body text-gray-600">

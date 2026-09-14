@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
+import { Button } from '$lib/components/ui';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectiveTypes } from '$lib/stores/collectives';
@@ -165,28 +166,17 @@ function handleCancel() {
 
   <!-- Form Actions -->
   <div class="flex gap-3 pt-2">
-    <button
+    <Button
       type="submit"
-      disabled={isSubmitting || !isValid}
-      class="flex-1 bg-forest text-white py-2 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="flex-1"
+      loading={isSubmitting}
+      disabled={!isValid}
     >
-      {#if isSubmitting}
-        <span class="inline-flex items-center gap-2">
-          <span class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-          {$i18n.t('collectives.form.saving')}
-        </span>
-      {:else}
-        {isEditMode ? $i18n.t('collectives.updateCollective') : $i18n.t('collectives.createNew')}
-      {/if}
-    </button>
+      {isEditMode ? $i18n.t('collectives.updateCollective') : $i18n.t('collectives.createNew')}
+    </Button>
 
-    <button
-      type="button"
-      onclick={handleCancel}
-      disabled={isSubmitting}
-      class="px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-    >
+    <Button variant="secondary" onclick={handleCancel} disabled={isSubmitting}>
       {$i18n.t('collectives.form.cancel')}
-    </button>
+    </Button>
   </div>
 </form>

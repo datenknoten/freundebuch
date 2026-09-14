@@ -4,6 +4,7 @@ import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import {
@@ -195,15 +196,12 @@ onMount(() => {
       <Users class="w-5 h-5" strokeWidth="2" />
       {$i18n.t('relationshipSection.relationships')}
     </h2>
-    <button
-      type="button"
-      onclick={openAddRelationship}
-      class="hidden sm:flex text-sm font-body font-semibold bg-forest text-white hover:bg-forest-light
-             items-center gap-1 px-2 py-1 rounded-md transition-colors"
-    >
-      <Plus class="w-4 h-4" strokeWidth="2" />
-      {$i18n.t('relationshipSection.addRelationship')}
-    </button>
+    <div class="hidden sm:block">
+      <Button variant="ghostAccent" size="xs" onclick={openAddRelationship}>
+        <Plus class="w-4 h-4" strokeWidth="2" />
+        {$i18n.t('relationshipSection.addRelationship')}
+      </Button>
+    </div>
   </div>
 
   <div class="space-y-4">
@@ -261,22 +259,21 @@ onMount(() => {
                         placeholder={$i18n.t('relationshipSection.addNotes')}
                       ></textarea>
                       <div class="flex gap-2">
-                        <button
-                          type="button"
+                        <Button
+                          size="xs"
+                          loading={isSavingNotes}
                           onclick={() => saveNotes(relationship.id)}
-                          disabled={isSavingNotes}
-                          class="text-xs text-white bg-forest px-2 py-1 rounded font-body hover:bg-forest-light disabled:opacity-50"
                         >
-                          {isSavingNotes ? $i18n.t('relationshipSection.saving') : $i18n.t('relationshipSection.save')}
-                        </button>
-                        <button
-                          type="button"
-                          onclick={cancelEditing}
+                          {$i18n.t('relationshipSection.save')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="xs"
                           disabled={isSavingNotes}
-                          class="text-xs text-gray-600 px-2 py-1 rounded font-body hover:bg-gray-200 disabled:opacity-50"
+                          onclick={cancelEditing}
                         >
                           {$i18n.t('relationshipSection.cancel')}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   {:else if relationship.notes}

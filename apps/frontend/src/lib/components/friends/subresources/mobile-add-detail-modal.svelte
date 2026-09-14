@@ -10,6 +10,7 @@ import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Phone from 'svelte-heros-v2/Phone.svelte';
 import Share from 'svelte-heros-v2/Share.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isModalOpen } from '$lib/stores/ui';
 import type { SubresourceType } from './add-detail-dropdown.svelte';
@@ -24,7 +25,7 @@ interface Props {
 let { onSelect, onClose }: Props = $props();
 
 let modalRef = $state<HTMLDivElement | null>(null);
-let cancelButton = $state<HTMLButtonElement | null>(null);
+let cancelButton = $state<HTMLElement | null>(null);
 let optionButtons = $state<HTMLButtonElement[]>([]);
 
 const optionConfig: { type: SubresourceType; labelKey: string; icon: string }[] = [
@@ -151,16 +152,15 @@ onMount(() => {
         {/each}
       </div>
 
-      <button
-        bind:this={cancelButton}
-        type="button"
+      <Button
+        bind:element={cancelButton}
+        variant="ghost"
+        block
+        class="mt-4"
         onclick={onClose}
-        class="w-full mt-4 py-3 text-center font-body font-semibold text-gray-600
-               hover:bg-gray-100 rounded-xl transition-colors
-               focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
       >
         {$i18n.t('common.cancel')}
-      </button>
+      </Button>
     </div>
 
     <!-- Safe area padding for iOS -->

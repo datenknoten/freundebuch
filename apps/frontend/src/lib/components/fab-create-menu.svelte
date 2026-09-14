@@ -47,6 +47,7 @@ import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import Swatch from 'svelte-heros-v2/Swatch.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { isModalOpen } from '$lib/stores/ui';
 
@@ -76,11 +77,11 @@ const options: { choice: FabCreateChoice; icon: typeof UserPlus; labelKey: strin
 let modalRef = $state<HTMLDivElement | null>(null);
 let detailButton = $state<HTMLButtonElement | null>(null);
 let optionButtons = $state<HTMLButtonElement[]>([]);
-let cancelButton = $state<HTMLButtonElement | null>(null);
+let cancelButton = $state<HTMLElement | null>(null);
 
 // The first focusable element is the contextual "Add detail" entry when present,
 // otherwise the first create-new option.
-let firstButton = $derived(onAddDetail ? detailButton : optionButtons[0]);
+let firstButton = $derived(onAddDetail !== undefined ? detailButton : (optionButtons[0] ?? null));
 
 function handleBackdropClick(e: MouseEvent) {
   if (e.target === e.currentTarget) {
@@ -94,8 +95,8 @@ function handleKeydown(e: KeyboardEvent) {
   }
 
   // Focus trapping
-  if (e.key === 'Tab' && modalRef) {
-    if (!firstButton || !cancelButton) return;
+  if (e.key === 'Tab' && modalRef !== null) {
+    if (firstButton === null || cancelButton === null) return;
 
     if (e.shiftKey && document.activeElement === firstButton) {
       e.preventDefault();
@@ -181,16 +182,9 @@ onMount(() => {
         {/each}
       </div>
 
-      <button
-        bind:this={cancelButton}
-        type="button"
-        onclick={onClose}
-        class="w-full mt-4 py-3 text-center font-body font-semibold text-gray-600
-               hover:bg-gray-100 rounded-xl transition-colors
-               focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
-      >
+      <Button variant="ghost" block class="mt-4" onclick={onClose} bind:element={cancelButton}>
         {$i18n.t('common.cancel')}
-      </button>
+      </Button>
     </div>
 
     <!-- Safe area padding for iOS -->

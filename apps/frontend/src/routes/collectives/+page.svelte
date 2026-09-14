@@ -1,6 +1,7 @@
 <script lang="ts">
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import CollectiveList from '$lib/components/collectives/collective-list.svelte';
+import { Button } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -18,15 +19,14 @@ const i18n = createI18n();
           <h1 class="text-3xl font-heading text-forest">{$i18n.t('collectives.title')}</h1>
           <p class="text-gray-600 font-body mt-1">{$i18n.t('collectives.subtitle')}</p>
         </div>
-        <a
+        <Button
           href="/collectives/new"
-          class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
           data-shortcut="n o"
           data-shortcut-label="shortcuts.newCollective"
         >
           <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('collectives.createNew')}
-        </a>
+        </Button>
       </div>
 
       <CollectiveList />

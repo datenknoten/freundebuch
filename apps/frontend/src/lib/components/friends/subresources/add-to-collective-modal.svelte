@@ -3,6 +3,7 @@ import { onMount } from 'svelte';
 import * as collectivesApi from '$lib/api/collectives.js';
 import CollectiveSearchInput from '$lib/components/collectives/collective-search-input.svelte';
 import RelationshipPreview from '$lib/components/collectives/relationship-preview.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   collectives,
@@ -287,30 +288,18 @@ function noop() {
   <!-- Custom footer buttons -->
   {#if !isLoadingData && availableCollectives.length > 0}
     <div class="flex gap-3 pt-4">
-      <button
-        type="button"
+      <Button
+        class="flex-1"
+        loading={isSubmitting}
+        disabled={!isValid}
         onclick={handleSubmit}
-        disabled={isSubmitting || !isValid}
-        class="flex-1 bg-forest text-white py-2 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        {#if isSubmitting}
-          <span class="inline-flex items-center gap-2">
-            <span class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-            {$i18n.t('friendDetail.addToCollective.adding')}
-          </span>
-        {:else}
-          {$i18n.t('friendDetail.addToCollective.submit')}
-        {/if}
-      </button>
+        {$i18n.t('friendDetail.addToCollective.submit')}
+      </Button>
 
-      <button
-        type="button"
-        onclick={onClose}
-        disabled={isSubmitting}
-        class="px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-      >
+      <Button variant="secondary" disabled={isSubmitting} onclick={onClose}>
         {$i18n.t('common.cancel')}
-      </button>
+      </Button>
     </div>
   {/if}
 </DetailEditModal>

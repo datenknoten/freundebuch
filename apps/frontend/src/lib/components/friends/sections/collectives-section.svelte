@@ -4,6 +4,7 @@ import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { openWithKeyboard } from '$lib/actions/auto-focus';
 import { removeMember } from '$lib/api/collectives';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   getKeyboardHint,
@@ -73,15 +74,10 @@ onMount(() => {
         <BuildingOffice class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('friendDetail.sections.collectives')}
       </h2>
-      <button
-        type="button"
-        onclick={openAddToCollectiveModal}
-        class="text-sm font-body font-semibold bg-forest text-white hover:bg-forest-light
-               flex items-center gap-1 px-2 py-1 rounded-md transition-colors"
-      >
+      <Button variant="ghost" size="xs" class="text-forest!" onclick={openAddToCollectiveModal}>
         <Plus class="w-4 h-4" strokeWidth="2" />
         {$i18n.t('friendDetail.actions.addCollective')}
-      </button>
+      </Button>
     </div>
     <div class="space-y-2">
       {#each collectives as collective, i (collective.id)}

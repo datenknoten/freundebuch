@@ -12,6 +12,7 @@ import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -524,9 +525,10 @@ function openFirstResult() {
           <option value="updated_at">{$i18n.t('friendList.lastUpdated')}</option>
         </select>
 
-        <button
+        <Button
+          variant="secondary"
+          size="xs"
           onclick={toggleSortOrder}
-          class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
           title={currentSortOrder === 'asc' ? $i18n.t('common.ascending') : $i18n.t('common.descending')}
           aria-label={currentSortOrder === 'asc' ? $i18n.t('common.ascending') : $i18n.t('common.descending')}
         >
@@ -535,37 +537,39 @@ function openFirstResult() {
           {:else}
             <BarsArrowDown class="w-4 h-4 text-gray-600" strokeWidth="2" />
           {/if}
-        </button>
+        </Button>
       </div>
 
       <!-- Pagination controls (inline) -->
       {#if displayTotalPages > 1}
         <div class="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200">
-          <button
+          <Button
+            variant="secondary"
+            size="xs"
             onclick={() => loadPage(displayPage - 1)}
             disabled={displayPage <= 1}
-            class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             title={$i18n.t('aria.previousPage')}
             aria-label={$i18n.t('aria.previousPage')}
             data-shortcut="<"
             data-shortcut-label="shortcuts.help.previousPage"
           >
             <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
-          </button>
+          </Button>
           <span class="text-sm text-gray-600 font-body px-2 whitespace-nowrap">
             {displayPage} / {displayTotalPages}
           </span>
-          <button
+          <Button
+            variant="secondary"
+            size="xs"
             onclick={() => loadPage(displayPage + 1)}
             disabled={displayPage >= displayTotalPages}
-            class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             title={$i18n.t('aria.nextPage')}
             aria-label={$i18n.t('aria.nextPage')}
             data-shortcut=">"
             data-shortcut-label="shortcuts.help.nextPage"
           >
             <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
-          </button>
+          </Button>
         </div>
       {/if}
     </div>
@@ -629,13 +633,10 @@ function openFirstResult() {
       <p class="mt-2 text-sm text-gray-600 font-body">
         {$i18n.t('friendList.getStarted')}
       </p>
-      <a
-        href="/friends/new"
-        class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-      >
+      <Button href="/friends/new" class="mt-4">
         <Plus class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('friendList.addFriend')}
-      </a>
+      </Button>
     </div>
   {:else if gridItems.length > 0}
     <!-- Unified Friend Grid - same component for both normal and search modes -->

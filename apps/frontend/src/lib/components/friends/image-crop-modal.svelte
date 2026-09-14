@@ -1,6 +1,7 @@
 <script lang="ts">
 import Cropper, { type CropArea, type OnCropCompleteEvent } from 'svelte-easy-crop';
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { isModalOpen } from '$lib/stores/ui';
 
 interface Props {
@@ -172,37 +173,22 @@ async function handleConfirm() {
 
     <!-- Footer buttons -->
     <div class="flex gap-3 p-4 border-t border-gray-200 flex-shrink-0">
-      <button
-        type="button"
-        onclick={onClose}
+      <Button
+        variant="secondary"
+        class="flex-1"
         disabled={isProcessing}
-        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold
-               text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+        onclick={onClose}
       >
         Cancel
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        class="flex-1"
+        loading={isProcessing}
+        disabled={croppedAreaPixels === null}
         onclick={handleConfirm}
-        disabled={isProcessing || !croppedAreaPixels}
-        class="flex-1 px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold
-               hover:bg-forest-light transition-colors disabled:opacity-50
-               flex items-center justify-center gap-2"
       >
-        {#if isProcessing}
-          <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-          Processing...
-        {:else}
-          Use Photo
-        {/if}
-      </button>
+        Use Photo
+      </Button>
     </div>
   </div>
 </div>

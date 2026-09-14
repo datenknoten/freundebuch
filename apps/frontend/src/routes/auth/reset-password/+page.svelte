@@ -1,6 +1,7 @@
 <script lang="ts">
 import { page } from '$app/stores';
 import ResetPasswordForm from '$lib/components/reset-password-form.svelte';
+import Button from '$lib/components/ui/button.svelte';
 
 // Get the reset token from URL query parameter
 const token = $derived($page.url.searchParams.get('token') || '');
@@ -20,12 +21,7 @@ const token = $derived($page.url.searchParams.get('token') || '');
 				<p class="text-gray-600 font-body mb-6">
 					This password reset link is invalid or has expired.
 				</p>
-				<a
-					href="/auth/forgot-password"
-					class="inline-block bg-forest text-white py-3 px-6 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-				>
-					Request a new reset link
-				</a>
+				<Button href="/auth/forgot-password">Request a new reset link</Button>
 			</div>
 		{/if}
 	</div>

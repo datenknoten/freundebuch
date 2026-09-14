@@ -10,6 +10,7 @@ import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
@@ -225,20 +226,17 @@ onMount(() => {
         <AddDetailDropdown onAdd={dispatchAddEvent} />
       </div>
 
-      <a
+      <Button
+        variant="secondary"
         href="/friends/{friend.id}/edit"
-        class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         data-shortcut="e"
         data-shortcut-label="shortcuts.help.editFriend"
       >
         {$i18n.t('common.edit')}
-      </a>
-      <button
-        onclick={() => showDeleteConfirm = true}
-        class="px-4 py-2 border border-red-300 text-red-600 rounded-lg font-body font-semibold hover:bg-red-50 transition-colors"
-      >
+      </Button>
+      <Button variant="dangerOutline" onclick={() => showDeleteConfirm = true}>
         {$i18n.t('common.delete')}
-      </button>
+      </Button>
     </div>
   </div>
 
@@ -421,20 +419,17 @@ onMount(() => {
         {$i18n.t('friendDetail.delete.confirmMessage')} <strong>{friend.displayName}</strong>? {$i18n.t('friendDetail.delete.cannotUndo')}
       </p>
       <div class="flex gap-3">
-        <button
-          onclick={() => showDeleteConfirm = false}
+        <Button
+          variant="secondary"
+          class="flex-1"
           disabled={isDeleting}
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          onclick={() => showDeleteConfirm = false}
         >
           {$i18n.t('common.cancel')}
-        </button>
-        <button
-          onclick={handleDelete}
-          disabled={isDeleting}
-          class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-body font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
-        >
-          {isDeleting ? $i18n.t('friendDetail.delete.deleting') : $i18n.t('common.delete')}
-        </button>
+        </Button>
+        <Button variant="danger" class="flex-1" loading={isDeleting} onclick={handleDelete}>
+          {$i18n.t('common.delete')}
+        </Button>
       </div>
     </div>
   </div>

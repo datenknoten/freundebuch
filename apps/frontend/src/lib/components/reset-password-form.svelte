@@ -2,6 +2,7 @@
 import { goto } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
 
 let { token } = $props();
 
@@ -110,13 +111,7 @@ async function handleSubmit(e) {
 			/>
 		</div>
 
-		<button
-			type="submit"
-			disabled={isLoading}
-			class="w-full bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-		>
-			{isLoading ? 'Resetting password...' : 'Reset password'}
-		</button>
+		<Button type="submit" block loading={isLoading}>Reset password</Button>
 	{/if}
 
 	<p class="text-center text-sm font-body text-gray-600">

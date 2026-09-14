@@ -1,4 +1,5 @@
 <script lang="ts">
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type { NotificationChannel } from '$shared';
 import TestMessageButton from './test-message-button.svelte';
@@ -73,33 +74,20 @@ function handleDelete() {
   <div class="flex items-center gap-2 shrink-0">
     <TestMessageButton channelId={channel.externalId} />
 
-    <button
-      onclick={handleToggle}
-      class="text-sm font-body px-2 py-1 rounded transition-colors"
-      class:text-green-700={!channel.isEnabled}
-      class:hover:bg-green-50={!channel.isEnabled}
-      class:text-yellow-700={channel.isEnabled}
-      class:hover:bg-yellow-50={channel.isEnabled}
-    >
+    <Button variant="secondary" size="sm" onclick={handleToggle}>
       {channel.isEnabled ? $i18n.t('profile.messagingReminders.toggle.disable') : $i18n.t('profile.messagingReminders.toggle.enable')}
-    </button>
+    </Button>
 
-    <button
-      onclick={() => onedit(channel)}
-      class="text-sm font-body text-gray-600 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
-    >
+    <Button variant="ghost" size="sm" onclick={() => onedit(channel)}>
       {$i18n.t('common.edit')}
-    </button>
+    </Button>
 
-    <button
+    <Button
+      variant={confirmingDelete ? 'danger' : 'dangerOutline'}
+      size="sm"
       onclick={handleDelete}
-      class="text-sm font-body px-2 py-1 rounded transition-colors"
-      class:text-red-600={!confirmingDelete}
-      class:hover:bg-red-50={!confirmingDelete}
-      class:bg-red-600={confirmingDelete}
-      class:text-white={confirmingDelete}
     >
       {confirmingDelete ? $i18n.t('profile.messagingReminders.delete.confirm') : $i18n.t('common.delete')}
-    </button>
+    </Button>
   </div>
 </div>

@@ -91,7 +91,9 @@ export const codeClasses = {
 export type ButtonVariant =
   | 'primary'
   | 'secondary'
+  | 'secondaryAccent'
   | 'ghost'
+  | 'ghostAccent'
   | 'danger'
   | 'dangerOutline'
   | 'caution';
@@ -102,7 +104,11 @@ const buttonBase = `inline-flex items-center justify-center gap-2 font-body font
 const buttonVariants: Record<ButtonVariant, string> = {
   primary: 'bg-forest text-white hover:bg-forest-light active:bg-forest-dark',
   secondary: 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50',
+  /** Outlined button in the accent colour: an active filter, a selected option. */
+  secondaryAccent: 'bg-white border border-forest text-forest hover:bg-forest/10',
   ghost: 'text-gray-700 hover:bg-gray-100',
+  /** Borderless action that reads as a link: "clear filters", "add detail", retry. */
+  ghostAccent: 'text-forest hover:bg-forest/10',
   danger: 'bg-red-600 text-white hover:bg-red-700',
   dangerOutline: 'border border-red-300 text-red-600 hover:bg-red-50',
   caution: 'bg-amber-600 text-white hover:bg-amber-700',

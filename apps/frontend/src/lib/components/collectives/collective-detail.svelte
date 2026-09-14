@@ -12,6 +12,7 @@ import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
+import { Button } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
@@ -153,21 +154,17 @@ let address = $derived(formatAddress(collective));
         <AddDetailDropdown onAdd={dispatchAddEvent} />
       </div>
 
-      <button
-        type="button"
+      <Button
+        variant="secondary"
         onclick={() => onEdit?.()}
-        class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         data-shortcut="e"
         data-shortcut-label="shortcuts.help.editCollective"
       >
         {$i18n.t('common.edit')}
-      </button>
-      <button
-        onclick={openDeleteConfirm}
-        class="px-4 py-2 border border-red-300 text-red-600 rounded-lg font-body font-semibold hover:bg-red-50 transition-colors"
-      >
+      </Button>
+      <Button variant="dangerOutline" onclick={openDeleteConfirm}>
         {$i18n.t('common.delete')}
-      </button>
+      </Button>
     </div>
   </div>
 
@@ -215,20 +212,22 @@ let address = $derived(formatAddress(collective));
         {$i18n.t('collectives.detail.deleteConfirmMessage', { name: collective.name })}
       </p>
       <div class="flex gap-3">
-        <button
+        <Button
+          variant="secondary"
+          class="flex-1"
           onclick={closeDeleteConfirm}
           disabled={isDeleting}
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           {$i18n.t('collectives.form.cancel')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="danger"
+          class="flex-1"
           onclick={handleDelete}
-          disabled={isDeleting}
-          class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-body font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
+          loading={isDeleting}
         >
-          {isDeleting ? $i18n.t('collectives.detail.deleting') : $i18n.t('collectives.detail.delete')}
-        </button>
+          {$i18n.t('collectives.detail.delete')}
+        </Button>
       </div>
     </div>
   </div>

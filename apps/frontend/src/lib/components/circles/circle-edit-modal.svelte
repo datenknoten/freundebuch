@@ -2,6 +2,7 @@
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { autoFocus } from '$lib/actions/auto-focus';
+import { Button } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
 import { isModalOpen } from '$lib/stores/ui';
@@ -282,36 +283,17 @@ function handleBackdropClick(e: MouseEvent) {
 
       <!-- Footer buttons (fixed) -->
       <div class="flex gap-3 p-4 border-t border-gray-200 flex-shrink-0">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          class="flex-1"
           onclick={handleClose}
           disabled={isSubmitting}
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold
-                 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           {$i18n.t('common.cancel')}
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          class="flex-1 px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold
-                 hover:bg-forest-light transition-colors disabled:opacity-50
-                 flex items-center justify-center gap-2"
-        >
-          {#if isSubmitting}
-            <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-            {$i18n.t('circles.form.saving')}
-          {:else}
-            {isEditing ? $i18n.t('circles.form.saveChanges') : $i18n.t('circles.form.createCircle')}
-          {/if}
-        </button>
+        </Button>
+        <Button type="submit" class="flex-1" loading={isSubmitting}>
+          {isEditing ? $i18n.t('circles.form.saveChanges') : $i18n.t('circles.form.createCircle')}
+        </Button>
       </div>
     </form>
 
@@ -323,20 +305,12 @@ function handleBackdropClick(e: MouseEvent) {
           <h3 class="text-lg font-heading text-gray-900 mb-2">{$i18n.t('circles.unsavedChanges.title')}</h3>
           <p class="text-gray-600 font-body mb-6">{$i18n.t('circles.unsavedChanges.message')}</p>
           <div class="flex gap-3 justify-center">
-            <button
-              type="button"
-              onclick={cancelClose}
-              class="px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-            >
+            <Button variant="secondary" onclick={cancelClose}>
               {$i18n.t('circles.unsavedChanges.keepEditing')}
-            </button>
-            <button
-              type="button"
-              onclick={confirmClose}
-              class="px-4 py-2 bg-amber-500 text-white rounded-lg font-body font-semibold hover:bg-amber-600 transition-colors"
-            >
+            </Button>
+            <Button variant="caution" onclick={confirmClose}>
               {$i18n.t('circles.unsavedChanges.discard')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+import Button from '$lib/components/ui/button.svelte';
 import FormInput from '$lib/components/ui/form-input.svelte';
 import FormSelect from '$lib/components/ui/form-select.svelte';
 import { createI18n } from '$lib/i18n/index.js';
@@ -180,20 +181,11 @@ function handleSubmit(event: SubmitEvent) {
   />
 
   <div class="flex gap-3 pt-2">
-    <button
-      type="submit"
-      disabled={isLoading}
-      class="flex-1 bg-forest text-white py-2 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {isLoading ? $i18n.t('common.saving') : $i18n.t('common.save')}
-    </button>
-    <button
-      type="button"
-      onclick={oncancel}
-      disabled={isLoading}
-      class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg font-body font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-    >
+    <Button type="submit" loading={isLoading} class="flex-1">
+      {$i18n.t('common.save')}
+    </Button>
+    <Button variant="secondary" disabled={isLoading} onclick={oncancel} class="flex-1">
       {$i18n.t('common.cancel')}
-    </button>
+    </Button>
   </div>
 </form>

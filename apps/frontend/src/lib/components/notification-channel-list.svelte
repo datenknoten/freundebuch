@@ -2,6 +2,7 @@
 import { onMount } from 'svelte';
 import Bell from 'svelte-heros-v2/Bell.svelte';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { notificationChannels } from '$lib/stores/notification-channels';
 import type {
@@ -101,12 +102,9 @@ async function handleDelete(channelId: string) {
       />
     </div>
   {:else}
-    <button
-      onclick={handleAddChannel}
-      class="bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-    >
+    <Button onclick={handleAddChannel}>
       {$i18n.t('profile.messagingReminders.addChannel')}
-    </button>
+    </Button>
   {/if}
 
   {#if $notificationChannels.isLoading}

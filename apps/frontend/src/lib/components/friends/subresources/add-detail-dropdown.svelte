@@ -10,6 +10,7 @@ import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Phone from 'svelte-heros-v2/Phone.svelte';
 import Share from 'svelte-heros-v2/Share.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -32,7 +33,7 @@ interface Props {
 
 let { onAdd }: Props = $props();
 let isOpen = $state(false);
-let buttonRef = $state<HTMLButtonElement | null>(null);
+let buttonRef = $state<HTMLElement | null>(null);
 let menuRef = $state<HTMLDivElement | null>(null);
 
 // Shortcut keys mirror FRIEND_DETAIL_ACTIONS in $lib/shortcuts/config.ts ("a" + key)
@@ -106,18 +107,16 @@ function handleClickOutside(e: MouseEvent) {
 <svelte:window onclick={handleClickOutside} onkeydown={handleKeydown} />
 
 <div class="relative">
-  <button
-    bind:this={buttonRef}
-    type="button"
+  <Button
+    bind:element={buttonRef}
+    variant="secondary"
     onclick={() => (isOpen = !isOpen)}
-    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-body font-semibold
-           hover:bg-gray-50 transition-colors flex items-center gap-2"
     aria-expanded={isOpen}
     aria-haspopup="menu"
   >
-    <ChevronDown class="w-4 h-4 transition-transform duration-150 {isOpen ? 'rotate-180' : ''}" strokeWidth="2" />
+    <ChevronDown class="w-4 h-4 transition-transform {isOpen ? 'rotate-180' : ''}" strokeWidth="2" />
     <span>{$i18n.t('subresources.common.add')}</span>
-  </button>
+  </Button>
 
   {#if isOpen}
     <div
