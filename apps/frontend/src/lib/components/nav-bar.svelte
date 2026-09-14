@@ -160,7 +160,7 @@ $effect(() => {
     </a>
   </div>
 
-  <nav class="p-4" aria-label="Mobile navigation menu">
+  <nav class="p-4" aria-label={$i18n.t('aria.mobileNavigation')}>
     {#if $isAuthenticated && $currentUser}
       <div class="space-y-2">
         <a
@@ -275,7 +275,7 @@ $effect(() => {
       <button
         class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors {focusRing}"
         onclick={() => mobileMenuOpen = !mobileMenuOpen}
-        aria-label="Toggle menu"
+        aria-label={$i18n.t('aria.toggleMenu')}
         aria-expanded={mobileMenuOpen}
       >
         {#if mobileMenuOpen}
@@ -302,7 +302,7 @@ $effect(() => {
         <button
           class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors {focusRing}"
           onclick={() => search.open()}
-          aria-label="Search"
+          aria-label={$i18n.t('aria.search')}
           data-shortcut="/"
           data-shortcut-label="shortcuts.help.focusSearch"
         >

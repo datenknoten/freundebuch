@@ -225,7 +225,7 @@ function handleDismiss() {
               disabled={isSubmitting}
               class="w-8 h-8 rounded-full border-2 transition-all {formColor === color ? 'border-gray-800 scale-110' : 'border-transparent hover:border-gray-400'}"
               style:background-color={color}
-              aria-label="Select {color}"
+              aria-label={$i18n.t('aria.selectColor', { color })}
               aria-pressed={formColor === color}
               title={color}
             ></button>

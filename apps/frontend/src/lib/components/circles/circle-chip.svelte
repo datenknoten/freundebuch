@@ -1,9 +1,12 @@
 <script lang="ts">
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { chipClasses } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
 import { circlesById } from '$lib/stores/circles';
 import { DEFAULT_CIRCLE_COLOR } from '$lib/utils/circle-colors';
 import type { Circle, CircleSummary } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   circle: CircleSummary;
@@ -86,7 +89,7 @@ let backgroundColor = $derived(circle.color ?? DEFAULT_CIRCLE_COLOR);
         e.stopPropagation();
         onremove?.();
       }}
-      aria-label="Remove {pathParts.ancestors.length > 0 ? pathParts.ancestors.join(' ') + ' ' : ''}{pathParts.name}"
+      aria-label={$i18n.t('aria.removeItem', { name: pathParts.name })}
     >
       <XMark class="w-3 h-3" strokeWidth="2" />
     </button>
