@@ -2,6 +2,9 @@
 import type { Snippet } from 'svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import Trash from 'svelte-heros-v2/Trash.svelte';
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 
 interface Props {
   onSwipeLeft?: () => void;
@@ -115,7 +118,7 @@ let editScale = $derived(Math.min(1, swipeOffset / FULL_SWIPE));
   >
     <div class="text-white flex flex-col items-center gap-1">
       <Trash class="w-5 h-5" strokeWidth="2" />
-      <span class="text-xs font-semibold">Delete</span>
+      <span class="text-xs font-semibold">{$i18n.t('common.delete')}</span>
     </div>
   </div>
 
@@ -129,7 +132,7 @@ let editScale = $derived(Math.min(1, swipeOffset / FULL_SWIPE));
   >
     <div class="text-white flex flex-col items-center gap-1">
       <PencilSquare class="w-5 h-5" strokeWidth="2" />
-      <span class="text-xs font-semibold">Edit</span>
+      <span class="text-xs font-semibold">{$i18n.t('common.edit')}</span>
     </div>
   </div>
 
@@ -143,7 +146,6 @@ let editScale = $derived(Math.min(1, swipeOffset / FULL_SWIPE));
     ontouchmove={handleTouchMove}
     ontouchend={handleTouchEnd}
     ontouchcancel={handleTouchCancel}
-    role="row"
   >
     {@render children()}
   </div>

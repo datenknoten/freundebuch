@@ -313,7 +313,9 @@ function getActualDepth(circle: Circle): number {
                     editLabel={$i18n.t('common.edit') + ' ' + circle.name}
                     deleteLabel={$i18n.t('common.delete') + ' ' + circle.name}
                     editShortcutHint="e {keyHint}"
+                    editShortcutLabel="shortcuts.panels.editCircle"
                     deleteShortcutHint="d {keyHint}"
+                    deleteShortcutLabel="shortcuts.panels.deleteCircle"
                   />
                 </div>
               </SwipeableRow>
@@ -368,7 +370,9 @@ function getActualDepth(circle: Circle): number {
                   editLabel={$i18n.t('common.edit') + ' ' + circle.name}
                   deleteLabel={$i18n.t('common.delete') + ' ' + circle.name}
                   editShortcutHint="e {keyHint}"
+                  editShortcutLabel="shortcuts.panels.editCircle"
                   deleteShortcutHint="d {keyHint}"
+                  deleteShortcutLabel="shortcuts.panels.deleteCircle"
                 />
               </div>
             </div>
