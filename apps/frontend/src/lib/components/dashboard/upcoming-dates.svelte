@@ -64,7 +64,7 @@ function getDaysUntilClass(daysUntil: number): string {
   if (daysUntil === 0) {
     return 'bg-forest text-white';
   } else if (daysUntil <= 7) {
-    return 'bg-sage-light text-forest';
+    return 'bg-amber-warm/30 text-forest';
   } else {
     return 'bg-gray-100 text-gray-600';
   }
