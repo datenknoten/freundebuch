@@ -18,11 +18,15 @@ import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
 import { collectiveTypeI18nKey } from '$lib/utils/collective-types';
 import type { Collective } from '$shared';
+import AddDetailDropdown from '../subresources/add-detail-dropdown.svelte';
+import AddDetailSheet from '../subresources/add-detail-sheet.svelte';
 import SubresourceSection from '../subresources/subresource-section.svelte';
-import AddDetailDropdown from './add-detail-dropdown.svelte';
 import MemberSection from './member-section.svelte';
-import MobileAddDetailModal from './mobile-add-detail-modal.svelte';
-import { circleDescriptor, contactDescriptors } from './subresource-descriptors';
+import {
+  circleDescriptor,
+  collectiveAddDetailOptions,
+  contactDescriptors,
+} from './subresource-descriptors';
 
 const i18n = createI18n();
 
@@ -128,7 +132,7 @@ let address = $derived(formatAddress(collective));
     <div class="flex gap-2">
       <!-- Desktop: Add detail dropdown (hidden on mobile; mobile uses the FAB) -->
       <div class="hidden sm:block">
-        <AddDetailDropdown onAdd={dispatchAddEvent} />
+        <AddDetailDropdown options={collectiveAddDetailOptions} onAdd={dispatchAddEvent} />
       </div>
 
       <Button
@@ -228,7 +232,8 @@ let address = $derived(formatAddress(collective));
 
 <!-- Mobile add detail modal -->
 {#if showMobileAddModal}
-  <MobileAddDetailModal
+  <AddDetailSheet
+    options={collectiveAddDetailOptions}
     onSelect={(shortcutEvent) => {
       // Close this picker and mount the edit form in one synchronous flush,
       // inside the tap, so the form's auto-focused field claims the keyboard.

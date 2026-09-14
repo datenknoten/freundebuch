@@ -26,6 +26,8 @@ const i18n = createI18n();
 
 import type { ContactCollectiveSummary, Friend } from '$shared';
 import LastEncounterBadge from '../encounters/last-encounter-badge.svelte';
+import AddDetailDropdown from '../subresources/add-detail-dropdown.svelte';
+import AddDetailSheet from '../subresources/add-detail-sheet.svelte';
 import SubresourceSection from '../subresources/subresource-section.svelte';
 import FriendAvatar from './friend-avatar.svelte';
 import RelationshipsSection from './relationships-section.svelte';
@@ -35,13 +37,13 @@ import {
   createCollectiveDescriptor,
   dateDescriptor,
   emailDescriptor,
+  friendAddDetailOptions,
   hasProfileUrl,
   phoneDescriptor,
   professionalHistoryDescriptor,
   socialProfileDescriptor,
   urlDescriptor,
 } from './subresource-descriptors';
-import { AddDetailDropdown, MobileAddDetailModal, type SubresourceType } from './subresources';
 
 interface Props {
   friend: Friend;
@@ -150,9 +152,10 @@ async function handleDelete() {
   goto('/friends');
 }
 
-// Dispatch add event for desktop dropdown and mobile modal
-function dispatchAddEvent(type: SubresourceType) {
-  window.dispatchEvent(new CustomEvent(`shortcut:add-${type}`));
+// Dispatch the add event the chosen menu entry carries; each section (and the
+// relationships section) listens for its own.
+function dispatchAddEvent(shortcutEvent: string) {
+  window.dispatchEvent(new CustomEvent(shortcutEvent));
 }
 
 // Keyboard shortcut event listeners
@@ -223,7 +226,7 @@ onMount(() => {
     <div class="flex gap-2">
       <!-- Desktop: Add dropdown (hidden on mobile) -->
       <div class="hidden sm:block">
-        <AddDetailDropdown onAdd={dispatchAddEvent} />
+        <AddDetailDropdown options={friendAddDetailOptions} onAdd={dispatchAddEvent} />
       </div>
 
       <Button
@@ -410,13 +413,14 @@ onMount(() => {
 
 <!-- Mobile add detail modal -->
 {#if showMobileAddModal}
-  <MobileAddDetailModal
-    onSelect={(type) => {
+  <AddDetailSheet
+    options={friendAddDetailOptions}
+    onSelect={(shortcutEvent) => {
       // Close this picker and mount the edit form in one synchronous flush,
       // inside the tap, so the form's auto-focused field claims the keyboard.
       openWithKeyboard(() => {
         showMobileAddModal = false;
-        dispatchAddEvent(type);
+        dispatchAddEvent(shortcutEvent);
       });
     }}
     onClose={() => showMobileAddModal = false}

@@ -1410,17 +1410,6 @@
       "atOrganization": "{{jobTitle}} at {{organization}}",
       "untitled": "Employment"
     },
-    "dropdown": {
-      "phoneNumber": "Phone Number",
-      "emailAddress": "Email Address",
-      "address": "Address",
-      "websiteUrl": "Website/URL",
-      "importantDate": "Important Date",
-      "socialProfile": "Social Profile",
-      "circle": "Circle",
-      "collective": "Collective",
-      "employment": "Employment"
-    },
     "circle": {
       "removeAria": "Remove from circle"
     },

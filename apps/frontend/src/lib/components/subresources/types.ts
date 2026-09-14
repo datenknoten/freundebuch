@@ -46,6 +46,36 @@ export interface FormPropsContext {
   isLoading: boolean;
 }
 
+/** One entry in the "add detail" dropdown / bottom sheet. */
+export interface AddDetailOption {
+  key: string;
+  icon: Component;
+  /** i18n key for the entry's label. */
+  labelKey: string;
+  /** Window event dispatched when the entry is chosen. */
+  event: string;
+  /** `data-shortcut` chord (e.g. "a p"). */
+  shortcut?: string;
+  /** `data-shortcut-label` key; defaults to `labelKey`. */
+  shortcutLabel?: string;
+}
+
+/** Build a menu entry from a descriptor, which already knows icon and event. */
+export function addDetailOption(
+  descriptor: SubresourceDescriptor,
+  labelKey: string,
+  shortcut?: string,
+): AddDetailOption {
+  return {
+    key: descriptor.key,
+    icon: descriptor.icon,
+    labelKey,
+    event: descriptor.shortcutEvent,
+    shortcut: shortcut ?? descriptor.addShortcut,
+    shortcutLabel: descriptor.addShortcutLabel,
+  };
+}
+
 export interface SubresourceDescriptor {
   key: string;
   /** Window event the keyboard system dispatches to open this section's add modal. */
