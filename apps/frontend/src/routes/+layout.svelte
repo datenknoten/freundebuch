@@ -25,7 +25,7 @@ import {
   userPreferences,
 } from '$lib/stores/auth';
 import { circles } from '$lib/stores/circles';
-import { isLocaleInitialized, locale } from '$lib/stores/locale';
+import { currentLanguage, isLocaleInitialized, locale } from '$lib/stores/locale';
 import { sessionExpired } from '$lib/stores/session';
 
 interface Props {
@@ -84,6 +84,14 @@ $effect(() => {
   if ($isLocaleInitialized && prefs?.language && prefs.language !== locale.getLanguage()) {
     locale.setLanguage(prefs.language as SupportedLanguage);
   }
+});
+
+// Keep the document language in sync with the active locale. `app.html` ships
+// a static `lang="en"`, which would otherwise make screen readers pronounce
+// German content with English phonetics.
+$effect(() => {
+  if (typeof document === 'undefined') return;
+  document.documentElement.lang = $currentLanguage;
 });
 
 // Routes exempt from onboarding redirect. `/oauth/` is exempt so the OAuth
