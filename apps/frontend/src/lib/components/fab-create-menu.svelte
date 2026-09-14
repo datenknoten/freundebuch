@@ -41,15 +41,14 @@ export function navigateForCreateChoice(choice: FabCreateChoice): void {
 </script>
 
 <script lang="ts">
-import { onMount } from 'svelte';
 import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import Swatch from 'svelte-heros-v2/Swatch.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
 import Button from '$lib/components/ui/button.svelte';
+import Modal from '$lib/components/ui/modal.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import { isModalOpen } from '$lib/stores/ui';
 
 const i18n = createI18n();
 
@@ -73,121 +72,55 @@ const options: { choice: FabCreateChoice; icon: typeof UserPlus; labelKey: strin
   { choice: 'circle', icon: Swatch, labelKey: 'shortcuts.newCircle' },
   { choice: 'collective', icon: BuildingOffice, labelKey: 'shortcuts.newCollective' },
 ];
-
-let modalRef = $state<HTMLDivElement | null>(null);
-let detailButton = $state<HTMLButtonElement | null>(null);
-let optionButtons = $state<HTMLButtonElement[]>([]);
-let cancelButton = $state<HTMLElement | null>(null);
-
-// The first focusable element is the contextual "Add detail" entry when present,
-// otherwise the first create-new option.
-let firstButton = $derived(onAddDetail !== undefined ? detailButton : (optionButtons[0] ?? null));
-
-function handleBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget) {
-    onClose();
-  }
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    onClose();
-  }
-
-  // Focus trapping
-  if (e.key === 'Tab' && modalRef !== null) {
-    if (firstButton === null || cancelButton === null) return;
-
-    if (e.shiftKey && document.activeElement === firstButton) {
-      e.preventDefault();
-      cancelButton.focus();
-    } else if (!e.shiftKey && document.activeElement === cancelButton) {
-      e.preventDefault();
-      firstButton.focus();
-    }
-  }
-}
-
-onMount(() => {
-  isModalOpen.set(true);
-  firstButton?.focus();
-
-  return () => {
-    isModalOpen.set(false);
-  };
-});
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<Modal title={$i18n.t('common.createNew')} variant="sheet" {onClose}>
+  <div class="space-y-3">
+    {#if onAddDetail}
+      <button
+        type="button"
+        onclick={onAddDetail}
+        class="w-full flex items-center gap-4 p-4 rounded-xl
+               bg-gray-50 hover:bg-forest/10 transition-colors
+               focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+      >
+        <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
+          <DocumentText class="w-6 h-6 text-forest" strokeWidth="2" />
+        </div>
+        <div class="text-left">
+          <span class="block text-base font-body font-semibold text-gray-900">
+            {$i18n.t('friendDetail.addDetail')}
+          </span>
+          <span class="block text-sm font-body text-gray-500">
+            {$i18n.t('friendDetail.addDetailSubtitle')}
+          </span>
+        </div>
+      </button>
+    {/if}
 
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div
-  class="fixed inset-0 bg-black/50 z-(--z-overlay) flex items-end justify-center sm:hidden"
-  onclick={handleBackdropClick}
-  role="presentation"
->
-  <div
-    bind:this={modalRef}
-    class="w-full bg-white rounded-t-2xl shadow-xl animate-slide-up max-h-[80vh] overflow-y-auto"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="fab-create-menu-title"
-  >
-    <div class="p-4">
-      <h2 id="fab-create-menu-title" class="text-xl font-heading text-gray-900 mb-4 text-center">
-        {$i18n.t('common.createNew')}
-      </h2>
-
-      <div class="space-y-3">
-        {#if onAddDetail}
-          <button
-            bind:this={detailButton}
-            type="button"
-            onclick={onAddDetail}
-            class="w-full flex items-center gap-4 p-4 rounded-xl
-                   bg-gray-50 hover:bg-forest/10 transition-colors
-                   focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
-          >
-            <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
-              <DocumentText class="w-6 h-6 text-forest" strokeWidth="2" />
-            </div>
-            <div class="text-left">
-              <span class="block text-base font-body font-semibold text-gray-900">
-                {$i18n.t('friendDetail.addDetail')}
-              </span>
-              <span class="block text-sm font-body text-gray-500">
-                {$i18n.t('friendDetail.addDetailSubtitle')}
-              </span>
-            </div>
-          </button>
-        {/if}
-
-        {#each options as option, index (option.choice)}
-          {@const Icon = option.icon}
-          <button
-            bind:this={optionButtons[index]}
-            type="button"
-            onclick={() => onSelect(option.choice)}
-            class="w-full flex items-center gap-4 p-4 rounded-xl
-                   bg-gray-50 hover:bg-forest/10 transition-colors
-                   focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
-          >
-            <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
-              <Icon class="w-6 h-6 text-forest" strokeWidth="2" />
-            </div>
-            <span class="text-base font-body font-semibold text-gray-900">
-              {$i18n.t(option.labelKey)}
-            </span>
-          </button>
-        {/each}
-      </div>
-
-      <Button variant="ghost" block class="mt-4" onclick={onClose} bind:element={cancelButton}>
-        {$i18n.t('common.cancel')}
-      </Button>
-    </div>
-
-    <!-- Safe area padding for iOS -->
-    <div class="h-safe-area-inset-bottom"></div>
+    {#each options as option (option.choice)}
+      {@const Icon = option.icon}
+      <button
+        type="button"
+        onclick={() => onSelect(option.choice)}
+        class="w-full flex items-center gap-4 p-4 rounded-xl
+               bg-gray-50 hover:bg-forest/10 transition-colors
+               focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+      >
+        <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
+          <Icon class="w-6 h-6 text-forest" strokeWidth="2" />
+        </div>
+        <span class="text-base font-body font-semibold text-gray-900">
+          {$i18n.t(option.labelKey)}
+        </span>
+      </button>
+    {/each}
   </div>
-</div>
+
+  <Button variant="ghost" block class="mt-4" onclick={onClose}>
+    {$i18n.t('common.cancel')}
+  </Button>
+
+  <!-- Safe area padding for iOS -->
+  <div class="h-safe-area-inset-bottom"></div>
+</Modal>

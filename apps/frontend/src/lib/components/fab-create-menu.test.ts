@@ -85,7 +85,8 @@ describe('FabCreateMenu', () => {
     const onClose = vi.fn();
     render(FabCreateMenu, { onSelect: vi.fn(), onClose });
 
-    await fireEvent.keyDown(window, { key: 'Escape' });
+    // Escape reaches the sheet as the native dialog's `cancel` event.
+    await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
     await fireEvent.click(screen.getByText('common.cancel'));
     expect(onClose).toHaveBeenCalledTimes(2);
   });
