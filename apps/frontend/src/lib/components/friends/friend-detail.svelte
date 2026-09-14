@@ -10,7 +10,7 @@ import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
-import { Button, ConfirmDialog, Fab } from '$lib/components/ui';
+import { Button, ConfirmDialog, Fab, headingClasses } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
@@ -203,7 +203,7 @@ onMount(() => {
     />
 
     <div class="flex-1 text-center sm:text-left">
-      <h1 class="text-3xl font-heading text-gray-900">{friend.displayName}</h1>
+      <h1 class={headingClasses.entity}>{friend.displayName}</h1>
 
       {#if friend.namePrefix || friend.nameFirst || friend.nameMiddle || friend.nameLast || friend.nameSuffix}
         <p class="text-gray-600 font-body mt-1">

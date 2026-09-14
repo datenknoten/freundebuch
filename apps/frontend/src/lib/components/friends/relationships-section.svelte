@@ -1,13 +1,10 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
-import XMark from 'svelte-heros-v2/XMark.svelte';
-import { formClasses } from '$lib/components/ui';
+import { formClasses, headingClasses, surfaceClasses } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
-import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import {
@@ -22,7 +19,7 @@ import {
 import type { Relationship, RelationshipCategory, RelationshipTypeId } from '$shared';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 import FriendAvatar from './friend-avatar.svelte';
-import { DetailEditModal, RelationshipEditForm } from './subresources';
+import { DetailActions, DetailEditModal, RelationshipEditForm } from './subresources';
 
 const i18n = createI18n();
 
@@ -183,8 +180,8 @@ onMount(() => {
 
 {#if relationships.length > 0}
 <section class="space-y-2">
-  <div class="flex items-center justify-between bg-forest/10 text-forest px-3 py-1.5 rounded-lg">
-    <h2 class="text-lg font-heading flex items-center gap-2">
+  <div class={surfaceClasses.section}>
+    <h2 class="{headingClasses.section} flex items-center gap-2">
       <Users class="w-5 h-5" strokeWidth="2" />
       {$i18n.t('relationshipSection.relationships')}
     </h2>
@@ -211,7 +208,7 @@ onMount(() => {
               {#if linkStartIndex !== undefined && relationshipBadgeIndex.has(relationship.id)}
                 <KeyboardHintBadge index={relationshipBadgeIndex.get(relationship.id) ?? 0} isActive={$isOpenFriendLinkModeActive} prefix={$openFriendLinkModePrefix} />
               {/if}
-              <div class="flex items-start gap-3 p-3 {RELATIONSHIP_CATEGORY_STYLE[category].bgColor} rounded-lg">
+              <div class="group flex items-start gap-3 p-3 {RELATIONSHIP_CATEGORY_STYLE[category].bgColor} rounded-lg">
                 <a
                   href="/friends/{relationship.relatedFriendId}"
                   class="flex-shrink-0 hover:opacity-80 transition-opacity"
@@ -274,33 +271,14 @@ onMount(() => {
                   {/if}
                 </div>
 
-                <div class="flex gap-1 flex-shrink-0">
-                  <button
-                    type="button"
-                    onclick={() => startEditing(relationship)}
-                    disabled={isDeleting === relationship.id}
-                    class="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-white/50 transition-colors disabled:opacity-50"
-                    aria-label={$i18n.t('aria.editNotes')}
-                    title={$i18n.t('aria.editNotes')}
-                  >
-                    <PencilSquare class="w-4 h-4" strokeWidth="2" />
-                  </button>
-                  <button
-                    type="button"
-                    onclick={() =>
-                      openDeleteConfirm(relationship.id, relationship.relatedFriendDisplayName)}
-                    disabled={isDeleting === relationship.id}
-                    class="p-1 text-gray-400 hover:text-red-600 rounded hover:bg-white/50 transition-colors disabled:opacity-50"
-                    aria-label={$i18n.t('aria.removeRelationship')}
-                    title={$i18n.t('aria.removeRelationship')}
-                  >
-                    {#if isDeleting === relationship.id}
-                      <Spinner size="sm" tone="current" />
-                    {:else}
-                      <XMark class="w-4 h-4" strokeWidth="2" />
-                    {/if}
-                  </button>
-                </div>
+                <DetailActions
+                  onEdit={() => startEditing(relationship)}
+                  onDelete={() =>
+                    openDeleteConfirm(relationship.id, relationship.relatedFriendDisplayName)}
+                  isDeleting={isDeleting === relationship.id}
+                  editLabel={$i18n.t('aria.editNotes')}
+                  deleteLabel={$i18n.t('aria.removeRelationship')}
+                />
               </div>
               </div>
             {/each}
