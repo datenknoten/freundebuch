@@ -71,7 +71,7 @@ export function isValid(): boolean {
     label={$i18n.t('subresources.social.username')}
     bind:value={username}
     {disabled}
-    placeholder="@username"
+    placeholder={$i18n.t('subresources.social.placeholder.username')}
   />
 
   <FormInput
@@ -80,7 +80,7 @@ export function isValid(): boolean {
     bind:value={profileUrl}
     type="url"
     {disabled}
-    placeholder="https://linkedin.com/in/username"
+    placeholder={$i18n.t('subresources.social.placeholder.profileUrl')}
   />
 
   <p class="text-sm text-gray-500 font-body">

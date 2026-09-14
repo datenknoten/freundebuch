@@ -1,7 +1,10 @@
 <script lang="ts">
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
 import type { PostalCodeInfo } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   /** Current postal code value */
@@ -101,7 +104,7 @@ export function focus() {
 </script>
 
 <div class="relative">
-  <label for="postal-code-input" class={formClasses.label}>Postal Code</label>
+  <label for="postal-code-input" class={formClasses.label}>{$i18n.t('address.postalCode')}</label>
 
   <div class="relative">
     <input
@@ -113,7 +116,7 @@ export function focus() {
       onkeydown={handleKeydown}
       onfocus={handleFocus}
       onblur={handleBlur}
-      placeholder="Enter postal code"
+      placeholder={$i18n.t('address.postalCodePlaceholder')}
       {disabled}
       class="{formClasses.inputSm} pr-10"
       autocomplete="off"

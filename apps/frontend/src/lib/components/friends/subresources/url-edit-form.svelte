@@ -60,7 +60,7 @@ export function isValid(): boolean {
     bind:value={url}
     type="url"
     {disabled}
-    placeholder="https://example.com"
+    placeholder={$i18n.t('subresources.url.placeholder.url')}
     required
     autofocus
   />
@@ -78,7 +78,7 @@ export function isValid(): boolean {
     label={$i18n.t('subresources.common.label')}
     bind:value={label}
     {disabled}
-    placeholder="e.g., Portfolio, LinkedIn"
+    placeholder={$i18n.t('subresources.url.placeholder.label')}
     optional
     optionalText={$i18n.t('common.optional')}
   />
