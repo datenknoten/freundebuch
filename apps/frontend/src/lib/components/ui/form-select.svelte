@@ -11,6 +11,11 @@ interface Props {
   required?: boolean;
   autofocus?: boolean;
   placeholderOption?: string;
+  /** Validation message; also marks the control invalid. */
+  error?: string;
+  /** Static hint rendered below the control. */
+  helper?: string;
+  size?: 'md' | 'sm';
 }
 
 let {
@@ -22,7 +27,16 @@ let {
   required = false,
   autofocus = false,
   placeholderOption,
+  error,
+  helper,
+  size = 'md',
 }: Props = $props();
+
+const describedBy = $derived(
+  [error !== undefined ? `${id}-error` : null, helper !== undefined ? `${id}-helper` : null]
+    .filter((part) => part !== null)
+    .join(' '),
+);
 </script>
 
 <div>
@@ -35,14 +49,24 @@ let {
     {id}
     bind:value
     {disabled}
-    class={formClasses.select}
+    class="{size === 'sm' ? formClasses.inputSm : formClasses.select}{error !== undefined
+      ? ` ${formClasses.inputError}`
+      : ''}"
     required={required}
+    aria-invalid={error !== undefined ? 'true' : undefined}
+    aria-describedby={describedBy.length > 0 ? describedBy : undefined}
   >
-    {#if placeholderOption}
+    {#if placeholderOption !== undefined}
       <option value="">{placeholderOption}</option>
     {/if}
     {#each options as opt}
       <option value={opt.value}>{opt.label}</option>
     {/each}
   </select>
+  {#if helper !== undefined}
+    <p id="{id}-helper" class={formClasses.helper}>{helper}</p>
+  {/if}
+  {#if error !== undefined}
+    <p id="{id}-error" class={formClasses.error}>{error}</p>
+  {/if}
 </div>
