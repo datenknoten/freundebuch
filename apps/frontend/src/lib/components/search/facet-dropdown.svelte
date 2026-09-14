@@ -1,7 +1,7 @@
 <script lang="ts">
 import { tick } from 'svelte';
 import Funnel from 'svelte-heros-v2/Funnel.svelte';
-import { Button, formClasses, Modal } from '$lib/components/ui';
+import { Button, codeClasses, formClasses, Modal } from '$lib/components/ui';
 import {
   FILTER_CATEGORY_LABELS,
   filterModeCategory,
@@ -263,7 +263,7 @@ $effect(() => {
                       class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                     >
                       {#if isKeyboardCategory}
-                        <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i)}</kbd>
+                        <kbd class="{codeClasses.kbd} min-w-5 text-center">{getKeyboardHint(i)}</kbd>
                       {/if}
                       <input
                         type="checkbox"
@@ -297,7 +297,7 @@ $effect(() => {
                       class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                     >
                       {#if isKeyboardCategory}
-                        <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i)}</kbd>
+                        <kbd class="{codeClasses.kbd} min-w-5 text-center">{getKeyboardHint(i)}</kbd>
                       {/if}
                       <input
                         type="checkbox"
@@ -329,7 +329,7 @@ $effect(() => {
                     class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                   >
                     {#if isKeyboardCategory}
-                      <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i)}</kbd>
+                      <kbd class="{codeClasses.kbd} min-w-5 text-center">{getKeyboardHint(i)}</kbd>
                     {/if}
                     <input
                       type="checkbox"
@@ -359,7 +359,7 @@ $effect(() => {
                 class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
               >
                 {#if isKeyboardCategory}
-                  <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">1</kbd>
+                  <kbd class="{codeClasses.kbd} min-w-5 text-center">1</kbd>
                 {/if}
                 <input
                   type="checkbox"
@@ -374,7 +374,7 @@ $effect(() => {
                   class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                 >
                   {#if isKeyboardCategory}
-                    <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono min-w-[1.25rem] text-center">{getKeyboardHint(i + 1)}</kbd>
+                    <kbd class="{codeClasses.kbd} min-w-5 text-center">{getKeyboardHint(i + 1)}</kbd>
                   {/if}
                   <input
                     type="checkbox"
