@@ -10,7 +10,6 @@
  * implementation. This replaces the former central `editingType` discriminator
  * with its parallel `if/else` save chain and `switch` delete chain.
  */
-import type { Component } from 'svelte';
 import Envelope from 'svelte-heros-v2/Envelope.svelte';
 import Link from 'svelte-heros-v2/Link.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
