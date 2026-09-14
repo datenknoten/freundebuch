@@ -48,6 +48,7 @@ import Swatch from 'svelte-heros-v2/Swatch.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
 import Button from '$lib/components/ui/button.svelte';
 import Modal from '$lib/components/ui/modal.svelte';
+import { focusRing } from '$lib/components/ui/styles';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -81,8 +82,7 @@ const options: { choice: FabCreateChoice; icon: typeof UserPlus; labelKey: strin
         type="button"
         onclick={onAddDetail}
         class="w-full flex items-center gap-4 p-4 rounded-xl
-               bg-gray-50 hover:bg-forest/10 transition-colors
-               focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+               bg-gray-50 hover:bg-forest/10 transition-colors {focusRing}"
       >
         <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
           <DocumentText class="w-6 h-6 text-forest" strokeWidth="2" />
@@ -104,8 +104,7 @@ const options: { choice: FabCreateChoice; icon: typeof UserPlus; labelKey: strin
         type="button"
         onclick={() => onSelect(option.choice)}
         class="w-full flex items-center gap-4 p-4 rounded-xl
-               bg-gray-50 hover:bg-forest/10 transition-colors
-               focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+               bg-gray-50 hover:bg-forest/10 transition-colors {focusRing}"
       >
         <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
           <Icon class="w-6 h-6 text-forest" strokeWidth="2" />

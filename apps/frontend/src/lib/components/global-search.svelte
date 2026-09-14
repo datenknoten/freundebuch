@@ -219,7 +219,7 @@ onMount(() => {
         value={searchState.query}
         oninput={(e) => search.setQuery(e.currentTarget.value, { loadFacets: true })}
         placeholder={$i18n.t('globalSearch.placeholder')}
-        class="w-full pl-12 pr-4 py-4 text-lg font-body text-gray-900 placeholder-gray-400 focus:outline-none"
+        class="w-full pl-12 pr-4 py-4 text-lg font-body text-gray-900 placeholder-gray-400 focus-visible:outline-none"
         autocomplete="off"
         role="combobox"
         aria-expanded={showResults || showRecentSearches}

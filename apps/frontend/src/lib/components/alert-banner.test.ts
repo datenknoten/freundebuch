@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { render, screen } from '$lib/test';
 import AlertBanner from './alert-banner.svelte';
 
-const message = (text: string) => createRawSnippet(() => ({ render: () => `<span>${text}</span>` }));
+const message = (text: string) =>
+  createRawSnippet(() => ({ render: () => `<span>${text}</span>` }));
 
 describe('AlertBanner', () => {
   it('announces errors assertively and marks them with the red edge', () => {

@@ -150,7 +150,7 @@ async function handleSubmit(e: Event) {
       bind:value={notes}
       rows="2"
       disabled={isSubmitting}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none disabled:opacity-50"
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-forest focus-visible:border-forest font-body text-sm resize-none disabled:opacity-50"
       placeholder={$i18n.t('relationshipSection.notesPlaceholder')}
     ></textarea>
   </div>

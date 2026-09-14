@@ -5,7 +5,7 @@ import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
 import Star from 'svelte-heros-v2/Star.svelte';
 import { goto } from '$app/navigation';
-import { chipClasses, surfaceClasses } from '$lib/components/ui';
+import { chipClasses, focusRing, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
 import { matchSourceBadge } from '$lib/utils/match-source';
@@ -224,15 +224,12 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
     <tbody>
       {#each items as item, index (item.id)}
         {@const matchBadge = matchSourceBadge(item.matchSource)}
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
+        <!-- The row is a mouse convenience; the name cell holds the real link,
+             so keyboard users get a focusable anchor instead of a fake one. -->
         <tr
           onclick={() => handleRowClick(item.id)}
-          onkeydown={(e) => e.key === 'Enter' && handleRowClick(item.id)}
           class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-          tabindex="0"
-          role="link"
-          aria-label="View {item.displayName}"
-          data-shortcut="o {getKeyboardHint(index)}"
-          data-shortcut-label="shortcuts.panels.openFriend"
         >
           {#each columns as columnId}
             <td
@@ -249,7 +246,16 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
                   size="sm"
                 />
               {:else if columnId === 'displayName'}
-                <span class="font-body text-gray-900">{item.displayName}</span>
+                <a
+                  href={getFriendDetailUrl(item.id)}
+                  onclick={handleLinkClick}
+                  class="font-body text-gray-900 hover:text-forest hover:underline rounded {focusRing}"
+                  data-sveltekit-preload-data="tap"
+                  data-shortcut="o {getKeyboardHint(index)}"
+                  data-shortcut-label="shortcuts.panels.openFriend"
+                >
+                  {item.displayName}
+                </a>
               {:else if columnId === 'circles'}
                 <CircleChips circles={item.circles} size="sm" maxVisible={2} />
               {:else if columnId === 'primaryEmail'}
@@ -316,12 +322,13 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
 </div>
 
 <!-- Mobile: Card view -->
-<div class="md:hidden space-y-2" role="list" aria-label="Friends">
+<ul class="md:hidden space-y-2">
   {#each items as item, index (item.id)}
     {@const matchBadge = matchSourceBadge(item.matchSource)}
+    <li>
     <a
       href={getFriendDetailUrl(item.id)}
-      class="flex items-start gap-4 {surfaceClasses.cardInteractive} relative"
+      class="flex items-start gap-4 {surfaceClasses.cardInteractive} relative {focusRing}"
       data-sveltekit-preload-data="tap"
       data-shortcut="o {getKeyboardHint(index)}"
       data-shortcut-label="shortcuts.panels.openFriend"
@@ -390,8 +397,9 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
 
       <ChevronRight class="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" strokeWidth="2" />
     </a>
+    </li>
   {/each}
-</div>
+</ul>
 
 <style>
   /* Style for highlighted search terms from ts_headline */

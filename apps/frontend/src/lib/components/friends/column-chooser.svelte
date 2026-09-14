@@ -123,7 +123,7 @@ $effect(() => {
               checked={isVisible}
               disabled={isRequired}
               onchange={() => toggleColumn(columnId)}
-              class="rounded border-gray-300 text-forest focus:ring-forest disabled:opacity-50"
+              class="rounded border-gray-300 text-forest focus-visible:ring-forest disabled:opacity-50"
             />
             <span class="flex-1 text-sm text-gray-700">
               {#if columnId === 'avatar'}

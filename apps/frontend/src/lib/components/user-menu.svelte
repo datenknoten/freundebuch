@@ -6,7 +6,7 @@ import Swatch from 'svelte-heros-v2/Swatch.svelte';
 import User from 'svelte-heros-v2/User.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
-import { surfaceClasses } from '$lib/components/ui';
+import { focusRing, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser } from '$lib/stores/auth';
 import UserAvatar from './user-avatar.svelte';
@@ -62,7 +62,7 @@ function handleClickOutside(e: MouseEvent) {
     bind:this={buttonRef}
     type="button"
     onclick={toggle}
-    class="flex items-center gap-1.5 p-1 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+    class="flex items-center gap-1.5 p-1 rounded-full hover:bg-gray-100 transition-colors {focusRing}"
     aria-expanded={isOpen}
     aria-haspopup="menu"
     aria-label="User menu"

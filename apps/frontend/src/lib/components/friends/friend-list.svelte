@@ -471,7 +471,7 @@ function openFirstResult() {
           id="page-size"
           value={currentPageSize}
           onchange={(e) => handlePageSizeChange(Number(e.currentTarget.value) as PageSize)}
-          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
+          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus-visible:ring-2 focus-visible:ring-forest focus-visible:border-forest"
           aria-label={$i18n.t('aria.itemsPerPage')}
         >
           <option value={10}>10</option>
@@ -495,7 +495,7 @@ function openFirstResult() {
             }
             handleSortChange();
           }}
-          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
+          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus-visible:ring-2 focus-visible:ring-forest focus-visible:border-forest"
           aria-label={$i18n.t('aria.sortBy')}
         >
           {#if isSearchMode}

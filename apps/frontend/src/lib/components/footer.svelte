@@ -1,6 +1,6 @@
 <script lang="ts">
-import LegalLinks from './legal-links.svelte';
 import { createI18n } from '$lib/i18n/index.js';
+import LegalLinks from './legal-links.svelte';
 
 const i18n = createI18n();
 </script>
