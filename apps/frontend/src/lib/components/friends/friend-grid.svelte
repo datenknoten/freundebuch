@@ -5,8 +5,10 @@ import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
 import Star from 'svelte-heros-v2/Star.svelte';
 import { goto } from '$app/navigation';
+import { chipClasses, focusRing, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
+import { matchSourceBadge } from '$lib/utils/match-source';
 import {
   type BirthdayFormat,
   COLUMN_DEFINITIONS,
@@ -172,23 +174,6 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
       return undefined;
   }
 }
-
-function getMatchSourceBadge(
-  matchSource: FriendGridItem['matchSource'],
-): { class: string; label: string } | null {
-  if (!matchSource || matchSource === 'friend') return null;
-
-  switch (matchSource) {
-    case 'email':
-      return { class: 'bg-blue-100 text-blue-700', label: 'email' };
-    case 'phone':
-      return { class: 'bg-green-100 text-green-700', label: 'phone' };
-    case 'notes':
-      return { class: 'bg-purple-100 text-purple-700', label: 'notes' };
-    default:
-      return null;
-  }
-}
 </script>
 
 <!-- Desktop: Table view -->
@@ -231,23 +216,20 @@ function getMatchSourceBadge(
         {/each}
         {#if isSearchMode}
           <th class="py-3 px-3 text-left w-24">
-            <span class="text-sm font-semibold text-gray-700 font-body">Match</span>
+            <span class="text-sm font-semibold text-gray-700 font-body">{$i18n.t('friendList.matchLabel')}</span>
           </th>
         {/if}
       </tr>
     </thead>
     <tbody>
       {#each items as item, index (item.id)}
-        {@const matchBadge = getMatchSourceBadge(item.matchSource)}
+        {@const matchBadge = matchSourceBadge(item.matchSource)}
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
+        <!-- The row is a mouse convenience; the name cell holds the real link,
+             so keyboard users get a focusable anchor instead of a fake one. -->
         <tr
           onclick={() => handleRowClick(item.id)}
-          onkeydown={(e) => e.key === 'Enter' && handleRowClick(item.id)}
           class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-          tabindex="0"
-          role="link"
-          aria-label="View {item.displayName}"
-          data-shortcut="o {getKeyboardHint(index)}"
-          data-shortcut-label="shortcuts.panels.openFriend"
         >
           {#each columns as columnId}
             <td
@@ -264,7 +246,16 @@ function getMatchSourceBadge(
                   size="sm"
                 />
               {:else if columnId === 'displayName'}
-                <span class="font-body text-gray-900">{item.displayName}</span>
+                <a
+                  href={getFriendDetailUrl(item.id)}
+                  onclick={handleLinkClick}
+                  class="font-body text-gray-900 hover:text-forest hover:underline rounded {focusRing}"
+                  data-sveltekit-preload-data="tap"
+                  data-shortcut="o {getKeyboardHint(index)}"
+                  data-shortcut-label="shortcuts.panels.openFriend"
+                >
+                  {item.displayName}
+                </a>
               {:else if columnId === 'circles'}
                 <CircleChips circles={item.circles} size="sm" maxVisible={2} />
               {:else if columnId === 'primaryEmail'}
@@ -309,8 +300,8 @@ function getMatchSourceBadge(
           {#if isSearchMode}
             <td class="py-2 px-3">
               {#if matchBadge}
-                <span class="px-2 py-0.5 text-xs font-medium rounded-full {matchBadge.class}">
-                  {matchBadge.label}
+                <span class={matchBadge.class}>
+                  {$i18n.t(matchBadge.labelKey)}
                 </span>
               {/if}
             </td>
@@ -331,12 +322,13 @@ function getMatchSourceBadge(
 </div>
 
 <!-- Mobile: Card view -->
-<div class="md:hidden space-y-2" role="list" aria-label="Friends">
+<ul class="md:hidden space-y-2">
   {#each items as item, index (item.id)}
-    {@const matchBadge = getMatchSourceBadge(item.matchSource)}
+    {@const matchBadge = matchSourceBadge(item.matchSource)}
+    <li>
     <a
       href={getFriendDetailUrl(item.id)}
-      class="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-forest hover:shadow-sm transition-all relative"
+      class="flex items-start gap-4 {surfaceClasses.cardInteractive} relative {focusRing}"
       data-sveltekit-preload-data="tap"
       data-shortcut="o {getKeyboardHint(index)}"
       data-shortcut-label="shortcuts.panels.openFriend"
@@ -359,11 +351,11 @@ function getMatchSourceBadge(
               <Star class="w-4 h-4 text-amber-500" variation="solid" />
             {/if}
             {#if item.archivedAt}
-              <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Archived</span>
+              <span class="{chipClasses.base} {chipClasses.neutral}">{$i18n.t('friendList.archived')}</span>
             {/if}
             {#if matchBadge}
-              <span class="px-2 py-0.5 text-xs font-medium rounded-full {matchBadge.class}">
-                {matchBadge.label}
+              <span class={matchBadge.class}>
+                {$i18n.t(matchBadge.labelKey)}
               </span>
             {/if}
           </div>
@@ -405,8 +397,9 @@ function getMatchSourceBadge(
 
       <ChevronRight class="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" strokeWidth="2" />
     </a>
+    </li>
   {/each}
-</div>
+</ul>
 
 <style>
   /* Style for highlighted search terms from ts_headline */

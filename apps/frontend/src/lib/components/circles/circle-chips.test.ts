@@ -3,6 +3,16 @@ import { fireEvent, render, screen } from '$lib/test';
 import type { CircleSummary } from '$shared';
 import CircleChips from './circle-chips.svelte';
 
+// i18n echoes keys so the assertions target stable keys, not English text.
+vi.mock('$lib/i18n/index.js', () => ({
+  createI18n: () => ({
+    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
+      run({ t: (k: string) => k });
+      return () => undefined;
+    },
+  }),
+}));
+
 const circle = (id: string, name: string): CircleSummary => ({ id, name, color: null });
 
 describe('CircleChips', () => {
@@ -30,20 +40,20 @@ describe('CircleChips', () => {
 
     // Only the first two are shown initially, plus a "+2 more" toggle.
     expect(screen.queryByText('C')).toBeNull();
-    const more = screen.getByText('+2 more');
+    const more = screen.getByText('common.showMore');
 
     await fireEvent.click(more);
 
     expect(screen.getByText('C')).toBeTruthy();
     expect(screen.getByText('D')).toBeTruthy();
-    expect(screen.getByText('Show less')).toBeTruthy();
+    expect(screen.getByText('common.showLess')).toBeTruthy();
   });
 
   it('invokes onremove with the circle id when a chip is removed', async () => {
     const onremove = vi.fn();
     render(CircleChips, { circles: [circle('c-1', 'Family')], removable: true, onremove });
 
-    await fireEvent.click(screen.getByLabelText('Remove Family'));
+    await fireEvent.click(screen.getByLabelText('aria.removeItem'));
 
     expect(onremove).toHaveBeenCalledWith('c-1');
   });

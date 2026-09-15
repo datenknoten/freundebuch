@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import type { CollectiveCircleInfo } from '$lib/api/collectives';
 import { anAddress, anEmail, aPhone, aUrl } from '$lib/test';
+import type { SubresourceDescriptor } from '../subresources/types';
 import { circleDescriptor, contactDescriptors } from './subresource-descriptors';
+
+/** Every descriptor here drives the shared edit modal, never a custom add component. */
+function formDriven(descriptor: SubresourceDescriptor) {
+  if ('AddComponent' in descriptor) throw new Error(`${descriptor.key} has no create/update`);
+  return descriptor;
+}
 
 // i18n is stubbed here as an echo so the address fallback key is observable.
 const t = (key: string) => key;
 
-const byKey = Object.fromEntries(contactDescriptors.map((d) => [d.key, d]));
+const byKey = Object.fromEntries(contactDescriptors.map((d) => [d.key, formDriven(d)]));
 
 const aCircle = (overrides: Partial<CollectiveCircleInfo> = {}): CollectiveCircleInfo => ({
   id: 'circle-1',
@@ -45,18 +52,22 @@ describe('collective subresource descriptors', () => {
 
   it('marks circle as add-only and the contact types as editable', () => {
     expect(circleDescriptor.editable).toBe(false);
-    expect(circleDescriptor.update).toBeUndefined();
+    expect(formDriven(circleDescriptor).update).toBeUndefined();
     expect(circleDescriptor.reloadAfterMutate).toBe(true);
     for (const d of contactDescriptors) {
       expect(d.editable).toBe(true);
-      expect(d.update).toBeTypeOf('function');
+      expect(formDriven(d).update).toBeTypeOf('function');
     }
   });
 
-  it('maps the phone unknown-country error and only registers it on the phone descriptor', async () => {
+  it('maps the phone validation errors and only registers them on the phone descriptor', async () => {
     const { ApiError } = await import('$lib/api/client');
     const err = new ApiError(422, 'nope', 'PHONE_COUNTRY_UNKNOWN');
     expect(byKey.phone.mapError?.(err, t)).toBe('subresources.phone.unknownCountry');
+    expect(byKey.phone.mapError?.(new ApiError(400, 'Invalid phone number'), t)).toBe(
+      'subresources.phone.invalidNumber',
+    );
+    expect(byKey.phone.mapError?.(new ApiError(500, 'boom'), t)).toBeUndefined();
     expect(byKey.phone.mapError?.(new Error('other'), t)).toBeUndefined();
     expect(byKey.email.mapError).toBeUndefined();
   });

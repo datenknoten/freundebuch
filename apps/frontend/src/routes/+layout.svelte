@@ -14,6 +14,7 @@ import Footer from '$lib/components/footer.svelte';
 import GlobalSearch from '$lib/components/global-search.svelte';
 import NavBar from '$lib/components/nav-bar.svelte';
 import SessionExpiredModal from '$lib/components/session-expired-modal.svelte';
+import { Fab } from '$lib/components/ui';
 import type { SupportedLanguage } from '$lib/i18n/index.js';
 import { createI18n } from '$lib/i18n/index.js';
 import { KeyboardShortcuts } from '$lib/shortcuts';
@@ -25,7 +26,7 @@ import {
   userPreferences,
 } from '$lib/stores/auth';
 import { circles } from '$lib/stores/circles';
-import { isLocaleInitialized, locale } from '$lib/stores/locale';
+import { currentLanguage, isLocaleInitialized, locale } from '$lib/stores/locale';
 import { sessionExpired } from '$lib/stores/session';
 
 interface Props {
@@ -86,6 +87,14 @@ $effect(() => {
   }
 });
 
+// Keep the document language in sync with the active locale. `app.html` ships
+// a static `lang="en"`, which would otherwise make screen readers pronounce
+// German content with English phonetics.
+$effect(() => {
+  if (typeof document === 'undefined') return;
+  document.documentElement.lang = $currentLanguage;
+});
+
 // Routes exempt from onboarding redirect. `/oauth/` is exempt so the OAuth
 // consent step is not interrupted mid-flow (which would drop the consent code).
 const onboardingExemptPaths = ['/onboarding', '/auth/', '/oauth/'];
@@ -104,9 +113,12 @@ $effect(() => {
 // Hide the FAB while the user is creating a new entity (any /new route, e.g.
 // /friends/new, /encounters/new, /collectives/new) so an accidental tap can't
 // interrupt them, and on friend/collective detail pages (which render their own
-// FAB with a contextual "add detail" entry).
+// FAB with a contextual "add detail" entry). The onboarding-exempt routes hide
+// it too: every create target is behind the onboarding guard, so the FAB would
+// only bounce the user straight back.
 const showFab = $derived(
   $isAuthenticated &&
+    !onboardingExemptPaths.some((path) => $page.url.pathname.startsWith(path)) &&
     !$page.url.pathname.endsWith('/new') &&
     !$page.url.pathname.match(/^\/friends\/[^/]+$/) &&
     !$page.url.pathname.match(/^\/collectives\/[^/]+$/),
@@ -136,22 +148,16 @@ function handleCreateSelect(choice: FabCreateChoice) {
 
 <div class="min-h-screen flex flex-col">
 	<NavBar />
-	<main class="flex-1">
+	<main class="flex-1 bg-gray-50 flex flex-col">
 		{@render children()}
 	</main>
 	<Footer />
 
 	<!-- Floating Action Button for mobile: tap = create menu -->
 	{#if showFab}
-		<button
-			type="button"
-			onclick={() => (createMenuOpen = true)}
-			class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white rounded-full shadow-lg hover:bg-forest-light transition-colors flex items-center justify-center z-50 select-none touch-none [-webkit-touch-callout:none]"
-			title={$i18n.t('common.createNew')}
-			aria-label={$i18n.t('common.createNew')}
-		>
+		<Fab onclick={() => (createMenuOpen = true)} label={$i18n.t('common.createNew')}>
 			<Plus class="w-6 h-6" strokeWidth="2" />
-		</button>
+		</Fab>
 	{/if}
 
 	{#if showFab && createMenuOpen}

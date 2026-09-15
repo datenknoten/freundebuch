@@ -10,7 +10,6 @@
  * implementation. This replaces the former central `editingType` discriminator
  * with its parallel `if/else` save chain and `switch` delete chain.
  */
-import type { Component } from 'svelte';
 import Envelope from 'svelte-heros-v2/Envelope.svelte';
 import Link from 'svelte-heros-v2/Link.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
@@ -61,80 +60,28 @@ import {
   UrlEditForm,
   UrlRow,
 } from '../friends/subresources';
+import {
+  type AddDetailOption,
+  addDetailOption,
+  addressDeleteName,
+  defineDescriptor,
+  editFormProps,
+  primaryAwareFormProps,
+  type SubresourceDescriptor,
+} from '../subresources/types';
 
-/** Translation function (`$i18n.t`), passed in so descriptors stay UI-framework agnostic. */
-type Translate = (key: string, params?: Record<string, unknown>) => string;
+/**
+ * The descriptor shape and the item/form types live in
+ * `../subresources/types`, shared with the friend detail sections.
+ */
+export type {
+  FormPropsContext,
+  SubresourceDescriptor,
+  SubresourceFormExports,
+  SubresourceItem,
+} from '../subresources/types';
 
-export type SubresourceItem = Phone | Email | Address | Url | CollectiveCircleInfo;
-type SubresourceInput = PhoneInput | EmailInput | AddressInput | UrlInput | { circleId: string };
-
-/** Methods every edit form exposes via `bind:this`. */
-export type SubresourceFormExports = { getData: () => unknown; isValid: () => boolean };
-/** Edit form component whose instance (`bind:this`) exposes {@link SubresourceFormExports}. */
-type SubresourceFormComponent = Component<Record<string, unknown>, SubresourceFormExports>;
-const asFormComponent = (component: unknown): SubresourceFormComponent =>
-  component as SubresourceFormComponent;
-
-/** Context handed to `formProps` so it can build the right props for each edit form. */
-export interface FormPropsContext {
-  editingData: SubresourceItem | null;
-  editingId: string | null;
-  itemCount: number;
-  items: SubresourceItem[];
-  isLoading: boolean;
-}
-
-export interface SubresourceDescriptor {
-  key: 'phone' | 'email' | 'address' | 'url' | 'circle';
-  /** Window event the keyboard system dispatches to open this section's add modal. */
-  shortcutEvent: string;
-  icon: Component;
-  /** i18n key for the section heading. */
-  sectionTitleKey: string;
-  /** i18n key for the "Add …" button label. */
-  addLabelKey: string;
-  /** `data-shortcut` chord shown on the add button (e.g. "a p"). */
-  addShortcut: string;
-  /** `data-shortcut-label` i18n key for the add button. */
-  addShortcutLabel: string;
-  /** Circle is add-only (no inline edit). */
-  editable: boolean;
-  /** i18n key for the type name in the add/edit modal title; falls back to `modalTypeNameLiteral`. */
-  modalTypeNameKey?: string;
-  /** Literal type name when there is no i18n key (circle preserves the original 'Circle'). */
-  modalTypeNameLiteral?: string;
-  load: (collectiveId: string) => Promise<SubresourceItem[]>;
-  create: (
-    collectiveId: string,
-    data: SubresourceInput,
-  ) => Promise<SubresourceItem | { message: string }>;
-  update?: (collectiveId: string, id: string, data: SubresourceInput) => Promise<SubresourceItem>;
-  remove: (collectiveId: string, id: string) => Promise<unknown>;
-  /** When the create/remove API returns only a message (circle), reload instead of patching locally. */
-  reloadAfterMutate?: boolean;
-  /**
-   * Wire the edit form's `onchange` to dirty-tracking, so `DetailEditModal`
-   * prompts about unsaved changes on close. Pre-refactor only the circle form
-   * did this; phone/email/address/url intentionally never prompted.
-   */
-  tracksDirty?: boolean;
-  /** Side effect scheduled after a successful save (address geocoding refetch). */
-  afterSave?: (reload: () => Promise<void>) => void;
-  FormComponent: SubresourceFormComponent;
-  formProps: (ctx: FormPropsContext) => Record<string, unknown>;
-  RowComponent: Component;
-  rowProps: (item: SubresourceItem) => Record<string, unknown>;
-  /** Preview text shown in the delete-confirm modal. */
-  deleteName: (item: SubresourceItem, t: Translate) => string;
-  /** Literal delete-modal title (preserves the original hardcoded English). */
-  deleteTitle: string;
-  /** Literal delete-modal description. */
-  deleteDescription: string;
-  /** Optional type-specific error mapping (phone unknown-country hint). */
-  mapError?: (err: unknown, t: Translate) => string | undefined;
-}
-
-const phoneDescriptor: SubresourceDescriptor = {
+const phoneDescriptor = defineDescriptor<Phone, PhoneInput>({
   key: 'phone',
   shortcutEvent: 'shortcut:collective-add-phone',
   icon: PhoneIcon,
@@ -145,27 +92,27 @@ const phoneDescriptor: SubresourceDescriptor = {
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.phoneNumber',
   load: (cid) => listPhones(cid),
-  create: (cid, data) => addPhone(cid, data as PhoneInput),
-  update: (cid, id, data) => updatePhone(cid, id, data as PhoneInput),
-  remove: (cid, id) => deletePhone(cid, id),
-  FormComponent: asFormComponent(PhoneEditForm),
-  formProps: ({ editingData, editingId, itemCount, isLoading }) => ({
-    initialData: (editingData as Phone | null) ?? undefined,
-    defaultPrimary: !editingId && itemCount === 0,
-    disabled: isLoading,
-  }),
+  create: (cid, data: PhoneInput) => addPhone(cid, data),
+  update: (cid, id, data: PhoneInput) => updatePhone(cid, id, data),
+  remove: (cid, item) => deletePhone(cid, item.id),
+  FormComponent: PhoneEditForm,
+  formProps: primaryAwareFormProps,
   RowComponent: PhoneRow,
-  rowProps: (item) => ({ phone: item as Phone }),
-  deleteName: (item) => (item as Phone).phoneNumber,
-  deleteTitle: 'Delete Phone Number',
-  deleteDescription: 'Are you sure you want to delete this phone?',
-  mapError: (err, t) =>
-    err instanceof ApiError && err.code === 'PHONE_COUNTRY_UNKNOWN'
-      ? t('subresources.phone.unknownCountry')
-      : undefined,
-};
+  rowProps: (phone) => ({ phone }),
+  deleteName: (phone) => phone.phoneNumber,
+  deleteTitleKey: 'friendDetail.modal.deletePhoneNumber',
+  deleteDescriptionKey: 'friendDetail.modal.confirmDeletePhone',
+  mapError: (err, t) => {
+    if (!(err instanceof ApiError)) return undefined;
+    if (err.code === 'PHONE_COUNTRY_UNKNOWN') return t('subresources.phone.unknownCountry');
+    // The backend rejects unparseable numbers with a 400 and a message meant
+    // for developers; show the field hint instead.
+    if (err.statusCode === 400) return t('subresources.phone.invalidNumber');
+    return undefined;
+  },
+});
 
-const emailDescriptor: SubresourceDescriptor = {
+const emailDescriptor = defineDescriptor<Email, EmailInput>({
   key: 'email',
   shortcutEvent: 'shortcut:collective-add-email',
   icon: Envelope,
@@ -176,23 +123,19 @@ const emailDescriptor: SubresourceDescriptor = {
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.emailAddress',
   load: (cid) => listEmails(cid),
-  create: (cid, data) => addEmail(cid, data as EmailInput),
-  update: (cid, id, data) => updateEmail(cid, id, data as EmailInput),
-  remove: (cid, id) => deleteEmail(cid, id),
-  FormComponent: asFormComponent(EmailEditForm),
-  formProps: ({ editingData, editingId, itemCount, isLoading }) => ({
-    initialData: (editingData as Email | null) ?? undefined,
-    defaultPrimary: !editingId && itemCount === 0,
-    disabled: isLoading,
-  }),
+  create: (cid, data: EmailInput) => addEmail(cid, data),
+  update: (cid, id, data: EmailInput) => updateEmail(cid, id, data),
+  remove: (cid, item) => deleteEmail(cid, item.id),
+  FormComponent: EmailEditForm,
+  formProps: primaryAwareFormProps,
   RowComponent: EmailRow,
-  rowProps: (item) => ({ email: item as Email }),
-  deleteName: (item) => (item as Email).emailAddress,
-  deleteTitle: 'Delete Email Address',
-  deleteDescription: 'Are you sure you want to delete this email?',
-};
+  rowProps: (email) => ({ email }),
+  deleteName: (email) => email.emailAddress,
+  deleteTitleKey: 'friendDetail.modal.deleteEmailAddress',
+  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
+});
 
-const addressDescriptor: SubresourceDescriptor = {
+const addressDescriptor = defineDescriptor<Address, AddressInput>({
   key: 'address',
   shortcutEvent: 'shortcut:collective-add-address',
   icon: MapPin,
@@ -203,9 +146,9 @@ const addressDescriptor: SubresourceDescriptor = {
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.address',
   load: (cid) => listAddresses(cid),
-  create: (cid, data) => addAddress(cid, data as AddressInput),
-  update: (cid, id, data) => updateAddress(cid, id, data as AddressInput),
-  remove: (cid, id) => deleteAddress(cid, id),
+  create: (cid, data: AddressInput) => addAddress(cid, data),
+  update: (cid, id, data: AddressInput) => updateAddress(cid, id, data),
+  remove: (cid, item) => deleteAddress(cid, item.id),
   // Geocoding runs asynchronously on the backend; refetch a few times to pick up
   // coordinates once they land.
   afterSave: (reload) => {
@@ -215,23 +158,16 @@ const addressDescriptor: SubresourceDescriptor = {
       }, delay);
     }
   },
-  FormComponent: asFormComponent(AddressEditForm),
-  formProps: ({ editingData, editingId, itemCount, isLoading }) => ({
-    initialData: (editingData as Address | null) ?? undefined,
-    defaultPrimary: !editingId && itemCount === 0,
-    disabled: isLoading,
-  }),
+  FormComponent: AddressEditForm,
+  formProps: primaryAwareFormProps,
   RowComponent: AddressRow,
-  rowProps: (item) => ({ address: item as Address }),
-  deleteName: (item, t) => {
-    const address = item as Address;
-    return address.streetLine1 || address.city || t('subresources.address.thisAddress');
-  },
-  deleteTitle: 'Delete Address',
-  deleteDescription: 'Are you sure you want to delete this address?',
-};
+  rowProps: (address) => ({ address }),
+  deleteName: addressDeleteName,
+  deleteTitleKey: 'friendDetail.modal.deleteAddress',
+  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteAddress',
+});
 
-const urlDescriptor: SubresourceDescriptor = {
+const urlDescriptor = defineDescriptor<Url, UrlInput>({
   key: 'url',
   shortcutEvent: 'shortcut:collective-add-url',
   icon: Link,
@@ -242,22 +178,19 @@ const urlDescriptor: SubresourceDescriptor = {
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.websiteUrl',
   load: (cid) => listUrls(cid),
-  create: (cid, data) => addUrl(cid, data as UrlInput),
-  update: (cid, id, data) => updateUrl(cid, id, data as UrlInput),
-  remove: (cid, id) => deleteUrl(cid, id),
-  FormComponent: asFormComponent(UrlEditForm),
-  formProps: ({ editingData, isLoading }) => ({
-    initialData: (editingData as Url | null) ?? undefined,
-    disabled: isLoading,
-  }),
+  create: (cid, data: UrlInput) => addUrl(cid, data),
+  update: (cid, id, data: UrlInput) => updateUrl(cid, id, data),
+  remove: (cid, item) => deleteUrl(cid, item.id),
+  FormComponent: UrlEditForm,
+  formProps: editFormProps,
   RowComponent: UrlRow,
-  rowProps: (item) => ({ url: item as Url }),
-  deleteName: (item) => (item as Url).url,
-  deleteTitle: 'Delete Website',
-  deleteDescription: 'Are you sure you want to delete this url?',
-};
+  rowProps: (url) => ({ url }),
+  deleteName: (url) => url.url,
+  deleteTitleKey: 'friendDetail.modal.deleteWebsite',
+  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteWebsite',
+});
 
-const circleDescriptor: SubresourceDescriptor = {
+const circleDescriptor = defineDescriptor<CollectiveCircleInfo, { circleId: string }>({
   key: 'circle',
   shortcutEvent: 'shortcut:collective-add-circle',
   icon: Users,
@@ -266,23 +199,20 @@ const circleDescriptor: SubresourceDescriptor = {
   addShortcut: 'a c',
   addShortcutLabel: 'shortcuts.add.circle',
   editable: false,
-  modalTypeNameLiteral: 'Circle',
+  modalTypeNameKey: 'friendDetail.modal.circle',
   load: (cid) => getCollectiveCircles(cid),
-  create: (cid, data) => addCollectiveToCircle(cid, (data as { circleId: string }).circleId),
-  remove: (cid, id) => removeCollectiveFromCircle(cid, id),
+  create: (cid, data: { circleId: string }) => addCollectiveToCircle(cid, data.circleId),
+  remove: (cid, item) => removeCollectiveFromCircle(cid, item.id),
   reloadAfterMutate: true,
   tracksDirty: true,
-  FormComponent: asFormComponent(CircleEditForm),
-  formProps: ({ items, isLoading }) => ({
-    existingCircles: items as CollectiveCircleInfo[],
-    disabled: isLoading,
-  }),
+  FormComponent: CircleEditForm,
+  formProps: ({ items, isLoading }) => ({ existingCircles: items, disabled: isLoading }),
   RowComponent: CircleRow,
-  rowProps: (item) => ({ circle: item as CollectiveCircleInfo }),
-  deleteName: (item) => (item as CollectiveCircleInfo).name,
-  deleteTitle: 'Remove from Circle',
-  deleteDescription: 'Are you sure you want to remove this collective from this circle?',
-};
+  rowProps: (circle) => ({ circle }),
+  deleteName: (circle) => circle.name,
+  deleteTitleKey: 'collectives.detail.removeFromCircleTitle',
+  deleteDescriptionKey: 'collectives.detail.confirmRemoveCircle',
+});
 
 /** Phone/email/address/url — rendered inside the contact-details wrapper, in this order. */
 export const contactDescriptors: SubresourceDescriptor[] = [
@@ -304,3 +234,8 @@ export { circleDescriptor };
  * window event that opens its add modal, so the picker stays data-driven.
  */
 export const detailDescriptors: SubresourceDescriptor[] = [...contactDescriptors, circleDescriptor];
+
+/** The same set as menu entries for the shared add-detail dropdown and sheet. */
+export const collectiveAddDetailOptions: AddDetailOption[] = detailDescriptors.map((descriptor) =>
+  addDetailOption(descriptor, `shortcuts.add.${descriptor.key}`),
+);

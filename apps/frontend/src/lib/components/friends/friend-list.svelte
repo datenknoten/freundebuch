@@ -5,13 +5,17 @@ import BarsArrowUp from 'svelte-heros-v2/BarsArrowUp.svelte';
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import FaceSmile from 'svelte-heros-v2/FaceSmile.svelte';
-import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import * as friendsApi from '$lib/api/friends';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
+import EmptyState from '$lib/components/ui/empty-state.svelte';
+import SearchInput from '$lib/components/ui/search-input.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -405,42 +409,20 @@ function openFirstResult() {
 
 <div class="space-y-4">
   <!-- Search input (prominent) -->
-  <div class="relative">
-    <MagnifyingGlass class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth="2" />
-    <input
-      bind:this={inputElement}
-      type="text"
-      value={searchQuery}
-      oninput={(e) => handleSearchInput(e.currentTarget.value)}
-      onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); openFirstResult(); } }}
-      placeholder={$i18n.t('friendList.searchPlaceholder')}
-      class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
-      autocomplete="off"
-      data-search-input
-      aria-label={$i18n.t('aria.searchFriends')}
-    />
-    {#if isSearching}
-      <div class="absolute right-4 top-1/2 -translate-y-1/2" aria-live="polite">
-        <div class="animate-spin rounded-full h-5 w-5 border-2 border-forest border-t-transparent" role="status">
-          <span class="sr-only">{$i18n.t('common.searching')}</span>
-        </div>
-      </div>
-    {:else if searchQuery}
-      <button
-        type="button"
-        onclick={clearSearch}
-        class="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-        aria-label={$i18n.t('aria.clearSearch')}
-      >
-        <XMark class="w-5 h-5" strokeWidth="2" />
-      </button>
-    {/if}
-  </div>
+  <SearchInput
+    bind:element={inputElement}
+    value={searchQuery}
+    oninput={handleSearchInput}
+    onsubmit={openFirstResult}
+    onclear={clearSearch}
+    busy={isSearching}
+    busyLabel={$i18n.t('common.searching')}
+    placeholder={$i18n.t('friendList.searchPlaceholder')}
+    ariaLabel={$i18n.t('aria.searchFriends')}
+  />
 
   {#if searchError}
-    <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-body" role="alert">
-      {searchError}
-    </div>
+    <AlertBanner variant="error">{searchError}</AlertBanner>
   {/if}
 
   <!-- Facet filters bar (always visible) -->
@@ -489,7 +471,7 @@ function openFirstResult() {
           id="page-size"
           value={currentPageSize}
           onchange={(e) => handlePageSizeChange(Number(e.currentTarget.value) as PageSize)}
-          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
+          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus-visible:ring-2 focus-visible:ring-forest focus-visible:border-forest"
           aria-label={$i18n.t('aria.itemsPerPage')}
         >
           <option value={10}>10</option>
@@ -513,7 +495,7 @@ function openFirstResult() {
             }
             handleSortChange();
           }}
-          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
+          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus-visible:ring-2 focus-visible:ring-forest focus-visible:border-forest"
           aria-label={$i18n.t('aria.sortBy')}
         >
           {#if isSearchMode}
@@ -524,9 +506,10 @@ function openFirstResult() {
           <option value="updated_at">{$i18n.t('friendList.lastUpdated')}</option>
         </select>
 
-        <button
+        <Button
+          variant="secondary"
+          size="xs"
           onclick={toggleSortOrder}
-          class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
           title={currentSortOrder === 'asc' ? $i18n.t('common.ascending') : $i18n.t('common.descending')}
           aria-label={currentSortOrder === 'asc' ? $i18n.t('common.ascending') : $i18n.t('common.descending')}
         >
@@ -535,37 +518,39 @@ function openFirstResult() {
           {:else}
             <BarsArrowDown class="w-4 h-4 text-gray-600" strokeWidth="2" />
           {/if}
-        </button>
+        </Button>
       </div>
 
       <!-- Pagination controls (inline) -->
       {#if displayTotalPages > 1}
         <div class="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200">
-          <button
+          <Button
+            variant="secondary"
+            size="xs"
             onclick={() => loadPage(displayPage - 1)}
             disabled={displayPage <= 1}
-            class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             title={$i18n.t('aria.previousPage')}
             aria-label={$i18n.t('aria.previousPage')}
             data-shortcut="<"
             data-shortcut-label="shortcuts.help.previousPage"
           >
             <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
-          </button>
+          </Button>
           <span class="text-sm text-gray-600 font-body px-2 whitespace-nowrap">
             {displayPage} / {displayTotalPages}
           </span>
-          <button
+          <Button
+            variant="secondary"
+            size="xs"
             onclick={() => loadPage(displayPage + 1)}
             disabled={displayPage >= displayTotalPages}
-            class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             title={$i18n.t('aria.nextPage')}
             aria-label={$i18n.t('aria.nextPage')}
             data-shortcut=">"
             data-shortcut-label="shortcuts.help.nextPage"
           >
             <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
-          </button>
+          </Button>
         </div>
       {/if}
     </div>
@@ -573,70 +558,47 @@ function openFirstResult() {
 
   <!-- Content area -->
   {#if (isSearchMode || isFilterMode) && isSearching && searchResults.length === 0}
-    <div class="flex justify-center py-12" aria-live="polite">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
-        <span class="sr-only">{$i18n.t('common.loadingResults')}</span>
-      </div>
+    <div class="flex justify-center py-12">
+      <Spinner size="lg" label={$i18n.t('common.loadingResults')} />
     </div>
   {:else if (isSearchMode || isFilterMode) && showNoResults}
-    <!-- No results -->
-    <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <FaceSmile class="mx-auto h-12 w-12 text-gray-300" strokeWidth="2" />
-      <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('friendList.noFriendsFound')}</h3>
-      <p class="mt-2 text-sm text-gray-600 font-body">
-        {#if isSearchMode}
-          {$i18n.t('friendList.noResultsFor', { query: searchQuery })}{#if hasActiveFilters} {$i18n.t('friendList.noResultsWithFilters')}{/if}
-        {:else}
-          {$i18n.t('friendList.noMatchFilters')}
-        {/if}
-      </p>
-      <p class="mt-1 text-xs text-gray-400 font-body">
-        {#if isSearchMode}
-          {$i18n.t('friendList.tryDifferentTerm')}
-        {:else}
-          {$i18n.t('friendList.tryAdjustFilters')}
-        {/if}
-      </p>
+    <EmptyState
+      icon={FaceSmile}
+      title={$i18n.t('friendList.noFriendsFound')}
+      description={isSearchMode
+        ? `${$i18n.t('friendList.noResultsFor', { query: searchQuery })}${hasActiveFilters ? ` ${$i18n.t('friendList.noResultsWithFilters')}` : ''}`
+        : $i18n.t('friendList.noMatchFilters')}
+      hint={isSearchMode
+        ? $i18n.t('friendList.tryDifferentTerm')
+        : $i18n.t('friendList.tryAdjustFilters')}
+    >
       {#if hasActiveFilters}
-        <button
-          onclick={handleClearAllFilters}
-          class="mt-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
-        >
+        <Button variant="ghostAccent" size="sm" onclick={handleClearAllFilters}>
           {$i18n.t('friendList.clearFilters')}
-        </button>
+        </Button>
       {/if}
       {#if isSearchMode}
-        <button
-          onclick={clearSearch}
-          class="mt-4 ml-4 inline-flex items-center gap-2 text-forest hover:text-forest-light font-body font-medium transition-colors"
-        >
+        <Button variant="ghostAccent" size="sm" onclick={clearSearch}>
           <XMark class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('friendList.clearSearch')}
-        </button>
+        </Button>
       {/if}
-    </div>
+    </EmptyState>
   {:else if !isSearchMode && !isFilterMode && $isFriendsLoading}
-    <div class="flex justify-center py-12" aria-live="polite">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest" role="status">
-        <span class="sr-only">{$i18n.t('common.loadingFriends')}</span>
-      </div>
+    <div class="flex justify-center py-12">
+      <Spinner size="lg" label={$i18n.t('common.loadingFriends')} />
     </div>
   {:else if !isSearchMode && !isFilterMode && $friendList.length === 0}
-    <!-- Empty state -->
-    <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <Users class="mx-auto h-12 w-12 text-gray-400" strokeWidth="2" />
-      <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('friendList.noFriendsYet')}</h3>
-      <p class="mt-2 text-sm text-gray-600 font-body">
-        {$i18n.t('friendList.getStarted')}
-      </p>
-      <a
-        href="/friends/new"
-        class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-      >
+    <EmptyState
+      icon={Users}
+      title={$i18n.t('friendList.noFriendsYet')}
+      description={$i18n.t('friendList.getStarted')}
+    >
+      <Button href="/friends/new">
         <Plus class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('friendList.addFriend')}
-      </a>
-    </div>
+      </Button>
+    </EmptyState>
   {:else if gridItems.length > 0}
     <!-- Unified Friend Grid - same component for both normal and search modes -->
     <FriendGrid

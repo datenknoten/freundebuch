@@ -8,6 +8,11 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
+import { focusTrap } from '$lib/actions/focus-trap';
+import Button from '$lib/components/ui/button.svelte';
+import EmptyState from '$lib/components/ui/empty-state.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
+import { codeClasses, surfaceClasses } from '$lib/components/ui/styles';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   hasActiveFilters,
@@ -16,6 +21,7 @@ import {
   search,
   searchFacets,
 } from '$lib/stores/search';
+import { matchSourceBadge } from '$lib/utils/match-source';
 import type { ArrayFacetField, FacetFilters } from '$shared';
 import FriendAvatar from './friends/friend-avatar.svelte';
 import FacetChips from './search/facet-chips.svelte';
@@ -189,7 +195,7 @@ onMount(() => {
   which is only possible because it already exists at that point.
 -->
 <div
-  class="fixed inset-0 z-50 bg-black/50 flex items-start justify-center pt-[10vh] {$isSearchOpen ? '' : 'opacity-0 pointer-events-none'}"
+  class="fixed inset-0 z-(--z-overlay) bg-gray-900/50 flex items-start justify-center pt-[10vh] {$isSearchOpen ? '' : 'opacity-0 pointer-events-none'}"
   onclick={handleBackdropClick}
   onkeydown={handleKeydown}
   role="dialog"
@@ -201,7 +207,8 @@ onMount(() => {
   <!-- Modal container -->
   <div
     bind:this={containerElement}
-    class="w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden"
+    use:focusTrap={$isSearchOpen}
+    class="w-full max-w-xl overflow-hidden {surfaceClasses.modal}"
   >
     <!-- Search input -->
     <div class="relative border-b border-gray-200">
@@ -212,7 +219,7 @@ onMount(() => {
         value={searchState.query}
         oninput={(e) => search.setQuery(e.currentTarget.value, { loadFacets: true })}
         placeholder={$i18n.t('globalSearch.placeholder')}
-        class="w-full pl-12 pr-4 py-4 text-lg font-body text-gray-900 placeholder-gray-400 focus:outline-none"
+        class="w-full pl-12 pr-4 py-4 text-lg font-body text-gray-900 placeholder-gray-400 focus-visible:outline-none"
         autocomplete="off"
         role="combobox"
         aria-expanded={showResults || showRecentSearches}
@@ -223,7 +230,7 @@ onMount(() => {
       />
       {#if searchState.isSearching}
         <div class="absolute right-4 top-1/2 -translate-y-1/2">
-          <div class="animate-spin rounded-full h-5 w-5 border-2 border-forest border-t-transparent"></div>
+          <Spinner size="md" />
         </div>
       {/if}
     </div>
@@ -279,7 +286,7 @@ onMount(() => {
                     type="button"
                     onclick={(e) => handleDeleteRecentSearch(e, recentQuery)}
                     class="p-1 text-gray-400 hover:text-gray-600 rounded"
-                    aria-label="Remove from recent searches"
+                    aria-label={$i18n.t('aria.removeRecentSearch')}
                   >
                     <XMark class="w-4 h-4" strokeWidth="2" />
                   </button>
@@ -291,6 +298,7 @@ onMount(() => {
           <!-- Search results -->
           <ul id="global-search-listbox" role="listbox" class="p-2">
             {#each searchState.results as friend, index}
+              {@const matchBadge = matchSourceBadge(friend.matchSource)}
               <li
                 role="option"
                 aria-selected={searchState.selectedIndex === index}
@@ -312,7 +320,10 @@ onMount(() => {
                     {#if friend.organization || friend.jobTitle}
                       <div class="font-body text-xs text-gray-500 truncate">
                         {#if friend.jobTitle && friend.organization}
-                          {friend.jobTitle} at {friend.organization}
+                          {$i18n.t('globalSearch.jobAtOrg', {
+                            jobTitle: friend.jobTitle,
+                            organization: friend.organization,
+                          })}
                         {:else if friend.jobTitle}
                           {friend.jobTitle}
                         {:else if friend.organization}
@@ -331,13 +342,9 @@ onMount(() => {
                       </div>
                     {/if}
                   </div>
-                  {#if friend.matchSource && friend.matchSource !== 'friend'}
-                    <span class="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full {
-                      friend.matchSource === 'email' ? 'bg-blue-100 text-blue-700' :
-                      friend.matchSource === 'phone' ? 'bg-green-100 text-green-700' :
-                      'bg-purple-100 text-purple-700'
-                    }">
-                      {friend.matchSource}
+                  {#if matchBadge}
+                    <span class="shrink-0 {matchBadge.class}">
+                      {$i18n.t(matchBadge.labelKey)}
                     </span>
                   {/if}
                 </button>
@@ -346,79 +353,56 @@ onMount(() => {
           </ul>
         {:else if showEmptyState}
           <!-- No results -->
-          <div class="p-6 text-center">
-            <FaceSmile class="mx-auto w-12 h-12 text-gray-300" strokeWidth="2" />
-            <p class="mt-3 font-body text-sm text-gray-600">
-              {$i18n.t('globalSearch.noMatch', { query: searchState.query })}
-            </p>
-            <p class="mt-1 font-body text-xs text-gray-400">
-              {$i18n.t('globalSearch.tryDifferent')}
-            </p>
-            <button
-              type="button"
-              onclick={navigateToNewFriend}
-              class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-forest text-white rounded-lg font-body text-sm font-medium hover:bg-forest-light transition-colors"
-            >
+          <EmptyState
+            icon={FaceSmile}
+            title={$i18n.t('globalSearch.noMatch', { query: searchState.query })}
+            hint={$i18n.t('globalSearch.tryDifferent')}
+          >
+            <Button size="sm" onclick={navigateToNewFriend}>
               <Plus class="w-4 h-4" strokeWidth="2" />
               {$i18n.t('globalSearch.addNewFriend')}
-            </button>
-          </div>
+            </Button>
+          </EmptyState>
         {:else if searchState.query.trim().length < 2 && searchState.recentSearches.length === 0}
           <!-- Initial state with no recent searches -->
-          <div class="p-8 text-center">
-            <MagnifyingGlass class="mx-auto w-12 h-12 text-gray-300" strokeWidth="2" />
-            <p class="mt-2 font-body text-sm text-gray-500">
-              {$i18n.t('globalSearch.findFriends')}
-            </p>
-            <p class="mt-1 font-body text-xs text-gray-400">
-              {$i18n.t('globalSearch.typeToSearch')}
-            </p>
-          </div>
+          <EmptyState
+            icon={MagnifyingGlass}
+            title={$i18n.t('globalSearch.findFriends')}
+            hint={$i18n.t('globalSearch.typeToSearch')}
+          />
         {/if}
       </div>
 
       <!-- Footer: Mobile action buttons -->
       <div class="sm:hidden border-t border-gray-200 p-2 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onclick={() => search.close()}
-          class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-body text-sm transition-colors"
-        >
+        <Button variant="ghost" size="sm" class="flex-1" onclick={() => search.close()}>
           <XMark class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('globalSearch.close')}
-        </button>
-        <button
-          type="button"
-          onclick={navigateToNewFriend}
-          class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-forest hover:bg-gray-100 rounded-lg font-body text-sm font-medium transition-colors"
-        >
+        </Button>
+        <Button variant="ghostAccent" size="sm" class="flex-1" onclick={navigateToNewFriend}>
           <Plus class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('common.new')}
-        </button>
-        <button
-          type="button"
-          onclick={navigateToFriendsList}
-          class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-forest hover:bg-gray-100 rounded-lg font-body text-sm font-medium transition-colors"
-        >
+        </Button>
+        <Button variant="ghostAccent" size="sm" class="flex-1" onclick={navigateToFriendsList}>
           <Users class="w-4 h-4" strokeWidth="2" />
           {$i18n.t('userMenu.friends')}
-        </button>
+        </Button>
       </div>
 
       <!-- Footer: Desktop keyboard hints -->
       <div class="hidden sm:flex border-t border-gray-200 px-4 py-2 items-center justify-between text-xs text-gray-400">
         <div class="flex items-center gap-4">
           <span class="flex items-center gap-1">
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">↑</kbd>
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">↓</kbd>
+            <kbd class={codeClasses.kbd}>↑</kbd>
+            <kbd class={codeClasses.kbd}>↓</kbd>
             <span>{$i18n.t('globalSearch.navigate')}</span>
           </span>
           <span class="flex items-center gap-1">
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">↵</kbd>
+            <kbd class={codeClasses.kbd}>↵</kbd>
             <span>{$i18n.t('globalSearch.select')}</span>
           </span>
           <span class="flex items-center gap-1">
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">Esc</kbd>
+            <kbd class={codeClasses.kbd}>Esc</kbd>
             <span>{$i18n.t('globalSearch.close')}</span>
           </span>
         </div>
@@ -428,7 +412,7 @@ onMount(() => {
             onclick={navigateToNewFriend}
             class="flex items-center gap-1.5 text-gray-500 hover:text-forest font-body transition-colors"
           >
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">
+            <kbd class={codeClasses.kbd}>
               {isMac ? '⌥' : 'Alt'}↵
             </kbd>
             <span>{$i18n.t('globalSearch.newFriend')}</span>
@@ -438,7 +422,7 @@ onMount(() => {
             onclick={navigateToFriendsList}
             class="flex items-center gap-1.5 text-gray-500 hover:text-forest font-body transition-colors"
           >
-            <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded font-mono">
+            <kbd class={codeClasses.kbd}>
               {isMac ? '⌘' : 'Ctrl'}↵
             </kbd>
             <span>{$i18n.t('globalSearch.friendsList')}</span>

@@ -2,6 +2,9 @@
 import { onMount } from 'svelte';
 import Bell from 'svelte-heros-v2/Bell.svelte';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
+import EmptyState from '$lib/components/ui/empty-state.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { notificationChannels } from '$lib/stores/notification-channels';
 import type {
@@ -58,7 +61,7 @@ async function handleSubmitForm(
     showForm = false;
     editingChannel = undefined;
   } catch (err) {
-    formError = (err as Error)?.message || 'Failed to save channel';
+    formError = (err as Error)?.message ?? $i18n.t('profile.messagingReminders.saveError');
   } finally {
     isSubmitting = false;
   }
@@ -88,7 +91,7 @@ async function handleDelete(channelId: string) {
 
   {#if showForm}
     <div class="bg-gray-50 rounded-lg p-4">
-      {#if formError}
+      {#if formError.length > 0}
         <div class="mb-4">
           <AlertBanner variant="error">{formError}</AlertBanner>
         </div>
@@ -101,24 +104,21 @@ async function handleDelete(channelId: string) {
       />
     </div>
   {:else}
-    <button
-      onclick={handleAddChannel}
-      class="bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-    >
+    <Button onclick={handleAddChannel}>
       {$i18n.t('profile.messagingReminders.addChannel')}
-    </button>
+    </Button>
   {/if}
 
   {#if $notificationChannels.isLoading}
-    <div class="text-center py-4">
-      <p class="text-gray-500 font-body">{$i18n.t('common.loading')}</p>
+    <div class="flex justify-center py-12">
+      <Spinner size="lg" label={$i18n.t('common.loading')} />
     </div>
   {:else if $notificationChannels.channels.length === 0 && !showForm}
-    <div class="text-center py-8 bg-gray-50 rounded-lg">
-      <Bell class="w-12 h-12 mx-auto text-gray-400 mb-3" strokeWidth="2" />
-      <p class="text-gray-600 font-body">{$i18n.t('profile.messagingReminders.noChannels')}</p>
-      <p class="text-gray-500 font-body text-sm mt-1">{$i18n.t('profile.messagingReminders.description')}</p>
-    </div>
+    <EmptyState
+      icon={Bell}
+      title={$i18n.t('profile.messagingReminders.noChannels')}
+      description={$i18n.t('profile.messagingReminders.description')}
+    />
   {:else}
     <div class="space-y-2">
       {#each $notificationChannels.channels as channel (channel.externalId)}

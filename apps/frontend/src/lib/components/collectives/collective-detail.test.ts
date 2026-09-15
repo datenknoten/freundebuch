@@ -1,7 +1,15 @@
 import { get } from 'svelte/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isModalOpen } from '$lib/stores/ui';
-import { aCollective, aCollectiveMember, fireEvent, render, screen, waitFor } from '$lib/test';
+import { isModalOpen, resetOpenOverlays } from '$lib/stores/ui';
+import {
+  aCollective,
+  aCollectiveMember,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '$lib/test';
 import CollectiveDetail from './collective-detail.svelte';
 
 vi.mock('$lib/i18n/index.js', () => ({
@@ -40,7 +48,7 @@ vi.mock('$lib/api/collectives', () => ({
 
 afterEach(() => {
   vi.clearAllMocks();
-  isModalOpen.set(false);
+  resetOpenOverlays();
 });
 
 describe('CollectiveDetail', () => {
@@ -100,7 +108,7 @@ describe('CollectiveDetail', () => {
     render(CollectiveDetail, { collective: aCollective() });
 
     await fireEvent.click(screen.getByText('common.delete'));
-    await fireEvent.click(screen.getByText('collectives.form.cancel'));
+    await fireEvent.click(screen.getByText('common.cancel'));
     expect(get(isModalOpen)).toBe(false);
     expect(screen.queryByText('collectives.detail.deleteConfirmTitle')).toBeNull();
   });
@@ -110,7 +118,7 @@ describe('CollectiveDetail', () => {
     render(CollectiveDetail, { collective });
 
     await fireEvent.click(screen.getByText('common.delete'));
-    await fireEvent.click(screen.getByText('collectives.detail.delete'));
+    await fireEvent.click(within(screen.getByRole('dialog')).getByText('common.delete'));
 
     await waitFor(() => expect(deleteCollective).toHaveBeenCalledWith(collective.id));
     await waitFor(() => expect(goto).toHaveBeenCalledWith('/collectives'));
@@ -118,35 +126,34 @@ describe('CollectiveDetail', () => {
     await waitFor(() => expect(get(isModalOpen)).toBe(false));
   });
 
-  it('closes the confirmation and clears the modal flag when deletion fails', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  it('keeps the confirmation open and shows the reason when deletion fails', async () => {
     deleteCollective.mockRejectedValueOnce(new Error('boom'));
     render(CollectiveDetail, { collective: aCollective() });
 
     await fireEvent.click(screen.getByText('common.delete'));
-    await fireEvent.click(screen.getByText('collectives.detail.delete'));
+    await fireEvent.click(within(screen.getByRole('dialog')).getByText('common.delete'));
 
-    await waitFor(() => expect(errorSpy).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('boom'));
     expect(goto).not.toHaveBeenCalled();
-    await waitFor(() =>
-      expect(screen.queryByText('collectives.detail.deleteConfirmTitle')).toBeNull(),
-    );
-    expect(get(isModalOpen)).toBe(false);
-    errorSpy.mockRestore();
+    expect(screen.getByText('collectives.detail.deleteConfirmTitle')).toBeTruthy();
+    expect(get(isModalOpen)).toBe(true);
   });
 
-  it('resets the deleting state after a successful delete even if navigation does not unmount', async () => {
+  it('offers an actionable confirmation again when navigation does not unmount', async () => {
     const collective = aCollective();
     render(CollectiveDetail, { collective });
 
     await fireEvent.click(screen.getByText('common.delete'));
-    await fireEvent.click(screen.getByText('collectives.detail.delete'));
+    await fireEvent.click(within(screen.getByRole('dialog')).getByText('common.delete'));
     await waitFor(() => expect(goto).toHaveBeenCalledWith('/collectives'));
 
     // goto() is a no-op here, so the component stays mounted. Re-opening the
     // dialog must offer an actionable button, not one stuck in "deleting".
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     await fireEvent.click(screen.getByText('common.delete'));
-    const confirm = screen.getByText('collectives.detail.delete') as HTMLButtonElement;
+    const confirm = within(screen.getByRole('dialog'))
+      .getByText('common.delete')
+      .closest('button') as HTMLButtonElement;
     expect(confirm.disabled).toBe(false);
   });
 

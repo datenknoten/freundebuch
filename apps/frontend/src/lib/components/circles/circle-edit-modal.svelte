@@ -1,10 +1,9 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
-import XMark from 'svelte-heros-v2/XMark.svelte';
-import { autoFocus } from '$lib/actions/auto-focus';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import { Button, FormInput, formClasses, headingClasses, Modal } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
-import { isModalOpen } from '$lib/stores/ui';
 import type { Circle, CircleInput } from '$shared';
 import { CIRCLE_COLORS } from '$shared';
 import CircleChip from './circle-chip.svelte';
@@ -20,11 +19,15 @@ let { circle = null, onClose }: Props = $props();
 
 const isEditing = $derived(!!circle);
 
+const uid = $props.id();
+const formId = `circle-form-${uid}`;
+
 // Form state
 let formName = $state('');
 let formColor = $state<string>(CIRCLE_COLORS[5]);
 let formParentId = $state<string | null>(null);
 let formError = $state('');
+let nameError = $state<string | undefined>(undefined);
 let isSubmitting = $state(false);
 let showUnsavedWarning = $state(false);
 
@@ -39,14 +42,9 @@ $effect(() => {
     formColor = circle?.color ?? CIRCLE_COLORS[5];
     formParentId = circle?.parentCircleId ?? null;
     formError = '';
+    nameError = undefined;
     initializedForCircleId = circleId;
   }
-});
-
-// Mark modal as open for keyboard shortcut handling
-$effect(() => {
-  isModalOpen.set(true);
-  return () => isModalOpen.set(false);
 });
 
 // Get valid parent options (exclude the current circle and its children to prevent circular references)
@@ -92,9 +90,10 @@ function getParentOptionsTree(): Array<{ circle: Circle; depth: number }> {
 async function handleSubmit(e: SubmitEvent) {
   e.preventDefault();
   formError = '';
+  nameError = undefined;
 
-  if (!formName.trim()) {
-    formError = 'Circle name is required';
+  if (formName.trim().length === 0) {
+    nameError = $i18n.t('circles.form.nameRequired');
     return;
   }
 
@@ -115,7 +114,10 @@ async function handleSubmit(e: SubmitEvent) {
 
     onClose();
   } catch (err) {
-    formError = (err as Error)?.message || 'Failed to save circle';
+    formError =
+      err instanceof Error && err.message.length > 0
+        ? err.message
+        : $i18n.t('circles.form.saveError');
   } finally {
     isSubmitting = false;
   }
@@ -152,194 +154,119 @@ function cancelClose() {
   showUnsavedWarning = false;
 }
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    if (showUnsavedWarning) {
-      cancelClose();
-    } else {
-      handleClose();
-    }
+// Escape, the backdrop and the header X all land here: while the unsaved-changes
+// question is up they answer it with "keep editing" instead of asking again.
+function handleDismiss() {
+  if (showUnsavedWarning) {
+    cancelClose();
+    return;
   }
-}
-
-function handleBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget) {
-    handleClose();
-  }
+  handleClose();
 }
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+{#snippet formFooter()}
+  <Button variant="secondary" class="flex-1" onclick={handleClose} disabled={isSubmitting}>
+    {$i18n.t('common.cancel')}
+  </Button>
+  <Button type="submit" form={formId} class="flex-1" loading={isSubmitting}>
+    {isEditing ? $i18n.t('circles.form.saveChanges') : $i18n.t('circles.form.createCircle')}
+  </Button>
+{/snippet}
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- Modal backdrop -->
-<div
-  class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4"
-  onclick={handleBackdropClick}
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="circle-modal-title"
-  tabindex="-1"
+{#snippet warningFooter()}
+  <Button variant="secondary" class="flex-1" onclick={cancelClose}>
+    {$i18n.t('subresources.common.keepEditing')}
+  </Button>
+  <Button variant="caution" class="flex-1" onclick={confirmClose}>
+    {$i18n.t('subresources.common.discardChanges')}
+  </Button>
+{/snippet}
+
+<Modal
+  title={isEditing ? $i18n.t('circles.form.title.edit') : $i18n.t('circles.form.title.new')}
+  size="md"
+  closable={!isSubmitting}
+  onClose={handleDismiss}
+  footer={showUnsavedWarning ? warningFooter : formFooter}
 >
-  <!-- Modal content -->
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col relative">
-    <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-      <h2 id="circle-modal-title" class="text-xl font-heading text-gray-900">
-        {isEditing ? $i18n.t('circles.form.title.edit') : $i18n.t('circles.form.title.new')}
-      </h2>
-      <button
-        type="button"
-        onclick={handleClose}
-        disabled={isSubmitting}
-        class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100
-               disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label={$i18n.t('common.close')}
-      >
-        <XMark class="w-5 h-5" strokeWidth="2" />
-      </button>
+  {#if showUnsavedWarning}
+    <div class="text-center">
+      <ExclamationTriangle class="w-12 h-12 mx-auto text-amber-500 mb-4" strokeWidth="2" />
+      <h3 class="{headingClasses.sub} mb-2">
+        {$i18n.t('subresources.common.unsavedChangesTitle')}
+      </h3>
+      <p class="text-gray-600 font-body">{$i18n.t('subresources.common.unsavedChanges')}</p>
     </div>
+  {:else}
+    <form id={formId} onsubmit={handleSubmit} class="space-y-4">
+      <!-- Name -->
+      <FormInput
+        id="circle-name"
+        label={$i18n.t('circles.form.name')}
+        bind:value={formName}
+        placeholder={$i18n.t('circles.form.namePlaceholder')}
+        disabled={isSubmitting}
+        error={nameError}
+        autofocus
+        maxlength={100}
+        required
+      />
 
-    <!-- Form -->
-    <form onsubmit={handleSubmit} class="flex flex-col flex-1 overflow-hidden">
-      <!-- Scrollable content area -->
-      <div class="p-4 space-y-4 overflow-y-auto flex-1">
-        <!-- Name -->
-        <div>
-          <label for="circle-name" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-            {$i18n.t('circles.form.name')}
-          </label>
-          <input
-            use:autoFocus
-            type="text"
-            id="circle-name"
-            bind:value={formName}
-            placeholder={$i18n.t('circles.form.namePlaceholder')}
-            maxlength="100"
-            required
-            disabled={isSubmitting}
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:bg-gray-100"
-          />
+      <!-- Color -->
+      <fieldset>
+        <legend class={formClasses.label}>
+          {$i18n.t('circles.form.color')}
+        </legend>
+        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label={$i18n.t('aria.circleColor')}>
+          {#each CIRCLE_COLORS as color}
+            <button
+              type="button"
+              onclick={() => formColor = color}
+              disabled={isSubmitting}
+              class="w-8 h-8 rounded-full border-2 transition-colors {formColor === color ? 'border-gray-800 scale-110' : 'border-transparent hover:border-gray-400'}"
+              style:background-color={color}
+              aria-label={$i18n.t('aria.selectColor', { color })}
+              aria-pressed={formColor === color}
+              title={color}
+            ></button>
+          {/each}
         </div>
+      </fieldset>
 
-        <!-- Color -->
-        <fieldset>
-          <legend class="block text-sm font-body font-semibold text-gray-700 mb-2">
-            {$i18n.t('circles.form.color')}
-          </legend>
-          <div class="flex flex-wrap gap-2" role="radiogroup" aria-label={$i18n.t('aria.circleColor')}>
-            {#each CIRCLE_COLORS as color}
-              <button
-                type="button"
-                onclick={() => formColor = color}
-                disabled={isSubmitting}
-                class="w-8 h-8 rounded-full border-2 transition-all {formColor === color ? 'border-gray-800 scale-110' : 'border-transparent hover:border-gray-400'}"
-                style:background-color={color}
-                aria-label="Select {color}"
-                aria-pressed={formColor === color}
-                title={color}
-              ></button>
-            {/each}
-          </div>
-        </fieldset>
-
-        <!-- Parent Circle -->
-        <div>
-          <label for="parent-circle" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-            {$i18n.t('circles.form.parentCircleOptional')}
-          </label>
-          <select
-            id="parent-circle"
-            bind:value={formParentId}
-            disabled={isSubmitting}
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body disabled:bg-gray-100"
-          >
-            <option value={null}>{$i18n.t('circles.form.noParent')}</option>
-            {#each getParentOptionsTree() as { circle: parentCircle, depth }}
-              <option value={parentCircle.id}>{'\u00A0\u00A0\u00A0'.repeat(depth)}{parentCircle.name}</option>
-            {/each}
-          </select>
-          <p class="mt-1 text-xs font-body text-gray-500">
-            {$i18n.t('circles.form.parentHelp')}
-          </p>
-        </div>
-
-        <!-- Preview -->
-        <div>
-          <span class="block text-sm font-body font-semibold text-gray-700 mb-2">
-            {$i18n.t('circles.form.preview')}
-          </span>
-          <CircleChip circle={{ id: 'preview', name: formName || $i18n.t('circles.form.defaultName'), color: formColor }} size="md" />
-        </div>
-
-        <!-- Error message -->
-        {#if formError}
-          <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-            {formError}
-          </div>
-        {/if}
+      <!-- Parent Circle -->
+      <div>
+        <label for="parent-circle" class={formClasses.label}>
+          {$i18n.t('circles.form.parentCircleOptional')}
+        </label>
+        <select
+          id="parent-circle"
+          bind:value={formParentId}
+          disabled={isSubmitting}
+          class={formClasses.input}
+        >
+          <option value={null}>{$i18n.t('circles.form.noParent')}</option>
+          {#each getParentOptionsTree() as { circle: parentCircle, depth }}
+            <option value={parentCircle.id}>{'\u00A0\u00A0\u00A0'.repeat(depth)}{parentCircle.name}</option>
+          {/each}
+        </select>
+        <p class="mt-1 text-xs font-body text-gray-500">
+          {$i18n.t('circles.form.parentHelp')}
+        </p>
       </div>
 
-      <!-- Footer buttons (fixed) -->
-      <div class="flex gap-3 p-4 border-t border-gray-200 flex-shrink-0">
-        <button
-          type="button"
-          onclick={handleClose}
-          disabled={isSubmitting}
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold
-                 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          {$i18n.t('common.cancel')}
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          class="flex-1 px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold
-                 hover:bg-forest-light transition-colors disabled:opacity-50
-                 flex items-center justify-center gap-2"
-        >
-          {#if isSubmitting}
-            <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-            {$i18n.t('circles.form.saving')}
-          {:else}
-            {isEditing ? $i18n.t('circles.form.saveChanges') : $i18n.t('circles.form.createCircle')}
-          {/if}
-        </button>
+      <!-- Preview -->
+      <div>
+        <span class={formClasses.label}>
+          {$i18n.t('circles.form.preview')}
+        </span>
+        <CircleChip circle={{ id: 'preview', name: formName || $i18n.t('circles.form.defaultName'), color: formColor }} size="md" />
       </div>
+
+      <!-- Error message -->
+      {#if formError.length > 0}
+        <AlertBanner variant="error">{formError}</AlertBanner>
+      {/if}
     </form>
-
-    <!-- Unsaved changes warning overlay -->
-    {#if showUnsavedWarning}
-      <div class="absolute inset-0 bg-white/95 rounded-xl flex items-center justify-center p-6">
-        <div class="text-center">
-          <ExclamationTriangle class="w-12 h-12 mx-auto text-amber-500 mb-4" strokeWidth="2" />
-          <h3 class="text-lg font-heading text-gray-900 mb-2">{$i18n.t('circles.unsavedChanges.title')}</h3>
-          <p class="text-gray-600 font-body mb-6">{$i18n.t('circles.unsavedChanges.message')}</p>
-          <div class="flex gap-3 justify-center">
-            <button
-              type="button"
-              onclick={cancelClose}
-              class="px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              {$i18n.t('circles.unsavedChanges.keepEditing')}
-            </button>
-            <button
-              type="button"
-              onclick={confirmClose}
-              class="px-4 py-2 bg-amber-500 text-white rounded-lg font-body font-semibold hover:bg-amber-600 transition-colors"
-            >
-              {$i18n.t('circles.unsavedChanges.discard')}
-            </button>
-          </div>
-        </div>
-      </div>
-    {/if}
-  </div>
-</div>
+  {/if}
+</Modal>

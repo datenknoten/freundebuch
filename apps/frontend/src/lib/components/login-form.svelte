@@ -1,9 +1,10 @@
 <script lang="ts">
 import Key from 'svelte-heros-v2/Key.svelte';
 import { goto } from '$app/navigation';
-import { autoFocus } from '$lib/actions/auto-focus';
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
+import FormInput from '$lib/components/ui/form-input.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
@@ -64,7 +65,7 @@ function handleSuccess() {
   goto('/');
 }
 
-async function handleSubmit(e) {
+async function handleSubmit(e: SubmitEvent) {
   e.preventDefault();
   error = '';
   isLoading = true;
@@ -100,60 +101,36 @@ async function handlePasskeySignIn() {
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-6">
-	<div>
-		<h2 class="text-3xl font-heading text-forest mb-2">{$i18n.t('auth.login.title')}</h2>
-		<p class="text-gray-600 font-body">{$i18n.t('auth.login.subtitle')}</p>
-	</div>
-
-	{#if error}
+	{#if error.length > 0}
 		<AlertBanner variant="error">{error}</AlertBanner>
 	{/if}
 
-	<div>
-		<label for="email" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-			{$i18n.t('auth.login.email')}
-		</label>
-		<input
-			type="email"
-			id="email"
-			bind:value={email}
-			required
-			autocomplete="username webauthn"
-            use:autoFocus
-			class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-			placeholder={$i18n.t('auth.login.emailPlaceholder')}
-			disabled={isLoading}
-		/>
-	</div>
+	<FormInput
+		id="email"
+		type="email"
+		label={$i18n.t('auth.login.email')}
+		bind:value={email}
+		placeholder={$i18n.t('auth.login.emailPlaceholder')}
+		autocomplete="username webauthn"
+		disabled={isLoading}
+		required
+		autofocus
+	/>
 
-	<div>
-		<label for="password" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-			{$i18n.t('auth.login.password')}
-		</label>
-		<input
-			type="password"
-			id="password"
-			bind:value={password}
-			required
-			autocomplete="current-password"
-			minlength="8"
-			class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-			placeholder={$i18n.t('auth.login.passwordPlaceholder')}
-			disabled={isLoading}
-		/>
-	</div>
+	<FormInput
+		id="password"
+		type="password"
+		label={$i18n.t('auth.login.password')}
+		bind:value={password}
+		placeholder="••••••••"
+		autocomplete="current-password"
+		minlength={8}
+		helper={$i18n.t('auth.passwordHelp')}
+		disabled={isLoading}
+		required
+	/>
 
-	<div class="flex items-center justify-between">
-		<div class="flex items-center">
-			<input
-				type="checkbox"
-				id="remember"
-				class="h-4 w-4 text-forest focus:ring-forest border-gray-300 rounded"
-			/>
-			<label for="remember" class="ml-2 block text-sm font-body text-gray-700">
-				{$i18n.t('auth.login.rememberMe')}
-			</label>
-		</div>
+	<div class="flex items-center justify-end">
 		<a
 			href="/auth/forgot-password"
 			class="text-sm font-body font-semibold text-forest hover:text-forest-light"
@@ -162,13 +139,9 @@ async function handlePasskeySignIn() {
 		</a>
 	</div>
 
-	<button
-		type="submit"
-		disabled={isLoading || isPasskeyLoading}
-		class="w-full bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-	>
-		{isLoading ? $i18n.t('common.loading') : $i18n.t('auth.login.submit')}
-	</button>
+	<Button type="submit" block loading={isLoading} disabled={isPasskeyLoading}>
+		{$i18n.t('auth.login.submit')}
+	</Button>
 
 	<div class="relative">
 		<div class="absolute inset-0 flex items-center">
@@ -179,15 +152,16 @@ async function handlePasskeySignIn() {
 		</div>
 	</div>
 
-	<button
-		type="button"
+	<Button
+		variant="secondary"
+		block
+		loading={isPasskeyLoading}
+		disabled={isLoading}
 		onclick={handlePasskeySignIn}
-		disabled={isPasskeyLoading || isLoading}
-		class="w-full flex items-center justify-center gap-2 bg-white text-gray-800 py-3 px-4 rounded-lg font-body font-semibold border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 	>
 		<Key class="w-5 h-5" strokeWidth="2" />
-		{isPasskeyLoading ? $i18n.t('profile.passkeys.signingIn') : $i18n.t('profile.passkeys.signIn')}
-	</button>
+		{$i18n.t('profile.passkeys.signIn')}
+	</Button>
 
 	{#if $signupEnabled}
 		<p class="text-center text-sm font-body text-gray-600">

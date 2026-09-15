@@ -24,9 +24,9 @@ export function navigateForCreateChoice(choice: FabCreateChoice): void {
       // otherwise navigate there with a flag the circles page uses to auto-open it.
       if (get(page).url.pathname === '/circles') {
         // The caller has already closed this menu. Flush that first so the
-        // menu's teardown (which clears the global `isModalOpen` flag) runs
-        // before the modal mounts and sets it — otherwise the flag would end
-        // up false behind an open modal, leaving keyboard shortcuts active.
+        // menu's <dialog> closes — and restores focus to the FAB — before the
+        // circle modal mounts; otherwise that focus restore would run after
+        // the modal's autofocus and steal the mobile keyboard.
         flushSync();
         // Then open the modal, still inside the FAB tap, so its auto-focused
         // name input claims the mobile keyboard. The page's event handler
@@ -41,14 +41,15 @@ export function navigateForCreateChoice(choice: FabCreateChoice): void {
 </script>
 
 <script lang="ts">
-import { onMount } from 'svelte';
 import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import Swatch from 'svelte-heros-v2/Swatch.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
+import Button from '$lib/components/ui/button.svelte';
+import Modal from '$lib/components/ui/modal.svelte';
+import { focusRing } from '$lib/components/ui/styles';
 import { createI18n } from '$lib/i18n/index.js';
-import { isModalOpen } from '$lib/stores/ui';
 
 const i18n = createI18n();
 
@@ -72,128 +73,50 @@ const options: { choice: FabCreateChoice; icon: typeof UserPlus; labelKey: strin
   { choice: 'circle', icon: Swatch, labelKey: 'shortcuts.newCircle' },
   { choice: 'collective', icon: BuildingOffice, labelKey: 'shortcuts.newCollective' },
 ];
-
-let modalRef = $state<HTMLDivElement | null>(null);
-let detailButton = $state<HTMLButtonElement | null>(null);
-let optionButtons = $state<HTMLButtonElement[]>([]);
-let cancelButton = $state<HTMLButtonElement | null>(null);
-
-// The first focusable element is the contextual "Add detail" entry when present,
-// otherwise the first create-new option.
-let firstButton = $derived(onAddDetail ? detailButton : optionButtons[0]);
-
-function handleBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget) {
-    onClose();
-  }
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    onClose();
-  }
-
-  // Focus trapping
-  if (e.key === 'Tab' && modalRef) {
-    if (!firstButton || !cancelButton) return;
-
-    if (e.shiftKey && document.activeElement === firstButton) {
-      e.preventDefault();
-      cancelButton.focus();
-    } else if (!e.shiftKey && document.activeElement === cancelButton) {
-      e.preventDefault();
-      firstButton.focus();
-    }
-  }
-}
-
-onMount(() => {
-  isModalOpen.set(true);
-  firstButton?.focus();
-
-  return () => {
-    isModalOpen.set(false);
-  };
-});
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
-
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div
-  class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center sm:hidden"
-  onclick={handleBackdropClick}
-  role="presentation"
->
-  <div
-    bind:this={modalRef}
-    class="w-full bg-white rounded-t-2xl shadow-xl animate-slide-up max-h-[80vh] overflow-y-auto"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="fab-create-menu-title"
-  >
-    <div class="p-4">
-      <h2 id="fab-create-menu-title" class="text-xl font-heading text-gray-900 mb-4 text-center">
-        {$i18n.t('common.createNew')}
-      </h2>
-
-      <div class="space-y-3">
-        {#if onAddDetail}
-          <button
-            bind:this={detailButton}
-            type="button"
-            onclick={onAddDetail}
-            class="w-full flex items-center gap-4 p-4 rounded-xl
-                   bg-gray-50 hover:bg-forest/10 transition-colors
-                   focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
-          >
-            <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
-              <DocumentText class="w-6 h-6 text-forest" strokeWidth="2" />
-            </div>
-            <div class="text-left">
-              <span class="block text-base font-body font-semibold text-gray-900">
-                {$i18n.t('friendDetail.addDetail')}
-              </span>
-              <span class="block text-sm font-body text-gray-500">
-                {$i18n.t('friendDetail.addDetailSubtitle')}
-              </span>
-            </div>
-          </button>
-        {/if}
-
-        {#each options as option, index (option.choice)}
-          {@const Icon = option.icon}
-          <button
-            bind:this={optionButtons[index]}
-            type="button"
-            onclick={() => onSelect(option.choice)}
-            class="w-full flex items-center gap-4 p-4 rounded-xl
-                   bg-gray-50 hover:bg-forest/10 transition-colors
-                   focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
-          >
-            <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
-              <Icon class="w-6 h-6 text-forest" strokeWidth="2" />
-            </div>
-            <span class="text-base font-body font-semibold text-gray-900">
-              {$i18n.t(option.labelKey)}
-            </span>
-          </button>
-        {/each}
-      </div>
-
+<Modal title={$i18n.t('common.createNew')} variant="sheet" {onClose}>
+  <div class="space-y-3">
+    {#if onAddDetail}
       <button
-        bind:this={cancelButton}
         type="button"
-        onclick={onClose}
-        class="w-full mt-4 py-3 text-center font-body font-semibold text-gray-600
-               hover:bg-gray-100 rounded-xl transition-colors
-               focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+        onclick={onAddDetail}
+        class="w-full flex items-center gap-4 p-4 rounded-xl
+               bg-gray-50 hover:bg-forest/10 transition-colors {focusRing}"
       >
-        {$i18n.t('common.cancel')}
+        <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
+          <DocumentText class="w-6 h-6 text-forest" strokeWidth="2" />
+        </div>
+        <div class="text-left">
+          <span class="block text-base font-body font-semibold text-gray-900">
+            {$i18n.t('friendDetail.addDetail')}
+          </span>
+          <span class="block text-sm font-body text-gray-500">
+            {$i18n.t('friendDetail.addDetailSubtitle')}
+          </span>
+        </div>
       </button>
-    </div>
+    {/if}
 
-    <!-- Safe area padding for iOS -->
-    <div class="h-safe-area-inset-bottom"></div>
+    {#each options as option (option.choice)}
+      {@const Icon = option.icon}
+      <button
+        type="button"
+        onclick={() => onSelect(option.choice)}
+        class="w-full flex items-center gap-4 p-4 rounded-xl
+               bg-gray-50 hover:bg-forest/10 transition-colors {focusRing}"
+      >
+        <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
+          <Icon class="w-6 h-6 text-forest" strokeWidth="2" />
+        </div>
+        <span class="text-base font-body font-semibold text-gray-900">
+          {$i18n.t(option.labelKey)}
+        </span>
+      </button>
+    {/each}
   </div>
-</div>
+
+  <Button variant="ghost" block class="mt-4" onclick={onClose}>
+    {$i18n.t('common.cancel')}
+  </Button>
+</Modal>

@@ -1,32 +1,36 @@
 <script lang="ts">
 import { page } from '$app/stores';
 import ResetPasswordForm from '$lib/components/reset-password-form.svelte';
+import { PageShell } from '$lib/components/ui';
+import Button from '$lib/components/ui/button.svelte';
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 
 // Get the reset token from URL query parameter
 const token = $derived($page.url.searchParams.get('token') || '');
 </script>
 
 <svelte:head>
-	<title>Reset Password | Freundebuch</title>
+	<title>{$i18n.t('auth.resetPassword.title')} | Freundebuch</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-	<div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-		{#if token}
-			<ResetPasswordForm {token} />
-		{:else}
-			<div class="text-center">
-				<h2 class="text-3xl font-heading text-forest mb-4">Invalid Reset Link</h2>
-				<p class="text-gray-600 font-body mb-6">
-					This password reset link is invalid or has expired.
-				</p>
-				<a
-					href="/auth/forgot-password"
-					class="inline-block bg-forest text-white py-3 px-6 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-				>
-					Request a new reset link
-				</a>
-			</div>
-		{/if}
-	</div>
-</div>
+<PageShell
+	width="narrow"
+	centered
+	title={token
+		? $i18n.t('auth.resetPassword.heading')
+		: $i18n.t('auth.resetPassword.invalidTitle')}
+	subtitle={token ? $i18n.t('auth.resetPassword.description') : undefined}
+>
+	{#if token}
+		<ResetPasswordForm {token} />
+	{:else}
+		<div class="text-center">
+			<p class="text-gray-600 font-body mb-6">
+				{$i18n.t('auth.resetPassword.invalidBody')}
+			</p>
+			<Button href="/auth/forgot-password">{$i18n.t('auth.resetPassword.requestNew')}</Button>
+		</div>
+	{/if}
+</PageShell>

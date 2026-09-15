@@ -1,9 +1,10 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
-import XMark from 'svelte-heros-v2/XMark.svelte';
+import { formClasses, headingClasses, surfaceClasses } from '$lib/components/ui';
+import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import {
@@ -11,10 +12,14 @@ import {
   isOpenFriendLinkModeActive,
   openFriendLinkModePrefix,
 } from '$lib/stores/ui';
+import {
+  RELATIONSHIP_CATEGORIES,
+  RELATIONSHIP_CATEGORY_STYLE,
+} from '$lib/utils/relationship-categories';
 import type { Relationship, RelationshipCategory, RelationshipTypeId } from '$shared';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 import FriendAvatar from './friend-avatar.svelte';
-import { DetailEditModal, RelationshipEditForm } from './subresources';
+import { DetailActions, DetailEditModal, RelationshipEditForm } from './subresources';
 
 const i18n = createI18n();
 
@@ -40,6 +45,8 @@ let editingRelationshipId = $state<string | null>(null);
 let editNotes = $state('');
 let isDeleting = $state<string | null>(null);
 let isSavingNotes = $state(false);
+let deleteConfirmId = $state<string | null>(null);
+let deleteConfirmName = $state('');
 
 // Add relationship modal state
 let isAddingRelationship = $state(false);
@@ -76,7 +83,7 @@ let relationshipBadgeIndex = $derived.by(() => {
   const groups = groupedRelationships();
   const map = new Map<string, number>();
   let counter = 0;
-  for (const category of ['family', 'professional', 'social'] as const) {
+  for (const category of RELATIONSHIP_CATEGORIES) {
     for (const rel of groups[category]) {
       map.set(rel.id, linkStartIndex + counter);
       counter++;
@@ -84,28 +91,6 @@ let relationshipBadgeIndex = $derived.by(() => {
   }
   return map;
 });
-
-// Category colors
-const categoryConfig: Record<
-  RelationshipCategory,
-  { labelKey: string; bgColor: string; textColor: string }
-> = {
-  family: {
-    labelKey: 'dashboard.legend.family',
-    bgColor: 'bg-rose-50',
-    textColor: 'text-rose-700',
-  },
-  professional: {
-    labelKey: 'dashboard.legend.professional',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700',
-  },
-  social: {
-    labelKey: 'dashboard.legend.social',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700',
-  },
-};
 
 function startEditing(relationship: Relationship) {
   editingRelationshipId = relationship.id;
@@ -132,16 +117,21 @@ async function saveNotes(relationshipId: string) {
   }
 }
 
-async function deleteRelationship(relationshipId: string) {
-  if (!confirm($i18n.t('relationshipSection.confirmRemove'))) {
-    return;
-  }
+function openDeleteConfirm(relationshipId: string, name: string) {
+  deleteConfirmId = relationshipId;
+  deleteConfirmName = name;
+}
 
-  isDeleting = relationshipId;
+function closeDeleteConfirm() {
+  deleteConfirmId = null;
+  deleteConfirmName = '';
+}
+
+async function handleDelete() {
+  if (deleteConfirmId === null) return;
+  isDeleting = deleteConfirmId;
   try {
-    await friends.deleteRelationship(friendId, relationshipId);
-  } catch {
-    // Error is handled by the store
+    await friends.deleteRelationship(friendId, deleteConfirmId);
   } finally {
     isDeleting = null;
   }
@@ -190,28 +180,26 @@ onMount(() => {
 
 {#if relationships.length > 0}
 <section class="space-y-2">
-  <div class="flex items-center justify-between bg-forest/10 text-forest px-3 py-1.5 rounded-lg">
-    <h2 class="text-lg font-heading flex items-center gap-2">
+  <div class={surfaceClasses.section}>
+    <h2 class="{headingClasses.section} flex items-center gap-2">
       <Users class="w-5 h-5" strokeWidth="2" />
       {$i18n.t('relationshipSection.relationships')}
     </h2>
-    <button
-      type="button"
-      onclick={openAddRelationship}
-      class="hidden sm:flex text-sm font-body font-semibold bg-forest text-white hover:bg-forest-light
-             items-center gap-1 px-2 py-1 rounded-md transition-colors"
-    >
-      <Plus class="w-4 h-4" strokeWidth="2" />
-      {$i18n.t('relationshipSection.addRelationship')}
-    </button>
+    <div class="hidden sm:block">
+      <Button variant="ghostAccent" size="xs" onclick={openAddRelationship}>
+        <Plus class="w-4 h-4" strokeWidth="2" />
+        {$i18n.t('relationshipSection.addRelationship')}
+      </Button>
+    </div>
   </div>
 
   <div class="space-y-4">
-    {#each Object.entries(groupedRelationships()) as [category, rels]}
+    {#each RELATIONSHIP_CATEGORIES as category}
+      {@const rels = groupedRelationships()[category]}
       {#if rels.length > 0}
         <div class="space-y-2">
-          <h4 class="text-sm font-body font-semibold {categoryConfig[category as RelationshipCategory].textColor}">
-            {$i18n.t(categoryConfig[category as RelationshipCategory].labelKey)}
+          <h4 class="text-sm font-body font-semibold {RELATIONSHIP_CATEGORY_STYLE[category].textColor}">
+            {$i18n.t(RELATIONSHIP_CATEGORY_STYLE[category].labelKey)}
           </h4>
 
           <div class="space-y-2">
@@ -220,7 +208,7 @@ onMount(() => {
               {#if linkStartIndex !== undefined && relationshipBadgeIndex.has(relationship.id)}
                 <KeyboardHintBadge index={relationshipBadgeIndex.get(relationship.id) ?? 0} isActive={$isOpenFriendLinkModeActive} prefix={$openFriendLinkModePrefix} />
               {/if}
-              <div class="flex items-start gap-3 p-3 {categoryConfig[category as RelationshipCategory].bgColor} rounded-lg">
+              <div class="group flex items-start gap-3 p-3 {RELATIONSHIP_CATEGORY_STYLE[category].bgColor} rounded-lg">
                 <a
                   href="/friends/{relationship.relatedFriendId}"
                   class="flex-shrink-0 hover:opacity-80 transition-opacity"
@@ -257,26 +245,25 @@ onMount(() => {
                         bind:value={editNotes}
                         rows="2"
                         disabled={isSavingNotes}
-                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm font-body resize-none focus:ring-2 focus:ring-forest focus:border-transparent disabled:opacity-50"
+                        class={formClasses.inputSm}
                         placeholder={$i18n.t('relationshipSection.addNotes')}
                       ></textarea>
                       <div class="flex gap-2">
-                        <button
-                          type="button"
+                        <Button
+                          size="xs"
+                          loading={isSavingNotes}
                           onclick={() => saveNotes(relationship.id)}
-                          disabled={isSavingNotes}
-                          class="text-xs text-white bg-forest px-2 py-1 rounded font-body hover:bg-forest-light disabled:opacity-50"
                         >
-                          {isSavingNotes ? $i18n.t('relationshipSection.saving') : $i18n.t('relationshipSection.save')}
-                        </button>
-                        <button
-                          type="button"
-                          onclick={cancelEditing}
+                          {$i18n.t('relationshipSection.save')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="xs"
                           disabled={isSavingNotes}
-                          class="text-xs text-gray-600 px-2 py-1 rounded font-body hover:bg-gray-200 disabled:opacity-50"
+                          onclick={cancelEditing}
                         >
                           {$i18n.t('relationshipSection.cancel')}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   {:else if relationship.notes}
@@ -284,32 +271,14 @@ onMount(() => {
                   {/if}
                 </div>
 
-                <div class="flex gap-1 flex-shrink-0">
-                  <button
-                    type="button"
-                    onclick={() => startEditing(relationship)}
-                    disabled={isDeleting === relationship.id}
-                    class="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-white/50 transition-colors disabled:opacity-50"
-                    aria-label={$i18n.t('aria.editNotes')}
-                    title={$i18n.t('aria.editNotes')}
-                  >
-                    <PencilSquare class="w-4 h-4" strokeWidth="2" />
-                  </button>
-                  <button
-                    type="button"
-                    onclick={() => deleteRelationship(relationship.id)}
-                    disabled={isDeleting === relationship.id}
-                    class="p-1 text-gray-400 hover:text-red-600 rounded hover:bg-white/50 transition-colors disabled:opacity-50"
-                    aria-label={$i18n.t('aria.removeRelationship')}
-                    title={$i18n.t('aria.removeRelationship')}
-                  >
-                    {#if isDeleting === relationship.id}
-                      <div class="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div>
-                    {:else}
-                      <XMark class="w-4 h-4" strokeWidth="2" />
-                    {/if}
-                  </button>
-                </div>
+                <DetailActions
+                  onEdit={() => startEditing(relationship)}
+                  onDelete={() =>
+                    openDeleteConfirm(relationship.id, relationship.relatedFriendDisplayName)}
+                  isDeleting={isDeleting === relationship.id}
+                  editLabel={$i18n.t('aria.editNotes')}
+                  deleteLabel={$i18n.t('aria.removeRelationship')}
+                />
               </div>
               </div>
             {/each}
@@ -338,4 +307,15 @@ onMount(() => {
       onchange={() => isDirty = true}
     />
   </DetailEditModal>
+{/if}
+
+{#if deleteConfirmId !== null}
+  <ConfirmDialog
+    title={$i18n.t('relationshipSection.removeTitle')}
+    description={$i18n.t('relationshipSection.confirmRemove')}
+    itemPreview={deleteConfirmName}
+    confirmLabel={$i18n.t('common.remove')}
+    onConfirm={handleDelete}
+    onClose={closeDeleteConfirm}
+  />
 {/if}

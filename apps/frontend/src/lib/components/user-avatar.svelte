@@ -1,4 +1,8 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
+
 interface Props {
   email: string;
   size?: 'sm' | 'md';
@@ -23,7 +27,7 @@ const initial = $derived(getInitial(email));
 <div
   class="rounded-full bg-sage flex items-center justify-center text-white font-heading font-bold {sizeClasses[size]}"
   role="img"
-  aria-label="User avatar for {email}"
+  aria-label={$i18n.t('aria.userAvatarFor', { email })}
 >
   {initial}
 </div>

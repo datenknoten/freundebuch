@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { createDirtyTracker, FormTextarea, formClasses } from '$lib/components/ui';
+import { createDirtyTracker, FormTextarea, formClasses, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
 import type { FriendSearchResult, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
@@ -26,7 +26,6 @@ let notes = $state('');
 let relationshipTypes = $state<RelationshipTypesGrouped | null>(null);
 let loadError = $state('');
 let relationshipTypeContainer: HTMLDivElement;
-let notesTextarea: HTMLTextAreaElement;
 
 onMount(async () => {
   try {
@@ -58,7 +57,7 @@ function handleRelationshipTypeSelect(typeId: RelationshipTypeId, viaKeyboard: b
   relationshipTypeId = typeId;
   if (viaKeyboard) {
     requestAnimationFrame(() => {
-      notesTextarea?.focus();
+      document.getElementById('relationship-notes')?.focus();
     });
   }
 }
@@ -127,7 +126,7 @@ export function isValid(): boolean {
         />
       {:else if !loadError}
         <div class="flex items-center gap-2 text-sm text-gray-500">
-          <div class="animate-spin rounded-full h-4 w-4 border-2 border-forest border-t-transparent"></div>
+          <Spinner size="sm" tone="current" />
           <span>{$i18n.t('relationshipSection.loadingTypes')}</span>
         </div>
       {/if}
@@ -135,18 +134,13 @@ export function isValid(): boolean {
   </div>
 
   <!-- Notes -->
-  <div class="space-y-2">
-    <label for="relationship-notes" class={formClasses.label}>
-      {$i18n.t('relationshipSection.notesOptional')}
-    </label>
-    <textarea
-      id="relationship-notes"
-      bind:this={notesTextarea}
-      bind:value={notes}
-      rows="2"
-      {disabled}
-      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm resize-none disabled:opacity-50"
-      placeholder={$i18n.t('relationshipSection.notesPlaceholder')}
-    ></textarea>
-  </div>
+  <FormTextarea
+    id="relationship-notes"
+    label={$i18n.t('relationshipSection.notesOptional')}
+    bind:value={notes}
+    rows={2}
+    {disabled}
+    size="sm"
+    placeholder={$i18n.t('relationshipSection.notesPlaceholder')}
+  />
 </div>

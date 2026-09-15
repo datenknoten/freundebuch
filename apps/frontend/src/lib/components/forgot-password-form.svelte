@@ -1,13 +1,18 @@
 <script lang="ts">
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
+import FormInput from '$lib/components/ui/form-input.svelte';
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 
 let email = $state('');
 let isLoading = $state(false);
 let error = $state('');
 let success = $state(false);
 
-async function handleSubmit(e) {
+async function handleSubmit(e: SubmitEvent) {
   e.preventDefault();
   error = '';
   isLoading = true;
@@ -20,7 +25,7 @@ async function handleSubmit(e) {
     });
 
     if (result.error) {
-      error = result.error.message || 'Failed to send reset email';
+      error = result.error.message ?? $i18n.t('auth.forgotPassword.error.generic');
       isLoading = false;
       return;
     }
@@ -28,59 +33,43 @@ async function handleSubmit(e) {
     success = true;
     isLoading = false;
   } catch (err) {
-    error = (err as Error)?.message || 'Failed to send reset email';
+    error = (err as Error)?.message ?? $i18n.t('auth.forgotPassword.error.generic');
     isLoading = false;
   }
 }
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-6">
-	<div>
-		<h2 class="text-3xl font-heading text-forest mb-2">Reset your password</h2>
-		<p class="text-gray-600 font-body">Enter your email to receive a password reset link</p>
-	</div>
-
-	{#if error}
+	{#if error.length > 0}
 		<AlertBanner variant="error">{error}</AlertBanner>
 	{/if}
 
 	{#if success}
 		<AlertBanner variant="success">
-			<p class="font-semibold mb-2">Password reset link sent!</p>
-			<p>If the email exists, a password reset link has been sent. Please check your inbox.</p>
+			<p class="font-semibold mb-2">{$i18n.t('auth.forgotPassword.successTitle')}</p>
+			<p>{$i18n.t('auth.forgotPassword.successBody')}</p>
 		</AlertBanner>
 	{/if}
 
 	{#if !success}
-		<div>
-			<label for="email" class="block text-sm font-body font-semibold text-gray-700 mb-2">
-				Email address
-			</label>
-			<input
-				type="email"
-				id="email"
-				bind:value={email}
-				required
-				autocomplete="email"
-				class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body"
-				placeholder="you@example.com"
-				disabled={isLoading}
-			/>
-		</div>
-
-		<button
-			type="submit"
+		<FormInput
+			id="email"
+			type="email"
+			label={$i18n.t('auth.forgotPassword.emailLabel')}
+			bind:value={email}
+			placeholder={$i18n.t('auth.forgotPassword.emailPlaceholder')}
+			autocomplete="email"
 			disabled={isLoading}
-			class="w-full bg-forest text-white py-3 px-4 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-		>
-			{isLoading ? 'Sending...' : 'Send reset link'}
-		</button>
+			required
+		/>
+
+		<Button type="submit" block loading={isLoading}>{$i18n.t('auth.forgotPassword.submit')}</Button>
 	{/if}
 
 	<p class="text-center text-sm font-body text-gray-600">
-		Remember your password?
+		{$i18n.t('auth.forgotPassword.rememberPassword')}
 		<a href="/auth/login" class="font-semibold text-forest hover:text-forest-light">
-			Sign in
+			{$i18n.t('auth.forgotPassword.signIn')}
 		</a>
 	</p>
 </form>

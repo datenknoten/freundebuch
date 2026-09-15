@@ -6,6 +6,7 @@ import Swatch from 'svelte-heros-v2/Swatch.svelte';
 import User from 'svelte-heros-v2/User.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import { focusRing, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser } from '$lib/stores/auth';
 import UserAvatar from './user-avatar.svelte';
@@ -61,10 +62,10 @@ function handleClickOutside(e: MouseEvent) {
     bind:this={buttonRef}
     type="button"
     onclick={toggle}
-    class="flex items-center gap-1.5 p-1 rounded-full hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+    class="flex items-center gap-1.5 p-1 rounded-full hover:bg-gray-100 transition-colors {focusRing}"
     aria-expanded={isOpen}
     aria-haspopup="menu"
-    aria-label="User menu"
+    aria-label={$i18n.t('aria.userMenu')}
   >
     {#if $currentUser}
       <UserAvatar email={$currentUser.email} size="sm" />
@@ -75,7 +76,7 @@ function handleClickOutside(e: MouseEvent) {
   {#if isOpen}
     <div
       bind:this={menuRef}
-      class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+      class="absolute right-0 mt-2 w-56 {surfaceClasses.popover} z-(--z-popover)"
       role="menu"
       aria-orientation="vertical"
     >

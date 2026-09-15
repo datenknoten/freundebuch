@@ -4,12 +4,12 @@ import BarsArrowDown from 'svelte-heros-v2/BarsArrowDown.svelte';
 import BarsArrowUp from 'svelte-heros-v2/BarsArrowUp.svelte';
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
-import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
-import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import type { CollectiveListParams } from '$lib/api/collectives';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import { Button, EmptyState, formClasses, SearchInput, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectivesList, collectiveTypes } from '$lib/stores/collectives';
 import { visibleCollectiveIds } from '$lib/stores/ui';
@@ -155,31 +155,15 @@ function openFirstResult() {
 
 <div class="space-y-4">
   <!-- Search input (prominent, matching friend list style) -->
-  <div class="relative">
-    <MagnifyingGlass class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth="2" />
-    <input
-      id="collective-search"
-      type="text"
-      value={searchQuery}
-      oninput={(e) => handleSearchInput(e.currentTarget.value)}
-      onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); openFirstResult(); } }}
-      placeholder={$i18n.t('collectives.searchPlaceholder')}
-      class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent"
-      autocomplete="off"
-      data-search-input
-      aria-label={$i18n.t('aria.searchCollectives')}
-    />
-    {#if searchQuery}
-      <button
-        type="button"
-        onclick={clearFilters}
-        class="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-        aria-label={$i18n.t('aria.clearSearch')}
-      >
-        <XMark class="w-5 h-5" strokeWidth="2" />
-      </button>
-    {/if}
-  </div>
+  <SearchInput
+    id="collective-search"
+    value={searchQuery}
+    oninput={handleSearchInput}
+    onsubmit={openFirstResult}
+    onclear={clearFilters}
+    placeholder={$i18n.t('collectives.searchPlaceholder')}
+    ariaLabel={$i18n.t('aria.searchCollectives')}
+  />
 
   <!-- Unified Control Bar (matching friend list style) -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-2 border-b border-gray-200">
@@ -202,7 +186,7 @@ function openFirstResult() {
           id="type-filter"
           value={selectedTypeId}
           onchange={handleTypeChange}
-          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
+          class={formClasses.inputSm}
           aria-label={$i18n.t('aria.filterByType')}
         >
           <option value="">{$i18n.t('collectives.allTypes')}</option>
@@ -221,7 +205,7 @@ function openFirstResult() {
           onchange={(e) => {
             sortBy = e.currentTarget.value as 'name' | 'created_at' | 'member_count';
           }}
-          class="px-2 py-1 border border-gray-300 rounded text-sm font-body focus:ring-2 focus:ring-forest focus:border-transparent"
+          class={formClasses.inputSm}
           aria-label={$i18n.t('aria.sortBy')}
         >
           <option value="name">{$i18n.t('friendList.name')}</option>
@@ -229,9 +213,10 @@ function openFirstResult() {
           <option value="member_count">{$i18n.t('collectives.sortByMembers')}</option>
         </select>
 
-        <button
+        <Button
+          variant="secondary"
+          size="xs"
           onclick={toggleSortOrder}
-          class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
           title={sortOrder === 'asc' ? $i18n.t('common.ascending') : $i18n.t('common.descending')}
           aria-label={sortOrder === 'asc' ? $i18n.t('common.ascending') : $i18n.t('common.descending')}
         >
@@ -240,31 +225,33 @@ function openFirstResult() {
           {:else}
             <BarsArrowDown class="w-4 h-4 text-gray-600" strokeWidth="2" />
           {/if}
-        </button>
+        </Button>
       </div>
 
       <!-- Pagination controls (inline) -->
       {#if pagination.totalPages > 1}
         <div class="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200">
-          <button
+          <Button
+            variant="secondary"
+            size="xs"
             onclick={() => goToPage(pagination.page - 1)}
             disabled={pagination.page <= 1 || isLoading}
-            class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             aria-label={$i18n.t('aria.previousPage')}
           >
             <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
-          </button>
+          </Button>
           <span class="text-sm text-gray-600 font-body px-2 whitespace-nowrap">
             {pagination.page} / {pagination.totalPages}
           </span>
-          <button
+          <Button
+            variant="secondary"
+            size="xs"
             onclick={() => goToPage(pagination.page + 1)}
             disabled={pagination.page >= pagination.totalPages || isLoading}
-            class="p-1.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             aria-label={$i18n.t('aria.nextPage')}
           >
             <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
-          </button>
+          </Button>
         </div>
       {/if}
     </div>
@@ -272,36 +259,27 @@ function openFirstResult() {
 
   <!-- Error state -->
   {#if error}
-    <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm" role="alert">
-      {error}
-    </div>
+    <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
   <!-- Loading state -->
   {#if isLoading && collectiveItems.length === 0}
     <div class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+      <Spinner size="lg" />
     </div>
   {:else if collectiveItems.length === 0}
-    <!-- Empty state -->
-    <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <Users class="mx-auto h-12 w-12 text-gray-400" strokeWidth="2" />
-      <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('collectives.noCollectives')}</h3>
-      <p class="mt-2 text-sm text-gray-600 font-body">
-        {#if searchQuery || selectedTypeId}
-          {$i18n.t('collectives.noCollectivesFiltered')}
-        {:else}
-          {$i18n.t('collectives.noCollectivesSubtitle')}
-        {/if}
-      </p>
-      <a
-        href="/collectives/new"
-        class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-      >
+    <EmptyState
+      icon={Users}
+      title={$i18n.t('collectives.noCollectives')}
+      description={searchQuery.length > 0 || selectedTypeId.length > 0
+        ? $i18n.t('collectives.noCollectivesFiltered')
+        : $i18n.t('collectives.noCollectivesSubtitle')}
+    >
+      <Button href="/collectives/new">
         <Plus class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('collectives.createNew')}
-      </a>
-    </div>
+      </Button>
+    </EmptyState>
   {:else}
     <!-- Collective Grid (table + cards) -->
     <CollectiveGrid

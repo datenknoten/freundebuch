@@ -3,10 +3,11 @@ import { onMount } from 'svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
-import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import type { EncounterListParams } from '$lib/api/encounters';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import { Button, EmptyState, formClasses, SearchInput, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters, encountersList } from '$lib/stores/encounters';
 import { visibleEncounterIds } from '$lib/stores/ui';
@@ -36,6 +37,11 @@ let isLoading = $derived($encounters.isLoading);
 let error = $derived($encounters.error);
 let encounterItems = $derived($encountersList);
 let pagination = $derived($encounters.pagination);
+
+// "Any filter set" drives both the clear button and the "filtered" note.
+let hasActiveFilters = $derived(
+  searchQuery.length > 0 || fromDate.length > 0 || toDate.length > 0 || selectedType.length > 0,
+);
 
 // Update visible encounter IDs for keyboard navigation
 $effect(() => {
@@ -114,34 +120,29 @@ function goToPage(page: number) {
   <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
     <!-- Search input -->
     <div class="flex-1">
-      <label for="encounter-search" class="block text-sm font-body font-medium text-gray-700 mb-1">
+      <label for="encounter-search" class={formClasses.label}>
         {$i18n.t('encounters.search')}
       </label>
-      <div class="relative">
-        <MagnifyingGlass class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth="2" />
-        <input
-          id="encounter-search"
-          type="text"
-          value={searchQuery}
-          oninput={(e) => handleSearchInput(e.currentTarget.value)}
-          onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); openFirstResult(); } }}
-          placeholder={$i18n.t('encounters.searchPlaceholder')}
-          class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-          data-search-input
-        />
-      </div>
+      <SearchInput
+        id="encounter-search"
+        value={searchQuery}
+        oninput={handleSearchInput}
+        onsubmit={openFirstResult}
+        placeholder={$i18n.t('encounters.searchPlaceholder')}
+        ariaLabel={$i18n.t('encounters.search')}
+      />
     </div>
 
     <!-- Type filter -->
     <div>
-      <label for="type-filter" class="block text-sm font-body font-medium text-gray-700 mb-1">
+      <label for="type-filter" class={formClasses.label}>
         {$i18n.t('encounters.typeFilter')}
       </label>
       <select
         id="type-filter"
         bind:value={selectedType}
         onchange={() => loadEncounters()}
-        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm bg-white"
+        class="{formClasses.inputSm} bg-white"
       >
         <option value="">{$i18n.t('encounters.allTypes')}</option>
         {#each ENCOUNTER_TYPES as type (type)}
@@ -153,7 +154,7 @@ function goToPage(page: number) {
     <!-- Date filters -->
     <div class="flex gap-2">
       <div>
-        <label for="from-date" class="block text-sm font-body font-medium text-gray-700 mb-1">
+        <label for="from-date" class={formClasses.label}>
           {$i18n.t('encounters.fromDate')}
         </label>
         <input
@@ -161,11 +162,11 @@ function goToPage(page: number) {
           type="date"
           bind:value={fromDate}
           onchange={handleDateChange}
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+          class={formClasses.inputSm}
         />
       </div>
       <div>
-        <label for="to-date" class="block text-sm font-body font-medium text-gray-700 mb-1">
+        <label for="to-date" class={formClasses.label}>
           {$i18n.t('encounters.toDate')}
         </label>
         <input
@@ -173,65 +174,55 @@ function goToPage(page: number) {
           type="date"
           bind:value={toDate}
           onchange={handleDateChange}
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
+          class={formClasses.inputSm}
         />
       </div>
     </div>
 
     <!-- Clear filters -->
-    {#if searchQuery || fromDate || toDate || selectedType}
-      <button
-        type="button"
-        onclick={clearFilters}
-        class="px-3 py-2 text-sm text-forest hover:text-forest-dark font-body font-medium transition-colors"
-      >
+    {#if hasActiveFilters}
+      <Button variant="ghostAccent" size="sm" onclick={clearFilters}>
         {$i18n.t('encounters.clearFilters')}
-      </button>
+      </Button>
     {/if}
   </div>
 
   <!-- Results count -->
   <div class="text-sm text-gray-600 font-body">
     {$i18n.t('encounters.encounterCount', { count: pagination.totalCount })}
-    {#if searchQuery || fromDate || toDate || selectedType}
+    {#if hasActiveFilters}
       <span class="text-forest">{$i18n.t('encounters.filtered')}</span>
     {/if}
   </div>
 
   <!-- Error state -->
-  {#if error}
-    <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg font-body text-sm" role="alert">
-      {error}
-    </div>
+  {#if error !== null && error.length > 0}
+    <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
   <!-- Loading state -->
   {#if isLoading && encounterItems.length === 0}
     <div class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forest"></div>
+      <Spinner size="lg" />
     </div>
   {:else if encounterItems.length === 0}
-    <!-- Empty state -->
-    <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <Calendar class="mx-auto h-12 w-12 text-gray-400" strokeWidth="2" />
-      <h3 class="mt-4 text-lg font-heading text-gray-900">{$i18n.t('encounters.noEncounters')}</h3>
-      <p class="mt-2 text-sm text-gray-600 font-body">
-        {#if searchQuery || fromDate || toDate || selectedType}
-          {$i18n.t('encounters.noEncountersFiltered')}
-        {:else}
-          {$i18n.t('encounters.noEncountersSubtitle')}
-        {/if}
-      </p>
-      {#if !friendId}
-        <a
-          href="/encounters/new"
-          class="mt-4 inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-        >
+    <EmptyState
+      icon={Calendar}
+      title={$i18n.t('encounters.noEncounters')}
+      description={searchQuery.length > 0 ||
+      fromDate.length > 0 ||
+      toDate.length > 0 ||
+      selectedType.length > 0
+        ? $i18n.t('encounters.noEncountersFiltered')
+        : $i18n.t('encounters.noEncountersSubtitle')}
+    >
+      {#if friendId === undefined}
+        <Button href="/encounters/new">
           <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('encounters.logNew')}
-        </a>
+        </Button>
       {/if}
-    </div>
+    </EmptyState>
   {:else}
     <!-- Encounter cards -->
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -243,27 +234,29 @@ function goToPage(page: number) {
     <!-- Pagination -->
     {#if pagination.totalPages > 1}
       <div class="flex items-center justify-center gap-2 pt-4">
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onclick={() => goToPage(pagination.page - 1)}
           disabled={pagination.page <= 1 || isLoading}
-          class="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           aria-label={$i18n.t('aria.previousPage')}
         >
           <ChevronLeft class="w-4 h-4 text-gray-600" strokeWidth="2" />
-        </button>
+        </Button>
 
         <span class="text-sm text-gray-600 font-body px-2">
           {$i18n.t('encounters.pageOf', { page: pagination.page, total: pagination.totalPages })}
         </span>
 
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onclick={() => goToPage(pagination.page + 1)}
           disabled={pagination.page >= pagination.totalPages || isLoading}
-          class="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           aria-label={$i18n.t('aria.nextPage')}
         >
           <ChevronRight class="w-4 h-4 text-gray-600" strokeWidth="2" />
-        </button>
+        </Button>
       </div>
     {/if}
   {/if}

@@ -1,6 +1,9 @@
 <script lang="ts">
 import * as channelsApi from '$lib/api/notification-channels';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
+import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
 
 const i18n = createI18n();
 
@@ -19,35 +22,28 @@ async function handleTest() {
   try {
     await channelsApi.testChannel(channelId);
     result = 'success';
-    setTimeout(() => {
-      result = null;
-    }, 5000);
   } catch {
     result = 'error';
-    setTimeout(() => {
-      result = null;
-    }, 5000);
   } finally {
     isLoading = false;
   }
+  setTimeout(() => {
+    result = null;
+  }, TRANSIENT_FEEDBACK_MS);
 }
 </script>
 
-<span class="inline-flex items-center gap-2">
-  <button
-    onclick={handleTest}
-    disabled={isLoading}
-    class="text-sm font-body text-forest hover:text-forest-light disabled:opacity-50 disabled:cursor-not-allowed"
-  >
+<div class="inline-flex items-center gap-2">
+  <Button variant="ghostAccent" size="sm" onclick={handleTest} disabled={isLoading}>
     {#if isLoading}
       {$i18n.t('profile.messagingReminders.test.sending')}
     {:else}
       {$i18n.t('profile.messagingReminders.test.button')}
     {/if}
-  </button>
+  </Button>
   {#if result === 'success'}
-    <span class="text-sm text-green-600 font-body">{$i18n.t('profile.messagingReminders.test.success')}</span>
+    <AlertBanner variant="success">{$i18n.t('profile.messagingReminders.test.success')}</AlertBanner>
   {:else if result === 'error'}
-    <span class="text-sm text-red-600 font-body">{$i18n.t('profile.messagingReminders.test.failure')}</span>
+    <AlertBanner variant="error">{$i18n.t('profile.messagingReminders.test.failure')}</AlertBanner>
   {/if}
-</span>
+</div>

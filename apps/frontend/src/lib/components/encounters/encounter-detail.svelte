@@ -4,6 +4,7 @@ import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import { Button, ConfirmDialog, headingClasses, surfaceClasses } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
@@ -28,7 +29,7 @@ interface Props {
 
 let { encounter, onEdit }: Props = $props();
 
-let isDeleting = $state(false);
+// ConfirmDialog owns the in-flight and error state
 let showDeleteConfirm = $state(false);
 
 let displayTitle = $derived(encounterDisplayTitle($i18n.t, encounter));
@@ -59,16 +60,11 @@ function formatTimestamp(isoStr: string): string {
   });
 }
 
+// Rejections propagate to ConfirmDialog, which keeps itself open and shows the
+// reason; on success it closes itself and we navigate away.
 async function handleDelete() {
-  isDeleting = true;
-  try {
-    await encounters.deleteEncounter(encounter.id);
-    goto('/encounters');
-  } catch (err) {
-    console.error('Failed to delete encounter:', err);
-    isDeleting = false;
-    showDeleteConfirm = false;
-  }
+  await encounters.deleteEncounter(encounter.id);
+  goto('/encounters');
 }
 </script>
 
@@ -81,7 +77,7 @@ async function handleDelete() {
     </div>
 
     <div class="flex-1 text-center sm:text-left">
-      <h1 class="text-3xl font-heading text-gray-900">{displayTitle}</h1>
+      <h1 class={headingClasses.entity}>{displayTitle}</h1>
       <div class="mt-1 flex items-center gap-2 text-gray-600 font-body justify-center sm:justify-start">
         <EncounterTypeIcon type={encounter.encounterType} class="w-4 h-4 flex-shrink-0" />
         <span>{encounterTypeLabel($i18n.t, encounter.encounterType)}</span>
@@ -99,31 +95,26 @@ async function handleDelete() {
     </div>
 
     <div class="flex gap-2">
-      <button
-        type="button"
+      <Button
+        variant="secondary"
         onclick={() => onEdit?.()}
-        class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         data-shortcut="e"
         data-shortcut-label="shortcuts.help.editEncounter"
       >
         {$i18n.t('common.edit')}
-      </button>
-      <button
-        type="button"
-        onclick={() => showDeleteConfirm = true}
-        class="px-4 py-2 border border-red-300 text-red-600 rounded-lg font-body font-semibold hover:bg-red-50 transition-colors"
-      >
+      </Button>
+      <Button variant="dangerOutline" onclick={() => showDeleteConfirm = true}>
         {$i18n.t('common.delete')}
-      </button>
+      </Button>
     </div>
   </div>
 
   <!-- ==================== FRIENDS SECTION ==================== -->
   <section class="space-y-2">
-    <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
+    <h2 class="{surfaceClasses.section} {headingClasses.section} gap-2">
       <Users class="w-5 h-5" strokeWidth="2" />
       {$i18n.t('encounters.detail.friends')}
-      <span class="text-sm font-body font-normal text-white/80">({encounter.friends.length})</span>
+      <span class="text-sm font-body font-normal text-forest/70">({encounter.friends.length})</span>
     </h2>
     <div class="flex flex-wrap gap-3 p-3 bg-gray-50 rounded-lg">
       {#each encounter.friends as friend, index (friend.id)}
@@ -150,7 +141,7 @@ async function handleDelete() {
   <!-- ==================== NOTES SECTION ==================== -->
   {#if encounter.description}
     <section class="space-y-2">
-      <h2 class="text-lg font-heading bg-forest text-white px-3 py-1.5 rounded-lg flex items-center gap-2">
+      <h2 class="{surfaceClasses.section} {headingClasses.section} gap-2">
         <DocumentText class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('encounters.detail.notes')}
       </h2>
@@ -169,39 +160,13 @@ async function handleDelete() {
   </section>
 </div>
 
-<!-- Delete confirmation modal -->
+<!-- Delete encounter confirmation -->
 {#if showDeleteConfirm}
-  <div
-    class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="delete-modal-title"
-  >
-    <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
-      <h3 id="delete-modal-title" class="text-xl font-heading text-gray-900 mb-2">
-        {$i18n.t('encounters.detail.deleteConfirmTitle')}
-      </h3>
-      <p class="text-gray-600 font-body mb-6">
-        {$i18n.t('encounters.detail.deleteConfirmMessage', { title: displayTitle })}
-      </p>
-      <div class="flex gap-3">
-        <button
-          type="button"
-          onclick={() => showDeleteConfirm = false}
-          disabled={isDeleting}
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          {$i18n.t('encounters.form.cancel')}
-        </button>
-        <button
-          type="button"
-          onclick={handleDelete}
-          disabled={isDeleting}
-          class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-body font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
-        >
-          {isDeleting ? $i18n.t('encounters.detail.deleting') : $i18n.t('common.delete')}
-        </button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$i18n.t('encounters.detail.deleteConfirmTitle')}
+    description={$i18n.t('encounters.detail.deleteConfirmMessage')}
+    itemPreview={displayTitle}
+    onConfirm={handleDelete}
+    onClose={() => (showDeleteConfirm = false)}
+  />
 {/if}

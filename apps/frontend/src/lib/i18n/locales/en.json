@@ -5,6 +5,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
+    "remove": "Remove",
     "edit": "Edit",
     "close": "Close",
     "confirm": "Confirm",
@@ -36,7 +37,10 @@
     "loadingResults": "Loading results...",
     "loadingFriends": "Loading friends...",
     "adding": "Adding...",
-    "loadingRelationshipTypes": "Loading relationship types..."
+    "loadingRelationshipTypes": "Loading relationship types...",
+    "backToHome": "Back to home",
+    "showMore": "+{{count}} more",
+    "showLess": "Show less"
   },
   "nav": {
     "home": "Home",
@@ -134,7 +138,7 @@
       "notFoundSubtitle": "This encounter may have been deleted or doesn't exist.",
       "returnToEncounters": "Return to encounters",
       "deleteConfirmTitle": "Delete Encounter?",
-      "deleteConfirmMessage": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone."
+      "deleteConfirmMessage": "Are you sure you want to delete this encounter?"
     }
   },
   "collectives": {
@@ -233,7 +237,9 @@
       "notFoundSubtitle": "This collective may have been deleted or doesn't exist.",
       "returnToCollectives": "Return to collectives",
       "deleteConfirmTitle": "Delete Collective?",
-      "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone."
+      "deleteConfirmMessage": "Are you sure you want to delete this collective?",
+      "removeFromCircleTitle": "Remove from Circle",
+      "confirmRemoveCircle": "Are you sure you want to remove this collective from this circle?"
     },
     "addMember": {
       "title": "Add Member",
@@ -288,6 +294,7 @@
     }
   },
   "auth": {
+    "passwordHelp": "Must be at least 8 characters long",
     "sessionExpired": {
       "title": "Your session expired",
       "message": "You've been signed out. Sign back in to pick up right where you left off.",
@@ -300,7 +307,6 @@
       "emailPlaceholder": "you@example.com",
       "password": "Password",
       "passwordPlaceholder": "Enter your password",
-      "rememberMe": "Remember me",
       "forgotPassword": "Forgot password?",
       "submit": "Sign In",
       "noAccount": "Don't have an account?",
@@ -318,11 +324,9 @@
       "emailPlaceholder": "you@example.com",
       "password": "Password",
       "passwordPlaceholder": "Create a password",
-      "passwordHelp": "Must be at least 8 characters long",
       "confirmPassword": "Confirm password",
       "confirmPasswordPlaceholder": "Repeat your password",
       "submit": "Create account",
-      "creating": "Creating account...",
       "hasAccount": "Already have an account?",
       "loginLink": "Sign in",
       "termsAgree": "I agree to the",
@@ -347,7 +351,14 @@
       "success": "If an account exists with this email, you will receive a reset link.",
       "error": {
         "generic": "Failed to send reset link. Please try again."
-      }
+      },
+      "heading": "Reset your password",
+      "description": "Enter your email to receive a password reset link",
+      "emailLabel": "Email address",
+      "successTitle": "Password reset link sent!",
+      "successBody": "If the email exists, a password reset link has been sent. Please check your inbox.",
+      "rememberPassword": "Remember your password?",
+      "signIn": "Sign in"
     },
     "resetPassword": {
       "title": "Set New Password",
@@ -360,8 +371,19 @@
       "success": "Password reset successfully! You can now sign in.",
       "error": {
         "invalidToken": "Invalid or expired reset link",
-        "generic": "Failed to reset password. Please try again."
-      }
+        "generic": "Failed to reset password. Please try again.",
+        "mismatch": "Passwords do not match",
+        "tooShort": "Password must be at least 8 characters"
+      },
+      "heading": "Create new password",
+      "description": "Enter your new password below",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "successTitle": "Password reset successful!",
+      "successBody": "Your password has been reset. Redirecting to login…",
+      "invalidTitle": "Invalid reset link",
+      "invalidBody": "This password reset link is invalid or has expired.",
+      "requestNew": "Request a new reset link"
     }
   },
   "home": {
@@ -375,7 +397,8 @@
       "subtitle": "A digital friendship book to remember the people who matter most.",
       "description": "Life gets busy, but friendships shouldn't fade away. Freundebuch is your personal space to cherish relationships, remember the little details, and never miss an opportunity to connect with the people you care about.",
       "cta": "Start Your Book",
-      "loginCta": "Sign In"
+      "loginCta": "Sign In",
+      "imageAlt": "An open book with memories"
     },
     "features": {
       "title": "Why Freundebuch?",
@@ -502,7 +525,48 @@
       "message": "Are you sure you want to delete {{name}}? This action cannot be undone.",
       "confirm": "Delete",
       "cancel": "Cancel"
-    }
+    },
+    "editFriend": "Edit Friend",
+    "editFriendSubtitle": "Update {{name}}'s information",
+    "backToFriend": "Back to friend",
+    "editFriendTitle": "Edit {{name}}"
+  },
+  "friendForm": {
+    "nameHeading": "Name",
+    "prefix": "Prefix",
+    "prefixPlaceholder": "Dr., Mr.",
+    "firstName": "First Name",
+    "middleName": "Middle Name",
+    "lastName": "Last Name",
+    "suffix": "Suffix",
+    "suffixPlaceholder": "Jr., PhD",
+    "maidenName": "Maiden Name",
+    "displayName": "Display Name",
+    "displayNameHelper": "Built from the name parts until you write your own.",
+    "nickname": "Nickname",
+    "interestsPlaceholder": "Interests, hobbies, topics they enjoy discussing...",
+    "metDate": "Date",
+    "metLocation": "Location",
+    "metLocationPlaceholder": "Conference, Coffee shop",
+    "metContext": "Story",
+    "metContextPlaceholder": "Context or story of how you met...",
+    "photo": {
+      "uploadTitle": "Click to upload photo",
+      "saveFirstTitle": "Save friend first to upload photo",
+      "previewAlt": "Photo preview",
+      "remove": "Remove photo",
+      "saveFirstHint": "Save friend to upload photo",
+      "uploadHint": "Click to upload photo (max 5MB)",
+      "invalidType": "Invalid file type. Allowed: {{types}}",
+      "tooLarge": "File too large. Maximum size: {{size}}MB",
+      "uploadError": "Failed to upload photo",
+      "deleteError": "Failed to delete photo",
+      "removeTitle": "Remove photo",
+      "removeConfirm": "The photo is deleted from the server immediately."
+    },
+    "saveChanges": "Save Changes",
+    "create": "Create Friend",
+    "saveError": "Failed to save friend"
   },
   "circles": {
     "title": "Circles",
@@ -540,7 +604,9 @@
       "save": "Save Circle",
       "saving": "Saving...",
       "saveChanges": "Save Changes",
-      "createCircle": "Create Circle"
+      "createCircle": "Create Circle",
+      "nameRequired": "Circle name is required",
+      "saveError": "Failed to save circle"
     },
     "delete": {
       "title": "Delete Circle",
@@ -549,12 +615,6 @@
       "messageWithCount_other": "Are you sure you want to delete this circle? {{count}} friends will be removed from this circle.",
       "confirm": "Delete",
       "cancel": "Cancel"
-    },
-    "unsavedChanges": {
-      "title": "Unsaved Changes",
-      "message": "You have unsaved changes. Are you sure you want to close?",
-      "keepEditing": "Keep Editing",
-      "discard": "Discard Changes"
     }
   },
   "profile": {
@@ -570,6 +630,9 @@
     "displayPreferences": {
       "title": "Display Preferences",
       "subtitle": "Customize how information is displayed throughout the app."
+    },
+    "display": {
+      "saved": "Preferences saved"
     },
     "preferences": {
       "title": "Preferences",
@@ -594,6 +657,7 @@
       "copyNow": "Copy this password now. You won't be able to see it again!",
       "useWith": "Use this password with your email address to sign in to CardDAV clients.",
       "namePlaceholder": "Password name (e.g., My iPhone)",
+      "nameLabel": "Password name",
       "creating": "Creating...",
       "create": "Create",
       "loading": "Loading app passwords...",
@@ -602,11 +666,12 @@
       "createdAt": "Created {{date}}",
       "lastUsed": "Last used {{date}}",
       "never": "Never",
-      "revoking": "Revoking...",
       "revoke": "Revoke",
       "failedToLoad": "Failed to load app passwords",
       "failedToCreate": "Failed to create app password",
-      "failedToRevoke": "Failed to revoke app password"
+      "failedToRevoke": "Failed to revoke app password",
+      "revokeTitle": "Revoke App Password",
+      "revokeDescription": "Are you sure you want to revoke this app password? Devices using it will stop syncing."
     },
     "passkeys": {
       "title": "Passkeys",
@@ -617,9 +682,9 @@
       "noPasskeys": "No passkeys registered",
       "noPasskeysHint": "Add a passkey for passwordless sign-in using Touch ID, Face ID, or a hardware key",
       "namePlaceholder": "Passkey name",
+      "nameLabel": "Passkey name",
       "unnamedPasskey": "Unnamed passkey",
       "added": "Added {{date}}",
-      "deleting": "Deleting...",
       "renameAria": "Rename passkey",
       "deviceType": {
         "multiDevice": "Multi-device",
@@ -627,12 +692,13 @@
         "unknown": "Unknown"
       },
       "signIn": "Sign in with Passkey",
-      "signingIn": "Signing in...",
       "signInFailed": "Passkey sign-in failed",
       "failedToLoad": "Failed to load passkeys",
       "failedToRegister": "Failed to register passkey",
       "failedToDelete": "Failed to delete passkey",
-      "failedToRename": "Failed to rename passkey"
+      "failedToRename": "Failed to rename passkey",
+      "deleteTitle": "Delete Passkey",
+      "deleteDescription": "Are you sure you want to delete this passkey? You will no longer be able to sign in with it."
     },
     "messagingReminders": {
       "title": "Messaging Reminders",
@@ -668,8 +734,12 @@
         "disabled": "Disabled"
       },
       "delete": {
-        "confirm": "Confirm?"
-      }
+        "title": "Delete channel",
+        "description": "Reminders will no longer be sent to this channel."
+      },
+      "unchanged": "(unchanged)",
+      "saveError": "Failed to save channel. Please try again.",
+      "chatSummary": "Chat: {{chat}}"
     },
     "carddav": {
       "title": "CardDAV Setup",
@@ -684,7 +754,7 @@
       "setupGuide": "Setup Guide",
       "useCredentials": "Use your email {{email}} and an app password to sign in.",
       "important": "Important",
-      "importantNote": "Always use an <strong>app password</strong> instead of your regular account password. App passwords can be revoked individually without changing your main password.",
+      "importantNote": "Always use an app password instead of your regular account password. App passwords can be revoked individually without changing your main password.",
       "ios": "iOS / iPadOS",
       "macos": "macOS",
       "thunderbird": "Thunderbird",
@@ -702,29 +772,29 @@
       },
       "steps": {
         "ios": {
-          "1": "Open <strong>Settings</strong> and tap <strong>Contacts</strong>",
-          "2": "Tap <strong>Accounts</strong>, then <strong>Add Account</strong>",
-          "3": "Select <strong>Other</strong> at the bottom",
-          "4": "Tap <strong>Add CardDAV Account</strong>",
+          "1": "Open Settings and tap Contacts",
+          "2": "Tap Accounts, then Add Account",
+          "3": "Select Other at the bottom",
+          "4": "Tap Add CardDAV Account",
           "5": "Enter your details:",
-          "6": "Tap <strong>Next</strong> to verify and save"
+          "6": "Tap Next to verify and save"
         },
         "macos": {
-          "1": "Open <strong>System Settings</strong> (or System Preferences)",
-          "2": "Click <strong>Internet Accounts</strong>",
-          "3": "Click <strong>Add Account</strong>, then select <strong>Other Contacts Account</strong>",
-          "4": "Select <strong>CardDAV</strong> as the account type",
+          "1": "Open System Settings (or System Preferences)",
+          "2": "Click Internet Accounts",
+          "3": "Click Add Account, then select Other Contacts Account",
+          "4": "Select CardDAV as the account type",
           "5": "Enter your details:",
-          "6": "Click <strong>Sign In</strong>"
+          "6": "Click Sign In"
         },
         "thunderbird": {
-          "1": "Install the <strong>CardBook</strong> add-on from Thunderbird Add-ons",
-          "2": "Open <strong>CardBook</strong> from the Thunderbird menu",
-          "3": "Click <strong>Address Book</strong> &rarr; <strong>New Address Book</strong>",
-          "4": "Select <strong>Remote</strong> and click <strong>Next</strong>",
-          "5": "Select <strong>CardDAV</strong> and click <strong>Next</strong>",
+          "1": "Install the CardBook add-on from Thunderbird Add-ons",
+          "2": "Open CardBook from the Thunderbird menu",
+          "3": "Click Address Book → New Address Book",
+          "4": "Select Remote and click Next",
+          "5": "Select CardDAV and click Next",
           "6": "Enter your details:",
-          "7": "Click <strong>Validate</strong> to verify the connection",
+          "7": "Click Validate to verify the connection",
           "8": "Select the address book and complete the setup"
         }
       }
@@ -773,7 +843,8 @@
           "password": "Password",
           "passwordValue": "Your app password"
         }
-      }
+      },
+      "emailPlaceholder": "your@email.com"
     },
     "danger": {
       "title": "Danger Zone",
@@ -854,7 +925,12 @@
       "description": "Start adding your friends"
     },
     "skip": "Skip for now",
-    "complete": "Complete Setup"
+    "complete": "Complete Setup",
+    "firstEntry": "The first entry in your friendbook is you! Fill in your details to get started.",
+    "error": {
+      "generic": "Failed to create your profile. Please try again."
+    },
+    "pageTitle": "Welcome"
   },
   "friendSearch": {
     "noResults": "No friends found"
@@ -863,7 +939,8 @@
     "placeholder": "Search friends, circles...",
     "noResults": "No results found",
     "recentSearches": "Recent Searches",
-    "clearRecent": "Clear recent"
+    "clearRecent": "Clear recent",
+    "filtersTitle": "Filters"
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",
@@ -1054,6 +1131,7 @@
       "deleteDate": "Delete Date",
       "deleteEmployment": "Delete Employment",
       "removeFromCircleTitle": "Remove from Circle",
+      "removeFromCollectiveTitle": "Remove from Collective",
       "confirmDeletePhone": "Are you sure you want to delete this phone number?",
       "confirmDeleteEmail": "Are you sure you want to delete this email address?",
       "confirmDeleteAddress": "Are you sure you want to delete this address?",
@@ -1061,13 +1139,14 @@
       "confirmDeleteSocial": "Are you sure you want to delete this social profile?",
       "confirmDeleteDate": "Are you sure you want to delete this important date?",
       "confirmDeleteEmployment": "Are you sure you want to delete this employment record?",
-      "confirmRemoveCircle": "Are you sure you want to remove this friend from this circle?"
+      "confirmRemoveCircle": "Are you sure you want to remove this friend from this circle?",
+      "confirmRemoveCollective": "Are you sure you want to remove this friend from this collective?"
     },
     "addDetail": "Add Detail",
     "addDetailSubtitle": "Add phone, email, address, and more",
     "delete": {
       "title": "Delete Friend",
-      "confirmMessage": "Are you sure you want to delete",
+      "confirmMessage": "Are you sure you want to delete this friend?",
       "cannotUndo": "This action cannot be undone.",
       "deleting": "Deleting..."
     },
@@ -1109,7 +1188,8 @@
     "select": "Select",
     "close": "Close",
     "newFriend": "New friend",
-    "friendsList": "Friends list"
+    "friendsList": "Friends list",
+    "jobAtOrg": "{{jobTitle}} at {{organization}}"
   },
   "dashboard": {
     "upcomingDates": "Upcoming Dates",
@@ -1153,12 +1233,32 @@
       "department": "Department",
       "relationshipCategory": "Relationship",
       "circles": "Circle"
+    },
+    "sections": {
+      "location": "Location",
+      "professional": "Professional",
+      "relationship": "Relationship",
+      "circles": "Circles"
+    },
+    "categories": {
+      "country": "Country",
+      "city": "City",
+      "organization": "Organization",
+      "jobTitle": "Job Title",
+      "department": "Department",
+      "relationship": "Relationship",
+      "circles": "Circles"
     }
   },
   "friendList": {
     "searchPlaceholder": "Search friends by name, email, phone, or notes...",
     "resultsFor_one": "{{count}} result for \"{{query}}\"",
     "resultsFor_other": "{{count}} results for \"{{query}}\"",
+    "matchSource": {
+      "email": "Email",
+      "phone": "Phone",
+      "notes": "Notes"
+    },
     "filtered": "(filtered)",
     "friendCount_one": "{{count}} friend",
     "friendCount_other": "{{count}} friends",
@@ -1179,13 +1279,16 @@
     "clearSearch": "Clear search",
     "noFriendsYet": "No friends yet",
     "getStarted": "Get started by adding your first friend.",
-    "addFriend": "Add Friend"
+    "addFriend": "Add Friend",
+    "matchLabel": "Match",
+    "archived": "Archived"
   },
   "relationshipSection": {
     "relationships": "Relationships",
     "relationship": "Relationship",
     "addRelationship": "Add Relationship",
     "confirmRemove": "Are you sure you want to remove this relationship?",
+    "removeTitle": "Remove Relationship",
     "addNotes": "Add notes...",
     "saving": "Saving...",
     "save": "Save",
@@ -1199,7 +1302,12 @@
     "adding": "Adding...",
     "pleaseSelectFriend": "Please select a friend",
     "failedToLoadTypes": "Failed to load relationship types",
-    "failedToAdd": "Failed to add relationship"
+    "failedToAdd": "Failed to add relationship",
+    "categories": {
+      "family": "Family",
+      "professional": "Professional",
+      "social": "Social"
+    }
   },
   "employment": {
     "jobTitle": "Job Title",
@@ -1236,8 +1344,6 @@
     "searchCollectives": "Search collectives",
     "filterByType": "Filter by type",
     "chooseColumns": "Choose columns",
-    "selectLanguage": "Select language",
-    "availableLanguages": "Available languages",
     "editNotes": "Edit notes",
     "removeRelationship": "Remove relationship",
     "circleColor": "Circle color",
@@ -1245,7 +1351,15 @@
     "startYear": "Start year",
     "endMonth": "End month",
     "endYear": "End year",
-    "logEncounter": "Log an encounter with this friend"
+    "logEncounter": "Log an encounter with this friend",
+    "selectColor": "Select {{color}}",
+    "removeItem": "Remove {{name}}",
+    "userMenu": "User menu",
+    "userAvatarFor": "User avatar for {{email}}",
+    "mobileNavigation": "Mobile navigation menu",
+    "toggleMenu": "Toggle menu",
+    "search": "Search",
+    "removeRecentSearch": "Remove from recent searches"
   },
   "countrySelect": {
     "label": "Country",
@@ -1273,6 +1387,9 @@
       "failedToSave": "Failed to save",
       "cannotBeUndone": "This action cannot be undone.",
       "unsavedChanges": "You have unsaved changes. Are you sure you want to close?",
+      "unsavedChangesTitle": "Unsaved Changes",
+      "keepEditing": "Keep Editing",
+      "discardChanges": "Discard Changes",
       "primary": "Primary"
     },
     "phone": {
@@ -1288,7 +1405,11 @@
         "other": "Other"
       },
       "editAria": "Edit phone",
-      "deleteAria": "Delete phone"
+      "deleteAria": "Delete phone",
+      "placeholder": {
+        "number": "+49 151 12345678",
+        "label": "e.g. Personal cell, Work direct"
+      }
     },
     "email": {
       "emailAddress": "Email Address",
@@ -1299,7 +1420,11 @@
         "other": "Other"
       },
       "editAria": "Edit email",
-      "deleteAria": "Delete email"
+      "deleteAria": "Delete email",
+      "placeholder": {
+        "address": "name@example.com",
+        "label": "e.g. Main, Newsletter"
+      }
     },
     "address": {
       "address": "Address",
@@ -1313,7 +1438,10 @@
         "other": "Other"
       },
       "editAria": "Edit address",
-      "deleteAria": "Delete address"
+      "deleteAria": "Delete address",
+      "placeholder": {
+        "label": "e.g. Main residence, Summer house"
+      }
     },
     "url": {
       "url": "URL",
@@ -1324,7 +1452,11 @@
         "other": "Other"
       },
       "editAria": "Edit URL",
-      "deleteAria": "Delete URL"
+      "deleteAria": "Delete URL",
+      "placeholder": {
+        "url": "https://example.com",
+        "label": "e.g. Portfolio, LinkedIn"
+      }
     },
     "date": {
       "date": "Date",
@@ -1335,7 +1467,10 @@
         "other": "Other"
       },
       "editAria": "Edit date",
-      "deleteAria": "Delete date"
+      "deleteAria": "Delete date",
+      "placeholder": {
+        "label": "e.g. Wedding anniversary, First met"
+      }
     },
     "social": {
       "platform": "Platform",
@@ -1351,7 +1486,11 @@
         "other": "Other"
       },
       "editAria": "Edit social profile",
-      "deleteAria": "Delete social profile"
+      "deleteAria": "Delete social profile",
+      "placeholder": {
+        "username": "@username",
+        "profileUrl": "https://linkedin.com/in/username"
+      }
     },
     "employment": {
       "primaryEmployment": "Set as primary (shown in contact cards)",
@@ -1364,19 +1503,15 @@
       "atOrganization": "{{jobTitle}} at {{organization}}",
       "untitled": "Employment"
     },
-    "dropdown": {
-      "phoneNumber": "Phone Number",
-      "emailAddress": "Email Address",
-      "address": "Address",
-      "websiteUrl": "Website/URL",
-      "importantDate": "Important Date",
-      "socialProfile": "Social Profile",
-      "circle": "Circle",
-      "collective": "Collective",
-      "employment": "Employment"
-    },
     "circle": {
-      "removeAria": "Remove from circle"
+      "removeAria": "Remove from circle",
+      "loading": "Loading circles…",
+      "noneCreated": "No circles created yet.",
+      "noneCreatedHint": "Create circles on the circles page to organise your friends.",
+      "allAssigned": "Already in every available circle.",
+      "select": "Select Circle",
+      "selectPlaceholder": "Choose a circle…",
+      "preview": "Preview:"
     },
     "collective": {
       "removeAria": "Remove from collective"
@@ -1400,5 +1535,34 @@
       "invalidBody": "This authorization link is invalid or has expired.",
       "backHome": "Back to home"
     }
+  },
+  "legal": {
+    "englishOnly": "This document is only available in English.",
+    "privacyTitle": "Privacy Policy",
+    "termsTitle": "Terms of Service"
+  },
+  "address": {
+    "street": "Street",
+    "streetPlaceholder": "Search streets…",
+    "streetManualPlaceholder": "Enter street name",
+    "houseNumber": "House Number",
+    "houseNumberPlaceholder": "Search or select…",
+    "houseNumberManualPlaceholder": "Enter house number",
+    "postalCode": "Postal Code",
+    "postalCodePlaceholder": "Enter postal code",
+    "enterManually": "Enter manually",
+    "streetLine2Placeholder": "Apartment, suite, floor, etc.",
+    "relationshipTypePlaceholder": "Search relationship types…",
+    "streetLine2": "Additional address info",
+    "postalCodeHint": "Enter at least 3 characters",
+    "noMatchingStreets": "No matching streets found",
+    "noMatchingNumbers": "No matching numbers found",
+    "noMatchingTypes": "No matching types found"
+  },
+  "imageCrop": {
+    "title": "Crop Photo",
+    "zoom": "Zoom",
+    "usePhoto": "Use Photo",
+    "processing": "Processing…"
   }
 }

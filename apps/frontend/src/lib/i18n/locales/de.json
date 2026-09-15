@@ -5,6 +5,7 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Löschen",
+    "remove": "Entfernen",
     "edit": "Bearbeiten",
     "close": "Schließen",
     "confirm": "Bestätigen",
@@ -36,7 +37,10 @@
     "loadingResults": "Ergebnisse werden geladen...",
     "loadingFriends": "Freunde werden geladen...",
     "adding": "Wird hinzugefügt...",
-    "loadingRelationshipTypes": "Beziehungstypen werden geladen..."
+    "loadingRelationshipTypes": "Beziehungstypen werden geladen...",
+    "backToHome": "Zurück zur Startseite",
+    "showMore": "+{{count}} weitere",
+    "showLess": "Weniger anzeigen"
   },
   "nav": {
     "home": "Startseite",
@@ -134,7 +138,7 @@
       "notFoundSubtitle": "Diese Begegnung wurde möglicherweise gelöscht oder existiert nicht.",
       "returnToEncounters": "Zurück zu Begegnungen",
       "deleteConfirmTitle": "Begegnung löschen?",
-      "deleteConfirmMessage": "Bist du sicher, dass du \"{{title}}\" löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+      "deleteConfirmMessage": "Bist du sicher, dass du diese Begegnung löschen möchtest?"
     }
   },
   "collectives": {
@@ -233,7 +237,9 @@
       "notFoundSubtitle": "Dieses Kollektiv wurde möglicherweise gelöscht oder existiert nicht.",
       "returnToCollectives": "Zurück zu Kollektiven",
       "deleteConfirmTitle": "Kollektiv löschen?",
-      "deleteConfirmMessage": "Bist du sicher, dass du \"{{name}}\" löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+      "deleteConfirmMessage": "Bist du sicher, dass du dieses Kollektiv löschen möchtest?",
+      "removeFromCircleTitle": "Aus Freundekreis entfernen",
+      "confirmRemoveCircle": "Bist du sicher, dass du dieses Kollektiv aus diesem Freundekreis entfernen möchtest?"
     },
     "addMember": {
       "title": "Mitglied hinzufügen",
@@ -288,6 +294,7 @@
     }
   },
   "auth": {
+    "passwordHelp": "Muss mindestens 8 Zeichen lang sein",
     "sessionExpired": {
       "title": "Deine Sitzung ist abgelaufen",
       "message": "Du wurdest abgemeldet. Melde dich erneut an, um genau dort weiterzumachen, wo du aufgehört hast.",
@@ -300,7 +307,6 @@
       "emailPlaceholder": "du@beispiel.de",
       "password": "Passwort",
       "passwordPlaceholder": "Gib dein Passwort ein",
-      "rememberMe": "Angemeldet bleiben",
       "forgotPassword": "Passwort vergessen?",
       "submit": "Anmelden",
       "noAccount": "Noch kein Konto?",
@@ -318,11 +324,9 @@
       "emailPlaceholder": "du@beispiel.de",
       "password": "Passwort",
       "passwordPlaceholder": "Erstelle ein Passwort",
-      "passwordHelp": "Muss mindestens 8 Zeichen lang sein",
       "confirmPassword": "Passwort bestätigen",
       "confirmPasswordPlaceholder": "Passwort wiederholen",
       "submit": "Konto erstellen",
-      "creating": "Konto wird erstellt...",
       "hasAccount": "Bereits ein Konto?",
       "loginLink": "Anmelden",
       "termsAgree": "Ich stimme den",
@@ -347,7 +351,14 @@
       "success": "Falls ein Konto mit dieser E-Mail existiert, erhältst du einen Reset-Link.",
       "error": {
         "generic": "Reset-Link konnte nicht gesendet werden. Bitte versuche es erneut."
-      }
+      },
+      "heading": "Passwort zurücksetzen",
+      "description": "Gib deine E-Mail-Adresse ein, um einen Link zum Zurücksetzen zu erhalten",
+      "emailLabel": "E-Mail-Adresse",
+      "successTitle": "Link zum Zurücksetzen verschickt!",
+      "successBody": "Falls die E-Mail-Adresse existiert, haben wir einen Link zum Zurücksetzen geschickt. Schau in dein Postfach.",
+      "rememberPassword": "Passwort wieder eingefallen?",
+      "signIn": "Anmelden"
     },
     "resetPassword": {
       "title": "Neues Passwort festlegen",
@@ -360,8 +371,19 @@
       "success": "Passwort erfolgreich zurückgesetzt! Du kannst dich jetzt anmelden.",
       "error": {
         "invalidToken": "Ungültiger oder abgelaufener Reset-Link",
-        "generic": "Passwort konnte nicht zurückgesetzt werden. Bitte versuche es erneut."
-      }
+        "generic": "Passwort konnte nicht zurückgesetzt werden. Bitte versuche es erneut.",
+        "mismatch": "Die Passwörter stimmen nicht überein",
+        "tooShort": "Das Passwort muss mindestens 8 Zeichen lang sein"
+      },
+      "heading": "Neues Passwort festlegen",
+      "description": "Gib unten dein neues Passwort ein",
+      "newPassword": "Neues Passwort",
+      "confirmNewPassword": "Neues Passwort bestätigen",
+      "successTitle": "Passwort zurückgesetzt!",
+      "successBody": "Dein Passwort wurde zurückgesetzt. Du wirst zur Anmeldung weitergeleitet …",
+      "invalidTitle": "Ungültiger Link",
+      "invalidBody": "Dieser Link zum Zurücksetzen ist ungültig oder abgelaufen.",
+      "requestNew": "Neuen Link anfordern"
     }
   },
   "home": {
@@ -375,7 +397,8 @@
       "subtitle": "Ein digitales Freundebuch, um die Menschen zu erinnern, die dir wichtig sind.",
       "description": "Das Leben ist hektisch, aber Freundschaften sollten nicht verblassen. Freundebuch ist dein persönlicher Raum, um Beziehungen zu pflegen, dich an die kleinen Details zu erinnern und keine Gelegenheit zu verpassen, mit den Menschen in Kontakt zu bleiben, die dir wichtig sind.",
       "cta": "Jetzt starten",
-      "loginCta": "Anmelden"
+      "loginCta": "Anmelden",
+      "imageAlt": "Ein aufgeschlagenes Buch mit Erinnerungen"
     },
     "features": {
       "title": "Warum Freundebuch?",
@@ -502,7 +525,48 @@
       "message": "Bist du sicher, dass du {{name}} löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
       "confirm": "Löschen",
       "cancel": "Abbrechen"
-    }
+    },
+    "editFriend": "Freund:in bearbeiten",
+    "editFriendSubtitle": "Daten von {{name}} aktualisieren",
+    "backToFriend": "Zurück zum Profil",
+    "editFriendTitle": "{{name}} bearbeiten"
+  },
+  "friendForm": {
+    "nameHeading": "Name",
+    "prefix": "Titel/Anrede",
+    "prefixPlaceholder": "Dr., Herr",
+    "firstName": "Vorname",
+    "middleName": "Zweiter Vorname",
+    "lastName": "Nachname",
+    "suffix": "Namenszusatz",
+    "suffixPlaceholder": "Jr., PhD",
+    "maidenName": "Geburtsname",
+    "displayName": "Anzeigename",
+    "displayNameHelper": "Wird aus den Namensteilen gebildet, bis du ihn selbst schreibst.",
+    "nickname": "Spitzname",
+    "interestsPlaceholder": "Interessen, Hobbys, Themen, über die sie gerne sprechen...",
+    "metDate": "Datum",
+    "metLocation": "Ort",
+    "metLocationPlaceholder": "Konferenz, Café",
+    "metContext": "Geschichte",
+    "metContextPlaceholder": "Zusammenhang oder Geschichte eures Kennenlernens...",
+    "photo": {
+      "uploadTitle": "Klicken, um ein Foto hochzuladen",
+      "saveFirstTitle": "Freund zuerst speichern, um ein Foto hochzuladen",
+      "previewAlt": "Fotovorschau",
+      "remove": "Foto entfernen",
+      "saveFirstHint": "Freund speichern, um ein Foto hochzuladen",
+      "uploadHint": "Klicken, um ein Foto hochzuladen (max. 5 MB)",
+      "invalidType": "Ungültiger Dateityp. Erlaubt: {{types}}",
+      "tooLarge": "Datei zu groß. Maximale Größe: {{size}} MB",
+      "uploadError": "Foto konnte nicht hochgeladen werden",
+      "deleteError": "Foto konnte nicht gelöscht werden",
+      "removeTitle": "Foto entfernen",
+      "removeConfirm": "Das Foto wird sofort vom Server gelöscht."
+    },
+    "saveChanges": "Änderungen speichern",
+    "create": "Freund erstellen",
+    "saveError": "Freund konnte nicht gespeichert werden"
   },
   "circles": {
     "title": "Freundekreise",
@@ -540,7 +604,9 @@
       "save": "Freundekreis speichern",
       "saving": "Speichern...",
       "saveChanges": "Änderungen speichern",
-      "createCircle": "Freundekreis erstellen"
+      "createCircle": "Freundekreis erstellen",
+      "nameRequired": "Der Name des Freundekreises ist erforderlich",
+      "saveError": "Freundekreis konnte nicht gespeichert werden"
     },
     "delete": {
       "title": "Freundekreis löschen",
@@ -549,12 +615,6 @@
       "messageWithCount_other": "Bist du sicher, dass du diesen Freundekreis löschen möchtest? {{count}} Freunde werden aus diesem Freundekreis entfernt.",
       "confirm": "Löschen",
       "cancel": "Abbrechen"
-    },
-    "unsavedChanges": {
-      "title": "Ungespeicherte Änderungen",
-      "message": "Du hast ungespeicherte Änderungen. Bist du sicher, dass du schließen möchtest?",
-      "keepEditing": "Weiter bearbeiten",
-      "discard": "Änderungen verwerfen"
     }
   },
   "profile": {
@@ -570,6 +630,9 @@
     "displayPreferences": {
       "title": "Anzeigeeinstellungen",
       "subtitle": "Passe an, wie Informationen in der App angezeigt werden."
+    },
+    "display": {
+      "saved": "Einstellungen gespeichert"
     },
     "preferences": {
       "title": "Einstellungen",
@@ -594,6 +657,7 @@
       "copyNow": "Kopiere dieses Passwort jetzt. Du wirst es nicht wieder sehen können!",
       "useWith": "Verwende dieses Passwort mit deiner E-Mail-Adresse, um dich bei CardDAV-Clients anzumelden.",
       "namePlaceholder": "Passwortname (z.B. Mein iPhone)",
+      "nameLabel": "Passwortname",
       "creating": "Wird erstellt...",
       "create": "Erstellen",
       "loading": "App-Passwörter werden geladen...",
@@ -602,11 +666,12 @@
       "createdAt": "Erstellt {{date}}",
       "lastUsed": "Zuletzt verwendet {{date}}",
       "never": "Nie",
-      "revoking": "Wird widerrufen...",
       "revoke": "Widerrufen",
       "failedToLoad": "App-Passwörter konnten nicht geladen werden",
       "failedToCreate": "App-Passwort konnte nicht erstellt werden",
-      "failedToRevoke": "App-Passwort konnte nicht widerrufen werden"
+      "failedToRevoke": "App-Passwort konnte nicht widerrufen werden",
+      "revokeTitle": "App-Passwort widerrufen",
+      "revokeDescription": "Bist du sicher, dass du dieses App-Passwort widerrufen möchtest? Geräte, die es verwenden, synchronisieren dann nicht mehr."
     },
     "passkeys": {
       "title": "Passkeys",
@@ -617,9 +682,9 @@
       "noPasskeys": "Keine Passkeys registriert",
       "noPasskeysHint": "Füge einen Passkey hinzu, um dich ohne Passwort mit Touch ID, Face ID oder einem Hardware-Schlüssel anzumelden",
       "namePlaceholder": "Passkey-Name",
+      "nameLabel": "Passkey-Name",
       "unnamedPasskey": "Unbenannter Passkey",
       "added": "Hinzugefügt {{date}}",
-      "deleting": "Wird gelöscht...",
       "renameAria": "Passkey umbenennen",
       "deviceType": {
         "multiDevice": "Mehrere Geräte",
@@ -627,12 +692,13 @@
         "unknown": "Unbekannt"
       },
       "signIn": "Mit Passkey anmelden",
-      "signingIn": "Anmeldung läuft...",
       "signInFailed": "Passkey-Anmeldung fehlgeschlagen",
       "failedToLoad": "Passkeys konnten nicht geladen werden",
       "failedToRegister": "Passkey konnte nicht registriert werden",
       "failedToDelete": "Passkey konnte nicht gelöscht werden",
-      "failedToRename": "Passkey konnte nicht umbenannt werden"
+      "failedToRename": "Passkey konnte nicht umbenannt werden",
+      "deleteTitle": "Passkey löschen",
+      "deleteDescription": "Bist du sicher, dass du diesen Passkey löschen möchtest? Du kannst dich dann nicht mehr damit anmelden."
     },
     "messagingReminders": {
       "title": "Messaging-Erinnerungen",
@@ -668,8 +734,12 @@
         "disabled": "Deaktiviert"
       },
       "delete": {
-        "confirm": "Bestätigen?"
-      }
+        "title": "Kanal löschen",
+        "description": "An diesen Kanal werden keine Erinnerungen mehr gesendet."
+      },
+      "unchanged": "(unverändert)",
+      "saveError": "Der Kanal konnte nicht gespeichert werden. Bitte versuch es noch einmal.",
+      "chatSummary": "Chat: {{chat}}"
     },
     "carddav": {
       "title": "CardDAV-Einrichtung",
@@ -684,7 +754,7 @@
       "setupGuide": "Einrichtungsanleitung",
       "useCredentials": "Verwende deine E-Mail {{email}} und ein App-Passwort zum Anmelden.",
       "important": "Wichtig",
-      "importantNote": "Verwende immer ein <strong>App-Passwort</strong> anstelle deines regulären Kontopassworts. App-Passwörter können einzeln widerrufen werden, ohne dein Hauptpasswort zu ändern.",
+      "importantNote": "Verwende immer ein App-Passwort anstelle deines regulären Kontopassworts. App-Passwörter können einzeln widerrufen werden, ohne dein Hauptpasswort zu ändern.",
       "ios": "iOS / iPadOS",
       "macos": "macOS",
       "thunderbird": "Thunderbird",
@@ -702,29 +772,29 @@
       },
       "steps": {
         "ios": {
-          "1": "Öffne <strong>Einstellungen</strong> und tippe auf <strong>Kontakte</strong>",
-          "2": "Tippe auf <strong>Accounts</strong>, dann auf <strong>Account hinzufügen</strong>",
-          "3": "Wähle <strong>Andere</strong> ganz unten",
-          "4": "Tippe auf <strong>CardDAV-Account hinzufügen</strong>",
+          "1": "Öffne Einstellungen und tippe auf Kontakte",
+          "2": "Tippe auf Accounts, dann auf Account hinzufügen",
+          "3": "Wähle Andere ganz unten",
+          "4": "Tippe auf CardDAV-Account hinzufügen",
           "5": "Gib deine Daten ein:",
-          "6": "Tippe auf <strong>Weiter</strong> zum Überprüfen und Speichern"
+          "6": "Tippe auf Weiter zum Überprüfen und Speichern"
         },
         "macos": {
-          "1": "Öffne <strong>Systemeinstellungen</strong>",
-          "2": "Klicke auf <strong>Internetaccounts</strong>",
-          "3": "Klicke auf <strong>Account hinzufügen</strong>, dann wähle <strong>Anderer Kontakte-Account</strong>",
-          "4": "Wähle <strong>CardDAV</strong> als Kontotyp",
+          "1": "Öffne Systemeinstellungen",
+          "2": "Klicke auf Internetaccounts",
+          "3": "Klicke auf Account hinzufügen, dann wähle Anderer Kontakte-Account",
+          "4": "Wähle CardDAV als Kontotyp",
           "5": "Gib deine Daten ein:",
-          "6": "Klicke auf <strong>Anmelden</strong>"
+          "6": "Klicke auf Anmelden"
         },
         "thunderbird": {
-          "1": "Installiere das <strong>CardBook</strong>-Add-on aus den Thunderbird-Add-ons",
-          "2": "Öffne <strong>CardBook</strong> über das Thunderbird-Menü",
-          "3": "Klicke auf <strong>Adressbuch</strong> &rarr; <strong>Neues Adressbuch</strong>",
-          "4": "Wähle <strong>Entfernt</strong> und klicke auf <strong>Weiter</strong>",
-          "5": "Wähle <strong>CardDAV</strong> und klicke auf <strong>Weiter</strong>",
+          "1": "Installiere das CardBook-Add-on aus den Thunderbird-Add-ons",
+          "2": "Öffne CardBook über das Thunderbird-Menü",
+          "3": "Klicke auf Adressbuch → Neues Adressbuch",
+          "4": "Wähle Entfernt und klicke auf Weiter",
+          "5": "Wähle CardDAV und klicke auf Weiter",
           "6": "Gib deine Daten ein:",
-          "7": "Klicke auf <strong>Überprüfen</strong>, um die Verbindung zu testen",
+          "7": "Klicke auf Überprüfen, um die Verbindung zu testen",
           "8": "Wähle das Adressbuch aus und schließe die Einrichtung ab"
         }
       }
@@ -773,7 +843,8 @@
           "password": "Passwort",
           "passwordValue": "Dein App-Passwort"
         }
-      }
+      },
+      "emailPlaceholder": "deine@email.de"
     },
     "danger": {
       "title": "Gefahrenzone",
@@ -854,7 +925,12 @@
       "description": "Beginne, deine Freunde hinzuzufügen"
     },
     "skip": "Vorerst überspringen",
-    "complete": "Einrichtung abschließen"
+    "complete": "Einrichtung abschließen",
+    "firstEntry": "Der erste Eintrag in deinem Freundebuch bist du! Trag deine Daten ein, um loszulegen.",
+    "error": {
+      "generic": "Dein Profil konnte nicht angelegt werden. Bitte versuch es noch einmal."
+    },
+    "pageTitle": "Willkommen"
   },
   "friendSearch": {
     "noResults": "Keine Freunde gefunden"
@@ -863,7 +939,8 @@
     "placeholder": "Freunde, Freundekreise suchen...",
     "noResults": "Keine Ergebnisse gefunden",
     "recentSearches": "Letzte Suchen",
-    "clearRecent": "Verlauf löschen"
+    "clearRecent": "Verlauf löschen",
+    "filtersTitle": "Filter"
   },
   "shortcuts": {
     "title": "Tastenkürzel",
@@ -1054,6 +1131,7 @@
       "deleteDate": "Termin löschen",
       "deleteEmployment": "Beschäftigung löschen",
       "removeFromCircleTitle": "Aus Freundekreis entfernen",
+      "removeFromCollectiveTitle": "Aus Kollektiv entfernen",
       "confirmDeletePhone": "Bist du sicher, dass du diese Telefonnummer löschen möchtest?",
       "confirmDeleteEmail": "Bist du sicher, dass du diese E-Mail-Adresse löschen möchtest?",
       "confirmDeleteAddress": "Bist du sicher, dass du diese Adresse löschen möchtest?",
@@ -1061,13 +1139,14 @@
       "confirmDeleteSocial": "Bist du sicher, dass du dieses soziale Profil löschen möchtest?",
       "confirmDeleteDate": "Bist du sicher, dass du diesen Termin löschen möchtest?",
       "confirmDeleteEmployment": "Bist du sicher, dass du diesen Beschäftigungseintrag löschen möchtest?",
-      "confirmRemoveCircle": "Bist du sicher, dass du diesen Freund aus diesem Freundekreis entfernen möchtest?"
+      "confirmRemoveCircle": "Bist du sicher, dass du diesen Freund aus diesem Freundekreis entfernen möchtest?",
+      "confirmRemoveCollective": "Bist du sicher, dass du diesen Freund aus diesem Kollektiv entfernen möchtest?"
     },
     "addDetail": "Detail hinzufügen",
     "addDetailSubtitle": "Telefon, E-Mail, Adresse und mehr hinzufügen",
     "delete": {
       "title": "Freund löschen",
-      "confirmMessage": "Bist du sicher, dass du löschen möchtest",
+      "confirmMessage": "Bist du sicher, dass du diesen Freund löschen möchtest?",
       "cannotUndo": "Diese Aktion kann nicht rückgängig gemacht werden.",
       "deleting": "Wird gelöscht..."
     },
@@ -1109,7 +1188,8 @@
     "select": "Auswählen",
     "close": "Schließen",
     "newFriend": "Neuer Freund",
-    "friendsList": "Freundeliste"
+    "friendsList": "Freundeliste",
+    "jobAtOrg": "{{jobTitle}} bei {{organization}}"
   },
   "dashboard": {
     "upcomingDates": "Anstehende Termine",
@@ -1153,12 +1233,32 @@
       "department": "Abteilung",
       "relationshipCategory": "Beziehung",
       "circles": "Freundekreis"
+    },
+    "sections": {
+      "location": "Ort",
+      "professional": "Beruflich",
+      "relationship": "Beziehung",
+      "circles": "Kreise"
+    },
+    "categories": {
+      "country": "Land",
+      "city": "Stadt",
+      "organization": "Organisation",
+      "jobTitle": "Position",
+      "department": "Abteilung",
+      "relationship": "Beziehung",
+      "circles": "Kreise"
     }
   },
   "friendList": {
     "searchPlaceholder": "Freunde nach Name, E-Mail, Telefon oder Notizen suchen...",
     "resultsFor_one": "{{count}} Ergebnis für \"{{query}}\"",
     "resultsFor_other": "{{count}} Ergebnisse für \"{{query}}\"",
+    "matchSource": {
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "notes": "Notizen"
+    },
     "filtered": "(gefiltert)",
     "friendCount_one": "{{count}} Freund",
     "friendCount_other": "{{count}} Freunde",
@@ -1179,13 +1279,16 @@
     "clearSearch": "Suche löschen",
     "noFriendsYet": "Noch keine Freunde",
     "getStarted": "Beginne, indem du deinen ersten Freund hinzufügst.",
-    "addFriend": "Freund hinzufügen"
+    "addFriend": "Freund hinzufügen",
+    "matchLabel": "Treffer",
+    "archived": "Archiviert"
   },
   "relationshipSection": {
     "relationships": "Beziehungen",
     "relationship": "Beziehung",
     "addRelationship": "Beziehung hinzufügen",
     "confirmRemove": "Bist du sicher, dass du diese Beziehung entfernen möchtest?",
+    "removeTitle": "Beziehung entfernen",
     "addNotes": "Notizen hinzufügen...",
     "saving": "Speichern...",
     "save": "Speichern",
@@ -1199,7 +1302,12 @@
     "adding": "Wird hinzugefügt...",
     "pleaseSelectFriend": "Bitte wähle einen Freund aus",
     "failedToLoadTypes": "Beziehungstypen konnten nicht geladen werden",
-    "failedToAdd": "Beziehung konnte nicht hinzugefügt werden"
+    "failedToAdd": "Beziehung konnte nicht hinzugefügt werden",
+    "categories": {
+      "family": "Familie",
+      "professional": "Beruflich",
+      "social": "Sozial"
+    }
   },
   "employment": {
     "jobTitle": "Berufsbezeichnung",
@@ -1236,8 +1344,6 @@
     "searchCollectives": "Kollektive suchen",
     "filterByType": "Nach Typ filtern",
     "chooseColumns": "Spalten auswählen",
-    "selectLanguage": "Sprache auswählen",
-    "availableLanguages": "Verfügbare Sprachen",
     "editNotes": "Notizen bearbeiten",
     "removeRelationship": "Beziehung entfernen",
     "circleColor": "Freundekreisfarbe",
@@ -1245,7 +1351,15 @@
     "startYear": "Startjahr",
     "endMonth": "Endmonat",
     "endYear": "Endjahr",
-    "logEncounter": "Begegnung mit diesem Freund erfassen"
+    "logEncounter": "Begegnung mit diesem Freund erfassen",
+    "selectColor": "{{color}} auswählen",
+    "removeItem": "{{name}} entfernen",
+    "userMenu": "Benutzermenü",
+    "userAvatarFor": "Profilbild von {{email}}",
+    "mobileNavigation": "Mobiles Navigationsmenü",
+    "toggleMenu": "Menü umschalten",
+    "search": "Suchen",
+    "removeRecentSearch": "Aus letzten Suchen entfernen"
   },
   "countrySelect": {
     "label": "Land",
@@ -1273,6 +1387,9 @@
       "failedToSave": "Speichern fehlgeschlagen",
       "cannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden.",
       "unsavedChanges": "Du hast ungespeicherte Änderungen. Bist du sicher, dass du schließen möchtest?",
+      "unsavedChangesTitle": "Ungespeicherte Änderungen",
+      "keepEditing": "Weiter bearbeiten",
+      "discardChanges": "Änderungen verwerfen",
       "primary": "Primär"
     },
     "phone": {
@@ -1288,7 +1405,11 @@
         "other": "Sonstige"
       },
       "editAria": "Telefonnummer bearbeiten",
-      "deleteAria": "Telefonnummer löschen"
+      "deleteAria": "Telefonnummer löschen",
+      "placeholder": {
+        "number": "+49 151 12345678",
+        "label": "z. B. Privathandy, Durchwahl"
+      }
     },
     "email": {
       "emailAddress": "E-Mail-Adresse",
@@ -1299,7 +1420,11 @@
         "other": "Sonstige"
       },
       "editAria": "E-Mail-Adresse bearbeiten",
-      "deleteAria": "E-Mail-Adresse löschen"
+      "deleteAria": "E-Mail-Adresse löschen",
+      "placeholder": {
+        "address": "name@beispiel.de",
+        "label": "z. B. Haupt, Newsletter"
+      }
     },
     "address": {
       "address": "Adresse",
@@ -1313,7 +1438,10 @@
         "other": "Sonstige"
       },
       "editAria": "Adresse bearbeiten",
-      "deleteAria": "Adresse löschen"
+      "deleteAria": "Adresse löschen",
+      "placeholder": {
+        "label": "z. B. Hauptwohnsitz, Ferienhaus"
+      }
     },
     "url": {
       "url": "URL",
@@ -1324,7 +1452,11 @@
         "other": "Sonstige"
       },
       "editAria": "URL bearbeiten",
-      "deleteAria": "URL löschen"
+      "deleteAria": "URL löschen",
+      "placeholder": {
+        "url": "https://beispiel.de",
+        "label": "z. B. Portfolio, LinkedIn"
+      }
     },
     "date": {
       "date": "Datum",
@@ -1335,7 +1467,10 @@
         "other": "Sonstige"
       },
       "editAria": "Datum bearbeiten",
-      "deleteAria": "Datum löschen"
+      "deleteAria": "Datum löschen",
+      "placeholder": {
+        "label": "z. B. Hochzeitstag, Kennenlerntag"
+      }
     },
     "social": {
       "platform": "Plattform",
@@ -1351,7 +1486,11 @@
         "other": "Sonstige"
       },
       "editAria": "Soziales Profil bearbeiten",
-      "deleteAria": "Soziales Profil löschen"
+      "deleteAria": "Soziales Profil löschen",
+      "placeholder": {
+        "username": "@benutzername",
+        "profileUrl": "https://linkedin.com/in/benutzername"
+      }
     },
     "employment": {
       "primaryEmployment": "Als primär festlegen (wird in Kontaktkarten angezeigt)",
@@ -1364,19 +1503,15 @@
       "atOrganization": "{{jobTitle}} bei {{organization}}",
       "untitled": "Berufserfahrung"
     },
-    "dropdown": {
-      "phoneNumber": "Telefonnummer",
-      "emailAddress": "E-Mail-Adresse",
-      "address": "Adresse",
-      "websiteUrl": "Webseite/URL",
-      "importantDate": "Wichtiger Termin",
-      "socialProfile": "Soziales Profil",
-      "circle": "Freundeskreis",
-      "collective": "Kollektiv",
-      "employment": "Berufserfahrung"
-    },
     "circle": {
-      "removeAria": "Aus Freundeskreis entfernen"
+      "removeAria": "Aus Freundeskreis entfernen",
+      "loading": "Kreise werden geladen …",
+      "noneCreated": "Noch keine Kreise angelegt.",
+      "noneCreatedHint": "Lege auf der Kreise-Seite Kreise an, um deine Freund:innen zu ordnen.",
+      "allAssigned": "Bereits in allen verfügbaren Kreisen.",
+      "select": "Kreis auswählen",
+      "selectPlaceholder": "Kreis wählen …",
+      "preview": "Vorschau:"
     },
     "collective": {
       "removeAria": "Aus Kollektiv entfernen"
@@ -1400,5 +1535,34 @@
       "invalidBody": "Dieser Autorisierungslink ist ungültig oder abgelaufen.",
       "backHome": "Zurück zur Startseite"
     }
+  },
+  "legal": {
+    "englishOnly": "Dieses Dokument ist nur auf Englisch verfügbar.",
+    "privacyTitle": "Datenschutzerklärung",
+    "termsTitle": "Nutzungsbedingungen"
+  },
+  "address": {
+    "street": "Straße",
+    "streetPlaceholder": "Straße suchen …",
+    "streetManualPlaceholder": "Straßennamen eingeben",
+    "houseNumber": "Hausnummer",
+    "houseNumberPlaceholder": "Suchen oder auswählen …",
+    "houseNumberManualPlaceholder": "Hausnummer eingeben",
+    "postalCode": "Postleitzahl",
+    "postalCodePlaceholder": "Postleitzahl eingeben",
+    "enterManually": "Manuell eingeben",
+    "streetLine2Placeholder": "Wohnung, Etage, Zusatz usw.",
+    "relationshipTypePlaceholder": "Beziehungsart suchen …",
+    "streetLine2": "Adresszusatz",
+    "postalCodeHint": "Gib mindestens 3 Zeichen ein",
+    "noMatchingStreets": "Keine passenden Straßen gefunden",
+    "noMatchingNumbers": "Keine passenden Hausnummern gefunden",
+    "noMatchingTypes": "Keine passenden Beziehungsarten gefunden"
+  },
+  "imageCrop": {
+    "title": "Foto zuschneiden",
+    "zoom": "Zoom",
+    "usePhoto": "Foto verwenden",
+    "processing": "Wird verarbeitet …"
   }
 }

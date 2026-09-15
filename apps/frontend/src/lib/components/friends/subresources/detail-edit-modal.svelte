@@ -1,8 +1,10 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import XMark from 'svelte-heros-v2/XMark.svelte';
+import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import Button from '$lib/components/ui/button.svelte';
+import Modal from '$lib/components/ui/modal.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import { isModalOpen } from '$lib/stores/ui';
 
 const i18n = createI18n();
 
@@ -12,8 +14,6 @@ interface Props {
   isLoading?: boolean;
   error?: string | null;
   isDirty?: boolean;
-  /** Hide the footer Cancel/Save buttons (useful when children have their own buttons) */
-  hideFooter?: boolean;
   /**
    * Wrap the content in a `<form>` (default). Set to false when the children
    * render their own `<form>`, to avoid invalid nested forms. The footer Save
@@ -21,9 +21,16 @@ interface Props {
    * calls `onSave` directly when false.
    */
   asForm?: boolean;
-  onSave: () => void;
+  /** Required unless the body owns its own actions (`footer={null}`). */
+  onSave?: () => void;
   onClose: () => void;
   children: Snippet;
+  /**
+   * Replaces the default Cancel/Save pair in the pinned footer. `null` drops
+   * the footer entirely — for bodies that render their own form and actions
+   * (the add-member form), where a modal footer would duplicate them.
+   */
+  footer?: Snippet | null;
 }
 
 let {
@@ -32,144 +39,111 @@ let {
   isLoading = false,
   error = null,
   isDirty = false,
-  hideFooter = false,
   asForm = true,
   onSave,
   onClose,
   children,
+  footer: footerActions,
 }: Props = $props();
 
-// Mark modal as open for keyboard shortcut handling
-$effect(() => {
-  isModalOpen.set(true);
-  return () => isModalOpen.set(false);
-});
+const uid = $props.id();
+const formId = `detail-edit-form-${uid}`;
+
+let showUnsavedWarning = $state(false);
 
 function handleClose() {
-  if (isDirty && !isLoading) {
-    if (confirm($i18n.t('subresources.common.unsavedChanges'))) {
-      onClose();
-    }
-  } else if (!isLoading) {
-    onClose();
+  if (isLoading) return;
+  if (isDirty) {
+    showUnsavedWarning = true;
+    return;
   }
+  onClose();
 }
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    handleClose();
-  }
+function discardChanges() {
+  showUnsavedWarning = false;
+  onClose();
 }
 
-function handleBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget) {
-    handleClose();
+function keepEditing() {
+  showUnsavedWarning = false;
+}
+
+// Escape, the backdrop and the header X all land here: while the question is
+// up they answer it with "keep editing" instead of asking it again.
+function handleDismiss() {
+  if (showUnsavedWarning) {
+    keepEditing();
+    return;
   }
+  handleClose();
 }
 
 function handleSubmit(e: Event) {
   e.preventDefault();
-  onSave();
+  onSave?.();
 }
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+{#snippet modalFooter()}
+  {#if showUnsavedWarning}
+    <Button variant="secondary" class="flex-1" onclick={keepEditing}>
+      {$i18n.t('subresources.common.keepEditing')}
+    </Button>
+    <Button variant="caution" class="flex-1" onclick={discardChanges}>
+      {$i18n.t('subresources.common.discardChanges')}
+    </Button>
+  {:else if footerActions !== undefined && footerActions !== null}
+    {@render footerActions()}
+  {:else}
+    <Button variant="secondary" class="flex-1" disabled={isLoading} onclick={handleClose}>
+      {$i18n.t('subresources.common.cancel')}
+    </Button>
+    <Button
+      type={asForm ? 'submit' : 'button'}
+      form={asForm ? formId : undefined}
+      class="flex-1"
+      loading={isLoading}
+      onclick={asForm ? undefined : onSave}
+    >
+      {$i18n.t('subresources.common.save')}
+    </Button>
+  {/if}
+{/snippet}
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- Modal backdrop -->
-<div
-  class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4"
-  onclick={handleBackdropClick}
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="edit-modal-title"
-  tabindex="-1"
+<Modal
+  title={showUnsavedWarning ? $i18n.t('subresources.common.unsavedChangesTitle') : title}
+  {subtitle}
+  size="md"
+  closable={!isLoading}
+  onClose={handleDismiss}
+  footer={footerActions === null && !showUnsavedWarning ? undefined : modalFooter}
 >
-  <!-- Modal content -->
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
-    <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-      <div>
-        <h2 id="edit-modal-title" class="text-xl font-heading text-gray-900">
-          {title}
-        </h2>
-        {#if subtitle}
-          <p class="text-sm text-gray-500 font-body">{subtitle}</p>
-        {/if}
-      </div>
-      <button
-        type="button"
-        onclick={handleClose}
-        disabled={isLoading}
-        class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100
-               disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label={$i18n.t('subresources.common.close')}
-      >
-        <XMark class="w-5 h-5" strokeWidth="2" />
-      </button>
+  {#if showUnsavedWarning}
+    <div class="text-center">
+      <ExclamationTriangle class="w-12 h-12 mx-auto text-amber-500 mb-4" strokeWidth="2" />
+      <p class="text-gray-600 font-body">{$i18n.t('subresources.common.unsavedChanges')}</p>
     </div>
+  {/if}
 
-    <!-- Form body. Rendered inside a <form> by default, or a plain <div> when
-         asForm is false (children supply their own <form>) to avoid nesting. -->
-    {#snippet body()}
-      <!-- Scrollable content area -->
-      <div class="p-4 space-y-4 overflow-y-auto flex-1">
-        {@render children()}
-
-        <!-- Error message -->
-        {#if error}
-          <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-            {error}
-          </div>
-        {/if}
-      </div>
-
-      <!-- Footer buttons (fixed) -->
-      {#if !hideFooter}
-      <div class="flex gap-3 p-4 border-t border-gray-200 flex-shrink-0">
-        <button
-          type="button"
-          onclick={handleClose}
-          disabled={isLoading}
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold
-                 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          {$i18n.t('subresources.common.cancel')}
-        </button>
-        <button
-          type={asForm ? 'submit' : 'button'}
-          onclick={asForm ? undefined : onSave}
-          disabled={isLoading}
-          class="flex-1 px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold
-                 hover:bg-forest-light transition-colors disabled:opacity-50
-                 flex items-center justify-center gap-2"
-        >
-          {#if isLoading}
-            <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-            {$i18n.t('subresources.common.saving')}
-          {:else}
-            {$i18n.t('subresources.common.save')}
-          {/if}
-        </button>
-      </div>
-      {/if}
-    {/snippet}
-
+  <!-- Hidden rather than unmounted: the edit form owns the user's in-progress
+       values and the section's `bind:this`, both of which a remount would
+       throw away — which is the opposite of "keep editing". -->
+  <div class:hidden={showUnsavedWarning}>
     {#if asForm}
-      <form onsubmit={handleSubmit} class="flex flex-col flex-1 overflow-hidden">
-        {@render body()}
+      <form id={formId} onsubmit={handleSubmit} class="space-y-4">
+        {@render children()}
       </form>
     {:else}
-      <div class="flex flex-col flex-1 overflow-hidden">
-        {@render body()}
+      <div class="space-y-4">
+        {@render children()}
+      </div>
+    {/if}
+
+    {#if error !== null && error.length > 0}
+      <div class="mt-4">
+        <AlertBanner variant="error">{error}</AlertBanner>
       </div>
     {/if}
   </div>
-</div>
+</Modal>

@@ -1,6 +1,7 @@
 <script lang="ts">
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import CollectiveList from '$lib/components/collectives/collective-list.svelte';
+import { Button, PageShell } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -10,26 +11,21 @@ const i18n = createI18n();
   <title>{$i18n.t('collectives.title')} | Freundebuch</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 p-4">
-  <div class="max-w-7xl mx-auto mt-8">
-    <div class="bg-white rounded-xl shadow-lg p-8">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 class="text-3xl font-heading text-forest">{$i18n.t('collectives.title')}</h1>
-          <p class="text-gray-600 font-body mt-1">{$i18n.t('collectives.subtitle')}</p>
-        </div>
-        <a
-          href="/collectives/new"
-          class="inline-flex items-center gap-2 bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
-          data-shortcut="n o"
-          data-shortcut-label="shortcuts.newCollective"
-        >
-          <Plus class="w-5 h-5" strokeWidth="2" />
-          {$i18n.t('collectives.createNew')}
-        </a>
-      </div>
+<PageShell
+  width="list"
+  title={$i18n.t('collectives.title')}
+  subtitle={$i18n.t('collectives.subtitle')}
+>
+  {#snippet actions()}
+    <Button
+      href="/collectives/new"
+      data-shortcut="n o"
+      data-shortcut-label="shortcuts.newCollective"
+    >
+      <Plus class="w-5 h-5" strokeWidth="2" />
+      {$i18n.t('collectives.createNew')}
+    </Button>
+  {/snippet}
 
-      <CollectiveList />
-    </div>
-  </div>
-</div>
+  <CollectiveList />
+</PageShell>

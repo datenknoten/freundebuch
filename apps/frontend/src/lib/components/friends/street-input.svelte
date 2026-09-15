@@ -2,7 +2,11 @@
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
+import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
 import type { StreetInfo } from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   /** Available streets to select from */
@@ -158,7 +162,7 @@ function enableManualEntry() {
 </script>
 
 <div class="relative">
-  <label for="street-input" class="block text-sm font-medium text-gray-700 font-body mb-1">Street</label>
+  <label for="street-input" class={formClasses.label}>{$i18n.t('address.street')}</label>
 
   <div class="relative">
     {#if value && !showDropdown && !manualEntry && streets.length > 0 && !freeTextMode}
@@ -168,19 +172,14 @@ function enableManualEntry() {
         onclick={activateInput}
         onkeydown={handleButtonKeydown}
         disabled={disabled || isLoading}
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg font-body text-sm flex items-center justify-between text-left focus:ring-2 focus:ring-forest focus:border-transparent {disabled || isLoading ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white cursor-pointer hover:border-gray-400'}"
+        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled ||
+        isLoading
+          ? 'opacity-50 cursor-not-allowed bg-gray-50'
+          : 'bg-white cursor-pointer hover:border-gray-400'}"
       >
         <span class="text-gray-900">{value}</span>
         {#if isLoading}
-          <svg
-            class="animate-spin h-4 w-4 text-gray-400"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
+          <Spinner size="sm" tone="current" />
         {:else}
           <ChevronDown class="w-4 h-4 text-gray-400" strokeWidth="2" />
         {/if}
@@ -197,9 +196,11 @@ function enableManualEntry() {
           onkeydown={handleKeydown}
           onblur={handleBlur}
           onfocus={handleFocus}
-          placeholder={freeTextMode || manualEntry ? 'Enter street name' : 'Search streets...'}
+          placeholder={freeTextMode || manualEntry
+            ? $i18n.t('address.streetManualPlaceholder')
+            : $i18n.t('address.streetPlaceholder')}
           {disabled}
-          class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          class="{formClasses.inputSm} pr-10"
           autocomplete="off"
           role={freeTextMode || manualEntry ? 'textbox' : 'combobox'}
           aria-expanded={showDropdown}
@@ -208,28 +209,7 @@ function enableManualEntry() {
         />
 
         {#if isLoading}
-          <div class="absolute right-3 top-1/2 -translate-y-1/2">
-            <svg
-              class="animate-spin h-4 w-4 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              />
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-          </div>
+          <Spinner size="sm" class="absolute right-3 top-1/2 -translate-y-1/2" />
         {:else if !freeTextMode && !manualEntry}
           <MagnifyingGlass class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth="2" />
         {/if}
@@ -239,7 +219,7 @@ function enableManualEntry() {
 
   {#if showDropdown && !isLoading && !freeTextMode && !manualEntry}
     <ul
-      class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
       role="listbox"
     >
       {#each filteredStreets() as street, index}
@@ -269,12 +249,14 @@ function enableManualEntry() {
           class="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 transition-colors text-left {highlightedIndex === filteredStreets().length ? 'bg-gray-100' : ''}"
         >
           <PencilSquare class="w-4 h-4 text-gray-400" strokeWidth="2" />
-          <span class="font-body text-sm text-gray-600">Enter manually</span>
+          <span class="font-body text-sm text-gray-600">{$i18n.t('address.enterManually')}</span>
         </button>
       </li>
 
       {#if filteredStreets().length === 0}
-        <li class="px-3 py-2 text-sm text-gray-500 font-body">No matching streets found</li>
+        <li class="px-3 py-2 text-sm text-gray-500 font-body">
+          {$i18n.t('address.noMatchingStreets')}
+        </li>
       {/if}
     </ul>
   {/if}

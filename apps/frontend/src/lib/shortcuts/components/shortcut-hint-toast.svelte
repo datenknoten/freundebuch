@@ -1,5 +1,6 @@
 <script lang="ts">
 import { fly } from 'svelte/transition';
+import { codeClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { activeHint, dismissHint } from '../hint-store.js';
 
@@ -26,7 +27,7 @@ let keyParts = $derived($activeHint ? $activeHint.keys.split(' ') : []);
     role="status"
     aria-live="polite"
     transition:fly={{ y: 16, duration: 200 }}
-    class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden max-w-xs"
+    class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-(--z-overlay) border border-gray-200 overflow-hidden max-w-xs"
   >
     <div class="px-4 py-3 font-body text-sm text-gray-700">
       <div class="flex items-center gap-1.5 flex-wrap">
@@ -35,7 +36,7 @@ let keyParts = $derived($activeHint ? $activeHint.keys.split(' ') : []);
           {#if i > 0}
             <span class="text-gray-400 text-xs">{$i18n.t('shortcuts.hintToast.then')}</span>
           {/if}
-          <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">{part}</kbd>
+          <kbd class={codeClasses.kbd}>{part}</kbd>
         {/each}
       </div>
       {#if $activeHint.labelKey}

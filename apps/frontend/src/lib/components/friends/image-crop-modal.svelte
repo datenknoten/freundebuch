@@ -1,7 +1,10 @@
 <script lang="ts">
 import Cropper, { type CropArea, type OnCropCompleteEvent } from 'svelte-easy-crop';
-import XMark from 'svelte-heros-v2/XMark.svelte';
-import { isModalOpen } from '$lib/stores/ui';
+import Button from '$lib/components/ui/button.svelte';
+import Modal from '$lib/components/ui/modal.svelte';
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 
 interface Props {
   imageUrl: string;
@@ -16,26 +19,8 @@ let zoom = $state(1);
 let croppedAreaPixels = $state<CropArea | null>(null);
 let isProcessing = $state(false);
 
-// Mark modal as open for keyboard shortcut handling
-$effect(() => {
-  isModalOpen.set(true);
-  return () => isModalOpen.set(false);
-});
-
 function handleCropComplete(event: OnCropCompleteEvent) {
   croppedAreaPixels = event.pixels;
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && !isProcessing) {
-    onClose();
-  }
-}
-
-function handleBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget && !isProcessing) {
-    onClose();
-  }
 }
 
 /**
@@ -111,98 +96,44 @@ async function handleConfirm() {
 }
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+{#snippet footer()}
+  <Button variant="secondary" class="flex-1" disabled={isProcessing} onclick={onClose}>
+    {$i18n.t('common.cancel')}
+  </Button>
+  <Button
+    class="flex-1"
+    loading={isProcessing}
+    disabled={croppedAreaPixels === null}
+    onclick={handleConfirm}
+  >
+    {$i18n.t('imageCrop.usePhoto')}
+  </Button>
+{/snippet}
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- Modal backdrop -->
-<div
-  class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4"
-  onclick={handleBackdropClick}
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="crop-modal-title"
-  tabindex="-1"
->
-  <!-- Modal content -->
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col">
-    <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-      <h2 id="crop-modal-title" class="text-xl font-heading text-gray-900">
-        Crop Photo
-      </h2>
-      <button
-        type="button"
-        onclick={onClose}
-        disabled={isProcessing}
-        class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100
-               disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label="Close"
-      >
-        <XMark class="w-5 h-5" strokeWidth="2" />
-      </button>
-    </div>
-
-    <!-- Crop area -->
-    <div class="relative w-full h-80 bg-gray-900">
-      <Cropper
-        image={imageUrl}
-        bind:crop
-        bind:zoom
-        aspect={1}
-        cropShape="round"
-        showGrid={false}
-        oncropcomplete={handleCropComplete}
-      />
-    </div>
-
-    <!-- Zoom slider -->
-    <div class="p-4 border-t border-gray-200">
-      <label class="flex items-center gap-3">
-        <span class="text-sm font-body text-gray-600">Zoom</span>
-        <input
-          type="range"
-          min="1"
-          max="3"
-          step="0.1"
-          bind:value={zoom}
-          class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-forest"
-        />
-      </label>
-    </div>
-
-    <!-- Footer buttons -->
-    <div class="flex gap-3 p-4 border-t border-gray-200 flex-shrink-0">
-      <button
-        type="button"
-        onclick={onClose}
-        disabled={isProcessing}
-        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold
-               text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-      >
-        Cancel
-      </button>
-      <button
-        type="button"
-        onclick={handleConfirm}
-        disabled={isProcessing || !croppedAreaPixels}
-        class="flex-1 px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold
-               hover:bg-forest-light transition-colors disabled:opacity-50
-               flex items-center justify-center gap-2"
-      >
-        {#if isProcessing}
-          <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-          Processing...
-        {:else}
-          Use Photo
-        {/if}
-      </button>
-    </div>
+<Modal title={$i18n.t('imageCrop.title')} size="lg" closable={!isProcessing} {onClose} {footer}>
+  <!-- Crop area -->
+  <div class="relative w-full h-80 bg-gray-900 rounded-lg overflow-hidden">
+    <Cropper
+      image={imageUrl}
+      bind:crop
+      bind:zoom
+      aspect={1}
+      cropShape="round"
+      showGrid={false}
+      oncropcomplete={handleCropComplete}
+    />
   </div>
-</div>
+
+  <!-- Zoom slider -->
+  <label class="mt-4 flex items-center gap-3">
+    <span class="text-sm font-body text-gray-600">{$i18n.t('imageCrop.zoom')}</span>
+    <input
+      type="range"
+      min="1"
+      max="3"
+      step="0.1"
+      bind:value={zoom}
+      class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-forest"
+    />
+  </label>
+</Modal>

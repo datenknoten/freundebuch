@@ -10,6 +10,7 @@ import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/fab-create-menu.svelte';
+import { Button, ConfirmDialog, Fab, headingClasses } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
@@ -24,20 +25,24 @@ const i18n = createI18n();
 
 import type { ContactCollectiveSummary, Friend } from '$shared';
 import LastEncounterBadge from '../encounters/last-encounter-badge.svelte';
+import AddDetailDropdown from '../subresources/add-detail-dropdown.svelte';
+import AddDetailSheet from '../subresources/add-detail-sheet.svelte';
+import SubresourceSection from '../subresources/subresource-section.svelte';
 import FriendAvatar from './friend-avatar.svelte';
 import RelationshipsSection from './relationships-section.svelte';
 import {
-  AddressSection,
-  CircleSection,
-  CollectivesSection,
-  DateSection,
-  EmailSection,
-  PhoneSection,
-  ProfessionalHistorySection,
-  SocialProfileSection,
-  UrlSection,
-} from './sections';
-import { AddDetailDropdown, MobileAddDetailModal, type SubresourceType } from './subresources';
+  addressDescriptor,
+  circleDescriptor,
+  createCollectiveDescriptor,
+  dateDescriptor,
+  emailDescriptor,
+  friendAddDetailOptions,
+  hasProfileUrl,
+  phoneDescriptor,
+  professionalHistoryDescriptor,
+  socialProfileDescriptor,
+  urlDescriptor,
+} from './subresource-descriptors';
 
 interface Props {
   friend: Friend;
@@ -56,6 +61,12 @@ $effect(() => {
   }
 });
 
+// The collective descriptor removes a membership through the collectives API,
+// so it has to tell this page to refetch afterwards.
+const collectiveDescriptor = createCollectiveDescriptor(() => {
+  loadCollectives().catch((err) => console.error('Failed to reload collectives:', err));
+});
+
 async function loadCollectives() {
   collectivesLoading = true;
   try {
@@ -72,7 +83,7 @@ let emailStartIndex = $derived(friend.phones.length);
 let urlStartIndex = $derived(friend.phones.length + friend.emails.length);
 let socialStartIndex = $derived(friend.phones.length + friend.emails.length + friend.urls.length);
 let filteredSocialCount = $derived(
-  friend.socialProfiles ? friend.socialProfiles.filter((p) => p.profileUrl).length : 0,
+  (friend.socialProfiles ?? []).filter((profile) => hasProfileUrl(profile)).length,
 );
 let collectiveStartIndex = $derived(
   friend.phones.length + friend.emails.length + friend.urls.length + filteredSocialCount,
@@ -98,11 +109,9 @@ let friendDetailLinks = $derived.by(() => {
   for (const url of friend.urls) {
     links.push({ url: url.url, type: 'external' });
   }
-  if (friend.socialProfiles) {
-    for (const profile of friend.socialProfiles) {
-      if (profile.profileUrl) {
-        links.push({ url: profile.profileUrl, type: 'external' });
-      }
+  for (const profile of friend.socialProfiles ?? []) {
+    if (hasProfileUrl(profile)) {
+      links.push({ url: profile.profileUrl, type: 'external' });
     }
   }
   for (const collective of collectives) {
@@ -128,30 +137,24 @@ $effect(() => {
   };
 });
 
-// Friend deletion state
-let isDeleting = $state(false);
+// Friend deletion state (ConfirmDialog owns the in-flight and error state)
 let showDeleteConfirm = $state(false);
 
 // Mobile add modal state
 let showMobileAddModal = $state(false);
 let showFabCreateMenu = $state(false);
 
-// Friend delete handler
+// Friend delete handler. Rejections propagate to ConfirmDialog, which keeps
+// itself open and shows the reason.
 async function handleDelete() {
-  isDeleting = true;
-  try {
-    await friends.deleteFriend(friend.id);
-    goto('/friends');
-  } catch (error) {
-    console.error('Failed to delete friend:', error);
-    isDeleting = false;
-    showDeleteConfirm = false;
-  }
+  await friends.deleteFriend(friend.id);
+  goto('/friends');
 }
 
-// Dispatch add event for desktop dropdown and mobile modal
-function dispatchAddEvent(type: SubresourceType) {
-  window.dispatchEvent(new CustomEvent(`shortcut:add-${type}`));
+// Dispatch the add event the chosen menu entry carries; each section (and the
+// relationships section) listens for its own.
+function dispatchAddEvent(shortcutEvent: string) {
+  window.dispatchEvent(new CustomEvent(shortcutEvent));
 }
 
 // Keyboard shortcut event listeners
@@ -200,7 +203,7 @@ onMount(() => {
     />
 
     <div class="flex-1 text-center sm:text-left">
-      <h1 class="text-3xl font-heading text-gray-900">{friend.displayName}</h1>
+      <h1 class={headingClasses.entity}>{friend.displayName}</h1>
 
       {#if friend.namePrefix || friend.nameFirst || friend.nameMiddle || friend.nameLast || friend.nameSuffix}
         <p class="text-gray-600 font-body mt-1">
@@ -222,32 +225,31 @@ onMount(() => {
     <div class="flex gap-2">
       <!-- Desktop: Add dropdown (hidden on mobile) -->
       <div class="hidden sm:block">
-        <AddDetailDropdown onAdd={dispatchAddEvent} />
+        <AddDetailDropdown options={friendAddDetailOptions} onAdd={dispatchAddEvent} />
       </div>
 
-      <a
+      <Button
+        variant="secondary"
         href="/friends/{friend.id}/edit"
-        class="px-4 py-2 bg-forest text-white rounded-lg font-body font-semibold hover:bg-forest-light transition-colors"
         data-shortcut="e"
         data-shortcut-label="shortcuts.help.editFriend"
       >
         {$i18n.t('common.edit')}
-      </a>
-      <button
-        onclick={() => showDeleteConfirm = true}
-        class="px-4 py-2 border border-red-300 text-red-600 rounded-lg font-body font-semibold hover:bg-red-50 transition-colors"
-      >
+      </Button>
+      <Button variant="dangerOutline" onclick={() => showDeleteConfirm = true}>
         {$i18n.t('common.delete')}
-      </button>
+      </Button>
     </div>
   </div>
 
   <!-- ==================== PROFESSIONAL HISTORY SECTION ==================== -->
   <!-- Always mounted so the add-work-experience shortcut/listener is registered
        even when the friend has no employment entries yet -->
-  <ProfessionalHistorySection
-    friendId={friend.id}
-    professionalHistory={friend.professionalHistory ?? []}
+  <SubresourceSection
+    descriptor={professionalHistoryDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.professionalHistory ?? []}
   />
 
   <!-- ==================== ABOUT SECTION ==================== -->
@@ -295,57 +297,68 @@ onMount(() => {
   {/if}
 
   <!-- ==================== CONTACT DETAILS SECTION ==================== -->
-  <div class="space-y-4">
-    <PhoneSection
-      friendId={friend.id}
-      phones={friend.phones}
-      linkStartIndex={0}
-    />
+  <SubresourceSection
+    descriptor={phoneDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.phones}
+    linkStartIndex={0}
+  />
 
-    <EmailSection
-      friendId={friend.id}
-      emails={friend.emails}
-      linkStartIndex={emailStartIndex}
-    />
+  <SubresourceSection
+    descriptor={emailDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.emails}
+    linkStartIndex={emailStartIndex}
+  />
 
-    <AddressSection
-      friendId={friend.id}
-      addresses={friend.addresses}
-    />
+  <SubresourceSection
+    descriptor={addressDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.addresses}
+  />
 
-    <UrlSection
-      friendId={friend.id}
-      urls={friend.urls}
-      linkStartIndex={urlStartIndex}
-    />
+  <SubresourceSection
+    descriptor={urlDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.urls}
+    linkStartIndex={urlStartIndex}
+  />
 
-    <SocialProfileSection
-      friendId={friend.id}
-      socialProfiles={friend.socialProfiles ?? []}
-      linkStartIndex={socialStartIndex}
-    />
-  </div>
+  <SubresourceSection
+    descriptor={socialProfileDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.socialProfiles ?? []}
+    linkStartIndex={socialStartIndex}
+  />
 
   <!-- ==================== IMPORTANT DATES SECTION ==================== -->
-  <DateSection
-    friendId={friend.id}
-    dates={friend.dates ?? []}
+  <SubresourceSection
+    descriptor={dateDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.dates ?? []}
   />
 
   <!-- ==================== CIRCLES SECTION ==================== -->
-  <CircleSection
-    friendId={friend.id}
-    circles={friend.circles ?? []}
-    existingCircles={friend.circles ?? []}
+  <SubresourceSection
+    descriptor={circleDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={friend.circles ?? []}
   />
 
   <!-- ==================== COLLECTIVES SECTION ==================== -->
-  <CollectivesSection
-    friendId={friend.id}
-    friendDisplayName={friend.displayName}
-    {collectives}
+  <SubresourceSection
+    descriptor={collectiveDescriptor}
+    ownerId={friend.id}
+    ownerName={friend.displayName}
+    items={collectives}
     linkStartIndex={collectiveStartIndex}
-    onCollectivesChanged={loadCollectives}
   />
 
   <!-- ==================== RELATIONSHIPS SECTION ==================== -->
@@ -366,23 +379,11 @@ onMount(() => {
 </div>
 
 <!-- Mobile FAB: tap = merged create menu (with a contextual "add detail" entry) -->
-<button
-  type="button"
-  onclick={() => (showFabCreateMenu = true)}
-  class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white
-         rounded-full shadow-lg hover:bg-forest-light transition-colors
-         flex items-center justify-center z-40 select-none touch-none [-webkit-touch-callout:none]"
-  aria-label={$i18n.t('common.createNew')}
->
+<Fab onclick={() => (showFabCreateMenu = true)} label={$i18n.t('common.createNew')}>
   <Plus class="w-6 h-6" strokeWidth="2" />
-</button>
+</Fab>
 
-<!-- Mobile create menu with a contextual "add detail" entry for this friend.
-     This block is kept before the add-detail modal on purpose: selecting
-     "add detail" closes this menu and opens the modal in the same update.
-     Svelte tears down blocks top-to-bottom, so the create menu must unmount
-     (clearing isModalOpen) before the add-detail modal mounts (setting it),
-     otherwise the modal would open with global shortcuts still enabled. -->
+<!-- Mobile create menu with a contextual "add detail" entry for this friend. -->
 {#if showFabCreateMenu}
   <FabCreateMenu
     onSelect={(choice: FabCreateChoice) => {
@@ -399,43 +400,27 @@ onMount(() => {
 
 <!-- Mobile add detail modal -->
 {#if showMobileAddModal}
-  <MobileAddDetailModal
-    onSelect={(type) => {
+  <AddDetailSheet
+    options={friendAddDetailOptions}
+    onSelect={(shortcutEvent) => {
       // Close this picker and mount the edit form in one synchronous flush,
       // inside the tap, so the form's auto-focused field claims the keyboard.
       openWithKeyboard(() => {
         showMobileAddModal = false;
-        dispatchAddEvent(type);
+        dispatchAddEvent(shortcutEvent);
       });
     }}
     onClose={() => showMobileAddModal = false}
   />
 {/if}
 
-<!-- Delete friend confirmation modal -->
+<!-- Delete friend confirmation -->
 {#if showDeleteConfirm}
-  <div class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
-      <h3 class="text-xl font-heading text-gray-900 mb-2">{$i18n.t('friendDetail.delete.title')}</h3>
-      <p class="text-gray-600 font-body mb-6">
-        {$i18n.t('friendDetail.delete.confirmMessage')} <strong>{friend.displayName}</strong>? {$i18n.t('friendDetail.delete.cannotUndo')}
-      </p>
-      <div class="flex gap-3">
-        <button
-          onclick={() => showDeleteConfirm = false}
-          disabled={isDeleting}
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-body font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          {$i18n.t('common.cancel')}
-        </button>
-        <button
-          onclick={handleDelete}
-          disabled={isDeleting}
-          class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-body font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
-        >
-          {isDeleting ? $i18n.t('friendDetail.delete.deleting') : $i18n.t('common.delete')}
-        </button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={$i18n.t('friendDetail.delete.title')}
+    description={$i18n.t('friendDetail.delete.confirmMessage')}
+    itemPreview={friend.displayName}
+    onConfirm={handleDelete}
+    onClose={() => (showDeleteConfirm = false)}
+  />
 {/if}

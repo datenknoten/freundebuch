@@ -1,6 +1,9 @@
 <script lang="ts">
+import { createI18n } from '$lib/i18n/index.js';
 import type { CircleSummary } from '$shared';
 import CircleChip from './circle-chip.svelte';
+
+const i18n = createI18n();
 
 interface Props {
   circles: CircleSummary[];
@@ -40,7 +43,7 @@ let displayCircles = $derived(showingAll ? circles : visibleCircles);
         class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
         onclick={() => (showingAll = true)}
       >
-        +{hiddenCount} more
+        {$i18n.t('common.showMore', { count: hiddenCount })}
       </button>
     {:else if showingAll && hiddenCount > 0}
       <button
@@ -48,7 +51,7 @@ let displayCircles = $derived(showingAll ? circles : visibleCircles);
         class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
         onclick={() => (showingAll = false)}
       >
-        Show less
+        {$i18n.t('common.showLess')}
       </button>
     {/if}
   </div>

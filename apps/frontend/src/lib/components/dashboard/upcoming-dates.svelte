@@ -1,5 +1,14 @@
 <script lang="ts">
+import Calendar from 'svelte-heros-v2/Calendar.svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
 import FriendAvatar from '$lib/components/friends/friend-avatar.svelte';
+import {
+  Button,
+  chipClasses,
+  EmptyState,
+  headingClasses,
+  surfaceClasses,
+} from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import type { DateType, UpcomingDate } from '$shared';
 
@@ -60,19 +69,23 @@ function formatDaysUntil(daysUntil: number): string {
   }
 }
 
+/**
+ * Tone of the countdown chip. `amber-warm` is the palette's "needs attention
+ * soon" accent and has no `chipClasses` tone of its own.
+ */
 function getDaysUntilClass(daysUntil: number): string {
   if (daysUntil === 0) {
-    return 'bg-forest text-white';
+    return chipClasses.forest;
   } else if (daysUntil <= 7) {
-    return 'bg-sage-light text-forest';
+    return 'bg-amber-warm/30 text-forest';
   } else {
-    return 'bg-gray-100 text-gray-600';
+    return chipClasses.neutral;
   }
 }
 </script>
 
-<div class="bg-white rounded-xl shadow-lg p-6">
-  <h3 class="text-xl font-heading text-gray-800 mb-4">{$i18n.t('dashboard.upcomingDates')}</h3>
+<div class={surfaceClasses.page}>
+  <h2 class="{headingClasses.widget} mb-4">{$i18n.t('dashboard.upcomingDates')}</h2>
 
   {#if isLoading}
     <div class="animate-pulse space-y-3">
@@ -87,22 +100,18 @@ function getDaysUntilClass(daysUntil: number): string {
       {/each}
     </div>
   {:else if error}
-    <div class="text-red-600 text-sm">{error}</div>
+    <AlertBanner variant="error">{error}</AlertBanner>
     {#if onRetry}
-      <button
-        type="button"
-        onclick={onRetry}
-        class="mt-3 text-sm font-body text-forest hover:text-forest-light"
-      >
+      <Button variant="ghostAccent" size="sm" class="mt-3" onclick={onRetry}>
         {$i18n.t('common.retry')}
-      </button>
+      </Button>
     {/if}
   {:else if upcomingDates.length === 0}
-    <div class="text-center py-6">
-      <div class="text-gray-400 text-4xl mb-2">&#128197;</div>
-      <p class="text-gray-500 font-body">{$i18n.t('dashboard.noUpcomingDates', { days })}</p>
-      <p class="text-gray-400 text-sm mt-1">{$i18n.t('dashboard.addBirthdays')}</p>
-    </div>
+    <EmptyState
+      icon={Calendar}
+      title={$i18n.t('dashboard.noUpcomingDates', { days })}
+      description={$i18n.t('dashboard.addBirthdays')}
+    />
   {:else}
     <div class="space-y-3">
       {#each upcomingDates as date (date.id)}
@@ -120,7 +129,7 @@ function getDaysUntilClass(daysUntil: number): string {
               <span class="font-body font-medium text-gray-900 truncate">
                 {date.friend.displayName}
               </span>
-              <span class="text-xs px-2 py-0.5 rounded-full font-body {getDaysUntilClass(date.daysUntil)}">
+              <span class="{chipClasses.base} {getDaysUntilClass(date.daysUntil)}">
                 {formatDaysUntil(date.daysUntil)}
               </span>
             </div>

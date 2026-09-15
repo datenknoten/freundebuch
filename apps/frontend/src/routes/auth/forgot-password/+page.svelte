@@ -1,13 +1,20 @@
 <script lang="ts">
 import ForgotPasswordForm from '$lib/components/forgot-password-form.svelte';
+import { PageShell } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
+
+const i18n = createI18n();
 </script>
 
 <svelte:head>
-	<title>Forgot Password | Freundebuch</title>
+	<title>{$i18n.t('auth.forgotPassword.title')} | Freundebuch</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-	<div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-		<ForgotPasswordForm />
-	</div>
-</div>
+<PageShell
+	width="narrow"
+	centered
+	title={$i18n.t('auth.forgotPassword.heading')}
+	subtitle={$i18n.t('auth.forgotPassword.description')}
+>
+	<ForgotPasswordForm />
+</PageShell>

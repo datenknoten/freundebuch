@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isModalOpen } from '$lib/stores/ui';
+import { isModalOpen, resetOpenOverlays } from '$lib/stores/ui';
 import { fireEvent, render, screen } from '$lib/test';
 import FabCreateMenu, { navigateForCreateChoice } from './fab-create-menu.svelte';
 
@@ -39,7 +39,7 @@ vi.mock('svelte', async (importOriginal) => {
 
 afterEach(() => {
   vi.clearAllMocks();
-  isModalOpen.set(false);
+  resetOpenOverlays();
 });
 
 describe('FabCreateMenu', () => {
@@ -85,7 +85,8 @@ describe('FabCreateMenu', () => {
     const onClose = vi.fn();
     render(FabCreateMenu, { onSelect: vi.fn(), onClose });
 
-    await fireEvent.keyDown(window, { key: 'Escape' });
+    // Escape reaches the sheet as the native dialog's `cancel` event.
+    await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
     await fireEvent.click(screen.getByText('common.cancel'));
     expect(onClose).toHaveBeenCalledTimes(2);
   });
@@ -98,7 +99,8 @@ describe('FabCreateMenu', () => {
 
     // The modal must open inside the FAB tap (iOS raises the keyboard only for
     // a focus() within the gesture), but only after the menu's teardown has
-    // flushed, or its cleanup would clear isModalOpen behind the open modal.
+    // flushed: closing its <dialog> restores focus to the FAB, which would
+    // otherwise land after the modal's autofocus and drop the keyboard.
     it('opens the circle modal synchronously, flushing the menu teardown first', () => {
       const flushesBeforeDispatch: number[] = [];
       const listener = () => flushesBeforeDispatch.push(flushSync.mock.calls.length);

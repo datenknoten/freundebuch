@@ -1,5 +1,7 @@
 <script lang="ts">
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
+import { chipClasses } from '$lib/components/ui';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type { Address, AddressType } from '$shared';
 import AddressMapModal from './address-map-modal.svelte';
@@ -61,26 +63,26 @@ const addressLines = $derived(formatAddress(address));
           {#if address.label} - {address.label}{/if}
         </span>
         {#if address.isPrimary}
-          <span class="px-2 py-0.5 bg-forest text-white text-xs rounded">
+          <span class="{chipClasses.base} {chipClasses.forest}">
             {$i18n.t('subresources.common.primary')}
           </span>
         {/if}
       </div>
     </div>
     {#if hasCoordinates}
-      <button
-        type="button"
-        class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-forest border border-forest/30 hover:bg-forest hover:text-white hover:border-forest px-2.5 py-1 rounded-full transition-colors"
+      <Button
+        variant="secondary"
+        size="xs"
+        class="mt-3"
         onclick={() => (showMap = true)}
         aria-haspopup="dialog"
       >
         <MapPin class="w-3.5 h-3.5" strokeWidth="2" />
         {$i18n.t('subresources.address.showMap')}
-      </button>
+      </Button>
     {/if}
-    {#if address.latitude != null && address.longitude != null}
+    {#if showMap && address.latitude != null && address.longitude != null}
       <AddressMapModal
-        open={showMap}
         latitude={address.latitude}
         longitude={address.longitude}
         addressLabel={formatAddressLabel(address)}

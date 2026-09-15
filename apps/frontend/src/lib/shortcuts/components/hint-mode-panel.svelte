@@ -14,7 +14,7 @@ const i18n = createI18n();
 const isDanger = $derived(variant === 'danger');
 </script>
 
-<div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden min-w-48">
+<div class="fixed bottom-6 left-6 bg-white rounded-lg shadow-lg z-(--z-overlay) border border-gray-200 overflow-hidden min-w-48">
   <div class="{isDanger ? 'bg-red-50 border-b border-red-200' : 'bg-gray-50 border-b border-gray-200'} px-3 py-2">
     <span class="text-sm font-medium {isDanger ? 'text-red-700' : 'text-gray-700'}">
       {title}{prefix ? ` (${prefix}...)` : '...'}

@@ -1,6 +1,6 @@
 <script lang="ts">
-import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import CollectiveForm from '$lib/components/collectives/collective-form.svelte';
+import { PageShell } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -10,22 +10,11 @@ const i18n = createI18n();
   <title>{$i18n.t('collectives.createNew')} | Freundebuch</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 p-4">
-  <div class="max-w-2xl mx-auto mt-8">
-    <div class="bg-white rounded-xl shadow-lg p-8">
-      <div class="mb-8">
-        <a
-          href="/collectives"
-          class="inline-flex items-center gap-2 text-gray-600 hover:text-forest font-body text-sm transition-colors"
-        >
-          <ChevronLeft class="w-4 h-4" strokeWidth="2" />
-          {$i18n.t('collectives.backToCollectives')}
-        </a>
-        <h1 class="text-3xl font-heading text-forest mt-4">{$i18n.t('collectives.createNew')}</h1>
-        <p class="text-gray-600 font-body mt-1">{$i18n.t('collectives.createNewSubtitle')}</p>
-      </div>
-
-      <CollectiveForm />
-    </div>
-  </div>
-</div>
+<PageShell
+  width="form"
+  title={$i18n.t('collectives.createNew')}
+  subtitle={$i18n.t('collectives.createNewSubtitle')}
+  back={{ href: '/collectives', label: $i18n.t('collectives.backToCollectives') }}
+>
+  <CollectiveForm />
+</PageShell>

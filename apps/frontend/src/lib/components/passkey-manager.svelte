@@ -4,6 +4,11 @@ import Key from 'svelte-heros-v2/Key.svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import { authClient } from '$lib/auth-client';
 import AlertBanner from '$lib/components/alert-banner.svelte';
+import { FormInput } from '$lib/components/ui';
+import Button from '$lib/components/ui/button.svelte';
+import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
+import EmptyState from '$lib/components/ui/empty-state.svelte';
+import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
@@ -29,6 +34,8 @@ let isAdding = $state(false);
 let deletingId = $state<string | null>(null);
 let editingId = $state<string | null>(null);
 let editName = $state('');
+let deleteConfirmId = $state<string | null>(null);
+let deleteConfirmName = $state('');
 
 onMount(async () => {
   await loadPasskeys();
@@ -64,18 +71,29 @@ async function handleAdd() {
   }
 }
 
-async function handleDelete(id: string) {
+function openDeleteConfirm(pk: Passkey) {
+  deleteConfirmId = pk.id;
+  deleteConfirmName = pk.name || $i18n.t('profile.passkeys.unnamedPasskey');
+}
+
+function closeDeleteConfirm() {
+  deleteConfirmId = null;
+  deleteConfirmName = '';
+}
+
+// Rejections stay inside ConfirmDialog, which keeps itself open and shows the
+// reason, so the failure is visible where the action was taken.
+async function handleDelete() {
+  const id = deleteConfirmId;
+  if (id === null) return;
   deletingId = id;
   error = '';
   try {
     const result = await authClient.passkey.deletePasskey({ id });
     if (result?.error) {
-      error = result.error.message || $i18n.t('profile.passkeys.failedToDelete');
-    } else {
-      await loadPasskeys();
+      throw new Error(result.error.message || $i18n.t('profile.passkeys.failedToDelete'));
     }
-  } catch (err) {
-    error = (err as Error)?.message || $i18n.t('profile.passkeys.failedToDelete');
+    await loadPasskeys();
   } finally {
     deletingId = null;
   }
@@ -125,28 +143,20 @@ function deviceTypeLabel(type: string | null): string {
 </script>
 
 <div class="space-y-6">
-  {#if error}
+  {#if error.length > 0}
     <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
-  <button
-    onclick={handleAdd}
-    disabled={isAdding}
-    class="bg-forest text-white px-4 py-2 rounded-lg font-body font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-  >
-    {isAdding ? $i18n.t('profile.passkeys.registering') : $i18n.t('profile.passkeys.add')}
-  </button>
+  <Button loading={isAdding} onclick={handleAdd}>
+    {$i18n.t('profile.passkeys.add')}
+  </Button>
 
   {#if isLoading}
-    <div class="text-center py-4">
-      <p class="text-gray-500 font-body">{$i18n.t('profile.passkeys.loading')}</p>
+    <div class="flex justify-center py-12">
+      <Spinner size="lg" label={$i18n.t('profile.passkeys.loading')} />
     </div>
   {:else if passkeys.length === 0}
-    <div class="text-center py-8 bg-gray-50 rounded-lg">
-      <Key class="w-12 h-12 mx-auto text-gray-400 mb-3" strokeWidth="2" />
-      <p class="text-gray-600 font-body">{$i18n.t('profile.passkeys.noPasskeys')}</p>
-      <p class="text-gray-500 font-body text-sm mt-1">{$i18n.t('profile.passkeys.noPasskeysHint')}</p>
-    </div>
+    <EmptyState icon={Key} title={$i18n.t('profile.passkeys.noPasskeys')} description={$i18n.t('profile.passkeys.noPasskeysHint')} />
   {:else}
     <div class="divide-y divide-gray-200 border border-gray-200 rounded-lg">
       {#each passkeys as pk (pk.id)}
@@ -155,27 +165,23 @@ function deviceTypeLabel(type: string | null): string {
             {#if editingId === pk.id}
               <form
                 onsubmit={(e) => { e.preventDefault(); saveEdit(pk.id); }}
-                class="flex items-center gap-2"
+                class="flex items-end gap-2"
               >
-                <input
-                  type="text"
-                  bind:value={editName}
-                  placeholder={$i18n.t('profile.passkeys.namePlaceholder')}
-                  class="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm"
-                />
-                <button
-                  type="submit"
-                  class="text-forest hover:text-forest-light font-body text-sm font-medium"
-                >
+                <div class="flex-1">
+                  <FormInput
+                    id="passkey-name-{pk.id}"
+                    label={$i18n.t('profile.passkeys.nameLabel')}
+                    bind:value={editName}
+                    placeholder={$i18n.t('profile.passkeys.namePlaceholder')}
+                    size="sm"
+                  />
+                </div>
+                <Button type="submit" variant="ghostAccent" size="sm">
                   {$i18n.t('common.save')}
-                </button>
-                <button
-                  type="button"
-                  onclick={cancelEdit}
-                  class="text-gray-500 hover:text-gray-700 font-body text-sm"
-                >
+                </Button>
+                <Button variant="ghost" size="sm" onclick={cancelEdit}>
                   {$i18n.t('common.cancel')}
-                </button>
+                </Button>
               </form>
             {:else}
               <div class="flex items-center gap-2">
@@ -198,16 +204,27 @@ function deviceTypeLabel(type: string | null): string {
             {/if}
           </div>
           {#if editingId !== pk.id}
-            <button
-              onclick={() => handleDelete(pk.id)}
+            <Button
+              variant="dangerOutline"
+              size="sm"
+              onclick={() => openDeleteConfirm(pk)}
               disabled={deletingId === pk.id}
-              class="text-red-600 hover:text-red-800 font-body text-sm font-medium disabled:opacity-50"
             >
-              {deletingId === pk.id ? $i18n.t('profile.passkeys.deleting') : $i18n.t('common.delete')}
-            </button>
+              {$i18n.t('common.delete')}
+            </Button>
           {/if}
         </div>
       {/each}
     </div>
   {/if}
 </div>
+
+{#if deleteConfirmId !== null}
+  <ConfirmDialog
+    title={$i18n.t('profile.passkeys.deleteTitle')}
+    description={$i18n.t('profile.passkeys.deleteDescription')}
+    itemPreview={deleteConfirmName}
+    onConfirm={handleDelete}
+    onClose={closeDeleteConfirm}
+  />
+{/if}

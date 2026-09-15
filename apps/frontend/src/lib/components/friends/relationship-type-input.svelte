@@ -2,7 +2,20 @@
 import { onMount } from 'svelte';
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
-import type { RelationshipType, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
+import { chipClasses, formClasses, surfaceClasses } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
+import {
+  RELATIONSHIP_CATEGORIES,
+  RELATIONSHIP_CATEGORY_STYLE,
+} from '$lib/utils/relationship-categories';
+import type {
+  RelationshipCategory,
+  RelationshipType,
+  RelationshipTypeId,
+  RelationshipTypesGrouped,
+} from '$shared';
+
+const i18n = createI18n();
 
 interface Props {
   /** The relationship types grouped by category */
@@ -24,18 +37,12 @@ let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
 let inputElement = $state<HTMLInputElement | undefined>(undefined);
 
-// Category labels and colors
-const categoryConfig: Record<string, { label: string; bgColor: string; textColor: string }> = {
-  family: { label: 'Family', bgColor: 'bg-rose-50', textColor: 'text-rose-700' },
-  professional: { label: 'Professional', bgColor: 'bg-blue-50', textColor: 'text-blue-700' },
-  social: { label: 'Social', bgColor: 'bg-green-50', textColor: 'text-green-700' },
-};
-
-// Flatten all types for filtering
+// Flatten all types for filtering; the category comes from the grouped shape,
+// so it is always one of the three known categories.
 const allTypes = $derived(() => {
-  const types: Array<RelationshipType & { category: string }> = [];
-  for (const [category, categoryTypes] of Object.entries(relationshipTypes)) {
-    for (const type of categoryTypes) {
+  const types: Array<RelationshipType & { category: RelationshipCategory }> = [];
+  for (const category of RELATIONSHIP_CATEGORIES) {
+    for (const type of relationshipTypes[category]) {
       types.push({ ...type, category });
     }
   }
@@ -174,14 +181,17 @@ function handleButtonKeydown(e: KeyboardEvent) {
         onclick={activateInput}
         onkeydown={handleButtonKeydown}
         {disabled}
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg font-body text-sm flex items-center justify-between text-left focus:ring-2 focus:ring-forest focus:border-transparent {disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white cursor-pointer hover:border-gray-400'}"
+        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled
+          ? 'opacity-50 cursor-not-allowed bg-gray-50'
+          : 'bg-white cursor-pointer hover:border-gray-400'}"
       >
         <div class="flex items-center gap-2">
           {#each allTypes().filter((t) => t.id === value) as type}
             <span
-              class="px-2 py-0.5 rounded text-xs font-medium {categoryConfig[type.category]?.bgColor} {categoryConfig[type.category]?.textColor}"
+              class="{chipClasses.base} {RELATIONSHIP_CATEGORY_STYLE[type.category]
+                .bgColor} {RELATIONSHIP_CATEGORY_STYLE[type.category].textColor}"
             >
-              {categoryConfig[type.category]?.label}
+              {$i18n.t(RELATIONSHIP_CATEGORY_STYLE[type.category].labelKey)}
             </span>
             <span class="text-gray-900">{type.label}</span>
           {/each}
@@ -198,9 +208,9 @@ function handleButtonKeydown(e: KeyboardEvent) {
         onkeydown={handleKeydown}
         onblur={handleBlur}
         onfocus={handleFocus}
-        placeholder="Search relationship types..."
+        placeholder={$i18n.t('address.relationshipTypePlaceholder')}
         {disabled}
-        class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-forest focus:border-transparent font-body text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        class="{formClasses.inputSm} pr-10"
         autocomplete="off"
         role="combobox"
         aria-expanded={showDropdown}
@@ -216,7 +226,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
   {#if showDropdown}
     <ul
       id="relationship-type-listbox"
-      class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
       role="listbox"
     >
       {#each filteredTypes() as type, index}
@@ -231,9 +241,10 @@ function handleButtonKeydown(e: KeyboardEvent) {
             class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors {highlightedIndex === index ? 'bg-gray-100' : ''}"
           >
             <span
-              class="px-2 py-0.5 rounded text-xs font-medium {categoryConfig[type.category]?.bgColor} {categoryConfig[type.category]?.textColor}"
+              class="{chipClasses.base} {RELATIONSHIP_CATEGORY_STYLE[type.category]
+                .bgColor} {RELATIONSHIP_CATEGORY_STYLE[type.category].textColor}"
             >
-              {categoryConfig[type.category]?.label}
+              {$i18n.t(RELATIONSHIP_CATEGORY_STYLE[type.category].labelKey)}
             </span>
             <span class="font-body text-sm text-gray-900">{type.label}</span>
           </button>
@@ -242,7 +253,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
 
       {#if filteredTypes().length === 0}
         <li class="px-3 py-2 text-sm text-gray-500 font-body">
-          No matching types found
+          {$i18n.t('address.noMatchingTypes')}
         </li>
       {/if}
     </ul>

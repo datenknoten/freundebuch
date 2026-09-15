@@ -12,10 +12,14 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
+import { focusTrap } from '$lib/actions/focus-trap';
+import { codeClasses, focusRing } from '$lib/components/ui';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
 import { search } from '$lib/stores/search';
+import LegalLinks from './legal-links.svelte';
 import UserMenu from './user-menu.svelte';
 
 const i18n = createI18n();
@@ -24,8 +28,6 @@ const i18n = createI18n();
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
 let mobileMenuOpen = $state(false);
-
-const version = __APP_VERSION__;
 
 // Derive page title from current route
 const pageTitle = $derived.by(() => {
@@ -57,11 +59,28 @@ async function handleLogout() {
   }
 }
 
+// A drawer entry is current when the route matches it exactly, or sits
+// underneath it ("/friends/123" marks "Friends"). "/" only ever matches itself.
+function isActive(href: string): boolean {
+  const path = $page.url.pathname;
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(`${href}/`);
+}
+
+const drawerLink =
+  'flex items-center gap-2 px-3 py-2 rounded-md font-body font-medium transition-colors';
+
+function drawerLinkClass(href: string): string {
+  return isActive(href)
+    ? `${drawerLink} bg-forest/10 text-forest`
+    : `${drawerLink} text-gray-700 hover:bg-gray-100 hover:text-forest`;
+}
+
 function closeMobileMenu() {
   mobileMenuOpen = false;
 }
 
-let menuElement: HTMLDivElement;
+let menuElement = $state<HTMLDivElement | undefined>(undefined);
 
 // Prevent body scroll when mobile menu is open
 $effect(() => {
@@ -76,46 +95,23 @@ $effect(() => {
   };
 });
 
-// Focus trap for mobile menu
+// Escape closes the drawer, and the first entry takes focus when it opens.
+// Tab containment is the shared `focusTrap` action on the drawer itself.
 $effect(() => {
-  if (mobileMenuOpen && menuElement) {
-    const focusableElements = menuElement.querySelectorAll<HTMLElement>(
-      'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])',
-    );
-    const firstFocusable = focusableElements[0];
-    const lastFocusable = focusableElements[focusableElements.length - 1];
+  if (!mobileMenuOpen || menuElement === undefined) return;
 
-    function handleTabKey(e: KeyboardEvent) {
-      if (e.key !== 'Tab') return;
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstFocusable) {
-          e.preventDefault();
-          lastFocusable?.focus();
-        }
-      } else {
-        if (document.activeElement === lastFocusable) {
-          e.preventDefault();
-          firstFocusable?.focus();
-        }
-      }
+  function handleEscape(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      closeMobileMenu();
     }
-
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        closeMobileMenu();
-      }
-    }
-
-    menuElement.addEventListener('keydown', handleTabKey);
-    document.addEventListener('keydown', handleEscape);
-    firstFocusable?.focus();
-
-    return () => {
-      menuElement.removeEventListener('keydown', handleTabKey);
-      document.removeEventListener('keydown', handleEscape);
-    };
   }
+
+  document.addEventListener('keydown', handleEscape);
+  menuElement.querySelector<HTMLElement>('a[href], button')?.focus();
+
+  return () => {
+    document.removeEventListener('keydown', handleEscape);
+  };
 });
 </script>
 
@@ -123,24 +119,19 @@ $effect(() => {
 {#if mobileMenuOpen}
   <div
     transition:fade={{ duration: 200 }}
-    class="fixed inset-0 bg-gray-900/50 z-40 sm:hidden"
+    class="fixed inset-0 bg-gray-900/50 z-(--z-overlay) sm:hidden"
     onclick={closeMobileMenu}
-    onkeydown={(e) => {
-      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        closeMobileMenu();
-      }
-    }}
-    role="button"
-    tabindex="0"
-    aria-label="Close menu"
+    role="presentation"
   ></div>
 {/if}
 
 <!-- Mobile slide-out menu -->
 <div
   bind:this={menuElement}
-  class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-200 ease-in-out sm:hidden {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
+  use:focusTrap={mobileMenuOpen}
+  inert={!mobileMenuOpen}
+  aria-hidden={!mobileMenuOpen}
+  class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-(--z-overlay) transform transition-transform ease-in-out sm:hidden {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
 >
   <div class="p-4 border-b border-gray-200">
     <a href="/" onclick={closeMobileMenu}>
@@ -148,7 +139,7 @@ $effect(() => {
     </a>
   </div>
 
-  <nav class="p-4" aria-label="Mobile navigation menu">
+  <nav class="p-4" aria-label={$i18n.t('aria.mobileNavigation')}>
     {#if $isAuthenticated && $currentUser}
       <div class="space-y-2">
         <a
@@ -157,7 +148,8 @@ $effect(() => {
           data-shortcut="n f"
           data-shortcut-label="shortcuts.newFriend"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
+          class={drawerLinkClass('/friends/new')}
+          aria-current={isActive('/friends/new') ? 'page' : undefined}
         >
           <Plus class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('friends.addNew')}
@@ -168,7 +160,8 @@ $effect(() => {
           data-shortcut="g f"
           data-shortcut-label="shortcuts.goFriends"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
+          class={drawerLinkClass('/friends')}
+          aria-current={isActive('/friends') ? 'page' : undefined}
         >
           <Users class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.friends')}
@@ -179,7 +172,8 @@ $effect(() => {
           data-shortcut="g c"
           data-shortcut-label="shortcuts.goCircles"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
+          class={drawerLinkClass('/circles')}
+          aria-current={isActive('/circles') ? 'page' : undefined}
         >
           <Swatch class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.circles')}
@@ -190,7 +184,8 @@ $effect(() => {
           data-shortcut="g e"
           data-shortcut-label="shortcuts.goEncounters"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
+          class={drawerLinkClass('/encounters')}
+          aria-current={isActive('/encounters') ? 'page' : undefined}
         >
           <Calendar class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.encounters')}
@@ -201,7 +196,8 @@ $effect(() => {
           data-shortcut="g o"
           data-shortcut-label="shortcuts.goCollectives"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
+          class={drawerLinkClass('/collectives')}
+          aria-current={isActive('/collectives') ? 'page' : undefined}
         >
           <BuildingOffice class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.collectives')}
@@ -212,7 +208,8 @@ $effect(() => {
           data-shortcut="g p"
           data-shortcut-label="shortcuts.goProfile"
           onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
+          class={drawerLinkClass('/profile')}
+          aria-current={isActive('/profile') ? 'page' : undefined}
         >
           <User class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.profile')}
@@ -225,64 +222,39 @@ $effect(() => {
         </div>
         <button
           onclick={handleLogout}
-          class="w-full flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
+          class="w-full flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors"
         >
           <ArrowRightOnRectangle class="w-5 h-5" strokeWidth="2" />
           {$i18n.t('nav.logout')}
         </button>
       </div>
     {:else}
-      <div class="space-y-2">
-        <a
-          href="/auth/login"
-          onclick={closeMobileMenu}
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:text-forest font-body font-medium transition-colors duration-200"
-        >
+      <div class="flex flex-col gap-2">
+        <Button href="/auth/login" variant="secondary" block onclick={closeMobileMenu}>
           {$i18n.t('nav.login')}
-        </a>
+        </Button>
         {#if $signupEnabled}
-          <a
-            href="/auth/register"
-            onclick={closeMobileMenu}
-            class="flex items-center gap-2 px-3 py-2 rounded-md bg-forest text-white hover:bg-forest-light font-body font-medium transition-colors duration-200"
-          >
+          <Button href="/auth/register" block onclick={closeMobileMenu}>
             {$i18n.t('nav.register')}
-          </a>
+          </Button>
         {/if}
       </div>
     {/if}
   </nav>
 
   <div class="absolute bottom-4 left-0 right-0 px-4">
-    <div class="flex justify-center gap-3 mb-2">
-      <a
-        href="/privacy"
-        onclick={closeMobileMenu}
-        class="text-gray-400 hover:text-forest text-xs font-body transition-colors duration-200"
-      >
-        {$i18n.t('footer.privacy')}
-      </a>
-      <span class="text-gray-300">|</span>
-      <a
-        href="/terms"
-        onclick={closeMobileMenu}
-        class="text-gray-400 hover:text-forest text-xs font-body transition-colors duration-200"
-      >
-        {$i18n.t('footer.terms')}
-      </a>
-    </div>
-    <p class="text-center text-gray-400 text-xs font-body"><a href="https://github.com/datenknoten/freundebuch" class="hover:text-forest transition-colors duration-200" target="_blank" rel="noopener noreferrer">v{version}</a></p>
+    <LegalLinks size="sm" onnavigate={closeMobileMenu} />
   </div>
 </div>
 
-<nav class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30">
+<nav class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-(--z-nav)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center h-16 gap-4">
+    <div class="flex items-center h-(--nav-h) gap-4">
       <!-- Mobile: Hamburger menu button -->
       <button
-        class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+        class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors {focusRing}"
         onclick={() => mobileMenuOpen = !mobileMenuOpen}
-        aria-label="Toggle menu"
+        aria-label={$i18n.t('aria.toggleMenu')}
         aria-expanded={mobileMenuOpen}
       >
         {#if mobileMenuOpen}
@@ -307,9 +279,9 @@ $effect(() => {
       <!-- Mobile: Search button (authenticated) or spacer -->
       {#if $isAuthenticated && $currentUser}
         <button
-          class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+          class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors {focusRing}"
           onclick={() => search.open()}
-          aria-label="Search"
+          aria-label={$i18n.t('aria.search')}
           data-shortcut="/"
           data-shortcut-label="shortcuts.help.focusSearch"
         >
@@ -324,14 +296,14 @@ $effect(() => {
         <div class="hidden sm:flex flex-1 justify-center px-4">
           <button
             onclick={() => search.open()}
-            class="w-full max-w-md flex items-center gap-3 px-4 py-2 text-gray-400 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors duration-200 cursor-text"
+            class="w-full max-w-md flex items-center gap-3 px-4 py-2 text-gray-400 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors cursor-text"
             title="{$i18n.t('common.search')} ({isMac ? 'Cmd' : 'Ctrl'}+K)"
             data-shortcut="/"
             data-shortcut-label="shortcuts.help.focusSearch"
           >
             <MagnifyingGlass class="w-5 h-5 shrink-0" strokeWidth="2" />
             <span class="flex-1 text-left font-body text-sm">{$i18n.t('friends.search')}</span>
-            <kbd class="hidden md:inline-block px-2 py-1 text-xs bg-white border border-gray-200 rounded font-mono text-gray-400">
+            <kbd class="hidden md:inline-block {codeClasses.kbd}">
               {isMac ? '⌘' : 'Ctrl'}K
             </kbd>
           </button>
@@ -341,32 +313,26 @@ $effect(() => {
       <!-- Desktop: Right side actions -->
       <div class="hidden sm:flex items-center gap-3 shrink-0">
         {#if $isAuthenticated && $currentUser}
-          <a
+          <Button
             href="/friends/new"
+            size="sm"
             data-sveltekit-preload-data="tap"
             data-shortcut="n f"
             data-shortcut-label="shortcuts.newFriend"
-            class="inline-flex items-center gap-1.5 bg-forest text-white px-3 py-1.5 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200 text-sm"
             title="{$i18n.t('friends.addNew')} (n)"
           >
             <Plus class="w-4 h-4" strokeWidth="2" />
             <span class="hidden md:inline">{$i18n.t('common.new')}</span>
-          </a>
+          </Button>
           <UserMenu />
         {:else}
-          <a
-            href="/auth/login"
-            class="text-gray-700 hover:text-forest font-body font-medium transition-colors duration-200"
-          >
+          <Button href="/auth/login" variant="secondary">
             {$i18n.t('nav.login')}
-          </a>
+          </Button>
           {#if $signupEnabled}
-            <a
-              href="/auth/register"
-              class="bg-forest text-white px-4 py-2 rounded-md font-body font-medium hover:bg-forest-light transition-colors duration-200"
-            >
+            <Button href="/auth/register">
               {$i18n.t('nav.register')}
-            </a>
+            </Button>
           {/if}
         {/if}
       </div>
@@ -375,4 +341,4 @@ $effect(() => {
 </nav>
 
 <!-- Spacer to prevent content from being hidden behind fixed navbar -->
-<div class="h-16"></div>
+<div class="h-(--nav-h)"></div>

@@ -1,13 +1,15 @@
 <script lang="ts">
 import * as d3 from 'd3';
 import { onDestroy } from 'svelte';
+import Share from 'svelte-heros-v2/Share.svelte';
+import AlertBanner from '$lib/components/alert-banner.svelte';
+import { Button, EmptyState, headingClasses, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type {
-  NetworkGraphData,
-  NetworkGraphLink,
-  NetworkGraphNode,
-  RelationshipCategory,
-} from '$shared';
+import {
+  RELATIONSHIP_CATEGORIES,
+  RELATIONSHIP_CATEGORY_STYLE,
+} from '$lib/utils/relationship-categories';
+import type { NetworkGraphData, NetworkGraphLink, NetworkGraphNode } from '$shared';
 
 const i18n = createI18n();
 
@@ -33,13 +35,6 @@ type SimulationNode = NetworkGraphNode & d3.SimulationNodeDatum;
 type SimulationLink = Omit<NetworkGraphLink, 'source' | 'target'> & {
   source: SimulationNode | string;
   target: SimulationNode | string;
-};
-
-// Category colors matching the design system
-const categoryColors: Record<RelationshipCategory, string> = {
-  family: '#2D5016', // Forest green
-  professional: '#D4A574', // Warm amber
-  social: '#8B9D83', // Sage green
 };
 
 function initializeGraph() {
@@ -94,7 +89,7 @@ function initializeGraph() {
   // Create arrow markers for directed edges
   const defs = svg.append('defs');
 
-  Object.entries(categoryColors).forEach(([category, color]) => {
+  for (const category of RELATIONSHIP_CATEGORIES) {
     defs
       .append('marker')
       .attr('id', `arrow-${category}`)
@@ -105,9 +100,9 @@ function initializeGraph() {
       .attr('markerHeight', 6)
       .attr('orient', 'auto')
       .append('path')
-      .attr('fill', color)
+      .attr('fill', RELATIONSHIP_CATEGORY_STYLE[category].hex)
       .attr('d', 'M0,-5L10,0L0,5');
-  });
+  }
 
   // Create links
   const link = g
@@ -116,7 +111,7 @@ function initializeGraph() {
     .selectAll('line')
     .data(links)
     .join('line')
-    .attr('stroke', (d) => categoryColors[d.relationshipCategory])
+    .attr('stroke', (d) => RELATIONSHIP_CATEGORY_STYLE[d.relationshipCategory].hex)
     .attr('stroke-opacity', 0.6)
     .attr('stroke-width', 2);
 
@@ -260,8 +255,8 @@ onDestroy(() => {
 });
 </script>
 
-<div class="bg-white rounded-xl shadow-lg p-6">
-  <h3 class="text-xl font-heading text-gray-800 mb-4">{$i18n.t('dashboard.relationshipNetwork')}</h3>
+<div class={surfaceClasses.page}>
+  <h2 class="{headingClasses.widget} mb-4">{$i18n.t('dashboard.relationshipNetwork')}</h2>
 
   {#if isLoading}
     <div class="h-[400px] flex items-center justify-center">
@@ -271,36 +266,24 @@ onDestroy(() => {
       </div>
     </div>
   {:else if error}
-    <div class="h-[400px] flex items-center justify-center">
-      <div class="text-center">
-        <div class="text-red-600 text-sm">{error}</div>
-        {#if onRetry}
-          <button
-            type="button"
-            onclick={onRetry}
-            class="mt-3 text-sm font-body text-forest hover:text-forest-light"
-          >
-            {$i18n.t('common.retry')}
-          </button>
-        {/if}
-      </div>
-    </div>
+    <AlertBanner variant="error">{error}</AlertBanner>
+    {#if onRetry}
+      <Button variant="ghostAccent" size="sm" class="mt-3" onclick={onRetry}>
+        {$i18n.t('common.retry')}
+      </Button>
+    {/if}
   {:else if !graphData || graphData.nodes.length === 0}
-    <div class="h-[400px] flex items-center justify-center">
-      <div class="text-center py-6">
-        <div class="text-gray-400 text-4xl mb-2">&#128279;</div>
-        <p class="text-gray-500 font-body">{$i18n.t('dashboard.noRelationships')}</p>
-        <p class="text-gray-400 text-sm mt-1">{$i18n.t('dashboard.addRelationshipsHint')}</p>
-      </div>
-    </div>
+    <EmptyState
+      icon={Share}
+      title={$i18n.t('dashboard.noRelationships')}
+      description={$i18n.t('dashboard.addRelationshipsHint')}
+    />
   {:else if graphData.links.length === 0}
-    <div class="h-[400px] flex items-center justify-center">
-      <div class="text-center py-6">
-        <div class="text-gray-400 text-4xl mb-2">&#128279;</div>
-        <p class="text-gray-500 font-body">{$i18n.t('dashboard.noConnections')}</p>
-        <p class="text-gray-400 text-sm mt-1">{$i18n.t('dashboard.addConnectionsHint')}</p>
-      </div>
-    </div>
+    <EmptyState
+      icon={Share}
+      title={$i18n.t('dashboard.noConnections')}
+      description={$i18n.t('dashboard.addConnectionsHint')}
+    />
   {:else}
     <div bind:this={container} class="w-full h-[400px] overflow-hidden"></div>
 

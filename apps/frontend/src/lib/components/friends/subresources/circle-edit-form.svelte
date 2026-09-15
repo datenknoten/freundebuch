@@ -1,13 +1,15 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { autoFocus } from '$lib/actions/auto-focus';
 import CircleChip from '$lib/components/circles/circle-chip.svelte';
-import { createDirtyTracker, formClasses } from '$lib/components/ui';
+import { createDirtyTracker, FormSelect, Spinner } from '$lib/components/ui';
+import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
 import type { Circle, CircleSummary } from '$shared';
 
+const i18n = createI18n();
+
 interface Props {
-  /** Circles the friend is already assigned to (to exclude from selection) */
+  /** Circles the owner (friend or collective) already belongs to. */
   existingCircles?: CircleSummary[];
   disabled?: boolean;
   onchange?: () => void;
@@ -48,6 +50,13 @@ let availableCirclesTree = $derived.by(() => {
   return buildTree(null, 0);
 });
 
+let circleOptions = $derived(
+  availableCirclesTree.map(({ circle, depth }) => ({
+    value: circle.id,
+    label: `${'\u00A0\u00A0\u00A0'.repeat(depth)}${circle.name}`,
+  })),
+);
+
 createDirtyTracker(
   () => {
     selectedCircleId;
@@ -73,47 +82,36 @@ export function getSelectedCircle(): Circle | undefined {
 <div class="space-y-4">
   {#if $circles.isLoading}
     <div class="flex items-center gap-2 text-gray-500 font-body">
-      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
-      Loading circles...
+      <Spinner size="sm" tone="current" />
+      {$i18n.t('subresources.circle.loading')}
     </div>
   {:else if availableCircles.length === 0}
     <div class="text-gray-500 font-body">
       {#if $circlesList.length === 0}
-        <p>No circles created yet.</p>
-        <p class="text-sm mt-1">Create circles in the Circles management page to organize your friends.</p>
+        <p>{$i18n.t('subresources.circle.noneCreated')}</p>
+        <p class="text-sm mt-1">{$i18n.t('subresources.circle.noneCreatedHint')}</p>
       {:else}
-        <p>This friend is already in all available circles.</p>
+        <p>{$i18n.t('subresources.circle.allAssigned')}</p>
       {/if}
     </div>
   {:else}
-    <div>
-      <label for="circle-select" class={formClasses.label}>
-        Select Circle <span class="text-red-500">*</span>
-      </label>
-      <select
-        use:autoFocus
-        id="circle-select"
-        bind:value={selectedCircleId}
-        {disabled}
-        class={formClasses.select}
-        required
-      >
-        <option value="">Choose a circle...</option>
-        {#each availableCirclesTree as { circle, depth } (circle.id)}
-          <option value={circle.id}>{'\u00A0\u00A0\u00A0'.repeat(depth)}{circle.name}</option>
-        {/each}
-      </select>
-    </div>
+    <FormSelect
+      id="circle-select"
+      label={$i18n.t('subresources.circle.select')}
+      bind:value={selectedCircleId}
+      options={circleOptions}
+      {disabled}
+      required
+      autofocus
+      placeholderOption={$i18n.t('subresources.circle.selectPlaceholder')}
+    />
 
     <!-- Preview of selected circle -->
     {#if selectedCircleId}
       {@const selectedCircle = availableCircles.find((c) => c.id === selectedCircleId)}
       {#if selectedCircle}
         <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-500 font-body">Preview:</span>
+          <span class="text-sm text-gray-500 font-body">{$i18n.t('subresources.circle.preview')}</span>
           <CircleChip circle={selectedCircle} size="md" />
         </div>
       {/if}

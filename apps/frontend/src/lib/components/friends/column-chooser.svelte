@@ -1,5 +1,7 @@
 <script lang="ts">
 import ViewColumns from 'svelte-heros-v2/ViewColumns.svelte';
+import { surfaceClasses } from '$lib/components/ui';
+import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { COLUMN_DEFINITIONS, type ColumnId, DEFAULT_COLUMNS, REQUIRED_COLUMNS } from '$shared';
 
@@ -72,24 +74,24 @@ $effect(() => {
 </script>
 
 <div class="relative column-chooser">
-  <button
-    type="button"
+  <Button
+    variant="secondary"
+    size="sm"
     onclick={(e) => {
       e.stopPropagation();
       isOpen = !isOpen;
     }}
-    class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 transition-colors border-gray-300"
     title={$i18n.t('aria.chooseColumns')}
     aria-label={$i18n.t('aria.chooseColumns')}
     aria-expanded={isOpen}
   >
     <ViewColumns class="w-4 h-4" strokeWidth="2" />
     <span>{$i18n.t('common.columns')}</span>
-  </button>
+  </Button>
 
   {#if isOpen}
     <div
-      class="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2"
+      class="absolute right-0 top-full mt-2 w-56 {surfaceClasses.popover} z-(--z-popover)"
     >
       <div class="px-3 pb-2 border-b border-gray-100">
         <div class="flex items-center justify-between">
@@ -121,7 +123,7 @@ $effect(() => {
               checked={isVisible}
               disabled={isRequired}
               onchange={() => toggleColumn(columnId)}
-              class="rounded border-gray-300 text-forest focus:ring-forest disabled:opacity-50"
+              class="rounded border-gray-300 text-forest focus-visible:ring-forest disabled:opacity-50"
             />
             <span class="flex-1 text-sm text-gray-700">
               {#if columnId === 'avatar'}
