@@ -119,7 +119,7 @@ function handleCancel() {
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-6">
-  {#if error}
+  {#if error.length > 0}
     <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
