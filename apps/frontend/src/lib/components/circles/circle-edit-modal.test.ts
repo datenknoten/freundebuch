@@ -32,15 +32,15 @@ describe('CircleEditModal', () => {
     // Escape reaches the dialog as the native `cancel` event.
     await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
     expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByText('circles.unsavedChanges.title')).toBeTruthy();
+    expect(screen.getByText('subresources.common.unsavedChangesTitle')).toBeTruthy();
 
     // A second Escape dismisses the question instead of asking it again.
     await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
-    expect(screen.queryByText('circles.unsavedChanges.title')).toBeNull();
+    expect(screen.queryByText('subresources.common.unsavedChangesTitle')).toBeNull();
     expect(onClose).not.toHaveBeenCalled();
 
     await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
-    await fireEvent.click(screen.getByText('circles.unsavedChanges.discard'));
+    await fireEvent.click(screen.getByText('subresources.common.discardChanges'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
