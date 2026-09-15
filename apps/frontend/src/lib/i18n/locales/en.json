@@ -558,7 +558,9 @@
       "invalidType": "Invalid file type. Allowed: {{types}}",
       "tooLarge": "File too large. Maximum size: {{size}}MB",
       "uploadError": "Failed to upload photo",
-      "deleteError": "Failed to delete photo"
+      "deleteError": "Failed to delete photo",
+      "removeTitle": "Remove photo",
+      "removeConfirm": "The photo is deleted from the server immediately."
     },
     "saveChanges": "Save Changes",
     "create": "Create Friend",
@@ -668,7 +670,6 @@
       "createdAt": "Created {{date}}",
       "lastUsed": "Last used {{date}}",
       "never": "Never",
-      "revoking": "Revoking...",
       "revoke": "Revoke",
       "failedToLoad": "Failed to load app passwords",
       "failedToCreate": "Failed to create app password",
@@ -688,7 +689,6 @@
       "nameLabel": "Passkey name",
       "unnamedPasskey": "Unnamed passkey",
       "added": "Added {{date}}",
-      "deleting": "Deleting...",
       "renameAria": "Rename passkey",
       "deviceType": {
         "multiDevice": "Multi-device",
@@ -738,7 +738,8 @@
         "disabled": "Disabled"
       },
       "delete": {
-        "confirm": "Confirm?"
+        "title": "Delete channel",
+        "description": "Reminders will no longer be sent to this channel."
       },
       "unchanged": "(unchanged)",
       "saveError": "Failed to save channel. Please try again.",

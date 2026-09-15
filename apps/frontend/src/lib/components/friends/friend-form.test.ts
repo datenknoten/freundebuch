@@ -1,6 +1,23 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { control, fireEvent, labelFor, render, tick, useLanguage } from '$lib/test';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  control,
+  fireEvent,
+  labelFor,
+  render,
+  screen,
+  tick,
+  useLanguage,
+  waitFor,
+  within,
+} from '$lib/test';
 import FriendForm from './friend-form.svelte';
+
+const deletePhoto = vi.fn().mockResolvedValue(undefined);
+vi.mock('$lib/stores/friends', () => ({
+  friends: {
+    deletePhoto: (...args: unknown[]) => deletePhoto(...args),
+  },
+}));
 
 describe('FriendForm', () => {
   beforeEach(async () => {
@@ -69,5 +86,18 @@ describe('FriendForm', () => {
 
     expect(labelFor('displayName')).toContain('Anzeigename');
     expect(labelFor('nameFirst')).toContain('Vorname');
+  });
+
+  it('asks before removing the photo, which the server deletes immediately', async () => {
+    render(FriendForm, {
+      friend: { id: 'f1', displayName: 'Ada', photoUrl: '/photos/ada.jpg' } as never,
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Remove photo' }));
+    expect(deletePhoto).not.toHaveBeenCalled();
+
+    const dialog = screen.getByRole('dialog');
+    await fireEvent.click(within(dialog).getByRole('button', { name: 'Remove photo' }));
+    await waitFor(() => expect(deletePhoto).toHaveBeenCalledWith('f1'));
   });
 });

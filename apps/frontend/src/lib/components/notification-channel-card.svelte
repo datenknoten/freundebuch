@@ -1,7 +1,6 @@
 <script lang="ts">
-import Button from '$lib/components/ui/button.svelte';
+import { Button, ConfirmDialog } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
 import type { NotificationChannel } from '$shared';
 import TestMessageButton from './test-message-button.svelte';
 
@@ -43,16 +42,11 @@ function handleToggle() {
   ontoggle(channel.externalId, !channel.isEnabled);
 }
 
-function handleDelete() {
-  if (confirmingDelete) {
-    ondelete(channel.externalId);
-    confirmingDelete = false;
-  } else {
-    confirmingDelete = true;
-    setTimeout(() => {
-      confirmingDelete = false;
-    }, TRANSIENT_FEEDBACK_MS);
-  }
+// The list owns the request and its error banner; ConfirmDialog only needs a
+// settled promise to close itself on.
+function handleDelete(): Promise<void> {
+  ondelete(channel.externalId);
+  return Promise.resolve();
 }
 </script>
 
@@ -85,12 +79,18 @@ function handleDelete() {
       {$i18n.t('common.edit')}
     </Button>
 
-    <Button
-      variant={confirmingDelete ? 'danger' : 'dangerOutline'}
-      size="sm"
-      onclick={handleDelete}
-    >
-      {confirmingDelete ? $i18n.t('profile.messagingReminders.delete.confirm') : $i18n.t('common.delete')}
+    <Button variant="dangerOutline" size="sm" onclick={() => (confirmingDelete = true)}>
+      {$i18n.t('common.delete')}
     </Button>
   </div>
 </div>
+
+{#if confirmingDelete}
+  <ConfirmDialog
+    title={$i18n.t('profile.messagingReminders.delete.title')}
+    description={$i18n.t('profile.messagingReminders.delete.description')}
+    itemPreview={platformLabels[channel.platform] ?? channel.platform}
+    onConfirm={handleDelete}
+    onClose={() => (confirmingDelete = false)}
+  />
+{/if}
