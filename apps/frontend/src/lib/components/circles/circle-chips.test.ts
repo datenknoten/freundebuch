@@ -46,7 +46,7 @@ describe('CircleChips', () => {
 
     expect(screen.getByText('C')).toBeTruthy();
     expect(screen.getByText('D')).toBeTruthy();
-    expect(screen.getByText('Show less')).toBeTruthy();
+    expect(screen.getByText('common.showLess')).toBeTruthy();
   });
 
   it('invokes onremove with the circle id when a chip is removed', async () => {

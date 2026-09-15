@@ -51,7 +51,7 @@ let displayCircles = $derived(showingAll ? circles : visibleCircles);
         class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
         onclick={() => (showingAll = false)}
       >
-        Show less
+        {$i18n.t('common.showLess')}
       </button>
     {/if}
   </div>

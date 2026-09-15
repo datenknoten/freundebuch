@@ -39,7 +39,8 @@
     "adding": "Wird hinzugefügt...",
     "loadingRelationshipTypes": "Beziehungstypen werden geladen...",
     "backToHome": "Zurück zur Startseite",
-    "showMore": "+{{count}} weitere"
+    "showMore": "+{{count}} weitere",
+    "showLess": "Weniger anzeigen"
   },
   "nav": {
     "home": "Startseite",
@@ -396,7 +397,8 @@
       "subtitle": "Ein digitales Freundebuch, um die Menschen zu erinnern, die dir wichtig sind.",
       "description": "Das Leben ist hektisch, aber Freundschaften sollten nicht verblassen. Freundebuch ist dein persönlicher Raum, um Beziehungen zu pflegen, dich an die kleinen Details zu erinnern und keine Gelegenheit zu verpassen, mit den Menschen in Kontakt zu bleiben, die dir wichtig sind.",
       "cta": "Jetzt starten",
-      "loginCta": "Anmelden"
+      "loginCta": "Anmelden",
+      "imageAlt": "Ein aufgeschlagenes Buch mit Erinnerungen"
     },
     "features": {
       "title": "Warum Freundebuch?",
