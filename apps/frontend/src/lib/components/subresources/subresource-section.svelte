@@ -57,7 +57,10 @@ let deletingId = $state<string | null>(null);
 let deleteConfirmItem = $state<SubresourceItem | null>(null);
 let deleteConfirmName = $state('');
 
-const usesCustomAdd = $derived(descriptor.AddComponent !== undefined);
+// Narrowed once: the two arms of the descriptor union differ in how an item
+// is added, and nothing else.
+const customAdd = $derived('AddComponent' in descriptor ? descriptor : null);
+const formDriven = $derived('AddComponent' in descriptor ? null : descriptor);
 const showModal = $derived(isAdding || editingId !== null);
 
 // Hint badges number the rows that actually register a link in the detail
@@ -78,16 +81,13 @@ const rows = $derived.by(() => {
 // Dynamic components (Svelte 5 renders capitalised reactive values as components)
 const Icon = $derived(descriptor.icon);
 const RowComponent = $derived(descriptor.RowComponent);
-const FormComponent = $derived(descriptor.FormComponent);
-const AddComponent = $derived(descriptor.AddComponent);
+const FormComponent = $derived(formDriven?.FormComponent);
+const AddComponent = $derived(customAdd?.AddComponent);
 
-const modalTypeName = $derived(
-  descriptor.modalTypeNameKey !== undefined
-    ? $i18n.t(descriptor.modalTypeNameKey)
-    : (descriptor.modalTypeNameLiteral ?? ''),
-);
 const modalTitle = $derived(
-  `${editingId !== null ? $i18n.t('friendDetail.modal.edit') : $i18n.t('friendDetail.modal.add')} ${modalTypeName}`,
+  `${editingId !== null ? $i18n.t('friendDetail.modal.edit') : $i18n.t('friendDetail.modal.add')} ${
+    formDriven === null ? '' : $i18n.t(formDriven.modalTypeNameKey)
+  }`,
 );
 
 // Monotonic reload counter. Several reloads can be in flight for the *same*
@@ -154,21 +154,21 @@ function closeModal() {
 }
 
 async function handleSave() {
-  if (formRef === null || !formRef.isValid()) return;
+  if (formDriven === null || formRef === null || !formRef.isValid()) return;
   isEditLoading = true;
   editError = null;
   try {
-    const data = formRef.getData() as never;
-    if (editingId !== null && descriptor.update !== undefined) {
-      const updated = await descriptor.update(ownerId, editingId, data);
+    const data = formRef.getData();
+    if (editingId !== null && formDriven.update !== undefined) {
+      const updated = await formDriven.update(ownerId, editingId, data);
       if (ownsItems) {
         loadedItems = loadedItems.map((item) => (item.id === editingId ? updated : item));
       }
     } else if (descriptor.reloadAfterMutate === true) {
-      await descriptor.create(ownerId, data);
+      await formDriven.create(ownerId, data);
       await reload();
     } else {
-      const created = await descriptor.create(ownerId, data);
+      const created = await formDriven.create(ownerId, data);
       if (ownsItems) {
         loadedItems = [...loadedItems, created as SubresourceItem];
       }
@@ -268,12 +268,12 @@ onMount(() => {
   </section>
 {/if}
 
-{#if showModal && usesCustomAdd && AddComponent !== undefined}
+{#if showModal && customAdd !== null && AddComponent !== undefined}
   <AddComponent
-    {...descriptor.addProps?.({ ownerId, ownerName: ownerName ?? '', items }) ?? {}}
+    {...customAdd.addProps({ ownerId, ownerName: ownerName ?? '', items })}
     onClose={closeModal}
   />
-{:else if showModal && FormComponent !== undefined}
+{:else if showModal && formDriven !== null && FormComponent !== undefined}
   <DetailEditModal
     title={modalTitle}
     subtitle={ownerName}
@@ -285,14 +285,14 @@ onMount(() => {
   >
     <FormComponent
       bind:this={formRef}
-      {...descriptor.formProps?.({
+      {...formDriven.formProps?.({
         editingData,
         editingId,
         itemCount: items.length,
         items,
         isLoading: isEditLoading,
       }) ?? {}}
-      onchange={descriptor.tracksDirty === true ? () => (isDirty = true) : undefined}
+      onchange={formDriven.tracksDirty === true ? () => (isDirty = true) : undefined}
     />
   </DetailEditModal>
 {/if}

@@ -74,9 +74,9 @@ function fakePhoneDescriptor(
     create: vi.fn(),
     update: vi.fn(),
     remove: vi.fn().mockResolvedValue({ message: 'ok' }),
-    FormComponent: PhoneEditForm as unknown as SubresourceDescriptor['FormComponent'],
+    FormComponent: PhoneEditForm,
     formProps: ({ editingData }) => ({ initialData: editingData ?? undefined }),
-    RowComponent: PhoneRow as unknown as SubresourceDescriptor['RowComponent'],
+    RowComponent: PhoneRow,
     rowProps: (item) => ({ phone: item }),
     deleteName: (item) => (item as ReturnType<typeof aPhone>).phoneNumber,
     deleteTitleKey: 'modal.deletePhone',
@@ -356,7 +356,7 @@ describe('SubresourceSection', () => {
   it('omits the edit affordance for a non-editable (circle-style) descriptor', async () => {
     const descriptor = fakePhoneDescriptor({
       editable: false,
-      RowComponent: CircleRow as unknown as SubresourceDescriptor['RowComponent'],
+      RowComponent: CircleRow,
       rowProps: (item) => ({ circle: { id: item.id, name: 'Inner', color: null } }),
       load: vi.fn().mockResolvedValue([aPhone()]),
     });
