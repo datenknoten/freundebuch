@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as api from '$lib/api/collectives';
 import { aPhone, aUrl } from '$lib/test';
+import type { SubresourceDescriptor } from '../subresources/types';
 import { circleDescriptor, contactDescriptors } from './subresource-descriptors';
 
 // Every descriptor closure just delegates to one API function; mock the whole
@@ -27,7 +28,17 @@ vi.mock('$lib/api/collectives', () => ({
   removeCollectiveFromCircle: vi.fn(),
 }));
 
-const byKey = Object.fromEntries(contactDescriptors.map((d) => [d.key, d]));
+/**
+ * Every descriptor in this module drives the shared edit modal; narrowing here
+ * keeps `create`/`update`/`formProps` reachable without a cast per assertion.
+ */
+function formDriven(descriptor: SubresourceDescriptor) {
+  if ('AddComponent' in descriptor) throw new Error(`${descriptor.key} has no create/update`);
+  return descriptor;
+}
+
+const byKey = Object.fromEntries(contactDescriptors.map((d) => [d.key, formDriven(d)]));
+const circle = formDriven(circleDescriptor);
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -35,7 +46,7 @@ afterEach(() => {
 
 describe('descriptor CRUD delegation', () => {
   it('wires phone load/create/update/remove to the phone API', async () => {
-    const data = { phone_number: '+1 555 0100' } as never;
+    const data = { phone_number: '+1 555 0100' };
     await byKey.phone.load?.('c1');
     await byKey.phone.create('c1', data);
     await byKey.phone.update?.('c1', 'p1', data);
@@ -47,7 +58,7 @@ describe('descriptor CRUD delegation', () => {
   });
 
   it('wires email load/create/update/remove to the email API', async () => {
-    const data = { email_address: 'a@b.com' } as never;
+    const data = { email_address: 'a@b.com' };
     await byKey.email.load?.('c1');
     await byKey.email.create('c1', data);
     await byKey.email.update?.('c1', 'e1', data);
@@ -59,7 +70,7 @@ describe('descriptor CRUD delegation', () => {
   });
 
   it('wires address load/create/update/remove to the address API', async () => {
-    const data = { street_line_1: '1 Main St' } as never;
+    const data = { street_line_1: '1 Main St' };
     await byKey.address.load?.('c1');
     await byKey.address.create('c1', data);
     await byKey.address.update?.('c1', 'a1', data);
@@ -71,7 +82,7 @@ describe('descriptor CRUD delegation', () => {
   });
 
   it('wires url load/create/update/remove to the url API', async () => {
-    const data = { url: 'https://x.dev' } as never;
+    const data = { url: 'https://x.dev' };
     await byKey.url.load?.('c1');
     await byKey.url.create('c1', data);
     await byKey.url.update?.('c1', 'u1', data);
@@ -83,9 +94,9 @@ describe('descriptor CRUD delegation', () => {
   });
 
   it('unwraps the circle id on create and delegates load/remove (add-only)', async () => {
-    await circleDescriptor.load?.('c1');
-    await circleDescriptor.create('c1', { circleId: 'circle-9' } as never);
-    await circleDescriptor.remove('c1', { id: 'circle-9' });
+    await circle.load?.('c1');
+    await circle.create('c1', { circleId: 'circle-9' });
+    await circle.remove('c1', { id: 'circle-9' });
     expect(api.getCollectiveCircles).toHaveBeenCalledWith('c1');
     expect(api.addCollectiveToCircle).toHaveBeenCalledWith('c1', 'circle-9');
     expect(api.removeCollectiveFromCircle).toHaveBeenCalledWith('c1', 'circle-9');
@@ -104,27 +115,27 @@ describe('descriptor formProps', () => {
 
   it('defaults primary on for the first phone/email/address but not when editing', () => {
     for (const d of [byKey.phone, byKey.email, byKey.address]) {
-      expect(d.formProps(ctx()).defaultPrimary).toBe(true);
-      expect(d.formProps(ctx({ itemCount: 2 })).defaultPrimary).toBe(false);
-      expect(d.formProps(ctx({ editingId: 'x' })).defaultPrimary).toBe(false);
+      expect(d.formProps?.(ctx()).defaultPrimary).toBe(true);
+      expect(d.formProps?.(ctx({ itemCount: 2 })).defaultPrimary).toBe(false);
+      expect(d.formProps?.(ctx({ editingId: 'x' })).defaultPrimary).toBe(false);
     }
   });
 
   it('passes initialData and disabled through, and url omits defaultPrimary', () => {
     const phone = aPhone();
-    expect(byKey.phone.formProps(ctx({ editingData: phone, isLoading: true }))).toMatchObject({
+    expect(byKey.phone.formProps?.(ctx({ editingData: phone, isLoading: true }))).toMatchObject({
       initialData: phone,
       disabled: true,
     });
     const url = aUrl();
-    const urlProps = byKey.url.formProps(ctx({ editingData: url }));
+    const urlProps = byKey.url.formProps?.(ctx({ editingData: url }));
     expect(urlProps).toMatchObject({ initialData: url });
     expect(urlProps.defaultPrimary).toBeUndefined();
   });
 
   it('hands circle the current items as existingCircles', () => {
-    const items = [{ id: 'c', name: 'Inner', color: null }] as never;
-    expect(circleDescriptor.formProps(ctx({ items }))).toMatchObject({
+    const items = [{ id: 'c', name: 'Inner', color: null }];
+    expect(circle.formProps?.(ctx({ items }))).toMatchObject({
       existingCircles: items,
       disabled: false,
     });
@@ -155,6 +166,6 @@ describe('address afterSave geocoding refetch', () => {
     expect(byKey.phone.afterSave).toBeUndefined();
     expect(byKey.email.afterSave).toBeUndefined();
     expect(byKey.url.afterSave).toBeUndefined();
-    expect(circleDescriptor.afterSave).toBeUndefined();
+    expect(circle.afterSave).toBeUndefined();
   });
 });
