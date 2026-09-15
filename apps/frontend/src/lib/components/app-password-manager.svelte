@@ -99,11 +99,11 @@ function formatDate(dateString: string | null): string {
 </script>
 
 <div class="space-y-6">
-  {#if error}
+  {#if error.length > 0}
     <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
-  {#if createdPassword}
+  {#if createdPassword !== null}
     <AlertBanner variant="success">
       <div class="flex justify-between items-start mb-2">
         <p class="font-semibold">{$i18n.t('profile.appPasswords.created')}</p>

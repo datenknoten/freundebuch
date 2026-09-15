@@ -8,7 +8,12 @@ import { createI18n } from '$lib/i18n/index.js';
 
 const i18n = createI18n();
 
-let { token } = $props();
+interface Props {
+  /** The one-time token from the reset link's query string. */
+  token: string;
+}
+
+let { token }: Props = $props();
 
 let password = $state('');
 let confirmPassword = $state('');
