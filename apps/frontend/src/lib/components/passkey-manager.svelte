@@ -143,7 +143,7 @@ function deviceTypeLabel(type: string | null): string {
 </script>
 
 <div class="space-y-6">
-  {#if error}
+  {#if error.length > 0}
     <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 

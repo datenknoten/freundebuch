@@ -91,7 +91,7 @@ async function handleDelete(channelId: string) {
 
   {#if showForm}
     <div class="bg-gray-50 rounded-lg p-4">
-      {#if formError}
+      {#if formError.length > 0}
         <div class="mb-4">
           <AlertBanner variant="error">{formError}</AlertBanner>
         </div>

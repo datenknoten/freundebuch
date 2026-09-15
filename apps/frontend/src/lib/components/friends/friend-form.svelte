@@ -314,7 +314,7 @@ async function handleSubmit(e: Event) {
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-6">
-  {#if error}
+  {#if error.length > 0}
     <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
@@ -353,7 +353,7 @@ async function handleSubmit(e: Event) {
           <Spinner tone="white" />
         </div>
       {:else if isEditing}
-        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-full flex items-center justify-center transition-all">
+        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-full flex items-center justify-center transition-colors">
           <Camera class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth="2" />
         </div>
       {/if}
@@ -374,7 +374,7 @@ async function handleSubmit(e: Event) {
       <p class="text-xs text-gray-500 font-body">{$i18n.t('friendForm.photo.uploadHint')}</p>
     {/if}
 
-    {#if photoError}
+    {#if photoError.length > 0}
       <p class="text-sm text-red-600 font-body">{photoError}</p>
     {/if}
   </div>

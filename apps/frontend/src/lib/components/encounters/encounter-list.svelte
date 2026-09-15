@@ -38,6 +38,11 @@ let error = $derived($encounters.error);
 let encounterItems = $derived($encountersList);
 let pagination = $derived($encounters.pagination);
 
+// "Any filter set" drives both the clear button and the "filtered" note.
+let hasActiveFilters = $derived(
+  searchQuery.length > 0 || fromDate.length > 0 || toDate.length > 0 || selectedType.length > 0,
+);
+
 // Update visible encounter IDs for keyboard navigation
 $effect(() => {
   const ids = encounterItems.map((e) => e.id);
@@ -175,7 +180,7 @@ function goToPage(page: number) {
     </div>
 
     <!-- Clear filters -->
-    {#if searchQuery || fromDate || toDate || selectedType}
+    {#if hasActiveFilters}
       <Button variant="ghostAccent" size="sm" onclick={clearFilters}>
         {$i18n.t('encounters.clearFilters')}
       </Button>
@@ -185,13 +190,13 @@ function goToPage(page: number) {
   <!-- Results count -->
   <div class="text-sm text-gray-600 font-body">
     {$i18n.t('encounters.encounterCount', { count: pagination.totalCount })}
-    {#if searchQuery || fromDate || toDate || selectedType}
+    {#if hasActiveFilters}
       <span class="text-forest">{$i18n.t('encounters.filtered')}</span>
     {/if}
   </div>
 
   <!-- Error state -->
-  {#if error}
+  {#if error !== null && error.length > 0}
     <AlertBanner variant="error">{error}</AlertBanner>
   {/if}
 
