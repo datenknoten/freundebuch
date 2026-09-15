@@ -210,7 +210,7 @@ function deviceTypeLabel(type: string | null): string {
               onclick={() => openDeleteConfirm(pk)}
               disabled={deletingId === pk.id}
             >
-              {deletingId === pk.id ? $i18n.t('profile.passkeys.deleting') : $i18n.t('common.delete')}
+              {$i18n.t('common.delete')}
             </Button>
           {/if}
         </div>

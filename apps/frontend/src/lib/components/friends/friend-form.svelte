@@ -4,7 +4,14 @@ import Camera from 'svelte-heros-v2/Camera.svelte';
 import { goto } from '$app/navigation';
 import * as collectivesApi from '$lib/api/collectives.js';
 import AlertBanner from '$lib/components/alert-banner.svelte';
-import { Button, FormInput, focusRing, headingClasses, Spinner } from '$lib/components/ui';
+import {
+  Button,
+  ConfirmDialog,
+  FormInput,
+  focusRing,
+  headingClasses,
+  Spinner,
+} from '$lib/components/ui';
 import MarkdownEditor from '$lib/editor/markdown-editor.svelte';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
@@ -191,19 +198,18 @@ async function uploadPhoto() {
   }
 }
 
+let confirmingPhotoRemoval = $state(false);
+
 async function handleDeletePhoto() {
   if (!friend) return;
 
   isUploadingPhoto = true;
-  photoError = '';
 
   try {
     await friends.deletePhoto(friend.id);
     photoUrl = undefined;
     photoPreview = null;
     photoFile = null;
-  } catch (err) {
-    photoError = (err as Error)?.message || $i18n.t('friendForm.photo.deleteError');
   } finally {
     isUploadingPhoto = false;
   }
@@ -356,7 +362,7 @@ async function handleSubmit(e: Event) {
     {#if isEditing && photoUrl}
       <button
         type="button"
-        onclick={handleDeletePhoto}
+        onclick={() => (confirmingPhotoRemoval = true)}
         disabled={isLoading || isUploadingPhoto}
         class="text-sm text-red-600 hover:text-red-700 font-body disabled:opacity-50"
       >
@@ -510,5 +516,16 @@ async function handleSubmit(e: Event) {
     imageUrl={cropImageUrl}
     onCrop={handleCropComplete}
     onClose={handleCropCancel}
+  />
+{/if}
+
+{#if confirmingPhotoRemoval}
+  <ConfirmDialog
+    title={$i18n.t('friendForm.photo.removeTitle')}
+    description={$i18n.t('friendForm.photo.removeConfirm')}
+    confirmLabel={$i18n.t('friendForm.photo.remove')}
+    confirmVariant="caution"
+    onConfirm={handleDeletePhoto}
+    onClose={() => (confirmingPhotoRemoval = false)}
   />
 {/if}

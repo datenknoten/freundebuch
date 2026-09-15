@@ -168,9 +168,7 @@ function formatDate(dateString: string | null): string {
             onclick={() => openRevokeConfirm(password)}
             disabled={revokingId === password.externalId}
           >
-            {revokingId === password.externalId
-              ? $i18n.t('profile.appPasswords.revoking')
-              : $i18n.t('profile.appPasswords.revoke')}
+            {$i18n.t('profile.appPasswords.revoke')}
           </Button>
         </div>
       {/each}
