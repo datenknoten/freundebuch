@@ -112,7 +112,7 @@ async function loadDashboard() {
 				<div class="mb-6">
 					<img
 						src="/logo.png"
-						alt="Freundebuch - An open book with memories"
+						alt={$i18n.t('home.hero.imageAlt')}
 						class="max-w-md w-full h-auto mx-auto"
 					/>
 				</div>
