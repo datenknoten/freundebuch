@@ -283,24 +283,21 @@ describe('SubresourceSection', () => {
     await waitFor(() => expect(screen.queryAllByText('+1 555 0100')).toHaveLength(0));
   });
 
-  it('does not prompt about unsaved changes for forms that do not opt into dirty tracking', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+  it('does not ask about unsaved changes for forms that do not opt into dirty tracking', async () => {
     renderSection(fakePhoneDescriptor({ load: vi.fn().mockResolvedValue([aPhone()]) }));
 
     await fireEvent.click(await screen.findByText('section.add'));
     await fireEvent.input(await screen.findByLabelText(/subresources\.phone\.phoneNumber/), {
       target: { value: '+1 555 9999' },
     });
-    // Close via the modal X. Without tracksDirty the modal must not prompt.
+    // Close via the modal X. Without tracksDirty the modal must not ask.
     await fireEvent.click(screen.getByLabelText('common.close'));
 
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(screen.queryByText('subresources.common.unsavedChanges')).toBeNull();
     await waitFor(() => expect(screen.queryByText('friendDetail.modal.add modal.type')).toBeNull());
-    confirmSpy.mockRestore();
   });
 
-  it('prompts about unsaved changes when the descriptor opts into dirty tracking (circle)', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('asks about unsaved changes when the descriptor opts into dirty tracking (circle)', async () => {
     renderSection(
       fakePhoneDescriptor({ tracksDirty: true, load: vi.fn().mockResolvedValue([aPhone()]) }),
     );
@@ -311,9 +308,9 @@ describe('SubresourceSection', () => {
     });
     await fireEvent.click(screen.getByLabelText('common.close'));
 
-    // Dirty -> DetailEditModal asks before discarding (confirm stubbed to cancel).
-    expect(confirmSpy).toHaveBeenCalled();
-    confirmSpy.mockRestore();
+    // Dirty -> DetailEditModal asks inside itself and stays open.
+    expect(screen.getByText('subresources.common.unsavedChanges')).toBeTruthy();
+    expect(screen.getByText('subresources.common.keepEditing')).toBeTruthy();
   });
 
   it('ignores an out-of-order reload for the same collective so the latest wins', async () => {

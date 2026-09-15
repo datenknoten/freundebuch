@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import Button from '$lib/components/ui/button.svelte';
 import Modal from '$lib/components/ui/modal.svelte';
@@ -48,12 +49,34 @@ let {
 const uid = $props.id();
 const formId = `detail-edit-form-${uid}`;
 
+let showUnsavedWarning = $state(false);
+
 function handleClose() {
   if (isLoading) return;
-  // A native confirm inside a modal dialog is deliberate: stacking a second
-  // <dialog> on top of this one to ask a yes/no question buys nothing.
-  if (isDirty && !confirm($i18n.t('subresources.common.unsavedChanges'))) return;
+  if (isDirty) {
+    showUnsavedWarning = true;
+    return;
+  }
   onClose();
+}
+
+function discardChanges() {
+  showUnsavedWarning = false;
+  onClose();
+}
+
+function keepEditing() {
+  showUnsavedWarning = false;
+}
+
+// Escape, the backdrop and the header X all land here: while the question is
+// up they answer it with "keep editing" instead of asking it again.
+function handleDismiss() {
+  if (showUnsavedWarning) {
+    keepEditing();
+    return;
+  }
+  handleClose();
 }
 
 function handleSubmit(e: Event) {
@@ -63,7 +86,14 @@ function handleSubmit(e: Event) {
 </script>
 
 {#snippet modalFooter()}
-  {#if footerActions !== undefined && footerActions !== null}
+  {#if showUnsavedWarning}
+    <Button variant="secondary" class="flex-1" onclick={keepEditing}>
+      {$i18n.t('subresources.common.keepEditing')}
+    </Button>
+    <Button variant="caution" class="flex-1" onclick={discardChanges}>
+      {$i18n.t('subresources.common.discardChanges')}
+    </Button>
+  {:else if footerActions !== undefined && footerActions !== null}
     {@render footerActions()}
   {:else}
     <Button variant="secondary" class="flex-1" disabled={isLoading} onclick={handleClose}>
@@ -82,27 +112,38 @@ function handleSubmit(e: Event) {
 {/snippet}
 
 <Modal
-  {title}
+  title={showUnsavedWarning ? $i18n.t('subresources.common.unsavedChangesTitle') : title}
   {subtitle}
   size="md"
   closable={!isLoading}
-  onClose={handleClose}
-  footer={footerActions === null ? undefined : modalFooter}
+  onClose={handleDismiss}
+  footer={footerActions === null && !showUnsavedWarning ? undefined : modalFooter}
 >
-  {#if asForm}
-    <form id={formId} onsubmit={handleSubmit} class="space-y-4">
-      {@render children()}
-    </form>
-  {:else}
-    <div class="space-y-4">
-      {@render children()}
+  {#if showUnsavedWarning}
+    <div class="text-center">
+      <ExclamationTriangle class="w-12 h-12 mx-auto text-amber-500 mb-4" strokeWidth="2" />
+      <p class="text-gray-600 font-body">{$i18n.t('subresources.common.unsavedChanges')}</p>
     </div>
   {/if}
 
-  {#if error !== null && error.length > 0}
-    <div class="mt-4">
-      <AlertBanner variant="error">{error}</AlertBanner>
-    </div>
-  {/if}
+  <!-- Hidden rather than unmounted: the edit form owns the user's in-progress
+       values and the section's `bind:this`, both of which a remount would
+       throw away — which is the opposite of "keep editing". -->
+  <div class:hidden={showUnsavedWarning}>
+    {#if asForm}
+      <form id={formId} onsubmit={handleSubmit} class="space-y-4">
+        {@render children()}
+      </form>
+    {:else}
+      <div class="space-y-4">
+        {@render children()}
+      </div>
+    {/if}
 
+    {#if error !== null && error.length > 0}
+      <div class="mt-4">
+        <AlertBanner variant="error">{error}</AlertBanner>
+      </div>
+    {/if}
+  </div>
 </Modal>

@@ -62,4 +62,35 @@ describe('DetailEditModal', () => {
     expect(screen.queryByText('subresources.common.cancel')).toBeNull();
     expect(screen.getByText('body content')).toBeTruthy();
   });
+
+  it('asks inside the dialog before discarding, and Escape answers "keep editing"', async () => {
+    const onClose = vi.fn();
+    render(DetailEditModal, { title: 'Edit', isDirty: true, onSave: vi.fn(), onClose, children });
+
+    // Escape reaches the dialog as the native `cancel` event.
+    await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByText('subresources.common.unsavedChanges')).toBeTruthy();
+
+    // The body stays mounted behind the question, so the edits survive.
+    expect(screen.getByText('body content')).toBeTruthy();
+
+    await fireEvent.click(screen.getByText('subresources.common.keepEditing'));
+    expect(screen.queryByText('subresources.common.unsavedChanges')).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+
+    await fireEvent.click(screen.getByText('subresources.common.cancel'));
+    await fireEvent.click(screen.getByText('subresources.common.discardChanges'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes straight away when nothing was edited', async () => {
+    const onClose = vi.fn();
+    render(DetailEditModal, { title: 'Edit', onSave: vi.fn(), onClose, children });
+
+    await fireEvent.click(screen.getByText('subresources.common.cancel'));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('subresources.common.unsavedChanges')).toBeNull();
+  });
 });
