@@ -558,7 +558,8 @@
       "invalidType": "Ungültiger Dateityp. Erlaubt: {{types}}",
       "tooLarge": "Datei zu groß. Maximale Größe: {{size}} MB",
       "uploadError": "Foto konnte nicht hochgeladen werden",
-      "deleteError": "Foto konnte nicht gelöscht werden"
+      "removeTitle": "Foto entfernen",
+      "removeConfirm": "Das Foto wird sofort vom Server gelöscht."
     },
     "saveChanges": "Änderungen speichern",
     "create": "Freund erstellen",
@@ -668,7 +669,6 @@
       "createdAt": "Erstellt {{date}}",
       "lastUsed": "Zuletzt verwendet {{date}}",
       "never": "Nie",
-      "revoking": "Wird widerrufen...",
       "revoke": "Widerrufen",
       "failedToLoad": "App-Passwörter konnten nicht geladen werden",
       "failedToCreate": "App-Passwort konnte nicht erstellt werden",
@@ -688,7 +688,6 @@
       "nameLabel": "Passkey-Name",
       "unnamedPasskey": "Unbenannter Passkey",
       "added": "Hinzugefügt {{date}}",
-      "deleting": "Wird gelöscht...",
       "renameAria": "Passkey umbenennen",
       "deviceType": {
         "multiDevice": "Mehrere Geräte",
@@ -738,7 +737,8 @@
         "disabled": "Deaktiviert"
       },
       "delete": {
-        "confirm": "Bestätigen?"
+        "title": "Kanal löschen",
+        "description": "An diesen Kanal werden keine Erinnerungen mehr gesendet."
       },
       "unchanged": "(unverändert)",
       "saveError": "Der Kanal konnte nicht gespeichert werden. Bitte versuch es noch einmal.",
