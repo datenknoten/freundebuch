@@ -176,10 +176,10 @@ function handleDismiss() {
 
 {#snippet warningFooter()}
   <Button variant="secondary" class="flex-1" onclick={cancelClose}>
-    {$i18n.t('circles.unsavedChanges.keepEditing')}
+    {$i18n.t('subresources.common.keepEditing')}
   </Button>
   <Button variant="caution" class="flex-1" onclick={confirmClose}>
-    {$i18n.t('circles.unsavedChanges.discard')}
+    {$i18n.t('subresources.common.discardChanges')}
   </Button>
 {/snippet}
 
@@ -194,9 +194,9 @@ function handleDismiss() {
     <div class="text-center">
       <ExclamationTriangle class="w-12 h-12 mx-auto text-amber-500 mb-4" strokeWidth="2" />
       <h3 class="{headingClasses.sub} mb-2">
-        {$i18n.t('circles.unsavedChanges.title')}
+        {$i18n.t('subresources.common.unsavedChangesTitle')}
       </h3>
-      <p class="text-gray-600 font-body">{$i18n.t('circles.unsavedChanges.message')}</p>
+      <p class="text-gray-600 font-body">{$i18n.t('subresources.common.unsavedChanges')}</p>
     </div>
   {:else}
     <form id={formId} onsubmit={handleSubmit} class="space-y-4">
