@@ -12,6 +12,7 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
+import { focusTrap } from '$lib/actions/focus-trap';
 import { codeClasses, focusRing } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
@@ -80,7 +81,7 @@ function closeMobileMenu() {
   mobileMenuOpen = false;
 }
 
-let menuElement: HTMLDivElement;
+let menuElement = $state<HTMLDivElement | undefined>(undefined);
 
 // Prevent body scroll when mobile menu is open
 $effect(() => {
@@ -95,46 +96,23 @@ $effect(() => {
   };
 });
 
-// Focus trap for mobile menu
+// Escape closes the drawer, and the first entry takes focus when it opens.
+// Tab containment is the shared `focusTrap` action on the drawer itself.
 $effect(() => {
-  if (mobileMenuOpen && menuElement) {
-    const focusableElements = menuElement.querySelectorAll<HTMLElement>(
-      'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])',
-    );
-    const firstFocusable = focusableElements[0];
-    const lastFocusable = focusableElements[focusableElements.length - 1];
+  if (!mobileMenuOpen || menuElement === undefined) return;
 
-    function handleTabKey(e: KeyboardEvent) {
-      if (e.key !== 'Tab') return;
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstFocusable) {
-          e.preventDefault();
-          lastFocusable?.focus();
-        }
-      } else {
-        if (document.activeElement === lastFocusable) {
-          e.preventDefault();
-          firstFocusable?.focus();
-        }
-      }
+  function handleEscape(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      closeMobileMenu();
     }
-
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        closeMobileMenu();
-      }
-    }
-
-    menuElement.addEventListener('keydown', handleTabKey);
-    document.addEventListener('keydown', handleEscape);
-    firstFocusable?.focus();
-
-    return () => {
-      menuElement.removeEventListener('keydown', handleTabKey);
-      document.removeEventListener('keydown', handleEscape);
-    };
   }
+
+  document.addEventListener('keydown', handleEscape);
+  menuElement.querySelector<HTMLElement>('a[href], button')?.focus();
+
+  return () => {
+    document.removeEventListener('keydown', handleEscape);
+  };
 });
 </script>
 
@@ -151,6 +129,7 @@ $effect(() => {
 <!-- Mobile slide-out menu -->
 <div
   bind:this={menuElement}
+  use:focusTrap={mobileMenuOpen}
   inert={!mobileMenuOpen}
   aria-hidden={!mobileMenuOpen}
   class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-(--z-overlay) transform transition-transform ease-in-out sm:hidden {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
