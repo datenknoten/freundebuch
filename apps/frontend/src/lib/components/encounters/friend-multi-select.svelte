@@ -221,7 +221,7 @@ function handleFocus() {
 
         {#if filteredResults.length === 0 && query.trim() && !isSearching}
           <li class="px-3 py-2 text-sm text-gray-500 font-body">
-            No friends found
+            {$i18n.t('friendSearch.noResults')}
           </li>
         {/if}
       </ul>

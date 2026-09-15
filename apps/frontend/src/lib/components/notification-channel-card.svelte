@@ -15,11 +15,12 @@ interface Props {
 
 let { channel, ontoggle, onedit, ondelete }: Props = $props();
 
-const platformLabels: Record<string, string> = {
-  telegram: 'Telegram',
-  matrix: 'Matrix',
-  discord: 'Discord',
-};
+/**
+ * Platform names are proper nouns, but the label still goes through i18n: a
+ * locale may transliterate one, and a hard-coded map silently outlives the
+ * key set it shadows.
+ */
+const platformLabel = $derived($i18n.t(`profile.messagingReminders.platform.${channel.platform}`));
 
 const credentialSummary = $derived(() => {
   switch (channel.platform) {
@@ -60,7 +61,7 @@ function handleDelete(): Promise<void> {
     ></span>
     <div class="min-w-0">
       <div class="font-body font-semibold text-gray-800">
-        {platformLabels[channel.platform] ?? channel.platform}
+        {platformLabel}
       </div>
       <div class="text-sm font-body text-gray-500 truncate">
         {credentialSummary()}
@@ -89,7 +90,7 @@ function handleDelete(): Promise<void> {
   <ConfirmDialog
     title={$i18n.t('profile.messagingReminders.delete.title')}
     description={$i18n.t('profile.messagingReminders.delete.description')}
-    itemPreview={platformLabels[channel.platform] ?? channel.platform}
+    itemPreview={platformLabel}
     onConfirm={handleDelete}
     onClose={() => (confirmingDelete = false)}
   />

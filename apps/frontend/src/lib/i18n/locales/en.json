@@ -39,7 +39,8 @@
     "adding": "Adding...",
     "loadingRelationshipTypes": "Loading relationship types...",
     "backToHome": "Back to home",
-    "showMore": "+{{count}} more"
+    "showMore": "+{{count}} more",
+    "showLess": "Show less"
   },
   "nav": {
     "home": "Home",
@@ -396,7 +397,8 @@
       "subtitle": "A digital friendship book to remember the people who matter most.",
       "description": "Life gets busy, but friendships shouldn't fade away. Freundebuch is your personal space to cherish relationships, remember the little details, and never miss an opportunity to connect with the people you care about.",
       "cta": "Start Your Book",
-      "loginCta": "Sign In"
+      "loginCta": "Sign In",
+      "imageAlt": "An open book with memories"
     },
     "features": {
       "title": "Why Freundebuch?",
