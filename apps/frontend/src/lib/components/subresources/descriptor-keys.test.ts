@@ -84,7 +84,7 @@ describe('subresource descriptor i18n keys', () => {
       ['sectionTitleKey', descriptor.sectionTitleKey],
       ['addLabelKey', descriptor.addLabelKey],
       ['addShortcutLabel', descriptor.addShortcutLabel],
-      ['modalTypeNameKey', descriptor.modalTypeNameKey],
+      ['modalTypeNameKey', 'AddComponent' in descriptor ? undefined : descriptor.modalTypeNameKey],
       ['deleteTitleKey', descriptor.deleteTitleKey],
       ['deleteDescriptionKey', descriptor.deleteDescriptionKey],
     ];

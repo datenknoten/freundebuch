@@ -11,7 +11,6 @@
  * page already holds every sub-resource in the friends store, so the section
  * is handed `items` and the store's own optimistic updates re-render it.
  */
-import type { Component } from 'svelte';
 import Briefcase from 'svelte-heros-v2/Briefcase.svelte';
 import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
@@ -46,9 +45,10 @@ import type {
 import {
   type AddDetailOption,
   addDetailOption,
-  asFormComponent,
-  type FormPropsContext,
-  itemAs,
+  addressDeleteName,
+  defineDescriptor,
+  editFormProps,
+  primaryAwareFormProps,
   type SubresourceDescriptor,
 } from '../subresources/types';
 import {
@@ -72,19 +72,7 @@ import {
   UrlRow,
 } from './subresources';
 
-/** `initialData` + `disabled`, the props every simple edit form takes. */
-const editFormProps = ({ editingData, isLoading }: FormPropsContext) => ({
-  initialData: editingData ?? undefined,
-  disabled: isLoading,
-});
-
-/** The same, plus the "first entry is primary" default. */
-const primaryAwareFormProps = (ctx: FormPropsContext) => ({
-  ...editFormProps(ctx),
-  defaultPrimary: ctx.editingId === null && ctx.itemCount === 0,
-});
-
-export const phoneDescriptor: SubresourceDescriptor = {
+export const phoneDescriptor = defineDescriptor<Phone, PhoneInput>({
   key: 'phone',
   shortcutEvent: 'shortcut:add-phone',
   icon: PhoneIcon,
@@ -98,11 +86,11 @@ export const phoneDescriptor: SubresourceDescriptor = {
   update: (friendId, id, data: PhoneInput) => friends.updatePhone(friendId, id, data),
   remove: (friendId, item) => friends.deletePhone(friendId, item.id),
   tracksDirty: true,
-  FormComponent: asFormComponent(PhoneEditForm),
+  FormComponent: PhoneEditForm,
   formProps: primaryAwareFormProps,
   RowComponent: PhoneRow,
-  rowProps: (item) => ({ phone: itemAs<Phone>(item) }),
-  deleteName: (item) => itemAs<Phone>(item).phoneNumber,
+  rowProps: (phone) => ({ phone }),
+  deleteName: (phone) => phone.phoneNumber,
   deleteTitleKey: 'friendDetail.modal.deletePhoneNumber',
   deleteDescriptionKey: 'friendDetail.modal.confirmDeletePhone',
   mapError: (err, t) => {
@@ -113,9 +101,9 @@ export const phoneDescriptor: SubresourceDescriptor = {
     if (err.statusCode === 400) return t('subresources.phone.invalidNumber');
     return undefined;
   },
-};
+});
 
-export const emailDescriptor: SubresourceDescriptor = {
+export const emailDescriptor = defineDescriptor<Email, EmailInput>({
   key: 'email',
   shortcutEvent: 'shortcut:add-email',
   icon: Envelope,
@@ -129,16 +117,16 @@ export const emailDescriptor: SubresourceDescriptor = {
   update: (friendId, id, data: EmailInput) => friends.updateEmail(friendId, id, data),
   remove: (friendId, item) => friends.deleteEmail(friendId, item.id),
   tracksDirty: true,
-  FormComponent: asFormComponent(EmailEditForm),
+  FormComponent: EmailEditForm,
   formProps: primaryAwareFormProps,
   RowComponent: EmailRow,
-  rowProps: (item) => ({ email: itemAs<Email>(item) }),
-  deleteName: (item) => itemAs<Email>(item).emailAddress,
+  rowProps: (email) => ({ email }),
+  deleteName: (email) => email.emailAddress,
   deleteTitleKey: 'friendDetail.modal.deleteEmailAddress',
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
-};
+});
 
-export const addressDescriptor: SubresourceDescriptor = {
+export const addressDescriptor = defineDescriptor<Address, AddressInput>({
   key: 'address',
   shortcutEvent: 'shortcut:add-address',
   icon: MapPin,
@@ -162,22 +150,16 @@ export const addressDescriptor: SubresourceDescriptor = {
     }
   },
   tracksDirty: true,
-  FormComponent: asFormComponent(AddressEditForm),
+  FormComponent: AddressEditForm,
   formProps: primaryAwareFormProps,
   RowComponent: AddressRow,
-  rowProps: (item) => ({ address: itemAs<Address>(item) }),
-  deleteName: (item, t) => {
-    const address = itemAs<Address>(item);
-    const label = address.streetLine1 ?? address.city;
-    return label !== null && label !== undefined && label.length > 0
-      ? label
-      : t('subresources.address.thisAddress');
-  },
+  rowProps: (address) => ({ address }),
+  deleteName: addressDeleteName,
   deleteTitleKey: 'friendDetail.modal.deleteAddress',
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteAddress',
-};
+});
 
-export const urlDescriptor: SubresourceDescriptor = {
+export const urlDescriptor = defineDescriptor<Url, UrlInput>({
   key: 'url',
   shortcutEvent: 'shortcut:add-url',
   icon: Link,
@@ -191,14 +173,14 @@ export const urlDescriptor: SubresourceDescriptor = {
   update: (friendId, id, data: UrlInput) => friends.updateUrl(friendId, id, data),
   remove: (friendId, item) => friends.deleteUrl(friendId, item.id),
   tracksDirty: true,
-  FormComponent: asFormComponent(UrlEditForm),
+  FormComponent: UrlEditForm,
   formProps: editFormProps,
   RowComponent: UrlRow,
-  rowProps: (item) => ({ url: itemAs<Url>(item) }),
-  deleteName: (item) => itemAs<Url>(item).url,
+  rowProps: (url) => ({ url }),
+  deleteName: (url) => url.url,
   deleteTitleKey: 'friendDetail.modal.deleteWebsite',
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteWebsite',
-};
+});
 
 /**
  * A social profile is only openable when it carries a URL. Shared with
@@ -209,7 +191,7 @@ export const hasProfileUrl = (
 ): profile is SocialProfile & { profileUrl: string } =>
   profile.profileUrl !== null && profile.profileUrl !== undefined && profile.profileUrl.length > 0;
 
-export const socialProfileDescriptor: SubresourceDescriptor = {
+export const socialProfileDescriptor = defineDescriptor<SocialProfile, SocialProfileInput>({
   key: 'social',
   shortcutEvent: 'shortcut:add-social',
   icon: Share,
@@ -224,22 +206,19 @@ export const socialProfileDescriptor: SubresourceDescriptor = {
     friends.updateSocialProfile(friendId, id, data),
   remove: (friendId, item) => friends.deleteSocialProfile(friendId, item.id),
   tracksDirty: true,
-  FormComponent: asFormComponent(SocialProfileEditForm),
+  FormComponent: SocialProfileEditForm,
   formProps: editFormProps,
   RowComponent: SocialProfileRow,
-  rowProps: (item) => ({ profile: itemAs<SocialProfile>(item) }),
+  rowProps: (profile) => ({ profile }),
   // Only a profile that carries a URL is openable, so only those take part in
   // the friend detail page's "o" link sequence.
-  linkable: (item) => hasProfileUrl(itemAs<SocialProfile>(item)),
-  deleteName: (item) => {
-    const profile = itemAs<SocialProfile>(item);
-    return profile.username ?? profile.profileUrl ?? profile.platform;
-  },
+  linkable: hasProfileUrl,
+  deleteName: (profile) => profile.username ?? profile.profileUrl ?? profile.platform,
   deleteTitleKey: 'friendDetail.modal.deleteSocialProfile',
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteSocial',
-};
+});
 
-export const dateDescriptor: SubresourceDescriptor = {
+export const dateDescriptor = defineDescriptor<FriendDate, DateInput>({
   key: 'date',
   shortcutEvent: 'shortcut:add-date',
   icon: Calendar,
@@ -253,16 +232,19 @@ export const dateDescriptor: SubresourceDescriptor = {
   update: (friendId, id, data: DateInput) => friends.updateDate(friendId, id, data),
   remove: (friendId, item) => friends.deleteDate(friendId, item.id),
   tracksDirty: true,
-  FormComponent: asFormComponent(DateEditForm),
+  FormComponent: DateEditForm,
   formProps: editFormProps,
   RowComponent: DateRow,
-  rowProps: (item) => ({ date: itemAs<FriendDate>(item) }),
-  deleteName: (item) => itemAs<FriendDate>(item).dateValue,
+  rowProps: (date) => ({ date }),
+  deleteName: (date) => date.dateValue,
   deleteTitleKey: 'friendDetail.modal.deleteDate',
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteDate',
-};
+});
 
-export const professionalHistoryDescriptor: SubresourceDescriptor = {
+export const professionalHistoryDescriptor = defineDescriptor<
+  ProfessionalHistory,
+  ProfessionalHistoryInput
+>({
   key: 'professional',
   shortcutEvent: 'shortcut:add-professional',
   icon: Briefcase,
@@ -278,19 +260,17 @@ export const professionalHistoryDescriptor: SubresourceDescriptor = {
     friends.updateProfessionalHistory(friendId, id, data),
   remove: (friendId, item) => friends.deleteProfessionalHistory(friendId, item.id),
   tracksDirty: true,
-  FormComponent: asFormComponent(ProfessionalHistoryEditForm),
+  FormComponent: ProfessionalHistoryEditForm,
   formProps: primaryAwareFormProps,
   RowComponent: ProfessionalHistoryRow,
-  rowProps: (item) => ({ history: itemAs<ProfessionalHistory>(item) }),
-  deleteName: (item, t) => {
-    const history = itemAs<ProfessionalHistory>(item);
-    return history.jobTitle ?? history.organization ?? t('friendDetail.modal.employment');
-  },
+  rowProps: (history) => ({ history }),
+  deleteName: (history, t) =>
+    history.jobTitle ?? history.organization ?? t('friendDetail.modal.employment'),
   deleteTitleKey: 'friendDetail.modal.deleteEmployment',
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmployment',
-};
+});
 
-export const circleDescriptor: SubresourceDescriptor = {
+export const circleDescriptor = defineDescriptor<CircleSummary, { circleId: string }>({
   key: 'circle',
   shortcutEvent: 'shortcut:add-circle',
   icon: Users,
@@ -304,17 +284,14 @@ export const circleDescriptor: SubresourceDescriptor = {
   create: (friendId, data: { circleId: string }) => friends.addCircle(friendId, data.circleId),
   remove: (friendId, item) => friends.removeCircle(friendId, item.id),
   tracksDirty: true,
-  FormComponent: asFormComponent(CircleEditForm),
-  formProps: ({ items, isLoading }) => ({
-    existingCircles: items.map((item) => itemAs<CircleSummary>(item)),
-    disabled: isLoading,
-  }),
+  FormComponent: CircleEditForm,
+  formProps: ({ items, isLoading }) => ({ existingCircles: items, disabled: isLoading }),
   RowComponent: CircleRow,
-  rowProps: (item) => ({ circle: itemAs<CircleSummary>(item) }),
-  deleteName: (item) => itemAs<CircleSummary>(item).name,
+  rowProps: (circle) => ({ circle }),
+  deleteName: (circle) => circle.name,
   deleteTitleKey: 'friendDetail.modal.removeFromCircleTitle',
   deleteDescriptionKey: 'friendDetail.modal.confirmRemoveCircle',
-};
+});
 
 /**
  * Joining a collective needs the collective *and* a role, so this descriptor
@@ -323,7 +300,7 @@ export const circleDescriptor: SubresourceDescriptor = {
  * `remove` reads `membershipId` off the row's item.
  */
 export function createCollectiveDescriptor(onChanged: () => void): SubresourceDescriptor {
-  return {
+  return defineDescriptor<ContactCollectiveSummary, never>({
     key: 'collective',
     shortcutEvent: 'shortcut:add-collective',
     icon: BuildingOffice,
@@ -332,15 +309,11 @@ export function createCollectiveDescriptor(onChanged: () => void): SubresourceDe
     addShortcut: 'a o',
     addShortcutLabel: 'shortcuts.add.collective',
     editable: false,
-    // Unused: AddComponent owns creation, so the section never calls this.
-    create: () => Promise.resolve(),
-    remove: async (_friendId, item) => {
-      const collective = itemAs<ContactCollectiveSummary>(item);
+    remove: async (_friendId, collective) => {
       await removeMember(collective.id, collective.membershipId);
       onChanged();
     },
-    // The modal takes concrete props; the descriptor's slot is prop-agnostic.
-    AddComponent: AddToCollectiveModal as unknown as Component<Record<string, unknown>>,
+    AddComponent: AddToCollectiveModal,
     addProps: ({ ownerId, ownerName, items }) => ({
       friendId: ownerId,
       friendDisplayName: ownerName,
@@ -348,11 +321,11 @@ export function createCollectiveDescriptor(onChanged: () => void): SubresourceDe
       onSuccess: onChanged,
     }),
     RowComponent: CollectiveRow,
-    rowProps: (item) => ({ collective: itemAs<ContactCollectiveSummary>(item) }),
-    deleteName: (item) => itemAs<ContactCollectiveSummary>(item).name,
+    rowProps: (collective) => ({ collective }),
+    deleteName: (collective) => collective.name,
     deleteTitleKey: 'friendDetail.modal.removeFromCollectiveTitle',
     deleteDescriptionKey: 'friendDetail.modal.confirmRemoveCollective',
-  };
+  });
 }
 
 /**
@@ -374,7 +347,7 @@ export const friendAddDetailOptions: AddDetailOption[] = [
   // the page's reload); the menu only needs its icon, event and chord, so a
   // throwaway instance stands in.
   addDetailOption(
-    createCollectiveDescriptor(() => {}),
+    createCollectiveDescriptor(() => undefined),
     'shortcuts.add.collective',
   ),
   addDetailOption(professionalHistoryDescriptor, 'shortcuts.add.workExperience'),
