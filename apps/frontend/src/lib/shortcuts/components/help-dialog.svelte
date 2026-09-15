@@ -1,4 +1,6 @@
 <script lang="ts">
+import type { Snippet } from 'svelte';
+import { codeClasses } from '$lib/components/ui';
 import Modal from '$lib/components/ui/modal.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import {
@@ -17,401 +19,208 @@ interface Props {
 let { pageContext, onclose }: Props = $props();
 
 const i18n = createI18n();
+
+/** The two item-picking chords every list and detail section documents. */
+const pickOne = ['o', '1-9'];
+const pickMany = ['o', 'a-z', '1-9'];
 </script>
+
+<!--
+  Every row is "label … key [then key]"; `shortcut` is the only place that
+  shape is written down, so a new chord is one line instead of five.
+-->
+{#snippet shortcut(label: string, keys: string[], separator?: string)}
+  <div class="flex justify-between items-center">
+    <span class="text-gray-700">{label}</span>
+    <div class="flex gap-1 items-center">
+      {#each keys as key, index (index)}
+        {#if index > 0}
+          <span class="text-gray-400">{separator ?? $i18n.t('shortcuts.help.then')}</span>
+        {/if}
+        <kbd class={codeClasses.kbd}>{key}</kbd>
+      {/each}
+    </div>
+  </div>
+{/snippet}
+
+{#snippet group(title: string, rows: Snippet)}
+  <div>
+    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{title}</h3>
+    <div class="space-y-2">{@render rows()}</div>
+  </div>
+{/snippet}
 
 <Modal title={$i18n.t('shortcuts.title')} size="lg" onClose={onclose}>
   <div class="space-y-6 font-body">
-    <!-- Navigation -->
-    <div>
-      <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-        {$i18n.t('shortcuts.navigation')}
-      </h3>
-      <div class="space-y-2">
-        {#each NAVIGATION_SHORTCUTS as shortcut}
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t(shortcut.helpKey)}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">g</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">{shortcut.key}</kbd>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </div>
+    {#snippet navigationRows()}
+      {#each NAVIGATION_SHORTCUTS as entry (entry.key)}
+        {@render shortcut($i18n.t(entry.helpKey), ['g', entry.key])}
+      {/each}
+    {/snippet}
+    {@render group($i18n.t('shortcuts.navigation'), navigationRows)}
 
-    <!-- Global Actions -->
-    <div>
-      <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-        {$i18n.t('shortcuts.actions')}
-      </h3>
-      <div class="space-y-2">
-        <div class="flex justify-between items-center">
-          <span class="text-gray-700">{$i18n.t('shortcuts.help.globalSearch')}</span>
-          <div class="flex gap-1">
-            <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">Cmd</kbd>
-            <span class="text-gray-400">+</span>
-            <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">K</kbd>
-          </div>
-        </div>
-        {#each CREATION_SHORTCUTS as shortcut}
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t(shortcut.labelKey)}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">n</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">{shortcut.key}</kbd>
-            </div>
-          </div>
-        {/each}
-        {#if pageContext.isOnFriendDetailPage}
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.editFriend')}</span>
-            <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
-          </div>
-        {/if}
-        <div class="flex justify-between items-center">
-          <span class="text-gray-700">{$i18n.t('shortcuts.help.focusSearch')}</span>
-          <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">/</kbd>
-        </div>
-      </div>
-    </div>
+    {#snippet actionRows()}
+      {@render shortcut($i18n.t('shortcuts.help.globalSearch'), ['Cmd', 'K'], '+')}
+      {#each CREATION_SHORTCUTS as entry (entry.key)}
+        {@render shortcut($i18n.t(entry.labelKey), ['n', entry.key])}
+      {/each}
+      {#if pageContext.isOnFriendDetailPage}
+        {@render shortcut($i18n.t('shortcuts.help.editFriend'), ['e'])}
+      {/if}
+      {@render shortcut($i18n.t('shortcuts.help.focusSearch'), ['/'])}
+    {/snippet}
+    {@render group($i18n.t('shortcuts.actions'), actionRows)}
 
-    <!-- Friends List Actions (only on /friends) -->
     {#if pageContext.isOnFriendsListPage}
-      <div>
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          {$i18n.t('shortcuts.help.friendsList')}
-        </h3>
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.friend') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.friend') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.previousPage')}</span>
-            <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">&lt;</kbd>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.nextPage')}</span>
-            <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">&gt;</kbd>
-          </div>
-        </div>
-      </div>
+      {#snippet friendsListRows()}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.friend') }),
+          pickOne,
+        )}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.friend') }),
+          pickMany,
+        )}
+        {@render shortcut($i18n.t('shortcuts.help.previousPage'), ['<'])}
+        {@render shortcut($i18n.t('shortcuts.help.nextPage'), ['>'])}
+      {/snippet}
+      {@render group($i18n.t('shortcuts.help.friendsList'), friendsListRows)}
 
-      <!-- Filters -->
-      <div>
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          {$i18n.t('shortcuts.help.filters')}
-        </h3>
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.filterByCountry')}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">c</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.filterByCity')}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">i</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.filterByOrganization')}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.clearAllFilters')}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">f</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">x</kbd>
-            </div>
-          </div>
-        </div>
-      </div>
+      {#snippet filterRows()}
+        {@render shortcut($i18n.t('shortcuts.help.filterByCountry'), ['f', 'c'])}
+        {@render shortcut($i18n.t('shortcuts.help.filterByCity'), ['f', 'i'])}
+        {@render shortcut($i18n.t('shortcuts.help.filterByOrganization'), ['f', 'o'])}
+        {@render shortcut($i18n.t('shortcuts.help.clearAllFilters'), ['f', 'x'])}
+      {/snippet}
+      {@render group($i18n.t('shortcuts.help.filters'), filterRows)}
     {/if}
 
-    <!-- Collective Detail -->
     {#if pageContext.isOnCollectiveDetailPage}
-      <div>
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          {$i18n.t('shortcuts.help.collectiveDetail')}
-        </h3>
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.editCollective')}</span>
-            <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.add.member') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.add.member') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-        </div>
-      </div>
+      {#snippet collectiveDetailRows()}
+        {@render shortcut($i18n.t('shortcuts.help.editCollective'), ['e'])}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.add.member') }),
+          pickOne,
+        )}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.add.member') }),
+          pickMany,
+        )}
+      {/snippet}
+      {@render group($i18n.t('shortcuts.help.collectiveDetail'), collectiveDetailRows)}
 
-      <div>
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          {$i18n.t('shortcuts.help.addDetails')}
-        </h3>
-        <div class="space-y-2">
-          {#each COLLECTIVE_DETAIL_ACTIONS as action}
-            <div class="flex justify-between items-center">
-              <span class="text-gray-700">{$i18n.t('shortcuts.help.addItem', { item: $i18n.t(action.labelKey) })}</span>
-              <div class="flex gap-1">
-                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
-                <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">{action.key}</kbd>
-              </div>
-            </div>
-          {/each}
-        </div>
-      </div>
+      {#snippet collectiveAddRows()}
+        {#each COLLECTIVE_DETAIL_ACTIONS as action (action.key)}
+          {@render shortcut(
+            $i18n.t('shortcuts.help.addItem', { item: $i18n.t(action.labelKey) }),
+            ['a', action.key],
+          )}
+        {/each}
+      {/snippet}
+      {@render group($i18n.t('shortcuts.help.addDetails'), collectiveAddRows)}
     {/if}
 
-    <!-- Encounter Detail -->
     {#if pageContext.isOnEncounterDetailPage}
-      <div>
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          {$i18n.t('shortcuts.help.encounterDetail')}
-        </h3>
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.editEncounter')}</span>
-            <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.friend') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.friend') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-        </div>
-      </div>
+      {#snippet encounterDetailRows()}
+        {@render shortcut($i18n.t('shortcuts.help.editEncounter'), ['e'])}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.friend') }),
+          pickOne,
+        )}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.friend') }),
+          pickMany,
+        )}
+      {/snippet}
+      {@render group($i18n.t('shortcuts.help.encounterDetail'), encounterDetailRows)}
     {/if}
 
-    <!-- Friend Detail: Add Details + Open Links -->
     {#if pageContext.isOnFriendDetailPage}
-      <div>
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          {$i18n.t('shortcuts.help.addDetails')}
-        </h3>
-        <div class="space-y-2">
-          {#each FRIEND_DETAIL_ACTIONS as action}
-            <div class="flex justify-between items-center">
-              <span class="text-gray-700">{$i18n.t('shortcuts.help.addItem', { item: $i18n.t(action.labelKey) })}</span>
-              <div class="flex gap-1">
-                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a</kbd>
-                <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-                <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">{action.key}</kbd>
-              </div>
-            </div>
-          {/each}
-        </div>
-      </div>
+      {#snippet friendAddRows()}
+        {#each FRIEND_DETAIL_ACTIONS as action (action.key)}
+          {@render shortcut(
+            $i18n.t('shortcuts.help.addItem', { item: $i18n.t(action.labelKey) }),
+            ['a', action.key],
+          )}
+        {/each}
+      {/snippet}
+      {@render group($i18n.t('shortcuts.help.addDetails'), friendAddRows)}
 
-      <div>
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          {$i18n.t('shortcuts.help.openLinks')}
-        </h3>
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.link') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.link') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-        </div>
-      </div>
+      {#snippet openLinkRows()}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.link') }),
+          pickOne,
+        )}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.link') }),
+          pickMany,
+        )}
+      {/snippet}
+      {@render group($i18n.t('shortcuts.help.openLinks'), openLinkRows)}
     {/if}
 
-    <!-- Circles -->
     {#if pageContext.isOnCirclesPage}
-      <div>
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          {$i18n.t('shortcuts.help.circlesSection')}
-        </h3>
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.editItem19', { item: $i18n.t('shortcuts.help.circle') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.editItem10', { item: $i18n.t('shortcuts.help.circle') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">e</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.deleteItem19', { item: $i18n.t('shortcuts.help.circle') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">d</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.deleteItem10', { item: $i18n.t('shortcuts.help.circle') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">d</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-        </div>
-      </div>
+      {#snippet circleRows()}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.editItem19', { item: $i18n.t('shortcuts.help.circle') }),
+          ['e', '1-9'],
+        )}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.editItem10', { item: $i18n.t('shortcuts.help.circle') }),
+          ['e', 'a-z', '1-9'],
+        )}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.deleteItem19', { item: $i18n.t('shortcuts.help.circle') }),
+          ['d', '1-9'],
+        )}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.deleteItem10', { item: $i18n.t('shortcuts.help.circle') }),
+          ['d', 'a-z', '1-9'],
+        )}
+      {/snippet}
+      {@render group($i18n.t('shortcuts.help.circlesSection'), circleRows)}
     {/if}
 
-    <!-- Encounters List -->
     {#if pageContext.isOnEncountersListPage}
-      <div>
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          {$i18n.t('shortcuts.help.encountersList')}
-        </h3>
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.encounter') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.encounter') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-        </div>
-      </div>
+      {#snippet encounterListRows()}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.encounter') }),
+          pickOne,
+        )}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.encounter') }),
+          pickMany,
+        )}
+      {/snippet}
+      {@render group($i18n.t('shortcuts.help.encountersList'), encounterListRows)}
     {/if}
 
-    <!-- Collectives List -->
     {#if pageContext.isOnCollectivesListPage}
-      <div>
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          {$i18n.t('shortcuts.help.collectivesList')}
-        </h3>
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.collective') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-700">{$i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.collective') })}</span>
-            <div class="flex gap-1">
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">o</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">a-z</kbd>
-              <span class="text-gray-400">{$i18n.t('shortcuts.help.then')}</span>
-              <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">1-9</kbd>
-            </div>
-          </div>
-        </div>
-      </div>
+      {#snippet collectiveListRows()}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem19', { item: $i18n.t('shortcuts.help.collective') }),
+          pickOne,
+        )}
+        {@render shortcut(
+          $i18n.t('shortcuts.help.openItem10', { item: $i18n.t('shortcuts.help.collective') }),
+          pickMany,
+        )}
+      {/snippet}
+      {@render group($i18n.t('shortcuts.help.collectivesList'), collectiveListRows)}
     {/if}
 
-    <!-- General -->
-    <div>
-      <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-        {$i18n.t('shortcuts.general')}
-      </h3>
-      <div class="space-y-2">
-        <div class="flex justify-between items-center">
-          <span class="text-gray-700">{$i18n.t('shortcuts.help.showHelp')}</span>
-          <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">?</kbd>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-gray-700">{$i18n.t('shortcuts.help.closeCancel')}</span>
-          <kbd class="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono">Esc</kbd>
-        </div>
-      </div>
-    </div>
+    {#snippet generalRows()}
+      {@render shortcut($i18n.t('shortcuts.help.showHelp'), ['?'])}
+      {@render shortcut($i18n.t('shortcuts.help.closeCancel'), ['Esc'])}
+    {/snippet}
+    {@render group($i18n.t('shortcuts.general'), generalRows)}
   </div>
 
   <div class="mt-6 pt-4 border-t border-gray-200">
     <p class="text-sm text-gray-500 font-body">
-      {$i18n.t('shortcuts.help.helpHintPrefix')} <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">?</kbd> {$i18n.t('shortcuts.help.helpHintSuffix')}
+      {$i18n.t('shortcuts.help.helpHintPrefix')}
+      <kbd class={codeClasses.kbd}>?</kbd>
+      {$i18n.t('shortcuts.help.helpHintSuffix')}
     </p>
   </div>
 </Modal>
