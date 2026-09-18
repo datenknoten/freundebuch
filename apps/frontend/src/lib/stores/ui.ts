@@ -1,7 +1,8 @@
 import { derived, writable } from 'svelte/store';
 
 /**
- * How many overlays (modal dialogs, sheets, the search panel) are open.
+ * How many overlays (modal dialogs, sheets, the search panel, the mobile
+ * navigation drawer) are open.
  *
  * A boolean could not express nesting: the blocking session-expiry dialog can
  * mount on top of an open modal, and whichever unmounts first would clear the

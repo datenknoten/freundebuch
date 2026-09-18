@@ -19,6 +19,7 @@ import { createI18n } from '$lib/i18n/index.js';
 import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
 import { search } from '$lib/stores/search';
+import { registerOpenOverlay } from '$lib/stores/ui';
 import { motionDuration } from '$lib/utils/motion';
 import LegalLinks from './legal-links.svelte';
 import UserMenu from './user-menu.svelte';
@@ -83,16 +84,17 @@ function closeMobileMenu() {
 
 let menuElement = $state<HTMLDivElement | undefined>(undefined);
 
-// Prevent body scroll when mobile menu is open
+// While the drawer covers the page it is an overlay like any modal: lock
+// body scroll and suppress the global shortcuts behind it.
 $effect(() => {
-  if (mobileMenuOpen) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = '';
-  }
+  if (!mobileMenuOpen) return;
+
+  document.body.style.overflow = 'hidden';
+  const release = registerOpenOverlay();
 
   return () => {
     document.body.style.overflow = '';
+    release();
   };
 });
 
