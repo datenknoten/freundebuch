@@ -38,7 +38,10 @@ const pageTitle = $derived(
     : $i18n.t('friends.editFriendSubtitle', { name: $currentFriend.displayName })}
   back={{ href: `/friends/${$page.params.id}`, label: $i18n.t('friends.backToFriend') }}
 >
-  {#if $isFriendsLoading}
+  <!-- Spin only while there is nothing to edit: every store action flips
+       `isFriendsLoading`, and swapping the form out mid-action would take any
+       open dialog (and the form's own state) with it. -->
+  {#if $isFriendsLoading && $currentFriend === null}
     <div class="flex justify-center py-12">
       <Spinner size="lg" />
     </div>
