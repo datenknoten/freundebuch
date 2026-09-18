@@ -283,6 +283,86 @@ describe('SubresourceSection', () => {
     await waitFor(() => expect(screen.queryAllByText('+1 555 0100')).toHaveLength(0));
   });
 
+  it('cancels a pending afterSave when the collective changes', async () => {
+    const cancel = vi.fn();
+    const descriptor = fakePhoneDescriptor({
+      afterSave: vi.fn().mockReturnValue(cancel),
+      create: vi.fn().mockResolvedValue(aPhone({ phoneNumber: '+49 30 9999' })),
+      load: vi.fn().mockResolvedValue([aPhone()]),
+    });
+
+    const { rerender } = render(SubresourceSection, {
+      descriptor,
+      ownerId: 'c1',
+      ownerName: 'Test Collective',
+    });
+
+    await fireEvent.click(await screen.findByText('section.add'));
+    await fireEvent.input(await screen.findByLabelText(/subresources\.phone\.phoneNumber/), {
+      target: { value: '+49 30 9999' },
+    });
+    await fireEvent.click(screen.getByText('subresources.common.save'));
+    await waitFor(() => expect(descriptor.afterSave).toHaveBeenCalledTimes(1));
+
+    await rerender({ descriptor, ownerId: 'c2', ownerName: 'Other' });
+
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels a pending afterSave when the section unmounts', async () => {
+    const cancel = vi.fn();
+    const descriptor = fakePhoneDescriptor({
+      afterSave: vi.fn().mockReturnValue(cancel),
+      create: vi.fn().mockResolvedValue(aPhone({ phoneNumber: '+49 30 9999' })),
+      load: vi.fn().mockResolvedValue([aPhone()]),
+    });
+
+    const { unmount } = render(SubresourceSection, {
+      descriptor,
+      ownerId: 'c1',
+      ownerName: 'Test Collective',
+    });
+
+    await fireEvent.click(await screen.findByText('section.add'));
+    await fireEvent.input(await screen.findByLabelText(/subresources\.phone\.phoneNumber/), {
+      target: { value: '+49 30 9999' },
+    });
+    await fireEvent.click(screen.getByText('subresources.common.save'));
+    await waitFor(() => expect(descriptor.afterSave).toHaveBeenCalledTimes(1));
+
+    unmount();
+
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a pending afterSave alive when the same owner re-renders', async () => {
+    const cancel = vi.fn();
+    const descriptor = fakePhoneDescriptor({
+      afterSave: vi.fn().mockReturnValue(cancel),
+      create: vi.fn().mockResolvedValue(aPhone({ phoneNumber: '+49 30 9999' })),
+      load: vi.fn().mockResolvedValue([aPhone()]),
+    });
+
+    const { rerender } = render(SubresourceSection, {
+      descriptor,
+      ownerId: 'c1',
+      ownerName: 'Test Collective',
+    });
+
+    await fireEvent.click(await screen.findByText('section.add'));
+    await fireEvent.input(await screen.findByLabelText(/subresources\.phone\.phoneNumber/), {
+      target: { value: '+49 30 9999' },
+    });
+    await fireEvent.click(screen.getByText('subresources.common.save'));
+    await waitFor(() => expect(descriptor.afterSave).toHaveBeenCalledTimes(1));
+
+    // The refetch itself refreshes the owner, which re-renders the section with
+    // new props for the same owner — the remaining attempts must survive that.
+    await rerender({ descriptor, ownerId: 'c1', ownerName: 'Renamed' });
+
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
   it('does not ask about unsaved changes for forms that do not opt into dirty tracking', async () => {
     renderSection(fakePhoneDescriptor({ load: vi.fn().mockResolvedValue([aPhone()]) }));
 

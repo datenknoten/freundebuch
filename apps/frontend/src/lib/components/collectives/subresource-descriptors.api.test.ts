@@ -162,6 +162,17 @@ describe('address afterSave geocoding refetch', () => {
     expect(reload).toHaveBeenCalledTimes(3);
   });
 
+  it('stops the remaining reloads when cancelled', () => {
+    const reload = vi.fn().mockResolvedValue(undefined);
+    const cancel = byKey.address.afterSave?.(reload, 'c1');
+
+    vi.advanceTimersByTime(800);
+    cancel?.();
+    vi.runAllTimers();
+
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
   it('is only defined for the address descriptor', () => {
     expect(byKey.phone.afterSave).toBeUndefined();
     expect(byKey.email.afterSave).toBeUndefined();

@@ -146,8 +146,10 @@ interface SubresourceDescriptorBase<TItem extends SubresourceItem> {
    * Side effect scheduled after a successful save (address geocoding refetch).
    * Receives the section's own reload and the owner id, so a descriptor whose
    * items live in a store can refetch the owner instead of the section.
+   * Returns a cancel function; the section calls it when the owner changes or
+   * the section unmounts, so a scheduled refetch never lands on another owner.
    */
-  afterSave?: (reload: () => Promise<void>, ownerId: string) => void;
+  afterSave?: (reload: () => Promise<void>, ownerId: string) => () => void;
   RowComponent: Component;
   rowProps: (item: TItem) => Record<string, unknown>;
   /**
