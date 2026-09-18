@@ -24,9 +24,10 @@ export function handleGuards(
     showHelp: boolean;
   },
 ): { suppress: boolean } {
-  // Handle Cmd/Ctrl+K to open global search (works even in inputs). Behind a
-  // modal the panel stays closed — it is a plain fixed element, so it would
-  // render underneath the top-layer dialog, unfocusable, while `isSearchOpen`
+  // Handle Cmd/Ctrl+K to open global search (works even in inputs). Behind an
+  // overlay (a modal dialog or the mobile drawer — both register with
+  // `registerOpenOverlay`) the panel stays closed: it is a plain fixed
+  // element, so it would render underneath, unfocusable, while `isSearchOpen`
   // suppressed every other shortcut — but the event is still prevented: the
   // browser's own Cmd+K focuses the URL bar, which is worse than nothing.
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {

@@ -1,5 +1,6 @@
-import { readable, writable } from 'svelte/store';
+import { get, readable, writable } from 'svelte/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { isModalOpen, resetOpenOverlays } from '$lib/stores/ui';
 import { cleanup, fireEvent, render, screen } from '$lib/test';
 import NavBar from './nav-bar.svelte';
 
@@ -34,6 +35,7 @@ vi.mock('$lib/stores/search', () => ({
 
 afterEach(() => {
   cleanup();
+  resetOpenOverlays();
   vi.clearAllMocks();
 });
 
@@ -49,5 +51,32 @@ describe('NavBar search trigger', () => {
     await fireEvent.click(triggers[0]);
 
     expect(searchOpen).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('NavBar mobile drawer', () => {
+  // The drawer covers the page, so the shortcuts behind it must stay off —
+  // the same overlay count the modals use.
+  it('counts the open drawer as an overlay so shortcuts stay off behind it', async () => {
+    render(NavBar);
+    expect(get(isModalOpen)).toBe(false);
+
+    const toggle = screen.getByLabelText('aria.toggleMenu');
+    await fireEvent.click(toggle);
+    expect(get(isModalOpen)).toBe(true);
+
+    await fireEvent.click(toggle);
+    expect(get(isModalOpen)).toBe(false);
+  });
+
+  it('releases the overlay when the nav bar unmounts with the drawer open', async () => {
+    const { unmount } = render(NavBar);
+
+    await fireEvent.click(screen.getByLabelText('aria.toggleMenu'));
+    expect(get(isModalOpen)).toBe(true);
+
+    unmount();
+
+    expect(get(isModalOpen)).toBe(false);
   });
 });
