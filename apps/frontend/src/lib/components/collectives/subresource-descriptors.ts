@@ -152,11 +152,14 @@ const addressDescriptor = defineDescriptor<Address, AddressInput>({
   // Geocoding runs asynchronously on the backend; refetch a few times to pick up
   // coordinates once they land.
   afterSave: (reload) => {
-    for (const delay of [800, 2000, 4500]) {
+    const timers = [800, 2000, 4500].map((delay) =>
       setTimeout(() => {
         reload().catch(() => undefined);
-      }, delay);
-    }
+      }, delay),
+    );
+    return () => {
+      for (const timer of timers) clearTimeout(timer);
+    };
   },
   FormComponent: AddressEditForm,
   formProps: primaryAwareFormProps,

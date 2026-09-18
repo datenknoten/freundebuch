@@ -95,6 +95,10 @@ const modalTitle = $derived(
 // so an earlier slow response must not clobber a later one.
 let reloadSeq = 0;
 
+// The afterSave refetch outlives the save that scheduled it, so hold its cancel
+// and call it before the next owner's and when the section goes away.
+let cancelAfterSave: (() => void) | null = null;
+
 async function reload() {
   if (descriptor.load === undefined) return;
   const seq = ++reloadSeq;
@@ -115,11 +119,22 @@ $effect(() => {
   const id = ownerId;
   if (id.length > 0 && id !== loadedOwnerId) {
     loadedOwnerId = id;
+    // A refetch scheduled for the previous owner must not land on this one.
+    cancelAfterSave?.();
+    cancelAfterSave = null;
     loadedItems = [];
     closeModal();
     closeDeleteConfirm();
     reload().catch((err) => console.error('Failed to load sub-resources:', err));
   }
+});
+
+// Untracked, so the teardown runs when the section goes away and not on every
+// re-run of the effect above — a pending refetch belongs to the owner on
+// screen, and that owner has not changed just because the props did.
+$effect(() => () => {
+  cancelAfterSave?.();
+  cancelAfterSave = null;
 });
 
 function openAdd() {
@@ -173,7 +188,8 @@ async function handleSave() {
         loadedItems = [...loadedItems, created as SubresourceItem];
       }
     }
-    descriptor.afterSave?.(reload, ownerId);
+    cancelAfterSave?.();
+    cancelAfterSave = descriptor.afterSave?.(reload, ownerId) ?? null;
     closeModal();
   } catch (err) {
     editError =

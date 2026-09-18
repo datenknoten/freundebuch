@@ -143,11 +143,14 @@ export const addressDescriptor = defineDescriptor<Address, AddressInput>({
   // friend store owns these items, so refetch the friend (the section's own
   // reload is inert here — the descriptor has no `load`).
   afterSave: (_reload, friendId) => {
-    for (const delay of [800, 2000, 4500]) {
+    const timers = [800, 2000, 4500].map((delay) =>
       setTimeout(() => {
         friends.loadFriend(friendId).catch(() => undefined);
-      }, delay);
-    }
+      }, delay),
+    );
+    return () => {
+      for (const timer of timers) clearTimeout(timer);
+    };
   },
   tracksDirty: true,
   FormComponent: AddressEditForm,

@@ -48,6 +48,16 @@ describe('friend subresource descriptors', () => {
     expect(friends.loadFriend).toHaveBeenNthCalledWith(3, 'f1');
   });
 
+  it('stops the remaining refetches when cancelled', () => {
+    const cancel = addressDescriptor.afterSave?.(async () => undefined, 'f1');
+
+    vi.advanceTimersByTime(800);
+    cancel?.();
+    vi.runAllTimers();
+
+    expect(friends.loadFriend).toHaveBeenCalledTimes(1);
+  });
+
   it('maps phone validation failures to the field hints', () => {
     expect(
       phoneDescriptor.mapError?.(new ApiError(400, 'Invalid phone number', 'VALIDATION_ERROR'), t),
