@@ -1,38 +1,37 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "schedule": ["before 5am on monday"],
+  "timezone": "Europe/Berlin",
   "rangeStrategy": "pin",
+  "automerge": false,
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 3,
+  "commitMessageLowerCase": "never",
+  "rebaseWhen": "conflicted",
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["before 5am on monday"]
+    "groupName": "all non-major dependencies"
+  },
+  "pin": {
+    "description": "Pin updates default to rebaseWhen=behind-base-branch, which repushes the branch on every commit to main and costs a pipeline each time",
+    "rebaseWhen": "conflicted"
+  },
+  "major": {
+    "dependencyDashboardApproval": true
   },
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch"],
+      "description": "One MR for everything without a major bump: an MR pipeline here runs the whole test suite plus docker-smoke, so a fan-out of MRs is paid per service",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
       "groupName": "all non-major dependencies",
-      "groupSlug": "all-minor-patch",
-      "automerge": false
-    },
-    {
-      "matchDepTypes": ["devDependencies"],
-      "groupName": "dev dependencies",
-      "automerge": false
-    },
-    {
-      "matchPackagePatterns": ["^@types/"],
-      "groupName": "TypeScript type definitions",
-      "automerge": false
+      "groupSlug": "all-minor-patch"
     }
   ],
+  "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {
-    "enabled": true,
-    "labels": ["security"]
-  },
-  "automerge": false,
-  "prConcurrentLimit": 5,
-  "prHourlyLimit": 2,
-  "labels": ["dependencies"],
-  "reviewers": [],
-  "assignees": []
+    "labels": ["security"],
+    "groupName": "security fixes",
+    "groupSlug": "security",
+    "dependencyDashboardApproval": false
+  }
 }
