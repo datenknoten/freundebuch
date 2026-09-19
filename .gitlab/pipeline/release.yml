@@ -1,0 +1,41 @@
+# semantic-release on main. The release commit carries "[skip ci]", so the tag
+# it creates never gets a push pipeline; this job creates the tag pipeline over
+# the API instead (POST /pipeline sets ignore_skip_ci).
+#
+# Manual recovery if a tag exists but no tag pipeline ran: CI/CD -> Pipelines ->
+# "Run pipeline" with the tag as ref (source "web" passes the workflow rules).
+release:
+  extends: .node
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && ($CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "web")
+  interruptible: false
+  resource_group: release
+  variables:
+    # semantic-release needs every tag to work out the last release.
+    GIT_DEPTH: 0
+    HK: "0"
+    VITE_API_URL: ""
+  script:
+    # The trigger below must not depend on this exit code: @semantic-release/gitlab's
+    # success step can fail (MR/issue comment API errors) after tag, release commit
+    # and GitLab release already exist, and a retry cannot recover — the retried job
+    # checks out the pre-release commit.
+    - npx semantic-release || SR_STATUS=$?
+    - |
+      set -euo pipefail
+      TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)
+      if [ -z "$TAG" ]; then
+        echo "No release published."
+      else
+        API="$CI_API_V4_URL/projects/$CI_PROJECT_ID"
+        EXISTING=$(curl -sSf -H "PRIVATE-TOKEN: $GL_TOKEN" "$API/pipelines?ref=$TAG" \
+          | jq '[.[] | select(.status != "skipped")] | length')
+        if [ "$EXISTING" -gt 0 ]; then
+          echo "A pipeline for $TAG already exists."
+        else
+          curl -sSf -X POST -H "PRIVATE-TOKEN: $GL_TOKEN" "$API/pipeline?ref=$TAG" \
+            | jq -r '"Created pipeline \(.id): \(.web_url)"'
+        fi
+      fi
+    - exit "${SR_STATUS:-0}"

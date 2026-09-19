@@ -6,7 +6,7 @@ variables:
   MISE_OVERRIDE_CONFIG_FILENAMES: mise.ci.toml
   MISE_TRUSTED_CONFIG_PATHS: $CI_PROJECT_DIR
   MISE_YES: "1"
-  # Parity with jdx/mise-action's `experimental: true` in the GitHub workflows.
+  # Experimental mise features on (aube backend).
   MISE_EXPERIMENTAL: "1"
   # mise and aube must keep their state inside the project: GitLab can only cache
   # paths under $CI_PROJECT_DIR. The image defaults to MISE_DATA_DIR=/mise.
@@ -38,6 +38,19 @@ default:
         prefix: aube
         files: [pnpm-lock.yaml]
       paths: [.aube/store]
+
+# Plain Postgres for jobs that run migrations directly (no testcontainers). The
+# runner waits for the service's TCP port before the job starts, and `mise install`
+# + `aube ci` run before anything touches the database.
+.postgres:
+  services:
+    - name: imresamu/postgis:18-3.6.1-trixie
+      alias: postgres
+  variables:
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+    POSTGRES_DB: test
+    DATABASE_URL: postgresql://test:test@postgres:5432/test
 
 .docker:
   image: docker:29-cli

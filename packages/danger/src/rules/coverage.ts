@@ -7,10 +7,9 @@ import type { DangerRule } from '../types';
  * lines up with Danger's repo-relative changed-file list automatically. Each
  * report is reported on independently.
  *
- * Both reports are produced in CI now (the frontend one in the `danger` job,
- * the backend one in `backend-coverage`), so a missing report means the job
- * that should have produced it failed or was skipped — worth a warning rather
- * than silence.
+ * Both reports are produced by the `checks` job and handed to `danger` as a job
+ * artifact, so a missing report means that job failed or was skipped — worth a
+ * warning rather than silence.
  */
 const CLOVER_REPORTS = ['apps/frontend/coverage/clover.xml', 'apps/backend/coverage/clover.xml'];
 

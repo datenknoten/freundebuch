@@ -1,5 +1,6 @@
 {
   "branches": ["main"],
+  "repositoryUrl": "https://gitlab.com/datenknoten/freundebuch.git",
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
@@ -38,7 +39,9 @@
             { "type": "test", "section": "Tests", "hidden": true },
             { "type": "build", "section": "Build System", "hidden": true },
             { "type": "ci", "section": "Continuous Integration", "hidden": true }
-          ]
+          ],
+          "commitUrlFormat": "{{host}}/{{owner}}/{{repository}}/-/commit/{{hash}}",
+          "compareUrlFormat": "{{host}}/{{owner}}/{{repository}}/-/compare/{{previousTag}}...{{currentTag}}"
         }
       }
     ],
@@ -57,7 +60,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "aube version:sync ${nextRelease.version}"
+        "prepareCmd": "scripts/release-prepare.sh ${nextRelease.version}"
       }
     ],
     [
@@ -72,6 +75,18 @@
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
-    "@semantic-release/github"
+    [
+      "@semantic-release/gitlab",
+      {
+        "assets": [
+          {
+            "path": "frontend-${nextRelease.version}.tar.gz",
+            "label": "Frontend static build (frontend-${nextRelease.version}.tar.gz)",
+            "target": "generic_package",
+            "type": "package"
+          }
+        ]
+      }
+    ]
   ]
 }

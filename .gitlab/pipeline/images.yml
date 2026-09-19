@@ -1,9 +1,6 @@
-# Container images. Ported from .github/workflows/release.yml's docker-build and
-# docker-manifest jobs, retargeted at this project's registry:
-# registry.gitlab.com/datenknoten/freundebuch/<image>. GitHub's dash-suffix naming
-# (freundebuch-backend) cannot be expressed inside one GitLab project.
+# Container images, published to registry.gitlab.com/datenknoten/freundebuch/<image>.
 
-# Sequential build of all five images for one architecture. ARCH is supplied by the
+# Sequential build of all six images for one architecture. ARCH is supplied by the
 # concrete jobs below.
 .build-images:
   # .buildx: the docker-container driver required by --cache-to type=registry.
@@ -13,14 +10,13 @@
   needs: []
   rules:
     - if: $CI_COMMIT_TAG
-  # A release must finish even when a newer pipeline appears (release.yml keeps
-  # cancel-in-progress: false for the same reason).
+  # A release must finish even when a newer pipeline appears.
   interruptible: false
   timeout: 2h
   script:
     - VERSION="${CI_COMMIT_TAG#v}"
     - |
-      for IMAGE in nginx backend mcp-server sabredav osm-import; do
+      for IMAGE in nginx backend mcp-server sabredav osm-import all-in-one; do
         TARGET=""
         case "$IMAGE" in
           nginx)      DOCKERFILE=docker/Dockerfile.nginx.prod ;;
@@ -28,11 +24,12 @@
           mcp-server) DOCKERFILE=docker/Dockerfile.backend.prod; TARGET=mcp-server ;;
           sabredav)   DOCKERFILE=docker/Dockerfile.sabredav.prod ;;
           osm-import) DOCKERFILE=docker/Dockerfile.osm-import ;;
+          all-in-one) DOCKERFILE=Dockerfile; TARGET=production ;;
         esac
         IMG="$CI_REGISTRY_IMAGE/$IMAGE"
         set --
-        # Only the nginx image bakes a frontend build arg (Dockerfile.nginx.prod).
-        if [ "$IMAGE" = "nginx" ]; then set -- --build-arg "VITE_SENTRY_DSN=$VITE_SENTRY_DSN"; fi
+        # nginx and all-in-one bake a frontend and take its Sentry build arg.
+        if [ "$IMAGE" = "nginx" ] || [ "$IMAGE" = "all-in-one" ]; then set -- --build-arg "VITE_SENTRY_DSN=$VITE_SENTRY_DSN"; fi
         if [ -n "$TARGET" ]; then set -- "$@" --target "$TARGET"; fi
         echo "=== building $IMAGE ($ARCH) ==="
         # provenance/sbom off: they turn a single-platform build into a manifest
@@ -72,6 +69,8 @@ manifest:
   variables:
     COSIGN_VERSION: v3.1.3
     COSIGN_SHA256: "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71"
+    SYFT_VERSION: 1.52.0
+    SYFT_SHA256: "caeedb81fb0491615f1ebd1761e4145d41ee86dd2cc7bf80669f9f5ad9d6133d"
   # Keyless signing: GitLab mints an OIDC token with aud=sigstore, and cosign picks
   # it up from $SIGSTORE_ID_TOKEN automatically. No key material exists anywhere.
   id_tokens:
@@ -85,12 +84,16 @@ manifest:
     - wget -qO /usr/local/bin/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
     - echo "${COSIGN_SHA256}  /usr/local/bin/cosign" | sha256sum -c -
     - chmod +x /usr/local/bin/cosign
+    # Same reasoning for syft: the SBOM generator is pinned, not floated.
+    - wget -qO syft.tgz "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_amd64.tar.gz"
+    - echo "${SYFT_SHA256}  syft.tgz" | sha256sum -c -
+    - tar -xzf syft.tgz -C /usr/local/bin syft
   script:
     - VERSION="${CI_COMMIT_TAG#v}"
     - |
-      for IMAGE in nginx backend mcp-server sabredav osm-import; do
+      for IMAGE in nginx backend mcp-server sabredav osm-import all-in-one; do
         IMG="$CI_REGISTRY_IMAGE/$IMAGE"
-        # Same tag set release.yml publishes: version, major.minor, major, latest.
+        # Tag set: version, major.minor, major, latest.
         docker buildx imagetools create \
           --tag "$IMG:$VERSION" \
           --tag "$IMG:${VERSION%.*}" \
@@ -112,10 +115,21 @@ manifest:
           --certificate-oidc-issuer "$CI_SERVER_URL" \
           --certificate-identity "$CI_PROJECT_URL//.gitlab-ci.yml@refs/tags/$CI_COMMIT_TAG" \
           "$IMG@$DIGEST" > /dev/null
+        # SPDX SBOM of the signed index, attached to the same digest as a
+        # signed attestation, and verified in-job for the same reason.
+        syft "$IMG@$DIGEST" -o spdx-json="sbom-$IMAGE.spdx.json"
+        cosign attest --yes --type spdxjson --predicate "sbom-$IMAGE.spdx.json" "$IMG@$DIGEST"
+        cosign verify-attestation --type spdxjson \
+          --certificate-oidc-issuer "$CI_SERVER_URL" \
+          --certificate-identity "$CI_PROJECT_URL//.gitlab-ci.yml@refs/tags/$CI_COMMIT_TAG" \
+          "$IMG@$DIGEST" > /dev/null
       done
+  artifacts:
+    paths:
+      - sbom-*.spdx.json
+    expire_in: 1 year
 
-# MR-only, exactly like ci.yml's docker-smoke: pushes to main and tags build the
-# real images instead.
+# MR-only: pushes to main and tags build the real images instead.
 docker-smoke:
   extends: .buildx
   stage: check
@@ -133,8 +147,31 @@ docker-smoke:
     - docker buildx build --load --file docker/Dockerfile.nginx.prod
       --tag freundebuch-nginx:ci --platform linux/amd64
       --cache-from "type=registry,ref=$CI_REGISTRY_IMAGE/nginx:buildcache-amd64" .
+    - docker buildx build --load --file Dockerfile --target production
+      --tag freundebuch-all-in-one:ci --platform linux/amd64
+      --cache-from "type=registry,ref=$CI_REGISTRY_IMAGE/all-in-one:buildcache-amd64" .
     # Resolve modules from each app's own directory, the way the real CMD does.
     - docker run --rm -w /app/apps/backend freundebuch-backend:ci node -e "require('bcrypt'); require('sharp');"
     - docker run --rm -w /app/apps/mcp-server freundebuch-mcp-server:ci node -e "require('bcrypt');"
     - docker run --rm freundebuch-nginx:ci test -f /app/frontend/index.html
+    # The all-in-one entrypoint runs migrations first; an unreachable database
+    # proves the bundled migrator and its modules resolve. Piping into `grep -q`
+    # would close the pipe on the first match, and pipefail turns the container's
+    # SIGPIPE into exit 141, so the output goes through a file.
+    - docker run --rm -e DATABASE_URL=postgresql://u:p@127.0.0.1:1/none freundebuch-all-in-one:ci
+      node /app/node_modules/node-pg-migrate/bin/node-pg-migrate.js --decamelize --migrations-dir /app/database/dist up > all-in-one-migrate.log 2>&1 || true
+    - grep -q ECONNREFUSED all-in-one-migrate.log
     - echo "Docker smoke tests passed"
+
+notify-failure:
+  stage: notify
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_BRANCH == "main"
+      when: on_failure
+  image: alpine:3.22
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - |
+      curl -X POST "$DEPLOYMENT_NOTIFICATION" -H "Content-Type: application/json" \
+        -d "{\"text\": \"❌ **Release pipeline failed**\n\n**Repository:** ${CI_PROJECT_PATH}\n**Pipeline:** ${CI_PIPELINE_URL}\"}"

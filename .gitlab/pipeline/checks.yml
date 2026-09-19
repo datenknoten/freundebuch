@@ -1,14 +1,13 @@
-# Code checks. Ported from .github/workflows/ci.yml, folded into one Node job:
-# GitHub's five separate JS jobs each paid a full `aube ci`, which dominates their
-# runtime.
+# Code checks, folded into one Node job: separate jobs each pay a full `aube ci`,
+# which dominates their runtime.
 
 checks:
   extends: .node
   stage: check
   # DAG: starts immediately, waits for nothing.
   needs: []
-  # The checks belong to the code under review, not to the [skip ci] release commit
-  # that a release tag points at (release.yml behaves the same way).
+  # The checks belong to the code under review, not to the [skip ci] release
+  # commit that a release tag points at.
   rules:
     - if: $CI_COMMIT_TAG
       when: never
@@ -33,26 +32,127 @@ checks:
   tags: [saas-linux-medium-amd64]
   timeout: 1h
   script:
-    # `aube run check`, never bare `aube check` — the latter is aube's dependency-tree
-    # verifier, not the biome script.
-    - aube run check
+    # `aube run check:ci`, never bare `aube check` — the latter is aube's
+    # dependency-tree verifier, not the biome script. `check` (without :ci) would
+    # write fixes and exit 0.
+    - aube run check:ci
     - aube type-check
     # Runs before the tests on purpose: it produces packages/shared/dist, which the
     # frontend suite imports through the $shared alias.
     - aube build
-    - aube --recursive run test
+    # Per workspace rather than `--recursive run test`: danger needs both clover
+    # reports as artifacts. Only @freundebuch/danger is dropped (its test is a no-op).
+    - aube --filter @freundebuch/frontend run test:coverage
+    - aube --filter @freundebuch/backend run test:coverage
+    - aube --filter @freundebuch/mcp-server run test
+    - aube --filter @freundebuch/shared run test
+  artifacts:
+    paths:
+      - apps/frontend/coverage/clover.xml
+      - apps/backend/coverage/clover.xml
+    expire_in: 1 week
 
+# The Integration suite does not self-skip: IntegrationTestCase::skipOrFail turns
+# a missing database into a failure when CI=true, deliberately, because a silent
+# skip would leave the PHP SQL unguarded against schema drift. So it needs a real
+# Postgres — and its runMigrations() shells out to tsx from apps/backend, so it
+# needs the node toolchain too. Hence the mise image with PHP on top rather than
+# php:8.4-cli.
 php:
+  extends: .node
   stage: check
   needs: []
   rules:
     - if: $CI_COMMIT_TAG
       when: never
     - when: on_success
-  # apps/sabredav/vendor is committed and composer's platform_check only asserts
-  # PHP >= 8.4, so the stock image needs no extensions: the unit tests mock PDO and
-  # the Integration suite self-skips (it requires `docker info` *and* `pnpm`).
-  image: php:8.4-cli
+  services:
+    - name: imresamu/postgis:18-3.6.1-trixie
+      alias: postgres
+  variables:
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+    # Not "test": the JS suites drop and recreate a database of that exact name
+    # as their clone template, which would delete what this suite migrates into.
+    POSTGRES_DB: sabredav
+    TEST_DATABASE_URL: postgresql://test:test@postgres:5432/sabredav
+  before_script:
+    - !reference [.node, before_script]
+    # Debian trixie ships PHP 8.4. apps/sabredav/vendor is committed, so composer
+    # never runs here; these are the extensions phpunit and the suite need.
+    - apt-get update && apt-get install -y --no-install-recommends php-cli php-pgsql php-curl php-mbstring php-xml
   script:
     - cd apps/sabredav
     - ./vendor/bin/phpunit
+
+# Committed .queries.ts must match the schema the migrations produce.
+pgtyped-drift:
+  extends: [.node, .postgres]
+  stage: check
+  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: on_success
+  script:
+    - aube --filter @freundebuch/backend run migrate
+    - aube --filter @freundebuch/backend run pgtyped
+    - git diff --exit-code -- apps/backend/src/models/queries
+
+# Every migration must survive a full down/up round trip.
+migrations:
+  extends: [.node, .postgres]
+  stage: check
+  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: on_success
+  script:
+    - aube --filter @freundebuch/backend run migrate
+    - count=$(ls database/migrations/*.ts | wc -l)
+    - aube --filter @freundebuch/backend run migrate:down "$count"
+    - aube --filter @freundebuch/backend run migrate
+
+composer-audit:
+  stage: check
+  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: on_success
+  image: composer:2
+  # Report-only: an advisory without a fixed release must not block a merge.
+  allow_failure: true
+  script:
+    - cd apps/sabredav && composer audit --no-interaction
+
+dependency-audit:
+  stage: check
+  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: on_success
+  image:
+    name: ghcr.io/google/osv-scanner:v2.5.1
+    entrypoint: [""]
+  # Report-only, same reason as composer-audit.
+  allow_failure: true
+  script:
+    # The image's entrypoint is the binary at /, and nothing puts it on PATH.
+    - /osv-scanner scan source --lockfile=pnpm-lock.yaml --lockfile=apps/sabredav/composer.lock
+
+danger:
+  extends: .node
+  stage: check
+  # Needs the clover reports the checks job publishes.
+  needs: [checks]
+  rules:
+    # Fork MR pipelines have no project CI variables (no DANGER_GITLAB_API_TOKEN).
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_PROJECT_ID == $CI_PROJECT_ID
+  variables:
+    # Danger diffs against the target branch.
+    GIT_DEPTH: 0
+  script:
+    - npx danger ci

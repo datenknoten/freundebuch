@@ -7,9 +7,6 @@
 .git/
 .gitignore
 
-# GitHub workflows and configs
-.github/
-
 # GitLab CI configs
 .gitlab-ci.yml
 .gitlab/

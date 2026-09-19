@@ -19,6 +19,7 @@ const packagePaths = [
   'apps/backend/package.json',
   'apps/frontend/package.json',
   'apps/mcp-server/package.json',
+  'packages/danger/package.json',
   'packages/shared/package.json',
 ];
 
