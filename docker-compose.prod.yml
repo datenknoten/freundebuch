@@ -1,6 +1,6 @@
 services:
   mcp-server:
-    image: ghcr.io/datenknoten/freundebuch-mcp-server:${VERSION:-latest}
+    image: registry.gitlab.com/datenknoten/freundebuch/mcp-server:${VERSION:-latest}
     container_name: freundebuch-mcp-server
     restart: unless-stopped
     environment:
@@ -31,7 +31,7 @@ services:
         condition: service_completed_successfully
 
   nginx:
-    image: ghcr.io/datenknoten/freundebuch-nginx:${VERSION:-latest}
+    image: registry.gitlab.com/datenknoten/freundebuch/nginx:${VERSION:-latest}
     container_name: freundebuch-nginx
     restart: unless-stopped
     environment:
@@ -74,7 +74,7 @@ services:
         condition: service_healthy
 
   backend:
-    image: ghcr.io/datenknoten/freundebuch-backend:${VERSION:-latest}
+    image: registry.gitlab.com/datenknoten/freundebuch/backend:${VERSION:-latest}
     container_name: freundebuch-backend
     restart: unless-stopped
     environment:
@@ -167,7 +167,7 @@ services:
   # window where new code met an old schema. Uses the compiled migrations
   # (database/dist) already baked into the backend image.
   migrate:
-    image: ghcr.io/datenknoten/freundebuch-backend:${VERSION:-latest}
+    image: registry.gitlab.com/datenknoten/freundebuch/backend:${VERSION:-latest}
     container_name: freundebuch-migrate
     restart: "no"
     command:
@@ -186,7 +186,7 @@ services:
         condition: service_healthy
 
   sabredav:
-    image: ghcr.io/datenknoten/freundebuch-sabredav:${VERSION:-latest}
+    image: registry.gitlab.com/datenknoten/freundebuch/sabredav:${VERSION:-latest}
     container_name: freundebuch-sabredav
     restart: unless-stopped
     environment:
@@ -230,7 +230,7 @@ services:
 
   # OSM address data import (run manually with --profile import)
   osm-import:
-    image: ghcr.io/datenknoten/freundebuch-osm-import:${VERSION:-latest}
+    image: registry.gitlab.com/datenknoten/freundebuch/osm-import:${VERSION:-latest}
     container_name: freundebuch-osm-import
     profiles:
       - import  # Only runs when explicitly requested

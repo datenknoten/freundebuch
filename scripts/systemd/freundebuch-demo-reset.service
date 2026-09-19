@@ -1,6 +1,6 @@
 [Unit]
 Description=Reset Freundebuch demo data
-Documentation=https://github.com/datenknoten/freundebuch
+Documentation=https://gitlab.com/datenknoten/freundebuch
 Requires=docker.service
 After=docker.service
 

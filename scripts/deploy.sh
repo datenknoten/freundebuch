@@ -24,14 +24,14 @@ VERSION="$1"
 # Configuration
 COMPOSE_DIR="/srv/freundebuch.schumacher.im"
 COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.yml"
-IMAGE_BASE="ghcr.io/datenknoten/freundebuch"
+IMAGE_BASE="registry.gitlab.com/datenknoten/freundebuch"
 
 # Service images (multi-service architecture)
 IMAGES=(
-    "${IMAGE_BASE}-nginx:${VERSION}"
-    "${IMAGE_BASE}-backend:${VERSION}"
-    "${IMAGE_BASE}-mcp-server:${VERSION}"
-    "${IMAGE_BASE}-sabredav:${VERSION}"
+    "${IMAGE_BASE}/nginx:${VERSION}"
+    "${IMAGE_BASE}/backend:${VERSION}"
+    "${IMAGE_BASE}/mcp-server:${VERSION}"
+    "${IMAGE_BASE}/sabredav:${VERSION}"
 )
 
 # Services to manage
@@ -156,7 +156,7 @@ rollback() {
 
         # Pull the previous version images (should be cached locally)
         for service in "${SERVICES[@]}"; do
-            local previous_image="${IMAGE_BASE}-${service}:${PREVIOUS_VERSION}"
+            local previous_image="${IMAGE_BASE}/${service}:${PREVIOUS_VERSION}"
             docker pull "$previous_image" 2>/dev/null || true
         done
 
