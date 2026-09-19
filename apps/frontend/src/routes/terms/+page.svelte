@@ -133,7 +133,7 @@ const i18n = createI18n();
 			<p class="text-gray-700 mt-4">
 				Freundebuch is open source software. The source code is available under the terms of its license,
 				which can be found in the project's
-				<a href="https://github.com/datenknoten/freundebuch" class="text-forest hover:text-forest-light" target="_blank" rel="noopener noreferrer">GitHub repository</a>.
+				<a href="https://gitlab.com/datenknoten/freundebuch" class="text-forest hover:text-forest-light" target="_blank" rel="noopener noreferrer">GitLab repository</a>.
 			</p>
 		</section>
 
@@ -228,7 +228,7 @@ const i18n = createI18n();
 			<p class="text-gray-700">
 				If you have any questions about these Terms of Service, please contact the operator of this
 				Freundebuch instance or reach out through the project's
-				<a href="https://github.com/datenknoten/freundebuch" class="text-forest hover:text-forest-light" target="_blank" rel="noopener noreferrer">GitHub repository</a>.
+				<a href="https://gitlab.com/datenknoten/freundebuch" class="text-forest hover:text-forest-light" target="_blank" rel="noopener noreferrer">GitLab repository</a>.
 			</p>
 		</section>
 	</div>

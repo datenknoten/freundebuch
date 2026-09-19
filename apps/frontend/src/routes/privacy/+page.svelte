@@ -239,7 +239,7 @@ const i18n = createI18n();
 			<p class="text-gray-700">
 				If you have any questions about this privacy policy, our data practices, or wish to exercise your rights,
 				please contact the operator of this Freundebuch instance or reach out through the project's
-				<a href="https://github.com/datenknoten/freundebuch" class="text-forest hover:text-forest-light" target="_blank" rel="noopener noreferrer">GitHub repository</a>.
+				<a href="https://gitlab.com/datenknoten/freundebuch" class="text-forest hover:text-forest-light" target="_blank" rel="noopener noreferrer">GitLab repository</a>.
 			</p>
 		</section>
 	</div>

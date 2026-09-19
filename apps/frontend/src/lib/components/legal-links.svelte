@@ -18,7 +18,7 @@ const text = $derived(size === 'sm' ? 'text-xs' : 'text-sm');
 
 <div class="flex items-center justify-center gap-3 {text} font-body text-gray-500">
   <a
-    href="https://github.com/datenknoten/freundebuch"
+    href="https://gitlab.com/datenknoten/freundebuch"
     class="hover:text-forest transition-colors"
     target="_blank"
     rel="noopener noreferrer"
