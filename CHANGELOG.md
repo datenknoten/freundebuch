@@ -1,224 +1,224 @@
 ## <small>3.1.3 (2026-09-18)</small>
 
-* fix(frontend): Allow pinch-zoom on mobile ([642b3b3](https://github.com/datenknoten/freundebuch/commit/642b3b3))
-* fix(frontend): Cancel the geocoding refetch when the section changes owner ([87610ff](https://github.com/datenknoten/freundebuch/commit/87610ff))
-* fix(frontend): Confirm saved display preferences ([d6f998c](https://github.com/datenknoten/freundebuch/commit/d6f998c))
-* fix(frontend): Count open overlays instead of flagging one ([1237604](https://github.com/datenknoten/freundebuch/commit/1237604))
-* fix(frontend): Count the mobile drawer as an open overlay ([7d33be5](https://github.com/datenknoten/freundebuch/commit/7d33be5))
-* fix(frontend): Drop the dead prose classes from the legal pages ([77b0997](https://github.com/datenknoten/freundebuch/commit/77b0997))
-* fix(frontend): Give the upcoming-dates badge a defined background ([cd72c08](https://github.com/datenknoten/freundebuch/commit/cd72c08))
-* fix(frontend): Hide the create FAB during onboarding ([54be536](https://github.com/datenknoten/freundebuch/commit/54be536))
-* fix(frontend): Honour prefers-reduced-motion for every animation ([bb9e4bc](https://github.com/datenknoten/freundebuch/commit/bb9e4bc))
-* fix(frontend): Keep the closed mobile drawer out of the tab order ([bae8711](https://github.com/datenknoten/freundebuch/commit/bae8711))
-* fix(frontend): Keep the friend edit form mounted while it saves ([9f8704e](https://github.com/datenknoten/freundebuch/commit/9f8704e))
-* fix(frontend): Keep the friend form renderable on the server ([94a844f](https://github.com/datenknoten/freundebuch/commit/94a844f))
-* fix(frontend): Keep the html lang attribute in sync with the locale ([6bee3ee](https://github.com/datenknoten/freundebuch/commit/6bee3ee))
-* fix(frontend): Label and translate the friend form fields ([ea34bd2](https://github.com/datenknoten/freundebuch/commit/ea34bd2))
-* fix(frontend): Layer overlays above the FAB with a z-index scale ([b2f16cc](https://github.com/datenknoten/freundebuch/commit/b2f16cc))
-* fix(frontend): Let Escape reach the dialog that is open ([1bcac27](https://github.com/datenknoten/freundebuch/commit/1bcac27))
-* fix(frontend): Map phone validation errors to the invalid-number hint for collectives ([f74acde](https://github.com/datenknoten/freundebuch/commit/f74acde))
-* fix(frontend): Mark the active route in the mobile drawer ([037a62b](https://github.com/datenknoten/freundebuch/commit/037a62b))
-* fix(frontend): Remove the unbound remember-me checkbox ([a76a333](https://github.com/datenknoten/freundebuch/commit/a76a333))
-* fix(frontend): Show focus rings only for keyboard navigation ([3c5d62b](https://github.com/datenknoten/freundebuch/commit/3c5d62b))
-* fix(frontend): Translate the address inputs and edit-form placeholders ([5c98c69](https://github.com/datenknoten/freundebuch/commit/5c98c69))
-* fix(frontend): Translate the facet filter labels and headings ([09fc2d8](https://github.com/datenknoten/freundebuch/commit/09fc2d8))
-* fix(frontend): Translate the last hardcoded strings ([dfba788](https://github.com/datenknoten/freundebuch/commit/dfba788))
-* fix(frontend): Translate the messaging and setup-guide leftovers ([9648909](https://github.com/datenknoten/freundebuch/commit/9648909))
-* fix(frontend): Translate the password reset flow and onboarding ([2083c95](https://github.com/datenknoten/freundebuch/commit/2083c95))
-* fix(frontend): Translate the remaining aria labels and list chrome ([07909f1](https://github.com/datenknoten/freundebuch/commit/07909f1))
-* fix(frontend): Translate the shared circle form and the last address strings ([ec19a2f](https://github.com/datenknoten/freundebuch/commit/ec19a2f))
-* refactor(frontend): Add error, helper and size props to the form primitives ([54aaf51](https://github.com/datenknoten/freundebuch/commit/54aaf51))
-* refactor(frontend): Adopt the form primitives across every form ([4037e21](https://github.com/datenknoten/freundebuch/commit/4037e21))
-* refactor(frontend): Align the dashboard widgets with the shared recipes ([dc4c002](https://github.com/datenknoten/freundebuch/commit/dc4c002))
-* refactor(frontend): Ask about unsaved changes inside the edit dialog ([df84b1c](https://github.com/datenknoten/freundebuch/commit/df84b1c))
-* refactor(frontend): Build modals on a native dialog element ([7027694](https://github.com/datenknoten/freundebuch/commit/7027694))
-* refactor(frontend): Codify the surface, chip and heading recipes ([022b361](https://github.com/datenknoten/freundebuch/commit/022b361))
-* refactor(frontend): Confirm every destructive action with the shared dialog ([233610d](https://github.com/datenknoten/freundebuch/commit/233610d))
-* refactor(frontend): Confirm the last two destructive actions ([ef7dd07](https://github.com/datenknoten/freundebuch/commit/ef7dd07))
-* refactor(frontend): Delete the unreferenced components ([4e11a18](https://github.com/datenknoten/freundebuch/commit/4e11a18))
-* refactor(frontend): Drop the stale Component import from the descriptors ([b881a71](https://github.com/datenknoten/freundebuch/commit/b881a71))
-* refactor(frontend): Extract SearchInput from the list pages ([dba48e9](https://github.com/datenknoten/freundebuch/commit/dba48e9))
-* refactor(frontend): Move the last hand-rolled controls onto formClasses ([47ce961](https://github.com/datenknoten/freundebuch/commit/47ce961))
-* refactor(frontend): Move the remaining modals onto Modal ([08f04aa](https://github.com/datenknoten/freundebuch/commit/08f04aa))
-* refactor(frontend): Render circle and collective rows through SubresourceRow ([4734e3c](https://github.com/datenknoten/freundebuch/commit/4734e3c))
-* refactor(frontend): Render empty states through EmptyState ([5c16520](https://github.com/datenknoten/freundebuch/commit/5c16520))
-* refactor(frontend): Render the shortcut help rows through one snippet ([4005404](https://github.com/datenknoten/freundebuch/commit/4005404))
-* refactor(frontend): Replace the hand-rolled spinners with one Spinner ([39ca7a7](https://github.com/datenknoten/freundebuch/commit/39ca7a7))
-* refactor(frontend): Route every button through a shared Button component ([5566951](https://github.com/datenknoten/freundebuch/commit/5566951))
-* refactor(frontend): Run the friend detail sections on the subresource descriptors ([0c66cf0](https://github.com/datenknoten/freundebuch/commit/0c66cf0))
-* refactor(frontend): Say what you mean in the migrated forms ([1ef0a3d](https://github.com/datenknoten/freundebuch/commit/1ef0a3d)), closes [#if](https://github.com/datenknoten/freundebuch/issues/if) [#if](https://github.com/datenknoten/freundebuch/issues/if)
-* refactor(frontend): Share popover, tab-strip and code surfaces ([8b9a013](https://github.com/datenknoten/freundebuch/commit/8b9a013))
-* refactor(frontend): Share the add-detail dropdown and sheet ([874fd88](https://github.com/datenknoten/freundebuch/commit/874fd88))
-* refactor(frontend): Share the FAB between the layout and the detail pages ([d0f6dc0](https://github.com/datenknoten/freundebuch/commit/d0f6dc0))
-* refactor(frontend): Share the legal links between footer and drawer ([692bea4](https://github.com/datenknoten/freundebuch/commit/692bea4))
-* refactor(frontend): Show feedback through AlertBanner everywhere ([bfa9a85](https://github.com/datenknoten/freundebuch/commit/bfa9a85))
-* refactor(frontend): Single-source the badge and category colour maps ([411dee6](https://github.com/datenknoten/freundebuch/commit/411dee6))
-* refactor(frontend): Trap drawer focus with the shared action ([f115fe7](https://github.com/datenknoten/freundebuch/commit/f115fe7))
-* refactor(frontend): Type the subresource descriptors generically ([f039730](https://github.com/datenknoten/freundebuch/commit/f039730))
-* refactor(frontend): Use the shared heading recipes on the detail pages ([b19988b](https://github.com/datenknoten/freundebuch/commit/b19988b))
-* refactor(frontend): Wrap every route in a PageShell ([329a540](https://github.com/datenknoten/freundebuch/commit/329a540))
-* docs(frontend): Describe the design language the app actually ships ([64f1ef9](https://github.com/datenknoten/freundebuch/commit/64f1ef9))
+* fix(frontend): Allow pinch-zoom on mobile ([642b3b3](https://gitlab.com/datenknoten/freundebuch/-/commit/642b3b3))
+* fix(frontend): Cancel the geocoding refetch when the section changes owner ([87610ff](https://gitlab.com/datenknoten/freundebuch/-/commit/87610ff))
+* fix(frontend): Confirm saved display preferences ([d6f998c](https://gitlab.com/datenknoten/freundebuch/-/commit/d6f998c))
+* fix(frontend): Count open overlays instead of flagging one ([1237604](https://gitlab.com/datenknoten/freundebuch/-/commit/1237604))
+* fix(frontend): Count the mobile drawer as an open overlay ([7d33be5](https://gitlab.com/datenknoten/freundebuch/-/commit/7d33be5))
+* fix(frontend): Drop the dead prose classes from the legal pages ([77b0997](https://gitlab.com/datenknoten/freundebuch/-/commit/77b0997))
+* fix(frontend): Give the upcoming-dates badge a defined background ([cd72c08](https://gitlab.com/datenknoten/freundebuch/-/commit/cd72c08))
+* fix(frontend): Hide the create FAB during onboarding ([54be536](https://gitlab.com/datenknoten/freundebuch/-/commit/54be536))
+* fix(frontend): Honour prefers-reduced-motion for every animation ([bb9e4bc](https://gitlab.com/datenknoten/freundebuch/-/commit/bb9e4bc))
+* fix(frontend): Keep the closed mobile drawer out of the tab order ([bae8711](https://gitlab.com/datenknoten/freundebuch/-/commit/bae8711))
+* fix(frontend): Keep the friend edit form mounted while it saves ([9f8704e](https://gitlab.com/datenknoten/freundebuch/-/commit/9f8704e))
+* fix(frontend): Keep the friend form renderable on the server ([94a844f](https://gitlab.com/datenknoten/freundebuch/-/commit/94a844f))
+* fix(frontend): Keep the html lang attribute in sync with the locale ([6bee3ee](https://gitlab.com/datenknoten/freundebuch/-/commit/6bee3ee))
+* fix(frontend): Label and translate the friend form fields ([ea34bd2](https://gitlab.com/datenknoten/freundebuch/-/commit/ea34bd2))
+* fix(frontend): Layer overlays above the FAB with a z-index scale ([b2f16cc](https://gitlab.com/datenknoten/freundebuch/-/commit/b2f16cc))
+* fix(frontend): Let Escape reach the dialog that is open ([1bcac27](https://gitlab.com/datenknoten/freundebuch/-/commit/1bcac27))
+* fix(frontend): Map phone validation errors to the invalid-number hint for collectives ([f74acde](https://gitlab.com/datenknoten/freundebuch/-/commit/f74acde))
+* fix(frontend): Mark the active route in the mobile drawer ([037a62b](https://gitlab.com/datenknoten/freundebuch/-/commit/037a62b))
+* fix(frontend): Remove the unbound remember-me checkbox ([a76a333](https://gitlab.com/datenknoten/freundebuch/-/commit/a76a333))
+* fix(frontend): Show focus rings only for keyboard navigation ([3c5d62b](https://gitlab.com/datenknoten/freundebuch/-/commit/3c5d62b))
+* fix(frontend): Translate the address inputs and edit-form placeholders ([5c98c69](https://gitlab.com/datenknoten/freundebuch/-/commit/5c98c69))
+* fix(frontend): Translate the facet filter labels and headings ([09fc2d8](https://gitlab.com/datenknoten/freundebuch/-/commit/09fc2d8))
+* fix(frontend): Translate the last hardcoded strings ([dfba788](https://gitlab.com/datenknoten/freundebuch/-/commit/dfba788))
+* fix(frontend): Translate the messaging and setup-guide leftovers ([9648909](https://gitlab.com/datenknoten/freundebuch/-/commit/9648909))
+* fix(frontend): Translate the password reset flow and onboarding ([2083c95](https://gitlab.com/datenknoten/freundebuch/-/commit/2083c95))
+* fix(frontend): Translate the remaining aria labels and list chrome ([07909f1](https://gitlab.com/datenknoten/freundebuch/-/commit/07909f1))
+* fix(frontend): Translate the shared circle form and the last address strings ([ec19a2f](https://gitlab.com/datenknoten/freundebuch/-/commit/ec19a2f))
+* refactor(frontend): Add error, helper and size props to the form primitives ([54aaf51](https://gitlab.com/datenknoten/freundebuch/-/commit/54aaf51))
+* refactor(frontend): Adopt the form primitives across every form ([4037e21](https://gitlab.com/datenknoten/freundebuch/-/commit/4037e21))
+* refactor(frontend): Align the dashboard widgets with the shared recipes ([dc4c002](https://gitlab.com/datenknoten/freundebuch/-/commit/dc4c002))
+* refactor(frontend): Ask about unsaved changes inside the edit dialog ([df84b1c](https://gitlab.com/datenknoten/freundebuch/-/commit/df84b1c))
+* refactor(frontend): Build modals on a native dialog element ([7027694](https://gitlab.com/datenknoten/freundebuch/-/commit/7027694))
+* refactor(frontend): Codify the surface, chip and heading recipes ([022b361](https://gitlab.com/datenknoten/freundebuch/-/commit/022b361))
+* refactor(frontend): Confirm every destructive action with the shared dialog ([233610d](https://gitlab.com/datenknoten/freundebuch/-/commit/233610d))
+* refactor(frontend): Confirm the last two destructive actions ([ef7dd07](https://gitlab.com/datenknoten/freundebuch/-/commit/ef7dd07))
+* refactor(frontend): Delete the unreferenced components ([4e11a18](https://gitlab.com/datenknoten/freundebuch/-/commit/4e11a18))
+* refactor(frontend): Drop the stale Component import from the descriptors ([b881a71](https://gitlab.com/datenknoten/freundebuch/-/commit/b881a71))
+* refactor(frontend): Extract SearchInput from the list pages ([dba48e9](https://gitlab.com/datenknoten/freundebuch/-/commit/dba48e9))
+* refactor(frontend): Move the last hand-rolled controls onto formClasses ([47ce961](https://gitlab.com/datenknoten/freundebuch/-/commit/47ce961))
+* refactor(frontend): Move the remaining modals onto Modal ([08f04aa](https://gitlab.com/datenknoten/freundebuch/-/commit/08f04aa))
+* refactor(frontend): Render circle and collective rows through SubresourceRow ([4734e3c](https://gitlab.com/datenknoten/freundebuch/-/commit/4734e3c))
+* refactor(frontend): Render empty states through EmptyState ([5c16520](https://gitlab.com/datenknoten/freundebuch/-/commit/5c16520))
+* refactor(frontend): Render the shortcut help rows through one snippet ([4005404](https://gitlab.com/datenknoten/freundebuch/-/commit/4005404))
+* refactor(frontend): Replace the hand-rolled spinners with one Spinner ([39ca7a7](https://gitlab.com/datenknoten/freundebuch/-/commit/39ca7a7))
+* refactor(frontend): Route every button through a shared Button component ([5566951](https://gitlab.com/datenknoten/freundebuch/-/commit/5566951))
+* refactor(frontend): Run the friend detail sections on the subresource descriptors ([0c66cf0](https://gitlab.com/datenknoten/freundebuch/-/commit/0c66cf0))
+* refactor(frontend): Say what you mean in the migrated forms ([1ef0a3d](https://gitlab.com/datenknoten/freundebuch/-/commit/1ef0a3d)), closes [#if](https://github.com/datenknoten/freundebuch/issues/if) [#if](https://github.com/datenknoten/freundebuch/issues/if)
+* refactor(frontend): Share popover, tab-strip and code surfaces ([8b9a013](https://gitlab.com/datenknoten/freundebuch/-/commit/8b9a013))
+* refactor(frontend): Share the add-detail dropdown and sheet ([874fd88](https://gitlab.com/datenknoten/freundebuch/-/commit/874fd88))
+* refactor(frontend): Share the FAB between the layout and the detail pages ([d0f6dc0](https://gitlab.com/datenknoten/freundebuch/-/commit/d0f6dc0))
+* refactor(frontend): Share the legal links between footer and drawer ([692bea4](https://gitlab.com/datenknoten/freundebuch/-/commit/692bea4))
+* refactor(frontend): Show feedback through AlertBanner everywhere ([bfa9a85](https://gitlab.com/datenknoten/freundebuch/-/commit/bfa9a85))
+* refactor(frontend): Single-source the badge and category colour maps ([411dee6](https://gitlab.com/datenknoten/freundebuch/-/commit/411dee6))
+* refactor(frontend): Trap drawer focus with the shared action ([f115fe7](https://gitlab.com/datenknoten/freundebuch/-/commit/f115fe7))
+* refactor(frontend): Type the subresource descriptors generically ([f039730](https://gitlab.com/datenknoten/freundebuch/-/commit/f039730))
+* refactor(frontend): Use the shared heading recipes on the detail pages ([b19988b](https://gitlab.com/datenknoten/freundebuch/-/commit/b19988b))
+* refactor(frontend): Wrap every route in a PageShell ([329a540](https://gitlab.com/datenknoten/freundebuch/-/commit/329a540))
+* docs(frontend): Describe the design language the app actually ships ([64f1ef9](https://gitlab.com/datenknoten/freundebuch/-/commit/64f1ef9))
 
 ## <small>3.1.2 (2026-09-13)</small>
 
-* fix(frontend): Mount tap-opened modals inside the gesture for the keyboard ([497493e](https://github.com/datenknoten/freundebuch/commit/497493e)), closes [#201](https://github.com/datenknoten/freundebuch/issues/201)
+* fix(frontend): Mount tap-opened modals inside the gesture for the keyboard ([497493e](https://gitlab.com/datenknoten/freundebuch/-/commit/497493e)), closes [#201](https://github.com/datenknoten/freundebuch/issues/201)
 
 ## <small>3.1.1 (2026-09-13)</small>
 
-* fix(frontend): Focus the mounted search input inside the tap ([78c1934](https://github.com/datenknoten/freundebuch/commit/78c1934)), closes [#199](https://github.com/datenknoten/freundebuch/issues/199)
+* fix(frontend): Focus the mounted search input inside the tap ([78c1934](https://gitlab.com/datenknoten/freundebuch/-/commit/78c1934)), closes [#199](https://github.com/datenknoten/freundebuch/issues/199)
 
 ## 3.1.0 (2026-09-13)
 
-* feat(frontend): Mention friends in collective notes ([7cdbf3c](https://github.com/datenknoten/freundebuch/commit/7cdbf3c))
-* feat(frontend): Mention friends in interests and how-we-met ([91172d5](https://github.com/datenknoten/freundebuch/commit/91172d5))
-* refactor(frontend): Extract MarkdownField from the encounter form ([e9d3451](https://github.com/datenknoten/freundebuch/commit/e9d3451))
+* feat(frontend): Mention friends in collective notes ([7cdbf3c](https://gitlab.com/datenknoten/freundebuch/-/commit/7cdbf3c))
+* feat(frontend): Mention friends in interests and how-we-met ([91172d5](https://gitlab.com/datenknoten/freundebuch/-/commit/91172d5))
+* refactor(frontend): Extract MarkdownField from the encounter form ([e9d3451](https://gitlab.com/datenknoten/freundebuch/-/commit/e9d3451))
 
 ## <small>3.0.1 (2026-09-13)</small>
 
-* test(frontend): Cover the global search modal ([c2e98cd](https://github.com/datenknoten/freundebuch/commit/c2e98cd))
-* fix(frontend): Open the mobile keyboard with the global search ([a98520b](https://github.com/datenknoten/freundebuch/commit/a98520b))
+* test(frontend): Cover the global search modal ([c2e98cd](https://gitlab.com/datenknoten/freundebuch/-/commit/c2e98cd))
+* fix(frontend): Open the mobile keyboard with the global search ([a98520b](https://gitlab.com/datenknoten/freundebuch/-/commit/a98520b))
 
 ## 3.0.0 (2026-09-12)
 
-* fix(backend): Answer a lost single-primary race with 409 ([7b1b26a](https://github.com/datenknoten/freundebuch/commit/7b1b26a))
-* fix(backend): Answer a PUT to an archived friend with 403, not 500 ([a9efb85](https://github.com/datenknoten/freundebuch/commit/a9efb85))
-* fix(backend): Bind stored credentials to their user and column ([18c2677](https://github.com/datenknoten/freundebuch/commit/18c2677))
-* fix(backend): Bound photo upload body and decode pixels ([4f1a51e](https://github.com/datenknoten/freundebuch/commit/4f1a51e))
-* fix(backend): Bound the address cache and skip the DB tier when PostGIS is local ([02681d9](https://github.com/datenknoten/freundebuch/commit/02681d9))
-* fix(backend): Bound the Better Auth pool and handle idle client errors ([58ed3a8](https://github.com/datenknoten/freundebuch/commit/58ed3a8))
-* fix(backend): Claim notification channel before sending the digest ([a033e8d](https://github.com/datenknoten/freundebuch/commit/a033e8d))
-* fix(backend): Close sign-up in Better Auth as well as the route gate ([4472272](https://github.com/datenknoten/freundebuch/commit/4472272))
-* fix(backend): Constant-time app-password verification and hashed prefix ([3ad396b](https://github.com/datenknoten/freundebuch/commit/3ad396b))
-* fix(backend): Exclude archived friends consistently from CardDAV ([0123f38](https://github.com/datenknoten/freundebuch/commit/0123f38))
-* fix(backend): Expire a sync-0 CardDAV token once the log was pruned ([b8f60bc](https://github.com/datenknoten/freundebuch/commit/b8f60bc))
-* fix(backend): Guarantee the order of the filter-only friend listing ([3e4b34a](https://github.com/datenknoten/freundebuch/commit/3e4b34a))
-* fix(backend): Honour a list or weak validator in If-None-Match ([ac0690e](https://github.com/datenknoten/freundebuch/commit/ac0690e))
-* fix(backend): Import Apple's grouped vCard properties ([97dcc91](https://github.com/datenknoten/freundebuch/commit/97dcc91))
-* fix(backend): Keep a manual relationship when a membership is removed ([ea26cfb](https://github.com/datenknoten/freundebuch/commit/ea26cfb))
-* fix(backend): Keep one primary per contact detail when importing a vCard ([bcdcb00](https://github.com/datenknoten/freundebuch/commit/bcdcb00))
-* fix(backend): Keep the dev-only reset link out of the redaction list ([00b360c](https://github.com/datenknoten/freundebuch/commit/00b360c))
-* fix(backend): Keep the stored photo when a client sends an inline one ([6d0c3cd](https://github.com/datenknoten/freundebuch/commit/6d0c3cd))
-* fix(backend): Key rate limits by hop count instead of the last hop ([4462660](https://github.com/datenknoten/freundebuch/commit/4462660))
-* fix(backend): Log dropped JSON aggregate rows and raise typed errors on enum drift ([e25af9f](https://github.com/datenknoten/freundebuch/commit/e25af9f))
-* fix(backend): Lowercase the principal URI from app-password auth ([ea5b11b](https://github.com/datenknoten/freundebuch/commit/ea5b11b))
-* fix(backend): Match private address ranges with net.BlockList ([3a0365d](https://github.com/datenknoten/freundebuch/commit/3a0365d))
-* fix(backend): Match the app-password principal the way Postgres does ([f7bdfca](https://github.com/datenknoten/freundebuch/commit/f7bdfca))
-* fix(backend): Memoise the readiness check for five seconds ([89e895d](https://github.com/datenknoten/freundebuch/commit/89e895d))
-* fix(backend): Point SabreDAV user lookups at auth."user" email ([dfa6505](https://github.com/datenknoten/freundebuch/commit/dfa6505))
-* fix(backend): Read digest language from Better Auth user preferences ([4dda91c](https://github.com/datenknoten/freundebuch/commit/4dda91c))
-* fix(backend): Read preferences fresh in /api/auth/me ([d669145](https://github.com/datenknoten/freundebuch/commit/d669145))
-* fix(backend): Read the CardDAV sync token before the card list ([21c3528](https://github.com/datenknoten/freundebuch/commit/21c3528))
-* fix(backend): Redact credentials from logs and Sentry traces ([1e2d33a](https://github.com/datenknoten/freundebuch/commit/1e2d33a))
-* fix(backend): Redact nested PII paths in logs ([9adc976](https://github.com/datenknoten/freundebuch/commit/9adc976))
-* fix(backend): Refuse redirects when delivering a Matrix message ([6e120c8](https://github.com/datenknoten/freundebuch/commit/6e120c8))
-* fix(backend): Repair CardDAV write paths broken by schema drift ([b9b329b](https://github.com/datenknoten/freundebuch/commit/b9b329b))
-* fix(backend): Report a failed photo write as a server error ([d6168dd](https://github.com/datenknoten/freundebuch/commit/d6168dd))
-* fix(backend): Report an undecodable upload as INVALID_IMAGE ([1245a7a](https://github.com/datenknoten/freundebuch/commit/1245a7a))
-* fix(backend): Require STARTTLS on an authenticated SMTP relay ([a0be961](https://github.com/datenknoten/freundebuch/commit/a0be961))
-* fix(backend): Resolve Matrix homeserver before SSRF check ([5d14fda](https://github.com/datenknoten/freundebuch/commit/5d14fda))
-* fix(backend): Return 400 instead of 500 on malformed JSON bodies ([fd40b42](https://github.com/datenknoten/freundebuch/commit/fd40b42))
-* fix(backend): Roll back the cleared primary when no row was written ([2d603d6](https://github.com/datenknoten/freundebuch/commit/2d603d6))
-* fix(backend): Say what a rejected placeholder secret needs ([261f6e4](https://github.com/datenknoten/freundebuch/commit/261f6e4))
-* fix(backend): Scope collective role and rule queries to the owning user ([699747f](https://github.com/datenknoten/freundebuch/commit/699747f))
-* fix(backend): Scope the duplicate-membership check to the collective owner ([81bfb4a](https://github.com/datenknoten/freundebuch/commit/81bfb4a))
-* fix(backend): Scrub the bot token from Sentry error events ([40e2f9b](https://github.com/datenknoten/freundebuch/commit/40e2f9b))
-* fix(backend): Stop logging the DAV username on every request ([66e4bc3](https://github.com/datenknoten/freundebuch/commit/66e4bc3))
-* fix(backend): Trust proxy headers behind nginx and rate-limit address lookup ([e93902f](https://github.com/datenknoten/freundebuch/commit/e93902f))
-* fix(backend): Update the primary position instead of replacing the history ([0967171](https://github.com/datenknoten/freundebuch/commit/0967171))
-* fix(ci): Exempt PSR-4 PHP files from the kebab-case Danger rule ([626da84](https://github.com/datenknoten/freundebuch/commit/626da84))
-* fix(ci): Notify when the SBOM job fails ([e6959b5](https://github.com/datenknoten/freundebuch/commit/e6959b5))
-* fix(config): Apply migrations before the all-in-one image starts ([ef524d3](https://github.com/datenknoten/freundebuch/commit/ef524d3))
-* fix(config): Apply the nginx changes to the templates the images build ([af6ab2d](https://github.com/datenknoten/freundebuch/commit/af6ab2d))
-* fix(config): Correct the backend's production environment variables ([433aa20](https://github.com/datenknoten/freundebuch/commit/433aa20))
-* fix(config): Install the native build toolchain in the all-in-one image ([0e0922e](https://github.com/datenknoten/freundebuch/commit/0e0922e))
-* fix(config): Let the PHP-FPM master start as root so CardDAV serves ([9e53142](https://github.com/datenknoten/freundebuch/commit/9e53142))
-* fix(config): List every compose variable in .env.example ([4e7eeeb](https://github.com/datenknoten/freundebuch/commit/4e7eeeb))
-* fix(config): Mount the data directory PostgreSQL 18 actually uses ([504ad71](https://github.com/datenknoten/freundebuch/commit/504ad71))
-* fix(config): Resolve production deps as the user that runs them ([064bf38](https://github.com/datenknoten/freundebuch/commit/064bf38))
-* fix(config): Resolve the real client address inside nginx ([662725e](https://github.com/datenknoten/freundebuch/commit/662725e))
-* fix(config): Set ENV in the all-in-one image and keep it distinct from NODE_ENV ([cf3c6ff](https://github.com/datenknoten/freundebuch/commit/cf3c6ff))
-* fix(config): Start mcp-server and sabredav after the migration job ([f24ca5c](https://github.com/datenknoten/freundebuch/commit/f24ca5c))
-* fix(config): Throttle only the credential endpoints in the auth zone ([785c692](https://github.com/datenknoten/freundebuch/commit/785c692))
-* fix(config): Treat an empty environment variable as unset ([ce00929](https://github.com/datenknoten/freundebuch/commit/ce00929))
-* fix(config): Trust the proxy in the all-in-one image and default ENV ([e564f71](https://github.com/datenknoten/freundebuch/commit/e564f71))
-* fix(database): Disable Matrix channels with a non-https homeserver ([52e4f4b](https://github.com/datenknoten/freundebuch/commit/52e4f4b))
-* fix(database): Index full-text search with the German dictionary ([a50c42a](https://github.com/datenknoten/freundebuch/commit/a50c42a))
-* fix(database): List the orphan identity rows that block the upgrade ([0d19004](https://github.com/datenknoten/freundebuch/commit/0d19004))
-* fix(database): Log archiving to the CardDAV sync log ([860557d](https://github.com/datenknoten/freundebuch/commit/860557d))
-* fix(database): Log friend-circle changes to the CardDAV sync log ([be74af2](https://github.com/datenknoten/freundebuch/commit/be74af2))
-* fix(database): Re-key credential account ids along with the user ([b8e12c7](https://github.com/datenknoten/freundebuch/commit/b8e12c7))
-* fix(database): Re-key pending verification tokens with the user id ([c668589](https://github.com/datenknoten/freundebuch/commit/c668589))
-* fix(database): Rebuild the search vectors without re-dating every friend ([9c29b1e](https://github.com/datenknoten/freundebuch/commit/9c29b1e))
-* fix(database): Spare a legacy user with friends from the orphan reaper ([64434eb](https://github.com/datenknoten/freundebuch/commit/64434eb))
-* fix(dx): Make test:unit exist everywhere and run without Docker ([0c880f5](https://github.com/datenknoten/freundebuch/commit/0c880f5))
-* fix(dx): Make the Biome check fail instead of fixing ([04e7b9f](https://github.com/datenknoten/freundebuch/commit/04e7b9f))
-* fix(dx): Run Biome from the check hook and the ci task ([8c1a105](https://github.com/datenknoten/freundebuch/commit/8c1a105))
-* fix(dx): Run only the Docker-free PHP suite on pre-push ([1691c91](https://github.com/datenknoten/freundebuch/commit/1691c91))
-* fix(frontend): Correct the revokeAppPassword response type ([2c7e168](https://github.com/datenknoten/freundebuch/commit/2c7e168))
-* fix(frontend): Proxy /health to the backend in dev ([ae15150](https://github.com/datenknoten/freundebuch/commit/ae15150))
-* fix(frontend): Remove the member-since block that never rendered ([579c50e](https://github.com/datenknoten/freundebuch/commit/579c50e)), closes [#if](https://github.com/datenknoten/freundebuch/issues/if)
-* fix(frontend): Translate the app-password manager ([fc97da9](https://github.com/datenknoten/freundebuch/commit/fc97da9))
-* fix(frontend): Translate the friend sub-resource rows ([2ae37ed](https://github.com/datenknoten/freundebuch/commit/2ae37ed))
-* fix(mcp-server): Redact credentials in the MCP server's logger ([d3b438b](https://github.com/datenknoten/freundebuch/commit/d3b438b))
-* fix(shared): Reject malformed dates at the API boundary ([07200fd](https://github.com/datenknoten/freundebuch/commit/07200fd))
-* fix(shared): Require https for a Matrix homeserver ([78898ae](https://github.com/datenknoten/freundebuch/commit/78898ae))
-* fix(shared): Validate circle sort_order as an integer ([77eb492](https://github.com/datenknoten/freundebuch/commit/77eb492))
-* feat(all)!: Unify paginated responses as { data, pagination } ([ce5c8c1](https://github.com/datenknoten/freundebuch/commit/ce5c8c1))
-* fix(backend)!: Force a full resync when the CardDAV sync token is expired ([74a452c](https://github.com/datenknoten/freundebuch/commit/74a452c))
-* fix(backend)!: Remove email editing from PUT /api/users/me ([3b39a26](https://github.com/datenknoten/freundebuch/commit/3b39a26))
-* fix(config)!: Require WEBAUTHN_RP_ID in the production compose file ([b19a55c](https://github.com/datenknoten/freundebuch/commit/b19a55c))
-* fix(shared)!: Normalize list query params onto generic contracts ([edc1cbf](https://github.com/datenknoten/freundebuch/commit/edc1cbf))
-* test(all): Update MCP and shared fixtures for the tightened contracts ([f5a6270](https://github.com/datenknoten/freundebuch/commit/f5a6270))
-* test(backend): Allow an external Postgres for the integration suite ([bc3e9b2](https://github.com/datenknoten/freundebuch/commit/bc3e9b2))
-* test(backend): Check the collective membership tables for tenancy ([7e2b624](https://github.com/datenknoten/freundebuch/commit/7e2b624))
-* test(backend): Cover the digest claim-before-send invariant ([5bd8387](https://github.com/datenknoten/freundebuch/commit/5bd8387))
-* test(backend): Cover the mailer, the rate-limit key and the cache bounds ([363dd6d](https://github.com/datenknoten/freundebuch/commit/363dd6d))
-* test(backend): Pin the status code and error code of every AppError ([926fa18](https://github.com/datenknoten/freundebuch/commit/926fa18))
-* test(backend): Run SabreDAV integration suite without pnpm ([ea46d24](https://github.com/datenknoten/freundebuch/commit/ea46d24))
-* test(backend): Share one PostGIS container across all suites and isolate per test ([9f3dc96](https://github.com/datenknoten/freundebuch/commit/9f3dc96))
-* test(backend): Stop the coverage job failing on pool queuing ([194157e](https://github.com/datenknoten/freundebuch/commit/194157e))
-* test(frontend): Use the paginated envelope in the API fixtures ([d545679](https://github.com/datenknoten/freundebuch/commit/d545679))
-* docs(docs): Add ADR 0003 single identity anchored on auth.users ([aafe039](https://github.com/datenknoten/freundebuch/commit/aafe039))
-* docs(docs): Add ADR 0004 single-instance deployment and connection budget ([6f4cea1](https://github.com/datenknoten/freundebuch/commit/6f4cea1))
-* docs(docs): Correct the backend coverage scope ([d07afef](https://github.com/datenknoten/freundebuch/commit/d07afef))
-* docs(docs): Document what a CardDAV sync can and cannot change ([1a2daa2](https://github.com/datenknoten/freundebuch/commit/1a2daa2))
-* ci(ci): Build and publish the all-in-one image ([13fd40a](https://github.com/datenknoten/freundebuch/commit/13fd40a))
-* ci(ci): Detect PgTyped drift against migrated schema ([03ea122](https://github.com/datenknoten/freundebuch/commit/03ea122))
-* ci(ci): Fix the osv-scanner reference and make the scan report-only ([e4e0894](https://github.com/datenknoten/freundebuch/commit/e4e0894))
-* ci(ci): Give the test job a Postgres service instead of nested containers ([120e14e](https://github.com/datenknoten/freundebuch/commit/120e14e))
-* ci(ci): Make the PHP dependency audit report-only ([74fb9d6](https://github.com/datenknoten/freundebuch/commit/74fb9d6))
-* ci(ci): Measure backend coverage over the whole suite ([a6d29a0](https://github.com/datenknoten/freundebuch/commit/a6d29a0))
-* ci(ci): Measure backend coverage, audit dependencies, attest SBOMs ([2fa9296](https://github.com/datenknoten/freundebuch/commit/2fa9296))
-* ci(ci): Mirror to GitLab and publish images to its registry ([69a00bd](https://github.com/datenknoten/freundebuch/commit/69a00bd))
-* ci(ci): Round-trip migrations up/down/up on every PR ([ac6ccab](https://github.com/datenknoten/freundebuch/commit/ac6ccab))
-* chore(backend): Regenerate the drifted friend-changes query types ([ac8a1f3](https://github.com/datenknoten/freundebuch/commit/ac8a1f3))
-* chore(config): Drop JWT/SESSION secrets and use a rejected placeholder for dev BETTER_AUTH_SECRET ([a7594cb](https://github.com/datenknoten/freundebuch/commit/a7594cb))
-* chore(dx): Make seed idempotent, align dev postgres volume, run unit tests only on pre-push ([32868c7](https://github.com/datenknoten/freundebuch/commit/32868c7))
-* refactor(backend): Construct services from one options object ([ac0694c](https://github.com/datenknoten/freundebuch/commit/ac0694c))
-* refactor(backend): Delete dead error classes, config keys and legacy upload migration ([bec866f](https://github.com/datenknoten/freundebuch/commit/bec866f))
-* refactor(backend): Drive rate limiters from one table and key authenticated routes by user ([93781dc](https://github.com/datenknoten/freundebuch/commit/93781dc))
-* refactor(backend): Drop the PostGIS gate on the persisted cache tier ([8ac40b9](https://github.com/datenknoten/freundebuch/commit/8ac40b9))
-* refactor(backend): Extract UsersService and shared row mappers ([9b0a408](https://github.com/datenknoten/freundebuch/commit/9b0a408))
-* refactor(backend): Generate sub-resource routers from one factory ([2406766](https://github.com/datenknoten/freundebuch/commit/2406766))
-* refactor(backend): Remove legacy session cleanup and resolve app-password users via auth."user" ([d90a251](https://github.com/datenknoten/freundebuch/commit/d90a251))
-* refactor(backend): Translate Postgres unique violations in one place ([3890e71](https://github.com/datenknoten/freundebuch/commit/3890e71))
-* refactor(mcp-server): Use Better Auth user id as the domain user id ([ca4d7f3](https://github.com/datenknoten/freundebuch/commit/ca4d7f3))
-* refactor(shared): Drop the unused HealthCheckResponse type ([27437af](https://github.com/datenknoten/freundebuch/commit/27437af))
-* style(all): Apply biome formatting ([69261c7](https://github.com/datenknoten/freundebuch/commit/69261c7))
-* perf(backend): Compute search headlines after pagination and make DISTINCT ON deterministic ([de162fc](https://github.com/datenknoten/freundebuch/commit/de162fc))
-* perf(backend): Stream photos with ETag and 304 support ([4e8e34f](https://github.com/datenknoten/freundebuch/commit/4e8e34f))
-* perf(database): Drop duplicate and dead indexes, add sub-resource updated_at ([44634d6](https://github.com/datenknoten/freundebuch/commit/44634d6))
-* feat(backend): Allocate legacy user row in Better Auth create hook and drop email bridge ([6a31dd7](https://github.com/datenknoten/freundebuch/commit/6a31dd7))
-* feat(backend): Encrypt notification channel credentials at rest ([e9e3f5f](https://github.com/datenknoten/freundebuch/commit/e9e3f5f))
-* feat(backend): Give every sub-resource service a list operation ([025b5f4](https://github.com/datenknoten/freundebuch/commit/025b5f4))
-* feat(backend): Send password-reset and verification mail over SMTP and add DISABLE_SIGNUP ([c5d1664](https://github.com/datenknoten/freundebuch/commit/c5d1664))
-* feat(backend): Split /health into liveness and readiness ([108f659](https://github.com/datenknoten/freundebuch/commit/108f659))
-* feat(config): Run migrations from a compose init service for self-hosters ([406bec9](https://github.com/datenknoten/freundebuch/commit/406bec9))
-* feat(database): Enforce lowercase emails on both identity tables ([29131b7](https://github.com/datenknoten/freundebuch/commit/29131b7))
-* feat(database): Enforce single primary sub-resource per owner in the schema ([092836d](https://github.com/datenknoten/freundebuch/commit/092836d))
-* feat(database): Unify identity on auth."user".id = auth.users.external_id ([1f46b01](https://github.com/datenknoten/freundebuch/commit/1f46b01))
-* build(backend): Keep test files out of the production build ([8e14326](https://github.com/datenknoten/freundebuch/commit/8e14326))
-* build(deps): Remove unused jsonwebtoken and stale type stubs ([1c39fb9](https://github.com/datenknoten/freundebuch/commit/1c39fb9))
+* fix(backend): Answer a lost single-primary race with 409 ([7b1b26a](https://gitlab.com/datenknoten/freundebuch/-/commit/7b1b26a))
+* fix(backend): Answer a PUT to an archived friend with 403, not 500 ([a9efb85](https://gitlab.com/datenknoten/freundebuch/-/commit/a9efb85))
+* fix(backend): Bind stored credentials to their user and column ([18c2677](https://gitlab.com/datenknoten/freundebuch/-/commit/18c2677))
+* fix(backend): Bound photo upload body and decode pixels ([4f1a51e](https://gitlab.com/datenknoten/freundebuch/-/commit/4f1a51e))
+* fix(backend): Bound the address cache and skip the DB tier when PostGIS is local ([02681d9](https://gitlab.com/datenknoten/freundebuch/-/commit/02681d9))
+* fix(backend): Bound the Better Auth pool and handle idle client errors ([58ed3a8](https://gitlab.com/datenknoten/freundebuch/-/commit/58ed3a8))
+* fix(backend): Claim notification channel before sending the digest ([a033e8d](https://gitlab.com/datenknoten/freundebuch/-/commit/a033e8d))
+* fix(backend): Close sign-up in Better Auth as well as the route gate ([4472272](https://gitlab.com/datenknoten/freundebuch/-/commit/4472272))
+* fix(backend): Constant-time app-password verification and hashed prefix ([3ad396b](https://gitlab.com/datenknoten/freundebuch/-/commit/3ad396b))
+* fix(backend): Exclude archived friends consistently from CardDAV ([0123f38](https://gitlab.com/datenknoten/freundebuch/-/commit/0123f38))
+* fix(backend): Expire a sync-0 CardDAV token once the log was pruned ([b8f60bc](https://gitlab.com/datenknoten/freundebuch/-/commit/b8f60bc))
+* fix(backend): Guarantee the order of the filter-only friend listing ([3e4b34a](https://gitlab.com/datenknoten/freundebuch/-/commit/3e4b34a))
+* fix(backend): Honour a list or weak validator in If-None-Match ([ac0690e](https://gitlab.com/datenknoten/freundebuch/-/commit/ac0690e))
+* fix(backend): Import Apple's grouped vCard properties ([97dcc91](https://gitlab.com/datenknoten/freundebuch/-/commit/97dcc91))
+* fix(backend): Keep a manual relationship when a membership is removed ([ea26cfb](https://gitlab.com/datenknoten/freundebuch/-/commit/ea26cfb))
+* fix(backend): Keep one primary per contact detail when importing a vCard ([bcdcb00](https://gitlab.com/datenknoten/freundebuch/-/commit/bcdcb00))
+* fix(backend): Keep the dev-only reset link out of the redaction list ([00b360c](https://gitlab.com/datenknoten/freundebuch/-/commit/00b360c))
+* fix(backend): Keep the stored photo when a client sends an inline one ([6d0c3cd](https://gitlab.com/datenknoten/freundebuch/-/commit/6d0c3cd))
+* fix(backend): Key rate limits by hop count instead of the last hop ([4462660](https://gitlab.com/datenknoten/freundebuch/-/commit/4462660))
+* fix(backend): Log dropped JSON aggregate rows and raise typed errors on enum drift ([e25af9f](https://gitlab.com/datenknoten/freundebuch/-/commit/e25af9f))
+* fix(backend): Lowercase the principal URI from app-password auth ([ea5b11b](https://gitlab.com/datenknoten/freundebuch/-/commit/ea5b11b))
+* fix(backend): Match private address ranges with net.BlockList ([3a0365d](https://gitlab.com/datenknoten/freundebuch/-/commit/3a0365d))
+* fix(backend): Match the app-password principal the way Postgres does ([f7bdfca](https://gitlab.com/datenknoten/freundebuch/-/commit/f7bdfca))
+* fix(backend): Memoise the readiness check for five seconds ([89e895d](https://gitlab.com/datenknoten/freundebuch/-/commit/89e895d))
+* fix(backend): Point SabreDAV user lookups at auth."user" email ([dfa6505](https://gitlab.com/datenknoten/freundebuch/-/commit/dfa6505))
+* fix(backend): Read digest language from Better Auth user preferences ([4dda91c](https://gitlab.com/datenknoten/freundebuch/-/commit/4dda91c))
+* fix(backend): Read preferences fresh in /api/auth/me ([d669145](https://gitlab.com/datenknoten/freundebuch/-/commit/d669145))
+* fix(backend): Read the CardDAV sync token before the card list ([21c3528](https://gitlab.com/datenknoten/freundebuch/-/commit/21c3528))
+* fix(backend): Redact credentials from logs and Sentry traces ([1e2d33a](https://gitlab.com/datenknoten/freundebuch/-/commit/1e2d33a))
+* fix(backend): Redact nested PII paths in logs ([9adc976](https://gitlab.com/datenknoten/freundebuch/-/commit/9adc976))
+* fix(backend): Refuse redirects when delivering a Matrix message ([6e120c8](https://gitlab.com/datenknoten/freundebuch/-/commit/6e120c8))
+* fix(backend): Repair CardDAV write paths broken by schema drift ([b9b329b](https://gitlab.com/datenknoten/freundebuch/-/commit/b9b329b))
+* fix(backend): Report a failed photo write as a server error ([d6168dd](https://gitlab.com/datenknoten/freundebuch/-/commit/d6168dd))
+* fix(backend): Report an undecodable upload as INVALID_IMAGE ([1245a7a](https://gitlab.com/datenknoten/freundebuch/-/commit/1245a7a))
+* fix(backend): Require STARTTLS on an authenticated SMTP relay ([a0be961](https://gitlab.com/datenknoten/freundebuch/-/commit/a0be961))
+* fix(backend): Resolve Matrix homeserver before SSRF check ([5d14fda](https://gitlab.com/datenknoten/freundebuch/-/commit/5d14fda))
+* fix(backend): Return 400 instead of 500 on malformed JSON bodies ([fd40b42](https://gitlab.com/datenknoten/freundebuch/-/commit/fd40b42))
+* fix(backend): Roll back the cleared primary when no row was written ([2d603d6](https://gitlab.com/datenknoten/freundebuch/-/commit/2d603d6))
+* fix(backend): Say what a rejected placeholder secret needs ([261f6e4](https://gitlab.com/datenknoten/freundebuch/-/commit/261f6e4))
+* fix(backend): Scope collective role and rule queries to the owning user ([699747f](https://gitlab.com/datenknoten/freundebuch/-/commit/699747f))
+* fix(backend): Scope the duplicate-membership check to the collective owner ([81bfb4a](https://gitlab.com/datenknoten/freundebuch/-/commit/81bfb4a))
+* fix(backend): Scrub the bot token from Sentry error events ([40e2f9b](https://gitlab.com/datenknoten/freundebuch/-/commit/40e2f9b))
+* fix(backend): Stop logging the DAV username on every request ([66e4bc3](https://gitlab.com/datenknoten/freundebuch/-/commit/66e4bc3))
+* fix(backend): Trust proxy headers behind nginx and rate-limit address lookup ([e93902f](https://gitlab.com/datenknoten/freundebuch/-/commit/e93902f))
+* fix(backend): Update the primary position instead of replacing the history ([0967171](https://gitlab.com/datenknoten/freundebuch/-/commit/0967171))
+* fix(ci): Exempt PSR-4 PHP files from the kebab-case Danger rule ([626da84](https://gitlab.com/datenknoten/freundebuch/-/commit/626da84))
+* fix(ci): Notify when the SBOM job fails ([e6959b5](https://gitlab.com/datenknoten/freundebuch/-/commit/e6959b5))
+* fix(config): Apply migrations before the all-in-one image starts ([ef524d3](https://gitlab.com/datenknoten/freundebuch/-/commit/ef524d3))
+* fix(config): Apply the nginx changes to the templates the images build ([af6ab2d](https://gitlab.com/datenknoten/freundebuch/-/commit/af6ab2d))
+* fix(config): Correct the backend's production environment variables ([433aa20](https://gitlab.com/datenknoten/freundebuch/-/commit/433aa20))
+* fix(config): Install the native build toolchain in the all-in-one image ([0e0922e](https://gitlab.com/datenknoten/freundebuch/-/commit/0e0922e))
+* fix(config): Let the PHP-FPM master start as root so CardDAV serves ([9e53142](https://gitlab.com/datenknoten/freundebuch/-/commit/9e53142))
+* fix(config): List every compose variable in .env.example ([4e7eeeb](https://gitlab.com/datenknoten/freundebuch/-/commit/4e7eeeb))
+* fix(config): Mount the data directory PostgreSQL 18 actually uses ([504ad71](https://gitlab.com/datenknoten/freundebuch/-/commit/504ad71))
+* fix(config): Resolve production deps as the user that runs them ([064bf38](https://gitlab.com/datenknoten/freundebuch/-/commit/064bf38))
+* fix(config): Resolve the real client address inside nginx ([662725e](https://gitlab.com/datenknoten/freundebuch/-/commit/662725e))
+* fix(config): Set ENV in the all-in-one image and keep it distinct from NODE_ENV ([cf3c6ff](https://gitlab.com/datenknoten/freundebuch/-/commit/cf3c6ff))
+* fix(config): Start mcp-server and sabredav after the migration job ([f24ca5c](https://gitlab.com/datenknoten/freundebuch/-/commit/f24ca5c))
+* fix(config): Throttle only the credential endpoints in the auth zone ([785c692](https://gitlab.com/datenknoten/freundebuch/-/commit/785c692))
+* fix(config): Treat an empty environment variable as unset ([ce00929](https://gitlab.com/datenknoten/freundebuch/-/commit/ce00929))
+* fix(config): Trust the proxy in the all-in-one image and default ENV ([e564f71](https://gitlab.com/datenknoten/freundebuch/-/commit/e564f71))
+* fix(database): Disable Matrix channels with a non-https homeserver ([52e4f4b](https://gitlab.com/datenknoten/freundebuch/-/commit/52e4f4b))
+* fix(database): Index full-text search with the German dictionary ([a50c42a](https://gitlab.com/datenknoten/freundebuch/-/commit/a50c42a))
+* fix(database): List the orphan identity rows that block the upgrade ([0d19004](https://gitlab.com/datenknoten/freundebuch/-/commit/0d19004))
+* fix(database): Log archiving to the CardDAV sync log ([860557d](https://gitlab.com/datenknoten/freundebuch/-/commit/860557d))
+* fix(database): Log friend-circle changes to the CardDAV sync log ([be74af2](https://gitlab.com/datenknoten/freundebuch/-/commit/be74af2))
+* fix(database): Re-key credential account ids along with the user ([b8e12c7](https://gitlab.com/datenknoten/freundebuch/-/commit/b8e12c7))
+* fix(database): Re-key pending verification tokens with the user id ([c668589](https://gitlab.com/datenknoten/freundebuch/-/commit/c668589))
+* fix(database): Rebuild the search vectors without re-dating every friend ([9c29b1e](https://gitlab.com/datenknoten/freundebuch/-/commit/9c29b1e))
+* fix(database): Spare a legacy user with friends from the orphan reaper ([64434eb](https://gitlab.com/datenknoten/freundebuch/-/commit/64434eb))
+* fix(dx): Make test:unit exist everywhere and run without Docker ([0c880f5](https://gitlab.com/datenknoten/freundebuch/-/commit/0c880f5))
+* fix(dx): Make the Biome check fail instead of fixing ([04e7b9f](https://gitlab.com/datenknoten/freundebuch/-/commit/04e7b9f))
+* fix(dx): Run Biome from the check hook and the ci task ([8c1a105](https://gitlab.com/datenknoten/freundebuch/-/commit/8c1a105))
+* fix(dx): Run only the Docker-free PHP suite on pre-push ([1691c91](https://gitlab.com/datenknoten/freundebuch/-/commit/1691c91))
+* fix(frontend): Correct the revokeAppPassword response type ([2c7e168](https://gitlab.com/datenknoten/freundebuch/-/commit/2c7e168))
+* fix(frontend): Proxy /health to the backend in dev ([ae15150](https://gitlab.com/datenknoten/freundebuch/-/commit/ae15150))
+* fix(frontend): Remove the member-since block that never rendered ([579c50e](https://gitlab.com/datenknoten/freundebuch/-/commit/579c50e)), closes [#if](https://github.com/datenknoten/freundebuch/issues/if)
+* fix(frontend): Translate the app-password manager ([fc97da9](https://gitlab.com/datenknoten/freundebuch/-/commit/fc97da9))
+* fix(frontend): Translate the friend sub-resource rows ([2ae37ed](https://gitlab.com/datenknoten/freundebuch/-/commit/2ae37ed))
+* fix(mcp-server): Redact credentials in the MCP server's logger ([d3b438b](https://gitlab.com/datenknoten/freundebuch/-/commit/d3b438b))
+* fix(shared): Reject malformed dates at the API boundary ([07200fd](https://gitlab.com/datenknoten/freundebuch/-/commit/07200fd))
+* fix(shared): Require https for a Matrix homeserver ([78898ae](https://gitlab.com/datenknoten/freundebuch/-/commit/78898ae))
+* fix(shared): Validate circle sort_order as an integer ([77eb492](https://gitlab.com/datenknoten/freundebuch/-/commit/77eb492))
+* feat(all)!: Unify paginated responses as { data, pagination } ([ce5c8c1](https://gitlab.com/datenknoten/freundebuch/-/commit/ce5c8c1))
+* fix(backend)!: Force a full resync when the CardDAV sync token is expired ([74a452c](https://gitlab.com/datenknoten/freundebuch/-/commit/74a452c))
+* fix(backend)!: Remove email editing from PUT /api/users/me ([3b39a26](https://gitlab.com/datenknoten/freundebuch/-/commit/3b39a26))
+* fix(config)!: Require WEBAUTHN_RP_ID in the production compose file ([b19a55c](https://gitlab.com/datenknoten/freundebuch/-/commit/b19a55c))
+* fix(shared)!: Normalize list query params onto generic contracts ([edc1cbf](https://gitlab.com/datenknoten/freundebuch/-/commit/edc1cbf))
+* test(all): Update MCP and shared fixtures for the tightened contracts ([f5a6270](https://gitlab.com/datenknoten/freundebuch/-/commit/f5a6270))
+* test(backend): Allow an external Postgres for the integration suite ([bc3e9b2](https://gitlab.com/datenknoten/freundebuch/-/commit/bc3e9b2))
+* test(backend): Check the collective membership tables for tenancy ([7e2b624](https://gitlab.com/datenknoten/freundebuch/-/commit/7e2b624))
+* test(backend): Cover the digest claim-before-send invariant ([5bd8387](https://gitlab.com/datenknoten/freundebuch/-/commit/5bd8387))
+* test(backend): Cover the mailer, the rate-limit key and the cache bounds ([363dd6d](https://gitlab.com/datenknoten/freundebuch/-/commit/363dd6d))
+* test(backend): Pin the status code and error code of every AppError ([926fa18](https://gitlab.com/datenknoten/freundebuch/-/commit/926fa18))
+* test(backend): Run SabreDAV integration suite without pnpm ([ea46d24](https://gitlab.com/datenknoten/freundebuch/-/commit/ea46d24))
+* test(backend): Share one PostGIS container across all suites and isolate per test ([9f3dc96](https://gitlab.com/datenknoten/freundebuch/-/commit/9f3dc96))
+* test(backend): Stop the coverage job failing on pool queuing ([194157e](https://gitlab.com/datenknoten/freundebuch/-/commit/194157e))
+* test(frontend): Use the paginated envelope in the API fixtures ([d545679](https://gitlab.com/datenknoten/freundebuch/-/commit/d545679))
+* docs(docs): Add ADR 0003 single identity anchored on auth.users ([aafe039](https://gitlab.com/datenknoten/freundebuch/-/commit/aafe039))
+* docs(docs): Add ADR 0004 single-instance deployment and connection budget ([6f4cea1](https://gitlab.com/datenknoten/freundebuch/-/commit/6f4cea1))
+* docs(docs): Correct the backend coverage scope ([d07afef](https://gitlab.com/datenknoten/freundebuch/-/commit/d07afef))
+* docs(docs): Document what a CardDAV sync can and cannot change ([1a2daa2](https://gitlab.com/datenknoten/freundebuch/-/commit/1a2daa2))
+* ci(ci): Build and publish the all-in-one image ([13fd40a](https://gitlab.com/datenknoten/freundebuch/-/commit/13fd40a))
+* ci(ci): Detect PgTyped drift against migrated schema ([03ea122](https://gitlab.com/datenknoten/freundebuch/-/commit/03ea122))
+* ci(ci): Fix the osv-scanner reference and make the scan report-only ([e4e0894](https://gitlab.com/datenknoten/freundebuch/-/commit/e4e0894))
+* ci(ci): Give the test job a Postgres service instead of nested containers ([120e14e](https://gitlab.com/datenknoten/freundebuch/-/commit/120e14e))
+* ci(ci): Make the PHP dependency audit report-only ([74fb9d6](https://gitlab.com/datenknoten/freundebuch/-/commit/74fb9d6))
+* ci(ci): Measure backend coverage over the whole suite ([a6d29a0](https://gitlab.com/datenknoten/freundebuch/-/commit/a6d29a0))
+* ci(ci): Measure backend coverage, audit dependencies, attest SBOMs ([2fa9296](https://gitlab.com/datenknoten/freundebuch/-/commit/2fa9296))
+* ci(ci): Mirror to GitLab and publish images to its registry ([69a00bd](https://gitlab.com/datenknoten/freundebuch/-/commit/69a00bd))
+* ci(ci): Round-trip migrations up/down/up on every PR ([ac6ccab](https://gitlab.com/datenknoten/freundebuch/-/commit/ac6ccab))
+* chore(backend): Regenerate the drifted friend-changes query types ([ac8a1f3](https://gitlab.com/datenknoten/freundebuch/-/commit/ac8a1f3))
+* chore(config): Drop JWT/SESSION secrets and use a rejected placeholder for dev BETTER_AUTH_SECRET ([a7594cb](https://gitlab.com/datenknoten/freundebuch/-/commit/a7594cb))
+* chore(dx): Make seed idempotent, align dev postgres volume, run unit tests only on pre-push ([32868c7](https://gitlab.com/datenknoten/freundebuch/-/commit/32868c7))
+* refactor(backend): Construct services from one options object ([ac0694c](https://gitlab.com/datenknoten/freundebuch/-/commit/ac0694c))
+* refactor(backend): Delete dead error classes, config keys and legacy upload migration ([bec866f](https://gitlab.com/datenknoten/freundebuch/-/commit/bec866f))
+* refactor(backend): Drive rate limiters from one table and key authenticated routes by user ([93781dc](https://gitlab.com/datenknoten/freundebuch/-/commit/93781dc))
+* refactor(backend): Drop the PostGIS gate on the persisted cache tier ([8ac40b9](https://gitlab.com/datenknoten/freundebuch/-/commit/8ac40b9))
+* refactor(backend): Extract UsersService and shared row mappers ([9b0a408](https://gitlab.com/datenknoten/freundebuch/-/commit/9b0a408))
+* refactor(backend): Generate sub-resource routers from one factory ([2406766](https://gitlab.com/datenknoten/freundebuch/-/commit/2406766))
+* refactor(backend): Remove legacy session cleanup and resolve app-password users via auth."user" ([d90a251](https://gitlab.com/datenknoten/freundebuch/-/commit/d90a251))
+* refactor(backend): Translate Postgres unique violations in one place ([3890e71](https://gitlab.com/datenknoten/freundebuch/-/commit/3890e71))
+* refactor(mcp-server): Use Better Auth user id as the domain user id ([ca4d7f3](https://gitlab.com/datenknoten/freundebuch/-/commit/ca4d7f3))
+* refactor(shared): Drop the unused HealthCheckResponse type ([27437af](https://gitlab.com/datenknoten/freundebuch/-/commit/27437af))
+* style(all): Apply biome formatting ([69261c7](https://gitlab.com/datenknoten/freundebuch/-/commit/69261c7))
+* perf(backend): Compute search headlines after pagination and make DISTINCT ON deterministic ([de162fc](https://gitlab.com/datenknoten/freundebuch/-/commit/de162fc))
+* perf(backend): Stream photos with ETag and 304 support ([4e8e34f](https://gitlab.com/datenknoten/freundebuch/-/commit/4e8e34f))
+* perf(database): Drop duplicate and dead indexes, add sub-resource updated_at ([44634d6](https://gitlab.com/datenknoten/freundebuch/-/commit/44634d6))
+* feat(backend): Allocate legacy user row in Better Auth create hook and drop email bridge ([6a31dd7](https://gitlab.com/datenknoten/freundebuch/-/commit/6a31dd7))
+* feat(backend): Encrypt notification channel credentials at rest ([e9e3f5f](https://gitlab.com/datenknoten/freundebuch/-/commit/e9e3f5f))
+* feat(backend): Give every sub-resource service a list operation ([025b5f4](https://gitlab.com/datenknoten/freundebuch/-/commit/025b5f4))
+* feat(backend): Send password-reset and verification mail over SMTP and add DISABLE_SIGNUP ([c5d1664](https://gitlab.com/datenknoten/freundebuch/-/commit/c5d1664))
+* feat(backend): Split /health into liveness and readiness ([108f659](https://gitlab.com/datenknoten/freundebuch/-/commit/108f659))
+* feat(config): Run migrations from a compose init service for self-hosters ([406bec9](https://gitlab.com/datenknoten/freundebuch/-/commit/406bec9))
+* feat(database): Enforce lowercase emails on both identity tables ([29131b7](https://gitlab.com/datenknoten/freundebuch/-/commit/29131b7))
+* feat(database): Enforce single primary sub-resource per owner in the schema ([092836d](https://gitlab.com/datenknoten/freundebuch/-/commit/092836d))
+* feat(database): Unify identity on auth."user".id = auth.users.external_id ([1f46b01](https://gitlab.com/datenknoten/freundebuch/-/commit/1f46b01))
+* build(backend): Keep test files out of the production build ([8e14326](https://gitlab.com/datenknoten/freundebuch/-/commit/8e14326))
+* build(deps): Remove unused jsonwebtoken and stale type stubs ([1c39fb9](https://gitlab.com/datenknoten/freundebuch/-/commit/1c39fb9))
 
 ### BREAKING CHANGE
 
@@ -245,1647 +245,1647 @@ are unchanged.
 
 ## 2.93.0 (2026-08-26)
 
-* docs: Mention encounter editing in the MCP server overview ([8960205](https://github.com/datenknoten/freundebuch/commit/8960205))
-* feat(mcp-server): Add edit_encounter tool ([9cf3683](https://github.com/datenknoten/freundebuch/commit/9cf3683))
+* docs: Mention encounter editing in the MCP server overview ([8960205](https://gitlab.com/datenknoten/freundebuch/-/commit/8960205))
+* feat(mcp-server): Add edit_encounter tool ([9cf3683](https://gitlab.com/datenknoten/freundebuch/-/commit/9cf3683))
 
 ## <small>2.92.1 (2026-08-08)</small>
 
-* fix(backend): Return the stored calendar day for date columns ([135c745](https://github.com/datenknoten/freundebuch/commit/135c745))
-* test(backend): Isolate tests from the ambient environment ([4dedd26](https://github.com/datenknoten/freundebuch/commit/4dedd26))
-* test(frontend): Make date rendering tests locale-independent ([c463111](https://github.com/datenknoten/freundebuch/commit/c463111))
-* docs: Add a self-hosting guide ([03a94d5](https://github.com/datenknoten/freundebuch/commit/03a94d5))
-* docs: Correct the documented database schema list ([9771910](https://github.com/datenknoten/freundebuch/commit/9771910))
-* docs: Document PR-scoped coverage reporting ([90858a2](https://github.com/datenknoten/freundebuch/commit/90858a2))
-* docs: Document the MCP OAuth 2.1 authorization flow ([d3ed52a](https://github.com/datenknoten/freundebuch/commit/d3ed52a))
-* docs: Document the mcp-server commit scope ([30d88a4](https://github.com/datenknoten/freundebuch/commit/30d88a4))
-* docs: Note that noExplicitAny is now a CI error ([a3739b8](https://github.com/datenknoten/freundebuch/commit/a3739b8))
-* docs: Start recording architecture decisions as ADRs ([011f1af](https://github.com/datenknoten/freundebuch/commit/011f1af))
-* docs(frontend): Document the shared test helpers ([ce17422](https://github.com/datenknoten/freundebuch/commit/ce17422))
-* docs(frontend): Record the descriptor-driven section pattern ([46acfe4](https://github.com/datenknoten/freundebuch/commit/46acfe4))
+* fix(backend): Return the stored calendar day for date columns ([135c745](https://gitlab.com/datenknoten/freundebuch/-/commit/135c745))
+* test(backend): Isolate tests from the ambient environment ([4dedd26](https://gitlab.com/datenknoten/freundebuch/-/commit/4dedd26))
+* test(frontend): Make date rendering tests locale-independent ([c463111](https://gitlab.com/datenknoten/freundebuch/-/commit/c463111))
+* docs: Add a self-hosting guide ([03a94d5](https://gitlab.com/datenknoten/freundebuch/-/commit/03a94d5))
+* docs: Correct the documented database schema list ([9771910](https://gitlab.com/datenknoten/freundebuch/-/commit/9771910))
+* docs: Document PR-scoped coverage reporting ([90858a2](https://gitlab.com/datenknoten/freundebuch/-/commit/90858a2))
+* docs: Document the MCP OAuth 2.1 authorization flow ([d3ed52a](https://gitlab.com/datenknoten/freundebuch/-/commit/d3ed52a))
+* docs: Document the mcp-server commit scope ([30d88a4](https://gitlab.com/datenknoten/freundebuch/-/commit/30d88a4))
+* docs: Note that noExplicitAny is now a CI error ([a3739b8](https://gitlab.com/datenknoten/freundebuch/-/commit/a3739b8))
+* docs: Start recording architecture decisions as ADRs ([011f1af](https://gitlab.com/datenknoten/freundebuch/-/commit/011f1af))
+* docs(frontend): Document the shared test helpers ([ce17422](https://gitlab.com/datenknoten/freundebuch/-/commit/ce17422))
+* docs(frontend): Record the descriptor-driven section pattern ([46acfe4](https://gitlab.com/datenknoten/freundebuch/-/commit/46acfe4))
 
 ## 2.92.0 (2026-07-30)
 
-* fix(mcp-server): Accept null for optional create_encounter fields ([8f8c44c](https://github.com/datenknoten/freundebuch/commit/8f8c44c))
-* feat(mcp-server): Add create_encounter tool ([44aef65](https://github.com/datenknoten/freundebuch/commit/44aef65))
+* fix(mcp-server): Accept null for optional create_encounter fields ([8f8c44c](https://gitlab.com/datenknoten/freundebuch/-/commit/8f8c44c))
+* feat(mcp-server): Add create_encounter tool ([44aef65](https://gitlab.com/datenknoten/freundebuch/-/commit/44aef65))
 
 ## <small>2.91.1 (2026-07-30)</small>
 
-* refactor(backend): Address PR review on the OAuth client lookup ([9488c4a](https://github.com/datenknoten/freundebuch/commit/9488c4a))
-* fix(backend): Resolve OAuth client name on the MCP consent screen ([6b68435](https://github.com/datenknoten/freundebuch/commit/6b68435))
+* refactor(backend): Address PR review on the OAuth client lookup ([9488c4a](https://gitlab.com/datenknoten/freundebuch/-/commit/9488c4a))
+* fix(backend): Resolve OAuth client name on the MCP consent screen ([6b68435](https://gitlab.com/datenknoten/freundebuch/-/commit/6b68435))
 
 ## 2.91.0 (2026-07-30)
 
-* feat(mcp-server): Add OAuth 2.1 support for the claude.ai connector ([8b80225](https://github.com/datenknoten/freundebuch/commit/8b80225))
+* feat(mcp-server): Add OAuth 2.1 support for the claude.ai connector ([8b80225](https://gitlab.com/datenknoten/freundebuch/-/commit/8b80225))
 
 ## 2.90.0 (2026-07-28)
 
-* fix(frontend): Defer in-place circle modal so the FAB menu clears its flag first ([2d66d28](https://github.com/datenknoten/freundebuch/commit/2d66d28))
-* fix(frontend): Keep modal flag set during FAB create-menu to add-detail handoff ([c8f138c](https://github.com/datenknoten/freundebuch/commit/c8f138c))
-* feat(frontend): Merge FAB menus into one tap and add collective detail-adding ([b8d6770](https://github.com/datenknoten/freundebuch/commit/b8d6770))
+* fix(frontend): Defer in-place circle modal so the FAB menu clears its flag first ([2d66d28](https://gitlab.com/datenknoten/freundebuch/-/commit/2d66d28))
+* fix(frontend): Keep modal flag set during FAB create-menu to add-detail handoff ([c8f138c](https://gitlab.com/datenknoten/freundebuch/-/commit/c8f138c))
+* feat(frontend): Merge FAB menus into one tap and add collective detail-adding ([b8d6770](https://gitlab.com/datenknoten/freundebuch/-/commit/b8d6770))
 
 ## <small>2.89.2 (2026-06-29)</small>
 
-* refactor(backend): Use Symbol.for for the query-wrapped marker ([d80d052](https://github.com/datenknoten/freundebuch/commit/d80d052))
-* refactor(frontend): Split collective-detail into data-driven sections (#187) ([f589a18](https://github.com/datenknoten/freundebuch/commit/f589a18)), closes [#187](https://github.com/datenknoten/freundebuch/issues/187) [#186](https://github.com/datenknoten/freundebuch/issues/186)
-* test(backend): Assert enhanced call-site stack on query rejection ([c9ebda8](https://github.com/datenknoten/freundebuch/commit/c9ebda8))
-* fix(backend): Prevent stack overflow from re-wrapping pooled pg clients ([bb31a40](https://github.com/datenknoten/freundebuch/commit/bb31a40))
+* refactor(backend): Use Symbol.for for the query-wrapped marker ([d80d052](https://gitlab.com/datenknoten/freundebuch/-/commit/d80d052))
+* refactor(frontend): Split collective-detail into data-driven sections (#187) ([f589a18](https://gitlab.com/datenknoten/freundebuch/-/commit/f589a18)), closes [#187](https://github.com/datenknoten/freundebuch/issues/187) [#186](https://github.com/datenknoten/freundebuch/issues/186)
+* test(backend): Assert enhanced call-site stack on query rejection ([c9ebda8](https://gitlab.com/datenknoten/freundebuch/-/commit/c9ebda8))
+* fix(backend): Prevent stack overflow from re-wrapping pooled pg clients ([bb31a40](https://gitlab.com/datenknoten/freundebuch/-/commit/bb31a40))
 
 ## <small>2.89.1 (2026-06-23)</small>
 
-* test(frontend): Add reusable test infrastructure ([d230e57](https://github.com/datenknoten/freundebuch/commit/d230e57))
-* test(frontend): Cover auth store ([c6df278](https://github.com/datenknoten/freundebuch/commit/c6df278))
-* test(frontend): Cover circles and app-passwords API clients ([ac73349](https://github.com/datenknoten/freundebuch/commit/ac73349))
-* test(frontend): Cover circles store ([1dd4ffc](https://github.com/datenknoten/freundebuch/commit/1dd4ffc))
-* test(frontend): Cover collectives API client ([34c5217](https://github.com/datenknoten/freundebuch/commit/34c5217))
-* test(frontend): Cover detail-actions and social/professional rows ([8526eb1](https://github.com/datenknoten/freundebuch/commit/8526eb1))
-* test(frontend): Cover email/url/date subresource rows ([e89e9da](https://github.com/datenknoten/freundebuch/commit/e89e9da))
-* test(frontend): Cover encounters and notification-channels API clients ([0e58c71](https://github.com/datenknoten/freundebuch/commit/0e58c71))
-* test(frontend): Cover encounters store ([668edb4](https://github.com/datenknoten/freundebuch/commit/668edb4))
-* test(frontend): Cover friend-subresources store operations ([e7f887a](https://github.com/datenknoten/freundebuch/commit/e7f887a))
-* test(frontend): Cover friends store ([5ace251](https://github.com/datenknoten/freundebuch/commit/5ace251))
-* test(frontend): Cover keyboard hint helpers in the ui store ([8a326ab](https://github.com/datenknoten/freundebuch/commit/8a326ab))
-* test(frontend): Cover phone edit form (establishes i18n mock pattern) ([dea4a3e](https://github.com/datenknoten/freundebuch/commit/dea4a3e))
-* test(frontend): Cover presentational components (render tests) ([0a65cee](https://github.com/datenknoten/freundebuch/commit/0a65cee))
-* test(frontend): Cover retry util and friend-list-filter store ([ed2a6ba](https://github.com/datenknoten/freundebuch/commit/ed2a6ba))
-* test(frontend): Cover reusable form UI components ([2863671](https://github.com/datenknoten/freundebuch/commit/2863671))
-* test(frontend): Cover search store ([cf8f57b](https://github.com/datenknoten/freundebuch/commit/cf8f57b))
-* test(frontend): Cover session and locale stores ([4d472fa](https://github.com/datenknoten/freundebuch/commit/4d472fa))
-* test(frontend): Fix lint errors in locale store test ([b08b89f](https://github.com/datenknoten/freundebuch/commit/b08b89f))
-* ci: Add PR coverage report via danger-plugin-coverage ([d41d4c0](https://github.com/datenknoten/freundebuch/commit/d41d4c0))
-* ci: Build shared before generating frontend coverage in the danger job ([1a46805](https://github.com/datenknoten/freundebuch/commit/1a46805))
-* ci: Generate only frontend coverage, in the danger job ([d439598](https://github.com/datenknoten/freundebuch/commit/d439598))
-* fix: Build shared before tests and type the circles test fixture ([865f8bf](https://github.com/datenknoten/freundebuch/commit/865f8bf))
-* fix: Pin lockfile to avoid rollup/mongodb drift from coverage deps ([e1ce234](https://github.com/datenknoten/freundebuch/commit/e1ce234))
-* refactor: Promote noExplicitAny to error and drop dead suppressions ([c824717](https://github.com/datenknoten/freundebuch/commit/c824717))
-* docs: Document explicit-checks ("say what you mean") convention ([8fa8844](https://github.com/datenknoten/freundebuch/commit/8fa8844))
+* test(frontend): Add reusable test infrastructure ([d230e57](https://gitlab.com/datenknoten/freundebuch/-/commit/d230e57))
+* test(frontend): Cover auth store ([c6df278](https://gitlab.com/datenknoten/freundebuch/-/commit/c6df278))
+* test(frontend): Cover circles and app-passwords API clients ([ac73349](https://gitlab.com/datenknoten/freundebuch/-/commit/ac73349))
+* test(frontend): Cover circles store ([1dd4ffc](https://gitlab.com/datenknoten/freundebuch/-/commit/1dd4ffc))
+* test(frontend): Cover collectives API client ([34c5217](https://gitlab.com/datenknoten/freundebuch/-/commit/34c5217))
+* test(frontend): Cover detail-actions and social/professional rows ([8526eb1](https://gitlab.com/datenknoten/freundebuch/-/commit/8526eb1))
+* test(frontend): Cover email/url/date subresource rows ([e89e9da](https://gitlab.com/datenknoten/freundebuch/-/commit/e89e9da))
+* test(frontend): Cover encounters and notification-channels API clients ([0e58c71](https://gitlab.com/datenknoten/freundebuch/-/commit/0e58c71))
+* test(frontend): Cover encounters store ([668edb4](https://gitlab.com/datenknoten/freundebuch/-/commit/668edb4))
+* test(frontend): Cover friend-subresources store operations ([e7f887a](https://gitlab.com/datenknoten/freundebuch/-/commit/e7f887a))
+* test(frontend): Cover friends store ([5ace251](https://gitlab.com/datenknoten/freundebuch/-/commit/5ace251))
+* test(frontend): Cover keyboard hint helpers in the ui store ([8a326ab](https://gitlab.com/datenknoten/freundebuch/-/commit/8a326ab))
+* test(frontend): Cover phone edit form (establishes i18n mock pattern) ([dea4a3e](https://gitlab.com/datenknoten/freundebuch/-/commit/dea4a3e))
+* test(frontend): Cover presentational components (render tests) ([0a65cee](https://gitlab.com/datenknoten/freundebuch/-/commit/0a65cee))
+* test(frontend): Cover retry util and friend-list-filter store ([ed2a6ba](https://gitlab.com/datenknoten/freundebuch/-/commit/ed2a6ba))
+* test(frontend): Cover reusable form UI components ([2863671](https://gitlab.com/datenknoten/freundebuch/-/commit/2863671))
+* test(frontend): Cover search store ([cf8f57b](https://gitlab.com/datenknoten/freundebuch/-/commit/cf8f57b))
+* test(frontend): Cover session and locale stores ([4d472fa](https://gitlab.com/datenknoten/freundebuch/-/commit/4d472fa))
+* test(frontend): Fix lint errors in locale store test ([b08b89f](https://gitlab.com/datenknoten/freundebuch/-/commit/b08b89f))
+* ci: Add PR coverage report via danger-plugin-coverage ([d41d4c0](https://gitlab.com/datenknoten/freundebuch/-/commit/d41d4c0))
+* ci: Build shared before generating frontend coverage in the danger job ([1a46805](https://gitlab.com/datenknoten/freundebuch/-/commit/1a46805))
+* ci: Generate only frontend coverage, in the danger job ([d439598](https://gitlab.com/datenknoten/freundebuch/-/commit/d439598))
+* fix: Build shared before tests and type the circles test fixture ([865f8bf](https://gitlab.com/datenknoten/freundebuch/-/commit/865f8bf))
+* fix: Pin lockfile to avoid rollup/mongodb drift from coverage deps ([e1ce234](https://gitlab.com/datenknoten/freundebuch/-/commit/e1ce234))
+* refactor: Promote noExplicitAny to error and drop dead suppressions ([c824717](https://gitlab.com/datenknoten/freundebuch/-/commit/c824717))
+* docs: Document explicit-checks ("say what you mean") convention ([8fa8844](https://gitlab.com/datenknoten/freundebuch/-/commit/8fa8844))
 
 ## 2.89.0 (2026-06-21)
 
-* chore(frontend): Remove unused selectCollectivePlaceholder i18n key ([a5298fe](https://github.com/datenknoten/freundebuch/commit/a5298fe))
-* fix(frontend): Associate collective combobox with its external label ([de88964](https://github.com/datenknoten/freundebuch/commit/de88964))
-* fix(frontend): Single auto-focus module instance and focus after clear ([992daa6](https://github.com/datenknoten/freundebuch/commit/992daa6))
-* feat(frontend): Combobox collective selector in friend "Add to collective" ([3315f97](https://github.com/datenknoten/freundebuch/commit/3315f97))
+* chore(frontend): Remove unused selectCollectivePlaceholder i18n key ([a5298fe](https://gitlab.com/datenknoten/freundebuch/-/commit/a5298fe))
+* fix(frontend): Associate collective combobox with its external label ([de88964](https://gitlab.com/datenknoten/freundebuch/-/commit/de88964))
+* fix(frontend): Single auto-focus module instance and focus after clear ([992daa6](https://gitlab.com/datenknoten/freundebuch/-/commit/992daa6))
+* feat(frontend): Combobox collective selector in friend "Add to collective" ([3315f97](https://gitlab.com/datenknoten/freundebuch/-/commit/3315f97))
 
 ## 2.88.0 (2026-06-21)
 
-* fix(frontend): Associate friend selector label with rendered control ([9cfea2e](https://github.com/datenknoten/freundebuch/commit/9cfea2e))
-* fix(frontend): Reliably autofocus friend search input in modals ([4cf8f03](https://github.com/datenknoten/freundebuch/commit/4cf8f03))
-* feat(frontend): Align friend selector with combobox dropdown pattern ([cba2297](https://github.com/datenknoten/freundebuch/commit/cba2297))
+* fix(frontend): Associate friend selector label with rendered control ([9cfea2e](https://gitlab.com/datenknoten/freundebuch/-/commit/9cfea2e))
+* fix(frontend): Reliably autofocus friend search input in modals ([4cf8f03](https://gitlab.com/datenknoten/freundebuch/-/commit/4cf8f03))
+* feat(frontend): Align friend selector with combobox dropdown pattern ([cba2297](https://gitlab.com/datenknoten/freundebuch/-/commit/cba2297))
 
 ## <small>2.87.2 (2026-06-21)</small>
 
-* fix(frontend): Address PR review on mobile autofocus priming ([ad67c10](https://github.com/datenknoten/freundebuch/commit/ad67c10))
-* fix(frontend): Make autofocus work on mobile keyboards ([ce65bcd](https://github.com/datenknoten/freundebuch/commit/ce65bcd))
+* fix(frontend): Address PR review on mobile autofocus priming ([ad67c10](https://gitlab.com/datenknoten/freundebuch/-/commit/ad67c10))
+* fix(frontend): Make autofocus work on mobile keyboards ([ce65bcd](https://gitlab.com/datenknoten/freundebuch/-/commit/ce65bcd))
 
 ## <small>2.87.1 (2026-06-21)</small>
 
-* fix(frontend): Select top match on Enter across search dropdowns ([f03835e](https://github.com/datenknoten/freundebuch/commit/f03835e))
-* fix(frontend): Select top match when confirming relationship type search ([1d8f438](https://github.com/datenknoten/freundebuch/commit/1d8f438))
+* fix(frontend): Select top match on Enter across search dropdowns ([f03835e](https://gitlab.com/datenknoten/freundebuch/-/commit/f03835e))
+* fix(frontend): Select top match when confirming relationship type search ([1d8f438](https://gitlab.com/datenknoten/freundebuch/-/commit/1d8f438))
 
 ## 2.87.0 (2026-06-21)
 
-* feat(all): PostGIS-only address lookup + postal-code autocomplete ([fa24597](https://github.com/datenknoten/freundebuch/commit/fa24597))
+* feat(all): PostGIS-only address lookup + postal-code autocomplete ([fa24597](https://gitlab.com/datenknoten/freundebuch/-/commit/fa24597))
 
 ## <small>2.86.1 (2026-06-21)</small>
 
-* fix(backend): Make auto-created member relationships visible on both contacts ([bad26ce](https://github.com/datenknoten/freundebuch/commit/bad26ce))
+* fix(backend): Make auto-created member relationships visible on both contacts ([bad26ce](https://gitlab.com/datenknoten/freundebuch/-/commit/bad26ce))
 
 ## 2.86.0 (2026-06-21)
 
-* fix(frontend): Satisfy noEmptyBlockStatements in session-expired modal ([ed2a83c](https://github.com/datenknoten/freundebuch/commit/ed2a83c))
-* feat(frontend): Prompt re-login in place when session expires ([4926e0f](https://github.com/datenknoten/freundebuch/commit/4926e0f))
-* feat(frontend): Replay failed request after re-login and add logout escape hatch ([002610d](https://github.com/datenknoten/freundebuch/commit/002610d))
+* fix(frontend): Satisfy noEmptyBlockStatements in session-expired modal ([ed2a83c](https://gitlab.com/datenknoten/freundebuch/-/commit/ed2a83c))
+* feat(frontend): Prompt re-login in place when session expires ([4926e0f](https://gitlab.com/datenknoten/freundebuch/-/commit/4926e0f))
+* feat(frontend): Replay failed request after re-login and add logout escape hatch ([002610d](https://gitlab.com/datenknoten/freundebuch/-/commit/002610d))
 
 ## <small>2.85.3 (2026-06-21)</small>
 
-* fix(dx): Make web sandbox toolchain setup work behind the tls proxy ([f4cb697](https://github.com/datenknoten/freundebuch/commit/f4cb697))
+* fix(dx): Make web sandbox toolchain setup work behind the tls proxy ([f4cb697](https://gitlab.com/datenknoten/freundebuch/-/commit/f4cb697))
 
 ## <small>2.85.2 (2026-06-18)</small>
 
-* fix(backend): Clarify phone rejection when a number's country can't be inferred ([5928c91](https://github.com/datenknoten/freundebuch/commit/5928c91))
+* fix(backend): Clarify phone rejection when a number's country can't be inferred ([5928c91](https://gitlab.com/datenknoten/freundebuch/-/commit/5928c91))
 
 ## <small>2.85.1 (2026-06-18)</small>
 
-* fix(frontend): Correct website and social add button translations ([a7cbb35](https://github.com/datenknoten/freundebuch/commit/a7cbb35))
+* fix(frontend): Correct website and social add button translations ([a7cbb35](https://gitlab.com/datenknoten/freundebuch/-/commit/a7cbb35))
 
 ## 2.85.0 (2026-06-18)
 
-* chore(dx): Add SessionStart hook to bootstrap mise toolchain on the web ([c0da05d](https://github.com/datenknoten/freundebuch/commit/c0da05d))
-* chore(dx): Bootstrap impeccable design context ([9e0839c](https://github.com/datenknoten/freundebuch/commit/9e0839c))
-* fix(frontend): Show a clear message when a phone number fails validation ([740ed26](https://github.com/datenknoten/freundebuch/commit/740ed26))
-* feat(dx): Relax kebab-case rule for markdown and impeccable artifacts ([6dcb372](https://github.com/datenknoten/freundebuch/commit/6dcb372))
-* feat(frontend): Soften friend detail headers, fix dead modal scrims ([d64d338](https://github.com/datenknoten/freundebuch/commit/d64d338))
+* chore(dx): Add SessionStart hook to bootstrap mise toolchain on the web ([c0da05d](https://gitlab.com/datenknoten/freundebuch/-/commit/c0da05d))
+* chore(dx): Bootstrap impeccable design context ([9e0839c](https://gitlab.com/datenknoten/freundebuch/-/commit/9e0839c))
+* fix(frontend): Show a clear message when a phone number fails validation ([740ed26](https://gitlab.com/datenknoten/freundebuch/-/commit/740ed26))
+* feat(dx): Relax kebab-case rule for markdown and impeccable artifacts ([6dcb372](https://gitlab.com/datenknoten/freundebuch/-/commit/6dcb372))
+* feat(frontend): Soften friend detail headers, fix dead modal scrims ([d64d338](https://gitlab.com/datenknoten/freundebuch/-/commit/d64d338))
 
 ## <small>2.84.6 (2026-06-14)</small>
 
-* fix(database): Stop set -e killing OSM import on osm2pgsql SIGPIPE ([5ab8d12](https://github.com/datenknoten/freundebuch/commit/5ab8d12))
+* fix(database): Stop set -e killing OSM import on osm2pgsql SIGPIPE ([5ab8d12](https://gitlab.com/datenknoten/freundebuch/-/commit/5ab8d12))
 
 ## <small>2.84.5 (2026-06-14)</small>
 
-* fix(database): Gate OSM ways on tags before building geometry ([15221d0](https://github.com/datenknoten/freundebuch/commit/15221d0))
+* fix(database): Gate OSM ways on tags before building geometry ([15221d0](https://gitlab.com/datenknoten/freundebuch/-/commit/15221d0))
 
 ## <small>2.84.4 (2026-06-14)</small>
 
-* fix(database): Revert OSM import to flat-nodes node store ([a1b34f6](https://github.com/datenknoten/freundebuch/commit/a1b34f6))
+* fix(database): Revert OSM import to flat-nodes node store ([a1b34f6](https://gitlab.com/datenknoten/freundebuch/-/commit/a1b34f6))
 
 ## <small>2.84.3 (2026-06-13)</small>
 
-* fix(database): Use RAM node cache instead of flat-nodes for OSM import ([18e51d2](https://github.com/datenknoten/freundebuch/commit/18e51d2))
+* fix(database): Use RAM node cache instead of flat-nodes for OSM import ([18e51d2](https://gitlab.com/datenknoten/freundebuch/-/commit/18e51d2))
 
 ## <small>2.84.2 (2026-06-13)</small>
 
-* fix(database): Speed up full-country OSM import with flat-nodes ([c654f38](https://github.com/datenknoten/freundebuch/commit/c654f38))
+* fix(database): Speed up full-country OSM import with flat-nodes ([c654f38](https://gitlab.com/datenknoten/freundebuch/-/commit/c654f38))
 
 ## <small>2.84.1 (2026-06-13)</small>
 
-* fix(all): Address dashboard PR review feedback ([acc1fc4](https://github.com/datenknoten/freundebuch/commit/acc1fc4))
-* fix(all): Address second round of dashboard PR review feedback ([d6acf09](https://github.com/datenknoten/freundebuch/commit/d6acf09))
-* fix(all): Address third round of dashboard PR review feedback ([1afba89](https://github.com/datenknoten/freundebuch/commit/1afba89))
-* perf(all): Reduce dashboard requests from 6 to 3 ([151db1b](https://github.com/datenknoten/freundebuch/commit/151db1b))
+* fix(all): Address dashboard PR review feedback ([acc1fc4](https://gitlab.com/datenknoten/freundebuch/-/commit/acc1fc4))
+* fix(all): Address second round of dashboard PR review feedback ([d6acf09](https://gitlab.com/datenknoten/freundebuch/-/commit/d6acf09))
+* fix(all): Address third round of dashboard PR review feedback ([1afba89](https://gitlab.com/datenknoten/freundebuch/-/commit/1afba89))
+* perf(all): Reduce dashboard requests from 6 to 3 ([151db1b](https://gitlab.com/datenknoten/freundebuch/-/commit/151db1b))
 
 ## 2.84.0 (2026-06-13)
 
-* fix(backend): Address PR review — tunnel status passthrough, doc name ([20030ca](https://github.com/datenknoten/freundebuch/commit/20030ca))
-* fix(backend): Align cache delete/clear with the database tier ([284667d](https://github.com/datenknoten/freundebuch/commit/284667d))
-* fix(backend): Bound and rate-limit the sentry tunnel ([e02a8b5](https://github.com/datenknoten/freundebuch/commit/e02a8b5))
-* fix(backend): Create a friend and its sub-resources atomically ([1907da7](https://github.com/datenknoten/freundebuch/commit/1907da7))
-* fix(backend): Don't echo upstream error bodies to clients ([9e60b66](https://github.com/datenknoten/freundebuch/commit/9e60b66))
-* fix(backend): Drain server and stop cron on graceful shutdown ([3845699](https://github.com/datenknoten/freundebuch/commit/3845699))
-* fix(backend): Gate digest delivery on daily flag, not exact minute ([e85c430](https://github.com/datenknoten/freundebuch/commit/e85c430))
-* fix(backend): Guard cron jobs against overlapping runs ([184b057](https://github.com/datenknoten/freundebuch/commit/184b057))
-* fix(backend): Harden pg pool against idle errors and hangs ([61c4b37](https://github.com/datenknoten/freundebuch/commit/61c4b37))
-* fix(backend): Key rate limiting off the socket, not spoofable headers ([c60783b](https://github.com/datenknoten/freundebuch/commit/c60783b))
-* fix(backend): Make relationship pair writes atomic ([8dc6665](https://github.com/datenknoten/freundebuch/commit/8dc6665))
-* fix(backend): Report 503 when database is unreachable ([eb0fa81](https://github.com/datenknoten/freundebuch/commit/eb0fa81))
-* fix(backend): Scrub PII from logs and Sentry, capture once ([753e5ff](https://github.com/datenknoten/freundebuch/commit/753e5ff))
-* fix(backend): Validate country code in address lookup ([9c2c980](https://github.com/datenknoten/freundebuch/commit/9c2c980))
-* fix(backend): Validate friend id on core routes ([19fa112](https://github.com/datenknoten/freundebuch/commit/19fa112))
-* fix(ci): Allow leading digit in kebab-case filename rule ([bed3c12](https://github.com/datenknoten/freundebuch/commit/bed3c12))
-* fix(database): Batch encounter friend previews and scope to user ([a866352](https://github.com/datenknoten/freundebuch/commit/a866352))
-* fix(database): Convert legacy varchar columns to text ([44e8637](https://github.com/datenknoten/freundebuch/commit/44e8637))
-* fix(database): Drop duplicate external_id indexes; document delete policy ([c358e96](https://github.com/datenknoten/freundebuch/commit/c358e96))
-* fix(database): Scope coordinate update to the owning user ([476a5fe](https://github.com/datenknoten/freundebuch/commit/476a5fe))
-* test(backend): Add cross-user authorization sweep ([7858f27](https://github.com/datenknoten/freundebuch/commit/7858f27))
-* test(backend): Add encounters and circles integration suites ([7fa4e5b](https://github.com/datenknoten/freundebuch/commit/7fa4e5b))
-* test(backend): Cover notification channels, uploads, tunnel, onboarding ([bf3adb2](https://github.com/datenknoten/freundebuch/commit/bf3adb2))
-* test(backend): Fix cleanup leak and wire up coverage tooling ([b36d0ff](https://github.com/datenknoten/freundebuch/commit/b36d0ff))
-* test(backend): Replace fake collectives test with real integration suite ([e6d1fd5](https://github.com/datenknoten/freundebuch/commit/e6d1fd5))
-* test(backend): Share one container across integration suites ([3acebd2](https://github.com/datenknoten/freundebuch/commit/3acebd2))
-* test(backend): Update db unit tests for pool hardening ([0b7313a](https://github.com/datenknoten/freundebuch/commit/0b7313a))
-* docs: Correct stale facts across documentation ([a384894](https://github.com/datenknoten/freundebuch/commit/a384894))
-* docs: Mark epics 2, 12 and 18 as shipped in epic tracker ([0914223](https://github.com/datenknoten/freundebuch/commit/0914223))
-* docs(backend): Refresh AGENTS.md error/auth/response sections ([4c00ca7](https://github.com/datenknoten/freundebuch/commit/4c00ca7))
-* docs(docs): Add 2026-06-13 backend review ([9978d0c](https://github.com/datenknoten/freundebuch/commit/9978d0c))
-* docs(docs): Check off backend review findings ([70d249e](https://github.com/datenknoten/freundebuch/commit/70d249e))
-* docs(docs): Refresh Monica comparison with June 2026 status ([38b3ebe](https://github.com/datenknoten/freundebuch/commit/38b3ebe))
-* refactor(backend): Add parseBody/requireUuidParam route helpers ([c52f241](https://github.com/datenknoten/freundebuch/commit/c52f241))
-* refactor(backend): Extract shared withTransaction helper ([8470f6d](https://github.com/datenknoten/freundebuch/commit/8470f6d))
-* refactor(backend): Type auth context and move photo cleanup into service ([5f17da0](https://github.com/datenknoten/freundebuch/commit/5f17da0))
-* refactor(backend): Unify friend and collective sub-resource bases ([7faae69](https://github.com/datenknoten/freundebuch/commit/7faae69))
-* refactor(backend): Use Friend terminology in membership errors ([d1e7dc6](https://github.com/datenknoten/freundebuch/commit/d1e7dc6))
-* chore(backend): Remove dead legacy auth code and shims ([f89bcb3](https://github.com/datenknoten/freundebuch/commit/f89bcb3))
-* feat(backend): Expose request id and log requests in production ([46d4f96](https://github.com/datenknoten/freundebuch/commit/46d4f96))
-* feat(ci): Add daily demo data reset script and systemd units ([227c849](https://github.com/datenknoten/freundebuch/commit/227c849))
+* fix(backend): Address PR review — tunnel status passthrough, doc name ([20030ca](https://gitlab.com/datenknoten/freundebuch/-/commit/20030ca))
+* fix(backend): Align cache delete/clear with the database tier ([284667d](https://gitlab.com/datenknoten/freundebuch/-/commit/284667d))
+* fix(backend): Bound and rate-limit the sentry tunnel ([e02a8b5](https://gitlab.com/datenknoten/freundebuch/-/commit/e02a8b5))
+* fix(backend): Create a friend and its sub-resources atomically ([1907da7](https://gitlab.com/datenknoten/freundebuch/-/commit/1907da7))
+* fix(backend): Don't echo upstream error bodies to clients ([9e60b66](https://gitlab.com/datenknoten/freundebuch/-/commit/9e60b66))
+* fix(backend): Drain server and stop cron on graceful shutdown ([3845699](https://gitlab.com/datenknoten/freundebuch/-/commit/3845699))
+* fix(backend): Gate digest delivery on daily flag, not exact minute ([e85c430](https://gitlab.com/datenknoten/freundebuch/-/commit/e85c430))
+* fix(backend): Guard cron jobs against overlapping runs ([184b057](https://gitlab.com/datenknoten/freundebuch/-/commit/184b057))
+* fix(backend): Harden pg pool against idle errors and hangs ([61c4b37](https://gitlab.com/datenknoten/freundebuch/-/commit/61c4b37))
+* fix(backend): Key rate limiting off the socket, not spoofable headers ([c60783b](https://gitlab.com/datenknoten/freundebuch/-/commit/c60783b))
+* fix(backend): Make relationship pair writes atomic ([8dc6665](https://gitlab.com/datenknoten/freundebuch/-/commit/8dc6665))
+* fix(backend): Report 503 when database is unreachable ([eb0fa81](https://gitlab.com/datenknoten/freundebuch/-/commit/eb0fa81))
+* fix(backend): Scrub PII from logs and Sentry, capture once ([753e5ff](https://gitlab.com/datenknoten/freundebuch/-/commit/753e5ff))
+* fix(backend): Validate country code in address lookup ([9c2c980](https://gitlab.com/datenknoten/freundebuch/-/commit/9c2c980))
+* fix(backend): Validate friend id on core routes ([19fa112](https://gitlab.com/datenknoten/freundebuch/-/commit/19fa112))
+* fix(ci): Allow leading digit in kebab-case filename rule ([bed3c12](https://gitlab.com/datenknoten/freundebuch/-/commit/bed3c12))
+* fix(database): Batch encounter friend previews and scope to user ([a866352](https://gitlab.com/datenknoten/freundebuch/-/commit/a866352))
+* fix(database): Convert legacy varchar columns to text ([44e8637](https://gitlab.com/datenknoten/freundebuch/-/commit/44e8637))
+* fix(database): Drop duplicate external_id indexes; document delete policy ([c358e96](https://gitlab.com/datenknoten/freundebuch/-/commit/c358e96))
+* fix(database): Scope coordinate update to the owning user ([476a5fe](https://gitlab.com/datenknoten/freundebuch/-/commit/476a5fe))
+* test(backend): Add cross-user authorization sweep ([7858f27](https://gitlab.com/datenknoten/freundebuch/-/commit/7858f27))
+* test(backend): Add encounters and circles integration suites ([7fa4e5b](https://gitlab.com/datenknoten/freundebuch/-/commit/7fa4e5b))
+* test(backend): Cover notification channels, uploads, tunnel, onboarding ([bf3adb2](https://gitlab.com/datenknoten/freundebuch/-/commit/bf3adb2))
+* test(backend): Fix cleanup leak and wire up coverage tooling ([b36d0ff](https://gitlab.com/datenknoten/freundebuch/-/commit/b36d0ff))
+* test(backend): Replace fake collectives test with real integration suite ([e6d1fd5](https://gitlab.com/datenknoten/freundebuch/-/commit/e6d1fd5))
+* test(backend): Share one container across integration suites ([3acebd2](https://gitlab.com/datenknoten/freundebuch/-/commit/3acebd2))
+* test(backend): Update db unit tests for pool hardening ([0b7313a](https://gitlab.com/datenknoten/freundebuch/-/commit/0b7313a))
+* docs: Correct stale facts across documentation ([a384894](https://gitlab.com/datenknoten/freundebuch/-/commit/a384894))
+* docs: Mark epics 2, 12 and 18 as shipped in epic tracker ([0914223](https://gitlab.com/datenknoten/freundebuch/-/commit/0914223))
+* docs(backend): Refresh AGENTS.md error/auth/response sections ([4c00ca7](https://gitlab.com/datenknoten/freundebuch/-/commit/4c00ca7))
+* docs(docs): Add 2026-06-13 backend review ([9978d0c](https://gitlab.com/datenknoten/freundebuch/-/commit/9978d0c))
+* docs(docs): Check off backend review findings ([70d249e](https://gitlab.com/datenknoten/freundebuch/-/commit/70d249e))
+* docs(docs): Refresh Monica comparison with June 2026 status ([38b3ebe](https://gitlab.com/datenknoten/freundebuch/-/commit/38b3ebe))
+* refactor(backend): Add parseBody/requireUuidParam route helpers ([c52f241](https://gitlab.com/datenknoten/freundebuch/-/commit/c52f241))
+* refactor(backend): Extract shared withTransaction helper ([8470f6d](https://gitlab.com/datenknoten/freundebuch/-/commit/8470f6d))
+* refactor(backend): Type auth context and move photo cleanup into service ([5f17da0](https://gitlab.com/datenknoten/freundebuch/-/commit/5f17da0))
+* refactor(backend): Unify friend and collective sub-resource bases ([7faae69](https://gitlab.com/datenknoten/freundebuch/-/commit/7faae69))
+* refactor(backend): Use Friend terminology in membership errors ([d1e7dc6](https://gitlab.com/datenknoten/freundebuch/-/commit/d1e7dc6))
+* chore(backend): Remove dead legacy auth code and shims ([f89bcb3](https://gitlab.com/datenknoten/freundebuch/-/commit/f89bcb3))
+* feat(backend): Expose request id and log requests in production ([46d4f96](https://gitlab.com/datenknoten/freundebuch/-/commit/46d4f96))
+* feat(ci): Add daily demo data reset script and systemd units ([227c849](https://gitlab.com/datenknoten/freundebuch/-/commit/227c849))
 
 ## 2.83.0 (2026-06-13)
 
-* fix(backend): Align notification date display with occurrence and pluralize years ([9fcac89](https://github.com/datenknoten/freundebuch/commit/9fcac89))
-* fix(backend): Escape user values in HTML notification body ([ad32560](https://github.com/datenknoten/freundebuch/commit/ad32560))
-* feat(backend): Include age in upcoming date notifications ([4a2270d](https://github.com/datenknoten/freundebuch/commit/4a2270d))
+* fix(backend): Align notification date display with occurrence and pluralize years ([9fcac89](https://gitlab.com/datenknoten/freundebuch/-/commit/9fcac89))
+* fix(backend): Escape user values in HTML notification body ([ad32560](https://gitlab.com/datenknoten/freundebuch/-/commit/ad32560))
+* feat(backend): Include age in upcoming date notifications ([4a2270d](https://gitlab.com/datenknoten/freundebuch/-/commit/4a2270d))
 
 ## 2.82.0 (2026-06-13)
 
-* feat(frontend): Hide FAB on entity creation pages ([3b213c8](https://github.com/datenknoten/freundebuch/commit/3b213c8))
+* feat(frontend): Hide FAB on entity creation pages ([3b213c8](https://gitlab.com/datenknoten/freundebuch/-/commit/3b213c8))
 
 ## 2.81.0 (2026-06-07)
 
-* feat(frontend): Add settings toggle for shortcut hints ([da0a804](https://github.com/datenknoten/freundebuch/commit/da0a804))
-* feat(frontend): Show shortcut hint toast for mouse-driven actions ([b1e68cc](https://github.com/datenknoten/freundebuch/commit/b1e68cc))
-* feat(frontend): Tag mouse actions with their keyboard shortcuts ([3f2f6c2](https://github.com/datenknoten/freundebuch/commit/3f2f6c2))
-* feat(shared): Add showShortcutHints user preference ([ffebaed](https://github.com/datenknoten/freundebuch/commit/ffebaed))
+* feat(frontend): Add settings toggle for shortcut hints ([da0a804](https://gitlab.com/datenknoten/freundebuch/-/commit/da0a804))
+* feat(frontend): Show shortcut hint toast for mouse-driven actions ([b1e68cc](https://gitlab.com/datenknoten/freundebuch/-/commit/b1e68cc))
+* feat(frontend): Tag mouse actions with their keyboard shortcuts ([3f2f6c2](https://gitlab.com/datenknoten/freundebuch/-/commit/3f2f6c2))
+* feat(shared): Add showShortcutHints user preference ([ffebaed](https://gitlab.com/datenknoten/freundebuch/-/commit/ffebaed))
 
 ## <small>2.80.2 (2026-06-07)</small>
 
-* fix(ci): Use bracketed host:port format for demo host key ([d32ea33](https://github.com/datenknoten/freundebuch/commit/d32ea33))
+* fix(ci): Use bracketed host:port format for demo host key ([d32ea33](https://gitlab.com/datenknoten/freundebuch/-/commit/d32ea33))
 
 ## <small>2.80.1 (2026-06-07)</small>
 
-* fix(ci): Add demo system known host ([1a2207c](https://github.com/datenknoten/freundebuch/commit/1a2207c))
+* fix(ci): Add demo system known host ([1a2207c](https://gitlab.com/datenknoten/freundebuch/-/commit/1a2207c))
 
 ## 2.80.0 (2026-06-07)
 
-* feat(ci): Add demo system deployment and document it in the README ([f0436fc](https://github.com/datenknoten/freundebuch/commit/f0436fc))
-* fix(backend): Prevent integration test flake from container startup timeouts ([eaac1da](https://github.com/datenknoten/freundebuch/commit/eaac1da))
-* docs(docs): Add comparison with Monica personal CRM ([bc9ec7b](https://github.com/datenknoten/freundebuch/commit/bc9ec7b))
-* docs(docs): Add pitch documents in English and German ([ed01060](https://github.com/datenknoten/freundebuch/commit/ed01060))
+* feat(ci): Add demo system deployment and document it in the README ([f0436fc](https://gitlab.com/datenknoten/freundebuch/-/commit/f0436fc))
+* fix(backend): Prevent integration test flake from container startup timeouts ([eaac1da](https://gitlab.com/datenknoten/freundebuch/-/commit/eaac1da))
+* docs(docs): Add comparison with Monica personal CRM ([bc9ec7b](https://gitlab.com/datenknoten/freundebuch/-/commit/bc9ec7b))
+* docs(docs): Add pitch documents in English and German ([ed01060](https://gitlab.com/datenknoten/freundebuch/-/commit/ed01060))
 
 ## 2.79.0 (2026-06-04)
 
-* fix(frontend): Only redirect to collective after membership succeeds ([3963d93](https://github.com/datenknoten/freundebuch/commit/3963d93))
-* feat(frontend): Create new friend for collective from detail page ([762a463](https://github.com/datenknoten/freundebuch/commit/762a463))
+* fix(frontend): Only redirect to collective after membership succeeds ([3963d93](https://gitlab.com/datenknoten/freundebuch/-/commit/3963d93))
+* feat(frontend): Create new friend for collective from detail page ([762a463](https://gitlab.com/datenknoten/freundebuch/-/commit/762a463))
 
 ## <small>2.78.1 (2026-06-04)</small>
 
-* fix(backend): Read self-profile from DB instead of cached session ([1c3710f](https://github.com/datenknoten/freundebuch/commit/1c3710f))
+* fix(backend): Read self-profile from DB instead of cached session ([1c3710f](https://gitlab.com/datenknoten/freundebuch/-/commit/1c3710f))
 
 ## 2.78.0 (2026-06-04)
 
-* feat(frontend): Add friend to collective from friend detail page ([4623e75](https://github.com/datenknoten/freundebuch/commit/4623e75))
+* feat(frontend): Add friend to collective from friend detail page ([4623e75](https://gitlab.com/datenknoten/freundebuch/-/commit/4623e75))
 
 ## 2.77.0 (2026-06-04)
 
-* feat(frontend): Add PWA shortcuts for common actions ([bbe1770](https://github.com/datenknoten/freundebuch/commit/bbe1770))
+* feat(frontend): Add PWA shortcuts for common actions ([bbe1770](https://gitlab.com/datenknoten/freundebuch/-/commit/bbe1770))
 
 ## 2.76.0 (2026-06-04)
 
-* feat(frontend): Open first result on Enter in list search boxes ([270d547](https://github.com/datenknoten/freundebuch/commit/270d547))
-* feat(frontend): Open linked friends from encounter detail with o ([d9cce1d](https://github.com/datenknoten/freundebuch/commit/d9cce1d))
-* fix(frontend): Allow adding work experience to friends with empty history ([5c31fa7](https://github.com/datenknoten/freundebuch/commit/5c31fa7))
+* feat(frontend): Open first result on Enter in list search boxes ([270d547](https://gitlab.com/datenknoten/freundebuch/-/commit/270d547))
+* feat(frontend): Open linked friends from encounter detail with o ([d9cce1d](https://gitlab.com/datenknoten/freundebuch/-/commit/d9cce1d))
+* fix(frontend): Allow adding work experience to friends with empty history ([5c31fa7](https://gitlab.com/datenknoten/freundebuch/-/commit/5c31fa7))
 
 ## 2.75.0 (2026-05-31)
 
-* feat(frontend): Add @-mention autocomplete to notes editor ([5e728d3](https://github.com/datenknoten/freundebuch/commit/5e728d3))
-* feat(frontend): Add edit hotkey on encounter detail ([34f6ed4](https://github.com/datenknoten/freundebuch/commit/34f6ed4))
-* fix(frontend): Improve heading readability in notes editor ([57842d0](https://github.com/datenknoten/freundebuch/commit/57842d0))
+* feat(frontend): Add @-mention autocomplete to notes editor ([5e728d3](https://gitlab.com/datenknoten/freundebuch/-/commit/5e728d3))
+* feat(frontend): Add edit hotkey on encounter detail ([34f6ed4](https://gitlab.com/datenknoten/freundebuch/-/commit/34f6ed4))
+* fix(frontend): Improve heading readability in notes editor ([57842d0](https://gitlab.com/datenknoten/freundebuch/-/commit/57842d0))
 
 ## <small>2.74.1 (2026-05-26)</small>
 
-* fix(frontend): Cache-bust home-screen icon URLs so iOS reloads them ([94b253f](https://github.com/datenknoten/freundebuch/commit/94b253f))
+* fix(frontend): Cache-bust home-screen icon URLs so iOS reloads them ([94b253f](https://gitlab.com/datenknoten/freundebuch/-/commit/94b253f))
 
 ## 2.74.0 (2026-05-25)
 
-* fix(frontend): Associate notes label via aria-labelledby ([364cfb3](https://github.com/datenknoten/freundebuch/commit/364cfb3))
-* fix(frontend): Harden editor links, undo, and viewer per review ([0d63c97](https://github.com/datenknoten/freundebuch/commit/0d63c97))
-* fix(frontend): React to prop changes and scope viewer margins ([8c63d69](https://github.com/datenknoten/freundebuch/commit/8c63d69))
-* fix(frontend): Scope link hardening and disabled state per review ([16302a3](https://github.com/datenknoten/freundebuch/commit/16302a3))
-* chore(config): Only unset core.hooksPath when it points at husky ([7b9eaa3](https://github.com/datenknoten/freundebuch/commit/7b9eaa3))
-* chore(config): Unset stale husky hooksPath in prepare ([a3dbd86](https://github.com/datenknoten/freundebuch/commit/a3dbd86))
-* chore(config): Use npx for biome in the hk pre-commit hook ([513f8a1](https://github.com/datenknoten/freundebuch/commit/513f8a1))
-* chore(deps): Add CodeMirror 6 + markdown-it for note editor ([7abf6da](https://github.com/datenknoten/freundebuch/commit/7abf6da))
-* test(frontend): Add unit tests for markdown editor and viewer ([e821085](https://github.com/datenknoten/freundebuch/commit/e821085))
-* feat(frontend): Add markdown editor and viewer components ([8d94de5](https://github.com/datenknoten/freundebuch/commit/8d94de5))
-* feat(frontend): Render encounter notes as inline-preview markdown ([34bd0da](https://github.com/datenknoten/freundebuch/commit/34bd0da))
-* feat(frontend): Vendor atomic-editor inline-preview CM6 engine ([cbfb94c](https://github.com/datenknoten/freundebuch/commit/cbfb94c))
+* fix(frontend): Associate notes label via aria-labelledby ([364cfb3](https://gitlab.com/datenknoten/freundebuch/-/commit/364cfb3))
+* fix(frontend): Harden editor links, undo, and viewer per review ([0d63c97](https://gitlab.com/datenknoten/freundebuch/-/commit/0d63c97))
+* fix(frontend): React to prop changes and scope viewer margins ([8c63d69](https://gitlab.com/datenknoten/freundebuch/-/commit/8c63d69))
+* fix(frontend): Scope link hardening and disabled state per review ([16302a3](https://gitlab.com/datenknoten/freundebuch/-/commit/16302a3))
+* chore(config): Only unset core.hooksPath when it points at husky ([7b9eaa3](https://gitlab.com/datenknoten/freundebuch/-/commit/7b9eaa3))
+* chore(config): Unset stale husky hooksPath in prepare ([a3dbd86](https://gitlab.com/datenknoten/freundebuch/-/commit/a3dbd86))
+* chore(config): Use npx for biome in the hk pre-commit hook ([513f8a1](https://gitlab.com/datenknoten/freundebuch/-/commit/513f8a1))
+* chore(deps): Add CodeMirror 6 + markdown-it for note editor ([7abf6da](https://gitlab.com/datenknoten/freundebuch/-/commit/7abf6da))
+* test(frontend): Add unit tests for markdown editor and viewer ([e821085](https://gitlab.com/datenknoten/freundebuch/-/commit/e821085))
+* feat(frontend): Add markdown editor and viewer components ([8d94de5](https://gitlab.com/datenknoten/freundebuch/-/commit/8d94de5))
+* feat(frontend): Render encounter notes as inline-preview markdown ([34bd0da](https://gitlab.com/datenknoten/freundebuch/-/commit/34bd0da))
+* feat(frontend): Vendor atomic-editor inline-preview CM6 engine ([cbfb94c](https://gitlab.com/datenknoten/freundebuch/-/commit/cbfb94c))
 
 ## 2.73.0 (2026-05-25)
 
-* feat(all): Add interaction type to encounters ([e75190a](https://github.com/datenknoten/freundebuch/commit/e75190a))
+* feat(all): Add interaction type to encounters ([e75190a](https://gitlab.com/datenknoten/freundebuch/-/commit/e75190a))
 
 ## <small>2.72.1 (2026-05-24)</small>
 
-* fix(config): Revalidate stable-named icons instead of caching them forever ([9d7273e](https://github.com/datenknoten/freundebuch/commit/9d7273e))
-* fix(frontend): Fix cropped home-screen icon and truncated PWA name ([e178b11](https://github.com/datenknoten/freundebuch/commit/e178b11))
+* fix(config): Revalidate stable-named icons instead of caching them forever ([9d7273e](https://gitlab.com/datenknoten/freundebuch/-/commit/9d7273e))
+* fix(frontend): Fix cropped home-screen icon and truncated PWA name ([e178b11](https://gitlab.com/datenknoten/freundebuch/-/commit/e178b11))
 
 ## 2.72.0 (2026-05-24)
 
-* chore(config): Ignore local Playwright MCP captures and ad-hoc screenshots ([916bbaa](https://github.com/datenknoten/freundebuch/commit/916bbaa))
-* chore(frontend): Tighten i18n keys and fix import order ([16e03f7](https://github.com/datenknoten/freundebuch/commit/16e03f7))
-* refactor(frontend): Extract collectiveTypeI18nKey util ([3f7172b](https://github.com/datenknoten/freundebuch/commit/3f7172b))
-* feat(frontend): Align detail-page UX across friends, collectives, encounters ([650c2ad](https://github.com/datenknoten/freundebuch/commit/650c2ad))
-* feat(frontend): Align list-page UX across friends, circles, collectives, encounters ([c9c00b7](https://github.com/datenknoten/freundebuch/commit/c9c00b7))
+* chore(config): Ignore local Playwright MCP captures and ad-hoc screenshots ([916bbaa](https://gitlab.com/datenknoten/freundebuch/-/commit/916bbaa))
+* chore(frontend): Tighten i18n keys and fix import order ([16e03f7](https://gitlab.com/datenknoten/freundebuch/-/commit/16e03f7))
+* refactor(frontend): Extract collectiveTypeI18nKey util ([3f7172b](https://gitlab.com/datenknoten/freundebuch/-/commit/3f7172b))
+* feat(frontend): Align detail-page UX across friends, collectives, encounters ([650c2ad](https://gitlab.com/datenknoten/freundebuch/-/commit/650c2ad))
+* feat(frontend): Align list-page UX across friends, circles, collectives, encounters ([c9c00b7](https://gitlab.com/datenknoten/freundebuch/-/commit/c9c00b7))
 
 ## <small>2.71.1 (2026-05-24)</small>
 
-* fix(ci): Build prod images from a pruned builder tree, not a re-install ([402334d](https://github.com/datenknoten/freundebuch/commit/402334d))
-* fix(ci): Clear the mise image ENTRYPOINT so CMD runs node/aube directly ([01b19e0](https://github.com/datenknoten/freundebuch/commit/01b19e0))
-* fix(ci): Make aube-built prod images self-contained and slim ([dd603ca](https://github.com/datenknoten/freundebuch/commit/dd603ca))
-* fix(ci): Replace pnpm CLI with aube via mise in Docker image builds ([59d0d9d](https://github.com/datenknoten/freundebuch/commit/59d0d9d))
-* fix(ci): Resolve smoke-test modules from each app directory ([d300a7c](https://github.com/datenknoten/freundebuch/commit/d300a7c))
-* fix(ci): Trust mise.toml in images so the node shim runs at runtime ([ef060d3](https://github.com/datenknoten/freundebuch/commit/ef060d3))
-* test(ci): Add Docker build smoke test on pull requests ([d6b80c0](https://github.com/datenknoten/freundebuch/commit/d6b80c0))
-* docs(ci): Explain why the all-in-one image avoids the mise base image ([991523f](https://github.com/datenknoten/freundebuch/commit/991523f))
+* fix(ci): Build prod images from a pruned builder tree, not a re-install ([402334d](https://gitlab.com/datenknoten/freundebuch/-/commit/402334d))
+* fix(ci): Clear the mise image ENTRYPOINT so CMD runs node/aube directly ([01b19e0](https://gitlab.com/datenknoten/freundebuch/-/commit/01b19e0))
+* fix(ci): Make aube-built prod images self-contained and slim ([dd603ca](https://gitlab.com/datenknoten/freundebuch/-/commit/dd603ca))
+* fix(ci): Replace pnpm CLI with aube via mise in Docker image builds ([59d0d9d](https://gitlab.com/datenknoten/freundebuch/-/commit/59d0d9d))
+* fix(ci): Resolve smoke-test modules from each app directory ([d300a7c](https://gitlab.com/datenknoten/freundebuch/-/commit/d300a7c))
+* fix(ci): Trust mise.toml in images so the node shim runs at runtime ([ef060d3](https://gitlab.com/datenknoten/freundebuch/-/commit/ef060d3))
+* test(ci): Add Docker build smoke test on pull requests ([d6b80c0](https://gitlab.com/datenknoten/freundebuch/-/commit/d6b80c0))
+* docs(ci): Explain why the all-in-one image avoids the mise base image ([991523f](https://gitlab.com/datenknoten/freundebuch/-/commit/991523f))
 
 ## 2.71.0 (2026-05-23)
 
-* fix(frontend): Align encounter detail with unified design language ([6cfc3e6](https://github.com/datenknoten/freundebuch/commit/6cfc3e6))
-* fix(frontend): Close create menu on navigation and auto-open circle modal ([0d0bfe2](https://github.com/datenknoten/freundebuch/commit/0d0bfe2))
-* fix(frontend): Suppress tap after cancelled drag and close menu on any URL change ([6302c45](https://github.com/datenknoten/freundebuch/commit/6302c45))
-* feat(frontend): Add long-press create menu to mobile FAB ([e3def8b](https://github.com/datenknoten/freundebuch/commit/e3def8b))
+* fix(frontend): Align encounter detail with unified design language ([6cfc3e6](https://gitlab.com/datenknoten/freundebuch/-/commit/6cfc3e6))
+* fix(frontend): Close create menu on navigation and auto-open circle modal ([0d0bfe2](https://gitlab.com/datenknoten/freundebuch/-/commit/0d0bfe2))
+* fix(frontend): Suppress tap after cancelled drag and close menu on any URL change ([6302c45](https://gitlab.com/datenknoten/freundebuch/-/commit/6302c45))
+* feat(frontend): Add long-press create menu to mobile FAB ([e3def8b](https://gitlab.com/datenknoten/freundebuch/-/commit/e3def8b))
 
 ## <small>2.70.2 (2026-04-26)</small>
 
-* fix(ci): Cancel stale CI runs and avoid prepare-time auto-install ([549e6a3](https://github.com/datenknoten/freundebuch/commit/549e6a3))
-* fix(ci): Resolve aube check shadowing biome and add scripts to @freundebuch/danger ([1206195](https://github.com/datenknoten/freundebuch/commit/1206195))
-* fix(dx): Use scoped names in aube --filter calls ([f615007](https://github.com/datenknoten/freundebuch/commit/f615007))
-* docs(dx): Document mise + hk + aube toolchain ([ea99779](https://github.com/datenknoten/freundebuch/commit/ea99779))
-* ci: Adopt mise-action and aube in workflows ([3bd707b](https://github.com/datenknoten/freundebuch/commit/3bd707b))
-* chore(dx): Pin toolchain with mise ([f7cff59](https://github.com/datenknoten/freundebuch/commit/f7cff59))
-* chore(dx): Replace husky and lint-staged with hk ([a9dab3f](https://github.com/datenknoten/freundebuch/commit/a9dab3f))
-* chore(dx): Switch package runner from pnpm to aube ([41d119f](https://github.com/datenknoten/freundebuch/commit/41d119f))
+* fix(ci): Cancel stale CI runs and avoid prepare-time auto-install ([549e6a3](https://gitlab.com/datenknoten/freundebuch/-/commit/549e6a3))
+* fix(ci): Resolve aube check shadowing biome and add scripts to @freundebuch/danger ([1206195](https://gitlab.com/datenknoten/freundebuch/-/commit/1206195))
+* fix(dx): Use scoped names in aube --filter calls ([f615007](https://gitlab.com/datenknoten/freundebuch/-/commit/f615007))
+* docs(dx): Document mise + hk + aube toolchain ([ea99779](https://gitlab.com/datenknoten/freundebuch/-/commit/ea99779))
+* ci: Adopt mise-action and aube in workflows ([3bd707b](https://gitlab.com/datenknoten/freundebuch/-/commit/3bd707b))
+* chore(dx): Pin toolchain with mise ([f7cff59](https://gitlab.com/datenknoten/freundebuch/-/commit/f7cff59))
+* chore(dx): Replace husky and lint-staged with hk ([a9dab3f](https://gitlab.com/datenknoten/freundebuch/-/commit/a9dab3f))
+* chore(dx): Switch package runner from pnpm to aube ([41d119f](https://gitlab.com/datenknoten/freundebuch/-/commit/41d119f))
 
-## [2.70.1](https://github.com/datenknoten/freundebuch/compare/v2.70.0...v2.70.1) (2026-04-26)
+## [2.70.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.70.0...v2.70.1) (2026-04-26)
 
 ### Bug Fixes
 
-* **docker:** Substitute MCP_HOST/MCP_PORT in nginx config ([c918a66](https://github.com/datenknoten/freundebuch/commit/c918a66da5f2e8d8c98a30dde1487f7c99358d21))
+* **docker:** Substitute MCP_HOST/MCP_PORT in nginx config ([c918a66](https://gitlab.com/datenknoten/freundebuch/-/commit/c918a66da5f2e8d8c98a30dde1487f7c99358d21))
 
-## [2.70.0](https://github.com/datenknoten/freundebuch/compare/v2.69.2...v2.70.0) (2026-04-26)
+## [2.70.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.69.2...v2.70.0) (2026-04-26)
 
 ### Features
 
-* **backend:** Add address geocoding via PostGIS and Nominatim ([3e55b49](https://github.com/datenknoten/freundebuch/commit/3e55b4952818794ff8aade8de7884963420af419))
-* **database:** Add latitude and longitude to address tables ([bf5a1e2](https://github.com/datenknoten/freundebuch/commit/bf5a1e23d897c0b2ec3f84a6b37b610a7c311e75))
-* **frontend:** Add address map view with Leaflet ([54cd0e8](https://github.com/datenknoten/freundebuch/commit/54cd0e8c7c1497906cd1400c586562237ab1fce4))
+* **backend:** Add address geocoding via PostGIS and Nominatim ([3e55b49](https://gitlab.com/datenknoten/freundebuch/-/commit/3e55b4952818794ff8aade8de7884963420af419))
+* **database:** Add latitude and longitude to address tables ([bf5a1e2](https://gitlab.com/datenknoten/freundebuch/-/commit/bf5a1e23d897c0b2ec3f84a6b37b610a7c311e75))
+* **frontend:** Add address map view with Leaflet ([54cd0e8](https://gitlab.com/datenknoten/freundebuch/-/commit/54cd0e8c7c1497906cd1400c586562237ab1fce4))
 
-## [2.69.2](https://github.com/datenknoten/freundebuch/compare/v2.69.1...v2.69.2) (2026-04-26)
+## [2.69.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.69.1...v2.69.2) (2026-04-26)
 
 ### Bug Fixes
 
-* **ci:** Align image registry with current repository path ([76acbc1](https://github.com/datenknoten/freundebuch/commit/76acbc163f6bb2c5a6ec9660e26b713bf324fea9))
+* **ci:** Align image registry with current repository path ([76acbc1](https://gitlab.com/datenknoten/freundebuch/-/commit/76acbc163f6bb2c5a6ec9660e26b713bf324fea9))
 
-## [2.69.1](https://github.com/datenknoten/freundebuch/compare/v2.69.0...v2.69.1) (2026-04-25)
+## [2.69.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.69.0...v2.69.1) (2026-04-25)
 
 ### Code Refactoring
 
-* **frontend:** Remove address fields from collective form ([03f44f1](https://github.com/datenknoten/freundebuch/commit/03f44f16e8fd20b27e03bc47fc81cc8ddad8422a))
+* **frontend:** Remove address fields from collective form ([03f44f1](https://gitlab.com/datenknoten/freundebuch/-/commit/03f44f16e8fd20b27e03bc47fc81cc8ddad8422a))
 
-## [2.69.0](https://github.com/datenknoten/freundebuch/compare/v2.68.3...v2.69.0) (2026-04-25)
-
-### Features
-
-* **all:** Add MCP server for LLM data access ([8de92d9](https://github.com/datenknoten/freundebuch/commit/8de92d9fd0c96e346bfde2d8da7918ed9458c223))
-
-### Bug Fixes
-
-* **all:** Address PR [#148](https://github.com/datenknoten/freundebuch/issues/148) Copilot follow-ups ([20e4d7a](https://github.com/datenknoten/freundebuch/commit/20e4d7ae51c32d2639f4337250844484c4a068a9))
-* **all:** Address PR [#148](https://github.com/datenknoten/freundebuch/issues/148) round-4 review ([ae41070](https://github.com/datenknoten/freundebuch/commit/ae41070396ae49b0bfff1e46089e873691bad175))
-* **all:** Address PR review for MCP server hardening ([1e423b1](https://github.com/datenknoten/freundebuch/commit/1e423b1856636768f3455f9c2a6c177d45e62d0e))
-* **all:** Address remaining PR review comments ([c7e9612](https://github.com/datenknoten/freundebuch/commit/c7e961284c6ee00aa53f183a8f6c2845d7f4ed45))
-* **all:** Extract MCP HTTP handler and add request hardening ([fa4ac83](https://github.com/datenknoten/freundebuch/commit/fa4ac83de367d5997a4d5283ad504d87ed49d1fc))
-* **all:** Port base64url dash fix to sabredav ([807b215](https://github.com/datenknoten/freundebuch/commit/807b215a61a3c129c5191b8b49aead693d4d9098))
-* **backend:** Preserve base64url dashes when verifying app passwords ([93eb4a3](https://github.com/datenknoten/freundebuch/commit/93eb4a3c0de9065645352adaad397ba231828861))
-
-## [2.68.3](https://github.com/datenknoten/freundebuch/compare/v2.68.2...v2.68.3) (2026-04-15)
-
-### Bug Fixes
-
-* **all:** Remove legacy auth code, harden Docker, sanitize search HTML ([119bf2a](https://github.com/datenknoten/freundebuch/commit/119bf2a97a71a86895fefb1f9e1821a3dfbc87c2))
-
-## [2.68.2](https://github.com/datenknoten/freundebuch/compare/v2.68.1...v2.68.2) (2026-04-03)
-
-### Bug Fixes
-
-* **frontend:** Add 'e' keyboard shortcut to open edit form on collective detail page ([6833361](https://github.com/datenknoten/freundebuch/commit/6833361fd281efad30c86aebc859b9dc3e941695))
-
-## [2.68.1](https://github.com/datenknoten/freundebuch/compare/v2.68.0...v2.68.1) (2026-03-29)
-
-### Bug Fixes
-
-* **frontend,backend:** Fix search focus and family relationship type inversion ([233334f](https://github.com/datenknoten/freundebuch/commit/233334f35171fa36dfef31d3b0059be977769c34))
-
-## [2.68.0](https://github.com/datenknoten/freundebuch/compare/v2.67.6...v2.68.0) (2026-03-22)
+## [2.69.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.68.3...v2.69.0) (2026-04-25)
 
 ### Features
 
-* **all:** Add DangerJS for automated PR quality checks ([69f0c49](https://github.com/datenknoten/freundebuch/commit/69f0c49a9a9df526940129eaaa915abcf94a2a39))
+* **all:** Add MCP server for LLM data access ([8de92d9](https://gitlab.com/datenknoten/freundebuch/-/commit/8de92d9fd0c96e346bfde2d8da7918ed9458c223))
 
 ### Bug Fixes
 
-* **ci:** Add statuses:write permission to release workflow ([abe0100](https://github.com/datenknoten/freundebuch/commit/abe010081af30dce36559b06866009abb1f87535))
-* **frontend:** Use i18next v4 plural format and translate hardcoded strings ([48fb365](https://github.com/datenknoten/freundebuch/commit/48fb3658b5d64337d7fcf91b041278cfa35d5d88))
+* **all:** Address PR [#148](https://github.com/datenknoten/freundebuch/issues/148) Copilot follow-ups ([20e4d7a](https://gitlab.com/datenknoten/freundebuch/-/commit/20e4d7ae51c32d2639f4337250844484c4a068a9))
+* **all:** Address PR [#148](https://github.com/datenknoten/freundebuch/issues/148) round-4 review ([ae41070](https://gitlab.com/datenknoten/freundebuch/-/commit/ae41070396ae49b0bfff1e46089e873691bad175))
+* **all:** Address PR review for MCP server hardening ([1e423b1](https://gitlab.com/datenknoten/freundebuch/-/commit/1e423b1856636768f3455f9c2a6c177d45e62d0e))
+* **all:** Address remaining PR review comments ([c7e9612](https://gitlab.com/datenknoten/freundebuch/-/commit/c7e961284c6ee00aa53f183a8f6c2845d7f4ed45))
+* **all:** Extract MCP HTTP handler and add request hardening ([fa4ac83](https://gitlab.com/datenknoten/freundebuch/-/commit/fa4ac83de367d5997a4d5283ad504d87ed49d1fc))
+* **all:** Port base64url dash fix to sabredav ([807b215](https://gitlab.com/datenknoten/freundebuch/-/commit/807b215a61a3c129c5191b8b49aead693d4d9098))
+* **backend:** Preserve base64url dashes when verifying app passwords ([93eb4a3](https://gitlab.com/datenknoten/freundebuch/-/commit/93eb4a3c0de9065645352adaad397ba231828861))
+
+## [2.68.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.68.2...v2.68.3) (2026-04-15)
+
+### Bug Fixes
+
+* **all:** Remove legacy auth code, harden Docker, sanitize search HTML ([119bf2a](https://gitlab.com/datenknoten/freundebuch/-/commit/119bf2a97a71a86895fefb1f9e1821a3dfbc87c2))
+
+## [2.68.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.68.1...v2.68.2) (2026-04-03)
+
+### Bug Fixes
+
+* **frontend:** Add 'e' keyboard shortcut to open edit form on collective detail page ([6833361](https://gitlab.com/datenknoten/freundebuch/-/commit/6833361fd281efad30c86aebc859b9dc3e941695))
+
+## [2.68.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.68.0...v2.68.1) (2026-03-29)
+
+### Bug Fixes
+
+* **frontend,backend:** Fix search focus and family relationship type inversion ([233334f](https://gitlab.com/datenknoten/freundebuch/-/commit/233334f35171fa36dfef31d3b0059be977769c34))
+
+## [2.68.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.67.6...v2.68.0) (2026-03-22)
+
+### Features
+
+* **all:** Add DangerJS for automated PR quality checks ([69f0c49](https://gitlab.com/datenknoten/freundebuch/-/commit/69f0c49a9a9df526940129eaaa915abcf94a2a39))
+
+### Bug Fixes
+
+* **ci:** Add statuses:write permission to release workflow ([abe0100](https://gitlab.com/datenknoten/freundebuch/-/commit/abe010081af30dce36559b06866009abb1f87535))
+* **frontend:** Use i18next v4 plural format and translate hardcoded strings ([48fb365](https://gitlab.com/datenknoten/freundebuch/-/commit/48fb3658b5d64337d7fcf91b041278cfa35d5d88))
 
 ### Code Refactoring
 
-* **ci:** Split code review prompt into three focused files ([e90de36](https://github.com/datenknoten/freundebuch/commit/e90de3602c6fd7b1594e1dbae48ed11c85e63692))
-* **frontend:** Rename all files to kebab-case convention ([3599b57](https://github.com/datenknoten/freundebuch/commit/3599b578836988c6adf5424446fcc39917a22c0e))
+* **ci:** Split code review prompt into three focused files ([e90de36](https://gitlab.com/datenknoten/freundebuch/-/commit/e90de3602c6fd7b1594e1dbae48ed11c85e63692))
+* **frontend:** Rename all files to kebab-case convention ([3599b57](https://gitlab.com/datenknoten/freundebuch/-/commit/3599b578836988c6adf5424446fcc39917a22c0e))
 
-## [2.67.6](https://github.com/datenknoten/freundebuch/compare/v2.67.5...v2.67.6) (2026-03-17)
-
-### Bug Fixes
-
-* clean up review prompt — fix fencing, trim bloat, improve accuracy ([f7823fc](https://github.com/datenknoten/freundebuch/commit/f7823fc834d88503cd39e5c697aa0d95c59110b5))
-* enforce Markdown formatting in code review summary comments ([654096c](https://github.com/datenknoten/freundebuch/commit/654096ccf0712bb7497a9881e4142140c4762f84))
-
-## [2.67.5](https://github.com/datenknoten/freundebuch/compare/v2.67.4...v2.67.5) (2026-03-17)
+## [2.67.6](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.67.5...v2.67.6) (2026-03-17)
 
 ### Bug Fixes
 
-* **backend:** Extract passkey listing to custom route with dedicated rate limit ([3703356](https://github.com/datenknoten/freundebuch/commit/3703356bf5808b7ecf46ac410da354fa3af9e76e))
+* clean up review prompt — fix fencing, trim bloat, improve accuracy ([f7823fc](https://gitlab.com/datenknoten/freundebuch/-/commit/f7823fc834d88503cd39e5c697aa0d95c59110b5))
+* enforce Markdown formatting in code review summary comments ([654096c](https://gitlab.com/datenknoten/freundebuch/-/commit/654096ccf0712bb7497a9881e4142140c4762f84))
+
+## [2.67.5](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.67.4...v2.67.5) (2026-03-17)
+
+### Bug Fixes
+
+* **backend:** Extract passkey listing to custom route with dedicated rate limit ([3703356](https://gitlab.com/datenknoten/freundebuch/-/commit/3703356bf5808b7ecf46ac410da354fa3af9e76e))
 
 ### Code Refactoring
 
-* **backend:** Use Better Auth internal API for passkey listing facade ([c56873f](https://github.com/datenknoten/freundebuch/commit/c56873f9e186a291e0078a499cbe7c71eaab4f64))
+* **backend:** Use Better Auth internal API for passkey listing facade ([c56873f](https://gitlab.com/datenknoten/freundebuch/-/commit/c56873f9e186a291e0078a499cbe7c71eaab4f64))
 
-## [2.67.4](https://github.com/datenknoten/freundebuch/compare/v2.67.3...v2.67.4) (2026-03-16)
+## [2.67.4](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.67.3...v2.67.4) (2026-03-16)
 
 ### Bug Fixes
 
-* **frontend:** Translate hardcoded strings in CardDAVSetupGuide component ([6557154](https://github.com/datenknoten/freundebuch/commit/6557154c2dfe3f0e1df4df52b4f533d671ed6805))
+* **frontend:** Translate hardcoded strings in CardDAVSetupGuide component ([6557154](https://gitlab.com/datenknoten/freundebuch/-/commit/6557154c2dfe3f0e1df4df52b4f533d671ed6805))
 
 ### Code Refactoring
 
-* **frontend:** Replace monolithic profile page with hub-and-spoke layout ([45722f4](https://github.com/datenknoten/freundebuch/commit/45722f4ee043c718b0e1c8d279952bd4ebcd01a5))
+* **frontend:** Replace monolithic profile page with hub-and-spoke layout ([45722f4](https://gitlab.com/datenknoten/freundebuch/-/commit/45722f4ee043c718b0e1c8d279952bd4ebcd01a5))
 
-## [2.67.3](https://github.com/datenknoten/freundebuch/compare/v2.67.2...v2.67.3) (2026-03-16)
+## [2.67.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.67.2...v2.67.3) (2026-03-16)
 
 ### Bug Fixes
 
-* **backend:** Fix invalid FROM-clause reference in SetUserSelfProfile query ([c28acdc](https://github.com/datenknoten/freundebuch/commit/c28acdc6cbab3ef3125c1575ef3432ad92403d85))
+* **backend:** Fix invalid FROM-clause reference in SetUserSelfProfile query ([c28acdc](https://gitlab.com/datenknoten/freundebuch/-/commit/c28acdc6cbab3ef3125c1575ef3432ad92403d85))
 
 ### Code Refactoring
 
-* **frontend:** Replace inline SVG icons with svelte-heros-v2 package ([8b18421](https://github.com/datenknoten/freundebuch/commit/8b18421b08049e9cbc359d205511c9d2b3f9621f))
+* **frontend:** Replace inline SVG icons with svelte-heros-v2 package ([8b18421](https://gitlab.com/datenknoten/freundebuch/-/commit/8b18421b08049e9cbc359d205511c9d2b3f9621f))
 
-## [2.67.2](https://github.com/datenknoten/freundebuch/compare/v2.67.1...v2.67.2) (2026-03-15)
-
-### Bug Fixes
-
-* **backend:** Replace `as any` with typed cast in auth test ([af5088b](https://github.com/datenknoten/freundebuch/commit/af5088ba25ab0f963d650ac4cd08a252faf909b9))
-* **backend:** Resolve Better Auth user ID / legacy UUID mismatch ([923a7d6](https://github.com/datenknoten/freundebuch/commit/923a7d6403a1bc5710d523f28d58d3a1b4b9d9fe))
-
-## [2.67.1](https://github.com/datenknoten/freundebuch/compare/v2.67.0...v2.67.1) (2026-03-15)
+## [2.67.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.67.1...v2.67.2) (2026-03-15)
 
 ### Bug Fixes
 
-* **backend:** Resolve flaky integration test timeouts under parallel execution ([2ab3b1e](https://github.com/datenknoten/freundebuch/commit/2ab3b1e1ebf26f1a010900bf13c08d3647990da9))
+* **backend:** Replace `as any` with typed cast in auth test ([af5088b](https://gitlab.com/datenknoten/freundebuch/-/commit/af5088ba25ab0f963d650ac4cd08a252faf909b9))
+* **backend:** Resolve Better Auth user ID / legacy UUID mismatch ([923a7d6](https://gitlab.com/datenknoten/freundebuch/-/commit/923a7d6403a1bc5710d523f28d58d3a1b4b9d9fe))
 
-## [2.67.0](https://github.com/datenknoten/freundebuch/compare/v2.66.2...v2.67.0) (2026-03-15)
+## [2.67.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.67.0...v2.67.1) (2026-03-15)
+
+### Bug Fixes
+
+* **backend:** Resolve flaky integration test timeouts under parallel execution ([2ab3b1e](https://gitlab.com/datenknoten/freundebuch/-/commit/2ab3b1e1ebf26f1a010900bf13c08d3647990da9))
+
+## [2.67.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.66.2...v2.67.0) (2026-03-15)
 
 ### Features
 
-* **backend, frontend:** Add passkey (WebAuthn) support via Better Auth ([288627e](https://github.com/datenknoten/freundebuch/commit/288627eceee7e1e56b7845a5e913648a3c3a3003))
-* **backend, frontend:** Migrate authentication from custom JWT to Better Auth ([51dfb2b](https://github.com/datenknoten/freundebuch/commit/51dfb2b5d5aa952b78891160ab9d54dc9ebbd863))
+* **backend, frontend:** Add passkey (WebAuthn) support via Better Auth ([288627e](https://gitlab.com/datenknoten/freundebuch/-/commit/288627eceee7e1e56b7845a5e913648a3c3a3003))
+* **backend, frontend:** Migrate authentication from custom JWT to Better Auth ([51dfb2b](https://gitlab.com/datenknoten/freundebuch/-/commit/51dfb2b5d5aa952b78891160ab9d54dc9ebbd863))
 
-## [2.66.2](https://github.com/datenknoten/freundebuch/compare/v2.66.1...v2.66.2) (2026-03-11)
-
-### Bug Fixes
-
-* **backend:** Allow partial credential updates for notification channels ([d1cdddc](https://github.com/datenknoten/freundebuch/commit/d1cdddc94dd0f79f6c8f72908b08a5644f2cf773))
-
-## [2.66.1](https://github.com/datenknoten/freundebuch/compare/v2.66.0...v2.66.1) (2026-03-11)
+## [2.66.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.66.1...v2.66.2) (2026-03-11)
 
 ### Bug Fixes
 
-* **backend:** Regenerate sql types ([c0cade0](https://github.com/datenknoten/freundebuch/commit/c0cade0300d3064a3009a97729fe3a911df8508f))
+* **backend:** Allow partial credential updates for notification channels ([d1cdddc](https://gitlab.com/datenknoten/freundebuch/-/commit/d1cdddc94dd0f79f6c8f72908b08a5644f2cf773))
 
-## [2.66.0](https://github.com/datenknoten/freundebuch/compare/v2.65.9...v2.66.0) (2026-03-11)
+## [2.66.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.66.0...v2.66.1) (2026-03-11)
+
+### Bug Fixes
+
+* **backend:** Regenerate sql types ([c0cade0](https://gitlab.com/datenknoten/freundebuch/-/commit/c0cade0300d3064a3009a97729fe3a911df8508f))
+
+## [2.66.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.65.9...v2.66.0) (2026-03-11)
 
 ### Features
 
-* **backend:** Add notification channel error classes and PgTyped queries ([8cf3f04](https://github.com/datenknoten/freundebuch/commit/8cf3f048825055a87733279505bd7ed69f4f7546))
-* **backend:** Add notification channels service, clients, scheduler, and routes ([5ded882](https://github.com/datenknoten/freundebuch/commit/5ded882c13b96301a976510657e8711a54274064))
-* **database:** Add notification_channels table migration ([1614c2b](https://github.com/datenknoten/freundebuch/commit/1614c2b1fa5dc56672f40a2635e9166d4cfe3e3b))
-* **frontend:** Add notification channels UI with profile page integration ([71923c9](https://github.com/datenknoten/freundebuch/commit/71923c9203277850383688208dea0c3ff19f0475))
-* **shared:** Add notification channel types ([d979ad1](https://github.com/datenknoten/freundebuch/commit/d979ad19a196fb237f95261346fe752871961c40))
+* **backend:** Add notification channel error classes and PgTyped queries ([8cf3f04](https://gitlab.com/datenknoten/freundebuch/-/commit/8cf3f048825055a87733279505bd7ed69f4f7546))
+* **backend:** Add notification channels service, clients, scheduler, and routes ([5ded882](https://gitlab.com/datenknoten/freundebuch/-/commit/5ded882c13b96301a976510657e8711a54274064))
+* **database:** Add notification_channels table migration ([1614c2b](https://gitlab.com/datenknoten/freundebuch/-/commit/1614c2b1fa5dc56672f40a2635e9166d4cfe3e3b))
+* **frontend:** Add notification channels UI with profile page integration ([71923c9](https://gitlab.com/datenknoten/freundebuch/-/commit/71923c9203277850383688208dea0c3ff19f0475))
+* **shared:** Add notification channel types ([d979ad1](https://gitlab.com/datenknoten/freundebuch/-/commit/d979ad19a196fb237f95261346fe752871961c40))
 
 ### Bug Fixes
 
-* **backend:** Add 10s timeout to external messaging HTTP calls ([47d58c5](https://github.com/datenknoten/freundebuch/commit/47d58c5f4230baf185ccb10bb86946650a80e999))
-* **backend:** Address code review findings on notification channels ([91f68e5](https://github.com/datenknoten/freundebuch/commit/91f68e507b10bb6f15f1fa6403dae26cb4c95e79))
-* **backend:** Fix IPv6 SSRF bypass in homeserver URL validation ([f051b45](https://github.com/datenknoten/freundebuch/commit/f051b4519a52e388a43a2642963daae186993abf))
-* **frontend:** Replace hand-written bell SVG with Heroicons bell icon ([49fc88c](https://github.com/datenknoten/freundebuch/commit/49fc88cbe27331b2abd760ce4cc217c3b6e476d4))
+* **backend:** Add 10s timeout to external messaging HTTP calls ([47d58c5](https://gitlab.com/datenknoten/freundebuch/-/commit/47d58c5f4230baf185ccb10bb86946650a80e999))
+* **backend:** Address code review findings on notification channels ([91f68e5](https://gitlab.com/datenknoten/freundebuch/-/commit/91f68e507b10bb6f15f1fa6403dae26cb4c95e79))
+* **backend:** Fix IPv6 SSRF bypass in homeserver URL validation ([f051b45](https://gitlab.com/datenknoten/freundebuch/-/commit/f051b4519a52e388a43a2642963daae186993abf))
+* **frontend:** Replace hand-written bell SVG with Heroicons bell icon ([49fc88c](https://gitlab.com/datenknoten/freundebuch/-/commit/49fc88cbe27331b2abd760ce4cc217c3b6e476d4))
 
-## [2.65.9](https://github.com/datenknoten/freundebuch/compare/v2.65.8...v2.65.9) (2026-03-09)
+## [2.65.9](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.65.8...v2.65.9) (2026-03-09)
 
 ### Code Refactoring
 
-* Replace inline types with dedicated named types ([a3f88eb](https://github.com/datenknoten/freundebuch/commit/a3f88eb2e3da06abe263f6ece7411ad81b6475ad)), closes [#126](https://github.com/datenknoten/freundebuch/issues/126)
+* Replace inline types with dedicated named types ([a3f88eb](https://gitlab.com/datenknoten/freundebuch/-/commit/a3f88eb2e3da06abe263f6ece7411ad81b6475ad)), closes [#126](https://github.com/datenknoten/freundebuch/issues/126)
 
-## [2.65.8](https://github.com/datenknoten/freundebuch/compare/v2.65.7...v2.65.8) (2026-03-08)
+## [2.65.8](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.65.7...v2.65.8) (2026-03-08)
 
 ### Bug Fixes
 
-* **frontend:** Replace try/catch error assertions with rejects.toMatchObject ([e3601c4](https://github.com/datenknoten/freundebuch/commit/e3601c46c877912a088777c57fa933b84dd0cdad))
+* **frontend:** Replace try/catch error assertions with rejects.toMatchObject ([e3601c4](https://gitlab.com/datenknoten/freundebuch/-/commit/e3601c46c877912a088777c57fa933b84dd0cdad))
 
 ### Code Refactoring
 
-* **shared:** Use inline snapshots for schema validation error assertions ([25ff73c](https://github.com/datenknoten/freundebuch/commit/25ff73c239b6a2ae082d38ea3c26f4f8c2f60ce5))
-* **shared:** Use toHaveProperty('summary') instead of toBeInstanceOf(type.errors) ([7a68ab5](https://github.com/datenknoten/freundebuch/commit/7a68ab52aad14526a27a1c6984e3305fee73f990))
+* **shared:** Use inline snapshots for schema validation error assertions ([25ff73c](https://gitlab.com/datenknoten/freundebuch/-/commit/25ff73c239b6a2ae082d38ea3c26f4f8c2f60ce5))
+* **shared:** Use toHaveProperty('summary') instead of toBeInstanceOf(type.errors) ([7a68ab5](https://gitlab.com/datenknoten/freundebuch/-/commit/7a68ab52aad14526a27a1c6984e3305fee73f990))
 
-## [2.65.7](https://github.com/datenknoten/freundebuch/compare/v2.65.6...v2.65.7) (2026-03-08)
+## [2.65.7](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.65.6...v2.65.7) (2026-03-08)
 
 ### Bug Fixes
 
-* **frontend:** Replace hardcoded strings with i18n keys in section components ([6abeae7](https://github.com/datenknoten/freundebuch/commit/6abeae7e38786aef72d98839013dc804deac6190))
+* **frontend:** Replace hardcoded strings with i18n keys in section components ([6abeae7](https://gitlab.com/datenknoten/freundebuch/-/commit/6abeae7e38786aef72d98839013dc804deac6190))
 
 ### Code Refactoring
 
-* **frontend:** Split FriendDetail into self-contained section components ([#116](https://github.com/datenknoten/freundebuch/issues/116)) ([18cea50](https://github.com/datenknoten/freundebuch/commit/18cea504ef96acb72d9c31802b9f72cb2a674cfc))
+* **frontend:** Split FriendDetail into self-contained section components ([#116](https://github.com/datenknoten/freundebuch/issues/116)) ([18cea50](https://gitlab.com/datenknoten/freundebuch/-/commit/18cea504ef96acb72d9c31802b9f72cb2a674cfc))
 
-## [2.65.6](https://github.com/datenknoten/freundebuch/compare/v2.65.5...v2.65.6) (2026-03-08)
-
-### Code Refactoring
-
-* **frontend:** Create SubresourceRow wrapper to eliminate mobile/desktop duplication ([8d029a3](https://github.com/datenknoten/freundebuch/commit/8d029a3f0285013c8f18b13f58d50fd632468079)), closes [#115](https://github.com/datenknoten/freundebuch/issues/115)
-
-## [2.65.5](https://github.com/datenknoten/freundebuch/compare/v2.65.4...v2.65.5) (2026-03-08)
+## [2.65.6](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.65.5...v2.65.6) (2026-03-08)
 
 ### Code Refactoring
 
-* **frontend:** Extract shared form primitives to eliminate subresource duplication ([#114](https://github.com/datenknoten/freundebuch/issues/114)) ([2134168](https://github.com/datenknoten/freundebuch/commit/2134168ab3e22f835eda55b2f16a27e14fd27755))
+* **frontend:** Create SubresourceRow wrapper to eliminate mobile/desktop duplication ([8d029a3](https://gitlab.com/datenknoten/freundebuch/-/commit/8d029a3f0285013c8f18b13f58d50fd632468079)), closes [#115](https://github.com/datenknoten/freundebuch/issues/115)
 
-## [2.65.4](https://github.com/datenknoten/freundebuch/compare/v2.65.3...v2.65.4) (2026-03-04)
-
-### Code Refactoring
-
-* **frontend:** Address review suggestions for friendListFilter ([589a1a1](https://github.com/datenknoten/freundebuch/commit/589a1a1d944055b1e40e009d59d249b37ba7f6a1))
-* **frontend:** Extract generic storeAction() wrapper to eliminate store boilerplate ([abd7d2a](https://github.com/datenknoten/freundebuch/commit/abd7d2a8f01de30e83f034968bf25cb1fd97c0da)), closes [#112](https://github.com/datenknoten/freundebuch/issues/112)
-* **frontend:** Split friends.ts store into focused modules ([0dee0f5](https://github.com/datenknoten/freundebuch/commit/0dee0f55c0bb769259ff4d7d27d4f406764b9136)), closes [#113](https://github.com/datenknoten/freundebuch/issues/113)
-
-## [2.65.3](https://github.com/datenknoten/freundebuch/compare/v2.65.2...v2.65.3) (2026-03-04)
+## [2.65.5](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.65.4...v2.65.5) (2026-03-08)
 
 ### Code Refactoring
 
-* **frontend:** Address review suggestions for shared API client ([0a74541](https://github.com/datenknoten/freundebuch/commit/0a745416b24a7f53970cdce5d8ba417dc03cb74e))
-* **frontend:** Extract shared API client from duplicated helpers ([b8c4442](https://github.com/datenknoten/freundebuch/commit/b8c4442094da47767341212c93e773f4de6e2cc8)), closes [#111](https://github.com/datenknoten/freundebuch/issues/111)
+* **frontend:** Extract shared form primitives to eliminate subresource duplication ([#114](https://github.com/datenknoten/freundebuch/issues/114)) ([2134168](https://gitlab.com/datenknoten/freundebuch/-/commit/2134168ab3e22f835eda55b2f16a27e14fd27755))
 
-## [2.65.2](https://github.com/datenknoten/freundebuch/compare/v2.65.1...v2.65.2) (2026-03-04)
-
-### Code Refactoring
-
-* **backend:** Add AppPasswordNotFoundError for consistent error handling ([dcba113](https://github.com/datenknoten/freundebuch/commit/dcba1135453fde84c13e778086dd6cf6b14ae681))
-* **backend:** Centralize error handling with AppError-aware global handler ([e2b6430](https://github.com/datenknoten/freundebuch/commit/e2b643062c76d6d4056fd0f425f6844efcaa88ac))
-* **backend:** Replace remaining inline 404 returns with thrown errors ([1312729](https://github.com/datenknoten/freundebuch/commit/131272901d676863ea38bc7f456863dec8f9c414))
-
-## [2.65.1](https://github.com/datenknoten/freundebuch/compare/v2.65.0...v2.65.1) (2026-03-04)
+## [2.65.4](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.65.3...v2.65.4) (2026-03-04)
 
 ### Code Refactoring
 
-* **backend:** Add per-element ArkType validation to JSON column parsers ([450e2ef](https://github.com/datenknoten/freundebuch/commit/450e2ef5e1c1c390a6166d3a1a217c21c94a8197))
-* **backend:** Replace ~115 unsafe `as` type assertions with runtime checks ([96a4b0f](https://github.com/datenknoten/freundebuch/commit/96a4b0f5936094820e4fb256a1a8f216f05430a1))
+* **frontend:** Address review suggestions for friendListFilter ([589a1a1](https://gitlab.com/datenknoten/freundebuch/-/commit/589a1a1d944055b1e40e009d59d249b37ba7f6a1))
+* **frontend:** Extract generic storeAction() wrapper to eliminate store boilerplate ([abd7d2a](https://gitlab.com/datenknoten/freundebuch/-/commit/abd7d2a8f01de30e83f034968bf25cb1fd97c0da)), closes [#112](https://github.com/datenknoten/freundebuch/issues/112)
+* **frontend:** Split friends.ts store into focused modules ([0dee0f5](https://gitlab.com/datenknoten/freundebuch/-/commit/0dee0f55c0bb769259ff4d7d27d4f406764b9136)), closes [#113](https://github.com/datenknoten/freundebuch/issues/113)
 
-## [2.65.0](https://github.com/datenknoten/freundebuch/compare/v2.64.0...v2.65.0) (2026-03-04)
-
-### Features
-
-* **frontend:** Add autofocus to login, register, and encounter forms ([2ea459d](https://github.com/datenknoten/freundebuch/commit/2ea459d768fd31d2d4acf23f8b4ff5d5558dadb1))
-
-### Bug Fixes
-
-* **frontend:** Address PR review feedback on shortcuts module ([5de9b04](https://github.com/datenknoten/freundebuch/commit/5de9b04d1aaaa042dd7ffd20dcdcdb3df4cb3497))
-* **frontend:** Remove shiftKey guard from keyboard shortcuts ([89049d0](https://github.com/datenknoten/freundebuch/commit/89049d0993243a70bf463f9a67a2704c3740d1d1))
+## [2.65.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.65.2...v2.65.3) (2026-03-04)
 
 ### Code Refactoring
 
-* **frontend:** Extract keyboard shortcuts into module with i18n support ([8c67aa4](https://github.com/datenknoten/freundebuch/commit/8c67aa4773a1d33d26e8b59f33f8aeeadbc1f046))
-* **frontend:** Extract relationship form into centralized modal system ([21de9c1](https://github.com/datenknoten/freundebuch/commit/21de9c169dea1a8c5a6022b27fd6dcf0b702e3dc))
+* **frontend:** Address review suggestions for shared API client ([0a74541](https://gitlab.com/datenknoten/freundebuch/-/commit/0a745416b24a7f53970cdce5d8ba417dc03cb74e))
+* **frontend:** Extract shared API client from duplicated helpers ([b8c4442](https://gitlab.com/datenknoten/freundebuch/-/commit/b8c4442094da47767341212c93e773f4de6e2cc8)), closes [#111](https://github.com/datenknoten/freundebuch/issues/111)
 
-## [2.64.0](https://github.com/datenknoten/freundebuch/compare/v2.63.0...v2.64.0) (2026-02-28)
-
-### Features
-
-* **frontend:** Add `o` shortcut to open links on friend detail page ([eb7b0fc](https://github.com/datenknoten/freundebuch/commit/eb7b0fcff5fbffd0fadd9c5714e525c881ab6bba))
-* **frontend:** Add friend to collective from friend detail page ([7d6ddd2](https://github.com/datenknoten/freundebuch/commit/7d6ddd2a306a097762c1fb707d44400dcdde1d21))
-
-### Bug Fixes
-
-* **backend:** Increase collectives rate limit from 60 to 120 req/min ([cd16b45](https://github.com/datenknoten/freundebuch/commit/cd16b45bfce26d035b751ba954f4eca88b9fc823))
-* **frontend:** Cancel stale preview requests and extract page size constant ([bc1f82a](https://github.com/datenknoten/freundebuch/commit/bc1f82ac2322243e4f380de53c8e15c9a30a9a7e))
-
-## [2.63.0](https://github.com/datenknoten/freundebuch/compare/v2.62.0...v2.63.0) (2026-02-28)
-
-### Features
-
-* **backend, shared:** Normalize national-format phone numbers to E.164 ([7cd032a](https://github.com/datenknoten/freundebuch/commit/7cd032af33ae01ef41a8ec52ffa1783d41b2452f))
-
-## [2.62.0](https://github.com/datenknoten/freundebuch/compare/v2.61.1...v2.62.0) (2026-02-28)
-
-### Features
-
-* **frontend, backend:** Auto-preselect primary for first sub-resource entry ([361dd42](https://github.com/datenknoten/freundebuch/commit/361dd428edc3681c292df717f86e58e3616740ec))
-
-## [2.61.1](https://github.com/datenknoten/freundebuch/compare/v2.61.0...v2.61.1) (2026-02-27)
-
-### Bug Fixes
-
-* **backend:** Replace non-null assertions with safe alternatives ([c796f7e](https://github.com/datenknoten/freundebuch/commit/c796f7e391c7de09551a87ab8a76348b25e637ee))
-
-## [2.61.0](https://github.com/datenknoten/freundebuch/compare/v2.60.0...v2.61.0) (2026-02-27)
-
-### Features
-
-* **docs:** Declare a license ([a650f8e](https://github.com/datenknoten/freundebuch/commit/a650f8e3c490eba22368e693fc15886ad22afb69))
-* **docs:** Refactor documentation ([e6a6735](https://github.com/datenknoten/freundebuch/commit/e6a67359e971247abb1b66a74230f6c1c1b7976b))
-
-## [2.60.0](https://github.com/datenknoten/freundebuch/compare/v2.59.0...v2.60.0) (2026-02-11)
-
-### Features
-
-* Implement collectives feature with full CRUD, memberships, and keyboard navigation ([f58cb3e](https://github.com/datenknoten/freundebuch/commit/f58cb3ef9918bb163b208dc5ad9bbfed83c09a18))
+## [2.65.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.65.1...v2.65.2) (2026-03-04)
 
 ### Code Refactoring
 
-* **frontend:** Extract shared FriendSearchInput for AddMemberForm ([0c6df39](https://github.com/datenknoten/freundebuch/commit/0c6df393a65ec1198833e486d50101487dc719eb))
+* **backend:** Add AppPasswordNotFoundError for consistent error handling ([dcba113](https://gitlab.com/datenknoten/freundebuch/-/commit/dcba1135453fde84c13e778086dd6cf6b14ae681))
+* **backend:** Centralize error handling with AppError-aware global handler ([e2b6430](https://gitlab.com/datenknoten/freundebuch/-/commit/e2b643062c76d6d4056fd0f425f6844efcaa88ac))
+* **backend:** Replace remaining inline 404 returns with thrown errors ([1312729](https://gitlab.com/datenknoten/freundebuch/-/commit/131272901d676863ea38bc7f456863dec8f9c414))
 
-## [2.59.0](https://github.com/datenknoten/freundebuch/compare/v2.58.0...v2.59.0) (2026-02-01)
-
-### Features
-
-* Implement encounter management (Epic 2) ([9c72c3e](https://github.com/datenknoten/freundebuch/commit/9c72c3e2f5af13014186f0d5d7fc3510caf88523))
-
-## [2.58.0](https://github.com/datenknoten/freundebuch/compare/v2.57.0...v2.58.0) (2026-02-01)
-
-### Features
-
-* **frontend:** Add keyboard shortcut for work experience (a+w) ([1f2a452](https://github.com/datenknoten/freundebuch/commit/1f2a452eef279f75c5c69711e7304168c70c3007))
+## [2.65.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.65.0...v2.65.1) (2026-03-04)
 
 ### Code Refactoring
 
-* **frontend:** Simplify desktop add dropdown to show details directly ([90aca64](https://github.com/datenknoten/freundebuch/commit/90aca64a97262948c33789cf659aba715d6242f1))
+* **backend:** Add per-element ArkType validation to JSON column parsers ([450e2ef](https://gitlab.com/datenknoten/freundebuch/-/commit/450e2ef5e1c1c390a6166d3a1a217c21c94a8197))
+* **backend:** Replace ~115 unsafe `as` type assertions with runtime checks ([96a4b0f](https://gitlab.com/datenknoten/freundebuch/-/commit/96a4b0f5936094820e4fb256a1a8f216f05430a1))
 
-## [2.57.0](https://github.com/datenknoten/freundebuch/compare/v2.56.0...v2.57.0) (2026-01-26)
-
-### Features
-
-* **frontend:** Add intermediate choice modal for FAB on friend detail ([92be57c](https://github.com/datenknoten/freundebuch/commit/92be57c3bf604f44ba8062c6341e379aada3af69))
-
-## [2.56.0](https://github.com/datenknoten/freundebuch/compare/v2.55.1...v2.56.0) (2026-01-26)
+## [2.65.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.64.0...v2.65.0) (2026-03-04)
 
 ### Features
 
-* **frontend:** Restore inline add buttons to section headers ([a95390d](https://github.com/datenknoten/freundebuch/commit/a95390dac05b9d97b1a16464985874814eacb039))
-
-## [2.55.1](https://github.com/datenknoten/freundebuch/compare/v2.55.0...v2.55.1) (2026-01-26)
+* **frontend:** Add autofocus to login, register, and encounter forms ([2ea459d](https://gitlab.com/datenknoten/freundebuch/-/commit/2ea459d768fd31d2d4acf23f8b4ff5d5558dadb1))
 
 ### Bug Fixes
 
-* **frontend:** Fix mobile UI issues on friend detail page ([0bc8d7a](https://github.com/datenknoten/freundebuch/commit/0bc8d7a181eca7ac4d98190d37504262dd526568))
+* **frontend:** Address PR review feedback on shortcuts module ([5de9b04](https://gitlab.com/datenknoten/freundebuch/-/commit/5de9b04d1aaaa042dd7ffd20dcdcdb3df4cb3497))
+* **frontend:** Remove shiftKey guard from keyboard shortcuts ([89049d0](https://gitlab.com/datenknoten/freundebuch/-/commit/89049d0993243a70bf463f9a67a2704c3740d1d1))
 
-## [2.55.0](https://github.com/datenknoten/freundebuch/compare/v2.54.2...v2.55.0) (2026-01-26)
+### Code Refactoring
+
+* **frontend:** Extract keyboard shortcuts into module with i18n support ([8c67aa4](https://gitlab.com/datenknoten/freundebuch/-/commit/8c67aa4773a1d33d26e8b59f33f8aeeadbc1f046))
+* **frontend:** Extract relationship form into centralized modal system ([21de9c1](https://gitlab.com/datenknoten/freundebuch/-/commit/21de9c169dea1a8c5a6022b27fd6dcf0b702e3dc))
+
+## [2.64.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.63.0...v2.64.0) (2026-02-28)
 
 ### Features
 
-* **frontend:** Add mobile FAB and desktop dropdown for adding subresources ([d342a31](https://github.com/datenknoten/freundebuch/commit/d342a3158afc1c3177c8542b2c364364020da93e))
+* **frontend:** Add `o` shortcut to open links on friend detail page ([eb7b0fc](https://gitlab.com/datenknoten/freundebuch/-/commit/eb7b0fcff5fbffd0fadd9c5714e525c881ab6bba))
+* **frontend:** Add friend to collective from friend detail page ([7d6ddd2](https://gitlab.com/datenknoten/freundebuch/-/commit/7d6ddd2a306a097762c1fb707d44400dcdde1d21))
 
 ### Bug Fixes
 
-* **frontend:** Add guard clause to focus trap in MobileAddDetailModal ([5357fa8](https://github.com/datenknoten/freundebuch/commit/5357fa843eeb7b8ce85135f345bfda13b9e899c4))
-* **frontend:** Respect prefers-reduced-motion for slide-up animation ([4d33f73](https://github.com/datenknoten/freundebuch/commit/4d33f738e6966595a091c450480cee50e2c6a63b))
+* **backend:** Increase collectives rate limit from 60 to 120 req/min ([cd16b45](https://gitlab.com/datenknoten/freundebuch/-/commit/cd16b45bfce26d035b751ba954f4eca88b9fc823))
+* **frontend:** Cancel stale preview requests and extract page size constant ([bc1f82a](https://gitlab.com/datenknoten/freundebuch/-/commit/bc1f82ac2322243e4f380de53c8e15c9a30a9a7e))
 
-## [2.54.2](https://github.com/datenknoten/freundebuch/compare/v2.54.1...v2.54.2) (2026-01-26)
-
-### Bug Fixes
-
-* **database:** Add unique index for concurrent materialized view refresh ([b82e5c1](https://github.com/datenknoten/freundebuch/commit/b82e5c1d19930786ef6a828ddbcfc37c8aadef58))
-
-## [2.54.1](https://github.com/datenknoten/freundebuch/compare/v2.54.0...v2.54.1) (2026-01-26)
-
-### Bug Fixes
-
-* **ci:** Use heredoc for psql variable interpolation in OSM import ([1982129](https://github.com/datenknoten/freundebuch/commit/1982129288516872771257f3d32caaf251979d14))
-
-## [2.54.0](https://github.com/datenknoten/freundebuch/compare/v2.53.0...v2.54.0) (2026-01-26)
+## [2.63.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.62.0...v2.63.0) (2026-02-28)
 
 ### Features
 
-* **backend:** Add OSM import scripts for address data ([2058080](https://github.com/datenknoten/freundebuch/commit/20580802cf335f03a8f2983100dbbd34842d5a0f))
-* **backend:** Integrate PostGIS address client with Overpass fallback ([63ae1ad](https://github.com/datenknoten/freundebuch/commit/63ae1ad4565cd4372d7ad8841cdd4397e139315b))
-* **ci:** Add osm-import Docker image to release workflow ([3316e05](https://github.com/datenknoten/freundebuch/commit/3316e0511c65aaf13e2f84772d8b1299cc3375af))
-* **database:** Add geodata schema for PostGIS address autocomplete ([a2cf517](https://github.com/datenknoten/freundebuch/commit/a2cf517fe39d02b6cfd8e80953a232c944046402))
-* **database:** Remove conditional PostGIS checks and add integration tests ([bb52ff5](https://github.com/datenknoten/freundebuch/commit/bb52ff50d1290b878b5e18b25d0b7d9084bc65a8))
+* **backend, shared:** Normalize national-format phone numbers to E.164 ([7cd032a](https://gitlab.com/datenknoten/freundebuch/-/commit/7cd032af33ae01ef41a8ec52ffa1783d41b2452f))
 
-### Bug Fixes
-
-* **ci:** Fix OSM import Docker build and script issues ([497a1aa](https://github.com/datenknoten/freundebuch/commit/497a1aa96516f4fe2bfc0119a38c07d26b510089))
-* **ci:** Use parameterized queries in OSM import script ([046d079](https://github.com/datenknoten/freundebuch/commit/046d0792bd508d18e22b941abbb835f91ec9ad8b))
-* **database:** Make geodata migration work without PostGIS ([8db2a94](https://github.com/datenknoten/freundebuch/commit/8db2a9447aa8eb76fe6f05ef1d7f74d985a2fb67))
-
-## [2.53.0](https://github.com/datenknoten/freundebuch/compare/v2.52.0...v2.53.0) (2026-01-19)
+## [2.62.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.61.1...v2.62.0) (2026-02-28)
 
 ### Features
 
-* **frontend:** Add friend name subtitle to relationship modal and translations ([8f98378](https://github.com/datenknoten/freundebuch/commit/8f983788fc15d1f52e3563c5d1c1d128e074197d))
-* **frontend:** Add i18n translations for subresource modals and edit forms ([a47983c](https://github.com/datenknoten/freundebuch/commit/a47983cbe562809a34b3e10727bc1df74f04ef0a))
+* **frontend, backend:** Auto-preselect primary for first sub-resource entry ([361dd42](https://gitlab.com/datenknoten/freundebuch/-/commit/361dd428edc3681c292df717f86e58e3616740ec))
 
-## [2.52.0](https://github.com/datenknoten/freundebuch/compare/v2.51.0...v2.52.0) (2026-01-19)
+## [2.61.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.61.0...v2.61.1) (2026-02-27)
+
+### Bug Fixes
+
+* **backend:** Replace non-null assertions with safe alternatives ([c796f7e](https://gitlab.com/datenknoten/freundebuch/-/commit/c796f7e391c7de09551a87ab8a76348b25e637ee))
+
+## [2.61.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.60.0...v2.61.0) (2026-02-27)
 
 ### Features
 
-* **frontend:** Move language switcher to profile and add missing translations ([70c84e2](https://github.com/datenknoten/freundebuch/commit/70c84e2dfa08f43d6d6a3eb56fcab4cae9fba7cd))
+* **docs:** Declare a license ([a650f8e](https://gitlab.com/datenknoten/freundebuch/-/commit/a650f8e3c490eba22368e693fc15886ad22afb69))
+* **docs:** Refactor documentation ([e6a6735](https://gitlab.com/datenknoten/freundebuch/-/commit/e6a67359e971247abb1b66a74230f6c1c1b7976b))
 
-### Bug Fixes
-
-* **frontend:** Use "Freundekreis" instead of "Kreis" in German translations ([502b945](https://github.com/datenknoten/freundebuch/commit/502b94570274ec36982a1d471415210b7e4f4f80))
-* **frontend:** Use informal "du" instead of formal "Sie" in German translations ([de918ed](https://github.com/datenknoten/freundebuch/commit/de918ede1d94a8a8b5e4cd531d9760f273e86e45))
-
-## [2.51.0](https://github.com/datenknoten/freundebuch/compare/v2.50.7...v2.51.0) (2026-01-19)
+## [2.60.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.59.0...v2.60.0) (2026-02-11)
 
 ### Features
 
-* **ci:** Add Matrix notification on release workflow failure ([9e7de1d](https://github.com/datenknoten/freundebuch/commit/9e7de1ddf2bb4c8b5c614659535d40a5da56bd4f))
+* Implement collectives feature with full CRUD, memberships, and keyboard navigation ([f58cb3e](https://gitlab.com/datenknoten/freundebuch/-/commit/f58cb3ef9918bb163b208dc5ad9bbfed83c09a18))
 
-## [2.50.7](https://github.com/datenknoten/freundebuch/compare/v2.50.6...v2.50.7) (2026-01-19)
+### Code Refactoring
+
+* **frontend:** Extract shared FriendSearchInput for AddMemberForm ([0c6df39](https://gitlab.com/datenknoten/freundebuch/-/commit/0c6df393a65ec1198833e486d50101487dc719eb))
+
+## [2.59.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.58.0...v2.59.0) (2026-02-01)
+
+### Features
+
+* Implement encounter management (Epic 2) ([9c72c3e](https://gitlab.com/datenknoten/freundebuch/-/commit/9c72c3e2f5af13014186f0d5d7fc3510caf88523))
+
+## [2.58.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.57.0...v2.58.0) (2026-02-01)
+
+### Features
+
+* **frontend:** Add keyboard shortcut for work experience (a+w) ([1f2a452](https://gitlab.com/datenknoten/freundebuch/-/commit/1f2a452eef279f75c5c69711e7304168c70c3007))
+
+### Code Refactoring
+
+* **frontend:** Simplify desktop add dropdown to show details directly ([90aca64](https://gitlab.com/datenknoten/freundebuch/-/commit/90aca64a97262948c33789cf659aba715d6242f1))
+
+## [2.57.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.56.0...v2.57.0) (2026-01-26)
+
+### Features
+
+* **frontend:** Add intermediate choice modal for FAB on friend detail ([92be57c](https://gitlab.com/datenknoten/freundebuch/-/commit/92be57c3bf604f44ba8062c6341e379aada3af69))
+
+## [2.56.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.55.1...v2.56.0) (2026-01-26)
+
+### Features
+
+* **frontend:** Restore inline add buttons to section headers ([a95390d](https://gitlab.com/datenknoten/freundebuch/-/commit/a95390dac05b9d97b1a16464985874814eacb039))
+
+## [2.55.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.55.0...v2.55.1) (2026-01-26)
 
 ### Bug Fixes
 
-* **ci:** Capture manifest digest from push output ([ec4687d](https://github.com/datenknoten/freundebuch/commit/ec4687d78ecc50f19760ae44bf31d7ebac911c3d))
+* **frontend:** Fix mobile UI issues on friend detail page ([0bc8d7a](https://gitlab.com/datenknoten/freundebuch/-/commit/0bc8d7a181eca7ac4d98190d37504262dd526568))
 
-## [2.50.6](https://github.com/datenknoten/freundebuch/compare/v2.50.5...v2.50.6) (2026-01-19)
+## [2.55.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.54.2...v2.55.0) (2026-01-26)
 
-### Bug Fixes
+### Features
 
-* **ci:** Disable provenance/sbom for individual Docker builds ([30b37a1](https://github.com/datenknoten/freundebuch/commit/30b37a12a4461cf4191d992d77ca6ba1c7b6f642))
-
-## [2.50.5](https://github.com/datenknoten/freundebuch/compare/v2.50.4...v2.50.5) (2026-01-19)
+* **frontend:** Add mobile FAB and desktop dropdown for adding subresources ([d342a31](https://gitlab.com/datenknoten/freundebuch/-/commit/d342a3158afc1c3177c8542b2c364364020da93e))
 
 ### Bug Fixes
 
-* **ci:** Support ARM builds for both public and private repositories ([8197638](https://github.com/datenknoten/freundebuch/commit/81976386982452336743dca32e61636901a27a08))
+* **frontend:** Add guard clause to focus trap in MobileAddDetailModal ([5357fa8](https://gitlab.com/datenknoten/freundebuch/-/commit/5357fa843eeb7b8ce85135f345bfda13b9e899c4))
+* **frontend:** Respect prefers-reduced-motion for slide-up animation ([4d33f73](https://gitlab.com/datenknoten/freundebuch/-/commit/4d33f738e6966595a091c450480cee50e2c6a63b))
 
-## [2.50.4](https://github.com/datenknoten/freundebuch/compare/v2.50.3...v2.50.4) (2026-01-19)
+## [2.54.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.54.1...v2.54.2) (2026-01-26)
 
 ### Bug Fixes
 
-* **all:** Build new release ([4510f2c](https://github.com/datenknoten/freundebuch/commit/4510f2c707595ceab082896b999fa7789ce33262))
+* **database:** Add unique index for concurrent materialized view refresh ([b82e5c1](https://gitlab.com/datenknoten/freundebuch/-/commit/b82e5c1d19930786ef6a828ddbcfc37c8aadef58))
 
-## [2.50.3](https://github.com/datenknoten/freundebuch/compare/v2.50.2...v2.50.3) (2026-01-19)
+## [2.54.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.54.0...v2.54.1) (2026-01-26)
+
+### Bug Fixes
+
+* **ci:** Use heredoc for psql variable interpolation in OSM import ([1982129](https://gitlab.com/datenknoten/freundebuch/-/commit/1982129288516872771257f3d32caaf251979d14))
+
+## [2.54.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.53.0...v2.54.0) (2026-01-26)
+
+### Features
+
+* **backend:** Add OSM import scripts for address data ([2058080](https://gitlab.com/datenknoten/freundebuch/-/commit/20580802cf335f03a8f2983100dbbd34842d5a0f))
+* **backend:** Integrate PostGIS address client with Overpass fallback ([63ae1ad](https://gitlab.com/datenknoten/freundebuch/-/commit/63ae1ad4565cd4372d7ad8841cdd4397e139315b))
+* **ci:** Add osm-import Docker image to release workflow ([3316e05](https://gitlab.com/datenknoten/freundebuch/-/commit/3316e0511c65aaf13e2f84772d8b1299cc3375af))
+* **database:** Add geodata schema for PostGIS address autocomplete ([a2cf517](https://gitlab.com/datenknoten/freundebuch/-/commit/a2cf517fe39d02b6cfd8e80953a232c944046402))
+* **database:** Remove conditional PostGIS checks and add integration tests ([bb52ff5](https://gitlab.com/datenknoten/freundebuch/-/commit/bb52ff50d1290b878b5e18b25d0b7d9084bc65a8))
+
+### Bug Fixes
+
+* **ci:** Fix OSM import Docker build and script issues ([497a1aa](https://gitlab.com/datenknoten/freundebuch/-/commit/497a1aa96516f4fe2bfc0119a38c07d26b510089))
+* **ci:** Use parameterized queries in OSM import script ([046d079](https://gitlab.com/datenknoten/freundebuch/-/commit/046d0792bd508d18e22b941abbb835f91ec9ad8b))
+* **database:** Make geodata migration work without PostGIS ([8db2a94](https://gitlab.com/datenknoten/freundebuch/-/commit/8db2a9447aa8eb76fe6f05ef1d7f74d985a2fb67))
+
+## [2.53.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.52.0...v2.53.0) (2026-01-19)
+
+### Features
+
+* **frontend:** Add friend name subtitle to relationship modal and translations ([8f98378](https://gitlab.com/datenknoten/freundebuch/-/commit/8f983788fc15d1f52e3563c5d1c1d128e074197d))
+* **frontend:** Add i18n translations for subresource modals and edit forms ([a47983c](https://gitlab.com/datenknoten/freundebuch/-/commit/a47983cbe562809a34b3e10727bc1df74f04ef0a))
+
+## [2.52.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.51.0...v2.52.0) (2026-01-19)
+
+### Features
+
+* **frontend:** Move language switcher to profile and add missing translations ([70c84e2](https://gitlab.com/datenknoten/freundebuch/-/commit/70c84e2dfa08f43d6d6a3eb56fcab4cae9fba7cd))
+
+### Bug Fixes
+
+* **frontend:** Use "Freundekreis" instead of "Kreis" in German translations ([502b945](https://gitlab.com/datenknoten/freundebuch/-/commit/502b94570274ec36982a1d471415210b7e4f4f80))
+* **frontend:** Use informal "du" instead of formal "Sie" in German translations ([de918ed](https://gitlab.com/datenknoten/freundebuch/-/commit/de918ede1d94a8a8b5e4cd531d9760f273e86e45))
+
+## [2.51.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.50.7...v2.51.0) (2026-01-19)
+
+### Features
+
+* **ci:** Add Matrix notification on release workflow failure ([9e7de1d](https://gitlab.com/datenknoten/freundebuch/-/commit/9e7de1ddf2bb4c8b5c614659535d40a5da56bd4f))
+
+## [2.50.7](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.50.6...v2.50.7) (2026-01-19)
+
+### Bug Fixes
+
+* **ci:** Capture manifest digest from push output ([ec4687d](https://gitlab.com/datenknoten/freundebuch/-/commit/ec4687d78ecc50f19760ae44bf31d7ebac911c3d))
+
+## [2.50.6](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.50.5...v2.50.6) (2026-01-19)
+
+### Bug Fixes
+
+* **ci:** Disable provenance/sbom for individual Docker builds ([30b37a1](https://gitlab.com/datenknoten/freundebuch/-/commit/30b37a12a4461cf4191d992d77ca6ba1c7b6f642))
+
+## [2.50.5](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.50.4...v2.50.5) (2026-01-19)
+
+### Bug Fixes
+
+* **ci:** Support ARM builds for both public and private repositories ([8197638](https://gitlab.com/datenknoten/freundebuch/-/commit/81976386982452336743dca32e61636901a27a08))
+
+## [2.50.4](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.50.3...v2.50.4) (2026-01-19)
+
+### Bug Fixes
+
+* **all:** Build new release ([4510f2c](https://gitlab.com/datenknoten/freundebuch/-/commit/4510f2c707595ceab082896b999fa7789ce33262))
+
+## [2.50.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.50.2...v2.50.3) (2026-01-19)
 
 ### Performance Improvements
 
-* **ci:** Optimize Docker builds with native ARM runners and improved caching ([84719b5](https://github.com/datenknoten/freundebuch/commit/84719b5a5f2b5560effaf21f20a9955a135cb5a3))
+* **ci:** Optimize Docker builds with native ARM runners and improved caching ([84719b5](https://gitlab.com/datenknoten/freundebuch/-/commit/84719b5a5f2b5560effaf21f20a9955a135cb5a3))
 
-## [2.50.2](https://github.com/datenknoten/freundebuch/compare/v2.50.1...v2.50.2) (2026-01-19)
-
-### Bug Fixes
-
-* **frontend:** Complete i18n translations for remaining components ([f8236ed](https://github.com/datenknoten/freundebuch/commit/f8236edfb0926a8a015730b9b8f1b1c6b64365c3))
-* **frontend:** Fix accessibility and reactivity warnings ([5e64cf3](https://github.com/datenknoten/freundebuch/commit/5e64cf34cd2e4c7229b1744bafd06617435cf8d7))
-* Resolve Biome linting warnings ([11c72a4](https://github.com/datenknoten/freundebuch/commit/11c72a45986f14014193da2b0f2777171e227bd2))
-
-## [2.50.1](https://github.com/datenknoten/freundebuch/compare/v2.50.0...v2.50.1) (2026-01-19)
+## [2.50.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.50.1...v2.50.2) (2026-01-19)
 
 ### Bug Fixes
 
-* **frontend:** Apply i18n translations to all major pages and components ([25474bb](https://github.com/datenknoten/freundebuch/commit/25474bbc814e299715f07fdda36518977948add4))
-* **frontend:** Fix duplicate translation key in CircleEditModal ([b9095a7](https://github.com/datenknoten/freundebuch/commit/b9095a710c18904b92535c33233d6a1c84692c52))
-* **frontend:** Use correct singular form for circle preview placeholder ([2664ceb](https://github.com/datenknoten/freundebuch/commit/2664ceb06a2eaf83bbfc9cdd5368fc3366fb9ec9))
+* **frontend:** Complete i18n translations for remaining components ([f8236ed](https://gitlab.com/datenknoten/freundebuch/-/commit/f8236edfb0926a8a015730b9b8f1b1c6b64365c3))
+* **frontend:** Fix accessibility and reactivity warnings ([5e64cf3](https://gitlab.com/datenknoten/freundebuch/-/commit/5e64cf34cd2e4c7229b1744bafd06617435cf8d7))
+* Resolve Biome linting warnings ([11c72a4](https://gitlab.com/datenknoten/freundebuch/-/commit/11c72a45986f14014193da2b0f2777171e227bd2))
 
-## [2.50.0](https://github.com/datenknoten/freundebuch/compare/v2.49.1...v2.50.0) (2026-01-19)
+## [2.50.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.50.0...v2.50.1) (2026-01-19)
+
+### Bug Fixes
+
+* **frontend:** Apply i18n translations to all major pages and components ([25474bb](https://gitlab.com/datenknoten/freundebuch/-/commit/25474bbc814e299715f07fdda36518977948add4))
+* **frontend:** Fix duplicate translation key in CircleEditModal ([b9095a7](https://gitlab.com/datenknoten/freundebuch/-/commit/b9095a710c18904b92535c33233d6a1c84692c52))
+* **frontend:** Use correct singular form for circle preview placeholder ([2664ceb](https://gitlab.com/datenknoten/freundebuch/-/commit/2664ceb06a2eaf83bbfc9cdd5368fc3366fb9ec9))
+
+## [2.50.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.49.1...v2.50.0) (2026-01-19)
 
 ### Features
 
-* **frontend:** Implement i18n with svelte-i18next ([8e48f61](https://github.com/datenknoten/freundebuch/commit/8e48f61dcfbedbd95abaa3229a78b48cd49a4ee6))
+* **frontend:** Implement i18n with svelte-i18next ([8e48f61](https://gitlab.com/datenknoten/freundebuch/-/commit/8e48f61dcfbedbd95abaa3229a78b48cd49a4ee6))
 
 ### Bug Fixes
 
-* **frontend:** Fix $effect cleanup pattern in LanguageSwitcher ([4d95086](https://github.com/datenknoten/freundebuch/commit/4d95086f1c44fb3c9aecae5bb775c0c448e5cc0c))
+* **frontend:** Fix $effect cleanup pattern in LanguageSwitcher ([4d95086](https://gitlab.com/datenknoten/freundebuch/-/commit/4d95086f1c44fb3c9aecae5bb775c0c448e5cc0c))
 
-## [2.49.1](https://github.com/datenknoten/freundebuch/compare/v2.49.0...v2.49.1) (2026-01-18)
+## [2.49.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.49.0...v2.49.1) (2026-01-18)
 
 ### Code Refactoring
 
-* **backend:** Decompose friends service and routes into focused modules ([e700db8](https://github.com/datenknoten/freundebuch/commit/e700db8174e6273d6cf62ce74a33b197d2ac9c38))
+* **backend:** Decompose friends service and routes into focused modules ([e700db8](https://gitlab.com/datenknoten/freundebuch/-/commit/e700db8174e6273d6cf62ce74a33b197d2ac9c38))
 
-## [2.49.0](https://github.com/datenknoten/freundebuch/compare/v2.48.0...v2.49.0) (2026-01-18)
+## [2.49.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.48.0...v2.49.0) (2026-01-18)
 
 ### Features
 
-* **frontend:** Add keyboard shortcuts for circle management ([54ed1c4](https://github.com/datenknoten/freundebuch/commit/54ed1c40bd4a96be3c010fe87cfc715f0afbbe8c))
-* **frontend:** Make keyboard shortcuts help context-sensitive ([3182c7f](https://github.com/datenknoten/freundebuch/commit/3182c7fff1dbbf6b43fbc2cfe39b29e710e406ad))
+* **frontend:** Add keyboard shortcuts for circle management ([54ed1c4](https://gitlab.com/datenknoten/freundebuch/-/commit/54ed1c40bd4a96be3c010fe87cfc715f0afbbe8c))
+* **frontend:** Make keyboard shortcuts help context-sensitive ([3182c7f](https://gitlab.com/datenknoten/freundebuch/-/commit/3182c7fff1dbbf6b43fbc2cfe39b29e710e406ad))
 
 ### Bug Fixes
 
-* **frontend:** Improve CircleEditModal initialization and unsaved changes handling ([12ff176](https://github.com/datenknoten/freundebuch/commit/12ff1765cd076fc6fb89ff8a07b517dedbf2831f))
+* **frontend:** Improve CircleEditModal initialization and unsaved changes handling ([12ff176](https://gitlab.com/datenknoten/freundebuch/-/commit/12ff1765cd076fc6fb89ff8a07b517dedbf2831f))
 
 ### Code Refactoring
 
-* **frontend:** Change n to two-key sequence for new items ([4578385](https://github.com/datenknoten/freundebuch/commit/45783857a87fd5dbe225824bd78eec49a026323f))
-* **frontend:** Move circle admin to modal with swipe actions ([5602797](https://github.com/datenknoten/freundebuch/commit/5602797d23860e68d9767c5c24e4bece49b64932))
+* **frontend:** Change n to two-key sequence for new items ([4578385](https://gitlab.com/datenknoten/freundebuch/-/commit/45783857a87fd5dbe225824bd78eec49a026323f))
+* **frontend:** Move circle admin to modal with swipe actions ([5602797](https://gitlab.com/datenknoten/freundebuch/-/commit/5602797d23860e68d9767c5c24e4bece49b64932))
 
-## [2.48.0](https://github.com/datenknoten/freundebuch/compare/v2.47.1...v2.48.0) (2026-01-17)
-
-### Features
-
-* Add maiden name field to friends ([6280336](https://github.com/datenknoten/freundebuch/commit/6280336e51adf25aa5c311b19d6dff95def2963e))
-
-### Bug Fixes
-
-* **backend:** Regenerate pgtyped types for maiden_name field ([20668ea](https://github.com/datenknoten/freundebuch/commit/20668ea4bb561c7943ee27465fca43f3707181b3))
-* **database:** Use TEXT instead of VARCHAR for maiden_name ([623c559](https://github.com/datenknoten/freundebuch/commit/623c559c64a937c10f7c217063d19fec38746f62))
-
-## [2.47.1](https://github.com/datenknoten/freundebuch/compare/v2.47.0...v2.47.1) (2026-01-17)
-
-### Bug Fixes
-
-* **frontend:** Debounce URL updates in search to prevent pushState spam ([e708aa5](https://github.com/datenknoten/freundebuch/commit/e708aa5055265af91f051eab92b4592e093c3f81))
-
-## [2.47.0](https://github.com/datenknoten/freundebuch/compare/v2.46.5...v2.47.0) (2026-01-17)
+## [2.48.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.47.1...v2.48.0) (2026-01-17)
 
 ### Features
 
-* Convert professional info to employment history subresource ([1c94fa6](https://github.com/datenknoten/freundebuch/commit/1c94fa60f4baea2c64e881c3616c3ab082059d6a))
-
-## [2.46.5](https://github.com/datenknoten/freundebuch/compare/v2.46.4...v2.46.5) (2026-01-16)
+* Add maiden name field to friends ([6280336](https://gitlab.com/datenknoten/freundebuch/-/commit/6280336e51adf25aa5c311b19d6dff95def2963e))
 
 ### Bug Fixes
 
-* **backend:** Add partial/prefix matching for display_name in search ([7673565](https://github.com/datenknoten/freundebuch/commit/76735658b73dd9909fe61e4499873dc92b0a4da2))
+* **backend:** Regenerate pgtyped types for maiden_name field ([20668ea](https://gitlab.com/datenknoten/freundebuch/-/commit/20668ea4bb561c7943ee27465fca43f3707181b3))
+* **database:** Use TEXT instead of VARCHAR for maiden_name ([623c559](https://gitlab.com/datenknoten/freundebuch/-/commit/623c559c64a937c10f7c217063d19fec38746f62))
 
-## [2.46.4](https://github.com/datenknoten/freundebuch/compare/v2.46.3...v2.46.4) (2026-01-16)
+## [2.47.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.47.0...v2.47.1) (2026-01-17)
 
 ### Bug Fixes
 
-* **frontend:** Preserve scroll position during subresource operations ([c3f81d7](https://github.com/datenknoten/freundebuch/commit/c3f81d79949d256e7778b82bab90e7e2b6a28ef7))
+* **frontend:** Debounce URL updates in search to prevent pushState spam ([e708aa5](https://gitlab.com/datenknoten/freundebuch/-/commit/e708aa5055265af91f051eab92b4592e093c3f81))
 
-## [2.46.3](https://github.com/datenknoten/freundebuch/compare/v2.46.2...v2.46.3) (2026-01-16)
+## [2.47.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.46.5...v2.47.0) (2026-01-17)
+
+### Features
+
+* Convert professional info to employment history subresource ([1c94fa6](https://gitlab.com/datenknoten/freundebuch/-/commit/1c94fa60f4baea2c64e881c3616c3ab082059d6a))
+
+## [2.46.5](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.46.4...v2.46.5) (2026-01-16)
+
+### Bug Fixes
+
+* **backend:** Add partial/prefix matching for display_name in search ([7673565](https://gitlab.com/datenknoten/freundebuch/-/commit/76735658b73dd9909fe61e4499873dc92b0a4da2))
+
+## [2.46.4](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.46.3...v2.46.4) (2026-01-16)
+
+### Bug Fixes
+
+* **frontend:** Preserve scroll position during subresource operations ([c3f81d7](https://gitlab.com/datenknoten/freundebuch/-/commit/c3f81d79949d256e7778b82bab90e7e2b6a28ef7))
+
+## [2.46.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.46.2...v2.46.3) (2026-01-16)
 
 ### Code Refactoring
 
-* **frontend:** Separate keyboard filter mode from regular dropdown ([e431588](https://github.com/datenknoten/freundebuch/commit/e43158805ea4a99187e57a5704fce4756e898baf))
+* **frontend:** Separate keyboard filter mode from regular dropdown ([e431588](https://gitlab.com/datenknoten/freundebuch/-/commit/e43158805ea4a99187e57a5704fce4756e898baf))
 
-## [2.46.2](https://github.com/datenknoten/freundebuch/compare/v2.46.1...v2.46.2) (2026-01-16)
-
-### Bug Fixes
-
-* **frontend:** Fix filter modal not closing on Escape key ([68bc68b](https://github.com/datenknoten/freundebuch/commit/68bc68bd61670fee45de3bb87f065fd7a3637268))
-
-## [2.46.1](https://github.com/datenknoten/freundebuch/compare/v2.46.0...v2.46.1) (2026-01-16)
+## [2.46.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.46.1...v2.46.2) (2026-01-16)
 
 ### Bug Fixes
 
-* **config:** Add IPv6 listening to nginx for healthcheck compatibility ([f4370c0](https://github.com/datenknoten/freundebuch/commit/f4370c05c3bb2bcab1a92afa19f0af33e6755e5b))
+* **frontend:** Fix filter modal not closing on Escape key ([68bc68b](https://gitlab.com/datenknoten/freundebuch/-/commit/68bc68bd61670fee45de3bb87f065fd7a3637268))
 
-## [2.46.0](https://github.com/datenknoten/freundebuch/compare/v2.45.1...v2.46.0) (2026-01-16)
+## [2.46.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.46.0...v2.46.1) (2026-01-16)
+
+### Bug Fixes
+
+* **config:** Add IPv6 listening to nginx for healthcheck compatibility ([f4370c0](https://gitlab.com/datenknoten/freundebuch/-/commit/f4370c05c3bb2bcab1a92afa19f0af33e6755e5b))
+
+## [2.46.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.45.1...v2.46.0) (2026-01-16)
 
 ### Features
 
-* **all:** Split monolithic container into multi-service architecture ([1d12282](https://github.com/datenknoten/freundebuch/commit/1d122825edb36abe136f9f94045e2a8ca4d13e75))
+* **all:** Split monolithic container into multi-service architecture ([1d12282](https://gitlab.com/datenknoten/freundebuch/-/commit/1d122825edb36abe136f9f94045e2a8ca4d13e75))
 
 ### Bug Fixes
 
-* **ci:** Move secret reference out of matrix definition ([92bb822](https://github.com/datenknoten/freundebuch/commit/92bb82224e168d439db342de42226e23381326b4))
+* **ci:** Move secret reference out of matrix definition ([92bb822](https://gitlab.com/datenknoten/freundebuch/-/commit/92bb82224e168d439db342de42226e23381326b4))
 
-## [2.45.1](https://github.com/datenknoten/freundebuch/compare/v2.45.0...v2.45.1) (2026-01-16)
+## [2.45.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.45.0...v2.45.1) (2026-01-16)
 
 ### Bug Fixes
 
-* **frontend:** Improve keyboard filter UX with modal and auto-scroll ([eb46df9](https://github.com/datenknoten/freundebuch/commit/eb46df9aa757081692fc294e068076181f67b3b8))
+* **frontend:** Improve keyboard filter UX with modal and auto-scroll ([eb46df9](https://gitlab.com/datenknoten/freundebuch/-/commit/eb46df9aa757081692fc294e068076181f67b3b8))
 
-## [2.45.0](https://github.com/datenknoten/freundebuch/compare/v2.44.1...v2.45.0) (2026-01-15)
+## [2.45.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.44.1...v2.45.0) (2026-01-15)
 
 ### Features
 
-* **frontend:** Add extended keyboard hints for filters (a1, b2, etc.) ([a78976e](https://github.com/datenknoten/freundebuch/commit/a78976ea0afd22530881af7043c5df34c2848e00))
-* **frontend:** Add keyboard shortcuts for filter selection ([8c9b085](https://github.com/datenknoten/freundebuch/commit/8c9b08592ccf14b767600b7d492666f4b08cc883))
-* **frontend:** Persist friend list filters across navigation ([58a438c](https://github.com/datenknoten/freundebuch/commit/58a438cde4b440068a5530aaf12a3f39a06bbbb5))
+* **frontend:** Add extended keyboard hints for filters (a1, b2, etc.) ([a78976e](https://gitlab.com/datenknoten/freundebuch/-/commit/a78976ea0afd22530881af7043c5df34c2848e00))
+* **frontend:** Add keyboard shortcuts for filter selection ([8c9b085](https://gitlab.com/datenknoten/freundebuch/-/commit/8c9b08592ccf14b767600b7d492666f4b08cc883))
+* **frontend:** Persist friend list filters across navigation ([58a438c](https://gitlab.com/datenknoten/freundebuch/-/commit/58a438cde4b440068a5530aaf12a3f39a06bbbb5))
 
 ### Bug Fixes
 
-* **frontend:** Require Shift for help shortcut to not conflict with / ([90fb7be](https://github.com/datenknoten/freundebuch/commit/90fb7bef5e994a8855c736bdf025aed5abd338a2))
-* **frontend:** Use $state for container ref in NetworkGraph ([b9c66b5](https://github.com/datenknoten/freundebuch/commit/b9c66b5ed486cdc76a0023ed5d5c33acee04177a))
+* **frontend:** Require Shift for help shortcut to not conflict with / ([90fb7be](https://gitlab.com/datenknoten/freundebuch/-/commit/90fb7bef5e994a8855c736bdf025aed5abd338a2))
+* **frontend:** Use $state for container ref in NetworkGraph ([b9c66b5](https://gitlab.com/datenknoten/freundebuch/-/commit/b9c66b5ed486cdc76a0023ed5d5c33acee04177a))
 
-## [2.44.1](https://github.com/datenknoten/freundebuch/compare/v2.44.0...v2.44.1) (2026-01-15)
+## [2.44.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.44.0...v2.44.1) (2026-01-15)
 
 ### Bug Fixes
 
-* **backend:** Regenerate PgTyped queries with correct parameter positions ([bd6429d](https://github.com/datenknoten/freundebuch/commit/bd6429d1bfeab1d5b4a9c4b65b4d69ad013dff31))
+* **backend:** Regenerate PgTyped queries with correct parameter positions ([bd6429d](https://gitlab.com/datenknoten/freundebuch/-/commit/bd6429d1bfeab1d5b4a9c4b65b4d69ad013dff31))
 
-## [2.44.0](https://github.com/datenknoten/freundebuch/compare/v2.43.0...v2.44.0) (2026-01-15)
+## [2.44.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.43.0...v2.44.0) (2026-01-15)
 
 ### Features
 
-* **frontend:** Add relationship network graph visualization ([7e94e94](https://github.com/datenknoten/freundebuch/commit/7e94e94f78c7f26848db8e6dd33d1d2419103fda))
+* **frontend:** Add relationship network graph visualization ([7e94e94](https://gitlab.com/datenknoten/freundebuch/-/commit/7e94e94f78c7f26848db8e6dd33d1d2419103fda))
 
 ### Bug Fixes
 
-* **backend:** Use PgTyped queries and proper error handling for network graph ([3ab938e](https://github.com/datenknoten/freundebuch/commit/3ab938e7bfdc216ea793077bbec23ee63bc22013))
+* **backend:** Use PgTyped queries and proper error handling for network graph ([3ab938e](https://gitlab.com/datenknoten/freundebuch/-/commit/3ab938e7bfdc216ea793077bbec23ee63bc22013))
 
-## [2.43.0](https://github.com/datenknoten/freundebuch/compare/v2.42.3...v2.43.0) (2026-01-15)
+## [2.43.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.42.3...v2.43.0) (2026-01-15)
 
 ### Features
 
-* **frontend:** Improve UX with friend context in modals and search persistence ([dab123f](https://github.com/datenknoten/freundebuch/commit/dab123f4e1cae10dd4ac71040ff6b96023b4cce2))
+* **frontend:** Improve UX with friend context in modals and search persistence ([dab123f](https://gitlab.com/datenknoten/freundebuch/-/commit/dab123f4e1cae10dd4ac71040ff6b96023b4cce2))
 
-## [2.42.3](https://github.com/datenknoten/freundebuch/compare/v2.42.2...v2.42.3) (2026-01-15)
-
-### Bug Fixes
-
-* **frontend:** Add missing circles filter parameter to faceted search API ([c6ffb64](https://github.com/datenknoten/freundebuch/commit/c6ffb64be17946225838c026c029986a8ce3a50e))
-
-## [2.42.2](https://github.com/datenknoten/freundebuch/compare/v2.42.1...v2.42.2) (2026-01-15)
+## [2.42.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.42.2...v2.42.3) (2026-01-15)
 
 ### Bug Fixes
 
-* **backend:** Prevent phone search from matching all records when query has no digits ([1c80969](https://github.com/datenknoten/freundebuch/commit/1c8096986d1ba20ad48a59dfb5a256584abcc1f3))
+* **frontend:** Add missing circles filter parameter to faceted search API ([c6ffb64](https://gitlab.com/datenknoten/freundebuch/-/commit/c6ffb64be17946225838c026c029986a8ce3a50e))
 
-## [2.42.1](https://github.com/datenknoten/freundebuch/compare/v2.42.0...v2.42.1) (2026-01-15)
+## [2.42.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.42.1...v2.42.2) (2026-01-15)
 
 ### Bug Fixes
 
-* **frontend:** Sanitize search headline HTML to prevent XSS ([1a7a035](https://github.com/datenknoten/freundebuch/commit/1a7a03594793c4ddd72f63e13a834ef3b92fbd9b))
+* **backend:** Prevent phone search from matching all records when query has no digits ([1c80969](https://gitlab.com/datenknoten/freundebuch/-/commit/1c8096986d1ba20ad48a59dfb5a256584abcc1f3))
+
+## [2.42.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.42.0...v2.42.1) (2026-01-15)
+
+### Bug Fixes
+
+* **frontend:** Sanitize search headline HTML to prevent XSS ([1a7a035](https://gitlab.com/datenknoten/freundebuch/-/commit/1a7a03594793c4ddd72f63e13a834ef3b92fbd9b))
 
 ### Code Refactoring
 
-* **frontend:** Unify friend grid for search and normal listing ([6be0af2](https://github.com/datenknoten/freundebuch/commit/6be0af234966e14f0be7871dc10a10f68e73e5ba))
+* **frontend:** Unify friend grid for search and normal listing ([6be0af2](https://gitlab.com/datenknoten/freundebuch/-/commit/6be0af234966e14f0be7871dc10a10f68e73e5ba))
 
-## [2.42.0](https://github.com/datenknoten/freundebuch/compare/v2.41.3...v2.42.0) (2026-01-15)
+## [2.42.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.41.3...v2.42.0) (2026-01-15)
 
 ### Features
 
-* Add circles to search and filter results ([cae29d3](https://github.com/datenknoten/freundebuch/commit/cae29d388e5aa575860ca63eb0fbc50de8f16b09))
+* Add circles to search and filter results ([cae29d3](https://gitlab.com/datenknoten/freundebuch/-/commit/cae29d388e5aa575860ca63eb0fbc50de8f16b09))
 
 ### Bug Fixes
 
-* **frontend:** Improve circle facet filter UI ([fe720bf](https://github.com/datenknoten/freundebuch/commit/fe720bf22b1d48854c7959a9c9d4df8d79ffd725))
-* **frontend:** Use grid layout for filtered results on desktop ([9d207cc](https://github.com/datenknoten/freundebuch/commit/9d207cc140c2d31a14820d33cdbf53fade4b1235))
+* **frontend:** Improve circle facet filter UI ([fe720bf](https://gitlab.com/datenknoten/freundebuch/-/commit/fe720bf22b1d48854c7959a9c9d4df8d79ffd725))
+* **frontend:** Use grid layout for filtered results on desktop ([9d207cc](https://gitlab.com/datenknoten/freundebuch/-/commit/9d207cc140c2d31a14820d33cdbf53fade4b1235))
 
-## [2.41.3](https://github.com/datenknoten/freundebuch/compare/v2.41.2...v2.41.3) (2026-01-14)
+## [2.41.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.41.2...v2.41.3) (2026-01-14)
 
 ### Bug Fixes
 
-* **frontend:** Load circles on app init for CircleChip hierarchy display ([7a63484](https://github.com/datenknoten/freundebuch/commit/7a634848854068e9e81cd9ba8d6769742c296f6c))
+* **frontend:** Load circles on app init for CircleChip hierarchy display ([7a63484](https://gitlab.com/datenknoten/freundebuch/-/commit/7a634848854068e9e81cd9ba8d6769742c296f6c))
 
-## [2.41.2](https://github.com/datenknoten/freundebuch/compare/v2.41.1...v2.41.2) (2026-01-14)
+## [2.41.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.41.1...v2.41.2) (2026-01-14)
 
 ### Code Refactoring
 
-* **frontend:** Extract shared autoFocus action and AlertBanner component ([a08296f](https://github.com/datenknoten/freundebuch/commit/a08296f748b3ba788a391c121d383057d6943ba9))
+* **frontend:** Extract shared autoFocus action and AlertBanner component ([a08296f](https://gitlab.com/datenknoten/freundebuch/-/commit/a08296f748b3ba788a391c121d383057d6943ba9))
 
-## [2.41.1](https://github.com/datenknoten/freundebuch/compare/v2.41.0...v2.41.1) (2026-01-14)
+## [2.41.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.41.0...v2.41.1) (2026-01-14)
 
 ### Code Refactoring
 
-* **frontend:** Use CircleChip component consistently across all views ([0d858b3](https://github.com/datenknoten/freundebuch/commit/0d858b3696c00adaee7e1f47054e5074b836587b))
+* **frontend:** Use CircleChip component consistently across all views ([0d858b3](https://gitlab.com/datenknoten/freundebuch/-/commit/0d858b3696c00adaee7e1f47054e5074b836587b))
 
-## [2.41.0](https://github.com/datenknoten/freundebuch/compare/v2.40.0...v2.41.0) (2026-01-14)
-
-### Features
-
-* **frontend:** Auto-focus first input in subresource edit forms ([97dd976](https://github.com/datenknoten/freundebuch/commit/97dd976fb63119e1d4662168cdea7514d3cd0c49))
-* **frontend:** Display circle hierarchy with scoped-label style ([4d3a72f](https://github.com/datenknoten/freundebuch/commit/4d3a72f50ab5c53b6ee543ed45c2c8ab91dd9f56))
-* **frontend:** Show circle dropdown as tree with indentation in add circle form ([0416420](https://github.com/datenknoten/freundebuch/commit/0416420b3165cd251967382c646c2f3f6852b2fd))
-
-### Bug Fixes
-
-* **frontend:** Use Svelte action for autofocus to prevent focus stealing ([0d0f872](https://github.com/datenknoten/freundebuch/commit/0d0f87286303e4eb535b1e15cfcf490d9fbac8a9))
-
-## [2.40.0](https://github.com/datenknoten/freundebuch/compare/v2.39.0...v2.40.0) (2026-01-14)
+## [2.41.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.40.0...v2.41.0) (2026-01-14)
 
 ### Features
 
-* **frontend:** Display circles with full path (e.g., "foo → bar") ([a7dd6d0](https://github.com/datenknoten/freundebuch/commit/a7dd6d06b8492b0612e42bfb3dce308ece7b62b0))
-* **frontend:** Show parent circle dropdown as tree with indentation ([083acbc](https://github.com/datenknoten/freundebuch/commit/083acbc153b2c9f3b5d75be65085b3ba853b31cd))
+* **frontend:** Auto-focus first input in subresource edit forms ([97dd976](https://gitlab.com/datenknoten/freundebuch/-/commit/97dd976fb63119e1d4662168cdea7514d3cd0c49))
+* **frontend:** Display circle hierarchy with scoped-label style ([4d3a72f](https://gitlab.com/datenknoten/freundebuch/-/commit/4d3a72f50ab5c53b6ee543ed45c2c8ab91dd9f56))
+* **frontend:** Show circle dropdown as tree with indentation in add circle form ([0416420](https://gitlab.com/datenknoten/freundebuch/-/commit/0416420b3165cd251967382c646c2f3f6852b2fd))
 
 ### Bug Fixes
 
-* **frontend:** Auto-focus name input when creating/editing circle ([30c3a04](https://github.com/datenknoten/freundebuch/commit/30c3a0449add947e40e0fa6d964c4f85e2d2ffe8))
+* **frontend:** Use Svelte action for autofocus to prevent focus stealing ([0d0f872](https://gitlab.com/datenknoten/freundebuch/-/commit/0d0f87286303e4eb535b1e15cfcf490d9fbac8a9))
 
-## [2.39.0](https://github.com/datenknoten/freundebuch/compare/v2.38.1...v2.39.0) (2026-01-14)
+## [2.40.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.39.0...v2.40.0) (2026-01-14)
 
 ### Features
 
-* Add configurable birthday format preference ([ff192e7](https://github.com/datenknoten/freundebuch/commit/ff192e786e70370818f6d8cede1e4fbeb333e29e))
-
-## [2.38.1](https://github.com/datenknoten/freundebuch/compare/v2.38.0...v2.38.1) (2026-01-14)
+* **frontend:** Display circles with full path (e.g., "foo → bar") ([a7dd6d0](https://gitlab.com/datenknoten/freundebuch/-/commit/a7dd6d06b8492b0612e42bfb3dce308ece7b62b0))
+* **frontend:** Show parent circle dropdown as tree with indentation ([083acbc](https://gitlab.com/datenknoten/freundebuch/-/commit/083acbc153b2c9f3b5d75be65085b3ba853b31cd))
 
 ### Bug Fixes
 
-* **backend:** Add missing mock in app-passwords service tests ([56f9ab6](https://github.com/datenknoten/freundebuch/commit/56f9ab69c4c5d0606bf9fdae2216d5a9f6d578a7))
+* **frontend:** Auto-focus name input when creating/editing circle ([30c3a04](https://gitlab.com/datenknoten/freundebuch/-/commit/30c3a0449add947e40e0fa6d964c4f85e2d2ffe8))
 
-## [2.38.0](https://github.com/datenknoten/freundebuch/compare/v2.37.7...v2.38.0) (2026-01-14)
+## [2.39.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.38.1...v2.39.0) (2026-01-14)
 
 ### Features
 
-* Add dynamic column selection to desktop friend list ([79138fd](https://github.com/datenknoten/freundebuch/commit/79138fdd8d0c85d4e0434f47e9ca7d01ac4ecb69))
+* Add configurable birthday format preference ([ff192e7](https://gitlab.com/datenknoten/freundebuch/-/commit/ff192e786e70370818f6d8cede1e4fbeb333e29e))
 
-## [2.37.7](https://github.com/datenknoten/freundebuch/compare/v2.37.6...v2.37.7) (2026-01-14)
-
-### Bug Fixes
-
-* **backend:** Remove redundant NULLIF in UpdateCircle query ([b59e694](https://github.com/datenknoten/freundebuch/commit/b59e69419edd382cd2947893307e8d06c2bd7668))
-* **frontend:** Enable sourcemap generation and fix Sentry upload config ([57e47f8](https://github.com/datenknoten/freundebuch/commit/57e47f8f0148c812022863ba797348c8510f9a07))
-
-## [2.37.6](https://github.com/datenknoten/freundebuch/compare/v2.37.5...v2.37.6) (2026-01-14)
+## [2.38.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.38.0...v2.38.1) (2026-01-14)
 
 ### Bug Fixes
 
-* **backend:** Filter db.js frames in production stack traces ([afb07f2](https://github.com/datenknoten/freundebuch/commit/afb07f29f053c2ba8e6fa2c07a2dec70d5664ec9))
-* **backend:** Preserve full stack traces for PostgreSQL errors ([bd422a7](https://github.com/datenknoten/freundebuch/commit/bd422a724b9dc6174eb8c1719e1d4f0dafe94ed5))
+* **backend:** Add missing mock in app-passwords service tests ([56f9ab6](https://gitlab.com/datenknoten/freundebuch/-/commit/56f9ab69c4c5d0606bf9fdae2216d5a9f6d578a7))
 
-## [2.37.5](https://github.com/datenknoten/freundebuch/compare/v2.37.4...v2.37.5) (2026-01-14)
-
-### Bug Fixes
-
-* **backend:** Add explicit ::uuid casts to prevent uuid/text type mismatch in circles queries ([3d52af3](https://github.com/datenknoten/freundebuch/commit/3d52af312a41e9aa1ec236bb4009a536c2b8dcff))
-
-## [2.37.4](https://github.com/datenknoten/freundebuch/compare/v2.37.3...v2.37.4) (2026-01-14)
-
-### Bug Fixes
-
-* **search:** Add explicit text[] casts to filterCircles parameter ([19b76ad](https://github.com/datenknoten/freundebuch/commit/19b76add4d835f1943d04fef7af098aedc239be4))
-
-## [2.37.3](https://github.com/datenknoten/freundebuch/compare/v2.37.2...v2.37.3) (2026-01-14)
-
-### Bug Fixes
-
-* **docker:** Add php8.2-curl to production image ([2b42a20](https://github.com/datenknoten/freundebuch/commit/2b42a202ad8982e24d9f764a7c1f1aa6fc678062))
-* **sabredav:** Add graceful curl fallback and improve error reporting ([784d7f8](https://github.com/datenknoten/freundebuch/commit/784d7f8c753dfba685810c8af06b4d1d6326c354))
-
-## [2.37.2](https://github.com/datenknoten/freundebuch/compare/v2.37.1...v2.37.2) (2026-01-13)
-
-### Bug Fixes
-
-* **sabredav:** Add global namespace prefix to curl functions ([1a1e3ec](https://github.com/datenknoten/freundebuch/commit/1a1e3ec35210e2e95325e18c999336488682d270))
-
-## [2.37.1](https://github.com/datenknoten/freundebuch/compare/v2.37.0...v2.37.1) (2026-01-13)
-
-### Bug Fixes
-
-* **nginx:** Use absolute HTTPS URLs for CardDAV well-known redirects ([c1d1886](https://github.com/datenknoten/freundebuch/commit/c1d18866ef7b3843abe1c9d1f028fc4c8eaa6902))
-
-## [2.37.0](https://github.com/datenknoten/freundebuch/compare/v2.36.0...v2.37.0) (2026-01-13)
+## [2.38.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.37.7...v2.38.0) (2026-01-14)
 
 ### Features
 
-* Add circle shortcuts and circle filtering in facet dropdown ([f497726](https://github.com/datenknoten/freundebuch/commit/f49772630b389324938bb0924b251aa93a672439))
+* Add dynamic column selection to desktop friend list ([79138fd](https://gitlab.com/datenknoten/freundebuch/-/commit/79138fdd8d0c85d4e0434f47e9ca7d01ac4ecb69))
 
-## [2.36.0](https://github.com/datenknoten/freundebuch/compare/v2.35.0...v2.36.0) (2026-01-13)
-
-### Features
-
-* **sabredav:** Add HTTP-level CardDAV server integration tests ([d60fa49](https://github.com/datenknoten/freundebuch/commit/d60fa4985b2d9eddb6d6cb9c24b57b7fe45381eb))
-* **sabredav:** Add integration tests using testcontainers-php ([f3485a1](https://github.com/datenknoten/freundebuch/commit/f3485a1b4a3e6f33748bd51ef3da8b5875d3bcf4))
+## [2.37.7](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.37.6...v2.37.7) (2026-01-14)
 
 ### Bug Fixes
 
-* **sabredav:** Add PHP platform constraint for 8.3 compatibility ([e013611](https://github.com/datenknoten/freundebuch/commit/e01361118bd9621d234d209c98b3756b80b32b66))
+* **backend:** Remove redundant NULLIF in UpdateCircle query ([b59e694](https://gitlab.com/datenknoten/freundebuch/-/commit/b59e69419edd382cd2947893307e8d06c2bd7668))
+* **frontend:** Enable sourcemap generation and fix Sentry upload config ([57e47f8](https://gitlab.com/datenknoten/freundebuch/-/commit/57e47f8f0148c812022863ba797348c8510f9a07))
+
+## [2.37.6](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.37.5...v2.37.6) (2026-01-14)
+
+### Bug Fixes
+
+* **backend:** Filter db.js frames in production stack traces ([afb07f2](https://gitlab.com/datenknoten/freundebuch/-/commit/afb07f29f053c2ba8e6fa2c07a2dec70d5664ec9))
+* **backend:** Preserve full stack traces for PostgreSQL errors ([bd422a7](https://gitlab.com/datenknoten/freundebuch/-/commit/bd422a724b9dc6174eb8c1719e1d4f0dafe94ed5))
+
+## [2.37.5](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.37.4...v2.37.5) (2026-01-14)
+
+### Bug Fixes
+
+* **backend:** Add explicit ::uuid casts to prevent uuid/text type mismatch in circles queries ([3d52af3](https://gitlab.com/datenknoten/freundebuch/-/commit/3d52af312a41e9aa1ec236bb4009a536c2b8dcff))
+
+## [2.37.4](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.37.3...v2.37.4) (2026-01-14)
+
+### Bug Fixes
+
+* **search:** Add explicit text[] casts to filterCircles parameter ([19b76ad](https://gitlab.com/datenknoten/freundebuch/-/commit/19b76add4d835f1943d04fef7af098aedc239be4))
+
+## [2.37.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.37.2...v2.37.3) (2026-01-14)
+
+### Bug Fixes
+
+* **docker:** Add php8.2-curl to production image ([2b42a20](https://gitlab.com/datenknoten/freundebuch/-/commit/2b42a202ad8982e24d9f764a7c1f1aa6fc678062))
+* **sabredav:** Add graceful curl fallback and improve error reporting ([784d7f8](https://gitlab.com/datenknoten/freundebuch/-/commit/784d7f8c753dfba685810c8af06b4d1d6326c354))
+
+## [2.37.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.37.1...v2.37.2) (2026-01-13)
+
+### Bug Fixes
+
+* **sabredav:** Add global namespace prefix to curl functions ([1a1e3ec](https://gitlab.com/datenknoten/freundebuch/-/commit/1a1e3ec35210e2e95325e18c999336488682d270))
+
+## [2.37.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.37.0...v2.37.1) (2026-01-13)
+
+### Bug Fixes
+
+* **nginx:** Use absolute HTTPS URLs for CardDAV well-known redirects ([c1d1886](https://gitlab.com/datenknoten/freundebuch/-/commit/c1d18866ef7b3843abe1c9d1f028fc4c8eaa6902))
+
+## [2.37.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.36.0...v2.37.0) (2026-01-13)
+
+### Features
+
+* Add circle shortcuts and circle filtering in facet dropdown ([f497726](https://gitlab.com/datenknoten/freundebuch/-/commit/f49772630b389324938bb0924b251aa93a672439))
+
+## [2.36.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.35.0...v2.36.0) (2026-01-13)
+
+### Features
+
+* **sabredav:** Add HTTP-level CardDAV server integration tests ([d60fa49](https://gitlab.com/datenknoten/freundebuch/-/commit/d60fa4985b2d9eddb6d6cb9c24b57b7fe45381eb))
+* **sabredav:** Add integration tests using testcontainers-php ([f3485a1](https://gitlab.com/datenknoten/freundebuch/-/commit/f3485a1b4a3e6f33748bd51ef3da8b5875d3bcf4))
+
+### Bug Fixes
+
+* **sabredav:** Add PHP platform constraint for 8.3 compatibility ([e013611](https://gitlab.com/datenknoten/freundebuch/-/commit/e01361118bd9621d234d209c98b3756b80b32b66))
 
 ### Reverts
 
-* Revert "fix(sabredav): Add PHP platform constraint for 8.3 compatibility" ([cf6c477](https://github.com/datenknoten/freundebuch/commit/cf6c477b67418a3202f14111ca3ab52b621ec0f9))
+* Revert "fix(sabredav): Add PHP platform constraint for 8.3 compatibility" ([cf6c477](https://gitlab.com/datenknoten/freundebuch/-/commit/cf6c477b67418a3202f14111ca3ab52b621ec0f9))
 
 ### Code Refactoring
 
-* **sabredav:** Use Node.js migrations instead of static SQL schema ([e33b5be](https://github.com/datenknoten/freundebuch/commit/e33b5bed5af6d91c29abb9b20dfb4d77e5a61425))
+* **sabredav:** Use Node.js migrations instead of static SQL schema ([e33b5be](https://gitlab.com/datenknoten/freundebuch/-/commit/e33b5bed5af6d91c29abb9b20dfb4d77e5a61425))
 
-## [2.35.0](https://github.com/datenknoten/freundebuch/compare/v2.34.0...v2.35.0) (2026-01-13)
+## [2.35.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.34.0...v2.35.0) (2026-01-13)
 
 ### Features
 
-* Add Circle Admin frontend and default circles migration ([ebbecc1](https://github.com/datenknoten/freundebuch/commit/ebbecc133927f18f9d82cae03b4eb0d0f2fef0a0))
+* Add Circle Admin frontend and default circles migration ([ebbecc1](https://gitlab.com/datenknoten/freundebuch/-/commit/ebbecc133927f18f9d82cae03b4eb0d0f2fef0a0))
 
 ### Bug Fixes
 
-* **database:** Use parameterized queries to prevent SQL injection ([5235f2f](https://github.com/datenknoten/freundebuch/commit/5235f2f82fed0fbea47881c7e690f99dd9fb0aae))
-* **database:** Use pgm.db.query() for parameterized queries ([179f57d](https://github.com/datenknoten/freundebuch/commit/179f57dd158a178700586b6f31998a27e72bbb27))
+* **database:** Use parameterized queries to prevent SQL injection ([5235f2f](https://gitlab.com/datenknoten/freundebuch/-/commit/5235f2f82fed0fbea47881c7e690f99dd9fb0aae))
+* **database:** Use pgm.db.query() for parameterized queries ([179f57d](https://gitlab.com/datenknoten/freundebuch/-/commit/179f57dd158a178700586b6f31998a27e72bbb27))
 
-## [2.34.0](https://github.com/datenknoten/freundebuch/compare/v2.33.0...v2.34.0) (2026-01-13)
-
-### Features
-
-* **frontend:** Add circle assignment UI to friend detail page ([6036dde](https://github.com/datenknoten/freundebuch/commit/6036ddef074ac45f674c3c8592d956746d83e515))
-
-## [2.33.0](https://github.com/datenknoten/freundebuch/compare/v2.32.4...v2.33.0) (2026-01-13)
+## [2.34.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.33.0...v2.34.0) (2026-01-13)
 
 ### Features
 
-* **backend:** Add CardDAV circles integration ([c850844](https://github.com/datenknoten/freundebuch/commit/c850844a5afc883188fb11d7bfa7fb5200ba7f73))
-* **backend:** Add circles and organization queries ([10d4eb7](https://github.com/datenknoten/freundebuch/commit/10d4eb75326817c5a80f989de0613b1b7dafe9ed))
-* **backend:** Add circles routes and extend friends routes ([abb4d10](https://github.com/datenknoten/freundebuch/commit/abb4d10297b8520741a43222d326d066aec6769c))
-* **backend:** Add circles service and extend friends service ([e7919a8](https://github.com/datenknoten/freundebuch/commit/e7919a8f138b43c33da6ad52f7486d44298029cb))
-* **database:** Add circles and organization migration ([cc3378e](https://github.com/datenknoten/freundebuch/commit/cc3378ec865aa523beec0098659b34a709ac6500))
-* **frontend:** Add circle components and update facet UI ([4a257ff](https://github.com/datenknoten/freundebuch/commit/4a257ff95f4ac197ffd50eb0f613bcda112a772b))
-* **frontend:** Add circles API and stores ([24169c8](https://github.com/datenknoten/freundebuch/commit/24169c80aab3c7f21771ec0bee2d44031d084c63))
-* **shared:** Add circles and organization types ([776b199](https://github.com/datenknoten/freundebuch/commit/776b199d34d2ceec4a2f4af5297cb505166431f4))
+* **frontend:** Add circle assignment UI to friend detail page ([6036dde](https://gitlab.com/datenknoten/freundebuch/-/commit/6036ddef074ac45f674c3c8592d956746d83e515))
+
+## [2.33.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.32.4...v2.33.0) (2026-01-13)
+
+### Features
+
+* **backend:** Add CardDAV circles integration ([c850844](https://gitlab.com/datenknoten/freundebuch/-/commit/c850844a5afc883188fb11d7bfa7fb5200ba7f73))
+* **backend:** Add circles and organization queries ([10d4eb7](https://gitlab.com/datenknoten/freundebuch/-/commit/10d4eb75326817c5a80f989de0613b1b7dafe9ed))
+* **backend:** Add circles routes and extend friends routes ([abb4d10](https://gitlab.com/datenknoten/freundebuch/-/commit/abb4d10297b8520741a43222d326d066aec6769c))
+* **backend:** Add circles service and extend friends service ([e7919a8](https://gitlab.com/datenknoten/freundebuch/-/commit/e7919a8f138b43c33da6ad52f7486d44298029cb))
+* **database:** Add circles and organization migration ([cc3378e](https://gitlab.com/datenknoten/freundebuch/-/commit/cc3378ec865aa523beec0098659b34a709ac6500))
+* **frontend:** Add circle components and update facet UI ([4a257ff](https://gitlab.com/datenknoten/freundebuch/-/commit/4a257ff95f4ac197ffd50eb0f613bcda112a772b))
+* **frontend:** Add circles API and stores ([24169c8](https://gitlab.com/datenknoten/freundebuch/-/commit/24169c80aab3c7f21771ec0bee2d44031d084c63))
+* **shared:** Add circles and organization types ([776b199](https://gitlab.com/datenknoten/freundebuch/-/commit/776b199d34d2ceec4a2f4af5297cb505166431f4))
 
 ### Bug Fixes
 
-* **backend:** Add transactions to setFriendCircles and mergeCircles ([e94f1a3](https://github.com/datenknoten/freundebuch/commit/e94f1a32c19d3018acee0b1e06ea1b18518b8914))
-* **backend:** Add unique constraint for circle names and length validation ([c642bf8](https://github.com/datenknoten/freundebuch/commit/c642bf8c608f27f52daef59a03a88b61cb578613))
-* **backend:** Address code review feedback for circles feature ([7184740](https://github.com/datenknoten/freundebuch/commit/7184740bed095d9ca2443e78e7734f09d372d840))
-* **backend:** Address PR feedback for circles feature ([8297935](https://github.com/datenknoten/freundebuch/commit/8297935ae5e3b9ffde26b8a77f703a98fdd4e38a))
-* **backend:** Use two-step circle matching in CardDAV ([b453627](https://github.com/datenknoten/freundebuch/commit/b4536276e37c8c11e01a4c852abd11c49087db8b))
-* **frontend:** Fix type assertion for ArrayFacetField indexing ([42775f9](https://github.com/datenknoten/freundebuch/commit/42775f9ea29a4390a3613d420007a2d50221bb2f))
+* **backend:** Add transactions to setFriendCircles and mergeCircles ([e94f1a3](https://gitlab.com/datenknoten/freundebuch/-/commit/e94f1a32c19d3018acee0b1e06ea1b18518b8914))
+* **backend:** Add unique constraint for circle names and length validation ([c642bf8](https://gitlab.com/datenknoten/freundebuch/-/commit/c642bf8c608f27f52daef59a03a88b61cb578613))
+* **backend:** Address code review feedback for circles feature ([7184740](https://gitlab.com/datenknoten/freundebuch/-/commit/7184740bed095d9ca2443e78e7734f09d372d840))
+* **backend:** Address PR feedback for circles feature ([8297935](https://gitlab.com/datenknoten/freundebuch/-/commit/8297935ae5e3b9ffde26b8a77f703a98fdd4e38a))
+* **backend:** Use two-step circle matching in CardDAV ([b453627](https://gitlab.com/datenknoten/freundebuch/-/commit/b4536276e37c8c11e01a4c852abd11c49087db8b))
+* **frontend:** Fix type assertion for ArrayFacetField indexing ([42775f9](https://gitlab.com/datenknoten/freundebuch/-/commit/42775f9ea29a4390a3613d420007a2d50221bb2f))
 
 ### Performance Improvements
 
-* **backend:** Optimize setFriendCircles to avoid extra query ([4139d55](https://github.com/datenknoten/freundebuch/commit/4139d556efa00293161b7d0251bf49f3fe7ebf3d))
+* **backend:** Optimize setFriendCircles to avoid extra query ([4139d55](https://gitlab.com/datenknoten/freundebuch/-/commit/4139d556efa00293161b7d0251bf49f3fe7ebf3d))
 
-## [2.32.4](https://github.com/datenknoten/freundebuch/compare/v2.32.3...v2.32.4) (2026-01-12)
-
-### Bug Fixes
-
-* **database:** Add migration to update photo URLs ([f513823](https://github.com/datenknoten/freundebuch/commit/f51382324f87fb3097b5786ffff4a6bef6ffc9c2))
-
-## [2.32.3](https://github.com/datenknoten/freundebuch/compare/v2.32.2...v2.32.3) (2026-01-12)
+## [2.32.4](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.32.3...v2.32.4) (2026-01-12)
 
 ### Bug Fixes
 
-* **backend:** Complete Contact → Friend rename fixes ([0b8314f](https://github.com/datenknoten/freundebuch/commit/0b8314f5a00c3b40eb6613f16f523af7b99d72eb))
+* **database:** Add migration to update photo URLs ([f513823](https://gitlab.com/datenknoten/freundebuch/-/commit/f51382324f87fb3097b5786ffff4a6bef6ffc9c2))
+
+## [2.32.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.32.2...v2.32.3) (2026-01-12)
+
+### Bug Fixes
+
+* **backend:** Complete Contact → Friend rename fixes ([0b8314f](https://gitlab.com/datenknoten/freundebuch/-/commit/0b8314f5a00c3b40eb6613f16f523af7b99d72eb))
 
 ### Code Refactoring
 
-* **all:** Update SabreDAV CardDAV backend for Friend rename ([43a9236](https://github.com/datenknoten/freundebuch/commit/43a9236ac3218193e51a25ee82efbff6bf39a162))
-* **backend:** Rename contact query files to friend ([26a169b](https://github.com/datenknoten/freundebuch/commit/26a169b05a494eb5e238b1f4f9aa5e6458a1cf59))
-* **backend:** Rename contact tests to friend ([58ea937](https://github.com/datenknoten/freundebuch/commit/58ea937e4a16314b74404581de34e004d92ea18b))
-* **backend:** Rename ContactsService to FriendsService ([a0247dc](https://github.com/datenknoten/freundebuch/commit/a0247dcd25eb8236ac11f9560c7d5a528d04e2b3))
-* **database:** Add migrations to rename Contact to Friend ([d810439](https://github.com/datenknoten/freundebuch/commit/d8104395ecb99928d36003ef1a54a7ae45426626))
-* **frontend:** Rename /contacts routes to /friends ([9d4b66d](https://github.com/datenknoten/freundebuch/commit/9d4b66dcb51440a687bbf960e8fc3061dae82f17))
-* **frontend:** Rename contact API and stores to friend ([1967cb2](https://github.com/datenknoten/freundebuch/commit/1967cb2189c86aa96a219c73f226acdc4d5bbb10))
-* **frontend:** Rename Contact components to Friend ([8ba48fa](https://github.com/datenknoten/freundebuch/commit/8ba48fab4c67af1337f312508e9d2b3d64d1be6b))
-* **shared:** Rename Contact types to Friend ([11afcfa](https://github.com/datenknoten/freundebuch/commit/11afcfa23352feb7cf35ee6ae889698018705c04))
+* **all:** Update SabreDAV CardDAV backend for Friend rename ([43a9236](https://gitlab.com/datenknoten/freundebuch/-/commit/43a9236ac3218193e51a25ee82efbff6bf39a162))
+* **backend:** Rename contact query files to friend ([26a169b](https://gitlab.com/datenknoten/freundebuch/-/commit/26a169b05a494eb5e238b1f4f9aa5e6458a1cf59))
+* **backend:** Rename contact tests to friend ([58ea937](https://gitlab.com/datenknoten/freundebuch/-/commit/58ea937e4a16314b74404581de34e004d92ea18b))
+* **backend:** Rename ContactsService to FriendsService ([a0247dc](https://gitlab.com/datenknoten/freundebuch/-/commit/a0247dcd25eb8236ac11f9560c7d5a528d04e2b3))
+* **database:** Add migrations to rename Contact to Friend ([d810439](https://gitlab.com/datenknoten/freundebuch/-/commit/d8104395ecb99928d36003ef1a54a7ae45426626))
+* **frontend:** Rename /contacts routes to /friends ([9d4b66d](https://gitlab.com/datenknoten/freundebuch/-/commit/9d4b66dcb51440a687bbf960e8fc3061dae82f17))
+* **frontend:** Rename contact API and stores to friend ([1967cb2](https://gitlab.com/datenknoten/freundebuch/-/commit/1967cb2189c86aa96a219c73f226acdc4d5bbb10))
+* **frontend:** Rename Contact components to Friend ([8ba48fa](https://gitlab.com/datenknoten/freundebuch/-/commit/8ba48fab4c67af1337f312508e9d2b3d64d1be6b))
+* **shared:** Rename Contact types to Friend ([11afcfa](https://gitlab.com/datenknoten/freundebuch/-/commit/11afcfa23352feb7cf35ee6ae889698018705c04))
 
-## [2.32.2](https://github.com/datenknoten/freundebuch/compare/v2.32.1...v2.32.2) (2026-01-12)
+## [2.32.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.32.1...v2.32.2) (2026-01-12)
 
 ### Bug Fixes
 
-* **backend:** Complete BirthdayAlreadyExistsError migration ([938afa1](https://github.com/datenknoten/freundebuch/commit/938afa1ecc6f22eb11fee1d438b2e376aaf89ed0))
+* **backend:** Complete BirthdayAlreadyExistsError migration ([938afa1](https://gitlab.com/datenknoten/freundebuch/-/commit/938afa1ecc6f22eb11fee1d438b2e376aaf89ed0))
 
 ### Code Refactoring
 
-* **backend:** Add toError helper to normalize unknown errors ([7b5d5d6](https://github.com/datenknoten/freundebuch/commit/7b5d5d6b0fda666ff16d850f4a115c8c30646121))
-* **backend:** Add UnknownValueError class for toError helper ([e5de839](https://github.com/datenknoten/freundebuch/commit/e5de839ff8bfb20704ec21e0cd330e1b5036c1b1))
-* **backend:** Replace raw Error class with custom error subclasses ([b2f0ab6](https://github.com/datenknoten/freundebuch/commit/b2f0ab6772cdb81a2526d71c23bd87eac485d5e7))
+* **backend:** Add toError helper to normalize unknown errors ([7b5d5d6](https://gitlab.com/datenknoten/freundebuch/-/commit/7b5d5d6b0fda666ff16d850f4a115c8c30646121))
+* **backend:** Add UnknownValueError class for toError helper ([e5de839](https://gitlab.com/datenknoten/freundebuch/-/commit/e5de839ff8bfb20704ec21e0cd330e1b5036c1b1))
+* **backend:** Replace raw Error class with custom error subclasses ([b2f0ab6](https://gitlab.com/datenknoten/freundebuch/-/commit/b2f0ab6772cdb81a2526d71c23bd87eac485d5e7))
 
-## [2.32.1](https://github.com/datenknoten/freundebuch/compare/v2.32.0...v2.32.1) (2026-01-11)
+## [2.32.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.32.0...v2.32.1) (2026-01-11)
 
 ### Bug Fixes
 
-* **frontend:** Use requestAnimationFrame for input focus to open mobile keyboard ([765b8b8](https://github.com/datenknoten/freundebuch/commit/765b8b800d7c776c73cdb75938b134241cd4c574))
+* **frontend:** Use requestAnimationFrame for input focus to open mobile keyboard ([765b8b8](https://gitlab.com/datenknoten/freundebuch/-/commit/765b8b800d7c776c73cdb75938b134241cd4c574))
 
-## [2.32.0](https://github.com/datenknoten/freundebuch/compare/v2.31.2...v2.32.0) (2026-01-11)
+## [2.32.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.31.2...v2.32.0) (2026-01-11)
 
 ### Features
 
-* **ci:** Add Matrix webhook notification on successful deployment ([c2948b0](https://github.com/datenknoten/freundebuch/commit/c2948b05ca5e1c1051a4f3499ffb41b675836955))
+* **ci:** Add Matrix webhook notification on successful deployment ([c2948b0](https://gitlab.com/datenknoten/freundebuch/-/commit/c2948b05ca5e1c1051a4f3499ffb41b675836955))
 
-## [2.31.2](https://github.com/datenknoten/freundebuch/compare/v2.31.1...v2.31.2) (2026-01-11)
-
-### Bug Fixes
-
-* **frontend:** Improve effect dependency tracking for display name fetch ([38c7614](https://github.com/datenknoten/freundebuch/commit/38c7614f75e4951d00560ff5ddf2b84d000c0cb9))
-* **frontend:** Prevent excessive API requests on dashboard ([652e4cb](https://github.com/datenknoten/freundebuch/commit/652e4cb37629d41a33bf62f8c7e1cd4fa6f46bb2))
-
-## [2.31.1](https://github.com/datenknoten/freundebuch/compare/v2.31.0...v2.31.1) (2026-01-11)
+## [2.31.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.31.1...v2.31.2) (2026-01-11)
 
 ### Bug Fixes
 
-* **frontend:** Add padding and show display name on dashboard ([31aed74](https://github.com/datenknoten/freundebuch/commit/31aed74d78375f9c960648425c34852297001ece))
-* **frontend:** Use responsive padding and prevent race conditions ([d97c67f](https://github.com/datenknoten/freundebuch/commit/d97c67f0c8672bf168bdf8222080dbf242364201))
+* **frontend:** Improve effect dependency tracking for display name fetch ([38c7614](https://gitlab.com/datenknoten/freundebuch/-/commit/38c7614f75e4951d00560ff5ddf2b84d000c0cb9))
+* **frontend:** Prevent excessive API requests on dashboard ([652e4cb](https://gitlab.com/datenknoten/freundebuch/-/commit/652e4cb37629d41a33bf62f8c7e1cd4fa6f46bb2))
+
+## [2.31.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.31.0...v2.31.1) (2026-01-11)
+
+### Bug Fixes
+
+* **frontend:** Add padding and show display name on dashboard ([31aed74](https://gitlab.com/datenknoten/freundebuch/-/commit/31aed74d78375f9c960648425c34852297001ece))
+* **frontend:** Use responsive padding and prevent race conditions ([d97c67f](https://gitlab.com/datenknoten/freundebuch/-/commit/d97c67f0c8672bf168bdf8222080dbf242364201))
 
 ### Code Refactoring
 
-* **frontend:** Use Svelte 5 runes for dashboard state management ([f245ad0](https://github.com/datenknoten/freundebuch/commit/f245ad0159382b1cf271803dff54d5e1983322a9))
+* **frontend:** Use Svelte 5 runes for dashboard state management ([f245ad0](https://gitlab.com/datenknoten/freundebuch/-/commit/f245ad0159382b1cf271803dff54d5e1983322a9))
 
-## [2.31.0](https://github.com/datenknoten/freundebuch/compare/v2.30.1...v2.31.0) (2026-01-11)
+## [2.31.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.30.1...v2.31.0) (2026-01-11)
 
 ### Features
 
-* Add upcoming dates dashboard element ([29af97b](https://github.com/datenknoten/freundebuch/commit/29af97b82d9ce38bc6ab73b1c57573eda4d52223))
+* Add upcoming dates dashboard element ([29af97b](https://gitlab.com/datenknoten/freundebuch/-/commit/29af97b82d9ce38bc6ab73b1c57573eda4d52223))
 
 ### Bug Fixes
 
-* **frontend:** Address PR review comments ([b97d369](https://github.com/datenknoten/freundebuch/commit/b97d3693b97b57c3b44eb5c507fa81519518aaa2))
-* Handle Feb 29 birthdays in non-leap years ([161a733](https://github.com/datenknoten/freundebuch/commit/161a733a635481a679c4a7c30597b314c92f58fe))
+* **frontend:** Address PR review comments ([b97d369](https://gitlab.com/datenknoten/freundebuch/-/commit/b97d3693b97b57c3b44eb5c507fa81519518aaa2))
+* Handle Feb 29 birthdays in non-leap years ([161a733](https://gitlab.com/datenknoten/freundebuch/-/commit/161a733a635481a679c4a7c30597b314c92f58fe))
 
-## [2.30.1](https://github.com/datenknoten/freundebuch/compare/v2.30.0...v2.30.1) (2026-01-11)
-
-### Bug Fixes
-
-* **frontend:** Redirect existing users to onboarding when required ([6b47090](https://github.com/datenknoten/freundebuch/commit/6b47090484de26f63a9607adc00f2602a2a1eab5))
-
-## [2.30.0](https://github.com/datenknoten/freundebuch/compare/v2.29.0...v2.30.0) (2026-01-11)
-
-### Features
-
-* Add self-contact onboarding requirement ([5e5583a](https://github.com/datenknoten/freundebuch/commit/5e5583ae740e2d1ffefdc2ee7a6358ac0189a352))
-
-## [2.29.0](https://github.com/datenknoten/freundebuch/compare/v2.28.0...v2.29.0) (2026-01-11)
-
-### Features
-
-* **frontend:** Add faceted search to friends list ([d1fd8a7](https://github.com/datenknoten/freundebuch/commit/d1fd8a70dd6e284cf4099b6b3d2212994f9f7445))
+## [2.30.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.30.0...v2.30.1) (2026-01-11)
 
 ### Bug Fixes
 
-* Address code review feedback for faceted search ([4dfeb04](https://github.com/datenknoten/freundebuch/commit/4dfeb047ca776f6934f26aaa9a318b4c1deae072))
+* **frontend:** Redirect existing users to onboarding when required ([6b47090](https://gitlab.com/datenknoten/freundebuch/-/commit/6b47090484de26f63a9607adc00f2602a2a1eab5))
 
-## [2.28.0](https://github.com/datenknoten/freundebuch/compare/v2.27.0...v2.28.0) (2026-01-10)
-
-### Features
-
-* **frontend:** Auto-focus firstname field when friend form opens ([6c5d385](https://github.com/datenknoten/freundebuch/commit/6c5d38507649d1251e1ca4cac7f4c6dacd661f3a))
-
-## [2.27.0](https://github.com/datenknoten/freundebuch/compare/v2.26.0...v2.27.0) (2026-01-10)
+## [2.30.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.29.0...v2.30.0) (2026-01-11)
 
 ### Features
 
-* **all:** Add faceted search to global search modal ([086070d](https://github.com/datenknoten/freundebuch/commit/086070d7d07c07326789b8d359a7800c1774ff66))
+* Add self-contact onboarding requirement ([5e5583a](https://gitlab.com/datenknoten/freundebuch/-/commit/5e5583ae740e2d1ffefdc2ee7a6358ac0189a352))
+
+## [2.29.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.28.0...v2.29.0) (2026-01-11)
+
+### Features
+
+* **frontend:** Add faceted search to friends list ([d1fd8a7](https://gitlab.com/datenknoten/freundebuch/-/commit/d1fd8a70dd6e284cf4099b6b3d2212994f9f7445))
 
 ### Bug Fixes
 
-* **backend:** Prevent SQL injection in ILIKE search patterns ([e69ec1f](https://github.com/datenknoten/freundebuch/commit/e69ec1f1b3a32f0a1b896d29f1015fd86fcc8f0c))
+* Address code review feedback for faceted search ([4dfeb04](https://gitlab.com/datenknoten/freundebuch/-/commit/4dfeb047ca776f6934f26aaa9a318b4c1deae072))
+
+## [2.28.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.27.0...v2.28.0) (2026-01-10)
+
+### Features
+
+* **frontend:** Auto-focus firstname field when friend form opens ([6c5d385](https://gitlab.com/datenknoten/freundebuch/-/commit/6c5d38507649d1251e1ca4cac7f4c6dacd661f3a))
+
+## [2.27.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.26.0...v2.27.0) (2026-01-10)
+
+### Features
+
+* **all:** Add faceted search to global search modal ([086070d](https://gitlab.com/datenknoten/freundebuch/-/commit/086070d7d07c07326789b8d359a7800c1774ff66))
+
+### Bug Fixes
+
+* **backend:** Prevent SQL injection in ILIKE search patterns ([e69ec1f](https://gitlab.com/datenknoten/freundebuch/-/commit/e69ec1f1b3a32f0a1b896d29f1015fd86fcc8f0c))
 
 ### Performance Improvements
 
-* **backend:** Add trigram indexes and fix GetFacetCounts consistency ([21870ce](https://github.com/datenknoten/freundebuch/commit/21870ce3e96a2a8f53776fdf1ab9ffd22caea2db))
-* **backend:** Eliminate correlated subquery for work_notes in ts_headline ([0c951c0](https://github.com/datenknoten/freundebuch/commit/0c951c068ee05d3783189da788c8457c64a1647c))
-* **backend:** Replace EXISTS subqueries with LEFT JOINs in search ([bce5253](https://github.com/datenknoten/freundebuch/commit/bce52534ea2c916ced24d5219ca3e412ccacb14c))
+* **backend:** Add trigram indexes and fix GetFacetCounts consistency ([21870ce](https://gitlab.com/datenknoten/freundebuch/-/commit/21870ce3e96a2a8f53776fdf1ab9ffd22caea2db))
+* **backend:** Eliminate correlated subquery for work_notes in ts_headline ([0c951c0](https://gitlab.com/datenknoten/freundebuch/-/commit/0c951c068ee05d3783189da788c8457c64a1647c))
+* **backend:** Replace EXISTS subqueries with LEFT JOINs in search ([bce5253](https://gitlab.com/datenknoten/freundebuch/-/commit/bce52534ea2c916ced24d5219ca3e412ccacb14c))
 
 ### Code Refactoring
 
-* **frontend:** Simplify store access pattern in search store ([230debf](https://github.com/datenknoten/freundebuch/commit/230debf5d6f3bcc0257842203a9e60146b3298bf))
+* **frontend:** Simplify store access pattern in search store ([230debf](https://gitlab.com/datenknoten/freundebuch/-/commit/230debf5d6f3bcc0257842203a9e60146b3298bf))
 
-## [2.26.0](https://github.com/datenknoten/freundebuch/compare/v2.25.0...v2.26.0) (2026-01-10)
-
-### Features
-
-* **frontend:** add terms of service page and navigation links ([3ac814d](https://github.com/datenknoten/freundebuch/commit/3ac814d30c932ed203982e6ed9d5fbd746c537a9))
-
-## [2.25.0](https://github.com/datenknoten/freundebuch/compare/v2.24.1...v2.25.0) (2026-01-10)
+## [2.26.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.25.0...v2.26.0) (2026-01-10)
 
 ### Features
 
-* **frontend:** add privacy policy page and navigation links ([2a42007](https://github.com/datenknoten/freundebuch/commit/2a420075aaf2edf6338d289ad60f0429695f91b2))
-* **frontend:** enhance privacy policy with GDPR compliance and Sentry disclosure ([e1704f5](https://github.com/datenknoten/freundebuch/commit/e1704f5c94ed8196a8da78c31716e585d7426639))
+* **frontend:** add terms of service page and navigation links ([3ac814d](https://gitlab.com/datenknoten/freundebuch/-/commit/3ac814d30c932ed203982e6ed9d5fbd746c537a9))
 
-### Bug Fixes
-
-* **frontend:** address PR review comments on privacy policy ([2d24c98](https://github.com/datenknoten/freundebuch/commit/2d24c98f57fffaa4e61ecebb28562d78ab35e579))
-
-## [2.24.1](https://github.com/datenknoten/freundebuch/compare/v2.24.0...v2.24.1) (2026-01-10)
-
-### Bug Fixes
-
-* **ci:** resolve heredoc delimiter issue in code review workflow ([0d2bf11](https://github.com/datenknoten/freundebuch/commit/0d2bf1168ff55f731fc11f68569728256800e9ec))
-
-## [2.24.0](https://github.com/datenknoten/freundebuch/compare/v2.23.3...v2.24.0) (2026-01-10)
+## [2.25.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.24.1...v2.25.0) (2026-01-10)
 
 ### Features
 
-* **sabredav:** Save raw vCard as JSON blob for debugging ([f043b5f](https://github.com/datenknoten/freundebuch/commit/f043b5fdd2ac14fdcc7299d0e29b76e7bb9acc44))
+* **frontend:** add privacy policy page and navigation links ([2a42007](https://gitlab.com/datenknoten/freundebuch/-/commit/2a420075aaf2edf6338d289ad60f0429695f91b2))
+* **frontend:** enhance privacy policy with GDPR compliance and Sentry disclosure ([e1704f5](https://gitlab.com/datenknoten/freundebuch/-/commit/e1704f5c94ed8196a8da78c31716e585d7426639))
 
 ### Bug Fixes
 
-* **sabredav:** Address PR review feedback for vCard JSON blob ([cd8f1c2](https://github.com/datenknoten/freundebuch/commit/cd8f1c2a425794bd84b1af8cff68e9659faf5e3a))
+* **frontend:** address PR review comments on privacy policy ([2d24c98](https://gitlab.com/datenknoten/freundebuch/-/commit/2d24c98f57fffaa4e61ecebb28562d78ab35e579))
 
-## [2.23.3](https://github.com/datenknoten/freundebuch/compare/v2.23.2...v2.23.3) (2026-01-10)
-
-### Bug Fixes
-
-* **sabredav:** Embed contact photos as base64 in vCards for iOS compatibility ([bb2c488](https://github.com/datenknoten/freundebuch/commit/bb2c48854941424e2d8a68295fdad4e83a3b048f))
-
-## [2.23.2](https://github.com/datenknoten/freundebuch/compare/v2.23.1...v2.23.2) (2026-01-08)
+## [2.24.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.24.0...v2.24.1) (2026-01-10)
 
 ### Bug Fixes
 
-* **backend:** Prevent SSRF in Sentry tunnel and XSS in search headlines ([7912678](https://github.com/datenknoten/freundebuch/commit/7912678f655cc2d1bfcbc3ccd74f60b055ae0971))
-* **frontend:** Prevent keyboard hint badges from being clipped in table view ([bc5eeda](https://github.com/datenknoten/freundebuch/commit/bc5eedac5bf11ed8302d5c322bb0587678c605a9))
+* **ci:** resolve heredoc delimiter issue in code review workflow ([0d2bf11](https://gitlab.com/datenknoten/freundebuch/-/commit/0d2bf1168ff55f731fc11f68569728256800e9ec))
 
-## [2.23.1](https://github.com/datenknoten/freundebuch/compare/v2.23.0...v2.23.1) (2026-01-08)
-
-### Bug Fixes
-
-* **frontend:** Standardize page widths to max-w-7xl ([ad4c61d](https://github.com/datenknoten/freundebuch/commit/ad4c61d7191dfd69154d17b4bc5179bb772bae5b))
-
-## [2.23.0](https://github.com/datenknoten/freundebuch/compare/v2.22.0...v2.23.0) (2026-01-08)
+## [2.24.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.23.3...v2.24.0) (2026-01-10)
 
 ### Features
 
-* **frontend:** Add table view for contacts list on desktop ([d58f793](https://github.com/datenknoten/freundebuch/commit/d58f793f774e704440dd065a374770ec8db8e0a7))
+* **sabredav:** Save raw vCard as JSON blob for debugging ([f043b5f](https://gitlab.com/datenknoten/freundebuch/-/commit/f043b5fdd2ac14fdcc7299d0e29b76e7bb9acc44))
 
-## [2.22.0](https://github.com/datenknoten/freundebuch/compare/v2.21.1...v2.22.0) (2026-01-08)
+### Bug Fixes
+
+* **sabredav:** Address PR review feedback for vCard JSON blob ([cd8f1c2](https://gitlab.com/datenknoten/freundebuch/-/commit/cd8f1c2a425794bd84b1af8cff68e9659faf5e3a))
+
+## [2.23.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.23.2...v2.23.3) (2026-01-10)
+
+### Bug Fixes
+
+* **sabredav:** Embed contact photos as base64 in vCards for iOS compatibility ([bb2c488](https://gitlab.com/datenknoten/freundebuch/-/commit/bb2c48854941424e2d8a68295fdad4e83a3b048f))
+
+## [2.23.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.23.1...v2.23.2) (2026-01-08)
+
+### Bug Fixes
+
+* **backend:** Prevent SSRF in Sentry tunnel and XSS in search headlines ([7912678](https://gitlab.com/datenknoten/freundebuch/-/commit/7912678f655cc2d1bfcbc3ccd74f60b055ae0971))
+* **frontend:** Prevent keyboard hint badges from being clipped in table view ([bc5eeda](https://gitlab.com/datenknoten/freundebuch/-/commit/bc5eedac5bf11ed8302d5c322bb0587678c605a9))
+
+## [2.23.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.23.0...v2.23.1) (2026-01-08)
+
+### Bug Fixes
+
+* **frontend:** Standardize page widths to max-w-7xl ([ad4c61d](https://gitlab.com/datenknoten/freundebuch/-/commit/ad4c61d7191dfd69154d17b4bc5179bb772bae5b))
+
+## [2.23.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.22.0...v2.23.0) (2026-01-08)
 
 ### Features
 
-* Add pagination controls with user preferences ([3c32d72](https://github.com/datenknoten/freundebuch/commit/3c32d7253459c7a0f94ea4109ea4d99b1e6fb5bf))
-* **frontend:** Extend keyboard navigation to support more than 9 contacts ([6d1803b](https://github.com/datenknoten/freundebuch/commit/6d1803b9f7e0326fe24648fee4dc6a37bea51fa3))
+* **frontend:** Add table view for contacts list on desktop ([d58f793](https://gitlab.com/datenknoten/freundebuch/-/commit/d58f793f774e704440dd065a374770ec8db8e0a7))
 
-## [2.21.1](https://github.com/datenknoten/freundebuch/compare/v2.21.0...v2.21.1) (2026-01-08)
-
-### Bug Fixes
-
-* **config:** Ensure API routes take precedence over static file regex in nginx ([edda76e](https://github.com/datenknoten/freundebuch/commit/edda76ef06b25a9b7b524420debb6ecb4465b186))
-
-## [2.21.0](https://github.com/datenknoten/freundebuch/compare/v2.20.5...v2.21.0) (2026-01-08)
+## [2.22.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.21.1...v2.22.0) (2026-01-08)
 
 ### Features
 
-* **frontend:** Add image cropping for avatar uploads ([73d21ed](https://github.com/datenknoten/freundebuch/commit/73d21ed2681e70d039533187f3243eb831151788))
+* Add pagination controls with user preferences ([3c32d72](https://gitlab.com/datenknoten/freundebuch/-/commit/3c32d7253459c7a0f94ea4109ea4d99b1e6fb5bf))
+* **frontend:** Extend keyboard navigation to support more than 9 contacts ([6d1803b](https://gitlab.com/datenknoten/freundebuch/-/commit/6d1803b9f7e0326fe24648fee4dc6a37bea51fa3))
 
-## [2.20.5](https://github.com/datenknoten/freundebuch/compare/v2.20.4...v2.20.5) (2026-01-07)
-
-### Bug Fixes
-
-* **backend:** Remove AUTH_DEBUG logging from SabreDAV AppPasswordBackend ([3d6ec65](https://github.com/datenknoten/freundebuch/commit/3d6ec657443e9890e329be060be0aaec7da4879b))
-
-## [2.20.4](https://github.com/datenknoten/freundebuch/compare/v2.20.3...v2.20.4) (2026-01-07)
+## [2.21.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.21.0...v2.21.1) (2026-01-08)
 
 ### Bug Fixes
 
-* **backend:** Handle undefined context in test teardown ([955efcf](https://github.com/datenknoten/freundebuch/commit/955efcf74d4ba8fd45929ed33f059aa0fff604dc))
-* **backend:** Suppress pool errors during test container shutdown ([d9d36ec](https://github.com/datenknoten/freundebuch/commit/d9d36ec1d63896b570fffa080677a59358f272b0))
-* **backend:** Use health check wait strategy for PostgreSQL testcontainers ([f3d5d28](https://github.com/datenknoten/freundebuch/commit/f3d5d2842727c81990c2596fc46a1eef2e283692))
+* **config:** Ensure API routes take precedence over static file regex in nginx ([edda76e](https://gitlab.com/datenknoten/freundebuch/-/commit/edda76ef06b25a9b7b524420debb6ecb4465b186))
 
-## [2.20.3](https://github.com/datenknoten/freundebuch/compare/v2.20.2...v2.20.3) (2026-01-07)
-
-### Bug Fixes
-
-* **frontend:** Streamline Add Relationship to match other subresources ([23da4db](https://github.com/datenknoten/freundebuch/commit/23da4dbedacd059b0821fc5ed117b701d79eaa02))
-
-## [2.20.2](https://github.com/datenknoten/freundebuch/compare/v2.20.1...v2.20.2) (2026-01-07)
-
-### Bug Fixes
-
-* **backend:** Add silent log level for test environments ([f897d48](https://github.com/datenknoten/freundebuch/commit/f897d48522e3660af3a397812c20fbbc6b1ffb1b))
-* **backend:** Silence noisy output during integration tests ([001ea0e](https://github.com/datenknoten/freundebuch/commit/001ea0ec76365b4a802e113434467a15c92c5b61))
-
-## [2.20.1](https://github.com/datenknoten/freundebuch/compare/v2.20.0...v2.20.1) (2026-01-07)
-
-### Bug Fixes
-
-* **config:** Prevent lint-staged from passing file args to build commands ([69db1c3](https://github.com/datenknoten/freundebuch/commit/69db1c37cf63c9fe2eb1c7d70013f16efe2ded39))
-* **frontend:** resolve Svelte 5 build warnings ([eda5688](https://github.com/datenknoten/freundebuch/commit/eda56884285dced1502dd00c2ba93e76a02d65bb))
-
-## [2.20.0](https://github.com/datenknoten/freundebuch/compare/v2.19.0...v2.20.0) (2026-01-07)
+## [2.21.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.20.5...v2.21.0) (2026-01-08)
 
 ### Features
 
-* **frontend:** improve keyboard shortcuts with persistent panels and quick open ([903114f](https://github.com/datenknoten/freundebuch/commit/903114f081f411519c76681a333ad36e5839351b))
+* **frontend:** Add image cropping for avatar uploads ([73d21ed](https://gitlab.com/datenknoten/freundebuch/-/commit/73d21ed2681e70d039533187f3243eb831151788))
 
-## [2.19.0](https://github.com/datenknoten/freundebuch/compare/v2.18.0...v2.19.0) (2026-01-07)
-
-### Features
-
-* **frontend:** integrate logo across favicon, navbar, and landing page ([934fdaf](https://github.com/datenknoten/freundebuch/commit/934fdafb6e29125a89ca3cbb0bccd52c0b7cdb54))
-
-## [2.18.0](https://github.com/datenknoten/freundebuch/compare/v2.17.1...v2.18.0) (2026-01-07)
-
-### Features
-
-* **frontend:** Add search filter to friends list ([129b9c4](https://github.com/datenknoten/freundebuch/commit/129b9c47bf36f5e1edbde2a5928e41e24acacb7c))
-* **frontend:** Enhance global search dialog ([b12c8f7](https://github.com/datenknoten/freundebuch/commit/b12c8f77b5edc476b8f9b66ed92f432a02e71524))
-* **frontend:** Redesign header with user avatar dropdown ([049ed20](https://github.com/datenknoten/freundebuch/commit/049ed20b4510d03381a29ec46644c97ba727c32e))
-* **search:** Add full-text search functionality (Epic 10 Phase 1) ([ba168e4](https://github.com/datenknoten/freundebuch/commit/ba168e4eb0b543632c7dc554f6e07692c101375e))
-
-## [2.17.1](https://github.com/datenknoten/freundebuch/compare/v2.17.0...v2.17.1) (2026-01-06)
+## [2.20.5](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.20.4...v2.20.5) (2026-01-07)
 
 ### Bug Fixes
 
-* **backend:** Fix Sentry Postgres integration and add release version ([c80ae66](https://github.com/datenknoten/freundebuch/commit/c80ae661de7a1d463a401b1eb9c815e414b7ba5a))
+* **backend:** Remove AUTH_DEBUG logging from SabreDAV AppPasswordBackend ([3d6ec65](https://gitlab.com/datenknoten/freundebuch/-/commit/3d6ec657443e9890e329be060be0aaec7da4879b))
 
-## [2.17.0](https://github.com/datenknoten/freundebuch/compare/v2.16.5...v2.17.0) (2026-01-06)
+## [2.20.4](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.20.3...v2.20.4) (2026-01-07)
+
+### Bug Fixes
+
+* **backend:** Handle undefined context in test teardown ([955efcf](https://gitlab.com/datenknoten/freundebuch/-/commit/955efcf74d4ba8fd45929ed33f059aa0fff604dc))
+* **backend:** Suppress pool errors during test container shutdown ([d9d36ec](https://gitlab.com/datenknoten/freundebuch/-/commit/d9d36ec1d63896b570fffa080677a59358f272b0))
+* **backend:** Use health check wait strategy for PostgreSQL testcontainers ([f3d5d28](https://gitlab.com/datenknoten/freundebuch/-/commit/f3d5d2842727c81990c2596fc46a1eef2e283692))
+
+## [2.20.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.20.2...v2.20.3) (2026-01-07)
+
+### Bug Fixes
+
+* **frontend:** Streamline Add Relationship to match other subresources ([23da4db](https://gitlab.com/datenknoten/freundebuch/-/commit/23da4dbedacd059b0821fc5ed117b701d79eaa02))
+
+## [2.20.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.20.1...v2.20.2) (2026-01-07)
+
+### Bug Fixes
+
+* **backend:** Add silent log level for test environments ([f897d48](https://gitlab.com/datenknoten/freundebuch/-/commit/f897d48522e3660af3a397812c20fbbc6b1ffb1b))
+* **backend:** Silence noisy output during integration tests ([001ea0e](https://gitlab.com/datenknoten/freundebuch/-/commit/001ea0ec76365b4a802e113434467a15c92c5b61))
+
+## [2.20.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.20.0...v2.20.1) (2026-01-07)
+
+### Bug Fixes
+
+* **config:** Prevent lint-staged from passing file args to build commands ([69db1c3](https://gitlab.com/datenknoten/freundebuch/-/commit/69db1c37cf63c9fe2eb1c7d70013f16efe2ded39))
+* **frontend:** resolve Svelte 5 build warnings ([eda5688](https://gitlab.com/datenknoten/freundebuch/-/commit/eda56884285dced1502dd00c2ba93e76a02d65bb))
+
+## [2.20.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.19.0...v2.20.0) (2026-01-07)
 
 ### Features
 
-* **frontend:** Embed fonts locally instead of using Google Fonts ([79fea40](https://github.com/datenknoten/freundebuch/commit/79fea4082ef3ca128d1c34d148bfc995f995890c))
+* **frontend:** improve keyboard shortcuts with persistent panels and quick open ([903114f](https://gitlab.com/datenknoten/freundebuch/-/commit/903114f081f411519c76681a333ad36e5839351b))
 
-## [2.16.5](https://github.com/datenknoten/freundebuch/compare/v2.16.4...v2.16.5) (2026-01-06)
+## [2.19.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.18.0...v2.19.0) (2026-01-07)
+
+### Features
+
+* **frontend:** integrate logo across favicon, navbar, and landing page ([934fdaf](https://gitlab.com/datenknoten/freundebuch/-/commit/934fdafb6e29125a89ca3cbb0bccd52c0b7cdb54))
+
+## [2.18.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.17.1...v2.18.0) (2026-01-07)
+
+### Features
+
+* **frontend:** Add search filter to friends list ([129b9c4](https://gitlab.com/datenknoten/freundebuch/-/commit/129b9c47bf36f5e1edbde2a5928e41e24acacb7c))
+* **frontend:** Enhance global search dialog ([b12c8f7](https://gitlab.com/datenknoten/freundebuch/-/commit/b12c8f77b5edc476b8f9b66ed92f432a02e71524))
+* **frontend:** Redesign header with user avatar dropdown ([049ed20](https://gitlab.com/datenknoten/freundebuch/-/commit/049ed20b4510d03381a29ec46644c97ba727c32e))
+* **search:** Add full-text search functionality (Epic 10 Phase 1) ([ba168e4](https://gitlab.com/datenknoten/freundebuch/-/commit/ba168e4eb0b543632c7dc554f6e07692c101375e))
+
+## [2.17.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.17.0...v2.17.1) (2026-01-06)
 
 ### Bug Fixes
 
-* **backend:** Also exclude /health endpoint from Sentry tracing ([3c257ba](https://github.com/datenknoten/freundebuch/commit/3c257ba61a6483b8c4e60beada8d5a3aa5f447ad))
-* **backend:** Exclude sentry-tunnel route from Sentry tracing ([d52d0c8](https://github.com/datenknoten/freundebuch/commit/d52d0c8630e3856cc706bb9c471c3697e460d615))
+* **backend:** Fix Sentry Postgres integration and add release version ([c80ae66](https://gitlab.com/datenknoten/freundebuch/-/commit/c80ae661de7a1d463a401b1eb9c815e414b7ba5a))
 
-## [2.16.4](https://github.com/datenknoten/freundebuch/compare/v2.16.3...v2.16.4) (2026-01-05)
+## [2.17.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.16.5...v2.17.0) (2026-01-06)
+
+### Features
+
+* **frontend:** Embed fonts locally instead of using Google Fonts ([79fea40](https://gitlab.com/datenknoten/freundebuch/-/commit/79fea4082ef3ca128d1c34d148bfc995f995890c))
+
+## [2.16.5](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.16.4...v2.16.5) (2026-01-06)
 
 ### Bug Fixes
 
-* **backend:** convert migration to typescript ([65cc327](https://github.com/datenknoten/freundebuch/commit/65cc327b31837bc00baeb49ffd9b319977ef5d10))
+* **backend:** Also exclude /health endpoint from Sentry tracing ([3c257ba](https://gitlab.com/datenknoten/freundebuch/-/commit/3c257ba61a6483b8c4e60beada8d5a3aa5f447ad))
+* **backend:** Exclude sentry-tunnel route from Sentry tracing ([d52d0c8](https://gitlab.com/datenknoten/freundebuch/-/commit/d52d0c8630e3856cc706bb9c471c3697e460d615))
 
-## [2.16.3](https://github.com/datenknoten/freundebuch/compare/v2.16.2...v2.16.3) (2026-01-05)
+## [2.16.4](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.16.3...v2.16.4) (2026-01-05)
+
+### Bug Fixes
+
+* **backend:** convert migration to typescript ([65cc327](https://gitlab.com/datenknoten/freundebuch/-/commit/65cc327b31837bc00baeb49ffd9b319977ef5d10))
+
+## [2.16.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.16.2...v2.16.3) (2026-01-05)
 
 ### Reverts
 
-* **backend:** Remove sentry debug code ([fc21b13](https://github.com/datenknoten/freundebuch/commit/fc21b138a531f2567766f159c447c808d417297c))
+* **backend:** Remove sentry debug code ([fc21b13](https://gitlab.com/datenknoten/freundebuch/-/commit/fc21b138a531f2567766f159c447c808d417297c))
 
-## [2.16.2](https://github.com/datenknoten/freundebuch/compare/v2.16.1...v2.16.2) (2026-01-05)
-
-### Bug Fixes
-
-* **backend:** Add sentry debug code ([d2e1f95](https://github.com/datenknoten/freundebuch/commit/d2e1f95b9cec587537333a84d703f0fafe9585b2))
-
-## [2.16.1](https://github.com/datenknoten/freundebuch/compare/v2.16.0...v2.16.1) (2026-01-05)
+## [2.16.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.16.1...v2.16.2) (2026-01-05)
 
 ### Bug Fixes
 
-* **frontend:** Prevent landing page flash for authenticated users ([847cdf3](https://github.com/datenknoten/freundebuch/commit/847cdf35fd615a6ff40180ae7813dcc83bdc9499))
+* **backend:** Add sentry debug code ([d2e1f95](https://gitlab.com/datenknoten/freundebuch/-/commit/d2e1f95b9cec587537333a84d703f0fafe9585b2))
 
-## [2.16.0](https://github.com/datenknoten/freundebuch/compare/v2.15.1...v2.16.0) (2026-01-05)
-
-### Features
-
-* **dx:** Add lint-staged for efficient pre-commit checks ([93c45dc](https://github.com/datenknoten/freundebuch/commit/93c45dced803553ef30ff5058d7e9a03db71e62e))
-
-## [2.15.1](https://github.com/datenknoten/freundebuch/compare/v2.15.0...v2.15.1) (2026-01-05)
+## [2.16.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.16.0...v2.16.1) (2026-01-05)
 
 ### Bug Fixes
 
-* **backend:** Improve error logging and Sentry integration ([1b848c6](https://github.com/datenknoten/freundebuch/commit/1b848c604c4ad6c815253833b67b843387a64a45))
+* **frontend:** Prevent landing page flash for authenticated users ([847cdf3](https://gitlab.com/datenknoten/freundebuch/-/commit/847cdf35fd615a6ff40180ae7813dcc83bdc9499))
 
-## [2.15.0](https://github.com/datenknoten/freundebuch/compare/v2.14.0...v2.15.0) (2026-01-05)
-
-### Features
-
-* **ci:** Pass explicit version to deploy script ([af1c0d5](https://github.com/datenknoten/freundebuch/commit/af1c0d5c8de412c6972db4cd3f194a6c7ace93e6))
-
-## [2.14.0](https://github.com/datenknoten/freundebuch/compare/v2.13.0...v2.14.0) (2026-01-04)
+## [2.16.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.15.1...v2.16.0) (2026-01-05)
 
 ### Features
 
-* **frontend:** Add inline subresource editing on contact detail page ([4d1f8da](https://github.com/datenknoten/freundebuch/commit/4d1f8da524569656ef558da8140ce387b74b3c51))
+* **dx:** Add lint-staged for efficient pre-commit checks ([93c45dc](https://gitlab.com/datenknoten/freundebuch/-/commit/93c45dced803553ef30ff5058d7e9a03db71e62e))
+
+## [2.15.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.15.0...v2.15.1) (2026-01-05)
+
+### Bug Fixes
+
+* **backend:** Improve error logging and Sentry integration ([1b848c6](https://gitlab.com/datenknoten/freundebuch/-/commit/1b848c604c4ad6c815253833b67b843387a64a45))
+
+## [2.15.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.14.0...v2.15.0) (2026-01-05)
+
+### Features
+
+* **ci:** Pass explicit version to deploy script ([af1c0d5](https://gitlab.com/datenknoten/freundebuch/-/commit/af1c0d5c8de412c6972db4cd3f194a6c7ace93e6))
+
+## [2.14.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.13.0...v2.14.0) (2026-01-04)
+
+### Features
+
+* **frontend:** Add inline subresource editing on contact detail page ([4d1f8da](https://gitlab.com/datenknoten/freundebuch/-/commit/4d1f8da524569656ef558da8140ce387b74b3c51))
 
 ### Code Refactoring
 
-* **frontend:** Reorganize contact detail page layout for clarity ([42213fa](https://github.com/datenknoten/freundebuch/commit/42213fad4e4ae1416471d701be8bccb7ab940786))
+* **frontend:** Reorganize contact detail page layout for clarity ([42213fa](https://gitlab.com/datenknoten/freundebuch/-/commit/42213fad4e4ae1416471d701be8bccb7ab940786))
 
-## [2.13.0](https://github.com/datenknoten/freundebuch/compare/v2.12.0...v2.13.0) (2026-01-04)
+## [2.13.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.12.0...v2.13.0) (2026-01-04)
 
 ### Features
 
-* **backend:** Add address lookup service and routes ([d2dd241](https://github.com/datenknoten/freundebuch/commit/d2dd241ce07a41449e3f2d9db84c6eafdb962385))
-* **backend:** Add arktype validation for cache deserialization ([18e422f](https://github.com/datenknoten/freundebuch/commit/18e422f4b9a2cbe1064de27a0c67a92ff6c9bf41))
-* **backend:** Add cache utility and address API configuration ([8e5043f](https://github.com/datenknoten/freundebuch/commit/8e5043fccba00fac9f4fe0edf521d79766819239))
-* **backend:** Add external API clients for address lookup ([996f3b9](https://github.com/datenknoten/freundebuch/commit/996f3b94b0ee9bff3c72bbf5e2bfed91354061a0))
-* **frontend:** Add address lookup API client ([9a0e5a6](https://github.com/datenknoten/freundebuch/commit/9a0e5a669d958602cc6eeb4c8627891da77928ce))
-* **frontend:** Add hierarchical address input components ([500cb6c](https://github.com/datenknoten/freundebuch/commit/500cb6cd4ab68eb42d26096d4c52963771f5d6df))
-* **frontend:** Integrate hierarchical address input in ContactForm ([b29f14d](https://github.com/datenknoten/freundebuch/commit/b29f14d5a843dfd728d3afeccb455af0828f0e6d))
-* **shared:** Add address lookup types ([8683ddf](https://github.com/datenknoten/freundebuch/commit/8683ddfe8efedd124ad4fed22175ce5769957168))
+* **backend:** Add address lookup service and routes ([d2dd241](https://gitlab.com/datenknoten/freundebuch/-/commit/d2dd241ce07a41449e3f2d9db84c6eafdb962385))
+* **backend:** Add arktype validation for cache deserialization ([18e422f](https://gitlab.com/datenknoten/freundebuch/-/commit/18e422f4b9a2cbe1064de27a0c67a92ff6c9bf41))
+* **backend:** Add cache utility and address API configuration ([8e5043f](https://gitlab.com/datenknoten/freundebuch/-/commit/8e5043fccba00fac9f4fe0edf521d79766819239))
+* **backend:** Add external API clients for address lookup ([996f3b9](https://gitlab.com/datenknoten/freundebuch/-/commit/996f3b94b0ee9bff3c72bbf5e2bfed91354061a0))
+* **frontend:** Add address lookup API client ([9a0e5a6](https://gitlab.com/datenknoten/freundebuch/-/commit/9a0e5a669d958602cc6eeb4c8627891da77928ce))
+* **frontend:** Add hierarchical address input components ([500cb6c](https://gitlab.com/datenknoten/freundebuch/-/commit/500cb6cd4ab68eb42d26096d4c52963771f5d6df))
+* **frontend:** Integrate hierarchical address input in ContactForm ([b29f14d](https://gitlab.com/datenknoten/freundebuch/-/commit/b29f14d5a843dfd728d3afeccb455af0828f0e6d))
+* **shared:** Add address lookup types ([8683ddf](https://gitlab.com/datenknoten/freundebuch/-/commit/8683ddfe8efedd124ad4fed22175ce5769957168))
 
 ### Bug Fixes
 
-* **backend:** Address code review issues for address lookup ([d896393](https://github.com/datenknoten/freundebuch/commit/d89639365f73d998b1f25f51941547998a260ffb))
-* **backend:** Address follow-up code review issues for address caching ([45fd4a6](https://github.com/datenknoten/freundebuch/commit/45fd4a6b41fce88a1f8bc209e474b62417a3aa36))
-* **backend:** Use system schema for address_cache table and add integration tests ([fadf202](https://github.com/datenknoten/freundebuch/commit/fadf20285aa2880bf1b393fd9ca5662127d15684))
+* **backend:** Address code review issues for address lookup ([d896393](https://gitlab.com/datenknoten/freundebuch/-/commit/d89639365f73d998b1f25f51941547998a260ffb))
+* **backend:** Address follow-up code review issues for address caching ([45fd4a6](https://gitlab.com/datenknoten/freundebuch/-/commit/45fd4a6b41fce88a1f8bc209e474b62417a3aa36))
+* **backend:** Use system schema for address_cache table and add integration tests ([fadf202](https://gitlab.com/datenknoten/freundebuch/-/commit/fadf20285aa2880bf1b393fd9ca5662127d15684))
 
-## [2.12.0](https://github.com/datenknoten/freundebuch/compare/v2.11.0...v2.12.0) (2026-01-03)
-
-### Features
-
-* **all:** Use depot runner ([cfbd063](https://github.com/datenknoten/freundebuch/commit/cfbd063a82f2f9b150aa45fedd883bce898f1a79))
-
-## [2.11.0](https://github.com/enko/freundebuch2/compare/v2.10.3...v2.11.0) (2026-01-02)
+## [2.12.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.11.0...v2.12.0) (2026-01-03)
 
 ### Features
 
-* **landing:** Reword landing page and add logo placeholder ([0eeb423](https://github.com/enko/freundebuch2/commit/0eeb42327b31b002976ff93f7ebaea9ce78e39f1))
+* **all:** Use depot runner ([cfbd063](https://gitlab.com/datenknoten/freundebuch/-/commit/cfbd063a82f2f9b150aa45fedd883bce898f1a79))
 
-## [2.10.3](https://github.com/enko/freundebuch2/compare/v2.10.2...v2.10.3) (2026-01-02)
+## [2.11.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.10.3...v2.11.0) (2026-01-02)
+
+### Features
+
+* **landing:** Reword landing page and add logo placeholder ([0eeb423](https://gitlab.com/datenknoten/freundebuch/-/commit/0eeb42327b31b002976ff93f7ebaea9ce78e39f1))
+
+## [2.10.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.10.2...v2.10.3) (2026-01-02)
 
 ### Bug Fixes
 
-* **docker:** Add php8.2-mbstring extension for SabreDAV ([7a4b18a](https://github.com/enko/freundebuch2/commit/7a4b18a9696897048e62a3d3b5f7208c3e7eafc7))
-* **docker:** Run database migrations on container startup ([f97bc78](https://github.com/enko/freundebuch2/commit/f97bc786e72188b04902f7763f191b14683deae4))
+* **docker:** Add php8.2-mbstring extension for SabreDAV ([7a4b18a](https://gitlab.com/datenknoten/freundebuch/-/commit/7a4b18a9696897048e62a3d3b5f7208c3e7eafc7))
+* **docker:** Run database migrations on container startup ([f97bc78](https://gitlab.com/datenknoten/freundebuch/-/commit/f97bc786e72188b04902f7763f191b14683deae4))
 
 ### Reverts
 
-* Remove automatic migrations from entrypoint ([52b9112](https://github.com/enko/freundebuch2/commit/52b9112e40417e9deb8fc828ddc2989616c96994))
+* Remove automatic migrations from entrypoint ([52b9112](https://gitlab.com/datenknoten/freundebuch/-/commit/52b9112e40417e9deb8fc828ddc2989616c96994))
 
-## [2.10.2](https://github.com/enko/freundebuch2/compare/v2.10.1...v2.10.2) (2026-01-02)
+## [2.10.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.10.1...v2.10.2) (2026-01-02)
 
 ### Bug Fixes
 
-* **nginx:** Fix invalid 'access_log off main' syntax ([2aad082](https://github.com/enko/freundebuch2/commit/2aad0821ffa2277bc8a71e9cafa2d263de161c7e))
+* **nginx:** Fix invalid 'access_log off main' syntax ([2aad082](https://gitlab.com/datenknoten/freundebuch/-/commit/2aad0821ffa2277bc8a71e9cafa2d263de161c7e))
 
-## [2.10.1](https://github.com/enko/freundebuch2/compare/v2.10.0...v2.10.1) (2026-01-02)
+## [2.10.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.10.0...v2.10.1) (2026-01-02)
 
 ### Performance Improvements
 
-* **docker:** Optimize build with BuildKit cache and .dockerignore ([457dc77](https://github.com/enko/freundebuch2/commit/457dc7797ac1721a2bd9d9e31855214f8a5ba7ec))
+* **docker:** Optimize build with BuildKit cache and .dockerignore ([457dc77](https://gitlab.com/datenknoten/freundebuch/-/commit/457dc7797ac1721a2bd9d9e31855214f8a5ba7ec))
 
-## [2.10.0](https://github.com/enko/freundebuch2/compare/v2.9.2...v2.10.0) (2026-01-02)
-
-### Features
-
-* **logging:** Improve logging configuration across all services ([520cbd0](https://github.com/enko/freundebuch2/commit/520cbd008b7c97f97297e8685c6ec0788ad3a7b5))
-
-## [2.9.2](https://github.com/enko/freundebuch2/compare/v2.9.1...v2.9.2) (2026-01-02)
-
-### Bug Fixes
-
-* Enable production logging for PHP and use Pino for HTTP requests ([77e5e0e](https://github.com/enko/freundebuch2/commit/77e5e0e0ea2e8127beb94592af59a21fe83f1ede))
-
-## [2.9.1](https://github.com/enko/freundebuch2/compare/v2.9.0...v2.9.1) (2026-01-02)
-
-### Bug Fixes
-
-* **carddav:** Pass original request URI to SabreDAV ([f8391ba](https://github.com/enko/freundebuch2/commit/f8391baa5a021bcff41994b81a9c7b60b18fc836))
-
-## [2.9.0](https://github.com/enko/freundebuch2/compare/v2.8.3...v2.9.0) (2026-01-02)
+## [2.10.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.9.2...v2.10.0) (2026-01-02)
 
 ### Features
 
-* Add distributed tracing between frontend and backend via Sentry ([de209a9](https://github.com/enko/freundebuch2/commit/de209a924d8dd5ac0f54b7fc65a7f51b6518b3e7))
+* **logging:** Improve logging configuration across all services ([520cbd0](https://gitlab.com/datenknoten/freundebuch/-/commit/520cbd008b7c97f97297e8685c6ec0788ad3a7b5))
 
-## [2.8.3](https://github.com/enko/freundebuch2/compare/v2.8.2...v2.8.3) (2026-01-02)
-
-### Bug Fixes
-
-* **frontend:** Remove +page.server.ts incompatible with static adapter ([2ae031d](https://github.com/enko/freundebuch2/commit/2ae031d7f897b2aaa9bea2da0537046a37c0a7fa))
-
-## [2.8.2](https://github.com/enko/freundebuch2/compare/v2.8.1...v2.8.2) (2026-01-02)
+## [2.9.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.9.1...v2.9.2) (2026-01-02)
 
 ### Bug Fixes
 
-* **frontend:** Add Sentry project slug to Vite config ([ff1b594](https://github.com/enko/freundebuch2/commit/ff1b59421c118ea2befda0aa98caaa532140c9da))
+* Enable production logging for PHP and use Pino for HTTP requests ([77e5e0e](https://gitlab.com/datenknoten/freundebuch/-/commit/77e5e0e0ea2e8127beb94592af59a21fe83f1ede))
 
-## [2.8.1](https://github.com/enko/freundebuch2/compare/v2.8.0...v2.8.1) (2026-01-02)
+## [2.9.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.9.0...v2.9.1) (2026-01-02)
 
 ### Bug Fixes
 
-* **ci:** Skip git hooks during semantic-release ([e8c3761](https://github.com/enko/freundebuch2/commit/e8c3761f1a6cba0c2c5c61f23293c180d1c87d5b))
+* **carddav:** Pass original request URI to SabreDAV ([f8391ba](https://gitlab.com/datenknoten/freundebuch/-/commit/f8391baa5a021bcff41994b81a9c7b60b18fc836))
 
-## [2.8.0](https://github.com/enko/freundebuch2/compare/v2.7.0...v2.8.0) (2026-01-01)
+## [2.9.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.8.3...v2.9.0) (2026-01-02)
 
 ### Features
 
-* **all:** Add Sentry tunnel to proxy frontend requests through backend ([3639349](https://github.com/enko/freundebuch2/commit/3639349131eb1470f759a499b1c2e9af91756a46))
-* **all:** Integrate Sentry error tracking across all layers ([1da1bf1](https://github.com/enko/freundebuch2/commit/1da1bf192c304fa505a52dd74c92613f5bb881c6))
+* Add distributed tracing between frontend and backend via Sentry ([de209a9](https://gitlab.com/datenknoten/freundebuch/-/commit/de209a924d8dd5ac0f54b7fc65a7f51b6518b3e7))
+
+## [2.8.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.8.2...v2.8.3) (2026-01-02)
 
 ### Bug Fixes
 
-* **backend:** Fix flaky app-passwords test for passwordPrefix assertion ([380f1b8](https://github.com/enko/freundebuch2/commit/380f1b8d81968f6faa90ca0986b870268894ebc5))
-* **ci:** Pass Sentry env vars during frontend build ([7934434](https://github.com/enko/freundebuch2/commit/793443449e2bf1f54008fca8b5719292dbf2660c))
+* **frontend:** Remove +page.server.ts incompatible with static adapter ([2ae031d](https://gitlab.com/datenknoten/freundebuch/-/commit/2ae031d7f897b2aaa9bea2da0537046a37c0a7fa))
 
-## [2.7.0](https://github.com/enko/freundebuch2/compare/v2.6.1...v2.7.0) (2026-01-01)
+## [2.8.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.8.1...v2.8.2) (2026-01-02)
+
+### Bug Fixes
+
+* **frontend:** Add Sentry project slug to Vite config ([ff1b594](https://gitlab.com/datenknoten/freundebuch/-/commit/ff1b59421c118ea2befda0aa98caaa532140c9da))
+
+## [2.8.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.8.0...v2.8.1) (2026-01-02)
+
+### Bug Fixes
+
+* **ci:** Skip git hooks during semantic-release ([e8c3761](https://gitlab.com/datenknoten/freundebuch/-/commit/e8c3761f1a6cba0c2c5c61f23293c180d1c87d5b))
+
+## [2.8.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.7.0...v2.8.0) (2026-01-01)
 
 ### Features
 
-* **frontend:** Display app version in footer and mobile menu ([f3e4481](https://github.com/enko/freundebuch2/commit/f3e448166a465557d37a2ec30e2b8ebb6705ae8f))
-
-## [2.6.1](https://github.com/enko/freundebuch2/compare/v2.6.0...v2.6.1) (2026-01-01)
+* **all:** Add Sentry tunnel to proxy frontend requests through backend ([3639349](https://gitlab.com/datenknoten/freundebuch/-/commit/3639349131eb1470f759a499b1c2e9af91756a46))
+* **all:** Integrate Sentry error tracking across all layers ([1da1bf1](https://gitlab.com/datenknoten/freundebuch/-/commit/1da1bf192c304fa505a52dd74c92613f5bb881c6))
 
 ### Bug Fixes
 
-* **config:** Add --ignore-platform-reqs to composer install ([1fa4ff1](https://github.com/enko/freundebuch2/commit/1fa4ff1655b64dbc48c7c7cd7d62a4c893106fdc))
+* **backend:** Fix flaky app-passwords test for passwordPrefix assertion ([380f1b8](https://gitlab.com/datenknoten/freundebuch/-/commit/380f1b8d81968f6faa90ca0986b870268894ebc5))
+* **ci:** Pass Sentry env vars during frontend build ([7934434](https://gitlab.com/datenknoten/freundebuch/-/commit/793443449e2bf1f54008fca8b5719292dbf2660c))
 
-## [2.6.0](https://github.com/enko/freundebuch2/compare/v2.5.0...v2.6.0) (2026-01-01)
+## [2.7.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.6.1...v2.7.0) (2026-01-01)
 
 ### Features
 
-* **all:** Add SabreDAV CardDAV server ([dd3fd74](https://github.com/enko/freundebuch2/commit/dd3fd748d6ba457dcb81ba781902deea739aeea3))
-* **backend:** Add app password management API ([22c1452](https://github.com/enko/freundebuch2/commit/22c14524b420db6b87e025ff51f1b7329fd44ff3))
-* **config:** Add Docker development infrastructure for CardDAV ([466d4d0](https://github.com/enko/freundebuch2/commit/466d4d0a395068922e6a667a421df2c6ae6cdb4a))
-* **config:** Add production Docker config for CardDAV ([dfcf01a](https://github.com/enko/freundebuch2/commit/dfcf01a68a3ed527e04f989c1d88c0baeab3a73d))
-* **database:** Add CardDAV support schema ([97a8639](https://github.com/enko/freundebuch2/commit/97a86390ce88537cd0df1f1eac4391002f03fccd))
-* **frontend:** Add app password management UI ([0515a99](https://github.com/enko/freundebuch2/commit/0515a99a6446243aac7a56adce1f592da6e9e2d5))
+* **frontend:** Display app version in footer and mobile menu ([f3e4481](https://gitlab.com/datenknoten/freundebuch/-/commit/f3e448166a465557d37a2ec30e2b8ebb6705ae8f))
+
+## [2.6.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.6.0...v2.6.1) (2026-01-01)
 
 ### Bug Fixes
 
-* **all:** Address code review security and data integrity issues ([7cbeee2](https://github.com/enko/freundebuch2/commit/7cbeee2ff9bc51f951422e83d5895e8b8cf6e8be))
-* **backend:** Make password length assertion more flexible ([a74b23a](https://github.com/enko/freundebuch2/commit/a74b23a9559df3195bc1acf0a08b00c4b150a509))
-* **frontend:** Formating ([ca9b5ca](https://github.com/enko/freundebuch2/commit/ca9b5cab1a95ecd779862a4728eaa0213cf46b7f))
+* **config:** Add --ignore-platform-reqs to composer install ([1fa4ff1](https://gitlab.com/datenknoten/freundebuch/-/commit/1fa4ff1655b64dbc48c7c7cd7d62a4c893106fdc))
 
-## [2.5.0](https://github.com/enko/freundebuch2/compare/v2.4.0...v2.5.0) (2025-12-31)
+## [2.6.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.5.0...v2.6.0) (2026-01-01)
 
 ### Features
 
-* **frontend:** add cache buster for static assets ([c9cd0c9](https://github.com/enko/freundebuch2/commit/c9cd0c90d1eb5926647254ae2eecd9398ec8af89))
+* **all:** Add SabreDAV CardDAV server ([dd3fd74](https://gitlab.com/datenknoten/freundebuch/-/commit/dd3fd748d6ba457dcb81ba781902deea739aeea3))
+* **backend:** Add app password management API ([22c1452](https://gitlab.com/datenknoten/freundebuch/-/commit/22c14524b420db6b87e025ff51f1b7329fd44ff3))
+* **config:** Add Docker development infrastructure for CardDAV ([466d4d0](https://gitlab.com/datenknoten/freundebuch/-/commit/466d4d0a395068922e6a667a421df2c6ae6cdb4a))
+* **config:** Add production Docker config for CardDAV ([dfcf01a](https://gitlab.com/datenknoten/freundebuch/-/commit/dfcf01a68a3ed527e04f989c1d88c0baeab3a73d))
+* **database:** Add CardDAV support schema ([97a8639](https://gitlab.com/datenknoten/freundebuch/-/commit/97a86390ce88537cd0df1f1eac4391002f03fccd))
+* **frontend:** Add app password management UI ([0515a99](https://gitlab.com/datenknoten/freundebuch/-/commit/0515a99a6446243aac7a56adce1f592da6e9e2d5))
 
-## [2.4.0](https://github.com/enko/freundebuch2/compare/v2.3.2...v2.4.0) (2025-12-31)
+### Bug Fixes
+
+* **all:** Address code review security and data integrity issues ([7cbeee2](https://gitlab.com/datenknoten/freundebuch/-/commit/7cbeee2ff9bc51f951422e83d5895e8b8cf6e8be))
+* **backend:** Make password length assertion more flexible ([a74b23a](https://gitlab.com/datenknoten/freundebuch/-/commit/a74b23a9559df3195bc1acf0a08b00c4b150a509))
+* **frontend:** Formating ([ca9b5ca](https://gitlab.com/datenknoten/freundebuch/-/commit/ca9b5cab1a95ecd779862a4728eaa0213cf46b7f))
+
+## [2.5.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.4.0...v2.5.0) (2025-12-31)
 
 ### Features
 
-* **all:** Add nickname field to contact model ([2652393](https://github.com/enko/freundebuch2/commit/2652393dbf5aa6f943bcdd0b6d5c299a4ab07817))
+* **frontend:** add cache buster for static assets ([c9cd0c9](https://gitlab.com/datenknoten/freundebuch/-/commit/c9cd0c90d1eb5926647254ae2eecd9398ec8af89))
 
-## [2.3.2](https://github.com/enko/freundebuch2/compare/v2.3.1...v2.3.2) (2025-12-30)
-
-### Bug Fixes
-
-* **navbar:** make navbar fixed at top for mobile and desktop ([d87293c](https://github.com/enko/freundebuch2/commit/d87293ca1a9e8ac4a62026676a087233cf53b9ff))
-
-## [2.3.1](https://github.com/enko/freundebuch2/compare/v2.3.0...v2.3.1) (2025-12-30)
-
-### Bug Fixes
-
-* **ci:** make attestation steps conditional on public visibility ([d29f8fb](https://github.com/enko/freundebuch2/commit/d29f8fb9874879af379dd5afe60a936d59a78ba6))
-* **mobile:** lock viewport and prevent horizontal overflow ([b82148b](https://github.com/enko/freundebuch2/commit/b82148bbe422e932b9b39eb3228f384d02bd584c))
-
-## [2.3.1](https://github.com/enko/freundebuch2/compare/v2.3.0...v2.3.1) (2025-12-30)
-
-### Bug Fixes
-
-* **ci:** make attestation steps conditional on public visibility ([d29f8fb](https://github.com/enko/freundebuch2/commit/d29f8fb9874879af379dd5afe60a936d59a78ba6))
-
-## [2.3.0](https://github.com/enko/freundebuch2/compare/v2.2.2...v2.3.0) (2025-12-30)
+## [2.4.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.3.2...v2.4.0) (2025-12-31)
 
 ### Features
 
-* **ci:** Add supply chain protection with provenance attestations ([d0d193e](https://github.com/enko/freundebuch2/commit/d0d193e7731cb3532da538a973234f45ad17aa71))
+* **all:** Add nickname field to contact model ([2652393](https://gitlab.com/datenknoten/freundebuch/-/commit/2652393dbf5aa6f943bcdd0b6d5c299a4ab07817))
 
-## [2.2.2](https://github.com/enko/freundebuch2/compare/v2.2.1...v2.2.2) (2025-12-30)
+## [2.3.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.3.1...v2.3.2) (2025-12-30)
+
+### Bug Fixes
+
+* **navbar:** make navbar fixed at top for mobile and desktop ([d87293c](https://gitlab.com/datenknoten/freundebuch/-/commit/d87293ca1a9e8ac4a62026676a087233cf53b9ff))
+
+## [2.3.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.3.0...v2.3.1) (2025-12-30)
+
+### Bug Fixes
+
+* **ci:** make attestation steps conditional on public visibility ([d29f8fb](https://gitlab.com/datenknoten/freundebuch/-/commit/d29f8fb9874879af379dd5afe60a936d59a78ba6))
+* **mobile:** lock viewport and prevent horizontal overflow ([b82148b](https://gitlab.com/datenknoten/freundebuch/-/commit/b82148bbe422e932b9b39eb3228f384d02bd584c))
+
+## [2.3.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.3.0...v2.3.1) (2025-12-30)
+
+### Bug Fixes
+
+* **ci:** make attestation steps conditional on public visibility ([d29f8fb](https://gitlab.com/datenknoten/freundebuch/-/commit/d29f8fb9874879af379dd5afe60a936d59a78ba6))
+
+## [2.3.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.2.2...v2.3.0) (2025-12-30)
+
+### Features
+
+* **ci:** Add supply chain protection with provenance attestations ([d0d193e](https://gitlab.com/datenknoten/freundebuch/-/commit/d0d193e7731cb3532da538a973234f45ad17aa71))
+
+## [2.2.2](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.2.1...v2.2.2) (2025-12-30)
 
 ### Code Refactoring
 
-* **ci:** replace ssh-action with script-based deployment ([af052e1](https://github.com/enko/freundebuch2/commit/af052e137f242204b551c6271c6882d9b894b3a0))
+* **ci:** replace ssh-action with script-based deployment ([af052e1](https://gitlab.com/datenknoten/freundebuch/-/commit/af052e137f242204b551c6271c6882d9b894b3a0))
 
-## [2.2.1](https://github.com/enko/freundebuch2/compare/v2.2.0...v2.2.1) (2025-12-30)
+## [2.2.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.2.0...v2.2.1) (2025-12-30)
 
 ### Bug Fixes
 
-* **all:** Trigger build ([da47bab](https://github.com/enko/freundebuch2/commit/da47babdb1988b5eba092bc9d31fb650c6516d82))
+* **all:** Trigger build ([da47bab](https://gitlab.com/datenknoten/freundebuch/-/commit/da47babdb1988b5eba092bc9d31fb650c6516d82))
 
-## [2.2.0](https://github.com/enko/freundebuch2/compare/v2.1.0...v2.2.0) (2025-12-30)
+## [2.2.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.1.0...v2.2.0) (2025-12-30)
 
 ### Features
 
-* **ci:** Add automated deployment to production server ([246232b](https://github.com/enko/freundebuch2/commit/246232be03cc0b2902f5e9918089ad974e3c8daf))
+* **ci:** Add automated deployment to production server ([246232b](https://gitlab.com/datenknoten/freundebuch/-/commit/246232be03cc0b2902f5e9918089ad974e3c8daf))
 
 ### Bug Fixes
 
-* **ci:** Address code review issues for deployment script ([0b9b858](https://github.com/enko/freundebuch2/commit/0b9b858e42aeaf9c9de204e0a10a389be098c982))
+* **ci:** Address code review issues for deployment script ([0b9b858](https://gitlab.com/datenknoten/freundebuch/-/commit/0b9b858e42aeaf9c9de204e0a10a389be098c982))
 
-## [2.1.0](https://github.com/enko/freundebuch2/compare/v2.0.0...v2.1.0) (2025-12-30)
+## [2.1.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v2.0.0...v2.1.0) (2025-12-30)
 
 ### Features
 
-* **frontend:** Add mobile-friendly hamburger menu to navbar ([d1286c2](https://github.com/enko/freundebuch2/commit/d1286c216094f08ee5c23322f2cea59e086ed79e))
+* **frontend:** Add mobile-friendly hamburger menu to navbar ([d1286c2](https://gitlab.com/datenknoten/freundebuch/-/commit/d1286c216094f08ee5c23322f2cea59e086ed79e))
 
 ### Bug Fixes
 
-* **frontend:** Address code review issues in mobile navbar ([4c155d1](https://github.com/enko/freundebuch2/commit/4c155d1aa2311509e0010062ca17048afa1d81e7))
+* **frontend:** Address code review issues in mobile navbar ([4c155d1](https://gitlab.com/datenknoten/freundebuch/-/commit/4c155d1aa2311509e0010062ca17048afa1d81e7))
 
-## [2.0.0](https://github.com/enko/freundebuch2/compare/v1.1.1...v2.0.0) (2025-12-29)
+## [2.0.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v1.1.1...v2.0.0) (2025-12-29)
 
 ### ⚠ BREAKING CHANGES
 
@@ -1898,86 +1898,86 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 ### Features
 
-* **docs:** Add Epic 13 for self-service friend pages ([43c0ac1](https://github.com/enko/freundebuch2/commit/43c0ac1caea105b036fe215d67b53939eaa1e8e3))
-* **frontend:** Rebrand UI from Personal CRM to Freundebuch ([dd3c1a0](https://github.com/enko/freundebuch2/commit/dd3c1a0a03785c70951db4de59e17db2f74b9db8))
+* **docs:** Add Epic 13 for self-service friend pages ([43c0ac1](https://gitlab.com/datenknoten/freundebuch/-/commit/43c0ac1caea105b036fe215d67b53939eaa1e8e3))
+* **frontend:** Rebrand UI from Personal CRM to Freundebuch ([dd3c1a0](https://gitlab.com/datenknoten/freundebuch/-/commit/dd3c1a0a03785c70951db4de59e17db2f74b9db8))
 
 ### Miscellaneous Chores
 
-* **config:** Rename database from personal_crm to freundebuch ([cbac65b](https://github.com/enko/freundebuch2/commit/cbac65beb94f760ae645b08fd4d3398895660695))
+* **config:** Rename database from personal_crm to freundebuch ([cbac65b](https://gitlab.com/datenknoten/freundebuch/-/commit/cbac65beb94f760ae645b08fd4d3398895660695))
 
-## [1.1.1](https://github.com/enko/freundebuch2/compare/v1.1.0...v1.1.1) (2025-12-29)
+## [1.1.1](https://gitlab.com/datenknoten/freundebuch/-/compare/v1.1.0...v1.1.1) (2025-12-29)
 
 ### Bug Fixes
 
-* **backend:** Fix TypeScript build output structure ([67833da](https://github.com/enko/freundebuch2/commit/67833da0bd2a31d167a17c1826023a222c85da3e))
+* **backend:** Fix TypeScript build output structure ([67833da](https://gitlab.com/datenknoten/freundebuch/-/commit/67833da0bd2a31d167a17c1826023a222c85da3e))
 
-## [1.1.0](https://github.com/enko/freundebuch2/compare/v1.0.0...v1.1.0) (2025-12-29)
+## [1.1.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v1.0.0...v1.1.0) (2025-12-29)
 
 ### Features
 
-* **database:** Add production-ready migration workflow ([6e0599a](https://github.com/enko/freundebuch2/commit/6e0599a7b6eaaa87ff9e32816f2d724cf4eb0ef8))
+* **database:** Add production-ready migration workflow ([6e0599a](https://gitlab.com/datenknoten/freundebuch/-/commit/6e0599a7b6eaaa87ff9e32816f2d724cf4eb0ef8))
 
 ## 1.0.0 (2025-12-29)
 
 ### Features
 
-* Add Docker production deployment infrastructure ([d468411](https://github.com/enko/freundebuch2/commit/d468411391f0756963075c02db5318308d56d898))
-* Add Render.com deployment configuration ([0d12919](https://github.com/enko/freundebuch2/commit/0d129194587833d11b7faebe1c340ca0e13718cc))
-* Add semantic-release automation for versioning and releases ([84ca6f2](https://github.com/enko/freundebuch2/commit/84ca6f266b4946653c0e40324a4d7a9e6fcb9e4f))
-* **all:** Implement basic setup ([ee4f0e7](https://github.com/enko/freundebuch2/commit/ee4f0e778f5b65830c9296ba9bbaabc9321b3fe4)), closes [#2](https://github.com/enko/freundebuch2/issues/2)
-* **backend:** Add cleanup scheduler for expired tokens and sessions ([bd42b07](https://github.com/enko/freundebuch2/commit/bd42b07e9c411d3782ca45f9a4a7e13b122da311))
-* **backend:** Add contacts API with CRUD operations and photo upload ([4f2a567](https://github.com/enko/freundebuch2/commit/4f2a56768418f30e286c195ba62a8d253da7a6c8))
-* **backend:** Add cookie-based auth for browser image requests ([5d72c2b](https://github.com/enko/freundebuch2/commit/5d72c2bd6d10f4b7674501c9fbfc9c9a4c68c8d4))
-* **backend:** Add Epic 1B routes and service methods ([930be4c](https://github.com/enko/freundebuch2/commit/930be4cc48d5bf7a9ad4c0d42f7771910c30209b))
-* **backend:** Add Epic 1D database migration and queries ([8a9d3ae](https://github.com/enko/freundebuch2/commit/8a9d3ae3d8ea295097cd7699da0f4977421997a5))
-* **backend:** Add Epic 1D relationship routes and service ([c12e9fc](https://github.com/enko/freundebuch2/commit/c12e9fcaa6cda2b61d0825722eb2f4a5eea97cdb))
-* **backend:** Add PgTyped queries for Epic 1B extended fields ([ee5295d](https://github.com/enko/freundebuch2/commit/ee5295d23af1fabb75987ed86eb1404d82b99d43))
-* **backend:** Add photo serving endpoint and rate limiting ([7ad5657](https://github.com/enko/freundebuch2/commit/7ad565700647d1e1330ae3b70a357a59e6e5dea8))
-* **backend:** Add rate limiting to auth endpoints ([cae6a2e](https://github.com/enko/freundebuch2/commit/cae6a2ec8ffe5176a5f3ce72d018d98f51fd11e7))
-* **contacts:** Add database schema and shared types for Epic 1A ([4c690bd](https://github.com/enko/freundebuch2/commit/4c690bd1a92067591290d76da7bd8efe37bc5d30))
-* **database:** Add Epic 1B extended contact fields schema ([ebf7590](https://github.com/enko/freundebuch2/commit/ebf75905d4bd4b77842f6b7b73683de95d52f46f))
-* **database:** Move contacts tables to dedicated schema ([ffc7db2](https://github.com/enko/freundebuch2/commit/ffc7db27d8b9d1f8d3a7cd0c6aafcf5277168687))
-* **frontend:** Add contacts UI with CRUD operations ([b16852f](https://github.com/enko/freundebuch2/commit/b16852fe681e89698212b1ece9b97f4aaddf81d6))
-* **frontend:** Add Epic 1B API client and store methods ([41d6d1a](https://github.com/enko/freundebuch2/commit/41d6d1a5066e905e7f8f2d3add5dc5f5546f80a4))
-* **frontend:** Add Epic 1B UI components for extended contact fields ([73c653a](https://github.com/enko/freundebuch2/commit/73c653a1f42e28b8e4f80de080c0a542ceb41299))
-* **frontend:** Add Epic 1D API client and store methods ([eedc445](https://github.com/enko/freundebuch2/commit/eedc4450d92f381c03f15f234c026beb2e7ab97c))
-* **frontend:** Add Epic 1D UI components for relationships ([84df10d](https://github.com/enko/freundebuch2/commit/84df10d3e546765ac78a14766bd5b6c9cac196cf))
-* **frontend:** Add keyboard shortcuts and quick actions ([b35867c](https://github.com/enko/freundebuch2/commit/b35867c74fc4c5e71ff561b80a1e05dffeecb278))
-* **frontend:** Add page titles to all routes ([482cb8c](https://github.com/enko/freundebuch2/commit/482cb8cb0d967b8651cdf760cf5ed9902036ca48))
-* **frontend:** Add photo upload to contact form ([5020837](https://github.com/enko/freundebuch2/commit/50208376880c6b5f29a433a4ddf294a21bf09677))
-* **frontend:** Switch to static adapter for single-domain deployment ([83e660e](https://github.com/enko/freundebuch2/commit/83e660ead613596f2579dbcbe7458e7b3c97ce75))
-* implement authentication ([5771cc6](https://github.com/enko/freundebuch2/commit/5771cc679f3722cfded482ac78a02a7eb9c4d4db)), closes [#7](https://github.com/enko/freundebuch2/issues/7)
-* Remove Render.com deployment configuration ([3f01e40](https://github.com/enko/freundebuch2/commit/3f01e401e1524515e7b45d1e9fcc0f53827182fd))
-* **shared:** Add Epic 1B extended contact field types ([1085f0a](https://github.com/enko/freundebuch2/commit/1085f0a65f4bd87eb334a2a0d18c71092e360f72))
-* **shared:** Add Epic 1D relationship types and schemas ([2e5477e](https://github.com/enko/freundebuch2/commit/2e5477e32974859cbd1ead1859519f01b43cd574))
-* **shared:** Add photo validation schemas and types ([bb22d46](https://github.com/enko/freundebuch2/commit/bb22d463d1027a910687aa56fa96abc03cf068bc))
-* **shared:** Add primary field validation to contact schema ([2319b04](https://github.com/enko/freundebuch2/commit/2319b04de02553a179d56235267e370dd7940ec4))
-* **shared:** Improve input validation with proper validators ([6579611](https://github.com/enko/freundebuch2/commit/6579611eda6dfbca0d40d39ef38ccbfad8156dfc))
-* update claude code review prompt ([fa57659](https://github.com/enko/freundebuch2/commit/fa57659b45b866c28486a583afdab29c86875c82))
-* update claude code review prompt ([8fe3869](https://github.com/enko/freundebuch2/commit/8fe3869aa8830a774fb7fe01129cc53949edd7cd))
+* Add Docker production deployment infrastructure ([d468411](https://gitlab.com/datenknoten/freundebuch/-/commit/d468411391f0756963075c02db5318308d56d898))
+* Add Render.com deployment configuration ([0d12919](https://gitlab.com/datenknoten/freundebuch/-/commit/0d129194587833d11b7faebe1c340ca0e13718cc))
+* Add semantic-release automation for versioning and releases ([84ca6f2](https://gitlab.com/datenknoten/freundebuch/-/commit/84ca6f266b4946653c0e40324a4d7a9e6fcb9e4f))
+* **all:** Implement basic setup ([ee4f0e7](https://gitlab.com/datenknoten/freundebuch/-/commit/ee4f0e778f5b65830c9296ba9bbaabc9321b3fe4)), closes [#2](https://github.com/enko/freundebuch2/issues/2)
+* **backend:** Add cleanup scheduler for expired tokens and sessions ([bd42b07](https://gitlab.com/datenknoten/freundebuch/-/commit/bd42b07e9c411d3782ca45f9a4a7e13b122da311))
+* **backend:** Add contacts API with CRUD operations and photo upload ([4f2a567](https://gitlab.com/datenknoten/freundebuch/-/commit/4f2a56768418f30e286c195ba62a8d253da7a6c8))
+* **backend:** Add cookie-based auth for browser image requests ([5d72c2b](https://gitlab.com/datenknoten/freundebuch/-/commit/5d72c2bd6d10f4b7674501c9fbfc9c9a4c68c8d4))
+* **backend:** Add Epic 1B routes and service methods ([930be4c](https://gitlab.com/datenknoten/freundebuch/-/commit/930be4cc48d5bf7a9ad4c0d42f7771910c30209b))
+* **backend:** Add Epic 1D database migration and queries ([8a9d3ae](https://gitlab.com/datenknoten/freundebuch/-/commit/8a9d3ae3d8ea295097cd7699da0f4977421997a5))
+* **backend:** Add Epic 1D relationship routes and service ([c12e9fc](https://gitlab.com/datenknoten/freundebuch/-/commit/c12e9fcaa6cda2b61d0825722eb2f4a5eea97cdb))
+* **backend:** Add PgTyped queries for Epic 1B extended fields ([ee5295d](https://gitlab.com/datenknoten/freundebuch/-/commit/ee5295d23af1fabb75987ed86eb1404d82b99d43))
+* **backend:** Add photo serving endpoint and rate limiting ([7ad5657](https://gitlab.com/datenknoten/freundebuch/-/commit/7ad565700647d1e1330ae3b70a357a59e6e5dea8))
+* **backend:** Add rate limiting to auth endpoints ([cae6a2e](https://gitlab.com/datenknoten/freundebuch/-/commit/cae6a2ec8ffe5176a5f3ce72d018d98f51fd11e7))
+* **contacts:** Add database schema and shared types for Epic 1A ([4c690bd](https://gitlab.com/datenknoten/freundebuch/-/commit/4c690bd1a92067591290d76da7bd8efe37bc5d30))
+* **database:** Add Epic 1B extended contact fields schema ([ebf7590](https://gitlab.com/datenknoten/freundebuch/-/commit/ebf75905d4bd4b77842f6b7b73683de95d52f46f))
+* **database:** Move contacts tables to dedicated schema ([ffc7db2](https://gitlab.com/datenknoten/freundebuch/-/commit/ffc7db27d8b9d1f8d3a7cd0c6aafcf5277168687))
+* **frontend:** Add contacts UI with CRUD operations ([b16852f](https://gitlab.com/datenknoten/freundebuch/-/commit/b16852fe681e89698212b1ece9b97f4aaddf81d6))
+* **frontend:** Add Epic 1B API client and store methods ([41d6d1a](https://gitlab.com/datenknoten/freundebuch/-/commit/41d6d1a5066e905e7f8f2d3add5dc5f5546f80a4))
+* **frontend:** Add Epic 1B UI components for extended contact fields ([73c653a](https://gitlab.com/datenknoten/freundebuch/-/commit/73c653a1f42e28b8e4f80de080c0a542ceb41299))
+* **frontend:** Add Epic 1D API client and store methods ([eedc445](https://gitlab.com/datenknoten/freundebuch/-/commit/eedc4450d92f381c03f15f234c026beb2e7ab97c))
+* **frontend:** Add Epic 1D UI components for relationships ([84df10d](https://gitlab.com/datenknoten/freundebuch/-/commit/84df10d3e546765ac78a14766bd5b6c9cac196cf))
+* **frontend:** Add keyboard shortcuts and quick actions ([b35867c](https://gitlab.com/datenknoten/freundebuch/-/commit/b35867c74fc4c5e71ff561b80a1e05dffeecb278))
+* **frontend:** Add page titles to all routes ([482cb8c](https://gitlab.com/datenknoten/freundebuch/-/commit/482cb8cb0d967b8651cdf760cf5ed9902036ca48))
+* **frontend:** Add photo upload to contact form ([5020837](https://gitlab.com/datenknoten/freundebuch/-/commit/50208376880c6b5f29a433a4ddf294a21bf09677))
+* **frontend:** Switch to static adapter for single-domain deployment ([83e660e](https://gitlab.com/datenknoten/freundebuch/-/commit/83e660ead613596f2579dbcbe7458e7b3c97ce75))
+* implement authentication ([5771cc6](https://gitlab.com/datenknoten/freundebuch/-/commit/5771cc679f3722cfded482ac78a02a7eb9c4d4db)), closes [#7](https://github.com/enko/freundebuch2/issues/7)
+* Remove Render.com deployment configuration ([3f01e40](https://gitlab.com/datenknoten/freundebuch/-/commit/3f01e401e1524515e7b45d1e9fcc0f53827182fd))
+* **shared:** Add Epic 1B extended contact field types ([1085f0a](https://gitlab.com/datenknoten/freundebuch/-/commit/1085f0a65f4bd87eb334a2a0d18c71092e360f72))
+* **shared:** Add Epic 1D relationship types and schemas ([2e5477e](https://gitlab.com/datenknoten/freundebuch/-/commit/2e5477e32974859cbd1ead1859519f01b43cd574))
+* **shared:** Add photo validation schemas and types ([bb22d46](https://gitlab.com/datenknoten/freundebuch/-/commit/bb22d463d1027a910687aa56fa96abc03cf068bc))
+* **shared:** Add primary field validation to contact schema ([2319b04](https://gitlab.com/datenknoten/freundebuch/-/commit/2319b04de02553a179d56235267e370dd7940ec4))
+* **shared:** Improve input validation with proper validators ([6579611](https://gitlab.com/datenknoten/freundebuch/-/commit/6579611eda6dfbca0d40d39ef38ccbfad8156dfc))
+* update claude code review prompt ([fa57659](https://gitlab.com/datenknoten/freundebuch/-/commit/fa57659b45b866c28486a583afdab29c86875c82))
+* update claude code review prompt ([8fe3869](https://gitlab.com/datenknoten/freundebuch/-/commit/8fe3869aa8830a774fb7fe01129cc53949edd7cd))
 
 ### Bug Fixes
 
-* **backend:** Add path traversal protection to file upload routes ([5144fb0](https://github.com/enko/freundebuch2/commit/5144fb0d7459645a798d3ec96addefed63d505aa))
-* **backend:** Add UUID validation and photo cleanup for contact routes ([068e664](https://github.com/enko/freundebuch2/commit/068e6649e74fd80466eba67b96769ac22a8253b2))
-* **backend:** Exclude dist directory from test runner ([5f94876](https://github.com/enko/freundebuch2/commit/5f94876b1b0b4919fc063e875dace460bd807d0f))
-* **backend:** Improve type safety and fix photo upload race condition ([eb7429e](https://github.com/enko/freundebuch2/commit/eb7429e02c5e5f0703356065f21f1343ac761c70))
-* **backend:** Prevent password reset token exposure in production ([dd7dd5a](https://github.com/enko/freundebuch2/commit/dd7dd5ac027cb0091e8518fee1099548b75ef621))
-* **backend:** Set Cross-Origin-Resource-Policy to cross-origin globally ([3ac062d](https://github.com/enko/freundebuch2/commit/3ac062d1f9bf744f2f9279077fec0b3248030a68))
-* **backend:** Update tests for BACKEND_URL configuration ([5da4c07](https://github.com/enko/freundebuch2/commit/5da4c0798c84759404e6f6c1f816a3ac3b49b057))
-* **build:** Fix build errors in backend and frontend ([8381ad0](https://github.com/enko/freundebuch2/commit/8381ad0b14370242df3285af22c96f3fccccddbf))
-* **config:** Add node_modules volumes for Docker development ([aee95dc](https://github.com/enko/freundebuch2/commit/aee95dc970d9eae3fb64aa197f1f5c2a89173681))
-* **config:** Allow semantic-release commits in commitlint ([74745b6](https://github.com/enko/freundebuch2/commit/74745b60745608f32af8d0154c416cc38b7e3bd5))
-* **config:** Build shared package before other workspaces ([5a90096](https://github.com/enko/freundebuch2/commit/5a9009609b849d51aaf5cb7bbb14c073b758f43e))
-* **frontend:** Fix $shared alias to point to compiled dist ([6343359](https://github.com/enko/freundebuch2/commit/634335982f27aea967d84898e88274b21cb2699a))
-* **frontend:** Improve contacts UI and fix auth initialization ([d814e82](https://github.com/enko/freundebuch2/commit/d814e820e6482224917f8304d3b07eae7075fc8f))
-* **frontend:** Properly update existing dates and social profiles ([3e19dfa](https://github.com/enko/freundebuch2/commit/3e19dfa8ddd0685a55acc6a3e3557d2ac9cb13cb))
-* **shared:** Allow social profiles with only username ([d9c3439](https://github.com/enko/freundebuch2/commit/d9c3439623496723a96d8dcbdb86689455acb443))
+* **backend:** Add path traversal protection to file upload routes ([5144fb0](https://gitlab.com/datenknoten/freundebuch/-/commit/5144fb0d7459645a798d3ec96addefed63d505aa))
+* **backend:** Add UUID validation and photo cleanup for contact routes ([068e664](https://gitlab.com/datenknoten/freundebuch/-/commit/068e6649e74fd80466eba67b96769ac22a8253b2))
+* **backend:** Exclude dist directory from test runner ([5f94876](https://gitlab.com/datenknoten/freundebuch/-/commit/5f94876b1b0b4919fc063e875dace460bd807d0f))
+* **backend:** Improve type safety and fix photo upload race condition ([eb7429e](https://gitlab.com/datenknoten/freundebuch/-/commit/eb7429e02c5e5f0703356065f21f1343ac761c70))
+* **backend:** Prevent password reset token exposure in production ([dd7dd5a](https://gitlab.com/datenknoten/freundebuch/-/commit/dd7dd5ac027cb0091e8518fee1099548b75ef621))
+* **backend:** Set Cross-Origin-Resource-Policy to cross-origin globally ([3ac062d](https://gitlab.com/datenknoten/freundebuch/-/commit/3ac062d1f9bf744f2f9279077fec0b3248030a68))
+* **backend:** Update tests for BACKEND_URL configuration ([5da4c07](https://gitlab.com/datenknoten/freundebuch/-/commit/5da4c0798c84759404e6f6c1f816a3ac3b49b057))
+* **build:** Fix build errors in backend and frontend ([8381ad0](https://gitlab.com/datenknoten/freundebuch/-/commit/8381ad0b14370242df3285af22c96f3fccccddbf))
+* **config:** Add node_modules volumes for Docker development ([aee95dc](https://gitlab.com/datenknoten/freundebuch/-/commit/aee95dc970d9eae3fb64aa197f1f5c2a89173681))
+* **config:** Allow semantic-release commits in commitlint ([74745b6](https://gitlab.com/datenknoten/freundebuch/-/commit/74745b60745608f32af8d0154c416cc38b7e3bd5))
+* **config:** Build shared package before other workspaces ([5a90096](https://gitlab.com/datenknoten/freundebuch/-/commit/5a9009609b849d51aaf5cb7bbb14c073b758f43e))
+* **frontend:** Fix $shared alias to point to compiled dist ([6343359](https://gitlab.com/datenknoten/freundebuch/-/commit/634335982f27aea967d84898e88274b21cb2699a))
+* **frontend:** Improve contacts UI and fix auth initialization ([d814e82](https://gitlab.com/datenknoten/freundebuch/-/commit/d814e820e6482224917f8304d3b07eae7075fc8f))
+* **frontend:** Properly update existing dates and social profiles ([3e19dfa](https://gitlab.com/datenknoten/freundebuch/-/commit/3e19dfa8ddd0685a55acc6a3e3557d2ac9cb13cb))
+* **shared:** Allow social profiles with only username ([d9c3439](https://gitlab.com/datenknoten/freundebuch/-/commit/d9c3439623496723a96d8dcbdb86689455acb443))
 
 ### Performance Improvements
 
-* **backend:** Optimize contact queries to reduce database round-trips ([a050c21](https://github.com/enko/freundebuch2/commit/a050c21329fff1ccb35decdf2f309c913986d681))
+* **backend:** Optimize contact queries to reduce database round-trips ([a050c21](https://gitlab.com/datenknoten/freundebuch/-/commit/a050c21329fff1ccb35decdf2f309c913986d681))
 
 ### Code Refactoring
 
-* **backend:** Centralize session and cookie configuration ([a542c0c](https://github.com/enko/freundebuch2/commit/a542c0c83f5a9bd23edac59595124fa251693963))
+* **backend:** Centralize session and cookie configuration ([a542c0c](https://gitlab.com/datenknoten/freundebuch/-/commit/a542c0c83f5a9bd23edac59595124fa251693963))

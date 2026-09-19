@@ -191,7 +191,7 @@ Never force-push to `main`.
 
 ## Automated Releases
 
-semantic-release runs on every push to `main`. It scans the commit history since the last release, generates a version bump, creates a git tag, and publishes a changelog. The `chore(release): <version>` commits you see in the log are created by this process - do not create them manually.
+semantic-release runs in the `release` job of the `main` pipeline on GitLab. It scans the commit history since the last release, works out the version bump, creates the tag and the CHANGELOG entry, and publishes a GitLab release with the frontend tarball attached. The release job then triggers the tag pipeline that builds, signs and publishes the images. Deploying a release to a server is a separate, manual step — CI has no access to any host. The `chore(release): <version>` commits you see in the log are created by this process - do not create them manually.
 
 Because semantic-release reads your commits to build release notes, the quality of your commit messages directly determines the quality of the release. This is the main reason we care about clean, well-scoped conventional commits.
 

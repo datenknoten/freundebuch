@@ -3,7 +3,7 @@
 **Status:** Partial (6A Done, 6B Planned)
 **Phase:** Integration & Polish (Phase 3)
 **Priority:** High
-**GitHub Issue:** [#8](https://github.com/enko/freundebuch2/issues/8)
+**Issue:** none (GitHub issue #8 retired with the move to GitLab)
 
 ## Overview
 

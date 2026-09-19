@@ -3,7 +3,7 @@
 **Status:** Done
 **Phase:** MVP (Phase 1)
 **Priority:** Critical
-**GitHub Issue:** [#3](https://github.com/enko/freundebuch2/issues/3)
+**Issue:** none (GitHub issue #3 retired with the move to GitLab)
 
 ## Overview
 

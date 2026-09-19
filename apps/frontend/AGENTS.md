@@ -126,7 +126,7 @@ vi.mock('$lib/i18n/index.js', () => ({
   bundle text. An echo mock cannot catch a hard-coded English literal; this
   can.
 
-Coverage is reported per PR at an 80% threshold — see [docs/development.md](../../docs/development.md#coverage-reporting).
+Coverage is reported per MR at an 80% threshold — see [docs/development.md](../../docs/development.md#coverage-reporting).
 
 ## Internationalization (i18n)
 

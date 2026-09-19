@@ -28,15 +28,15 @@ Each workspace has its own AGENTS.md with specific guidance:
 - [apps/backend/AGENTS.md](apps/backend/AGENTS.md) - Hono, routes, database, auth
 - [packages/shared/AGENTS.md](packages/shared/AGENTS.md) - Types, schemas, utilities
 
-## GitHub
+## GitLab
 
-Use the `gh` CLI to interact with issues and PRs:
+Use the `glab` CLI to interact with issues and merge requests:
 
 ```bash
-gh issue list                 # List open issues
-gh issue view <number>        # View issue details
-gh pr list                    # List open PRs
-gh pr view <number>           # View PR details
+glab issue list               # List open issues
+glab issue view <number>      # View issue details
+glab mr list                  # List open merge requests
+glab mr view <number>         # View merge request details
 ```
 
 ## Quick Commands
@@ -89,7 +89,7 @@ There is no per-app build step in the pre-commit hook; full builds run on pre-pu
 
 ### Code Quality
 - Biome for linting and formatting
-- Test coverage target: >80% (gated on PRs via danger-plugin-coverage)
+- Test coverage target: >80% (gated on MRs via danger-plugin-coverage)
 - All tests must pass before merging
 - Prefer explicit conditionals over truthiness coercion on non-boolean values
   (e.g. `x === undefined`, `arr.length === 0`, not bare `!x`) — see

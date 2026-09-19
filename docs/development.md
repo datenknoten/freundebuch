@@ -8,7 +8,7 @@ This project follows **trunk-based development**:
 - Use **feature flags** to hide incomplete features in production
 - Keep commits small and focused - integrate multiple times per day
 - All code on `main` must be deployable (even if features are hidden behind flags)
-- CI runs on every commit to `main`
+- CI runs on every merge request and every commit to `main` (GitLab CI, `.gitlab-ci.yml`)
 
 ## Toolchain
 
@@ -144,10 +144,10 @@ Single tool for linting and formatting (replaces ESLint + Prettier):
 
 ### Coverage reporting
 
-Coverage is reported per pull request rather than enforced per workspace: CI runs the tests with coverage, and a [Danger](https://danger.systems) rule (`packages/danger/src/rules/coverage.ts`) comments on the PR with the coverage of the files it changed, at an 80% threshold.
+Coverage is reported per merge request rather than enforced per workspace: CI runs the tests with coverage, and a [Danger](https://danger.systems) rule (`packages/danger/src/rules/coverage.ts`) comments on the MR with the coverage of the files it changed, at an 80% threshold.
 
 It is **report-only** today — files below threshold are marked but the build still passes. The gate becomes blocking once the frontend baseline clears 80%. See [ADR 0002](./decisions/0002-pr-coverage-via-danger.md).
 
-Both workspaces produce a report: the frontend one in the `danger` job, the backend one in the `backend-coverage` job (the whole suite, integration included), ferried into `danger` as an artifact.
+Both workspaces produce a report: both clover reports are produced by the `checks` job and handed to `danger` as a job artifact.
 
 Frontend tests share the helpers in `apps/frontend/src/lib/test/` (render helpers, store harness, fetch mock, fixtures) — see [apps/frontend/AGENTS.md](../apps/frontend/AGENTS.md).

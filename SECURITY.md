@@ -40,4 +40,4 @@ The following are in scope for security reports:
 
 ## Dependency Management
 
-Dependencies are pinned to exact versions and monitored by [Renovate](https://docs.renovatebot.com/) with vulnerability alerts enabled. Security-related dependency updates are labeled and prioritized.
+Dependencies are pinned to exact versions and monitored by a self-hosted [Renovate](https://docs.renovatebot.com/) runner with OSV vulnerability alerts enabled. Security-related dependency updates are labeled and prioritized.

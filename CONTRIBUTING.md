@@ -4,7 +4,7 @@ Thanks for your interest in contributing to Freundebuch! This guide covers every
 
 ## Creating Issues
 
-Before opening an issue, please search existing issues to avoid duplicates.
+Issues live in the GitLab issue tracker: <https://gitlab.com/datenknoten/freundebuch/-/issues>. Before opening one, please search existing issues to avoid duplicates.
 
 ### Bug Reports
 
@@ -30,7 +30,7 @@ Use the project's domain language in issues and discussions:
 - **Circle** (not "Group")
 - **Collective** (not "Organization")
 
-## Pull Request Workflow
+## Merge Request Workflow
 
 Freundebuch follows a **trunk-based development** model. Keep branches short-lived and changes small.
 
@@ -41,8 +41,8 @@ Freundebuch follows a **trunk-based development** model. Keep branches short-liv
 # plus mise (https://mise.jdx.dev). mise installs node, aube, hk, and pkl
 # at the versions pinned in mise.toml.
 
-git clone <repo-url>
-cd freundebuch2
+git clone git@gitlab.com:datenknoten/freundebuch.git
+cd freundebuch
 mise install        # installs all pinned tools and registers git hooks via hk
 aube install        # installs JS dependencies (reads pnpm-lock.yaml)
 
@@ -79,7 +79,7 @@ aube type-check     # TypeScript
 aube test           # All tests
 ```
 
-### 4. Open a Pull Request
+### 4. Open a Merge Request
 
 - Target the `main` branch
 - Write a clear title following commit conventions
@@ -88,22 +88,26 @@ aube test           # All tests
 
 ### 5. CI Checks
 
-Every PR runs these checks automatically:
+Every merge request runs these GitLab CI jobs automatically:
 
-| Check | Command | What It Verifies |
-|-------|---------|-------------------|
-| Lint & Format | `aube check` | Biome rules pass |
-| Type Check | `aube type-check` | No TypeScript errors |
-| Tests | `aube test` | Unit, integration, and PHP tests pass |
-| Build | `aube build` | Project builds successfully |
+| Job | What It Verifies |
+|-----|------------------|
+| `checks` | Biome, TypeScript, build, and all JS tests with coverage |
+| `php` | PHPUnit suite for `apps/sabredav` |
+| `pgtyped-drift` | Committed `*.queries.ts` still match the migrated schema |
+| `migrations` | Every migration survives a down/up round trip |
+| `composer-audit` | PHP advisories (report-only) |
+| `dependency-audit` | Lockfile advisories via osv-scanner (report-only) |
+| `danger` | Coverage tables, commit conventions, file naming (MR only) |
+| `docker-smoke` | Production images build and start (MR only) |
 
-All checks must pass before merging.
+All blocking checks must pass before merging.
 
 ### 6. Review & Merge
 
-- PRs require review before merging
+- MRs require review and a green pipeline
 - Address review feedback with new commits (don't force-push during review)
-- Once approved and green, the PR gets merged into `main`
+- Merges are fast-forward, so rebase on `main` before merging
 
 ## Code Standards & Tooling
 

@@ -5,7 +5,7 @@
 **Priority:** High
 
 > **Note:** Phase 2 (Multi-user workspaces, sharing, permissions) has been extracted to [Epic 16: Multi-User Workspaces](epic-16-planned-multi-user-workspaces.md).
-**GitHub Issue:** [#7](https://github.com/enko/freundebuch2/issues/7)
+**Issue:** none (GitHub issue #7 retired with the move to GitLab)
 
 ## Overview
 

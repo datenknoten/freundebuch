@@ -6,17 +6,18 @@ pieces fit together, this one explains how to run them.
 
 ## What you're deploying
 
-The default deployment is five containers, all published to `ghcr.io` as
-multi-arch images (amd64 + arm64) on every release — plus a single-container
-alternative, described below:
+The default deployment is five containers, all published to the GitLab container
+registry (`registry.gitlab.com/datenknoten/freundebuch/…`) as multi-arch images
+(amd64 + arm64) on every release — plus a single-container alternative,
+described below:
 
 | Image | Role |
 |-------|------|
-| `ghcr.io/datenknoten/freundebuch-nginx` | Reverse proxy **and** the built frontend — the static SPA is baked into this image, there is no separate frontend service |
-| `ghcr.io/datenknoten/freundebuch-backend` | Hono API, Better Auth, and the compiled database migrations |
-| `ghcr.io/datenknoten/freundebuch-mcp-server` | MCP endpoint for AI assistants (`/mcp`) |
-| `ghcr.io/datenknoten/freundebuch-sabredav` | CalDAV/CardDAV (PHP-FPM) |
-| `ghcr.io/datenknoten/freundebuch-osm-import` | One-shot OSM address import, only under the `import` profile |
+| `registry.gitlab.com/datenknoten/freundebuch/nginx` | Reverse proxy **and** the built frontend — the static SPA is baked into this image, there is no separate frontend service |
+| `registry.gitlab.com/datenknoten/freundebuch/backend` | Hono API, Better Auth, and the compiled database migrations |
+| `registry.gitlab.com/datenknoten/freundebuch/mcp-server` | MCP endpoint for AI assistants (`/mcp`) |
+| `registry.gitlab.com/datenknoten/freundebuch/sabredav` | CalDAV/CardDAV (PHP-FPM) |
+| `registry.gitlab.com/datenknoten/freundebuch/osm-import` | One-shot OSM address import, only under the `import` profile |
 
 Plus PostgreSQL 18 with PostGIS 3.6. The compose file uses
 `imresamu/postgis:18-3.6.1-trixie`, picked for its arm64 builds.
@@ -24,12 +25,16 @@ Plus PostgreSQL 18 with PostGIS 3.6. The compose file uses
 Every release pushes four tags per image: the full version (`2.92.0`), the minor
 series (`2.92`), the major series (`2`), and `latest`. Pin `VERSION` to a full
 version or a series rather than tracking `latest`, so upgrades are something you
-choose. Manifests carry build-provenance attestations, verifiable with
-`gh attestation verify oci://ghcr.io/datenknoten/freundebuch-backend:<tag> --owner datenknoten`.
+choose. Every image index is signed keyless with Sigstore and carries an SPDX
+SBOM attestation. Verify with `cosign verify --certificate-oidc-issuer
+https://gitlab.com --certificate-identity
+'https://gitlab.com/datenknoten/freundebuch//.gitlab-ci.yml@refs/tags/v<version>'
+registry.gitlab.com/datenknoten/freundebuch/backend:<version>` and
+`cosign verify-attestation --type spdxjson` with the same flags.
 
 ### The all-in-one alternative
 
-`ghcr.io/datenknoten/freundebuch-all-in-one` (built from the repository root
+`registry.gitlab.com/datenknoten/freundebuch/all-in-one` (built from the repository root
 `Dockerfile`, same tags and attestations) packs nginx, the frontend, the
 backend, the MCP server and PHP-FPM into one container under supervisord. It
 brings no database: point `DATABASE_URL` at your own Postgres 18 + PostGIS and
@@ -204,7 +209,13 @@ row the other cannot match. Both need a manual decision — see
 
 Releases are cut by semantic-release on every merge to `main`, so versions move
 quickly. [CHANGELOG.md](../CHANGELOG.md) is the authoritative list of what
-changed.
+changed, and releases live at
+<https://gitlab.com/datenknoten/freundebuch/-/releases>.
+
+**Registry move:** images moved from `ghcr.io/datenknoten/freundebuch-<svc>` to
+`registry.gitlab.com/datenknoten/freundebuch/<svc>`. The ghcr.io tags stay but
+receive no new releases; change every `image:` line in your compose file (or
+re-copy `docker-compose.prod.yml`) before pulling the next version.
 
 ## Connecting AI assistants (MCP)
 

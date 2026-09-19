@@ -1,5 +1,7 @@
 # Freundebuch
 
+Development happens on GitLab: <https://gitlab.com/datenknoten/freundebuch> — issues and merge requests live there. The GitHub repository is a read-only mirror.
+
 A self-hostable web application for relationship management. Think of it as your digital friendship book — an address book that actually helps you maintain meaningful connections.
 
 ## Why Freundebuch?
@@ -52,7 +54,7 @@ Frontend runs at `http://localhost:5173`, backend at `http://localhost:3000`.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to create issues, the PR workflow, and code standards.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to create issues, the MR workflow, and code standards.
 
 ## Security
 

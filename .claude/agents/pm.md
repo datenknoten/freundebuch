@@ -23,7 +23,7 @@ Files use the pattern: `epic-NN-{status}-{kebab-case-title}.md`
 - Status: `done`, `planned`, `partial`, `future`
 
 ### Required Sections (in order)
-1. **Header** - Title, Status, Phase, Priority, GitHub Issue
+1. **Header** - Title, Status, Phase, Priority, Issue
 2. **Overview** - 1-2 paragraphs, user-focused, warm tone
 3. **Goals** - Bullet list of success criteria
 4. **Key Features** - Detailed feature breakdown

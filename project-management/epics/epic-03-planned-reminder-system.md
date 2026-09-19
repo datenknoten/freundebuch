@@ -3,7 +3,7 @@
 **Status:** Planned
 **Phase:** Core Functionality (Phase 2)
 **Priority:** High
-**GitHub Issue:** [#5](https://github.com/enko/freundebuch2/issues/5)
+**Issue:** none (GitHub issue #5 retired with the move to GitLab)
 
 ## Overview
 

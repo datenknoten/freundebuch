@@ -5,7 +5,7 @@
 **Priority:** High
 
 > **Note:** Phase 2 (Advanced Search features) has been extracted to [Epic 17: Advanced Search](epic-17-planned-advanced-search.md).
-**GitHub Issue:** [#12](https://github.com/enko/freundebuch2/issues/12)
+**Issue:** none (GitHub issue #12 retired with the move to GitLab)
 
 ## Overview
 

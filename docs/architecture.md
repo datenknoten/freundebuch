@@ -128,7 +128,7 @@ The MCP server speaks the [Model Context Protocol](https://modelcontextprotocol.
 
 ## Deployment
 
-Multi-container Docker setup with multi-arch builds (amd64 + arm64). Images published to `ghcr.io`. Automated via semantic-release on merge to `main`.
+Multi-container Docker setup with multi-arch builds (amd64 + arm64). Images published to the GitLab container registry. Automated via semantic-release on merge to `main` (GitLab CI).
 
 **Services:**
 - Backend (Node.js)
