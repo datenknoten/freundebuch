@@ -163,10 +163,13 @@ docker-smoke:
     - grep -q ECONNREFUSED all-in-one-migrate.log
     - echo "Docker smoke tests passed"
 
+# Only runs when a webhook is configured: without $DEPLOYMENT_NOTIFICATION the
+# curl below posts to an empty URL and fails, adding a second red job to every
+# red pipeline.
 notify-failure:
   stage: notify
   rules:
-    - if: $CI_COMMIT_TAG || $CI_COMMIT_BRANCH == "main"
+    - if: ($CI_COMMIT_TAG || $CI_COMMIT_BRANCH == "main") && $DEPLOYMENT_NOTIFICATION
       when: on_failure
   image: alpine:3.22
   before_script:

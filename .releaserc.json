@@ -81,7 +81,7 @@
         "assets": [
           {
             "path": "frontend-${nextRelease.version}.tar.gz",
-            "label": "Frontend static build (frontend-${nextRelease.version}.tar.gz)",
+            "label": "frontend-${nextRelease.version}.tar.gz",
             "target": "generic_package",
             "type": "package"
           }
