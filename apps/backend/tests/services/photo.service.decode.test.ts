@@ -16,6 +16,13 @@ import { resetConfig } from '../../src/utils/config.js';
 
 const VALID_FRIEND_ID = '550e8400-e29b-41d4-a716-446655440000';
 
+/**
+ * Root bypasses the DAC permission bits, so `chmod 0o500` denies it nothing and
+ * the write cannot be made to fail. CI containers run as root; developers and
+ * any non-root runner still execute this case.
+ */
+const RUNS_AS_ROOT = process.getuid?.() === 0;
+
 /** A PNG whose header parses but whose compressed pixel data is garbage. */
 async function pngWithCorruptPixelData(): Promise<Uint8Array<ArrayBuffer>> {
   const valid = await sharp({
@@ -96,29 +103,32 @@ describe('PhotoService decode failures', () => {
    * used to be reported as `400 Invalid image file` and logged below warn, so
    * the operator got no signal at all.
    */
-  it('propagates a filesystem failure instead of blaming the image', async () => {
-    const valid = await sharp({
-      create: { width: 64, height: 64, channels: 3, background: { r: 1, g: 2, b: 3 } },
-    })
-      .png()
-      .toBuffer();
+  it.skipIf(RUNS_AS_ROOT)(
+    'propagates a filesystem failure instead of blaming the image',
+    async () => {
+      const valid = await sharp({
+        create: { width: 64, height: 64, channels: 3, background: { r: 1, g: 2, b: 3 } },
+      })
+        .png()
+        .toBuffer();
 
-    // The friend directory already exists (a previous upload), so the
-    // recursive mkdir succeeds and the write is what fails.
-    const friendDir = path.join(uploadDir, VALID_FRIEND_ID);
-    await mkdir(friendDir, { recursive: true });
-    await chmod(friendDir, 0o500);
+      // The friend directory already exists (a previous upload), so the
+      // recursive mkdir succeeds and the write is what fails.
+      const friendDir = path.join(uploadDir, VALID_FRIEND_ID);
+      await mkdir(friendDir, { recursive: true });
+      await chmod(friendDir, 0o500);
 
-    try {
-      const upload = photoService.uploadPhoto(
-        VALID_FRIEND_ID,
-        new File([new Uint8Array(valid)], 'photo.png', { type: 'image/png' }),
-      );
+      try {
+        const upload = photoService.uploadPhoto(
+          VALID_FRIEND_ID,
+          new File([new Uint8Array(valid)], 'photo.png', { type: 'image/png' }),
+        );
 
-      await expect(upload).rejects.not.toBeInstanceOf(PhotoUploadError);
-      await expect(upload).rejects.toMatchObject({ code: 'EACCES' });
-    } finally {
-      await chmod(friendDir, 0o700);
-    }
-  });
+        await expect(upload).rejects.not.toBeInstanceOf(PhotoUploadError);
+        await expect(upload).rejects.toMatchObject({ code: 'EACCES' });
+      } finally {
+        await chmod(friendDir, 0o700);
+      }
+    },
+  );
 });

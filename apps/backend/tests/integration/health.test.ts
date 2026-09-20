@@ -9,6 +9,13 @@ import type { AppContext } from '../../src/types/context.js';
 import { createLogger } from '../../src/utils/logger.js';
 import { setupAuthTestSuite } from './auth.helpers.js';
 
+/**
+ * Root bypasses the DAC permission bits, so `chmod 0o500` denies it nothing and
+ * an unwritable uploads directory cannot be produced at all. CI containers run
+ * as root; developers and any non-root runner still execute this case.
+ */
+const RUNS_AS_ROOT = process.getuid?.() === 0;
+
 describe('Health Endpoint Integration Tests', () => {
   const { getContext } = setupAuthTestSuite();
 
@@ -83,22 +90,25 @@ describe('Health Endpoint Integration Tests', () => {
       expect(body.emailEnabled).toBe(false);
     });
 
-    it('should return 503 when the uploads directory is not writable', async () => {
-      const { app } = getContext();
-      // Read+execute only: the photo service could not create a friend
-      // directory here, which is exactly the read-only-mount case.
-      await chmod(uploadDir, 0o500);
+    it.skipIf(RUNS_AS_ROOT)(
+      'should return 503 when the uploads directory is not writable',
+      async () => {
+        const { app } = getContext();
+        // Read+execute only: the photo service could not create a friend
+        // directory here, which is exactly the read-only-mount case.
+        await chmod(uploadDir, 0o500);
 
-      const response = await app.fetch(new Request('http://localhost/health/ready'));
-      const body = (await response.json()) as {
-        status: string;
-        checks: { db: boolean; authDb: boolean; uploads: boolean };
-      };
+        const response = await app.fetch(new Request('http://localhost/health/ready'));
+        const body = (await response.json()) as {
+          status: string;
+          checks: { db: boolean; authDb: boolean; uploads: boolean };
+        };
 
-      expect(body.checks).toEqual({ db: true, authDb: true, uploads: false });
-      expect(response.status).toBe(503);
-      expect(body.status).toBe('not_ready');
-    });
+        expect(body.checks).toEqual({ db: true, authDb: true, uploads: false });
+        expect(response.status).toBe(503);
+        expect(body.status).toBe('not_ready');
+      },
+    );
 
     it('should return 503 and mark the failing check when the main pool is down', async () => {
       // A dedicated app over an unreachable pool: the suite's own pool must
