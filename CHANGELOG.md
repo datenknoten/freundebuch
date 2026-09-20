@@ -1,3 +1,12 @@
+## <small>3.1.4 (2026-09-20)</small>
+
+* test(backend): Skip the permission tests when the suite runs as root ([3cfe2ac](https://gitlab.com/datenknoten/freundebuch/commit/3cfe2ac))
+* docs: Point the project documentation at GitLab ([e4e8277](https://gitlab.com/datenknoten/freundebuch/commit/e4e8277))
+* fix(frontend): Link the source repository on GitLab ([a548f10](https://gitlab.com/datenknoten/freundebuch/commit/a548f10))
+* build(config): Publish images to the GitLab container registry ([8662fb5](https://gitlab.com/datenknoten/freundebuch/commit/8662fb5))
+* build(deps): Bundle Renovate updates and hold majors for approval ([51bb6fe](https://gitlab.com/datenknoten/freundebuch/commit/51bb6fe))
+* ci: Move release automation from GitHub Actions to GitLab CI ([17598f0](https://gitlab.com/datenknoten/freundebuch/commit/17598f0))
+
 ## <small>3.1.3 (2026-09-18)</small>
 
 * fix(frontend): Allow pinch-zoom on mobile ([642b3b3](https://gitlab.com/datenknoten/freundebuch/-/commit/642b3b3))
