@@ -1,13 +1,14 @@
-import { normalizePhoneNumber } from '@freundebuch/shared/index.js';
+import { countryNameToCode, normalizePhoneNumber } from '@freundebuch/shared/index.js';
 import type { Context } from 'hono';
 import type { AppContext } from '../types/context.js';
-import { countryNameToCode, localeToCountry } from '../utils/country.js';
+import { localeToCountry } from '../utils/country.js';
 import { PhoneCountryUnknownError } from '../utils/errors.js';
 
 /**
  * Resolves the country to interpret a national-format number in, given the
- * owner (friend or collective) the phone belongs to. Returns a country *name*
- * as stored on the owner's primary address, or null/undefined when unknown.
+ * owner (friend or collective) the phone belongs to. Returns the country stored
+ * on the owner's primary address (an ISO code; legacy rows may hold free text),
+ * or null/undefined when unknown.
  */
 export type PrimaryCountryLookup = (
   c: Context<AppContext>,

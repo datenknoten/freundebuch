@@ -1,35 +1,3 @@
-import { SUPPORTED_COUNTRIES } from './countries.js';
-
-const SUPPORTED_CODES = new Set(SUPPORTED_COUNTRIES.map((c) => c.code));
-
-/**
- * Country names stored in the user's own language (e.g. from CardDAV imports or
- * legacy data) don't match the English {@link SUPPORTED_COUNTRIES} names. Map
- * the common non-English spellings — German first, since that's our primary
- * market — to ISO 3166-1 alpha-2 codes.
- */
-const LOCALIZED_COUNTRY_NAMES: Record<string, string> = {
-  deutschland: 'DE',
-  österreich: 'AT',
-  oesterreich: 'AT',
-  schweiz: 'CH',
-  frankreich: 'FR',
-  italien: 'IT',
-  spanien: 'ES',
-  niederlande: 'NL',
-  belgien: 'BE',
-  luxemburg: 'LU',
-  polen: 'PL',
-  tschechien: 'CZ',
-  dänemark: 'DK',
-  daenemark: 'DK',
-  'vereinigtes königreich': 'GB',
-  großbritannien: 'GB',
-  grossbritannien: 'GB',
-  'vereinigte staaten': 'US',
-  usa: 'US',
-};
-
 /**
  * Languages that map cleanly to a single primary country, used as a fallback
  * when an Accept-Language entry carries no region subtag (e.g. "de" → "DE").
@@ -45,24 +13,6 @@ const LANGUAGE_TO_COUNTRY: Record<string, string> = {
   cs: 'CZ',
   da: 'DK',
 };
-
-/**
- * Map a country name (e.g. "Germany" or "Deutschland") to its ISO 3166-1
- * alpha-2 code (e.g. "DE"). Also accepts a code that's already in alpha-2 form.
- */
-export function countryNameToCode(name: string): string | undefined {
-  const normalized = name.trim().toLowerCase();
-  if (!normalized) return undefined;
-
-  // Already an ISO alpha-2 code we recognize.
-  const asCode = normalized.toUpperCase();
-  if (SUPPORTED_CODES.has(asCode)) return asCode;
-
-  return (
-    SUPPORTED_COUNTRIES.find((c) => c.name.toLowerCase() === normalized)?.code ??
-    LOCALIZED_COUNTRY_NAMES[normalized]
-  );
-}
 
 /**
  * Extract a country code from the Accept-Language header.
