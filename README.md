@@ -1,6 +1,6 @@
 # Freundebuch
 
-Development happens on GitLab: <https://gitlab.com/datenknoten/freundebuch> — issues and merge requests live there. The GitHub repository is a read-only mirror.
+Development happens on GitLab: <https://gitlab.com/datenknoten/freundebuch> — issues and merge requests live there. The GitHub repository is a read-only mirror. Releases up to v3.1.3 are listed on the [GitHub releases page](https://github.com/datenknoten/freundebuch/releases); later releases are on [GitLab](https://gitlab.com/datenknoten/freundebuch/-/releases).
 
 A self-hostable web application for relationship management. Think of it as your digital friendship book — an address book that actually helps you maintain meaningful connections.
 
