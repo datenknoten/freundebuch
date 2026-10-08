@@ -2,7 +2,7 @@
   "name": "@freundebuch/frontend",
   "version": "3.1.4",
   "dependencies": {
-    "@better-auth/passkey": "1.5.5",
+    "@better-auth/passkey": "1.6.22",
     "@codemirror/autocomplete": "6.20.2",
     "@codemirror/commands": "6.10.3",
     "@codemirror/lang-markdown": "6.5.0",
@@ -34,7 +34,7 @@
     "@types/d3": "7.4.3",
     "@types/leaflet": "1.9.21",
     "@types/markdown-it": "14.1.2",
-    "@vitest/coverage-v8": "4.0.16",
+    "@vitest/coverage-v8": "4.1.11",
     "autoprefixer": "10.4.23",
     "jsdom": "27.3.0",
     "postcss": "8.5.23",
