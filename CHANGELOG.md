@@ -1,3 +1,18 @@
+## 3.2.0 (2026-10-08)
+
+* test(frontend): Cover the friend grid and the facet dropdown ([044d0b6](https://gitlab.com/datenknoten/freundebuch/commit/044d0b6))
+* feat(backend): Map vCard address countries to ISO codes in CardDAV ([9ba5a80](https://gitlab.com/datenknoten/freundebuch/commit/9ba5a80))
+* feat(database): Convert stored address countries to ISO codes ([89ca70a](https://gitlab.com/datenknoten/freundebuch/commit/89ca70a))
+* feat(frontend): Preselect the default country in new addresses ([a4f2228](https://gitlab.com/datenknoten/freundebuch/commit/a4f2228))
+* feat(frontend): Show country names in the UI language ([33a9964](https://gitlab.com/datenknoten/freundebuch/commit/33a9964))
+* feat(shared): Accept only ISO country codes for addresses ([c810bba](https://gitlab.com/datenknoten/freundebuch/commit/c810bba))
+* feat(shared): Add a default country preference ([b87b61a](https://gitlab.com/datenknoten/freundebuch/commit/b87b61a))
+* feat(shared): Add country helpers based on i18n-iso-countries ([58b957c](https://gitlab.com/datenknoten/freundebuch/commit/58b957c))
+* refactor(backend): Guess the phone country with the shared country lookup ([a96407f](https://gitlab.com/datenknoten/freundebuch/commit/a96407f))
+* refactor(backend): Remove the unused country list endpoint ([9c82dff](https://gitlab.com/datenknoten/freundebuch/commit/9c82dff))
+* fix(mcp-server): Describe the country filter as ISO codes ([1d485f5](https://gitlab.com/datenknoten/freundebuch/commit/1d485f5))
+* build(deps): Add i18n-iso-countries to the shared package ([c79a746](https://gitlab.com/datenknoten/freundebuch/commit/c79a746))
+
 ## <small>3.1.5 (2026-10-08)</small>
 
 * fix(backend): Import the Sharp type by name ([148d590](https://gitlab.com/datenknoten/freundebuch/commit/148d590))
