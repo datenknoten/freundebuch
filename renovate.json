@@ -8,9 +8,22 @@
   "prConcurrentLimit": 3,
   "commitMessageLowerCase": "never",
   "rebaseWhen": "conflicted",
+  "postUpgradeTasks": {
+    "commands": [
+      "git checkout {{{baseBranch}}} -- pnpm-lock.yaml",
+      "npx --yes @endevco/aube@1.2.0 install --lockfile-only --fix-lockfile"
+    ],
+    "fileFilters": ["pnpm-lock.yaml"],
+    "executionMode": "branch"
+  },
   "lockFileMaintenance": {
     "enabled": true,
-    "groupName": "all non-major dependencies"
+    "schedule": ["at any time"],
+    "postUpgradeTasks": {
+      "commands": ["rm -f pnpm-lock.yaml", "npx --yes @endevco/aube@1.2.0 install --lockfile-only"],
+      "fileFilters": ["pnpm-lock.yaml"],
+      "executionMode": "branch"
+    }
   },
   "pin": {
     "description": "Pin updates default to rebaseWhen=behind-base-branch, which repushes the branch on every commit to main and costs a pipeline each time",
@@ -25,6 +38,16 @@
       "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The aube that regenerates pnpm-lock.yaml in postUpgradeTasks must stay on the version that mise.toml pins",
+      "managerFilePatterns": ["/^renovate\\.json$/"],
+      "matchStrings": ["@endevco/aube@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "@endevco/aube",
+      "datasourceTemplate": "npm"
     }
   ],
   "osvVulnerabilityAlerts": true,
