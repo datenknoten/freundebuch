@@ -144,7 +144,7 @@ class MapperTest extends TestCase
                     'city' => 'New York',
                     'state_province' => 'NY',
                     'postal_code' => '10001',
-                    'country' => 'USA',
+                    'country' => 'US',
                     'address_type' => 'home',
                     'is_primary' => true,
                 ],
@@ -154,7 +154,7 @@ class MapperTest extends TestCase
 
         $vcard = $this->mapper->friendToVCard($friend);
 
-        $this->assertStringContainsString('ADR;TYPE=home;PREF=1:;;123 Main St,Apt 4B;New York;NY;10001;USA', $vcard);
+        $this->assertStringContainsString('ADR;TYPE=home;PREF=1:;;123 Main St,Apt 4B;New York;NY;10001;United States of America', $vcard);
     }
 
     #[Test]
@@ -380,8 +380,40 @@ VCARD;
         $this->assertEquals('Boston', $friend['addresses'][0]['city']);
         $this->assertEquals('MA', $friend['addresses'][0]['state_province']);
         $this->assertEquals('02101', $friend['addresses'][0]['postal_code']);
-        $this->assertEquals('USA', $friend['addresses'][0]['country']);
+        $this->assertEquals('US', $friend['addresses'][0]['country']);
         $this->assertEquals('home', $friend['addresses'][0]['address_type']);
+    }
+
+    /** @return array<string, array{string, ?string}> */
+    public static function adrCountryProvider(): array
+    {
+        return [
+            'German name' => ['Deutschland', 'DE'],
+            'lowercase English name' => ['germany', 'DE'],
+            'lowercase code' => ['de', 'DE'],
+            'German alias' => ['Großbritannien', 'GB'],
+            'unknown text' => ['Atlantis', 'Atlantis'],
+            'empty' => ['', null],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('adrCountryProvider')]
+    public function vcardToFriendMapsAdrCountryToCode(string $country, ?string $expected): void
+    {
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:test-uuid
+FN:Jane Smith
+ADR;TYPE=home:;;1 Main St;Berlin;;10115;{$country}
+END:VCARD
+VCARD;
+
+        $friend = $this->mapper->vcardToFriend($vcard);
+
+        $this->assertCount(1, $friend['addresses']);
+        $this->assertSame($expected, $friend['addresses'][0]['country']);
     }
 
     #[Test]

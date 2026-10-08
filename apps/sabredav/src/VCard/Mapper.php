@@ -100,7 +100,7 @@ class Mapper
                 $this->escape($address['city'] ?? '') . ';' .
                 $this->escape($address['state_province'] ?? '') . ';' .
                 $this->escape($address['postal_code'] ?? '') . ';' .
-                $this->escape($address['country'] ?? '');
+                $this->escape(Countries::toName($address['country'] ?? null));
         }
 
         // URLs
@@ -283,7 +283,7 @@ class Mapper
                         'city' => $this->unescape($parts[3] ?? '') ?: null,
                         'state_province' => $this->unescape($parts[4] ?? '') ?: null,
                         'postal_code' => $this->unescape($parts[5] ?? '') ?: null,
-                        'country' => $this->unescape($parts[6] ?? '') ?: null,
+                        'country' => Countries::toCode($this->unescape($parts[6] ?? '')),
                         'address_type' => $this->parseAddressType($params),
                         'is_primary' => $this->hasPref($params),
                     ];
