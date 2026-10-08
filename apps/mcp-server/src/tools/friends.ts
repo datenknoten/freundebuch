@@ -79,7 +79,10 @@ export function registerFriendsTools(
       sortOrder: z.enum(['asc', 'desc']).default('asc').describe('Sort direction'),
       filters: z
         .object({
-          country: z.array(z.string()).optional().describe('Filter by country names'),
+          country: z
+            .array(z.string())
+            .optional()
+            .describe('Filter by ISO 3166-1 alpha-2 country codes, e.g. "DE"'),
           city: z.array(z.string()).optional().describe('Filter by city names'),
           organization: z.array(z.string()).optional().describe('Filter by organization names'),
           job_title: z.array(z.string()).optional().describe('Filter by job titles'),
