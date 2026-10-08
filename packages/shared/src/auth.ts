@@ -1,4 +1,5 @@
 import { type } from 'arktype';
+import { CountryCodeSchema } from './countries.js';
 
 /**
  * Request/Response types for authentication endpoints
@@ -46,6 +47,7 @@ export const UserPreferencesSchema = type({
   'birthdayFormat?': BirthdayFormatSchema,
   'language?': LanguageSchema,
   'showShortcutHints?': 'boolean',
+  'defaultCountry?': CountryCodeSchema.or('null'),
 });
 export type UserPreferences = typeof UserPreferencesSchema.infer;
 
@@ -55,6 +57,7 @@ export const UpdatePreferencesRequestSchema = type({
   'birthdayFormat?': BirthdayFormatSchema,
   'language?': LanguageSchema,
   'showShortcutHints?': 'boolean',
+  'defaultCountry?': CountryCodeSchema.or('null'),
 });
 export type UpdatePreferencesRequest = typeof UpdatePreferencesRequestSchema.infer;
 

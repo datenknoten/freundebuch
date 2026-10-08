@@ -457,6 +457,47 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(meBody.preferences.friendsPageSize).toBe(50);
     });
 
+    it('should store, clear and validate the default country preference', async () => {
+      const { app } = getContext();
+
+      const { response: regResponse } = await signUp(
+        'default-country@example.com',
+        'SecurePassword123',
+      );
+      const cookies = extractCookies(regResponse);
+
+      const patch = (body: Record<string, unknown>) =>
+        app.fetch(
+          new Request('http://localhost/api/auth/preferences', {
+            method: 'PATCH',
+            headers: { Cookie: cookies, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          }),
+        );
+      const readDefaultCountry = async () => {
+        const meResponse = await app.fetch(
+          new Request('http://localhost/api/auth/me', {
+            method: 'GET',
+            headers: { Cookie: cookies },
+          }),
+        );
+        expect(meResponse.status).toBe(200);
+        const meBody = (await meResponse.json()) as {
+          preferences: { defaultCountry?: string | null };
+        };
+        return meBody.preferences.defaultCountry;
+      };
+
+      expect((await patch({ defaultCountry: 'AT' })).status).toBe(200);
+      expect(await readDefaultCountry()).toBe('AT');
+
+      expect((await patch({ defaultCountry: null })).status).toBe(200);
+      expect(await readDefaultCountry()).toBeNull();
+
+      expect((await patch({ defaultCountry: 'Austria' })).status).toBe(400);
+      expect(await readDefaultCountry()).toBeNull();
+    });
+
     it('should return 401 without a session cookie', async () => {
       const { app } = getContext();
 
