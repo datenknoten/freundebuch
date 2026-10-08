@@ -646,7 +646,10 @@
         "long": "Long (May 15)"
       },
       "shortcutHints": "Keyboard shortcut hints",
-      "shortcutHintsHelp": "Show a tip when a clicked action also has a keyboard shortcut"
+      "shortcutHintsHelp": "Show a tip when a clicked action also has a keyboard shortcut",
+      "defaultCountry": "Default country",
+      "defaultCountryNone": "No default",
+      "defaultCountryHelp": "Preselected when you add a new address"
     },
     "appPasswords": {
       "title": "App Passwords",

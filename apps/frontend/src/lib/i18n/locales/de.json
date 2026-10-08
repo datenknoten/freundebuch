@@ -646,7 +646,10 @@
         "long": "Lang (15. Mai)"
       },
       "shortcutHints": "Tastenkürzel-Hinweise",
-      "shortcutHintsHelp": "Zeigt einen Tipp, wenn eine angeklickte Aktion auch ein Tastenkürzel hat"
+      "shortcutHintsHelp": "Zeigt einen Tipp, wenn eine angeklickte Aktion auch ein Tastenkürzel hat",
+      "defaultCountry": "Standardland",
+      "defaultCountryNone": "Kein Standardland",
+      "defaultCountryHelp": "Wird vorausgewählt, wenn du eine neue Adresse hinzufügst"
     },
     "appPasswords": {
       "title": "App-Passwörter",

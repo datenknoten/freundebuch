@@ -349,6 +349,9 @@ export const showShortcutHints = derived(
   ($auth) => $auth.preferences.showShortcutHints ?? true,
 );
 
+/** Derived store for the default country of new addresses (ISO code or null) */
+export const defaultCountry = derived(auth, ($auth) => $auth.preferences.defaultCountry ?? null);
+
 /**
  * Helper to wait for auth initialization
  * Returns a promise that resolves when auth is initialized

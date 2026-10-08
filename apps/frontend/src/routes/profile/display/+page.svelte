@@ -2,14 +2,14 @@
 import AlertBanner from '$lib/components/alert-banner.svelte';
 import { FormCheckbox, FormSelect, PageShell } from '$lib/components/ui';
 import { createI18n, languageNames } from '$lib/i18n/index.js';
-import { auth, birthdayFormat, showShortcutHints } from '$lib/stores/auth';
+import { auth, birthdayFormat, defaultCountry, showShortcutHints } from '$lib/stores/auth';
 import {
   currentLanguage,
   locale,
   type SupportedLanguage,
   supportedLanguages,
 } from '$lib/stores/locale';
-import type { BirthdayFormat, UserPreferences } from '$shared';
+import { type BirthdayFormat, listCountries, type UserPreferences } from '$shared';
 
 const i18n = createI18n();
 
@@ -36,12 +36,20 @@ function handleLanguageChange(lang: SupportedLanguage) {
   void locale.setLanguage(lang);
 }
 
+function handleDefaultCountryChange(code: string) {
+  void persistPreferences({ defaultCountry: code === '' ? null : code });
+}
+
 function handleShortcutHintsChange(enabled: boolean) {
   void persistPreferences({ showShortcutHints: enabled });
 }
 
 let languageOptions = $derived(
   supportedLanguages.map((lang) => ({ value: lang, label: languageNames[lang] })),
+);
+
+let countryOptions = $derived(
+  listCountries($currentLanguage).map((c) => ({ value: c.code, label: c.name })),
 );
 
 let birthdayFormatOptions = $derived([
@@ -85,6 +93,17 @@ let birthdayFormatOptions = $derived([
         bind:value={() => $birthdayFormat, handleBirthdayFormatChange}
         options={birthdayFormatOptions}
         helper={$i18n.t('profile.preferences.birthdayFormatHelp')}
+      />
+    </div>
+
+    <div class="max-w-xs">
+      <FormSelect
+        id="default-country"
+        label={$i18n.t('profile.preferences.defaultCountry')}
+        bind:value={() => $defaultCountry ?? '', handleDefaultCountryChange}
+        options={countryOptions}
+        placeholderOption={$i18n.t('profile.preferences.defaultCountryNone')}
+        helper={$i18n.t('profile.preferences.defaultCountryHelp')}
       />
     </div>
 

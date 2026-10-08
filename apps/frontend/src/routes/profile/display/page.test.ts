@@ -12,6 +12,7 @@ vi.mock('$lib/stores/auth', () => ({
   currentUser: readable({ externalId: 'ext-1', email: 'ada@example.com' }),
   birthdayFormat: readable('eu'),
   showShortcutHints: readable(false),
+  defaultCountry: readable('DE'),
 }));
 
 describe('profile display page', () => {
@@ -43,5 +44,14 @@ describe('profile display page', () => {
     await fireEvent.click(hints);
     await tick();
     expect(updatePreferences).toHaveBeenCalledWith({ showShortcutHints: true });
+
+    const country = control('default-country') as HTMLSelectElement;
+    expect(country.value).toBe('DE');
+    await fireEvent.change(country, { target: { value: 'AT' } });
+    await tick();
+    expect(updatePreferences).toHaveBeenCalledWith({ defaultCountry: 'AT' });
+    await fireEvent.change(country, { target: { value: '' } });
+    await tick();
+    expect(updatePreferences).toHaveBeenCalledWith({ defaultCountry: null });
   });
 });
