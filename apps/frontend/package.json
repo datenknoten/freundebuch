@@ -13,13 +13,13 @@
     "@lezer/highlight": "1.2.3",
     "@sentry/sveltekit": "10.32.1",
     "arktype": "2.1.29",
-    "better-auth": "1.5.5",
+    "better-auth": "1.6.22",
     "d3": "7.9.0",
     "i18next": "25.7.4",
     "i18next-browser-languagedetector": "8.2.0",
     "isomorphic-dompurify": "2.35.0",
     "leaflet": "1.9.4",
-    "markdown-it": "14.2.0",
+    "markdown-it": "14.3.1",
     "svelte-easy-crop": "5.0.0",
     "svelte-heros-v2": "3.0.1",
     "svelte-i18next": "2.2.2"
@@ -27,7 +27,7 @@
   "devDependencies": {
     "@playwright/test": "1.57.0",
     "@sveltejs/adapter-static": "3.0.8",
-    "@sveltejs/kit": "2.49.2",
+    "@sveltejs/kit": "2.70.2",
     "@sveltejs/vite-plugin-svelte": "6.2.1",
     "@tailwindcss/postcss": "4.1.18",
     "@testing-library/svelte": "5.3.0",
@@ -37,14 +37,14 @@
     "@vitest/coverage-v8": "4.0.16",
     "autoprefixer": "10.4.23",
     "jsdom": "27.3.0",
-    "postcss": "8.5.6",
-    "svelte": "5.46.1",
+    "postcss": "8.5.23",
+    "svelte": "5.55.7",
     "svelte-check": "4.3.5",
     "tailwindcss": "4.1.18",
     "tslib": "2.8.1",
     "typescript": "5.9.3",
-    "vite": "7.3.0",
-    "vitest": "4.0.16"
+    "vite": "7.3.5",
+    "vitest": "4.1.11"
   },
   "scripts": {
     "build": "vite build",

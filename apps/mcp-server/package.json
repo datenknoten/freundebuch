@@ -16,7 +16,7 @@
   "dependencies": {
     "@freundebuch/backend": "workspace:*",
     "@freundebuch/shared": "workspace:*",
-    "@modelcontextprotocol/sdk": "1.29.0",
+    "@modelcontextprotocol/sdk": "1.31.0",
     "@pgtyped/runtime": "2.4.2",
     "arktype": "2.1.29",
     "bcrypt": "6.0.0",
@@ -35,6 +35,6 @@
     "tsx": "4.21.0",
     "typescript": "5.9.3",
     "vite-tsconfig-paths": "6.0.3",
-    "vitest": "4.0.16"
+    "vitest": "4.1.11"
   }
 }

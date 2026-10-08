@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'freundebuch/sabredav',
-        'pretty_version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
-        'version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
-        'reference' => '80943f939ba6ac2cb66e02a4609f0099b973e12a',
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => 'f0a5565fdfd07c69bf37d3a0a70ac37cd67b0ef9',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         'freundebuch/sabredav' => array(
-            'pretty_version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
-            'version' => 'dev-claude/add-sabredav-integration-tests-iZ9nO',
-            'reference' => '80943f939ba6ac2cb66e02a4609f0099b973e12a',
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => 'f0a5565fdfd07c69bf37d3a0a70ac37cd67b0ef9',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -119,9 +119,9 @@
             'dev_requirement' => true,
         ),
         'phpunit/phpunit' => array(
-            'pretty_version' => '11.5.46',
-            'version' => '11.5.46.0',
-            'reference' => '75dfe79a2aa30085b7132bb84377c24062193f33',
+            'pretty_version' => '11.5.50',
+            'version' => '11.5.50.0',
+            'reference' => 'fdfc727f0fcacfeb8fcb30c7e5da173125b58be3',
             'type' => 'library',
             'install_path' => __DIR__ . '/../phpunit/phpunit',
             'aliases' => array(),
@@ -257,9 +257,9 @@
             'dev_requirement' => true,
         ),
         'sebastian/comparator' => array(
-            'pretty_version' => '6.3.2',
-            'version' => '6.3.2.0',
-            'reference' => '85c77556683e6eee4323e4c5468641ca0237e2e8',
+            'pretty_version' => '6.3.3',
+            'version' => '6.3.3.0',
+            'reference' => '2c95e1e86cb8dd41beb8d502057d1081ccc8eca9',
             'type' => 'library',
             'install_path' => __DIR__ . '/../sebastian/comparator',
             'aliases' => array(),
