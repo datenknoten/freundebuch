@@ -38,12 +38,6 @@ const HouseNumberSchema = type({
 
 const HouseNumberArraySchema = type(HouseNumberSchema, '[]');
 
-/**
- * Countries are a static list served as a plain object; only its shape as an
- * object is contractual, so that is all the validator asserts.
- */
-const CountriesSchema = type('object');
-
 // Type aliases for the validated types
 export type StreetCached = typeof StreetSchema.infer;
 export type HouseNumberCached = typeof HouseNumberSchema.infer;
@@ -73,7 +67,6 @@ function createValidator<T>(
 
 // Pre-built validators for each cache type
 const validators = {
-  countries: createValidator(CountriesSchema, 'object'),
   streets: createValidator(StreetArraySchema, 'Street[]'),
   houseNumbers: createValidator(HouseNumberArraySchema, 'HouseNumber[]'),
 };
@@ -273,29 +266,13 @@ export class AddressCache<T extends object> {
 
 // Cache configuration constants
 const CACHE_CONFIG = {
-  countries: { ttlHours: 24 * 7, maxSize: 10 }, // Countries rarely change, cache 7 days
   streets: { ttlHours: 24, maxSize: 1000 },
   houseNumbers: { ttlHours: 24, maxSize: 2000 },
 };
 
 // Singleton instances for different cache types
-let countriesCache: AddressCache<object> | null = null;
 let streetsCache: AddressCache<StreetCached[]> | null = null;
 let houseNumbersCache: AddressCache<HouseNumberCached[]> | null = null;
-
-/**
- * Get the countries cache (must be initialized first)
- */
-export function getCountriesCache(): AddressCache<object> {
-  if (!countriesCache) {
-    countriesCache = new AddressCache<object>(
-      CACHE_CONFIG.countries.ttlHours,
-      CACHE_CONFIG.countries.maxSize,
-      validators.countries,
-    );
-  }
-  return countriesCache;
-}
 
 /**
  * Get the streets cache with arktype validation
@@ -334,13 +311,6 @@ export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
   cacheLogger = logger;
 
   // Eagerly create all caches with validators to ensure they get the pool
-  if (!countriesCache) {
-    countriesCache = new AddressCache<object>(
-      CACHE_CONFIG.countries.ttlHours,
-      CACHE_CONFIG.countries.maxSize,
-      validators.countries,
-    );
-  }
   if (!streetsCache) {
     streetsCache = new AddressCache<StreetCached[]>(
       CACHE_CONFIG.streets.ttlHours,
@@ -357,7 +327,6 @@ export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
   }
 
   // Set database pool on all caches
-  countriesCache.setPool(pool);
   streetsCache.setPool(pool);
   houseNumbersCache.setPool(pool);
 

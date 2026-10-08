@@ -5,7 +5,6 @@ import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { addressLookupRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { getAddressLookupService } from '../services/address-lookup.registry.js';
 import type { AppContext } from '../types/context.js';
-import { SUPPORTED_COUNTRIES } from '../utils/countries.js';
 import { ValidationError } from '../utils/errors.js';
 
 const app = new Hono<AppContext>();
@@ -59,15 +58,6 @@ const HouseNumbersQuerySchema = type({
 // ============================================================================
 // Routes
 // ============================================================================
-
-/**
- * GET /api/address-lookup/countries
- * Get list of supported countries
- * Note: Uses static list, doesn't require API key
- */
-app.get('/countries', (c) => {
-  return c.json(SUPPORTED_COUNTRIES);
-});
 
 /**
  * GET /api/address-lookup/postal-codes

@@ -1,5 +1,4 @@
 import type { Logger } from 'pino';
-import { type Country, SUPPORTED_COUNTRIES } from '../utils/countries.js';
 import type { GeocodedLocation } from './external/nominatim.client.js';
 import { NominatimClient } from './external/nominatim.client.js';
 import { type HouseNumber, OverpassClient, type Street } from './external/overpass.client.js';
@@ -16,7 +15,7 @@ export interface PostalCodeInfo {
   city: string;
 }
 
-export type { Country, Street, HouseNumber };
+export type { Street, HouseNumber };
 
 /** DACH countries supported by PostGIS address data */
 const DACH_COUNTRIES = ['DE', 'AT', 'CH'];
@@ -65,13 +64,6 @@ export class AddressLookupService {
     }
 
     return true;
-  }
-
-  /**
-   * Get list of supported countries
-   */
-  getCountries(): Country[] {
-    return SUPPORTED_COUNTRIES;
   }
 
   /**

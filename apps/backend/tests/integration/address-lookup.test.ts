@@ -1,6 +1,5 @@
 import bcrypt from 'bcrypt';
 import { describe, expect, it } from 'vitest';
-import { SUPPORTED_COUNTRIES } from '../../src/utils/countries.js';
 import {
   completeTestUserOnboarding,
   createBetterAuthSession,
@@ -25,18 +24,6 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
   }
 
   describe('Authentication', () => {
-    it('should return 401 for unauthenticated request to /countries', async () => {
-      const { app } = getContext();
-
-      const response = await app.fetch(
-        new Request('http://localhost/api/address-lookup/countries', {
-          method: 'GET',
-        }),
-      );
-
-      expect(response.status).toBe(401);
-    });
-
     it('should return 401 for unauthenticated request to /cities', async () => {
       const { app } = getContext();
 
@@ -77,70 +64,6 @@ describe('Address Lookup API - Integration Tests', { timeout: 30000 }, () => {
       );
 
       expect(response.status).toBe(401);
-    });
-  });
-
-  describe('GET /api/address-lookup/countries', () => {
-    it('should return list of supported countries when authenticated', async () => {
-      const { app } = getContext();
-      const { sessionCookies } = await createUserAndLogin(
-        'addr-countries@test.com',
-        'TestPassword123',
-      );
-
-      const response = await app.fetch(
-        new Request('http://localhost/api/address-lookup/countries', {
-          method: 'GET',
-          headers: {
-            Cookie: sessionCookies,
-          },
-        }),
-      );
-
-      expect(response.status).toBe(200);
-      const body = (await response.json()) as Array<{ code: string; name: string }>;
-
-      // Should return an array
-      expect(Array.isArray(body)).toBe(true);
-      expect(body.length).toBeGreaterThan(0);
-
-      // Should match the exported SUPPORTED_COUNTRIES
-      expect(body).toEqual(SUPPORTED_COUNTRIES);
-
-      // Each country should have code and name
-      for (const country of body) {
-        expect(country).toHaveProperty('code');
-        expect(country).toHaveProperty('name');
-        expect(country.code.length).toBe(2); // ISO 3166-1 alpha-2
-      }
-    });
-
-    it('should include common countries like Germany and United States', async () => {
-      const { app } = getContext();
-      const { sessionCookies } = await createUserAndLogin(
-        'addr-countries2@test.com',
-        'TestPassword123',
-      );
-
-      const response = await app.fetch(
-        new Request('http://localhost/api/address-lookup/countries', {
-          method: 'GET',
-          headers: {
-            Cookie: sessionCookies,
-          },
-        }),
-      );
-
-      expect(response.status).toBe(200);
-      const body = (await response.json()) as Array<{ code: string; name: string }>;
-
-      const germany = body.find((c) => c.code === 'DE');
-      expect(germany).toBeDefined();
-      expect(germany?.name).toBe('Germany');
-
-      const usa = body.find((c) => c.code === 'US');
-      expect(usa).toBeDefined();
-      expect(usa?.name).toBe('United States');
     });
   });
 
