@@ -9,7 +9,7 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import type { Logger } from 'pino';
-import sharp from 'sharp';
+import sharp, { type Sharp } from 'sharp';
 import { getConfig } from '../utils/config.js';
 import { AppError } from '../utils/errors.js';
 import { isPathWithinBase, isValidUuid } from '../utils/security.js';
@@ -80,7 +80,7 @@ export class PhotoService {
     // Validate it's actually an image using sharp. `limitInputPixels` caps the
     // decoded surface: a small, highly compressed file can otherwise expand to
     // gigabytes of pixels (decompression bomb).
-    let image: sharp.Sharp;
+    let image: Sharp;
     try {
       image = sharp(buffer, { limitInputPixels: MAX_IMAGE_PIXELS, sequentialRead: true });
       await image.metadata();
