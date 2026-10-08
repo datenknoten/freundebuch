@@ -1,4 +1,5 @@
 import { type } from 'arktype';
+import { CountryCodeSchema } from './countries.js';
 import { IsoDateString } from './dates.js';
 import {
   type Paginated,
@@ -33,7 +34,7 @@ export const CollectiveInputSchema = type({
   'address_city?': 'string | null',
   'address_state_province?': 'string | null',
   'address_postal_code?': 'string | null',
-  'address_country?': 'string | null',
+  'address_country?': CountryCodeSchema.or('null'),
 }).narrow((data, ctx) => {
   // Validate name length
   if (data.name.trim().length === 0) {
@@ -59,7 +60,7 @@ export const CollectiveUpdateSchema = type({
   'address_city?': 'string | null',
   'address_state_province?': 'string | null',
   'address_postal_code?': 'string | null',
-  'address_country?': 'string | null',
+  'address_country?': CountryCodeSchema.or('null'),
 }).narrow((data, ctx) => {
   // Validate name length if provided
   if (data.name !== undefined) {

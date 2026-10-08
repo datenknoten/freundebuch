@@ -759,15 +759,9 @@ describe('Search API - Integration Tests', () => {
       it('should filter by city', async () => {
         const { app, pool, testUser } = getContext();
 
-        await createFriendWithAddress(pool, testUser.externalId, 'Alice NYC', 'New York', 'USA');
-        await createFriendWithAddress(pool, testUser.externalId, 'Alice LA', 'Los Angeles', 'USA');
-        await createFriendWithAddress(
-          pool,
-          testUser.externalId,
-          'Alice SF',
-          'San Francisco',
-          'USA',
-        );
+        await createFriendWithAddress(pool, testUser.externalId, 'Alice NYC', 'New York', 'US');
+        await createFriendWithAddress(pool, testUser.externalId, 'Alice LA', 'Los Angeles', 'US');
+        await createFriendWithAddress(pool, testUser.externalId, 'Alice SF', 'San Francisco', 'US');
 
         const request = new Request(
           'http://localhost/api/friends/search/faceted?q=alice&city=New York',
@@ -788,18 +782,12 @@ describe('Search API - Integration Tests', () => {
       it('should filter by country', async () => {
         const { app, pool, testUser } = getContext();
 
-        await createFriendWithAddress(pool, testUser.externalId, 'Alice USA', 'New York', 'USA');
-        await createFriendWithAddress(pool, testUser.externalId, 'Alice UK', 'London', 'UK');
-        await createFriendWithAddress(
-          pool,
-          testUser.externalId,
-          'Alice Germany',
-          'Berlin',
-          'Germany',
-        );
+        await createFriendWithAddress(pool, testUser.externalId, 'Alice USA', 'New York', 'US');
+        await createFriendWithAddress(pool, testUser.externalId, 'Alice UK', 'London', 'GB');
+        await createFriendWithAddress(pool, testUser.externalId, 'Alice Germany', 'Berlin', 'DE');
 
         const request = new Request(
-          'http://localhost/api/friends/search/faceted?q=alice&country=USA',
+          'http://localhost/api/friends/search/faceted?q=alice&country=US',
           {
             method: 'GET',
             headers: authHeaders(testUser.sessionCookies),
@@ -925,7 +913,7 @@ describe('Search API - Integration Tests', () => {
         );
         await pool.query(
           `INSERT INTO friends.friend_addresses (friend_id, city, country, address_type, is_primary)
-           VALUES ($1, 'New York', 'USA', 'home', true)`,
+           VALUES ($1, 'New York', 'US', 'home', true)`,
           [friend1Result.rows[0].id],
         );
 
@@ -936,7 +924,7 @@ describe('Search API - Integration Tests', () => {
           testUser.externalId,
           'Alice CityOnly',
           'New York',
-          'USA',
+          'US',
         );
 
         const request = new Request(

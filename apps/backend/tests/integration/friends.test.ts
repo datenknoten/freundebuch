@@ -171,7 +171,7 @@ describe('Friends API - Integration Tests', () => {
               city: 'Anytown',
               state_province: 'CA',
               postal_code: '12345',
-              country: 'USA',
+              country: 'US',
               address_type: 'home',
               is_primary: true,
             },
@@ -684,7 +684,7 @@ describe('Friends API - Integration Tests', () => {
           city: 'Anytown',
           state_province: 'CA',
           postal_code: '12345',
-          country: 'USA',
+          country: 'US',
           address_type: 'home',
         }),
       });
@@ -696,6 +696,26 @@ describe('Friends API - Integration Tests', () => {
       expect(body.streetLine1).toBe('123 Main St');
       expect(body.city).toBe('Anytown');
       expect(body.addressType).toBe('home');
+    });
+
+    it('should reject an address whose country is not an ISO code', async () => {
+      const { app, pool, testUser } = getContext();
+
+      const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
+
+      const request = new Request(`http://localhost/api/friends/${friendId}/addresses`, {
+        method: 'POST',
+        headers: authHeaders(testUser.sessionCookies),
+        body: JSON.stringify({
+          city: 'Berlin',
+          country: 'Germany',
+          address_type: 'home',
+        }),
+      });
+
+      const response = await app.fetch(request);
+
+      expect(response.status).toBe(400);
     });
   });
 

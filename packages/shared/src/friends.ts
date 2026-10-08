@@ -1,6 +1,7 @@
 import { type } from 'arktype';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import type { CircleSummary } from './circles.js';
+import { CountryCodeSchema } from './countries.js';
 import { IsoDateString } from './dates.js';
 import {
   type Paginated,
@@ -95,7 +96,7 @@ export const AddressInputSchema = type({
   'city?': 'string',
   'state_province?': 'string',
   'postal_code?': 'string',
-  'country?': 'string',
+  'country?': CountryCodeSchema,
   address_type: AddressTypeSchema,
   'label?': 'string',
   'is_primary?': 'boolean',
