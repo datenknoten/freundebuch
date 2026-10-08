@@ -8,7 +8,7 @@
  */
 export interface CountryInfo {
   code: string; // ISO 3166-1 alpha-2 code (e.g., "DE", "US")
-  name: string; // Full country name (e.g., "Germany", "United States")
+  name: string; // Country name in the requested UI language
 }
 
 /**
