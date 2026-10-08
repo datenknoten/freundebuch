@@ -1,3 +1,13 @@
+## <small>3.1.5 (2026-10-08)</small>
+
+* fix(backend): Import the Sharp type by name ([148d590](https://gitlab.com/datenknoten/freundebuch/commit/148d590))
+* fix(deps): Keep the better-auth and vitest plugins on their core versions ([54e1fa0](https://gitlab.com/datenknoten/freundebuch/commit/54e1fa0))
+* fix(deps): Update security fixes [SECURITY] ([c2dab29](https://gitlab.com/datenknoten/freundebuch/commit/c2dab29))
+* docs: Link the pre-GitLab releases on the GitHub mirror ([f0a5565](https://gitlab.com/datenknoten/freundebuch/commit/f0a5565))
+* build(deps): Regenerate pnpm-lock.yaml with aube in Renovate branches ([e5ee33d](https://gitlab.com/datenknoten/freundebuch/commit/e5ee33d))
+* chore(all): Fix lint findings and ignore installed skill dirs ([df90ef5](https://gitlab.com/datenknoten/freundebuch/commit/df90ef5)), closes [#191](https://gitlab.com/datenknoten/freundebuch/issues/191)
+* ci: Upload the release tarball under a valid package filename ([7edb24c](https://gitlab.com/datenknoten/freundebuch/commit/7edb24c))
+
 ## <small>3.1.4 (2026-09-20)</small>
 
 * test(backend): Skip the permission tests when the suite runs as root ([3cfe2ac](https://gitlab.com/datenknoten/freundebuch/commit/3cfe2ac))

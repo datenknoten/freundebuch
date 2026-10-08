@@ -1,6 +1,6 @@
 {
   "name": "@freundebuch/danger",
-  "version": "3.1.4",
+  "version": "3.1.5",
   "private": true,
   "description": "Danger.js rules consumed by dangerfile.ts at the repo root",
   "license": "AGPL-3.0-only",
