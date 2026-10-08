@@ -2,7 +2,13 @@
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { circlesById } from '$lib/stores/circles';
-import { type ArrayFacetField, type FacetFilters, isArrayFacetField } from '$shared';
+import { currentLanguage } from '$lib/stores/locale';
+import {
+  type ArrayFacetField,
+  countryDisplayName,
+  type FacetFilters,
+  isArrayFacetField,
+} from '$shared';
 import CircleChip from '../circles/circle-chip.svelte';
 
 const i18n = createI18n();
@@ -29,6 +35,7 @@ const fieldLabelKeys: Record<ArrayFacetField, string> = {
 // Flatten filters into chip array (only array-type fields)
 function getChips(
   t: typeof $i18n.t,
+  language: string,
 ): Array<{ field: ArrayFacetField; value: string; label: string }> {
   const result: Array<{ field: ArrayFacetField; value: string; label: string }> = [];
 
@@ -39,7 +46,7 @@ function getChips(
         result.push({
           field: facetField,
           value,
-          label: `${t(fieldLabelKeys[facetField])}: ${value}`,
+          label: `${t(fieldLabelKeys[facetField])}: ${facetField === 'country' ? countryDisplayName(value, language) : value}`,
         });
       }
     }
@@ -47,7 +54,7 @@ function getChips(
   return result;
 }
 
-let chips = $derived(getChips($i18n.t));
+let chips = $derived(getChips($i18n.t, $currentLanguage));
 let hasFilters = $derived(chips.length > 0);
 </script>
 

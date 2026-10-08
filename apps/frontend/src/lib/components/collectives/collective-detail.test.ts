@@ -84,7 +84,7 @@ describe('CollectiveDetail', () => {
     });
     render(CollectiveDetail, { collective });
 
-    expect(screen.getByText('1 Main St, 10115 Berlin, DE')).toBeTruthy();
+    expect(screen.getByText('1 Main St, 10115 Berlin, Germany')).toBeTruthy();
   });
 
   it('invokes onEdit from the edit button', async () => {

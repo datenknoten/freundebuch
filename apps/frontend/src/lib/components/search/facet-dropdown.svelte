@@ -3,6 +3,7 @@ import { tick } from 'svelte';
 import Funnel from 'svelte-heros-v2/Funnel.svelte';
 import { Button, codeClasses, formClasses, Modal } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
+import { currentLanguage } from '$lib/stores/locale';
 import {
   FILTER_CATEGORY_LABELS,
   filterModeCategory,
@@ -13,6 +14,7 @@ import {
 import {
   type ArrayFacetField,
   type CircleFacetValue,
+  countryDisplayName,
   type FacetFilters,
   type FacetGroups,
   isArrayFacetField,
@@ -274,7 +276,7 @@ $effect(() => {
                         onchange={() => toggleFilter(group.field, facet.value)}
                         class={formClasses.checkbox}
                       />
-                      <span class="flex-1 truncate">{facet.value}</span>
+                      <span class="flex-1 truncate">{group.field === 'country' ? countryDisplayName(facet.value, $currentLanguage) : facet.value}</span>
                       <span class="text-xs text-gray-400">{facet.count}</span>
                     </label>
                   {/each}
@@ -308,7 +310,7 @@ $effect(() => {
                         onchange={() => toggleFilter(group.field, facet.value)}
                         class={formClasses.checkbox}
                       />
-                      <span class="flex-1 truncate">{facet.value}</span>
+                      <span class="flex-1 truncate">{group.field === 'country' ? countryDisplayName(facet.value, $currentLanguage) : facet.value}</span>
                       <span class="text-xs text-gray-400">{facet.count}</span>
                     </label>
                   {/each}
@@ -425,7 +427,7 @@ $effect(() => {
                       onchange={() => toggleFilter(group.field, facet.value)}
                       class={formClasses.checkbox}
                     />
-                    <span class="flex-1 truncate">{facet.value}</span>
+                    <span class="flex-1 truncate">{group.field === 'country' ? countryDisplayName(facet.value, $currentLanguage) : facet.value}</span>
                     <span class="text-xs text-gray-400">{facet.count}</span>
                   </label>
                 {/each}
@@ -456,7 +458,7 @@ $effect(() => {
                       onchange={() => toggleFilter(group.field, facet.value)}
                       class={formClasses.checkbox}
                     />
-                    <span class="flex-1 truncate">{facet.value}</span>
+                    <span class="flex-1 truncate">{group.field === 'country' ? countryDisplayName(facet.value, $currentLanguage) : facet.value}</span>
                     <span class="text-xs text-gray-400">{facet.count}</span>
                   </label>
                 {/each}

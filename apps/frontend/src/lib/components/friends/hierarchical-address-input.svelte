@@ -3,13 +3,13 @@ import { onMount } from 'svelte';
 import * as addressApi from '$lib/api/address-lookup';
 import { formClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type {
-  AddressType,
-  CityInfo,
-  CountryInfo,
-  HouseNumberInfo,
-  PostalCodeInfo,
-  StreetInfo,
+import {
+  type AddressType,
+  type CityInfo,
+  type HouseNumberInfo,
+  isCountryCode,
+  type PostalCodeInfo,
+  type StreetInfo,
 } from '$shared';
 import CitySelect from './city-select.svelte';
 import CountrySelect from './country-select.svelte';
@@ -30,10 +30,8 @@ interface AddressOutput {
 }
 
 interface Props {
-  /** Initial country code for editing */
+  /** ISO country code to preselect */
   initialCountryCode?: string;
-  /** Initial country name for editing */
-  initialCountryName?: string;
   /** Initial postal code for editing */
   initialPostalCode?: string;
   /** Initial city for editing */
@@ -56,7 +54,6 @@ interface Props {
 
 let {
   initialCountryCode = '',
-  initialCountryName = '',
   initialPostalCode = '',
   initialCity = '',
   initialState = '',
@@ -69,8 +66,9 @@ let {
 }: Props = $props();
 
 // State for each step - initialize with functions to capture initial values
-let selectedCountryCode = $state((() => initialCountryCode)());
-let selectedCountryName = $state((() => initialCountryName)());
+let selectedCountryCode = $state(
+  (() => (isCountryCode(initialCountryCode) ? initialCountryCode : ''))(),
+);
 let postalCode = $state((() => initialPostalCode)());
 let selectedCity = $state((() => initialCity)());
 let selectedState = $state((() => initialState)());
@@ -79,14 +77,12 @@ let houseNumber = $state((() => initialHouseNumber)());
 let streetLine2 = $state((() => initialStreetLine2)());
 
 // Data from APIs
-let countries = $state<CountryInfo[]>([]);
 let postalCodeSuggestions = $state<PostalCodeInfo[]>([]);
 let cities = $state<CityInfo[]>([]);
 let streets = $state<StreetInfo[]>([]);
 let houseNumbers = $state<HouseNumberInfo[]>([]);
 
 // Loading states
-let isLoadingCountries = $state(false);
 let isLoadingCities = $state(false);
 let isLoadingStreets = $state(false);
 let isLoadingHouseNumbers = $state(false);
@@ -108,10 +104,8 @@ let houseNumberAbortController: AbortController | null = null;
 // Element references for focus management
 let postalCodeInputRef: { focus: () => void } | undefined;
 
-// Load countries on mount, and preload other data if editing existing address
-onMount(async () => {
-  await loadCountries();
-
+// Preload other data if editing existing address
+onMount(() => {
   // If editing an existing address, preload cities/streets/house numbers in background
   if (selectedCountryCode && postalCode) {
     loadCities().then(() => {
@@ -125,28 +119,6 @@ onMount(async () => {
     });
   }
 });
-
-async function loadCountries() {
-  isLoadingCountries = true;
-  try {
-    countries = await addressApi.getCountries();
-
-    // If we have a country name but no code (editing existing address), look up the code
-    if (!selectedCountryCode && selectedCountryName) {
-      const matchedCountry = countries.find(
-        (c) => c.name.toLowerCase() === selectedCountryName.toLowerCase(),
-      );
-      if (matchedCountry) {
-        selectedCountryCode = matchedCountry.code;
-      }
-    }
-  } catch (error) {
-    console.error('Failed to load countries:', error);
-    countries = [];
-  } finally {
-    isLoadingCountries = false;
-  }
-}
 
 async function loadCities() {
   if (!selectedCountryCode || postalCode.length < 3) {
@@ -264,9 +236,8 @@ function scheduleHouseNumberLoad() {
   }, 300);
 }
 
-function handleCountryChange(code: string, name: string, viaKeyboard: boolean = false) {
+function handleCountryChange(code: string, viaKeyboard: boolean = false) {
   selectedCountryCode = code;
-  selectedCountryName = name;
   // Cancel any pending street/house number loads
   cancelStreetLoad();
   cancelHouseNumberLoad();
@@ -393,11 +364,10 @@ function handleStreetLine2Change(e: Event) {
 function emitChange() {
   // Emit whenever we have enough data to form a partial address
   // The parent component's validation will determine what's truly required
-  const country = selectedCountryName || selectedCountryCode;
   const streetLine1 = `${selectedStreet} ${houseNumber}`.trim();
 
   onChange?.({
-    country: country || '',
+    country: selectedCountryCode,
     postal_code: postalCode || '',
     city: selectedCity || '',
     state_province: selectedState || undefined,
@@ -410,13 +380,7 @@ function emitChange() {
 
 <div class="space-y-3">
   <!-- Country -->
-  <CountrySelect
-    {countries}
-    value={selectedCountryCode}
-    isLoading={isLoadingCountries}
-    {disabled}
-    onSelect={handleCountryChange}
-  />
+  <CountrySelect value={selectedCountryCode} {disabled} onSelect={handleCountryChange} />
 
   <!-- Postal Code -->
   <PostalCodeInput

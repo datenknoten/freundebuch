@@ -3,7 +3,8 @@ import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import { chipClasses } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import type { Address, AddressType } from '$shared';
+import { currentLanguage } from '$lib/stores/locale';
+import { type Address, type AddressType, countryDisplayName } from '$shared';
 import AddressMapModal from './address-map-modal.svelte';
 import SubresourceRow from './subresource-row.svelte';
 
@@ -25,22 +26,22 @@ function addressTypeLabel(type: AddressType): string {
   return $i18n.t(`subresources.address.types.${type}`);
 }
 
-function formatAddress(addr: Address): string[] {
+function formatAddress(addr: Address, language: string): string[] {
   const lines: string[] = [];
   if (addr.streetLine1) lines.push(addr.streetLine1);
   if (addr.streetLine2) lines.push(addr.streetLine2);
   const cityLine = [addr.postalCode, addr.city].filter(Boolean).join(' ');
   if (cityLine) lines.push(cityLine);
   if (addr.stateProvince) lines.push(addr.stateProvince);
-  if (addr.country) lines.push(addr.country);
+  if (addr.country) lines.push(countryDisplayName(addr.country, language));
   return lines;
 }
 
-function formatAddressLabel(addr: Address): string {
-  return formatAddress(addr).join(', ');
+function formatAddressLabel(addr: Address, language: string): string {
+  return formatAddress(addr, language).join(', ');
 }
 
-const addressLines = $derived(formatAddress(address));
+const addressLines = $derived(formatAddress(address, $currentLanguage));
 </script>
 
 <SubresourceRow
@@ -85,7 +86,7 @@ const addressLines = $derived(formatAddress(address));
       <AddressMapModal
         latitude={address.latitude}
         longitude={address.longitude}
-        addressLabel={formatAddressLabel(address)}
+        addressLabel={formatAddressLabel(address, $currentLanguage)}
         onClose={() => (showMap = false)}
       />
     {/if}

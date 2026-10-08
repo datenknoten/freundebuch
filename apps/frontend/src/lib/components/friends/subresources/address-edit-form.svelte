@@ -1,7 +1,7 @@
 <script lang="ts">
 import { createDirtyTracker, FormCheckbox, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { Address, AddressInput, AddressType } from '$shared';
+import { type Address, type AddressInput, type AddressType, isCountryCode } from '$shared';
 import HierarchicalAddressInput from '../hierarchical-address-input.svelte';
 
 const i18n = createI18n();
@@ -19,6 +19,10 @@ let { initialData, defaultPrimary, disabled = false, onchange }: Props = $props(
 let addressType = $state<AddressType>((() => initialData?.addressType ?? 'home')());
 let label = $state((() => initialData?.label ?? '')());
 let isPrimary = $state((() => initialData?.isPrimary ?? defaultPrimary ?? false)());
+const initialCountryCode = (() => {
+  const stored = initialData?.country;
+  return stored !== undefined && isCountryCode(stored) ? stored : '';
+})();
 
 // Address data from HierarchicalAddressInput
 let addressData = $state<{
@@ -61,7 +65,7 @@ function handleAddressChange(data: {
 
 export function getData(): AddressInput {
   return {
-    country: addressData?.country ?? initialData?.country ?? '',
+    country: addressData?.country ?? initialCountryCode,
     postal_code: addressData?.postal_code ?? initialData?.postalCode ?? '',
     city: addressData?.city ?? initialData?.city ?? '',
     state_province: addressData?.state_province ?? initialData?.stateProvince,
@@ -76,7 +80,7 @@ export function getData(): AddressInput {
 export function isValid(): boolean {
   // At minimum, require a country and some address content
   const data = getData();
-  return data.country.length > 0 && !!(data.city || data.street_line1 || data.postal_code);
+  return isCountryCode(data.country) && !!(data.city || data.street_line1 || data.postal_code);
 }
 
 // Parse initial street line 1 to extract street name and house number
@@ -106,8 +110,7 @@ const parsedStreet = (() => parseStreetLine1(initialData?.streetLine1))();
   <!-- Hierarchical Address Input -->
   <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
     <HierarchicalAddressInput
-      initialCountryCode=""
-      initialCountryName={initialData?.country ?? ''}
+      initialCountryCode={initialCountryCode}
       initialPostalCode={initialData?.postalCode ?? ''}
       initialCity={initialData?.city ?? ''}
       initialState={initialData?.stateProvince ?? ''}

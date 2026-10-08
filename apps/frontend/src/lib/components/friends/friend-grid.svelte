@@ -7,12 +7,14 @@ import Star from 'svelte-heros-v2/Star.svelte';
 import { goto } from '$app/navigation';
 import { chipClasses, focusRing, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
+import { currentLanguage } from '$lib/stores/locale';
 import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
 import { matchSourceBadge } from '$lib/utils/match-source';
 import {
   type BirthdayFormat,
   COLUMN_DEFINITIONS,
   type ColumnId,
+  countryDisplayName,
   type FriendGridItem,
 } from '$shared';
 import CircleChips from '../circles/circle-chips.svelte';
@@ -165,7 +167,9 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
     case 'primaryCity':
       return item.primaryCity;
     case 'primaryCountry':
-      return item.primaryCountry;
+      return item.primaryCountry === undefined
+        ? undefined
+        : countryDisplayName(item.primaryCountry, $currentLanguage);
     case 'primaryEmail':
       return item.primaryEmail;
     case 'primaryPhone':

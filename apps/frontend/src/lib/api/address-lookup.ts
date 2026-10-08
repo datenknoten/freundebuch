@@ -1,12 +1,5 @@
-import type { CityInfo, CountryInfo, HouseNumberInfo, PostalCodeInfo, StreetInfo } from '$shared';
+import type { CityInfo, HouseNumberInfo, PostalCodeInfo, StreetInfo } from '$shared';
 import { apiRequest } from './client.js';
-
-/**
- * Get list of supported countries
- */
-export async function getCountries(): Promise<CountryInfo[]> {
-  return apiRequest('/api/address-lookup/countries');
-}
 
 /**
  * Search postal codes by prefix (autocomplete), returning postal-code/city pairs

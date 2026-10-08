@@ -19,12 +19,13 @@ import {
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
+import { currentLanguage } from '$lib/stores/locale';
 import {
   collectiveTypeI18nKey,
   getTypeBadgeColor,
   getTypeIconComponent,
 } from '$lib/utils/collective-types';
-import type { Collective } from '$shared';
+import { type Collective, countryDisplayName } from '$shared';
 import AddDetailDropdown from '../subresources/add-detail-dropdown.svelte';
 import AddDetailSheet from '../subresources/add-detail-sheet.svelte';
 import SubresourceSection from '../subresources/subresource-section.svelte';
@@ -58,13 +59,13 @@ function dispatchAddEvent(shortcutEvent: string) {
   window.dispatchEvent(new CustomEvent(shortcutEvent));
 }
 
-function formatAddress(c: Collective): string | null {
+function formatAddress(c: Collective, language: string): string | null {
   const parts = [
     c.address.streetLine1,
     c.address.streetLine2,
     [c.address.postalCode, c.address.city].filter(Boolean).join(' '),
     c.address.stateProvince,
-    c.address.country,
+    c.address.country === null ? null : countryDisplayName(c.address.country, language),
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(', ') : null;
 }
@@ -76,7 +77,7 @@ async function handleDelete() {
   goto('/collectives');
 }
 
-let address = $derived(formatAddress(collective));
+let address = $derived(formatAddress(collective, $currentLanguage));
 let TypeIcon = $derived(getTypeIconComponent(collective.type.name));
 let typeBadgeColor = $derived(getTypeBadgeColor(collective.type.name));
 </script>

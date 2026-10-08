@@ -1,26 +1,25 @@
 <script lang="ts">
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
-import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
+import { formClasses, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { CountryInfo } from '$shared';
+import { currentLanguage } from '$lib/stores/locale';
+import { type CountryInfo, listCountries } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
-  /** Available countries to select from */
-  countries: CountryInfo[];
   /** Currently selected country code */
   value: string;
-  /** Whether data is loading */
-  isLoading?: boolean;
   /** Whether the input is disabled */
   disabled?: boolean;
   /** Called when a country is selected (viaKeyboard indicates if Enter was pressed) */
-  onSelect?: (code: string, name: string, viaKeyboard: boolean) => void;
+  onSelect?: (code: string, viaKeyboard: boolean) => void;
 }
 
-let { countries, value, isLoading = false, disabled = false, onSelect }: Props = $props();
+let { value, disabled = false, onSelect }: Props = $props();
+
+const countries = $derived(listCountries($currentLanguage));
 
 let query = $state('');
 let showDropdown = $state(false);
@@ -46,7 +45,7 @@ function selectCountry(country: CountryInfo, viaKeyboard: boolean = false) {
   query = '';
   showDropdown = false;
   highlightedIndex = -1;
-  onSelect?.(country.code, country.name, viaKeyboard);
+  onSelect?.(country.code, viaKeyboard);
 }
 
 function handleInput() {
@@ -136,9 +135,8 @@ function handleButtonKeydown(e: KeyboardEvent) {
         type="button"
         onclick={activateInput}
         onkeydown={handleButtonKeydown}
-        disabled={disabled || isLoading}
-        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled ||
-        isLoading
+        disabled={disabled}
+        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled
           ? 'opacity-50 cursor-not-allowed bg-gray-50'
           : 'bg-white cursor-pointer hover:border-gray-400'}"
       >
@@ -160,8 +158,8 @@ function handleButtonKeydown(e: KeyboardEvent) {
           onkeydown={handleKeydown}
           onblur={handleBlur}
           onfocus={handleFocus}
-          placeholder={isLoading ? $i18n.t('countrySelect.loadingCountries') : $i18n.t('countrySelect.searchCountries')}
-          disabled={disabled || isLoading}
+          placeholder={$i18n.t('countrySelect.searchCountries')}
+          disabled={disabled}
           class="{formClasses.inputSm} pr-10"
           autocomplete="off"
           role="combobox"
@@ -171,16 +169,12 @@ function handleButtonKeydown(e: KeyboardEvent) {
           aria-autocomplete="list"
         />
 
-        {#if isLoading}
-          <Spinner size="sm" class="absolute right-3 top-1/2 -translate-y-1/2" />
-        {:else}
-          <MagnifyingGlass class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth="2" />
-        {/if}
+        <MagnifyingGlass class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth="2" />
       </div>
     {/if}
   </div>
 
-  {#if showDropdown && !isLoading}
+  {#if showDropdown}
     <ul
       id="country-select-listbox"
       class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"

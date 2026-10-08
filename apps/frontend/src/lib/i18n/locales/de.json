@@ -1362,7 +1362,6 @@
   },
   "countrySelect": {
     "label": "Land",
-    "loadingCountries": "Länder werden geladen...",
     "searchCountries": "Länder suchen...",
     "noMatchingCountries": "Keine passenden Länder gefunden"
   },
