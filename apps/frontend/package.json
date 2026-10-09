@@ -1,6 +1,6 @@
 {
   "name": "@freundebuch/frontend",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "dependencies": {
     "@better-auth/passkey": "1.6.22",
     "@codemirror/autocomplete": "6.20.2",

@@ -1,3 +1,7 @@
+## <small>3.2.1 (2026-10-09)</small>
+
+* fix(config): Fetch mise for the all-in-one image without GitHub Releases ([8367a50](https://gitlab.com/datenknoten/freundebuch/commit/8367a50))
+
 ## 3.2.0 (2026-10-08)
 
 * test(frontend): Cover the friend grid and the facet dropdown ([044d0b6](https://gitlab.com/datenknoten/freundebuch/commit/044d0b6))
