@@ -8,11 +8,38 @@
 # Unlike the other Dockerfiles, this image does NOT use the ghcr.io/jdx/mise base
 # image. It bundles all services in one container and needs php8.2-fpm, which is
 # packaged for Debian bookworm; the mise image's OS does not ship php8.2. So we
-# base on node:24-bookworm-slim and install mise via its official installer
-# (pinned version) instead.
+# base on node:24-bookworm-slim and copy in a pinned mise binary from the `mise`
+# stage instead.
 #
 # MISE_NO_HOOKS skips mise.toml's dev-only postinstall hook (no .git here).
 # ============================================
+
+# ============================================
+# Stage: mise binary
+# Downloaded once, copied into runtime-base and base.
+# ============================================
+FROM node:24-bookworm-slim AS mise
+ARG TARGETARCH
+# Pinned mise release. Update the version and both SHA-256 sums together; the
+# sums are in https://mise.jdx.dev/v<version>/SHASUMS256.txt.
+ARG MISE_VERSION=2026.5.15
+# Fetch from mise.jdx.dev (Cloudflare), not GitHub Releases: on the GitLab SaaS
+# arm64 runners the TLS handshake with GitHub's release asset host stalls until
+# curl's 300 s default connect timeout. The short connect timeout plus retries
+# turn such a stall into a quick retry.
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    case "$TARGETARCH" in \
+      amd64) arch=x64;   sha256=1c47c32a2bf6d40ef48e31272335845cbeeaa5184883fc0222f8ad29a3594d6c ;; \
+      arm64) arch=arm64; sha256=adbf15b370aac0075563c26bf20a868cc64e2d54edfdc9a1b29efffa597cc830 ;; \
+      *) echo "unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;; \
+    esac && \
+    curl -fsSL --connect-timeout 20 --max-time 300 --retry 5 --retry-all-errors \
+      -o /tmp/mise.tar.gz \
+      "https://mise.jdx.dev/v${MISE_VERSION}/mise-v${MISE_VERSION}-linux-${arch}.tar.gz" && \
+    echo "${sha256}  /tmp/mise.tar.gz" | sha256sum -c - && \
+    tar -xzf /tmp/mise.tar.gz -C /tmp && \
+    install -m 0755 /tmp/mise/bin/mise /usr/local/bin/mise
 
 # ============================================
 # Stage: Runtime base with system dependencies
@@ -38,10 +65,10 @@ RUN apt-get update && \
     # Configure PHP-FPM to listen on TCP socket instead of Unix socket
     sed -i 's|listen = /run/php/php8.2-fpm.sock|listen = 127.0.0.1:9000|' /etc/php/8.2/fpm/pool.d/www.conf && \
     # Ensure PHP-FPM directory exists
-    mkdir -p /run/php && \
-    # Install mise via its installer rather than the mise base image (php8.2
-    # needs the bookworm base — see header). Pinned; provides node + aube.
-    curl -fsSL https://mise.run | MISE_VERSION=v2026.5.15 MISE_INSTALL_PATH=/usr/local/bin/mise sh
+    mkdir -p /run/php
+
+# mise provides node + aube (see header for why it is not the mise base image).
+COPY --from=mise /usr/local/bin/mise /usr/local/bin/mise
 
 # ============================================
 # Stage: SabreDAV PHP dependencies
@@ -63,11 +90,9 @@ ENV MISE_DATA_DIR=/mise
 ENV PATH="/mise/shims:${PATH}"
 # Trust the copied mise.toml for all users so the mise shims run node/aube.
 ENV MISE_TRUSTED_CONFIG_PATHS=/app
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
-    rm -rf /var/lib/apt/lists/* && \
-    # mise installed via its installer to share the bookworm base with the
-    # production stage (see header for why this image avoids the mise base image).
-    curl -fsSL https://mise.run | MISE_VERSION=v2026.5.15 MISE_INSTALL_PATH=/usr/local/bin/mise sh
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=mise /usr/local/bin/mise /usr/local/bin/mise
 WORKDIR /app
 
 # ============================================
