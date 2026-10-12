@@ -16,7 +16,7 @@ let { size = 'md', onnavigate }: Props = $props();
 const text = $derived(size === 'sm' ? 'text-xs' : 'text-sm');
 </script>
 
-<div class="flex items-center justify-center gap-3 {text} font-body text-gray-500">
+<div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 {text} font-body text-gray-500">
   <a
     href="https://gitlab.com/datenknoten/freundebuch"
     class="hover:text-forest transition-colors"
