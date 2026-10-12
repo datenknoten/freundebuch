@@ -1,3 +1,8 @@
+## <small>3.2.2 (2026-10-12)</small>
+
+* fix(frontend): Disable page zoom through the viewport meta tag ([801b315](https://gitlab.com/datenknoten/freundebuch/commit/801b315))
+* fix(frontend): Keep pinch gestures in the map modal from zooming the page ([ac9f451](https://gitlab.com/datenknoten/freundebuch/commit/ac9f451))
+
 ## <small>3.2.1 (2026-10-09)</small>
 
 * fix(config): Fetch mise for the all-in-one image without GitHub Releases ([8367a50](https://gitlab.com/datenknoten/freundebuch/commit/8367a50))
