@@ -1,3 +1,7 @@
+## <small>3.2.3 (2026-10-12)</small>
+
+* fix(frontend): Wrap the legal links so the version stays readable in the mobile menu ([7504a6a](https://gitlab.com/datenknoten/freundebuch/commit/7504a6a))
+
 ## <small>3.2.2 (2026-10-12)</small>
 
 * fix(frontend): Disable page zoom through the viewport meta tag ([801b315](https://gitlab.com/datenknoten/freundebuch/commit/801b315))
