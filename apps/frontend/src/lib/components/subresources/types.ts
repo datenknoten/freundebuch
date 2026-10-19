@@ -50,6 +50,8 @@ type AuthoredFormComponent<TInput> = Component<never, SubresourceFormExports<TIn
 
 /** Context handed to `formProps` so it can build the right props for each edit form. */
 export interface FormPropsContext<TItem extends SubresourceItem = SubresourceItem> {
+  /** Id of the owner (friend/collective) the section belongs to. */
+  ownerId: string;
   editingData: TItem | null;
   editingId: string | null;
   itemCount: number;

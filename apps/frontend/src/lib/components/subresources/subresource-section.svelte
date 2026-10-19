@@ -302,6 +302,7 @@ onMount(() => {
     <FormComponent
       bind:this={formRef}
       {...formDriven.formProps?.({
+        ownerId,
         editingData,
         editingId,
         itemCount: items.length,

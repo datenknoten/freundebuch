@@ -105,6 +105,7 @@ describe('descriptor CRUD delegation', () => {
 
 describe('descriptor formProps', () => {
   const ctx = (over = {}) => ({
+    ownerId: 'owner-1',
     editingData: null,
     editingId: null,
     itemCount: 0,
