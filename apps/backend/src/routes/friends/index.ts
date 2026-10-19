@@ -13,6 +13,7 @@ import datesRoutes from './sub-resources/dates.routes.js';
 import emailsRoutes from './sub-resources/emails.routes.js';
 import encountersRoutes from './sub-resources/encounters.routes.js';
 import metInfoRoutes from './sub-resources/met-info.routes.js';
+import notesRoutes from './sub-resources/notes.routes.js';
 import phonesRoutes from './sub-resources/phones.routes.js';
 import professionalHistoryRoutes from './sub-resources/professional-history.routes.js';
 import relationshipsRoutes from './sub-resources/relationships.routes.js';
@@ -52,5 +53,6 @@ app.route('/:id/relationships', relationshipsRoutes);
 app.route('/:id/professional-history', professionalHistoryRoutes);
 app.route('/:id/encounters', encountersRoutes);
 app.route('/:id/collectives', collectivesRoutes);
+app.route('/:id/notes', notesRoutes);
 
 export default app;

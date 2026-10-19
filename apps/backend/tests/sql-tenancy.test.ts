@@ -29,6 +29,7 @@ const USER_OWNED = [
   'friends.friend_met_info',
   'friends.friend_relationships',
   'friends.friend_circles',
+  'friends.friend_notes',
   'encounters.encounters',
   'encounters.encounter_friends',
   'collectives.collectives',

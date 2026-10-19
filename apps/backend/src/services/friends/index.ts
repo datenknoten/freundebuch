@@ -17,6 +17,7 @@ export { AddressService } from './sub-resources/address.service.js';
 export type { DateServiceOptions } from './sub-resources/date.service.js';
 export { DateService } from './sub-resources/date.service.js';
 export { EmailService } from './sub-resources/email.service.js';
+export { FriendNotesService } from './sub-resources/friend-notes.service.js';
 export type { MetInfoServiceOptions } from './sub-resources/met-info.service.js';
 export { MetInfoService } from './sub-resources/met-info.service.js';
 // Sub-resource services
