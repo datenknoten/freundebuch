@@ -18,6 +18,7 @@ import type {
   Friend,
   FriendDate,
   FriendListItem,
+  FriendNote,
   Phone,
   Url,
 } from '$shared';
@@ -83,6 +84,20 @@ export function aFriendDate(overrides: Partial<FriendDate> = {}): FriendDate {
     yearKnown: true,
     dateType: 'birthday',
     createdAt: TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function aFriendNote(overrides: Partial<FriendNote> = {}): FriendNote {
+  return {
+    id: nextId('note'),
+    content: 'Likes hiking',
+    encounter: null,
+    sourceFriend: null,
+    supersedesNoteId: null,
+    supersededByNoteId: null,
+    createdAt: TIMESTAMP,
+    updatedAt: TIMESTAMP,
     ...overrides,
   };
 }

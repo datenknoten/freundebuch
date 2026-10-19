@@ -38,6 +38,7 @@ import {
   emailDescriptor,
   friendAddDetailOptions,
   hasProfileUrl,
+  noteDescriptor,
   phoneDescriptor,
   professionalHistoryDescriptor,
   socialProfileDescriptor,
@@ -295,6 +296,9 @@ onMount(() => {
       {/if}
     </div>
   {/if}
+
+  <!-- ==================== NOTES SECTION ==================== -->
+  <SubresourceSection descriptor={noteDescriptor} ownerId={friend.id} ownerName={friend.displayName} />
 
   <!-- ==================== CONTACT DETAILS SECTION ==================== -->
   <SubresourceSection

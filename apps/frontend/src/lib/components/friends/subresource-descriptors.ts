@@ -14,6 +14,7 @@
 import Briefcase from 'svelte-heros-v2/Briefcase.svelte';
 import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
+import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import Envelope from 'svelte-heros-v2/Envelope.svelte';
 import Heart from 'svelte-heros-v2/Heart.svelte';
 import Link from 'svelte-heros-v2/Link.svelte';
@@ -23,6 +24,7 @@ import Share from 'svelte-heros-v2/Share.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { ApiError } from '$lib/api/client';
 import { removeMember } from '$lib/api/collectives';
+import { addNote, deleteNote, listNotes, updateNote } from '$lib/api/friends';
 import { friends } from '$lib/stores/friends';
 import type {
   Address,
@@ -33,6 +35,8 @@ import type {
   Email,
   EmailInput,
   FriendDate,
+  FriendNote,
+  FriendNoteInput,
   Phone,
   PhoneInput,
   ProfessionalHistory,
@@ -62,6 +66,8 @@ import {
   DateRow,
   EmailEditForm,
   EmailRow,
+  NoteEditForm,
+  NoteRow,
   PhoneEditForm,
   PhoneRow,
   ProfessionalHistoryEditForm,
@@ -338,6 +344,37 @@ export function createCollectiveDescriptor(onChanged: () => void): SubresourceDe
  * though they are not a descriptor-driven section — the menu is the entry
  * point for every detail a friend can gain.
  */
+/**
+ * Notes are not part of the friend payload, so this section loads its own
+ * items instead of reading them from the friends store.
+ */
+export const noteDescriptor = defineDescriptor<FriendNote, FriendNoteInput>({
+  key: 'note',
+  shortcutEvent: 'shortcut:add-note',
+  icon: DocumentText,
+  sectionTitleKey: 'friendDetail.sections.notes',
+  addLabelKey: 'friendDetail.actions.addNote',
+  addShortcut: 'a n',
+  addShortcutLabel: 'shortcuts.add.note',
+  editable: true,
+  modalTypeNameKey: 'friendDetail.modal.note',
+  load: (friendId) => listNotes(friendId),
+  create: (friendId, data) => addNote(friendId, data),
+  update: (friendId, id, data) => updateNote(friendId, id, data),
+  remove: (friendId, note) => deleteNote(friendId, note.id),
+  // A create, update or delete can change another note's supersede state, and the
+  // server orders the list newest first, so the section reloads after every change.
+  reloadAfterMutate: true,
+  tracksDirty: true,
+  FormComponent: NoteEditForm,
+  formProps: (ctx) => ({ ...editFormProps(ctx), friendId: ctx.ownerId, notes: ctx.items }),
+  RowComponent: NoteRow,
+  rowProps: (note) => ({ note }),
+  deleteName: (note) => (note.content.length > 60 ? `${note.content.slice(0, 60)}…` : note.content),
+  deleteTitleKey: 'friendDetail.modal.deleteNote',
+  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteNote',
+});
+
 export const friendAddDetailOptions: AddDetailOption[] = [
   addDetailOption(phoneDescriptor, 'shortcuts.add.phone'),
   addDetailOption(emailDescriptor, 'shortcuts.add.email'),
@@ -362,4 +399,5 @@ export const friendAddDetailOptions: AddDetailOption[] = [
     shortcut: 'a r',
     shortcutLabel: 'shortcuts.add.relationship',
   },
+  addDetailOption(noteDescriptor, 'shortcuts.add.note'),
 ];

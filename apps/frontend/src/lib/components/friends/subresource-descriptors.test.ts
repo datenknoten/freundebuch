@@ -92,6 +92,7 @@ describe('friend subresource descriptors', () => {
       'collective',
       'professional',
       'relationship',
+      'note',
     ]);
   });
 });

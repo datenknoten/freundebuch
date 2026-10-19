@@ -980,7 +980,8 @@
       "circle": "Freundekreis",
       "collective": "Kollektiv",
       "workExperience": "Berufserfahrung",
-      "member": "Mitglied"
+      "member": "Mitglied",
+      "note": "Notiz"
     },
     "panels": {
       "goTo": "Gehe zu...",
@@ -1083,7 +1084,8 @@
       "relationships": "Beziehungen",
       "employmentHistory": "Beschäftigungshistorie",
       "interestsHobbies": "Interessen & Hobbys",
-      "howWeMet": "Wie wir uns kennenlernten"
+      "howWeMet": "Wie wir uns kennenlernten",
+      "notes": "Notizen"
     },
     "actions": {
       "addPhone": "Telefon hinzufügen",
@@ -1095,7 +1097,8 @@
       "addCircle": "Freundekreis hinzufügen",
       "addRelationship": "Beziehung hinzufügen",
       "addEmployment": "Beschäftigung hinzufügen",
-      "addCollective": "Kollektiv hinzufügen"
+      "addCollective": "Kollektiv hinzufügen",
+      "addNote": "Notiz hinzufügen"
     },
     "empty": {
       "phones": "Noch keine Telefonnummern hinzugefügt.",
@@ -1142,7 +1145,10 @@
       "confirmDeleteDate": "Bist du sicher, dass du diesen Termin löschen möchtest?",
       "confirmDeleteEmployment": "Bist du sicher, dass du diesen Beschäftigungseintrag löschen möchtest?",
       "confirmRemoveCircle": "Bist du sicher, dass du diesen Freund aus diesem Freundekreis entfernen möchtest?",
-      "confirmRemoveCollective": "Bist du sicher, dass du diesen Freund aus diesem Kollektiv entfernen möchtest?"
+      "confirmRemoveCollective": "Bist du sicher, dass du diesen Freund aus diesem Kollektiv entfernen möchtest?",
+      "note": "Notiz",
+      "deleteNote": "Notiz löschen",
+      "confirmDeleteNote": "Bist du sicher, dass du diese Notiz löschen möchtest?"
     },
     "addDetail": "Detail hinzufügen",
     "addDetailSubtitle": "Telefon, E-Mail, Adresse und mehr hinzufügen",
@@ -1516,6 +1522,24 @@
     },
     "collective": {
       "removeAria": "Aus Kollektiv entfernen"
+    },
+    "note": {
+      "content": "Notiz",
+      "placeholder": {
+        "content": "Was hast du erfahren?"
+      },
+      "sourceFriend": "Erzählt von",
+      "sourceFriendPlaceholder": "Freund suchen…",
+      "encounter": "Erfahren bei",
+      "noEncounter": "Keine Begegnung",
+      "supersedes": "Ersetzt Notiz",
+      "noSupersedes": "Ersetzt keine Notiz",
+      "superseded": "Überholt",
+      "updatesOlder": "Aktualisiert eine ältere Notiz",
+      "toldBy": "erzählt von {{name}}",
+      "fromEncounter": "bei {{title}}",
+      "editAria": "Notiz bearbeiten",
+      "deleteAria": "Notiz löschen"
     }
   },
   "oauth": {

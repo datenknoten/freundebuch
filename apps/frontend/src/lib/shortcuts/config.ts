@@ -76,6 +76,7 @@ export const FRIEND_DETAIL_ACTIONS: MenuShortcut[] = [
   { key: 'c', labelKey: 'shortcuts.add.circle' },
   { key: 'o', labelKey: 'shortcuts.add.collective' },
   { key: 'w', labelKey: 'shortcuts.add.workExperience' },
+  { key: 'n', labelKey: 'shortcuts.add.note' },
 ];
 
 export const FRIEND_DETAIL_EVENTS: Record<string, string> = {
@@ -89,6 +90,7 @@ export const FRIEND_DETAIL_EVENTS: Record<string, string> = {
   c: 'shortcut:add-circle',
   o: 'shortcut:add-collective',
   w: 'shortcut:add-professional',
+  n: 'shortcut:add-note',
 };
 
 export const COLLECTIVE_DETAIL_ACTIONS: MenuShortcut[] = [

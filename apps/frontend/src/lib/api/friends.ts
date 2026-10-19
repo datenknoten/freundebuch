@@ -11,6 +11,8 @@ import type {
   Friend,
   FriendCreateInput,
   FriendDate,
+  FriendNote,
+  FriendNoteInput,
   FriendSearchResult,
   FriendUpdateInput,
   GlobalSearchResult,
@@ -322,6 +324,50 @@ export async function updateDate(
  */
 export async function deleteDate(friendId: string, dateId: string): Promise<{ message: string }> {
   return apiRequest(`/api/friends/${friendId}/dates/${dateId}`, {
+    method: 'DELETE',
+  });
+}
+
+// ============================================================================
+// Note Operations (Epic 15)
+// ============================================================================
+
+/**
+ * List a friend's notes, newest first
+ */
+export async function listNotes(friendId: string): Promise<FriendNote[]> {
+  return apiRequest<FriendNote[]>(`/api/friends/${friendId}/notes`);
+}
+
+/**
+ * Add a note to a friend
+ */
+export async function addNote(friendId: string, data: FriendNoteInput): Promise<FriendNote> {
+  return apiRequest<FriendNote>(`/api/friends/${friendId}/notes`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update a note (replaces the whole note, including its links)
+ */
+export async function updateNote(
+  friendId: string,
+  noteId: string,
+  data: FriendNoteInput,
+): Promise<FriendNote> {
+  return apiRequest<FriendNote>(`/api/friends/${friendId}/notes/${noteId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete a note
+ */
+export async function deleteNote(friendId: string, noteId: string): Promise<{ message: string }> {
+  return apiRequest(`/api/friends/${friendId}/notes/${noteId}`, {
     method: 'DELETE',
   });
 }
