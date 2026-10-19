@@ -1,3 +1,18 @@
+## 3.3.0 (2026-10-19)
+
+* feat(backend): Add the friend notes API ([161cdca](https://gitlab.com/datenknoten/freundebuch/commit/161cdca))
+* feat(backend): Match friend notes in the global search ([5feb81c](https://gitlab.com/datenknoten/freundebuch/commit/5feb81c))
+* feat(database): Add the friend notes table ([3666461](https://gitlab.com/datenknoten/freundebuch/commit/3666461))
+* feat(frontend): Add a notes section to the friend detail page ([53f0fcf](https://gitlab.com/datenknoten/freundebuch/commit/53f0fcf))
+* feat(frontend): Write friend notes in the Markdown editor with mentions ([53df84d](https://gitlab.com/datenknoten/freundebuch/commit/53df84d))
+* feat(mcp-server): Add tools to list and create friend notes ([8348854](https://gitlab.com/datenknoten/freundebuch/commit/8348854))
+* feat(mcp-server): Describe friend note content as Markdown ([9d5c80a](https://gitlab.com/datenknoten/freundebuch/commit/9d5c80a))
+* feat(shared): Add friend note types and input schema ([ffd476f](https://gitlab.com/datenknoten/freundebuch/commit/ffd476f))
+* docs(docs): Add stories for search language and note promotion ([d51bd03](https://gitlab.com/datenknoten/freundebuch/commit/d51bd03))
+* docs(docs): Mark Epic 15 friend notes as done ([aca9a6f](https://gitlab.com/datenknoten/freundebuch/commit/aca9a6f))
+* refactor(frontend): Pass the owner id to sub-resource forms ([d2d8e79](https://gitlab.com/datenknoten/freundebuch/commit/d2d8e79))
+* refactor(frontend): Reload after updates when a section sets reloadAfterMutate ([7e8bb25](https://gitlab.com/datenknoten/freundebuch/commit/7e8bb25))
+
 ## <small>3.2.3 (2026-10-12)</small>
 
 * fix(frontend): Wrap the legal links so the version stays readable in the mobile menu ([7504a6a](https://gitlab.com/datenknoten/freundebuch/commit/7504a6a))
