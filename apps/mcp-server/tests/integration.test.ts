@@ -423,7 +423,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
       return { baseUrl, sessionId, email: testUser.email, password: testUser.appPassword };
     }
 
-    it('should list all 14 tools', async () => {
+    it('should list all 16 tools', async () => {
       const { baseUrl, testUser } = getContext();
       const sessionId = await initMcpSession(baseUrl, testUser.email, testUser.appPassword);
 
@@ -436,7 +436,7 @@ describe('MCP Server', { timeout: 60000 }, () => {
       const result = body as { result?: { tools?: Array<{ name: string }> } };
       const toolNames = result.result?.tools?.map((t) => t.name) ?? [];
 
-      expect(toolNames.length).toBeGreaterThanOrEqual(14);
+      expect(toolNames.length).toBeGreaterThanOrEqual(16);
       expect(toolNames).toContain('list_friends');
       expect(toolNames).toContain('get_friend');
       expect(toolNames).toContain('search_friends');
@@ -451,6 +451,60 @@ describe('MCP Server', { timeout: 60000 }, () => {
       expect(toolNames).toContain('get_encounter');
       expect(toolNames).toContain('create_encounter');
       expect(toolNames).toContain('edit_encounter');
+      expect(toolNames).toContain('list_friend_notes');
+      expect(toolNames).toContain('create_friend_note');
+    });
+
+    async function insertFriend(displayName: string): Promise<string> {
+      const { pool, testUser } = getContext();
+      const friendResult = await pool.query(
+        `INSERT INTO friends.friends (user_id, display_name)
+         SELECT u.id, $2 FROM auth.users u WHERE u.external_id = $1
+         RETURNING external_id`,
+        [testUser.externalId, displayName],
+      );
+      return friendResult.rows[0].external_id;
+    }
+
+    it('create_friend_note should create a note that list_friend_notes returns', async () => {
+      const friendId = await insertFriend('Note Subject');
+      const sourceFriendId = await insertFriend('Note Source');
+
+      const { baseUrl, sessionId, email, password } = await getSessionAndAuth();
+      const { body: createBody } = await callTool(
+        baseUrl,
+        'create_friend_note',
+        { friendId, content: 'Moves to Leipzig', sourceFriendId },
+        { email, password, sessionId },
+      );
+      const createResult = createBody as { result?: { isError?: boolean } };
+      expect(createResult.result?.isError).toBeUndefined();
+
+      const { body } = await callTool(
+        baseUrl,
+        'list_friend_notes',
+        { friendId },
+        { email, password, sessionId },
+      );
+      const result = body as { result?: { content?: Array<{ text?: string }> } };
+      const notes = JSON.parse(result.result?.content?.[0]?.text ?? '[]');
+      expect(notes).toHaveLength(1);
+      expect(notes[0].content).toBe('Moves to Leipzig');
+      expect(notes[0].sourceFriend.id).toBe(sourceFriendId);
+    });
+
+    it('create_friend_note should return an error when the friend is its own source', async () => {
+      const friendId = await insertFriend('Self Source');
+
+      const { baseUrl, sessionId, email, password } = await getSessionAndAuth();
+      const { body } = await callTool(
+        baseUrl,
+        'create_friend_note',
+        { friendId, content: 'Told by myself', sourceFriendId: friendId },
+        { email, password, sessionId },
+      );
+      const result = body as { result?: { isError?: boolean } };
+      expect(result.result?.isError).toBe(true);
     });
 
     it('list_friends should return a paginated list', async () => {

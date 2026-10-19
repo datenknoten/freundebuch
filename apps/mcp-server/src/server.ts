@@ -3,6 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerCirclesTools } from './tools/circles.js';
 import { registerCollectivesTools } from './tools/collectives.js';
 import { registerEncountersTools } from './tools/encounters.js';
+import { registerFriendNotesTools } from './tools/friend-notes.js';
 import { registerFriendsTools } from './tools/friends.js';
 import type { Services } from './utils/service-factory.js';
 
@@ -21,6 +22,7 @@ export function createMcpServer(services: Services, getUserId: () => string): Mc
   registerCirclesTools(server, services, getUserId);
   registerCollectivesTools(server, services, getUserId);
   registerEncountersTools(server, services, getUserId);
+  registerFriendNotesTools(server, services, getUserId);
 
   return server;
 }
