@@ -8,6 +8,7 @@ export * from './columns.js';
 export * from './countries.js';
 export * from './dates.js';
 export * from './encounters.js';
+export * from './friend-notes.js';
 export * from './friends.js';
 export * from './notification-channels.js';
 export * from './pagination.js';
