@@ -21,7 +21,7 @@ WITH matching_friends AS (
             WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'
             WHEN e.id IS NOT NULL THEN 'email'
             WHEN p.id IS NOT NULL THEN 'phone'
-            WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
+            WHEN r.id IS NOT NULL OR m.id IS NOT NULL OR fn.id IS NOT NULL THEN 'notes'
             ELSE NULL
         END as match_source
     FROM friends.friends c
@@ -37,6 +37,9 @@ WITH matching_friends AS (
         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
     LEFT JOIN friends.friend_met_info m
         ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_notes fn
+        ON fn.friend_id = c.id
+        AND (fn.search_vector @@ websearch_to_tsquery('german', :query) OR fn.content ILIKE :wildcardQuery)
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
@@ -49,6 +52,7 @@ WITH matching_friends AS (
           OR p.id IS NOT NULL
           OR r.id IS NOT NULL
           OR m.id IS NOT NULL
+          OR fn.id IS NOT NULL
       )
     -- Deterministic winner per friend: without this ORDER BY the DISTINCT ON
     -- row (and therefore match_source) is arbitrary between identical requests.
@@ -108,7 +112,7 @@ WITH matching_friends AS (
             WHEN c.search_vector @@ websearch_to_tsquery('german', :query) THEN 'friend'
             WHEN e.id IS NOT NULL THEN 'email'
             WHEN p.id IS NOT NULL THEN 'phone'
-            WHEN r.id IS NOT NULL OR m.id IS NOT NULL THEN 'notes'
+            WHEN r.id IS NOT NULL OR m.id IS NOT NULL OR fn.id IS NOT NULL THEN 'notes'
             ELSE NULL
         END as match_source
     FROM friends.friends c
@@ -124,6 +128,9 @@ WITH matching_friends AS (
         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
     LEFT JOIN friends.friend_met_info m
         ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_notes fn
+        ON fn.friend_id = c.id
+        AND (fn.search_vector @@ websearch_to_tsquery('german', :query) OR fn.content ILIKE :wildcardQuery)
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
@@ -136,6 +143,7 @@ WITH matching_friends AS (
           OR p.id IS NOT NULL
           OR r.id IS NOT NULL
           OR m.id IS NOT NULL
+          OR fn.id IS NOT NULL
       )
     -- Deterministic winner per friend (see FullTextSearchFriends)
     ORDER BY c.id, match_source
@@ -246,6 +254,9 @@ WITH base_matches AS (
         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
     LEFT JOIN friends.friend_met_info m
         ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_notes fn
+        ON fn.friend_id = c.id
+        AND (fn.search_vector @@ websearch_to_tsquery('german', :query) OR fn.content ILIKE :wildcardQuery)
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
@@ -256,6 +267,7 @@ WITH base_matches AS (
           OR p.id IS NOT NULL
           OR r.id IS NOT NULL
           OR m.id IS NOT NULL
+          OR fn.id IS NOT NULL
       )
 ),
 filtered_matches AS (
@@ -419,6 +431,9 @@ WITH base_matches AS (
         ON r.friend_id = c.id AND r.notes ILIKE :wildcardQuery
     LEFT JOIN friends.friend_met_info m
         ON m.friend_id = c.id AND m.met_context ILIKE :wildcardQuery
+    LEFT JOIN friends.friend_notes fn
+        ON fn.friend_id = c.id
+        AND (fn.search_vector @@ websearch_to_tsquery('german', :query) OR fn.content ILIKE :wildcardQuery)
     WHERE u.external_id = :userExternalId
       AND c.deleted_at IS NULL
       AND (
@@ -429,6 +444,7 @@ WITH base_matches AS (
           OR p.id IS NOT NULL
           OR r.id IS NOT NULL
           OR m.id IS NOT NULL
+          OR fn.id IS NOT NULL
       )
 )
 -- Country facet

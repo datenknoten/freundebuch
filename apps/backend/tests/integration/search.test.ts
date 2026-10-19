@@ -5,6 +5,7 @@ import {
   createCircleWithFriend,
   createFriendWithAddress,
   createFriendWithEmail,
+  createFriendWithFriendNote,
   createFriendWithFullName,
   createFriendWithMetContext,
   createFriendWithNotes,
@@ -272,6 +273,32 @@ describe('Search API - Integration Tests', () => {
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
         expect(body[0].displayName).toBe('Alice');
+        expect(body[0].matchSource).toBe('notes');
+      });
+
+      it('should search by friend notes with German stemming', async () => {
+        const { app, pool, testUser } = getContext();
+
+        await createFriendWithFriendNote(
+          pool,
+          testUser.externalId,
+          'Clara Note',
+          'Sie sammelt alte Bücher',
+        );
+        await createFriendWithFriendNote(pool, testUser.externalId, 'Dora Note', 'Spielt Tennis');
+
+        // "Buch" matches "Bücher" only through the 'german' stemmer, not through ILIKE.
+        const request = new Request('http://localhost/api/friends/search/full?q=Buch', {
+          method: 'GET',
+          headers: authHeaders(testUser.sessionCookies),
+        });
+
+        const response = await app.fetch(request);
+        const body = (await response.json()) as SearchResultItem[];
+
+        expect(response.status).toBe(200);
+        expect(body).toHaveLength(1);
+        expect(body[0].displayName).toBe('Clara Note');
         expect(body[0].matchSource).toBe('notes');
       });
 

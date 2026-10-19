@@ -165,6 +165,26 @@ export async function createFriendWithMetContext(
 }
 
 /**
+ * Create a friend with a note (friends.friend_notes, Epic 15)
+ */
+export async function createFriendWithFriendNote(
+  pool: pg.Pool,
+  userExternalId: string,
+  displayName: string,
+  content: string,
+): Promise<string> {
+  const friendId = await createTestFriend(pool, userExternalId, displayName);
+
+  await pool.query(
+    `INSERT INTO friends.friend_notes (friend_id, content)
+     SELECT id, $2 FROM friends.friends WHERE external_id = $1`,
+    [friendId, content],
+  );
+
+  return friendId;
+}
+
+/**
  * Create a friend with address (city and country)
  */
 export async function createFriendWithAddress(
