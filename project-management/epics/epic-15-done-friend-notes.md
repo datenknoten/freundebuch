@@ -10,6 +10,7 @@
 > primary keys plus an `external_id` UUID, are not paginated, and use the `'german'`
 > text-search config like the friend search. A note can link to the encounter where the
 > user learned it, to the friend who told it, and to an older note that it replaces.
+> The content is Markdown with `@`-mentions, like the other free-text fields, not plain text.
 > See migration `database/migrations/1792404740677_friend-notes.ts` and
 > `apps/backend/src/services/friends/sub-resources/friend-notes.service.ts`.
 > Follow-ups: `project-management/issues/dynamic-full-text-search-language.md` and

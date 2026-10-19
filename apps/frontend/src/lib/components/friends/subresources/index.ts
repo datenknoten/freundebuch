@@ -15,6 +15,7 @@ export { default as DetailEditModal } from './detail-edit-modal.svelte';
 export { default as EmailEditForm } from './email-edit-form.svelte';
 export { default as EmailRow } from './email-row.svelte';
 export { default as NoteEditForm } from './note-edit-form.svelte';
+export { noteExcerpt } from './note-excerpt';
 export { default as NoteRow } from './note-row.svelte';
 // Edit Form Components
 export { default as PhoneEditForm } from './phone-edit-form.svelte';

@@ -2,10 +2,12 @@
 import { onMount } from 'svelte';
 import { listEncounters } from '$lib/api/encounters';
 import { encounterDisplayTitle } from '$lib/components/encounters/encounter-display';
-import { createDirtyTracker, FormSelect, FormTextarea, formClasses } from '$lib/components/ui';
+import { createDirtyTracker, FormSelect, formClasses } from '$lib/components/ui';
+import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type { FriendNote, FriendNoteInput, FriendSearchResult } from '$shared';
 import FriendSearchInput from '../friend-search-input.svelte';
+import { noteExcerpt } from './note-excerpt';
 
 const i18n = createI18n();
 
@@ -80,8 +82,7 @@ const encounterSelectOptions = $derived<Option[]>([
 ]);
 
 function noteLabel(note: FriendNote): string {
-  const text = note.content.length > 60 ? `${note.content.slice(0, 60)}…` : note.content;
-  return `${text} · ${formatDate(note.createdAt)}`;
+  return `${noteExcerpt(note.content)} · ${formatDate(note.createdAt)}`;
 }
 
 const supersedeOptions = $derived<Option[]>([
@@ -111,13 +112,10 @@ export function isValid(): boolean {
 </script>
 
 <div class="space-y-4">
-  <FormTextarea
-    id="note-content"
-    label={$i18n.t('subresources.note.content')}
+  <MarkdownField
     bind:value={content}
-    rows={4}
+    label={$i18n.t('subresources.note.content')}
     {disabled}
-    required
     placeholder={$i18n.t('subresources.note.placeholder.content')}
   />
 

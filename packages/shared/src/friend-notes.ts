@@ -33,6 +33,7 @@ export interface FriendNoteEncounter {
 
 export interface FriendNote {
   id: string;
+  /** Markdown; an `@`-mention is a link such as `[Anna](/friends/{id})` */
   content: string;
   encounter: FriendNoteEncounter | null;
   /** The friend who told the user about this */

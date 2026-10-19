@@ -68,6 +68,7 @@ import {
   EmailRow,
   NoteEditForm,
   NoteRow,
+  noteExcerpt,
   PhoneEditForm,
   PhoneRow,
   ProfessionalHistoryEditForm,
@@ -370,7 +371,7 @@ export const noteDescriptor = defineDescriptor<FriendNote, FriendNoteInput>({
   formProps: (ctx) => ({ ...editFormProps(ctx), friendId: ctx.ownerId, notes: ctx.items }),
   RowComponent: NoteRow,
   rowProps: (note) => ({ note }),
-  deleteName: (note) => (note.content.length > 60 ? `${note.content.slice(0, 60)}…` : note.content),
+  deleteName: (note) => noteExcerpt(note.content),
   deleteTitleKey: 'friendDetail.modal.deleteNote',
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteNote',
 });
