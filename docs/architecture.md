@@ -97,7 +97,7 @@ PostgreSQL with PostGIS extension. Each domain gets its own schema — the `publ
 | Schema | Purpose | Key Tables |
 |--------|---------|------------|
 | `auth` | Authentication and sessions | user, session, account, verification, passkey (Better Auth), app_passwords, oauth_application, oauth_access_token, oauth_consent (MCP OAuth provider); legacy users/sessions tables pending removal |
-| `friends` | Friend management | friends, friend_phones, friend_emails, friend_addresses, friend_urls, friend_dates, friend_professional_history, friend_social_profiles, friend_met_info, friend_relationships, friend_changes, circles, friend_circles |
+| `friends` | Friend management | friends, friend_phones, friend_emails, friend_addresses, friend_urls, friend_dates, friend_professional_history, friend_social_profiles, friend_met_info, friend_relationships, friend_notes, friend_changes, circles, friend_circles |
 | `encounters` | Encounter tracking | encounters, encounter_friends |
 | `collectives` | Collectives (families, companies, clubs) | collective_types, collective_roles, collectives, collective_memberships, collective_addresses, collective_emails, collective_phones, collective_urls, collective_circles |
 | `geodata` | OpenStreetMap address data | import_batches, addresses, address_search_index, housenumbers |
@@ -155,6 +155,7 @@ Detailed epics live in [project-management/epics/](../project-management/epics/)
 - **Epic 10** — Full-text search
 - **Epic 12** — Collectives (families, companies, clubs, friend groups)
 - **Epic 14** — Sub-resource inline editing
+- **Epic 15** — Friend notes (with encounter, source-friend and supersede links)
 
 ### In Progress
 
@@ -170,6 +171,5 @@ Detailed epics live in [project-management/epics/](../project-management/epics/)
 - **Epic 9** — Dashboard and insights
 - **Epic 11** — Custom fields
 - **Epic 13** — Self-service pages
-- **Epic 15** — Friend notes
 - **Epic 16** — Multi-user workspaces
 - **Epic 17** — Advanced search

@@ -17,13 +17,13 @@ This epic is divided into sub-epics to allow incremental delivery:
 |----------|-------|--------------|-------------|--------|
 | [1A](#epic-1a-core-friend-crud) | Core Friend CRUD | Critical | Basic friend management - the foundation | Done |
 | [1B](#epic-1b-extended-friend-fields) | Extended Friend Fields | High | Rich context: dates, profession, social profiles | Done |
-| 1C | Friend Notes | High | Timestamped notes system | Extracted to [Epic 15](epic-15-planned-friend-notes.md) |
+| 1C | Friend Notes | High | Timestamped notes system | Extracted to [Epic 15](epic-15-done-friend-notes.md) |
 | [1D](#epic-1d-friend-relationships) | Friend Relationships | Medium | Links between friends | Done |
 
 **Recommended Implementation Order:** 1A → 1B → 1C → 1D
 
 > **Note:** Custom fields have been extracted to [Epic 11: Custom Fields](epic-11-planned-custom-fields.md) for Phase 2.
-> **Note:** Friend Notes (1C) has been extracted to [Epic 15: Friend Notes](epic-15-planned-friend-notes.md).
+> **Note:** Friend Notes (1C) has been extracted to [Epic 15: Friend Notes](epic-15-done-friend-notes.md).
 
 ---
 
@@ -539,7 +539,7 @@ CREATE INDEX idx_friend_social_profiles_friend_id ON friend_social_profiles(frie
 
 ---
 
-> **Note:** Epic 1C (Friend Notes) has been extracted to [Epic 15: Friend Notes](epic-15-planned-friend-notes.md).
+> **Note:** Epic 1C (Friend Notes) has been extracted to [Epic 15: Friend Notes](epic-15-done-friend-notes.md).
 
 ---
 

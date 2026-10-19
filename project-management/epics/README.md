@@ -21,7 +21,7 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 | [Epic 12](epic-12-done-collectives.md) | Collectives | Phase 2 | Medium | **Done** |
 | [Epic 13](epic-13-future-self-service-pages.md) | Self-Service Friend Pages | Phase 4 | Low | Future |
 | [Epic 14](epic-14-done-subresource-inline-editing.md) | Subresource Inline Editing | Enhancement | High | **Done** |
-| [Epic 15](epic-15-planned-friend-notes.md) | Friend Notes | MVP (Phase 1) | High | Planned |
+| [Epic 15](epic-15-done-friend-notes.md) | Friend Notes | MVP (Phase 1) | High | **Done** |
 | [Epic 16](epic-16-planned-multi-user-workspaces.md) | Multi-User Workspaces | Phase 2 | Medium | Planned |
 | [Epic 17](epic-17-planned-advanced-search.md) | Advanced Search | Phase 2 | Medium | Planned |
 | [Epic 18](epic-18-partial-better-auth-migration.md) | Better Auth Migration | Phase 1.5 | High | **Partial** (live; legacy table removal pending) |
@@ -53,19 +53,19 @@ Welcome to the epic planning documents for Freundebuch! Each epic represents a m
 - Epic 5: Multi-User Management (authentication) - **Done**
 - Epic 10: Search Functionality (basic) - **Done**
 - Epic 14: Subresource Inline Editing - **Done**
-- Epic 15: Friend Notes - Planned (extracted from Epic 1C)
+- Epic 15: Friend Notes - **Done** (extracted from Epic 1C)
 
 **What you can do now:**
 - Create, edit, and manage your friends
 - Add phones, emails, addresses, URLs, dates, social profiles inline
 - Define relationships between friends
 - Search to find anyone quickly
+- Keep timestamped notes about a friend, with who told you and where you heard it
 - Log in securely (single-user)
 - Use it on any device (responsive design!)
 
 **Still to come:**
 - Organize friends into circles and tag them (Epic 4)
-- Friend notes (Epic 15)
 
 ---
 

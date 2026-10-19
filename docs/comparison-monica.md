@@ -54,7 +54,6 @@ Everything in this list is something Monica shipped years ago and we have only p
 | Feature | Monica | Freundebuch status |
 |---|---|---|
 | **Reminders & stay-in-touch** | Set a contact frequency per person, get reminded automatically; logging a call resets the timer | Epic 3, not started. **Our most critical gap** - without it we're an address book with history, not a relationship tool |
-| **Notes per contact** | Shipped | Epic 15, planned |
 | **Journal / diary** | Chandler's flagship feature - entries tag contacts and build a life timeline | No equivalent planned (deliberate, see §6) |
 | **Gift tracking** | Gifts given or planned, with status | Only "gift" as an encounter type |
 | **Debt tracking** | Money owed or lent per contact | No equivalent |

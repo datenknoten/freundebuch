@@ -1,10 +1,19 @@
 # Epic 15: Friend Notes
 
-**Status:** Planned
+**Status:** Done
 **Phase:** MVP (Phase 1)
 **Priority:** High
 **Depends On:** Epic 1 (Friend Management)
 **Extracted From:** Epic 1C
+
+> **Implementation note:** The shipped design differs from this plan. Notes use integer
+> primary keys plus an `external_id` UUID, are not paginated, and use the `'german'`
+> text-search config like the friend search. A note can link to the encounter where the
+> user learned it, to the friend who told it, and to an older note that it replaces.
+> See migration `database/migrations/1792404740677_friend-notes.ts` and
+> `apps/backend/src/services/friends/sub-resources/friend-notes.service.ts`.
+> Follow-ups: `project-management/issues/dynamic-full-text-search-language.md` and
+> `project-management/issues/promote-note-content-to-structured-fields.md`.
 
 ## Overview
 
