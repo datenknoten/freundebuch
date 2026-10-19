@@ -14,7 +14,7 @@ export function registerFriendNotesTools(
 ) {
   server.tool(
     'list_friend_notes',
-    'List all notes about a friend, newest first. Each note has its text, creation time, the encounter where it was learned, the friend who told it, and supersede links (supersedesNoteId / supersededByNoteId; a superseded note is outdated).',
+    'List all notes about a friend, newest first. Each note has its Markdown text, creation time, the encounter where it was learned, the friend who told it, and supersede links (supersedesNoteId / supersededByNoteId; a superseded note is outdated).',
     {
       friendId: z.string().uuid().describe('The friend ID (UUID)'),
     },
@@ -29,7 +29,13 @@ export function registerFriendNotesTools(
     'Add a note about a friend: a fact or detail the user learned. Optionally link the encounter where it was learned, the friend who told it, and an older note of the same friend that this note replaces. Returns the created note.',
     {
       friendId: z.string().uuid().describe('The friend ID (UUID) that the note is about'),
-      content: z.string().trim().min(1).describe('The note text'),
+      content: z
+        .string()
+        .trim()
+        .min(1)
+        .describe(
+          'The note text as Markdown. Mention a friend, collective or encounter with a link such as [Anna](/friends/{id}), [Club](/collectives/{id}) or [Lunch](/encounters/{id}).',
+        ),
       encounterId: z
         .string()
         .uuid()
