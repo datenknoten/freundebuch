@@ -223,6 +223,27 @@ describe('SubresourceSection', () => {
     await waitFor(() => expect(screen.queryAllByText('+1 555 0200')).toHaveLength(0));
   });
 
+  it('reloads once after an update when the descriptor sets reloadAfterMutate', async () => {
+    const phone = aPhone({ phoneNumber: '+1 555 0100' });
+    const updated = aPhone({ id: phone.id, phoneNumber: '+1 555 0200' });
+    // A row that only the reload returns: the update changed another row too.
+    const sibling = aPhone({ phoneNumber: '+1 555 0300' });
+    const load = vi.fn().mockResolvedValueOnce([phone]).mockResolvedValue([updated, sibling]);
+    const update = vi.fn().mockResolvedValue(updated);
+    const descriptor = fakePhoneDescriptor({ load, update, reloadAfterMutate: true });
+    renderSection(descriptor);
+
+    await fireEvent.click((await screen.findAllByLabelText('subresources.phone.editAria'))[0]);
+    await fireEvent.input(await screen.findByLabelText(/subresources\.phone\.phoneNumber/), {
+      target: { value: '+1 555 0200' },
+    });
+    await fireEvent.click(screen.getByText('subresources.common.save'));
+
+    await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
+    expect((await screen.findAllByText('+1 555 0300')).length).toBeGreaterThan(0);
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
   it('ignores a stale load when the collective changes while a request is in flight', async () => {
     // Deferred loads let us resolve the old collective's request *after* the new one.
     function deferred<T>() {

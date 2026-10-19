@@ -176,7 +176,9 @@ async function handleSave() {
     const data = formRef.getData();
     if (editingId !== null && formDriven.update !== undefined) {
       const updated = await formDriven.update(ownerId, editingId, data);
-      if (ownsItems) {
+      if (descriptor.reloadAfterMutate === true) {
+        await reload();
+      } else if (ownsItems) {
         loadedItems = loadedItems.map((item) => (item.id === editingId ? updated : item));
       }
     } else if (descriptor.reloadAfterMutate === true) {

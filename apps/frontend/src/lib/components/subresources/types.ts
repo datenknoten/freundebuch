@@ -142,7 +142,11 @@ interface SubresourceDescriptorBase<TItem extends SubresourceItem> {
   load?: (ownerId: string) => Promise<TItem[]>;
   /** Receives the whole item, since some types delete by a secondary id. */
   remove: (ownerId: string, item: TItem) => Promise<unknown>;
-  /** When the create/remove API returns only a message, reload instead of patching locally. */
+  /**
+   * Reload after every create, update and remove instead of patching locally:
+   * the API returns only a message (circles), or a mutation also changes other
+   * rows or their order (notes and their supersede links).
+   */
   reloadAfterMutate?: boolean;
   /**
    * Side effect scheduled after a successful save (address geocoding refetch).
