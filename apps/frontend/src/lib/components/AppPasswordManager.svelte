@@ -2,25 +2,26 @@
 import { onMount } from 'svelte';
 import Key from 'svelte-heros-v2/Key.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
-import type { AppPassword, CreateAppPasswordResult } from '$lib/api/app-passwords';
-import * as appPasswordsApi from '$lib/api/app-passwords';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
+import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { codeClasses } from '$lib/components/ui/styles.js';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/i18n.js';
+import type { AppPasswordCreateResponse, AppPasswordResponse } from '$shared';
 
+const appPasswordsApi = getAppContext().api.appPasswords;
 const i18n = createI18n();
 
-let passwords = $state<AppPassword[]>([]);
+let passwords = $state<AppPasswordResponse[]>([]);
 let isLoading = $state(true);
 let error = $state('');
 let newPasswordName = $state('');
 let isCreating = $state(false);
-let createdPassword = $state<CreateAppPasswordResult | null>(null);
+let createdPassword = $state<AppPasswordCreateResponse | null>(null);
 let revokingId = $state<string | null>(null);
 let revokeConfirmId = $state<string | null>(null);
 let revokeConfirmName = $state('');
@@ -58,7 +59,7 @@ async function handleCreate(event: SubmitEvent) {
   }
 }
 
-function openRevokeConfirm(password: AppPassword) {
+function openRevokeConfirm(password: AppPasswordResponse) {
   revokeConfirmId = password.externalId;
   revokeConfirmName = password.name;
 }
@@ -119,7 +120,7 @@ function formatDate(dateString: string | null): string {
       <p class="mb-3">
         {$i18n.t('profile.appPasswords.copyNow')}
       </p>
-      <code class="block {codeClasses.blockLg} select-all">
+      <code class="block {CODE_CLASSES.blockLg} select-all">
         {createdPassword.password}
       </code>
       <p class="text-xs mt-2">

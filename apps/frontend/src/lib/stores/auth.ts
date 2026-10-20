@@ -1,19 +1,20 @@
+import type { Logger } from 'pino';
 import { derived, writable } from 'svelte/store';
-import type { UserPreferences, UserResponse } from '$shared';
-import * as authApi from '../api/auth.js';
-import { authClient } from '../auth-client.js';
+import type { UserPreferences, UserResponse, UserWithPreferencesResponse } from '$shared';
+import type { AuthApi } from '../api/auth.js';
+import type { AuthClient } from '../auth-client.js';
 import { retryWithBackoff } from '../utils/retry.js';
-import { abandonSessionExpired, resolveSessionExpired, setHasSession } from './session.js';
+import type { SessionStore } from './session.js';
 
-/** Default user preferences */
-const DEFAULT_PREFERENCES: UserPreferences = {
-  friendsPageSize: 25,
-};
+export interface AuthStoreOptions {
+  authApi: AuthApi;
+  authClient: AuthClient;
+  session: SessionStore;
+  logger: Logger;
+}
 
-/**
- * Auth state interface
- */
-interface AuthState {
+export interface AuthState {
+  /** `null` while signed out. */
   user: UserResponse | null;
   preferences: UserPreferences;
   isLoading: boolean;
@@ -21,10 +22,11 @@ interface AuthState {
   error: string | null;
 }
 
-/**
- * Initial auth state
- */
-const initialState: AuthState = {
+const DEFAULT_PREFERENCES: UserPreferences = {
+  friendsPageSize: 25,
+};
+
+const INITIAL_STATE: AuthState = {
   user: null,
   preferences: DEFAULT_PREFERENCES,
   isLoading: false,
@@ -32,354 +34,219 @@ const initialState: AuthState = {
   error: null,
 };
 
-/**
- * Create the auth store
- */
-function createAuthStore() {
-  const { subscribe, set, update } = writable<AuthState>(initialState);
+const PREFERENCES_RETRY_ATTEMPTS = 5;
+const PREFERENCES_RETRY_DELAY_MS = 1000;
 
-  /**
-   * Fetch user data from our custom /api/auth/me endpoint
-   * which includes preferences and onboarding status
-   */
-  async function fetchUserData(): Promise<UserResponse | null> {
+function toUser(result: UserWithPreferencesResponse) {
+  return {
+    externalId: result.user.externalId,
+    email: result.user.email,
+    selfProfileId: result.user.selfProfileId,
+    displayName: result.user.displayName,
+    hasCompletedOnboarding: result.user.hasCompletedOnboarding,
+    preferences: result.preferences,
+  } satisfies UserResponse;
+}
+
+function withDefaults(preferences: UserPreferences | undefined) {
+  return { ...DEFAULT_PREFERENCES, ...preferences };
+}
+
+/**
+ * The signed-in user and their preferences. Signing up, in and out goes through Better Auth;
+ * the user data comes from the backend's `/api/auth/me`.
+ */
+export class AuthStore {
+  private readonly state = writable(INITIAL_STATE);
+  public readonly subscribe = this.state.subscribe;
+  public readonly isAuthenticated = derived(this.state, (state) => state.user !== null);
+  public readonly currentUser = derived(this.state, (state) => state.user);
+  public readonly isInitialized = derived(this.state, (state) => state.isInitialized);
+  public readonly preferences = derived(this.state, (state) => state.preferences);
+  public readonly friendsPageSize = derived(
+    this.state,
+    (state) => state.preferences.friendsPageSize ?? 25,
+  );
+  public readonly friendsTableColumns = derived(
+    this.state,
+    (state) => state.preferences.friendsTableColumns ?? null,
+  );
+  public readonly birthdayFormat = derived(
+    this.state,
+    (state) => state.preferences.birthdayFormat ?? 'iso',
+  );
+  public readonly showShortcutHints = derived(
+    this.state,
+    (state) => state.preferences.showShortcutHints ?? true,
+  );
+  /** The ISO code preselected for new addresses, `null` when the user chose none. */
+  public readonly defaultCountry = derived(
+    this.state,
+    (state) => state.preferences.defaultCountry ?? null,
+  );
+  public readonly needsOnboarding = derived(
+    this.state,
+    (state) => state.user !== null && state.user.hasCompletedOnboarding === false,
+  );
+  private readonly authApi: AuthApi;
+  private readonly authClient: AuthClient;
+  private readonly session: SessionStore;
+  private readonly logger: Logger;
+
+  public constructor(options: AuthStoreOptions) {
+    this.authApi = options.authApi;
+    this.authClient = options.authClient;
+    this.session = options.session;
+    this.logger = options.logger;
+  }
+
+  public async register(email: string, password: string) {
+    this.startLoading();
     try {
-      const result = await authApi.getUserWithPreferences();
-      return {
-        externalId: result.user.externalId,
-        email: result.user.email,
-        selfProfileId: result.user.selfProfileId,
-        displayName: result.user.displayName,
-        hasCompletedOnboarding: result.user.hasCompletedOnboarding,
-        preferences: result.preferences,
-      };
-    } catch {
-      return null;
+      const result = await this.authClient.signUp.email({
+        email,
+        password,
+        name: email.split('@')[0] ?? '',
+      });
+      if (result.error !== null) {
+        throw new Error(result.error.message ?? 'Registration failed');
+      }
+      return await this.signedIn();
+    } catch (error) {
+      this.fail(error, 'Registration failed');
+      throw error;
     }
   }
 
-  return {
-    subscribe,
-
-    /**
-     * Register a new user
-     */
-    register: async (email: string, password: string) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        const result = await authClient.signUp.email({
-          email,
-          password,
-          name: email.split('@')[0] ?? '',
-        });
-
-        if (result.error) {
-          throw new Error(result.error.message || 'Registration failed');
-        }
-
-        // Fetch full user data including preferences/onboarding
-        const userData = await fetchUserData();
-
-        if (userData) {
-          setHasSession(true);
-          resolveSessionExpired();
-          update((state) => ({
-            ...state,
-            user: userData,
-            preferences: { ...DEFAULT_PREFERENCES, ...userData.preferences },
-            isLoading: false,
-            isInitialized: true,
-            error: null,
-          }));
-        }
-
-        return userData;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Registration failed';
-
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          isInitialized: true,
-          error: errorMessage,
-        }));
-
-        throw error;
+  public async login(email: string, password: string) {
+    this.startLoading();
+    try {
+      const result = await this.authClient.signIn.email({ email, password });
+      if (result.error !== null) {
+        throw new Error(result.error.message ?? 'Login failed');
       }
-    },
+      return await this.signedIn();
+    } catch (error) {
+      this.fail(error, 'Login failed');
+      throw error;
+    }
+  }
 
-    /**
-     * Login an existing user
-     */
-    login: async (email: string, password: string) => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
+  public async logout() {
+    this.startLoading();
+    try {
+      await this.authClient.signOut();
+      this.session.setHasSession(false);
+      this.session.abandonSessionExpired();
+      this.state.set(INITIAL_STATE);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Logout failed';
+      this.state.update((state) => ({ ...state, isLoading: false, error: message }));
+      throw error;
+    }
+  }
 
-      try {
-        const result = await authClient.signIn.email({
-          email,
-          password,
-        });
+  /**
+   * Restores the session on app load. `/api/auth/me` validates the session itself, so a
+   * separate Better Auth session request would only delay the first render.
+   */
+  public async initialize() {
+    this.state.update((state) => ({ ...state, isLoading: true }));
+    const user = await this.findUser();
+    if (user !== undefined) {
+      this.applyUser(user);
+      return user;
+    }
+    this.session.setHasSession(false);
+    this.state.update((state) => ({
+      ...state,
+      isLoading: false,
+      isInitialized: true,
+      error: null,
+    }));
+    return undefined;
+  }
 
-        if (result.error) {
-          throw new Error(result.error.message || 'Login failed');
-        }
+  public clearError() {
+    this.state.update((state) => ({ ...state, error: null }));
+  }
 
-        // Fetch full user data including preferences/onboarding
-        const userData = await fetchUserData();
-
-        if (userData) {
-          setHasSession(true);
-          resolveSessionExpired();
-          update((state) => ({
-            ...state,
-            user: userData,
-            preferences: { ...DEFAULT_PREFERENCES, ...userData.preferences },
-            isLoading: false,
-            isInitialized: true,
-            error: null,
-          }));
-        }
-
-        return userData;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Login failed';
-
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          isInitialized: true,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Logout the current user
-     */
-    logout: async () => {
-      update((state) => ({ ...state, isLoading: true, error: null }));
-
-      try {
-        await authClient.signOut();
-        setHasSession(false);
-        abandonSessionExpired();
-        set(initialState);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Logout failed';
-
-        update((state) => ({
-          ...state,
-          isLoading: false,
-          error: errorMessage,
-        }));
-
-        throw error;
-      }
-    },
-
-    /**
-     * Initialize auth state (e.g., on app load)
-     * Checks if there's a valid session via Better Auth
-     */
-    initialize: async () => {
-      update((state) => ({ ...state, isLoading: true }));
-
-      // Fetch the user directly from /api/auth/me. The endpoint already
-      // validates the session via auth middleware, so a separate
-      // authClient.getSession() round-trip would only add a redundant request
-      // to the critical path. fetchUserData() returns null on any failure
-      // (including a 401 when there's no valid session).
-      const userData = await fetchUserData();
-
-      if (userData) {
-        setHasSession(true);
-        resolveSessionExpired();
-        update((state) => ({
-          ...state,
-          user: userData,
-          preferences: { ...DEFAULT_PREFERENCES, ...userData.preferences },
-          isLoading: false,
-          isInitialized: true,
-          error: null,
-        }));
-
-        return { user: userData };
-      }
-
-      // No valid session
-      setHasSession(false);
-      update((state) => ({
-        ...state,
-        isLoading: false,
-        isInitialized: true,
-        error: null,
-      }));
-
-      return null;
-    },
-
-    /**
-     * Clear any auth errors
-     */
-    clearError: () => {
-      update((state) => ({ ...state, error: null }));
-    },
-
-    /**
-     * Update user preferences
-     * Uses exponential backoff retry, fails silently after max attempts
-     */
-    updatePreferences: async (newPreferences: Partial<UserPreferences>) => {
-      // Optimistically update the store immediately
-      update((state) => ({
-        ...state,
-        preferences: { ...state.preferences, ...newPreferences },
-      }));
-
-      // Persist to server with retry
-      await retryWithBackoff(
-        async () => {
-          const result = await authApi.updatePreferences(newPreferences);
-          // Update with server response (in case of any transformations)
-          update((state) => ({
-            ...state,
-            preferences: { ...DEFAULT_PREFERENCES, ...result.preferences },
-          }));
-          return result;
-        },
-        {
-          maxAttempts: 5,
-          initialDelay: 1000,
-          onRetry: (attempt, error) => {
-            console.warn(`Preferences update failed (attempt ${attempt}):`, error.message);
-          },
-        },
-      );
-    },
-
-    /**
-     * Load preferences from server
-     * Called during initialization after auth is confirmed
-     */
-    loadPreferences: async () => {
-      try {
-        const result = await authApi.getUserWithPreferences();
-        update((state) => ({
-          ...state,
-          preferences: { ...DEFAULT_PREFERENCES, ...result.preferences },
-        }));
-      } catch (error) {
-        // Silently fail - use defaults
-        console.warn('Failed to load preferences:', error);
-      }
-    },
-
-    /**
-     * Refresh user data from server
-     * Used after onboarding completion to update hasCompletedOnboarding
-     */
-    refreshUserData: async () => {
-      try {
-        const user = await authApi.getCurrentUser();
-        update((state) => ({
-          ...state,
-          user,
-          preferences: { ...DEFAULT_PREFERENCES, ...user.preferences },
-        }));
-        return user;
-      } catch (error) {
-        console.warn('Failed to refresh user data:', error);
-        throw error;
-      }
-    },
-  };
-}
-
-/**
- * The global auth store
- */
-export const auth = createAuthStore();
-
-/**
- * Derived store for authenticated state
- */
-export const isAuthenticated = derived(auth, ($auth) => $auth.user !== null);
-
-/**
- * Derived store for current user
- */
-export const currentUser = derived(auth, ($auth) => $auth.user);
-
-/**
- * Derived store for initialization state
- */
-export const isAuthInitialized = derived(auth, ($auth) => $auth.isInitialized);
-
-/**
- * Derived store for user preferences
- */
-export const userPreferences = derived(auth, ($auth) => $auth.preferences);
-
-/**
- * Derived store for friends page size
- */
-export const friendsPageSize = derived(auth, ($auth) => $auth.preferences.friendsPageSize ?? 25);
-
-/**
- * Derived store for friends table columns
- */
-export const friendsTableColumns = derived(
-  auth,
-  ($auth) => $auth.preferences.friendsTableColumns ?? null,
-);
-
-/**
- * Derived store for birthday format (default: 'iso')
- */
-export const birthdayFormat = derived(auth, ($auth) => $auth.preferences.birthdayFormat ?? 'iso');
-
-/**
- * Derived store for shortcut hint toasts (default: enabled)
- */
-export const showShortcutHints = derived(
-  auth,
-  ($auth) => $auth.preferences.showShortcutHints ?? true,
-);
-
-/** Derived store for the default country of new addresses (ISO code or null) */
-export const defaultCountry = derived(auth, ($auth) => $auth.preferences.defaultCountry ?? null);
-
-/**
- * Helper to wait for auth initialization
- * Returns a promise that resolves when auth is initialized
- */
-export function waitForAuthInit(): Promise<void> {
-  return new Promise((resolve) => {
-    const unsubscribe = auth.subscribe((state) => {
-      if (state.isInitialized) {
-        unsubscribe();
-        resolve();
-      }
+  /**
+   * Applies the change at once and persists it in the background with exponential backoff;
+   * after the last failed attempt the change stays local.
+   */
+  public async updatePreferences(changes: UserPreferences) {
+    this.state.update((state) => ({ ...state, preferences: { ...state.preferences, ...changes } }));
+    await retryWithBackoff(() => this.persistPreferences(changes), {
+      maxAttempts: PREFERENCES_RETRY_ATTEMPTS,
+      initialDelay: PREFERENCES_RETRY_DELAY_MS,
+      onRetry: (attempt, err) => this.logger.warn({ err, attempt }, 'Preferences update failed'),
     });
-  });
-}
+  }
 
-/**
- * Convenience function to refresh user data
- * Used after onboarding completion
- */
-export async function refreshUserData() {
-  return auth.refreshUserData();
-}
+  /** Reloads the user, for example once the onboarding completed. */
+  public async refreshUserData() {
+    try {
+      const user = await this.authApi.getCurrentUser();
+      this.state.update((state) => ({
+        ...state,
+        user,
+        preferences: withDefaults(user.preferences),
+      }));
+      return user;
+    } catch (err) {
+      this.logger.warn({ err }, 'Failed to refresh user data');
+      throw err;
+    }
+  }
 
-/**
- * Derived store for onboarding status
- * Returns true if user needs to complete onboarding
- */
-export const needsOnboarding = derived(
-  auth,
-  ($auth) => $auth.user !== null && !$auth.user.hasCompletedOnboarding,
-);
+  private startLoading() {
+    this.state.update((state) => ({ ...state, isLoading: true, error: null }));
+  }
+
+  private fail(error: unknown, fallbackMessage: string) {
+    const message = error instanceof Error ? error.message : fallbackMessage;
+    this.state.update((state) => ({
+      ...state,
+      isLoading: false,
+      isInitialized: true,
+      error: message,
+    }));
+  }
+
+  private async signedIn() {
+    const user = await this.findUser();
+    if (user !== undefined) {
+      this.applyUser(user);
+    }
+    return user;
+  }
+
+  /** Resolves `undefined` on any failure, a 401 without a session included. */
+  private async findUser() {
+    try {
+      return toUser(await this.authApi.getUserWithPreferences());
+    } catch {
+      return undefined;
+    }
+  }
+
+  private applyUser(user: UserResponse) {
+    this.session.setHasSession(true);
+    this.session.resolveSessionExpired();
+    this.state.update((state) => ({
+      ...state,
+      user,
+      preferences: withDefaults(user.preferences),
+      isLoading: false,
+      isInitialized: true,
+      error: null,
+    }));
+  }
+
+  private async persistPreferences(changes: UserPreferences) {
+    const result = await this.authApi.updatePreferences(changes);
+    this.state.update((state) => ({ ...state, preferences: withDefaults(result.preferences) }));
+    return result;
+  }
+}

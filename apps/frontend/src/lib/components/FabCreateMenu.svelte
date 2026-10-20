@@ -8,7 +8,7 @@ import { openWithKeyboard } from '$lib/actions/auto-focus';
 export type FabCreateChoice = 'friend' | 'encounter' | 'circle' | 'collective';
 
 /** Routes the user to the creation flow for the chosen entity. */
-export function navigateForCreateChoice(choice: FabCreateChoice): void {
+export function navigateForCreateChoice(choice: FabCreateChoice) {
   switch (choice) {
     case 'friend':
       goto('/friends/new');
@@ -48,7 +48,7 @@ import Swatch from 'svelte-heros-v2/Swatch.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
-import { focusRing } from '$lib/components/ui/styles';
+import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 
 const i18n = createI18n();
@@ -82,7 +82,7 @@ const options: { choice: FabCreateChoice; icon: typeof UserPlus; labelKey: strin
         type="button"
         onclick={onAddDetail}
         class="w-full flex items-center gap-4 p-4 rounded-xl
-               bg-gray-50 hover:bg-forest/10 transition-colors {focusRing}"
+               bg-gray-50 hover:bg-forest/10 transition-colors {FOCUS_RING}"
       >
         <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
           <DocumentText class="w-6 h-6 text-forest" strokeWidth="2" />
@@ -104,7 +104,7 @@ const options: { choice: FabCreateChoice; icon: typeof UserPlus; labelKey: strin
         type="button"
         onclick={() => onSelect(option.choice)}
         class="w-full flex items-center gap-4 p-4 rounded-xl
-               bg-gray-50 hover:bg-forest/10 transition-colors {focusRing}"
+               bg-gray-50 hover:bg-forest/10 transition-colors {FOCUS_RING}"
       >
         <div class="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center flex-shrink-0">
           <Icon class="w-6 h-6 text-forest" strokeWidth="2" />

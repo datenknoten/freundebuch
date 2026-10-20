@@ -1,7 +1,8 @@
 import { get } from 'svelte/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isModalOpen, resetOpenOverlays } from '$lib/stores/ui';
-import { fireEvent, render, screen } from '$lib/test/render.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, screen } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
 import FabCreateMenu, { navigateForCreateChoice } from './FabCreateMenu.svelte';
 
 // i18n returns the key so assertions can target stable label keys.
@@ -37,66 +38,83 @@ vi.mock('svelte', async (importOriginal) => {
   return { ...actual, flushSync: (...args: unknown[]) => flushSync(...args) };
 });
 
-afterEach(() => {
+beforeEach(() => {
   vi.clearAllMocks();
-  resetOpenOverlays();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('FabCreateMenu', () => {
-  it('offers the four create options and reports the selected choice', async () => {
-    const onSelect = vi.fn();
-    render(FabCreateMenu, { onSelect, onClose: vi.fn() });
+  describe('when open', () => {
+    it('offers the four create options and reports the selected choice', async () => {
+      const onSelect = vi.fn();
+      renderWithContext(FabCreateMenu, { props: { onSelect, onClose: vi.fn() } });
 
-    for (const label of [
-      'shortcuts.newFriend',
-      'shortcuts.newEncounter',
-      'shortcuts.newCircle',
-      'shortcuts.newCollective',
-    ]) {
-      expect(screen.getByText(label)).toBeTruthy();
-    }
+      for (const label of [
+        'shortcuts.newFriend',
+        'shortcuts.newEncounter',
+        'shortcuts.newCircle',
+        'shortcuts.newCollective',
+      ]) {
+        expect(screen.getByText(label)).toBeTruthy();
+      }
 
-    await fireEvent.click(screen.getByText('shortcuts.newFriend'));
-    expect(onSelect).toHaveBeenCalledWith('friend');
+      await fireEvent.click(screen.getByText('shortcuts.newFriend'));
+      expect(onSelect).toHaveBeenCalledWith('friend');
+    });
+
+    it('omits the contextual "add detail" entry when onAddDetail is not provided', () => {
+      renderWithContext(FabCreateMenu, { props: { onSelect: vi.fn(), onClose: vi.fn() } });
+      expect(screen.queryByText('friendDetail.addDetail')).toBeNull();
+    });
+
+    it('shows the contextual "add detail" entry and invokes onAddDetail', async () => {
+      const onAddDetail = vi.fn();
+      renderWithContext(FabCreateMenu, {
+        props: { onSelect: vi.fn(), onClose: vi.fn(), onAddDetail },
+      });
+
+      await fireEvent.click(screen.getByText('friendDetail.addDetail'));
+      expect(onAddDetail).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes on Escape and via the cancel button', async () => {
+      const onClose = vi.fn();
+      renderWithContext(FabCreateMenu, { props: { onSelect: vi.fn(), onClose } });
+
+      // Escape reaches the sheet as the native dialog's `cancel` event.
+      await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
+      await fireEvent.click(screen.getByText('common.cancel'));
+      expect(onClose).toHaveBeenCalledTimes(2);
+    });
   });
 
-  it('omits the contextual "add detail" entry when onAddDetail is not provided', () => {
-    render(FabCreateMenu, { onSelect: vi.fn(), onClose: vi.fn() });
-    expect(screen.queryByText('friendDetail.addDetail')).toBeNull();
+  describe('overlay registration', () => {
+    it('flags the global modal state while open and clears it on unmount', () => {
+      const context = createTestAppContext();
+      const { unmount } = renderWithContext(FabCreateMenu, {
+        props: { onSelect: vi.fn(), onClose: vi.fn() },
+        context,
+      });
+      expect(get(context.stores.overlay.isAnyOpen)).toBe(true);
+
+      unmount();
+      expect(get(context.stores.overlay.isAnyOpen)).toBe(false);
+    });
   });
+});
 
-  it('shows the contextual "add detail" entry and invokes onAddDetail', async () => {
-    const onAddDetail = vi.fn();
-    render(FabCreateMenu, { onSelect: vi.fn(), onClose: vi.fn(), onAddDetail });
-
-    await fireEvent.click(screen.getByText('friendDetail.addDetail'));
-    expect(onAddDetail).toHaveBeenCalledTimes(1);
-  });
-
-  it('flags the global modal state while open and clears it on unmount', () => {
-    const { unmount } = render(FabCreateMenu, { onSelect: vi.fn(), onClose: vi.fn() });
-    expect(get(isModalOpen)).toBe(true);
-
-    unmount();
-    expect(get(isModalOpen)).toBe(false);
-  });
-
-  it('closes on Escape and via the cancel button', async () => {
-    const onClose = vi.fn();
-    render(FabCreateMenu, { onSelect: vi.fn(), onClose });
-
-    // Escape reaches the sheet as the native dialog's `cancel` event.
-    await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
-    await fireEvent.click(screen.getByText('common.cancel'));
-    expect(onClose).toHaveBeenCalledTimes(2);
-  });
-
-  describe('navigateForCreateChoice', () => {
+describe('navigateForCreateChoice', () => {
+  describe('for a non-circle choice', () => {
     it('routes non-circle choices straight to their create flow', () => {
       navigateForCreateChoice('friend');
       expect(goto).toHaveBeenCalledWith('/friends/new');
     });
+  });
 
+  describe('for the circle choice', () => {
     // The modal must open inside the FAB tap (iOS raises the keyboard only for
     // a focus() within the gesture), but only after the menu's teardown has
     // flushed: closing its <dialog> restores focus to the FAB, which would

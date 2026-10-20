@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { type ButtonSize, type ButtonVariant, buttonClasses } from './button-classes.js';
 import Spinner from './Spinner.svelte';
-import { type ButtonSize, type ButtonVariant, buttonClasses } from './styles';
 
 interface Props {
   variant?: ButtonVariant;

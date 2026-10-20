@@ -1,163 +1,184 @@
+import { createRootLogger } from '@datenknoten/kit/logger';
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTestApiClient } from '$lib/test/api-test-client.js';
+import { aFriend, aFriendListItem, aPhone } from '$lib/test/fixtures.js';
+import { ApiError } from '../api/api-error.js';
+import { CirclesApi } from '../api/circles.js';
+import { FriendDetailsApi } from '../api/friend-details.js';
+import { FriendPhotosApi } from '../api/friend-photos.js';
+import { FriendSearchApi } from '../api/friend-search.js';
+import { FriendsApi } from '../api/friends.js';
+import { FriendsStore } from './friends.js';
 
-// Shared mocks must live in vi.hoisted() because vi.mock factories are hoisted
-// above module scope.
-const h = vi.hoisted(() => {
-  class ApiError extends Error {
-    statusCode: number;
-    constructor(statusCode: number, message: string) {
-      super(message);
-      this.name = 'ApiError';
-      this.statusCode = statusCode;
-    }
-  }
-  return {
-    ApiError,
-    api: {
-      listFriends: vi.fn(),
-      getFriend: vi.fn(),
-      createFriend: vi.fn(),
-      updateFriend: vi.fn(),
-      deleteFriend: vi.fn(),
-      getRelationshipTypes: vi.fn(),
-      searchFriends: vi.fn(),
-    },
-    subresourceOps: vi.fn(() => ({})),
-  };
-});
+const client = createTestApiClient();
+const friendsApi = new FriendsApi({ client });
+const friendDetailsApi = new FriendDetailsApi({ client });
+const friendPhotosApi = new FriendPhotosApi({ client });
+const friendSearchApi = new FriendSearchApi({ client });
+const circlesApi = new CirclesApi({ client });
 
-vi.mock('$shared', () => ({}));
-vi.mock('../api/friends.js', () => h.api);
-vi.mock('../api/auth.js', () => ({ ApiError: h.ApiError }));
-vi.mock('./friend-subresources.js', () => ({ createSubresourceOps: h.subresourceOps }));
+function createFriendsStore() {
+  return new FriendsStore({
+    friendsApi,
+    friendDetailsApi,
+    friendPhotosApi,
+    friendSearchApi,
+    circlesApi,
+    logger: createRootLogger({ LOG_LEVEL: 'silent' }),
+  });
+}
 
-import { currentFriend, friendList, friends, isFriendsLoading } from './friends.js';
+async function storeWithFriend(friend = aFriend({ id: 'f-1' })) {
+  const store = createFriendsStore();
+  vi.spyOn(friendsApi, 'getFriend').mockResolvedValueOnce(friend);
+  await store.loadFriend(friend.id);
+  return store;
+}
 
-const page = (friendsList: Array<{ id: string }>, totalCount = friendsList.length) => ({
-  data: friendsList,
-  pagination: { page: 1, pageSize: 25, totalCount, totalPages: 1 },
-});
-
-describe('friends store', () => {
+describe('FriendsStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    friends.reset();
   });
 
   afterEach(() => {
-    friends.reset();
+    vi.restoreAllMocks();
   });
 
   describe('loadFriends', () => {
-    it('maps the paginated response into state and clears loading', async () => {
-      h.api.listFriends.mockResolvedValue(page([{ id: 'f-1' }, { id: 'f-2' }], 2));
+    it('keeps the page of friends and its pagination', async () => {
+      const item = aFriendListItem({ id: 'f-1' });
+      vi.spyOn(friendsApi, 'listFriends').mockResolvedValueOnce({
+        data: [item],
+        pagination: { page: 2, pageSize: 10, totalCount: 11, totalPages: 2 },
+      });
+      const store = createFriendsStore();
 
-      await friends.loadFriends();
+      await store.loadFriends({ page: 2 });
 
-      const state = get(friends);
-      expect(state.friends).toHaveLength(2);
-      expect(state.total).toBe(2);
-      expect(state.isLoading).toBe(false);
-      expect(get(friendList)).toHaveLength(2);
-      expect(get(isFriendsLoading)).toBe(false);
+      expect(get(store.list)).toEqual([item]);
+      expect(get(store)).toMatchObject({ page: 2, pageSize: 10, total: 11, totalPages: 2 });
     });
 
-    it('records an error message on failure', async () => {
-      h.api.listFriends.mockRejectedValue(new h.ApiError(500, 'boom'));
+    it('stores the API message and rethrows when the request fails', async () => {
+      vi.spyOn(friendsApi, 'listFriends').mockRejectedValueOnce(new ApiError(500, 'Boom'));
+      const store = createFriendsStore();
 
-      await expect(friends.loadFriends()).rejects.toThrow();
-      expect(get(friends).error).toBe('boom');
+      await expect(store.loadFriends()).rejects.toBeInstanceOf(ApiError);
+      expect(get(store).error).toBe('Boom');
+      expect(get(store.isLoading)).toBe(false);
     });
   });
 
   describe('loadFriend', () => {
-    it('sets the current friend on success', async () => {
-      h.api.getFriend.mockResolvedValue({ id: 'f-1', displayName: 'Ada' });
+    it('clears the friend on display when the friend cannot be loaded', async () => {
+      const store = await storeWithFriend();
+      vi.spyOn(friendsApi, 'getFriend').mockRejectedValueOnce(new ApiError(404, 'Not found'));
 
-      await friends.loadFriend('f-1');
+      await expect(store.loadFriend('f-2')).rejects.toBeInstanceOf(ApiError);
 
-      expect(get(currentFriend)).toMatchObject({ id: 'f-1' });
-    });
-
-    it('clears the current friend on failure (onError)', async () => {
-      h.api.getFriend.mockRejectedValue(new h.ApiError(404, 'nope'));
-
-      await expect(friends.loadFriend('f-1')).rejects.toThrow();
-      expect(get(currentFriend)).toBeNull();
+      expect(get(store.currentFriend)).toBeNull();
     });
   });
 
   describe('deleteFriend', () => {
-    it('removes the friend from the list, decrements total, and clears current', async () => {
-      h.api.listFriends.mockResolvedValue(page([{ id: 'f-1' }, { id: 'f-2' }], 2));
-      await friends.loadFriends();
-      h.api.getFriend.mockResolvedValue({ id: 'f-1' });
-      await friends.loadFriend('f-1');
+    it('drops the friend from the list and from display', async () => {
+      const store = await storeWithFriend();
+      vi.spyOn(friendsApi, 'deleteFriend').mockResolvedValueOnce(undefined);
 
-      h.api.deleteFriend.mockResolvedValue(undefined);
-      await friends.deleteFriend('f-1');
+      await store.deleteFriend('f-1');
 
-      const state = get(friends);
-      expect(state.friends.map((f) => f.id)).toEqual(['f-2']);
-      expect(state.total).toBe(1);
-      expect(state.currentFriend).toBeNull();
+      expect(get(store.currentFriend)).toBeNull();
     });
   });
 
   describe('loadRelationshipTypes', () => {
-    it('fetches once and serves subsequent calls from cache', async () => {
+    it('requests the types once and serves the cache afterwards', async () => {
       const types = { family: [], professional: [], social: [] };
-      h.api.getRelationshipTypes.mockResolvedValue(types);
+      const listTypes = vi.spyOn(friendsApi, 'listRelationshipTypes').mockResolvedValue(types);
+      const store = createFriendsStore();
 
-      const first = await friends.loadRelationshipTypes();
-      const second = await friends.loadRelationshipTypes();
+      await store.loadRelationshipTypes();
+      await expect(store.loadRelationshipTypes()).resolves.toBe(types);
 
-      expect(first).toBe(types);
-      expect(second).toBe(types);
-      expect(h.api.getRelationshipTypes).toHaveBeenCalledTimes(1);
+      expect(listTypes).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('searchFriends', () => {
-    it('returns API results', async () => {
-      h.api.searchFriends.mockResolvedValue([{ id: 'f-1' }]);
+  describe('sub-resources of the friend on display', () => {
+    it('appends an added phone', async () => {
+      const store = await storeWithFriend();
+      const phone = aPhone({ id: 'p-1' });
+      vi.spyOn(friendDetailsApi, 'addPhone').mockResolvedValueOnce(phone);
 
-      const result = await friends.searchFriends('ada', undefined, 5);
+      await store.addPhone('f-1', { phoneNumber: phone.phoneNumber, phoneType: 'mobile' });
 
-      expect(result).toEqual([{ id: 'f-1' }]);
-      expect(h.api.searchFriends).toHaveBeenCalledWith('ada', undefined, 5);
+      expect(get(store.currentFriend)?.phones).toEqual([phone]);
     });
 
-    it('records an error and rethrows on failure', async () => {
-      h.api.searchFriends.mockRejectedValue(new h.ApiError(500, 'search failed'));
+    it('replaces an updated phone in place', async () => {
+      const store = await storeWithFriend(aFriend({ id: 'f-1', phones: [aPhone({ id: 'p-1' })] }));
+      const updated = aPhone({ id: 'p-1', label: 'Office' });
+      vi.spyOn(friendDetailsApi, 'updatePhone').mockResolvedValueOnce(updated);
 
-      await expect(friends.searchFriends('x')).rejects.toThrow();
-      expect(get(friends).error).toBe('search failed');
+      await store.updatePhone('f-1', 'p-1', {
+        phoneNumber: updated.phoneNumber,
+        phoneType: 'work',
+      });
+
+      expect(get(store.currentFriend)?.phones).toEqual([updated]);
+    });
+
+    it('removes a deleted phone', async () => {
+      const store = await storeWithFriend(aFriend({ id: 'f-1', phones: [aPhone({ id: 'p-1' })] }));
+      vi.spyOn(friendDetailsApi, 'deletePhone').mockResolvedValueOnce(undefined);
+
+      await store.deletePhone('f-1', 'p-1');
+
+      expect(get(store.currentFriend)?.phones).toEqual([]);
+    });
+
+    it('takes the photo URLs of an upload', async () => {
+      const store = await storeWithFriend();
+      vi.spyOn(friendPhotosApi, 'uploadPhoto').mockResolvedValueOnce({
+        photoUrl: '/p.jpg',
+        photoThumbnailUrl: '/t.jpg',
+      });
+
+      await store.uploadPhoto('f-1', new File(['x'], 'p.jpg'));
+
+      expect(get(store.currentFriend)).toMatchObject({
+        photoUrl: '/p.jpg',
+        photoThumbnailUrl: '/t.jpg',
+      });
+    });
+
+    it('adds the friend to a circle through the circles API', async () => {
+      const store = await storeWithFriend();
+      const circle = { id: 'c-1', name: 'Family', color: null };
+      vi.spyOn(circlesApi, 'addFriendToCircle').mockResolvedValueOnce(circle);
+
+      await store.addCircle('f-1', 'c-1');
+
+      expect(get(store.currentFriend)?.circles).toEqual([circle]);
+    });
+
+    it('leaves the state untouched when no friend is on display', async () => {
+      const store = createFriendsStore();
+      vi.spyOn(friendDetailsApi, 'addPhone').mockResolvedValueOnce(aPhone());
+
+      await store.addPhone('f-1', { phoneNumber: '+49 30 1234567', phoneType: 'mobile' });
+
+      expect(get(store.currentFriend)).toBeNull();
     });
   });
 
-  describe('utility methods', () => {
-    it('clearCurrentFriend and clearError reset their fields', async () => {
-      h.api.getFriend.mockResolvedValue({ id: 'f-1' });
-      await friends.loadFriend('f-1');
-      friends.clearCurrentFriend();
-      expect(get(currentFriend)).toBeNull();
+  describe('refreshFriend', () => {
+    it('swallows a failed refetch', async () => {
+      const store = createFriendsStore();
+      vi.spyOn(friendsApi, 'getFriend').mockRejectedValueOnce(new ApiError(500, 'Boom'));
 
-      h.api.listFriends.mockRejectedValue(new h.ApiError(500, 'boom'));
-      await expect(friends.loadFriends()).rejects.toThrow();
-      friends.clearError();
-      expect(get(friends).error).toBeNull();
-    });
-
-    it('reset returns to the initial state', async () => {
-      h.api.getFriend.mockResolvedValue({ id: 'f-1' });
-      await friends.loadFriend('f-1');
-
-      friends.reset();
-
-      expect(get(friends).currentFriend).toBeNull();
-      expect(get(friends).page).toBe(1);
+      await expect(store.refreshFriend('f-1')).resolves.toBeUndefined();
     });
   });
 });

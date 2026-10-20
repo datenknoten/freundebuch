@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { useLanguage } from '$lib/test/locale.js';
-import { control, labelFor, render } from '$lib/test/render.js';
+import { control, labelFor } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
 import EncounterForm from './EncounterForm.svelte';
 
 describe('EncounterForm', () => {
@@ -9,7 +10,7 @@ describe('EncounterForm', () => {
   });
 
   it('labels the title, date and location', () => {
-    render(EncounterForm, {});
+    renderWithContext(EncounterForm, { props: {} });
 
     expect(labelFor('title')).toContain('Title');
     expect(labelFor('title')).toContain('(optional)');

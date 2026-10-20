@@ -12,10 +12,27 @@ vi.mock('$lib/i18n/i18n.js', () => ({
   }),
 }));
 
-import { jsonResponse, restoreFetch, stubFetch } from '$lib/test/fetch-mock.js';
 import { aFriendNote } from '$lib/test/fixtures.js';
-import { render, screen } from '$lib/test/render.js';
+import { screen } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
+import type { FriendNoteResponse } from '$shared';
 import NoteEditForm from './NoteEditForm.svelte';
+
+interface NoteEditFormProps {
+  friendId: string;
+  initialData?: FriendNoteResponse;
+  notes: FriendNoteResponse[];
+}
+
+function renderNoteEditForm(props: NoteEditFormProps) {
+  const context = createTestAppContext();
+  vi.spyOn(context.api.encounters, 'listEncounters').mockResolvedValue({
+    data: [],
+    pagination: { page: 1, pageSize: 20, totalCount: 0, totalPages: 0 },
+  });
+  return renderWithContext(NoteEditForm, { props, context });
+}
 
 function supersedeValues(): string[] {
   const select = screen.getByLabelText(/subresources\.note\.supersedes/) as HTMLSelectElement;
@@ -24,16 +41,11 @@ function supersedeValues(): string[] {
 
 describe('NoteEditForm', () => {
   beforeEach(() => {
-    stubFetch(
-      jsonResponse({
-        data: [],
-        pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
-      }),
-    );
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    restoreFetch();
+    vi.restoreAllMocks();
   });
 
   it('offers only older, not-yet-superseded notes as supersede targets', () => {
@@ -45,7 +57,7 @@ describe('NoteEditForm', () => {
     const edited = aFriendNote({ createdAt: '2026-01-03T00:00:00.000Z' });
     const newer = aFriendNote({ createdAt: '2026-01-04T00:00:00.000Z' });
 
-    render(NoteEditForm, {
+    renderNoteEditForm({
       friendId: 'friend-x',
       initialData: edited,
       notes: [newer, edited, supersededByOther, older],
@@ -62,13 +74,13 @@ describe('NoteEditForm', () => {
     });
     target.supersededByNoteId = edited.id;
 
-    render(NoteEditForm, { friendId: 'friend-x', initialData: edited, notes: [edited, target] });
+    renderNoteEditForm({ friendId: 'friend-x', initialData: edited, notes: [edited, target] });
 
     expect(supersedeValues()).toEqual(['', target.id]);
   });
 
   it('sends null for empty selects and trims the content', () => {
-    const { component } = render(NoteEditForm, {
+    const { component } = renderNoteEditForm({
       friendId: 'friend-x',
       initialData: aFriendNote({ content: '  Likes hiking  ' }),
       notes: [],
@@ -78,9 +90,9 @@ describe('NoteEditForm', () => {
     expect(form.isValid()).toBe(true);
     expect(form.getData()).toEqual({
       content: 'Likes hiking',
-      encounter_id: null,
-      source_friend_id: null,
-      supersedes_note_id: null,
+      encounterId: null,
+      sourceFriendId: null,
+      supersedesNoteId: null,
     });
   });
 });

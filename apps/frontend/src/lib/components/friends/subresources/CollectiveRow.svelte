@@ -1,5 +1,5 @@
 <script lang="ts">
-import { chipClasses } from '$lib/components/ui/styles.js';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { ContactCollectiveSummaryResponse } from '$shared';
 import SubresourceRow from './SubresourceRow.svelte';
@@ -33,7 +33,7 @@ let { collective, onDelete, isDeleting = false, shortcutHint }: Props = $props()
         {collective.name}
       </a>
       {#if !collective.isActive}
-        <span class="{chipClasses.base} {chipClasses.neutral}">
+        <span class="{CHIP_CLASSES.base} {CHIP_CLASSES.neutral}">
           {$i18n.t('collectives.inactive')}
         </span>
       {/if}

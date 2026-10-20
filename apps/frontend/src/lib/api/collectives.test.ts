@@ -1,154 +1,157 @@
+import { ValidationError } from '@datenknoten/kit';
+import { createRootLogger } from '@datenknoten/kit/logger';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('$shared', () => ({}));
-
-import { jsonResponse, restoreFetch, stubFetch } from '$lib/test/fetch-mock.js';
-import { aCollective, aCollectiveMember } from '$lib/test/fixtures.js';
+import { aCollective } from '$lib/test/fixtures.js';
 import { itemAt } from '$lib/test/item-at.js';
-import {
-  addMember,
-  createCollective,
-  deactivateMember,
-  deleteCollective,
-  getCollective,
-  listCollectives,
-  reactivateMember,
-  updateCollective,
-} from './collectives.js';
+import { ApiClient } from './api-client.js';
+import { CollectivesApi } from './collectives.js';
 
-describe('collectives API', () => {
-  let fetchMock: ReturnType<typeof stubFetch>;
+const EMPTY_PAGE = {
+  data: [],
+  pagination: { page: 1, pageSize: 20, totalCount: 0, totalPages: 0 },
+};
 
+const fetchMock = vi.fn<typeof fetch>();
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status });
+}
+
+async function stayUnauthenticated() {
+  return false;
+}
+
+function createCollectivesApi() {
+  const client = new ApiClient({
+    baseUrl: '',
+    logger: createRootLogger({ LOG_LEVEL: 'silent' }),
+    onUnauthorized: stayUnauthenticated,
+  });
+  return new CollectivesApi({ client });
+}
+
+function sentUrl() {
+  return String(itemAt(fetchMock.mock.calls, 0)[0]);
+}
+
+function sentBody() {
+  return JSON.parse(String(itemAt(fetchMock.mock.calls, 0)[1]?.body));
+}
+
+describe('CollectivesApi', () => {
   beforeEach(() => {
-    fetchMock = stubFetch();
+    vi.clearAllMocks();
+    vi.stubGlobal('fetch', fetchMock);
   });
 
-  afterEach(restoreFetch);
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
 
   describe('listCollectives', () => {
-    it('requests the collectives endpoint with no query string by default', async () => {
-      const envelope = {
-        data: [],
-        pagination: { page: 1, pageSize: 20, totalCount: 0, totalPages: 0 },
-      };
-      fetchMock.mockResolvedValue(jsonResponse(envelope));
+    it('returns the page of the response', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(EMPTY_PAGE));
 
-      const result = await listCollectives();
-
-      expect(fetchMock).toHaveBeenCalledWith('/api/collectives', expect.objectContaining({}));
-      expect(result).toEqual(envelope);
+      await expect(createCollectivesApi().listCollectives()).resolves.toEqual(EMPTY_PAGE);
     });
 
-    it('serializes pagination and filter params into a query string', async () => {
-      fetchMock.mockResolvedValue(
-        jsonResponse({
-          data: [],
-          pagination: { page: 2, pageSize: 50, totalCount: 0, totalPages: 0 },
-        }),
+    it('sends the filters as snake_case query parameters and skips empty ones', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(EMPTY_PAGE));
+
+      await createCollectivesApi().listCollectives({
+        page: 2,
+        pageSize: 50,
+        typeId: 'club-1',
+        search: '',
+        shouldIncludeDeleted: true,
+      });
+
+      expect(sentUrl()).toBe(
+        '/api/collectives?page=2&page_size=50&type_id=club-1&include_deleted=true',
       );
+    });
 
-      await listCollectives({ page: 2, pageSize: 50, typeId: 'club-1', includeDeleted: true });
+    it('throws ValidationError when the page lacks its pagination', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ data: [] }));
 
-      const url = itemAt(fetchMock.mock.calls, 0)[0] as string;
-      expect(url).toContain('page=2');
-      expect(url).toContain('page_size=50');
-      expect(url).toContain('type_id=club-1');
-      expect(url).toContain('include_deleted=true');
+      await expect(createCollectivesApi().listCollectives()).rejects.toBeInstanceOf(
+        ValidationError,
+      );
     });
   });
 
   describe('getCollective', () => {
-    it('requests a single collective by id and returns the body', async () => {
+    it('returns the collective of the response', async () => {
       const collective = aCollective({ name: 'Chess Club' });
-      fetchMock.mockResolvedValue(jsonResponse(collective));
+      fetchMock.mockResolvedValueOnce(jsonResponse(collective));
 
-      const result = await getCollective(collective.id);
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        `/api/collectives/${collective.id}`,
-        expect.objectContaining({}),
+      await expect(createCollectivesApi().getCollective(collective.id)).resolves.toEqual(
+        collective,
       );
-      expect(result).toEqual(collective);
+    });
+
+    it('throws ValidationError when the collective lacks its members', async () => {
+      const { members: _members, ...incomplete } = aCollective();
+      fetchMock.mockResolvedValueOnce(jsonResponse(incomplete));
+
+      await expect(createCollectivesApi().getCollective('c-1')).rejects.toBeInstanceOf(
+        ValidationError,
+      );
     });
   });
 
   describe('createCollective', () => {
-    it('POSTs the input as a JSON body', async () => {
-      const created = aCollective();
-      fetchMock.mockResolvedValue(jsonResponse(created));
+    it('sends the collective as the snake_case wire input', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(aCollective(), 201));
 
-      await createCollective({ name: 'New Club', collective_type_id: created.type.id });
+      await createCollectivesApi().createCollective({
+        name: 'New Club',
+        collectiveTypeId: 'type-1',
+        notes: 'Weekly',
+      });
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        '/api/collectives',
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify({ name: 'New Club', collective_type_id: created.type.id }),
-        }),
-      );
-    });
-  });
-
-  describe('updateCollective', () => {
-    it('PUTs to the collective id with the update body', async () => {
-      const updated = aCollective({ name: 'Renamed' });
-      fetchMock.mockResolvedValue(jsonResponse(updated));
-
-      await updateCollective(updated.id, { name: 'Renamed' });
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        `/api/collectives/${updated.id}`,
-        expect.objectContaining({ method: 'PUT', body: JSON.stringify({ name: 'Renamed' }) }),
-      );
+      expect(sentBody()).toEqual({
+        name: 'New Club',
+        collective_type_id: 'type-1',
+        notes: 'Weekly',
+      });
     });
   });
 
   describe('deleteCollective', () => {
-    it('issues a DELETE and resolves to void', async () => {
-      fetchMock.mockResolvedValue(jsonResponse({ success: true }));
+    it('resolves once the backend confirms the deletion', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ success: true }));
 
-      await expect(deleteCollective('collective-1')).resolves.toBeUndefined();
-      expect(fetchMock).toHaveBeenCalledWith(
-        '/api/collectives/collective-1',
-        expect.objectContaining({ method: 'DELETE' }),
+      await expect(createCollectivesApi().deleteCollective('c-1')).resolves.toBeUndefined();
+    });
+
+    it('throws ValidationError when the confirmation is malformed', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ deleted: 'yes' }));
+
+      await expect(createCollectivesApi().deleteCollective('c-1')).rejects.toBeInstanceOf(
+        ValidationError,
       );
     });
   });
 
-  describe('membership operations', () => {
-    it('addMember POSTs to the members endpoint', async () => {
-      const member = aCollectiveMember();
-      fetchMock.mockResolvedValue(jsonResponse(member));
+  describe('listCollectiveCircles', () => {
+    it('returns the circles of the collective', async () => {
+      const circles = [
+        { id: 'circle-1', name: 'Family', color: null, createdAt: '2026-01-01T00:00:00.000Z' },
+      ];
+      fetchMock.mockResolvedValueOnce(jsonResponse(circles));
 
-      await addMember('collective-1', { friend_id: member.contact.id, role_id: member.role.id });
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        '/api/collectives/collective-1/members',
-        expect.objectContaining({ method: 'POST' }),
-      );
+      await expect(createCollectivesApi().listCollectiveCircles('c-1')).resolves.toEqual(circles);
     });
 
-    it('deactivateMember posts an empty body when no reason is given', async () => {
-      const member = aCollectiveMember({ isActive: false });
-      fetchMock.mockResolvedValue(jsonResponse(member));
-
-      await deactivateMember('collective-1', member.id);
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        `/api/collectives/collective-1/members/${member.id}/deactivate`,
-        expect.objectContaining({ method: 'POST', body: JSON.stringify({}) }),
+    it('throws ValidationError when a circle lacks its creation date', async () => {
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse([{ id: 'circle-1', name: 'Family', color: null }]),
       );
-    });
 
-    it('reactivateMember posts to the reactivate endpoint', async () => {
-      const member = aCollectiveMember({ isActive: true });
-      fetchMock.mockResolvedValue(jsonResponse(member));
-
-      await reactivateMember('collective-1', member.id);
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        `/api/collectives/collective-1/members/${member.id}/reactivate`,
-        expect.objectContaining({ method: 'POST' }),
+      await expect(createCollectivesApi().listCollectiveCircles('c-1')).rejects.toBeInstanceOf(
+        ValidationError,
       );
     });
   });

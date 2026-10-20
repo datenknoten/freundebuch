@@ -1,16 +1,19 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
+import type { CollectiveCreateData, CollectiveUpdateData } from '$lib/api/collectives.js';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import MarkdownField from '$lib/editor/MarkdownField.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { collectives, collectiveTypes } from '$lib/stores/collectives';
-import type { CollectiveCreateInput, CollectiveResponse, CollectiveUpdateInput } from '$shared';
+import type { CollectiveResponse } from '$shared';
 
 const i18n = createI18n();
+const collectives = getAppContext().stores.collectives;
+const collectiveTypes = collectives.types;
 
 interface Props {
   /** Existing collective for edit mode */
@@ -38,11 +41,7 @@ let types = $derived($collectiveTypes);
 let isLoadingTypes = $derived($collectives.isLoadingTypes);
 let typeOptions = $derived(types.map((type) => ({ value: type.id, label: type.name })));
 
-onMount(async () => {
-  if (types.length === 0) {
-    await collectives.loadTypes();
-  }
-});
+onMount(() => collectives.preloadTypes());
 
 // Validation
 let isValid = $derived(name.trim().length > 0 && (isEditMode || selectedTypeId.length > 0));
@@ -62,15 +61,15 @@ async function handleSubmit(e: Event) {
     let result: CollectiveResponse;
 
     if (isEditMode && collective) {
-      const input: CollectiveUpdateInput = {
+      const input: CollectiveUpdateData = {
         name: name.trim(),
         notes: notes.trim() || null,
       };
       result = await collectives.updateCollective(collective.id, input);
     } else {
-      const input: CollectiveCreateInput = {
+      const input: CollectiveCreateData = {
         name: name.trim(),
-        collective_type_id: selectedTypeId,
+        collectiveTypeId: selectedTypeId,
         notes: notes.trim() || undefined,
       };
       result = await collectives.createCollective(input);

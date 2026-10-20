@@ -1,12 +1,13 @@
 <script lang="ts">
 import XMark from 'svelte-heros-v2/XMark.svelte';
-import { chipClasses } from '$lib/components/ui/styles.js';
+import { getAppContext } from '$lib/app-context.js';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { circlesById } from '$lib/stores/circles';
 import { DEFAULT_CIRCLE_COLOR } from '$lib/utils/circle-colors';
 import type { CircleResponse, CircleSummaryResponse } from '$shared';
 
 const i18n = createI18n();
+const circlesById = getAppContext().stores.circles.byId;
 
 interface Props {
   circle: CircleSummaryResponse;
@@ -70,7 +71,7 @@ let textColorClass = $derived(getTextColor(circle.color));
 // The chip recipe with the one deviation it needs: a larger size step.
 let chipClass = $derived(
   size === 'sm'
-    ? chipClasses.base
+    ? CHIP_CLASSES.base
     : 'inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-body font-medium',
 );
 let backgroundColor = $derived(circle.color ?? DEFAULT_CIRCLE_COLOR);

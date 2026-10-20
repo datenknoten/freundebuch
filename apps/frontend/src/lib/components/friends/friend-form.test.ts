@@ -1,31 +1,33 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { aFriend } from '$lib/test/fixtures.js';
 import { useLanguage } from '$lib/test/locale.js';
-import {
-  control,
-  fireEvent,
-  labelFor,
-  render,
-  screen,
-  tick,
-  waitFor,
-  within,
-} from '$lib/test/render.js';
+import { control, fireEvent, labelFor, screen, tick, waitFor, within } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
+import type { FriendResponse } from '$shared';
 import FriendForm from './FriendForm.svelte';
 
-const deletePhoto = vi.fn().mockResolvedValue(undefined);
-vi.mock('$lib/stores/friends', () => ({
-  friends: {
-    deletePhoto: (...args: unknown[]) => deletePhoto(...args),
-  },
-}));
+function renderFriendForm(friend?: FriendResponse) {
+  const context = createTestAppContext();
+  const deletePhoto = vi.spyOn(context.stores.friends, 'deletePhoto').mockResolvedValue(undefined);
+  renderWithContext(FriendForm, { props: { friend }, context });
+  return { deletePhoto };
+}
+
+const ADA_WITH_PHOTO = aFriend({ id: 'f1', displayName: 'Ada', photoUrl: '/photos/ada.jpg' });
 
 describe('FriendForm', () => {
   beforeEach(async () => {
+    vi.clearAllMocks();
     await useLanguage('en');
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('gives every field a label and marks display name required outside the placeholder', () => {
-    render(FriendForm, {});
+    renderFriendForm();
 
     for (const id of [
       'namePrefix',
@@ -49,7 +51,7 @@ describe('FriendForm', () => {
   });
 
   it('mirrors the name parts into the display name until it is written by hand', async () => {
-    render(FriendForm, {});
+    renderFriendForm();
     const display = control('displayName') as HTMLInputElement;
 
     await fireEvent.input(control('nameFirst'), { target: { value: 'Ada' } });
@@ -73,25 +75,23 @@ describe('FriendForm', () => {
   });
 
   it('keeps a saved display name that differs from its name parts', () => {
-    render(FriendForm, {
-      friend: { id: 'f1', displayName: 'Ada', nameFirst: 'Augusta', nameLast: 'Lovelace' } as never,
-    });
+    renderFriendForm(
+      aFriend({ id: 'f1', displayName: 'Ada', nameFirst: 'Augusta', nameLast: 'Lovelace' }),
+    );
 
     expect(control('displayName').value).toBe('Ada');
   });
 
   it('renders its labels in the active language', async () => {
     await useLanguage('de');
-    render(FriendForm, {});
+    renderFriendForm();
 
     expect(labelFor('displayName')).toContain('Anzeigename');
     expect(labelFor('nameFirst')).toContain('Vorname');
   });
 
   it('asks before removing the photo, which the server deletes immediately', async () => {
-    render(FriendForm, {
-      friend: { id: 'f1', displayName: 'Ada', photoUrl: '/photos/ada.jpg' } as never,
-    });
+    const { deletePhoto } = renderFriendForm(ADA_WITH_PHOTO);
 
     await fireEvent.click(screen.getByRole('button', { name: 'Remove photo' }));
     expect(deletePhoto).not.toHaveBeenCalled();
@@ -102,10 +102,8 @@ describe('FriendForm', () => {
   });
 
   it('keeps the dialog open with the reason when the delete fails', async () => {
+    const { deletePhoto } = renderFriendForm(ADA_WITH_PHOTO);
     deletePhoto.mockRejectedValueOnce(new Error('Storage is read-only'));
-    render(FriendForm, {
-      friend: { id: 'f1', displayName: 'Ada', photoUrl: '/photos/ada.jpg' } as never,
-    });
 
     await fireEvent.click(screen.getByRole('button', { name: 'Remove photo' }));
     const dialog = screen.getByRole('dialog');

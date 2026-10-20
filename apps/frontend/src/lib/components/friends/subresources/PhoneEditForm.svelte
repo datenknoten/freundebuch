@@ -1,10 +1,11 @@
 <script lang="ts">
+import type { PhoneData } from '$lib/api/phone-data.js';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import type { PhoneInputSchema, PhoneResponse, PhoneType } from '$shared';
+import type { PhoneResponse, PhoneType } from '$shared';
 
 const i18n = createI18n();
 
@@ -41,13 +42,13 @@ const phoneTypeOptions = $derived([
   { value: 'other' as const, label: $i18n.t('subresources.phone.types.other') },
 ]);
 
-export function getData(): typeof PhoneInputSchema.inferIn {
+export function getData() {
   return {
-    phone_number: phoneNumber.trim(),
-    phone_type: phoneType,
+    phoneNumber: phoneNumber.trim(),
+    phoneType,
     label: label.trim() || undefined,
-    is_primary: isPrimary,
-  };
+    isPrimary,
+  } satisfies PhoneData;
 }
 
 export function isValid(): boolean {

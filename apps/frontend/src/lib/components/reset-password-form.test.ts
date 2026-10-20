@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { useLanguage } from '$lib/test/locale.js';
-import { control, labelFor, render, screen } from '$lib/test/render.js';
+import { control, labelFor, screen } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
 import ResetPasswordForm from './ResetPasswordForm.svelte';
 
 describe('ResetPasswordForm', () => {
@@ -9,7 +10,7 @@ describe('ResetPasswordForm', () => {
   });
 
   it('labels both password fields and drops the hand-rolled hint', () => {
-    render(ResetPasswordForm, { token: 'tok' });
+    renderWithContext(ResetPasswordForm, { props: { token: 'tok' } });
 
     expect(labelFor('password')).toContain('New password');
     expect(labelFor('confirm-password')).toContain('Confirm new password');

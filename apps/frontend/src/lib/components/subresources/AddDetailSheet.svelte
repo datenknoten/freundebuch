@@ -1,7 +1,7 @@
 <script lang="ts">
 import Button from '$lib/components/ui/Button.svelte';
+import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
 import Modal from '$lib/components/ui/Modal.svelte';
-import { focusRing } from '$lib/components/ui/styles.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { AddDetailOption } from './types';
 
@@ -24,7 +24,7 @@ let { options, onSelect, onClose }: Props = $props();
       <button
         type="button"
         onclick={() => onSelect(option.event)}
-        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-gray-50 hover:bg-forest/10 transition-colors {focusRing}"
+        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-gray-50 hover:bg-forest/10 transition-colors {FOCUS_RING}"
       >
         <Icon class="w-6 h-6 text-forest" strokeWidth="2" />
         <span class="text-sm font-body font-medium text-gray-700">{$i18n.t(option.labelKey)}</span>

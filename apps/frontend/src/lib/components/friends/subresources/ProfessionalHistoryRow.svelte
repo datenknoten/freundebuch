@@ -1,5 +1,5 @@
 <script lang="ts">
-import { chipClasses } from '$lib/components/ui/styles.js';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { ProfessionalHistoryResponse } from '$shared';
 import SubresourceRow from './SubresourceRow.svelte';
@@ -70,7 +70,7 @@ function getSubText(): string {
         {getMainText()}
       </span>
       {#if history.isPrimary}
-        <span class="{chipClasses.base} {chipClasses.tint}">
+        <span class="{CHIP_CLASSES.base} {CHIP_CLASSES.tint}">
           {$i18n.t('subresources.common.primary')}
         </span>
       {/if}

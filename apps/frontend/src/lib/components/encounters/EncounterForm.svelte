@@ -1,18 +1,17 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import type { EncounterCreateData, EncounterUpdateData } from '$lib/api/encounters.js';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
-import { formClasses } from '$lib/components/ui/styles.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import MarkdownField from '$lib/editor/MarkdownField.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { encounters } from '$lib/stores/encounters';
 import {
   ENCOUNTER_TYPES,
-  type EncounterCreateInput,
   type EncounterResponse,
   type EncounterType,
-  type EncounterUpdateInput,
   type FriendSearchResultResponse,
 } from '$shared';
 import EncounterTypeIcon from './EncounterTypeIcon.svelte';
@@ -20,6 +19,7 @@ import { encounterTypeLabel } from './encounter-display';
 import FriendMultiSelect from './FriendMultiSelect.svelte';
 
 const i18n = createI18n();
+const encounters = getAppContext().stores.encounters;
 
 interface Props {
   /** Existing encounter for edit mode */
@@ -78,22 +78,22 @@ async function handleSubmit(e: Event) {
     let result: EncounterResponse;
 
     if (isEditMode && encounter) {
-      const input: EncounterUpdateInput = {
+      const input: EncounterUpdateData = {
         title: title.trim() || null,
-        encounter_type: encounterType,
-        encounter_date: encounterDate,
-        friend_ids: selectedFriends.map((f) => f.id),
-        location_text: showLocation ? locationText.trim() || null : null,
+        encounterType,
+        encounterDate,
+        friendIds: selectedFriends.map((f) => f.id),
+        locationText: showLocation ? locationText.trim() || null : null,
         description: description.trim() || null,
       };
       result = await encounters.updateEncounter(encounter.id, input);
     } else {
-      const input: EncounterCreateInput = {
+      const input: EncounterCreateData = {
         title: title.trim() || undefined,
-        encounter_type: encounterType,
-        encounter_date: encounterDate,
-        friend_ids: selectedFriends.map((f) => f.id),
-        location_text: showLocation ? locationText.trim() || undefined : undefined,
+        encounterType,
+        encounterDate,
+        friendIds: selectedFriends.map((f) => f.id),
+        locationText: showLocation ? locationText.trim() || undefined : undefined,
         description: description.trim() || undefined,
       };
       result = await encounters.createEncounter(input);
@@ -127,7 +127,7 @@ function handleCancel() {
 
   <!-- Type -->
   <div>
-    <span class={formClasses.label}>
+    <span class={FORM_CLASSES.label}>
       {$i18n.t('encounters.form.typeLabel')}
     </span>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -173,7 +173,7 @@ function handleCancel() {
 
   <!-- Friends -->
   <div>
-    <span class={formClasses.label}>
+    <span class={FORM_CLASSES.label}>
       {$i18n.t('encounters.form.friendsLabel')} <span class="text-red-500" aria-hidden="true">{$i18n.t('encounters.form.required')}</span>
     </span>
     <FriendMultiSelect

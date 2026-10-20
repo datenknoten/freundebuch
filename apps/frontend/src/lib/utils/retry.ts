@@ -23,21 +23,15 @@ const DEFAULT_OPTIONS: Required<Omit<RetryOptions, 'onRetry'>> = {
   backoffMultiplier: 2,
 };
 
-/**
- * Sleep for a given number of milliseconds
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
 /**
  * Retry a function with exponential backoff
  * Returns undefined if all attempts fail (fails silently)
  */
-export async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {},
-): Promise<T | undefined> {
+export async function retryWithBackoff<T>(fn: () => Promise<T>, options: RetryOptions = {}) {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   let delay = opts.initialDelay;
 

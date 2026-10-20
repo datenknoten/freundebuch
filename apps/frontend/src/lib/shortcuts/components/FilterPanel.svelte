@@ -1,8 +1,12 @@
 <script lang="ts">
-import { codeClasses } from '$lib/components/ui/styles.js';
+import { getAppContext } from '$lib/app-context.js';
+import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { filterModeCategory, filterModePrefix } from '$lib/stores/ui';
-import { FILTER_FIELD_I18N_KEYS, FILTER_PANEL_CATEGORIES } from '../config.js';
+import { FILTER_FIELD_I18N_KEYS, filterPanelCategories } from '../config.js';
+
+const keyboardModes = getAppContext().stores.keyboardModes;
+const filterModeCategory = keyboardModes.filter.category;
+const filterModePrefix = keyboardModes.filter.prefix;
 
 const i18n = createI18n();
 
@@ -44,16 +48,16 @@ const categoryLabel = $derived(
     </div>
   {:else}
     <div class="p-2 space-y-1 font-body text-sm">
-      {#each FILTER_PANEL_CATEGORIES as item}
+      {#each filterPanelCategories as item}
         <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
           <span class="text-gray-700">{$i18n.t(item.labelKey)}</span>
-          <kbd class={codeClasses.kbd}>{item.key}</kbd>
+          <kbd class={CODE_CLASSES.kbd}>{item.key}</kbd>
         </div>
       {/each}
       <div class="border-t border-gray-200 mt-2 pt-2">
         <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-red-50">
           <span class="text-red-600">{$i18n.t('shortcuts.panels.clearAllFilters')}</span>
-          <kbd class={codeClasses.kbdDanger}>x</kbd>
+          <kbd class={CODE_CLASSES.kbdDanger}>x</kbd>
         </div>
       </div>
     </div>

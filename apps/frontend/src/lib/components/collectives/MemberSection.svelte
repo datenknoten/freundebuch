@@ -2,20 +2,25 @@
 import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
+import type { MembershipDeactivateData } from '$lib/api/collective-members.js';
+import { getAppContext } from '$lib/app-context.js';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
 import Modal from '$lib/components/ui/Modal.svelte';
-import { headingClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { collectives } from '$lib/stores/collectives';
-import { visibleMemberContactIds } from '$lib/stores/ui';
-import type { CollectiveResponse, MembershipDeactivateInput } from '$shared';
+import type { CollectiveResponse } from '$shared';
 import DetailEditModal from '../friends/subresources/DetailEditModal.svelte';
 import AddMemberForm from './AddMemberForm.svelte';
 import MemberList from './MemberList.svelte';
 
+const visibleMemberContactIds = getAppContext().stores.keyboardModes.members.visibleItems;
+
 const i18n = createI18n();
+const { logger, stores } = getAppContext();
+const collectives = stores.collectives;
 
 interface Props {
   collective: CollectiveResponse;
@@ -62,9 +67,9 @@ $effect(() => {
 
 async function handleAddMember(contactId: string, roleId: string, skipAutoRelationships?: boolean) {
   await collectives.addMember(collective.id, {
-    friend_id: contactId,
-    role_id: roleId,
-    skip_auto_relationships: skipAutoRelationships,
+    friendId: contactId,
+    roleId,
+    shouldSkipAutoRelationships: skipAutoRelationships,
   });
   showAddMember = false;
 }
@@ -84,15 +89,15 @@ function closeDeactivateModal() {
 async function handleDeactivateConfirm() {
   if (deactivatingMemberId === null) return;
   const trimmedReason = deactivateReason.trim();
-  const input: MembershipDeactivateInput = {
+  const input: MembershipDeactivateData = {
     reason: trimmedReason.length > 0 ? trimmedReason : null,
-    inactive_date: deactivateDate === '' ? null : deactivateDate,
+    inactiveDate: deactivateDate === '' ? null : deactivateDate,
   };
   try {
     await collectives.deactivateMember(collective.id, deactivatingMemberId, input);
     closeDeactivateModal();
   } catch (err) {
-    console.error('Failed to deactivate member:', err);
+    logger.error({ err }, 'Failed to deactivate member');
   }
 }
 
@@ -100,7 +105,7 @@ async function handleReactivate(memberId: string) {
   try {
     await collectives.reactivateMember(collective.id, memberId);
   } catch (err) {
-    console.error('Failed to reactivate member:', err);
+    logger.error({ err }, 'Failed to reactivate member');
   }
 }
 
@@ -108,16 +113,11 @@ function openRemoveConfirm(memberId: string) {
   removeConfirmMemberId = memberId;
 }
 
+// Rejections propagate to ConfirmDialog, which stays open and shows the reason.
 async function handleRemoveConfirm() {
   const memberId = removeConfirmMemberId;
   if (memberId === null) return;
-  try {
-    await collectives.removeMember(collective.id, memberId);
-  } catch (err) {
-    console.error('Failed to remove member:', err);
-    // Rethrow so the dialog stays open and shows the reason.
-    throw err;
-  }
+  await collectives.removeMember(collective.id, memberId);
 }
 
 // Keyboard shortcut: open the add-member modal
@@ -133,8 +133,8 @@ onMount(() => {
 </script>
 
 <section class="space-y-2">
-  <div class={surfaceClasses.section}>
-    <h2 class="{headingClasses.section} flex items-center gap-2">
+  <div class={SURFACE_CLASSES.section}>
+    <h2 class="{HEADING_CLASSES.section} flex items-center gap-2">
       <UserPlus class="w-5 h-5" strokeWidth="2" />
       {$i18n.t('collectives.detail.members')}
       <span class="text-sm font-body font-normal text-forest/70">({collective.activeMemberCount})</span>

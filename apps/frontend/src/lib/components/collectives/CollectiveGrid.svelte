@@ -4,21 +4,24 @@ import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
-import { chipClasses, focusRing, surfaceClasses } from '$lib/components/ui/styles.js';
+import { getAppContext } from '$lib/app-context.js';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
+import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import {
-  getKeyboardHint,
-  isOpenCollectiveModeActive,
-  openCollectiveModePrefix,
-} from '$lib/stores/ui';
 import {
   collectiveTypeI18nKey,
   getTypeBadgeColor,
   getTypeIconComponent,
 } from '$lib/utils/collective-types';
+import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import type { CollectiveListItemResponse } from '$shared';
 import FriendAvatar from '../friends/FriendAvatar.svelte';
 import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
+
+const keyboardModes = getAppContext().stores.keyboardModes;
+const isOpenCollectiveModeActive = keyboardModes.collectives.isActive;
+const openCollectiveModePrefix = keyboardModes.collectives.prefix;
 
 const i18n = createI18n();
 
@@ -135,7 +138,7 @@ function formatDate(dateString: string | undefined): string {
             <a
               href="/collectives/{item.id}"
               onclick={handleLinkClick}
-              class="font-body text-gray-900 font-medium hover:text-forest hover:underline rounded {focusRing}"
+              class="font-body text-gray-900 font-medium hover:text-forest hover:underline rounded {FOCUS_RING}"
               data-sveltekit-preload-data="tap"
               data-shortcut="o {getKeyboardHint(index)}"
               data-shortcut-label="shortcuts.panels.openCollective"
@@ -146,7 +149,7 @@ function formatDate(dateString: string | undefined): string {
 
           <!-- Type -->
           <td class="py-2 px-3">
-            <span class="{chipClasses.base} {getTypeBadgeColor(item.type.name)}">
+            <span class="{CHIP_CLASSES.base} {getTypeBadgeColor(item.type.name)}">
               <TypeIcon class="w-3 h-3" strokeWidth="2" />
               {$i18n.t(collectiveTypeI18nKey(item.type.name), { defaultValue: item.type.name })}
             </span>
@@ -201,7 +204,7 @@ function formatDate(dateString: string | undefined): string {
     <li>
     <a
       href="/collectives/{item.id}"
-      class="flex items-start gap-4 {surfaceClasses.cardInteractive} relative {focusRing}"
+      class="flex items-start gap-4 {SURFACE_CLASSES.cardInteractive} relative {FOCUS_RING}"
       class:opacity-60={item.deletedAt}
       data-sveltekit-preload-data="tap"
       data-shortcut="o {getKeyboardHint(index)}"
@@ -220,11 +223,11 @@ function formatDate(dateString: string | undefined): string {
             {item.name}
           </h3>
           <div class="flex items-center gap-2 shrink-0">
-            <span class="{chipClasses.base} {getTypeBadgeColor(item.type.name)}">
+            <span class="{CHIP_CLASSES.base} {getTypeBadgeColor(item.type.name)}">
               {$i18n.t(collectiveTypeI18nKey(item.type.name), { defaultValue: item.type.name })}
             </span>
             {#if item.deletedAt}
-              <span class="{chipClasses.base} {chipClasses.neutral}">{$i18n.t('collectives.deleted')}</span>
+              <span class="{CHIP_CLASSES.base} {CHIP_CLASSES.neutral}">{$i18n.t('collectives.deleted')}</span>
             {/if}
           </div>
         </div>

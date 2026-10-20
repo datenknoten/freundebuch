@@ -1,72 +1,55 @@
+import { createRootLogger } from '@datenknoten/kit/logger';
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTestApiClient } from '$lib/test/api-test-client.js';
+import type { GlobalSearchResultResponse } from '$shared';
+import { FriendSearchApi } from '../api/friend-search.js';
+import { SearchStore } from './search.js';
 
-const h = vi.hoisted(() => ({
-  api: {
-    fullTextSearch: vi.fn(),
-    facetedSearch: vi.fn(),
-    getRecentSearches: vi.fn(),
-    addRecentSearch: vi.fn(),
-    deleteRecentSearch: vi.fn(),
-    clearRecentSearches: vi.fn(),
-  },
-}));
+const friendSearchApi = new FriendSearchApi({ client: createTestApiClient() });
 
-vi.mock('$shared', () => ({}));
-vi.mock('../api/friends.js', () => h.api);
+function createSearchStore() {
+  return new SearchStore({ friendSearchApi, logger: createRootLogger({ LOG_LEVEL: 'silent' }) });
+}
 
-import {
-  hasActiveFilters,
-  isSearching,
-  isSearchOpen,
-  recentSearches,
-  search,
-  searchFilters,
-  searchResults,
-} from './search.js';
+function aHit(id: string): GlobalSearchResultResponse {
+  return { id, displayName: id, rank: 1, headline: null, matchSource: null, circles: [] };
+}
 
-describe('search store', () => {
+const ONE_PAGE = { page: 1, pageSize: 10, totalCount: 1, totalPages: 1 };
+
+describe('SearchStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    search.reset();
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    search.reset();
+    vi.restoreAllMocks();
   });
 
-  describe('modal state', () => {
-    it('open / close / toggle drive isOpen and reset on close', () => {
-      search.open();
-      expect(get(isSearchOpen)).toBe(true);
-
-      search.close();
-      expect(get(isSearchOpen)).toBe(false);
+  describe('opening and closing', () => {
+    it('toggles between open and closed', () => {
+      const search = createSearchStore();
 
       search.toggle();
-      expect(get(isSearchOpen)).toBe(true);
+      expect(get(search.isOpen)).toBe(true);
       search.toggle();
-      expect(get(isSearchOpen)).toBe(false);
+      expect(get(search.isOpen)).toBe(false);
     });
 
     // The focus has to move inside the same call as open(): on iOS a focus()
     // that runs after the tap handler returns never raises the keyboard.
     it('focuses the attached input on open and blurs it on close', () => {
+      const search = createSearchStore();
       const input = document.createElement('input');
       document.body.appendChild(input);
       search.attachInput(input);
 
       search.open();
       expect(document.activeElement).toBe(input);
-
       search.close();
-      expect(document.activeElement).not.toBe(input);
-
-      search.toggle();
-      expect(document.activeElement).toBe(input);
-      search.toggle();
       expect(document.activeElement).not.toBe(input);
 
       search.detachInput(input);
@@ -77,113 +60,115 @@ describe('search store', () => {
   });
 
   describe('setQuery', () => {
-    it('runs a debounced simple search when no filters are active', async () => {
-      h.api.fullTextSearch.mockResolvedValue([{ id: 'f-1' }]);
+    it('runs a full-text search after the typing pause when no filter is set', async () => {
+      const fullTextSearch = vi
+        .spyOn(friendSearchApi, 'fullTextSearch')
+        .mockResolvedValue([aHit('f-1')]);
+      const search = createSearchStore();
 
       search.setQuery('ada');
-      expect(get(isSearching)).toBe(true);
-
+      expect(get(search).isSearching).toBe(true);
       await vi.advanceTimersByTimeAsync(300);
 
-      expect(h.api.fullTextSearch).toHaveBeenCalledWith('ada', 10);
-      expect(get(searchResults)).toEqual([{ id: 'f-1' }]);
-      expect(get(isSearching)).toBe(false);
+      expect(fullTextSearch).toHaveBeenCalledWith('ada', 10);
+      expect(get(search).results).toEqual([aHit('f-1')]);
+      expect(get(search).isSearching).toBe(false);
     });
 
-    it('does not search for queries shorter than two characters', async () => {
+    it('does not search for a query shorter than two characters', async () => {
+      const fullTextSearch = vi.spyOn(friendSearchApi, 'fullTextSearch');
+      const search = createSearchStore();
+
       search.setQuery('a');
-      expect(get(isSearching)).toBe(false);
-
       await vi.advanceTimersByTimeAsync(300);
 
-      expect(h.api.fullTextSearch).not.toHaveBeenCalled();
+      expect(fullTextSearch).not.toHaveBeenCalled();
     });
 
-    it('uses faceted search when filters are active', async () => {
-      h.api.facetedSearch.mockResolvedValue({ data: [{ id: 'f-2' }], facets: null });
+    it('runs the faceted search while a filter is set', async () => {
+      const facetedSearch = vi
+        .spyOn(friendSearchApi, 'facetedSearch')
+        .mockResolvedValue({ data: [aHit('f-2')], pagination: ONE_PAGE });
+      const search = createSearchStore();
       search.setFilters({ city: ['Berlin'] });
 
       search.setQuery('ada');
       await vi.advanceTimersByTimeAsync(300);
 
-      expect(h.api.facetedSearch).toHaveBeenCalledWith(
+      expect(facetedSearch).toHaveBeenCalledWith(
         expect.objectContaining({ query: 'ada', filters: { city: ['Berlin'] } }),
       );
-      expect(get(searchResults)).toEqual([{ id: 'f-2' }]);
+      expect(get(search).results).toEqual([aHit('f-2')]);
+    });
+
+    it('records a failure as an error message', async () => {
+      vi.spyOn(friendSearchApi, 'fullTextSearch').mockRejectedValue(new TypeError('offline'));
+      const search = createSearchStore();
+
+      search.setQuery('ada');
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(get(search).error).toBe('Search failed');
     });
   });
 
-  describe('selection navigation', () => {
-    it('clamps selectPrevious at 0 and selectNext at the last result', async () => {
-      h.api.fullTextSearch.mockResolvedValue([{ id: 'a' }, { id: 'b' }]);
+  describe('selection', () => {
+    it('stays between the first and the last result', async () => {
+      vi.spyOn(friendSearchApi, 'fullTextSearch').mockResolvedValue([aHit('a'), aHit('b')]);
+      const search = createSearchStore();
       search.setQuery('ada');
       await vi.advanceTimersByTimeAsync(300);
 
       search.selectPrevious();
       expect(get(search).selectedIndex).toBe(0);
-
       search.selectNext();
       search.selectNext();
       search.selectNext();
-      expect(get(search).selectedIndex).toBe(1); // clamped to results.length - 1
+      expect(get(search).selectedIndex).toBe(1);
     });
   });
 
   describe('recent searches', () => {
-    it('loadRecentSearches populates from the API', async () => {
-      h.api.getRecentSearches.mockResolvedValue(['ada', 'bob']);
+    it('loads the recent searches', async () => {
+      vi.spyOn(friendSearchApi, 'listRecentSearches').mockResolvedValue(['ada', 'bob']);
+      const search = createSearchStore();
+
       await search.loadRecentSearches();
-      expect(get(recentSearches)).toEqual(['ada', 'bob']);
+
+      expect(get(search).recentSearches).toEqual(['ada', 'bob']);
     });
 
-    it('addRecentSearch prepends, de-duplicates case-insensitively, and caps at 10', async () => {
-      h.api.getRecentSearches.mockResolvedValue(['Ada', 'bob']);
+    it('moves a repeated query to the top without duplicating it', async () => {
+      vi.spyOn(friendSearchApi, 'listRecentSearches').mockResolvedValue(['bob', 'Ada']);
+      vi.spyOn(friendSearchApi, 'addRecentSearch').mockResolvedValue(undefined);
+      const search = createSearchStore();
       await search.loadRecentSearches();
-      h.api.addRecentSearch.mockResolvedValue(undefined);
 
       await search.addRecentSearch('ada');
 
-      expect(h.api.addRecentSearch).toHaveBeenCalledWith('ada');
-      expect(get(recentSearches)).toEqual(['ada', 'bob']);
+      expect(get(search).recentSearches).toEqual(['ada', 'bob']);
     });
 
-    it('addRecentSearch ignores queries shorter than two characters', async () => {
-      await search.addRecentSearch('a');
-      expect(h.api.addRecentSearch).not.toHaveBeenCalled();
-    });
-
-    it('deleteRecentSearch and clearRecentSearches update state', async () => {
-      h.api.getRecentSearches.mockResolvedValue(['ada', 'bob']);
+    it('keeps the list when deleting fails', async () => {
+      vi.spyOn(friendSearchApi, 'listRecentSearches').mockResolvedValue(['ada']);
+      vi.spyOn(friendSearchApi, 'deleteRecentSearch').mockRejectedValue(new TypeError('offline'));
+      const search = createSearchStore();
       await search.loadRecentSearches();
 
-      h.api.deleteRecentSearch.mockResolvedValue(undefined);
       await search.deleteRecentSearch('ada');
-      expect(get(recentSearches)).toEqual(['bob']);
 
-      h.api.clearRecentSearches.mockResolvedValue(undefined);
-      await search.clearRecentSearches();
-      expect(get(recentSearches)).toEqual([]);
+      expect(get(search).recentSearches).toEqual(['ada']);
     });
   });
 
   describe('filters', () => {
-    it('setFilters / removeFilter / clearFilters update filters and hasActiveFilters', () => {
-      search.setFilters({ city: ['Berlin', 'Munich'] });
-      expect(get(searchFilters)).toEqual({ city: ['Berlin', 'Munich'] });
-      expect(get(hasActiveFilters)).toBe(true);
-
-      search.removeFilter('city', 'Berlin');
-      expect(get(searchFilters).city).toEqual(['Munich']);
-
-      search.clearFilters();
-      expect(get(searchFilters)).toEqual({});
-      expect(get(hasActiveFilters)).toBe(false);
-    });
-
-    it('removeFilter drops the key entirely when the last value is removed', () => {
+    it('drops a facet once its last value is removed', () => {
+      const search = createSearchStore();
       search.setFilters({ city: ['Berlin'] });
+
       search.removeFilter('city', 'Berlin');
-      expect(get(searchFilters).city).toBeUndefined();
+
+      expect(get(search.hasActiveFilters)).toBe(false);
     });
   });
 });

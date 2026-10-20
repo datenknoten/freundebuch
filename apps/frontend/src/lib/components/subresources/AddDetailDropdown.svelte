@@ -1,7 +1,8 @@
 <script lang="ts">
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import Button from '$lib/components/ui/Button.svelte';
-import { focusRing, surfaceClasses } from '$lib/components/ui/styles.js';
+import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { AddDetailOption } from './types';
 
@@ -60,7 +61,7 @@ function handleClickOutside(e: MouseEvent) {
   {#if isOpen}
     <div
       bind:this={menuRef}
-      class="absolute right-0 mt-2 w-56 z-(--z-popover) {surfaceClasses.popover}"
+      class="absolute right-0 mt-2 w-56 z-(--z-popover) {SURFACE_CLASSES.popover}"
       role="menu"
       aria-orientation="vertical"
     >
@@ -69,7 +70,7 @@ function handleClickOutside(e: MouseEvent) {
         <button
           type="button"
           onclick={() => handleSelect(option.event)}
-          class="w-full px-4 py-2 text-left text-sm font-body text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors {focusRing}"
+          class="w-full px-4 py-2 text-left text-sm font-body text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors {FOCUS_RING}"
           role="menuitem"
           data-shortcut={option.shortcut}
           data-shortcut-label={option.shortcutLabel ?? option.labelKey}

@@ -1,28 +1,35 @@
-import { readable } from 'svelte/store';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { useLanguage } from '$lib/test/locale.js';
-import { control, fireEvent, render, screen, tick, waitFor } from '$lib/test/render.js';
+import { control, fireEvent, screen, tick, waitFor } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
 import DisplayPage from './+page.svelte';
 
-const updatePreferences = vi.fn().mockResolvedValue(undefined);
-
-vi.mock('$lib/stores/auth', () => ({
-  auth: {
-    updatePreferences: (...args: unknown[]) => updatePreferences(...args),
-  },
-  currentUser: readable({ externalId: 'ext-1', email: 'ada@example.com' }),
-  birthdayFormat: readable('eu'),
-  showShortcutHints: readable(false),
-  defaultCountry: readable('DE'),
-}));
+async function createSignedInContext() {
+  const context = createTestAppContext();
+  vi.spyOn(context.api.auth, 'getUserWithPreferences').mockResolvedValue({
+    user: { externalId: 'ext-1', email: 'ada@example.com', hasCompletedOnboarding: true },
+    preferences: { birthdayFormat: 'eu', showShortcutHints: false, defaultCountry: 'DE' },
+  });
+  await context.stores.auth.initialize();
+  return context;
+}
 
 describe('profile display page', () => {
   beforeAll(async () => {
     await useLanguage('en');
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('reflects the stored preferences and writes changes through', async () => {
-    render(DisplayPage, {});
+    const context = await createSignedInContext();
+    const updatePreferences = vi
+      .spyOn(context.stores.auth, 'updatePreferences')
+      .mockResolvedValue(undefined);
+    renderWithContext(DisplayPage, { props: {}, context });
 
     const language = control('language') as HTMLSelectElement;
     expect(language.value).toBe('en');

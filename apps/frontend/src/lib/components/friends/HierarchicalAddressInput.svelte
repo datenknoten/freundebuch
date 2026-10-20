@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import * as addressApi from '$lib/api/address-lookup';
-import { formClasses } from '$lib/components/ui/styles.js';
+import { getAppContext } from '$lib/app-context.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import {
   type AddressType,
@@ -17,6 +17,8 @@ import HouseNumberInput from './HouseNumberInput.svelte';
 import PostalCodeInput from './PostalCodeInput.svelte';
 import StreetInput from './StreetInput.svelte';
 
+const { api, logger } = getAppContext();
+const addressLookupApi = api.addressLookup;
 const i18n = createI18n();
 
 interface AddressOutput {
@@ -128,7 +130,7 @@ async function loadCities() {
 
   isLoadingCities = true;
   try {
-    cities = await addressApi.getCities(selectedCountryCode, postalCode);
+    cities = await addressLookupApi.listCities(selectedCountryCode, postalCode);
     // Auto-select if only one result
     const onlyCity = cities.length === 1 ? cities[0] : undefined;
     if (onlyCity !== undefined) {
@@ -138,7 +140,7 @@ async function loadCities() {
       scheduleStreetLoad();
     }
   } catch (error) {
-    console.error('Failed to load cities:', error);
+    logger.error({ err: error }, 'Failed to load cities');
     cities = [];
   } finally {
     isLoadingCities = false;
@@ -170,7 +172,11 @@ function scheduleStreetLoad() {
     streetAbortController = new AbortController();
     streetFreeText = false;
     try {
-      streets = await addressApi.getStreets(selectedCountryCode, selectedCity, postalCode);
+      streets = await addressLookupApi.listStreets({
+        countryCode: selectedCountryCode,
+        city: selectedCity,
+        postalCode,
+      });
       if (streets.length === 0) {
         streetFreeText = true;
       }
@@ -178,7 +184,7 @@ function scheduleStreetLoad() {
       if (error instanceof Error && error.name === 'AbortError') {
         return; // Request was cancelled, ignore
       }
-      console.error('Failed to load streets:', error);
+      logger.error({ err: error }, 'Failed to load streets');
       streets = [];
       streetFreeText = true;
     } finally {
@@ -215,12 +221,12 @@ function scheduleHouseNumberLoad() {
     houseNumberAbortController = new AbortController();
     houseNumberFreeText = false;
     try {
-      houseNumbers = await addressApi.getHouseNumbers(
-        selectedCountryCode,
-        selectedCity,
+      houseNumbers = await addressLookupApi.listHouseNumbers({
+        countryCode: selectedCountryCode,
+        city: selectedCity,
         postalCode,
-        selectedStreet,
-      );
+        street: selectedStreet,
+      });
       if (houseNumbers.length === 0) {
         houseNumberFreeText = true;
       }
@@ -228,7 +234,7 @@ function scheduleHouseNumberLoad() {
       if (error instanceof Error && error.name === 'AbortError') {
         return; // Request was cancelled, ignore
       }
-      console.error('Failed to load house numbers:', error);
+      logger.error({ err: error }, 'Failed to load house numbers');
       houseNumbers = [];
       houseNumberFreeText = true;
     } finally {
@@ -271,9 +277,9 @@ async function loadPostalCodeSuggestions() {
   }
 
   try {
-    postalCodeSuggestions = await addressApi.getPostalCodes(selectedCountryCode, postalCode);
+    postalCodeSuggestions = await addressLookupApi.listPostalCodes(selectedCountryCode, postalCode);
   } catch (error) {
-    console.error('Failed to load postal code suggestions:', error);
+    logger.error({ err: error }, 'Failed to load postal code suggestions');
     postalCodeSuggestions = [];
   }
 }
@@ -425,7 +431,7 @@ function emitChange() {
 
   <!-- Street Line 2 (always available) -->
   <div class="relative">
-    <label for="street-line-2-input" class={formClasses.label}>
+    <label for="street-line-2-input" class={FORM_CLASSES.label}>
       {$i18n.t('address.streetLine2')}
       <span class="text-gray-400">({$i18n.t('common.optional')})</span>
     </label>
@@ -436,7 +442,7 @@ function emitChange() {
       oninput={handleStreetLine2Change}
       placeholder={$i18n.t('address.streetLine2Placeholder')}
       {disabled}
-      class={formClasses.inputSm}
+      class={FORM_CLASSES.inputSm}
     />
   </div>
 </div>

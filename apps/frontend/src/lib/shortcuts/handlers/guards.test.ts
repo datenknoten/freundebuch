@@ -1,54 +1,73 @@
-import { readable } from 'svelte/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { search } from '$lib/stores/search';
-import { registerOpenOverlay, resetOpenOverlays } from '$lib/stores/ui';
-import { handleGuards } from './guards';
+import { readable, writable } from 'svelte/store';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { KeyboardModesStore } from '$lib/stores/keyboard-modes.js';
+import { OverlayStore } from '$lib/stores/overlay.js';
+import type { ShortcutStores } from '../types.js';
+import { handleGuards } from './guards.js';
 
-// The guards only read authentication; a constant store keeps the test focused
-// on the key handling.
-vi.mock('$lib/stores/auth', () => ({ isAuthenticated: readable(true) }));
+function createStores() {
+  const search = { isOpen: writable(false), toggle: vi.fn() };
+  const stores: ShortcutStores = {
+    keyboardModes: new KeyboardModesStore(),
+    overlay: new OverlayStore(),
+    isAuthenticated: readable(true),
+    search,
+    currentFriend: readable(null),
+    friendListFilter: readable({ query: '', filters: {} }),
+  };
+  return { stores, search };
+}
 
-const callbacks = { toggleHelp: vi.fn(), clearPending: vi.fn(), showHelp: false };
+function createOptions(stores: ShortcutStores) {
+  return { toggleHelp: vi.fn(), clearPending: vi.fn(), isHelpOpen: false, stores };
+}
 
-function commandK(): KeyboardEvent {
+function commandK() {
   const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, cancelable: true });
   // handleGuards reads e.target; an undispatched event has none.
   Object.defineProperty(event, 'target', { value: document.body });
   return event;
 }
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 afterEach(() => {
-  resetOpenOverlays();
   vi.restoreAllMocks();
 });
 
 describe('handleGuards', () => {
-  it('opens the global search on Cmd+K', () => {
-    const toggle = vi.spyOn(search, 'toggle').mockImplementation(() => undefined);
+  describe('Cmd+K', () => {
+    it('opens the global search', () => {
+      const { stores, search } = createStores();
+      const event = commandK();
 
-    const event = commandK();
-    const result = handleGuards(event, callbacks);
+      const result = handleGuards(event, createOptions(stores));
 
-    expect(toggle).toHaveBeenCalledTimes(1);
-    expect(event.defaultPrevented).toBe(true);
-    expect(result).toEqual({ suppress: true });
-  });
+      expect([search.toggle.mock.calls.length, event.defaultPrevented, result]).toEqual([
+        1,
+        true,
+        { suppress: true },
+      ]);
+    });
 
-  // The search panel is a plain fixed element; a top-layer dialog covers it, so
-  // opening it behind a modal produced an unreachable panel that also kept
-  // every other shortcut suppressed. The chord is still swallowed, or the
-  // browser's own Cmd+K takes focus to the URL bar.
-  it('swallows Cmd+K without opening the search while a modal is open', () => {
-    const toggle = vi.spyOn(search, 'toggle').mockImplementation(() => undefined);
-    const release = registerOpenOverlay();
+    // The search panel is a plain fixed element; a top-layer dialog covers it, so
+    // opening it behind a modal produced an unreachable panel that also kept
+    // every other shortcut suppressed. The chord is still swallowed, or the
+    // browser's own Cmd+K takes focus to the URL bar.
+    it('swallows the chord without opening the search while a modal is open', () => {
+      const { stores, search } = createStores();
+      stores.overlay.register();
+      const event = commandK();
 
-    const event = commandK();
-    const result = handleGuards(event, callbacks);
+      const result = handleGuards(event, createOptions(stores));
 
-    expect(toggle).not.toHaveBeenCalled();
-    expect(event.defaultPrevented).toBe(true);
-    expect(result).toEqual({ suppress: true });
-
-    release();
+      expect([search.toggle.mock.calls.length, event.defaultPrevented, result]).toEqual([
+        0,
+        true,
+        { suppress: true },
+      ]);
+    });
   });
 });

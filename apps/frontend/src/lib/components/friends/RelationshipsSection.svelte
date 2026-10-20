@@ -2,26 +2,31 @@
 import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
+import type { RelationshipCreateData } from '$lib/api/friend-details.js';
+import { getAppContext } from '$lib/app-context.js';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
-import { formClasses, headingClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { friends } from '$lib/stores/friends';
-import {
-  getKeyboardHint,
-  isOpenFriendLinkModeActive,
-  openFriendLinkModePrefix,
-} from '$lib/stores/ui';
+import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import {
   RELATIONSHIP_CATEGORIES,
   RELATIONSHIP_CATEGORY_STYLE,
 } from '$lib/utils/relationship-categories';
-import type { RelationshipCategory, RelationshipResponse, RelationshipTypeId } from '$shared';
+import type { RelationshipCategory, RelationshipResponse } from '$shared';
 import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
 import DetailActions from './subresources/DetailActions.svelte';
 import DetailEditModal from './subresources/DetailEditModal.svelte';
 import RelationshipEditForm from './subresources/RelationshipEditForm.svelte';
+
+const { stores } = getAppContext();
+const friends = stores.friends;
+const keyboardModes = stores.keyboardModes;
+const isOpenFriendLinkModeActive = keyboardModes.friendLinks.isActive;
+const openFriendLinkModePrefix = keyboardModes.friendLinks.prefix;
 
 const i18n = createI18n();
 
@@ -56,11 +61,7 @@ let isAddLoading = $state(false);
 let addError = $state<string | null>(null);
 let isDirty = $state(false);
 let relationshipFormRef = $state<{
-  getData: () => {
-    related_friend_id: string;
-    relationship_type_id: RelationshipTypeId;
-    notes?: string;
-  };
+  getData: () => RelationshipCreateData;
   isValid: () => boolean;
 } | null>(null);
 
@@ -182,8 +183,8 @@ onMount(() => {
 
 {#if relationships.length > 0}
 <section class="space-y-2">
-  <div class={surfaceClasses.section}>
-    <h2 class="{headingClasses.section} flex items-center gap-2">
+  <div class={SURFACE_CLASSES.section}>
+    <h2 class="{HEADING_CLASSES.section} flex items-center gap-2">
       <Users class="w-5 h-5" strokeWidth="2" />
       {$i18n.t('relationshipSection.relationships')}
     </h2>
@@ -247,7 +248,7 @@ onMount(() => {
                         bind:value={editNotes}
                         rows="2"
                         disabled={isSavingNotes}
-                        class={formClasses.inputSm}
+                        class={FORM_CLASSES.inputSm}
                         placeholder={$i18n.t('relationshipSection.addNotes')}
                       ></textarea>
                       <div class="flex gap-2">

@@ -1,13 +1,14 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
-import * as authApi from '$lib/api/auth';
+import type { FriendCreateData } from '$lib/api/friend-create-data.js';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import FriendForm from '$lib/components/friends/FriendForm.svelte';
 import PageShell from '$lib/components/ui/PageShell.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { auth, refreshUserData } from '$lib/stores/auth';
-import type { FriendCreateInputSchema } from '$shared';
 
+const { api, stores } = getAppContext();
+const auth = stores.auth;
 const i18n = createI18n();
 
 let isLoading = $state(false);
@@ -20,14 +21,14 @@ $effect(() => {
   }
 });
 
-async function handleSubmit(data: typeof FriendCreateInputSchema.inferIn) {
+async function handleSubmit(data: FriendCreateData) {
   isLoading = true;
   error = '';
 
   try {
-    await authApi.createSelfProfile(data);
+    await api.auth.createSelfProfile(data);
     // Refresh user data to update onboarding status
-    await refreshUserData();
+    await auth.refreshUserData();
     goto('/friends');
   } catch (err) {
     error = (err as Error)?.message ?? $i18n.t('onboarding.error.generic');

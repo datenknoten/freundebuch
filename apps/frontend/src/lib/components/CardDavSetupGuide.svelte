@@ -1,12 +1,14 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import TabNav from '$lib/components/TabNav.svelte';
 import Button from '$lib/components/ui/Button.svelte';
-import { codeClasses } from '$lib/components/ui/styles.js';
+import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { currentUser } from '$lib/stores/auth';
 import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
+
+const currentUser = getAppContext().stores.auth.currentUser;
 
 const i18n = createI18n();
 
@@ -59,7 +61,7 @@ async function copyUrl() {
 <div class="space-y-6">
   <AlertBanner variant="info" title={$i18n.t('profile.carddav.serverUrl')}>
     <div class="flex items-center gap-2 mt-2">
-      <code class="flex-1 {codeClasses.inline} break-all">
+      <code class="flex-1 {CODE_CLASSES.inline} break-all">
         {carddavUrl}
       </code>
       <Button size="sm" onclick={copyUrl} class="shrink-0">

@@ -1,8 +1,7 @@
 <script lang="ts">
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import { getAppContext } from '$lib/app-context.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { circlesById } from '$lib/stores/circles';
-import { currentLanguage } from '$lib/stores/locale';
 import {
   type ArrayFacetField,
   countryDisplayName,
@@ -11,7 +10,10 @@ import {
 } from '$shared';
 import CircleChip from '../circles/CircleChip.svelte';
 
+const currentLanguage = getAppContext().stores.locale.currentLanguage;
+
 const i18n = createI18n();
+const circlesById = getAppContext().stores.circles.byId;
 
 interface Props {
   filters: FacetFilters;

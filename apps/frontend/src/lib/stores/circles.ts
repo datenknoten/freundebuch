@@ -1,15 +1,15 @@
-import { derived, get, writable } from 'svelte/store';
-import type {
-  CircleInput,
-  CircleResponse,
-  CircleSummaryResponse,
-  CircleWithHierarchyResponse,
-} from '$shared';
-import { buildCircleHierarchy } from '$shared';
-import * as circlesApi from '../api/circles.js';
+import type { Logger } from 'pino';
+import { derived, get, type Readable, writable } from 'svelte/store';
+import type { CircleResponse } from '$shared';
+import type { CircleData, CircleOrderItem, CirclesApi } from '../api/circles.js';
 import { storeAction } from './store-action.js';
 
-interface CirclesState {
+export interface CirclesStoreOptions {
+  circlesApi: CirclesApi;
+  logger: Logger;
+}
+
+export interface CirclesState {
   circles: CircleResponse[];
   isLoading: boolean;
   error: string | null;
@@ -17,175 +17,152 @@ interface CirclesState {
   hasLoaded: boolean;
 }
 
-const initialState: CirclesState = {
+const INITIAL_STATE: CirclesState = {
   circles: [],
   isLoading: false,
   error: null,
   hasLoaded: false,
 };
 
-function createCirclesStore() {
-  const { subscribe, set, update } = writable<CirclesState>(initialState);
-
-  // Tracks an in-flight load so concurrent callers share one request and all
-  // await the same result rather than receiving stale/empty data.
-  let inFlight: Promise<CircleResponse[]> | null = null;
-
-  return {
-    subscribe,
-
-    /**
-     * Load circles, caching the result. After a successful load this is a
-     * no-op; while a load is in flight, concurrent callers reuse the same
-     * promise. This lets the many call sites (layout, circles page, circle
-     * picker) share a single request. Pass `force` to bypass the cache and
-     * refetch.
-     */
-    loadCircles: (force = false): Promise<CircleResponse[]> => {
-      const state = get({ subscribe });
-      if (!force) {
-        if (state.hasLoaded) return Promise.resolve(state.circles);
-        if (inFlight) return inFlight;
-      }
-      inFlight = storeAction(
-        update,
-        () => circlesApi.listCircles(),
-        (_state, circles) => ({ circles, hasLoaded: true }),
-        'Failed to load circles',
-      ).finally(() => {
-        inFlight = null;
-      });
-      return inFlight;
-    },
-
-    createCircle: (input: CircleInput) =>
-      storeAction(
-        update,
-        () => circlesApi.createCircle(input),
-        (state, circle) => ({ circles: [...state.circles, circle] }),
-        'Failed to create circle',
-      ),
-
-    updateCircle: (circleId: string, input: Partial<CircleInput>) =>
-      storeAction(
-        update,
-        () => circlesApi.updateCircle(circleId, input),
-        (state, updatedCircle) => ({
-          circles: state.circles.map((c) => (c.id === circleId ? updatedCircle : c)),
-        }),
-        'Failed to update circle',
-      ),
-
-    deleteCircle: (circleId: string) =>
-      storeAction(
-        update,
-        () => circlesApi.deleteCircle(circleId),
-        (state) => ({
-          circles: state.circles.filter((c) => c.id !== circleId),
-        }),
-        'Failed to delete circle',
-      ),
-
-    reorderCircles: (order: Array<{ id: string; sort_order: number }>) =>
-      storeAction(
-        update,
-        () => circlesApi.reorderCircles(order),
-        (state) => {
-          const orderMap = new Map(order.map((o) => [o.id, o.sort_order]));
-          const updatedCircles = state.circles.map((c) => ({
-            ...c,
-            sortOrder: orderMap.get(c.id) ?? c.sortOrder,
-          }));
-
-          return {
-            circles: updatedCircles.sort((a, b) => a.sortOrder - b.sortOrder),
-          };
-        },
-        'Failed to reorder circles',
-      ),
-
-    mergeCircles: (targetCircleId: string, sourceCircleId: string) =>
-      storeAction(
-        update,
-        () => circlesApi.mergeCircles(targetCircleId, sourceCircleId),
-        (state, mergedCircle) => ({
-          circles: state.circles
-            .filter((c) => c.id !== sourceCircleId)
-            .map((c) => (c.id === targetCircleId ? mergedCircle : c)),
-        }),
-        'Failed to merge circles',
-      ),
-
-    clear: () => {
-      inFlight = null;
-      set(initialState);
-    },
-  };
+function bySortOrder(a: CircleResponse, b: CircleResponse) {
+  return a.sortOrder - b.sortOrder;
 }
 
-export const circles = createCirclesStore();
+function replaceCircle(state: CirclesState, updated: CircleResponse) {
+  return { circles: state.circles.map((circle) => (circle.id === updated.id ? updated : circle)) };
+}
 
-export const circlesList = derived(circles, ($circles) =>
-  [...$circles.circles].sort((a, b) => a.sortOrder - b.sortOrder),
-);
+function applySortOrder(state: CirclesState, order: CircleOrderItem[]) {
+  const sortOrderById = new Map(order.map((item) => [item.id, item.sortOrder]));
+  const circles = state.circles.map((circle) => ({
+    ...circle,
+    sortOrder: sortOrderById.get(circle.id) ?? circle.sortOrder,
+  }));
+  return { circles: circles.sort(bySortOrder) };
+}
 
-export const circleHierarchy = derived(circles, ($circles): CircleWithHierarchyResponse[] =>
-  buildCircleHierarchy($circles.circles),
-);
+function withoutCircle(state: CirclesState, circleId: string) {
+  return { circles: state.circles.filter((circle) => circle.id !== circleId) };
+}
 
-export const circlesById = derived(
-  circles,
-  ($circles) => new Map<string, CircleResponse>($circles.circles.map((c) => [c.id, c])),
-);
+function mergeInto(state: CirclesState, sourceCircleId: string, merged: CircleResponse) {
+  const { circles } = withoutCircle(state, sourceCircleId);
+  return { circles: circles.map((circle) => (circle.id === merged.id ? merged : circle)) };
+}
 
-export function getCirclePath(circleId: string, circlesMap: Map<string, CircleResponse>): string {
-  const parts: string[] = [];
-  let currentId: string | null = circleId;
+function indexCircles(state: CirclesState) {
+  return new Map(state.circles.map((circle) => [circle.id, circle]));
+}
 
-  while (currentId) {
-    const circle = circlesMap.get(currentId);
-    if (!circle) break;
-    parts.unshift(circle.name);
-    currentId = circle.parentCircleId;
+/**
+ * The circles of the signed-in user. A failed action stores its message in `error` and rethrows;
+ * `clear` drops the cache, for example after a sign-out.
+ */
+export class CirclesStore {
+  public readonly subscribe: Readable<CirclesState>['subscribe'];
+  /** The circles ordered by `sortOrder`. */
+  public readonly list: Readable<CircleResponse[]>;
+  public readonly byId: Readable<Map<string, CircleResponse>>;
+  private readonly state = writable(INITIAL_STATE);
+  private readonly circlesApi: CirclesApi;
+  private readonly logger: Logger;
+  // Shared by concurrent callers so they all await the same result instead of stale or empty data.
+  private inFlight: Promise<CircleResponse[]> | undefined;
+
+  public constructor(options: CirclesStoreOptions) {
+    this.circlesApi = options.circlesApi;
+    this.logger = options.logger;
+    this.subscribe = this.state.subscribe;
+    this.list = derived(this.state, (state) => [...state.circles].sort(bySortOrder));
+    this.byId = derived(this.state, indexCircles);
   }
 
-  return parts.join(' → ');
-}
+  /**
+   * Serves the cached circles after the first successful load, and joins a load in flight, so
+   * every consumer shares one request. `shouldRefetch` bypasses both.
+   */
+  public async loadCircles(shouldRefetch = false) {
+    const state = get(this.state);
+    if (shouldRefetch === false && state.hasLoaded === true) {
+      return state.circles;
+    }
+    if (shouldRefetch === false && this.inFlight !== undefined) {
+      return this.inFlight;
+    }
+    const load = this.fetchCircles();
+    this.inFlight = load;
+    return load;
+  }
 
-// ============================================================================
-// Friend-Circle Assignment Helpers
-// ============================================================================
+  /** Loads in the background: a failure is logged and kept in `error`, never thrown. */
+  public async preloadCircles() {
+    try {
+      await this.loadCircles();
+    } catch (err) {
+      this.logger.warn({ err }, 'Failed to preload circles');
+    }
+  }
 
-export async function setFriendCircles(
-  friendId: string,
-  circleIds: string[],
-): Promise<CircleSummaryResponse[]> {
-  return circlesApi.setFriendCircles(friendId, circleIds);
-}
+  public createCircle(data: CircleData) {
+    return storeAction(
+      this.state.update,
+      () => this.circlesApi.createCircle(data),
+      (state, circle) => ({ circles: [...state.circles, circle] }),
+      'Failed to create circle',
+    );
+  }
 
-export async function addFriendToCircle(
-  friendId: string,
-  circleId: string,
-): Promise<CircleSummaryResponse> {
-  return circlesApi.addFriendToCircle(friendId, circleId);
-}
+  public updateCircle(circleId: string, data: CircleData) {
+    return storeAction(
+      this.state.update,
+      () => this.circlesApi.updateCircle(circleId, data),
+      replaceCircle,
+      'Failed to update circle',
+    );
+  }
 
-export async function removeFriendFromCircle(friendId: string, circleId: string): Promise<void> {
-  return circlesApi.removeFriendFromCircle(friendId, circleId);
-}
+  public deleteCircle(circleId: string) {
+    return storeAction(
+      this.state.update,
+      () => this.circlesApi.deleteCircle(circleId),
+      (state) => withoutCircle(state, circleId),
+      'Failed to delete circle',
+    );
+  }
 
-// ============================================================================
-// Favorites & Archive Helpers
-// ============================================================================
+  public reorderCircles(order: CircleOrderItem[]) {
+    return storeAction(
+      this.state.update,
+      () => this.circlesApi.reorderCircles(order),
+      (state) => applySortOrder(state, order),
+      'Failed to reorder circles',
+    );
+  }
 
-export async function toggleFavorite(friendId: string): Promise<boolean> {
-  return circlesApi.toggleFavorite(friendId);
-}
+  public mergeCircles(targetCircleId: string, sourceCircleId: string) {
+    return storeAction(
+      this.state.update,
+      () => this.circlesApi.mergeCircles(targetCircleId, sourceCircleId),
+      (state, merged) => mergeInto(state, sourceCircleId, merged),
+      'Failed to merge circles',
+    );
+  }
 
-export async function archiveFriend(friendId: string, reason?: string): Promise<void> {
-  return circlesApi.archiveFriend(friendId, reason);
-}
+  public clear() {
+    this.inFlight = undefined;
+    this.state.set(INITIAL_STATE);
+  }
 
-export async function unarchiveFriend(friendId: string): Promise<void> {
-  return circlesApi.unarchiveFriend(friendId);
+  private async fetchCircles() {
+    try {
+      return await storeAction(
+        this.state.update,
+        () => this.circlesApi.listCircles(),
+        (_state, circles) => ({ circles, hasLoaded: true }),
+        'Failed to load circles',
+      );
+    } finally {
+      this.inFlight = undefined;
+    }
+  }
 }

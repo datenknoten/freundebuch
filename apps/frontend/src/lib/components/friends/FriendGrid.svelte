@@ -5,11 +5,13 @@ import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
 import Star from 'svelte-heros-v2/Star.svelte';
 import { goto } from '$app/navigation';
-import { chipClasses, focusRing, surfaceClasses } from '$lib/components/ui/styles.js';
+import { getAppContext } from '$lib/app-context.js';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
+import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { currentLanguage } from '$lib/stores/locale';
-import { getKeyboardHint, isOpenModeActive, openModePrefix } from '$lib/stores/ui';
-import { matchSourceBadge } from '$lib/utils/match-source';
+import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
+import { findMatchSourceBadge } from '$lib/utils/match-source.js';
 import {
   type BirthdayFormat,
   COLUMN_DEFINITIONS,
@@ -20,6 +22,12 @@ import {
 import CircleChips from '../circles/CircleChips.svelte';
 import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
+
+const keyboardModes = getAppContext().stores.keyboardModes;
+const isOpenModeActive = keyboardModes.friends.isActive;
+const openModePrefix = keyboardModes.friends.prefix;
+
+const currentLanguage = getAppContext().stores.locale.currentLanguage;
 
 const i18n = createI18n();
 
@@ -152,7 +160,7 @@ function formatBirthday(dateString: string | undefined, format: BirthdayFormat):
   }
 }
 
-function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefined {
+function findCellValue(item: FriendGridItem, columnId: ColumnId) {
   switch (columnId) {
     case 'displayName':
       return item.displayName;
@@ -227,7 +235,7 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
     </thead>
     <tbody>
       {#each items as item, index (item.id)}
-        {@const matchBadge = matchSourceBadge(item.matchSource)}
+        {@const matchBadge = findMatchSourceBadge(item.matchSource)}
         <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
         <!-- The row is a mouse convenience; the name cell holds the real link,
              so keyboard users get a focusable anchor instead of a fake one. -->
@@ -253,7 +261,7 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
                 <a
                   href={getFriendDetailUrl(item.id)}
                   onclick={handleLinkClick}
-                  class="font-body text-gray-900 hover:text-forest hover:underline rounded {focusRing}"
+                  class="font-body text-gray-900 hover:text-forest hover:underline rounded {FOCUS_RING}"
                   data-sveltekit-preload-data="tap"
                   data-shortcut="o {getKeyboardHint(index)}"
                   data-shortcut-label="shortcuts.panels.openFriend"
@@ -294,7 +302,7 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
                 <span class="font-body text-gray-600 text-sm">{formatDate(item.updatedAt)}</span>
               {:else}
                 <!-- Text columns: nickname, organization, jobTitle, department, primaryCity, primaryCountry -->
-                {@const value = getCellValue(item, columnId)}
+                {@const value = findCellValue(item, columnId)}
                 {#if value}
                   <span class="font-body text-gray-600">{value}</span>
                 {/if}
@@ -328,11 +336,11 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
 <!-- Mobile: Card view -->
 <ul class="md:hidden space-y-2">
   {#each items as item, index (item.id)}
-    {@const matchBadge = matchSourceBadge(item.matchSource)}
+    {@const matchBadge = findMatchSourceBadge(item.matchSource)}
     <li>
     <a
       href={getFriendDetailUrl(item.id)}
-      class="flex items-start gap-4 {surfaceClasses.cardInteractive} relative {focusRing}"
+      class="flex items-start gap-4 {SURFACE_CLASSES.cardInteractive} relative {FOCUS_RING}"
       data-sveltekit-preload-data="tap"
       data-shortcut="o {getKeyboardHint(index)}"
       data-shortcut-label="shortcuts.panels.openFriend"
@@ -355,7 +363,7 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
               <Star class="w-4 h-4 text-amber-500" variation="solid" />
             {/if}
             {#if item.archivedAt}
-              <span class="{chipClasses.base} {chipClasses.neutral}">{$i18n.t('friendList.archived')}</span>
+              <span class="{CHIP_CLASSES.base} {CHIP_CLASSES.neutral}">{$i18n.t('friendList.archived')}</span>
             {/if}
             {#if matchBadge}
               <span class={matchBadge.class}>

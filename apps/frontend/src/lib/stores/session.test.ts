@@ -1,64 +1,57 @@
 import { get } from 'svelte/store';
-import { afterEach, describe, expect, it } from 'vitest';
-import {
-  abandonSessionExpired,
-  notifyUnauthorized,
-  resolveSessionExpired,
-  sessionExpired,
-  setHasSession,
-} from './session.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { SessionStore } from './session.js';
 
-describe('session store', () => {
-  afterEach(() => {
-    // Release anything parked and reset module state between tests.
-    abandonSessionExpired();
-    setHasSession(false);
+describe('SessionStore', () => {
+  let session: SessionStore;
+
+  beforeEach(() => {
+    session = new SessionStore();
   });
 
-  it('resolves immediately to false and does not prompt when unauthenticated', async () => {
-    setHasSession(false);
+  describe('notifyUnauthorized', () => {
+    it('resolves false without prompting when no session exists', async () => {
+      await expect(session.notifyUnauthorized()).resolves.toBe(false);
+      expect(get(session)).toBe(false);
+    });
 
-    await expect(notifyUnauthorized()).resolves.toBe(false);
-    expect(get(sessionExpired)).toBe(false);
+    it('shows the prompt when a session existed', () => {
+      session.setHasSession(true);
+
+      void session.notifyUnauthorized();
+
+      expect(get(session)).toBe(true);
+    });
+
+    it('works detached from the store, as the API client calls it', async () => {
+      const notifyUnauthorized = session.notifyUnauthorized.bind(session);
+
+      await expect(notifyUnauthorized()).resolves.toBe(false);
+    });
   });
 
-  it('shows the prompt and parks the request when authenticated', () => {
-    setHasSession(true);
+  describe('resolveSessionExpired', () => {
+    it('settles every parked request with true and hides the prompt', async () => {
+      session.setHasSession(true);
+      const first = session.notifyUnauthorized();
+      const second = session.notifyUnauthorized();
 
-    const pending = notifyUnauthorized();
+      session.resolveSessionExpired();
 
-    expect(get(sessionExpired)).toBe(true);
-    // The promise stays pending until resolved/abandoned.
-    void pending;
+      await expect(Promise.all([first, second])).resolves.toEqual([true, true]);
+      expect(get(session)).toBe(false);
+    });
   });
 
-  it('resolveSessionExpired settles parked requests with true and hides the prompt', async () => {
-    setHasSession(true);
-    const pending = notifyUnauthorized();
+  describe('abandonSessionExpired', () => {
+    it('settles parked requests with false and hides the prompt', async () => {
+      session.setHasSession(true);
+      const pending = session.notifyUnauthorized();
 
-    resolveSessionExpired();
+      session.abandonSessionExpired();
 
-    await expect(pending).resolves.toBe(true);
-    expect(get(sessionExpired)).toBe(false);
-  });
-
-  it('abandonSessionExpired settles parked requests with false and hides the prompt', async () => {
-    setHasSession(true);
-    const pending = notifyUnauthorized();
-
-    abandonSessionExpired();
-
-    await expect(pending).resolves.toBe(false);
-    expect(get(sessionExpired)).toBe(false);
-  });
-
-  it('settles every parked request from a single resolution', async () => {
-    setHasSession(true);
-    const first = notifyUnauthorized();
-    const second = notifyUnauthorized();
-
-    resolveSessionExpired();
-
-    await expect(Promise.all([first, second])).resolves.toEqual([true, true]);
+      await expect(pending).resolves.toBe(false);
+      expect(get(session)).toBe(false);
+    });
   });
 });

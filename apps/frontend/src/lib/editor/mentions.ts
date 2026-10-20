@@ -16,9 +16,9 @@ import {
   type CompletionResult,
 } from '@codemirror/autocomplete';
 import type { Extension } from '@codemirror/state';
-import { listCollectives } from '$lib/api/collectives';
-import { listEncounters } from '$lib/api/encounters';
-import { searchFriends } from '$lib/api/friends';
+import type { CollectivesApi } from '$lib/api/collectives.js';
+import type { EncountersApi } from '$lib/api/encounters.js';
+import type { FriendSearchApi } from '$lib/api/friend-search.js';
 
 /** How many hits to request per entity type. */
 const PER_TYPE_LIMIT = 5;
@@ -42,6 +42,13 @@ export interface MentionTypeLabels {
   encounter: string;
 }
 
+/** The APIs the mention search queries; `AppApis` satisfies it. */
+export interface MentionSearchApis {
+  friendSearch: FriendSearchApi;
+  collectives: CollectivesApi;
+  encounters: EncountersApi;
+}
+
 /** Build a readable label for an encounter, which may have no title. */
 function encounterLabel(item: {
   title: string | null;
@@ -58,11 +65,11 @@ function encounterLabel(item: {
  * Query every mentionable entity type in parallel. Uses `allSettled` so one
  * failing endpoint doesn't blank out the whole list.
  */
-async function searchMentionables(query: string): Promise<Mentionable[]> {
+async function searchMentionables(apis: MentionSearchApis, query: string): Promise<Mentionable[]> {
   const [friends, collectives, encounters] = await Promise.allSettled([
-    searchFriends(query, undefined, PER_TYPE_LIMIT),
-    listCollectives({ search: query, pageSize: PER_TYPE_LIMIT }),
-    listEncounters({ search: query, pageSize: PER_TYPE_LIMIT }),
+    apis.friendSearch.searchFriends({ query, limit: PER_TYPE_LIMIT }),
+    apis.collectives.listCollectives({ search: query, pageSize: PER_TYPE_LIMIT }),
+    apis.encounters.listEncounters({ search: query, pageSize: PER_TYPE_LIMIT }),
   ]);
 
   const out: Mentionable[] = [];
@@ -100,7 +107,7 @@ function escapeLinkLabel(s: string): string {
   return s.replace(/[\\[\]]/g, '\\$&');
 }
 
-function makeMentionSource(typeLabels: MentionTypeLabels) {
+function makeMentionSource(typeLabels: MentionTypeLabels, apis: MentionSearchApis) {
   const kindLabel: Record<MentionKind, string> = {
     friend: typeLabels.friend,
     collective: typeLabels.collective,
@@ -116,7 +123,7 @@ function makeMentionSource(typeLabels: MentionTypeLabels) {
     return new Promise((resolve, reject) => {
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
-        searchMentionables(query).then(resolve, reject);
+        searchMentionables(apis, query).then(resolve, reject);
       }, DEBOUNCE_MS);
     });
   }
@@ -177,9 +184,12 @@ function makeMentionSource(typeLabels: MentionTypeLabels) {
  * Autocomplete extension that turns `@`-typed text into entity links.
  * `typeLabels` carries the already-localized kind names for the dropdown.
  */
-export function mentionAutocomplete(typeLabels: MentionTypeLabels): Extension {
+export function mentionAutocomplete(
+  typeLabels: MentionTypeLabels,
+  apis: MentionSearchApis,
+): Extension {
   return autocompletion({
-    override: [makeMentionSource(typeLabels)],
+    override: [makeMentionSource(typeLabels, apis)],
     activateOnTyping: true,
     // Run the source on every keystroke (0 delay). The source itself
     // debounces network calls via DEBOUNCE_MS, so leaving CodeMirror's

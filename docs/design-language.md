@@ -59,16 +59,16 @@ We've paired **Yanone Kaffeesatz** (for headings) with **Merriweather** (for bod
 Headings use Yanone Kaffeesatz at its regular weight; the typeface is condensed
 enough that bolding it makes headings look cramped, so **no heading carries
 `font-bold`**. The scale is exported from
-[`ui/styles.ts`](../apps/frontend/src/lib/components/ui/styles.ts) as
-`headingClasses`, and components use those constants rather than raw classes:
+[`ui/heading-classes.ts`](../apps/frontend/src/lib/components/ui/heading-classes.ts) as
+`HEADING_CLASSES`, and components use those constants rather than raw classes:
 
 | Recipe | Classes | Where |
 |---|---|---|
-| `headingClasses.page` | `text-3xl font-heading text-forest` | the `h1` of a list, form or settings page (rendered by `PageShell`) |
-| `headingClasses.entity` | `text-3xl font-heading text-gray-900` | the `h1` of a detail page, where the heading is the entity's name |
-| `headingClasses.widget` | `text-xl font-heading text-gray-900` | dashboard widgets and modal titles |
-| `headingClasses.section` | `text-lg font-heading` | the `h2` inside a tinted section header |
-| `headingClasses.sub` | `text-lg font-heading text-gray-900` | `h3` group headings inside forms and cards |
+| `HEADING_CLASSES.page` | `text-3xl font-heading text-forest` | the `h1` of a list, form or settings page (rendered by `PageShell`) |
+| `HEADING_CLASSES.entity` | `text-3xl font-heading text-gray-900` | the `h1` of a detail page, where the heading is the entity's name |
+| `HEADING_CLASSES.widget` | `text-xl font-heading text-gray-900` | dashboard widgets and modal titles |
+| `HEADING_CLASSES.section` | `text-lg font-heading` | the `h2` inside a tinted section header |
+| `HEADING_CLASSES.sub` | `text-lg font-heading text-gray-900` | `h3` group headings inside forms and cards |
 
 The logged-out landing hero keeps `text-6xl` as the single deliberate
 exception.
@@ -114,7 +114,7 @@ spacer of the same height. No page declares `min-h-screen`.
 
 ## Surfaces, Shadows & Radius
 
-`surfaceClasses` in `ui/styles.ts` is the full set. Radius encodes hierarchy:
+`SURFACE_CLASSES` in `ui/surface-classes.ts` is the full set. Radius encodes hierarchy:
 `rounded-lg` for controls, cards and rows, `rounded-xl` for page surfaces and
 modals, `rounded-t-2xl` for bottom sheets, `rounded-full` for chips, avatars
 and the FAB.
@@ -156,14 +156,14 @@ ignores `z-index` entirely.
 
 - **Hover lightens**: `hover:bg-forest-light`. **Pressed darkens**:
   `active:bg-forest-dark`. That is the whole rule for forest surfaces.
-- **Focus**: keyboard only. Every interactive element uses `focusRing`
+- **Focus**: keyboard only. Every interactive element uses `FOCUS_RING`
   (`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest
   focus-visible:ring-offset-2`) or, for text inputs, the `focus-visible:` ring
-  baked into `formClasses`. A plain `focus:` style is a bug.
+  baked into `FORM_CLASSES`. A plain `focus:` style is a bug.
 - **Disabled**: `disabled:opacity-50 disabled:cursor-not-allowed`.
 - **Transitions**: `transition-colors` with Tailwind's default 150ms. An
   explicit `duration-*` appears in exactly four places, all of them animating
-  something other than colour: `surfaceClasses.cardInteractive`, the row
+  something other than colour: `SURFACE_CLASSES.cardInteractive`, the row
   actions' and swipeable row's `transition-opacity`, and the user menu's
   `transition-transform` chevron.
 
@@ -203,7 +203,7 @@ reaching for Tailwind's important suffix.
 ### Surfaces and text
 
 `buttonClasses(variant, size)` exists for the rare element that must not be a
-`<button>` or `<a>`. `linkClasses.back` is the back link, and `codeClasses`
+`<button>` or `<a>`. `LINK_CLASSES.back` is the back link, and `CODE_CLASSES`
 covers `block`, `blockLg`, `inline` and `kbd`.
 
 ### Form controls — `ui/form-*.svelte`
@@ -212,10 +212,10 @@ covers `block`, `blockLg`, `inline` and `kbd`.
 required marker, the optional marker, the helper line and the error line
 (`aria-invalid` plus `aria-describedby`). A field with a visible label is a
 primitive; a control inside a composite widget (a combobox with its own
-listbox) stays a raw element with `formClasses.input` / `inputSm` /
-`checkbox`, and its panel uses `surfaceClasses.listbox`.
+listbox) stays a raw element with `FORM_CLASSES.input` / `inputSm` /
+`checkbox`, and its panel uses `SURFACE_CLASSES.listbox`.
 
-Every label is `formClasses.label`. There is no second label recipe.
+Every label is `FORM_CLASSES.label`. There is no second label recipe.
 
 ### Feedback
 
@@ -251,7 +251,7 @@ Because the platform owns Escape, the keyboard-shortcut guard must never call
 
 ### Chips and badges
 
-`chipClasses.base` (`inline-flex items-center gap-1 rounded-full px-2 py-0.5
+`CHIP_CLASSES.base` (`inline-flex items-center gap-1 rounded-full px-2 py-0.5
 text-xs font-body font-medium`) plus one tone: `forest`, `tint` or `neutral`.
 Categorical palettes — relationship categories (rose/blue/green) and collective
 types — are **data colours**, not brand colours; each lives in exactly one
@@ -401,5 +401,7 @@ keeping with our privacy-first principle. Available weights:
 
 - Colors: `bg-forest`, `text-forest-light`, `border-sage`, `text-amber-warm`
 - Typography: `font-heading`, `font-body`
-- Recipes: import from `$lib/components/ui` (`surfaceClasses`, `chipClasses`,
-  `headingClasses`, `linkClasses`, `codeClasses`, `formClasses`, `focusRing`)
+- Recipes: import each from its own module in `$lib/components/ui/`
+  (`SURFACE_CLASSES` from `surface-classes.js`, `CHIP_CLASSES`, `HEADING_CLASSES`,
+  `LINK_CLASSES`, `CODE_CLASSES`, `FORM_CLASSES`, `FOCUS_RING` from `focus-ring.js`,
+  `buttonClasses` from `button-classes.js`)

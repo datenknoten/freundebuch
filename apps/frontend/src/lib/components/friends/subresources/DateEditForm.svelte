@@ -1,10 +1,11 @@
 <script lang="ts">
+import type { DateData } from '$lib/api/friend-details.js';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import type { DateInputSchema, DateType, FriendDateResponse } from '$shared';
+import type { DateType, FriendDateResponse } from '$shared';
 
 const i18n = createI18n();
 
@@ -38,13 +39,13 @@ const dateTypeOptions = $derived([
   { value: 'other' as const, label: $i18n.t('subresources.date.types.other') },
 ]);
 
-export function getData(): typeof DateInputSchema.inferIn {
+export function getData() {
   return {
-    date_value: dateValue,
-    year_known: yearKnown,
-    date_type: dateType,
+    dateValue,
+    yearKnown,
+    dateType,
     label: label.trim() || undefined,
-  };
+  } satisfies DateData;
 }
 
 export function isValid(): boolean {

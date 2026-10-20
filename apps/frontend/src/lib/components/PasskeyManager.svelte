@@ -2,7 +2,7 @@
 import { onMount } from 'svelte';
 import Key from 'svelte-heros-v2/Key.svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
-import { authClient } from '$lib/auth-client';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
@@ -11,6 +11,7 @@ import FormInput from '$lib/components/ui/FormInput.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/i18n.js';
 
+const authClient = getAppContext().authClient;
 const i18n = createI18n();
 
 interface Passkey {

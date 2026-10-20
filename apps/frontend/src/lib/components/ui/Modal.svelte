@@ -1,9 +1,13 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import { getAppContext } from '$lib/app-context.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { registerOpenOverlay } from '$lib/stores/ui';
-import { focusRing, headingClasses, surfaceClasses } from './styles';
+import { FOCUS_RING } from './focus-ring.js';
+import { HEADING_CLASSES } from './heading-classes.js';
+import { SURFACE_CLASSES } from './surface-classes.js';
+
+const overlay = getAppContext().stores.overlay;
 
 interface Props {
   title: string;
@@ -47,38 +51,48 @@ let dialogEl = $state<HTMLDialogElement | undefined>(undefined);
 // Set once the teardown below closes the dialog, and never cleared: the
 // platform queues the resulting `close` event as a task, so `handleClose`
 // runs after teardown has finished and must still recognise it as ours.
-let tearingDown = false;
+let isTearingDown = false;
 
 // showModal() is what buys the focus trap, Escape handling and an inert
 // background; the component is mounted only while the modal should be open, so
 // the effect opens on mount and closes on teardown.
-$effect(() => {
+function openDialog() {
   const element = dialogEl;
-  if (element === undefined) return;
+  if (element === undefined) {
+    return undefined;
+  }
 
   // Svelte detaches a destroyed block's DOM before running effect teardowns,
   // so `close()` below runs on a disconnected <dialog> and the platform skips
   // its own focus restore. Remember the opener and restore focus by hand.
   const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
-  if (!element.open) element.showModal();
-  const releaseOverlay = registerOpenOverlay();
+  if (element.open === false) {
+    element.showModal();
+  }
+  const releaseOverlay = overlay.register();
 
-  return () => {
-    if (element.open) {
-      tearingDown = true;
+  return function closeDialog() {
+    if (element.open === true) {
+      isTearingDown = true;
       element.close();
     }
     releaseOverlay();
-    if (opener?.isConnected === true) opener.focus();
+    if (opener?.isConnected === true) {
+      opener.focus();
+    }
   };
-});
+}
+
+$effect(openDialog);
 
 function handleCancel(event: Event) {
   // Native Escape fires `cancel`; translate it so the parent's state stays in
   // sync (and swallow it entirely while the modal is not closable).
   event.preventDefault();
-  if (closable) onClose();
+  if (closable === true) {
+    onClose();
+  }
 }
 
 function handleClose() {
@@ -87,15 +101,22 @@ function handleClose() {
   // `close()` or `<form method="dialog">` never fires `cancel` at all. Keep
   // component and dialog in agreement instead of leaving a mounted modal with
   // nothing visible and the overlay count stuck.
-  if (tearingDown) return;
-  if (closable) onClose();
-  else dialogEl?.showModal();
+  if (isTearingDown === true) {
+    return;
+  }
+  if (closable === true) {
+    onClose();
+  } else {
+    dialogEl?.showModal();
+  }
 }
 
 function handleBackdropClick(event: MouseEvent) {
   // A click on the <dialog> itself is a click on the backdrop: the panel's own
   // content sits in child elements.
-  if (closable && event.target === dialogEl) onClose();
+  if (closable === true && event.target === dialogEl) {
+    onClose();
+  }
 }
 </script>
 
@@ -108,12 +129,12 @@ function handleBackdropClick(event: MouseEvent) {
   class:sheet={variant === 'sheet'}
   class:fullscreen
   class="p-0 w-full {widths[size]} max-h-[90vh] {variant === 'sheet'
-    ? `${surfaceClasses.sheet} animate-slide-up`
-    : surfaceClasses.modal} backdrop:bg-gray-900/50 {className}"
+    ? `${SURFACE_CLASSES.sheet} animate-slide-up`
+    : SURFACE_CLASSES.modal} backdrop:bg-gray-900/50 {className}"
 >
   <div class="flex items-center justify-between gap-3 p-4 border-b border-gray-200 shrink-0">
     <div class="min-w-0">
-      <h2 id={titleId} class="{headingClasses.widget} truncate">{title}</h2>
+      <h2 id={titleId} class="{HEADING_CLASSES.widget} truncate">{title}</h2>
       {#if subtitle !== undefined}
         <p class="text-sm text-gray-500 font-body truncate">{subtitle}</p>
       {/if}
@@ -122,7 +143,7 @@ function handleBackdropClick(event: MouseEvent) {
       <button
         type="button"
         onclick={onClose}
-        class="p-2 shrink-0 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors {focusRing}"
+        class="p-2 shrink-0 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors {FOCUS_RING}"
         aria-label={$i18n.t('common.close')}
       >
         <XMark class="w-5 h-5" strokeWidth="2" />

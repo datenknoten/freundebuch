@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { focusRing } from './styles';
+import { FOCUS_RING } from './focus-ring.js';
 
 interface Props {
   onclick: () => void;
@@ -21,7 +21,7 @@ let { onclick, label, children }: Props = $props();
   {onclick}
   class="fixed bottom-6 right-6 sm:hidden w-14 h-14 bg-forest text-white rounded-full shadow-lg
          hover:bg-forest-light transition-colors flex items-center justify-center z-(--z-fab)
-         select-none touch-none [-webkit-touch-callout:none] {focusRing}"
+         select-none touch-none [-webkit-touch-callout:none] {FOCUS_RING}"
   title={label}
   aria-label={label}
 >

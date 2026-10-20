@@ -2,18 +2,21 @@
 import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { openWithKeyboard } from '$lib/actions/auto-focus';
+import { getAppContext } from '$lib/app-context.js';
 import KeyboardHintBadge from '$lib/components/KeyboardHintBadge.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
-import { headingClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import {
-  getKeyboardHint,
-  isOpenFriendLinkModeActive,
-  openFriendLinkModePrefix,
-} from '$lib/stores/ui';
+import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import DetailEditModal from '../friends/subresources/DetailEditModal.svelte';
 import type { SubresourceDescriptor, SubresourceFormExports, SubresourceItem } from './types';
+
+const { logger, stores } = getAppContext();
+const keyboardModes = stores.keyboardModes;
+const isOpenFriendLinkModeActive = keyboardModes.friendLinks.isActive;
+const openFriendLinkModePrefix = keyboardModes.friendLinks.prefix;
 
 const i18n = createI18n();
 
@@ -127,7 +130,7 @@ $effect(() => {
     loadedItems = [];
     closeModal();
     closeDeleteConfirm();
-    reload().catch((err) => console.error('Failed to load sub-resources:', err));
+    void reload().catch((err) => logger.error({ err }, 'Failed to load sub-resources'));
   }
 });
 
@@ -249,8 +252,8 @@ onMount(() => {
 
 {#if items.length > 0}
   <section class="space-y-2">
-    <div class={surfaceClasses.section}>
-      <h2 class="{headingClasses.section} flex items-center gap-2">
+    <div class={SURFACE_CLASSES.section}>
+      <h2 class="{HEADING_CLASSES.section} flex items-center gap-2">
         <Icon class="w-5 h-5" strokeWidth="2" />
         {$i18n.t(descriptor.sectionTitleKey)}
       </h2>

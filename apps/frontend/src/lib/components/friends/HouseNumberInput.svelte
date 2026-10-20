@@ -1,8 +1,9 @@
 <script lang="ts">
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { formClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { HouseNumberInfoResponse } from '$shared';
 
@@ -166,7 +167,7 @@ function enableManualEntry() {
 </script>
 
 <div class="relative">
-  <label for="house-number-input" class={formClasses.label}>{$i18n.t('address.houseNumber')}</label>
+  <label for="house-number-input" class={FORM_CLASSES.label}>{$i18n.t('address.houseNumber')}</label>
 
   <div class="relative">
     {#if value && !showDropdown && !manualEntry && houseNumbers.length > 0 && !freeTextMode}
@@ -176,7 +177,7 @@ function enableManualEntry() {
         onclick={activateInput}
         onkeydown={handleButtonKeydown}
         disabled={disabled || isLoading}
-        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled ||
+        class="{FORM_CLASSES.inputSm} flex items-center justify-between text-left {disabled ||
         isLoading
           ? 'opacity-50 cursor-not-allowed bg-gray-50'
           : 'bg-white cursor-pointer hover:border-gray-400'}"
@@ -204,7 +205,7 @@ function enableManualEntry() {
             ? $i18n.t('address.houseNumberManualPlaceholder')
             : $i18n.t('address.houseNumberPlaceholder')}
           {disabled}
-          class="{formClasses.inputSm} pr-10"
+          class="{FORM_CLASSES.inputSm} pr-10"
           autocomplete="off"
           role={freeTextMode || manualEntry ? 'textbox' : 'combobox'}
           aria-expanded={showDropdown}
@@ -221,7 +222,7 @@ function enableManualEntry() {
 
   {#if showDropdown && !isLoading && !freeTextMode && !manualEntry}
     <ul
-      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
+      class="absolute z-(--z-popover) w-full mt-1 {SURFACE_CLASSES.listbox}"
       role="listbox"
     >
       {#each filteredNumbers() as hn, index}

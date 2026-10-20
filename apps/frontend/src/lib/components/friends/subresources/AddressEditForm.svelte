@@ -1,18 +1,16 @@
 <script lang="ts">
 import { get } from 'svelte/store';
+import type { AddressData } from '$lib/api/address-data.js';
+import { getAppContext } from '$lib/app-context.js';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { defaultCountry } from '$lib/stores/auth';
-import {
-  type AddressInputSchema,
-  type AddressResponse,
-  type AddressType,
-  isCountryCode,
-} from '$shared';
+import { type AddressResponse, type AddressType, isCountryCode } from '$shared';
 import HierarchicalAddressInput from '../HierarchicalAddressInput.svelte';
+
+const defaultCountry = getAppContext().stores.auth.defaultCountry;
 
 const i18n = createI18n();
 
@@ -74,18 +72,18 @@ function handleAddressChange(data: {
   onchange?.();
 }
 
-export function getData(): typeof AddressInputSchema.inferIn {
+export function getData() {
   return {
     country: addressData?.country ?? initialCountryCode,
-    postal_code: addressData?.postal_code ?? initialData?.postalCode ?? '',
+    postalCode: addressData?.postal_code ?? initialData?.postalCode ?? '',
     city: addressData?.city ?? initialData?.city ?? '',
-    state_province: addressData?.state_province ?? initialData?.stateProvince,
-    street_line1: addressData?.street_line1 ?? initialData?.streetLine1 ?? '',
-    street_line2: addressData?.street_line2 ?? initialData?.streetLine2,
-    address_type: addressType,
+    stateProvince: addressData?.state_province ?? initialData?.stateProvince,
+    streetLine1: addressData?.street_line1 ?? initialData?.streetLine1 ?? '',
+    streetLine2: addressData?.street_line2 ?? initialData?.streetLine2,
+    addressType,
     label: label.trim() || undefined,
-    is_primary: isPrimary,
-  };
+    isPrimary,
+  } satisfies AddressData;
 }
 
 export function isValid(): boolean {
@@ -94,7 +92,7 @@ export function isValid(): boolean {
   return (
     data.country !== undefined &&
     isCountryCode(data.country) &&
-    !!(data.city || data.street_line1 || data.postal_code)
+    !!(data.city || data.streetLine1 || data.postalCode)
   );
 }
 

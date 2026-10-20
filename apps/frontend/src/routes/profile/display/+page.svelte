@@ -1,17 +1,23 @@
 <script lang="ts">
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import PageShell from '$lib/components/ui/PageShell.svelte';
-import { createI18n, languageNames } from '$lib/i18n/i18n.js';
-import { auth, birthdayFormat, defaultCountry, showShortcutHints } from '$lib/stores/auth';
 import {
-  currentLanguage,
-  locale,
+  createI18n,
+  LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGES,
   type SupportedLanguage,
-  supportedLanguages,
-} from '$lib/stores/locale';
+} from '$lib/i18n/i18n.js';
 import { type BirthdayFormat, listCountries, type UserPreferences } from '$shared';
+
+const auth = getAppContext().stores.auth;
+const birthdayFormat = auth.birthdayFormat;
+const defaultCountry = auth.defaultCountry;
+const showShortcutHints = auth.showShortcutHints;
+const locale = getAppContext().stores.locale;
+const currentLanguage = locale.currentLanguage;
 
 const i18n = createI18n();
 
@@ -47,7 +53,7 @@ function handleShortcutHintsChange(enabled: boolean) {
 }
 
 let languageOptions = $derived(
-  supportedLanguages.map((lang) => ({ value: lang, label: languageNames[lang] })),
+  SUPPORTED_LANGUAGES.map((lang) => ({ value: lang, label: LANGUAGE_NAMES[lang] })),
 );
 
 let countryOptions = $derived(

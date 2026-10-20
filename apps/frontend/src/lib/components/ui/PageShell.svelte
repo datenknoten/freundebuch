@@ -1,7 +1,9 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
-import { headingClasses, linkClasses, surfaceClasses } from './styles';
+import { HEADING_CLASSES } from './heading-classes.js';
+import { LINK_CLASSES } from './link-classes.js';
+import { SURFACE_CLASSES } from './surface-classes.js';
 
 interface Props {
   /**
@@ -40,11 +42,11 @@ const hasHeader = $derived(title !== undefined || back !== undefined || actions 
     ? 'flex-1 flex flex-col justify-center'
     : 'mt-8'}"
 >
-  <div class={surfaceClasses.page}>
+  <div class={SURFACE_CLASSES.page}>
     {#if hasHeader}
       <div class="mb-8">
         {#if back !== undefined}
-          <a href={back.href} class="{linkClasses.back} mb-4">
+          <a href={back.href} class="{LINK_CLASSES.back} mb-4">
             <ChevronLeft class="w-4 h-4" strokeWidth="2" />
             {back.label}
           </a>
@@ -52,7 +54,7 @@ const hasHeader = $derived(title !== undefined || back !== undefined || actions 
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             {#if title !== undefined}
-              <h1 class={headingClasses.page}>{title}</h1>
+              <h1 class={HEADING_CLASSES.page}>{title}</h1>
             {/if}
             {#if subtitle !== undefined}
               <p class="text-gray-600 font-body mt-1">{subtitle}</p>

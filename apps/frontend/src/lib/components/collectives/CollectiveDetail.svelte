@@ -4,18 +4,19 @@ import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import { openWithKeyboard } from '$lib/actions/auto-focus';
+import { getAppContext } from '$lib/app-context.js';
 import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/FabCreateMenu.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import Fab from '$lib/components/ui/Fab.svelte';
-import { chipClasses, headingClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import MarkdownView from '$lib/editor/MarkdownView.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { collectives } from '$lib/stores/collectives';
-import { currentLanguage } from '$lib/stores/locale';
 import {
   collectiveTypeI18nKey,
   getTypeBadgeColor,
@@ -26,13 +27,21 @@ import AddDetailDropdown from '../subresources/AddDetailDropdown.svelte';
 import AddDetailSheet from '../subresources/AddDetailSheet.svelte';
 import SubresourceSection from '../subresources/SubresourceSection.svelte';
 import MemberSection from './MemberSection.svelte';
-import {
-  circleDescriptor,
-  collectiveAddDetailOptions,
-  contactDescriptors,
-} from './subresource-descriptors';
+import { createCollectiveDescriptors } from './subresource-descriptors';
+
+const currentLanguage = getAppContext().stores.locale.currentLanguage;
 
 const i18n = createI18n();
+const { api, stores } = getAppContext();
+const collectives = stores.collectives;
+const {
+  contactDescriptors,
+  circleDescriptor,
+  addDetailOptions: collectiveAddDetailOptions,
+} = createCollectiveDescriptors({
+  collectivesApi: api.collectives,
+  collectiveContactsApi: api.collectiveContacts,
+});
 
 interface Props {
   collective: CollectiveResponse;
@@ -87,9 +96,9 @@ let typeBadgeColor = $derived(getTypeBadgeColor(collective.type.name));
     </div>
 
     <div class="flex-1 text-center sm:text-left">
-      <h1 class={headingClasses.entity}>{collective.name}</h1>
+      <h1 class={HEADING_CLASSES.entity}>{collective.name}</h1>
       <div class="mt-1 flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-        <span class="{chipClasses.base} {typeBadgeColor}">
+        <span class="{CHIP_CLASSES.base} {typeBadgeColor}">
           {$i18n.t(collectiveTypeI18nKey(collective.type.name), { defaultValue: collective.type.name })}
         </span>
         <span class="text-sm text-gray-500 font-body">
@@ -127,7 +136,7 @@ let typeBadgeColor = $derived(getTypeBadgeColor(collective.type.name));
   <!-- ==================== NOTES SECTION ==================== -->
   {#if collective.notes}
     <section class="space-y-2">
-      <h2 class="{surfaceClasses.sectionHeading} {headingClasses.section}">
+      <h2 class="{SURFACE_CLASSES.sectionHeading} {HEADING_CLASSES.section}">
         <DocumentText class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('collectives.detail.notes')}
       </h2>

@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import Modal from '$lib/components/ui/Modal.svelte';
-import { codeClasses } from '$lib/components/ui/styles.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import {
   COLLECTIVE_DETAIL_ACTIONS,
@@ -37,7 +37,7 @@ const pickMany = ['o', 'a-z', '1-9'];
         {#if index > 0}
           <span class="text-gray-400">{separator ?? $i18n.t('shortcuts.help.then')}</span>
         {/if}
-        <kbd class={codeClasses.kbd}>{key}</kbd>
+        <kbd class={CODE_CLASSES.kbd}>{key}</kbd>
       {/each}
     </div>
   </div>
@@ -219,7 +219,7 @@ const pickMany = ['o', 'a-z', '1-9'];
   <div class="mt-6 pt-4 border-t border-gray-200">
     <p class="text-sm text-gray-500 font-body">
       {$i18n.t('shortcuts.help.helpHintPrefix')}
-      <kbd class={codeClasses.kbd}>?</kbd>
+      <kbd class={CODE_CLASSES.kbd}>?</kbd>
       {$i18n.t('shortcuts.help.helpHintSuffix')}
     </p>
   </div>

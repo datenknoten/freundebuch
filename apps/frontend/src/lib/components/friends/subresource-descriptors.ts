@@ -7,9 +7,11 @@
  * `subresources/SubresourceSection.svelte` drives all of them with one
  * implementation instead of nine near-identical section components.
  *
- * Unlike the collectives descriptors these never `load`: the friend detail
- * page already holds every sub-resource in the friends store, so the section
- * is handed `items` and the store's own optimistic updates re-render it.
+ * Unlike the collectives descriptors these never `load` (notes aside): the
+ * friend detail page already holds every sub-resource in the friends store, so
+ * the section is handed `items` and the store's own optimistic updates
+ * re-render it. The descriptors close over the store and APIs they are built
+ * with, so the detail page builds them from its app context.
  */
 import Briefcase from 'svelte-heros-v2/Briefcase.svelte';
 import BuildingOffice from 'svelte-heros-v2/BuildingOffice.svelte';
@@ -22,28 +24,29 @@ import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
 import Share from 'svelte-heros-v2/Share.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
-import { ApiError } from '$lib/api/client';
-import { removeMember } from '$lib/api/collectives';
-import { addNote, deleteNote, listNotes, updateNote } from '$lib/api/friends';
-import { friends } from '$lib/stores/friends';
+import type { AddressData } from '$lib/api/address-data.js';
+import { ApiError } from '$lib/api/api-error.js';
+import type { CollectiveMembersApi } from '$lib/api/collective-members.js';
+import type { EmailData } from '$lib/api/email-data.js';
 import type {
-  AddressInputSchema,
+  DateData,
+  ProfessionalHistoryData,
+  SocialProfileData,
+} from '$lib/api/friend-details.js';
+import type { FriendNoteData, FriendNotesApi } from '$lib/api/friend-notes.js';
+import type { PhoneData } from '$lib/api/phone-data.js';
+import type { UrlData } from '$lib/api/url-data.js';
+import type { FriendsStore } from '$lib/stores/friends.js';
+import type {
   AddressResponse,
   CircleSummaryResponse,
   ContactCollectiveSummaryResponse,
-  DateInputSchema,
-  EmailInputSchema,
   EmailResponse,
   FriendDateResponse,
-  FriendNoteInput,
   FriendNoteResponse,
-  PhoneInputSchema,
   PhoneResponse,
-  ProfessionalHistoryInputSchema,
   ProfessionalHistoryResponse,
-  SocialProfileInput,
   SocialProfileResponse,
-  UrlInput,
   UrlResponse,
 } from '$shared';
 import {
@@ -54,6 +57,7 @@ import {
   editFormProps,
   primaryAwareFormProps,
   type SubresourceDescriptor,
+  type Translate,
 } from '../subresources/types';
 import AddressEditForm from './subresources/AddressEditForm.svelte';
 import AddressRow from './subresources/AddressRow.svelte';
@@ -77,236 +81,308 @@ import SocialProfileRow from './subresources/SocialProfileRow.svelte';
 import UrlEditForm from './subresources/UrlEditForm.svelte';
 import UrlRow from './subresources/UrlRow.svelte';
 
-export const phoneDescriptor = defineDescriptor<PhoneResponse, typeof PhoneInputSchema.inferIn>({
-  key: 'phone',
-  shortcutEvent: 'shortcut:add-phone',
-  icon: PhoneIcon,
-  sectionTitleKey: 'friendDetail.sections.phoneNumbers',
-  addLabelKey: 'friendDetail.actions.addPhone',
-  addShortcut: 'a p',
-  addShortcutLabel: 'shortcuts.add.phone',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.phoneNumber',
-  create: (friendId, data: typeof PhoneInputSchema.inferIn) => friends.addPhone(friendId, data),
-  update: (friendId, id, data: typeof PhoneInputSchema.inferIn) =>
-    friends.updatePhone(friendId, id, data),
-  remove: (friendId, item) => friends.deletePhone(friendId, item.id),
-  tracksDirty: true,
-  FormComponent: PhoneEditForm,
-  formProps: primaryAwareFormProps,
-  RowComponent: PhoneRow,
-  rowProps: (phone) => ({ phone }),
-  deleteName: (phone) => phone.phoneNumber,
-  deleteTitleKey: 'friendDetail.modal.deletePhoneNumber',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeletePhone',
-  mapError: (err, t) => {
-    if (!(err instanceof ApiError)) return undefined;
-    if (err.code === 'PHONE_COUNTRY_UNKNOWN') return t('subresources.phone.unknownCountry');
-    // The backend rejects unparseable numbers with a 400 and a message meant
-    // for developers; show the field hint instead.
-    if (err.statusCode === 400) return t('subresources.phone.invalidNumber');
-    return undefined;
-  },
-});
+export interface FriendDescriptorsOptions {
+  friendsStore: FriendsStore;
+  friendNotesApi: FriendNotesApi;
+}
 
-export const emailDescriptor = defineDescriptor<EmailResponse, typeof EmailInputSchema.inferIn>({
-  key: 'email',
-  shortcutEvent: 'shortcut:add-email',
-  icon: Envelope,
-  sectionTitleKey: 'friendDetail.sections.emailAddresses',
-  addLabelKey: 'friendDetail.actions.addEmail',
-  addShortcut: 'a e',
-  addShortcutLabel: 'shortcuts.add.email',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.emailAddress',
-  create: (friendId, data: typeof EmailInputSchema.inferIn) => friends.addEmail(friendId, data),
-  update: (friendId, id, data: typeof EmailInputSchema.inferIn) =>
-    friends.updateEmail(friendId, id, data),
-  remove: (friendId, item) => friends.deleteEmail(friendId, item.id),
-  tracksDirty: true,
-  FormComponent: EmailEditForm,
-  formProps: primaryAwareFormProps,
-  RowComponent: EmailRow,
-  rowProps: (email) => ({ email }),
-  deleteName: (email) => email.emailAddress,
-  deleteTitleKey: 'friendDetail.modal.deleteEmailAddress',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
-});
+export interface CollectiveDescriptorOptions {
+  collectiveMembersApi: CollectiveMembersApi;
+  /** Called after a membership was removed, so the page refetches the friend's collectives. */
+  onChanged: () => void;
+}
 
-export const addressDescriptor = defineDescriptor<
-  AddressResponse,
-  typeof AddressInputSchema.inferIn
->({
-  key: 'address',
-  shortcutEvent: 'shortcut:add-address',
-  icon: MapPin,
-  sectionTitleKey: 'friendDetail.sections.addresses',
-  addLabelKey: 'friendDetail.actions.addAddress',
-  addShortcut: 'a a',
-  addShortcutLabel: 'shortcuts.add.address',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.address',
-  create: (friendId, data: typeof AddressInputSchema.inferIn) => friends.addAddress(friendId, data),
-  update: (friendId, id, data: typeof AddressInputSchema.inferIn) =>
-    friends.updateAddress(friendId, id, data),
-  remove: (friendId, item) => friends.deleteAddress(friendId, item.id),
-  // Geocoding runs asynchronously on the backend after the write commits. The
-  // friend store owns these items, so refetch the friend (the section's own
-  // reload is inert here — the descriptor has no `load`).
-  afterSave: (_reload, friendId) => {
-    const timers = [800, 2000, 4500].map((delay) =>
-      setTimeout(() => {
-        friends.loadFriend(friendId).catch(() => undefined);
-      }, delay),
-    );
-    return () => {
-      for (const timer of timers) clearTimeout(timer);
-    };
-  },
-  tracksDirty: true,
-  FormComponent: AddressEditForm,
-  formProps: primaryAwareFormProps,
-  RowComponent: AddressRow,
-  rowProps: (address) => ({ address }),
-  deleteName: addressDeleteName,
-  deleteTitleKey: 'friendDetail.modal.deleteAddress',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteAddress',
-});
+export interface FriendDescriptors {
+  phone: SubresourceDescriptor;
+  email: SubresourceDescriptor;
+  address: SubresourceDescriptor;
+  url: SubresourceDescriptor;
+  socialProfile: SubresourceDescriptor;
+  date: SubresourceDescriptor;
+  professionalHistory: SubresourceDescriptor;
+  circle: SubresourceDescriptor;
+  note: SubresourceDescriptor;
+}
 
-export const urlDescriptor = defineDescriptor<UrlResponse, UrlInput>({
-  key: 'url',
-  shortcutEvent: 'shortcut:add-url',
-  icon: Link,
-  sectionTitleKey: 'friendDetail.sections.websites',
-  addLabelKey: 'friendDetail.actions.addUrl',
-  addShortcut: 'a u',
-  addShortcutLabel: 'shortcuts.add.url',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.websiteUrl',
-  create: (friendId, data: UrlInput) => friends.addUrl(friendId, data),
-  update: (friendId, id, data: UrlInput) => friends.updateUrl(friendId, id, data),
-  remove: (friendId, item) => friends.deleteUrl(friendId, item.id),
-  tracksDirty: true,
-  FormComponent: UrlEditForm,
-  formProps: editFormProps,
-  RowComponent: UrlRow,
-  rowProps: (url) => ({ url }),
-  deleteName: (url) => url.url,
-  deleteTitleKey: 'friendDetail.modal.deleteWebsite',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteWebsite',
-});
+/** Geocoding runs on the backend after the write commits; these refetches pick its result up. */
+const ADDRESS_REFETCH_DELAYS_MS = [800, 2000, 4500];
 
 /**
  * A social profile is only openable when it carries a URL. Shared with
  * `FriendDetail.svelte`, which builds the "o" link list from the same rule.
  */
-export const hasProfileUrl = (
+export function hasProfileUrl(
   profile: SocialProfileResponse,
-): profile is SocialProfileResponse & { profileUrl: string } =>
-  profile.profileUrl !== null && profile.profileUrl !== undefined && profile.profileUrl.length > 0;
+): profile is SocialProfileResponse & { profileUrl: string } {
+  return (
+    profile.profileUrl !== null && profile.profileUrl !== undefined && profile.profileUrl.length > 0
+  );
+}
 
-export const socialProfileDescriptor = defineDescriptor<SocialProfileResponse, SocialProfileInput>({
-  key: 'social',
-  shortcutEvent: 'shortcut:add-social',
-  icon: Share,
-  sectionTitleKey: 'friendDetail.sections.socialProfiles',
-  addLabelKey: 'friendDetail.actions.addSocial',
-  addShortcut: 'a s',
-  addShortcutLabel: 'shortcuts.add.socialProfile',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.socialProfile',
-  create: (friendId, data: SocialProfileInput) => friends.addSocialProfile(friendId, data),
-  update: (friendId, id, data: SocialProfileInput) =>
-    friends.updateSocialProfile(friendId, id, data),
-  remove: (friendId, item) => friends.deleteSocialProfile(friendId, item.id),
-  tracksDirty: true,
-  FormComponent: SocialProfileEditForm,
-  formProps: editFormProps,
-  RowComponent: SocialProfileRow,
-  rowProps: (profile) => ({ profile }),
-  // Only a profile that carries a URL is openable, so only those take part in
-  // the friend detail page's "o" link sequence.
-  linkable: hasProfileUrl,
-  deleteName: (profile) => profile.username ?? profile.profileUrl ?? profile.platform,
-  deleteTitleKey: 'friendDetail.modal.deleteSocialProfile',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteSocial',
-});
+function mapPhoneError(err: unknown, t: Translate) {
+  if (err instanceof ApiError === false) {
+    return undefined;
+  }
+  if (err.code === 'PHONE_COUNTRY_UNKNOWN') {
+    return t('subresources.phone.unknownCountry');
+  }
+  // The backend rejects unparseable numbers with a 400 and a message meant
+  // for developers; show the field hint instead.
+  if (err.statusCode === 400) {
+    return t('subresources.phone.invalidNumber');
+  }
+  return undefined;
+}
 
-export const dateDescriptor = defineDescriptor<FriendDateResponse, typeof DateInputSchema.inferIn>({
-  key: 'date',
-  shortcutEvent: 'shortcut:add-date',
-  icon: Calendar,
-  sectionTitleKey: 'friendDetail.sections.importantDates',
-  addLabelKey: 'friendDetail.actions.addDate',
-  addShortcut: 'a d',
-  addShortcutLabel: 'shortcuts.add.date',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.importantDate',
-  create: (friendId, data: typeof DateInputSchema.inferIn) => friends.addDate(friendId, data),
-  update: (friendId, id, data: typeof DateInputSchema.inferIn) =>
-    friends.updateDate(friendId, id, data),
-  remove: (friendId, item) => friends.deleteDate(friendId, item.id),
-  tracksDirty: true,
-  FormComponent: DateEditForm,
-  formProps: editFormProps,
-  RowComponent: DateRow,
-  rowProps: (date) => ({ date }),
-  deleteName: (date) => date.dateValue,
-  deleteTitleKey: 'friendDetail.modal.deleteDate',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteDate',
-});
+/** The friend store owns addresses, so refetch the friend; the section's own reload is inert here. */
+function scheduleAddressRefetch(friendsStore: FriendsStore, friendId: string) {
+  const timers = ADDRESS_REFETCH_DELAYS_MS.map((delay) =>
+    setTimeout(() => void friendsStore.refreshFriend(friendId), delay),
+  );
+  return function cancelAddressRefetch() {
+    for (const timer of timers) {
+      clearTimeout(timer);
+    }
+  };
+}
 
-export const professionalHistoryDescriptor = defineDescriptor<
-  ProfessionalHistoryResponse,
-  typeof ProfessionalHistoryInputSchema.inferIn
->({
-  key: 'professional',
-  shortcutEvent: 'shortcut:add-professional',
-  icon: Briefcase,
-  sectionTitleKey: 'friendDetail.sections.employmentHistory',
-  addLabelKey: 'friendDetail.actions.addEmployment',
-  addShortcut: 'a w',
-  addShortcutLabel: 'shortcuts.add.workExperience',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.employment',
-  create: (friendId, data: typeof ProfessionalHistoryInputSchema.inferIn) =>
-    friends.addProfessionalHistory(friendId, data),
-  update: (friendId, id, data: typeof ProfessionalHistoryInputSchema.inferIn) =>
-    friends.updateProfessionalHistory(friendId, id, data),
-  remove: (friendId, item) => friends.deleteProfessionalHistory(friendId, item.id),
-  tracksDirty: true,
-  FormComponent: ProfessionalHistoryEditForm,
-  formProps: primaryAwareFormProps,
-  RowComponent: ProfessionalHistoryRow,
-  rowProps: (history) => ({ history }),
-  deleteName: (history, t) =>
-    history.jobTitle ?? history.organization ?? t('friendDetail.modal.employment'),
-  deleteTitleKey: 'friendDetail.modal.deleteEmployment',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmployment',
-});
+export function createFriendDescriptors(options: FriendDescriptorsOptions) {
+  const { friendsStore, friendNotesApi } = options;
 
-export const circleDescriptor = defineDescriptor<CircleSummaryResponse, { circleId: string }>({
-  key: 'circle',
-  shortcutEvent: 'shortcut:add-circle',
-  icon: Users,
-  sectionTitleKey: 'friendDetail.sections.circles',
-  addLabelKey: 'friendDetail.actions.addCircle',
-  addShortcut: 'a c',
-  addShortcutLabel: 'shortcuts.add.circle',
-  // A friend joins an existing circle; there is nothing to edit in place.
-  editable: false,
-  modalTypeNameKey: 'friendDetail.modal.circle',
-  create: (friendId, data: { circleId: string }) => friends.addCircle(friendId, data.circleId),
-  remove: (friendId, item) => friends.removeCircle(friendId, item.id),
-  tracksDirty: true,
-  FormComponent: CircleEditForm,
-  formProps: ({ items, isLoading }) => ({ existingCircles: items, disabled: isLoading }),
-  RowComponent: CircleRow,
-  rowProps: (circle) => ({ circle }),
-  deleteName: (circle) => circle.name,
-  deleteTitleKey: 'friendDetail.modal.removeFromCircleTitle',
-  deleteDescriptionKey: 'friendDetail.modal.confirmRemoveCircle',
-});
+  const phone = defineDescriptor<PhoneResponse, PhoneData>({
+    key: 'phone',
+    shortcutEvent: 'shortcut:add-phone',
+    icon: PhoneIcon,
+    sectionTitleKey: 'friendDetail.sections.phoneNumbers',
+    addLabelKey: 'friendDetail.actions.addPhone',
+    addShortcut: 'a p',
+    addShortcutLabel: 'shortcuts.add.phone',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.phoneNumber',
+    create: (friendId, data) => friendsStore.addPhone(friendId, data),
+    update: (friendId, id, data) => friendsStore.updatePhone(friendId, id, data),
+    remove: (friendId, item) => friendsStore.deletePhone(friendId, item.id),
+    tracksDirty: true,
+    FormComponent: PhoneEditForm,
+    formProps: primaryAwareFormProps,
+    RowComponent: PhoneRow,
+    rowProps: (item) => ({ phone: item }),
+    deleteName: (item) => item.phoneNumber,
+    deleteTitleKey: 'friendDetail.modal.deletePhoneNumber',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeletePhone',
+    mapError: mapPhoneError,
+  });
+
+  const email = defineDescriptor<EmailResponse, EmailData>({
+    key: 'email',
+    shortcutEvent: 'shortcut:add-email',
+    icon: Envelope,
+    sectionTitleKey: 'friendDetail.sections.emailAddresses',
+    addLabelKey: 'friendDetail.actions.addEmail',
+    addShortcut: 'a e',
+    addShortcutLabel: 'shortcuts.add.email',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.emailAddress',
+    create: (friendId, data) => friendsStore.addEmail(friendId, data),
+    update: (friendId, id, data) => friendsStore.updateEmail(friendId, id, data),
+    remove: (friendId, item) => friendsStore.deleteEmail(friendId, item.id),
+    tracksDirty: true,
+    FormComponent: EmailEditForm,
+    formProps: primaryAwareFormProps,
+    RowComponent: EmailRow,
+    rowProps: (item) => ({ email: item }),
+    deleteName: (item) => item.emailAddress,
+    deleteTitleKey: 'friendDetail.modal.deleteEmailAddress',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
+  });
+
+  const address = defineDescriptor<AddressResponse, AddressData>({
+    key: 'address',
+    shortcutEvent: 'shortcut:add-address',
+    icon: MapPin,
+    sectionTitleKey: 'friendDetail.sections.addresses',
+    addLabelKey: 'friendDetail.actions.addAddress',
+    addShortcut: 'a a',
+    addShortcutLabel: 'shortcuts.add.address',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.address',
+    create: (friendId, data) => friendsStore.addAddress(friendId, data),
+    update: (friendId, id, data) => friendsStore.updateAddress(friendId, id, data),
+    remove: (friendId, item) => friendsStore.deleteAddress(friendId, item.id),
+    afterSave: (_reload, friendId) => scheduleAddressRefetch(friendsStore, friendId),
+    tracksDirty: true,
+    FormComponent: AddressEditForm,
+    formProps: primaryAwareFormProps,
+    RowComponent: AddressRow,
+    rowProps: (item) => ({ address: item }),
+    deleteName: addressDeleteName,
+    deleteTitleKey: 'friendDetail.modal.deleteAddress',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeleteAddress',
+  });
+
+  const url = defineDescriptor<UrlResponse, UrlData>({
+    key: 'url',
+    shortcutEvent: 'shortcut:add-url',
+    icon: Link,
+    sectionTitleKey: 'friendDetail.sections.websites',
+    addLabelKey: 'friendDetail.actions.addUrl',
+    addShortcut: 'a u',
+    addShortcutLabel: 'shortcuts.add.url',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.websiteUrl',
+    create: (friendId, data) => friendsStore.addUrl(friendId, data),
+    update: (friendId, id, data) => friendsStore.updateUrl(friendId, id, data),
+    remove: (friendId, item) => friendsStore.deleteUrl(friendId, item.id),
+    tracksDirty: true,
+    FormComponent: UrlEditForm,
+    formProps: editFormProps,
+    RowComponent: UrlRow,
+    rowProps: (item) => ({ url: item }),
+    deleteName: (item) => item.url,
+    deleteTitleKey: 'friendDetail.modal.deleteWebsite',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeleteWebsite',
+  });
+
+  const socialProfile = defineDescriptor<SocialProfileResponse, SocialProfileData>({
+    key: 'social',
+    shortcutEvent: 'shortcut:add-social',
+    icon: Share,
+    sectionTitleKey: 'friendDetail.sections.socialProfiles',
+    addLabelKey: 'friendDetail.actions.addSocial',
+    addShortcut: 'a s',
+    addShortcutLabel: 'shortcuts.add.socialProfile',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.socialProfile',
+    create: (friendId, data) => friendsStore.addSocialProfile(friendId, data),
+    update: (friendId, id, data) => friendsStore.updateSocialProfile(friendId, id, data),
+    remove: (friendId, item) => friendsStore.deleteSocialProfile(friendId, item.id),
+    tracksDirty: true,
+    FormComponent: SocialProfileEditForm,
+    formProps: editFormProps,
+    RowComponent: SocialProfileRow,
+    rowProps: (item) => ({ profile: item }),
+    // Only a profile that carries a URL is openable, so only those take part in
+    // the friend detail page's "o" link sequence.
+    linkable: hasProfileUrl,
+    deleteName: (item) => item.username ?? item.profileUrl ?? item.platform,
+    deleteTitleKey: 'friendDetail.modal.deleteSocialProfile',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeleteSocial',
+  });
+
+  const date = defineDescriptor<FriendDateResponse, DateData>({
+    key: 'date',
+    shortcutEvent: 'shortcut:add-date',
+    icon: Calendar,
+    sectionTitleKey: 'friendDetail.sections.importantDates',
+    addLabelKey: 'friendDetail.actions.addDate',
+    addShortcut: 'a d',
+    addShortcutLabel: 'shortcuts.add.date',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.importantDate',
+    create: (friendId, data) => friendsStore.addDate(friendId, data),
+    update: (friendId, id, data) => friendsStore.updateDate(friendId, id, data),
+    remove: (friendId, item) => friendsStore.deleteDate(friendId, item.id),
+    tracksDirty: true,
+    FormComponent: DateEditForm,
+    formProps: editFormProps,
+    RowComponent: DateRow,
+    rowProps: (item) => ({ date: item }),
+    deleteName: (item) => item.dateValue,
+    deleteTitleKey: 'friendDetail.modal.deleteDate',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeleteDate',
+  });
+
+  const professionalHistory = defineDescriptor<
+    ProfessionalHistoryResponse,
+    ProfessionalHistoryData
+  >({
+    key: 'professional',
+    shortcutEvent: 'shortcut:add-professional',
+    icon: Briefcase,
+    sectionTitleKey: 'friendDetail.sections.employmentHistory',
+    addLabelKey: 'friendDetail.actions.addEmployment',
+    addShortcut: 'a w',
+    addShortcutLabel: 'shortcuts.add.workExperience',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.employment',
+    create: (friendId, data) => friendsStore.addProfessionalHistory(friendId, data),
+    update: (friendId, id, data) => friendsStore.updateProfessionalHistory(friendId, id, data),
+    remove: (friendId, item) => friendsStore.deleteProfessionalHistory(friendId, item.id),
+    tracksDirty: true,
+    FormComponent: ProfessionalHistoryEditForm,
+    formProps: primaryAwareFormProps,
+    RowComponent: ProfessionalHistoryRow,
+    rowProps: (item) => ({ history: item }),
+    deleteName: (item, t) =>
+      item.jobTitle ?? item.organization ?? t('friendDetail.modal.employment'),
+    deleteTitleKey: 'friendDetail.modal.deleteEmployment',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmployment',
+  });
+
+  const circle = defineDescriptor<CircleSummaryResponse, { circleId: string }>({
+    key: 'circle',
+    shortcutEvent: 'shortcut:add-circle',
+    icon: Users,
+    sectionTitleKey: 'friendDetail.sections.circles',
+    addLabelKey: 'friendDetail.actions.addCircle',
+    addShortcut: 'a c',
+    addShortcutLabel: 'shortcuts.add.circle',
+    // A friend joins an existing circle; there is nothing to edit in place.
+    editable: false,
+    modalTypeNameKey: 'friendDetail.modal.circle',
+    create: (friendId, data) => friendsStore.addCircle(friendId, data.circleId),
+    remove: (friendId, item) => friendsStore.removeCircle(friendId, item.id),
+    tracksDirty: true,
+    FormComponent: CircleEditForm,
+    formProps: ({ items, isLoading }) => ({ existingCircles: items, disabled: isLoading }),
+    RowComponent: CircleRow,
+    rowProps: (item) => ({ circle: item }),
+    deleteName: (item) => item.name,
+    deleteTitleKey: 'friendDetail.modal.removeFromCircleTitle',
+    deleteDescriptionKey: 'friendDetail.modal.confirmRemoveCircle',
+  });
+
+  // Notes are not part of the friend payload, so this section loads its own items.
+  const note = defineDescriptor<FriendNoteResponse, FriendNoteData>({
+    key: 'note',
+    shortcutEvent: 'shortcut:add-note',
+    icon: DocumentText,
+    sectionTitleKey: 'friendDetail.sections.notes',
+    addLabelKey: 'friendDetail.actions.addNote',
+    addShortcut: 'a n',
+    addShortcutLabel: 'shortcuts.add.note',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.note',
+    load: (friendId) => friendNotesApi.listNotes(friendId),
+    create: (friendId, data) => friendNotesApi.addNote(friendId, data),
+    update: (friendId, id, data) => friendNotesApi.updateNote(friendId, id, data),
+    remove: (friendId, item) => friendNotesApi.deleteNote(friendId, item.id),
+    // A create, update or delete can change another note's supersede state, and the
+    // server orders the list newest first, so the section reloads after every change.
+    reloadAfterMutate: true,
+    tracksDirty: true,
+    FormComponent: NoteEditForm,
+    formProps: (ctx) => ({ ...editFormProps(ctx), friendId: ctx.ownerId, notes: ctx.items }),
+    RowComponent: NoteRow,
+    rowProps: (item) => ({ note: item }),
+    deleteName: (item) => noteExcerpt(item.content),
+    deleteTitleKey: 'friendDetail.modal.deleteNote',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeleteNote',
+  });
+
+  const descriptors: FriendDescriptors = {
+    phone,
+    email,
+    address,
+    url,
+    socialProfile,
+    date,
+    professionalHistory,
+    circle,
+    note,
+  };
+  return descriptors;
+}
 
 /**
  * Joining a collective needs the collective *and* a role, so this descriptor
@@ -314,7 +390,8 @@ export const circleDescriptor = defineDescriptor<CircleSummaryResponse, { circle
  * membership deletion on the collective, not on the friend, which is why
  * `remove` reads `membershipId` off the row's item.
  */
-export function createCollectiveDescriptor(onChanged: () => void): SubresourceDescriptor {
+export function createCollectiveDescriptor(options: CollectiveDescriptorOptions) {
+  const { collectiveMembersApi, onChanged } = options;
   return defineDescriptor<ContactCollectiveSummaryResponse, never>({
     key: 'collective',
     shortcutEvent: 'shortcut:add-collective',
@@ -324,8 +401,8 @@ export function createCollectiveDescriptor(onChanged: () => void): SubresourceDe
     addShortcut: 'a o',
     addShortcutLabel: 'shortcuts.add.collective',
     editable: false,
-    remove: async (_friendId, collective) => {
-      await removeMember(collective.id, collective.membershipId);
+    remove: async (_friendId, item) => {
+      await collectiveMembersApi.removeMember(item.id, item.membershipId);
       onChanged();
     },
     AddComponent: AddToCollectiveModal,
@@ -336,8 +413,8 @@ export function createCollectiveDescriptor(onChanged: () => void): SubresourceDe
       onSuccess: onChanged,
     }),
     RowComponent: CollectiveRow,
-    rowProps: (collective) => ({ collective }),
-    deleteName: (collective) => collective.name,
+    rowProps: (item) => ({ collective: item }),
+    deleteName: (item) => item.name,
     deleteTitleKey: 'friendDetail.modal.removeFromCollectiveTitle',
     deleteDescriptionKey: 'friendDetail.modal.confirmRemoveCollective',
   });
@@ -350,60 +427,29 @@ export function createCollectiveDescriptor(onChanged: () => void): SubresourceDe
  * though they are not a descriptor-driven section — the menu is the entry
  * point for every detail a friend can gain.
  */
-/**
- * Notes are not part of the friend payload, so this section loads its own
- * items instead of reading them from the friends store.
- */
-export const noteDescriptor = defineDescriptor<FriendNoteResponse, FriendNoteInput>({
-  key: 'note',
-  shortcutEvent: 'shortcut:add-note',
-  icon: DocumentText,
-  sectionTitleKey: 'friendDetail.sections.notes',
-  addLabelKey: 'friendDetail.actions.addNote',
-  addShortcut: 'a n',
-  addShortcutLabel: 'shortcuts.add.note',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.note',
-  load: (friendId) => listNotes(friendId),
-  create: (friendId, data) => addNote(friendId, data),
-  update: (friendId, id, data) => updateNote(friendId, id, data),
-  remove: (friendId, note) => deleteNote(friendId, note.id),
-  // A create, update or delete can change another note's supersede state, and the
-  // server orders the list newest first, so the section reloads after every change.
-  reloadAfterMutate: true,
-  tracksDirty: true,
-  FormComponent: NoteEditForm,
-  formProps: (ctx) => ({ ...editFormProps(ctx), friendId: ctx.ownerId, notes: ctx.items }),
-  RowComponent: NoteRow,
-  rowProps: (note) => ({ note }),
-  deleteName: (note) => noteExcerpt(note.content),
-  deleteTitleKey: 'friendDetail.modal.deleteNote',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteNote',
-});
-
-export const friendAddDetailOptions: AddDetailOption[] = [
-  addDetailOption(phoneDescriptor, 'shortcuts.add.phone'),
-  addDetailOption(emailDescriptor, 'shortcuts.add.email'),
-  addDetailOption(addressDescriptor, 'shortcuts.add.address'),
-  addDetailOption(urlDescriptor, 'shortcuts.add.url'),
-  addDetailOption(dateDescriptor, 'shortcuts.add.date'),
-  addDetailOption(socialProfileDescriptor, 'shortcuts.add.socialProfile'),
-  addDetailOption(circleDescriptor, 'shortcuts.add.circle'),
-  // The collective descriptor is built per friend detail page (it closes over
-  // the page's reload); the menu only needs its icon, event and chord, so a
-  // throwaway instance stands in.
-  addDetailOption(
-    createCollectiveDescriptor(() => undefined),
-    'shortcuts.add.collective',
-  ),
-  addDetailOption(professionalHistoryDescriptor, 'shortcuts.add.workExperience'),
-  {
-    key: 'relationship',
-    icon: Heart,
-    labelKey: 'shortcuts.add.relationship',
-    event: 'shortcut:add-relationship',
-    shortcut: 'a r',
-    shortcutLabel: 'shortcuts.add.relationship',
-  },
-  addDetailOption(noteDescriptor, 'shortcuts.add.note'),
-];
+export function createFriendAddDetailOptions(
+  descriptors: FriendDescriptors,
+  collectiveDescriptor: SubresourceDescriptor,
+) {
+  const options: AddDetailOption[] = [
+    addDetailOption(descriptors.phone, 'shortcuts.add.phone'),
+    addDetailOption(descriptors.email, 'shortcuts.add.email'),
+    addDetailOption(descriptors.address, 'shortcuts.add.address'),
+    addDetailOption(descriptors.url, 'shortcuts.add.url'),
+    addDetailOption(descriptors.date, 'shortcuts.add.date'),
+    addDetailOption(descriptors.socialProfile, 'shortcuts.add.socialProfile'),
+    addDetailOption(descriptors.circle, 'shortcuts.add.circle'),
+    addDetailOption(collectiveDescriptor, 'shortcuts.add.collective'),
+    addDetailOption(descriptors.professionalHistory, 'shortcuts.add.workExperience'),
+    {
+      key: 'relationship',
+      icon: Heart,
+      labelKey: 'shortcuts.add.relationship',
+      event: 'shortcut:add-relationship',
+      shortcut: 'a r',
+      shortcutLabel: 'shortcuts.add.relationship',
+    },
+    addDetailOption(descriptors.note, 'shortcuts.add.note'),
+  ];
+  return options;
+}

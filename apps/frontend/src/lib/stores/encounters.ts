@@ -1,33 +1,34 @@
-import { derived, writable } from 'svelte/store';
+import { derived, type Readable, writable } from 'svelte/store';
+import type { EncounterListItemResponse, EncounterResponse, PaginationInfo } from '$shared';
 import type {
-  EncounterCreateInput,
-  EncounterListItemResponse,
-  EncounterResponse,
-  EncounterUpdateInput,
-  LastEncounterSummaryResponse,
-  PaginationInfo,
-} from '$shared';
-import type { EncounterListParams } from '../api/encounters.js';
-import * as encountersApi from '../api/encounters.js';
+  EncounterCreateData,
+  EncounterListParams,
+  EncountersApi,
+  EncounterUpdateData,
+} from '../api/encounters.js';
 import { storeAction } from './store-action.js';
 
-interface FilterState {
+export interface EncountersStoreOptions {
+  encountersApi: EncountersApi;
+}
+
+interface EncounterFilters {
   friendId?: string;
   fromDate?: string;
   toDate?: string;
   search?: string;
 }
 
-interface EncountersState {
+export interface EncountersState {
   encounters: EncounterListItemResponse[];
   currentEncounter: EncounterResponse | null;
   pagination: PaginationInfo;
-  filters: FilterState;
+  filters: EncounterFilters;
   isLoading: boolean;
   error: string | null;
 }
 
-const initialState: EncountersState = {
+const INITIAL_STATE: EncountersState = {
   encounters: [],
   currentEncounter: null,
   pagination: {
@@ -41,148 +42,128 @@ const initialState: EncountersState = {
   error: null,
 };
 
-function createEncountersStore() {
-  const { subscribe, set, update } = writable<EncountersState>(initialState);
+const FRIEND_PREVIEW_SIZE = 3;
 
+function newestFirst(a: EncounterListItemResponse, b: EncounterListItemResponse) {
+  return new Date(b.encounterDate).getTime() - new Date(a.encounterDate).getTime();
+}
+
+function toListItem(encounter: EncounterResponse) {
+  const item: EncounterListItemResponse = {
+    id: encounter.id,
+    title: encounter.title,
+    encounterType: encounter.encounterType,
+    encounterDate: encounter.encounterDate,
+    locationText: encounter.locationText,
+    friendCount: encounter.friends.length,
+    friends: encounter.friends.slice(0, FRIEND_PREVIEW_SIZE),
+    createdAt: encounter.createdAt,
+  };
+  return item;
+}
+
+function withTotalCount(pagination: PaginationInfo, totalCount: number) {
   return {
-    subscribe,
-
-    loadEncounters: (params: EncounterListParams = {}) =>
-      storeAction(
-        update,
-        () => encountersApi.listEncounters(params),
-        (_state, result) => ({
-          encounters: result.data,
-          pagination: result.pagination,
-          filters: {
-            friendId: params.friendId,
-            fromDate: params.fromDate,
-            toDate: params.toDate,
-            search: params.search,
-          },
-        }),
-        'Failed to load encounters',
-      ),
-
-    loadEncounter: (encounterId: string) =>
-      storeAction(
-        update,
-        () => encountersApi.getEncounter(encounterId),
-        (_state, encounter) => ({ currentEncounter: encounter }),
-        'Failed to load encounter',
-        () => ({ currentEncounter: null }),
-      ),
-
-    createEncounter: (input: EncounterCreateInput) =>
-      storeAction(
-        update,
-        () => encountersApi.createEncounter(input),
-        (state, encounter) => ({
-          encounters: [
-            {
-              id: encounter.id,
-              title: encounter.title,
-              encounterType: encounter.encounterType,
-              encounterDate: encounter.encounterDate,
-              locationText: encounter.locationText,
-              friendCount: encounter.friends.length,
-              friends: encounter.friends.slice(0, 3),
-              createdAt: encounter.createdAt,
-            },
-            ...state.encounters,
-          ],
-          pagination: {
-            ...state.pagination,
-            totalCount: state.pagination.totalCount + 1,
-            totalPages: Math.ceil((state.pagination.totalCount + 1) / state.pagination.pageSize),
-          },
-        }),
-        'Failed to create encounter',
-      ),
-
-    updateEncounter: (encounterId: string, input: EncounterUpdateInput) =>
-      storeAction(
-        update,
-        () => encountersApi.updateEncounter(encounterId, input),
-        (state, encounter) => ({
-          currentEncounter:
-            state.currentEncounter?.id === encounterId ? encounter : state.currentEncounter,
-          encounters: state.encounters.map((e) =>
-            e.id === encounterId
-              ? {
-                  id: encounter.id,
-                  title: encounter.title,
-                  encounterType: encounter.encounterType,
-                  encounterDate: encounter.encounterDate,
-                  locationText: encounter.locationText,
-                  friendCount: encounter.friends.length,
-                  friends: encounter.friends.slice(0, 3),
-                  createdAt: encounter.createdAt,
-                }
-              : e,
-          ),
-        }),
-        'Failed to update encounter',
-      ),
-
-    deleteEncounter: (encounterId: string) =>
-      storeAction(
-        update,
-        () => encountersApi.deleteEncounter(encounterId),
-        (state) => ({
-          currentEncounter:
-            state.currentEncounter?.id === encounterId ? null : state.currentEncounter,
-          encounters: state.encounters.filter((e) => e.id !== encounterId),
-          pagination: {
-            ...state.pagination,
-            totalCount: Math.max(0, state.pagination.totalCount - 1),
-            totalPages: Math.ceil(
-              Math.max(0, state.pagination.totalCount - 1) / state.pagination.pageSize,
-            ),
-          },
-        }),
-        'Failed to delete encounter',
-      ),
-
-    setFilters: async (filters: FilterState) => {
-      update((state) => ({ ...state, filters }));
-    },
-
-    clearCurrentEncounter: () => {
-      update((state) => ({ ...state, currentEncounter: null }));
-    },
-
-    clear: () => {
-      set(initialState);
-    },
+    ...pagination,
+    totalCount,
+    totalPages: Math.ceil(totalCount / pagination.pageSize),
   };
 }
 
-export const encounters = createEncountersStore();
-
-export const encountersList = derived(encounters, ($encounters) =>
-  [...$encounters.encounters].sort(
-    (a, b) => new Date(b.encounterDate).getTime() - new Date(a.encounterDate).getTime(),
-  ),
-);
-
-export const isLoadingEncounters = derived(encounters, ($encounters) => $encounters.isLoading);
-
-export const encountersError = derived(encounters, ($encounters) => $encounters.error);
-
-// ============================================================================
-// Friend-specific Encounter Helpers
-// ============================================================================
-
-export async function getFriendEncounters(
-  friendId: string,
-  params: Omit<EncounterListParams, 'friendId'> = {},
-) {
-  return encountersApi.getFriendEncounters(friendId, params);
+function prependEncounter(state: EncountersState, encounter: EncounterResponse) {
+  return {
+    encounters: [toListItem(encounter), ...state.encounters],
+    pagination: withTotalCount(state.pagination, state.pagination.totalCount + 1),
+  };
 }
 
-export async function getLastEncounter(
-  friendId: string,
-): Promise<LastEncounterSummaryResponse | null> {
-  return encountersApi.getLastEncounter(friendId);
+function replaceEncounter(state: EncountersState, updated: EncounterResponse) {
+  return {
+    currentEncounter: state.currentEncounter?.id === updated.id ? updated : state.currentEncounter,
+    encounters: state.encounters.map((item) =>
+      item.id === updated.id ? toListItem(updated) : item,
+    ),
+  };
+}
+
+function withoutEncounter(state: EncountersState, encounterId: string) {
+  return {
+    currentEncounter: state.currentEncounter?.id === encounterId ? null : state.currentEncounter,
+    encounters: state.encounters.filter((item) => item.id !== encounterId),
+    pagination: withTotalCount(state.pagination, Math.max(0, state.pagination.totalCount - 1)),
+  };
+}
+
+/** The encounters list and the encounter on screen. */
+export class EncountersStore {
+  public readonly subscribe: Readable<EncountersState>['subscribe'];
+  /** The listed encounters, newest first. */
+  public readonly list: Readable<EncounterListItemResponse[]>;
+  private readonly state = writable(INITIAL_STATE);
+  private readonly encountersApi: EncountersApi;
+
+  public constructor(options: EncountersStoreOptions) {
+    this.encountersApi = options.encountersApi;
+    this.subscribe = this.state.subscribe;
+    this.list = derived(this.state, (state) => [...state.encounters].sort(newestFirst));
+  }
+
+  public loadEncounters(params: EncounterListParams = {}) {
+    return storeAction(
+      this.state.update,
+      () => this.encountersApi.listEncounters(params),
+      (_state, result) => ({
+        encounters: result.data,
+        pagination: result.pagination,
+        filters: {
+          friendId: params.friendId,
+          fromDate: params.fromDate,
+          toDate: params.toDate,
+          search: params.search,
+        },
+      }),
+      'Failed to load encounters',
+    );
+  }
+
+  public loadEncounter(encounterId: string) {
+    return storeAction(
+      this.state.update,
+      () => this.encountersApi.getEncounter(encounterId),
+      (_state, encounter) => ({ currentEncounter: encounter }),
+      'Failed to load encounter',
+      () => ({ currentEncounter: null }),
+    );
+  }
+
+  public createEncounter(data: EncounterCreateData) {
+    return storeAction(
+      this.state.update,
+      () => this.encountersApi.createEncounter(data),
+      prependEncounter,
+      'Failed to create encounter',
+    );
+  }
+
+  public updateEncounter(encounterId: string, data: EncounterUpdateData) {
+    return storeAction(
+      this.state.update,
+      () => this.encountersApi.updateEncounter(encounterId, data),
+      replaceEncounter,
+      'Failed to update encounter',
+    );
+  }
+
+  public deleteEncounter(encounterId: string) {
+    return storeAction(
+      this.state.update,
+      () => this.encountersApi.deleteEncounter(encounterId),
+      (state) => withoutEncounter(state, encounterId),
+      'Failed to delete encounter',
+    );
+  }
+
+  public clear() {
+    this.state.set(INITIAL_STATE);
+  }
 }

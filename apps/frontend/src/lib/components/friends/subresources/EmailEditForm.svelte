@@ -1,10 +1,11 @@
 <script lang="ts">
+import type { EmailData } from '$lib/api/email-data.js';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import type { EmailInputSchema, EmailResponse, EmailType } from '$shared';
+import type { EmailResponse, EmailType } from '$shared';
 
 const i18n = createI18n();
 
@@ -39,13 +40,13 @@ const emailTypeOptions = $derived([
   { value: 'other' as const, label: $i18n.t('subresources.email.types.other') },
 ]);
 
-export function getData(): typeof EmailInputSchema.inferIn {
+export function getData() {
   return {
-    email_address: emailAddress.trim(),
-    email_type: emailType,
+    emailAddress: emailAddress.trim(),
+    emailType,
     label: label.trim() || undefined,
-    is_primary: isPrimary,
-  };
+    isPrimary,
+  } satisfies EmailData;
 }
 
 export function isValid(): boolean {

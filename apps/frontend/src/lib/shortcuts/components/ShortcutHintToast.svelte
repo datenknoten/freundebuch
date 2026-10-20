@@ -1,29 +1,37 @@
 <script lang="ts">
 import { fly } from 'svelte/transition';
-import { codeClasses } from '$lib/components/ui/styles.js';
+import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { motionDuration } from '$lib/utils/motion';
-import { activeHint, dismissHint } from '../hint-store.js';
+import type { ShortcutHintStore } from '../shortcut-hint-store.js';
+
+interface Props {
+  hints: ShortcutHintStore;
+}
+
+let { hints }: Props = $props();
 
 const i18n = createI18n();
 const DISMISS_MS = 4500;
 
-let timer: ReturnType<typeof setTimeout> | null = null;
+function dismissHint() {
+  hints.dismiss();
+}
 
-// Re-arm the auto-dismiss timer whenever a new hint appears
-$effect(() => {
-  const hint = $activeHint;
-  if (timer) clearTimeout(timer);
-  timer = hint ? setTimeout(dismissHint, DISMISS_MS) : null;
-  return () => {
-    if (timer) clearTimeout(timer);
+// Re-arms the auto-dismiss timer whenever a new hint appears.
+function scheduleDismiss() {
+  const timer = $hints === null ? undefined : setTimeout(dismissHint, DISMISS_MS);
+  return function cancelDismiss() {
+    clearTimeout(timer);
   };
-});
+}
 
-let keyParts = $derived($activeHint ? $activeHint.keys.split(' ') : []);
+$effect(scheduleDismiss);
+
+let keyParts = $derived($hints === null ? [] : $hints.keys.split(' '));
 </script>
 
-{#if $activeHint}
+{#if $hints !== null}
   <div
     role="status"
     aria-live="polite"
@@ -37,11 +45,11 @@ let keyParts = $derived($activeHint ? $activeHint.keys.split(' ') : []);
           {#if i > 0}
             <span class="text-gray-400 text-xs">{$i18n.t('shortcuts.hintToast.then')}</span>
           {/if}
-          <kbd class={codeClasses.kbd}>{part}</kbd>
+          <kbd class={CODE_CLASSES.kbd}>{part}</kbd>
         {/each}
       </div>
-      {#if $activeHint.labelKey}
-        <div class="mt-1 text-xs text-gray-500">{$i18n.t($activeHint.labelKey)}</div>
+      {#if $hints.labelKey !== undefined}
+        <div class="mt-1 text-xs text-gray-500">{$i18n.t($hints.labelKey)}</div>
       {/if}
     </div>
   </div>

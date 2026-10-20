@@ -1,10 +1,13 @@
 <script lang="ts">
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
-import { formClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { getAppContext } from '$lib/app-context.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { currentLanguage } from '$lib/stores/locale';
 import { type CountryInfoResponse, listCountries } from '$shared';
+
+const currentLanguage = getAppContext().stores.locale.currentLanguage;
 
 const i18n = createI18n();
 
@@ -129,7 +132,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
 </script>
 
 <div class="relative">
-  <label for="country-input" class={formClasses.label}>{$i18n.t('countrySelect.label')}</label>
+  <label for="country-input" class={FORM_CLASSES.label}>{$i18n.t('countrySelect.label')}</label>
 
   <div class="relative">
     {#if value && !showDropdown}
@@ -139,7 +142,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
         onclick={activateInput}
         onkeydown={handleButtonKeydown}
         disabled={disabled}
-        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled
+        class="{FORM_CLASSES.inputSm} flex items-center justify-between text-left {disabled
           ? 'opacity-50 cursor-not-allowed bg-gray-50'
           : 'bg-white cursor-pointer hover:border-gray-400'}"
       >
@@ -163,7 +166,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
           onfocus={handleFocus}
           placeholder={$i18n.t('countrySelect.searchCountries')}
           disabled={disabled}
-          class="{formClasses.inputSm} pr-10"
+          class="{FORM_CLASSES.inputSm} pr-10"
           autocomplete="off"
           role="combobox"
           aria-expanded={showDropdown}
@@ -180,7 +183,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
   {#if showDropdown}
     <ul
       id="country-select-listbox"
-      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
+      class="absolute z-(--z-popover) w-full mt-1 {SURFACE_CLASSES.listbox}"
       role="listbox"
     >
       {#each filteredCountries() as country, index}

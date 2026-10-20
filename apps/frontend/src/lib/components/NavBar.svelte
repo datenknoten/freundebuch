@@ -13,113 +13,147 @@ import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { focusTrap } from '$lib/actions/focus-trap';
+import { getAppContext } from '$lib/app-context.js';
 import Button from '$lib/components/ui/Button.svelte';
-import { codeClasses, focusRing } from '$lib/components/ui/styles.js';
+import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
+import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { auth, currentUser, isAuthenticated } from '$lib/stores/auth';
-import { signupEnabled } from '$lib/stores/instance';
-import { search } from '$lib/stores/search';
-import { registerOpenOverlay } from '$lib/stores/ui';
 import { motionDuration } from '$lib/utils/motion';
 import LegalLinks from './LegalLinks.svelte';
 import UserMenu from './UserMenu.svelte';
+
+const { logger, stores } = getAppContext();
+const overlay = stores.overlay;
+const search = stores.search;
+
+const auth = getAppContext().stores.auth;
+const currentUser = auth.currentUser;
+const isAuthenticated = auth.isAuthenticated;
+const signupEnabled = getAppContext().stores.instance.signupEnabled;
 
 const i18n = createI18n();
 
 // Detect platform for keyboard shortcut hint
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
-let mobileMenuOpen = $state(false);
+let isMobileMenuOpen = $state(false);
 
-// Derive page title from current route
-const pageTitle = $derived.by(() => {
-  const pathname = $page.url.pathname;
-  const t = $i18n.t;
-  if (pathname === '/' || pathname === '/friends') return t('nav.friends');
-  if (pathname === '/friends/new') return t('friends.addNew');
-  if (pathname.startsWith('/friends/') && pathname.endsWith('/edit')) return t('common.edit');
-  if (pathname.startsWith('/friends/')) return t('nav.friends');
-  if (pathname === '/circles') return t('nav.circles');
-  if (pathname === '/encounters') return t('nav.encounters');
-  if (pathname === '/encounters/new') return t('encounters.logNew');
-  if (pathname.startsWith('/encounters/')) return t('nav.encounters');
-  if (pathname === '/collectives') return t('nav.collectives');
-  if (pathname === '/collectives/new') return t('collectives.createNew');
-  if (pathname.startsWith('/collectives/')) return t('nav.collectives');
-  if (pathname === '/profile') return t('nav.profile');
-  if (pathname.startsWith('/auth/')) return 'Freundebuch';
-  return 'Freundebuch';
-});
+const APP_NAME = 'Freundebuch';
+
+/** The i18n key of the header title for a route; `undefined` shows the app name. */
+function findTitleKey(pathname: string) {
+  if (pathname === '/' || pathname === '/friends') {
+    return 'nav.friends';
+  }
+  if (pathname === '/friends/new') {
+    return 'friends.addNew';
+  }
+  if (pathname.startsWith('/friends/') === true) {
+    return pathname.endsWith('/edit') === true ? 'common.edit' : 'nav.friends';
+  }
+  if (pathname === '/circles') {
+    return 'nav.circles';
+  }
+  if (pathname === '/encounters/new') {
+    return 'encounters.logNew';
+  }
+  if (pathname === '/encounters' || pathname.startsWith('/encounters/') === true) {
+    return 'nav.encounters';
+  }
+  if (pathname === '/collectives/new') {
+    return 'collectives.createNew';
+  }
+  if (pathname === '/collectives' || pathname.startsWith('/collectives/') === true) {
+    return 'nav.collectives';
+  }
+  if (pathname === '/profile') {
+    return 'nav.profile';
+  }
+  return undefined;
+}
+
+const pageTitleKey = $derived(findTitleKey($page.url.pathname));
+const pageTitle = $derived(pageTitleKey === undefined ? APP_NAME : $i18n.t(pageTitleKey));
 
 async function handleLogout() {
-  mobileMenuOpen = false;
+  isMobileMenuOpen = false;
   try {
     await auth.logout();
     goto('/auth/login');
-  } catch (error) {
-    console.error('Logout failed:', error);
+  } catch (err) {
+    logger.error({ err }, 'Logout failed');
   }
 }
 
 // A drawer entry is current when the route matches it exactly, or sits
 // underneath it ("/friends/123" marks "Friends"). "/" only ever matches itself.
-function isActive(href: string): boolean {
+function isActive(href: string) {
   const path = $page.url.pathname;
-  if (href === '/') return path === '/';
-  return path === href || path.startsWith(`${href}/`);
+  if (href === '/') {
+    return path === '/';
+  }
+  return path === href || path.startsWith(`${href}/`) === true;
 }
 
 const drawerLink =
   'flex items-center gap-2 px-3 py-2 rounded-md font-body font-medium transition-colors';
 
-function drawerLinkClass(href: string): string {
-  return isActive(href)
+function drawerLinkClass(href: string) {
+  return isActive(href) === true
     ? `${drawerLink} bg-forest/10 text-forest`
     : `${drawerLink} text-gray-700 hover:bg-gray-100 hover:text-forest`;
 }
 
 function closeMobileMenu() {
-  mobileMenuOpen = false;
+  isMobileMenuOpen = false;
 }
 
 let menuElement = $state<HTMLDivElement | undefined>(undefined);
 
 // While the drawer covers the page it is an overlay like any modal: lock
 // body scroll and suppress the global shortcuts behind it.
-$effect(() => {
-  if (!mobileMenuOpen) return;
+function lockPageBehindDrawer() {
+  if (isMobileMenuOpen === false) {
+    return undefined;
+  }
 
   document.body.style.overflow = 'hidden';
-  const release = registerOpenOverlay();
+  const release = overlay.register();
 
-  return () => {
+  return function unlockPage() {
     document.body.style.overflow = '';
     release();
   };
-});
+}
+
+$effect(lockPageBehindDrawer);
+
+function handleEscape(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    closeMobileMenu();
+  }
+}
 
 // Escape closes the drawer, and the first entry takes focus when it opens.
 // Tab containment is the shared `focusTrap` action on the drawer itself.
-$effect(() => {
-  if (!mobileMenuOpen || menuElement === undefined) return;
-
-  function handleEscape(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      closeMobileMenu();
-    }
+function focusOpenDrawer() {
+  if (isMobileMenuOpen === false || menuElement === undefined) {
+    return undefined;
   }
 
   document.addEventListener('keydown', handleEscape);
   menuElement.querySelector<HTMLElement>('a[href], button')?.focus();
 
-  return () => {
+  return function stopListening() {
     document.removeEventListener('keydown', handleEscape);
   };
-});
+}
+
+$effect(focusOpenDrawer);
 </script>
 
 <!-- Mobile menu overlay -->
-{#if mobileMenuOpen}
+{#if isMobileMenuOpen}
   <div
     transition:fade={{ duration: motionDuration(200) }}
     class="fixed inset-0 bg-gray-900/50 z-(--z-overlay) sm:hidden"
@@ -131,10 +165,10 @@ $effect(() => {
 <!-- Mobile slide-out menu -->
 <div
   bind:this={menuElement}
-  use:focusTrap={mobileMenuOpen}
-  inert={!mobileMenuOpen}
-  aria-hidden={!mobileMenuOpen}
-  class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-(--z-overlay) transform transition-transform ease-in-out sm:hidden {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
+  use:focusTrap={isMobileMenuOpen}
+  inert={!isMobileMenuOpen}
+  aria-hidden={!isMobileMenuOpen}
+  class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-(--z-overlay) transform transition-transform ease-in-out sm:hidden {isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}"
 >
   <div class="p-4 border-b border-gray-200">
     <a href="/" onclick={closeMobileMenu}>
@@ -255,12 +289,12 @@ $effect(() => {
     <div class="flex items-center h-(--nav-h) gap-4">
       <!-- Mobile: Hamburger menu button -->
       <button
-        class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors {focusRing}"
-        onclick={() => mobileMenuOpen = !mobileMenuOpen}
+        class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors {FOCUS_RING}"
+        onclick={() => isMobileMenuOpen = !isMobileMenuOpen}
         aria-label={$i18n.t('aria.toggleMenu')}
-        aria-expanded={mobileMenuOpen}
+        aria-expanded={isMobileMenuOpen}
       >
-        {#if mobileMenuOpen}
+        {#if isMobileMenuOpen}
           <XMark class="w-6 h-6" strokeWidth="2" />
         {:else}
           <Bars3 class="w-6 h-6" strokeWidth="2" />
@@ -282,7 +316,7 @@ $effect(() => {
       <!-- Mobile: Search button (authenticated) or spacer -->
       {#if $isAuthenticated && $currentUser}
         <button
-          class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors {focusRing}"
+          class="sm:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors {FOCUS_RING}"
           onclick={() => search.open()}
           aria-label={$i18n.t('aria.search')}
           data-shortcut="/"
@@ -306,7 +340,7 @@ $effect(() => {
           >
             <MagnifyingGlass class="w-5 h-5 shrink-0" strokeWidth="2" />
             <span class="flex-1 text-left font-body text-sm">{$i18n.t('friends.search')}</span>
-            <kbd class="hidden md:inline-block {codeClasses.kbd}">
+            <kbd class="hidden md:inline-block {CODE_CLASSES.kbd}">
               {isMac ? '⌘' : 'Ctrl'}K
             </kbd>
           </button>

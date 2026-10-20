@@ -1,11 +1,11 @@
 <script lang="ts">
+import { getAppContext } from '$lib/app-context.js';
 import Button from '$lib/components/ui/Button.svelte';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { formClasses } from '$lib/components/ui/styles.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { previewMemberRelationships } from '$lib/stores/collectives';
 import type {
   CollectiveRoleResponse,
   FriendSearchResultResponse,
@@ -16,6 +16,7 @@ import FriendSearchInput from '../friends/FriendSearchInput.svelte';
 import RelationshipPreview from './RelationshipPreview.svelte';
 
 const i18n = createI18n();
+const { api, logger } = getAppContext();
 
 interface Props {
   collectiveId: string;
@@ -81,15 +82,15 @@ async function loadPreview(friend: FriendSearchResultResponse, roleId: string) {
 
   isLoadingPreview = true;
   try {
-    const result = await previewMemberRelationships(
+    const result = await api.collectiveMembers.previewMemberRelationships(
       collectiveId,
-      { friend_id: friend.id, role_id: roleId },
-      { signal },
+      { friendId: friend.id, roleId },
+      signal,
     );
     if (!signal.aborted) preview = result;
   } catch (err) {
     if (!signal.aborted) {
-      console.error('Failed to load preview:', err);
+      logger.error({ err }, 'Failed to load relationship preview');
       preview = null;
     }
   } finally {
@@ -142,7 +143,7 @@ async function handleSubmit(e: Event) {
 
   <!-- Friend search -->
   <div>
-    <label for="member-search" class={formClasses.label}>
+    <label for="member-search" class={FORM_CLASSES.label}>
       {$i18n.t('collectives.addMember.friendLabel')} <span class="text-red-500" aria-hidden="true">*</span>
     </label>
 

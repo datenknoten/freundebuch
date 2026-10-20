@@ -5,21 +5,24 @@ import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
 import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
-import type { EncounterListParams } from '$lib/api/encounters';
+import type { EncounterListParams } from '$lib/api/encounters.js';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import SearchInput from '$lib/components/ui/SearchInput.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { formClasses } from '$lib/components/ui/styles.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { encounters, encountersList } from '$lib/stores/encounters';
-import { visibleEncounterIds } from '$lib/stores/ui';
 import { ENCOUNTER_TYPES, type EncounterType } from '$shared';
 import EncounterCard from './EncounterCard.svelte';
 import { encounterTypeLabel } from './encounter-display';
 
+const visibleEncounterIds = getAppContext().stores.keyboardModes.encounters.visibleItems;
+
 const i18n = createI18n();
+const encounters = getAppContext().stores.encounters;
+const encountersList = encounters.list;
 
 interface Props {
   /** Friend ID to filter encounters by */
@@ -124,7 +127,7 @@ function goToPage(page: number) {
   <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
     <!-- Search input -->
     <div class="flex-1">
-      <label for="encounter-search" class={formClasses.label}>
+      <label for="encounter-search" class={FORM_CLASSES.label}>
         {$i18n.t('encounters.search')}
       </label>
       <SearchInput
@@ -139,14 +142,14 @@ function goToPage(page: number) {
 
     <!-- Type filter -->
     <div>
-      <label for="type-filter" class={formClasses.label}>
+      <label for="type-filter" class={FORM_CLASSES.label}>
         {$i18n.t('encounters.typeFilter')}
       </label>
       <select
         id="type-filter"
         bind:value={selectedType}
         onchange={() => loadEncounters()}
-        class="{formClasses.inputSm} bg-white"
+        class="{FORM_CLASSES.inputSm} bg-white"
       >
         <option value="">{$i18n.t('encounters.allTypes')}</option>
         {#each ENCOUNTER_TYPES as type (type)}
@@ -158,7 +161,7 @@ function goToPage(page: number) {
     <!-- Date filters -->
     <div class="flex gap-2">
       <div>
-        <label for="from-date" class={formClasses.label}>
+        <label for="from-date" class={FORM_CLASSES.label}>
           {$i18n.t('encounters.fromDate')}
         </label>
         <input
@@ -166,11 +169,11 @@ function goToPage(page: number) {
           type="date"
           bind:value={fromDate}
           onchange={handleDateChange}
-          class={formClasses.inputSm}
+          class={FORM_CLASSES.inputSm}
         />
       </div>
       <div>
-        <label for="to-date" class={formClasses.label}>
+        <label for="to-date" class={FORM_CLASSES.label}>
           {$i18n.t('encounters.toDate')}
         </label>
         <input
@@ -178,7 +181,7 @@ function goToPage(page: number) {
           type="date"
           bind:value={toDate}
           onchange={handleDateChange}
-          class={formClasses.inputSm}
+          class={FORM_CLASSES.inputSm}
         />
       </div>
     </div>

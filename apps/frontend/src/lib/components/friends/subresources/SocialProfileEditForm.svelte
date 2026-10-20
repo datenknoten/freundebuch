@@ -1,9 +1,10 @@
 <script lang="ts">
+import type { SocialProfileData } from '$lib/api/friend-details.js';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import type { SocialPlatform, SocialProfileInput, SocialProfileResponse } from '$shared';
+import type { SocialPlatform, SocialProfileResponse } from '$shared';
 
 const i18n = createI18n();
 
@@ -43,12 +44,12 @@ const platformOptions = $derived(
   platformKeys.map((p) => ({ value: p, label: $i18n.t(`subresources.social.platforms.${p}`) })),
 );
 
-export function getData(): SocialProfileInput {
+export function getData() {
   return {
     platform,
-    profile_url: profileUrl.trim() || null,
+    profileUrl: profileUrl.trim() || null,
     username: username.trim() || null,
-  };
+  } satisfies SocialProfileData;
 }
 
 export function isValid(): boolean {

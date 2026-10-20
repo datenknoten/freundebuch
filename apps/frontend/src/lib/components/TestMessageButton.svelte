@@ -1,10 +1,11 @@
 <script lang="ts">
-import * as channelsApi from '$lib/api/notification-channels';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
 
+const notificationChannelsApi = getAppContext().api.notificationChannels;
 const i18n = createI18n();
 
 interface Props {
@@ -20,7 +21,7 @@ async function handleTest() {
   isLoading = true;
   result = null;
   try {
-    await channelsApi.testChannel(channelId);
+    await notificationChannelsApi.testChannel(channelId);
     result = 'success';
   } catch {
     result = 'error';

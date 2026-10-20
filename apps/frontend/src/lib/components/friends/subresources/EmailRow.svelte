@@ -1,5 +1,5 @@
 <script lang="ts">
-import { chipClasses } from '$lib/components/ui/styles.js';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { EmailResponse, EmailType } from '$shared';
 import SubresourceRow from './SubresourceRow.svelte';
@@ -42,7 +42,7 @@ function emailTypeLabel(type: EmailType): string {
       {emailTypeLabel(email.emailType)}
       {#if email.label} - {email.label}{/if}
       {#if email.isPrimary}
-        <span class="ml-1 {chipClasses.base} {chipClasses.forest}">
+        <span class="ml-1 {CHIP_CLASSES.base} {CHIP_CLASSES.forest}">
           {$i18n.t('subresources.common.primary')}
         </span>
       {/if}

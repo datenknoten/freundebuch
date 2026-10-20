@@ -7,45 +7,25 @@
  * icon, i18n keys, API calls, row/form components, and the per-type quirks
  * (address geocoding refetch, circle being add-only) — so that
  * `SubresourceSection.svelte` can drive all of them with a single, branch-free
- * implementation. This replaces the former central `editingType` discriminator
- * with its parallel `if/else` save chain and `switch` delete chain.
+ * implementation.
  */
 import Envelope from 'svelte-heros-v2/Envelope.svelte';
 import Link from 'svelte-heros-v2/Link.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
-import { ApiError } from '$lib/api/client';
-import {
-  addAddress,
-  addCollectiveToCircle,
-  addEmail,
-  addPhone,
-  addUrl,
-  type CollectiveCircleInfo,
-  deleteAddress,
-  deleteEmail,
-  deletePhone,
-  deleteUrl,
-  getCollectiveCircles,
-  listAddresses,
-  listEmails,
-  listPhones,
-  listUrls,
-  removeCollectiveFromCircle,
-  updateAddress,
-  updateEmail,
-  updatePhone,
-  updateUrl,
-} from '$lib/api/collectives';
+import type { AddressData } from '$lib/api/address-data.js';
+import { ApiError } from '$lib/api/api-error.js';
+import type { CollectiveContactsApi } from '$lib/api/collective-contacts.js';
+import type { CollectivesApi } from '$lib/api/collectives.js';
+import type { EmailData } from '$lib/api/email-data.js';
+import type { PhoneData } from '$lib/api/phone-data.js';
+import type { UrlData } from '$lib/api/url-data.js';
 import type {
-  AddressInputSchema,
   AddressResponse,
-  EmailInputSchema,
+  CollectiveCircleResponse,
   EmailResponse,
-  PhoneInputSchema,
   PhoneResponse,
-  UrlInput,
   UrlResponse,
 } from '$shared';
 import AddressEditForm from '../friends/subresources/AddressEditForm.svelte';
@@ -59,184 +39,195 @@ import PhoneRow from '../friends/subresources/PhoneRow.svelte';
 import UrlEditForm from '../friends/subresources/UrlEditForm.svelte';
 import UrlRow from '../friends/subresources/UrlRow.svelte';
 import {
-  type AddDetailOption,
   addDetailOption,
   addressDeleteName,
   defineDescriptor,
   editFormProps,
   primaryAwareFormProps,
   type SubresourceDescriptor,
+  type Translate,
 } from '../subresources/types';
 
-/**
- * The descriptor shape and the item/form types live in
- * `../subresources/types`, shared with the friend detail sections.
- */
-export type {
-  FormPropsContext,
-  SubresourceDescriptor,
-  SubresourceFormExports,
-  SubresourceItem,
-} from '../subresources/types';
+export interface CollectiveDescriptorsOptions {
+  collectivesApi: CollectivesApi;
+  collectiveContactsApi: CollectiveContactsApi;
+}
 
-const phoneDescriptor = defineDescriptor<PhoneResponse, typeof PhoneInputSchema.inferIn>({
-  key: 'phone',
-  shortcutEvent: 'shortcut:collective-add-phone',
-  icon: PhoneIcon,
-  sectionTitleKey: 'friendDetail.sections.phoneNumbers',
-  addLabelKey: 'friendDetail.actions.addPhone',
-  addShortcut: 'a p',
-  addShortcutLabel: 'shortcuts.add.phone',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.phoneNumber',
-  load: (cid) => listPhones(cid),
-  create: (cid, data: typeof PhoneInputSchema.inferIn) => addPhone(cid, data),
-  update: (cid, id, data: typeof PhoneInputSchema.inferIn) => updatePhone(cid, id, data),
-  remove: (cid, item) => deletePhone(cid, item.id),
-  FormComponent: PhoneEditForm,
-  formProps: primaryAwareFormProps,
-  RowComponent: PhoneRow,
-  rowProps: (phone) => ({ phone }),
-  deleteName: (phone) => phone.phoneNumber,
-  deleteTitleKey: 'friendDetail.modal.deletePhoneNumber',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeletePhone',
-  mapError: (err, t) => {
-    if (!(err instanceof ApiError)) return undefined;
-    if (err.code === 'PHONE_COUNTRY_UNKNOWN') return t('subresources.phone.unknownCountry');
-    // The backend rejects unparseable numbers with a 400 and a message meant
-    // for developers; show the field hint instead.
-    if (err.statusCode === 400) return t('subresources.phone.invalidNumber');
+const ADDRESS_REFETCH_DELAYS_MS = [800, 2000, 4500];
+
+function mapPhoneError(err: unknown, t: Translate) {
+  if (err instanceof ApiError === false) {
     return undefined;
-  },
-});
+  }
+  if (err.code === 'PHONE_COUNTRY_UNKNOWN') {
+    return t('subresources.phone.unknownCountry');
+  }
+  // The backend rejects unparseable numbers with a 400 and a message meant
+  // for developers; show the field hint instead.
+  if (err.statusCode === 400) {
+    return t('subresources.phone.invalidNumber');
+  }
+  return undefined;
+}
 
-const emailDescriptor = defineDescriptor<EmailResponse, typeof EmailInputSchema.inferIn>({
-  key: 'email',
-  shortcutEvent: 'shortcut:collective-add-email',
-  icon: Envelope,
-  sectionTitleKey: 'friendDetail.sections.emailAddresses',
-  addLabelKey: 'friendDetail.actions.addEmail',
-  addShortcut: 'a e',
-  addShortcutLabel: 'shortcuts.add.email',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.emailAddress',
-  load: (cid) => listEmails(cid),
-  create: (cid, data: typeof EmailInputSchema.inferIn) => addEmail(cid, data),
-  update: (cid, id, data: typeof EmailInputSchema.inferIn) => updateEmail(cid, id, data),
-  remove: (cid, item) => deleteEmail(cid, item.id),
-  FormComponent: EmailEditForm,
-  formProps: primaryAwareFormProps,
-  RowComponent: EmailRow,
-  rowProps: (email) => ({ email }),
-  deleteName: (email) => email.emailAddress,
-  deleteTitleKey: 'friendDetail.modal.deleteEmailAddress',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
-});
+// Geocoding runs asynchronously on the backend; refetch a few times to pick up
+// coordinates once they land.
+function refetchUntilGeocoded(reload: () => Promise<unknown>) {
+  const timers = ADDRESS_REFETCH_DELAYS_MS.map((delay) =>
+    setTimeout(() => void reload().catch(() => undefined), delay),
+  );
+  return function cancelRefetch() {
+    for (const timer of timers) {
+      clearTimeout(timer);
+    }
+  };
+}
 
-const addressDescriptor = defineDescriptor<AddressResponse, typeof AddressInputSchema.inferIn>({
-  key: 'address',
-  shortcutEvent: 'shortcut:collective-add-address',
-  icon: MapPin,
-  sectionTitleKey: 'friendDetail.sections.addresses',
-  addLabelKey: 'friendDetail.actions.addAddress',
-  addShortcut: 'a a',
-  addShortcutLabel: 'shortcuts.add.address',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.address',
-  load: (cid) => listAddresses(cid),
-  create: (cid, data: typeof AddressInputSchema.inferIn) => addAddress(cid, data),
-  update: (cid, id, data: typeof AddressInputSchema.inferIn) => updateAddress(cid, id, data),
-  remove: (cid, item) => deleteAddress(cid, item.id),
-  // Geocoding runs asynchronously on the backend; refetch a few times to pick up
-  // coordinates once they land.
-  afterSave: (reload) => {
-    const timers = [800, 2000, 4500].map((delay) =>
-      setTimeout(() => {
-        reload().catch(() => undefined);
-      }, delay),
-    );
-    return () => {
-      for (const timer of timers) clearTimeout(timer);
-    };
-  },
-  FormComponent: AddressEditForm,
-  formProps: primaryAwareFormProps,
-  RowComponent: AddressRow,
-  rowProps: (address) => ({ address }),
-  deleteName: addressDeleteName,
-  deleteTitleKey: 'friendDetail.modal.deleteAddress',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteAddress',
-});
+function createPhoneDescriptor(api: CollectiveContactsApi) {
+  return defineDescriptor<PhoneResponse, PhoneData>({
+    key: 'phone',
+    shortcutEvent: 'shortcut:collective-add-phone',
+    icon: PhoneIcon,
+    sectionTitleKey: 'friendDetail.sections.phoneNumbers',
+    addLabelKey: 'friendDetail.actions.addPhone',
+    addShortcut: 'a p',
+    addShortcutLabel: 'shortcuts.add.phone',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.phoneNumber',
+    load: (cid) => api.listPhones(cid),
+    create: (cid, data) => api.addPhone(cid, data),
+    update: (cid, id, data) => api.updatePhone(cid, id, data),
+    remove: (cid, item) => api.deletePhone(cid, item.id),
+    FormComponent: PhoneEditForm,
+    formProps: primaryAwareFormProps,
+    RowComponent: PhoneRow,
+    rowProps: (phone) => ({ phone }),
+    deleteName: (phone) => phone.phoneNumber,
+    deleteTitleKey: 'friendDetail.modal.deletePhoneNumber',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeletePhone',
+    mapError: mapPhoneError,
+  });
+}
 
-const urlDescriptor = defineDescriptor<UrlResponse, UrlInput>({
-  key: 'url',
-  shortcutEvent: 'shortcut:collective-add-url',
-  icon: Link,
-  sectionTitleKey: 'friendDetail.sections.websites',
-  addLabelKey: 'friendDetail.actions.addUrl',
-  addShortcut: 'a u',
-  addShortcutLabel: 'shortcuts.add.url',
-  editable: true,
-  modalTypeNameKey: 'friendDetail.modal.websiteUrl',
-  load: (cid) => listUrls(cid),
-  create: (cid, data: UrlInput) => addUrl(cid, data),
-  update: (cid, id, data: UrlInput) => updateUrl(cid, id, data),
-  remove: (cid, item) => deleteUrl(cid, item.id),
-  FormComponent: UrlEditForm,
-  formProps: editFormProps,
-  RowComponent: UrlRow,
-  rowProps: (url) => ({ url }),
-  deleteName: (url) => url.url,
-  deleteTitleKey: 'friendDetail.modal.deleteWebsite',
-  deleteDescriptionKey: 'friendDetail.modal.confirmDeleteWebsite',
-});
+function createEmailDescriptor(api: CollectiveContactsApi) {
+  return defineDescriptor<EmailResponse, EmailData>({
+    key: 'email',
+    shortcutEvent: 'shortcut:collective-add-email',
+    icon: Envelope,
+    sectionTitleKey: 'friendDetail.sections.emailAddresses',
+    addLabelKey: 'friendDetail.actions.addEmail',
+    addShortcut: 'a e',
+    addShortcutLabel: 'shortcuts.add.email',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.emailAddress',
+    load: (cid) => api.listEmails(cid),
+    create: (cid, data) => api.addEmail(cid, data),
+    update: (cid, id, data) => api.updateEmail(cid, id, data),
+    remove: (cid, item) => api.deleteEmail(cid, item.id),
+    FormComponent: EmailEditForm,
+    formProps: primaryAwareFormProps,
+    RowComponent: EmailRow,
+    rowProps: (email) => ({ email }),
+    deleteName: (email) => email.emailAddress,
+    deleteTitleKey: 'friendDetail.modal.deleteEmailAddress',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
+  });
+}
 
-const circleDescriptor = defineDescriptor<CollectiveCircleInfo, { circleId: string }>({
-  key: 'circle',
-  shortcutEvent: 'shortcut:collective-add-circle',
-  icon: Users,
-  sectionTitleKey: 'friendDetail.sections.circles',
-  addLabelKey: 'friendDetail.actions.addCircle',
-  addShortcut: 'a c',
-  addShortcutLabel: 'shortcuts.add.circle',
-  editable: false,
-  modalTypeNameKey: 'friendDetail.modal.circle',
-  load: (cid) => getCollectiveCircles(cid),
-  create: (cid, data: { circleId: string }) => addCollectiveToCircle(cid, data.circleId),
-  remove: (cid, item) => removeCollectiveFromCircle(cid, item.id),
-  reloadAfterMutate: true,
-  tracksDirty: true,
-  FormComponent: CircleEditForm,
-  formProps: ({ items, isLoading }) => ({ existingCircles: items, disabled: isLoading }),
-  RowComponent: CircleRow,
-  rowProps: (circle) => ({ circle }),
-  deleteName: (circle) => circle.name,
-  deleteTitleKey: 'collectives.detail.removeFromCircleTitle',
-  deleteDescriptionKey: 'collectives.detail.confirmRemoveCircle',
-});
+function createAddressDescriptor(api: CollectiveContactsApi) {
+  return defineDescriptor<AddressResponse, AddressData>({
+    key: 'address',
+    shortcutEvent: 'shortcut:collective-add-address',
+    icon: MapPin,
+    sectionTitleKey: 'friendDetail.sections.addresses',
+    addLabelKey: 'friendDetail.actions.addAddress',
+    addShortcut: 'a a',
+    addShortcutLabel: 'shortcuts.add.address',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.address',
+    load: (cid) => api.listAddresses(cid),
+    create: (cid, data) => api.addAddress(cid, data),
+    update: (cid, id, data) => api.updateAddress(cid, id, data),
+    remove: (cid, item) => api.deleteAddress(cid, item.id),
+    afterSave: refetchUntilGeocoded,
+    FormComponent: AddressEditForm,
+    formProps: primaryAwareFormProps,
+    RowComponent: AddressRow,
+    rowProps: (address) => ({ address }),
+    deleteName: addressDeleteName,
+    deleteTitleKey: 'friendDetail.modal.deleteAddress',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeleteAddress',
+  });
+}
 
-/** Phone/email/address/url — rendered inside the contact-details wrapper, in this order. */
-export const contactDescriptors: SubresourceDescriptor[] = [
-  phoneDescriptor,
-  emailDescriptor,
-  addressDescriptor,
-  urlDescriptor,
-];
+function createUrlDescriptor(api: CollectiveContactsApi) {
+  return defineDescriptor<UrlResponse, UrlData>({
+    key: 'url',
+    shortcutEvent: 'shortcut:collective-add-url',
+    icon: Link,
+    sectionTitleKey: 'friendDetail.sections.websites',
+    addLabelKey: 'friendDetail.actions.addUrl',
+    addShortcut: 'a u',
+    addShortcutLabel: 'shortcuts.add.url',
+    editable: true,
+    modalTypeNameKey: 'friendDetail.modal.websiteUrl',
+    load: (cid) => api.listUrls(cid),
+    create: (cid, data) => api.addUrl(cid, data),
+    update: (cid, id, data) => api.updateUrl(cid, id, data),
+    remove: (cid, item) => api.deleteUrl(cid, item.id),
+    FormComponent: UrlEditForm,
+    formProps: editFormProps,
+    RowComponent: UrlRow,
+    rowProps: (url) => ({ url }),
+    deleteName: (url) => url.url,
+    deleteTitleKey: 'friendDetail.modal.deleteWebsite',
+    deleteDescriptionKey: 'friendDetail.modal.confirmDeleteWebsite',
+  });
+}
 
-/** Circle — rendered as its own top-level section, matching the original layout. */
-export { circleDescriptor };
+function createCircleDescriptor(api: CollectivesApi) {
+  return defineDescriptor<CollectiveCircleResponse, { circleId: string }>({
+    key: 'circle',
+    shortcutEvent: 'shortcut:collective-add-circle',
+    icon: Users,
+    sectionTitleKey: 'friendDetail.sections.circles',
+    addLabelKey: 'friendDetail.actions.addCircle',
+    addShortcut: 'a c',
+    addShortcutLabel: 'shortcuts.add.circle',
+    editable: false,
+    modalTypeNameKey: 'friendDetail.modal.circle',
+    load: (cid) => api.listCollectiveCircles(cid),
+    create: (cid, data) => api.addCollectiveToCircle(cid, data.circleId),
+    remove: (cid, item) => api.removeCollectiveFromCircle(cid, item.id),
+    reloadAfterMutate: true,
+    tracksDirty: true,
+    FormComponent: CircleEditForm,
+    formProps: ({ items, isLoading }) => ({ existingCircles: items, disabled: isLoading }),
+    RowComponent: CircleRow,
+    rowProps: (circle) => ({ circle }),
+    deleteName: (circle) => circle.name,
+    deleteTitleKey: 'collectives.detail.removeFromCircleTitle',
+    deleteDescriptionKey: 'collectives.detail.confirmRemoveCircle',
+  });
+}
 
 /**
- * Every sub-resource a collective can gain via the "add detail" entry point
- * (FAB menu on mobile, dropdown on desktop), in display order. Members are
- * intentionally excluded — the member section always renders its own add
- * button, whereas these contact/circle sections hide when empty and would
- * otherwise be unreachable. Each descriptor already carries the icon and the
- * window event that opens its add modal, so the picker stays data-driven.
+ * `contactDescriptors` render inside the contact-details wrapper, in this order; the circle
+ * descriptor renders as its own top-level section. `addDetailOptions` lists every sub-resource a
+ * collective can gain via the "add detail" entry point, in display order. Members are excluded:
+ * the member section always renders its own add button, whereas these sections hide when empty
+ * and would otherwise be unreachable.
  */
-export const detailDescriptors: SubresourceDescriptor[] = [...contactDescriptors, circleDescriptor];
-
-/** The same set as menu entries for the shared add-detail dropdown and sheet. */
-export const collectiveAddDetailOptions: AddDetailOption[] = detailDescriptors.map((descriptor) =>
-  addDetailOption(descriptor, `shortcuts.add.${descriptor.key}`),
-);
+export function createCollectiveDescriptors(options: CollectiveDescriptorsOptions) {
+  const contactDescriptors: SubresourceDescriptor[] = [
+    createPhoneDescriptor(options.collectiveContactsApi),
+    createEmailDescriptor(options.collectiveContactsApi),
+    createAddressDescriptor(options.collectiveContactsApi),
+    createUrlDescriptor(options.collectiveContactsApi),
+  ];
+  const circleDescriptor = createCircleDescriptor(options.collectivesApi);
+  const addDetailOptions = [...contactDescriptors, circleDescriptor].map((descriptor) =>
+    addDetailOption(descriptor, `shortcuts.add.${descriptor.key}`),
+  );
+  return { contactDescriptors, circleDescriptor, addDetailOptions };
+}

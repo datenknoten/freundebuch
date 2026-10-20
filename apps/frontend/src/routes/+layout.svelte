@@ -2,10 +2,11 @@
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import '../app.css';
 import type { Snippet } from 'svelte';
-import { onMount } from 'svelte';
+import { onMount, untrack } from 'svelte';
 import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
+import { setAppContext } from '$lib/app-context.js';
 import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
@@ -15,25 +16,31 @@ import GlobalSearch from '$lib/components/GlobalSearch.svelte';
 import NavBar from '$lib/components/NavBar.svelte';
 import SessionExpiredModal from '$lib/components/SessionExpiredModal.svelte';
 import Fab from '$lib/components/ui/Fab.svelte';
-import type { SupportedLanguage } from '$lib/i18n/i18n.js';
+import { createAppContext } from '$lib/create-app-context.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import KeyboardShortcuts from '$lib/shortcuts/KeyboardShortcuts.svelte';
-import {
-  auth,
-  isAuthenticated,
-  isAuthInitialized,
-  needsOnboarding,
-  userPreferences,
-} from '$lib/stores/auth';
-import { circles } from '$lib/stores/circles';
-import { currentLanguage, isLocaleInitialized, locale } from '$lib/stores/locale';
-import { sessionExpired } from '$lib/stores/session';
+import type { LayoutData } from './$types';
 
 interface Props {
   children: Snippet;
+  data: LayoutData;
 }
 
-let { children }: Props = $props();
+let { children, data }: Props = $props();
+
+// Built once per page lifetime: a rerun of the root load must not replace the stores' state.
+const appContext = createAppContext(untrack(() => data.config));
+setAppContext(appContext);
+const circles = appContext.stores.circles;
+const auth = appContext.stores.auth;
+const isAuthenticated = auth.isAuthenticated;
+const isAuthInitialized = auth.isInitialized;
+const needsOnboarding = auth.needsOnboarding;
+const userPreferences = auth.preferences;
+const locale = appContext.stores.locale;
+const currentLanguage = locale.currentLanguage;
+const isLocaleInitialized = locale.isInitialized;
+const session = appContext.stores.session;
 
 // Create i18n store for reactive translations
 const i18n = createI18n();
@@ -41,11 +48,10 @@ const i18n = createI18n();
 // Initialize auth state and i18n on app load
 onMount(async () => {
   // Initialize auth first to get user preferences
-  const authResult = await auth.initialize();
+  const user = await auth.initialize();
 
   // Initialize locale with user's language preference if available
-  const userLanguage = authResult?.user?.preferences?.language as SupportedLanguage | undefined;
-  await locale.initialize(userLanguage);
+  await locale.initialize(user?.preferences?.language);
 });
 
 // Preload circles when the user is authenticated. The circles store caches
@@ -64,7 +70,7 @@ $effect(() => {
       // Re-check auth: the user may have logged out (or the session may have
       // expired) between scheduling and this callback firing, in which case we
       // must not issue an unauthenticated request.
-      if (get(isAuthenticated)) circles.loadCircles();
+      if (get(isAuthenticated)) void circles.preloadCircles();
     };
     if (typeof requestIdleCallback === 'function') {
       requestIdleCallback(preload);
@@ -83,7 +89,7 @@ $effect(() => {
 $effect(() => {
   const prefs = $userPreferences;
   if ($isLocaleInitialized && prefs?.language && prefs.language !== locale.getLanguage()) {
-    locale.setLanguage(prefs.language as SupportedLanguage);
+    locale.setLanguage(prefs.language);
   }
 });
 
@@ -166,7 +172,7 @@ function handleCreateSelect(choice: FabCreateChoice) {
 
 	<!-- Session-expired re-login prompt: shown when an API call returns 401 for a
 	     previously-authenticated user, letting them re-authenticate in place. -->
-	{#if $sessionExpired}
+	{#if $session}
 		<SessionExpiredModal />
 	{/if}
 </div>

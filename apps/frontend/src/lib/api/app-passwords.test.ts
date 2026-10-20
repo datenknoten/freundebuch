@@ -1,56 +1,97 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { jsonResponse, restoreFetch, stubFetch } from '$lib/test/fetch-mock.js';
-import { createAppPassword, listAppPasswords, revokeAppPassword } from './app-passwords.js';
+import { ValidationError } from '@datenknoten/kit';
+import { createRootLogger } from '@datenknoten/kit/logger';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { itemAt } from '$lib/test/item-at.js';
+import { ApiClient } from './api-client.js';
+import { AppPasswordsApi } from './app-passwords.js';
 
-describe('app-passwords API', () => {
-  let fetchMock: ReturnType<typeof stubFetch>;
+const AN_APP_PASSWORD = {
+  externalId: 'ap-1',
+  name: 'CalDAV',
+  lastUsedAt: null,
+  createdAt: '2026-01-01T00:00:00.000Z',
+};
 
+const fetchMock = vi.fn<typeof fetch>();
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status });
+}
+
+async function stayUnauthenticated() {
+  return false;
+}
+
+function createClient() {
+  return new ApiClient({
+    baseUrl: '',
+    logger: createRootLogger({ LOG_LEVEL: 'silent' }),
+    onUnauthorized: stayUnauthenticated,
+  });
+}
+
+function sentRequest() {
+  return itemAt(fetchMock.mock.calls, 0);
+}
+
+describe('AppPasswordsApi', () => {
   beforeEach(() => {
-    fetchMock = stubFetch();
+    vi.clearAllMocks();
+    vi.stubGlobal('fetch', fetchMock);
   });
 
-  afterEach(restoreFetch);
-
-  it('listAppPasswords GETs the collection and returns it', async () => {
-    const rows = [{ externalId: 'ap-1', name: 'CalDAV', lastUsedAt: null, createdAt: 't' }];
-    fetchMock.mockResolvedValue(jsonResponse(rows));
-
-    const result = await listAppPasswords();
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/app-passwords', expect.objectContaining({}));
-    expect(result).toEqual(rows);
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  it('createAppPassword POSTs the name and returns the one-time password', async () => {
-    const created = {
-      externalId: 'ap-2',
-      name: 'Phone',
-      passwordPrefix: 'abcd1234',
-      lastUsedAt: null,
-      createdAt: 't',
-      password: 'abcd-1234-efgh-5678',
-    };
-    fetchMock.mockResolvedValue(jsonResponse(created));
+  describe('listAppPasswords', () => {
+    it('returns the app passwords of the response', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse([AN_APP_PASSWORD]));
 
-    const result = await createAppPassword('Phone');
+      await expect(
+        new AppPasswordsApi({ client: createClient() }).listAppPasswords(),
+      ).resolves.toEqual([AN_APP_PASSWORD]);
+    });
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/app-passwords',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ name: 'Phone' }) }),
-    );
-    expect(result.password).toBe('abcd-1234-efgh-5678');
-    expect(result.passwordPrefix).toBe('abcd1234');
+    it('throws ValidationError when an app password lacks its name', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse([{ externalId: 'ap-1' }]));
+
+      await expect(
+        new AppPasswordsApi({ client: createClient() }).listAppPasswords(),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
   });
 
-  it('revokeAppPassword DELETEs the given id and returns the success envelope', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
+  describe('createAppPassword', () => {
+    it('sends the name and returns the one-time password', async () => {
+      const created = { ...AN_APP_PASSWORD, password: 'abcd-1234', passwordPrefix: 'abcd1234' };
+      fetchMock.mockResolvedValueOnce(jsonResponse(created, 201));
 
-    const result = await revokeAppPassword('ap-1');
+      const result = await new AppPasswordsApi({ client: createClient() }).createAppPassword(
+        'Phone',
+      );
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/app-passwords/ap-1',
-      expect.objectContaining({ method: 'DELETE' }),
-    );
-    expect(result).toEqual({ success: true });
+      expect(JSON.parse(String(sentRequest()[1]?.body))).toEqual({ name: 'Phone' });
+      expect(result.password).toBe('abcd-1234');
+    });
+
+    it('throws ValidationError when the response lacks the password', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(AN_APP_PASSWORD, 201));
+
+      await expect(
+        new AppPasswordsApi({ client: createClient() }).createAppPassword('Phone'),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
+  describe('revokeAppPassword', () => {
+    it('resolves once the backend confirms the revocation', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ success: true }));
+
+      await expect(
+        new AppPasswordsApi({ client: createClient() }).revokeAppPassword('ap-1'),
+      ).resolves.toBeUndefined();
+    });
   });
 });

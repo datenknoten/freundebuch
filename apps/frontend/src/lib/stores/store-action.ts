@@ -1,4 +1,4 @@
-import { ApiError } from '../api/auth.js';
+import { ApiError } from '../api/api-error.js';
 
 /**
  * Generic store action wrapper that handles loading/error state boilerplate.

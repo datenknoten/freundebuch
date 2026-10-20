@@ -1,9 +1,10 @@
 import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
 import { describe, expect, it, vi } from 'vitest';
-import { addMember } from '$lib/api/collectives';
-import { aPhone } from '$lib/test/fixtures.js';
+import { aCollectiveMember, aCollectiveType, aPhone } from '$lib/test/fixtures.js';
 import { itemAt } from '$lib/test/item-at.js';
-import { fireEvent, render, screen, waitFor, within } from '$lib/test/render.js';
+import { fireEvent, screen, waitFor, within } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
 import { createCollectiveDescriptor } from '../friends/subresource-descriptors';
 import CircleRow from '../friends/subresources/CircleRow.svelte';
 import PhoneEditForm from '../friends/subresources/PhoneEditForm.svelte';
@@ -19,41 +20,6 @@ vi.mock('$lib/i18n/i18n.js', () => ({
       return () => undefined;
     },
   }),
-}));
-
-// The collective descriptor mounts the real AddToCollectiveModal, which reads
-// its options from the collectives store and posts through the API module.
-vi.mock('$lib/stores/collectives', () => {
-  const readableOf = <T>(value: T) => ({
-    subscribe: (run: (v: T) => void) => {
-      run(value);
-      return () => undefined;
-    },
-  });
-  return {
-    collectives: {
-      loadCollectives: vi.fn().mockResolvedValue(undefined),
-      loadTypes: vi.fn().mockResolvedValue(undefined),
-    },
-    collectivesList: readableOf([
-      {
-        id: 'col-1',
-        name: 'Book Club',
-        type: { id: 'type-1', name: 'Club' },
-        photoThumbnailUrl: null,
-        deletedAt: null,
-      },
-    ]),
-    collectiveTypes: readableOf([
-      { id: 'type-1', name: 'Club', roles: [{ id: 'role-1', label: 'Member', sortOrder: 0 }] },
-    ]),
-    previewMemberRelationships: vi.fn().mockResolvedValue({ relationships: [] }),
-  };
-});
-
-vi.mock('$lib/api/collectives', () => ({
-  addMember: vi.fn().mockResolvedValue({ id: 'membership-1' }),
-  removeMember: vi.fn().mockResolvedValue({ message: 'removed' }),
 }));
 
 /**
@@ -90,10 +56,8 @@ function fakePhoneDescriptor(
 }
 
 function renderSection(descriptor: SubresourceDescriptor) {
-  return render(SubresourceSection, {
-    descriptor,
-    ownerId: 'c1',
-    ownerName: 'Test Collective',
+  return renderWithContext(SubresourceSection, {
+    props: { descriptor, ownerId: 'c1', ownerName: 'Test Collective' },
   });
 }
 
@@ -145,7 +109,7 @@ describe('SubresourceSection', () => {
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
     expect(create).toHaveBeenCalledWith(
       'c1',
-      expect.objectContaining({ phone_number: '+49 30 9999' }),
+      expect.objectContaining({ phoneNumber: '+49 30 9999' }),
     );
     expect((await screen.findAllByText('+49 30 9999')).length).toBeGreaterThan(0);
   });
@@ -174,7 +138,7 @@ describe('SubresourceSection', () => {
     expect(update).toHaveBeenCalledWith(
       'c1',
       phone.id,
-      expect.objectContaining({ phone_number: '+1 555 0200' }),
+      expect.objectContaining({ phoneNumber: '+1 555 0200' }),
     );
     expect((await screen.findAllByText('+1 555 0200')).length).toBeGreaterThan(0);
     await waitFor(() => expect(screen.queryAllByText('+1 555 0100')).toHaveLength(0));
@@ -270,10 +234,12 @@ describe('SubresourceSection', () => {
     const load = vi.fn((id: string) => (id === 'c1' ? first.promise : second.promise));
     const descriptor = fakePhoneDescriptor({ load });
 
-    const { rerender } = render(SubresourceSection, {
-      descriptor,
-      ownerId: 'c1',
-      ownerName: 'Test Collective',
+    const { rerender } = renderWithContext(SubresourceSection, {
+      props: {
+        descriptor,
+        ownerId: 'c1',
+        ownerName: 'Test Collective',
+      },
     });
 
     // Switch to a new collective; its (faster) response lands first.
@@ -294,10 +260,12 @@ describe('SubresourceSection', () => {
     const load = vi.fn((id: string) => Promise.resolve(id === 'c1' ? [phoneC1] : [phoneC2]));
     const descriptor = fakePhoneDescriptor({ load });
 
-    const { rerender } = render(SubresourceSection, {
-      descriptor,
-      ownerId: 'c1',
-      ownerName: 'Test Collective',
+    const { rerender } = renderWithContext(SubresourceSection, {
+      props: {
+        descriptor,
+        ownerId: 'c1',
+        ownerName: 'Test Collective',
+      },
     });
 
     // Open the edit modal on the first collective.
@@ -326,10 +294,12 @@ describe('SubresourceSection', () => {
       load: vi.fn().mockResolvedValue([aPhone()]),
     });
 
-    const { rerender } = render(SubresourceSection, {
-      descriptor,
-      ownerId: 'c1',
-      ownerName: 'Test Collective',
+    const { rerender } = renderWithContext(SubresourceSection, {
+      props: {
+        descriptor,
+        ownerId: 'c1',
+        ownerName: 'Test Collective',
+      },
     });
 
     await fireEvent.click(await screen.findByText('section.add'));
@@ -352,10 +322,12 @@ describe('SubresourceSection', () => {
       load: vi.fn().mockResolvedValue([aPhone()]),
     });
 
-    const { unmount } = render(SubresourceSection, {
-      descriptor,
-      ownerId: 'c1',
-      ownerName: 'Test Collective',
+    const { unmount } = renderWithContext(SubresourceSection, {
+      props: {
+        descriptor,
+        ownerId: 'c1',
+        ownerName: 'Test Collective',
+      },
     });
 
     await fireEvent.click(await screen.findByText('section.add'));
@@ -378,10 +350,12 @@ describe('SubresourceSection', () => {
       load: vi.fn().mockResolvedValue([aPhone()]),
     });
 
-    const { rerender } = render(SubresourceSection, {
-      descriptor,
-      ownerId: 'c1',
-      ownerName: 'Test Collective',
+    const { rerender } = renderWithContext(SubresourceSection, {
+      props: {
+        descriptor,
+        ownerId: 'c1',
+        ownerName: 'Test Collective',
+      },
     });
 
     await fireEvent.click(await screen.findByText('section.add'));
@@ -495,11 +469,13 @@ describe('SubresourceSection', () => {
           aPhone({ id: 'c', phoneNumber: '+1 333 0000' }),
         ]),
     });
-    render(SubresourceSection, {
-      descriptor,
-      ownerId: 'c1',
-      ownerName: 'Test Collective',
-      linkStartIndex: 5,
+    renderWithContext(SubresourceSection, {
+      props: {
+        descriptor,
+        ownerId: 'c1',
+        ownerName: 'Test Collective',
+        linkStartIndex: 5,
+      },
     });
 
     const shortcutFor = async (number: string) => {
@@ -516,20 +492,62 @@ describe('SubresourceSection', () => {
 
   it('closes the custom add component after a successful add', async () => {
     const onChanged = vi.fn();
-    render(SubresourceSection, {
-      descriptor: createCollectiveDescriptor(onChanged),
-      ownerId: 'f1',
-      ownerName: 'Ada Lovelace',
-      items: [
+    const context = createTestAppContext();
+    vi.spyOn(context.api.collectives, 'listCollectives').mockResolvedValue({
+      data: [
         {
-          id: 'col-9',
-          membershipId: 'm-9',
-          name: 'Chess Club',
-          typeName: 'Club',
-          isActive: true,
-          role: { id: 'role-9', label: 'Member' },
-        } as unknown as SubresourceItem,
+          id: 'col-1',
+          name: 'Book Club',
+          type: { id: 'type-1', name: 'Club' },
+          photoUrl: null,
+          photoThumbnailUrl: null,
+          memberCount: 0,
+          activeMemberCount: 0,
+          memberPreview: [],
+          createdAt: '2026-01-01T00:00:00.000Z',
+          deletedAt: null,
+        },
       ],
+      pagination: { page: 1, pageSize: 1000, totalCount: 1, totalPages: 1 },
+    });
+    vi.spyOn(context.api.collectives, 'listCollectiveTypes').mockResolvedValue({
+      types: [
+        aCollectiveType({
+          id: 'type-1',
+          name: 'Club',
+          roles: [{ id: 'role-1', roleKey: 'member', label: 'Member', sortOrder: 0 }],
+        }),
+      ],
+    });
+    vi.spyOn(context.api.collectiveMembers, 'previewMemberRelationships').mockResolvedValue({
+      newContact: { id: 'f1', displayName: 'Ada Lovelace', photoUrl: null },
+      role: { id: 'role-1', roleKey: 'member', label: 'Member', sortOrder: 0 },
+      relationships: [],
+      existingRelationshipsSkipped: 0,
+    });
+    const addMember = vi
+      .spyOn(context.api.collectiveMembers, 'addMember')
+      .mockResolvedValue(aCollectiveMember());
+    renderWithContext(SubresourceSection, {
+      props: {
+        descriptor: createCollectiveDescriptor({
+          collectiveMembersApi: context.api.collectiveMembers,
+          onChanged,
+        }),
+        ownerId: 'f1',
+        ownerName: 'Ada Lovelace',
+        items: [
+          {
+            id: 'col-9',
+            membershipId: 'm-9',
+            name: 'Chess Club',
+            typeName: 'Club',
+            isActive: true,
+            role: { id: 'role-9', label: 'Member' },
+          } as unknown as SubresourceItem,
+        ],
+      },
+      context,
     });
 
     await fireEvent.click(await screen.findByText('friendDetail.actions.addCollective'));
@@ -540,9 +558,9 @@ describe('SubresourceSection', () => {
     await fireEvent.click(await screen.findByText('friendDetail.addToCollective.submit'));
 
     await waitFor(() =>
-      expect(vi.mocked(addMember)).toHaveBeenCalledWith(
+      expect(addMember).toHaveBeenCalledWith(
         'col-1',
-        expect.objectContaining({ friend_id: 'f1', role_id: 'role-1' }),
+        expect.objectContaining({ friendId: 'f1', roleId: 'role-1' }),
       ),
     );
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());

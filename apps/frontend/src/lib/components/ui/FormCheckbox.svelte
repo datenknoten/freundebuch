@@ -1,5 +1,5 @@
 <script lang="ts">
-import { formClasses } from './styles';
+import { FORM_CLASSES } from './form-classes.js';
 
 interface Props {
   id: string;
@@ -17,9 +17,9 @@ let { id, label, checked = $bindable(), disabled = false }: Props = $props();
     type="checkbox"
     bind:checked
     {disabled}
-    class={formClasses.checkbox}
+    class={FORM_CLASSES.checkbox}
   />
-  <label for={id} class={formClasses.checkboxLabel}>
+  <label for={id} class={FORM_CLASSES.checkboxLabel}>
     {label}
   </label>
 </div>

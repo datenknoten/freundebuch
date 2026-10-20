@@ -5,7 +5,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import { openWithKeyboard } from '$lib/actions/auto-focus';
-import { getCollectivesForFriend } from '$lib/api/friends';
+import { getAppContext } from '$lib/app-context.js';
 import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
@@ -13,11 +13,10 @@ import FabCreateMenu, {
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 import Fab from '$lib/components/ui/Fab.svelte';
-import { headingClasses } from '$lib/components/ui/styles.js';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
 import MarkdownView from '$lib/editor/MarkdownView.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { friends } from '$lib/stores/friends';
-import { type FriendDetailLink, visibleFriendDetailLinks } from '$lib/stores/ui';
+import type { FriendDetailLink } from '$lib/stores/keyboard-modes.js';
 
 const i18n = createI18n();
 
@@ -29,19 +28,15 @@ import SubresourceSection from '../subresources/SubresourceSection.svelte';
 import FriendAvatar from './FriendAvatar.svelte';
 import RelationshipsSection from './RelationshipsSection.svelte';
 import {
-  addressDescriptor,
-  circleDescriptor,
   createCollectiveDescriptor,
-  dateDescriptor,
-  emailDescriptor,
-  friendAddDetailOptions,
+  createFriendAddDetailOptions,
+  createFriendDescriptors,
   hasProfileUrl,
-  noteDescriptor,
-  phoneDescriptor,
-  professionalHistoryDescriptor,
-  socialProfileDescriptor,
-  urlDescriptor,
 } from './subresource-descriptors';
+
+const { api, logger, stores } = getAppContext();
+const friends = stores.friends;
+const visibleFriendDetailLinks = stores.keyboardModes.friendLinks.visibleItems;
 
 interface Props {
   friend: FriendResponse;
@@ -59,17 +54,38 @@ $effect(() => {
   }
 });
 
+function reloadCollectives() {
+  void loadCollectives();
+}
+
 // The collective descriptor removes a membership through the collectives API,
 // so it has to tell this page to refetch afterwards.
-const collectiveDescriptor = createCollectiveDescriptor(() => {
-  loadCollectives().catch((err) => console.error('Failed to reload collectives:', err));
+const collectiveDescriptor = createCollectiveDescriptor({
+  collectiveMembersApi: api.collectiveMembers,
+  onChanged: reloadCollectives,
 });
+const descriptors = createFriendDescriptors({
+  friendsStore: friends,
+  friendNotesApi: api.friendNotes,
+});
+const friendAddDetailOptions = createFriendAddDetailOptions(descriptors, collectiveDescriptor);
+const {
+  address: addressDescriptor,
+  circle: circleDescriptor,
+  date: dateDescriptor,
+  email: emailDescriptor,
+  note: noteDescriptor,
+  phone: phoneDescriptor,
+  professionalHistory: professionalHistoryDescriptor,
+  socialProfile: socialProfileDescriptor,
+  url: urlDescriptor,
+} = descriptors;
 
 async function loadCollectives() {
   try {
-    collectives = await getCollectivesForFriend(friend.id);
+    collectives = await api.friends.listFriendCollectives(friend.id);
   } catch (err) {
-    console.error('Failed to load collectives:', err);
+    logger.error({ err }, 'Failed to load collectives');
   }
 }
 
@@ -198,7 +214,7 @@ onMount(() => {
     />
 
     <div class="flex-1 text-center sm:text-left">
-      <h1 class={headingClasses.entity}>{friend.displayName}</h1>
+      <h1 class={HEADING_CLASSES.entity}>{friend.displayName}</h1>
 
       {#if friend.namePrefix || friend.nameFirst || friend.nameMiddle || friend.nameLast || friend.nameSuffix}
         <p class="text-gray-600 font-body mt-1">

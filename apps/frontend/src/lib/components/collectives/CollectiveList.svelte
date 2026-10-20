@@ -7,19 +7,23 @@ import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
-import type { CollectiveListParams } from '$lib/api/collectives';
+import type { CollectiveListParams } from '$lib/api/collectives.js';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import SearchInput from '$lib/components/ui/SearchInput.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { formClasses } from '$lib/components/ui/styles.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { collectives, collectivesList, collectiveTypes } from '$lib/stores/collectives';
-import { visibleCollectiveIds } from '$lib/stores/ui';
 import CollectiveGrid from './CollectiveGrid.svelte';
 
+const visibleCollectiveIds = getAppContext().stores.keyboardModes.collectives.visibleItems;
+
 const i18n = createI18n();
+const collectives = getAppContext().stores.collectives;
+const collectivesList = collectives.list;
+const collectiveTypes = collectives.types;
 
 interface Props {
   /** Initial type filter */
@@ -190,7 +194,7 @@ function openFirstResult() {
           id="type-filter"
           value={selectedTypeId}
           onchange={handleTypeChange}
-          class={formClasses.inputSm}
+          class={FORM_CLASSES.inputSm}
           aria-label={$i18n.t('aria.filterByType')}
         >
           <option value="">{$i18n.t('collectives.allTypes')}</option>
@@ -209,7 +213,7 @@ function openFirstResult() {
           onchange={(e) => {
             sortBy = e.currentTarget.value as 'name' | 'created_at' | 'member_count';
           }}
-          class={formClasses.inputSm}
+          class={FORM_CLASSES.inputSm}
           aria-label={$i18n.t('aria.sortBy')}
         >
           <option value="name">{$i18n.t('friendList.name')}</option>

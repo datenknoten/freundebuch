@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '$lib/test/render.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, screen, waitFor, within } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
 import PasskeyManager from './PasskeyManager.svelte';
 
 vi.mock('$lib/i18n/i18n.js', () => ({
@@ -12,49 +13,70 @@ vi.mock('$lib/i18n/i18n.js', () => ({
   getCurrentLanguage: () => 'en',
 }));
 
-const deletePasskey = vi.fn();
-vi.mock('$lib/auth-client', () => ({
-  authClient: {
-    passkey: {
-      listUserPasskeys: vi.fn().mockResolvedValue({
-        data: [
-          {
-            id: 'pk-1',
-            name: 'YubiKey',
-            deviceType: 'singleDevice',
-            createdAt: new Date('2026-01-01T00:00:00Z'),
-          },
-        ],
-      }),
-      deletePasskey: (...args: unknown[]) => deletePasskey(...args),
-      addPasskey: vi.fn(),
-      updatePasskey: vi.fn(),
-    },
-  },
-}));
+const A_PASSKEY = {
+  id: 'pk-1',
+  name: 'YubiKey',
+  deviceType: 'singleDevice',
+  createdAt: '2026-01-01T00:00:00.000Z',
+};
+
+/** Better Auth answers by path; the delete answer is set per test. */
+let deleteAnswer: { success: boolean } | { message: string } = { success: true };
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+async function answerBetterAuth(input: RequestInfo | URL) {
+  const url = new URL(input instanceof Request ? input.url : String(input), 'http://localhost');
+  if (url.pathname === '/api/auth/passkey/list-user-passkeys') {
+    return json([A_PASSKEY]);
+  }
+  if (url.pathname === '/api/auth/passkey/delete-passkey') {
+    return 'success' in deleteAnswer ? json(deleteAnswer) : json(deleteAnswer, 400);
+  }
+  return json({}, 404);
+}
+
+const fetchMock = vi.fn(answerBetterAuth);
+
+function deleteRequests() {
+  return fetchMock.mock.calls.filter(([input]) =>
+    String(input instanceof Request ? input.url : input).includes('/passkey/delete-passkey'),
+  );
+}
 
 async function openDeleteConfirmation() {
-  render(PasskeyManager);
+  renderWithContext(PasskeyManager, { props: {} });
   await waitFor(() => expect(screen.getByText('YubiKey')).toBeTruthy());
   await fireEvent.click(screen.getByText('common.delete'));
   return screen.getByRole('dialog');
 }
 
-afterEach(() => {
+beforeEach(() => {
   vi.clearAllMocks();
+  deleteAnswer = { success: true };
+  vi.stubGlobal('fetch', fetchMock);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('PasskeyManager', () => {
   it('deletes a passkey only after the confirmation dialog', async () => {
-    deletePasskey.mockResolvedValue({ error: null });
     const dialog = await openDeleteConfirmation();
 
     expect(within(dialog).getByText('profile.passkeys.deleteTitle')).toBeTruthy();
     expect(within(dialog).getByText('YubiKey')).toBeTruthy();
-    expect(deletePasskey).not.toHaveBeenCalled();
+    expect(deleteRequests()).toEqual([]);
 
     await fireEvent.click(within(dialog).getByText('common.delete'));
-    await waitFor(() => expect(deletePasskey).toHaveBeenCalledWith({ id: 'pk-1' }));
+    await waitFor(() => expect(deleteRequests()).toHaveLength(1));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
@@ -62,12 +84,12 @@ describe('PasskeyManager', () => {
     const dialog = await openDeleteConfirmation();
 
     await fireEvent.click(within(dialog).getByText('common.cancel'));
-    expect(deletePasskey).not.toHaveBeenCalled();
+    expect(deleteRequests()).toEqual([]);
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('keeps the dialog open and shows the reason when deletion fails', async () => {
-    deletePasskey.mockResolvedValue({ error: { message: 'still in use' } });
+    deleteAnswer = { message: 'still in use' };
     const dialog = await openDeleteConfirmation();
 
     await fireEvent.click(within(dialog).getByText('common.delete'));

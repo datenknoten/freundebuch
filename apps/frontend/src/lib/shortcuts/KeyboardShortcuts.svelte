@@ -1,28 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { page } from '$app/stores';
+import { getAppContext } from '$lib/app-context.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import {
-  deleteCircleModePrefix,
-  editCircleModePrefix,
-  filterModeCategory,
-  filterModePrefix,
-  isDeleteCircleModeActive,
-  isEditCircleModeActive,
-  isFilterModeActive,
-  isOpenCollectiveModeActive,
-  isOpenEncounterFriendModeActive,
-  isOpenEncounterModeActive,
-  isOpenFriendLinkModeActive,
-  isOpenMemberModeActive,
-  isOpenModeActive,
-  openCollectiveModePrefix,
-  openEncounterFriendModePrefix,
-  openEncounterModePrefix,
-  openFriendLinkModePrefix,
-  openMemberModePrefix,
-  openModePrefix,
-} from '$lib/stores/ui';
 import FilterPanel from './components/FilterPanel.svelte';
 import HelpDialog from './components/HelpDialog.svelte';
 import HintModePanel from './components/HintModePanel.svelte';
@@ -34,87 +14,108 @@ import {
   FRIEND_DETAIL_ACTIONS,
   NAVIGATION_SHORTCUTS,
 } from './config.js';
+import { isDetailPath } from './detail-path.js';
 import { createKeydownHandler } from './handlers/keydown-handler.js';
-import { handleShortcutHintClick } from './hint-store.js';
+import { ShortcutHintStore } from './shortcut-hint-store.js';
+import type { ShortcutStores } from './types.js';
+
+const { stores: appStores } = getAppContext();
+const keyboardModes = appStores.keyboardModes;
+const shortcutStores: ShortcutStores = {
+  keyboardModes,
+  overlay: appStores.overlay,
+  isAuthenticated: appStores.auth.isAuthenticated,
+  search: appStores.search,
+  currentFriend: appStores.friends.currentFriend,
+  friendListFilter: appStores.friendListFilter,
+};
+const shortcutHints = new ShortcutHintStore({
+  showShortcutHints: appStores.auth.showShortcutHints,
+});
+const openModePrefix = keyboardModes.friends.prefix;
+const openEncounterModePrefix = keyboardModes.encounters.prefix;
+const openMemberModePrefix = keyboardModes.members.prefix;
+const openCollectiveModePrefix = keyboardModes.collectives.prefix;
+const openFriendLinkModePrefix = keyboardModes.friendLinks.prefix;
+const openEncounterFriendModePrefix = keyboardModes.encounterFriends.prefix;
+const editCircleModePrefix = keyboardModes.editCircle.prefix;
+const deleteCircleModePrefix = keyboardModes.deleteCircle.prefix;
 
 const i18n = createI18n();
 
-let showHelp = $state(false);
+let isHelpOpen = $state(false);
 let pendingKey = $state<string | null>(null);
 
 let isOnCirclesPage = $derived($page.url.pathname === '/circles');
 let isOnFriendsListPage = $derived($page.url.pathname === '/friends');
 let isOnEncountersListPage = $derived($page.url.pathname === '/encounters');
 let isOnCollectivesListPage = $derived($page.url.pathname === '/collectives');
-let isOnFriendDetailPage = $derived(
-  $page.url.pathname.match(/^\/friends\/[^/]+$/) && !$page.url.pathname.endsWith('/new'),
-);
-let isOnCollectiveDetailPage = $derived(
-  $page.url.pathname.match(/^\/collectives\/[^/]+$/) && !$page.url.pathname.endsWith('/new'),
-);
-let isOnEncounterDetailPage = $derived(
-  $page.url.pathname.match(/^\/encounters\/[^/]+$/) && !$page.url.pathname.endsWith('/new'),
-);
+let isOnFriendDetailPage = $derived(isDetailPath($page.url.pathname, 'friends'));
+let isOnCollectiveDetailPage = $derived(isDetailPath($page.url.pathname, 'collectives'));
+let isOnEncounterDetailPage = $derived(isDetailPath($page.url.pathname, 'encounters'));
 
 function clearPending() {
   pendingKey = null;
-  isOpenModeActive.set(false);
-  openModePrefix.set(null);
-  isFilterModeActive.set(false);
-  filterModeCategory.set(null);
-  filterModePrefix.set(null);
-  isEditCircleModeActive.set(false);
-  editCircleModePrefix.set(null);
-  isDeleteCircleModeActive.set(false);
-  deleteCircleModePrefix.set(null);
-  isOpenEncounterModeActive.set(false);
-  openEncounterModePrefix.set(null);
-  isOpenCollectiveModeActive.set(false);
-  openCollectiveModePrefix.set(null);
-  isOpenMemberModeActive.set(false);
-  openMemberModePrefix.set(null);
-  isOpenFriendLinkModeActive.set(false);
-  openFriendLinkModePrefix.set(null);
-  isOpenEncounterFriendModeActive.set(false);
-  openEncounterFriendModePrefix.set(null);
+  keyboardModes.reset();
 }
 
-// Capture phase so the hint fires even when inner handlers stopPropagation()
-onMount(() => {
-  document.addEventListener('click', handleShortcutHintClick, true);
-  return () => document.removeEventListener('click', handleShortcutHintClick, true);
-});
+function getPendingKey() {
+  return pendingKey;
+}
 
-// The handler is recreated when showHelp changes so guards get fresh state
+function setPendingKey(key: string | null) {
+  pendingKey = key;
+}
+
+function toggleHelp() {
+  isHelpOpen = isHelpOpen === false;
+}
+
+function closeHelp() {
+  isHelpOpen = false;
+}
+
+function showClickedShortcutHint(event: MouseEvent) {
+  shortcutHints.handleClick(event);
+}
+
+// Capture phase, so the hint fires even when inner handlers stopPropagation().
+function listenForShortcutClicks() {
+  document.addEventListener('click', showClickedShortcutHint, true);
+  return function stopListening() {
+    document.removeEventListener('click', showClickedShortcutHint, true);
+  };
+}
+
+onMount(listenForShortcutClicks);
+
+// Recreated when the help dialog opens or closes, so the guards see the current state.
 const handleKeydown = $derived(
   createKeydownHandler({
-    getPendingKey: () => pendingKey,
-    setPendingKey: (key) => {
-      pendingKey = key;
-    },
-    toggleHelp: () => {
-      showHelp = !showHelp;
-    },
+    getPendingKey,
+    setPendingKey,
+    toggleHelp,
     clearPending,
-    showHelp,
+    isHelpOpen,
+    stores: shortcutStores,
   }),
 );
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
-{#if showHelp}
+{#if isHelpOpen}
   <HelpDialog
     pageContext={{
       isOnCirclesPage,
       isOnFriendsListPage,
       isOnEncountersListPage,
       isOnCollectivesListPage,
-      isOnFriendDetailPage: !!isOnFriendDetailPage,
-      isOnCollectiveDetailPage: !!isOnCollectiveDetailPage,
-      isOnEncounterDetailPage: !!isOnEncounterDetailPage,
+      isOnFriendDetailPage,
+      isOnCollectiveDetailPage,
+      isOnEncounterDetailPage,
     }}
-    onclose={() => (showHelp = false)}
+    onclose={closeHelp}
   />
 {/if}
 
@@ -145,5 +146,5 @@ const handleKeydown = $derived(
 {:else if pendingKey === 'd' && isOnCirclesPage}
   <HintModePanel title={$i18n.t('shortcuts.panels.deleteCircle')} prefix={$deleteCircleModePrefix} variant="danger" itemDescription={$i18n.t('shortcuts.items.circleDelete')} />
 {:else}
-  <ShortcutHintToast />
+  <ShortcutHintToast hints={shortcutHints} />
 {/if}

@@ -21,18 +21,24 @@ const MOVE_CANCEL_PX = 10;
 export function longPress(node: HTMLElement, params: LongPressParams) {
   let current = params;
   let timer: ReturnType<typeof setTimeout> | null = null;
-  let longPressFired = false;
-  let cancelled = false;
+  let hasLongPressFired = false;
+  let isCancelled = false;
   let activePointerId: number | null = null;
   let activePointerType = '';
   let startX = 0;
   let startY = 0;
 
   function clearTimer() {
-    if (timer) {
+    if (timer !== null) {
       clearTimeout(timer);
       timer = null;
     }
+  }
+
+  function fireLongPress() {
+    timer = null;
+    hasLongPressFired = true;
+    current.onLong();
   }
 
   function endPress() {
@@ -43,23 +49,23 @@ export function longPress(node: HTMLElement, params: LongPressParams) {
   function handlePointerDown(e: PointerEvent) {
     // Ignore secondary buttons (e.g. right-click) and additional pointers while
     // one is already being tracked (multi-touch / re-entrancy).
-    if (e.button !== 0 || activePointerId !== null) return;
+    if (e.button !== 0 || activePointerId !== null) {
+      return;
+    }
     clearTimer();
     activePointerId = e.pointerId;
     activePointerType = e.pointerType;
-    longPressFired = false;
-    cancelled = false;
+    hasLongPressFired = false;
+    isCancelled = false;
     startX = e.clientX;
     startY = e.clientY;
-    timer = setTimeout(() => {
-      timer = null;
-      longPressFired = true;
-      current.onLong();
-    }, current.duration ?? DEFAULT_DURATION);
+    timer = setTimeout(fireLongPress, current.duration ?? DEFAULT_DURATION);
   }
 
   function handlePointerMove(e: PointerEvent) {
-    if (e.pointerId !== activePointerId || !timer) return;
+    if (e.pointerId !== activePointerId || timer === null) {
+      return;
+    }
     if (
       Math.abs(e.clientX - startX) > MOVE_CANCEL_PX ||
       Math.abs(e.clientY - startY) > MOVE_CANCEL_PX
@@ -67,23 +73,25 @@ export function longPress(node: HTMLElement, params: LongPressParams) {
       // Treat a drag/scroll as a cancelled gesture: stop the long press and
       // suppress the click that follows so it isn't mistaken for a short tap.
       clearTimer();
-      cancelled = true;
+      isCancelled = true;
     }
   }
 
   function handlePointerEnd(e: PointerEvent) {
-    if (e.pointerId !== activePointerId) return;
+    if (e.pointerId !== activePointerId) {
+      return;
+    }
     endPress();
   }
 
   function handleClick(e: MouseEvent) {
     // Suppress the click that follows a long press or a cancelled drag so it
     // doesn't also fire onShort.
-    if (longPressFired || cancelled) {
+    if (hasLongPressFired === true || isCancelled === true) {
       e.preventDefault();
       e.stopPropagation();
-      longPressFired = false;
-      cancelled = false;
+      hasLongPressFired = false;
+      isCancelled = false;
       return;
     }
     // Covers pointer taps (mouse/touch) and keyboard activation (Enter/Space).

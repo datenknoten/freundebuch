@@ -3,15 +3,17 @@ import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { autoFocus } from '$lib/actions/auto-focus';
-import { listFriends } from '$lib/api/friends';
+import { getAppContext } from '$lib/app-context.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { formClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { friends } from '$lib/stores/friends';
 import type { FriendSearchResultResponse } from '$shared';
 import FriendAvatar from './FriendAvatar.svelte';
 
 const i18n = createI18n();
+const { api, stores } = getAppContext();
+const friends = stores.friends;
 
 interface Props {
   /** Placeholder text for the input */
@@ -92,7 +94,7 @@ async function loadSuggestions() {
 
   isLoadingSuggestions = true;
   try {
-    const { data: list } = await listFriends({
+    const { data: list } = await api.friends.listFriends({
       pageSize: limit,
       sortBy: 'display_name',
       sortOrder: 'asc',
@@ -140,7 +142,7 @@ async function performSearch() {
 
   isSearching = true;
   try {
-    results = await friends.searchFriends(query, excludeFriendId, limit);
+    results = await friends.searchFriends({ query, excludeFriendId, limit });
     showDropdown = true;
     highlightedIndex = findNextSelectableIndex(-1, 1);
   } catch {
@@ -251,7 +253,7 @@ function handleFocus() {
           onclick={activateInput}
           onkeydown={handleButtonKeydown}
           {disabled}
-          class="{formClasses.inputSm} flex-1 min-w-0 flex items-center justify-between text-left {disabled
+          class="{FORM_CLASSES.inputSm} flex-1 min-w-0 flex items-center justify-between text-left {disabled
             ? 'opacity-50 cursor-not-allowed bg-gray-50'
             : 'bg-white cursor-pointer hover:border-gray-400'}"
           aria-haspopup="listbox"
@@ -289,7 +291,7 @@ function handleFocus() {
         onfocus={handleFocus}
         {placeholder}
         {disabled}
-        class="{formClasses.inputSm} pr-10"
+        class="{FORM_CLASSES.inputSm} pr-10"
         autocomplete="off"
         role="combobox"
         aria-expanded={showDropdown}
@@ -309,7 +311,7 @@ function handleFocus() {
   {#if showDropdown}
     <ul
       id="{id}-listbox"
-      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
+      class="absolute z-(--z-popover) w-full mt-1 {SURFACE_CLASSES.listbox}"
       role="listbox"
     >
       {#each displayResults as friend, index (friend.id)}

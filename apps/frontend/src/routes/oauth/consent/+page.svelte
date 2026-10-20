@@ -1,11 +1,13 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { page } from '$app/stores';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import PageShell from '$lib/components/ui/PageShell.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 
+const { api, logger } = getAppContext();
 const i18n = createI18n();
 
 // The authorization server redirects here with these params (see the `mcp`
@@ -29,49 +31,30 @@ function scopeLabel(scope: string): string {
 }
 
 onMount(async () => {
-  if (!clientId) return;
+  if (clientId === '') {
+    return;
+  }
   try {
-    const res = await fetch(`/api/auth/oauth2/client/${encodeURIComponent(clientId)}`, {
-      credentials: 'include',
-    });
-    if (res.ok) {
-      const data = await res.json();
-      clientName = data?.name ?? '';
-    }
-  } catch {
-    // Non-fatal: fall back to showing the client id.
+    const client = await api.oauth.getClient(clientId);
+    clientName = client.name;
+  } catch (err) {
+    // The subtitle falls back to the client id.
+    logger.warn({ err }, 'Failed to resolve the OAuth client name');
   }
 });
 
-async function submitConsent(accept: boolean) {
-  if (isSubmitting) return;
+async function submitConsent(isAccepted: boolean) {
+  if (isSubmitting === true) {
+    return;
+  }
   error = '';
   isSubmitting = true;
-
   try {
-    const res = await fetch('/api/auth/oauth2/consent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ accept, consent_code: consentCode }),
-    });
-
-    if (!res.ok) {
-      error = $i18n.t('oauth.consent.error');
-      isSubmitting = false;
-      return;
-    }
-
-    const data = await res.json();
-    if (data?.redirectURI) {
-      // Full navigation back to the client's callback (external origin).
-      window.location.href = data.redirectURI;
-      return;
-    }
-
-    error = $i18n.t('oauth.consent.error');
-    isSubmitting = false;
-  } catch {
+    const consent = await api.oauth.submitConsent(consentCode, isAccepted);
+    // Full navigation: the callback belongs to the client's origin.
+    window.location.href = consent.redirectURI;
+  } catch (err) {
+    logger.warn({ err }, 'Failed to submit the OAuth consent');
     error = $i18n.t('oauth.consent.error');
     isSubmitting = false;
   }

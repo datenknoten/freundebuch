@@ -1,11 +1,12 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import type { RelationshipCreateData } from '$lib/api/friend-details.js';
+import { getAppContext } from '$lib/app-context.js';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormTextarea from '$lib/components/ui/FormTextarea.svelte';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { formClasses } from '$lib/components/ui/styles.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { friends } from '$lib/stores/friends';
 import type {
   FriendSearchResultResponse,
   RelationshipTypeId,
@@ -15,6 +16,7 @@ import FriendSearchInput from '../FriendSearchInput.svelte';
 import RelationshipTypeInput from '../RelationshipTypeInput.svelte';
 
 const i18n = createI18n();
+const friends = getAppContext().stores.friends;
 
 interface Props {
   /** Friend ID (used to exclude self from search) */
@@ -73,19 +75,15 @@ function clearSelectedFriend() {
   selectedFriend = null;
 }
 
-export function getData(): {
-  related_friend_id: string;
-  relationship_type_id: RelationshipTypeId;
-  notes?: string;
-} {
+export function getData() {
   if (selectedFriend === null) {
     throw new Error('getData() called without a selected friend; guard with isValid() first');
   }
   return {
-    related_friend_id: selectedFriend.id,
-    relationship_type_id: relationshipTypeId,
+    relatedFriendId: selectedFriend.id,
+    relationshipTypeId,
     notes: notes.trim() || undefined,
-  };
+  } satisfies RelationshipCreateData;
 }
 
 export function isValid(): boolean {
@@ -105,7 +103,7 @@ export function isValid(): boolean {
 
   <!-- Friend Selection -->
   <div class="space-y-2">
-    <span class={formClasses.label}>
+    <span class={FORM_CLASSES.label}>
       {$i18n.t('relationshipSection.relatedFriend')} <span class="text-red-500">*</span>
     </span>
 
@@ -122,7 +120,7 @@ export function isValid(): boolean {
 
   <!-- Relationship Type -->
   <div class="space-y-2">
-    <span class={formClasses.label}>
+    <span class={FORM_CLASSES.label}>
       {$i18n.t('relationshipSection.relationshipType')} <span class="text-red-500">*</span>
     </span>
 

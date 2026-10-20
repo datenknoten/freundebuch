@@ -1,148 +1,140 @@
+import { createRootLogger } from '@datenknoten/kit/logger';
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { EncounterListItemResponse } from '$shared';
+import { ApiClient } from '../api/api-client.js';
+import { ApiError } from '../api/api-error.js';
+import { EncountersApi } from '../api/encounters.js';
+import { anEncounter, anEncounterListItem } from '../test/fixtures.js';
+import { EncountersStore } from './encounters.js';
 
-const h = vi.hoisted(() => {
-  class ApiError extends Error {
-    statusCode: number;
-    constructor(statusCode: number, message: string) {
-      super(message);
-      this.name = 'ApiError';
-      this.statusCode = statusCode;
-    }
-  }
-  return {
-    ApiError,
-    api: {
-      listEncounters: vi.fn(),
-      getEncounter: vi.fn(),
-      createEncounter: vi.fn(),
-      updateEncounter: vi.fn(),
-      deleteEncounter: vi.fn(),
-    },
-  };
-});
+async function stayUnauthenticated() {
+  return false;
+}
 
-vi.mock('$shared', () => ({}));
-vi.mock('../api/encounters.js', () => h.api);
-vi.mock('../api/auth.js', () => ({ ApiError: h.ApiError }));
+function pageOf(items: EncounterListItemResponse[], totalCount = items.length) {
+  return { data: items, pagination: { page: 1, pageSize: 20, totalCount, totalPages: 1 } };
+}
 
-import { encounters, encountersList } from './encounters.js';
+function setup() {
+  const encountersApi = new EncountersApi({
+    client: new ApiClient({
+      baseUrl: '',
+      logger: createRootLogger({ LOG_LEVEL: 'silent' }),
+      onUnauthorized: stayUnauthenticated,
+    }),
+  });
+  const store = new EncountersStore({ encountersApi });
+  return { encountersApi, store };
+}
 
-const fullEncounter = (id: string, date: string, friendIds: string[] = []) => ({
-  id,
-  title: `Encounter ${id}`,
-  encounterType: 'in_person',
-  encounterDate: date,
-  locationText: null,
-  friends: friendIds.map((fid) => ({ id: fid })),
-  createdAt: '2026-01-01T00:00:00.000Z',
-});
+async function setupLoaded(items: EncounterListItemResponse[]) {
+  const { encountersApi, store } = setup();
+  vi.spyOn(encountersApi, 'listEncounters').mockResolvedValue(pageOf(items));
+  await store.loadEncounters();
+  return { encountersApi, store };
+}
 
-const listItem = (id: string, date: string) => ({
-  id,
-  title: `Encounter ${id}`,
-  encounterType: 'in_person',
-  encounterDate: date,
-  locationText: null,
-  friendCount: 0,
-  friends: [],
-  createdAt: '2026-01-01T00:00:00.000Z',
-});
-
-const pageResult = (items: ReturnType<typeof listItem>[], totalCount = items.length) => ({
-  data: items,
-  pagination: { page: 1, pageSize: 20, totalCount, totalPages: 1 },
-});
-
-describe('encounters store', () => {
+describe('EncountersStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    encounters.clear();
   });
 
   afterEach(() => {
-    encounters.clear();
+    vi.restoreAllMocks();
   });
 
-  it('loadEncounters maps results, pagination, and filters', async () => {
-    h.api.listEncounters.mockResolvedValue(pageResult([listItem('e-1', '2026-02-01')], 5));
+  describe('loadEncounters', () => {
+    it('keeps the page, its pagination and the filters it was loaded with', async () => {
+      const { encountersApi, store } = setup();
+      vi.spyOn(encountersApi, 'listEncounters').mockResolvedValue(
+        pageOf([anEncounterListItem({ id: 'e-1' })], 5),
+      );
 
-    await encounters.loadEncounters({ friendId: 'f-1', search: 'coffee' });
+      await store.loadEncounters({ friendId: 'f-1', search: 'coffee' });
 
-    const state = get(encounters);
-    expect(state.encounters).toHaveLength(1);
-    expect(state.pagination.totalCount).toBe(5);
-    expect(state.filters).toMatchObject({ friendId: 'f-1', search: 'coffee' });
-  });
-
-  it('loadEncounter sets currentEncounter, clearing it on failure', async () => {
-    h.api.getEncounter.mockResolvedValue(fullEncounter('e-1', '2026-02-01'));
-    await encounters.loadEncounter('e-1');
-    expect(get(encounters).currentEncounter).toMatchObject({ id: 'e-1' });
-
-    h.api.getEncounter.mockRejectedValue(new h.ApiError(404, 'nope'));
-    await expect(encounters.loadEncounter('e-2')).rejects.toThrow();
-    expect(get(encounters).currentEncounter).toBeNull();
-  });
-
-  it('createEncounter prepends a list item and increments the total', async () => {
-    h.api.listEncounters.mockResolvedValue(pageResult([listItem('e-1', '2026-02-01')], 1));
-    await encounters.loadEncounters();
-
-    h.api.createEncounter.mockResolvedValue(fullEncounter('e-2', '2026-03-01', ['f-1', 'f-2']));
-    await encounters.createEncounter({ title: 'New' } as never);
-
-    const state = get(encounters);
-    expect(state.encounters[0]).toMatchObject({ id: 'e-2', friendCount: 2 });
-    expect(state.pagination.totalCount).toBe(2);
-  });
-
-  it('updateEncounter updates the list item and currentEncounter when it matches', async () => {
-    h.api.listEncounters.mockResolvedValue(pageResult([listItem('e-1', '2026-02-01')], 1));
-    await encounters.loadEncounters();
-    h.api.getEncounter.mockResolvedValue(fullEncounter('e-1', '2026-02-01'));
-    await encounters.loadEncounter('e-1');
-
-    h.api.updateEncounter.mockResolvedValue({
-      ...fullEncounter('e-1', '2026-02-01'),
-      title: 'Renamed',
+      const state = get(store);
+      expect(state.encounters.map((item) => item.id)).toEqual(['e-1']);
+      expect(state.pagination.totalCount).toBe(5);
+      expect(state.filters).toMatchObject({ friendId: 'f-1', search: 'coffee' });
     });
-    await encounters.updateEncounter('e-1', { title: 'Renamed' } as never);
 
-    const state = get(encounters);
-    expect(state.encounters[0]?.title).toBe('Renamed');
-    expect(state.currentEncounter?.title).toBe('Renamed');
+    it('lists the encounters newest first', async () => {
+      const { store } = await setupLoaded([
+        anEncounterListItem({ id: 'old', encounterDate: '2026-01-01' }),
+        anEncounterListItem({ id: 'new', encounterDate: '2026-03-01' }),
+      ]);
+
+      expect(get(store.list).map((item) => item.id)).toEqual(['new', 'old']);
+    });
   });
 
-  it('deleteEncounter removes the item and decrements the total (clamped at 0)', async () => {
-    h.api.listEncounters.mockResolvedValue(pageResult([listItem('e-1', '2026-02-01')], 1));
-    await encounters.loadEncounters();
+  describe('loadEncounter', () => {
+    it('drops the current encounter when loading another one fails', async () => {
+      const { encountersApi, store } = setup();
+      vi.spyOn(encountersApi, 'getEncounter')
+        .mockResolvedValueOnce(anEncounter({ id: 'e-1' }))
+        .mockRejectedValueOnce(new ApiError(404, 'Encounter not found'));
 
-    h.api.deleteEncounter.mockResolvedValue(undefined);
-    await encounters.deleteEncounter('e-1');
+      await store.loadEncounter('e-1');
+      await expect(store.loadEncounter('e-2')).rejects.toBeInstanceOf(ApiError);
 
-    const state = get(encounters);
-    expect(state.encounters).toHaveLength(0);
-    expect(state.pagination.totalCount).toBe(0);
+      expect(get(store).currentEncounter).toBeNull();
+      expect(get(store).error).toBe('Encounter not found');
+    });
   });
 
-  it('encountersList is sorted by encounterDate descending', async () => {
-    h.api.listEncounters.mockResolvedValue(
-      pageResult([listItem('old', '2026-01-01'), listItem('new', '2026-05-01')], 2),
-    );
-    await encounters.loadEncounters();
+  describe('createEncounter', () => {
+    it('prepends the encounter as a list item and counts it', async () => {
+      const { encountersApi, store } = await setupLoaded([anEncounterListItem({ id: 'e-1' })]);
+      vi.spyOn(encountersApi, 'createEncounter').mockResolvedValue(anEncounter({ id: 'e-2' }));
 
-    expect(get(encountersList).map((e) => e.id)).toEqual(['new', 'old']);
+      await store.createEncounter({ encounterDate: '2026-02-01', friendIds: ['f-1'] });
+
+      const state = get(store);
+      expect(state.encounters.map((item) => item.id)).toEqual(['e-2', 'e-1']);
+      expect(state.encounters[0]?.friendCount).toBe(1);
+      expect(state.pagination.totalCount).toBe(2);
+    });
   });
 
-  it('clearCurrentEncounter and clear reset state', async () => {
-    h.api.getEncounter.mockResolvedValue(fullEncounter('e-1', '2026-02-01'));
-    await encounters.loadEncounter('e-1');
+  describe('updateEncounter', () => {
+    it('replaces the list item and the current encounter', async () => {
+      const { encountersApi, store } = await setupLoaded([anEncounterListItem({ id: 'e-1' })]);
+      vi.spyOn(encountersApi, 'getEncounter').mockResolvedValue(anEncounter({ id: 'e-1' }));
+      await store.loadEncounter('e-1');
+      vi.spyOn(encountersApi, 'updateEncounter').mockResolvedValue(
+        anEncounter({ id: 'e-1', title: 'Renamed' }),
+      );
 
-    encounters.clearCurrentEncounter();
-    expect(get(encounters).currentEncounter).toBeNull();
+      await store.updateEncounter('e-1', { title: 'Renamed' });
 
-    encounters.clear();
-    expect(get(encounters).encounters).toHaveLength(0);
+      const state = get(store);
+      expect(state.encounters[0]?.title).toBe('Renamed');
+      expect(state.currentEncounter?.title).toBe('Renamed');
+    });
+  });
+
+  describe('deleteEncounter', () => {
+    it('removes the encounter and never lets the total drop below zero', async () => {
+      const { encountersApi, store } = await setupLoaded([anEncounterListItem({ id: 'e-1' })]);
+      vi.spyOn(encountersApi, 'deleteEncounter').mockResolvedValue(undefined);
+
+      await store.deleteEncounter('e-1');
+
+      const state = get(store);
+      expect(state.encounters).toHaveLength(0);
+      expect(state.pagination.totalCount).toBe(0);
+    });
+  });
+
+  describe('clear', () => {
+    it('resets the store to its initial state', async () => {
+      const { store } = await setupLoaded([anEncounterListItem()]);
+
+      store.clear();
+
+      expect(get(store).encounters).toHaveLength(0);
+    });
   });
 });

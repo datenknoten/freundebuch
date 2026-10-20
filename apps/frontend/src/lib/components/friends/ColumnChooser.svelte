@@ -1,7 +1,7 @@
 <script lang="ts">
 import ViewColumns from 'svelte-heros-v2/ViewColumns.svelte';
 import Button from '$lib/components/ui/Button.svelte';
-import { surfaceClasses } from '$lib/components/ui/styles.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { COLUMN_DEFINITIONS, type ColumnId, DEFAULT_COLUMNS, REQUIRED_COLUMNS } from '$shared';
 
@@ -90,7 +90,7 @@ $effect(() => {
 
   {#if isOpen}
     <div
-      class="absolute right-0 top-full mt-2 w-56 {surfaceClasses.popover} z-(--z-popover)"
+      class="absolute right-0 top-full mt-2 w-56 {SURFACE_CLASSES.popover} z-(--z-popover)"
     >
       <div class="px-3 pb-2 border-b border-gray-100">
         <div class="flex items-center justify-between">

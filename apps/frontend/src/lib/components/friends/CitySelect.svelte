@@ -1,6 +1,6 @@
 <script lang="ts">
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
-import { formClasses } from '$lib/components/ui/styles.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { CityInfoResponse } from '$shared';
 
@@ -64,7 +64,7 @@ const singleCity = $derived(cities.length === 1 ? cities[0] : undefined);
 </script>
 
 <div class="relative">
-  <label for="city-input" class={formClasses.label}>{$i18n.t('citySelect.label')}</label>
+  <label for="city-input" class={FORM_CLASSES.label}>{$i18n.t('citySelect.label')}</label>
 
   {#if freeTextMode || cities.length === 0}
     <!-- Free text input when no cities available -->
@@ -77,11 +77,11 @@ const singleCity = $derived(cities.length === 1 ? cities[0] : undefined);
       onkeydown={handleFreeTextKeydown}
       placeholder={$i18n.t('citySelect.placeholder')}
       {disabled}
-      class={formClasses.inputSm}
+      class={FORM_CLASSES.inputSm}
     />
   {:else if singleCity !== undefined}
     <!-- Auto-selected single city - show as read-only -->
-    <div class="{formClasses.inputSm} bg-gray-50 text-gray-700">
+    <div class="{FORM_CLASSES.inputSm} bg-gray-50 text-gray-700">
       {formatCityDisplay(singleCity)}
     </div>
   {:else}
@@ -91,7 +91,7 @@ const singleCity = $derived(cities.length === 1 ? cities[0] : undefined);
       {value}
       onchange={handleChange}
       {disabled}
-      class="{formClasses.inputSm} appearance-none bg-white cursor-pointer"
+      class="{FORM_CLASSES.inputSm} appearance-none bg-white cursor-pointer"
     >
       <option value="" disabled>{$i18n.t('citySelect.selectCity')}</option>
       {#each cities as city}

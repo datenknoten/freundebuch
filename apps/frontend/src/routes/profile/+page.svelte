@@ -7,14 +7,16 @@ import FingerPrint from 'svelte-heros-v2/FingerPrint.svelte';
 import LockClosed from 'svelte-heros-v2/LockClosed.svelte';
 import PaintBrush from 'svelte-heros-v2/PaintBrush.svelte';
 import User from 'svelte-heros-v2/User.svelte';
-import { listAppPasswords } from '$lib/api/app-passwords';
-import { authClient } from '$lib/auth-client';
+import { getAppContext } from '$lib/app-context.js';
 import ProfileCard from '$lib/components/ProfileCard.svelte';
 import PageShell from '$lib/components/ui/PageShell.svelte';
-import { createI18n, languageNames } from '$lib/i18n/i18n.js';
-import { birthdayFormat, currentUser } from '$lib/stores/auth';
-import { currentLanguage } from '$lib/stores/locale';
-import { notificationChannels } from '$lib/stores/notification-channels';
+import { createI18n, LANGUAGE_NAMES } from '$lib/i18n/i18n.js';
+
+const { api, authClient, logger, stores } = getAppContext();
+const birthdayFormat = stores.auth.birthdayFormat;
+const currentUser = stores.auth.currentUser;
+const currentLanguage = stores.locale.currentLanguage;
+const notificationChannels = stores.notificationChannels;
 
 const i18n = createI18n();
 
@@ -29,13 +31,14 @@ onMount(async () => {
   try {
     const [passkeyResult, appPasswords] = await Promise.all([
       authClient.passkey.listUserPasskeys(),
-      listAppPasswords(),
+      api.appPasswords.listAppPasswords(),
       notificationChannels.loadChannels(),
     ]);
     passkeyCount = (passkeyResult?.data ?? []).length;
     appPasswordCount = appPasswords.length;
-  } catch {
-    // Counts stay at 0 — cards will show "No X" status gracefully
+  } catch (err) {
+    // Counts stay at 0: the cards show their "No X" status.
+    logger.warn({ err }, 'Failed to load the profile counts');
   }
 });
 
@@ -43,7 +46,7 @@ const accountStatus = $derived($currentUser?.email ?? '');
 
 const displayStatus = $derived(
   $i18n.t('profile.hub.status.language', {
-    language: languageNames[$currentLanguage] ?? $currentLanguage,
+    language: LANGUAGE_NAMES[$currentLanguage] ?? $currentLanguage,
     format: $birthdayFormat.toUpperCase(),
   }),
 );

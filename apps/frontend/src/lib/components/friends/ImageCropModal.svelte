@@ -1,10 +1,12 @@
 <script lang="ts">
 import Cropper, { type CropArea, type OnCropCompleteEvent } from 'svelte-easy-crop';
+import { getAppContext } from '$lib/app-context.js';
 import Button from '$lib/components/ui/Button.svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 
 const i18n = createI18n();
+const logger = getAppContext().logger;
 
 interface Props {
   imageUrl: string;
@@ -89,7 +91,7 @@ async function handleConfirm() {
     const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels);
     onCrop(croppedBlob);
   } catch (error) {
-    console.error('Error cropping image:', error);
+    logger.error({ err: error }, 'Failed to crop image');
   } finally {
     isProcessing = false;
   }

@@ -1,12 +1,14 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import TabNav from '$lib/components/TabNav.svelte';
 import Button from '$lib/components/ui/Button.svelte';
-import { codeClasses } from '$lib/components/ui/styles.js';
+import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { currentUser } from '$lib/stores/auth';
 import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
+
+const currentUser = getAppContext().stores.auth.currentUser;
 
 const i18n = createI18n();
 
@@ -73,7 +75,7 @@ const claudeDesktopConfig = $derived(
   <!-- MCP Endpoint URL -->
   <AlertBanner variant="info" title={$i18n.t('profile.mcp.endpointUrl')}>
     <div class="flex items-center gap-2 mt-2">
-      <code class="flex-1 {codeClasses.inline} break-all">
+      <code class="flex-1 {CODE_CLASSES.inline} break-all">
         {mcpUrl}
       </code>
       <Button size="sm" onclick={copyUrl} class="shrink-0">
@@ -139,7 +141,7 @@ const claudeDesktopConfig = $derived(
             <li>{$i18n.t('profile.mcp.steps.claudeDesktop.step2')}</li>
             <li>{$i18n.t('profile.mcp.steps.claudeDesktop.step3')}</li>
           </ol>
-          <pre class={codeClasses.block}>{claudeDesktopConfig}</pre>
+          <pre class={CODE_CLASSES.block}>{claudeDesktopConfig}</pre>
           <p class="font-body text-xs text-gray-500">
             {$i18n.t('profile.mcp.steps.claudeDesktop.note')}
           </p>
@@ -149,7 +151,7 @@ const claudeDesktopConfig = $derived(
           <p class="font-body text-sm text-gray-700">
             {$i18n.t('profile.mcp.steps.claudeCode.intro')}
           </p>
-          <pre class={codeClasses.block}>claude mcp add freundebuch \
+          <pre class={CODE_CLASSES.block}>claude mcp add freundebuch \
   --transport http \
   --url {mcpUrl} \
   --header "Authorization: Basic &lt;base64-credentials&gt;"</pre>
@@ -163,11 +165,11 @@ const claudeDesktopConfig = $derived(
             {$i18n.t('profile.mcp.steps.other.intro')}
           </p>
           <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2 font-body text-sm">
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.transport')}:</span> <code class={codeClasses.inline}>Streamable HTTP</code></div>
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.url')}:</span> <code class="{codeClasses.inline} break-all">{mcpUrl}</code></div>
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.auth')}:</span> <code class={codeClasses.inline}>HTTP Basic Auth</code></div>
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.username')}:</span> <code class="{codeClasses.inline} break-all">{displayEmail}</code></div>
-            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.password')}:</span> <code class={codeClasses.inline}>{$i18n.t('profile.mcp.steps.other.passwordValue')}</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.transport')}:</span> <code class={CODE_CLASSES.inline}>Streamable HTTP</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.url')}:</span> <code class="{CODE_CLASSES.inline} break-all">{mcpUrl}</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.auth')}:</span> <code class={CODE_CLASSES.inline}>HTTP Basic Auth</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.username')}:</span> <code class="{CODE_CLASSES.inline} break-all">{displayEmail}</code></div>
+            <div><span class="font-semibold text-gray-700">{$i18n.t('profile.mcp.steps.other.password')}:</span> <code class={CODE_CLASSES.inline}>{$i18n.t('profile.mcp.steps.other.passwordValue')}</code></div>
           </div>
         </div>
       {/if}

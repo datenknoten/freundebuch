@@ -1,11 +1,13 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
-import { formClasses } from '$lib/components/ui/styles';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { auth } from '$lib/stores/auth';
+
+const auth = getAppContext().stores.auth;
 
 const i18n = createI18n();
 
@@ -87,8 +89,8 @@ async function handleSubmit(e: SubmitEvent) {
 	/>
 
 	<div class="flex items-start gap-2">
-		<input type="checkbox" id="terms" required class="{formClasses.checkbox} mt-1" />
-		<label for="terms" class={formClasses.checkboxLabel}>
+		<input type="checkbox" id="terms" required class="{FORM_CLASSES.checkbox} mt-1" />
+		<label for="terms" class={FORM_CLASSES.checkboxLabel}>
 			{$i18n.t('auth.register.termsAgree')}
 			<a href="/terms" class="font-semibold text-forest hover:text-forest-light">
 				{$i18n.t('auth.register.termsOfService')}

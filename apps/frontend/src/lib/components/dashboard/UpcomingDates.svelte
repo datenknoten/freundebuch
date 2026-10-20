@@ -3,8 +3,10 @@ import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
 import Button from '$lib/components/ui/Button.svelte';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
-import { chipClasses, headingClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { DateType, UpcomingDateResponse } from '$shared';
 
@@ -67,21 +69,21 @@ function formatDaysUntil(daysUntil: number): string {
 
 /**
  * Tone of the countdown chip. `amber-warm` is the palette's "needs attention
- * soon" accent and has no `chipClasses` tone of its own.
+ * soon" accent and has no `CHIP_CLASSES` tone of its own.
  */
 function getDaysUntilClass(daysUntil: number): string {
   if (daysUntil === 0) {
-    return chipClasses.forest;
+    return CHIP_CLASSES.forest;
   } else if (daysUntil <= 7) {
     return 'bg-amber-warm/30 text-forest';
   } else {
-    return chipClasses.neutral;
+    return CHIP_CLASSES.neutral;
   }
 }
 </script>
 
-<div class={surfaceClasses.page}>
-  <h2 class="{headingClasses.widget} mb-4">{$i18n.t('dashboard.upcomingDates')}</h2>
+<div class={SURFACE_CLASSES.page}>
+  <h2 class="{HEADING_CLASSES.widget} mb-4">{$i18n.t('dashboard.upcomingDates')}</h2>
 
   {#if isLoading}
     <div class="animate-pulse space-y-3">
@@ -125,7 +127,7 @@ function getDaysUntilClass(daysUntil: number): string {
               <span class="font-body font-medium text-gray-900 truncate">
                 {date.friend.displayName}
               </span>
-              <span class="{chipClasses.base} {getDaysUntilClass(date.daysUntil)}">
+              <span class="{CHIP_CLASSES.base} {getDaysUntilClass(date.daysUntil)}">
                 {formatDaysUntil(date.daysUntil)}
               </span>
             </div>

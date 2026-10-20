@@ -1,16 +1,19 @@
-import type {
-  EncounterCreateInput,
-  EncounterListResponse,
-  EncounterResponse,
-  EncounterType,
-  EncounterUpdateInput,
-  LastEncounterSummaryResponse,
+import {
+  type EncounterCreateInputSchema,
+  EncounterListResponseSchema,
+  EncounterResponseSchema,
+  type EncounterType,
+  type EncounterUpdateInputSchema,
+  LastEncounterSummaryResponseSchema,
+  SuccessResponseSchema,
 } from '$shared';
-import { ApiError, apiRequest } from './client.js';
+import type { ApiClient } from './api-client.js';
+import { ApiError } from './api-error.js';
+import { withQuery } from './with-query.js';
 
-// ============================================================================
-// Query Parameters
-// ============================================================================
+export interface EncountersApiOptions {
+  client: ApiClient;
+}
 
 export interface EncounterListParams {
   page?: number;
@@ -22,117 +25,111 @@ export interface EncounterListParams {
   type?: EncounterType;
 }
 
-function buildQueryString(params: EncounterListParams): string {
-  const searchParams = new URLSearchParams();
-
-  if (params.page !== undefined) {
-    searchParams.set('page', String(params.page));
-  }
-  if (params.pageSize !== undefined) {
-    searchParams.set('page_size', String(params.pageSize));
-  }
-  if (params.friendId) {
-    searchParams.set('friend_id', params.friendId);
-  }
-  if (params.fromDate) {
-    searchParams.set('from_date', params.fromDate);
-  }
-  if (params.toDate) {
-    searchParams.set('to_date', params.toDate);
-  }
-  if (params.search) {
-    searchParams.set('search', params.search);
-  }
-  if (params.type) {
-    searchParams.set('type', params.type);
-  }
-
-  const queryString = searchParams.toString();
-  return queryString ? `?${queryString}` : '';
+export interface EncounterCreateData {
+  title?: string;
+  encounterDate: string;
+  encounterType?: EncounterType;
+  friendIds: string[];
+  locationText?: string | null;
+  description?: string | null;
 }
 
-// ============================================================================
-// Encounter CRUD Operations
-// ============================================================================
-
-/**
- * List encounters with pagination and filtering
- */
-export async function listEncounters(
-  params: EncounterListParams = {},
-): Promise<EncounterListResponse> {
-  const queryString = buildQueryString(params);
-  return apiRequest<EncounterListResponse>(`/api/encounters${queryString}`);
+export interface EncounterUpdateData {
+  title?: string | null;
+  encounterDate?: string;
+  encounterType?: EncounterType;
+  friendIds?: string[];
+  locationText?: string | null;
+  description?: string | null;
 }
 
-/**
- * Get a single encounter by ID
- */
-export async function getEncounter(encounterId: string): Promise<EncounterResponse> {
-  return apiRequest<EncounterResponse>(`/api/encounters/${encounterId}`);
+const NOT_FOUND_STATUS = 404;
+
+/** An empty filter means "no filter", so it stays out of the query string. */
+function nonEmpty(value: string | undefined) {
+  return value === '' ? undefined : value;
 }
 
-/**
- * Create a new encounter
- */
-export async function createEncounter(input: EncounterCreateInput): Promise<EncounterResponse> {
-  return apiRequest<EncounterResponse>('/api/encounters', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+function mapEncounterCreateInput(data: EncounterCreateData) {
+  return {
+    title: data.title,
+    encounter_date: data.encounterDate,
+    encounter_type: data.encounterType,
+    friend_ids: data.friendIds,
+    location_text: data.locationText,
+    description: data.description,
+  } satisfies typeof EncounterCreateInputSchema.inferIn;
 }
 
-/**
- * Update an encounter
- */
-export async function updateEncounter(
-  encounterId: string,
-  input: EncounterUpdateInput,
-): Promise<EncounterResponse> {
-  return apiRequest<EncounterResponse>(`/api/encounters/${encounterId}`, {
-    method: 'PUT',
-    body: JSON.stringify(input),
-  });
+function mapEncounterUpdateInput(data: EncounterUpdateData) {
+  return {
+    title: data.title,
+    encounter_date: data.encounterDate,
+    encounter_type: data.encounterType,
+    friend_ids: data.friendIds,
+    location_text: data.locationText,
+    description: data.description,
+  } satisfies typeof EncounterUpdateInputSchema.inferIn;
 }
 
-/**
- * Delete an encounter
- */
-export async function deleteEncounter(encounterId: string): Promise<void> {
-  await apiRequest<{ success: boolean }>(`/api/encounters/${encounterId}`, {
-    method: 'DELETE',
-  });
-}
+export class EncountersApi {
+  private readonly client: ApiClient;
 
-// ============================================================================
-// Friend-specific Encounter Operations
-// ============================================================================
+  public constructor(options: EncountersApiOptions) {
+    this.client = options.client;
+  }
 
-/**
- * Get encounters for a specific friend
- */
-export async function getFriendEncounters(
-  friendId: string,
-  params: Omit<EncounterListParams, 'friendId'> = {},
-): Promise<EncounterListResponse> {
-  const queryString = buildQueryString({ ...params, friendId: undefined });
-  return apiRequest<EncounterListResponse>(`/api/friends/${friendId}/encounters${queryString}`);
-}
-
-/**
- * Get the most recent encounter with a specific friend
- */
-export async function getLastEncounter(
-  friendId: string,
-): Promise<LastEncounterSummaryResponse | null> {
-  try {
-    return await apiRequest<LastEncounterSummaryResponse>(
-      `/api/friends/${friendId}/encounters/last`,
+  public listEncounters(params: EncounterListParams = {}) {
+    return this.client.request(
+      EncounterListResponseSchema,
+      withQuery('/api/encounters', {
+        page: params.page,
+        page_size: params.pageSize,
+        friend_id: nonEmpty(params.friendId),
+        from_date: nonEmpty(params.fromDate),
+        to_date: nonEmpty(params.toDate),
+        search: nonEmpty(params.search),
+        type: params.type,
+      }),
     );
-  } catch (error) {
-    if (error instanceof ApiError && error.statusCode === 404) {
-      return null;
+  }
+
+  public getEncounter(encounterId: string) {
+    return this.client.request(EncounterResponseSchema, `/api/encounters/${encounterId}`);
+  }
+
+  public createEncounter(data: EncounterCreateData) {
+    return this.client.request(EncounterResponseSchema, '/api/encounters', {
+      method: 'POST',
+      body: JSON.stringify(mapEncounterCreateInput(data)),
+    });
+  }
+
+  public updateEncounter(encounterId: string, data: EncounterUpdateData) {
+    return this.client.request(EncounterResponseSchema, `/api/encounters/${encounterId}`, {
+      method: 'PUT',
+      body: JSON.stringify(mapEncounterUpdateInput(data)),
+    });
+  }
+
+  public async deleteEncounter(encounterId: string) {
+    await this.client.request(SuccessResponseSchema, `/api/encounters/${encounterId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /** The most recent encounter with the friend, or `undefined` when they never met. */
+  public async findLastEncounter(friendId: string) {
+    try {
+      return await this.client.request(
+        LastEncounterSummaryResponseSchema,
+        `/api/friends/${friendId}/encounters/last`,
+      );
+    } catch (error) {
+      if (error instanceof ApiError && error.statusCode === NOT_FOUND_STATUS) {
+        return undefined;
+      }
+      throw error;
     }
-    throw error;
   }
 }

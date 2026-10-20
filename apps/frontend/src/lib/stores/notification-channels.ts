@@ -1,80 +1,100 @@
-import { writable } from 'svelte/store';
+import { type Readable, writable } from 'svelte/store';
 import type {
-  NotificationChannelCreateInput,
+  NotificationChannelCreateInputSchema,
   NotificationChannelResponse,
-  NotificationChannelUpdateInput,
+  NotificationChannelUpdateInputSchema,
 } from '$shared';
-import * as channelsApi from '../api/notification-channels.js';
+import type { NotificationChannelsApi } from '../api/notification-channels.js';
 import { storeAction } from './store-action.js';
 
-interface NotificationChannelsState {
+export interface NotificationChannelsStoreOptions {
+  notificationChannelsApi: NotificationChannelsApi;
+}
+
+export interface NotificationChannelsState {
   channels: NotificationChannelResponse[];
   isLoading: boolean;
   error: string | null;
 }
 
-const initialState: NotificationChannelsState = {
+const INITIAL_STATE: NotificationChannelsState = {
   channels: [],
   isLoading: false,
   error: null,
 };
 
-function createNotificationChannelsStore() {
-  const { subscribe, set, update } = writable<NotificationChannelsState>(initialState);
-
+function replaceChannel(state: NotificationChannelsState, updated: NotificationChannelResponse) {
   return {
-    subscribe,
-
-    loadChannels: () =>
-      storeAction(
-        update,
-        () => channelsApi.listChannels(),
-        (_state, channels) => ({ channels }),
-        'Failed to load notification channels',
-      ),
-
-    createChannel: (input: NotificationChannelCreateInput) =>
-      storeAction(
-        update,
-        () => channelsApi.createChannel(input),
-        (state, channel) => ({ channels: [...state.channels, channel] }),
-        'Failed to create notification channel',
-      ),
-
-    updateChannel: (channelId: string, input: NotificationChannelUpdateInput) =>
-      storeAction(
-        update,
-        () => channelsApi.updateChannel(channelId, input),
-        (state, updatedChannel) => ({
-          channels: state.channels.map((ch) => (ch.externalId === channelId ? updatedChannel : ch)),
-        }),
-        'Failed to update notification channel',
-      ),
-
-    deleteChannel: (channelId: string) =>
-      storeAction(
-        update,
-        () => channelsApi.deleteChannel(channelId),
-        (state) => ({
-          channels: state.channels.filter((ch) => ch.externalId !== channelId),
-        }),
-        'Failed to delete notification channel',
-      ),
-
-    toggleChannel: (channelId: string, isEnabled: boolean) =>
-      storeAction(
-        update,
-        () => channelsApi.toggleChannel(channelId, isEnabled),
-        (state, updatedChannel) => ({
-          channels: state.channels.map((ch) => (ch.externalId === channelId ? updatedChannel : ch)),
-        }),
-        'Failed to toggle notification channel',
-      ),
-
-    clear: () => {
-      set(initialState);
-    },
+    channels: state.channels.map((channel) =>
+      channel.externalId === updated.externalId ? updated : channel,
+    ),
   };
 }
 
-export const notificationChannels = createNotificationChannelsStore();
+function withoutChannel(state: NotificationChannelsState, channelId: string) {
+  return { channels: state.channels.filter((channel) => channel.externalId !== channelId) };
+}
+
+/** A failed action stores its message in `error` and rethrows. */
+export class NotificationChannelsStore {
+  public readonly subscribe: Readable<NotificationChannelsState>['subscribe'];
+  private readonly state = writable(INITIAL_STATE);
+  private readonly notificationChannelsApi: NotificationChannelsApi;
+
+  public constructor(options: NotificationChannelsStoreOptions) {
+    this.notificationChannelsApi = options.notificationChannelsApi;
+    this.subscribe = this.state.subscribe;
+  }
+
+  public loadChannels() {
+    return storeAction(
+      this.state.update,
+      () => this.notificationChannelsApi.listChannels(),
+      (_state, channels) => ({ channels }),
+      'Failed to load notification channels',
+    );
+  }
+
+  public createChannel(input: typeof NotificationChannelCreateInputSchema.inferIn) {
+    return storeAction(
+      this.state.update,
+      () => this.notificationChannelsApi.createChannel(input),
+      (state, channel) => ({ channels: [...state.channels, channel] }),
+      'Failed to create notification channel',
+    );
+  }
+
+  public updateChannel(
+    channelId: string,
+    input: typeof NotificationChannelUpdateInputSchema.inferIn,
+  ) {
+    return storeAction(
+      this.state.update,
+      () => this.notificationChannelsApi.updateChannel(channelId, input),
+      replaceChannel,
+      'Failed to update notification channel',
+    );
+  }
+
+  public deleteChannel(channelId: string) {
+    return storeAction(
+      this.state.update,
+      () => this.notificationChannelsApi.deleteChannel(channelId),
+      (state) => withoutChannel(state, channelId),
+      'Failed to delete notification channel',
+    );
+  }
+
+  public toggleChannel(channelId: string, isEnabled: boolean) {
+    return storeAction(
+      this.state.update,
+      () => this.notificationChannelsApi.toggleChannel(channelId, isEnabled),
+      replaceChannel,
+      'Failed to toggle notification channel',
+    );
+  }
+
+  public clear() {
+    this.state.set(INITIAL_STATE);
+  }
+}

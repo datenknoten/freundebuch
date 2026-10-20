@@ -10,7 +10,7 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-import * as friendsApi from '$lib/api/friends';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
@@ -20,9 +20,6 @@ import { createI18n } from '$lib/i18n/i18n.js';
 
 const i18n = createI18n();
 
-import { auth, birthdayFormat, friendsPageSize, friendsTableColumns } from '$lib/stores/auth';
-import { friendList, friendListFilter, friends, isFriendsLoading } from '$lib/stores/friends';
-import { filterModeCategory, isFilterModeActive, visibleFriendIds } from '$lib/stores/ui';
 import {
   type ArrayFacetField,
   type ColumnId,
@@ -40,6 +37,21 @@ import FacetChips from '../search/FacetChips.svelte';
 import FacetDropdown from '../search/FacetDropdown.svelte';
 import ColumnChooser from './ColumnChooser.svelte';
 import FriendGrid from './FriendGrid.svelte';
+
+const { api, logger, stores } = getAppContext();
+const friends = stores.friends;
+const friendList = friends.list;
+const isFriendsLoading = friends.isLoading;
+const friendListFilter = stores.friendListFilter;
+const keyboardModes = stores.keyboardModes;
+const filterModeCategory = keyboardModes.filter.category;
+const isFilterModeActive = keyboardModes.filter.isActive;
+const visibleFriendIds = keyboardModes.friends.visibleItems;
+
+const auth = getAppContext().stores.auth;
+const birthdayFormat = auth.birthdayFormat;
+const friendsPageSize = auth.friendsPageSize;
+const friendsTableColumns = auth.friendsTableColumns;
 
 // Reference to FacetDropdown for keyboard filter control
 let facetDropdownRef = $state<FacetDropdown | null>(null);
@@ -144,21 +156,21 @@ async function performSearch() {
 
   isSearching = true;
   try {
-    const result = await friendsApi.facetedSearch({
+    const result = await api.friendSearch.facetedSearch({
       query: hasQuery ? searchQuery.trim() : undefined,
       page: searchPage,
       pageSize: currentPageSize,
       sortBy: hasQuery ? searchSortBy : sortBy,
       sortOrder: hasQuery ? searchSortOrder : sortOrder,
       filters: activeFilters,
-      includeFacets: true,
+      shouldIncludeFacets: true,
     });
     searchResults = result.data;
     searchTotal = result.pagination.totalCount;
     searchTotalPages = result.pagination.totalPages;
     facets = result.facets ?? null;
   } catch (error) {
-    console.error('Search failed:', error);
+    logger.warn({ err: error }, 'Friend list search failed');
     searchError = 'Search failed. Please try again.';
     searchResults = [];
     searchTotal = 0;
@@ -234,13 +246,13 @@ function handleClearAllFilters() {
 async function loadFacets() {
   isFacetsLoading = true;
   try {
-    const result = await friendsApi.facetedSearch({
+    const result = await api.friendSearch.facetedSearch({
       pageSize: 1,
-      includeFacets: true,
+      shouldIncludeFacets: true,
     });
     facets = result.facets ?? null;
   } catch (error) {
-    console.error('Failed to load facets:', error);
+    logger.warn({ err: error }, 'Failed to load facets');
   } finally {
     isFacetsLoading = false;
   }

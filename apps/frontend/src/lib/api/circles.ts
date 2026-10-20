@@ -1,156 +1,127 @@
-import type { CircleInput, CircleResponse, CircleSummaryResponse } from '$shared';
-import { apiRequest } from './client.js';
+import {
+  type CircleInputSchema,
+  type CircleMergeInputSchema,
+  type CircleReorderInputSchema,
+  CircleResponseSchema,
+  CircleSummaryResponseSchema,
+  MessageResponseSchema,
+  type SetFriendCirclesInputSchema,
+  SuccessResponseSchema,
+} from '$shared';
+import type { ApiClient } from './api-client.js';
 
-// ============================================================================
-// Circle CRUD Operations
-// ============================================================================
-
-/**
- * Get all circles for the authenticated user
- */
-export async function listCircles(): Promise<CircleResponse[]> {
-  return apiRequest<CircleResponse[]>('/api/circles');
+export interface CirclesApiOptions {
+  client: ApiClient;
 }
 
-/**
- * Get a single circle by ID
- */
-export async function getCircle(circleId: string): Promise<CircleResponse> {
-  return apiRequest<CircleResponse>(`/api/circles/${circleId}`);
+export interface CircleData {
+  name: string;
+  color?: string | null;
+  parentCircleId?: string | null;
 }
 
-/**
- * Create a new circle
- */
-export async function createCircle(input: CircleInput): Promise<CircleResponse> {
-  return apiRequest<CircleResponse>('/api/circles', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+export interface CircleOrderItem {
+  id: string;
+  sortOrder: number;
 }
 
-/**
- * Update a circle
- */
-export async function updateCircle(
-  circleId: string,
-  input: Partial<CircleInput>,
-): Promise<CircleResponse> {
-  return apiRequest<CircleResponse>(`/api/circles/${circleId}`, {
-    method: 'PUT',
-    body: JSON.stringify(input),
-  });
+const CircleResponseListSchema = CircleResponseSchema.array();
+const CircleSummaryResponseListSchema = CircleSummaryResponseSchema.array();
+
+function mapCircleInput(data: CircleData) {
+  return {
+    name: data.name,
+    color: data.color,
+    parent_circle_id: data.parentCircleId,
+  } satisfies typeof CircleInputSchema.inferIn;
 }
 
-/**
- * Delete a circle
- */
-export async function deleteCircle(circleId: string): Promise<void> {
-  await apiRequest<{ success: boolean }>(`/api/circles/${circleId}`, {
-    method: 'DELETE',
-  });
+function mapCircleReorderInput(order: CircleOrderItem[]) {
+  return {
+    order: order.map((item) => ({ id: item.id, sort_order: item.sortOrder })),
+  } satisfies typeof CircleReorderInputSchema.inferIn;
 }
 
-/**
- * Batch reorder circles by updating their sort_order
- */
-export async function reorderCircles(
-  order: Array<{ id: string; sort_order: number }>,
-): Promise<void> {
-  await apiRequest<{ success: boolean }>('/api/circles/reorder', {
-    method: 'PUT',
-    body: JSON.stringify({ order }),
-  });
-}
+export class CirclesApi {
+  private readonly client: ApiClient;
 
-/**
- * Merge one circle into another
- * Friends from the source circle are moved to the target, then the source is deleted
- */
-export async function mergeCircles(
-  targetCircleId: string,
-  sourceCircleId: string,
-): Promise<CircleResponse> {
-  return apiRequest<CircleResponse>(`/api/circles/${targetCircleId}/merge`, {
-    method: 'POST',
-    body: JSON.stringify({ source_circle_id: sourceCircleId }),
-  });
-}
+  public constructor(options: CirclesApiOptions) {
+    this.client = options.client;
+  }
 
-// ============================================================================
-// Friend-Circle Assignment Operations
-// ============================================================================
+  public listCircles() {
+    return this.client.request(CircleResponseListSchema, '/api/circles');
+  }
 
-/**
- * Get all circles for a specific friend
- */
-export async function getFriendCircles(friendId: string): Promise<CircleSummaryResponse[]> {
-  return apiRequest<CircleSummaryResponse[]>(`/api/friends/${friendId}/circles`);
-}
+  public getCircle(circleId: string) {
+    return this.client.request(CircleResponseSchema, `/api/circles/${circleId}`);
+  }
 
-/**
- * Set circles for a friend (replaces all existing assignments)
- */
-export async function setFriendCircles(
-  friendId: string,
-  circleIds: string[],
-): Promise<CircleSummaryResponse[]> {
-  return apiRequest<CircleSummaryResponse[]>(`/api/friends/${friendId}/circles`, {
-    method: 'PUT',
-    body: JSON.stringify({ circle_ids: circleIds }),
-  });
-}
+  public createCircle(data: CircleData) {
+    return this.client.request(CircleResponseSchema, '/api/circles', {
+      method: 'POST',
+      body: JSON.stringify(mapCircleInput(data)),
+    });
+  }
 
-/**
- * Add a friend to a single circle
- */
-export async function addFriendToCircle(
-  friendId: string,
-  circleId: string,
-): Promise<CircleSummaryResponse> {
-  return apiRequest<CircleSummaryResponse>(`/api/friends/${friendId}/circles/${circleId}`, {
-    method: 'POST',
-  });
-}
+  public updateCircle(circleId: string, data: CircleData) {
+    return this.client.request(CircleResponseSchema, `/api/circles/${circleId}`, {
+      method: 'PUT',
+      body: JSON.stringify(mapCircleInput(data)),
+    });
+  }
 
-/**
- * Remove a friend from a circle
- */
-export async function removeFriendFromCircle(friendId: string, circleId: string): Promise<void> {
-  await apiRequest<{ message: string }>(`/api/friends/${friendId}/circles/${circleId}`, {
-    method: 'DELETE',
-  });
-}
+  public async deleteCircle(circleId: string) {
+    await this.client.request(SuccessResponseSchema, `/api/circles/${circleId}`, {
+      method: 'DELETE',
+    });
+  }
 
-// ============================================================================
-// Favorites & Archive Operations
-// ============================================================================
+  public async reorderCircles(order: CircleOrderItem[]) {
+    await this.client.request(SuccessResponseSchema, '/api/circles/reorder', {
+      method: 'PUT',
+      body: JSON.stringify(mapCircleReorderInput(order)),
+    });
+  }
 
-/**
- * Toggle the favorite status of a friend
- */
-export async function toggleFavorite(friendId: string): Promise<boolean> {
-  const result = await apiRequest<{ is_favorite: boolean }>(`/api/friends/${friendId}/favorite`, {
-    method: 'POST',
-  });
-  return result.is_favorite;
-}
+  /** Moves the friends of the source circle into the target, then deletes the source. */
+  public mergeCircles(targetCircleId: string, sourceCircleId: string) {
+    const input = {
+      source_circle_id: sourceCircleId,
+    } satisfies typeof CircleMergeInputSchema.inferIn;
+    return this.client.request(CircleResponseSchema, `/api/circles/${targetCircleId}/merge`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
 
-/**
- * Archive a friend with an optional reason
- */
-export async function archiveFriend(friendId: string, reason?: string): Promise<void> {
-  await apiRequest<{ message: string }>(`/api/friends/${friendId}/archive`, {
-    method: 'POST',
-    body: JSON.stringify({ reason }),
-  });
-}
+  public getFriendCircles(friendId: string) {
+    return this.client.request(CircleSummaryResponseListSchema, `/api/friends/${friendId}/circles`);
+  }
 
-/**
- * Unarchive a friend (restore from archive)
- */
-export async function unarchiveFriend(friendId: string): Promise<void> {
-  await apiRequest<{ message: string }>(`/api/friends/${friendId}/unarchive`, {
-    method: 'POST',
-  });
+  /** Replaces every circle assignment of the friend. */
+  public setFriendCircles(friendId: string, circleIds: string[]) {
+    const input = { circle_ids: circleIds } satisfies typeof SetFriendCirclesInputSchema.inferIn;
+    return this.client.request(
+      CircleSummaryResponseListSchema,
+      `/api/friends/${friendId}/circles`,
+      { method: 'PUT', body: JSON.stringify(input) },
+    );
+  }
+
+  public addFriendToCircle(friendId: string, circleId: string) {
+    return this.client.request(
+      CircleSummaryResponseSchema,
+      `/api/friends/${friendId}/circles/${circleId}`,
+      { method: 'POST' },
+    );
+  }
+
+  public async removeFriendFromCircle(friendId: string, circleId: string) {
+    await this.client.request(
+      MessageResponseSchema,
+      `/api/friends/${friendId}/circles/${circleId}`,
+      { method: 'DELETE' },
+    );
+  }
 }

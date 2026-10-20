@@ -1,38 +1,21 @@
 import type { ComponentProps } from 'svelte';
 import { get } from 'svelte/store';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { filterModeCategory, filterModePrefix, isFilterModeActive } from '$lib/stores/ui';
 import { useLanguage } from '$lib/test/locale.js';
-import { fireEvent, render, screen, tick, waitFor, within } from '$lib/test/render.js';
+import { fireEvent, screen, tick, waitFor, within } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
 import type { FacetGroupsResponse } from '$shared';
 import FacetDropdown from './FacetDropdown.svelte';
 
-// Hoisted above the mock factory so the test body and the mocked module share
-// the same store. Hand-rolled rather than `writable`, because `vi.hoisted`
-// runs before this file's imports.
-const language = vi.hoisted(() => {
-  let value = 'en';
-  const subscribers = new Set<(v: string) => void>();
-  return {
-    subscribe(run: (v: string) => void) {
-      subscribers.add(run);
-      run(value);
-      return () => {
-        subscribers.delete(run);
-      };
-    },
-    set(next: string) {
-      value = next;
-      for (const run of subscribers) run(value);
-    },
-  };
-});
-
-vi.mock('$lib/stores/locale', () => ({ currentLanguage: language }));
+const context = createTestAppContext();
+const isFilterModeActive = context.stores.keyboardModes.filter.isActive;
+const filterModeCategory = context.stores.keyboardModes.filter.category;
+const filterModePrefix = context.stores.keyboardModes.filter.prefix;
 
 async function useCountryLanguage(lang: 'en' | 'de') {
   await useLanguage(lang);
-  language.set(lang);
+  await context.stores.locale.setLanguage(lang);
 }
 
 function someFacets(overrides: Partial<FacetGroupsResponse> = {}): FacetGroupsResponse {
@@ -77,11 +60,9 @@ const NO_FACETS: FacetGroupsResponse = {
 
 function renderDropdown(props: Partial<ComponentProps<typeof FacetDropdown>> = {}) {
   const onFilterChange = vi.fn();
-  const view = render(FacetDropdown, {
-    facets: someFacets(),
-    activeFilters: {},
-    onFilterChange,
-    ...props,
+  const view = renderWithContext(FacetDropdown, {
+    context,
+    props: { facets: someFacets(), activeFilters: {}, onFilterChange, ...props },
   });
   return { onFilterChange, component: view.component };
 }
@@ -115,9 +96,7 @@ describe('FacetDropdown', () => {
   });
 
   afterEach(() => {
-    isFilterModeActive.set(false);
-    filterModeCategory.set(null);
-    filterModePrefix.set(null);
+    context.stores.keyboardModes.reset();
     scrollIntoView.mockClear();
   });
 

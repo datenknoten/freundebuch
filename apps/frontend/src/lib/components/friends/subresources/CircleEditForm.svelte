@@ -1,14 +1,16 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { getAppContext } from '$lib/app-context.js';
 import CircleChip from '$lib/components/circles/CircleChip.svelte';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { circles, circlesList } from '$lib/stores/circles';
 import type { CircleResponse, CircleSummaryResponse } from '$shared';
 
 const i18n = createI18n();
+const circles = getAppContext().stores.circles;
+const circlesList = circles.list;
 
 interface Props {
   /** Circles the owner (friend or collective) already belongs to. */
@@ -76,7 +78,7 @@ export function isValid(): boolean {
   return selectedCircleId.length > 0;
 }
 
-export function getSelectedCircle(): CircleResponse | undefined {
+export function findSelectedCircle() {
   return availableCircles.find((c) => c.id === selectedCircleId);
 }
 </script>

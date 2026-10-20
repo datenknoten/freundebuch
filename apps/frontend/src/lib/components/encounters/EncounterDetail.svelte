@@ -4,25 +4,27 @@ import DocumentText from 'svelte-heros-v2/DocumentText.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
+import { getAppContext } from '$lib/app-context.js';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
-import { headingClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import MarkdownView from '$lib/editor/MarkdownView.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { encounters } from '$lib/stores/encounters';
-import {
-  getKeyboardHint,
-  isOpenEncounterFriendModeActive,
-  openEncounterFriendModePrefix,
-  visibleEncounterFriendIds,
-} from '$lib/stores/ui';
+import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import type { EncounterResponse } from '$shared';
 import FriendAvatar from '../friends/FriendAvatar.svelte';
 import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
 import EncounterTypeIcon from './EncounterTypeIcon.svelte';
 import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display';
 
+const keyboardModes = getAppContext().stores.keyboardModes;
+const isOpenEncounterFriendModeActive = keyboardModes.encounterFriends.isActive;
+const openEncounterFriendModePrefix = keyboardModes.encounterFriends.prefix;
+const visibleEncounterFriendIds = keyboardModes.encounterFriends.visibleItems;
+
 const i18n = createI18n();
+const encounters = getAppContext().stores.encounters;
 
 interface Props {
   encounter: EncounterResponse;
@@ -79,7 +81,7 @@ async function handleDelete() {
     </div>
 
     <div class="flex-1 text-center sm:text-left">
-      <h1 class={headingClasses.entity}>{displayTitle}</h1>
+      <h1 class={HEADING_CLASSES.entity}>{displayTitle}</h1>
       <div class="mt-1 flex items-center gap-2 text-gray-600 font-body justify-center sm:justify-start">
         <EncounterTypeIcon type={encounter.encounterType} class="w-4 h-4 flex-shrink-0" />
         <span>{encounterTypeLabel($i18n.t, encounter.encounterType)}</span>
@@ -113,7 +115,7 @@ async function handleDelete() {
 
   <!-- ==================== FRIENDS SECTION ==================== -->
   <section class="space-y-2">
-    <h2 class="{surfaceClasses.sectionHeading} {headingClasses.section}">
+    <h2 class="{SURFACE_CLASSES.sectionHeading} {HEADING_CLASSES.section}">
       <Users class="w-5 h-5" strokeWidth="2" />
       {$i18n.t('encounters.detail.friends')}
       <span class="text-sm font-body font-normal text-forest/70">({encounter.friends.length})</span>
@@ -143,7 +145,7 @@ async function handleDelete() {
   <!-- ==================== NOTES SECTION ==================== -->
   {#if encounter.description}
     <section class="space-y-2">
-      <h2 class="{surfaceClasses.sectionHeading} {headingClasses.section}">
+      <h2 class="{SURFACE_CLASSES.sectionHeading} {HEADING_CLASSES.section}">
         <DocumentText class="w-5 h-5" strokeWidth="2" />
         {$i18n.t('encounters.detail.notes')}
       </h2>

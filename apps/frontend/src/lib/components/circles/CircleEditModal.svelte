@@ -1,17 +1,20 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
+import type { CircleData } from '$lib/api/circles.js';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
 import Modal from '$lib/components/ui/Modal.svelte';
-import { formClasses, headingClasses } from '$lib/components/ui/styles.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { circles, circlesList } from '$lib/stores/circles';
-import type { CircleInput, CircleResponse } from '$shared';
-import { CIRCLE_COLORS } from '$shared';
+import { CIRCLE_COLORS, type CircleResponse } from '$shared';
 import CircleChip from './CircleChip.svelte';
 
 const i18n = createI18n();
+const circles = getAppContext().stores.circles;
+const circlesList = circles.list;
 
 interface Props {
   circle?: CircleResponse | null;
@@ -103,10 +106,10 @@ async function handleSubmit(e: SubmitEvent) {
   isSubmitting = true;
 
   try {
-    const input: CircleInput = {
+    const input: CircleData = {
       name: formName.trim(),
       color: formColor,
-      parent_circle_id: formParentId,
+      parentCircleId: formParentId,
     };
 
     if (isEditing && circle) {
@@ -196,7 +199,7 @@ function handleDismiss() {
   {#if showUnsavedWarning}
     <div class="text-center">
       <ExclamationTriangle class="w-12 h-12 mx-auto text-amber-500 mb-4" strokeWidth="2" />
-      <h3 class="{headingClasses.sub} mb-2">
+      <h3 class="{HEADING_CLASSES.sub} mb-2">
         {$i18n.t('subresources.common.unsavedChangesTitle')}
       </h3>
       <p class="text-gray-600 font-body">{$i18n.t('subresources.common.unsavedChanges')}</p>
@@ -218,7 +221,7 @@ function handleDismiss() {
 
       <!-- Color -->
       <fieldset>
-        <legend class={formClasses.label}>
+        <legend class={FORM_CLASSES.label}>
           {$i18n.t('circles.form.color')}
         </legend>
         <div class="flex flex-wrap gap-2" role="radiogroup" aria-label={$i18n.t('aria.circleColor')}>
@@ -239,14 +242,14 @@ function handleDismiss() {
 
       <!-- Parent Circle -->
       <div>
-        <label for="parent-circle" class={formClasses.label}>
+        <label for="parent-circle" class={FORM_CLASSES.label}>
           {$i18n.t('circles.form.parentCircleOptional')}
         </label>
         <select
           id="parent-circle"
           bind:value={formParentId}
           disabled={isSubmitting}
-          class={formClasses.input}
+          class={FORM_CLASSES.input}
         >
           <option value={null}>{$i18n.t('circles.form.noParent')}</option>
           {#each getParentOptionsTree() as { circle: parentCircle, depth }}
@@ -260,7 +263,7 @@ function handleDismiss() {
 
       <!-- Preview -->
       <div>
-        <span class={formClasses.label}>
+        <span class={FORM_CLASSES.label}>
           {$i18n.t('circles.form.preview')}
         </span>
         <CircleChip circle={{ id: 'preview', name: formName || $i18n.t('circles.form.defaultName'), color: formColor }} size="md" />

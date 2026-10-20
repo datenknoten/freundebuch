@@ -1,8 +1,10 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
+import { getAppContext } from '$lib/app-context.js';
 import PageShell from '$lib/components/ui/PageShell.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { currentLanguage } from '$lib/stores/locale';
+
+const currentLanguage = getAppContext().stores.locale.currentLanguage;
 
 const i18n = createI18n();
 </script>

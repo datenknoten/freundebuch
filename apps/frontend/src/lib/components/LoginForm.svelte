@@ -1,13 +1,15 @@
 <script lang="ts">
 import Key from 'svelte-heros-v2/Key.svelte';
 import { goto } from '$app/navigation';
-import { authClient } from '$lib/auth-client';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { auth } from '$lib/stores/auth';
-import { signupEnabled } from '$lib/stores/instance';
+
+const { authClient, stores } = getAppContext();
+const auth = stores.auth;
+const signupEnabled = stores.instance.signupEnabled;
 
 interface Props {
   /**

@@ -2,39 +2,20 @@ import type { ComponentProps } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { itemAt } from '$lib/test/item-at.js';
 import { useLanguage } from '$lib/test/locale.js';
-import { fireEvent, render, screen, within } from '$lib/test/render.js';
+import { fireEvent, screen, within } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
 import type { ColumnId, FriendGridItem } from '$shared';
 import FriendGrid from './FriendGrid.svelte';
 
 const navigation = vi.hoisted(() => ({ goto: vi.fn() }));
 vi.mock('$app/navigation', () => navigation);
 
-// Hoisted above the mock factory so the test body and the mocked module share
-// the same store. Hand-rolled rather than `writable`, because `vi.hoisted`
-// runs before this file's imports.
-const language = vi.hoisted(() => {
-  let value = 'en';
-  const subscribers = new Set<(v: string) => void>();
-  return {
-    subscribe(run: (v: string) => void) {
-      subscribers.add(run);
-      run(value);
-      return () => {
-        subscribers.delete(run);
-      };
-    },
-    set(next: string) {
-      value = next;
-      for (const run of subscribers) run(value);
-    },
-  };
-});
-
-vi.mock('$lib/stores/locale', () => ({ currentLanguage: language }));
+const context = createTestAppContext();
 
 async function useCountryLanguage(lang: 'en' | 'de') {
   await useLanguage(lang);
-  language.set(lang);
+  await context.stores.locale.setLanguage(lang);
 }
 
 let nextId = 0;
@@ -45,14 +26,17 @@ function anItem(overrides: Partial<FriendGridItem> = {}): FriendGridItem {
 
 function renderGrid(props: Partial<ComponentProps<typeof FriendGrid>> = {}) {
   const onSortChange = vi.fn();
-  render(FriendGrid, {
-    items: [anItem()],
-    columns: ['avatar', 'displayName'] as ColumnId[],
-    sortBy: 'display_name',
-    sortOrder: 'asc',
-    birthdayFormat: 'iso',
-    onSortChange,
-    ...props,
+  renderWithContext(FriendGrid, {
+    context,
+    props: {
+      items: [anItem()],
+      columns: ['avatar', 'displayName'] as ColumnId[],
+      sortBy: 'display_name',
+      sortOrder: 'asc',
+      birthdayFormat: 'iso',
+      onSortChange,
+      ...props,
+    },
   });
   return { onSortChange };
 }
@@ -264,25 +248,31 @@ describe('FriendGrid', () => {
     });
 
     it('marks only the current sort column, and the mark follows the order', () => {
-      const { unmount } = render(FriendGrid, {
-        items: [],
-        columns,
-        sortBy: 'created_at',
-        sortOrder: 'asc',
-        birthdayFormat: 'iso',
-        onSortChange: vi.fn(),
+      const { unmount } = renderWithContext(FriendGrid, {
+        context,
+        props: {
+          items: [],
+          columns,
+          sortBy: 'created_at',
+          sortOrder: 'asc',
+          birthdayFormat: 'iso',
+          onSortChange: vi.fn(),
+        },
       });
       const ascending = within(header('Added')).getByRole('img').innerHTML;
       expect(within(header('Name')).queryByRole('img')).toBeNull();
       unmount();
 
-      render(FriendGrid, {
-        items: [],
-        columns,
-        sortBy: 'created_at',
-        sortOrder: 'desc',
-        birthdayFormat: 'iso',
-        onSortChange: vi.fn(),
+      renderWithContext(FriendGrid, {
+        context,
+        props: {
+          items: [],
+          columns,
+          sortBy: 'created_at',
+          sortOrder: 'desc',
+          birthdayFormat: 'iso',
+          onSortChange: vi.fn(),
+        },
       });
 
       expect(within(header('Added')).getByRole('img').innerHTML).not.toBe(ascending);

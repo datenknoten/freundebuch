@@ -5,6 +5,7 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import { replaceState } from '$app/navigation';
 import { page } from '$app/stores';
 import { openWithKeyboard } from '$lib/actions/auto-focus';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import CircleEditModal from '$lib/components/circles/CircleEditModal.svelte';
 import DetailActions from '$lib/components/friends/subresources/DetailActions.svelte';
@@ -12,26 +13,28 @@ import SwipeableRow from '$lib/components/friends/subresources/SwipeableRow.svel
 import KeyboardHintBadge from '$lib/components/KeyboardHintBadge.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
 import PageShell from '$lib/components/ui/PageShell.svelte';
 import SearchInput from '$lib/components/ui/SearchInput.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { chipClasses } from '$lib/components/ui/styles.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { isAuthInitialized } from '$lib/stores/auth';
-import { circles, circlesList } from '$lib/stores/circles';
-import {
-  deleteCircleModePrefix,
-  editCircleModePrefix,
-  getKeyboardHint,
-  isDeleteCircleModeActive,
-  isEditCircleModeActive,
-  visibleCircleIds,
-} from '$lib/stores/ui';
 import { DEFAULT_CIRCLE_COLOR } from '$lib/utils/circle-colors';
+import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import type { CircleResponse } from '$shared';
 
+const keyboardModes = getAppContext().stores.keyboardModes;
+const deleteCircleModePrefix = keyboardModes.deleteCircle.prefix;
+const editCircleModePrefix = keyboardModes.editCircle.prefix;
+const isDeleteCircleModeActive = keyboardModes.deleteCircle.isActive;
+const isEditCircleModeActive = keyboardModes.editCircle.isActive;
+const visibleCircleIds = keyboardModes.visibleCircleIds;
+
+const isAuthInitialized = getAppContext().stores.auth.isInitialized;
+
 const i18n = createI18n();
+const circles = getAppContext().stores.circles;
+const circlesList = circles.list;
 
 let hasLoaded = $state(false);
 let showEditModal = $state(false);
@@ -292,7 +295,7 @@ function getActualDepth(circle: CircleResponse): number {
                 <div class="flex items-center gap-2">
                   <span class="font-body font-medium text-gray-800 truncate">{circle.name}</span>
                   {#if circle.friendCount > 0}
-                    <span class="{chipClasses.base} {chipClasses.neutral}">
+                    <span class="{CHIP_CLASSES.base} {CHIP_CLASSES.neutral}">
                       {$i18n.t('circles.friend', { count: circle.friendCount })}
                     </span>
                   {/if}
@@ -347,7 +350,7 @@ function getActualDepth(circle: CircleResponse): number {
               <div class="flex items-center gap-2">
                 <span class="font-body font-medium text-gray-800 truncate">{circle.name}</span>
                 {#if circle.friendCount > 0}
-                  <span class="{chipClasses.base} {chipClasses.neutral}">
+                  <span class="{CHIP_CLASSES.base} {CHIP_CLASSES.neutral}">
                     {$i18n.t('circles.friend', { count: circle.friendCount })}
                   </span>
                 {/if}

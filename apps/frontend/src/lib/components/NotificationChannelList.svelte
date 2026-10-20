@@ -1,12 +1,12 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import Bell from 'svelte-heros-v2/Bell.svelte';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { notificationChannels } from '$lib/stores/notification-channels';
 import type {
   NotificationChannelCreateInput,
   NotificationChannelResponse,
@@ -14,6 +14,8 @@ import type {
 } from '$shared';
 import NotificationChannelCard from './NotificationChannelCard.svelte';
 import NotificationChannelForm from './NotificationChannelForm.svelte';
+
+const notificationChannels = getAppContext().stores.notificationChannels;
 
 const i18n = createI18n();
 

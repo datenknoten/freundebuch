@@ -1,63 +1,59 @@
 import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
-import { page } from '$app/stores';
-import { currentFriend } from '$lib/stores/friends';
+import { isDetailPath } from '../detail-path.js';
+import type { HandlerContext } from '../types.js';
 
-export function handleSingleKey(e: KeyboardEvent): boolean {
-  const pathname = get(page).url.pathname;
+function handleEditKey(e: KeyboardEvent, ctx: HandlerContext) {
+  const currentFriend = get(ctx.stores.currentFriend);
+  if (currentFriend !== null && isDetailPath(ctx.pathname, 'friends', true) === true) {
+    e.preventDefault();
+    void goto(`/friends/${currentFriend.id}/edit`);
+    return true;
+  }
+  if (isDetailPath(ctx.pathname, 'collectives', true) === true) {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('shortcut:edit-collective'));
+    return true;
+  }
+  if (isDetailPath(ctx.pathname, 'encounters') === true) {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('shortcut:edit-encounter'));
+    return true;
+  }
+  return false;
+}
 
+function focusSearch(e: KeyboardEvent) {
+  e.preventDefault();
+  const searchInput = document.querySelector<HTMLInputElement>('[data-search-input]');
+  if (searchInput === null) {
+    void goto('/friends');
+    return true;
+  }
+  searchInput.focus();
+  return true;
+}
+
+function dispatchPageChange(e: KeyboardEvent, ctx: HandlerContext, eventName: string) {
+  if (ctx.pathname !== '/friends') {
+    return false;
+  }
+  e.preventDefault();
+  window.dispatchEvent(new CustomEvent(eventName));
+  return true;
+}
+
+export function handleSingleKey(e: KeyboardEvent, ctx: HandlerContext) {
   switch (e.key) {
     case 'e':
-      // Edit current friend if on friend detail page
-      if (get(currentFriend) && pathname.match(/^\/friends\/[^/]+$/)) {
-        e.preventDefault();
-        goto(`/friends/${get(currentFriend)?.id}/edit`);
-        return true;
-      }
-      // Edit current collective if on collective detail page
-      if (pathname.match(/^\/collectives\/[^/]+$/)) {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent('shortcut:edit-collective'));
-        return true;
-      }
-      // Edit current encounter if on encounter detail page. Exclude
-      // `/encounters/new` so pressing `e` on the creation route doesn't get
-      // silently swallowed (matches the `isOnEncounterDetailPage` guard in
-      // KeyboardShortcuts.svelte).
-      if (pathname.match(/^\/encounters\/[^/]+$/) && !pathname.endsWith('/new')) {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent('shortcut:edit-encounter'));
-        return true;
-      }
-      break;
-
-    case '/': {
-      e.preventDefault();
-      const searchInput = document.querySelector<HTMLInputElement>('[data-search-input]');
-      if (searchInput) {
-        searchInput.focus();
-      } else {
-        goto('/friends');
-      }
-      return true;
-    }
-
+      return handleEditKey(e, ctx);
+    case '/':
+      return focusSearch(e);
     case '<':
-      if (pathname === '/friends') {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent('shortcut:previous-page'));
-        return true;
-      }
-      break;
-
+      return dispatchPageChange(e, ctx, 'shortcut:previous-page');
     case '>':
-      if (pathname === '/friends') {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent('shortcut:next-page'));
-        return true;
-      }
-      break;
+      return dispatchPageChange(e, ctx, 'shortcut:next-page');
+    default:
+      return false;
   }
-
-  return false;
 }

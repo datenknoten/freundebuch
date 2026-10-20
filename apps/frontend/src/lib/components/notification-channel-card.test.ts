@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '$lib/test/render.js';
+import { fireEvent, screen, waitFor, within } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
 import type { NotificationChannelResponse } from '$shared';
 import NotificationChannelCard from './NotificationChannelCard.svelte';
 
@@ -21,11 +22,8 @@ const channel = {
 
 function renderCard() {
   const ondelete = vi.fn();
-  render(NotificationChannelCard, {
-    channel,
-    ontoggle: vi.fn(),
-    onedit: vi.fn(),
-    ondelete,
+  renderWithContext(NotificationChannelCard, {
+    props: { channel, ontoggle: vi.fn(), onedit: vi.fn(), ondelete },
   });
   return ondelete;
 }

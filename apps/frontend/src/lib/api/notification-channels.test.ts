@@ -1,93 +1,106 @@
+import { ValidationError } from '@datenknoten/kit';
+import { createRootLogger } from '@datenknoten/kit/logger';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { itemAt } from '$lib/test/item-at.js';
+import { ApiClient } from './api-client.js';
+import { NotificationChannelsApi } from './notification-channels.js';
 
-vi.mock('$shared', () => ({}));
+const A_CHANNEL = {
+  externalId: 'ch-1',
+  platform: 'telegram',
+  isEnabled: true,
+  lookaheadDays: 7,
+  notifyTime: '09:00',
+  credentials: { chatId: '42' },
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
 
-import { jsonResponse, restoreFetch, stubFetch } from '$lib/test/fetch-mock.js';
-import {
-  createChannel,
-  deleteChannel,
-  getChannel,
-  listChannels,
-  testChannel,
-  toggleChannel,
-  updateChannel,
-} from './notification-channels.js';
+const fetchMock = vi.fn<typeof fetch>();
 
-describe('notification-channels API', () => {
-  let fetchMock: ReturnType<typeof stubFetch>;
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status });
+}
 
+async function stayUnauthenticated() {
+  return false;
+}
+
+function createClient() {
+  return new ApiClient({
+    baseUrl: '',
+    logger: createRootLogger({ LOG_LEVEL: 'silent' }),
+    onUnauthorized: stayUnauthenticated,
+  });
+}
+
+function sentRequest() {
+  return itemAt(fetchMock.mock.calls, 0);
+}
+
+function createApi() {
+  return new NotificationChannelsApi({ client: createClient() });
+}
+
+describe('NotificationChannelsApi', () => {
   beforeEach(() => {
-    fetchMock = stubFetch();
+    vi.clearAllMocks();
+    vi.stubGlobal('fetch', fetchMock);
   });
 
-  afterEach(restoreFetch);
-
-  it('listChannels returns the channel array', async () => {
-    fetchMock.mockResolvedValue(jsonResponse([{ id: 'ch-1' }]));
-
-    const result = await listChannels();
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/notification-channels',
-      expect.objectContaining({}),
-    );
-    expect(result).toEqual([{ id: 'ch-1' }]);
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  it('getChannel returns the channel', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ id: 'ch-1' }));
-    const result = await getChannel('ch-1');
-    expect(result).toEqual({ id: 'ch-1' });
+  describe('listChannels', () => {
+    it('returns the channels of the response', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse([A_CHANNEL]));
+
+      await expect(createApi().listChannels()).resolves.toEqual([A_CHANNEL]);
+    });
+
+    it('throws ValidationError when a channel names an unknown platform', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse([{ ...A_CHANNEL, platform: 'fax' }]));
+
+      await expect(createApi().listChannels()).rejects.toBeInstanceOf(ValidationError);
+    });
   });
 
-  it('createChannel POSTs the input and returns the channel', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ id: 'ch-2' }));
+  describe('createChannel', () => {
+    it('sends the input and returns the created channel', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(A_CHANNEL, 201));
+      const input = { platform: 'telegram' as const, credentials: { botToken: 't', chatId: '42' } };
 
-    const result = await createChannel({ platform: 'telegram' } as never);
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/notification-channels',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ platform: 'telegram' }) }),
-    );
-    expect(result).toEqual({ id: 'ch-2' });
+      await expect(createApi().createChannel(input)).resolves.toEqual(A_CHANNEL);
+      expect(JSON.parse(String(sentRequest()[1]?.body))).toEqual(input);
+    });
   });
 
-  it('updateChannel PUTs to the id endpoint', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ id: 'ch-1' }));
-    await updateChannel('ch-1', { isEnabled: false } as never);
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/notification-channels/ch-1',
-      expect.objectContaining({ method: 'PUT' }),
-    );
+  describe('toggleChannel', () => {
+    it('sends the enabled flag', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ ...A_CHANNEL, isEnabled: false }));
+
+      const channel = await createApi().toggleChannel('ch-1', false);
+
+      expect(JSON.parse(String(sentRequest()[1]?.body))).toEqual({ isEnabled: false });
+      expect(channel.isEnabled).toBe(false);
+    });
   });
 
-  it('deleteChannel DELETEs the id endpoint', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
-    await deleteChannel('ch-1');
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/notification-channels/ch-1',
-      expect.objectContaining({ method: 'DELETE' }),
-    );
+  describe('testChannel', () => {
+    it('throws ValidationError when the confirmation is malformed', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ sent: true }));
+
+      await expect(createApi().testChannel('ch-1')).rejects.toBeInstanceOf(ValidationError);
+    });
   });
 
-  it('testChannel POSTs to the test endpoint', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
-    await testChannel('ch-1');
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/notification-channels/ch-1/test',
-      expect.objectContaining({ method: 'POST' }),
-    );
-  });
+  describe('deleteChannel', () => {
+    it('resolves once the backend confirms the deletion', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ success: true }));
 
-  it('toggleChannel PATCHes isEnabled and unwraps data', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ id: 'ch-1', isEnabled: true }));
-
-    const result = await toggleChannel('ch-1', true);
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/notification-channels/ch-1/toggle',
-      expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ isEnabled: true }) }),
-    );
-    expect(result).toEqual({ id: 'ch-1', isEnabled: true });
+      await expect(createApi().deleteChannel('ch-1')).resolves.toBeUndefined();
+    });
   });
 });

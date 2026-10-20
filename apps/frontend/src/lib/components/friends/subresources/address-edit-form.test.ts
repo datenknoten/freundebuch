@@ -1,88 +1,83 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import type { ComponentProps } from 'svelte';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AppContext } from '$lib/app-context.js';
 import { anAddress } from '$lib/test/fixtures.js';
 import { useLanguage } from '$lib/test/locale.js';
-import { render } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
 import AddressEditForm from './AddressEditForm.svelte';
 
-// Hoisted above the mock factory so the test body and the mocked module share
-// the same store. Hand-rolled rather than `writable`, because `vi.hoisted`
-// runs before this file's imports.
-const defaultCountry = vi.hoisted(() => {
-  let value: string | null = null;
-  const subscribers = new Set<(v: string | null) => void>();
-  return {
-    subscribe(run: (v: string | null) => void) {
-      subscribers.add(run);
-      run(value);
-      return () => {
-        subscribers.delete(run);
-      };
-    },
-    set(next: string | null) {
-      value = next;
-      for (const run of subscribers) run(value);
-    },
-  };
-});
+let context: AppContext;
 
-vi.mock('$lib/stores/auth', () => ({ defaultCountry }));
+function renderForm(props: ComponentProps<typeof AddressEditForm>) {
+  return renderWithContext(AddressEditForm, { context, props });
+}
 
-// HierarchicalAddressInput preloads cities/streets for an existing address on mount.
-vi.mock('$lib/api/address-lookup', () => ({
-  getPostalCodes: vi.fn().mockResolvedValue([]),
-  getCities: vi.fn().mockResolvedValue([]),
-  getStreets: vi.fn().mockResolvedValue([]),
-  getHouseNumbers: vi.fn().mockResolvedValue([]),
-}));
+async function useDefaultCountry(country: string) {
+  vi.spyOn(context.api.auth, 'updatePreferences').mockResolvedValue({
+    preferences: { defaultCountry: country },
+  });
+  await context.stores.auth.updatePreferences({ defaultCountry: country });
+}
 
 beforeAll(async () => {
   await useLanguage('en');
 });
 
-describe('AddressEditForm', () => {
-  it('keeps the stored country code of an existing address', () => {
-    const { component } = render(AddressEditForm, {
-      initialData: anAddress({ country: 'DE', city: 'Berlin' }),
-    });
-
-    expect(component.getData().country).toBe('DE');
-    expect(component.isValid()).toBe(true);
-  });
-
-  it('drops a legacy free-text country and refuses to save until one is chosen', () => {
-    const { component } = render(AddressEditForm, {
-      initialData: anAddress({ country: 'Atlantis', city: 'Poseidonia' }),
-    });
-
-    expect(component.getData().country).toBe('');
-    expect(component.isValid()).toBe(false);
-  });
+beforeEach(() => {
+  vi.clearAllMocks();
+  context = createTestAppContext();
+  // HierarchicalAddressInput preloads cities and streets of an existing address on mount.
+  vi.spyOn(context.api.addressLookup, 'listCities').mockResolvedValue([]);
+  vi.spyOn(context.api.addressLookup, 'listStreets').mockResolvedValue([]);
+  vi.spyOn(context.api.addressLookup, 'listHouseNumbers').mockResolvedValue([]);
+  vi.spyOn(context.api.addressLookup, 'listPostalCodes').mockResolvedValue([]);
 });
 
-describe('default country', () => {
-  afterEach(() => {
-    defaultCountry.set(null);
-  });
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
-  it('preselects the default country for a new address', () => {
-    defaultCountry.set('AT');
-    const { component } = render(AddressEditForm, {});
+describe('AddressEditForm', () => {
+  describe('an existing address', () => {
+    it('keeps the stored country code', () => {
+      const { component } = renderForm({
+        initialData: anAddress({ country: 'DE', city: 'Berlin' }),
+      });
 
-    expect(component.getData().country).toBe('AT');
-  });
-
-  it('leaves the country empty for a new address without a default', () => {
-    const { component } = render(AddressEditForm, {});
-
-    expect(component.getData().country).toBe('');
-  });
-
-  it('keeps the stored country of an existing address over the default', () => {
-    defaultCountry.set('AT');
-    const { component } = render(AddressEditForm, {
-      initialData: anAddress({ country: 'DE' }),
+      expect(component.getData().country).toBe('DE');
+      expect(component.isValid()).toBe(true);
     });
 
-    expect(component.getData().country).toBe('DE');
+    it('drops a legacy free-text country and refuses to save until one is chosen', () => {
+      const { component } = renderForm({
+        initialData: anAddress({ country: 'Atlantis', city: 'Poseidonia' }),
+      });
+
+      expect(component.getData().country).toBe('');
+      expect(component.isValid()).toBe(false);
+    });
+
+    it('keeps the stored country over the default', async () => {
+      await useDefaultCountry('AT');
+      const { component } = renderForm({ initialData: anAddress({ country: 'DE' }) });
+
+      expect(component.getData().country).toBe('DE');
+    });
+  });
+
+  describe('a new address', () => {
+    it('preselects the default country', async () => {
+      await useDefaultCountry('AT');
+      const { component } = renderForm({});
+
+      expect(component.getData().country).toBe('AT');
+    });
+
+    it('leaves the country empty without a default', () => {
+      const { component } = renderForm({});
+
+      expect(component.getData().country).toBe('');
+    });
   });
 });

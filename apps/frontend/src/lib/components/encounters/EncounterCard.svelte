@@ -2,18 +2,19 @@
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
-import { surfaceClasses } from '$lib/components/ui/styles.js';
+import { getAppContext } from '$lib/app-context.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import {
-  getKeyboardHint,
-  isOpenEncounterModeActive,
-  openEncounterModePrefix,
-} from '$lib/stores/ui';
+import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import type { EncounterListItemResponse } from '$shared';
 import FriendAvatar from '../friends/FriendAvatar.svelte';
 import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
 import EncounterTypeIcon from './EncounterTypeIcon.svelte';
 import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display';
+
+const keyboardModes = getAppContext().stores.keyboardModes;
+const isOpenEncounterModeActive = keyboardModes.encounters.isActive;
+const openEncounterModePrefix = keyboardModes.encounters.prefix;
 
 const i18n = createI18n();
 
@@ -46,7 +47,7 @@ function formatDate(dateStr: string): string {
 
 <a
   {href}
-  class="block {surfaceClasses.cardInteractive} relative"
+  class="block {SURFACE_CLASSES.cardInteractive} relative"
   data-shortcut={openShortcut}
   data-shortcut-label={openShortcut === undefined ? undefined : 'shortcuts.panels.openEncounter'}
 >

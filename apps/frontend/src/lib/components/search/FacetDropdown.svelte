@@ -1,18 +1,14 @@
 <script lang="ts">
 import { tick } from 'svelte';
 import Funnel from 'svelte-heros-v2/Funnel.svelte';
+import { getAppContext } from '$lib/app-context.js';
 import Button from '$lib/components/ui/Button.svelte';
+import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Modal from '$lib/components/ui/Modal.svelte';
-import { codeClasses, formClasses } from '$lib/components/ui/styles.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { currentLanguage } from '$lib/stores/locale';
-import {
-  FILTER_CATEGORY_LABELS,
-  filterModeCategory,
-  filterModePrefix,
-  getKeyboardHint,
-  isFilterModeActive,
-} from '$lib/stores/ui';
+import { FILTER_CATEGORY_LABELS } from '$lib/shortcuts/config.js';
+import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import {
   type ArrayFacetField,
   type CircleFacetValueResponse,
@@ -22,6 +18,13 @@ import {
   isArrayFacetField,
 } from '$shared';
 import CircleChip from '../circles/CircleChip.svelte';
+
+const keyboardModes = getAppContext().stores.keyboardModes;
+const filterModeCategory = keyboardModes.filter.category;
+const filterModePrefix = keyboardModes.filter.prefix;
+const isFilterModeActive = keyboardModes.filter.isActive;
+
+const currentLanguage = getAppContext().stores.locale.currentLanguage;
 
 const i18n = createI18n();
 
@@ -269,13 +272,13 @@ $effect(() => {
                       class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                     >
                       {#if isKeyboardCategory}
-                        <kbd class="{codeClasses.kbd} min-w-5 text-center">{getKeyboardHint(i)}</kbd>
+                        <kbd class="{CODE_CLASSES.kbd} min-w-5 text-center">{getKeyboardHint(i)}</kbd>
                       {/if}
                       <input
                         type="checkbox"
                         checked={isFilterActive(group.field, facet.value)}
                         onchange={() => toggleFilter(group.field, facet.value)}
-                        class={formClasses.checkbox}
+                        class={FORM_CLASSES.checkbox}
                       />
                       <span class="flex-1 truncate">{group.field === 'country' ? countryDisplayName(facet.value, $currentLanguage) : facet.value}</span>
                       <span class="text-xs text-gray-400">{facet.count}</span>
@@ -303,13 +306,13 @@ $effect(() => {
                       class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                     >
                       {#if isKeyboardCategory}
-                        <kbd class="{codeClasses.kbd} min-w-5 text-center">{getKeyboardHint(i)}</kbd>
+                        <kbd class="{CODE_CLASSES.kbd} min-w-5 text-center">{getKeyboardHint(i)}</kbd>
                       {/if}
                       <input
                         type="checkbox"
                         checked={isFilterActive(group.field, facet.value)}
                         onchange={() => toggleFilter(group.field, facet.value)}
-                        class={formClasses.checkbox}
+                        class={FORM_CLASSES.checkbox}
                       />
                       <span class="flex-1 truncate">{group.field === 'country' ? countryDisplayName(facet.value, $currentLanguage) : facet.value}</span>
                       <span class="text-xs text-gray-400">{facet.count}</span>
@@ -335,13 +338,13 @@ $effect(() => {
                     class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                   >
                     {#if isKeyboardCategory}
-                      <kbd class="{codeClasses.kbd} min-w-5 text-center">{getKeyboardHint(i)}</kbd>
+                      <kbd class="{CODE_CLASSES.kbd} min-w-5 text-center">{getKeyboardHint(i)}</kbd>
                     {/if}
                     <input
                       type="checkbox"
                       checked={isFilterActive(group.field, facet.value)}
                       onchange={() => toggleFilter(group.field, facet.value)}
-                      class={formClasses.checkbox}
+                      class={FORM_CLASSES.checkbox}
                     />
                     <span class="flex-1 capitalize">{facet.value}</span>
                     <span class="text-xs text-gray-400">{facet.count}</span>
@@ -365,13 +368,13 @@ $effect(() => {
                 class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
               >
                 {#if isKeyboardCategory}
-                  <kbd class="{codeClasses.kbd} min-w-5 text-center">1</kbd>
+                  <kbd class="{CODE_CLASSES.kbd} min-w-5 text-center">1</kbd>
                 {/if}
                 <input
                   type="checkbox"
                   checked={isFilterActive('circles', 'no-circle')}
                   onchange={() => toggleFilter('circles', 'no-circle')}
-                  class={formClasses.checkbox}
+                  class={FORM_CLASSES.checkbox}
                 />
                 <span class="flex-1 italic text-gray-500">No Circle</span>
               </label>
@@ -380,13 +383,13 @@ $effect(() => {
                   class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded text-sm"
                 >
                   {#if isKeyboardCategory}
-                    <kbd class="{codeClasses.kbd} min-w-5 text-center">{getKeyboardHint(i + 1)}</kbd>
+                    <kbd class="{CODE_CLASSES.kbd} min-w-5 text-center">{getKeyboardHint(i + 1)}</kbd>
                   {/if}
                   <input
                     type="checkbox"
                     checked={isFilterActive('circles', circle.value)}
                     onchange={() => toggleFilter('circles', circle.value)}
-                    class={formClasses.checkbox}
+                    class={FORM_CLASSES.checkbox}
                   />
                   <CircleChip
                     circle={{ id: circle.value, name: circle.label, color: circle.color }}
@@ -426,7 +429,7 @@ $effect(() => {
                       type="checkbox"
                       checked={isFilterActive(group.field, facet.value)}
                       onchange={() => toggleFilter(group.field, facet.value)}
-                      class={formClasses.checkbox}
+                      class={FORM_CLASSES.checkbox}
                     />
                     <span class="flex-1 truncate">{group.field === 'country' ? countryDisplayName(facet.value, $currentLanguage) : facet.value}</span>
                     <span class="text-xs text-gray-400">{facet.count}</span>
@@ -457,7 +460,7 @@ $effect(() => {
                       type="checkbox"
                       checked={isFilterActive(group.field, facet.value)}
                       onchange={() => toggleFilter(group.field, facet.value)}
-                      class={formClasses.checkbox}
+                      class={FORM_CLASSES.checkbox}
                     />
                     <span class="flex-1 truncate">{group.field === 'country' ? countryDisplayName(facet.value, $currentLanguage) : facet.value}</span>
                     <span class="text-xs text-gray-400">{facet.count}</span>
@@ -486,7 +489,7 @@ $effect(() => {
                     type="checkbox"
                     checked={isFilterActive(group.field, facet.value)}
                     onchange={() => toggleFilter(group.field, facet.value)}
-                    class={formClasses.checkbox}
+                    class={FORM_CLASSES.checkbox}
                   />
                   <span class="flex-1 capitalize">{facet.value}</span>
                   <span class="text-xs text-gray-400">{facet.count}</span>
@@ -513,7 +516,7 @@ $effect(() => {
                 type="checkbox"
                 checked={isFilterActive('circles', 'no-circle')}
                 onchange={() => toggleFilter('circles', 'no-circle')}
-                class={formClasses.checkbox}
+                class={FORM_CLASSES.checkbox}
               />
               <span class="flex-1 italic text-gray-500">No Circle</span>
             </label>
@@ -526,7 +529,7 @@ $effect(() => {
                   type="checkbox"
                   checked={isFilterActive('circles', circle.value)}
                   onchange={() => toggleFilter('circles', circle.value)}
-                  class={formClasses.checkbox}
+                  class={FORM_CLASSES.checkbox}
                 />
                 <CircleChip
                   circle={{ id: circle.value, name: circle.label, color: circle.color }}

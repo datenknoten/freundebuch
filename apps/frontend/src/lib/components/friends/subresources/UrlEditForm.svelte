@@ -1,9 +1,10 @@
 <script lang="ts">
+import type { UrlData } from '$lib/api/url-data.js';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import type { UrlInput, UrlResponse, UrlType } from '$shared';
+import type { UrlResponse, UrlType } from '$shared';
 
 const i18n = createI18n();
 
@@ -36,12 +37,12 @@ const urlTypeOptions = $derived([
   { value: 'other' as const, label: $i18n.t('subresources.url.types.other') },
 ]);
 
-export function getData(): UrlInput {
+export function getData() {
   return {
     url: url.trim(),
-    url_type: urlType,
+    urlType,
     label: label.trim() || undefined,
-  };
+  } satisfies UrlData;
 }
 
 export function isValid(): boolean {

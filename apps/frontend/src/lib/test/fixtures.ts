@@ -10,11 +10,14 @@
  */
 import type {
   AddressResponse,
+  CircleResponse,
   CollectiveMemberResponse,
   CollectiveResponse,
   CollectiveRoleResponse,
   CollectiveTypeResponse,
   EmailResponse,
+  EncounterListItemResponse,
+  EncounterResponse,
   FriendDateResponse,
   FriendListItemResponse,
   FriendNoteResponse,
@@ -202,4 +205,50 @@ export function aCollective(overrides: Partial<CollectiveResponse> = {}): Collec
     deletedAt: null,
     ...overrides,
   };
+}
+
+export function aCircle(overrides: Partial<CircleResponse> = {}) {
+  const circle: CircleResponse = {
+    id: nextId('circle'),
+    name: 'Close friends',
+    color: null,
+    parentCircleId: null,
+    sortOrder: 0,
+    friendCount: 0,
+    createdAt: TIMESTAMP,
+    updatedAt: TIMESTAMP,
+    ...overrides,
+  };
+  return circle;
+}
+
+export function anEncounter(overrides: Partial<EncounterResponse> = {}) {
+  const encounter: EncounterResponse = {
+    id: nextId('encounter'),
+    title: 'Coffee',
+    encounterType: 'in_person',
+    encounterDate: '2026-02-01',
+    locationText: null,
+    description: null,
+    friends: [{ id: nextId('friend'), displayName: 'Test Friend', photoUrl: null }],
+    createdAt: TIMESTAMP,
+    updatedAt: TIMESTAMP,
+    ...overrides,
+  };
+  return encounter;
+}
+
+export function anEncounterListItem(overrides: Partial<EncounterListItemResponse> = {}) {
+  const item: EncounterListItemResponse = {
+    id: nextId('encounter'),
+    title: 'Coffee',
+    encounterType: 'in_person',
+    encounterDate: '2026-02-01',
+    locationText: null,
+    friendCount: 1,
+    friends: [{ id: nextId('friend'), displayName: 'Test Friend', photoUrl: null }],
+    createdAt: TIMESTAMP,
+    ...overrides,
+  };
+  return item;
 }

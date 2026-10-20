@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { focusRing, surfaceClasses } from '$lib/components/ui/styles.js';
+import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 
 interface Props {
   href: string;
@@ -15,7 +16,7 @@ let { href, title, description, status, icon }: Props = $props();
 
 <a
   {href}
-  class="{surfaceClasses.cardInteractive} flex items-start gap-4 {focusRing}"
+  class="{SURFACE_CLASSES.cardInteractive} flex items-start gap-4 {FOCUS_RING}"
 >
   <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest/10 text-forest">
     {@render icon()}

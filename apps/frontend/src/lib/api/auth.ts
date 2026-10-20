@@ -1,82 +1,46 @@
-import type {
-  FriendCreateInputSchema,
-  FriendResponse,
-  UserPreferences,
-  UserResponse,
+import {
+  FriendResponseSchema,
+  PreferencesResponseSchema,
+  type UserPreferences,
+  UserResponseSchema,
+  UserWithPreferencesResponseSchema,
 } from '$shared';
-import { apiRequest } from './client.js';
+import type { ApiClient } from './api-client.js';
+import { type FriendCreateData, mapFriendCreateInput } from './friend-create-data.js';
 
-export { ApiError } from './client.js';
-
-// Note: register, login, logout, refresh, forgotPassword, resetPassword
-// are now handled by the Better Auth client (authClient) directly.
-// See lib/auth-client.ts and lib/stores/auth.ts
-
-/**
- * Get the current user's profile
- */
-export async function getCurrentUser(): Promise<UserResponse> {
-  return apiRequest<UserResponse>('/api/users/me', {
-    method: 'GET',
-  });
+export interface AuthApiOptions {
+  client: ApiClient;
 }
 
-/**
- * Get the current user with preferences
- */
-export async function getUserWithPreferences(): Promise<{
-  user: UserResponse;
-  preferences: UserPreferences;
-}> {
-  return apiRequest('/api/auth/me', {
-    method: 'GET',
-  });
-}
+/** The account endpoints of the backend; sign-up, sign-in and sign-out go through Better Auth. */
+export class AuthApi {
+  private readonly client: ApiClient;
 
-/**
- * Update user preferences
- */
-export async function updatePreferences(
-  data: UserPreferences,
-): Promise<{ preferences: UserPreferences }> {
-  return apiRequest('/api/auth/preferences', {
-    method: 'PATCH',
-    body: JSON.stringify(data),
-  });
-}
+  public constructor(options: AuthApiOptions) {
+    this.client = options.client;
+  }
 
-// ============================================================================
-// Self-Profile (Onboarding)
-// ============================================================================
+  public getCurrentUser() {
+    return this.client.request(UserResponseSchema, '/api/users/me');
+  }
 
-/**
- * Get the current user's self-profile ID
- */
-export async function getSelfProfile(): Promise<{ selfProfileId: string | null }> {
-  return apiRequest('/api/users/me/self-profile', {
-    method: 'GET',
-  });
-}
+  public getUserWithPreferences() {
+    return this.client.request(UserWithPreferencesResponseSchema, '/api/auth/me');
+  }
 
-/**
- * Set an existing friend as the user's self-profile
- */
-export async function setSelfProfile(friendId: string): Promise<{ selfProfileId: string }> {
-  return apiRequest('/api/users/me/self-profile', {
-    method: 'PUT',
-    body: JSON.stringify({ friendId }),
-  });
-}
+  /** Merges the given preferences into the stored ones. */
+  public updatePreferences(preferences: UserPreferences) {
+    return this.client.request(PreferencesResponseSchema, '/api/auth/preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(preferences),
+    });
+  }
 
-/**
- * Create a new friend and set it as the user's self-profile
- * Used during onboarding
- */
-export async function createSelfProfile(
-  data: typeof FriendCreateInputSchema.inferIn,
-): Promise<FriendResponse> {
-  return apiRequest<FriendResponse>('/api/users/me/self-profile', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  /** Creates the friend that represents the user, which completes the onboarding. */
+  public createSelfProfile(data: FriendCreateData) {
+    return this.client.request(FriendResponseSchema, '/api/users/me/self-profile', {
+      method: 'POST',
+      body: JSON.stringify(mapFriendCreateInput(data)),
+    });
+  }
 }

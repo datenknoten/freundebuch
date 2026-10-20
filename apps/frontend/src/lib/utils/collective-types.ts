@@ -14,7 +14,7 @@ import Home from 'svelte-heros-v2/Home.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 
 /** Icon for a collective type; `Users` is the fallback for unknown types. */
-export function getTypeIconComponent(typeName: string): typeof Home {
+export function getTypeIconComponent(typeName: string) {
   switch (typeName.toLowerCase()) {
     case 'family':
       return Home;
@@ -30,7 +30,7 @@ export function getTypeIconComponent(typeName: string): typeof Home {
 }
 
 /** Background/foreground pair for a collective type's badge and avatar stand-in. */
-export function getTypeBadgeColor(typeName: string): string {
+export function getTypeBadgeColor(typeName: string) {
   switch (typeName.toLowerCase()) {
     case 'family':
       return 'bg-rose-100 text-rose-800';
@@ -46,7 +46,7 @@ export function getTypeBadgeColor(typeName: string): string {
 }
 
 /** Build i18n key for a collective type's display label. */
-export function collectiveTypeI18nKey(typeName: string): string {
+export function collectiveTypeI18nKey(typeName: string) {
   const slug = typeName.toLowerCase().replace(/\s+/g, '_');
   return `collectives.types.${slug}`;
 }

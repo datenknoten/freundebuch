@@ -1,17 +1,8 @@
 import { get } from 'svelte/store';
 import { page } from '$app/stores';
-import { currentFriend } from '$lib/stores/friends';
-import {
-  isDeleteCircleModeActive,
-  isEditCircleModeActive,
-  isOpenCollectiveModeActive,
-  isOpenEncounterFriendModeActive,
-  isOpenEncounterModeActive,
-  isOpenFriendLinkModeActive,
-  isOpenMemberModeActive,
-  isOpenModeActive,
-} from '$lib/stores/ui';
-import type { HandlerContext } from '../types.js';
+import { isDetailPath } from '../detail-path.js';
+import { findOpenModeConfig } from '../find-open-mode-config.js';
+import type { HandlerContext, ShortcutStores } from '../types.js';
 import { handleCircleMode } from './circle-mode.js';
 import { handleCreation } from './creation.js';
 import { handleDetailActions } from './detail-actions.js';
@@ -21,151 +12,100 @@ import { handleNavigation } from './navigation.js';
 import { handleOpenMode } from './open-mode.js';
 import { handleSingleKey } from './single-key.js';
 
-export interface KeydownHandlerCallbacks {
+export interface KeydownHandlerOptions {
   getPendingKey: () => string | null;
   setPendingKey: (key: string | null) => void;
   toggleHelp: () => void;
   clearPending: () => void;
-  showHelp: boolean;
+  isHelpOpen: boolean;
+  stores: ShortcutStores;
 }
 
-export function createKeydownHandler(callbacks: KeydownHandlerCallbacks) {
-  return function handleKeydown(e: KeyboardEvent) {
-    // --- Guards ---
-    const { suppress } = handleGuards(e, {
-      toggleHelp: callbacks.toggleHelp,
-      clearPending: callbacks.clearPending,
-      showHelp: callbacks.showHelp,
-    });
-    if (suppress) return;
+/** Runs the handler of a pending two-key sequence; `true` when it consumed the event. */
+function handlePendingSequence(e: KeyboardEvent, ctx: HandlerContext) {
+  switch (ctx.pendingKey) {
+    case 'g':
+      handleNavigation(e, ctx);
+      return true;
+    case 'n':
+      handleCreation(e, ctx);
+      return true;
+    case 'a':
+      handleDetailActions(e, ctx);
+      return true;
+    case 'o':
+      handleOpenMode(e, ctx);
+      return true;
+    case 'f':
+      handleFilterMode(e, ctx);
+      return true;
+    case 'e':
+    case 'd':
+      return handleCircleMode(e, ctx);
+    default:
+      return false;
+  }
+}
 
-    const pathname = get(page).url.pathname;
-    const pendingKey = callbacks.getPendingKey();
+function canStartDetailAction(ctx: HandlerContext) {
+  const isOnFriend =
+    get(ctx.stores.currentFriend) !== null && isDetailPath(ctx.pathname, 'friends', true) === true;
+  return isOnFriend === true || isDetailPath(ctx.pathname, 'collectives') === true;
+}
+
+/** Starts a two-key sequence; `true` when the key opened one. */
+function startSequence(e: KeyboardEvent, ctx: HandlerContext, options: KeydownHandlerOptions) {
+  const { keyboardModes } = ctx.stores;
+  const { pathname } = ctx;
+
+  if (e.key === 'g' || e.key === 'n' || (e.key === 'a' && canStartDetailAction(ctx) === true)) {
+    e.preventDefault();
+    options.setPendingKey(e.key);
+    return true;
+  }
+
+  const openModeConfig = e.key === 'o' ? findOpenModeConfig(pathname) : undefined;
+  if (openModeConfig !== undefined) {
+    e.preventDefault();
+    options.setPendingKey('o');
+    keyboardModes[openModeConfig.mode].isActive.set(true);
+    return true;
+  }
+
+  if (e.key === 'f' && pathname === '/friends') {
+    e.preventDefault();
+    options.setPendingKey('f');
+    return true;
+  }
+
+  if ((e.key === 'e' || e.key === 'd') && pathname === '/circles') {
+    e.preventDefault();
+    options.setPendingKey(e.key);
+    const circleMode = e.key === 'e' ? keyboardModes.editCircle : keyboardModes.deleteCircle;
+    circleMode.isActive.set(true);
+    return true;
+  }
+
+  return false;
+}
+
+export function createKeydownHandler(options: KeydownHandlerOptions) {
+  return function handleKeydown(e: KeyboardEvent) {
+    const { suppress } = handleGuards(e, options);
+    if (suppress === true) {
+      return;
+    }
 
     const ctx: HandlerContext = {
-      pendingKey,
-      pathname,
-      clearPending: callbacks.clearPending,
+      pendingKey: options.getPendingKey(),
+      pathname: get(page).url.pathname,
+      clearPending: options.clearPending,
+      stores: options.stores,
     };
 
-    // --- Two-key sequences ---
-    if (pendingKey === 'g') {
-      handleNavigation(e, ctx);
+    if (handlePendingSequence(e, ctx) === true || startSequence(e, ctx, options) === true) {
       return;
     }
-
-    if (pendingKey === 'n') {
-      handleCreation(e, ctx);
-      return;
-    }
-
-    if (pendingKey === 'a') {
-      handleDetailActions(e, ctx);
-      return;
-    }
-
-    if (pendingKey === 'o') {
-      handleOpenMode(e, ctx);
-      return;
-    }
-
-    if (pendingKey === 'f') {
-      handleFilterMode(e, ctx);
-      return;
-    }
-
-    if (pendingKey === 'e' || pendingKey === 'd') {
-      if (handleCircleMode(e, ctx)) return;
-    }
-
-    // --- Start two-key sequences ---
-    if (e.key === 'g') {
-      e.preventDefault();
-      callbacks.setPendingKey('g');
-      return;
-    }
-
-    if (e.key === 'n') {
-      e.preventDefault();
-      callbacks.setPendingKey('n');
-      return;
-    }
-
-    // Start add detail sequence (on friend or collective detail page)
-    if (
-      e.key === 'a' &&
-      ((get(currentFriend) && pathname.match(/^\/friends\/[^/]+$/)) ||
-        (pathname.match(/^\/collectives\/[^/]+$/) && !pathname.endsWith('/new')))
-    ) {
-      e.preventDefault();
-      callbacks.setPendingKey('a');
-      return;
-    }
-
-    // Start open mode sequences
-    if (e.key === 'o') {
-      if (pathname === '/friends') {
-        e.preventDefault();
-        callbacks.setPendingKey('o');
-        isOpenModeActive.set(true);
-        return;
-      }
-      if (pathname === '/encounters') {
-        e.preventDefault();
-        callbacks.setPendingKey('o');
-        isOpenEncounterModeActive.set(true);
-        return;
-      }
-      if (pathname === '/collectives') {
-        e.preventDefault();
-        callbacks.setPendingKey('o');
-        isOpenCollectiveModeActive.set(true);
-        return;
-      }
-      if (pathname.match(/^\/collectives\/[^/]+$/) && !pathname.endsWith('/new')) {
-        e.preventDefault();
-        callbacks.setPendingKey('o');
-        isOpenMemberModeActive.set(true);
-        return;
-      }
-      if (pathname.match(/^\/friends\/[^/]+$/) && !pathname.endsWith('/new')) {
-        e.preventDefault();
-        callbacks.setPendingKey('o');
-        isOpenFriendLinkModeActive.set(true);
-        return;
-      }
-      if (pathname.match(/^\/encounters\/[^/]+$/) && !pathname.endsWith('/new')) {
-        e.preventDefault();
-        callbacks.setPendingKey('o');
-        isOpenEncounterFriendModeActive.set(true);
-        return;
-      }
-    }
-
-    // Start filter sequence (only on friends list page)
-    if (e.key === 'f' && pathname === '/friends') {
-      e.preventDefault();
-      callbacks.setPendingKey('f');
-      return;
-    }
-
-    // Start edit circle sequence (only on circles page)
-    if (e.key === 'e' && pathname === '/circles') {
-      e.preventDefault();
-      callbacks.setPendingKey('e');
-      isEditCircleModeActive.set(true);
-      return;
-    }
-
-    // Start delete circle sequence (only on circles page)
-    if (e.key === 'd' && pathname === '/circles') {
-      e.preventDefault();
-      callbacks.setPendingKey('d');
-      isDeleteCircleModeActive.set(true);
-      return;
-    }
-
-    // --- Single key shortcuts ---
-    handleSingleKey(e);
+    handleSingleKey(e, ctx);
   };
 }

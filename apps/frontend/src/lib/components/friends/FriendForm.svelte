@@ -2,23 +2,26 @@
 import { untrack } from 'svelte';
 import Camera from 'svelte-heros-v2/Camera.svelte';
 import { goto } from '$app/navigation';
-import * as collectivesApi from '$lib/api/collectives.js';
+import type { FriendCreateData } from '$lib/api/friend-create-data.js';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
+import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { focusRing, headingClasses } from '$lib/components/ui/styles.js';
 import MarkdownEditor from '$lib/editor/MarkdownEditor.svelte';
 import MarkdownField from '$lib/editor/MarkdownField.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { friends } from '$lib/stores/friends';
-import type { FriendCreateInputSchema, FriendResponse } from '$shared';
+import type { FriendResponse } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
 import FriendAvatar from './FriendAvatar.svelte';
 import ImageCropModal from './ImageCropModal.svelte';
 
 const i18n = createI18n();
+const { api, logger, stores } = getAppContext();
+const friends = stores.friends;
 
 // The interests editor is labelled by its visible section heading.
 const interestsLabelId = $props.id();
@@ -28,7 +31,7 @@ interface Props {
   /** Onboarding mode - for creating the user's self-friend */
   isOnboarding?: boolean;
   /** Custom submit handler (used in onboarding mode) */
-  onSubmit?: (data: typeof FriendCreateInputSchema.inferIn) => Promise<void>;
+  onSubmit?: (data: FriendCreateData) => Promise<void>;
   /** Custom submit button label */
   submitLabel?: string;
   /** External loading state (used in onboarding mode) */
@@ -218,29 +221,28 @@ async function handleSubmit(e: Event) {
   internalIsLoading = true;
 
   try {
-    // Build met_info if any field is filled
+    // Met info is only sent when one of its fields is filled
     const metInfo =
       metDate || metLocation || metContext
         ? {
-            met_date: metDate || undefined,
-            met_location: metLocation || undefined,
-            met_context: metContext || undefined,
+            metDate: metDate || undefined,
+            metLocation: metLocation || undefined,
+            metContext: metContext || undefined,
           }
         : undefined;
 
-    // Build the friend data for creating/onboarding
-    // Note: Professional history is now managed as a subresource from the detail page
-    const friendData: typeof FriendCreateInputSchema.inferIn = {
-      display_name: displayName,
+    // Professional history and the other sub-resources are added on the detail page
+    const friendData: FriendCreateData = {
+      displayName,
       nickname: nickname || undefined,
-      name_prefix: namePrefix || undefined,
-      name_first: nameFirst || undefined,
-      name_middle: nameMiddle || undefined,
-      name_last: nameLast || undefined,
-      name_suffix: nameSuffix || undefined,
-      maiden_name: maidenName || undefined,
+      namePrefix: namePrefix || undefined,
+      nameFirst: nameFirst || undefined,
+      nameMiddle: nameMiddle || undefined,
+      nameLast: nameLast || undefined,
+      nameSuffix: nameSuffix || undefined,
+      maidenName: maidenName || undefined,
       interests: interests || undefined,
-      met_info: metInfo,
+      metInfo,
     };
 
     // Onboarding mode - call the custom submit handler
@@ -253,14 +255,14 @@ async function handleSubmit(e: Event) {
       // Update existing friend - core fields only
       // Subresources (phones, emails, professional history, etc.) are edited inline on the detail page
       await friends.updateFriend(friend.id, {
-        display_name: displayName,
+        displayName,
         nickname: nickname || null,
-        name_prefix: namePrefix || null,
-        name_first: nameFirst || null,
-        name_middle: nameMiddle || null,
-        name_last: nameLast || null,
-        name_suffix: nameSuffix || null,
-        maiden_name: maidenName || null,
+        namePrefix: namePrefix || null,
+        nameFirst: nameFirst || null,
+        nameMiddle: nameMiddle || null,
+        nameLast: nameLast || null,
+        nameSuffix: nameSuffix || null,
+        maidenName: maidenName || null,
         interests: interests || null,
       });
 
@@ -281,13 +283,13 @@ async function handleSubmit(e: Event) {
           let roleId = addToCollective.roleId;
           if (!roleId) {
             // Fall back to the collective type's default (first) role
-            const collective = await collectivesApi.getCollective(addToCollective.id);
+            const collective = await api.collectives.getCollective(addToCollective.id);
             roleId = collective.type.roles.toSorted((a, b) => a.sortOrder - b.sortOrder)[0]?.id;
           }
           if (roleId) {
-            await collectivesApi.addMember(addToCollective.id, {
-              friend_id: newFriend.id,
-              role_id: roleId,
+            await api.collectiveMembers.addMember(addToCollective.id, {
+              friendId: newFriend.id,
+              roleId,
             });
             // Only return to the collective once the friend is actually a member
             goto(`/collectives/${addToCollective.id}`);
@@ -297,7 +299,7 @@ async function handleSubmit(e: Event) {
           // was created but not added, so fall through to the friend detail page
         } catch (err) {
           // Friend was created; membership failed - land on the friend so nothing is lost
-          console.error('Failed to add new friend to collective:', err);
+          logger.error({ err }, 'Failed to add new friend to collective');
         }
       }
 
@@ -330,7 +332,7 @@ async function handleSubmit(e: Event) {
       type="button"
       onclick={triggerPhotoUpload}
       disabled={isLoading || isUploadingPhoto || !isEditing}
-      class="relative group rounded-full {focusRing} disabled:cursor-not-allowed"
+      class="relative group rounded-full {FOCUS_RING} disabled:cursor-not-allowed"
       title={isEditing
         ? $i18n.t('friendForm.photo.uploadTitle')
         : $i18n.t('friendForm.photo.saveFirstTitle')}
@@ -378,7 +380,7 @@ async function handleSubmit(e: Event) {
 
   <!-- Name parts -->
   <div class="space-y-4">
-    <h3 class={headingClasses.sub}>{$i18n.t('friendForm.nameHeading')}</h3>
+    <h3 class={HEADING_CLASSES.sub}>{$i18n.t('friendForm.nameHeading')}</h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <FormInput
@@ -440,7 +442,7 @@ async function handleSubmit(e: Event) {
 
   <!-- Epic 1B: Interests -->
   <div class="space-y-2">
-    <h3 id={interestsLabelId} class={headingClasses.sub}>
+    <h3 id={interestsLabelId} class={HEADING_CLASSES.sub}>
       {$i18n.t('friendDetail.sections.interestsHobbies')}
     </h3>
     <MarkdownEditor
@@ -453,7 +455,7 @@ async function handleSubmit(e: Event) {
 
   <!-- Epic 1B: How/Where Met -->
   <div class="space-y-4">
-    <h3 class={headingClasses.sub}>{$i18n.t('friendDetail.sections.howWeMet')}</h3>
+    <h3 class={HEADING_CLASSES.sub}>{$i18n.t('friendDetail.sections.howWeMet')}</h3>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <FormInput
         id="metDate"

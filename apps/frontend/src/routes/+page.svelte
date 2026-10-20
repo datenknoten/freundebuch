@@ -5,16 +5,22 @@ import ShieldCheck from 'svelte-heros-v2/ShieldCheck.svelte';
 import Sparkles from 'svelte-heros-v2/Sparkles.svelte';
 import Star from 'svelte-heros-v2/Star.svelte';
 import UserGroup from 'svelte-heros-v2/UserGroup.svelte';
-import { getDashboardData } from '$lib/api/friends';
+import { getAppContext } from '$lib/app-context.js';
 import NetworkGraph from '$lib/components/dashboard/NetworkGraph.svelte';
 import UpcomingDates from '$lib/components/dashboard/UpcomingDates.svelte';
 import Button from '$lib/components/ui/Button.svelte';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
 import PageShell from '$lib/components/ui/PageShell.svelte';
-import { headingClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
-import { signupEnabled } from '$lib/stores/instance';
 import type { NetworkGraphResponse, UpcomingDateResponse } from '$shared';
+
+const friendsApi = getAppContext().api.friends;
+const auth = getAppContext().stores.auth;
+const currentUser = auth.currentUser;
+const isAuthenticated = auth.isAuthenticated;
+const isAuthInitialized = auth.isInitialized;
+const signupEnabled = getAppContext().stores.instance.signupEnabled;
 
 const i18n = createI18n();
 
@@ -51,7 +57,7 @@ async function loadDashboard() {
   isDashboardLoading = true;
   dashboardError = null;
   try {
-    const data = await getDashboardData({ days: UPCOMING_DAYS, limit: UPCOMING_LIMIT });
+    const data = await friendsApi.getDashboard({ days: UPCOMING_DAYS, limit: UPCOMING_LIMIT });
     upcomingDates = data.upcomingDates;
     networkGraph = data.networkGraph;
   } catch (err) {
@@ -77,8 +83,8 @@ async function loadDashboard() {
 				days={UPCOMING_DAYS}
 				limit={UPCOMING_LIMIT}
 			/>
-			<div class={surfaceClasses.page}>
-				<h2 class="{headingClasses.widget} mb-4">{$i18n.t('home.quickActions')}</h2>
+			<div class={SURFACE_CLASSES.page}>
+				<h2 class="{HEADING_CLASSES.widget} mb-4">{$i18n.t('home.quickActions')}</h2>
 				<div class="space-y-3">
 					<Button href="/friends/new" block class="justify-start">
 						<Plus class="w-5 h-5" strokeWidth="2" />
@@ -103,7 +109,7 @@ async function loadDashboard() {
 				<h1 class="text-6xl font-heading text-forest mb-4">Freundebuch</h1>
 				<div class="animate-pulse">
 					<div class="h-8 bg-gray-200 rounded w-64 mx-auto mb-8"></div>
-					<div class={surfaceClasses.page}>
+					<div class={SURFACE_CLASSES.page}>
 						<div class="h-10 bg-gray-200 rounded w-48 mx-auto mb-4"></div>
 						<div class="h-6 bg-gray-200 rounded w-72 mx-auto"></div>
 					</div>
@@ -123,7 +129,7 @@ async function loadDashboard() {
 					{$i18n.t('home.tagline')}
 				</p>
 
-				<div class="{surfaceClasses.page} mb-8 text-left">
+				<div class="{SURFACE_CLASSES.page} mb-8 text-left">
 					<h2 class="text-3xl font-heading text-gray-800 mb-6 text-center">
 						{$i18n.t('home.hero.title')}
 					</h2>

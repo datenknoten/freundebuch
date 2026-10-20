@@ -3,8 +3,9 @@ import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { autoFocus } from '$lib/actions/auto-focus';
 import { createI18n } from '$lib/i18n/i18n.js';
+import { FOCUS_RING } from './focus-ring.js';
+import { FORM_CLASSES } from './form-classes.js';
 import Spinner from './Spinner.svelte';
-import { focusRing, formClasses } from './styles';
 
 interface Props {
   value: string;
@@ -67,7 +68,7 @@ function handleKeydown(event: KeyboardEvent) {
     oninput={handleInput}
     onkeydown={handleKeydown}
     {placeholder}
-    class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg {formClasses.inputFocus}"
+    class="w-full pl-12 pr-12 py-3 text-base font-body text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg {FORM_CLASSES.inputFocus}"
     autocomplete="off"
     data-search-input
     aria-label={ariaLabel}
@@ -82,7 +83,7 @@ function handleKeydown(event: KeyboardEvent) {
     <button
       type="button"
       onclick={onclear}
-      class="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors {focusRing}"
+      class="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors {FOCUS_RING}"
       aria-label={$i18n.t('aria.clearSearch')}
     >
       <XMark class="w-5 h-5" strokeWidth="2" />

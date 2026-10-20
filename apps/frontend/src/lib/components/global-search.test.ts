@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { itemAt } from '$lib/test/item-at.js';
-import { cleanup, fireEvent, render, screen, waitFor } from '$lib/test/render.js';
+import { cleanup, fireEvent, screen, waitFor } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
 import GlobalSearch from './GlobalSearch.svelte';
 
 // i18n returns the key so assertions can target stable label keys.
@@ -15,38 +17,32 @@ vi.mock('$lib/i18n/i18n.js', () => ({
 
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
-const h = vi.hoisted(() => ({
-  api: {
-    fullTextSearch: vi.fn(),
-    facetedSearch: vi.fn(),
-    getRecentSearches: vi.fn(),
-    addRecentSearch: vi.fn(),
-    deleteRecentSearch: vi.fn(),
-    clearRecentSearches: vi.fn(),
-  },
-}));
-vi.mock('$lib/api/friends.js', () => h.api);
-
-// The real store drives the component, so open/close go through it.
-import { search } from '$lib/stores/search';
+/** The real search store drives the component, so open/close go through it. */
+function renderGlobalSearch() {
+  const context = createTestAppContext();
+  const { friendSearch } = context.api;
+  vi.spyOn(friendSearch, 'listRecentSearches').mockResolvedValue(['Dori', 'Merl']);
+  const deleteRecentSearch = vi
+    .spyOn(friendSearch, 'deleteRecentSearch')
+    .mockResolvedValue(undefined);
+  renderWithContext(GlobalSearch, { props: {}, context });
+  return { search: context.stores.search, friendSearch, deleteRecentSearch };
+}
 
 beforeEach(() => {
-  h.api.getRecentSearches.mockResolvedValue(['Dori', 'Merl']);
-  h.api.deleteRecentSearch.mockResolvedValue(undefined);
-  h.api.clearRecentSearches.mockResolvedValue(undefined);
+  vi.clearAllMocks();
 });
 
 afterEach(() => {
   cleanup();
-  search.reset();
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe('GlobalSearch', () => {
   // The input must exist before the modal opens (see the store's open()), so
   // the closed modal is hidden rather than unmounted.
   it('keeps the input mounted but hidden while the search store is closed', async () => {
-    render(GlobalSearch);
+    const { search } = renderGlobalSearch();
 
     const dialog = screen.getByRole('dialog', { hidden: true });
     expect(dialog.getAttribute('aria-hidden')).toBe('true');
@@ -67,7 +63,7 @@ describe('GlobalSearch', () => {
   // focus has to happen synchronously in open() — not on mount, not a frame
   // later.
   it('focuses the input synchronously when the modal opens', () => {
-    render(GlobalSearch);
+    const { search } = renderGlobalSearch();
     const input = screen.getByPlaceholderText('globalSearch.placeholder');
 
     search.open();
@@ -76,7 +72,7 @@ describe('GlobalSearch', () => {
   });
 
   it('blurs the input when the modal closes so the keyboard goes away', () => {
-    render(GlobalSearch);
+    const { search } = renderGlobalSearch();
     const input = screen.getByPlaceholderText('globalSearch.placeholder');
     search.open();
     expect(document.activeElement).toBe(input);
@@ -87,18 +83,18 @@ describe('GlobalSearch', () => {
   });
 
   it('loads and lists the recent searches on open', async () => {
-    render(GlobalSearch);
+    const { search, friendSearch } = renderGlobalSearch();
     search.open();
 
     await waitFor(() => {
-      expect(h.api.getRecentSearches).toHaveBeenCalled();
+      expect(friendSearch.listRecentSearches).toHaveBeenCalled();
     });
     expect(await screen.findByText('Dori')).toBeTruthy();
     expect(screen.getByText('Merl')).toBeTruthy();
   });
 
   it('puts a clicked recent search into the input', async () => {
-    render(GlobalSearch);
+    const { search } = renderGlobalSearch();
     search.open();
 
     const recent = await screen.findByText('Dori');
@@ -111,7 +107,7 @@ describe('GlobalSearch', () => {
   });
 
   it('drops a recent search without leaving the modal', async () => {
-    render(GlobalSearch);
+    const { search, deleteRecentSearch } = renderGlobalSearch();
     search.open();
 
     await screen.findByText('Dori');
@@ -119,7 +115,7 @@ describe('GlobalSearch', () => {
     await fireEvent.click(removeDori);
 
     await waitFor(() => {
-      expect(h.api.deleteRecentSearch).toHaveBeenCalledWith('Dori');
+      expect(deleteRecentSearch).toHaveBeenCalledWith('Dori');
     });
     expect(screen.getByPlaceholderText('globalSearch.placeholder')).toBeTruthy();
   });

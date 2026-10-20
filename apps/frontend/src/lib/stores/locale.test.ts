@@ -1,97 +1,99 @@
+import { createRootLogger } from '@datenknoten/kit/logger';
 import { get } from 'svelte/store';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiClient } from '../api/api-client.js';
+import { AuthApi } from '../api/auth.js';
+import { createAppAuthClient } from '../auth-client.js';
+import { AuthStore } from './auth.js';
+import { LocaleStore } from './locale.js';
+import { SessionStore } from './session.js';
 
-// vi.mock factories are hoisted above module scope, so the shared mocks must be
-// created inside vi.hoisted() (which runs first) rather than as outer consts.
-const mocks = vi.hoisted(() => {
-  let authValue: { user: unknown } = { user: null };
-  const subscribers = new Set<(v: { user: unknown }) => void>();
-  const authStore = {
-    subscribe(run: (v: { user: unknown }) => void) {
-      subscribers.add(run);
-      run(authValue);
-      return () => subscribers.delete(run);
-    },
-    set(v: { user: unknown }) {
-      authValue = v;
-      for (const run of subscribers) run(authValue);
-    },
-  };
-  return {
-    initI18n: vi.fn(() => Promise.resolve()),
-    changeLanguage: vi.fn(() => Promise.resolve()),
-    getCurrentLanguage: vi.fn(() => 'en'),
-    updatePreferences: vi.fn(() => Promise.resolve()),
-    authStore,
-  };
-});
-
-vi.mock('$lib/i18n/i18n.js', () => ({
-  initI18n: mocks.initI18n,
-  changeLanguage: mocks.changeLanguage,
-  getCurrentLanguage: mocks.getCurrentLanguage,
-  supportedLanguages: ['en', 'de'],
+const h = vi.hoisted(() => ({
+  initI18n: vi.fn(async () => undefined),
+  changeLanguage: vi.fn(async () => undefined),
+  getCurrentLanguage: vi.fn(() => 'en'),
 }));
 
-vi.mock('./auth.js', () => ({
-  auth: { subscribe: mocks.authStore.subscribe, updatePreferences: mocks.updatePreferences },
-}));
+vi.mock('$lib/i18n/i18n.js', () => h);
 
-import { currentLanguage, isLocaleInitialized, locale } from './locale.js';
+async function stayUnauthenticated() {
+  return false;
+}
 
-describe('locale store', () => {
+function createLocaleStore() {
+  const logger = createRootLogger({ LOG_LEVEL: 'silent' });
+  const authApi = new AuthApi({
+    client: new ApiClient({ baseUrl: '', logger, onUnauthorized: stayUnauthenticated }),
+  });
+  const auth = new AuthStore({
+    authApi,
+    authClient: createAppAuthClient(''),
+    session: new SessionStore(),
+    logger,
+  });
+  return { locale: new LocaleStore({ auth, logger }), auth, authApi };
+}
+
+async function signIn(auth: AuthStore, authApi: AuthApi) {
+  vi.spyOn(authApi, 'getUserWithPreferences').mockResolvedValue({
+    user: { externalId: 'u-1', email: 'ada@example.com', hasCompletedOnboarding: true },
+    preferences: {},
+  });
+  await auth.initialize();
+}
+
+describe('LocaleStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getCurrentLanguage.mockReturnValue('en');
-    mocks.authStore.set({ user: null });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('initialize', () => {
-    it('initializes i18n, records the detected language, and sets <html lang>', async () => {
-      mocks.getCurrentLanguage.mockReturnValue('de');
+    it('starts i18n and records the detected language on <html lang>', async () => {
+      h.getCurrentLanguage.mockReturnValue('de');
+      const { locale } = createLocaleStore();
 
-      const detected = await locale.initialize('de');
-
-      expect(mocks.initI18n).toHaveBeenCalledWith('de');
-      expect(detected).toBe('de');
-      expect(get(currentLanguage)).toBe('de');
-      expect(get(isLocaleInitialized)).toBe(true);
+      await expect(locale.initialize('de')).resolves.toBe('de');
+      expect(h.initI18n).toHaveBeenCalledWith('de');
+      expect(get(locale.currentLanguage)).toBe('de');
+      expect(get(locale.isInitialized)).toBe(true);
       expect(document.documentElement.lang).toBe('de');
     });
   });
 
   describe('setLanguage', () => {
-    it('changes the language and updates the store', async () => {
+    it('changes the language without persisting it while signed out', async () => {
+      const { locale, authApi } = createLocaleStore();
+      const updatePreferences = vi.spyOn(authApi, 'updatePreferences');
+
       await locale.setLanguage('de');
 
-      expect(mocks.changeLanguage).toHaveBeenCalledWith('de');
-      expect(get(currentLanguage)).toBe('de');
       expect(locale.getLanguage()).toBe('de');
+      expect(updatePreferences).not.toHaveBeenCalled();
     });
 
-    it('persists the preference when authenticated', async () => {
-      mocks.authStore.set({ user: { id: 'u-1' } });
+    it('persists the language of a signed-in user', async () => {
+      const { locale, auth, authApi } = createLocaleStore();
+      await signIn(auth, authApi);
+      const updatePreferences = vi
+        .spyOn(authApi, 'updatePreferences')
+        .mockResolvedValue({ preferences: { language: 'de' } });
 
       await locale.setLanguage('de');
 
-      expect(mocks.updatePreferences).toHaveBeenCalledWith({ language: 'de' });
+      expect(updatePreferences).toHaveBeenCalledWith({ language: 'de' });
     });
 
-    it('does not persist the preference when unauthenticated', async () => {
-      mocks.authStore.set({ user: null });
-
-      await locale.setLanguage('de');
-
-      expect(mocks.updatePreferences).not.toHaveBeenCalled();
-    });
-
-    it('swallows a failure to persist the preference', async () => {
-      mocks.authStore.set({ user: { id: 'u-1' } });
-      mocks.updatePreferences.mockRejectedValueOnce(new Error('network'));
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    it('keeps the new language when persisting it fails', async () => {
+      const { locale, auth, authApi } = createLocaleStore();
+      await signIn(auth, authApi);
+      vi.spyOn(auth, 'updatePreferences').mockRejectedValue(new Error('network'));
 
       await expect(locale.setLanguage('de')).resolves.toBeUndefined();
-      expect(warn).toHaveBeenCalled();
+      expect(get(locale.currentLanguage)).toBe('de');
     });
   });
 });

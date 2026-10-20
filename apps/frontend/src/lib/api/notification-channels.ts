@@ -1,76 +1,68 @@
-import type {
-  NotificationChannelCreateInput,
-  NotificationChannelResponse,
-  NotificationChannelUpdateInput,
+import {
+  type NotificationChannelCreateInputSchema,
+  NotificationChannelResponseSchema,
+  type NotificationChannelToggleInputSchema,
+  type NotificationChannelUpdateInputSchema,
+  SuccessResponseSchema,
 } from '$shared';
-import { apiRequest } from './client.js';
+import type { ApiClient } from './api-client.js';
 
-/**
- * List all notification channels for the authenticated user
- */
-export async function listChannels(): Promise<NotificationChannelResponse[]> {
-  return apiRequest<NotificationChannelResponse[]>('/api/notification-channels');
+export interface NotificationChannelsApiOptions {
+  client: ApiClient;
 }
 
-/**
- * Get a single notification channel by ID
- */
-export async function getChannel(channelId: string): Promise<NotificationChannelResponse> {
-  return apiRequest<NotificationChannelResponse>(`/api/notification-channels/${channelId}`);
-}
+const NotificationChannelResponseListSchema = NotificationChannelResponseSchema.array();
 
-/**
- * Create a new notification channel
- */
-export async function createChannel(
-  input: NotificationChannelCreateInput,
-): Promise<NotificationChannelResponse> {
-  return apiRequest<NotificationChannelResponse>('/api/notification-channels', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
-}
+export class NotificationChannelsApi {
+  private readonly client: ApiClient;
 
-/**
- * Update an existing notification channel
- */
-export async function updateChannel(
-  channelId: string,
-  input: NotificationChannelUpdateInput,
-): Promise<NotificationChannelResponse> {
-  return apiRequest<NotificationChannelResponse>(`/api/notification-channels/${channelId}`, {
-    method: 'PUT',
-    body: JSON.stringify(input),
-  });
-}
+  public constructor(options: NotificationChannelsApiOptions) {
+    this.client = options.client;
+  }
 
-/**
- * Delete a notification channel
- */
-export async function deleteChannel(channelId: string): Promise<void> {
-  await apiRequest<{ success: boolean }>(`/api/notification-channels/${channelId}`, {
-    method: 'DELETE',
-  });
-}
+  public listChannels() {
+    return this.client.request(NotificationChannelResponseListSchema, '/api/notification-channels');
+  }
 
-/**
- * Send a test message to a notification channel
- */
-export async function testChannel(channelId: string): Promise<void> {
-  await apiRequest<{ success: boolean }>(`/api/notification-channels/${channelId}/test`, {
-    method: 'POST',
-  });
-}
+  public createChannel(input: typeof NotificationChannelCreateInputSchema.inferIn) {
+    return this.client.request(NotificationChannelResponseSchema, '/api/notification-channels', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  }
 
-/**
- * Toggle a channel's enabled/disabled state
- */
-export async function toggleChannel(
-  channelId: string,
-  isEnabled: boolean,
-): Promise<NotificationChannelResponse> {
-  return apiRequest<NotificationChannelResponse>(`/api/notification-channels/${channelId}/toggle`, {
-    method: 'PATCH',
-    body: JSON.stringify({ isEnabled }),
-  });
+  public updateChannel(
+    channelId: string,
+    input: typeof NotificationChannelUpdateInputSchema.inferIn,
+  ) {
+    return this.client.request(
+      NotificationChannelResponseSchema,
+      `/api/notification-channels/${channelId}`,
+      { method: 'PUT', body: JSON.stringify(input) },
+    );
+  }
+
+  public async deleteChannel(channelId: string) {
+    await this.client.request(SuccessResponseSchema, `/api/notification-channels/${channelId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /** Sends a test message through the channel. */
+  public async testChannel(channelId: string) {
+    await this.client.request(
+      SuccessResponseSchema,
+      `/api/notification-channels/${channelId}/test`,
+      { method: 'POST' },
+    );
+  }
+
+  public toggleChannel(channelId: string, isEnabled: boolean) {
+    const input = { isEnabled } satisfies typeof NotificationChannelToggleInputSchema.inferIn;
+    return this.client.request(
+      NotificationChannelResponseSchema,
+      `/api/notification-channels/${channelId}/toggle`,
+      { method: 'PATCH', body: JSON.stringify(input) },
+    );
+  }
 }

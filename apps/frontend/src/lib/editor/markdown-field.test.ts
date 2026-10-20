@@ -1,11 +1,11 @@
-import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { describe, expect, it } from 'vitest';
+import { renderWithContext } from '$lib/test/render-with-context.js';
 import MarkdownField from './MarkdownField.svelte';
 
 describe('MarkdownField', () => {
   it('labels the editor content via aria-labelledby', async () => {
-    const { container } = render(MarkdownField, {
+    const { container } = renderWithContext(MarkdownField, {
       props: { value: '', label: 'Notes', hint: '(optional)' },
     });
     await tick();
@@ -20,8 +20,8 @@ describe('MarkdownField', () => {
   });
 
   it('gives two instances distinct label ids', async () => {
-    const a = render(MarkdownField, { props: { value: '', label: 'A' } });
-    const b = render(MarkdownField, { props: { value: '', label: 'B' } });
+    const a = renderWithContext(MarkdownField, { props: { value: '', label: 'A' } });
+    const b = renderWithContext(MarkdownField, { props: { value: '', label: 'B' } });
     await tick();
     const idA = a.container.querySelector('.cm-content')?.getAttribute('aria-labelledby');
     const idB = b.container.querySelector('.cm-content')?.getAttribute('aria-labelledby');

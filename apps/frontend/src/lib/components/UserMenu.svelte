@@ -6,10 +6,15 @@ import Swatch from 'svelte-heros-v2/Swatch.svelte';
 import User from 'svelte-heros-v2/User.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
-import { focusRing, surfaceClasses } from '$lib/components/ui/styles.js';
+import { getAppContext } from '$lib/app-context.js';
+import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { auth, currentUser } from '$lib/stores/auth';
 import UserAvatar from './UserAvatar.svelte';
+
+const logger = getAppContext().logger;
+const auth = getAppContext().stores.auth;
+const currentUser = auth.currentUser;
 
 const i18n = createI18n();
 
@@ -30,8 +35,8 @@ async function handleLogout() {
   try {
     await auth.logout();
     goto('/auth/login');
-  } catch (error) {
-    console.error('Logout failed:', error);
+  } catch (err) {
+    logger.error({ err }, 'Logout failed');
   }
 }
 
@@ -62,7 +67,7 @@ function handleClickOutside(e: MouseEvent) {
     bind:this={buttonRef}
     type="button"
     onclick={toggle}
-    class="flex items-center gap-1.5 p-1 rounded-full hover:bg-gray-100 transition-colors {focusRing}"
+    class="flex items-center gap-1.5 p-1 rounded-full hover:bg-gray-100 transition-colors {FOCUS_RING}"
     aria-expanded={isOpen}
     aria-haspopup="menu"
     aria-label={$i18n.t('aria.userMenu')}
@@ -76,7 +81,7 @@ function handleClickOutside(e: MouseEvent) {
   {#if isOpen}
     <div
       bind:this={menuRef}
-      class="absolute right-0 mt-2 w-56 {surfaceClasses.popover} z-(--z-popover)"
+      class="absolute right-0 mt-2 w-56 {SURFACE_CLASSES.popover} z-(--z-popover)"
       role="menu"
       aria-orientation="vertical"
     >

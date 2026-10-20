@@ -1,85 +1,65 @@
-import { writable } from 'svelte/store';
+import { type Readable, writable } from 'svelte/store';
+
+type ReAuthenticationWaiter = (isReAuthenticated: boolean) => void;
 
 /**
  * Session expiry handling.
  *
- * When a previously-authenticated user's session expires server-side, the very
- * next API call comes back as a 401. Rather than letting individual pages break
- * (or silently swallow the error), the API client funnels that 401 here so the
- * app can surface a re-login dialog *in place* — preserving whatever the user
- * was doing instead of bouncing them out to the login page.
+ * When a previously authenticated user's session expires server-side, the next API call answers
+ * 401. The API client hands that 401 to `notifyUnauthorized`, which raises the re-login prompt in
+ * place, so the user keeps whatever they were doing, and parks the request until the outcome is
+ * known: a re-authentication replays it, a sign-out rejects it.
  *
- * The client also *awaits* the outcome: if the user re-authenticates, the
- * original request is replayed transparently; if they log out (or give up), the
- * request rejects as usual.
+ * The store's value is whether the prompt is shown.
  */
+export class SessionStore {
+  public readonly subscribe: Readable<boolean>['subscribe'];
+  private readonly isExpired = writable(false);
+  // Tells an expired session (prompt for re-login) from an ordinary signed-out state, such as the
+  // startup session probe, where a 401 is expected.
+  private hasSession = false;
+  private waiters: ReAuthenticationWaiter[] = [];
 
-// Lightweight snapshot of whether the user currently holds an authenticated
-// session. Maintained by the auth store; read by the API client. We keep this
-// as a module-level flag (rather than importing the auth store into the client)
-// to avoid a circular import: auth store -> api -> client.
-//
-// It lets us distinguish an *expired* session (was authenticated, now 401 ->
-// prompt re-login) from an ordinary unauthenticated state (e.g. the initial
-// session check on the login page, where a 401 is expected and harmless).
-let hasSession = false;
-
-/** Called by the auth store whenever the authenticated state changes. */
-export function setHasSession(value: boolean): void {
-  hasSession = value;
-}
-
-/**
- * True when a previously-authenticated session has expired and we want to
- * prompt the user to re-authenticate without navigating away from the current
- * page.
- */
-export const sessionExpired = writable(false);
-
-// Requests that hit a 401 park here, each waiting to learn whether the user
-// re-authenticated (true -> replay the request) or bailed out (false -> reject).
-let waiters: Array<(reAuthenticated: boolean) => void> = [];
-
-function settle(reAuthenticated: boolean): void {
-  const pending = waiters;
-  waiters = [];
-  for (const resolve of pending) {
-    resolve(reAuthenticated);
+  public constructor() {
+    this.subscribe = this.isExpired.subscribe;
   }
-}
 
-/**
- * Notify that an API request was rejected as unauthorized (401).
- *
- * Resolves with `true` once the user re-authenticates (caller should replay the
- * request) or `false` if they log out / abandon the prompt (caller should
- * reject). A 401 while unauthenticated (e.g. the startup session probe) resolves
- * immediately to `false` and never shows the prompt.
- */
-export function notifyUnauthorized(): Promise<boolean> {
-  if (!hasSession) {
-    return Promise.resolve(false);
+  /** The auth store reports every change of the signed-in state here. */
+  public setHasSession(hasSession: boolean) {
+    this.hasSession = hasSession;
   }
-  sessionExpired.set(true);
-  return new Promise<boolean>((resolve) => {
-    waiters.push(resolve);
-  });
-}
 
-/**
- * Re-authentication succeeded: dismiss the prompt and let parked requests
- * replay.
- */
-export function resolveSessionExpired(): void {
-  sessionExpired.set(false);
-  settle(true);
-}
+  /**
+   * Resolves `true` once the user signed in again, so the caller replays the request, and
+   * `false` once they signed out or when no session existed in the first place.
+   */
+  public notifyUnauthorized() {
+    if (this.hasSession === false) {
+      return Promise.resolve(false);
+    }
+    this.isExpired.set(true);
+    return new Promise<boolean>((resolve) => {
+      this.waiters.push(resolve);
+    });
+  }
 
-/**
- * The user abandoned re-authentication (e.g. logged out): dismiss the prompt and
- * let parked requests reject.
- */
-export function abandonSessionExpired(): void {
-  sessionExpired.set(false);
-  settle(false);
+  /** The user signed in again: hides the prompt and replays the parked requests. */
+  public resolveSessionExpired() {
+    this.isExpired.set(false);
+    this.settle(true);
+  }
+
+  /** The user gave up, for example by signing out: hides the prompt and rejects parked requests. */
+  public abandonSessionExpired() {
+    this.isExpired.set(false);
+    this.settle(false);
+  }
+
+  private settle(isReAuthenticated: boolean) {
+    const pending = this.waiters;
+    this.waiters = [];
+    for (const resolve of pending) {
+      resolve(isReAuthenticated);
+    }
+  }
 }

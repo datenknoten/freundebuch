@@ -14,18 +14,17 @@
  * );
  * ```
  */
-export function createDirtyTracker(
-  trackFn: () => void,
-  onchange: () => (() => void) | undefined,
-): void {
-  let initialized = false;
+export function createDirtyTracker(trackFn: () => void, onchange: () => (() => void) | undefined) {
+  let isInitialized = false;
 
-  $effect(() => {
+  function notifyChange() {
     trackFn();
-    if (initialized) {
+    if (isInitialized === true) {
       onchange()?.();
-    } else {
-      initialized = true;
+      return;
     }
-  });
+    isInitialized = true;
+  }
+
+  $effect(notifyChange);
 }

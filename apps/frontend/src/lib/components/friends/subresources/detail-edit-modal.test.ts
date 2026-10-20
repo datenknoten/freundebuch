@@ -1,6 +1,7 @@
 import { createRawSnippet } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '$lib/test/render.js';
+import { fireEvent, screen } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
 import DetailEditModal from './DetailEditModal.svelte';
 
 vi.mock('$lib/i18n/i18n.js', () => ({
@@ -19,11 +20,13 @@ const children = createRawSnippet(() => ({
 describe('DetailEditModal', () => {
   it('wraps content in a <form> by default and saves via submit', async () => {
     const onSave = vi.fn();
-    const { container } = render(DetailEditModal, {
-      title: 'Edit',
-      onSave,
-      onClose: vi.fn(),
-      children,
+    const { container } = renderWithContext(DetailEditModal, {
+      props: {
+        title: 'Edit',
+        onSave,
+        onClose: vi.fn(),
+        children,
+      },
     });
 
     expect(container.querySelectorAll('form')).toHaveLength(1);
@@ -33,12 +36,14 @@ describe('DetailEditModal', () => {
 
   it('renders no <form> when asForm is false, and the footer Save still calls onSave', async () => {
     const onSave = vi.fn();
-    const { container } = render(DetailEditModal, {
-      title: 'Edit',
-      asForm: false,
-      onSave,
-      onClose: vi.fn(),
-      children,
+    const { container } = renderWithContext(DetailEditModal, {
+      props: {
+        title: 'Edit',
+        asForm: false,
+        onSave,
+        onClose: vi.fn(),
+        children,
+      },
     });
 
     // No surrounding form, so the button is type=button calling onSave directly.
@@ -50,12 +55,14 @@ describe('DetailEditModal', () => {
   // The add-member body renders its own form and submit button; a modal footer
   // would duplicate them.
   it('drops the footer entirely for footer={null}', () => {
-    render(DetailEditModal, {
-      title: 'Add member',
-      asForm: false,
-      footer: null,
-      onClose: vi.fn(),
-      children,
+    renderWithContext(DetailEditModal, {
+      props: {
+        title: 'Add member',
+        asForm: false,
+        footer: null,
+        onClose: vi.fn(),
+        children,
+      },
     });
 
     expect(screen.queryByText('subresources.common.save')).toBeNull();
@@ -65,7 +72,9 @@ describe('DetailEditModal', () => {
 
   it('asks inside the dialog before discarding, and Escape answers "keep editing"', async () => {
     const onClose = vi.fn();
-    render(DetailEditModal, { title: 'Edit', isDirty: true, onSave: vi.fn(), onClose, children });
+    renderWithContext(DetailEditModal, {
+      props: { title: 'Edit', isDirty: true, onSave: vi.fn(), onClose, children },
+    });
 
     // Escape reaches the dialog as the native `cancel` event.
     await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
@@ -86,7 +95,9 @@ describe('DetailEditModal', () => {
 
   it('closes straight away when nothing was edited', async () => {
     const onClose = vi.fn();
-    render(DetailEditModal, { title: 'Edit', onSave: vi.fn(), onClose, children });
+    renderWithContext(DetailEditModal, {
+      props: { title: 'Edit', onSave: vi.fn(), onClose, children },
+    });
 
     await fireEvent.click(screen.getByText('subresources.common.cancel'));
 

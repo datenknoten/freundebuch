@@ -2,7 +2,9 @@
 import { onMount } from 'svelte';
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
-import { chipClasses, formClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import {
   RELATIONSHIP_CATEGORIES,
@@ -178,14 +180,14 @@ function handleButtonKeydown(e: KeyboardEvent) {
         onclick={activateInput}
         onkeydown={handleButtonKeydown}
         {disabled}
-        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled
+        class="{FORM_CLASSES.inputSm} flex items-center justify-between text-left {disabled
           ? 'opacity-50 cursor-not-allowed bg-gray-50'
           : 'bg-white cursor-pointer hover:border-gray-400'}"
       >
         <div class="flex items-center gap-2">
           {#each allTypes().filter((t) => t.id === value) as type}
             <span
-              class="{chipClasses.base} {RELATIONSHIP_CATEGORY_STYLE[type.category]
+              class="{CHIP_CLASSES.base} {RELATIONSHIP_CATEGORY_STYLE[type.category]
                 .bgColor} {RELATIONSHIP_CATEGORY_STYLE[type.category].textColor}"
             >
               {$i18n.t(RELATIONSHIP_CATEGORY_STYLE[type.category].labelKey)}
@@ -207,7 +209,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
         onfocus={handleFocus}
         placeholder={$i18n.t('address.relationshipTypePlaceholder')}
         {disabled}
-        class="{formClasses.inputSm} pr-10"
+        class="{FORM_CLASSES.inputSm} pr-10"
         autocomplete="off"
         role="combobox"
         aria-expanded={showDropdown}
@@ -223,7 +225,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
   {#if showDropdown}
     <ul
       id="relationship-type-listbox"
-      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
+      class="absolute z-(--z-popover) w-full mt-1 {SURFACE_CLASSES.listbox}"
       role="listbox"
     >
       {#each filteredTypes() as type, index}
@@ -238,7 +240,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
             class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors {highlightedIndex === index ? 'bg-gray-100' : ''}"
           >
             <span
-              class="{chipClasses.base} {RELATIONSHIP_CATEGORY_STYLE[type.category]
+              class="{CHIP_CLASSES.base} {RELATIONSHIP_CATEGORY_STYLE[type.category]
                 .bgColor} {RELATIONSHIP_CATEGORY_STYLE[type.category].textColor}"
             >
               {$i18n.t(RELATIONSHIP_CATEGORY_STYLE[type.category].labelKey)}

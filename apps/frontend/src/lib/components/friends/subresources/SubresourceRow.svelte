@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { surfaceClasses } from '$lib/components/ui/styles.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import DetailActions from './DetailActions.svelte';
 import SwipeableRow from './SwipeableRow.svelte';
 
@@ -20,7 +20,7 @@ let { onEdit, onDelete, isDeleting = false, editLabel, deleteLabel, children }: 
 </script>
 
 {#snippet rowContent()}
-  <div class={surfaceClasses.row}>
+  <div class={SURFACE_CLASSES.row}>
     {@render children()}
     <DetailActions {onEdit} {onDelete} {isDeleting} {editLabel} {deleteLabel} />
   </div>

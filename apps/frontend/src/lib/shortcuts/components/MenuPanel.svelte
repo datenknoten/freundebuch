@@ -1,5 +1,5 @@
 <script lang="ts">
-import { codeClasses } from '$lib/components/ui/styles.js';
+import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { MenuShortcut } from '../types.js';
 
@@ -23,14 +23,14 @@ const i18n = createI18n();
     {#each items as item}
       <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50">
         <span class="text-gray-700">{$i18n.t(item.labelKey)}</span>
-        <kbd class={codeClasses.kbd}>{item.key}</kbd>
+        <kbd class={CODE_CLASSES.kbd}>{item.key}</kbd>
       </div>
     {/each}
     {#if dangerItem}
       <div class="border-t border-gray-200 mt-2 pt-2">
         <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-red-50">
           <span class="text-red-600">{$i18n.t(dangerItem.labelKey)}</span>
-          <kbd class={codeClasses.kbdDanger}>{dangerItem.key}</kbd>
+          <kbd class={CODE_CLASSES.kbdDanger}>{dangerItem.key}</kbd>
         </div>
       </div>
     {/if}

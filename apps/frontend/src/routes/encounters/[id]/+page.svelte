@@ -2,6 +2,7 @@
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import FaceSmile from 'svelte-heros-v2/FaceSmile.svelte';
 import { page } from '$app/stores';
+import { getAppContext } from '$lib/app-context.js';
 import EncounterDetail from '$lib/components/encounters/EncounterDetail.svelte';
 import EncounterForm from '$lib/components/encounters/EncounterForm.svelte';
 import Button from '$lib/components/ui/Button.svelte';
@@ -9,9 +10,10 @@ import EmptyState from '$lib/components/ui/EmptyState.svelte';
 import PageShell from '$lib/components/ui/PageShell.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { isAuthInitialized } from '$lib/stores/auth';
-import { encounters } from '$lib/stores/encounters';
 import type { EncounterResponse } from '$shared';
+
+const isAuthInitialized = getAppContext().stores.auth.isInitialized;
+const encounters = getAppContext().stores.encounters;
 
 const i18n = createI18n();
 

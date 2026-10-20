@@ -1,12 +1,14 @@
 <script lang="ts">
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
+import { getAppContext } from '$lib/app-context.js';
 import Button from '$lib/components/ui/Button.svelte';
-import { chipClasses } from '$lib/components/ui/styles.js';
+import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { currentLanguage } from '$lib/stores/locale';
 import { type AddressResponse, type AddressType, countryDisplayName } from '$shared';
 import AddressMapModal from './AddressMapModal.svelte';
 import SubresourceRow from './SubresourceRow.svelte';
+
+const currentLanguage = getAppContext().stores.locale.currentLanguage;
 
 interface Props {
   address: AddressResponse;
@@ -64,7 +66,7 @@ const addressLines = $derived(formatAddress(address, $currentLanguage));
           {#if address.label} - {address.label}{/if}
         </span>
         {#if address.isPrimary}
-          <span class="{chipClasses.base} {chipClasses.forest}">
+          <span class="{CHIP_CLASSES.base} {CHIP_CLASSES.forest}">
             {$i18n.t('subresources.common.primary')}
           </span>
         {/if}

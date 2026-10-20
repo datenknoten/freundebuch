@@ -1,5 +1,5 @@
 <script lang="ts">
-import { formClasses } from './styles';
+import { FORM_CLASSES } from './form-classes.js';
 
 interface Props {
   id: string;
@@ -41,7 +41,7 @@ const describedBy = $derived(
 </script>
 
 <div>
-  <label for={id} class={formClasses.label}>
+  <label for={id} class={FORM_CLASSES.label}>
     {label}
     {#if required}<span class="text-red-500" aria-hidden="true">*</span>{/if}
     {#if optional && optionalText.length > 0}<span class="text-gray-400">({optionalText})</span>{/if}
@@ -52,18 +52,18 @@ const describedBy = $derived(
     {rows}
     {disabled}
     {placeholder}
-    class="{size === 'sm' ? `${formClasses.inputSm} resize-none` : formClasses.textarea}{error !==
+    class="{size === 'sm' ? `${FORM_CLASSES.inputSm} resize-none` : FORM_CLASSES.textarea}{error !==
     undefined
-      ? ` ${formClasses.inputError}`
+      ? ` ${FORM_CLASSES.inputError}`
       : ''}"
     required={required}
     aria-invalid={error !== undefined ? 'true' : undefined}
     aria-describedby={describedBy.length > 0 ? describedBy : undefined}
   ></textarea>
   {#if helper !== undefined}
-    <p id="{id}-helper" class={formClasses.helper}>{helper}</p>
+    <p id="{id}-helper" class={FORM_CLASSES.helper}>{helper}</p>
   {/if}
   {#if error !== undefined}
-    <p id="{id}-error" class={formClasses.error}>{error}</p>
+    <p id="{id}-error" class={FORM_CLASSES.error}>{error}</p>
   {/if}
 </div>

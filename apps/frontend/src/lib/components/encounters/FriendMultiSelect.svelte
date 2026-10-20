@@ -1,14 +1,16 @@
 <script lang="ts">
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
+import { getAppContext } from '$lib/app-context.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { formClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { friends } from '$lib/stores/friends';
 import type { FriendSearchResultResponse } from '$shared';
 import FriendAvatar from '../friends/FriendAvatar.svelte';
 
 const i18n = createI18n();
+const friends = getAppContext().stores.friends;
 
 interface Props {
   /** Selected friend IDs */
@@ -67,7 +69,7 @@ async function performSearch() {
 
   isSearching = true;
   try {
-    results = await friends.searchFriends(query, undefined, limit);
+    results = await friends.searchFriends({ query, limit });
     showDropdown = filteredResults.length > 0;
     highlightedIndex = -1;
   } catch {
@@ -178,7 +180,7 @@ function handleFocus() {
         onfocus={handleFocus}
         {placeholder}
         {disabled}
-        class="{formClasses.inputSm} pr-10"
+        class="{FORM_CLASSES.inputSm} pr-10"
         autocomplete="off"
         role="combobox"
         aria-expanded={showDropdown}
@@ -199,7 +201,7 @@ function handleFocus() {
     {#if showDropdown}
       <ul
         id="friend-multi-select-listbox"
-        class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
+        class="absolute z-(--z-popover) w-full mt-1 {SURFACE_CLASSES.listbox}"
         role="listbox"
       >
         {#each filteredResults as friend, index (friend.id)}

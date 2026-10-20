@@ -6,6 +6,7 @@ import { placeholder as cmPlaceholder, EditorView, keymap } from '@codemirror/vi
 import { onDestroy, onMount } from 'svelte';
 import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
+import { getAppContext } from '$lib/app-context.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import {
   atomicEditorTheme,
@@ -41,6 +42,7 @@ let {
 }: Props = $props();
 
 const i18n = createI18n();
+const api = getAppContext().api;
 
 let host: HTMLDivElement;
 let view: EditorView | undefined;
@@ -108,11 +110,14 @@ function openSafeLink(url: string): void {
 function mentionExtension() {
   if (!mentions) return [];
   const t = get(i18n).t;
-  return mentionAutocomplete({
-    friend: t('shortcuts.help.friend'),
-    collective: t('shortcuts.help.collective'),
-    encounter: t('shortcuts.help.encounter'),
-  });
+  return mentionAutocomplete(
+    {
+      friend: t('shortcuts.help.friend'),
+      collective: t('shortcuts.help.collective'),
+      encounter: t('shortcuts.help.encounter'),
+    },
+    api,
+  );
 }
 
 onMount(() => {

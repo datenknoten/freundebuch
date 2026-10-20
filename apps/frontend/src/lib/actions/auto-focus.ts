@@ -27,7 +27,7 @@ import { flushSync } from 'svelte';
  * (keyboard shortcuts, auto-open on navigation) have no keyboard to claim
  * anyway — they can set the state directly.
  */
-export function openWithKeyboard(open: () => void): void {
+export function openWithKeyboard(open: () => void) {
   open();
   flushSync();
 }
@@ -46,13 +46,20 @@ export function openWithKeyboard(open: () => void): void {
  * <input use:autoFocus type="text" />
  * <input use:autoFocus={shouldFocus} type="text" />
  */
-export function autoFocus(node: HTMLElement, enabled: boolean = true) {
-  if (!enabled) return;
+export function autoFocus(node: HTMLElement, isEnabled = true) {
+  if (isEnabled === false) {
+    return;
+  }
 
   node.focus();
-  const frame = requestAnimationFrame(() => {
-    if (document.activeElement !== node) node.focus();
-  });
+
+  function refocus() {
+    if (document.activeElement !== node) {
+      node.focus();
+    }
+  }
+
+  const frame = requestAnimationFrame(refocus);
 
   return {
     destroy() {

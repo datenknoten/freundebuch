@@ -1,29 +1,6 @@
-import {
-  FILTER_CATEGORY_KEYS,
-  isOpenCollectiveModeActive,
-  isOpenEncounterFriendModeActive,
-  isOpenEncounterModeActive,
-  isOpenFriendLinkModeActive,
-  isOpenMemberModeActive,
-  isOpenModeActive,
-  openCollectiveModePrefix,
-  openEncounterFriendModePrefix,
-  openEncounterModePrefix,
-  openFriendLinkModePrefix,
-  openMemberModePrefix,
-  openModePrefix,
-  visibleCollectiveIds,
-  visibleEncounterFriendIds,
-  visibleEncounterIds,
-  visibleFriendDetailLinks,
-  visibleFriendIds,
-  visibleMemberContactIds,
-} from '$lib/stores/ui';
 import type { MenuShortcut, NavigationShortcut, OpenModeConfig } from './types.js';
 
-// ---------------------------------------------------------------------------
-// Navigation (g + key)
-// ---------------------------------------------------------------------------
+//#region Navigation (g + key)
 
 export const NAVIGATION_SHORTCUTS: NavigationShortcut[] = [
   { key: 'h', labelKey: 'shortcuts.nav.home', helpKey: 'shortcuts.goHome' },
@@ -42,10 +19,9 @@ export const NAVIGATION_PATHS: Record<string, string> = {
   o: '/collectives',
   // 'f' is special-cased to restore filter state
 };
+//#endregion
 
-// ---------------------------------------------------------------------------
-// Creation (n + key)
-// ---------------------------------------------------------------------------
+//#region Creation (n + key)
 
 export const CREATION_SHORTCUTS: MenuShortcut[] = [
   { key: 'f', labelKey: 'shortcuts.newFriend' },
@@ -60,10 +36,9 @@ export const CREATION_PATHS: Record<string, string> = {
   o: '/collectives/new',
   // 'c' is special-cased
 };
+//#endregion
 
-// ---------------------------------------------------------------------------
-// Detail actions (a + key)
-// ---------------------------------------------------------------------------
+//#region Detail actions (a + key)
 
 export const FRIEND_DETAIL_ACTIONS: MenuShortcut[] = [
   { key: 'p', labelKey: 'shortcuts.add.phone' },
@@ -110,68 +85,48 @@ export const COLLECTIVE_DETAIL_EVENTS: Record<string, string> = {
   c: 'shortcut:collective-add-circle',
   m: 'shortcut:collective-add-member',
 };
+//#endregion
 
-// ---------------------------------------------------------------------------
-// Open mode configs (o + key)
-// ---------------------------------------------------------------------------
+//#region Open mode configs (o + key)
 
 export const OPEN_MODE_CONFIGS: OpenModeConfig[] = [
   {
     routeMatch: /^\/friends\/[^/]+$/,
-    itemIdsStore: visibleFriendDetailLinks,
-    prefixStore: openFriendLinkModePrefix,
-    activeStore: isOpenFriendLinkModeActive,
+    mode: 'friendLinks',
     basePath: '',
-    modeName: 'link',
     dispatchEvent: 'shortcut:open-friend-link',
   },
-  {
-    routeMatch: /^\/collectives\/[^/]+$/,
-    itemIdsStore: visibleMemberContactIds,
-    prefixStore: openMemberModePrefix,
-    activeStore: isOpenMemberModeActive,
-    basePath: '/friends',
-    modeName: 'member',
-  },
-  {
-    routeMatch: /^\/encounters\/[^/]+$/,
-    itemIdsStore: visibleEncounterFriendIds,
-    prefixStore: openEncounterFriendModePrefix,
-    activeStore: isOpenEncounterFriendModeActive,
-    basePath: '/friends',
-    modeName: 'encounterFriend',
-  },
-  {
-    routeMatch: '/friends',
-    itemIdsStore: visibleFriendIds,
-    prefixStore: openModePrefix,
-    activeStore: isOpenModeActive,
-    basePath: '/friends',
-    modeName: 'friend',
-  },
-  {
-    routeMatch: '/encounters',
-    itemIdsStore: visibleEncounterIds,
-    prefixStore: openEncounterModePrefix,
-    activeStore: isOpenEncounterModeActive,
-    basePath: '/encounters',
-    modeName: 'encounter',
-  },
-  {
-    routeMatch: '/collectives',
-    itemIdsStore: visibleCollectiveIds,
-    prefixStore: openCollectiveModePrefix,
-    activeStore: isOpenCollectiveModeActive,
-    basePath: '/collectives',
-    modeName: 'collective',
-  },
+  { routeMatch: /^\/collectives\/[^/]+$/, mode: 'members', basePath: '/friends' },
+  { routeMatch: /^\/encounters\/[^/]+$/, mode: 'encounterFriends', basePath: '/friends' },
+  { routeMatch: '/friends', mode: 'friends', basePath: '/friends' },
+  { routeMatch: '/encounters', mode: 'encounters', basePath: '/encounters' },
+  { routeMatch: '/collectives', mode: 'collectives', basePath: '/collectives' },
 ];
+//#endregion
 
-// ---------------------------------------------------------------------------
-// Filter panel categories (f + key)
-// ---------------------------------------------------------------------------
+//#region Filter panel categories (f + key)
 
-// Mapping from snake_case filter field names to i18n keys
+/** The key that picks each facet field in filter mode (`f c` → country). */
+export const FILTER_CATEGORY_KEYS: Record<string, string> = {
+  c: 'country',
+  i: 'city',
+  o: 'organization',
+  j: 'job_title',
+  d: 'department',
+  r: 'relationship_category',
+  l: 'circles',
+};
+
+export const FILTER_CATEGORY_LABELS: Record<string, { key: string; labelKey: string }> = {
+  country: { key: 'c', labelKey: 'facets.categories.country' },
+  city: { key: 'i', labelKey: 'facets.categories.city' },
+  organization: { key: 'o', labelKey: 'facets.categories.organization' },
+  job_title: { key: 'j', labelKey: 'facets.categories.jobTitle' },
+  department: { key: 'd', labelKey: 'facets.categories.department' },
+  relationship_category: { key: 'r', labelKey: 'facets.categories.relationship' },
+  circles: { key: 'l', labelKey: 'facets.categories.circles' },
+};
+
 export const FILTER_FIELD_I18N_KEYS: Record<string, string> = {
   country: 'facets.fields.country',
   city: 'facets.fields.city',
@@ -182,9 +137,10 @@ export const FILTER_FIELD_I18N_KEYS: Record<string, string> = {
   circles: 'facets.fields.circles',
 };
 
-export const FILTER_PANEL_CATEGORIES: MenuShortcut[] = Object.entries(FILTER_CATEGORY_KEYS).map(
-  ([key, field]) => ({
-    key,
-    labelKey: FILTER_FIELD_I18N_KEYS[field] ?? field,
-  }),
-);
+function toFilterPanelCategory([key, field]: [string, string]) {
+  return { key, labelKey: FILTER_FIELD_I18N_KEYS[field] ?? field } satisfies MenuShortcut;
+}
+
+export const filterPanelCategories: MenuShortcut[] =
+  Object.entries(FILTER_CATEGORY_KEYS).map(toFilterPanelCategory);
+//#endregion

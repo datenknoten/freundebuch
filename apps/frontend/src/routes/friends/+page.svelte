@@ -3,13 +3,17 @@ import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
+import { getAppContext } from '$lib/app-context.js';
 import FriendList from '$lib/components/friends/FriendList.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import PageShell from '$lib/components/ui/PageShell.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { friendsPageSize, isAuthInitialized } from '$lib/stores/auth';
-import { friends } from '$lib/stores/friends';
 import type { FacetFilters } from '$shared';
+
+const friends = getAppContext().stores.friends;
+const auth = getAppContext().stores.auth;
+const friendsPageSize = auth.friendsPageSize;
+const isAuthInitialized = auth.isInitialized;
 
 const i18n = createI18n();
 

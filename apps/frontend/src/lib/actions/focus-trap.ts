@@ -10,7 +10,7 @@
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function focusable(container: HTMLElement): HTMLElement[] {
+function focusable(container: HTMLElement) {
   return [...container.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
     (element) => element.offsetParent !== null || element === document.activeElement,
   );
@@ -20,29 +20,33 @@ function focusable(container: HTMLElement): HTMLElement[] {
  * `use:focusTrap={enabled}` — while `enabled` is true, Tab and Shift+Tab cycle
  * within the node instead of escaping to the page behind it.
  */
-export function focusTrap(node: HTMLElement, enabled: boolean = true) {
-  let active = enabled;
+export function focusTrap(node: HTMLElement, isEnabled = true) {
+  let isActive = isEnabled;
 
   function handleKeydown(event: KeyboardEvent) {
-    if (!active || event.key !== 'Tab') return;
+    if (isActive === false || event.key !== 'Tab') {
+      return;
+    }
 
     const elements = focusable(node);
     const first = elements[0];
     const last = elements[elements.length - 1];
-    if (first === undefined || last === undefined) return;
-
-    // Focus sits outside the trapped set (a backdrop with tabindex="-1", or a
-    // node that has since been removed): Tab would walk into the page behind.
-    if (!node.contains(document.activeElement)) {
-      event.preventDefault();
-      (event.shiftKey ? last : first).focus();
+    if (first === undefined || last === undefined) {
       return;
     }
 
-    if (event.shiftKey && document.activeElement === first) {
+    // Focus sits outside the trapped set (a backdrop with tabindex="-1", or a
+    // node that has since been removed): Tab would walk into the page behind.
+    if (node.contains(document.activeElement) === false) {
+      event.preventDefault();
+      (event.shiftKey === true ? last : first).focus();
+      return;
+    }
+
+    if (event.shiftKey === true && document.activeElement === first) {
       event.preventDefault();
       last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
+    } else if (event.shiftKey === false && document.activeElement === last) {
       event.preventDefault();
       first.focus();
     }
@@ -52,7 +56,7 @@ export function focusTrap(node: HTMLElement, enabled: boolean = true) {
 
   return {
     update(next: boolean) {
-      active = next;
+      isActive = next;
     },
     destroy() {
       node.removeEventListener('keydown', handleKeydown);

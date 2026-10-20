@@ -1,5 +1,5 @@
 <script lang="ts" generics="Id extends string">
-import { focusRing } from '$lib/components/ui/styles.js';
+import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
 
 interface Props {
   tabs: { id: Id; label: string }[];
@@ -60,7 +60,7 @@ function handleKeydown(event: KeyboardEvent) {
       tabindex={selected ? 0 : -1}
       onclick={() => onselect(tab.id)}
       onkeydown={handleKeydown}
-      class="flex-1 shrink-0 px-4 py-3 font-body font-medium text-sm transition-colors {focusRing} {selected
+      class="flex-1 shrink-0 px-4 py-3 font-body font-medium text-sm transition-colors {FOCUS_RING} {selected
         ? 'bg-white text-forest border-b-2 border-forest'
         : 'bg-gray-50 text-gray-600 hover:text-gray-800'}"
     >

@@ -2,12 +2,13 @@
 import { onMount } from 'svelte';
 import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
+import { getAppContext } from '$lib/app-context.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { getLastEncounter } from '$lib/stores/encounters';
 import type { LastEncounterSummaryResponse } from '$shared';
 import { encounterDisplayTitle } from './encounter-display';
 
 const i18n = createI18n();
+const encountersApi = getAppContext().api.encounters;
 
 interface Props {
   friendId: string;
@@ -16,7 +17,7 @@ interface Props {
 
 let { friendId, friendName }: Props = $props();
 
-let lastEncounter = $state<LastEncounterSummaryResponse | null>(null);
+let lastEncounter = $state<LastEncounterSummaryResponse | undefined>(undefined);
 let isLoading = $state(true);
 let error = $state<string | null>(null);
 
@@ -31,7 +32,7 @@ let displayTitle = $derived(
 
 onMount(async () => {
   try {
-    lastEncounter = await getLastEncounter(friendId);
+    lastEncounter = await encountersApi.findLastEncounter(friendId);
   } catch (err) {
     error = (err as Error)?.message || 'Failed to load';
   } finally {

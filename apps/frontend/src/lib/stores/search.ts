@@ -1,16 +1,19 @@
-import { derived, get, writable } from 'svelte/store';
+import type { Logger } from 'pino';
+import { derived, get, type Readable, writable } from 'svelte/store';
 import type {
   ArrayFacetField,
   FacetFilters,
   FacetGroupsResponse,
   GlobalSearchResultResponse,
 } from '$shared';
-import * as friendsApi from '../api/friends.js';
+import type { FriendSearchApi } from '../api/friend-search.js';
 
-/**
- * Search state interface
- */
-interface SearchState {
+export interface SearchStoreOptions {
+  friendSearchApi: FriendSearchApi;
+  logger: Logger;
+}
+
+export interface SearchState {
   query: string;
   results: GlobalSearchResultResponse[];
   recentSearches: string[];
@@ -18,16 +21,12 @@ interface SearchState {
   isOpen: boolean;
   error: string | null;
   selectedIndex: number;
-  // Faceted search state
   filters: FacetFilters;
   facets: FacetGroupsResponse | null;
-  facetsLoading: boolean;
+  isFacetsLoading: boolean;
 }
 
-/**
- * Initial search state
- */
-const initialState: SearchState = {
+const INITIAL_STATE: SearchState = {
   query: '',
   results: [],
   recentSearches: [],
@@ -35,145 +34,90 @@ const initialState: SearchState = {
   isOpen: false,
   error: null,
   selectedIndex: 0,
-  // Faceted search state
   filters: {},
   facets: null,
-  facetsLoading: false,
+  isFacetsLoading: false,
 };
 
-/**
- * Debounce helper
- */
-function debounce<TArgs extends unknown[]>(fn: (...args: TArgs) => void, delay: number) {
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  return (...args: TArgs) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
-  };
+const MIN_QUERY_LENGTH = 2;
+const RESULT_LIMIT = 10;
+const RECENT_SEARCH_LIMIT = 10;
+const SEARCH_DEBOUNCE_MS = 300;
+const FACETS_DEBOUNCE_MS = 500;
+
+function isSearchable(query: string) {
+  return query.trim().length >= MIN_QUERY_LENGTH;
 }
 
-/**
- * Create the search store
- */
-function createSearchStore() {
-  const { subscribe, set, update } = writable<SearchState>(initialState);
+function hasFilters(filters: FacetFilters) {
+  return Object.values(filters).some((values) => Array.isArray(values) && values.length > 0);
+}
 
-  // Debounced search function (for simple search without filters)
-  const debouncedSearch = debounce(async (query: string) => {
-    if (!query.trim() || query.trim().length < 2) {
-      update((state) => ({ ...state, results: [], isSearching: false }));
-      return;
+function withoutFilterValue(filters: FacetFilters, field: ArrayFacetField, value: string) {
+  const remaining = (filters[field] ?? []).filter((existing) => existing !== value);
+  return { ...filters, [field]: remaining.length > 0 ? remaining : undefined };
+}
+
+function withRecentSearch(state: SearchState, query: string) {
+  const others = state.recentSearches.filter(
+    (recent) => recent.toLowerCase() !== query.toLowerCase(),
+  );
+  return { ...state, recentSearches: [query, ...others].slice(0, RECENT_SEARCH_LIMIT) };
+}
+
+function nextIndex(state: SearchState) {
+  const count = state.results.length > 0 ? state.results.length : state.recentSearches.length;
+  return Math.min(count - 1, state.selectedIndex + 1);
+}
+
+/** The global search modal: query, debounced results, facets and the user's recent searches. */
+export class SearchStore {
+  public readonly subscribe: Readable<SearchState>['subscribe'];
+  public readonly isOpen: Readable<boolean>;
+  public readonly facets: Readable<FacetGroupsResponse | null>;
+  public readonly isFacetsLoading: Readable<boolean>;
+  public readonly hasActiveFilters: Readable<boolean>;
+  private readonly state = writable(INITIAL_STATE);
+  private readonly friendSearchApi: FriendSearchApi;
+  private readonly logger: Logger;
+  private searchTimer: ReturnType<typeof setTimeout> | undefined;
+  private facetsTimer: ReturnType<typeof setTimeout> | undefined;
+  // The modal keeps its input mounted (hidden) while closed and registers it here, so `open`
+  // can focus it synchronously: iOS raises the on-screen keyboard only for a focus() that
+  // runs inside the user's tap.
+  private inputElement: HTMLInputElement | undefined;
+
+  public constructor(options: SearchStoreOptions) {
+    this.friendSearchApi = options.friendSearchApi;
+    this.logger = options.logger;
+    this.subscribe = this.state.subscribe;
+    this.isOpen = derived(this.state, (state) => state.isOpen);
+    this.facets = derived(this.state, (state) => state.facets);
+    this.isFacetsLoading = derived(this.state, (state) => state.isFacetsLoading);
+    this.hasActiveFilters = derived(this.state, (state) => hasFilters(state.filters));
+  }
+
+  public attachInput(element: HTMLInputElement) {
+    this.inputElement = element;
+  }
+
+  /** Call when the element is destroyed. */
+  public detachInput(element: HTMLInputElement) {
+    if (this.inputElement === element) {
+      this.inputElement = undefined;
     }
+  }
 
-    try {
-      const results = await friendsApi.fullTextSearch(query, 10);
-      update((state) => ({
-        ...state,
-        results,
-        isSearching: false,
-        selectedIndex: 0,
-      }));
-    } catch {
-      update((state) => ({
-        ...state,
-        results: [],
-        isSearching: false,
-        error: 'Search failed',
-      }));
-    }
-  }, 300);
+  public open() {
+    this.state.update((state) => ({ ...state, isOpen: true }));
+    this.inputElement?.focus();
+  }
 
-  // Debounced faceted search function
-  const debouncedFacetedSearch = debounce(async (query: string, filters: FacetFilters) => {
-    if (!query.trim() || query.trim().length < 2) {
-      update((state) => ({ ...state, results: [], isSearching: false }));
-      return;
-    }
-
-    try {
-      // Check if any filters are active
-      const hasFilters = Object.values(filters).some((arr) => arr && arr.length > 0);
-
-      if (hasFilters) {
-        // Use faceted search when filters are active
-        const response = await friendsApi.facetedSearch({
-          query,
-          filters,
-          includeFacets: true,
-          pageSize: 10,
-        });
-        update((state) => ({
-          ...state,
-          results: response.data,
-          facets: response.facets ?? null,
-          isSearching: false,
-          facetsLoading: false,
-          selectedIndex: 0,
-        }));
-      } else {
-        // Use simple search when no filters (faster)
-        const results = await friendsApi.fullTextSearch(query, 10);
-        update((state) => ({
-          ...state,
-          results,
-          isSearching: false,
-          selectedIndex: 0,
-        }));
-      }
-    } catch {
-      update((state) => ({
-        ...state,
-        results: [],
-        isSearching: false,
-        facetsLoading: false,
-        error: 'Search failed',
-      }));
-    }
-  }, 300);
-
-  // Load facets for the current query (called separately for progressive loading)
-  const loadFacets = debounce(async (query: string) => {
-    if (!query.trim() || query.trim().length < 2) {
-      return;
-    }
-
-    update((state) => ({ ...state, facetsLoading: true }));
-
-    try {
-      const response = await friendsApi.facetedSearch({
-        query,
-        includeFacets: true,
-        pageSize: 1, // Minimal results, we just want facets
-      });
-      update((state) => ({
-        ...state,
-        facets: response.facets ?? null,
-        facetsLoading: false,
-      }));
-    } catch {
-      update((state) => ({
-        ...state,
-        facetsLoading: false,
-      }));
-    }
-  }, 500);
-
-  // The modal's text input. The modal keeps it mounted (hidden) while closed and
-  // registers it here so open() can focus it synchronously: iOS raises the
-  // on-screen keyboard only for a focus() that runs inside the user's tap, and
-  // an input that is mounted after the tap is always too late.
-  let inputElement: HTMLInputElement | null = null;
-
-  const open = () => {
-    update((state) => ({ ...state, isOpen: true }));
-    inputElement?.focus();
-  };
-
-  const close = () => {
-    // Drop focus first so the mobile keyboard goes away with the modal — the
-    // input stays mounted, so nothing else would blur it.
-    inputElement?.blur();
-    update((state) => ({
+  /** Closes the modal and resets the query, results and filters. */
+  public close() {
+    // The input stays mounted, so only an explicit blur dismisses the mobile keyboard.
+    this.inputElement?.blur();
+    this.state.update((state) => ({
       ...state,
       isOpen: false,
       query: '',
@@ -182,253 +126,178 @@ function createSearchStore() {
       error: null,
       filters: {},
       facets: null,
-      facetsLoading: false,
+      isFacetsLoading: false,
     }));
-  };
+  }
 
-  return {
-    subscribe,
+  public toggle() {
+    if (get(this.state).isOpen === true) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
 
-    /**
-     * Register the modal's input so open() and close() can move focus
-     */
-    attachInput: (element: HTMLInputElement) => {
-      inputElement = element;
-    },
+  /** Searches after a pause in typing; `shouldLoadFacets` also refreshes the facets in the background. */
+  public setQuery(query: string, options: { shouldLoadFacets?: boolean } = {}) {
+    this.state.update((state) => ({
+      ...state,
+      query,
+      isSearching: isSearchable(query),
+      error: null,
+    }));
+    this.scheduleSearch(query, get(this.state).filters);
+    if (options.shouldLoadFacets === true && isSearchable(query)) {
+      this.scheduleFacets(query);
+    }
+  }
 
-    /**
-     * Forget the modal's input (call when the element is destroyed)
-     */
-    detachInput: (element: HTMLInputElement) => {
-      if (inputElement === element) inputElement = null;
-    },
+  public selectPrevious() {
+    this.state.update((state) => ({
+      ...state,
+      selectedIndex: Math.max(0, state.selectedIndex - 1),
+    }));
+  }
 
-    /**
-     * Open the search modal and focus its input
-     */
-    open,
+  public selectNext() {
+    this.state.update((state) => ({ ...state, selectedIndex: nextIndex(state) }));
+  }
 
-    /**
-     * Close the search modal and reset state
-     */
-    close,
+  /** Recent searches are a convenience: a failure is logged, never thrown. */
+  public async loadRecentSearches() {
+    try {
+      const recentSearches = await this.friendSearchApi.listRecentSearches(RECENT_SEARCH_LIMIT);
+      this.state.update((state) => ({ ...state, recentSearches }));
+    } catch (err) {
+      this.logger.error({ err }, 'Failed to load recent searches');
+    }
+  }
 
-    /**
-     * Toggle the search modal
-     */
-    toggle: () => {
-      if (get({ subscribe }).isOpen) {
-        close();
-      } else {
-        open();
-      }
-    },
+  public async addRecentSearch(query: string) {
+    const trimmed = query.trim();
+    if (isSearchable(trimmed) === false) {
+      return;
+    }
+    try {
+      await this.friendSearchApi.addRecentSearch(trimmed);
+      this.state.update((state) => withRecentSearch(state, query));
+    } catch (err) {
+      this.logger.error({ err }, 'Failed to save recent search');
+    }
+  }
 
-    /**
-     * Set the search query and trigger search
-     * Optionally loads facets for progressive enhancement
-     */
-    setQuery: (query: string, options?: { loadFacets?: boolean }) => {
-      let currentFilters: FacetFilters = {};
+  public async deleteRecentSearch(query: string) {
+    try {
+      await this.friendSearchApi.deleteRecentSearch(query);
+      this.state.update((state) => ({
+        ...state,
+        recentSearches: state.recentSearches.filter((recent) => recent !== query),
+      }));
+    } catch (err) {
+      this.logger.error({ err }, 'Failed to delete recent search');
+    }
+  }
 
-      update((state) => {
-        currentFilters = state.filters;
-        return {
-          ...state,
+  public async clearRecentSearches() {
+    try {
+      await this.friendSearchApi.clearRecentSearches();
+      this.state.update((state) => ({ ...state, recentSearches: [] }));
+    } catch (err) {
+      this.logger.error({ err }, 'Failed to clear recent searches');
+    }
+  }
+
+  public setFilters(filters: FacetFilters) {
+    this.applyFilters(filters);
+  }
+
+  public removeFilter(field: ArrayFacetField, value: string) {
+    this.applyFilters(withoutFilterValue(get(this.state).filters, field, value));
+  }
+
+  public clearFilters() {
+    this.applyFilters({});
+  }
+
+  public reset() {
+    clearTimeout(this.searchTimer);
+    clearTimeout(this.facetsTimer);
+    this.state.set(INITIAL_STATE);
+  }
+
+  private applyFilters(filters: FacetFilters) {
+    this.state.update((state) => ({ ...state, filters, isSearching: true }));
+    const { query } = get(this.state);
+    if (isSearchable(query)) {
+      this.scheduleSearch(query, filters);
+    }
+  }
+
+  private scheduleSearch(query: string, filters: FacetFilters) {
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => void this.search(query, filters), SEARCH_DEBOUNCE_MS);
+  }
+
+  private scheduleFacets(query: string) {
+    clearTimeout(this.facetsTimer);
+    this.facetsTimer = setTimeout(() => void this.loadFacets(query), FACETS_DEBOUNCE_MS);
+  }
+
+  /** Plain full-text search is faster, so the faceted endpoint only runs while filters are set. */
+  private async search(query: string, filters: FacetFilters) {
+    if (isSearchable(query) === false) {
+      this.state.update((state) => ({ ...state, results: [], isSearching: false }));
+      return;
+    }
+    try {
+      if (hasFilters(filters)) {
+        const response = await this.friendSearchApi.facetedSearch({
           query,
-          isSearching: query.trim().length >= 2,
-          error: null,
-        };
-      });
-
-      // Check if filters are active
-      const hasFilters = Object.values(currentFilters).some((arr) => arr && arr.length > 0);
-
-      if (hasFilters) {
-        // Use faceted search when filters are active
-        debouncedFacetedSearch(query, currentFilters);
-      } else {
-        // Use simple search (faster)
-        debouncedSearch(query);
-      }
-
-      // Optionally load facets in background
-      if (options?.loadFacets && query.trim().length >= 2) {
-        loadFacets(query);
-      }
-    },
-
-    /**
-     * Navigate selection up
-     */
-    selectPrevious: () => {
-      update((state) => ({
-        ...state,
-        selectedIndex: Math.max(0, state.selectedIndex - 1),
-      }));
-    },
-
-    /**
-     * Navigate selection down
-     */
-    selectNext: () => {
-      update((state) => ({
-        ...state,
-        selectedIndex: Math.min(
-          state.results.length > 0 ? state.results.length - 1 : state.recentSearches.length - 1,
-          state.selectedIndex + 1,
-        ),
-      }));
-    },
-
-    /**
-     * Reset selection index
-     */
-    resetSelection: () => {
-      update((state) => ({ ...state, selectedIndex: 0 }));
-    },
-
-    /**
-     * Load recent searches from API
-     */
-    loadRecentSearches: async () => {
-      try {
-        const recentSearches = await friendsApi.getRecentSearches(10);
-        update((state) => ({ ...state, recentSearches }));
-      } catch (error) {
-        // Silently fail - recent searches are not critical
-        console.error('Failed to load recent searches:', error);
-      }
-    },
-
-    /**
-     * Add a search to recent searches
-     */
-    addRecentSearch: async (query: string) => {
-      if (!query.trim() || query.trim().length < 2) return;
-
-      try {
-        await friendsApi.addRecentSearch(query.trim());
-        // Optimistically update local state
-        update((state) => {
-          const filtered = state.recentSearches.filter(
-            (s) => s.toLowerCase() !== query.toLowerCase(),
-          );
-          return {
-            ...state,
-            recentSearches: [query, ...filtered].slice(0, 10),
-          };
+          filters,
+          shouldIncludeFacets: true,
+          pageSize: RESULT_LIMIT,
         });
-      } catch (error) {
-        console.error('Failed to save recent search:', error);
-      }
-    },
-
-    /**
-     * Delete a specific recent search
-     */
-    deleteRecentSearch: async (query: string) => {
-      try {
-        await friendsApi.deleteRecentSearch(query);
-        update((state) => ({
+        this.state.update((state) => ({
           ...state,
-          recentSearches: state.recentSearches.filter((s) => s !== query),
+          results: response.data,
+          facets: response.facets ?? null,
+          isSearching: false,
+          isFacetsLoading: false,
+          selectedIndex: 0,
         }));
-      } catch (error) {
-        console.error('Failed to delete recent search:', error);
+      } else {
+        const results = await this.friendSearchApi.fullTextSearch(query, RESULT_LIMIT);
+        this.state.update((state) => ({ ...state, results, isSearching: false, selectedIndex: 0 }));
       }
-    },
+    } catch (err) {
+      this.logger.warn({ err }, 'Search failed');
+      this.state.update((state) => ({
+        ...state,
+        results: [],
+        isSearching: false,
+        isFacetsLoading: false,
+        error: 'Search failed',
+      }));
+    }
+  }
 
-    /**
-     * Clear all recent searches
-     */
-    clearRecentSearches: async () => {
-      try {
-        await friendsApi.clearRecentSearches();
-        update((state) => ({ ...state, recentSearches: [] }));
-      } catch (error) {
-        console.error('Failed to clear recent searches:', error);
-      }
-    },
-
-    /**
-     * Set facet filters and trigger new search
-     */
-    setFilters: (filters: FacetFilters) => {
-      let currentQuery = '';
-
-      update((state) => {
-        currentQuery = state.query;
-        return { ...state, filters, isSearching: true };
+  private async loadFacets(query: string) {
+    this.state.update((state) => ({ ...state, isFacetsLoading: true }));
+    try {
+      // One result is enough: only the facets are wanted.
+      const response = await this.friendSearchApi.facetedSearch({
+        query,
+        shouldIncludeFacets: true,
+        pageSize: 1,
       });
-
-      // Re-run the search with new filters
-      if (currentQuery.trim().length >= 2) {
-        debouncedFacetedSearch(currentQuery, filters);
-      }
-    },
-
-    /**
-     * Remove a single filter value (array-type facet fields only)
-     */
-    removeFilter: (field: ArrayFacetField, value: string) => {
-      let currentQuery = '';
-      let newFilters: FacetFilters = {};
-
-      update((state) => {
-        currentQuery = state.query;
-        const current = state.filters[field] ?? [];
-        const updated = current.filter((v) => v !== value);
-        newFilters = {
-          ...state.filters,
-          [field]: updated.length > 0 ? updated : undefined,
-        };
-        return { ...state, filters: newFilters, isSearching: true };
-      });
-
-      // Re-run the search with updated filters
-      if (currentQuery.trim().length >= 2) {
-        debouncedFacetedSearch(currentQuery, newFilters);
-      }
-    },
-
-    /**
-     * Clear all filters
-     */
-    clearFilters: () => {
-      let currentQuery = '';
-
-      update((state) => {
-        currentQuery = state.query;
-        return { ...state, filters: {}, isSearching: true };
-      });
-
-      // Re-run the search without filters
-      if (currentQuery.trim().length >= 2) {
-        debouncedFacetedSearch(currentQuery, {});
-      }
-    },
-
-    /**
-     * Reset the store to initial state
-     */
-    reset: () => set(initialState),
-  };
+      this.state.update((state) => ({
+        ...state,
+        facets: response.facets ?? null,
+        isFacetsLoading: false,
+      }));
+    } catch (err) {
+      this.logger.warn({ err }, 'Failed to load search facets');
+      this.state.update((state) => ({ ...state, isFacetsLoading: false }));
+    }
+  }
 }
-
-export const search = createSearchStore();
-
-// Derived stores for convenience
-export const isSearchOpen = derived(search, ($search) => $search.isOpen);
-export const searchResults = derived(search, ($search) => $search.results);
-export const isSearching = derived(search, ($search) => $search.isSearching);
-export const searchQuery = derived(search, ($search) => $search.query);
-export const recentSearches = derived(search, ($search) => $search.recentSearches);
-
-// Faceted search derived stores
-export const searchFilters = derived(search, ($search) => $search.filters);
-export const searchFacets = derived(search, ($search) => $search.facets);
-export const isFacetsLoading = derived(search, ($search) => $search.facetsLoading);
-export const hasActiveFilters = derived(search, ($search) =>
-  Object.values($search.filters).some((arr) => arr && arr.length > 0),
-);

@@ -1,11 +1,12 @@
 <script lang="ts">
+import type { ProfessionalHistoryData } from '$lib/api/friend-details.js';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import FormTextarea from '$lib/components/ui/FormTextarea.svelte';
-import { formClasses } from '$lib/components/ui/styles.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import type { ProfessionalHistoryInputSchema, ProfessionalHistoryResponse } from '$shared';
+import type { ProfessionalHistoryResponse } from '$shared';
 
 const i18n = createI18n();
 
@@ -60,18 +61,18 @@ $effect(() => {
   }
 });
 
-export function getData(): typeof ProfessionalHistoryInputSchema.inferIn {
+export function getData() {
   return {
-    job_title: jobTitle.trim() || null,
+    jobTitle: jobTitle.trim() || null,
     organization: organization.trim() || null,
     department: department.trim() || null,
     notes: notes.trim() || null,
-    from_month: fromMonth,
-    from_year: fromYear,
-    to_month: isCurrentPosition ? null : toMonth,
-    to_year: isCurrentPosition ? null : toYear,
-    is_primary: isPrimary,
-  };
+    fromMonth,
+    fromYear,
+    toMonth: isCurrentPosition ? null : toMonth,
+    toYear: isCurrentPosition ? null : toYear,
+    isPrimary,
+  } satisfies ProfessionalHistoryData;
 }
 
 export function isValid(): boolean {
@@ -142,7 +143,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
 
   <!-- From Date -->
   <fieldset>
-    <legend class={formClasses.label}>
+    <legend class={FORM_CLASSES.label}>
       {$i18n.t('employment.startDate')} <span class="text-red-500">*</span>
     </legend>
     <div class="grid grid-cols-2 gap-2">
@@ -150,7 +151,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
         bind:value={fromMonth}
         {disabled}
         aria-label={$i18n.t('aria.startMonth')}
-        class={formClasses.select}
+        class={FORM_CLASSES.select}
       >
         {#each months as { value, label }}
           <option {value}>{label}</option>
@@ -160,7 +161,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
         bind:value={fromYear}
         {disabled}
         aria-label={$i18n.t('aria.startYear')}
-        class={formClasses.select}
+        class={FORM_CLASSES.select}
       >
         {#each years as year}
           <option value={year}>{year}</option>
@@ -179,7 +180,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
   <!-- To Date (only shown if not current position) -->
   {#if !isCurrentPosition}
     <fieldset>
-      <legend class={formClasses.label}>
+      <legend class={FORM_CLASSES.label}>
         {$i18n.t('employment.endDate')} <span class="text-red-500">*</span>
       </legend>
       <div class="grid grid-cols-2 gap-2">
@@ -187,7 +188,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
           bind:value={toMonth}
           {disabled}
           aria-label={$i18n.t('aria.endMonth')}
-          class={formClasses.select}
+          class={FORM_CLASSES.select}
         >
           {#each months as { value, label }}
             <option {value}>{label}</option>
@@ -197,7 +198,7 @@ const years = Array.from({ length: 60 }, (_, i) => currentYear + 5 - i);
           bind:value={toYear}
           {disabled}
           aria-label={$i18n.t('aria.endYear')}
-          class={formClasses.select}
+          class={FORM_CLASSES.select}
         >
           {#each years as year}
             <option value={year}>{year}</option>

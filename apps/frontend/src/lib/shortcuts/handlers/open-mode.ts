@@ -1,81 +1,64 @@
-import { get } from 'svelte/store';
+import { get, type Readable } from 'svelte/store';
 import { goto } from '$app/navigation';
-import { getIndexFromHint, ITEMS_PER_GROUP } from '$lib/stores/ui';
-import { OPEN_MODE_CONFIGS } from '../config.js';
-import type { HandlerContext, OpenModeConfig } from '../types.js';
+import { findIndexFromHint } from '$lib/utils/find-index-from-hint.js';
+import { hasHintGroup } from '$lib/utils/has-hint-group.js';
+import { findOpenModeConfig } from '../find-open-mode-config.js';
+import type { HandlerContext, OpenModeConfig, OpenModeItem } from '../types.js';
 
-function findMatchingConfig(pathname: string): OpenModeConfig | undefined {
-  return OPEN_MODE_CONFIGS.find((config) => {
-    if (typeof config.routeMatch === 'string') {
-      return pathname === config.routeMatch;
-    }
-    return config.routeMatch.test(pathname) && !pathname.endsWith('/new');
-  });
+function openItem(config: OpenModeConfig, items: OpenModeItem[], index: number) {
+  if (config.dispatchEvent !== undefined) {
+    window.dispatchEvent(new CustomEvent(config.dispatchEvent, { detail: { index } }));
+    return;
+  }
+  void goto(`${config.basePath}/${items[index]}`);
 }
 
-export function handleOpenMode(e: KeyboardEvent, ctx: HandlerContext): boolean {
-  if (ctx.pendingKey !== 'o') return false;
-
-  const config = findMatchingConfig(ctx.pathname);
-  if (!config) {
+export function handleOpenMode(e: KeyboardEvent, ctx: HandlerContext) {
+  if (ctx.pendingKey !== 'o') {
+    return false;
+  }
+  const config = findOpenModeConfig(ctx.pathname);
+  if (config === undefined) {
     ctx.clearPending();
     return true;
   }
 
-  const itemIds = get(config.itemIdsStore);
-  const currentPrefix = get(config.prefixStore);
-  const keyNum = parseInt(e.key, 10);
-  const keyLower = e.key.toLowerCase();
+  const mode = ctx.stores.keyboardModes[config.mode];
+  const visibleItems: Readable<OpenModeItem[]> = mode.visibleItems;
+  const items = get(visibleItems);
+  const currentPrefix = get(mode.prefix);
+  const keyNum = Number.parseInt(e.key, 10);
+  const isDigitKey = keyNum >= 1 && keyNum <= 9;
 
-  // If we already have a letter prefix, we're waiting for a number
-  if (currentPrefix) {
-    if (keyNum >= 1 && keyNum <= 9) {
+  if (currentPrefix !== null && currentPrefix !== '') {
+    if (isDigitKey === true) {
       e.preventDefault();
-      const index = getIndexFromHint(`${currentPrefix}${keyNum}`);
-      if (index >= 0 && index < itemIds.length) {
-        ctx.clearPending();
-        if (config.dispatchEvent) {
-          window.dispatchEvent(new CustomEvent(config.dispatchEvent, { detail: { index } }));
-        } else {
-          goto(`${config.basePath}/${itemIds[index]}`);
-        }
-      } else {
-        ctx.clearPending();
-      }
-    } else {
-      ctx.clearPending();
+    }
+    ctx.clearPending();
+    const index = isDigitKey === true ? findIndexFromHint(`${currentPrefix}${keyNum}`) : undefined;
+    if (index !== undefined && index < items.length) {
+      openItem(config, items, index);
     }
     return true;
   }
 
-  // No prefix yet - check if it's a number (1-9) or letter (a-z)
-  if (keyNum >= 1 && keyNum <= 9) {
+  if (isDigitKey === true) {
     e.preventDefault();
     const index = keyNum - 1;
-    if (index < itemIds.length) {
+    if (index < items.length) {
       ctx.clearPending();
-      if (config.dispatchEvent) {
-        window.dispatchEvent(new CustomEvent(config.dispatchEvent, { detail: { index } }));
-      } else {
-        goto(`${config.basePath}/${itemIds[index]}`);
-      }
+      openItem(config, items, index);
     }
     return true;
   }
 
-  // Check if it's a letter for extended navigation
-  if (keyLower >= 'a' && keyLower <= 'z') {
-    const letterIndex = keyLower.charCodeAt(0) - 97;
-    const groupStartIndex = (letterIndex + 1) * ITEMS_PER_GROUP;
-
-    if (groupStartIndex < itemIds.length) {
-      e.preventDefault();
-      config.prefixStore.set(keyLower);
-      return true;
-    }
+  const keyLower = e.key.toLowerCase();
+  if (keyLower >= 'a' && keyLower <= 'z' && hasHintGroup(keyLower, items.length) === true) {
+    e.preventDefault();
+    mode.prefix.set(keyLower);
+    return true;
   }
 
-  // Invalid key, clear pending state
   ctx.clearPending();
   return true;
 }

@@ -1,7 +1,8 @@
 <script lang="ts">
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { formClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { PostalCodeInfoResponse } from '$shared';
 
@@ -107,7 +108,7 @@ export function focus() {
 </script>
 
 <div class="relative">
-  <label for="postal-code-input" class={formClasses.label}>{$i18n.t('address.postalCode')}</label>
+  <label for="postal-code-input" class={FORM_CLASSES.label}>{$i18n.t('address.postalCode')}</label>
 
   <div class="relative">
     <input
@@ -121,7 +122,7 @@ export function focus() {
       onblur={handleBlur}
       placeholder={$i18n.t('address.postalCodePlaceholder')}
       {disabled}
-      class="{formClasses.inputSm} pr-10"
+      class="{FORM_CLASSES.inputSm} pr-10"
       autocomplete="off"
       role="combobox"
       aria-expanded={showDropdown}
@@ -138,7 +139,7 @@ export function focus() {
 
   {#if showDropdown && !isLoading && suggestions.length > 0}
     <ul
-      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
+      class="absolute z-(--z-popover) w-full mt-1 {SURFACE_CLASSES.listbox}"
       role="listbox"
     >
       {#each suggestions as suggestion, index}
@@ -157,6 +158,6 @@ export function focus() {
   {/if}
 
   {#if value && value.length < 3 && !disabled}
-    <p class={formClasses.helper}>{$i18n.t('address.postalCodeHint')}</p>
+    <p class={FORM_CLASSES.helper}>{$i18n.t('address.postalCodeHint')}</p>
   {/if}
 </div>

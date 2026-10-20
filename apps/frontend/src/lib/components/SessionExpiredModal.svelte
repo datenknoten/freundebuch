@@ -1,13 +1,17 @@
 <script lang="ts">
 import LockClosed from 'svelte-heros-v2/LockClosed.svelte';
 import { goto } from '$app/navigation';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import LoginForm from '$lib/components/LoginForm.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { auth, currentUser } from '$lib/stores/auth';
-import { abandonSessionExpired } from '$lib/stores/session';
+
+const { stores } = getAppContext();
+const auth = stores.auth;
+const session = stores.session;
+const currentUser = auth.currentUser;
 
 const i18n = createI18n();
 
@@ -34,7 +38,7 @@ async function handleLogout() {
   } finally {
     // Ensure the prompt is dismissed and parked requests reject regardless of
     // how the sign-out request resolved.
-    abandonSessionExpired();
+    session.abandonSessionExpired();
     await goto('/auth/login');
   }
 }

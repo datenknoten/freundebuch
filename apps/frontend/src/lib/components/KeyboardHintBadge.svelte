@@ -1,5 +1,5 @@
 <script lang="ts">
-import { getKeyboardHint } from '$lib/stores/ui';
+import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 
 interface Props {
   /** 0-based index of the item in the list */
@@ -28,18 +28,15 @@ const toneClasses = {
 
 let keyHint = $derived(getKeyboardHint(index));
 
-let shouldShow = $derived.by(() => {
-  if (!isActive) return false;
-  if (keyHint.length === 0) return false;
-
-  if (prefix === null) {
-    // No prefix selected yet - show all hints
-    return true;
+/** Before a letter is typed every hint shows; after it only the hints of that letter's group. */
+function isHintVisible() {
+  if (isActive === false || keyHint.length === 0) {
+    return false;
   }
+  return prefix === null || (keyHint.length === 2 && keyHint[0] === prefix);
+}
 
-  // Prefix selected - only show hints that match this prefix
-  return keyHint.length === 2 && keyHint[0] === prefix;
-});
+let shouldShow = $derived.by(isHintVisible);
 </script>
 
 {#if shouldShow}

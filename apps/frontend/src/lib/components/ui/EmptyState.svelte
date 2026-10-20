@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Component, Snippet } from 'svelte';
-import { headingClasses } from './styles';
+import { HEADING_CLASSES } from './heading-classes.js';
 
 interface Props {
   icon: Component<{ class?: string; strokeWidth?: string }>;
@@ -21,7 +21,7 @@ let { icon: Icon, title, description, hint, tone = 'neutral', children }: Props 
     class="mx-auto h-12 w-12 {tone === 'error' ? 'text-red-400' : 'text-gray-400'}"
     strokeWidth="2"
   />
-  <h3 class="mt-4 {headingClasses.sub}">{title}</h3>
+  <h3 class="mt-4 {HEADING_CLASSES.sub}">{title}</h3>
   {#if description !== undefined}
     <p class="mt-2 text-sm text-gray-600 font-body">{description}</p>
   {/if}

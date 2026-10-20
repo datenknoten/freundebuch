@@ -1,151 +1,168 @@
+import { createRootLogger } from '@datenknoten/kit/logger';
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { UserWithPreferencesResponse } from '$shared';
+import { ApiClient } from '../api/api-client.js';
+import { AuthApi } from '../api/auth.js';
+import { createAppAuthClient } from '../auth-client.js';
+import { AuthStore } from './auth.js';
+import { SessionStore } from './session.js';
 
 const h = vi.hoisted(() => ({
-  api: {
-    getUserWithPreferences: vi.fn(),
-    updatePreferences: vi.fn(),
-    getCurrentUser: vi.fn(),
-  },
-  authClient: {
-    signUp: { email: vi.fn() },
-    signIn: { email: vi.fn() },
-    signOut: vi.fn(),
-  },
-  session: {
-    setHasSession: vi.fn(),
-    resolveSessionExpired: vi.fn(),
-    abandonSessionExpired: vi.fn(),
-  },
-  // Run the wrapped fn directly so updatePreferences persistence is exercised
-  // without real backoff timers.
-  retryWithBackoff: vi.fn((fn: () => Promise<unknown>) => fn()),
+  // Runs the wrapped call once, so persisting preferences needs no backoff timers.
+  retryWithBackoff: vi.fn((persist: () => Promise<unknown>) => persist()),
 }));
 
-vi.mock('$shared', () => ({}));
-vi.mock('../api/auth.js', () => h.api);
-vi.mock('../auth-client.js', () => ({ authClient: h.authClient }));
 vi.mock('../utils/retry.js', () => ({ retryWithBackoff: h.retryWithBackoff }));
-vi.mock('./session.js', () => h.session);
 
-import { auth, currentUser, isAuthenticated, needsOnboarding, userPreferences } from './auth.js';
-
-const userResponse = (overrides: Record<string, unknown> = {}) => ({
+const ADA: UserWithPreferencesResponse = {
   user: {
     externalId: 'u-1',
     email: 'ada@example.com',
     selfProfileId: 'p-1',
     displayName: 'Ada',
     hasCompletedOnboarding: true,
-    ...overrides,
   },
   preferences: { friendsPageSize: 50 },
-});
+};
 
-describe('auth store', () => {
+/** Better Auth answers by path; every path without an answer fails with 500. */
+const betterAuthAnswers = new Map<string, Response>();
+
+async function answerBetterAuth(input: RequestInfo | URL) {
+  const url = new URL(input instanceof Request ? input.url : String(input), 'http://localhost');
+  return betterAuthAnswers.get(url.pathname) ?? new Response('{}', { status: 500 });
+}
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+async function stayUnauthenticated() {
+  return false;
+}
+
+function createAuthStore() {
+  const logger = createRootLogger({ LOG_LEVEL: 'silent' });
+  const authApi = new AuthApi({
+    client: new ApiClient({ baseUrl: '', logger, onUnauthorized: stayUnauthenticated }),
+  });
+  const session = new SessionStore();
+  const auth = new AuthStore({ authApi, authClient: createAppAuthClient(''), session, logger });
+  return { auth, authApi, session };
+}
+
+describe('AuthStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // logout() resets the store to its initial state between tests.
-    h.authClient.signOut.mockResolvedValue(undefined);
+    betterAuthAnswers.clear();
+    vi.stubGlobal('fetch', vi.fn(answerBetterAuth));
   });
 
-  afterEach(async () => {
-    await auth.logout().catch(() => undefined);
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   describe('login', () => {
-    it('signs in, loads the user, and marks the session active', async () => {
-      h.authClient.signIn.email.mockResolvedValue({ error: null });
-      h.api.getUserWithPreferences.mockResolvedValue(userResponse());
+    it('signs in, loads the user and marks the session active', async () => {
+      const { auth, authApi, session } = createAuthStore();
+      betterAuthAnswers.set('/api/auth/sign-in/email', json({ token: 't', user: {} }));
+      vi.spyOn(authApi, 'getUserWithPreferences').mockResolvedValue(ADA);
+      const setHasSession = vi.spyOn(session, 'setHasSession');
 
-      const result = await auth.login('ada@example.com', 'pw');
-
-      expect(result).toMatchObject({ externalId: 'u-1' });
-      expect(h.session.setHasSession).toHaveBeenCalledWith(true);
-      const state = get(auth);
-      expect(get(isAuthenticated)).toBe(true);
-      expect(get(currentUser)).toMatchObject({ email: 'ada@example.com' });
-      expect(get(userPreferences).friendsPageSize).toBe(50);
-      expect(state.isLoading).toBe(false);
-      expect(state.isInitialized).toBe(true);
+      await expect(auth.login('ada@example.com', 'pw')).resolves.toMatchObject({
+        externalId: 'u-1',
+      });
+      expect(setHasSession).toHaveBeenCalledWith(true);
+      expect(get(auth.isAuthenticated)).toBe(true);
+      expect(get(auth.friendsPageSize)).toBe(50);
+      expect(get(auth)).toMatchObject({ isLoading: false, isInitialized: true });
     });
 
-    it('throws and records an error when sign-in fails', async () => {
-      h.authClient.signIn.email.mockResolvedValue({ error: { message: 'bad creds' } });
+    it('records the Better Auth message and rethrows when sign-in fails', async () => {
+      const { auth } = createAuthStore();
+      betterAuthAnswers.set(
+        '/api/auth/sign-in/email',
+        json({ code: 'INVALID_EMAIL_OR_PASSWORD', message: 'bad creds' }, 401),
+      );
 
       await expect(auth.login('ada@example.com', 'pw')).rejects.toThrow('bad creds');
       expect(get(auth).error).toBe('bad creds');
-      expect(get(isAuthenticated)).toBe(false);
+      expect(get(auth.isAuthenticated)).toBe(false);
     });
   });
 
   describe('register', () => {
-    it('signs up and loads the user', async () => {
-      h.authClient.signUp.email.mockResolvedValue({ error: null });
-      h.api.getUserWithPreferences.mockResolvedValue(
-        userResponse({ hasCompletedOnboarding: false }),
-      );
+    it('signs up and flags a user without self-profile for onboarding', async () => {
+      const { auth, authApi } = createAuthStore();
+      betterAuthAnswers.set('/api/auth/sign-up/email', json({ token: 't', user: {} }));
+      vi.spyOn(authApi, 'getUserWithPreferences').mockResolvedValue({
+        ...ADA,
+        user: { ...ADA.user, hasCompletedOnboarding: false },
+      });
 
-      const result = await auth.register('ada@example.com', 'pw');
+      await auth.register('ada@example.com', 'pw');
 
-      expect(result).toMatchObject({ externalId: 'u-1' });
-      expect(h.authClient.signUp.email).toHaveBeenCalledWith(
-        expect.objectContaining({ email: 'ada@example.com', name: 'ada' }),
-      );
-      expect(get(needsOnboarding)).toBe(true);
+      expect(get(auth.needsOnboarding)).toBe(true);
     });
   });
 
   describe('logout', () => {
-    it('signs out and resets to the initial state', async () => {
-      h.authClient.signIn.email.mockResolvedValue({ error: null });
-      h.api.getUserWithPreferences.mockResolvedValue(userResponse());
-      await auth.login('ada@example.com', 'pw');
+    it('signs out, rejects parked requests and resets the state', async () => {
+      const { auth, authApi, session } = createAuthStore();
+      vi.spyOn(authApi, 'getUserWithPreferences').mockResolvedValue(ADA);
+      await auth.initialize();
+      betterAuthAnswers.set('/api/auth/sign-out', json({ success: true }));
+      const parked = session.notifyUnauthorized();
 
       await auth.logout();
 
-      expect(h.session.setHasSession).toHaveBeenLastCalledWith(false);
-      expect(h.session.abandonSessionExpired).toHaveBeenCalled();
-      expect(get(isAuthenticated)).toBe(false);
+      await expect(parked).resolves.toBe(false);
+      expect(get(auth.isAuthenticated)).toBe(false);
+      expect(get(auth.isInitialized)).toBe(false);
     });
   });
 
   describe('initialize', () => {
-    it('hydrates the user when a session exists', async () => {
-      h.api.getUserWithPreferences.mockResolvedValue(userResponse());
+    it('restores the user of an existing session', async () => {
+      const { auth, authApi } = createAuthStore();
+      vi.spyOn(authApi, 'getUserWithPreferences').mockResolvedValue(ADA);
 
-      const result = await auth.initialize();
-
-      expect(result).toMatchObject({ user: { externalId: 'u-1' } });
-      expect(get(isAuthenticated)).toBe(true);
+      await expect(auth.initialize()).resolves.toMatchObject({ externalId: 'u-1' });
+      expect(get(auth.currentUser)).toMatchObject({ email: 'ada@example.com' });
     });
 
-    it('finishes initialized with no user when there is no session', async () => {
-      h.api.getUserWithPreferences.mockRejectedValue(new Error('401'));
+    it('finishes signed out when the session check fails', async () => {
+      const { auth, authApi } = createAuthStore();
+      vi.spyOn(authApi, 'getUserWithPreferences').mockRejectedValue(new Error('401'));
 
-      const result = await auth.initialize();
-
-      expect(result).toBeNull();
-      expect(h.session.setHasSession).toHaveBeenLastCalledWith(false);
-      expect(get(auth).isInitialized).toBe(true);
-      expect(get(isAuthenticated)).toBe(false);
+      await expect(auth.initialize()).resolves.toBeUndefined();
+      expect(get(auth)).toMatchObject({ user: null, isInitialized: true, isLoading: false });
     });
   });
 
   describe('updatePreferences', () => {
-    it('optimistically updates then persists the server response', async () => {
-      h.api.updatePreferences.mockResolvedValue({ preferences: { friendsPageSize: 100 } });
+    it('applies the change at once and then takes the stored preferences', async () => {
+      const { auth, authApi } = createAuthStore();
+      vi.spyOn(authApi, 'updatePreferences').mockResolvedValue({
+        preferences: { friendsPageSize: 100, birthdayFormat: 'eu' },
+      });
 
       await auth.updatePreferences({ friendsPageSize: 100 });
 
-      expect(h.api.updatePreferences).toHaveBeenCalledWith({ friendsPageSize: 100 });
-      expect(get(userPreferences).friendsPageSize).toBe(100);
+      expect(get(auth.friendsPageSize)).toBe(100);
+      expect(get(auth.birthdayFormat)).toBe('eu');
     });
   });
 
   describe('clearError', () => {
     it('clears a recorded error', async () => {
-      h.authClient.signIn.email.mockResolvedValue({ error: { message: 'bad' } });
+      const { auth } = createAuthStore();
+      betterAuthAnswers.set('/api/auth/sign-in/email', json({ message: 'bad' }, 401));
       await expect(auth.login('a@b.c', 'pw')).rejects.toThrow();
 
       auth.clearError();

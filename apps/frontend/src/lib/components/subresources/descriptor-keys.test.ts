@@ -1,8 +1,34 @@
 import { describe, expect, it } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import * as collectiveDescriptors from '../collectives/subresource-descriptors';
-import * as friendDescriptors from '../friends/subresource-descriptors';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
+import { createCollectiveDescriptors } from '../collectives/subresource-descriptors';
+import {
+  createCollectiveDescriptor,
+  createFriendAddDetailOptions,
+  createFriendDescriptors,
+} from '../friends/subresource-descriptors';
 import type { AddDetailOption, SubresourceDescriptor } from './types';
+
+const { api, stores } = createTestAppContext();
+const friendDescriptors = createFriendDescriptors({
+  friendsStore: stores.friends,
+  friendNotesApi: api.friendNotes,
+});
+const friendCollectiveDescriptor = createCollectiveDescriptor({
+  collectiveMembersApi: api.collectiveMembers,
+  onChanged: () => undefined,
+});
+const friendModule = {
+  ...friendDescriptors,
+  friendAddDetailOptions: createFriendAddDetailOptions(
+    friendDescriptors,
+    friendCollectiveDescriptor,
+  ),
+};
+const collectiveDescriptors = createCollectiveDescriptors({
+  collectivesApi: api.collectives,
+  collectiveContactsApi: api.collectiveContacts,
+});
 
 /**
  * Descriptor i18n keys are strings the section renders straight into dialog
@@ -63,13 +89,13 @@ function collectMenuOptions(module: Record<string, unknown>): [string, AddDetail
 }
 
 const descriptors: [string, SubresourceDescriptor][] = [
-  ...collectDescriptors(friendDescriptors as unknown as Record<string, unknown>),
+  ...collectDescriptors(friendModule),
   ...collectDescriptors(collectiveDescriptors as unknown as Record<string, unknown>),
-  ['createCollectiveDescriptor()', friendDescriptors.createCollectiveDescriptor(() => undefined)],
+  ['createCollectiveDescriptor()', friendCollectiveDescriptor],
 ];
 
 const menuOptions: [string, AddDetailOption][] = [
-  ...collectMenuOptions(friendDescriptors as unknown as Record<string, unknown>),
+  ...collectMenuOptions(friendModule),
   ...collectMenuOptions(collectiveDescriptors as unknown as Record<string, unknown>),
 ];
 

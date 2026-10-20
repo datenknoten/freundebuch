@@ -1,69 +1,74 @@
-import type {
-  CityInfoResponse,
-  HouseNumberInfoResponse,
-  PostalCodeInfoResponse,
-  StreetInfoResponse,
+import {
+  CityInfoResponseSchema,
+  HouseNumberInfoResponseSchema,
+  PostalCodeInfoResponseSchema,
+  StreetInfoResponseSchema,
 } from '$shared';
-import { apiRequest } from './client.js';
+import type { ApiClient } from './api-client.js';
 
-/**
- * Search postal codes by prefix (autocomplete), returning postal-code/city pairs
- */
-export async function getPostalCodes(
-  countryCode: string,
-  prefix: string,
-): Promise<PostalCodeInfoResponse[]> {
-  const params = new URLSearchParams({
-    country: countryCode,
-    prefix,
-  });
-  return apiRequest(`/api/address-lookup/postal-codes?${params}`);
+export interface AddressLookupApiOptions {
+  client: ApiClient;
 }
 
-/**
- * Get cities for a postal code in a country
- */
-export async function getCities(
-  countryCode: string,
-  postalCode: string,
-): Promise<CityInfoResponse[]> {
-  const params = new URLSearchParams({
-    country: countryCode,
-    postal_code: postalCode,
-  });
-  return apiRequest(`/api/address-lookup/cities?${params}`);
+export interface StreetLookup {
+  countryCode: string;
+  city: string;
+  postalCode: string;
 }
 
-/**
- * Get streets for a city/postal code combination
- */
-export async function getStreets(
-  countryCode: string,
-  city: string,
-  postalCode: string,
-): Promise<StreetInfoResponse[]> {
-  const params = new URLSearchParams({
-    country: countryCode,
-    city,
-    postal_code: postalCode,
-  });
-  return apiRequest(`/api/address-lookup/streets?${params}`);
+export interface HouseNumberLookup extends StreetLookup {
+  street: string;
 }
 
-/**
- * Get house numbers for a street
- */
-export async function getHouseNumbers(
-  countryCode: string,
-  city: string,
-  postalCode: string,
-  street: string,
-): Promise<HouseNumberInfoResponse[]> {
-  const params = new URLSearchParams({
-    country: countryCode,
-    city,
-    postal_code: postalCode,
-    street,
-  });
-  return apiRequest(`/api/address-lookup/house-numbers?${params}`);
+const PostalCodeInfoResponseListSchema = PostalCodeInfoResponseSchema.array();
+const CityInfoResponseListSchema = CityInfoResponseSchema.array();
+const StreetInfoResponseListSchema = StreetInfoResponseSchema.array();
+const HouseNumberInfoResponseListSchema = HouseNumberInfoResponseSchema.array();
+
+/** Autocomplete for the address form, one level of the address hierarchy per method. */
+export class AddressLookupApi {
+  private readonly client: ApiClient;
+
+  public constructor(options: AddressLookupApiOptions) {
+    this.client = options.client;
+  }
+
+  /** Postal-code/city pairs whose postal code starts with the prefix. */
+  public listPostalCodes(countryCode: string, prefix: string) {
+    const params = new URLSearchParams({ country: countryCode, prefix });
+    return this.client.request(
+      PostalCodeInfoResponseListSchema,
+      `/api/address-lookup/postal-codes?${params}`,
+    );
+  }
+
+  public listCities(countryCode: string, postalCode: string) {
+    const params = new URLSearchParams({ country: countryCode, postal_code: postalCode });
+    return this.client.request(CityInfoResponseListSchema, `/api/address-lookup/cities?${params}`);
+  }
+
+  public listStreets(lookup: StreetLookup) {
+    const params = new URLSearchParams({
+      country: lookup.countryCode,
+      city: lookup.city,
+      postal_code: lookup.postalCode,
+    });
+    return this.client.request(
+      StreetInfoResponseListSchema,
+      `/api/address-lookup/streets?${params}`,
+    );
+  }
+
+  public listHouseNumbers(lookup: HouseNumberLookup) {
+    const params = new URLSearchParams({
+      country: lookup.countryCode,
+      city: lookup.city,
+      postal_code: lookup.postalCode,
+      street: lookup.street,
+    });
+    return this.client.request(
+      HouseNumberInfoResponseListSchema,
+      `/api/address-lookup/house-numbers?${params}`,
+    );
+  }
 }

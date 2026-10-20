@@ -1,23 +1,31 @@
-import { readable } from 'svelte/store';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { useLanguage } from '$lib/test/locale.js';
-import { control, render } from '$lib/test/render.js';
+import { control } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
 import AccountPage from './+page.svelte';
 
-vi.mock('$lib/stores/auth', () => ({
-  auth: { updatePreferences: vi.fn() },
-  currentUser: readable({ externalId: 'ext-1', email: 'ada@example.com' }),
-  birthdayFormat: readable('eu'),
-  showShortcutHints: readable(false),
-}));
+async function createSignedInContext() {
+  const context = createTestAppContext();
+  vi.spyOn(context.api.auth, 'getUserWithPreferences').mockResolvedValue({
+    user: { externalId: 'ext-1', email: 'ada@example.com', hasCompletedOnboarding: true },
+    preferences: { birthdayFormat: 'eu', showShortcutHints: false, defaultCountry: 'DE' },
+  });
+  await context.stores.auth.initialize();
+  return context;
+}
 
 describe('profile account page', () => {
   beforeAll(async () => {
     await useLanguage('en');
   });
 
-  it('renders the read-only account fields as labelled disabled inputs', () => {
-    render(AccountPage, {});
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('renders the read-only account fields as labelled disabled inputs', async () => {
+    renderWithContext(AccountPage, { props: {}, context: await createSignedInContext() });
 
     const userId = control('user-id') as HTMLInputElement;
     expect(userId.value).toBe('ext-1');

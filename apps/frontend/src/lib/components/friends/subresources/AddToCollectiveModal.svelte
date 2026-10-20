@@ -1,21 +1,16 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import * as collectivesApi from '$lib/api/collectives.js';
+import { get } from 'svelte/store';
+import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import CollectiveSearchInput from '$lib/components/collectives/CollectiveSearchInput.svelte';
 import RelationshipPreview from '$lib/components/collectives/RelationshipPreview.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { formClasses } from '$lib/components/ui/styles.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import {
-  collectives,
-  collectivesList,
-  collectiveTypes,
-  previewMemberRelationships,
-} from '$lib/stores/collectives';
 import type {
   CollectiveListItemResponse,
   CollectiveRoleResponse,
@@ -25,6 +20,8 @@ import type {
 import DetailEditModal from './DetailEditModal.svelte';
 
 const i18n = createI18n();
+const { api, logger, stores } = getAppContext();
+const collectives = stores.collectives;
 
 interface Props {
   friendId: string;
@@ -81,19 +78,10 @@ onMount(async () => {
       collectives.loadTypes(),
     ]);
 
-    // Read from store after loading
-    const unsubCollectives = collectivesList.subscribe((v) => {
-      allCollectives = v;
-    });
-    const unsubTypes = collectiveTypes.subscribe((v) => {
-      types = v;
-    });
-
-    // Cleanup subscriptions - we only need the initial values
-    unsubCollectives();
-    unsubTypes();
+    allCollectives = get(collectives.list);
+    types = get(collectives.types);
   } catch (err) {
-    console.error('Failed to load data:', err);
+    logger.error({ err }, 'Failed to load collectives');
   } finally {
     isLoadingData = false;
   }
@@ -130,15 +118,15 @@ async function loadPreview() {
 
   isLoadingPreview = true;
   try {
-    const result = await previewMemberRelationships(
+    const result = await api.collectiveMembers.previewMemberRelationships(
       selectedCollectiveId,
-      { friend_id: friendId, role_id: selectedRoleId },
-      { signal },
+      { friendId, roleId: selectedRoleId },
+      signal,
     );
     if (!signal.aborted) preview = result;
   } catch (err) {
     if (!signal.aborted) {
-      console.error('Failed to load preview:', err);
+      logger.error({ err }, 'Failed to load relationship preview');
       preview = null;
     }
   } finally {
@@ -153,10 +141,10 @@ async function handleSubmit() {
   error = null;
 
   try {
-    await collectivesApi.addMember(selectedCollectiveId, {
-      friend_id: friendId,
-      role_id: selectedRoleId,
-      skip_auto_relationships: skipAutoRelationships,
+    await api.collectiveMembers.addMember(selectedCollectiveId, {
+      friendId,
+      roleId: selectedRoleId,
+      shouldSkipAutoRelationships: skipAutoRelationships,
     });
     onSuccess();
     onClose();
@@ -212,7 +200,7 @@ let roleOptions = $derived(rolesForSelected.map((role) => ({ value: role.id, lab
 
       <!-- Collective select -->
       <div>
-        <label for="collective-select" class={formClasses.label}>
+        <label for="collective-select" class={FORM_CLASSES.label}>
           {$i18n.t('friendDetail.addToCollective.selectCollective')} <span class="text-red-500">*</span>
         </label>
         <CollectiveSearchInput

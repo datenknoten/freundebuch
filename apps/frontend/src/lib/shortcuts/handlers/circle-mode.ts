@@ -1,81 +1,67 @@
-import type { Writable } from 'svelte/store';
 import { get } from 'svelte/store';
-import {
-  deleteCircleModePrefix,
-  editCircleModePrefix,
-  getIndexFromHint,
-  ITEMS_PER_GROUP,
-  visibleCircleIds,
-} from '$lib/stores/ui';
+import type { HintModeStore } from '$lib/stores/hint-mode.js';
+import { findIndexFromHint } from '$lib/utils/find-index-from-hint.js';
+import { hasHintGroup } from '$lib/utils/has-hint-group.js';
 import type { HandlerContext } from '../types.js';
+
+function dispatchCircleAction(eventName: string, circleId: string | undefined) {
+  window.dispatchEvent(new CustomEvent(eventName, { detail: { circleId } }));
+}
 
 function handleCircleAction(
   e: KeyboardEvent,
   ctx: HandlerContext,
-  prefixStore: Writable<string | null>,
+  mode: HintModeStore,
   eventName: string,
-): boolean {
-  const circleIds = get(visibleCircleIds);
-  const currentPrefix = get(prefixStore);
-  const keyNum = parseInt(e.key, 10);
-  const keyLower = e.key.toLowerCase();
+) {
+  const circleIds = get(ctx.stores.keyboardModes.visibleCircleIds);
+  const currentPrefix = get(mode.prefix);
+  const keyNum = Number.parseInt(e.key, 10);
+  const isDigitKey = keyNum >= 1 && keyNum <= 9;
 
-  // If we already have a letter prefix, we're waiting for a number
-  if (currentPrefix) {
-    if (keyNum >= 1 && keyNum <= 9) {
+  if (currentPrefix !== null && currentPrefix !== '') {
+    if (isDigitKey === true) {
       e.preventDefault();
-      const index = getIndexFromHint(`${currentPrefix}${keyNum}`);
-      if (index >= 0 && index < circleIds.length) {
-        ctx.clearPending();
-        window.dispatchEvent(
-          new CustomEvent(eventName, { detail: { circleId: circleIds[index] } }),
-        );
-      } else {
-        ctx.clearPending();
-      }
-    } else {
-      ctx.clearPending();
+    }
+    ctx.clearPending();
+    const index = isDigitKey === true ? findIndexFromHint(`${currentPrefix}${keyNum}`) : undefined;
+    if (index !== undefined && index < circleIds.length) {
+      dispatchCircleAction(eventName, circleIds[index]);
     }
     return true;
   }
 
-  // No prefix yet - check if it's a number (1-9) or letter (a-z)
-  if (keyNum >= 1 && keyNum <= 9) {
+  if (isDigitKey === true) {
     e.preventDefault();
     const index = keyNum - 1;
     if (index < circleIds.length) {
       ctx.clearPending();
-      window.dispatchEvent(new CustomEvent(eventName, { detail: { circleId: circleIds[index] } }));
+      dispatchCircleAction(eventName, circleIds[index]);
     }
     return true;
   }
 
-  // Check if it's a letter for extended navigation
-  if (keyLower >= 'a' && keyLower <= 'z') {
-    const letterIndex = keyLower.charCodeAt(0) - 97;
-    const groupStartIndex = (letterIndex + 1) * ITEMS_PER_GROUP;
-
-    if (groupStartIndex < circleIds.length) {
-      e.preventDefault();
-      prefixStore.set(keyLower);
-      return true;
-    }
+  const keyLower = e.key.toLowerCase();
+  if (keyLower >= 'a' && keyLower <= 'z' && hasHintGroup(keyLower, circleIds.length) === true) {
+    e.preventDefault();
+    mode.prefix.set(keyLower);
+    return true;
   }
 
   ctx.clearPending();
   return true;
 }
 
-export function handleCircleMode(e: KeyboardEvent, ctx: HandlerContext): boolean {
-  if (ctx.pathname !== '/circles') return false;
-
+export function handleCircleMode(e: KeyboardEvent, ctx: HandlerContext) {
+  if (ctx.pathname !== '/circles') {
+    return false;
+  }
+  const { keyboardModes } = ctx.stores;
   if (ctx.pendingKey === 'e') {
-    return handleCircleAction(e, ctx, editCircleModePrefix, 'shortcut:edit-circle');
+    return handleCircleAction(e, ctx, keyboardModes.editCircle, 'shortcut:edit-circle');
   }
-
   if (ctx.pendingKey === 'd') {
-    return handleCircleAction(e, ctx, deleteCircleModePrefix, 'shortcut:delete-circle');
+    return handleCircleAction(e, ctx, keyboardModes.deleteCircle, 'shortcut:delete-circle');
   }
-
   return false;
 }

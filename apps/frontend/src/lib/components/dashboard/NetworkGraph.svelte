@@ -5,7 +5,8 @@ import Share from 'svelte-heros-v2/Share.svelte';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
-import { headingClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import {
   RELATIONSHIP_CATEGORIES,
@@ -261,8 +262,8 @@ onDestroy(() => {
 });
 </script>
 
-<div class={surfaceClasses.page}>
-  <h2 class="{headingClasses.widget} mb-4">{$i18n.t('dashboard.relationshipNetwork')}</h2>
+<div class={SURFACE_CLASSES.page}>
+  <h2 class="{HEADING_CLASSES.widget} mb-4">{$i18n.t('dashboard.relationshipNetwork')}</h2>
 
   {#if isLoading}
     <div class="h-[400px] flex items-center justify-center">

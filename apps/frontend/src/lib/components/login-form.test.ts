@@ -1,7 +1,7 @@
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { jsonResponse, restoreFetch, stubFetch } from '$lib/test/fetch-mock.js';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { useLanguage } from '$lib/test/locale.js';
-import { control, labelFor, render, screen } from '$lib/test/render.js';
+import { control, labelFor, screen } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
 import LoginForm from './LoginForm.svelte';
 
 describe('LoginForm', () => {
@@ -9,11 +9,14 @@ describe('LoginForm', () => {
     await useLanguage('en');
   });
 
-  afterEach(restoreFetch);
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
 
   it('labels the login fields and keeps the passkey autofill hint', () => {
-    stubFetch(jsonResponse({ signupEnabled: true }));
-    render(LoginForm, {});
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response('{}')));
+    renderWithContext(LoginForm, { props: {} });
 
     expect(labelFor('email')).toContain('Email');
     expect(control('email').type).toBe('email');

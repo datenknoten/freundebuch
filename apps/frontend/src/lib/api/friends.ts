@@ -1,780 +1,129 @@
-import type {
-  AddressInputSchema,
-  AddressResponse,
-  ContactCollectiveSummaryResponse,
-  DashboardResponse,
-  DateInputSchema,
-  EmailInputSchema,
-  EmailResponse,
-  FacetedSearchResponse,
-  FacetFilters,
-  FriendCreateInputSchema,
-  FriendDateResponse,
-  FriendListResponse,
-  FriendNoteInput,
-  FriendNoteResponse,
-  FriendResponse,
-  FriendSearchResultResponse,
-  FriendUpdateInput,
-  GlobalSearchResultResponse,
-  MetInfoInput,
-  MetInfoResponse,
-  NetworkGraphResponse,
-  PaginatedSearchResponse,
-  PhoneInputSchema,
-  PhoneResponse,
-  ProfessionalHistoryInputSchema,
-  ProfessionalHistoryResponse,
-  RelationshipCreateInput,
-  RelationshipResponse,
-  RelationshipTypesGroupedResponse,
-  RelationshipUpdateInput,
-  SearchSortBy,
-  SocialProfileInput,
-  SocialProfileResponse,
-  UpcomingDateResponse,
-  UrlInput,
-  UrlResponse,
+import {
+  ContactCollectiveSummaryResponseSchema,
+  DashboardResponseSchema,
+  FriendListResponseSchema,
+  FriendResponseSchema,
+  type FriendSortBy,
+  type FriendUpdateInputSchema,
+  MessageResponseSchema,
+  RelationshipTypesGroupedResponseSchema,
 } from '$shared';
-import { apiRequest } from './client.js';
+import type { ApiClient } from './api-client.js';
+import { type FriendCreateData, mapFriendCreateInput } from './friend-create-data.js';
+import { withQuery } from './with-query.js';
 
-// ============================================================================
-// Friend CRUD Operations
-// ============================================================================
+export interface FriendsApiOptions {
+  client: ApiClient;
+}
 
 export interface FriendListParams {
   page?: number;
   pageSize?: number;
-  sortBy?: 'display_name' | 'created_at' | 'updated_at';
+  sortBy?: FriendSortBy;
   sortOrder?: 'asc' | 'desc';
-  // Epic 4: Categorization & Organization filters
-  favorites?: boolean;
-  archived?: boolean | 'only'; // true = include archived, 'only' = only archived, false/undefined = exclude
 }
 
-/**
- * Get paginated list of friends
- */
-export async function listFriends(params: FriendListParams = {}): Promise<FriendListResponse> {
-  const searchParams = new URLSearchParams();
-
-  if (params.page) searchParams.set('page', params.page.toString());
-  if (params.pageSize) searchParams.set('page_size', params.pageSize.toString());
-  if (params.sortBy) searchParams.set('sort_by', params.sortBy);
-  if (params.sortOrder) searchParams.set('sort_order', params.sortOrder);
-  // Epic 4: Categorization & Organization filters
-  if (params.favorites) searchParams.set('favorites', 'true');
-  if (params.archived === true) searchParams.set('archived', 'true');
-  if (params.archived === 'only') searchParams.set('archived', 'only');
-
-  const query = searchParams.toString();
-  const endpoint = `/api/friends${query ? `?${query}` : ''}`;
-
-  return apiRequest<FriendListResponse>(endpoint);
-}
-
-/**
- * Get a single friend by ID
- */
-export async function getFriend(id: string): Promise<FriendResponse> {
-  return apiRequest<FriendResponse>(`/api/friends/${id}`);
-}
-
-/**
- * Create a new friend
- */
-export async function createFriend(
-  data: typeof FriendCreateInputSchema.inferIn,
-): Promise<FriendResponse> {
-  return apiRequest<FriendResponse>('/api/friends', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Update an existing friend
- */
-export async function updateFriend(id: string, data: FriendUpdateInput): Promise<FriendResponse> {
-  return apiRequest<FriendResponse>(`/api/friends/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Delete a friend (soft delete)
- */
-export async function deleteFriend(id: string): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${id}`, {
-    method: 'DELETE',
-  });
-}
-
-// ============================================================================
-// Phone Operations
-// ============================================================================
-
-/**
- * Add a phone number to a friend
- */
-export async function addPhone(
-  friendId: string,
-  data: typeof PhoneInputSchema.inferIn,
-): Promise<PhoneResponse> {
-  return apiRequest<PhoneResponse>(`/api/friends/${friendId}/phones`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Update a phone number
- */
-export async function updatePhone(
-  friendId: string,
-  phoneId: string,
-  data: Partial<typeof PhoneInputSchema.inferIn>,
-): Promise<PhoneResponse> {
-  return apiRequest<PhoneResponse>(`/api/friends/${friendId}/phones/${phoneId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Delete a phone number
- */
-export async function deletePhone(friendId: string, phoneId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/phones/${phoneId}`, {
-    method: 'DELETE',
-  });
-}
-
-// ============================================================================
-// Email Operations
-// ============================================================================
-
-/**
- * Add an email to a friend
- */
-export async function addEmail(
-  friendId: string,
-  data: typeof EmailInputSchema.inferIn,
-): Promise<EmailResponse> {
-  return apiRequest<EmailResponse>(`/api/friends/${friendId}/emails`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Update an email
- */
-export async function updateEmail(
-  friendId: string,
-  emailId: string,
-  data: Partial<typeof EmailInputSchema.inferIn>,
-): Promise<EmailResponse> {
-  return apiRequest<EmailResponse>(`/api/friends/${friendId}/emails/${emailId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Delete an email
- */
-export async function deleteEmail(friendId: string, emailId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/emails/${emailId}`, {
-    method: 'DELETE',
-  });
-}
-
-// ============================================================================
-// Address Operations
-// ============================================================================
-
-/**
- * Add an address to a friend
- */
-export async function addAddress(
-  friendId: string,
-  data: typeof AddressInputSchema.inferIn,
-): Promise<AddressResponse> {
-  return apiRequest<AddressResponse>(`/api/friends/${friendId}/addresses`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Update an address
- */
-export async function updateAddress(
-  friendId: string,
-  addressId: string,
-  data: Partial<typeof AddressInputSchema.inferIn>,
-): Promise<AddressResponse> {
-  return apiRequest<AddressResponse>(`/api/friends/${friendId}/addresses/${addressId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Delete an address
- */
-export async function deleteAddress(
-  friendId: string,
-  addressId: string,
-): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/addresses/${addressId}`, {
-    method: 'DELETE',
-  });
-}
-
-// ============================================================================
-// URL Operations
-// ============================================================================
-
-/**
- * Add a URL to a friend
- */
-export async function addUrl(friendId: string, data: UrlInput): Promise<UrlResponse> {
-  return apiRequest<UrlResponse>(`/api/friends/${friendId}/urls`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Update a URL
- */
-export async function updateUrl(
-  friendId: string,
-  urlId: string,
-  data: Partial<UrlInput>,
-): Promise<UrlResponse> {
-  return apiRequest<UrlResponse>(`/api/friends/${friendId}/urls/${urlId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Delete a URL
- */
-export async function deleteUrl(friendId: string, urlId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/urls/${urlId}`, {
-    method: 'DELETE',
-  });
-}
-
-// ============================================================================
-// Photo Operations
-// ============================================================================
-
-export interface PhotoUploadResult {
-  photoUrl: string;
-  photoThumbnailUrl: string;
-}
-
-/**
- * Upload a photo for a friend
- */
-export async function uploadPhoto(friendId: string, file: File): Promise<PhotoUploadResult> {
-  const formData = new FormData();
-  formData.append('photo', file);
-
-  return apiRequest<PhotoUploadResult>(`/api/friends/${friendId}/photo`, {
-    method: 'POST',
-    body: formData,
-  });
-}
-
-/**
- * Delete a friend's photo
- */
-export async function deletePhoto(friendId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/photo`, {
-    method: 'DELETE',
-  });
-}
-
-// ============================================================================
-// Date Operations (Epic 1B)
-// ============================================================================
-
-/**
- * Add an important date to a friend
- */
-export async function addDate(
-  friendId: string,
-  data: typeof DateInputSchema.inferIn,
-): Promise<FriendDateResponse> {
-  return apiRequest<FriendDateResponse>(`/api/friends/${friendId}/dates`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Update an important date
- */
-export async function updateDate(
-  friendId: string,
-  dateId: string,
-  data: typeof DateInputSchema.inferIn,
-): Promise<FriendDateResponse> {
-  return apiRequest<FriendDateResponse>(`/api/friends/${friendId}/dates/${dateId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Delete an important date
- */
-export async function deleteDate(friendId: string, dateId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/dates/${dateId}`, {
-    method: 'DELETE',
-  });
-}
-
-// ============================================================================
-// Note Operations (Epic 15)
-// ============================================================================
-
-/**
- * List a friend's notes, newest first
- */
-export async function listNotes(friendId: string): Promise<FriendNoteResponse[]> {
-  return apiRequest<FriendNoteResponse[]>(`/api/friends/${friendId}/notes`);
-}
-
-/**
- * Add a note to a friend
- */
-export async function addNote(
-  friendId: string,
-  data: FriendNoteInput,
-): Promise<FriendNoteResponse> {
-  return apiRequest<FriendNoteResponse>(`/api/friends/${friendId}/notes`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Update a note (replaces the whole note, including its links)
- */
-export async function updateNote(
-  friendId: string,
-  noteId: string,
-  data: FriendNoteInput,
-): Promise<FriendNoteResponse> {
-  return apiRequest<FriendNoteResponse>(`/api/friends/${friendId}/notes/${noteId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Delete a note
- */
-export async function deleteNote(friendId: string, noteId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/notes/${noteId}`, {
-    method: 'DELETE',
-  });
-}
-
-/** Options for upcoming dates query */
-export interface UpcomingDatesOptions {
+export interface DashboardParams {
   days?: number;
   limit?: number;
 }
 
-/**
- * Get upcoming important dates across all friends
- */
-export async function getUpcomingDates(
-  options?: UpcomingDatesOptions,
-): Promise<UpcomingDateResponse[]> {
-  const searchParams = new URLSearchParams();
-  if (options?.days) searchParams.set('days', options.days.toString());
-  if (options?.limit) searchParams.set('limit', options.limit.toString());
-  const queryString = searchParams.toString();
-  const endpoint = `/api/friends/dates/upcoming${queryString ? `?${queryString}` : ''}`;
-  return apiRequest<UpcomingDateResponse[]>(endpoint);
+/** `null` clears a field; an omitted field stays unchanged. */
+export interface FriendUpdateData {
+  displayName?: string;
+  nickname?: string | null;
+  namePrefix?: string | null;
+  nameFirst?: string | null;
+  nameMiddle?: string | null;
+  nameLast?: string | null;
+  nameSuffix?: string | null;
+  maidenName?: string | null;
+  interests?: string | null;
 }
 
-// ============================================================================
-// Met Info Operations (Epic 1B)
-// ============================================================================
+const ContactCollectiveSummaryResponseListSchema = ContactCollectiveSummaryResponseSchema.array();
 
-/**
- * Set or update how/where met information (upsert)
- */
-export async function setMetInfo(friendId: string, data: MetInfoInput): Promise<MetInfoResponse> {
-  return apiRequest<MetInfoResponse>(`/api/friends/${friendId}/met-info`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+function mapFriendUpdateInput(data: FriendUpdateData) {
+  return {
+    display_name: data.displayName,
+    nickname: data.nickname,
+    name_prefix: data.namePrefix,
+    name_first: data.nameFirst,
+    name_middle: data.nameMiddle,
+    name_last: data.nameLast,
+    name_suffix: data.nameSuffix,
+    maiden_name: data.maidenName,
+    interests: data.interests,
+  } satisfies typeof FriendUpdateInputSchema.inferIn;
 }
 
-/**
- * Delete how/where met information
- */
-export async function deleteMetInfo(friendId: string): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/met-info`, {
-    method: 'DELETE',
-  });
+function mapFriendListParams(params: FriendListParams) {
+  return {
+    page: params.page,
+    page_size: params.pageSize,
+    sort_by: params.sortBy,
+    sort_order: params.sortOrder,
+  };
 }
 
-// ============================================================================
-// Social Profile Operations (Epic 1B)
-// ============================================================================
+export class FriendsApi {
+  private readonly client: ApiClient;
 
-/**
- * Add a social profile to a friend
- */
-export async function addSocialProfile(
-  friendId: string,
-  data: SocialProfileInput,
-): Promise<SocialProfileResponse> {
-  return apiRequest<SocialProfileResponse>(`/api/friends/${friendId}/social-profiles`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
+  public constructor(options: FriendsApiOptions) {
+    this.client = options.client;
+  }
 
-/**
- * Update a social profile
- */
-export async function updateSocialProfile(
-  friendId: string,
-  profileId: string,
-  data: SocialProfileInput,
-): Promise<SocialProfileResponse> {
-  return apiRequest<SocialProfileResponse>(
-    `/api/friends/${friendId}/social-profiles/${profileId}`,
-    {
+  public listFriends(params: FriendListParams = {}) {
+    return this.client.request(
+      FriendListResponseSchema,
+      withQuery('/api/friends', mapFriendListParams(params)),
+    );
+  }
+
+  public getFriend(friendId: string) {
+    return this.client.request(FriendResponseSchema, `/api/friends/${friendId}`);
+  }
+
+  public createFriend(data: FriendCreateData) {
+    return this.client.request(FriendResponseSchema, '/api/friends', {
+      method: 'POST',
+      body: JSON.stringify(mapFriendCreateInput(data)),
+    });
+  }
+
+  public updateFriend(friendId: string, data: FriendUpdateData) {
+    return this.client.request(FriendResponseSchema, `/api/friends/${friendId}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
-    },
-  );
-}
-
-/**
- * Delete a social profile
- */
-export async function deleteSocialProfile(
-  friendId: string,
-  profileId: string,
-): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/social-profiles/${profileId}`, {
-    method: 'DELETE',
-  });
-}
-
-// ============================================================================
-// Professional History Operations
-// ============================================================================
-
-/**
- * Add a professional history entry to a friend
- */
-export async function addProfessionalHistory(
-  friendId: string,
-  data: typeof ProfessionalHistoryInputSchema.inferIn,
-): Promise<ProfessionalHistoryResponse> {
-  return apiRequest<ProfessionalHistoryResponse>(`/api/friends/${friendId}/professional-history`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Update a professional history entry
- */
-export async function updateProfessionalHistory(
-  friendId: string,
-  historyId: string,
-  data: typeof ProfessionalHistoryInputSchema.inferIn,
-): Promise<ProfessionalHistoryResponse> {
-  return apiRequest<ProfessionalHistoryResponse>(
-    `/api/friends/${friendId}/professional-history/${historyId}`,
-    {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    },
-  );
-}
-
-/**
- * Delete a professional history entry
- */
-export async function deleteProfessionalHistory(
-  friendId: string,
-  historyId: string,
-): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/professional-history/${historyId}`, {
-    method: 'DELETE',
-  });
-}
-
-// ============================================================================
-// Relationship Operations (Epic 1D)
-// ============================================================================
-
-/**
- * Get all relationship types grouped by category
- */
-export async function getRelationshipTypes(): Promise<RelationshipTypesGroupedResponse> {
-  return apiRequest<RelationshipTypesGroupedResponse>('/api/friends/relationship-types');
-}
-
-/**
- * Search friends by name (for autocomplete in relationship picker)
- */
-export async function searchFriends(
-  query: string,
-  exclude?: string,
-  limit?: number,
-): Promise<FriendSearchResultResponse[]> {
-  const searchParams = new URLSearchParams();
-  searchParams.set('q', query);
-  if (exclude) searchParams.set('exclude', exclude);
-  if (limit) searchParams.set('limit', limit.toString());
-
-  return apiRequest<FriendSearchResultResponse[]>(`/api/friends/search?${searchParams.toString()}`);
-}
-
-/**
- * Add a relationship to a friend
- */
-export async function addRelationship(
-  friendId: string,
-  data: RelationshipCreateInput,
-): Promise<RelationshipResponse> {
-  return apiRequest<RelationshipResponse>(`/api/friends/${friendId}/relationships`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Update a relationship
- */
-export async function updateRelationship(
-  friendId: string,
-  relationshipId: string,
-  data: RelationshipUpdateInput,
-): Promise<RelationshipResponse> {
-  return apiRequest<RelationshipResponse>(
-    `/api/friends/${friendId}/relationships/${relationshipId}`,
-    {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    },
-  );
-}
-
-/**
- * Delete a relationship
- */
-export async function deleteRelationship(
-  friendId: string,
-  relationshipId: string,
-): Promise<{ message: string }> {
-  return apiRequest(`/api/friends/${friendId}/relationships/${relationshipId}`, {
-    method: 'DELETE',
-  });
-}
-
-// ============================================================================
-// Full-Text Search Operations (Epic 10)
-// ============================================================================
-
-/**
- * Full-text search across friends with relevance ranking
- * Searches: names, organization, job title, work notes, emails, phones,
- * relationship notes, and met context
- */
-export async function fullTextSearch(
-  query: string,
-  limit?: number,
-): Promise<GlobalSearchResultResponse[]> {
-  const searchParams = new URLSearchParams();
-  searchParams.set('q', query);
-  if (limit) searchParams.set('limit', limit.toString());
-
-  return apiRequest<GlobalSearchResultResponse[]>(
-    `/api/friends/search/full?${searchParams.toString()}`,
-  );
-}
-
-export interface PaginatedSearchParams {
-  query: string;
-  page?: number;
-  pageSize?: number;
-  sortBy?: SearchSortBy;
-  sortOrder?: 'asc' | 'desc';
-}
-
-/**
- * Paginated full-text search with sorting options
- * Used by in-page search for friends list
- */
-export async function paginatedSearch(
-  params: PaginatedSearchParams,
-): Promise<PaginatedSearchResponse> {
-  const searchParams = new URLSearchParams();
-  searchParams.set('q', params.query);
-  if (params.page) searchParams.set('page', params.page.toString());
-  if (params.pageSize) searchParams.set('page_size', params.pageSize.toString());
-  if (params.sortBy) searchParams.set('sort_by', params.sortBy);
-  if (params.sortOrder) searchParams.set('sort_order', params.sortOrder);
-
-  return apiRequest<PaginatedSearchResponse>(
-    `/api/friends/search/paginated?${searchParams.toString()}`,
-  );
-}
-
-/** Parameters for faceted search */
-export interface FacetedSearchParams {
-  query?: string; // Optional - can search with query, filters, or both
-  page?: number;
-  pageSize?: number;
-  sortBy?: SearchSortBy;
-  sortOrder?: 'asc' | 'desc';
-  filters?: FacetFilters;
-  includeFacets?: boolean;
-}
-
-/**
- * Faceted full-text search with filter support
- * Supports filtering by location, professional, and relationship facets
- * Can be used with a search query, filters, or both
- */
-export async function facetedSearch(params: FacetedSearchParams): Promise<FacetedSearchResponse> {
-  const searchParams = new URLSearchParams();
-
-  // Query is optional - can search with query, filters, or just get facets
-  if (params.query) searchParams.set('q', params.query);
-  if (params.page) searchParams.set('page', params.page.toString());
-  if (params.pageSize) searchParams.set('page_size', params.pageSize.toString());
-  if (params.sortBy) searchParams.set('sort_by', params.sortBy);
-  if (params.sortOrder) searchParams.set('sort_order', params.sortOrder);
-  if (params.includeFacets) searchParams.set('include_facets', 'true');
-
-  // Add filter parameters (comma-separated values)
-  if (params.filters?.country?.length) {
-    searchParams.set('country', params.filters.country.join(','));
-  }
-  if (params.filters?.city?.length) {
-    searchParams.set('city', params.filters.city.join(','));
-  }
-  if (params.filters?.organization?.length) {
-    searchParams.set('organization', params.filters.organization.join(','));
-  }
-  if (params.filters?.job_title?.length) {
-    searchParams.set('job_title', params.filters.job_title.join(','));
-  }
-  if (params.filters?.department?.length) {
-    searchParams.set('department', params.filters.department.join(','));
-  }
-  if (params.filters?.relationship_category?.length) {
-    searchParams.set('relationship_category', params.filters.relationship_category.join(','));
-  }
-  if (params.filters?.circles?.length) {
-    searchParams.set('circles', params.filters.circles.join(','));
+      body: JSON.stringify(mapFriendUpdateInput(data)),
+    });
   }
 
-  return apiRequest<FacetedSearchResponse>(
-    `/api/friends/search/faceted?${searchParams.toString()}`,
-  );
-}
-
-/**
- * Get user's recent search queries
- */
-export async function getRecentSearches(limit?: number): Promise<string[]> {
-  const searchParams = new URLSearchParams();
-  if (limit) searchParams.set('limit', limit.toString());
-
-  const query = searchParams.toString();
-  const endpoint = `/api/friends/search/recent${query ? `?${query}` : ''}`;
-
-  return apiRequest<string[]>(endpoint);
-}
-
-/**
- * Add or update a recent search query
- */
-export async function addRecentSearch(query: string): Promise<void> {
-  await apiRequest<{ success: boolean }>('/api/friends/search/recent', {
-    method: 'POST',
-    body: JSON.stringify({ query }),
-  });
-}
-
-/**
- * Delete a specific recent search
- */
-export async function deleteRecentSearch(query: string): Promise<void> {
-  await apiRequest<{ success: boolean }>(
-    `/api/friends/search/recent/${encodeURIComponent(query)}`,
-    {
+  /** Soft-deletes the friend. */
+  public async deleteFriend(friendId: string) {
+    await this.client.request(MessageResponseSchema, `/api/friends/${friendId}`, {
       method: 'DELETE',
-    },
-  );
-}
+    });
+  }
 
-/**
- * Clear all recent searches
- */
-export async function clearRecentSearches(): Promise<void> {
-  await apiRequest<{ success: boolean }>('/api/friends/search/recent', {
-    method: 'DELETE',
-  });
-}
+  public listRelationshipTypes() {
+    return this.client.request(
+      RelationshipTypesGroupedResponseSchema,
+      '/api/friends/relationship-types',
+    );
+  }
 
-// ============================================================================
-// Network Graph Operations (Dashboard visualization)
-// ============================================================================
+  /** Upcoming dates and the network graph in one request. */
+  public getDashboard(params: DashboardParams = {}) {
+    return this.client.request(
+      DashboardResponseSchema,
+      withQuery('/api/friends/dashboard', { days: params.days, limit: params.limit }),
+    );
+  }
 
-/**
- * Get network graph data for visualization
- * Returns all non-archived friends as nodes and their relationships as links
- */
-export async function getNetworkGraphData(): Promise<NetworkGraphResponse> {
-  return apiRequest<NetworkGraphResponse>('/api/friends/network-graph');
-}
-
-/**
- * Get the consolidated dashboard payload (upcoming dates + network graph)
- * in a single request. Used by the home page to avoid multiple round-trips.
- */
-export async function getDashboardData(options?: UpcomingDatesOptions): Promise<DashboardResponse> {
-  const searchParams = new URLSearchParams();
-  if (options?.days) searchParams.set('days', options.days.toString());
-  if (options?.limit) searchParams.set('limit', options.limit.toString());
-  const queryString = searchParams.toString();
-  const endpoint = `/api/friends/dashboard${queryString ? `?${queryString}` : ''}`;
-  return apiRequest<DashboardResponse>(endpoint);
-}
-
-// ============================================================================
-// Collectives Operations
-// ============================================================================
-
-/**
- * Get all collectives this friend belongs to
- */
-export async function getCollectivesForFriend(
-  friendId: string,
-): Promise<ContactCollectiveSummaryResponse[]> {
-  return apiRequest<ContactCollectiveSummaryResponse[]>(`/api/friends/${friendId}/collectives`);
+  public listFriendCollectives(friendId: string) {
+    return this.client.request(
+      ContactCollectiveSummaryResponseListSchema,
+      `/api/friends/${friendId}/collectives`,
+    );
+  }
 }

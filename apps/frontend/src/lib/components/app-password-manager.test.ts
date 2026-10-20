@@ -1,17 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AppContext } from '$lib/app-context.js';
 import { changeLanguage, initI18n } from '$lib/i18n/i18n.js';
 import de from '$lib/i18n/locales/de.json';
 import en from '$lib/i18n/locales/en.json';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '$lib/test/render.js';
+import { cleanup, fireEvent, screen, waitFor, within } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
 import AppPasswordManager from './AppPasswordManager.svelte';
 
-const listAppPasswords = vi.fn();
-const revokeAppPassword = vi.fn();
-vi.mock('$lib/api/app-passwords', () => ({
-  listAppPasswords: (...args: unknown[]) => listAppPasswords(...args),
-  createAppPassword: vi.fn(),
-  revokeAppPassword: (...args: unknown[]) => revokeAppPassword(...args),
-}));
+const AN_APP_PASSWORD = {
+  externalId: 'ap-1',
+  name: 'My iPhone',
+  lastUsedAt: null,
+  createdAt: '2025-01-15T10:00:00Z',
+};
 
 // The real locale bundles are loaded on purpose: an assertion against
 // `en.profile.appPasswords.*` fails the moment a string is hard-coded in the
@@ -19,24 +21,28 @@ vi.mock('$lib/api/app-passwords', () => ({
 const enStrings = en.profile.appPasswords;
 const deStrings = de.profile.appPasswords;
 
-describe('AppPasswordManager i18n', () => {
+function renderManager(context: AppContext) {
+  return renderWithContext(AppPasswordManager, { props: {}, context });
+}
+
+describe('AppPasswordManager', () => {
+  let context: AppContext;
+
   beforeEach(async () => {
-    listAppPasswords.mockResolvedValue([
-      {
-        externalId: 'ap-1',
-        name: 'My iPhone',
-        lastUsedAt: null,
-        createdAt: '2025-01-15T10:00:00Z',
-      },
-    ]);
+    vi.clearAllMocks();
+    context = createTestAppContext();
+    vi.spyOn(context.api.appPasswords, 'listAppPasswords').mockResolvedValue([AN_APP_PASSWORD]);
     await initI18n('en');
     await changeLanguage('en');
   });
 
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   it('renders the English locale strings', async () => {
-    const { container } = render(AppPasswordManager);
+    const { container } = renderManager(context);
 
     expect(screen.getByPlaceholderText(enStrings.namePlaceholder)).toBeTruthy();
     expect(screen.getByText(enStrings.create)).toBeTruthy();
@@ -49,7 +55,7 @@ describe('AppPasswordManager i18n', () => {
 
   it('renders the German locale strings and leaks no English', async () => {
     await changeLanguage('de');
-    const { container } = render(AppPasswordManager);
+    const { container } = renderManager(context);
 
     expect(screen.getByPlaceholderText(deStrings.namePlaceholder)).toBeTruthy();
     expect(screen.getByText(deStrings.create)).toBeTruthy();
@@ -63,9 +69,9 @@ describe('AppPasswordManager i18n', () => {
   });
 
   it('renders the localised empty state', async () => {
-    listAppPasswords.mockResolvedValue([]);
+    vi.spyOn(context.api.appPasswords, 'listAppPasswords').mockResolvedValue([]);
     await changeLanguage('de');
-    render(AppPasswordManager);
+    renderManager(context);
 
     await waitFor(() => {
       expect(screen.getByText(deStrings.noPasswords)).toBeTruthy();
@@ -74,9 +80,9 @@ describe('AppPasswordManager i18n', () => {
   });
 
   it('surfaces a localised error when the list request fails', async () => {
-    listAppPasswords.mockRejectedValue(new Error(''));
+    vi.spyOn(context.api.appPasswords, 'listAppPasswords').mockRejectedValue(new Error(''));
     await changeLanguage('de');
-    render(AppPasswordManager);
+    renderManager(context);
 
     await waitFor(() => {
       expect(screen.getByText(deStrings.failedToLoad)).toBeTruthy();
@@ -84,8 +90,10 @@ describe('AppPasswordManager i18n', () => {
   });
 
   it('revokes an app password only after the confirmation dialog', async () => {
-    revokeAppPassword.mockResolvedValue(undefined);
-    render(AppPasswordManager);
+    const revokeAppPassword = vi
+      .spyOn(context.api.appPasswords, 'revokeAppPassword')
+      .mockResolvedValue(undefined);
+    renderManager(context);
 
     await waitFor(() => expect(screen.getByText(enStrings.revoke)).toBeTruthy());
     await fireEvent.click(screen.getByText(enStrings.revoke));

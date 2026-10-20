@@ -1,6 +1,6 @@
-import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { describe, expect, it } from 'vitest';
+import { renderWithContext } from '$lib/test/render-with-context.js';
 import MarkdownEditor from './MarkdownEditor.svelte';
 
 // CM6 mounts a real DOM, so these run under jsdom. We assert on the editor's
@@ -9,7 +9,7 @@ import MarkdownEditor from './MarkdownEditor.svelte';
 // internals.
 describe('MarkdownEditor', () => {
   it('renders a heading line with the inline-preview decoration', async () => {
-    const { container } = render(MarkdownEditor, { props: { value: '## Hello' } });
+    const { container } = renderWithContext(MarkdownEditor, { props: { value: '## Hello' } });
     await tick();
     // Inline live-preview keeps the raw `## ` in the document but hides the
     // marker in the DOM and tags the line as a heading. So we assert on the
@@ -20,7 +20,9 @@ describe('MarkdownEditor', () => {
   });
 
   it('reconciles an external value change into the document', async () => {
-    const { container, rerender } = render(MarkdownEditor, { props: { value: 'first' } });
+    const { container, rerender } = renderWithContext(MarkdownEditor, {
+      props: { value: 'first' },
+    });
     await tick();
     await rerender({ value: 'second' });
     await tick();
@@ -30,7 +32,7 @@ describe('MarkdownEditor', () => {
   });
 
   it('mounts without a placeholder and stays empty', async () => {
-    const { container } = render(MarkdownEditor, { props: { value: '' } });
+    const { container } = renderWithContext(MarkdownEditor, { props: { value: '' } });
     await tick();
     const content = container.querySelector('.cm-content');
     expect(content?.textContent).toBe('');

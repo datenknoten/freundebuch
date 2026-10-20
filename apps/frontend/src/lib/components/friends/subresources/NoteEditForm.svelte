@@ -1,17 +1,19 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { listEncounters } from '$lib/api/encounters';
+import type { FriendNoteData } from '$lib/api/friend-notes.js';
+import { getAppContext } from '$lib/app-context.js';
 import { encounterDisplayTitle } from '$lib/components/encounters/encounter-display';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
-import { formClasses } from '$lib/components/ui/styles.js';
+import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import MarkdownField from '$lib/editor/MarkdownField.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import type { FriendNoteInput, FriendNoteResponse, FriendSearchResultResponse } from '$shared';
+import type { FriendNoteResponse, FriendSearchResultResponse } from '$shared';
 import FriendSearchInput from '../FriendSearchInput.svelte';
 import { noteExcerpt } from './note-excerpt';
 
 const i18n = createI18n();
+const { api, logger } = getAppContext();
 
 interface Props {
   initialData?: FriendNoteResponse;
@@ -60,7 +62,7 @@ function formatDate(dateStr: string): string {
 onMount(async () => {
   const options: Option[] = [];
   try {
-    const page = await listEncounters({ pageSize: 20 });
+    const page = await api.encounters.listEncounters({ pageSize: 20 });
     for (const item of page.data) {
       options.push({
         value: item.id,
@@ -68,7 +70,7 @@ onMount(async () => {
       });
     }
   } catch (err) {
-    console.error('Failed to load encounters for the note form', err);
+    logger.error({ err }, 'Failed to load encounters for the note form');
   }
   const current = initialData?.encounter ?? null;
   if (current !== null && !options.some((option) => option.value === current.id)) {
@@ -101,13 +103,13 @@ const supersedeOptions = $derived<Option[]>([
     .map((n) => ({ value: n.id, label: noteLabel(n) })),
 ]);
 
-export function getData(): FriendNoteInput {
+export function getData() {
   return {
     content: content.trim(),
-    encounter_id: encounterId === '' ? null : encounterId,
-    source_friend_id: sourceFriend?.id ?? null,
-    supersedes_note_id: supersedesNoteId === '' ? null : supersedesNoteId,
-  };
+    encounterId: encounterId === '' ? null : encounterId,
+    sourceFriendId: sourceFriend?.id ?? null,
+    supersedesNoteId: supersedesNoteId === '' ? null : supersedesNoteId,
+  } satisfies FriendNoteData;
 }
 
 export function isValid(): boolean {
@@ -124,7 +126,7 @@ export function isValid(): boolean {
   />
 
   <div class="space-y-2">
-    <span class={formClasses.label}>{$i18n.t('subresources.note.sourceFriend')}</span>
+    <span class={FORM_CLASSES.label}>{$i18n.t('subresources.note.sourceFriend')}</span>
     <FriendSearchInput
       placeholder={$i18n.t('subresources.note.sourceFriendPlaceholder')}
       excludeFriendId={friendId}

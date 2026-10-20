@@ -2,6 +2,7 @@
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import FaceSmile from 'svelte-heros-v2/FaceSmile.svelte';
 import { page } from '$app/stores';
+import { getAppContext } from '$lib/app-context.js';
 import CollectiveDetail from '$lib/components/collectives/CollectiveDetail.svelte';
 import CollectiveForm from '$lib/components/collectives/CollectiveForm.svelte';
 import Button from '$lib/components/ui/Button.svelte';
@@ -9,9 +10,10 @@ import EmptyState from '$lib/components/ui/EmptyState.svelte';
 import PageShell from '$lib/components/ui/PageShell.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { isAuthInitialized } from '$lib/stores/auth';
-import { collectives } from '$lib/stores/collectives';
 import type { CollectiveResponse } from '$shared';
+
+const isAuthInitialized = getAppContext().stores.auth.isInitialized;
+const collectives = getAppContext().stores.collectives;
 
 const i18n = createI18n();
 

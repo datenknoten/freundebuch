@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '$lib/test/render.js';
+import { fireEvent, screen } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
 import type { CircleSummaryResponse } from '$shared';
 import CircleChips from './CircleChips.svelte';
 
@@ -17,14 +18,16 @@ const circle = (id: string, name: string): CircleSummaryResponse => ({ id, name,
 
 describe('CircleChips', () => {
   it('renders nothing when there are no circles', () => {
-    const { container } = render(CircleChips, { circles: [] });
+    const { container } = renderWithContext(CircleChips, { props: { circles: [] } });
     expect(container.textContent?.trim()).toBe('');
   });
 
   it('renders a chip per circle up to maxVisible', () => {
-    render(CircleChips, {
-      circles: [circle('1', 'Family'), circle('2', 'Work'), circle('3', 'Gym')],
-      maxVisible: 3,
+    renderWithContext(CircleChips, {
+      props: {
+        circles: [circle('1', 'Family'), circle('2', 'Work'), circle('3', 'Gym')],
+        maxVisible: 3,
+      },
     });
 
     expect(screen.getByText('Family')).toBeTruthy();
@@ -33,9 +36,11 @@ describe('CircleChips', () => {
   });
 
   it('collapses extra circles behind a "+N more" toggle and expands on click', async () => {
-    render(CircleChips, {
-      circles: [circle('1', 'A'), circle('2', 'B'), circle('3', 'C'), circle('4', 'D')],
-      maxVisible: 2,
+    renderWithContext(CircleChips, {
+      props: {
+        circles: [circle('1', 'A'), circle('2', 'B'), circle('3', 'C'), circle('4', 'D')],
+        maxVisible: 2,
+      },
     });
 
     // Only the first two are shown initially, plus a "+2 more" toggle.
@@ -51,7 +56,9 @@ describe('CircleChips', () => {
 
   it('invokes onremove with the circle id when a chip is removed', async () => {
     const onremove = vi.fn();
-    render(CircleChips, { circles: [circle('c-1', 'Family')], removable: true, onremove });
+    renderWithContext(CircleChips, {
+      props: { circles: [circle('c-1', 'Family')], removable: true, onremove },
+    });
 
     await fireEvent.click(screen.getByLabelText('aria.removeItem'));
 

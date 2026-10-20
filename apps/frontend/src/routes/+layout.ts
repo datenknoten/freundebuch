@@ -1,8 +1,6 @@
 import * as Sentry from '@sentry/sveltekit';
 import { browser, dev } from '$app/environment';
-import { configureApiBaseUrl } from '$lib/api/client.js';
-import { configureAuthClient } from '$lib/auth-client.js';
-import { type ClientConfig, loadClientConfig } from '$lib/config.js';
+import { loadClientConfig } from '$lib/config.js';
 
 function initSentry(dsn: string) {
   Sentry.init({
@@ -36,9 +34,8 @@ function initSentry(dsn: string) {
   });
 }
 
-function configureClient(config: ClientConfig) {
-  configureApiBaseUrl(config.PUBLIC_API_URL);
-  configureAuthClient(config.PUBLIC_API_URL);
+export function load() {
+  const config = loadClientConfig();
   // The root load reruns on invalidation, while Sentry must start once per page lifetime.
   if (
     browser === true &&
@@ -47,10 +44,5 @@ function configureClient(config: ClientConfig) {
   ) {
     initSentry(config.PUBLIC_SENTRY_DSN);
   }
-}
-
-export function load() {
-  const config = loadClientConfig();
-  configureClient(config);
   return { config };
 }

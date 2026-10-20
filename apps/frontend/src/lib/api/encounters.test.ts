@@ -1,105 +1,144 @@
+import { ValidationError } from '@datenknoten/kit';
+import { createRootLogger } from '@datenknoten/kit/logger';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('$shared', () => ({}));
-
-import { jsonResponse, restoreFetch, stubFetch } from '$lib/test/fetch-mock.js';
+import { anEncounter } from '$lib/test/fixtures.js';
 import { itemAt } from '$lib/test/item-at.js';
-import {
-  createEncounter,
-  deleteEncounter,
-  getEncounter,
-  getFriendEncounters,
-  getLastEncounter,
-  listEncounters,
-  updateEncounter,
-} from './encounters.js';
+import { ApiClient } from './api-client.js';
+import { ApiError } from './api-error.js';
+import { EncountersApi } from './encounters.js';
 
-describe('encounters API', () => {
-  let fetchMock: ReturnType<typeof stubFetch>;
+const EMPTY_PAGE = {
+  data: [],
+  pagination: { page: 1, pageSize: 20, totalCount: 0, totalPages: 0 },
+};
 
-  /** The envelope every paginated endpoint returns (`Paginated<T>` in @freundebuch/shared). */
-  const emptyPage = {
-    data: [],
-    pagination: { page: 1, pageSize: 20, totalCount: 0, totalPages: 0 },
-  };
+const LAST_ENCOUNTER = {
+  id: 'e-9',
+  title: 'Lunch',
+  encounterType: 'in_person',
+  encounterDate: '2026-02-01',
+};
 
+const fetchMock = vi.fn<typeof fetch>();
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status });
+}
+
+async function stayUnauthenticated() {
+  return false;
+}
+
+function createEncountersApi() {
+  const client = new ApiClient({
+    baseUrl: '',
+    logger: createRootLogger({ LOG_LEVEL: 'silent' }),
+    onUnauthorized: stayUnauthenticated,
+  });
+  return new EncountersApi({ client });
+}
+
+function sentUrl() {
+  return String(itemAt(fetchMock.mock.calls, 0)[0]);
+}
+
+function sentBody() {
+  return JSON.parse(String(itemAt(fetchMock.mock.calls, 0)[1]?.body));
+}
+
+describe('EncountersApi', () => {
   beforeEach(() => {
-    fetchMock = stubFetch();
+    vi.clearAllMocks();
+    vi.stubGlobal('fetch', fetchMock);
   });
 
-  afterEach(restoreFetch);
-
-  it('listEncounters serializes filter params into a query string', async () => {
-    fetchMock.mockResolvedValue(jsonResponse(emptyPage));
-
-    await listEncounters({ page: 2, pageSize: 25, friendId: 'f-1', type: 'in_person' as never });
-
-    const url = itemAt(fetchMock.mock.calls, 0)[0] as string;
-    expect(url.startsWith('/api/encounters?')).toBe(true);
-    expect(url).toContain('page=2');
-    expect(url).toContain('page_size=25');
-    expect(url).toContain('friend_id=f-1');
-    expect(url).toContain('type=in_person');
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  it('listEncounters omits the query string when no params are given', async () => {
-    fetchMock.mockResolvedValue(jsonResponse(emptyPage));
-    const result = await listEncounters();
-    expect(fetchMock).toHaveBeenCalledWith('/api/encounters', expect.objectContaining({}));
-    expect(result).toEqual(emptyPage);
-  });
+  describe('listEncounters', () => {
+    it('sends the filters as snake_case query parameters and skips empty ones', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(EMPTY_PAGE));
 
-  it('getEncounter / createEncounter / updateEncounter / deleteEncounter hit the right endpoints', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ id: 'e-1' }));
-    await getEncounter('e-1');
-    expect(fetchMock).toHaveBeenLastCalledWith('/api/encounters/e-1', expect.objectContaining({}));
+      await createEncountersApi().listEncounters({
+        page: 2,
+        pageSize: 25,
+        friendId: 'f-1',
+        search: '',
+        type: 'in_person',
+      });
 
-    await createEncounter({ title: 'Coffee' } as never);
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      '/api/encounters',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ title: 'Coffee' }) }),
-    );
-
-    await updateEncounter('e-1', { title: 'Tea' } as never);
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      '/api/encounters/e-1',
-      expect.objectContaining({ method: 'PUT' }),
-    );
-
-    await deleteEncounter('e-1');
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      '/api/encounters/e-1',
-      expect.objectContaining({ method: 'DELETE' }),
-    );
-  });
-
-  it('getFriendEncounters drops friendId from the query and uses the nested path', async () => {
-    fetchMock.mockResolvedValue(jsonResponse(emptyPage));
-
-    await getFriendEncounters('f-1', { page: 1 });
-
-    const url = itemAt(fetchMock.mock.calls, 0)[0] as string;
-    expect(url.startsWith('/api/friends/f-1/encounters')).toBe(true);
-    expect(url).not.toContain('friend_id');
-    expect(url).toContain('page=1');
-  });
-
-  describe('getLastEncounter', () => {
-    it('returns the summary when present', async () => {
-      fetchMock.mockResolvedValue(jsonResponse({ id: 'e-9', title: 'Lunch' }));
-      const result = await getLastEncounter('f-1');
-      expect(result).toEqual({ id: 'e-9', title: 'Lunch' });
+      expect(sentUrl()).toBe('/api/encounters?page=2&page_size=25&friend_id=f-1&type=in_person');
     });
 
-    it('returns null on a 404 instead of throwing', async () => {
-      fetchMock.mockResolvedValue(jsonResponse({ error: 'not found' }, { status: 404 }));
-      const result = await getLastEncounter('f-1');
-      expect(result).toBeNull();
+    it('throws ValidationError when an encounter has an unknown type', async () => {
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse({ ...EMPTY_PAGE, data: [{ ...anEncounter(), encounterType: 'telepathy' }] }),
+      );
+
+      await expect(createEncountersApi().listEncounters()).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
+  describe('createEncounter', () => {
+    it('sends the encounter as the snake_case wire input', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(anEncounter(), 201));
+
+      await createEncountersApi().createEncounter({
+        title: 'Coffee',
+        encounterDate: '2026-02-01',
+        encounterType: 'in_person',
+        friendIds: ['f-1'],
+        locationText: 'Café',
+      });
+
+      expect(sentBody()).toEqual({
+        title: 'Coffee',
+        encounter_date: '2026-02-01',
+        encounter_type: 'in_person',
+        friend_ids: ['f-1'],
+        location_text: 'Café',
+      });
     });
 
-    it('rethrows non-404 errors', async () => {
-      fetchMock.mockResolvedValue(jsonResponse({ error: 'boom' }, { status: 500 }));
-      await expect(getLastEncounter('f-1')).rejects.toMatchObject({ statusCode: 500 });
+    it('returns the encounter of the response', async () => {
+      const encounter = anEncounter();
+      fetchMock.mockResolvedValueOnce(jsonResponse(encounter, 201));
+
+      await expect(
+        createEncountersApi().createEncounter({ encounterDate: '2026-02-01', friendIds: ['f-1'] }),
+      ).resolves.toEqual(encounter);
+    });
+  });
+
+  describe('deleteEncounter', () => {
+    it('throws ValidationError when the confirmation is malformed', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ deleted: 'yes' }));
+
+      await expect(createEncountersApi().deleteEncounter('e-1')).rejects.toBeInstanceOf(
+        ValidationError,
+      );
+    });
+  });
+
+  describe('findLastEncounter', () => {
+    it('returns the summary when the friend has encounters', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(LAST_ENCOUNTER));
+
+      await expect(createEncountersApi().findLastEncounter('f-1')).resolves.toEqual(LAST_ENCOUNTER);
+    });
+
+    it('returns undefined when the backend answers 404', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ error: 'Encounters not found' }, 404));
+
+      await expect(createEncountersApi().findLastEncounter('f-1')).resolves.toBeUndefined();
+    });
+
+    it('rethrows any other error status', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ error: 'boom' }, 500));
+
+      await expect(createEncountersApi().findLastEncounter('f-1')).rejects.toBeInstanceOf(ApiError);
     });
   });
 });

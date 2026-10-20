@@ -3,11 +3,16 @@ import CheckCircle from 'svelte-heros-v2/CheckCircle.svelte';
 import NoSymbol from 'svelte-heros-v2/NoSymbol.svelte';
 import Tag from 'svelte-heros-v2/Tag.svelte';
 import Trash from 'svelte-heros-v2/Trash.svelte';
+import { getAppContext } from '$lib/app-context.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { getKeyboardHint, isOpenMemberModeActive, openMemberModePrefix } from '$lib/stores/ui';
+import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import type { CollectiveMemberResponse } from '$shared';
 import FriendAvatar from '../friends/FriendAvatar.svelte';
 import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
+
+const keyboardModes = getAppContext().stores.keyboardModes;
+const isOpenMemberModeActive = keyboardModes.members.isActive;
+const openMemberModePrefix = keyboardModes.members.prefix;
 
 const i18n = createI18n();
 

@@ -9,25 +9,25 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { focusTrap } from '$lib/actions/focus-trap';
+import { getAppContext } from '$lib/app-context.js';
 import Button from '$lib/components/ui/Button.svelte';
+import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
-import { codeClasses, surfaceClasses } from '$lib/components/ui/styles';
+import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import {
-  hasActiveFilters,
-  isFacetsLoading,
-  isSearchOpen,
-  search,
-  searchFacets,
-} from '$lib/stores/search';
-import { matchSourceBadge } from '$lib/utils/match-source';
+import { findMatchSourceBadge } from '$lib/utils/match-source.js';
 import type { ArrayFacetField, FacetFilters } from '$shared';
 import FriendAvatar from './friends/FriendAvatar.svelte';
 import FacetChips from './search/FacetChips.svelte';
 import FacetDropdown from './search/FacetDropdown.svelte';
 
 const i18n = createI18n();
+const search = getAppContext().stores.search;
+const isSearchOpen = search.isOpen;
+const searchFacets = search.facets;
+const isFacetsLoading = search.isFacetsLoading;
+const hasActiveFilters = search.hasActiveFilters;
 
 /** Sanitize search headline HTML to only allow <mark> tags for highlighting */
 function sanitizeHeadline(html: string | null | undefined): string {
@@ -202,7 +202,7 @@ onMount(() => {
   <!-- Modal container -->
   <div
     use:focusTrap={$isSearchOpen}
-    class="w-full max-w-xl overflow-hidden {surfaceClasses.modal}"
+    class="w-full max-w-xl overflow-hidden {SURFACE_CLASSES.modal}"
   >
     <!-- Search input -->
     <div class="relative border-b border-gray-200">
@@ -211,7 +211,7 @@ onMount(() => {
         use:registerInput
         type="text"
         value={searchState.query}
-        oninput={(e) => search.setQuery(e.currentTarget.value, { loadFacets: true })}
+        oninput={(e) => search.setQuery(e.currentTarget.value, { shouldLoadFacets: true })}
         placeholder={$i18n.t('globalSearch.placeholder')}
         class="w-full pl-12 pr-4 py-4 text-lg font-body text-gray-900 placeholder-gray-400 focus-visible:outline-none"
         autocomplete="off"
@@ -292,7 +292,7 @@ onMount(() => {
           <!-- Search results -->
           <ul id="global-search-listbox" role="listbox" class="p-2">
             {#each searchState.results as friend, index}
-              {@const matchBadge = matchSourceBadge(friend.matchSource)}
+              {@const matchBadge = findMatchSourceBadge(friend.matchSource)}
               <li
                 role="option"
                 aria-selected={searchState.selectedIndex === index}
@@ -387,16 +387,16 @@ onMount(() => {
       <div class="hidden sm:flex border-t border-gray-200 px-4 py-2 items-center justify-between text-xs text-gray-400">
         <div class="flex items-center gap-4">
           <span class="flex items-center gap-1">
-            <kbd class={codeClasses.kbd}>↑</kbd>
-            <kbd class={codeClasses.kbd}>↓</kbd>
+            <kbd class={CODE_CLASSES.kbd}>↑</kbd>
+            <kbd class={CODE_CLASSES.kbd}>↓</kbd>
             <span>{$i18n.t('globalSearch.navigate')}</span>
           </span>
           <span class="flex items-center gap-1">
-            <kbd class={codeClasses.kbd}>↵</kbd>
+            <kbd class={CODE_CLASSES.kbd}>↵</kbd>
             <span>{$i18n.t('globalSearch.select')}</span>
           </span>
           <span class="flex items-center gap-1">
-            <kbd class={codeClasses.kbd}>Esc</kbd>
+            <kbd class={CODE_CLASSES.kbd}>Esc</kbd>
             <span>{$i18n.t('globalSearch.close')}</span>
           </span>
         </div>
@@ -406,7 +406,7 @@ onMount(() => {
             onclick={navigateToNewFriend}
             class="flex items-center gap-1.5 text-gray-500 hover:text-forest font-body transition-colors"
           >
-            <kbd class={codeClasses.kbd}>
+            <kbd class={CODE_CLASSES.kbd}>
               {isMac ? '⌥' : 'Alt'}↵
             </kbd>
             <span>{$i18n.t('globalSearch.newFriend')}</span>
@@ -416,7 +416,7 @@ onMount(() => {
             onclick={navigateToFriendsList}
             class="flex items-center gap-1.5 text-gray-500 hover:text-forest font-body transition-colors"
           >
-            <kbd class={codeClasses.kbd}>
+            <kbd class={CODE_CLASSES.kbd}>
               {isMac ? '⌘' : 'Ctrl'}↵
             </kbd>
             <span>{$i18n.t('globalSearch.friendsList')}</span>

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '$lib/test/render.js';
+import { fireEvent, screen } from '$lib/test/render.js';
+import { renderWithContext } from '$lib/test/render-with-context.js';
 import CircleEditModal from './CircleEditModal.svelte';
 
 // i18n returns the key so assertions can target stable label keys.
@@ -14,7 +15,7 @@ vi.mock('$lib/i18n/i18n.js', () => ({
 
 describe('CircleEditModal', () => {
   it('renders the form inside an open dialog', () => {
-    render(CircleEditModal, { onClose: vi.fn() });
+    renderWithContext(CircleEditModal, { props: { onClose: vi.fn() } });
 
     const dialog = screen.getByRole('dialog') as HTMLDialogElement;
     expect(dialog.open).toBe(true);
@@ -24,7 +25,7 @@ describe('CircleEditModal', () => {
 
   it('asks before discarding edits, and Escape answers "keep editing"', async () => {
     const onClose = vi.fn();
-    render(CircleEditModal, { onClose });
+    renderWithContext(CircleEditModal, { props: { onClose } });
 
     const input = screen.getByLabelText(/circles\.form\.name/);
     await fireEvent.input(input, { target: { value: 'Family' } });
@@ -45,7 +46,7 @@ describe('CircleEditModal', () => {
   });
 
   it('reports the empty name on the field itself', async () => {
-    render(CircleEditModal, { onClose: vi.fn() });
+    renderWithContext(CircleEditModal, { props: { onClose: vi.fn() } });
 
     await fireEvent.submit(screen.getByRole('dialog').querySelector('form') as HTMLFormElement);
 

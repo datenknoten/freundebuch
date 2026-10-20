@@ -1,8 +1,10 @@
 <script lang="ts">
+import { getAppContext } from '$lib/app-context.js';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import PageShell from '$lib/components/ui/PageShell.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { currentUser } from '$lib/stores/auth';
+
+const currentUser = getAppContext().stores.auth.currentUser;
 
 const i18n = createI18n();
 </script>

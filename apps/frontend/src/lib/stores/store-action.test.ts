@@ -1,27 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { itemAt } from '$lib/test/item-at';
-
-// Mock the auth API module to provide ApiError without triggering the full auth store chain
-vi.mock('../api/auth.js', () => {
-  class ApiError extends Error {
-    statusCode: number;
-    code?: string;
-    details?: unknown;
-    constructor(statusCode: number, message: string, code?: string, details?: unknown) {
-      super(message);
-      this.name = 'ApiError';
-      this.statusCode = statusCode;
-      this.code = code;
-      this.details = details;
-    }
-  }
-  return { ApiError };
-});
-
+import { ApiError } from '../api/api-error.js';
 import { storeAction } from './store-action.js';
-
-// Re-import the mocked ApiError for instanceof checks
-const { ApiError } = await import('../api/auth.js');
 
 interface TestState {
   isLoading: boolean;
