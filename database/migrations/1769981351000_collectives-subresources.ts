@@ -13,7 +13,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * This allows collectives (families, companies, clubs) to have their own contact information
  * independent of individual friend contact info.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Create collective_phones table
   // ============================================================================
@@ -390,7 +390,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   });
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // Drop tables in reverse order of creation
 
   // Step 5: Drop collective_circle_memberships

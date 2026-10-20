@@ -1,10 +1,8 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Create system schema if it doesn't exist
+export async function up(pgm: MigrationBuilder) {
   pgm.createSchema('system', { ifNotExists: true });
 
-  // Create address_cache table for persistent caching of external API responses
   pgm.createTable(
     { schema: 'system', name: 'address_cache' },
     {
@@ -49,12 +47,10 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     },
   );
 
-  // Add table comment
   pgm.sql(
     `COMMENT ON TABLE system.address_cache IS 'Persistent cache for address lookup API responses (ZipcodeBase, Overpass)'`,
   );
 
-  // Create indexes
   pgm.createIndex({ schema: 'system', name: 'address_cache' }, 'external_id', {
     name: 'idx_address_cache_external_id',
   });
@@ -65,7 +61,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     name: 'idx_address_cache_expires_at',
   });
 
-  // Create updated_at trigger
   pgm.sql(`
     CREATE TRIGGER update_address_cache_updated_at
       BEFORE UPDATE ON system.address_cache
@@ -74,7 +69,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.sql('DROP TRIGGER IF EXISTS update_address_cache_updated_at ON system.address_cache');
   pgm.dropTable({ schema: 'system', name: 'address_cache' }, { cascade: true });
 }

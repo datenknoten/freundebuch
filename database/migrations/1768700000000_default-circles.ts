@@ -17,7 +17,7 @@ const DEFAULT_CIRCLES = [
   { name: 'Acquaintances', color: '#6B7280', sort_order: 3 }, // gray
 ];
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // Insert default circles for all existing users using parameterized queries
   // Using pgm.db.query() for proper parameterized query support
   for (const circle of DEFAULT_CIRCLES) {
@@ -34,7 +34,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   }
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // Remove default circles that were created by this migration
   // Only remove circles that:
   // 1. Have no friends assigned to them (friend_count = 0)

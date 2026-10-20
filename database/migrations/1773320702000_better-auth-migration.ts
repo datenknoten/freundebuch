@@ -16,7 +16,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * - Drop legacy tables (users, sessions, password_reset_tokens)
  * - Update FK references in other schemas
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // Better Auth "user" table with custom fields
   pgm.createTable(
     { schema: 'auth', name: 'user' },
@@ -227,7 +227,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     FROM auth.users
   `);
 
-  // Create credential account entries with existing bcrypt password hashes
   pgm.sql(`
     INSERT INTO auth.account (id, account_id, provider_id, user_id, password, created_at, updated_at)
     SELECT
@@ -242,7 +241,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.dropTable({ schema: 'auth', name: 'verification' }, { ifExists: true });
   pgm.dropTable({ schema: 'auth', name: 'account' }, { ifExists: true });
   pgm.dropTable({ schema: 'auth', name: 'session' }, { ifExists: true });

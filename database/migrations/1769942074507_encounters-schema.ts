@@ -10,7 +10,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  *
  * Epic: #2 - Encounter Management
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Create encounters schema
   // ============================================================================
@@ -80,7 +80,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 
   pgm.sql(`COMMENT ON TABLE encounters.encounters IS 'Encounters/meetings with friends'`);
 
-  // Add constraint for non-empty title with reasonable length
   pgm.addConstraint({ schema: 'encounters', name: 'encounters' }, 'encounters_title_not_empty', {
     check: 'LENGTH(TRIM(title)) > 0 AND LENGTH(title) <= 200',
   });
@@ -104,7 +103,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     name: 'idx_encounters_user_date',
   });
 
-  // Create trigger for encounters updated_at
   pgm.sql(`
     CREATE TRIGGER update_encounters_updated_at
     BEFORE UPDATE ON encounters.encounters
@@ -177,7 +175,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   });
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Drop encounter_friends junction table
   // ============================================================================

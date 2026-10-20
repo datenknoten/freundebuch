@@ -1,13 +1,10 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Create auth schema for authentication and user management
+export async function up(pgm: MigrationBuilder) {
   pgm.createSchema('auth', { ifNotExists: true });
 
-  // Add comment to schema
   pgm.sql(`COMMENT ON SCHEMA auth IS 'Authentication and user management'`);
 
-  // Create users table
   pgm.createTable(
     { schema: 'auth', name: 'users' },
     {
@@ -45,16 +42,13 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     },
   );
 
-  // Add table comment
   pgm.sql(`COMMENT ON TABLE auth.users IS 'User accounts with authentication credentials'`);
 
-  // Create indexes for users
   pgm.createIndex({ schema: 'auth', name: 'users' }, 'external_id', {
     name: 'idx_users_external_id',
   });
   pgm.createIndex({ schema: 'auth', name: 'users' }, 'email', { name: 'idx_users_email' });
 
-  // Create sessions table
   pgm.createTable(
     { schema: 'auth', name: 'sessions' },
     {
@@ -94,10 +88,8 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     },
   );
 
-  // Add table comment
   pgm.sql(`COMMENT ON TABLE auth.sessions IS 'User authentication sessions'`);
 
-  // Create indexes for sessions
   pgm.createIndex({ schema: 'auth', name: 'sessions' }, 'external_id', {
     name: 'idx_sessions_external_id',
   });
@@ -111,7 +103,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     name: 'idx_sessions_expires_at',
   });
 
-  // Create function to update updated_at timestamp
   pgm.sql(`
     CREATE OR REPLACE FUNCTION update_updated_at_column()
     RETURNS TRIGGER AS $$
@@ -122,7 +113,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     $$ LANGUAGE plpgsql;
   `);
 
-  // Create trigger for users table
   pgm.sql(`
     CREATE TRIGGER update_users_updated_at
     BEFORE UPDATE ON auth.users
@@ -131,14 +121,12 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // Drop tables in reverse order (sessions before users due to foreign key)
   pgm.dropTable({ schema: 'auth', name: 'sessions' }, { cascade: true });
   pgm.dropTable({ schema: 'auth', name: 'users' }, { cascade: true });
 
-  // Drop function
   pgm.sql('DROP FUNCTION IF EXISTS update_updated_at_column CASCADE;');
 
-  // Drop schema
   pgm.dropSchema('auth', { cascade: true });
 }

@@ -85,11 +85,11 @@ const SUB_RESOURCE_TABLES = [
   'collectives.collective_urls',
 ] as const;
 
-function triggerName(table: string): string {
+function triggerName(table: string) {
   return `update_${table.split('.')[1]}_updated_at`;
 }
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // geodata.addresses.id is bigint, so a bigint FK column needs a bigint
   // reference. The integer column silently caps at 2^31 rows.
   pgm.sql(`ALTER TABLE encounters.encounters ALTER COLUMN location_address_id TYPE bigint;`);
@@ -130,7 +130,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   }
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   for (const table of [...SUB_RESOURCE_TABLES].reverse()) {
     pgm.sql(`
       DROP TRIGGER IF EXISTS ${triggerName(table)} ON ${table};

@@ -1,7 +1,6 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Create the contacts schema
+export async function up(pgm: MigrationBuilder) {
   pgm.createSchema('contacts', { ifNotExists: true });
 
   // Move tables from public to contacts schema
@@ -16,7 +15,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   // The update_updated_at_column function stays in public since it's shared
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // Move tables back to public schema
   // Order: move children first, then parent
   pgm.sql('ALTER TABLE contacts.contact_urls SET SCHEMA public;');
@@ -25,6 +24,5 @@ export async function down(pgm: MigrationBuilder): Promise<void> {
   pgm.sql('ALTER TABLE contacts.contact_phones SET SCHEMA public;');
   pgm.sql('ALTER TABLE contacts.contacts SET SCHEMA public;');
 
-  // Drop the contacts schema
   pgm.dropSchema('contacts', { ifExists: true });
 }

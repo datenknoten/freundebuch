@@ -19,7 +19,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * If a user already manually created the correct relationship, the buggy one is
  * deleted instead of updated (to avoid unique constraint violations).
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // First, delete buggy relationships where the correct one already exists
   // (user manually added it, so we just need to clean up the duplicate with wrong type)
   pgm.sql(`
@@ -57,7 +57,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // Reverse: invert the types back (applying the same bug again)
   // This is a best-effort rollback — deleted duplicates cannot be restored
   pgm.sql(`

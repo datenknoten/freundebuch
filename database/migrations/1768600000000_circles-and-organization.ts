@@ -10,7 +10,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  *
  * Epic: #6 - Categorization & Organization
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Create circles table
   // ============================================================================
@@ -72,12 +72,10 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 
   pgm.sql(`COMMENT ON TABLE friends.circles IS 'Circles for organizing friends'`);
 
-  // Add constraint for non-empty name with reasonable length
   pgm.addConstraint({ schema: 'friends', name: 'circles' }, 'circles_name_not_empty', {
     check: 'LENGTH(TRIM(name)) > 0 AND LENGTH(name) <= 100',
   });
 
-  // Add constraint for valid hex color (if provided)
   pgm.addConstraint({ schema: 'friends', name: 'circles' }, 'circles_valid_color', {
     check: "color IS NULL OR color ~* '^#[0-9A-Fa-f]{6}$'",
   });
@@ -102,7 +100,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     ON friends.circles (user_id, LOWER(name));
   `);
 
-  // Create trigger for circles updated_at
   pgm.sql(`
     CREATE TRIGGER update_circles_updated_at
     BEFORE UPDATE ON friends.circles
@@ -195,7 +192,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   });
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Remove columns from friends table
   // ============================================================================

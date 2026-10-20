@@ -1,7 +1,6 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Create contacts table
+export async function up(pgm: MigrationBuilder) {
   pgm.createTable('contacts', {
     id: {
       type: 'serial',
@@ -76,12 +75,10 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 
   pgm.sql(`COMMENT ON TABLE contacts IS 'Contact entries for Freundebuch'`);
 
-  // Add constraint for non-empty display_name
   pgm.addConstraint('contacts', 'contacts_display_name_not_empty', {
     check: 'LENGTH(TRIM(display_name)) > 0',
   });
 
-  // Create indexes for contacts
   pgm.createIndex('contacts', 'external_id', { name: 'idx_contacts_external_id' });
   pgm.createIndex('contacts', 'user_id', { name: 'idx_contacts_user_id' });
   pgm.createIndex('contacts', ['user_id', 'display_name'], { name: 'idx_contacts_display_name' });
@@ -94,7 +91,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     method: 'btree',
   });
 
-  // Create trigger for contacts updated_at
   pgm.sql(`
     CREATE TRIGGER update_contacts_updated_at
     BEFORE UPDATE ON contacts
@@ -102,7 +98,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     EXECUTE FUNCTION update_updated_at_column();
   `);
 
-  // Create contact_phones table
   pgm.createTable('contact_phones', {
     id: {
       type: 'serial',
@@ -158,7 +153,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   pgm.createIndex('contact_phones', 'external_id', { name: 'idx_contact_phones_external_id' });
   pgm.createIndex('contact_phones', 'contact_id', { name: 'idx_contact_phones_contact_id' });
 
-  // Create contact_emails table
   pgm.createTable('contact_emails', {
     id: {
       type: 'serial',
@@ -219,7 +213,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   pgm.createIndex('contact_emails', 'contact_id', { name: 'idx_contact_emails_contact_id' });
   pgm.createIndex('contact_emails', 'email_address', { name: 'idx_contact_emails_address' });
 
-  // Create contact_addresses table
   pgm.createTable('contact_addresses', {
     id: {
       type: 'serial',
@@ -290,7 +283,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   });
   pgm.createIndex('contact_addresses', 'contact_id', { name: 'idx_contact_addresses_contact_id' });
 
-  // Create contact_urls table
   pgm.createTable('contact_urls', {
     id: {
       type: 'serial',
@@ -341,8 +333,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   pgm.createIndex('contact_urls', 'contact_id', { name: 'idx_contact_urls_contact_id' });
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
-  // Drop trigger first
+export async function down(pgm: MigrationBuilder) {
   pgm.sql('DROP TRIGGER IF EXISTS update_contacts_updated_at ON contacts;');
 
   // Drop tables in reverse order (children before parent)

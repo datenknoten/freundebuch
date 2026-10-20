@@ -12,7 +12,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * case are two accounts with two sets of friends. The migration aborts and
  * leaves the resolution to the operator.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.sql(`
     DO $$ BEGIN
       IF EXISTS (SELECT lower(email) FROM auth."user" GROUP BY lower(email) HAVING count(*) > 1)
@@ -33,7 +33,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.sql(`ALTER TABLE auth."user" DROP CONSTRAINT IF EXISTS user_email_lowercase;`);
   pgm.sql(`ALTER TABLE auth.users DROP CONSTRAINT IF EXISTS users_email_lowercase;`);
 }

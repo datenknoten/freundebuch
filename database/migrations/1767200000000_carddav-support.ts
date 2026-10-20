@@ -1,6 +1,6 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================
   // App-Specific Passwords for CardDAV/CalDAV
   // ============================================
@@ -61,7 +61,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     `COMMENT ON TABLE auth.app_passwords IS 'App-specific passwords for CardDAV/CalDAV authentication'`,
   );
 
-  // Add constraint for non-empty name
   pgm.addConstraint({ schema: 'auth', name: 'app_passwords' }, 'app_passwords_name_not_empty', {
     check: 'LENGTH(TRIM(name)) > 0',
   });
@@ -125,7 +124,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     `COMMENT ON TABLE contacts.contact_changes IS 'Change log for CardDAV sync (sync-collection support)'`,
   );
 
-  // Add constraint for valid change types
   pgm.addConstraint({ schema: 'contacts', name: 'contact_changes' }, 'valid_change_type', {
     check: "change_type IN ('create', 'update', 'delete')",
   });
@@ -284,8 +282,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
-  // Drop triggers first
+export async function down(pgm: MigrationBuilder) {
   pgm.sql('DROP TRIGGER IF EXISTS contact_change_trigger ON contacts.contacts;');
   pgm.sql('DROP TRIGGER IF EXISTS phone_change_trigger ON contacts.contact_phones;');
   pgm.sql('DROP TRIGGER IF EXISTS email_change_trigger ON contacts.contact_emails;');
@@ -297,11 +294,9 @@ export async function down(pgm: MigrationBuilder): Promise<void> {
   );
   pgm.sql('DROP TRIGGER IF EXISTS met_info_change_trigger ON contacts.contact_met_info;');
 
-  // Drop trigger functions
   pgm.sql('DROP FUNCTION IF EXISTS contacts.log_contact_change() CASCADE;');
   pgm.sql('DROP FUNCTION IF EXISTS contacts.log_subresource_change() CASCADE;');
 
-  // Drop tables
   pgm.dropTable({ schema: 'contacts', name: 'contact_changes' }, { cascade: true });
   pgm.dropTable({ schema: 'auth', name: 'app_passwords' }, { cascade: true });
 }

@@ -15,7 +15,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * Collectives group contacts together (families, companies, clubs) with
  * automatic relationship creation based on roles.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Create collectives schema
   // ============================================================================
@@ -522,7 +522,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   // Step 8: Seed default collective types with roles and rules
   // ============================================================================
 
-  // Insert default collective types
   pgm.sql(`
     INSERT INTO collectives.collective_types (name, description, is_system_default) VALUES
       ('Family', 'A family unit with parents, children, and extended family', TRUE),
@@ -531,7 +530,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
       ('Friend Group', 'A social circle of friends', TRUE);
   `);
 
-  // Insert roles for Family
   pgm.sql(`
     INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
     SELECT ct.id, r.role_key, r.label, r.sort_order
@@ -546,7 +544,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     WHERE ct.name = 'Family';
   `);
 
-  // Insert roles for Company
   pgm.sql(`
     INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
     SELECT ct.id, r.role_key, r.label, r.sort_order
@@ -559,7 +556,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     WHERE ct.name = 'Company';
   `);
 
-  // Insert roles for Club
   pgm.sql(`
     INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
     SELECT ct.id, r.role_key, r.label, r.sort_order
@@ -570,7 +566,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     WHERE ct.name = 'Club';
   `);
 
-  // Insert roles for Friend Group
   pgm.sql(`
     INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
     SELECT ct.id, r.role_key, r.label, r.sort_order
@@ -619,7 +614,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     WHERE ct.name = 'Family';
   `);
 
-  // Insert relationship rules for Company
   pgm.sql(`
     INSERT INTO collectives.collective_relationship_rules (collective_type_id, new_member_role_id, existing_member_role_id, relationship_type_id, relationship_direction)
     SELECT
@@ -644,7 +638,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     WHERE ct.name = 'Company';
   `);
 
-  // Insert relationship rules for Club
   pgm.sql(`
     INSERT INTO collectives.collective_relationship_rules (collective_type_id, new_member_role_id, existing_member_role_id, relationship_type_id, relationship_direction)
     SELECT
@@ -659,7 +652,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     WHERE ct.name = 'Club';
   `);
 
-  // Insert relationship rules for Friend Group
   pgm.sql(`
     INSERT INTO collectives.collective_relationship_rules (collective_type_id, new_member_role_id, existing_member_role_id, relationship_type_id, relationship_direction)
     SELECT
@@ -675,7 +667,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Remove source_membership_id from contact_relationships
   // ============================================================================

@@ -8,7 +8,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  *
  * Default value ensures existing users get sensible defaults.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.addColumn(
     { schema: 'auth', name: 'users' },
     {
@@ -21,13 +21,12 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     },
   );
 
-  // Add a comment explaining the structure
   pgm.sql(`
     COMMENT ON COLUMN auth.users.preferences IS 
     'User preferences stored as JSONB. Structure: { contactsPageSize?: 10 | 25 | 50 | 100 }';
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.dropColumn({ schema: 'auth', name: 'users' }, 'preferences');
 }

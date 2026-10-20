@@ -38,13 +38,13 @@ const TABLES: Array<[schema: string, table: string]> = [
   ['system', 'notification_channels'],
 ];
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   for (const [schema, table] of TABLES) {
     pgm.sql(`DROP INDEX IF EXISTS "${schema}"."idx_${table}_external_id";`);
   }
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   for (const [schema, table] of TABLES) {
     pgm.sql(
       `CREATE INDEX IF NOT EXISTS "idx_${table}_external_id" ON "${schema}"."${table}" (external_id);`,

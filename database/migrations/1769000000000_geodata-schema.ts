@@ -1,14 +1,11 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Enable PostGIS extension for spatial data support
+export async function up(pgm: MigrationBuilder) {
   pgm.sql(`CREATE EXTENSION IF NOT EXISTS postgis;`);
 
-  // Create geodata schema
   pgm.createSchema('geodata', { ifNotExists: true });
   pgm.sql(`COMMENT ON SCHEMA geodata IS 'OpenStreetMap address data for autocomplete'`);
 
-  // Create import_batches table first (referenced by addresses)
   pgm.createTable(
     { schema: 'geodata', name: 'import_batches' },
     {
@@ -76,12 +73,10 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 
   pgm.sql(`COMMENT ON TABLE geodata.import_batches IS 'Tracks OSM data import jobs'`);
 
-  // Add check constraint for status
   pgm.addConstraint({ schema: 'geodata', name: 'import_batches' }, 'chk_import_status', {
     check: `status IN ('running', 'completed', 'failed')`,
   });
 
-  // Create indexes for import_batches
   pgm.createIndex({ schema: 'geodata', name: 'import_batches' }, 'external_id', {
     name: 'idx_import_batches_external_id',
   });
@@ -89,7 +84,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     name: 'idx_import_batches_status',
   });
 
-  // Create updated_at trigger for import_batches
   pgm.sql(`
     CREATE TRIGGER update_import_batches_updated_at
       BEFORE UPDATE ON geodata.import_batches
@@ -97,7 +91,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
       EXECUTE FUNCTION update_updated_at_column();
   `);
 
-  // Create main addresses table
   pgm.createTable(
     { schema: 'geodata', name: 'addresses' },
     {
@@ -165,11 +158,9 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 
   pgm.sql(`COMMENT ON TABLE geodata.addresses IS 'OSM address data for autocomplete lookups'`);
 
-  // Add location column using PostGIS geometry type
   pgm.sql(`ALTER TABLE geodata.addresses ADD COLUMN location GEOMETRY(Point, 4326)`);
   pgm.sql(`COMMENT ON COLUMN geodata.addresses.location IS 'WGS84 coordinates (SRID 4326)'`);
 
-  // Create indexes for addresses table
   pgm.createIndex({ schema: 'geodata', name: 'addresses' }, 'external_id', {
     name: 'idx_addresses_external_id',
   });
@@ -192,10 +183,8 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     name: 'idx_addresses_import_batch',
   });
 
-  // Create spatial index using GIST
   pgm.sql(`CREATE INDEX idx_addresses_location ON geodata.addresses USING GIST(location)`);
 
-  // Create updated_at trigger for addresses
   pgm.sql(`
     CREATE TRIGGER update_addresses_updated_at
       BEFORE UPDATE ON geodata.addresses
@@ -203,7 +192,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
       EXECUTE FUNCTION update_updated_at_column();
   `);
 
-  // Create materialized views for fast DISTINCT queries
   pgm.sql(`
     CREATE MATERIALIZED VIEW geodata.streets_by_postal AS
     SELECT DISTINCT country_code, postal_code, street
@@ -221,29 +209,23 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     COMMENT ON MATERIALIZED VIEW geodata.housenumbers_by_street IS 'Pre-computed distinct house numbers by street for fast lookups';
   `);
 
-  // Create indexes on materialized views
   pgm.sql(`
     CREATE UNIQUE INDEX idx_streets_by_postal ON geodata.streets_by_postal(country_code, postal_code, street);
     CREATE INDEX idx_housenumbers_by_street ON geodata.housenumbers_by_street(country_code, postal_code, street);
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
-  // Drop materialized views first
+export async function down(pgm: MigrationBuilder) {
   pgm.sql('DROP MATERIALIZED VIEW IF EXISTS geodata.housenumbers_by_street CASCADE');
   pgm.sql('DROP MATERIALIZED VIEW IF EXISTS geodata.streets_by_postal CASCADE');
 
-  // Drop triggers
   pgm.sql('DROP TRIGGER IF EXISTS update_addresses_updated_at ON geodata.addresses');
   pgm.sql('DROP TRIGGER IF EXISTS update_import_batches_updated_at ON geodata.import_batches');
 
-  // Drop tables
   pgm.dropTable({ schema: 'geodata', name: 'addresses' }, { cascade: true });
   pgm.dropTable({ schema: 'geodata', name: 'import_batches' }, { cascade: true });
 
-  // Drop schema
   pgm.dropSchema('geodata', { cascade: true });
 
-  // Drop PostGIS extension (be careful - this may affect other data)
   pgm.sql('DROP EXTENSION IF EXISTS postgis CASCADE');
 }

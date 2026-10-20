@@ -12,7 +12,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * fallback) and a stored `phone_digits` column so digit-only phone search can
  * use a trigram index instead of a per-row `regexp_replace`.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // Same body as 1768800000000_friend-professional-history.ts, with 'german'
   // instead of 'english' in every to_tsvector call.
   pgm.sql(`
@@ -92,7 +92,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   pgm.sql(`DROP INDEX IF EXISTS friends.idx_friend_phones_trgm;`);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.sql(`DROP INDEX IF EXISTS friends.idx_friend_phones_digits_trgm;`);
   pgm.sql(`ALTER TABLE friends.friend_phones DROP COLUMN IF EXISTS phone_digits;`);
   pgm.sql(`

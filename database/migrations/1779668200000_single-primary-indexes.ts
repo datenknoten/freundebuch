@@ -42,7 +42,7 @@ const OWNED_TABLES = [
   },
 ] as const;
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   for (const { table, owner, index } of OWNED_TABLES) {
     // Normalise first: keep the lowest id per owner, which is the oldest row
     // and therefore the one a user most likely set deliberately.
@@ -60,7 +60,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   }
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   for (const { table, index } of OWNED_TABLES) {
     // The index lives in the table's schema, so it must be dropped qualified.
     const schema = table.split('.')[0];

@@ -14,15 +14,13 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * - Column: auth.users.self_contact_id → self_profile_id
  * - Indexes and triggers with "contact" in name
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Rename columns BEFORE renaming tables (due to FK constraints)
   // ============================================================================
 
-  // Rename self_contact_id to self_profile_id in auth.users
   pgm.renameColumn({ schema: 'auth', name: 'users' }, 'self_contact_id', 'self_profile_id');
 
-  // Rename index for self_profile_id
   pgm.sql(`
     ALTER INDEX IF EXISTS auth.idx_users_self_contact_id
     RENAME TO idx_users_self_profile_id;
@@ -78,7 +76,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   );
   pgm.sql('DROP TRIGGER IF EXISTS contacts_search_vector_update ON contacts.contacts;');
 
-  // Drop the search vector function (will recreate with new name)
   pgm.sql('DROP FUNCTION IF EXISTS contacts.update_contact_search_vector();');
 
   // ============================================================================
@@ -151,7 +148,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     `COMMENT ON FUNCTION friends.update_friend_search_vector() IS 'Trigger function to update search_vector on friend insert/update'`,
   );
 
-  // Create search vector trigger
   pgm.sql(`
     CREATE TRIGGER friends_search_vector_update
     BEFORE INSERT OR UPDATE ON friends.friends
@@ -307,13 +303,12 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     `COMMENT ON TABLE friends.relationship_types IS 'Reference table for relationship type definitions'`,
   );
 
-  // Update column comment for self_profile_id
   pgm.sql(
     `COMMENT ON COLUMN auth.users.self_profile_id IS 'Reference to the user''s profile (first friendbook entry)'`,
   );
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Rename schema back
   // ============================================================================
@@ -368,7 +363,6 @@ export async function down(pgm: MigrationBuilder): Promise<void> {
     'related_contact_id',
   );
 
-  // Rename self_profile_id back to self_contact_id
   pgm.renameColumn({ schema: 'auth', name: 'users' }, 'self_profile_id', 'self_contact_id');
 
   // ============================================================================

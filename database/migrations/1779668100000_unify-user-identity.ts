@@ -31,7 +31,7 @@ const BA_CHILD_FKS = [
   { table: 'auth.oauth_consent', constraint: 'oauth_consent_user_id_fkey' },
 ] as const;
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // 1. Let a re-keyed auth."user".id propagate to the BA children.
   for (const { table, constraint } of BA_CHILD_FKS) {
     pgm.sql(`
@@ -182,7 +182,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.sql(`DROP FUNCTION IF EXISTS auth.delete_orphan_legacy_users();`);
   pgm.sql(`DROP TRIGGER IF EXISTS update_ba_user_updated_at ON auth."user";`);
 

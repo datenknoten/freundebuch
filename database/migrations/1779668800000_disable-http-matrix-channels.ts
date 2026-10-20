@@ -9,7 +9,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * switched off here instead; the user re-enters an https URL and re-enables the
  * channel, which the update schema enforces.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.sql(`
     UPDATE system.notification_channels
       SET is_enabled = false, updated_at = current_timestamp
@@ -19,7 +19,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(_pgm: MigrationBuilder): Promise<void> {
+export async function down(_pgm: MigrationBuilder) {
   // Which channels were enabled before is not recorded anywhere, so the
   // previous state cannot be restored.
 }

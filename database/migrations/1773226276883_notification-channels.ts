@@ -1,10 +1,8 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Create system schema if it doesn't exist
+export async function up(pgm: MigrationBuilder) {
   pgm.createSchema('system', { ifNotExists: true });
 
-  // Create notification_channels table for messaging bot configurations
   pgm.createTable(
     { schema: 'system', name: 'notification_channels' },
     {
@@ -107,7 +105,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     },
   );
 
-  // Add table comment
   pgm.sql(
     `COMMENT ON TABLE system.notification_channels IS 'Messaging bot configurations for daily date digest notifications (Telegram, Matrix, Discord)'`,
   );
@@ -119,7 +116,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     { unique: ['user_id', 'platform'] },
   );
 
-  // Create indexes
   pgm.createIndex({ schema: 'system', name: 'notification_channels' }, 'external_id', {
     name: 'idx_notification_channels_external_id',
   });
@@ -133,7 +129,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     where: 'is_enabled = true',
   });
 
-  // Create updated_at trigger
   pgm.sql(`
     CREATE TRIGGER update_notification_channels_updated_at
       BEFORE UPDATE ON system.notification_channels
@@ -142,7 +137,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.sql(
     'DROP TRIGGER IF EXISTS update_notification_channels_updated_at ON system.notification_channels',
   );

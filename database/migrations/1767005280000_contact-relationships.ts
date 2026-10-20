@@ -7,7 +7,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * - relationship_types reference table with predefined types
  * - contact_relationships junction table for bidirectional relationships
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Create relationship_types reference table
   // ============================================================================
@@ -44,7 +44,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     check: "category IN ('family', 'professional', 'social')",
   });
 
-  // Add foreign key for inverse_type_id (self-referencing)
   pgm.addConstraint({ schema: 'contacts', name: 'relationship_types' }, 'fk_inverse_type', {
     foreignKeys: {
       columns: 'inverse_type_id',
@@ -148,7 +147,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     check: 'contact_id != related_contact_id',
   });
 
-  // Create indexes
   pgm.createIndex({ schema: 'contacts', name: 'contact_relationships' }, 'external_id', {
     name: 'idx_contact_relationships_external_id',
     unique: true,
@@ -168,7 +166,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   );
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // Drop tables in reverse order (relationships first due to foreign key)
   pgm.dropTable({ schema: 'contacts', name: 'contact_relationships' }, { cascade: true });
   pgm.dropTable({ schema: 'contacts', name: 'relationship_types' }, { cascade: true });

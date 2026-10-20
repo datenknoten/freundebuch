@@ -9,7 +9,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * - contact_met_info table for how/where met information
  * - contact_social_profiles table for social media links
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Add professional fields to contacts table
   // ============================================================================
@@ -176,7 +176,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     unique: true,
   });
 
-  // Create trigger for updated_at
   pgm.sql(`
     CREATE TRIGGER update_contact_met_info_updated_at
     BEFORE UPDATE ON contacts.contact_met_info
@@ -253,8 +252,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   });
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
-  // Drop trigger first
+export async function down(pgm: MigrationBuilder) {
   pgm.sql(
     'DROP TRIGGER IF EXISTS update_contact_met_info_updated_at ON contacts.contact_met_info;',
   );
@@ -264,7 +262,6 @@ export async function down(pgm: MigrationBuilder): Promise<void> {
   pgm.dropTable({ schema: 'contacts', name: 'contact_met_info' }, { cascade: true });
   pgm.dropTable({ schema: 'contacts', name: 'contact_dates' }, { cascade: true });
 
-  // Remove columns from contacts table
   pgm.dropColumns({ schema: 'contacts', name: 'contacts' }, [
     'job_title',
     'organization',

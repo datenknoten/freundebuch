@@ -97,7 +97,7 @@ const DOWN = `
     END;
 `;
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.createFunction(
     { schema: 'friends', name: 'log_friend_change' },
     [],
@@ -106,7 +106,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   );
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.createFunction(
     { schema: 'friends', name: 'log_friend_change' },
     [],

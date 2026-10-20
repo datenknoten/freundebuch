@@ -20,7 +20,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * junction table needs no `external_id` of its own: the logged change names the
  * friend, exactly like the other sub-resource triggers.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.sql(`
     CREATE TRIGGER circle_change_trigger
     AFTER INSERT OR UPDATE OR DELETE ON friends.friend_circles
@@ -29,6 +29,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.sql('DROP TRIGGER IF EXISTS circle_change_trigger ON friends.friend_circles;');
 }

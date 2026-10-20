@@ -20,7 +20,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * `encounter_id` uses ON DELETE SET NULL because user cleanup deletes
  * encounters before friends.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.sql(`
     CREATE TABLE friends.friend_notes (
       id SERIAL PRIMARY KEY,
@@ -67,6 +67,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.sql('DROP TABLE IF EXISTS friends.friend_notes CASCADE;');
 }

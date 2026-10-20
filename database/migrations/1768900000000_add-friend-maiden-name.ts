@@ -1,6 +1,6 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.addColumn(
     { schema: 'friends', name: 'friends' },
     {
@@ -12,6 +12,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   );
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.dropColumn({ schema: 'friends', name: 'friends' }, 'maiden_name');
 }

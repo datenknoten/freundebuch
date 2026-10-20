@@ -6,7 +6,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * Creates the `passkey` table in the `auth` schema to store
  * registered WebAuthn credentials (hardware keys, platform authenticators).
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.createTable(
     { schema: 'auth', name: 'passkey' },
     {
@@ -71,6 +71,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   });
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.dropTable({ schema: 'auth', name: 'passkey' }, { ifExists: true });
 }

@@ -20,7 +20,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  *     row is swept away (`MAX(id)` would fall back to 0 and re-advertise
  *     `sync-0`, which clients treat as "never synced")
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.createTable(
     { schema: 'friends', name: 'friend_changes_pruned' },
     {
@@ -57,7 +57,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.sql(
     'DROP TRIGGER IF EXISTS update_friend_changes_pruned_updated_at ON friends.friend_changes_pruned',
   );

@@ -55,13 +55,13 @@ const COLUMNS: Array<[schema: string, table: string, column: string, length: num
   ['friends', 'friends', 'photo_url', 500],
 ];
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   for (const [schema, table, column] of COLUMNS) {
     pgm.sql(`ALTER TABLE "${schema}"."${table}" ALTER COLUMN "${column}" TYPE text;`);
   }
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   for (const [schema, table, column, length] of COLUMNS) {
     pgm.sql(`ALTER TABLE "${schema}"."${table}" ALTER COLUMN "${column}" TYPE varchar(${length});`);
   }

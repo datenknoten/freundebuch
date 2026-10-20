@@ -10,7 +10,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * 3. Removes the old professional columns from the friends table
  * 4. Updates the full-text search trigger to use the new table
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // 1. Create the friend_professional_history table
   // ============================================================================
@@ -182,7 +182,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   // 5. Update the full-text search trigger to use the new table
   // ============================================================================
 
-  // Drop the existing trigger (it references the old columns)
   pgm.sql(`DROP TRIGGER IF EXISTS friends_search_vector_update ON friends.friends;`);
 
   // Recreate the trigger function to use the professional_history table
@@ -237,7 +236,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     FOR EACH ROW EXECUTE FUNCTION friends.update_friend_search_vector();
   `);
 
-  // Create a trigger to update friend's search_vector when professional history changes
   pgm.sql(`
     CREATE OR REPLACE FUNCTION friends.refresh_friend_search_on_professional_history_change()
     RETURNS TRIGGER AS $$
@@ -264,7 +262,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   // 6. Update the CardDAV change tracking trigger to not reference removed columns
   // ============================================================================
 
-  // Update log_friend_change() to remove references to job_title, organization, department, work_notes
   pgm.sql(`
     CREATE OR REPLACE FUNCTION friends.log_friend_change()
     RETURNS TRIGGER AS $$
@@ -305,7 +302,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     $$ LANGUAGE plpgsql;
   `);
 
-  // Add trigger to log professional history changes for CardDAV sync
   pgm.sql(`
     CREATE TRIGGER professional_history_change_trigger
     AFTER INSERT OR UPDATE OR DELETE ON friends.friend_professional_history
@@ -329,7 +325,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   pgm.sql(`UPDATE friends.friends SET updated_at = updated_at;`);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // ============================================================================
   // 1. Re-add the old columns to friends table
   // ============================================================================

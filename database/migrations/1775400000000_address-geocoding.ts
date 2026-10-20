@@ -1,7 +1,6 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Add latitude/longitude columns to friend addresses
+export async function up(pgm: MigrationBuilder) {
   pgm.addColumns(
     { schema: 'friends', name: 'friend_addresses' },
     {
@@ -16,7 +15,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     },
   );
 
-  // Add latitude/longitude columns to collective addresses
   pgm.addColumns(
     { schema: 'collectives', name: 'collective_addresses' },
     {
@@ -32,7 +30,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   );
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.dropColumns({ schema: 'friends', name: 'friend_addresses' }, ['latitude', 'longitude']);
   pgm.dropColumns({ schema: 'collectives', name: 'collective_addresses' }, [
     'latitude',

@@ -14,7 +14,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
 
 const VALID_TYPES = "encounter_type IN ('in_person', 'phone_call', 'video_call', 'message')";
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Add encounter_type discriminator
   // ============================================================================
@@ -53,7 +53,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   });
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Restore title NOT NULL (backfill any null titles first)
   // ============================================================================

@@ -20,7 +20,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * prefixes are always exactly 8 base64url characters, so they can never be
  * mistaken for a 16-char hex hash.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.sql(`ALTER TABLE auth.app_passwords ALTER COLUMN password_prefix TYPE text;`);
 
   pgm.sql(`
@@ -49,7 +49,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
  * in that combination the affected users have to create new app passwords.
  * The notice makes that visible in the migration log.
  */
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.sql(`
     COMMENT ON COLUMN auth.app_passwords.password_prefix IS 'First 8 chars for quick lookup';
   `);

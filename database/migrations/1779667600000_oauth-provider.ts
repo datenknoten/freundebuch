@@ -13,7 +13,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * `apps/backend/src/lib/auth.ts`. Access/refresh tokens are stored hashed by
  * Better Auth — no plaintext secrets at rest.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // Registered OAuth clients. With Dynamic Client Registration enabled, one row
   // is created per client that registers (claude.ai registers itself).
   pgm.createTable(
@@ -129,7 +129,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   });
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.dropTable({ schema: 'auth', name: 'oauth_consent' }, { ifExists: true });
   pgm.dropTable({ schema: 'auth', name: 'oauth_access_token' }, { ifExists: true });
   pgm.dropTable({ schema: 'auth', name: 'oauth_application' }, { ifExists: true });

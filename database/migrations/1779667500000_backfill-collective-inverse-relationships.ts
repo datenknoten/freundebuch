@@ -24,7 +24,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * the membership continues to clean up both edges. ON CONFLICT DO NOTHING
  * preserves any edge the user may have created manually.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.sql(`
     INSERT INTO friends.friend_relationships (
       friend_id,
@@ -45,7 +45,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(): Promise<void> {
+export async function down() {
   // No-op: this is a best-effort data backfill. Backfilled inverse edges are
   // indistinguishable from legitimately auto-created edges (both carry a
   // source_membership_id), so we cannot safely remove them without risking the

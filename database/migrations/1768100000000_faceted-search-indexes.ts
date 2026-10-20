@@ -11,7 +11,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * Note: Relationship category facets use existing relationship_types table
  * which is already indexed.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Enable pg_trgm extension for trigram indexes (supports ILIKE searches)
   // ============================================================================
@@ -66,14 +66,13 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // `ifExists` throughout: the professional-history migration moved
   // organization/job_title/department off contacts and dropped their indexes,
   // so on a full rollback they are already gone by the time we get here.
   pgm.sql('DROP INDEX IF EXISTS contacts.idx_contact_met_info_met_context_trgm;');
   pgm.sql('DROP INDEX IF EXISTS contacts.idx_contact_relationships_notes_trgm;');
 
-  // Drop professional facet indexes
   pgm.dropIndex({ schema: 'contacts', name: 'contacts' }, 'department', {
     name: 'idx_contacts_department',
     ifExists: true,
@@ -87,7 +86,6 @@ export async function down(pgm: MigrationBuilder): Promise<void> {
     ifExists: true,
   });
 
-  // Drop location facet indexes
   pgm.dropIndex({ schema: 'contacts', name: 'contact_addresses' }, 'city', {
     name: 'idx_contact_addresses_city',
     ifExists: true,

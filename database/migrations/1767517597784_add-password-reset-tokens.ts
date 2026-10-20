@@ -1,7 +1,6 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Create password_reset_tokens table
+export async function up(pgm: MigrationBuilder) {
   pgm.createTable(
     { schema: 'auth', name: 'password_reset_tokens' },
     {
@@ -46,12 +45,10 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     },
   );
 
-  // Add table comment
   pgm.sql(
     `COMMENT ON TABLE auth.password_reset_tokens IS 'Password reset tokens for forgot password flow'`,
   );
 
-  // Create indexes
   pgm.createIndex({ schema: 'auth', name: 'password_reset_tokens' }, 'external_id', {
     name: 'idx_password_reset_tokens_external_id',
   });
@@ -66,6 +63,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   });
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.dropTable({ schema: 'auth', name: 'password_reset_tokens' }, { cascade: true });
 }

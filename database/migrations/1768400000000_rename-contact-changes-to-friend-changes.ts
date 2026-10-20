@@ -9,7 +9,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * 3. Renaming columns in friend_changes
  * 4. Updating trigger functions for CardDAV sync
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Update column comments that reference "contact"
   // ============================================================================
@@ -39,7 +39,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   );
   pgm.sql('DROP TRIGGER IF EXISTS met_info_change_trigger ON friends.friend_met_info;');
 
-  // Drop old trigger functions
   pgm.sql('DROP FUNCTION IF EXISTS friends.log_contact_change() CASCADE;');
   pgm.sql('DROP FUNCTION IF EXISTS friends.log_subresource_change() CASCADE;');
 
@@ -221,7 +220,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // ============================================================================
   // Step 1: Drop new triggers
   // ============================================================================

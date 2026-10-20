@@ -11,7 +11,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * - Trigram indexes on emails and phones for partial matching
  * - search_history table for recent searches
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   // ============================================================================
   // Enable pg_trgm extension for partial matching (trigrams)
   // ============================================================================
@@ -140,26 +140,20 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
-  // Drop search_history table
+export async function down(pgm: MigrationBuilder) {
   pgm.dropTable({ schema: 'contacts', name: 'search_history' }, { cascade: true });
 
-  // Drop trigram indexes
   pgm.sql(`DROP INDEX IF EXISTS contacts.idx_contact_phones_trgm;`);
   pgm.sql(`DROP INDEX IF EXISTS contacts.idx_contact_emails_trgm;`);
 
-  // Drop trigger
   pgm.sql(`DROP TRIGGER IF EXISTS contacts_search_vector_update ON contacts.contacts;`);
 
-  // Drop trigger function
   pgm.sql(`DROP FUNCTION IF EXISTS contacts.update_contact_search_vector();`);
 
-  // Drop GIN index
   pgm.dropIndex({ schema: 'contacts', name: 'contacts' }, 'search_vector', {
     name: 'idx_contacts_search_vector',
   });
 
-  // Drop search_vector column
   pgm.dropColumn({ schema: 'contacts', name: 'contacts' }, 'search_vector');
 
   // Note: We don't drop pg_trgm extension as it might be used elsewhere

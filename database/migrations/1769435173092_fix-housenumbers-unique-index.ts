@@ -1,7 +1,6 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Drop the existing non-unique index
+export async function up(pgm: MigrationBuilder) {
   pgm.sql(`DROP INDEX IF EXISTS geodata.idx_housenumbers_by_street`);
 
   // Create a unique index including house_number
@@ -12,7 +11,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   // Revert to the original non-unique index
   pgm.sql(`DROP INDEX IF EXISTS geodata.idx_housenumbers_by_street`);
 

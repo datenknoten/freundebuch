@@ -14,7 +14,7 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  * `'Unknown'` (see scripts/osm-import/import-region.sh); those are excluded here
  * so they never surface as suggestions.
  */
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   pgm.sql(`
     CREATE MATERIALIZED VIEW geodata.cities_by_postal AS
     SELECT DISTINCT country_code, postal_code, city
@@ -39,6 +39,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   pgm.sql('DROP MATERIALIZED VIEW IF EXISTS geodata.cities_by_postal CASCADE');
 }

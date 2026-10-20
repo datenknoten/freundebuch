@@ -1265,16 +1265,21 @@ const TARGETS: ReadonlyArray<{ table: string; column: string; triggers: readonly
   },
 ];
 
-const literal = (value: string) => `'${value.replaceAll("'", "''")}'`;
+function literal(value: string) {
+  return `'${value.replaceAll("'", "''")}'`;
+}
 
 /** Run `statements` for `table` with its updated_at and change-log triggers disabled. */
-function withoutTriggers(table: string, triggers: readonly string[], statements: string): string {
-  const toggle = (action: 'DISABLE' | 'ENABLE') =>
-    triggers.map((trigger) => `ALTER TABLE ${table} ${action} TRIGGER ${trigger};`).join('\n');
+function withoutTriggers(table: string, triggers: readonly string[], statements: string) {
+  function toggle(action: 'DISABLE' | 'ENABLE') {
+    return triggers
+      .map((trigger) => `ALTER TABLE ${table} ${action} TRIGGER ${trigger};`)
+      .join('\n');
+  }
   return [toggle('DISABLE'), statements, toggle('ENABLE')].join('\n');
 }
 
-export async function up(pgm: MigrationBuilder): Promise<void> {
+export async function up(pgm: MigrationBuilder) {
   const values = NAME_TO_CODE.map(
     ([name, code]) => `(lower(${literal(name)}), ${literal(code)})`,
   ).join(',\n');
@@ -1301,7 +1306,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   }
 }
 
-export async function down(pgm: MigrationBuilder): Promise<void> {
+export async function down(pgm: MigrationBuilder) {
   const values = CODE_TO_NAME.map(([code, name]) => `(${literal(code)}, ${literal(name)})`).join(
     ',\n',
   );
