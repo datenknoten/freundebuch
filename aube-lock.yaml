@@ -403,6 +403,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@datenknoten/kit':
+        specifier: 1.1.0
+        version: 1.1.0(arktype@2.2.8)(pino@10.4.0)
       arktype:
         specifier: 2.2.8
         version: 2.2.8
@@ -413,6 +416,9 @@ importers:
         specifier: 1.12.33
         version: 1.12.33
     devDependencies:
+      '@datenknoten/tsconfig':
+        specifier: 1.1.0
+        version: 1.1.0
       typescript:
         specifier: 5.9.3
         version: 5.9.3
