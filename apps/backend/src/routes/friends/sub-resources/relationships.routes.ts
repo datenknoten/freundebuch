@@ -5,6 +5,7 @@ import {
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
+import { PhotoService } from '../../../services/photo.service.js';
 import type { AppContext } from '../../../types/context.js';
 import {
   FriendNotFoundError,
@@ -34,7 +35,11 @@ app.post('/', async (c) => {
     throw new ValidationError('Cannot create relationship with self');
   }
 
-  const friendsService = new FriendsService({ db: db, logger: c.get('logger') });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: c.get('logger'),
+    photoService: new PhotoService({ logger: c.get('logger'), config: c.get('config') }),
+  });
   // A duplicate pair surfaces as ConflictError from the service, which the
   // global handler renders as 409 { error, code: 'CONFLICT' }.
   const relationship = await friendsService.addRelationship(user.userId, friendId, validated);
@@ -57,7 +62,11 @@ app.put('/:relationshipId', async (c) => {
   const relationshipId = requireUuidParam(c, 'relationshipId');
   const validated = await parseBody(c, RelationshipUpdateInputSchema);
 
-  const friendsService = new FriendsService({ db: db, logger: c.get('logger') });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: c.get('logger'),
+    photoService: new PhotoService({ logger: c.get('logger'), config: c.get('config') }),
+  });
   const relationship = await friendsService.updateRelationship(
     user.userId,
     friendId,
@@ -82,7 +91,11 @@ app.delete('/:relationshipId', async (c) => {
   const friendId = requireUuidParam(c, 'id');
   const relationshipId = requireUuidParam(c, 'relationshipId');
 
-  const friendsService = new FriendsService({ db: db, logger: c.get('logger') });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: c.get('logger'),
+    photoService: new PhotoService({ logger: c.get('logger'), config: c.get('config') }),
+  });
   const deleted = await friendsService.deleteRelationship(user.userId, friendId, relationshipId);
 
   if (!deleted) {

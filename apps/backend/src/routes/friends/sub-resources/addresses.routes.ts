@@ -18,7 +18,7 @@ export default createSubResourceRouter({
     return new AddressService({
       db,
       logger,
-      addressLookupService: getAddressLookupService(db, logger),
+      addressLookupService: getAddressLookupService(db, logger, c.get('config')),
     });
   },
 });

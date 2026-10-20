@@ -1,12 +1,6 @@
 import type { Context, Next } from 'hono';
-import { getAuth } from '../lib/auth.js';
 import type { AppContext } from '../types/context.js';
 import { AuthenticationError } from '../utils/errors.js';
-
-/** The Better Auth session as returned by api.getSession (non-null). */
-export type AuthSession = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getAuth>['api']['getSession']>>
->;
 
 export interface AuthContext {
   /**
@@ -27,7 +21,7 @@ export interface AuthContext {
  * lookup to translate between identity tables.
  */
 export async function authMiddleware(c: Context<AppContext>, next: Next) {
-  const session = await getAuth().api.getSession({
+  const session = await c.get('auth').api.getSession({
     headers: c.req.raw.headers,
   });
 

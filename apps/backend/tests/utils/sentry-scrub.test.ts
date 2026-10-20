@@ -5,7 +5,7 @@ import {
   SENSITIVE_LOG_KEYS,
   scrubBreadcrumb,
   scrubErrorEvent,
-} from '../../src/instrument.js';
+} from '../../src/instrumentation.js';
 
 const TELEGRAM_URL = 'https://api.telegram.org/bot123456:AAHsecret/sendMessage';
 const TELEGRAM_URL_REDACTED = 'https://api.telegram.org/bot[redacted]/sendMessage';

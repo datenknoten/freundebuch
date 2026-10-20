@@ -1,7 +1,8 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { authHeaders, createTestFriend, setupFriendsTestSuite } from './friends.helpers.js';
 
 /**
@@ -10,15 +11,10 @@ import { authHeaders, createTestFriend, setupFriendsTestSuite } from './friends.
  * ETag round-trip and the owner check.
  */
 describe('GET /api/uploads/friends/:friendId/:filename', () => {
-  const { getContext } = setupFriendsTestSuite();
+  const uploadDir = path.join(tmpdir(), `fb-uploads-${randomUUID()}`);
+  const { getContext } = setupFriendsTestSuite({ UPLOAD_DIR: uploadDir });
 
   const PHOTO_BYTES = Buffer.from('fake-jpeg-bytes-for-etag-test');
-  let uploadDir: string;
-
-  beforeAll(async () => {
-    uploadDir = await mkdtemp(path.join(tmpdir(), 'fb-uploads-'));
-    vi.stubEnv('UPLOAD_DIR', uploadDir);
-  });
 
   async function writePhoto(friendId: string): Promise<void> {
     await mkdir(path.join(uploadDir, friendId), { recursive: true });

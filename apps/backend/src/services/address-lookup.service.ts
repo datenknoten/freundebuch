@@ -87,7 +87,7 @@ export class AddressLookupService {
       );
       return cities.map((c) => ({ city: c.city }));
     } catch (error) {
-      this.logger.warn({ error, countryCode, postalCode }, 'PostGIS cities lookup failed');
+      this.logger.warn({ err: error, countryCode, postalCode }, 'PostGIS cities lookup failed');
       return [];
     }
   }
@@ -111,7 +111,7 @@ export class AddressLookupService {
       );
       return matches;
     } catch (error) {
-      this.logger.warn({ error, countryCode, prefix }, 'PostGIS postal code search failed');
+      this.logger.warn({ err: error, countryCode, prefix }, 'PostGIS postal code search failed');
       return [];
     }
   }
@@ -140,7 +140,7 @@ export class AddressLookupService {
         );
       } catch (error) {
         this.logger.warn(
-          { error, countryCode, city, postalCode },
+          { err: error, countryCode, city, postalCode },
           'PostGIS streets lookup failed, falling back to Overpass',
         );
       }
@@ -151,7 +151,7 @@ export class AddressLookupService {
       return await this.overpassClient.getStreets(countryCode, city, postalCode);
     } catch (error) {
       this.logger.warn(
-        { error, countryCode, city, postalCode },
+        { err: error, countryCode, city, postalCode },
         'Failed to fetch streets from Overpass',
       );
       return [];
@@ -192,7 +192,7 @@ export class AddressLookupService {
         );
       } catch (error) {
         this.logger.warn(
-          { error, countryCode, city, postalCode, street },
+          { err: error, countryCode, city, postalCode, street },
           'PostGIS house numbers lookup failed, falling back to Overpass',
         );
       }
@@ -203,7 +203,7 @@ export class AddressLookupService {
       return await this.overpassClient.getHouseNumbers(countryCode, city, postalCode, street);
     } catch (error) {
       this.logger.warn(
-        { error, countryCode, city, postalCode, street },
+        { err: error, countryCode, city, postalCode, street },
         'Failed to fetch house numbers from Overpass',
       );
       return [];
@@ -247,7 +247,7 @@ export class AddressLookupService {
         );
       } catch (error) {
         this.logger.warn(
-          { error, countryCode, city, postalCode, street },
+          { err: error, countryCode, city, postalCode, street },
           'PostGIS geocode failed, falling back to Nominatim',
         );
       }
@@ -258,7 +258,7 @@ export class AddressLookupService {
       return await this.nominatimClient.geocode(countryCode, city, postalCode, street, houseNumber);
     } catch (error) {
       this.logger.warn(
-        { error, countryCode, city, postalCode, street },
+        { err: error, countryCode, city, postalCode, street },
         'Nominatim geocode failed',
       );
       return null;

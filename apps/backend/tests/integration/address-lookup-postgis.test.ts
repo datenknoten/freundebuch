@@ -1,7 +1,6 @@
 import bcrypt from 'bcrypt';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { resetAddressService } from '../../src/services/address-lookup.registry.js';
-import { resetConfig } from '../../src/utils/config.js';
 import {
   completeTestUserOnboarding,
   createBetterAuthSession,
@@ -20,17 +19,17 @@ import { insertTestAddresses } from './postgis.helpers.js';
  * (validation + empty-list fallback); this file covers the data path.
  */
 describe('Address Lookup API - PostGIS full-stack', { timeout: 60000 }, () => {
-  const { getContext } = setupAuthTestSuite();
+  // PostGIS is enabled for this file only.
+  const { getContext } = setupAuthTestSuite({
+    POSTGIS_ADDRESS_ENABLED: 'true',
+    POSTGIS_ADDRESS_DACH_ONLY: 'true',
+  });
 
   let sessionCookies: string;
 
   beforeAll(async () => {
-    // Enable PostGIS for this file only. The address service is created lazily
-    // on first request, so toggling the env + clearing the singleton here takes
-    // effect before any request is made.
-    vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'true');
-    vi.stubEnv('POSTGIS_ADDRESS_DACH_ONLY', 'true');
-    resetConfig();
+    // The address service is a lazily created singleton, so clearing it here
+    // makes the first request build it from this suite's config.
     resetAddressService();
 
     const { pool } = getContext();

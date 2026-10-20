@@ -4,7 +4,6 @@ import {
   type UserWithPreferencesResponse,
 } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
-import { getAuth } from '../lib/auth.js';
 import { authMiddleware, getAuthSession, getAuthUser } from '../middleware/auth.js';
 import { passkeyListRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { getOAuthClientByClientId } from '../models/queries/oauth.queries.js';
@@ -14,7 +13,6 @@ import {
   updateUserPreferences,
 } from '../models/queries/users.queries.js';
 import type { AppContext } from '../types/context.js';
-import { getConfig } from '../utils/config.js';
 import {
   AuthenticationError,
   ResourceNotFoundError,
@@ -49,12 +47,12 @@ app.on(['POST', 'GET'], '/*', async (c, next) => {
   // answers 400; this gate runs first so the client gets the documented 403
   // SIGNUP_DISABLED. The config is read only for that one path, so every other
   // auth request stays a pure passthrough.
-  if (path === '/api/auth/sign-up/email' && getConfig().DISABLE_SIGNUP) {
+  if (path === '/api/auth/sign-up/email' && c.get('config').DISABLE_SIGNUP) {
     throw new SignupDisabledError();
   }
 
   // Delegate to Better Auth handler
-  return getAuth().handler(c.req.raw);
+  return c.get('auth').handler(c.req.raw);
 });
 
 /**
@@ -164,7 +162,7 @@ app.get(
   authMiddleware,
   passkeyListRateLimitMiddleware,
   async (c) => {
-    const passkeys = await getAuth().api.listPasskeys({
+    const passkeys = await c.get('auth').api.listPasskeys({
       headers: c.req.raw.headers,
     });
     return c.json(passkeys);
@@ -185,7 +183,7 @@ app.get(
  * authMiddleware because this read doesn't need the legacy-user bridge.
  */
 app.get('/oauth2/client/:id', async (c) => {
-  const session = await getAuth().api.getSession({ headers: c.req.raw.headers });
+  const session = await c.get('auth').api.getSession({ headers: c.req.raw.headers });
   if (!session) {
     throw new AuthenticationError('Unauthorized');
   }

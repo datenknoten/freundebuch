@@ -1,10 +1,7 @@
 /**
- * Sentry instrumentation file
- *
- * IMPORTANT: This file must be imported BEFORE any other modules that need
- * to be instrumented (like 'pg'). Sentry uses monkey-patching to add
- * instrumentation, which only works if Sentry is initialized before the
- * modules are loaded.
+ * Sentry instrumentation, preloaded with `node --import` so Sentry patches
+ * modules like 'pg' before the application loads them. Sentry uses
+ * monkey-patching, which only works on modules loaded after its init.
  */
 import { createRequire } from 'node:module';
 import * as Sentry from '@sentry/node';
@@ -15,16 +12,17 @@ const require = createRequire(import.meta.url);
 const pkg: Record<string, unknown> = require('../package.json');
 const pkgVersion = typeof pkg.version === 'string' ? pkg.version : 'unknown';
 
-// Read directly from process.env to avoid config validation during tests.
+// Read directly from process.env: this file runs before the application and
+// its config module exist.
 //
-// APP_ENV comes from ENV, not NODE_ENV. The two are deliberately separate:
-// NODE_ENV drives Node and the ecosystem (dependency pruning at install,
-// library dev/prod branches) while ENV describes the deployment this process
-// is part of. Sentry wants the latter.
-const SENTRY_DSN = process.env.SENTRY_DSN;
-const APP_ENV = process.env.ENV || 'development';
+// The environment comes from ENV, not NODE_ENV. The two are deliberately
+// separate: NODE_ENV drives Node and the ecosystem (dependency pruning at
+// install, library dev/prod branches) while ENV describes the deployment this
+// process is part of. Sentry wants the latter.
+const sentryDsn = process.env.SENTRY_DSN;
+const appEnv = process.env.ENV || 'development';
 
-const IS_PRODUCTION = APP_ENV === 'production';
+const isProduction = appEnv === 'production';
 
 // Attribute keys that must never leave the process. Backstop for the pino
 // redaction in utils/logger.ts — forwarded log attributes are scrubbed here
@@ -117,17 +115,17 @@ export function scrubErrorEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
   return event;
 }
 
-if (SENTRY_DSN) {
+if (sentryDsn) {
   Sentry.init({
-    dsn: SENTRY_DSN,
-    environment: APP_ENV,
+    dsn: sentryDsn,
+    environment: appEnv,
     release: `freundebuch-backend@${pkgVersion}`,
 
     // Full tracing in dev for debugging; sample in production to bound cost.
-    tracesSampleRate: IS_PRODUCTION ? 0.1 : 1.0,
+    tracesSampleRate: isProduction ? 0.1 : 1.0,
 
     // Default PII (request IP, headers) only outside production.
-    sendDefaultPii: !IS_PRODUCTION,
+    sendDefaultPii: !isProduction,
 
     // Capture pino log messages as breadcrumbs and errors, and trace postgres queries
     integrations: [

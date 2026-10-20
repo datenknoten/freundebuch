@@ -10,7 +10,7 @@ import {
 import { type } from 'arktype';
 import type { Logger } from 'pino';
 import sharp, { type Sharp } from 'sharp';
-import { getConfig } from '../utils/config.js';
+import type { Config } from '../config.js';
 import { AppError } from '../utils/errors.js';
 import { isPathWithinBase, isValidUuid } from '../utils/security.js';
 import { isNodeError } from '../utils/type-guards.js';
@@ -21,8 +21,11 @@ import { isNodeError } from '../utils/type-guards.js';
  */
 const MAX_IMAGE_PIXELS = 50_000_000;
 
+export type PhotoConfig = Pick<Config, 'BACKEND_URL' | 'UPLOAD_DIR'>;
+
 export interface PhotoServiceOptions {
   logger: Logger;
+  config: PhotoConfig;
 }
 
 export class PhotoService {
@@ -32,10 +35,8 @@ export class PhotoService {
 
   constructor(options: PhotoServiceOptions) {
     this.logger = options.logger;
-    const config = getConfig();
-    // Use environment variable or default to local uploads directory
-    this.uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'friends');
-    this.baseUrl = `${config.BACKEND_URL}/api/uploads/friends`;
+    this.uploadDir = options.config.UPLOAD_DIR;
+    this.baseUrl = `${options.config.BACKEND_URL}/api/uploads/friends`;
   }
 
   /**

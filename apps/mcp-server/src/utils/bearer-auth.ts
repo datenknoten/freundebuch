@@ -1,5 +1,5 @@
 import type { IncomingMessage } from 'node:http';
-import { getAuth } from '@freundebuch/backend/lib/auth.js';
+import type { Auth } from '@freundebuch/backend/lib/auth.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 
@@ -7,6 +7,13 @@ export interface BearerAuthContext {
   /** The user's single identity: auth."user".id = auth.users.external_id. */
   userId: string;
   email: string;
+}
+
+export interface BearerAuthOptions {
+  auth: Auth;
+  /** Shared pg pool, for the email of the token's subject. */
+  pool: pg.Pool;
+  logger: Logger;
 }
 
 /**
@@ -19,9 +26,9 @@ export interface BearerAuthContext {
  */
 export async function verifyBearerToken(
   req: IncomingMessage,
-  pool: pg.Pool,
-  logger: Logger,
+  options: BearerAuthOptions,
 ): Promise<BearerAuthContext | null> {
+  const { auth, pool, logger } = options;
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return null;
@@ -33,7 +40,7 @@ export async function verifyBearerToken(
 
   let session: { userId?: string; accessTokenExpiresAt?: string | Date } | null;
   try {
-    session = await getAuth().api.getMcpSession({ headers });
+    session = await auth.api.getMcpSession({ headers });
   } catch (err) {
     logger.error({ err }, 'Error validating MCP bearer token');
     return null;

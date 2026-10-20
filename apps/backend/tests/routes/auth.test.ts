@@ -2,24 +2,27 @@ import { Hono } from 'hono';
 import type { Pool } from 'pg';
 import pino from 'pino';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { loadConfig } from '../../src/config.js';
+import type { Auth } from '../../src/lib/auth.js';
 import type { AppContext } from '../../src/types/context.js';
 import { isAppError } from '../../src/utils/errors.js';
+import { TEST_ENV } from '../helpers/test-env.js';
 
-const { mockGetSession, mockHandler, mockOAuthClientRun } = vi.hoisted(() => ({
-  mockGetSession: vi.fn(),
-  mockHandler: vi.fn(),
+const { mockOAuthClientRun } = vi.hoisted(() => ({
   mockOAuthClientRun: vi.fn(),
 }));
 
-// Mock the Better Auth module
-vi.mock('../../src/lib/auth.ts', () => ({
-  getAuth: () => ({
-    api: {
-      getSession: mockGetSession,
-    },
-    handler: mockHandler,
-  }),
-}));
+const mockGetSession = vi.fn<Auth['api']['getSession']>();
+const mockHandler = vi.fn<Auth['handler']>();
+
+const FAKE_AUTH: Auth = {
+  handler: mockHandler,
+  api: {
+    getSession: mockGetSession,
+    listPasskeys: vi.fn<Auth['api']['listPasskeys']>(),
+    getMcpSession: vi.fn<Auth['api']['getMcpSession']>(),
+  },
+};
 
 // Mock the pgTyped OAuth client lookup query.
 vi.mock('../../src/models/queries/oauth.queries.ts', () => ({
@@ -45,6 +48,8 @@ describe('Auth Routes', () => {
     app.use('*', async (c, next) => {
       c.set('db', mockDb);
       c.set('logger', logger);
+      c.set('auth', FAKE_AUTH);
+      c.set('config', loadConfig({ ...TEST_ENV }));
       await next();
     });
 

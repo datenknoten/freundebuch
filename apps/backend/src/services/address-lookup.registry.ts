@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import type { Logger } from 'pino';
-import { getConfig } from '../utils/config.js';
+import type { Config } from '../config.js';
 import { AddressLookupService } from './address-lookup.service.js';
 import { PostGISAddressClient } from './external/postgis-address.client.js';
 
@@ -21,9 +21,21 @@ let postgisClient: PostGISAddressClient | null = null;
  * Address lookup depends on no API key (PostGIS + Overpass + Nominatim), so
  * there is always an instance to return.
  */
-export function getAddressLookupService(pool: pg.Pool, logger: Logger): AddressLookupService {
+export type AddressLookupConfig = Pick<
+  Config,
+  | 'NOMINATIM_CONTACT_EMAIL'
+  | 'OVERPASS_API_URL'
+  | 'OVERPASS_FALLBACK_URL'
+  | 'POSTGIS_ADDRESS_DACH_ONLY'
+  | 'POSTGIS_ADDRESS_ENABLED'
+>;
+
+export function getAddressLookupService(
+  pool: pg.Pool,
+  logger: Logger,
+  config: AddressLookupConfig,
+): AddressLookupService {
   if (!addressLookupService) {
-    const config = getConfig();
     if (config.POSTGIS_ADDRESS_ENABLED && !postgisClient) {
       postgisClient = new PostGISAddressClient(pool, logger);
     }

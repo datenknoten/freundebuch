@@ -1,8 +1,8 @@
 import type { Hono } from 'hono';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
-import { resetConfig } from '../../src/utils/config.js';
+
 import {
   type AuthTestContext,
   completeTestUserOnboarding,
@@ -22,10 +22,6 @@ describe('Circles API - Integration', () => {
   let user: { externalId: string; email: string; sessionCookies: string };
 
   beforeAll(async () => {
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
-    vi.stubEnv('LOG_LEVEL', 'silent');
-
     context = await setupAuthTests();
   }, SUITE_HOOK_TIMEOUT_MS);
 
@@ -40,8 +36,6 @@ describe('Circles API - Integration', () => {
 
   afterAll(async () => {
     await teardownAuthTests(context);
-    vi.unstubAllEnvs();
-    resetConfig();
   }, SUITE_HOOK_TIMEOUT_MS);
 
   const appOf = (): Hono<AppContext> => context.app;

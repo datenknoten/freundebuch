@@ -1,9 +1,9 @@
 import type { Hono } from 'hono';
 import type pg from 'pg';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
-import { resetConfig } from '../../src/utils/config.js';
+
 import {
   type AuthTestContext,
   completeTestUserOnboarding,
@@ -27,10 +27,6 @@ describe('Cross-user authorization', () => {
   let userB: { externalId: string; email: string; sessionCookies: string };
 
   beforeAll(async () => {
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
-    vi.stubEnv('LOG_LEVEL', 'silent');
-
     context = await setupAuthTests();
 
     userA = await createAuthenticatedUser(context.pool, 'authz-a@example.com', 'Password123!');
@@ -45,8 +41,6 @@ describe('Cross-user authorization', () => {
 
   afterAll(async () => {
     await teardownAuthTests(context);
-    vi.unstubAllEnvs();
-    resetConfig();
   }, SUITE_HOOK_TIMEOUT_MS);
 
   const app = (): Hono<AppContext> => context.app;

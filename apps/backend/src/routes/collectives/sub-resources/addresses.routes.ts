@@ -18,7 +18,7 @@ export default createSubResourceRouter({
     return new CollectiveAddressService({
       db,
       logger,
-      addressLookupService: getAddressLookupService(db, logger),
+      addressLookupService: getAddressLookupService(db, logger, c.get('config')),
     });
   },
 });

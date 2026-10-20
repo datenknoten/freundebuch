@@ -148,7 +148,7 @@ export class NominatimClient {
 
       return { latitude, longitude };
     } catch (error) {
-      this.logger.warn({ error, countryCode, city, postalCode }, 'Nominatim geocode error');
+      this.logger.warn({ err: error, countryCode, city, postalCode }, 'Nominatim geocode error');
       return null;
     }
   }

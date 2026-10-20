@@ -183,7 +183,7 @@ out tags;
       return await this.fetchOverpass(this.primaryUrl, query);
     } catch (primaryError) {
       this.logger.warn(
-        { error: primaryError, url: this.primaryUrl },
+        { err: primaryError, url: this.primaryUrl },
         'Primary Overpass endpoint failed, trying fallback',
       );
 

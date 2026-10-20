@@ -1,6 +1,6 @@
 import { PHOTO_VALIDATION_ERRORS } from '@freundebuch/shared/index.js';
 import pino from 'pino';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PhotoService, PhotoUploadError } from '../../src/services/photo.service.js';
 
 // Valid UUID v4 for tests
@@ -31,29 +31,17 @@ vi.mock('node:fs/promises', () => ({
   writeFile: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock config
-vi.mock('../../src/utils/config.js', () => ({
-  getConfig: vi.fn(() => ({
-    FRONTEND_URL: 'http://localhost:5173',
-    BACKEND_URL: 'http://localhost:3000',
-  })),
-}));
+const PHOTO_CONFIG = { BACKEND_URL: 'http://localhost:3000', UPLOAD_DIR: '/tmp/test-uploads' };
 
 describe('PhotoService', () => {
   let photoService: PhotoService;
   let mockLogger: pino.Logger;
 
   beforeEach(() => {
-    vi.stubEnv('UPLOAD_DIR', '/tmp/test-uploads');
-
     mockLogger = pino({ level: 'silent' });
-    photoService = new PhotoService({ logger: mockLogger });
+    photoService = new PhotoService({ logger: mockLogger, config: PHOTO_CONFIG });
 
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
   });
 
   describe('uploadPhoto', () => {

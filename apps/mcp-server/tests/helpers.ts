@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import http from 'node:http';
+import { type Auth, createAuth, createAuthPool } from '@freundebuch/backend/lib/auth.js';
 import bcrypt from 'bcrypt';
 import pg from 'pg';
 import type { Logger } from 'pino';
@@ -7,6 +8,19 @@ import pino from 'pino';
 import { afterAll, beforeAll, inject } from 'vitest';
 import { createMcpRequestHandler, type Session } from '../src/http-handler.js';
 import { createServices, type Services } from '../src/utils/service-factory.js';
+
+/** The auth and photo settings the MCP server's backend collaborators read. */
+const TEST_CONFIG = {
+  BETTER_AUTH_SECRET: 'test-better-auth-secret-test-better-auth-secret-1',
+  DISABLE_SIGNUP: false,
+  ENV: 'test',
+  FRONTEND_URL: 'http://localhost:5173',
+  LOG_LEVEL: 'silent',
+  RATE_LIMIT_ENABLED: false,
+  SMTP_SECURE: false,
+  BACKEND_URL: 'http://localhost:3000',
+  UPLOAD_DIR: '/tmp/mcp-test-uploads',
+} as const;
 
 /**
  * Suite hooks only clone a database and boot an in-process HTTP server now, but
@@ -16,6 +30,7 @@ const SUITE_HOOK_TIMEOUT_MS = 120_000;
 
 export interface TestContext {
   pool: pg.Pool;
+  authPool: pg.Pool;
   services: Services;
   logger: Logger;
   baseUrl: string;
@@ -138,10 +153,11 @@ function startMcpHttpServer(
   services: Services,
   logger: Logger,
   pool: pg.Pool,
+  auth: Auth,
 ): Promise<{ server: http.Server; baseUrl: string; sessions: Map<string, Session> }> {
   return new Promise((resolve) => {
     const sessions = new Map<string, Session>();
-    const handler = createMcpRequestHandler({ services, logger, sessions, pool });
+    const handler = createMcpRequestHandler({ services, logger, sessions, pool, auth });
     const httpServer = http.createServer(handler);
 
     httpServer.listen(0, () => {
@@ -339,16 +355,29 @@ export function setupMcpTestSuite() {
     });
 
     const logger: Logger = pino({ level: 'silent' });
-    const services = createServices(pool, logger);
+    const services = createServices(pool, logger, TEST_CONFIG);
+    const authPool = createAuthPool({
+      config: {
+        DATABASE_URL: databaseUri,
+        DATABASE_POOL_MIN: 1,
+        DATABASE_POOL_MAX: 2,
+        DATABASE_CONNECTION_TIMEOUT_MS: 5000,
+        DATABASE_IDLE_TIMEOUT_MS: 30000,
+        DATABASE_STATEMENT_TIMEOUT_MS: 30000,
+      },
+      logger,
+    });
+    const auth = createAuth({ config: TEST_CONFIG, pool: authPool, logger });
 
     const testUser = await createTestUserWithAppPassword(pool, 'mcp-test@example.com');
     const otherUser = await createTestUserWithAppPassword(pool, 'mcp-other@example.com');
 
-    const { server: httpServer, baseUrl } = await startMcpHttpServer(services, logger, pool);
+    const { server: httpServer, baseUrl } = await startMcpHttpServer(services, logger, pool, auth);
 
     context = {
       databaseName,
       pool,
+      authPool,
       services,
       logger,
       baseUrl,
@@ -364,6 +393,9 @@ export function setupMcpTestSuite() {
     }
     if (context?.pool) {
       await context.pool.end();
+    }
+    if (context?.authPool) {
+      await context.authPool.end();
     }
     if (context?.databaseName) {
       await dropClonedDatabase(context.databaseName);

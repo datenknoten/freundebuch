@@ -1,7 +1,7 @@
 import type pg from 'pg';
-import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach } from 'vitest';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
-import { resetConfig } from '../../src/utils/config.js';
+
 import {
   type AuthTestContext,
   completeTestUserOnboarding,
@@ -303,11 +303,6 @@ export function setupSearchTestSuite() {
   let context: SearchTestContext;
 
   beforeAll(async () => {
-    // Set required environment variables for tests
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
-    vi.stubEnv('LOG_LEVEL', 'silent');
-
     authContext = await setupAuthTests();
   }, SUITE_HOOK_TIMEOUT_MS);
 
@@ -327,8 +322,6 @@ export function setupSearchTestSuite() {
 
   afterAll(async () => {
     await teardownAuthTests(authContext);
-    vi.unstubAllEnvs();
-    resetConfig();
   }, SUITE_HOOK_TIMEOUT_MS);
 
   return {

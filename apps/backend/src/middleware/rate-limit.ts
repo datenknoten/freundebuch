@@ -1,27 +1,16 @@
 import { getConnInfo } from '@hono/node-server/conninfo';
 import type { Context, Next } from 'hono';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import type { Config } from '../config.js';
 import type { AppContext } from '../types/context.js';
-import { getConfig } from '../utils/config.js';
 import { isRateLimiterRes } from '../utils/type-guards.js';
-
-// Use higher limits in test environment to allow concurrent operation tests.
-//
-// The one place ENV and NODE_ENV are deliberately OR'd. Elsewhere they mean
-// different things and are kept apart, but "am I under test" is answered by
-// whichever of the three a given runner happens to set: vitest sets VITEST, CI
-// sets NODE_ENV, and the app's own config uses ENV.
-const isTestEnv =
-  process.env.ENV === 'test' || process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 
 // Auth endpoint rate limiting is handled by Better Auth's rateLimit config
 // (5 req/min window), plus an nginx `limit_req` zone in front of /api/auth/.
 
 interface LimitSpec {
-  /** Requests per minute in production. */
+  /** Requests per minute. */
   points: number;
-  /** Requests per minute under test, where suites fire in bursts. */
-  test: number;
   /** Seconds to block after exceeding; defaults to 60. */
   blockDuration?: number;
   /**
@@ -43,22 +32,21 @@ interface LimitSpec {
  * (see ADR 0004); a second replica would double every limit.
  */
 const LIMITS = {
-  friends: { points: 100, test: 500, keyedByUser: true },
-  circles: { points: 60, test: 300, keyedByUser: true },
-  encounters: { points: 60, test: 300, keyedByUser: true },
-  collectives: { points: 120, test: 300, keyedByUser: true },
-  notificationChannels: { points: 30, test: 300, keyedByUser: true },
-  passkeyList: { points: 30, test: 300, keyedByUser: true },
+  friends: { points: 100, keyedByUser: true },
+  circles: { points: 60, keyedByUser: true },
+  encounters: { points: 60, keyedByUser: true },
+  collectives: { points: 120, keyedByUser: true },
+  notificationChannels: { points: 30, keyedByUser: true },
+  passkeyList: { points: 30, keyedByUser: true },
   notificationTest: {
     points: 3,
-    test: 100,
     blockDuration: 120,
     keyedByUser: true,
     message: 'Too many test messages. Please wait before trying again.',
   },
-  addressLookup: { points: 60, test: 300, keyedByUser: true },
+  addressLookup: { points: 60, keyedByUser: true },
   // Unauthenticated: there is no user to key by.
-  sentryTunnel: { points: 60, test: 300, keyedByUser: false },
+  sentryTunnel: { points: 60, keyedByUser: false },
 } as const satisfies Record<string, LimitSpec>;
 
 type LimiterName = keyof typeof LIMITS;
@@ -67,11 +55,9 @@ function buildLimiters(): Record<LimiterName, RateLimiterMemory> {
   const entries = Object.entries(LIMITS).map(([name, spec]) => [
     name,
     new RateLimiterMemory({
-      points: isTestEnv ? spec.test : spec.points,
+      points: spec.points,
       duration: 60,
-      blockDuration: isTestEnv
-        ? 1
-        : (('blockDuration' in spec ? spec.blockDuration : undefined) ?? 60),
+      blockDuration: ('blockDuration' in spec ? spec.blockDuration : undefined) ?? 60,
     }),
   ]);
   return Object.fromEntries(entries) as Record<LimiterName, RateLimiterMemory>;
@@ -105,8 +91,10 @@ export function resetRateLimiters(): void {
  * thing to a real address available, and a client that forges extra entries
  * only ever pushes itself further from the key it wants to spoof.
  */
-function getClientIdentifier(c: Context): string {
-  const config = getConfig();
+function getClientIdentifier(
+  c: Context,
+  config: Pick<Config, 'TRUST_PROXY' | 'TRUSTED_PROXY_HOPS'>,
+): string {
   if (config.TRUST_PROXY) {
     const forwarded = c.req.header('X-Forwarded-For');
     if (forwarded) {
@@ -150,8 +138,12 @@ function rateLimit(name: LimiterName) {
   const spec: LimitSpec = LIMITS[name];
 
   return async (c: Context<AppContext>, next: Next) => {
+    const config = c.get('config');
+    if (config.RATE_LIMIT_ENABLED === false) {
+      return next();
+    }
     const userId = spec.keyedByUser ? c.get('user')?.userId : undefined;
-    const key = userId === undefined ? getClientIdentifier(c) : `user:${userId}`;
+    const key = userId === undefined ? getClientIdentifier(c, config) : `user:${userId}`;
 
     try {
       await limiters[name].consume(key);
@@ -159,7 +151,7 @@ function rateLimit(name: LimiterName) {
     } catch (error) {
       if (!isRateLimiterRes(error)) throw error;
       const retryAfter = Math.ceil(error.msBeforeNext / 1000);
-      c.get('logger').warn({ key, retryAfter }, `Rate limit exceeded on ${name} endpoint`);
+      c.get('logger').warn({ key, retryAfter, limiter: name }, 'Rate limit exceeded');
       return c.json({ error: spec.message ?? 'Too many requests. Please try again later.' }, 429, {
         'Retry-After': String(retryAfter),
       });

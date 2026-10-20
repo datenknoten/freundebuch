@@ -1,5 +1,7 @@
+import path from 'node:path';
+import { LOG_LEVELS } from '@datenknoten/kit/logger';
+import { parseEnv } from '@datenknoten/kit/schema';
 import { type } from 'arktype';
-import { ConfigurationError } from './errors.js';
 
 const BooleanString = type('"true" | "false" | "TRUE" | "FALSE" | "1" | "0" | boolean').pipe(
   (result) => result === 'true' || result === '1' || result === 'TRUE' || result === true,
@@ -20,9 +22,6 @@ const SecretType = type('string >= 32').narrow(
 // connect with an opaque error.
 const DatabaseUrlType = type('string').and(/^postgres(?:ql)?:\/\//);
 
-/**
- * ArkType schema for environment configuration validation
- */
 const ConfigSchema = type({
   // Database
   DATABASE_URL: DatabaseUrlType,
@@ -66,11 +65,9 @@ const ConfigSchema = type({
   // Authentication (Better Auth)
   BETTER_AUTH_SECRET: SecretType,
   // Public origin of the deployment (e.g. https://freundebuch.example.com).
-  // Better Auth reads process.env.BETTER_AUTH_URL directly for its issuer/base
-  // URL; we also declare it here so the OAuth `resource` audience and discovery
-  // metadata can be derived from config. Optional: when unset, Better Auth
-  // resolves the base URL per-request (preserving the existing dev behaviour)
-  // and we fall back to FRONTEND_URL for the resource value.
+  // createAuth passes it to Better Auth as the issuer/base URL and derives the
+  // OAuth `resource` audience from it. Optional: when unset, FRONTEND_URL
+  // stands in, which equals the public origin in production.
   'BETTER_AUTH_URL?': 'string',
 
   // WebAuthn / Passkey
@@ -91,8 +88,14 @@ const ConfigSchema = type({
   // returns 403 and the frontend hides the register link.
   DISABLE_SIGNUP: BooleanString.default(false),
 
-  // Optional
-  LOG_LEVEL: '"trace" | "debug" | "info" | "warn" | "error" | "fatal" | "silent" = "info"',
+  LOG_LEVEL: type.enumerated(...LOG_LEVELS).default('info'),
+
+  // Off only where suites fire bursts of requests (the test env). Switches
+  // both the per-router limiters and Better Auth's sign-in limiter.
+  RATE_LIMIT_ENABLED: BooleanString.default(true),
+
+  // Where uploaded friend photos live. In production a bind-mounted volume.
+  UPLOAD_DIR: type('string').default(() => path.join(process.cwd(), 'uploads', 'friends')),
 
   // Sentry (optional)
   'SENTRY_DSN?': 'string',
@@ -116,39 +119,10 @@ const ConfigSchema = type({
 
 export type Config = typeof ConfigSchema.infer;
 
-let cachedConfig: Config | null = null;
-
-/**
- * Parses and validates environment variables into a typed configuration object
- * @throws {Error} If validation fails with detailed error messages
- * @returns Validated configuration object
- */
-export function getConfig(): Config {
-  if (typeof cachedConfig === 'object' && cachedConfig !== null) {
-    return cachedConfig;
-  }
-
-  // Docker compose's `${VAR:-}` interpolation and `.env` files with a bare
-  // `KEY=` deliver "", which for every key in this schema means "unset" - an
-  // empty SMTP_PORT would otherwise fail integer parsing and crash the boot.
-  const env = Object.fromEntries(
-    Object.entries(process.env).filter(([, value]) => value !== undefined && value !== ''),
-  );
-
-  const result = ConfigSchema(env);
-
-  if (result instanceof type.errors) {
-    const errorMessage = result.summary;
-    throw new ConfigurationError(`Configuration validation failed:\n${errorMessage}`);
-  }
-
-  cachedConfig = result;
-  return result;
-}
-
-/**
- * Resets the cached configuration (useful for testing)
- */
-export function resetConfig(): void {
-  cachedConfig = null;
+export function loadConfig(
+  // biome-ignore lint/style/noProcessEnv: the config module is the one reader of the environment
+  env: Record<string, string | undefined> = process.env,
+) {
+  const config: Config = parseEnv(ConfigSchema, env);
+  return config;
 }

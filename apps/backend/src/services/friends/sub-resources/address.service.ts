@@ -248,7 +248,7 @@ export class AddressService extends SubResourceService<
         );
         logger.debug({ addressExternalId, ...location }, 'Background geocode persisted');
       } catch (error) {
-        logger.warn({ error, addressExternalId }, 'Background address geocode failed');
+        logger.warn({ err: error, addressExternalId }, 'Background address geocode failed');
       }
     });
   }

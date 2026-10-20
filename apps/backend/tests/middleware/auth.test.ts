@@ -1,20 +1,22 @@
 import { Hono } from 'hono';
 import type pg from 'pg';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Auth } from '../../src/lib/auth.js';
 import { authMiddleware, getAuthUser } from '../../src/middleware/auth.js';
 import type { AppContext } from '../../src/types/context.js';
 import { isAppError } from '../../src/utils/errors.js';
 
+// Untyped: the fixtures carry the full Better Auth session, wider than AuthSession.
 const mockGetSession = vi.fn();
 
-// Mock the Better Auth module
-vi.mock('../../src/lib/auth.ts', () => ({
-  getAuth: () => ({
-    api: {
-      getSession: mockGetSession,
-    },
-  }),
-}));
+const FAKE_AUTH: Auth = {
+  handler: vi.fn<Auth['handler']>(),
+  api: {
+    getSession: mockGetSession,
+    listPasskeys: vi.fn<Auth['api']['listPasskeys']>(),
+    getMcpSession: vi.fn<Auth['api']['getMcpSession']>(),
+  },
+};
 
 describe('authMiddleware', () => {
   let app: Hono<AppContext>;
@@ -26,6 +28,7 @@ describe('authMiddleware', () => {
     // Setup db context and test route with auth middleware
     app.use('/protected/*', async (c, next) => {
       c.set('db', {} as unknown as pg.Pool); // mock db pool
+      c.set('auth', FAKE_AUTH);
       return next();
     });
     app.use('/protected/*', authMiddleware);

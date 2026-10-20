@@ -4,7 +4,7 @@ import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { runner } from 'node-pg-migrate';
 import pg from 'pg';
 import { Wait } from 'testcontainers';
-import { CONTAINER_STARTUP_TIMEOUT_MS } from './timeouts.js';
+import { CONTAINER_STARTUP_TIMEOUT_MS } from '../integration/timeouts.js';
 
 /** Minimal shape of the vitest global-setup context we use. */
 interface GlobalSetupContext {

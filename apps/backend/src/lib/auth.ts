@@ -2,32 +2,70 @@ import { passkey } from '@better-auth/passkey';
 import bcrypt from 'bcrypt';
 import { betterAuth } from 'better-auth';
 import { mcp } from 'better-auth/plugins';
-import { Pool } from 'pg';
-import { createMailer, isMailConfigured } from '../services/mailer.js';
-import { getConfig } from '../utils/config.js';
-import { ConfigurationError, toError } from '../utils/errors.js';
-import { createLogger } from '../utils/logger.js';
+import pg from 'pg';
+import type { Logger } from 'pino';
+import type { Config } from '../config.js';
+import { createMailer, isMailConfigured, type MailConfig } from '../services/mailer.js';
+import type { PoolOptions } from '../utils/db.js';
+import { toError } from '../utils/errors.js';
 
-// Better Auth's Auth<T> generic is invariant, so Auth<SpecificOptions> cannot
-// be assigned to Auth<BetterAuthOptions>. ReturnType inference also fails due
-// to a non-portable @simplewebauthn/server transitive type reference.
-// biome-ignore lint/suspicious/noExplicitAny: Auth<T> is invariant; ReturnType inference fails due to @simplewebauthn/server transitive type
-let _auth: any = null;
-let _authPool: Pool | null = null;
+/** The config keys Better Auth reads; the MCP server supplies the same set. */
+export type AuthConfig = MailConfig &
+  Pick<
+    Config,
+    | 'BETTER_AUTH_SECRET'
+    | 'BETTER_AUTH_URL'
+    | 'DISABLE_SIGNUP'
+    | 'ENV'
+    | 'FRONTEND_URL'
+    | 'LOG_LEVEL'
+    | 'RATE_LIMIT_ENABLED'
+    | 'WEBAUTHN_RP_ID'
+  >;
 
-function createAuth() {
-  const config = getConfig();
+export interface AuthOptions {
+  config: AuthConfig;
+  /** The pool from createAuthPool: Better Auth requires search_path=auth. */
+  pool: pg.Pool;
+  logger: Logger;
+}
 
-  // Public origin of this deployment. In production every surface (SPA, /api,
-  // /mcp) is served from the same host behind nginx, so the OAuth issuer and the
-  // MCP `resource` audience share that origin. Prefer BETTER_AUTH_URL (which
-  // Better Auth also reads from process.env for its issuer); fall back to
-  // FRONTEND_URL, which equals the public origin in production.
-  const publicBaseUrl = config.BETTER_AUTH_URL ?? config.FRONTEND_URL;
+/** The part of a Better Auth session the app reads. */
+export interface AuthSession {
+  user: { id: string; email: string };
+}
 
-  // Better Auth requires search_path=auth, so it needs its own pool.
-  // Pool sizes are halved from the main pool to keep total connections in check.
-  const authPool = new Pool({
+/** The OAuth access token getMcpSession resolves; it does not check expiry. */
+export interface McpSession {
+  userId: string;
+  accessTokenExpiresAt: Date;
+}
+
+interface HeadersContext {
+  headers: Headers;
+}
+
+/**
+ * The Better Auth surface the app uses. Named here because the inferred
+ * `Auth<Options>` type is invariant in its options and references a
+ * non-portable @simplewebauthn/server type.
+ */
+export interface Auth {
+  handler(request: Request): Promise<Response>;
+  api: {
+    getSession(context: HeadersContext): Promise<AuthSession | null>;
+    listPasskeys(context: HeadersContext): Promise<unknown>;
+    getMcpSession(context: HeadersContext): Promise<McpSession | null>;
+  };
+}
+
+/**
+ * Better Auth requires search_path=auth, so it needs its own pool. Pool sizes
+ * are halved from the main pool to keep total connections in check.
+ */
+export function createAuthPool(options: PoolOptions) {
+  const { config, logger } = options;
+  const authPool = new pg.Pool({
     connectionString: config.DATABASE_URL,
     options: '-c search_path=auth',
     min: Math.max(1, Math.floor(config.DATABASE_POOL_MIN / 2)),
@@ -38,16 +76,26 @@ function createAuth() {
     query_timeout: config.DATABASE_STATEMENT_TIMEOUT_MS,
   });
 
-  _authPool = authPool;
-
   // Without an 'error' listener, an idle-client error (DB restart, network
   // blip) is emitted as an unhandled 'error' event and crashes the process.
-  const poolLogger = createLogger();
   authPool.on('error', (err) => {
-    poolLogger.error({ err: toError(err) }, 'Idle pg client error');
+    logger.error({ err: toError(err) }, 'Idle pg client error');
   });
 
-  return betterAuth({
+  return authPool;
+}
+
+export function createAuth(options: AuthOptions) {
+  const { config, pool: authPool } = options;
+  const logger = options.logger.child({ module: 'auth' });
+
+  // Public origin of this deployment. In production every surface (SPA, /api,
+  // /mcp) is served from the same host behind nginx, so the OAuth issuer and the
+  // MCP `resource` audience share that origin. Prefer BETTER_AUTH_URL; fall
+  // back to FRONTEND_URL, which equals the public origin in production.
+  const publicBaseUrl = config.BETTER_AUTH_URL ?? config.FRONTEND_URL;
+
+  const auth: Auth = betterAuth({
     database: authPool,
     basePath: '/api/auth',
     // The public origin where auth is reachable. Required for the OAuth/MCP
@@ -58,7 +106,7 @@ function createAuth() {
     baseURL: publicBaseUrl,
     secret: config.BETTER_AUTH_SECRET,
     logger: {
-      disabled: process.env.VITEST === 'true',
+      disabled: config.LOG_LEVEL === 'silent',
     },
     emailAndPassword: {
       enabled: true,
@@ -91,7 +139,6 @@ function createAuth() {
         },
       },
       sendResetPassword: async ({ user, url }, _request) => {
-        const logger = (await import('../utils/logger.js')).createLogger();
         logger.info({ userId: user.id }, 'Password reset requested');
         const mailer = createMailer(config, logger);
         if (mailer === null) {
@@ -131,7 +178,6 @@ function createAuth() {
     emailVerification: {
       sendOnSignUp: isMailConfigured(config),
       sendVerificationEmail: async ({ user, url }, _request) => {
-        const logger = (await import('../utils/logger.js')).createLogger();
         const mailer = createMailer(config, logger);
         if (mailer === null) {
           logger.warn({ kind: 'email-verification' }, 'SMTP not configured; email not sent');
@@ -310,8 +356,9 @@ function createAuth() {
     ],
     trustedOrigins: [config.FRONTEND_URL],
     rateLimit: {
+      ...(config.RATE_LIMIT_ENABLED === false ? { enabled: false } : {}),
       window: 60,
-      max: process.env.VITEST === 'true' ? 1000 : 5,
+      max: 5,
     },
     databaseHooks: {
       user: {
@@ -348,39 +395,5 @@ function createAuth() {
       },
     },
   });
-}
-
-export function getAuth() {
-  if (!_auth) {
-    _auth = createAuth();
-  }
-  return _auth;
-}
-
-/**
- * The Better Auth pool (search_path=auth). Better Auth owns its own pool, so
- * the readiness probe has to check it separately from the main pool: the main
- * pool can be fine while auth queries fail.
- */
-export function getAuthPool(): Pool {
-  if (!_authPool) {
-    // Creating the auth instance is what builds the pool.
-    getAuth();
-  }
-  if (!_authPool) {
-    throw new ConfigurationError('Better Auth pool is not initialised');
-  }
-  return _authPool;
-}
-
-/**
- * Drain the auth pool and clear the singleton.
- * Must be called before stopping the database (e.g. in test teardown).
- */
-export async function resetAuth(): Promise<void> {
-  if (_authPool) {
-    await _authPool.end();
-    _authPool = null;
-  }
-  _auth = null;
+  return auth;
 }

@@ -1,12 +1,21 @@
 import { Hono } from 'hono';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { pino } from 'pino';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { loadConfig } from '../../src/config.js';
 import {
   friendsRateLimitMiddleware,
   resetRateLimiters,
   sentryTunnelRateLimitMiddleware,
 } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
-import { resetConfig } from '../../src/utils/config.js';
+import { TEST_ENV } from '../helpers/test-env.js';
+
+const SILENT_LOGGER = pino({ level: 'silent' });
+
+/** A config with rate limiting on, which TEST_ENV switches off for every other suite. */
+function limitedConfig(env: Record<string, string> = {}) {
+  return loadConfig({ ...TEST_ENV, RATE_LIMIT_ENABLED: 'true', ...env });
+}
 
 /**
  * The point of keying authenticated limiters by user: everyone behind one NAT
@@ -14,17 +23,12 @@ import { resetConfig } from '../../src/utils/config.js';
  * so one heavy client locked out the rest.
  */
 describe('rate limiting', () => {
-  const silentLogger = {
-    warn: () => undefined,
-    info: () => undefined,
-    debug: () => undefined,
-    error: () => undefined,
-  };
-
-  function appFor(userId: string | undefined): Hono<AppContext> {
+  function appFor(userId: string | undefined, env: Record<string, string> = {}) {
+    const config = limitedConfig(env);
     const app = new Hono<AppContext>();
     app.use('*', async (c, next) => {
-      c.set('logger', silentLogger as any);
+      c.set('logger', SILENT_LOGGER);
+      c.set('config', config);
       if (userId !== undefined) {
         c.set('user', { userId, email: `${userId}@example.com` });
       }
@@ -36,9 +40,6 @@ describe('rate limiting', () => {
   }
 
   beforeEach(() => {
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    resetConfig();
     resetRateLimiters();
   });
 
@@ -55,7 +56,7 @@ describe('rate limiting', () => {
     const userA = appFor('user-a');
     const userB = appFor('user-b');
 
-    // The test-env budget is 500/min; drain it for user A.
+    // The friends budget is 100/min; drain it for user A.
     expect(await drain(userA, 600)).toBe(429);
 
     // User B has an untouched bucket.
@@ -84,6 +85,12 @@ describe('rate limiting', () => {
     });
   });
 
+  it('lets every request through when RATE_LIMIT_ENABLED is false', async () => {
+    const app = appFor('user-unlimited', { RATE_LIMIT_ENABLED: 'false' });
+
+    expect(await drain(app, 300)).toBe(200);
+  });
+
   /**
    * X-Forwarded-For is client-controlled. If it were honoured unconditionally,
    * or if the *leftmost* hop were taken, an attacker could mint a fresh bucket
@@ -93,10 +100,12 @@ describe('rate limiting', () => {
    * the client identifier - which is exactly what these assertions probe.
    */
   describe('client identifier', () => {
-    function tunnelApp(): Hono<AppContext> {
+    function tunnelApp(env: Record<string, string> = {}) {
+      const config = limitedConfig(env);
       const app = new Hono<AppContext>();
       app.use('*', async (c, next) => {
-        c.set('logger', silentLogger as any);
+        c.set('logger', SILENT_LOGGER);
+        c.set('config', config);
         return next();
       });
       app.use('*', sentryTunnelRateLimitMiddleware);
@@ -118,9 +127,7 @@ describe('rate limiting', () => {
     }
 
     it('ignores X-Forwarded-For when TRUST_PROXY is off', async () => {
-      vi.stubEnv('TRUST_PROXY', 'false');
-      resetConfig();
-      const app = tunnelApp();
+      const app = tunnelApp({ TRUST_PROXY: 'false' });
 
       expect(await drainWith(app, { 'X-Forwarded-For': '10.0.0.1' }, 400)).toBe(429);
 
@@ -130,9 +137,7 @@ describe('rate limiting', () => {
     });
 
     it('keys by the last X-Forwarded-For hop when TRUST_PROXY is on', async () => {
-      vi.stubEnv('TRUST_PROXY', 'true');
-      resetConfig();
-      const app = tunnelApp();
+      const app = tunnelApp({ TRUST_PROXY: 'true' });
 
       // The trusted proxy appends the real peer as the last hop; everything to
       // its left is whatever the client chose to send.
@@ -152,9 +157,7 @@ describe('rate limiting', () => {
     });
 
     it('falls back to X-Real-IP when TRUST_PROXY is on and no forwarded chain exists', async () => {
-      vi.stubEnv('TRUST_PROXY', 'true');
-      resetConfig();
-      const app = tunnelApp();
+      const app = tunnelApp({ TRUST_PROXY: 'true' });
 
       expect(await drainWith(app, { 'X-Real-IP': '198.51.100.4' }, 400)).toBe(429);
 
@@ -170,10 +173,7 @@ describe('rate limiting', () => {
      * collapse TRUST_PROXY exists to prevent.
      */
     it('keys by the client hop, not the inner proxy, with two trusted proxies', async () => {
-      vi.stubEnv('TRUST_PROXY', 'true');
-      vi.stubEnv('TRUSTED_PROXY_HOPS', '2');
-      resetConfig();
-      const app = tunnelApp();
+      const app = tunnelApp({ TRUST_PROXY: 'true', TRUSTED_PROXY_HOPS: '2' });
 
       // Drain one client; the inner proxy address is identical for everyone.
       expect(await drainWith(app, { 'X-Forwarded-For': '203.0.113.7, 10.0.0.2' }, 400)).toBe(429);
@@ -186,10 +186,7 @@ describe('rate limiting', () => {
     });
 
     it('never keys past the leftmost hop when the chain is shorter than configured', async () => {
-      vi.stubEnv('TRUST_PROXY', 'true');
-      vi.stubEnv('TRUSTED_PROXY_HOPS', '2');
-      resetConfig();
-      const app = tunnelApp();
+      const app = tunnelApp({ TRUST_PROXY: 'true', TRUSTED_PROXY_HOPS: '2' });
 
       // A request that reached the app with only one hop recorded: the single
       // entry is all there is, and it must not index out of the array.

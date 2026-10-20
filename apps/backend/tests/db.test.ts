@@ -1,6 +1,7 @@
 import pg from 'pg';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetConfig } from '../src/utils/config.js';
+import { pino } from 'pino';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { loadConfig } from '../src/config.js';
 import {
   checkDatabaseConnection,
   closePool,
@@ -8,6 +9,7 @@ import {
   setupGracefulShutdown,
   wrapClient,
 } from '../src/utils/db.js';
+import { TEST_ENV } from './helpers/test-env.js';
 
 // Mock pg module - use regular function to allow constructor usage
 vi.mock('pg', () => {
@@ -21,18 +23,11 @@ vi.mock('pg', () => {
   };
 });
 
+const SILENT_LOGGER = pino({ level: 'silent' });
+
 describe('db.ts', () => {
   beforeEach(() => {
-    // Set required environment variables
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    resetConfig();
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    resetConfig();
   });
 
   describe('createPool', () => {
@@ -50,7 +45,7 @@ describe('db.ts', () => {
         return mockPoolInstance;
       });
 
-      const pool = createPool();
+      const pool = createPool({ config: loadConfig({ ...TEST_ENV }), logger: SILENT_LOGGER });
 
       expect(pg.Pool).toHaveBeenCalledWith({
         connectionString: 'postgresql://localhost:5432/test',
@@ -65,9 +60,7 @@ describe('db.ts', () => {
     });
 
     it('should use custom pool min/max when provided', () => {
-      vi.stubEnv('DATABASE_POOL_MIN', '5');
-      vi.stubEnv('DATABASE_POOL_MAX', '20');
-      resetConfig();
+      const config = loadConfig({ ...TEST_ENV, DATABASE_POOL_MIN: '5', DATABASE_POOL_MAX: '20' });
 
       const mockPoolInstance = {
         connect: vi.fn(),
@@ -82,7 +75,7 @@ describe('db.ts', () => {
         return mockPoolInstance;
       });
 
-      createPool();
+      createPool({ config, logger: SILENT_LOGGER });
 
       expect(pg.Pool).toHaveBeenCalledWith({
         connectionString: 'postgresql://localhost:5432/test',
@@ -159,7 +152,7 @@ describe('db.ts', () => {
         connect: vi.fn().mockResolvedValue(mockClient),
       } as unknown as pg.Pool;
 
-      const result = await checkDatabaseConnection(mockPool);
+      const result = await checkDatabaseConnection(mockPool, SILENT_LOGGER);
 
       expect(result).toBe(true);
       expect(mockPool.connect).toHaveBeenCalledOnce();
@@ -172,7 +165,7 @@ describe('db.ts', () => {
         connect: vi.fn().mockRejectedValue(new Error('Connection failed')),
       } as unknown as pg.Pool;
 
-      const result = await checkDatabaseConnection(mockPool);
+      const result = await checkDatabaseConnection(mockPool, SILENT_LOGGER);
 
       expect(result).toBe(false);
       expect(mockPool.connect).toHaveBeenCalledOnce();
@@ -188,7 +181,7 @@ describe('db.ts', () => {
         connect: vi.fn().mockResolvedValue(mockClient),
       } as unknown as pg.Pool;
 
-      const result = await checkDatabaseConnection(mockPool);
+      const result = await checkDatabaseConnection(mockPool, SILENT_LOGGER);
 
       expect(result).toBe(false);
       expect(mockClient.query).toHaveBeenCalledWith('SELECT 1');
@@ -204,7 +197,7 @@ describe('db.ts', () => {
         connect: vi.fn().mockResolvedValue(mockClient),
       } as unknown as pg.Pool;
 
-      await checkDatabaseConnection(mockPool);
+      await checkDatabaseConnection(mockPool, SILENT_LOGGER);
 
       // Client must still be released on error (released in a finally block).
       expect(mockClient.release).toHaveBeenCalledOnce();
@@ -250,7 +243,7 @@ describe('db.ts', () => {
     });
 
     it('should register SIGTERM and SIGINT handlers', () => {
-      setupGracefulShutdown({ pool: mockPool });
+      setupGracefulShutdown({ pool: mockPool, logger: SILENT_LOGGER });
 
       expect(process.listenerCount('SIGTERM')).toBe(1);
       expect(process.listenerCount('SIGINT')).toBe(1);

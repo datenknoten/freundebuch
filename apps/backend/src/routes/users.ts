@@ -1,6 +1,8 @@
 import { FriendCreateInputSchema, SelfProfileSetInputSchema } from '@freundebuch/shared/index.js';
 import { type Context, Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
+import { FriendsService } from '../services/friends/index.js';
+import { PhotoService } from '../services/photo.service.js';
 import { UsersService } from '../services/users.service.js';
 import type { AppContext } from '../types/context.js';
 import { parseBody } from '../utils/http.js';
@@ -10,8 +12,13 @@ const app = new Hono<AppContext>();
 // Apply auth middleware to all user routes
 app.use('*', authMiddleware);
 
-const usersService = (c: Context<AppContext>): UsersService =>
-  new UsersService({ db: c.get('db'), logger: c.get('logger') });
+function usersService(c: Context<AppContext>) {
+  const db = c.get('db');
+  const logger = c.get('logger');
+  const photoService = new PhotoService({ logger, config: c.get('config') });
+  const friendsService = new FriendsService({ db, logger, photoService });
+  return new UsersService({ db, logger, friendsService });
+}
 
 /**
  * GET /api/users/me

@@ -249,7 +249,10 @@ export class CollectiveAddressService extends SubResourceService<
         );
         logger.debug({ addressExternalId, ...location }, 'Background geocode persisted');
       } catch (error) {
-        logger.warn({ error, addressExternalId }, 'Background collective address geocode failed');
+        logger.warn(
+          { err: error, addressExternalId },
+          'Background collective address geocode failed',
+        );
       }
     });
   }

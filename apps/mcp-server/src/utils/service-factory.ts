@@ -4,12 +4,17 @@ import { CollectivesService } from '@freundebuch/backend/services/collectives/co
 import { EncountersService } from '@freundebuch/backend/services/encounters.service.js';
 import { FriendsService } from '@freundebuch/backend/services/friends/friends.service.js';
 import { FriendNotesService } from '@freundebuch/backend/services/friends/sub-resources/friend-notes.service.js';
+import { type PhotoConfig, PhotoService } from '@freundebuch/backend/services/photo.service.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 
-export function createServices(pool: pg.Pool, logger: Logger) {
+export function createServices(pool: pg.Pool, logger: Logger, photoConfig: PhotoConfig) {
   return {
-    friends: new FriendsService({ db: pool, logger: logger }),
+    friends: new FriendsService({
+      db: pool,
+      logger: logger,
+      photoService: new PhotoService({ logger, config: photoConfig }),
+    }),
     circles: new CirclesService({ db: pool }),
     collectives: new CollectivesService({ db: pool }),
     encounters: new EncountersService({ db: pool }),

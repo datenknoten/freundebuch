@@ -11,9 +11,6 @@ import {
   upsertAddressCacheEntry,
 } from '../models/queries/address-cache.queries.js';
 
-// Global logger for cache operations, set during initialization
-let cacheLogger: Logger | null = null;
-
 // ============================================================================
 // Arktype schemas for cached data validation
 // ============================================================================
@@ -48,18 +45,11 @@ type Validator<T> = (data: unknown) => T | undefined;
 /**
  * Create a validator function from an arktype schema
  */
-function createValidator<T>(
-  schema: { assert: (data: unknown) => T },
-  typeName: string,
-): Validator<T> {
+function createValidator<T>(schema: { assert: (data: unknown) => T }): Validator<T> {
   return (data: unknown): T | undefined => {
     try {
       return schema.assert(data);
-    } catch (error) {
-      cacheLogger?.warn(
-        { error, typeName },
-        'Cache value failed schema validation, discarding invalid entry',
-      );
+    } catch {
       return undefined;
     }
   };
@@ -67,8 +57,8 @@ function createValidator<T>(
 
 // Pre-built validators for each cache type
 const validators = {
-  streets: createValidator(StreetArraySchema, 'Street[]'),
-  houseNumbers: createValidator(HouseNumberArraySchema, 'HouseNumber[]'),
+  streets: createValidator(StreetArraySchema),
+  houseNumbers: createValidator(HouseNumberArraySchema),
 };
 
 /**
@@ -80,6 +70,7 @@ export class AddressCache<T extends object> {
   private memoryCache: LRUCache<string, T>;
   private ttlMs: number;
   private pool: pg.Pool | null = null;
+  private logger: Logger | undefined;
   private validator: Validator<T>;
 
   /**
@@ -101,14 +92,15 @@ export class AddressCache<T extends object> {
   }
 
   /**
-   * Set the database pool for persistence
+   * Set the database pool for persistence and the logger for its failures.
    * Must be called before using database-backed features
    *
    * The persisted tier is always on: this cache only fronts Overpass, which is
    * queried exactly when PostGIS is not used.
    */
-  setPool(pool: pg.Pool): void {
+  setPool(pool: pg.Pool, logger: Logger): void {
     this.pool = pool;
+    this.logger = logger;
   }
 
   /**
@@ -135,7 +127,10 @@ export class AddressCache<T extends object> {
 
       const validated = this.validator(row.cache_value);
       if (validated === undefined) {
-        // Validation failed (log already happened in the validator).
+        this.logger?.warn(
+          { cacheKey: key },
+          'Cache value failed schema validation, discarding invalid entry',
+        );
         // Delete the bad row so we don't re-read and re-reject it every
         // miss until it expires.
         await this.deleteFromDatabase(key);
@@ -146,7 +141,10 @@ export class AddressCache<T extends object> {
       this.memoryCache.set(key, validated);
       return validated;
     } catch (error) {
-      cacheLogger?.error({ error, cacheKey: key }, 'Failed to read from address cache database');
+      this.logger?.error(
+        { err: error, cacheKey: key },
+        'Failed to read from address cache database',
+      );
       return undefined;
     }
   }
@@ -174,7 +172,10 @@ export class AddressCache<T extends object> {
         pool,
       );
     } catch (error) {
-      cacheLogger?.error({ error, cacheKey: key }, 'Failed to persist to address cache database');
+      this.logger?.error(
+        { err: error, cacheKey: key },
+        'Failed to persist to address cache database',
+      );
     }
   }
 
@@ -197,7 +198,7 @@ export class AddressCache<T extends object> {
       const result = await addressCacheEntryExists.run({ cacheKey: key }, pool);
       return result.length > 0;
     } catch (error) {
-      cacheLogger?.error({ error, cacheKey: key }, 'Failed to probe address cache database');
+      this.logger?.error({ err: error, cacheKey: key }, 'Failed to probe address cache database');
       return false;
     }
   }
@@ -221,7 +222,7 @@ export class AddressCache<T extends object> {
       try {
         await clearAddressCache.run(undefined, this.pool);
       } catch (error) {
-        cacheLogger?.error({ error }, 'Failed to clear address cache database');
+        this.logger?.error({ err: error }, 'Failed to clear address cache database');
       }
     }
   }
@@ -234,7 +235,10 @@ export class AddressCache<T extends object> {
     try {
       await deleteAddressCacheEntry.run({ cacheKey: key }, this.pool);
     } catch (error) {
-      cacheLogger?.error({ error, cacheKey: key }, 'Failed to delete from address cache database');
+      this.logger?.error(
+        { err: error, cacheKey: key },
+        'Failed to delete from address cache database',
+      );
     }
   }
 
@@ -251,7 +255,7 @@ export class AddressCache<T extends object> {
       const result = await deleteExpiredAddressCacheEntries.run(undefined, this.pool);
       return result.length;
     } catch (error) {
-      cacheLogger?.error({ error }, 'Failed to cleanup expired address cache entries');
+      this.logger?.error({ err: error }, 'Failed to cleanup expired address cache entries');
       return 0;
     }
   }
@@ -308,7 +312,7 @@ export function getHouseNumbersCache(): AddressCache<HouseNumberCached[]> {
  * Caches are created eagerly to ensure they receive the pool.
  */
 export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
-  cacheLogger = logger;
+  const cacheLogger = logger.child({ module: 'address-cache' });
 
   // Eagerly create all caches with validators to ensure they get the pool
   if (!streetsCache) {
@@ -327,8 +331,8 @@ export function initializeAddressCaches(pool: pg.Pool, logger: Logger): void {
   }
 
   // Set database pool on all caches
-  streetsCache.setPool(pool);
-  houseNumbersCache.setPool(pool);
+  streetsCache.setPool(pool, cacheLogger);
+  houseNumbersCache.setPool(pool, cacheLogger);
 
   logger.debug('Address caches initialized with database pool and arktype validators');
 }

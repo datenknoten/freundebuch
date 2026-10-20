@@ -60,7 +60,7 @@ import {
   parseUrlType,
 } from '../../utils/type-guards.js';
 import type { AddressLookupService } from '../address-lookup.service.js';
-import { PhotoService } from '../photo.service.js';
+import type { PhotoService } from '../photo.service.js';
 import { NetworkGraphService } from './network-graph.service.js';
 import { RelationshipService } from './relationship.service.js';
 import { SearchService } from './search.service.js';
@@ -76,6 +76,7 @@ import { UrlService } from './sub-resources/url.service.js';
 export interface FriendsServiceOptions {
   db: pg.Pool;
   logger: Logger;
+  photoService: PhotoService;
   addressLookupService?: AddressLookupService;
 }
 
@@ -86,6 +87,7 @@ export interface FriendsServiceOptions {
 export class FriendsService {
   private db: pg.Pool;
   private logger: Logger;
+  private readonly photoService: PhotoService;
   private _addressLookupService?: AddressLookupService;
 
   // Lazy-loaded service instances
@@ -104,6 +106,7 @@ export class FriendsService {
   constructor(options: FriendsServiceOptions) {
     this.db = options.db;
     this.logger = options.logger;
+    this.photoService = options.photoService;
     this._addressLookupService = options.addressLookupService;
   }
 
@@ -461,9 +464,9 @@ export class FriendsService {
     // deleteFriend cleans them up. Best-effort: a missing file must not fail
     // the delete.
     try {
-      await new PhotoService({ logger: this.logger }).deletePhoto(friendExternalId);
+      await this.photoService.deletePhoto(friendExternalId);
     } catch (error) {
-      this.logger.warn({ error, friendExternalId }, 'Failed to delete friend photos');
+      this.logger.warn({ err: error, friendExternalId }, 'Failed to delete friend photos');
     }
 
     this.logger.info({ friendExternalId }, 'Friend deleted successfully');

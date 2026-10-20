@@ -145,7 +145,10 @@ export abstract class SubResourceService<
    * List all sub-resources for an owner.
    */
   async list(userExternalId: string, ownerExternalId: string): Promise<TOutput[]> {
-    this.logger.debug({ ownerExternalId }, `Listing ${this.config.resourceName}s`);
+    this.logger.debug(
+      { ownerExternalId, resource: this.config.resourceName },
+      'Listing sub-resources',
+    );
     const rows = await this.config.listFn({ userExternalId, ownerExternalId }, this.db);
     return rows.map(this.config.mapListResult);
   }
@@ -161,7 +164,10 @@ export abstract class SubResourceService<
     ownerExternalId: string,
     input: TInput,
   ): Promise<TOutput | null> {
-    this.logger.debug({ ownerExternalId }, `Adding ${this.config.resourceName}`);
+    this.logger.debug(
+      { ownerExternalId, resource: this.config.resourceName },
+      'Adding sub-resource',
+    );
 
     try {
       return await withTransaction(this.db, async (txClient) => {
@@ -225,8 +231,8 @@ export abstract class SubResourceService<
     input: TInput,
   ): Promise<TOutput | null> {
     this.logger.debug(
-      { ownerExternalId, resourceExternalId },
-      `Updating ${this.config.resourceName}`,
+      { ownerExternalId, resourceExternalId, resource: this.config.resourceName },
+      'Updating sub-resource',
     );
 
     try {
@@ -268,8 +274,8 @@ export abstract class SubResourceService<
     client?: pg.Pool | pg.PoolClient,
   ): Promise<boolean> {
     this.logger.debug(
-      { ownerExternalId, resourceExternalId },
-      `Deleting ${this.config.resourceName}`,
+      { ownerExternalId, resourceExternalId, resource: this.config.resourceName },
+      'Deleting sub-resource',
     );
 
     const dbClient = client ?? this.db;

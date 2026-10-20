@@ -9,6 +9,7 @@ import { type } from 'arktype';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../middleware/auth.js';
 import { FriendsService } from '../../services/friends/index.js';
+import { PhotoService } from '../../services/photo.service.js';
 import type { AppContext } from '../../types/context.js';
 import { ResourceNotFoundError, ValidationError } from '../../utils/errors.js';
 import { parseBody } from '../../utils/http.js';
@@ -41,7 +42,11 @@ app.get('/', async (c) => {
 
   const limit = limitParam ? Math.min(50, Math.max(1, Number.parseInt(limitParam, 10) || 10)) : 10;
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const results = await friendsService.searchFriends(user.userId, query.trim(), exclude, limit);
 
   return c.json(results);
@@ -72,7 +77,11 @@ app.get('/full', async (c) => {
 
   const limit = limitParam ? Math.min(50, Math.max(1, Number.parseInt(limitParam, 10) || 10)) : 10;
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const results = await friendsService.fullTextSearch(user.userId, query.trim(), limit);
 
   return c.json(results);
@@ -101,7 +110,11 @@ app.get('/paginated', async (c) => {
   }
 
   const options = parseSearchQuery(validated);
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const results = await friendsService.paginatedSearch(user.userId, options);
 
   return c.json(results);
@@ -146,7 +159,11 @@ app.get('/faceted', async (c) => {
   }
 
   const options = parseFacetedSearchQuery(validated);
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
 
   // Use appropriate method based on whether query is present
   // filterOnlyList handles both filter-only and facets-only requests
@@ -169,7 +186,11 @@ app.get('/recent', async (c) => {
   const limitParam = c.req.query('limit');
   const limit = limitParam ? Math.min(20, Math.max(1, Number.parseInt(limitParam, 10) || 10)) : 10;
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const recentSearches = await friendsService.getRecentSearches(user.userId, limit);
 
   return c.json(recentSearches);
@@ -190,7 +211,11 @@ app.post('/recent', async (c) => {
     throw new ValidationError('Query must be at least 2 characters');
   }
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   await friendsService.addRecentSearch(user.userId, query.trim());
 
   return c.json({ success: true }, 201);
@@ -206,7 +231,11 @@ app.delete('/recent/:query', async (c) => {
   const user = getAuthUser(c);
   const query = decodeURIComponent(c.req.param('query'));
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const deleted = await friendsService.deleteRecentSearch(user.userId, query);
 
   if (!deleted) {
@@ -225,7 +254,11 @@ app.delete('/recent', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   await friendsService.clearRecentSearches(user.userId);
 
   return c.json({ success: true });

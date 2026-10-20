@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/node';
 import cron, { type ScheduledTask } from 'node-cron';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import type { Config } from '../config.js';
 import {
   deleteExpiredAddressCacheEntries,
   trimAddressCache,
@@ -14,7 +15,6 @@ import {
 } from '../models/queries/notification-channels.queries.js';
 import { deleteOrphanLegacyUsers } from '../models/queries/users.queries.js';
 import { dispatchNotification } from '../services/external/notification-dispatcher.js';
-import { getConfig } from './config.js';
 import { toError } from './errors.js';
 import { formatNotificationMessage } from './notification-messages.js';
 
@@ -83,11 +83,20 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): ScheduledT
   return task;
 }
 
+export interface NotificationSchedulerOptions {
+  pool: pg.Pool;
+  logger: Logger;
+  /** From deriveCredentialsKey(config.BETTER_AUTH_SECRET). */
+  credentialsKey: Buffer;
+  config: Pick<Config, 'FRONTEND_URL'>;
+}
+
 /**
  * Setup notification scheduler for daily date digest messages
  * Runs every minute to check for channels due for notification
  */
-export function setupNotificationScheduler(pool: pg.Pool, logger: Logger): ScheduledTask {
+export function setupNotificationScheduler(options: NotificationSchedulerOptions): ScheduledTask {
+  const { logger } = options;
   // Skip a tick if the previous dispatch run is still in flight. Without this,
   // a run taking >60s overlaps the next and could double-send a digest.
   let running = false;
@@ -98,7 +107,7 @@ export function setupNotificationScheduler(pool: pg.Pool, logger: Logger): Sched
     }
     running = true;
     try {
-      await dispatchDueNotifications(pool, logger);
+      await dispatchDueNotifications(options);
     } finally {
       running = false;
     }
@@ -112,7 +121,8 @@ export function setupNotificationScheduler(pool: pg.Pool, logger: Logger): Sched
  * Query and dispatch all notification channels due at the current minute.
  * Extracted so the overlap guard in setupNotificationScheduler stays readable.
  */
-async function dispatchDueNotifications(pool: pg.Pool, logger: Logger): Promise<void> {
+async function dispatchDueNotifications(options: NotificationSchedulerOptions): Promise<void> {
+  const { pool, logger, credentialsKey, config } = options;
   const now = new Date();
   const currentTime = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}`;
   const todayUtc = now.toISOString().slice(0, 10);
@@ -132,7 +142,6 @@ async function dispatchDueNotifications(pool: pg.Pool, logger: Logger): Promise<
 
   if (dueChannels.length === 0) return;
 
-  const config = getConfig();
   const instanceUrl =
     config.FRONTEND_URL !== 'http://localhost:5173' ? config.FRONTEND_URL : undefined;
 
@@ -167,7 +176,7 @@ async function dispatchDueNotifications(pool: pg.Pool, logger: Logger): Promise<
 
       const locale = channel.user_language ?? 'en';
       const message = formatNotificationMessage(upcomingDates, locale, instanceUrl);
-      await dispatchNotification(channel, message.plain, message.html);
+      await dispatchNotification(channel, message.plain, message.html, credentialsKey);
 
       logger.info({ channelExternalId: channel.external_id }, 'Notification dispatched');
     } catch (error) {

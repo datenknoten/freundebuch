@@ -73,7 +73,7 @@ app.get('/postal-codes', async (c) => {
     throw new ValidationError('Invalid query parameters', validated);
   }
 
-  const service = getAddressLookupService(pool, logger);
+  const service = getAddressLookupService(pool, logger, c.get('config'));
   const postalCodes = await service.searchPostalCodes(validated.country, validated.prefix);
   return c.json(postalCodes);
 });
@@ -92,7 +92,7 @@ app.get('/cities', async (c) => {
     throw new ValidationError('Invalid query parameters', validated);
   }
 
-  const service = getAddressLookupService(pool, logger);
+  const service = getAddressLookupService(pool, logger, c.get('config'));
   const cities = await service.getCitiesByPostalCode(validated.country, validated.postal_code);
   return c.json(cities);
 });
@@ -111,7 +111,7 @@ app.get('/streets', async (c) => {
     throw new ValidationError('Invalid query parameters', validated);
   }
 
-  const service = getAddressLookupService(pool, logger);
+  const service = getAddressLookupService(pool, logger, c.get('config'));
   const streets = await service.getStreets(
     validated.country,
     validated.city,
@@ -134,7 +134,7 @@ app.get('/house-numbers', async (c) => {
     throw new ValidationError('Invalid query parameters', validated);
   }
 
-  const service = getAddressLookupService(pool, logger);
+  const service = getAddressLookupService(pool, logger, c.get('config'));
   const houseNumbers = await service.getHouseNumbers(
     validated.country,
     validated.city,

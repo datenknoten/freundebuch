@@ -8,11 +8,12 @@ import {
   setUserSelfProfile,
 } from '../models/queries/users.queries.js';
 import { UserNotFoundError, ValidationError } from '../utils/errors.js';
-import { FriendsService } from './friends/index.js';
+import type { FriendsService } from './friends/index.js';
 
 export interface UsersServiceOptions {
   db: pg.Pool;
   logger: Logger;
+  friendsService: FriendsService;
 }
 
 /**
@@ -24,10 +25,12 @@ export interface UsersServiceOptions {
 export class UsersService {
   private db: pg.Pool;
   private logger: Logger;
+  private readonly friendsService: FriendsService;
 
   constructor(options: UsersServiceOptions) {
     this.db = options.db;
     this.logger = options.logger;
+    this.friendsService = options.friendsService;
   }
 
   async getMe(userId: string): Promise<UserResponse> {
@@ -69,8 +72,7 @@ export class UsersService {
       throw new ValidationError('Self-profile already exists');
     }
 
-    const friendsService = new FriendsService({ db: this.db, logger: this.logger });
-    const newFriend = await friendsService.createFriend(userId, input);
+    const newFriend = await this.friendsService.createFriend(userId, input);
 
     const setResult = await setUserSelfProfile.run(
       { userExternalId: userId, friendExternalId: newFriend.id },

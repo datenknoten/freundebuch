@@ -1,8 +1,13 @@
 import type pg from 'pg';
 import type { Logger } from 'pino';
-import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
-import { resetConfig } from '../../src/utils/config.js';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { loadConfig } from '../../src/config.js';
+import { deriveCredentialsKey } from '../../src/utils/credentials-crypto.js';
 import { setupNotificationScheduler } from '../../src/utils/scheduler.js';
+import { TEST_AUTH_SECRET, TEST_ENV } from '../helpers/test-env.js';
+
+const CONFIG = loadConfig({ ...TEST_ENV });
+const KEY = deriveCredentialsKey(TEST_AUTH_SECRET);
 
 /**
  * The digest dispatcher, driven through the real cron seam.
@@ -86,15 +91,6 @@ describe('notification dispatch', () => {
     mocks.scheduled.length = 0;
     mocks.dispatchNotification.mockClear();
     statements = [];
-    resetConfig();
-    vi.unstubAllEnvs();
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-  });
-
-  afterEach(() => {
-    resetConfig();
-    vi.unstubAllEnvs();
   });
 
   /** @param claimWins whether the conditional UPDATE returns its row */
@@ -116,7 +112,12 @@ describe('notification dispatch', () => {
   }
 
   async function runOneTick(pool: pg.Pool): Promise<void> {
-    setupNotificationScheduler(pool, silentLogger());
+    setupNotificationScheduler({
+      pool: pool,
+      logger: silentLogger(),
+      credentialsKey: KEY,
+      config: CONFIG,
+    });
     expect(mocks.scheduled).toHaveLength(1);
     await mocks.scheduled[0]?.();
   }
@@ -160,7 +161,12 @@ describe('notification dispatch', () => {
     });
     const logger = silentLogger();
 
-    setupNotificationScheduler({ query } as unknown as pg.Pool, logger);
+    setupNotificationScheduler({
+      pool: { query } as unknown as pg.Pool,
+      logger: logger,
+      credentialsKey: KEY,
+      config: CONFIG,
+    });
     const first = mocks.scheduled[0]?.();
     // Second tick arrives while the first is blocked on the query.
     await mocks.scheduled[0]?.();
@@ -179,7 +185,12 @@ describe('notification dispatch', () => {
     });
     const logger = silentLogger();
 
-    setupNotificationScheduler({ query } as unknown as pg.Pool, logger);
+    setupNotificationScheduler({
+      pool: { query } as unknown as pg.Pool,
+      logger: logger,
+      credentialsKey: KEY,
+      config: CONFIG,
+    });
     // A broken query must not throw out of the cron callback: an unhandled
     // rejection there would take the scheduler down for every later tick.
     await expect(mocks.scheduled[0]?.()).resolves.toBeUndefined();

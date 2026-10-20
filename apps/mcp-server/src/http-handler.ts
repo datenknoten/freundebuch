@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { Auth } from '@freundebuch/backend/lib/auth.js';
 import { NodeStreamableHTTPServerTransport } from '@modelcontextprotocol/node';
 import type pg from 'pg';
 import type { Logger } from 'pino';
@@ -21,6 +22,8 @@ export interface Session {
 interface HandlerDeps {
   services: Services;
   logger: Logger;
+  /** Validates OAuth bearer tokens against the co-located authorization server. */
+  auth: Auth;
   sessions: Map<string, Session>;
   /** Shared pg pool — used to resolve OAuth subjects to the legacy external_id. */
   pool: pg.Pool;
@@ -215,7 +218,7 @@ function readSessionIdHeader(
 export function createMcpRequestHandler(
   deps: HandlerDeps,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
-  const { services, logger, sessions, pool, betterAuthUrl } = deps;
+  const { services, logger, sessions, pool, auth, betterAuthUrl } = deps;
   const maxBodyBytes = deps.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
 
   return async function handleRequest(req, res) {
@@ -242,7 +245,7 @@ export function createMcpRequestHandler(
     let authResult: { userId: string; email: string } | null = null;
 
     if (authHeader?.startsWith('Bearer ')) {
-      authResult = await verifyBearerToken(req, pool, logger);
+      authResult = await verifyBearerToken(req, { auth, pool, logger });
       if (!authResult) {
         logger.warn(
           { ip: getClientIp(req) },

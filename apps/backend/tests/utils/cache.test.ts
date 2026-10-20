@@ -1,7 +1,9 @@
 import type pg from 'pg';
-import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { pino } from 'pino';
+import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { AddressCache, getStreetsCache } from '../../src/utils/cache.js';
-import { resetConfig } from '../../src/utils/config.js';
+
+const SILENT_LOGGER = pino({ level: 'silent' });
 
 interface QueryResult {
   rows: Record<string, unknown>[];
@@ -25,25 +27,12 @@ function statements(query: Mock<QueryFn>): string[] {
 }
 
 describe('AddressCache database tier', () => {
-  beforeEach(() => {
-    resetConfig();
-    vi.unstubAllEnvs();
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-  });
-
-  afterEach(() => {
-    resetConfig();
-    vi.unstubAllEnvs();
-  });
-
   it('persists to and probes the database tier when PostGIS is off', async () => {
-    vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'false');
     const { pool, query } = mockPool(async (text) =>
       text.includes('SELECT 1') ? { rows: [{ present: 1 }] } : { rows: [] },
     );
     const cache = getStreetsCache();
-    cache.setPool(pool);
+    cache.setPool(pool, SILENT_LOGGER);
 
     await cache.set('streets:off:1', [{ name: 'Hauptstrasse' }]);
     expect(statements(query).some((sql) => sql.includes('INSERT INTO system.address_cache'))).toBe(
@@ -56,12 +45,11 @@ describe('AddressCache database tier', () => {
   });
 
   it('treats a malformed cached row as a miss and deletes it', async () => {
-    vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'false');
     const { pool, query } = mockPool(async (text) =>
       text.includes('SELECT cache_key') ? { rows: [{ cache_value: [{ nope: 1 }] }] } : { rows: [] },
     );
     const cache = getStreetsCache();
-    cache.setPool(pool);
+    cache.setPool(pool, SILENT_LOGGER);
 
     await expect(cache.get('streets:broken')).resolves.toBeUndefined();
     expect(statements(query).some((sql) => sql.includes('DELETE FROM system.address_cache'))).toBe(
@@ -75,10 +63,9 @@ describe('AddressCache database tier', () => {
    * "deleted" would mean "deleted until the next miss".
    */
   it('deletes from the database tier as well, so the entry cannot resurrect', async () => {
-    vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'false');
     const { pool, query } = mockPool(async () => ({ rows: [] }));
     const cache = getStreetsCache();
-    cache.setPool(pool);
+    cache.setPool(pool, SILENT_LOGGER);
 
     await cache.set('streets:doomed', [{ name: 'Hauptstrasse' }]);
     await expect(cache.delete('streets:doomed')).resolves.toBe(true);
@@ -91,10 +78,9 @@ describe('AddressCache database tier', () => {
   it('clears the database tier even when PostGIS answers lookups locally', async () => {
     // The persisted tier is not gated on POSTGIS_ADDRESS_ENABLED: rows written
     // by any instance still have to be purged.
-    vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'true');
     const { pool, query } = mockPool(async () => ({ rows: [] }));
     const cache = getStreetsCache();
-    cache.setPool(pool);
+    cache.setPool(pool, SILENT_LOGGER);
 
     await cache.set('streets:kept', [{ name: 'Hauptstrasse' }]);
     await cache.clear();
@@ -106,23 +92,21 @@ describe('AddressCache database tier', () => {
   });
 
   it('reports how many expired rows the scheduled cleanup removed', async () => {
-    vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'false');
     const { pool } = mockPool(async () => ({
       rows: [{ cache_key: 'a' }, { cache_key: 'b' }],
     }));
     const cache = getStreetsCache();
-    cache.setPool(pool);
+    cache.setPool(pool, SILENT_LOGGER);
 
     await expect(cache.cleanupDatabase()).resolves.toBe(2);
   });
 
   it('survives a database error on read and reports a miss', async () => {
-    vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'false');
     const { pool } = mockPool(async () => {
       throw new Error('connection terminated');
     });
     const cache = getStreetsCache();
-    cache.setPool(pool);
+    cache.setPool(pool, SILENT_LOGGER);
 
     // A cache is an optimisation; a broken one must degrade to a miss rather
     // than propagate and fail the request it was meant to speed up.
@@ -141,20 +125,8 @@ describe('AddressCache memory bounds', () => {
   /** Values are already the right shape here, so the validator is identity. */
   const passthrough = <T extends object>(value: unknown): T | undefined => value as T;
 
-  beforeEach(() => {
-    resetConfig();
-    vi.unstubAllEnvs();
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    // No pool is attached in this block, so the database tier is off either
-    // way; pinning the flag keeps that independent of ambient config.
-    vi.stubEnv('POSTGIS_ADDRESS_ENABLED', 'true');
-  });
-
   afterEach(() => {
     vi.useRealTimers();
-    resetConfig();
-    vi.unstubAllEnvs();
   });
 
   it('never exceeds maxSize and evicts the least recently used entry', async () => {

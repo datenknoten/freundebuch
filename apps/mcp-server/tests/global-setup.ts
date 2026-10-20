@@ -50,7 +50,7 @@ async function createTemplateDatabase(serverUri: string): Promise<() => Promise<
 }
 
 /**
- * Vitest global setup, mirroring apps/backend/tests/integration/global-setup.ts:
+ * Vitest global setup, mirroring apps/backend/tests/helpers/global-setup.ts:
  * start ONE PostGIS server for the whole run and migrate a template database
  * once; each suite clones it in milliseconds instead of booting its own
  * container and replaying every migration.

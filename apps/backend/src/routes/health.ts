@@ -2,11 +2,8 @@ import { access, constants, mkdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { type Context, Hono } from 'hono';
 import type pg from 'pg';
-import { getAuthPool } from '../lib/auth.js';
 import { isMailConfigured } from '../services/mailer.js';
-import { PhotoService } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
-import { getConfig } from '../utils/config.js';
 import { toError } from '../utils/errors.js';
 
 const require = createRequire(import.meta.url);
@@ -85,23 +82,18 @@ export function resetReadinessCache(): void {
  */
 async function computeReadiness(c: Context<AppContext>): Promise<ReadinessResponse> {
   const logger = c.get('logger');
-  const config = getConfig();
-
-  const uploadDir = new PhotoService({ logger: logger }).getUploadDir();
+  const config = c.get('config');
+  const uploadDir = config.UPLOAD_DIR;
 
   const [db, authDb, uploads] = await Promise.all([
     poolReachable(c.get('db')).catch((error: unknown) => {
       logger.error({ err: toError(error) }, 'Readiness: main database check failed');
       return false;
     }),
-    // getAuthPool() itself can throw (unconfigured), so it runs inside the
-    // promise rather than while building the array.
-    Promise.resolve()
-      .then(() => poolReachable(getAuthPool()))
-      .catch((error: unknown) => {
-        logger.error({ err: toError(error) }, 'Readiness: auth database check failed');
-        return false;
-      }),
+    poolReachable(c.get('authPool')).catch((error: unknown) => {
+      logger.error({ err: toError(error) }, 'Readiness: auth database check failed');
+      return false;
+    }),
     // mkdir first: the photo service creates the tree lazily on the first
     // upload, so on a fresh volume the directory does not exist yet and a bare
     // access() would report a broken instance. mkdir is idempotent and fails
@@ -130,8 +122,8 @@ health.get('/ready', async (c) => {
   if (cachedReadiness === null || Date.now() - cachedReadiness.at >= READINESS_TTL_MS) {
     const entry = { at: Date.now(), result: computeReadiness(c) };
     cachedReadiness = entry;
-    // computeReadiness turns dependency failures into `false`, but getConfig()
-    // and getUploadDir() can still throw. A rejection must not stick for the
+    // computeReadiness turns dependency failures into `false`, but it can
+    // still throw. A rejection must not stick for the
     // whole TTL, so drop the entry and let the next caller re-check.
     entry.result.catch(() => {
       if (cachedReadiness === entry) {

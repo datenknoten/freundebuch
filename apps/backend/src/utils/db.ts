@@ -1,11 +1,9 @@
 import pg from 'pg';
-import { getConfig } from './config.js';
+import type { Logger } from 'pino';
+import type { Config } from '../config.js';
 import { toError } from './errors.js';
-import { createLogger } from './logger.js';
 
 const { Pool } = pg;
-
-let pool: pg.Pool | undefined;
 
 /**
  * Enhances a database error with the original call site stack trace.
@@ -138,8 +136,13 @@ function wrapPool(originalPool: pg.Pool): pg.Pool {
     }
 
     // Handle promise style
-    return originalConnect().then((client: pg.PoolClient) => wrapClient(client));
+    return connectAndWrap();
   };
+
+  async function connectAndWrap() {
+    const client: pg.PoolClient = await originalConnect();
+    return wrapClient(client);
+  }
 
   // biome-ignore lint/suspicious/noExplicitAny: matching pg's connect signature
   originalPool.connect = wrappedConnect as any;
@@ -147,11 +150,23 @@ function wrapPool(originalPool: pg.Pool): pg.Pool {
   return originalPool;
 }
 
-export function createPool(): pg.Pool {
-  if (pool instanceof pg.Pool) {
-    return pool;
-  }
-  const config = getConfig();
+export type PoolConfig = Pick<
+  Config,
+  | 'DATABASE_URL'
+  | 'DATABASE_POOL_MIN'
+  | 'DATABASE_POOL_MAX'
+  | 'DATABASE_CONNECTION_TIMEOUT_MS'
+  | 'DATABASE_IDLE_TIMEOUT_MS'
+  | 'DATABASE_STATEMENT_TIMEOUT_MS'
+>;
+
+export interface PoolOptions {
+  config: PoolConfig;
+  logger: Logger;
+}
+
+export function createPool(options: PoolOptions) {
+  const { config, logger } = options;
   const rawPool = new Pool({
     connectionString: config.DATABASE_URL,
     min: config.DATABASE_POOL_MIN,
@@ -164,25 +179,21 @@ export function createPool(): pg.Pool {
 
   // Without an 'error' listener, an idle-client error (DB restart, network
   // blip) is emitted as an unhandled 'error' event and crashes the process.
-  const poolLogger = createLogger();
   rawPool.on('error', (err) => {
-    poolLogger.error({ err: toError(err) }, 'Idle pg client error');
+    logger.error({ err: toError(err) }, 'Idle pg client error');
   });
 
-  pool = wrapPool(rawPool);
-  return pool;
+  return wrapPool(rawPool);
 }
 
-export async function checkDatabaseConnection(dbPool: pg.Pool): Promise<boolean> {
+export async function checkDatabaseConnection(dbPool: pg.Pool, logger: Logger): Promise<boolean> {
   let client: pg.PoolClient | undefined;
   try {
     client = await dbPool.connect();
     await client.query('SELECT 1');
     return true;
   } catch (error) {
-    const logger = createLogger();
-    const err = toError(error);
-    logger.error({ err }, 'Database connection check failed');
+    logger.error({ err: toError(error) }, 'Database connection check failed');
     return false;
   } finally {
     client?.release();
@@ -238,17 +249,19 @@ interface StoppableTask {
 
 interface ShutdownOptions {
   pool: pg.Pool;
+  logger: Logger;
   server?: ClosableServer;
   tasks?: StoppableTask[];
 }
 
-export function setupGracefulShutdown({ pool, server, tasks = [] }: ShutdownOptions): void {
-  const logger = createLogger();
-  const shutdown = async (signal: string) => {
-    if (isShuttingDown) return;
+export function setupGracefulShutdown({ pool, logger, server, tasks = [] }: ShutdownOptions): void {
+  async function shutdown(signal: string) {
+    if (isShuttingDown) {
+      return;
+    }
     isShuttingDown = true;
 
-    logger.info(`${signal} received, starting graceful shutdown`);
+    logger.info({ signal }, 'Signal received, starting graceful shutdown');
 
     // Force-exit if graceful teardown hangs. unref() so this timer alone
     // doesn't keep the event loop alive.
@@ -277,8 +290,12 @@ export function setupGracefulShutdown({ pool, server, tasks = [] }: ShutdownOpti
       logger.error({ err: toError(error) }, 'Error during graceful shutdown');
       process.exit(1);
     }
-  };
+  }
 
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => {
+    void shutdown('SIGTERM');
+  });
+  process.on('SIGINT', () => {
+    void shutdown('SIGINT');
+  });
 }

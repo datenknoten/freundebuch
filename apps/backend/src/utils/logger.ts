@@ -1,6 +1,3 @@
-import pino from 'pino';
-import { getConfig } from './config.js';
-
 /**
  * Backstop against PII and credentials reaching logs (and, via the Sentry pino
  * integration, Sentry). Call sites should log IDs not PII, but this catches
@@ -58,25 +55,5 @@ export const LOG_REDACT_PATHS = [
   // writers are the `ENV !== 'production'` branches in lib/auth.ts, which log
   // at debug level when SMTP is unconfigured — the documented recovery path
   // for an instance without mail (docs/self-hosting.md). Production never logs
-  // them. instrument.ts still strips them from anything reaching Sentry.
+  // them. instrumentation.ts still strips them from anything reaching Sentry.
 ];
-
-export function createLogger() {
-  const config = getConfig();
-  return pino({
-    level: process.env.VITEST === 'true' ? 'silent' : config.LOG_LEVEL,
-    redact: {
-      paths: LOG_REDACT_PATHS,
-    },
-    transport:
-      config.ENV !== 'production'
-        ? {
-            target: 'pino-pretty',
-            options: {
-              colorize: true,
-              translateTime: "yyyy-mm-dd'T'HH:MM:ss.l'Z'",
-            },
-          }
-        : undefined,
-  });
-}

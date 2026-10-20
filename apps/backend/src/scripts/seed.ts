@@ -7,9 +7,12 @@
  *        aube seed --reset   (delete the existing demo user first)
  */
 
+import { exitWith, rejectUsage } from '@datenknoten/kit/cli';
 import bcrypt from 'bcrypt';
 import pg from 'pg';
-import { getConfig } from '../utils/config.js';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+import { type Config, loadConfig } from '../config.js';
 import { formatDateOnly } from '../utils/date.js';
 import { DataIntegrityError } from '../utils/errors.js';
 
@@ -92,15 +95,18 @@ const DEMO_ENCOUNTERS = [
   },
 ];
 
-async function seed() {
-  const config = getConfig();
+interface SeedOptions {
+  config: Pick<Config, 'DATABASE_URL'>;
+  shouldReset: boolean;
+}
+
+async function seed(options: SeedOptions) {
+  const { config, shouldReset: reset } = options;
   const pool = new Pool({
     connectionString: config.DATABASE_URL,
   });
 
   console.log('Starting database seeding...\n');
-
-  const reset = process.argv.includes('--reset');
 
   try {
     // Check if demo user already exists
@@ -270,9 +276,6 @@ async function seed() {
     } finally {
       client.release();
     }
-  } catch (error) {
-    console.error('Seeding failed:', error);
-    process.exit(1);
   } finally {
     await pool.end();
   }
@@ -296,5 +299,20 @@ async function assignFriendToCircle(
   );
 }
 
-// Run the seed
-seed();
+async function main() {
+  const argv = await yargs(hideBin(process.argv))
+    .usage('$0 [--reset]', 'Create the demo user with friends, circles and encounters')
+    .option('reset', {
+      type: 'boolean',
+      default: false,
+      describe: 'Delete the existing demo user first, then seed it again',
+    })
+    .strict()
+    .locale('en')
+    .fail(rejectUsage)
+    .parse();
+
+  await seed({ config: loadConfig(), shouldReset: argv.reset });
+}
+
+void main().catch(exitWith);

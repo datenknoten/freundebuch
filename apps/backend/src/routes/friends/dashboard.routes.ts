@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { etag } from 'hono/etag';
 import { getAuthUser } from '../../middleware/auth.js';
 import { FriendsService } from '../../services/friends/index.js';
+import { PhotoService } from '../../services/photo.service.js';
 import type { AppContext } from '../../types/context.js';
 
 const app = new Hono<AppContext>();
@@ -40,7 +41,11 @@ app.get('/dates/upcoming', async (c) => {
   const days = parseDays(c.req.query('days'));
   const limit = parseLimit(c.req.query('limit'));
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const upcomingDates = await friendsService.getUpcomingDates(user.userId, { days, limit });
 
   return c.json(upcomingDates);
@@ -59,7 +64,11 @@ app.get('/dashboard', async (c) => {
   const days = parseDays(c.req.query('days'));
   const limit = parseLimit(c.req.query('limit'));
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const [upcomingDates, networkGraph] = await Promise.all([
     friendsService.getUpcomingDates(user.userId, { days, limit }),
     friendsService.getNetworkGraphData(user.userId),
@@ -78,7 +87,11 @@ app.get('/network-graph', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const graphData = await friendsService.getNetworkGraphData(user.userId);
 
   return c.json(graphData);
@@ -92,7 +105,11 @@ app.get('/relationship-types', async (c) => {
   const logger = c.get('logger');
   const db = c.get('db');
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const types = await friendsService.getRelationshipTypes();
 
   return c.json(types);

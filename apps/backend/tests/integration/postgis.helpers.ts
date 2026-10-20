@@ -1,8 +1,7 @@
 import pg from 'pg';
 import pino from 'pino';
-import { afterAll, assert, beforeAll, vi } from 'vitest';
+import { afterAll, assert, beforeAll } from 'vitest';
 import { PostGISAddressClient } from '../../src/services/external/postgis-address.client.js';
-import { resetConfig } from '../../src/utils/config.js';
 import { cloneTemplateDatabase, dropClonedDatabase } from './auth.helpers.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
@@ -26,9 +25,6 @@ const silentLogger = pino({ level: 'silent' });
  */
 export async function setupPostGISTests(): Promise<PostGISTestContext> {
   const { databaseName, databaseUri } = await cloneTemplateDatabase();
-
-  vi.stubEnv('DATABASE_URL', databaseUri);
-  resetConfig();
 
   // Small pool: parallel workers share one server's connection budget.
   const pool = new pg.Pool({ connectionString: databaseUri, min: 1, max: 4 });
@@ -121,16 +117,11 @@ export function setupPostGISTestSuite() {
   let context: PostGISTestContext;
 
   beforeAll(async () => {
-    // Set required environment variables for tests
-    vi.stubEnv('LOG_LEVEL', 'silent');
-
     context = await setupPostGISTests();
   }, SUITE_HOOK_TIMEOUT_MS);
 
   afterAll(async () => {
     await teardownPostGISTests(context);
-    vi.unstubAllEnvs();
-    resetConfig();
   }, SUITE_HOOK_TIMEOUT_MS);
 
   return {

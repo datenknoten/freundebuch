@@ -48,7 +48,11 @@ app.get('/friends/:friendId/:filename', async (c) => {
   const filename = c.req.param('filename');
 
   // Verify the user owns this friend
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const friend = await friendsService.getFriendById(user.userId, friendId);
 
   if (!friend) {
@@ -73,7 +77,7 @@ app.get('/friends/:friendId/:filename', async (c) => {
     throw new ValidationError('Invalid filename');
   }
 
-  const photoService = new PhotoService({ logger: logger });
+  const photoService = new PhotoService({ logger: logger, config: c.get('config') });
   const uploadDir = photoService.getUploadDir();
   const filePath = path.join(uploadDir, friendId, filename);
 
@@ -94,7 +98,7 @@ app.get('/friends/:friendId/:filename', async (c) => {
     if (isNodeError(error) && error.code === 'ENOENT') {
       throw new ResourceNotFoundError('Photo');
     }
-    logger.error({ error, friendId, filename }, 'Failed to serve photo');
+    logger.error({ err: error, friendId, filename }, 'Failed to serve photo');
     throw error;
   }
 

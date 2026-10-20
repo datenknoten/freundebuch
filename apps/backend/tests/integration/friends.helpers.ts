@@ -1,7 +1,7 @@
 import type pg from 'pg';
-import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach } from 'vitest';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
-import { resetConfig } from '../../src/utils/config.js';
+
 import {
   type AuthTestContext,
   completeTestUserOnboarding,
@@ -110,19 +110,15 @@ export function authHeaders(sessionCookies: string): Record<string, string> {
 }
 
 /**
- * Setup function for beforeAll in friends test files
+ * Setup function for beforeAll in friends test files. `env` adds or overrides
+ * config variables for the suite's app.
  */
-export function setupFriendsTestSuite() {
+export function setupFriendsTestSuite(env: Record<string, string> = {}) {
   let authContext: AuthTestContext;
   let context: FriendsTestContext;
 
   beforeAll(async () => {
-    // Set required environment variables for tests
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
-    vi.stubEnv('LOG_LEVEL', 'silent');
-
-    authContext = await setupAuthTests();
+    authContext = await setupAuthTests(env);
   }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
@@ -141,8 +137,6 @@ export function setupFriendsTestSuite() {
 
   afterAll(async () => {
     await teardownAuthTests(authContext);
-    vi.unstubAllEnvs();
-    resetConfig();
   }, SUITE_HOOK_TIMEOUT_MS);
 
   return {

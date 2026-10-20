@@ -30,6 +30,8 @@ type ChannelRow = IGetChannelsByUserIdResult | IGetChannelByExternalIdResult;
 
 export interface NotificationChannelsServiceOptions {
   db: Pool;
+  /** From deriveCredentialsKey(config.BETTER_AUTH_SECRET). */
+  credentialsKey: Buffer;
 }
 
 /**
@@ -37,9 +39,11 @@ export interface NotificationChannelsServiceOptions {
  */
 export class NotificationChannelsService {
   private db: Pool;
+  private readonly credentialsKey: Buffer;
 
   constructor(options: NotificationChannelsServiceOptions) {
     this.db = options.db;
+    this.credentialsKey = options.credentialsKey;
   }
 
   /**
@@ -90,17 +94,20 @@ export class NotificationChannelsService {
           telegramBotToken: encryptOptional(
             input.credentials.botToken,
             credentialContext(userExternalId, 'telegram_bot_token'),
+            this.credentialsKey,
           ),
           telegramChatId: input.credentials.chatId ?? null,
           matrixHomeserver: input.credentials.homeserver ?? null,
           matrixAccessToken: encryptOptional(
             input.credentials.accessToken,
             credentialContext(userExternalId, 'matrix_access_token'),
+            this.credentialsKey,
           ),
           matrixRoomId: input.credentials.roomId ?? null,
           discordWebhookUrl: encryptOptional(
             input.credentials.webhookUrl,
             credentialContext(userExternalId, 'discord_webhook_url'),
+            this.credentialsKey,
           ),
           lookaheadDays: input.lookaheadDays ?? null,
           notifyTime: input.notifyTime ?? null,
@@ -143,17 +150,20 @@ export class NotificationChannelsService {
         telegramBotToken: encryptOptional(
           input.credentials?.botToken,
           credentialContext(userExternalId, 'telegram_bot_token'),
+          this.credentialsKey,
         ),
         telegramChatId: input.credentials?.chatId ?? null,
         matrixHomeserver: input.credentials?.homeserver ?? null,
         matrixAccessToken: encryptOptional(
           input.credentials?.accessToken,
           credentialContext(userExternalId, 'matrix_access_token'),
+          this.credentialsKey,
         ),
         matrixRoomId: input.credentials?.roomId ?? null,
         discordWebhookUrl: encryptOptional(
           input.credentials?.webhookUrl,
           credentialContext(userExternalId, 'discord_webhook_url'),
+          this.credentialsKey,
         ),
         lookaheadDays: input.lookaheadDays ?? null,
         notifyTime: input.notifyTime ?? null,
@@ -211,6 +221,7 @@ export class NotificationChannelsService {
           decrypt(
             channel.telegram_bot_token ?? '',
             credentialContext(userExternalId, 'telegram_bot_token'),
+            this.credentialsKey,
           ),
           channel.telegram_chat_id ?? '',
           testMessage,
@@ -222,6 +233,7 @@ export class NotificationChannelsService {
           decrypt(
             channel.matrix_access_token ?? '',
             credentialContext(userExternalId, 'matrix_access_token'),
+            this.credentialsKey,
           ),
           channel.matrix_room_id ?? '',
           testMessage,
@@ -233,6 +245,7 @@ export class NotificationChannelsService {
           decrypt(
             channel.discord_webhook_url ?? '',
             credentialContext(userExternalId, 'discord_webhook_url'),
+            this.credentialsKey,
           ),
           testMessage,
         );
@@ -304,7 +317,7 @@ export class NotificationChannelsService {
     value: string | null | undefined,
   ): string | undefined {
     if (value === null || value === undefined || value === '') return undefined;
-    const plain = tryDecrypt(value, credentialContext(userExternalId, column));
+    const plain = tryDecrypt(value, credentialContext(userExternalId, column), this.credentialsKey);
     if (plain === null || plain.length <= 4) return '****';
     return `...${plain.slice(-4)}`;
   }

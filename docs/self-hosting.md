@@ -147,7 +147,7 @@ it, so the pools have to fit. With the shipped defaults:
 
 | Consumer | Connections | Where it comes from |
 |----------|-------------|---------------------|
-| Backend, main pool | up to 10 | `DATABASE_POOL_MAX`, default `10` (`apps/backend/src/utils/config.ts`) |
+| Backend, main pool | up to 10 | `DATABASE_POOL_MAX`, default `10` (`apps/backend/src/config.ts`) |
 | Backend, Better Auth pool | up to 5 | Better Auth needs `search_path=auth`, so it gets its own pool at half the main sizes — `max(2, ⌊DATABASE_POOL_MAX/2⌋)` (`apps/backend/src/lib/auth.ts`) |
 | MCP server, main pool | up to 5 | Its own `DATABASE_POOL_MAX`, default `5` (`apps/mcp-server/src/config.ts`) |
 | MCP server, Better Auth pool | up to 2 | It co-locates the backend's Better Auth instance to validate OAuth tokens, so the same halved pool is built — but from the MCP container's `DATABASE_POOL_MAX` of `5`, i.e. `max(2, ⌊5/2⌋)` |

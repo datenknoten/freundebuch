@@ -3,9 +3,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import pino from 'pino';
 import sharp from 'sharp';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PhotoService, PhotoUploadError } from '../../src/services/photo.service.js';
-import { resetConfig } from '../../src/utils/config.js';
 
 /**
  * Real sharp, real filesystem: the sibling suite mocks both, so it cannot see
@@ -52,18 +51,14 @@ describe('PhotoService decode failures', () => {
 
   beforeEach(async () => {
     uploadDir = await mkdtemp(path.join(tmpdir(), 'freundebuch-photos-'));
-    vi.stubEnv('UPLOAD_DIR', uploadDir);
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    resetConfig();
-
-    photoService = new PhotoService({ logger: pino({ level: 'silent' }) });
+    photoService = new PhotoService({
+      logger: pino({ level: 'silent' }),
+      config: { BACKEND_URL: 'http://localhost:3000', UPLOAD_DIR: uploadDir },
+    });
   });
 
   afterEach(async () => {
     await rm(uploadDir, { recursive: true, force: true });
-    resetConfig();
-    vi.unstubAllEnvs();
   });
 
   it('rejects an image that only fails once its pixels are decoded', async () => {

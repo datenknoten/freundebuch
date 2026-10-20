@@ -1,8 +1,11 @@
 import net from 'node:net';
 import type { Logger } from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { loadConfig } from '../../src/config.js';
 import { createMailer, isMailConfigured } from '../../src/services/mailer.js';
-import { getConfig, resetConfig } from '../../src/utils/config.js';
+import { TEST_ENV } from '../helpers/test-env.js';
+
+const FRONTEND_URL = 'https://friends.example.test';
 
 /**
  * Mail is verified against a real SMTP conversation rather than a mocked
@@ -97,36 +100,33 @@ describe('SMTP mailer', () => {
 
   beforeEach(async () => {
     sink = await startSink();
-    resetConfig();
-    vi.unstubAllEnvs();
-    vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    vi.stubEnv('FRONTEND_URL', 'https://friends.example.test');
   });
 
   afterEach(async () => {
     await sink.close();
-    resetConfig();
-    vi.unstubAllEnvs();
   });
 
-  function configureSmtp(): void {
-    vi.stubEnv('SMTP_HOST', '127.0.0.1');
-    vi.stubEnv('SMTP_PORT', String(sink.port));
-    vi.stubEnv('SMTP_SECURE', 'false');
-    resetConfig();
+  /** A config pointing the mailer at the local sink. */
+  function smtpConfig(env: Record<string, string> = {}) {
+    return loadConfig({
+      ...TEST_ENV,
+      FRONTEND_URL,
+      SMTP_HOST: '127.0.0.1',
+      SMTP_PORT: String(sink.port),
+      SMTP_SECURE: 'false',
+      ...env,
+    });
   }
 
   it('returns null and reports unconfigured when SMTP_HOST is unset', () => {
-    const config = getConfig();
+    const config = loadConfig({ ...TEST_ENV, FRONTEND_URL });
 
     expect(isMailConfigured(config)).toBe(false);
     expect(createMailer(config, silentLogger())).toBeNull();
   });
 
   it('delivers the subject, body and recipient over SMTP', async () => {
-    configureSmtp();
-    const config = getConfig();
+    const config = smtpConfig();
     expect(isMailConfigured(config)).toBe(true);
 
     const mailer = createMailer(config, silentLogger());
@@ -147,8 +147,7 @@ describe('SMTP mailer', () => {
   });
 
   it('derives the From address from FRONTEND_URL when SMTP_FROM is unset', async () => {
-    configureSmtp();
-    const mailer = createMailer(getConfig(), silentLogger());
+    const mailer = createMailer(smtpConfig(), silentLogger());
     if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
 
     await mailer.send('user@example.com', 'Subject', 'body');
@@ -157,11 +156,10 @@ describe('SMTP mailer', () => {
   });
 
   it('prefers an explicit SMTP_FROM over the derived address', async () => {
-    configureSmtp();
-    vi.stubEnv('SMTP_FROM', 'Freundebuch <hello@other.example>');
-    resetConfig();
-
-    const mailer = createMailer(getConfig(), silentLogger());
+    const mailer = createMailer(
+      smtpConfig({ SMTP_FROM: 'Freundebuch <hello@other.example>' }),
+      silentLogger(),
+    );
     if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
 
     await mailer.send('user@example.com', 'Subject', 'body');
@@ -171,9 +169,8 @@ describe('SMTP mailer', () => {
   });
 
   it('keeps the recipient out of the log line but records the subject', async () => {
-    configureSmtp();
     const logger = silentLogger();
-    const mailer = createMailer(getConfig(), logger);
+    const mailer = createMailer(smtpConfig(), logger);
     if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
 
     await mailer.send('user@example.com', 'Reset your password', 'body');
@@ -186,8 +183,7 @@ describe('SMTP mailer', () => {
   });
 
   it('sends an html alternative only when one is supplied', async () => {
-    configureSmtp();
-    const mailer = createMailer(getConfig(), silentLogger());
+    const mailer = createMailer(smtpConfig(), silentLogger());
     if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
 
     await mailer.send('user@example.com', 'Text only', 'just text');
@@ -198,12 +194,10 @@ describe('SMTP mailer', () => {
   });
 
   it('refuses to send credentials over a relay that cannot upgrade to TLS', async () => {
-    configureSmtp();
-    vi.stubEnv('SMTP_USER', 'relay-user');
-    vi.stubEnv('SMTP_PASSWORD', 'relay-password');
-    resetConfig();
-
-    const mailer = createMailer(getConfig(), silentLogger());
+    const mailer = createMailer(
+      smtpConfig({ SMTP_USER: 'relay-user', SMTP_PASSWORD: 'relay-password' }),
+      silentLogger(),
+    );
     if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
 
     await expect(mailer.send('user@example.com', 'Subject', 'body')).rejects.toThrow(/STARTTLS/i);
@@ -212,8 +206,7 @@ describe('SMTP mailer', () => {
   });
 
   it('does not demand STARTTLS when no credentials are configured', async () => {
-    configureSmtp();
-    const mailer = createMailer(getConfig(), silentLogger());
+    const mailer = createMailer(smtpConfig(), silentLogger());
     if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
 
     await mailer.send('user@example.com', 'Subject', 'body');

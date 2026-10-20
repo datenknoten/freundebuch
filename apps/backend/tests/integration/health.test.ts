@@ -1,4 +1,5 @@
-import { chmod, mkdtemp, rm } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { chmod, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Hono } from 'hono';
@@ -6,8 +7,26 @@ import pg from 'pg';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import healthRoutes, { resetReadinessCache } from '../../src/routes/health.js';
 import type { AppContext } from '../../src/types/context.js';
-import { createLogger } from '../../src/utils/logger.js';
-import { setupAuthTestSuite } from './auth.helpers.js';
+import { type AuthTestContext, setupAuthTestSuite } from './auth.helpers.js';
+
+// The repo's own apps/backend/uploads is created by the dev container and
+// owned by root, so the check has to run against a directory this process
+// controls.
+const UPLOAD_DIR = path.join(tmpdir(), `fb-health-uploads-${randomUUID()}`);
+
+/** A health-only app over the given main pool, sharing the suite's auth pool and config. */
+function healthAppWith(context: AuthTestContext, pool: pg.Pool) {
+  const app = new Hono<AppContext>();
+  app.use('*', async (c, next) => {
+    c.set('db', pool);
+    c.set('authPool', context.authPool);
+    c.set('config', context.config);
+    c.set('logger', context.logger);
+    await next();
+  });
+  app.route('/health', healthRoutes);
+  return app;
+}
 
 /**
  * Root bypasses the DAC permission bits, so `chmod 0o500` denies it nothing and
@@ -17,7 +36,7 @@ import { setupAuthTestSuite } from './auth.helpers.js';
 const RUNS_AS_ROOT = process.getuid?.() === 0;
 
 describe('Health Endpoint Integration Tests', () => {
-  const { getContext } = setupAuthTestSuite();
+  const { getContext } = setupAuthTestSuite({ UPLOAD_DIR });
 
   describe('GET /health (liveness)', () => {
     it('should return 200 with status and release', async () => {
@@ -52,14 +71,10 @@ describe('Health Endpoint Integration Tests', () => {
   });
 
   describe('GET /health/ready (readiness)', () => {
-    // The repo's own apps/backend/uploads is created by the dev container and
-    // owned by root, so the check has to run against a directory this process
-    // controls. UPLOAD_DIR is what the photo service reads.
-    let uploadDir: string;
+    const uploadDir = UPLOAD_DIR;
 
     beforeEach(async () => {
-      uploadDir = await mkdtemp(path.join(tmpdir(), 'fb-health-uploads-'));
-      vi.stubEnv('UPLOAD_DIR', uploadDir);
+      await mkdir(uploadDir, { recursive: true });
       // The readiness body is memoised for a few seconds; every case below
       // changes the environment it reports on, so it needs a fresh check.
       resetReadinessCache();
@@ -120,14 +135,7 @@ describe('Health Endpoint Integration Tests', () => {
       failingPool.on('error', () => {
         // Expected while the pool fails to connect.
       });
-      const logger = createLogger();
-      const failingApp = new Hono<AppContext>();
-      failingApp.use('*', async (c, next) => {
-        c.set('db', failingPool);
-        c.set('logger', logger);
-        await next();
-      });
-      failingApp.route('/health', healthRoutes);
+      const failingApp = healthAppWith(getContext(), failingPool);
 
       const response = await failingApp.fetch(new Request('http://localhost/health/ready'));
       const body = (await response.json()) as {
@@ -154,14 +162,7 @@ describe('Health Endpoint Integration Tests', () => {
       failingPool.on('error', () => {
         // Expected while the pool fails to connect.
       });
-      const logger = createLogger();
-      const failingApp = new Hono<AppContext>();
-      failingApp.use('*', async (c, next) => {
-        c.set('db', failingPool);
-        c.set('logger', logger);
-        await next();
-      });
-      failingApp.route('/health', healthRoutes);
+      const failingApp = healthAppWith(getContext(), failingPool);
 
       const response = await failingApp.fetch(new Request('http://localhost/health'));
 

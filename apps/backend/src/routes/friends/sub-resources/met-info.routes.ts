@@ -2,6 +2,7 @@ import { MetInfoInputSchema } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
+import { PhotoService } from '../../../services/photo.service.js';
 import type { AppContext } from '../../../types/context.js';
 import { FriendNotFoundError, ResourceNotFoundError } from '../../../utils/errors.js';
 import { parseBody, requireUuidParam } from '../../../utils/http.js';
@@ -18,7 +19,11 @@ app.put('/', async (c) => {
   const friendId = requireUuidParam(c, 'id', 'friend ID');
   const validated = await parseBody(c, MetInfoInputSchema);
 
-  const friendsService = new FriendsService({ db: db, logger: c.get('logger') });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: c.get('logger'),
+    photoService: new PhotoService({ logger: c.get('logger'), config: c.get('config') }),
+  });
   const metInfo = await friendsService.setMetInfo(user.userId, friendId, validated);
 
   if (!metInfo) {
@@ -37,7 +42,11 @@ app.delete('/', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const friendsService = new FriendsService({ db: db, logger: c.get('logger') });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: c.get('logger'),
+    photoService: new PhotoService({ logger: c.get('logger'), config: c.get('config') }),
+  });
   const deleted = await friendsService.deleteMetInfo(user.userId, friendId);
 
   if (!deleted) {

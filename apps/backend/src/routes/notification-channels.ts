@@ -19,6 +19,7 @@ import {
 } from '../middleware/rate-limit.js';
 import { NotificationChannelsService } from '../services/notification-channels.service.js';
 import type { AppContext } from '../types/context.js';
+import { deriveCredentialsKey } from '../utils/credentials-crypto.js';
 import { NotificationChannelNotFoundError, ValidationError } from '../utils/errors.js';
 import { parseBody, requireUuidParam } from '../utils/http.js';
 
@@ -97,7 +98,10 @@ app.get('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const service = new NotificationChannelsService({ db: db });
+  const service = new NotificationChannelsService({
+    db: db,
+    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+  });
   const result = await service.listChannels(user.userId);
 
   return c.json(result);
@@ -117,7 +121,10 @@ app.post('/', async (c) => {
   // Second pass: validate platform-specific credentials
   const credentials = validateCredentials(validated.platform, validated.credentials);
 
-  const service = new NotificationChannelsService({ db: db });
+  const service = new NotificationChannelsService({
+    db: db,
+    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+  });
   const result = await service.createChannel(user.userId, {
     platform: validated.platform,
     isEnabled: validated.isEnabled,
@@ -138,7 +145,10 @@ app.get('/:channelId', async (c) => {
   const user = getAuthUser(c);
   const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
-  const service = new NotificationChannelsService({ db: db });
+  const service = new NotificationChannelsService({
+    db: db,
+    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+  });
   const result = await service.getChannel(user.userId, channelId);
 
   return c.json(result);
@@ -159,12 +169,18 @@ app.put('/:channelId', async (c) => {
   // If credentials provided, fetch existing channel to know the platform
   let credentials: Record<string, string> | undefined;
   if (validated.credentials) {
-    const service = new NotificationChannelsService({ db: db });
+    const service = new NotificationChannelsService({
+      db: db,
+      credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+    });
     const existing = await service.getChannel(user.userId, channelId);
     credentials = validateCredentialsForUpdate(existing.platform, validated.credentials);
   }
 
-  const service = new NotificationChannelsService({ db: db });
+  const service = new NotificationChannelsService({
+    db: db,
+    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+  });
   const result = await service.updateChannel(user.userId, channelId, {
     isEnabled: validated.isEnabled,
     lookaheadDays: validated.lookaheadDays,
@@ -184,7 +200,10 @@ app.delete('/:channelId', async (c) => {
   const user = getAuthUser(c);
   const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
-  const service = new NotificationChannelsService({ db: db });
+  const service = new NotificationChannelsService({
+    db: db,
+    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+  });
   const deleted = await service.deleteChannel(user.userId, channelId);
 
   if (!deleted) {
@@ -203,7 +222,10 @@ app.post('/:channelId/test', notificationTestRateLimitMiddleware, async (c) => {
   const user = getAuthUser(c);
   const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
-  const service = new NotificationChannelsService({ db: db });
+  const service = new NotificationChannelsService({
+    db: db,
+    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+  });
   await service.sendTestMessage(user.userId, channelId);
 
   return c.json({ success: true });
@@ -219,7 +241,10 @@ app.patch('/:channelId/toggle', async (c) => {
   const channelId = requireUuidParam(c, 'channelId', 'channel ID');
   const validated = await parseBody(c, NotificationChannelToggleInputSchema);
 
-  const service = new NotificationChannelsService({ db: db });
+  const service = new NotificationChannelsService({
+    db: db,
+    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+  });
   const result = await service.toggleChannel(user.userId, channelId, validated.isEnabled);
 
   return c.json(result);

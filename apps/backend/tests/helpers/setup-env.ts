@@ -3,19 +3,13 @@
  *
  * Vitest inherits the shell's environment, so a developer who has sourced
  * `.env` (or exported the variables any other way) runs a different suite than
- * CI does. That is not hypothetical: `tests/config.test.ts` asserts that
- * `getConfig()` *throws* when DATABASE_URL is missing, which silently cannot
- * happen if the shell supplies one. Six tests failed locally and passed in CI
- * for exactly this reason.
+ * CI does. Tests build their config from TEST_ENV and never from the process
+ * environment, but two readers remain: instrumentation.ts (SENTRY_DSN, ENV),
+ * which sentry-scrub.test.ts imports, and Better Auth, which reads some
+ * BETTER_AUTH_* variables itself.
  *
  * Clearing the config surface here gives every test file the same empty
- * baseline. Tests opt in to the values they need with `vi.stubEnv`, and because
- * the variable is absent when the stub is recorded, `vi.unstubAllEnvs()`
- * removes it again rather than restoring a stale ambient value.
- *
- * Keep CONFIG_ENV_KEYS in sync with ConfigSchema in src/utils/config.ts. A key
- * that is in the schema but missing here is a variable the shell can still
- * leak into a test run.
+ * baseline. Keep CONFIG_ENV_KEYS in sync with ConfigSchema in src/config.ts.
  */
 const CONFIG_ENV_KEYS = [
   // Database
@@ -48,6 +42,8 @@ const CONFIG_ENV_KEYS = [
   // Optional
   'LOG_LEVEL',
   'SENTRY_DSN',
+  'RATE_LIMIT_ENABLED',
+  'UPLOAD_DIR',
   // Address lookup
   'OVERPASS_API_URL',
   'OVERPASS_FALLBACK_URL',

@@ -48,7 +48,11 @@ app.post(
     }
 
     // Verify friend exists and belongs to user
-    const friendsService = new FriendsService({ db: db, logger: logger });
+    const friendsService = new FriendsService({
+      db: db,
+      logger: logger,
+      photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+    });
     const friend = await friendsService.getFriendById(user.userId, friendId);
 
     if (!friend) {
@@ -56,7 +60,7 @@ app.post(
     }
 
     // Upload photo
-    const photoService = new PhotoService({ logger: logger });
+    const photoService = new PhotoService({ logger: logger, config: c.get('config') });
     const result = await photoService.uploadPhoto(friendId, file);
 
     // Update friend with photo URLs
@@ -94,7 +98,11 @@ app.delete('/:id/photo', async (c) => {
   // UUID-validated to prevent path traversal
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const friend = await friendsService.getFriendById(user.userId, friendId);
 
   if (!friend) {
@@ -102,7 +110,7 @@ app.delete('/:id/photo', async (c) => {
   }
 
   // Delete photo files
-  const photoService = new PhotoService({ logger: logger });
+  const photoService = new PhotoService({ logger: logger, config: c.get('config') });
   await photoService.deletePhoto(friendId);
 
   // Clear photo URLs from friend
@@ -204,7 +212,11 @@ app.post('/:id/favorite', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const isFavorite = await friendsService.toggleFavorite(user.userId, friendId);
 
   if (isFavorite === null) {
@@ -238,7 +250,11 @@ app.post('/:id/archive', async (c) => {
 
   const validated = validate(ArchiveFriendInputSchema, body);
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const archived = await friendsService.archiveFriend(user.userId, friendId, validated.reason);
 
   if (!archived) {
@@ -258,7 +274,11 @@ app.post('/:id/unarchive', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  const friendsService = new FriendsService({ db: db, logger: logger });
+  const friendsService = new FriendsService({
+    db: db,
+    logger: logger,
+    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+  });
   const unarchived = await friendsService.unarchiveFriend(user.userId, friendId);
 
   if (!unarchived) {

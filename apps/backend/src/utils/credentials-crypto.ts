@@ -1,7 +1,6 @@
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from 'node:crypto';
 import type pg from 'pg';
 import type { Logger } from 'pino';
-import { getConfig } from './config.js';
 import { ConfigurationError } from './errors.js';
 
 /**
@@ -43,22 +42,9 @@ export function credentialContext(userExternalId: string, column: CredentialColu
   return `notification-channel:${userExternalId}:${column}`;
 }
 
-let cachedKey: Buffer | null = null;
-
-function getKey(): Buffer {
-  if (cachedKey === null) {
-    const secret = getConfig().BETTER_AUTH_SECRET;
-    cachedKey = Buffer.from(hkdfSync('sha256', secret, HKDF_SALT, HKDF_INFO, KEY_BYTES));
-  }
-  return cachedKey;
-}
-
-/**
- * Drop the derived key so the next call re-derives it from the current
- * configuration. Only needed by tests that swap `BETTER_AUTH_SECRET`.
- */
-export function resetCredentialsKey(): void {
-  cachedKey = null;
+/** Derive the credential key from BETTER_AUTH_SECRET; derive once and pass it on. */
+export function deriveCredentialsKey(secret: string) {
+  return Buffer.from(hkdfSync('sha256', secret, HKDF_SALT, HKDF_INFO, KEY_BYTES));
 }
 
 /** True when the value already carries an encryption envelope. */
@@ -69,9 +55,9 @@ export function isEncrypted(value: string): boolean {
 /** SQL `LIKE` pattern matching current-envelope values, for backfill queries. */
 const ENCRYPTED_V2_LIKE_PATTERN = `${ENVELOPE_PREFIX_V2}%`;
 
-export function encrypt(plain: string, context: string): string {
+export function encrypt(plain: string, context: string, key: Buffer): string {
   const iv = randomBytes(IV_BYTES);
-  const cipher = createCipheriv(ALGORITHM, getKey(), iv);
+  const cipher = createCipheriv(ALGORITHM, key, iv);
   cipher.setAAD(Buffer.from(context, 'utf8'));
   const ciphertext = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
   const parts = [
@@ -91,7 +77,7 @@ export function encrypt(plain: string, context: string): string {
  * key, a tampered value, or a v2 ciphertext presented under the wrong context
  * must not silently degrade to garbage.
  */
-export function decrypt(value: string, context: string): string {
+export function decrypt(value: string, context: string, key: Buffer): string {
   const isV2 = value.startsWith(ENVELOPE_PREFIX_V2);
   if (!isV2 && !value.startsWith(ENVELOPE_PREFIX_V1)) {
     return value;
@@ -106,7 +92,7 @@ export function decrypt(value: string, context: string): string {
   }
 
   try {
-    const decipher = createDecipheriv(ALGORITHM, getKey(), Buffer.from(iv, 'base64url'));
+    const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(iv, 'base64url'));
     // v1 was written without associated data; setting it there would fail the
     // tag check on every legacy row.
     if (isV2) {
@@ -131,9 +117,9 @@ export function decrypt(value: string, context: string): string {
  * must keep working after a secret rotation (so the user can re-enter the
  * credential through the UI).
  */
-export function tryDecrypt(value: string, context: string): string | null {
+export function tryDecrypt(value: string, context: string, key: Buffer): string | null {
   try {
-    return decrypt(value, context);
+    return decrypt(value, context, key);
   } catch {
     return null;
   }
@@ -144,14 +130,18 @@ export function tryDecrypt(value: string, context: string): string | null {
  * envelope is passed through so a re-save never double-wraps; a v1 envelope is
  * re-wrapped so it gains the context binding.
  */
-export function encryptOptional(value: string | null | undefined, context: string): string | null {
+export function encryptOptional(
+  value: string | null | undefined,
+  context: string,
+  key: Buffer,
+): string | null {
   if (value === null || value === undefined) {
     return null;
   }
   if (value.startsWith(ENVELOPE_PREFIX_V2)) {
     return value;
   }
-  return encrypt(decrypt(value, context), context);
+  return encrypt(decrypt(value, context, key), context, key);
 }
 
 interface LegacyCredentialRow {
@@ -176,6 +166,7 @@ interface LegacyCredentialRow {
 export async function encryptLegacyNotificationCredentials(
   db: pg.Pool,
   logger: Logger,
+  key: Buffer,
 ): Promise<number> {
   const { rows } = await db.query<LegacyCredentialRow>(
     `SELECT nc.id,
@@ -201,7 +192,7 @@ export async function encryptLegacyNotificationCredentials(
         return value;
       }
       const context = credentialContext(row.user_external_id, column);
-      const plain = tryDecrypt(value, context);
+      const plain = tryDecrypt(value, context, key);
       if (plain === null) {
         logger.warn(
           { channelId: row.id, column },
@@ -210,7 +201,7 @@ export async function encryptLegacyNotificationCredentials(
         return value;
       }
       changed = true;
-      return encrypt(plain, context);
+      return encrypt(plain, context, key);
     };
 
     const telegramBotToken = upgrade(row.telegram_bot_token, 'telegram_bot_token');

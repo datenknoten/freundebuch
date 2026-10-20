@@ -1,16 +1,23 @@
 import crypto from 'node:crypto';
+import { createRootLogger } from '@datenknoten/kit/logger';
 import type { Hono } from 'hono';
 import pg from 'pg';
-import { afterAll, beforeAll, beforeEach, inject, vi } from 'vitest';
-import { createApp } from '../../src/index.js';
-import { resetAuth } from '../../src/lib/auth.js';
+import type { Logger } from 'pino';
+import { afterAll, beforeAll, beforeEach, inject } from 'vitest';
+import { createApp } from '../../src/app.js';
+import { type Config, loadConfig } from '../../src/config.js';
+import { type Auth, createAuth, createAuthPool } from '../../src/lib/auth.js';
 import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
-import { resetConfig } from '../../src/utils/config.js';
+import { TEST_AUTH_SECRET, TEST_ENV } from '../helpers/test-env.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 export interface AuthTestContext {
   pool: pg.Pool;
+  authPool: pg.Pool;
+  auth: Auth;
+  config: Config;
+  logger: Logger;
   app: Hono<AppContext>;
   /** Name of the per-suite database cloned from the migrated template. */
   databaseName: string;
@@ -89,27 +96,29 @@ const TEST_POOL_MAX = 4;
 
 /**
  * Set up test environment: clone a fresh database from the migrated template
- * and boot the app against it.
+ * and boot the app against it. `env` adds or overrides config variables.
  */
-export async function setupAuthTests(): Promise<AuthTestContext> {
+export async function setupAuthTests(env: Record<string, string> = {}): Promise<AuthTestContext> {
   const { databaseName, databaseUri } = await cloneTemplateDatabase();
 
-  await resetAuth();
-  vi.stubEnv('DATABASE_URL', databaseUri);
-  // createApp derives the Better Auth pool from these, so stub them too.
-  vi.stubEnv('DATABASE_POOL_MIN', String(TEST_POOL_MIN));
-  vi.stubEnv('DATABASE_POOL_MAX', String(TEST_POOL_MAX));
-  // The budget above is deliberately small, so a suite that fires concurrent
-  // requests queues on the Better Auth pool's two clients by design. Waiting
-  // is correct; timing out is not. The 5s production default is far too tight
-  // under v8 coverage instrumentation, which stretches a bcrypt-bound sign-in
-  // roughly 15x (`should handle concurrent sign-in attempts`: 1.1s plain,
-  // 17.8s instrumented) and turned queuing into a 500. With the wait
-  // effectively unbounded, vitest's 30s testTimeout is the real limit, so a
-  // pool that genuinely never yields a client fails as a timeout naming the
-  // test rather than as an HTTP 500 that looks like a product bug.
-  vi.stubEnv('DATABASE_CONNECTION_TIMEOUT_MS', '60000');
-  resetConfig();
+  const config = loadConfig({
+    ...TEST_ENV,
+    DATABASE_URL: databaseUri,
+    DATABASE_POOL_MIN: String(TEST_POOL_MIN),
+    DATABASE_POOL_MAX: String(TEST_POOL_MAX),
+    // The budget above is deliberately small, so a suite that fires concurrent
+    // requests queues on the Better Auth pool's two clients by design. Waiting
+    // is correct; timing out is not. The 5s production default is far too tight
+    // under v8 coverage instrumentation, which stretches a bcrypt-bound sign-in
+    // roughly 15x (`should handle concurrent sign-in attempts`: 1.1s plain,
+    // 17.8s instrumented) and turned queuing into a 500. With the wait
+    // effectively unbounded, vitest's 30s testTimeout is the real limit, so a
+    // pool that genuinely never yields a client fails as a timeout naming the
+    // test rather than as an HTTP 500 that looks like a product bug.
+    DATABASE_CONNECTION_TIMEOUT_MS: '60000',
+    ...env,
+  });
+  const logger = createRootLogger(config);
 
   const pool = new pg.Pool({
     connectionString: databaseUri,
@@ -120,8 +129,15 @@ export async function setupAuthTests(): Promise<AuthTestContext> {
     // Ignore — expected during teardown.
   });
 
-  const app = await createApp(pool);
-  return { pool, app, databaseName };
+  const authPool = createAuthPool({ config, logger });
+  const auth = createAuth({ config, pool: authPool, logger });
+  const app = await createApp({ config, logger, pool, authPool, auth });
+  return { pool, authPool, auth, config, logger, app, databaseName };
+}
+
+/** A second app over the suite's pools, with config variables changed for one test. */
+export async function createAppWithConfig(context: AuthTestContext, overrides: Partial<Config>) {
+  return createApp({ ...context, config: { ...context.config, ...overrides } });
 }
 
 /**
@@ -131,8 +147,8 @@ export async function teardownAuthTests(context: AuthTestContext): Promise<void>
   if (!context) {
     return;
   }
-  // Drain Better Auth's internal pool before ending the app pool.
-  await resetAuth();
+  // Drain Better Auth's pool before ending the app pool.
+  await context.authPool.end();
   if (context.pool) {
     await context.pool.end();
   }
@@ -308,9 +324,7 @@ export async function createBetterAuthSession(pool: pg.Pool, userId: string): Pr
     [sessionId, userId, token, expiresAt],
   );
 
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret) throw new Error('BETTER_AUTH_SECRET must be set for test session creation');
-  const signature = await makeHonoCookieSignature(token, secret);
+  const signature = await makeHonoCookieSignature(token, TEST_AUTH_SECRET);
   const signedValue = encodeURIComponent(`${token}.${signature}`);
   return `better-auth.session_token=${signedValue}`;
 }
@@ -318,16 +332,11 @@ export async function createBetterAuthSession(pool: pg.Pool, userId: string): Pr
 /**
  * Setup function for beforeAll in test files
  */
-export function setupAuthTestSuite() {
+export function setupAuthTestSuite(env: Record<string, string> = {}) {
   let context: AuthTestContext;
 
   beforeAll(async () => {
-    // Set required environment variables for tests
-    vi.stubEnv('BETTER_AUTH_SECRET', 'test-better-auth-secret-test-better-auth-secret-1');
-    vi.stubEnv('FRONTEND_URL', 'http://localhost:5173');
-    vi.stubEnv('LOG_LEVEL', 'silent');
-
-    context = await setupAuthTests();
+    context = await setupAuthTests(env);
   }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(() => {
@@ -337,8 +346,6 @@ export function setupAuthTestSuite() {
 
   afterAll(async () => {
     await teardownAuthTests(context);
-    vi.unstubAllEnvs();
-    resetConfig();
   }, SUITE_HOOK_TIMEOUT_MS);
 
   return {

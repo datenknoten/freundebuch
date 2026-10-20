@@ -11,6 +11,7 @@ export async function dispatchNotification(
   channel: IGetEnabledChannelsDueAtResult,
   plainText: string,
   htmlText: string,
+  credentialsKey: Buffer,
 ): Promise<void> {
   switch (channel.platform) {
     case 'telegram':
@@ -18,6 +19,7 @@ export async function dispatchNotification(
         decrypt(
           channel.telegram_bot_token ?? '',
           credentialContext(channel.user_external_id, 'telegram_bot_token'),
+          credentialsKey,
         ),
         channel.telegram_chat_id ?? '',
         plainText,
@@ -29,6 +31,7 @@ export async function dispatchNotification(
         decrypt(
           channel.matrix_access_token ?? '',
           credentialContext(channel.user_external_id, 'matrix_access_token'),
+          credentialsKey,
         ),
         channel.matrix_room_id ?? '',
         plainText,
@@ -40,6 +43,7 @@ export async function dispatchNotification(
         decrypt(
           channel.discord_webhook_url ?? '',
           credentialContext(channel.user_external_id, 'discord_webhook_url'),
+          credentialsKey,
         ),
         plainText,
       );

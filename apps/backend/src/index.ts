@@ -1,190 +1,84 @@
-// IMPORTANT: Import Sentry instrumentation first, before any other modules
-// This ensures pg and other modules are properly instrumented
-import './instrument.js';
-
-import { ValidationError as KitValidationError } from '@datenknoten/kit';
-import type { ErrorResponse } from '@freundebuch/shared/index.js';
+import { exitWith } from '@datenknoten/kit/cli';
+import { createRootLogger } from '@datenknoten/kit/logger';
 import { serve } from '@hono/node-server';
 import * as Sentry from '@sentry/node';
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import { secureHeaders } from 'hono/secure-headers';
-import type pg from 'pg';
-import { httpLoggerMiddleware } from './middleware/http-logger.js';
-import { sentryTracingMiddleware } from './middleware/sentry.js';
-import addressLookupRoutes from './routes/address-lookup.js';
-import appPasswordsRoutes from './routes/app-passwords.js';
-import authRoutes from './routes/auth.js';
-import circlesRoutes from './routes/circles.js';
-import collectivesRoutes from './routes/collectives.js';
-import encountersRoutes from './routes/encounters.js';
-import friendsRoutes from './routes/friends/index.js';
-import healthRoutes from './routes/health.js';
-import notificationChannelsRoutes from './routes/notification-channels.js';
-import sentryTunnelRoutes from './routes/sentry-tunnel.js';
-import uploadsRoutes from './routes/uploads.js';
-import usersRoutes from './routes/users.js';
-import type { AppContext } from './types/context.js';
+import { createApp } from './app.js';
+import { loadConfig } from './config.js';
+import { createAuth, createAuthPool } from './lib/auth.js';
 import { initializeAddressCaches } from './utils/cache.js';
-import { getConfig } from './utils/config.js';
-import { encryptLegacyNotificationCredentials } from './utils/credentials-crypto.js';
-import { checkDatabaseConnection, createPool, setupGracefulShutdown } from './utils/db.js';
-import { DatabaseConnectionError, isAppError, toError, ValidationError } from './utils/errors.js';
-import { createLogger } from './utils/logger.js';
+import {
+  deriveCredentialsKey,
+  encryptLegacyNotificationCredentials,
+} from './utils/credentials-crypto.js';
+import { createPool, setupGracefulShutdown } from './utils/db.js';
+import { toError } from './utils/errors.js';
+import { LOG_REDACT_PATHS } from './utils/logger.js';
 import { setupCleanupScheduler, setupNotificationScheduler } from './utils/scheduler.js';
 
-Error.stackTraceLimit = 100;
+const PRETTY_TRANSPORT = {
+  target: 'pino-pretty',
+  options: {
+    colorize: true,
+    translateTime: "yyyy-mm-dd'T'HH:MM:ss.l'Z'",
+  },
+};
 
-export async function createApp(pool: pg.Pool) {
-  const config = getConfig();
-  const app = new Hono<AppContext>();
-  const logger = createLogger();
+async function main() {
+  Error.stackTraceLimit = 100;
 
-  const dbConnected = await checkDatabaseConnection(pool);
-
-  if (dbConnected === false) {
-    throw new DatabaseConnectionError();
-  }
-
-  // Global context middleware - inject db and logger
-  app.use('*', async (c, next) => {
-    const requestId = crypto.randomUUID();
-    c.set('db', pool);
-    c.set('logger', logger.child({ requestId }));
-    // Surface the correlation id so clients/frontend can quote it, and tag the
-    // Sentry scope so captured errors are searchable by request id.
-    c.header('X-Request-Id', requestId);
-    Sentry.setTag('request_id', requestId);
-    await next();
+  const config = loadConfig();
+  const logger = createRootLogger(config, {
+    redactPaths: LOG_REDACT_PATHS,
+    ...(config.ENV === 'development' ? { transport: PRETTY_TRANSPORT } : {}),
   });
-
-  // Middleware
-  app.use('*', httpLoggerMiddleware);
-  app.use(
-    '*',
-    secureHeaders({
-      // Allow cross-origin resource loading (needed for frontend to load images from backend)
-      crossOriginResourcePolicy: 'cross-origin',
-    }),
-  );
-  app.use(
-    '*',
-    cors({
-      origin: config.FRONTEND_URL,
-      credentials: true,
-      // Allow Sentry tracing headers for distributed tracing
-      allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage'],
-      exposeHeaders: ['sentry-trace', 'baggage'],
-    }),
-  );
-
-  // Sentry tracing middleware - must come after CORS to access headers
-  // This continues traces from the frontend for distributed tracing
-  app.use('*', sentryTracingMiddleware);
-
-  // Routes
-  app.route('/health', healthRoutes);
-  app.route('/api/auth', authRoutes);
-  app.route('/api/users', usersRoutes);
-  app.route('/api/friends', friendsRoutes);
-  app.route('/api/circles', circlesRoutes);
-  app.route('/api/collectives', collectivesRoutes);
-  app.route('/api/encounters', encountersRoutes);
-  app.route('/api/uploads', uploadsRoutes);
-  app.route('/api/app-passwords', appPasswordsRoutes);
-  app.route('/api/sentry-tunnel', sentryTunnelRoutes);
-  app.route('/api/address-lookup', addressLookupRoutes);
-  app.route('/api/notification-channels', notificationChannelsRoutes);
-
-  // Error handling
-  app.onError((thrown, c) => {
-    // Shared parsers throw kit's ValidationError; answer it like the local one.
-    const err =
-      thrown instanceof KitValidationError
-        ? new ValidationError(thrown.message, thrown.details)
-        : thrown;
-    // Fall back to a fresh logger: an error thrown before the context
-    // middleware runs would leave c.get('logger') undefined.
-    const pinoLogger = c.get('logger') ?? createLogger();
-
-    // Single Sentry capture point for the whole app: report unexpected errors
-    // and 5xx AppErrors, but not expected 4xx (validation, not-found, etc.).
-    if (isAppError(err)) {
-      pinoLogger[err.statusCode >= 500 ? 'error' : 'warn']({ err }, err.message);
-      if (err.statusCode >= 500) {
-        Sentry.captureException(err, {
-          extra: { path: c.req.path, method: c.req.method },
-        });
-      }
-      const body: ErrorResponse = { error: err.message };
-      if (err.code) body.code = err.code;
-      if (err.details !== undefined) body.details = err.details;
-      return c.json(body, err.statusCode);
-    }
-
-    const normalizedErr = toError(err);
-    pinoLogger.error({ err: normalizedErr }, 'Unhandled error');
-    Sentry.captureException(normalizedErr, {
-      extra: { path: c.req.path, method: c.req.method },
-    });
-    return c.json<ErrorResponse>({ error: 'Internal Server Error' }, 500);
-  });
-
-  // 404 handler
-  app.notFound((c) => {
-    return c.json({ error: 'Not Found' }, 404);
-  });
-
-  return app;
-}
-
-export async function startServer() {
-  const config = getConfig();
-  const pool = createPool();
-  const app = await createApp(pool);
-  const port = config.PORT;
-  const pinoLogger = createLogger();
 
   // Last-resort handlers so an unhandled rejection / uncaught exception is
   // logged and reported to Sentry instead of silently killing the process.
   process.on('unhandledRejection', (reason) => {
     const err = toError(reason);
-    pinoLogger.error({ err }, 'Unhandled promise rejection');
+    logger.error({ err }, 'Unhandled promise rejection');
     Sentry.captureException(err);
   });
   process.on('uncaughtException', (err) => {
-    pinoLogger.error({ err }, 'Uncaught exception');
+    logger.error({ err }, 'Uncaught exception');
     Sentry.captureException(err);
   });
 
-  // Initialize address caches with database pool for persistence
-  initializeAddressCaches(pool, pinoLogger);
+  const pool = createPool({ config, logger: logger.child({ module: 'db' }) });
+  const authPool = createAuthPool({ config, logger: logger.child({ module: 'auth-db' }) });
+  const auth = createAuth({ config, pool: authPool, logger });
+  const app = await createApp({ config, logger, pool, authPool, auth });
+
+  initializeAddressCaches(pool, logger);
 
   // One-shot conversion of credentials written before encryption at rest
   // existed. Idempotent, so it stays harmless on every later boot.
-  await encryptLegacyNotificationCredentials(pool, pinoLogger);
+  const credentialsKey = deriveCredentialsKey(config.BETTER_AUTH_SECRET);
+  await encryptLegacyNotificationCredentials(
+    pool,
+    logger.child({ module: 'credentials' }),
+    credentialsKey,
+  );
 
-  // Setup cleanup scheduler for expired sessions, tokens, and cache
-  const cleanupTask = setupCleanupScheduler(pool, pinoLogger);
+  const schedulerLogger = logger.child({ module: 'scheduler' });
+  const cleanupTask = setupCleanupScheduler(pool, schedulerLogger);
+  const notificationTask = setupNotificationScheduler({
+    pool,
+    logger: schedulerLogger,
+    credentialsKey,
+    config,
+  });
 
-  // Setup notification scheduler for daily date digest messages
-  const notificationTask = setupNotificationScheduler(pool, pinoLogger);
-
-  pinoLogger.info(`Starting server on port ${port}`);
+  logger.info({ port: config.PORT }, 'Starting server');
 
   const server = serve({
     fetch: app.fetch,
-    port,
+    port: config.PORT,
   });
 
   // Register graceful shutdown now that the server and cron tasks exist, so
   // SIGTERM/SIGINT stops cron, drains in-flight requests, then closes the pool.
-  setupGracefulShutdown({ pool, server, tasks: [cleanupTask, notificationTask] });
-
-  return { app, port, logger: pinoLogger };
+  setupGracefulShutdown({ pool, logger, server, tasks: [cleanupTask, notificationTask] });
 }
 
-// Only start server if this file is being run directly
-if (import.meta.main === true) {
-  startServer();
-}
+void main().catch(exitWith);

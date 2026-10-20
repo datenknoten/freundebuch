@@ -1,5 +1,5 @@
 import type { Logger } from 'pino';
-import type { Config } from '../utils/config.js';
+import type { Config } from '../config.js';
 import { ConfigurationError } from '../utils/errors.js';
 
 /**
@@ -43,11 +43,22 @@ export interface Mailer {
   send(to: string, subject: string, text: string, html?: string): Promise<void>;
 }
 
+export type MailConfig = Pick<
+  Config,
+  | 'FRONTEND_URL'
+  | 'SMTP_FROM'
+  | 'SMTP_HOST'
+  | 'SMTP_PASSWORD'
+  | 'SMTP_PORT'
+  | 'SMTP_SECURE'
+  | 'SMTP_USER'
+>;
+
 /**
  * True when the deployment can send mail. Single source of truth for
  * `createMailer`'s null decision and for the readiness probe's `emailEnabled`.
  */
-export function isMailConfigured(config: Config): boolean {
+export function isMailConfigured(config: Pick<Config, 'SMTP_HOST'>): boolean {
   return config.SMTP_HOST !== undefined && config.SMTP_HOST !== '';
 }
 
@@ -99,7 +110,7 @@ async function getTransport(options: SmtpTransportOptions): Promise<SmtpTranspor
   return transport;
 }
 
-function defaultFrom(config: Config): string {
+function defaultFrom(config: MailConfig): string {
   try {
     return `Freundebuch <no-reply@${new URL(config.FRONTEND_URL).hostname}>`;
   } catch {
@@ -110,7 +121,7 @@ function defaultFrom(config: Config): string {
 /**
  * @returns a mailer, or `null` when SMTP_HOST is unset.
  */
-export function createMailer(config: Config, logger: Logger): Mailer | null {
+export function createMailer(config: MailConfig, logger: Logger): Mailer | null {
   const host = config.SMTP_HOST;
   if (host === undefined || host === '') {
     return null;

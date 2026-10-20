@@ -47,7 +47,7 @@ export class PostGISAddressClient {
 
       return result.rows.map((row) => ({ city: row.city }));
     } catch (error) {
-      this.logger.error({ error, countryCode, postalCode }, 'PostGIS cities query failed');
+      this.logger.error({ err: error, countryCode, postalCode }, 'PostGIS cities query failed');
       throw error;
     }
   }
@@ -82,7 +82,7 @@ export class PostGISAddressClient {
 
       return result.rows.map((row) => ({ postalCode: row.postal_code, city: row.city }));
     } catch (error) {
-      this.logger.error({ error, countryCode, prefix }, 'PostGIS postal code search failed');
+      this.logger.error({ err: error, countryCode, prefix }, 'PostGIS postal code search failed');
       throw error;
     }
   }
@@ -108,7 +108,7 @@ export class PostGISAddressClient {
 
       return result.rows.map((row) => ({ name: row.street }));
     } catch (error) {
-      this.logger.error({ error, countryCode, postalCode }, 'PostGIS streets query failed');
+      this.logger.error({ err: error, countryCode, postalCode }, 'PostGIS streets query failed');
       throw error;
     }
   }
@@ -143,7 +143,7 @@ export class PostGISAddressClient {
       return houseNumbers;
     } catch (error) {
       this.logger.error(
-        { error, countryCode, postalCode, street },
+        { err: error, countryCode, postalCode, street },
         'PostGIS house numbers query failed',
       );
       throw error;
@@ -164,7 +164,7 @@ export class PostGISAddressClient {
       );
       return Number.parseInt(result.rows[0]?.count || '0', 10) > 0;
     } catch (error) {
-      this.logger.debug({ error }, 'PostGIS availability check failed');
+      this.logger.debug({ err: error }, 'PostGIS availability check failed');
       return false;
     }
   }
@@ -184,7 +184,7 @@ export class PostGISAddressClient {
       );
       return result.rows[0]?.exists || false;
     } catch (error) {
-      this.logger.debug({ error, countryCode }, 'PostGIS country check failed');
+      this.logger.debug({ err: error, countryCode }, 'PostGIS country check failed');
       return false;
     }
   }
@@ -231,7 +231,7 @@ export class PostGISAddressClient {
       return { latitude, longitude };
     } catch (error) {
       this.logger.error(
-        { error, countryCode, postalCode, city, street },
+        { err: error, countryCode, postalCode, city, street },
         'PostGIS geocode query failed',
       );
       return null;
@@ -274,7 +274,7 @@ export class PostGISAddressClient {
         streetCount: Number.parseInt(row.street_count, 10),
       }));
     } catch (error) {
-      this.logger.error({ error }, 'PostGIS stats query failed');
+      this.logger.error({ err: error }, 'PostGIS stats query failed');
       return [];
     }
   }
