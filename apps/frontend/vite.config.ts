@@ -25,6 +25,14 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
+  resolve: {
+    alias: [
+      // The package's Node entry requires every locale through a dynamic `require`, which the SSR
+      // bundle cannot resolve, so loading hooks.server.ts at build time crashes. $shared registers
+      // the locales it needs itself, so the plain entry (the browser one) serves both sides.
+      { find: /^i18n-iso-countries$/, replacement: 'i18n-iso-countries/index.js' },
+    ],
+  },
   build: {
     // Generate sourcemaps for Sentry (hidden = not referenced in JS files)
     sourcemap: 'hidden',

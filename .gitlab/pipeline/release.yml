@@ -15,7 +15,7 @@ release:
     # semantic-release needs every tag to work out the last release.
     GIT_DEPTH: 0
     HK: "0"
-    VITE_API_URL: ""
+    PUBLIC_API_URL: ""
   script:
     # The trigger below must not depend on this exit code: @semantic-release/gitlab's
     # success step can fail (MR/issue comment API errors) after tag, release commit

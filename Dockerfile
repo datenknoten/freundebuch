@@ -167,11 +167,11 @@ RUN aube --filter @freundebuch/mcp-server run build
 FROM shared-builder AS frontend-builder
 
 COPY apps/frontend ./apps/frontend
-# Build static frontend - VITE_API_URL is empty for same-origin requests
-ENV VITE_API_URL=""
+# Build static frontend - PUBLIC_API_URL is empty for same-origin requests
+ENV PUBLIC_API_URL=""
 # Sentry DSN is passed as build arg (optional)
-ARG VITE_SENTRY_DSN=""
-ENV VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+ARG PUBLIC_SENTRY_DSN=""
+ENV PUBLIC_SENTRY_DSN=${PUBLIC_SENTRY_DSN}
 RUN aube --filter @freundebuch/frontend run build
 
 # ============================================

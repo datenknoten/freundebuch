@@ -49,10 +49,10 @@ COPY packages/shared ./packages/shared
 COPY apps/frontend ./apps/frontend
 
 # Build shared package and frontend
-# VITE_API_URL is empty for same-origin requests via nginx proxy
-ARG VITE_SENTRY_DSN=""
-ENV VITE_API_URL=""
-ENV VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+# PUBLIC_API_URL is empty for same-origin requests via nginx proxy
+ARG PUBLIC_SENTRY_DSN=""
+ENV PUBLIC_API_URL=""
+ENV PUBLIC_SENTRY_DSN=${PUBLIC_SENTRY_DSN}
 
 RUN aube --filter @freundebuch/shared run build && \
     aube --filter @freundebuch/frontend run build

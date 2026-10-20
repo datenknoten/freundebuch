@@ -1,23 +1,23 @@
+import { parseWith } from '@datenknoten/kit/schema';
 import * as Sentry from '@sentry/sveltekit';
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
+import { loadServerConfig, type ServerConfig } from '$lib/server/config.js';
+import { UserResponseSchema } from '$shared';
 
-// Initialize Sentry for server-side (SSR/prerendering)
-const SENTRY_DSN = process.env.SENTRY_DSN;
+let config: ServerConfig;
 
-if (SENTRY_DSN) {
-  Sentry.init({
-    dsn: SENTRY_DSN,
-    environment: process.env.NODE_ENV || 'development',
-
-    // Performance monitoring
-    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-  });
+export function init() {
+  config = loadServerConfig();
+  if (config.SENTRY_DSN !== undefined) {
+    Sentry.init({
+      dsn: config.SENTRY_DSN,
+      environment: config.NODE_ENV,
+      tracesSampleRate: config.NODE_ENV === 'production' ? 0.1 : 1.0,
+    });
+  }
 }
-
-// API URL for server-side calls
-const API_URL = process.env.API_URL || 'http://localhost:8787';
 
 /**
  * Check if user has completed onboarding
@@ -30,20 +30,20 @@ const API_URL = process.env.API_URL || 'http://localhost:8787';
  *   will be blocked by the backend API which is the authoritative enforcement
  * - This prevents users from being locked out during temporary outages
  */
-async function checkOnboardingStatus(cookie: string): Promise<boolean> {
+async function checkOnboardingStatus(apiUrl: string, cookie: string) {
   try {
-    const response = await fetch(`${API_URL}/api/users/me`, {
+    const response = await fetch(`${apiUrl}/api/users/me`, {
       headers: {
         Cookie: cookie,
       },
     });
 
-    if (!response.ok) {
+    if (response.ok === false) {
       // If check fails, assume user is onboarded (fail open for UX)
       return true;
     }
 
-    const user = await response.json();
+    const user = parseWith(UserResponseSchema, await response.json());
     return user.hasCompletedOnboarding === true;
   } catch {
     // On error, assume user is onboarded (fail open for UX)
@@ -59,6 +59,8 @@ async function checkOnboardingStatus(cookie: string): Promise<boolean> {
  * Better Auth's session cookie to determine authentication state.
  */
 const authHandle: Handle = async ({ event, resolve }) => {
+  event.locals.config = config;
+
   // Better Auth session cookie name
   const sessionCookie =
     event.cookies.get('better-auth.session_token') ||
@@ -96,7 +98,10 @@ const authHandle: Handle = async ({ event, resolve }) => {
   if (requiresOnboarding) {
     // Forward all cookies to the backend for session-based auth
     const cookieHeader = event.request.headers.get('cookie') || '';
-    const hasCompletedOnboarding = await checkOnboardingStatus(cookieHeader);
+    const hasCompletedOnboarding = await checkOnboardingStatus(
+      event.locals.config.API_URL,
+      cookieHeader,
+    );
     if (!hasCompletedOnboarding) {
       throw redirect(303, '/onboarding');
     }

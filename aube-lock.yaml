@@ -238,6 +238,9 @@ importers:
       markdown-it:
         specifier: 14.3.1
         version: 14.3.1
+      pino:
+        specifier: 10.4.0
+        version: 10.4.0
       svelte-easy-crop:
         specifier: 5.0.0
         version: 5.0.0(svelte@5.56.4)

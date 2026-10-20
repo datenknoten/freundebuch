@@ -79,7 +79,7 @@ src/
 - All API calls go through `lib/api/` modules
 - Use `ApiError` class for error handling
 - Token refresh handled automatically
-- Same-origin requests in production (empty `VITE_API_URL`)
+- Same-origin requests in production (empty `PUBLIC_API_URL`)
 
 ### Data-Driven Sections
 

@@ -1,9 +1,13 @@
 import type { ErrorResponse } from '$shared';
 import { notifyUnauthorized } from '../stores/session.js';
 
-// In production with single-domain deployment, use empty string for same-origin requests.
-// In development, VITE_API_URL can point to the backend server if needed.
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
+// Empty means same-origin requests, as in the single-domain production deployment.
+let apiBaseUrl = '';
+
+/** The root layout load calls this once with the client config, before the first request. */
+export function configureApiBaseUrl(baseUrl: string) {
+  apiBaseUrl = baseUrl;
+}
 
 /**
  * Custom error class for API errors
@@ -31,7 +35,7 @@ export async function apiRequest<T>(
   // Disabled on the replay itself so a still-failing request can't loop.
   retryOnUnauthorized = true,
 ): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${apiBaseUrl}${endpoint}`;
 
   const headers: Record<string, string> = {
     ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),

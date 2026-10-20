@@ -22,6 +22,7 @@
     "isomorphic-dompurify": "2.35.0",
     "leaflet": "1.9.4",
     "markdown-it": "14.3.1",
+    "pino": "10.4.0",
     "svelte-easy-crop": "5.0.0",
     "svelte-heros-v2": "3.0.1",
     "svelte-i18next": "2.2.2"

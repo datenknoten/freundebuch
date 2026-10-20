@@ -29,7 +29,7 @@
         IMG="$CI_REGISTRY_IMAGE/$IMAGE"
         set --
         # nginx and all-in-one bake a frontend and take its Sentry build arg.
-        if [ "$IMAGE" = "nginx" ] || [ "$IMAGE" = "all-in-one" ]; then set -- --build-arg "VITE_SENTRY_DSN=$VITE_SENTRY_DSN"; fi
+        if [ "$IMAGE" = "nginx" ] || [ "$IMAGE" = "all-in-one" ]; then set -- --build-arg "PUBLIC_SENTRY_DSN=$VITE_SENTRY_DSN"; fi
         if [ -n "$TARGET" ]; then set -- "$@" --target "$TARGET"; fi
         echo "=== building $IMAGE ($ARCH) ==="
         # provenance/sbom off: they turn a single-platform build into a manifest
