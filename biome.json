@@ -1,14 +1,8 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "extends": ["@datenknoten/biome-config/biome"],
   "files": {
-    "ignoreUnknown": false,
     "includes": [
-      "**",
       "!**/node_modules",
       "!**/dist",
       "!**/build",
@@ -20,112 +14,13 @@
       "!**/editor/inline-preview"
     ]
   },
-  "formatter": {
-    "enabled": true,
-    "formatWithErrors": false,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineEnding": "lf",
-    "lineWidth": 100
-  },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "complexity": {
-        "noExtraBooleanCast": "error",
-        "noUselessCatch": "error",
-        "noAdjacentSpacesInRegex": "error",
-        "noArguments": "error"
-      },
-      "correctness": {
-        "noConstAssign": "error",
-        "noConstantCondition": "error",
-        "noEmptyCharacterClassInRegex": "error",
-        "noEmptyPattern": "error",
-        "noGlobalObjectCalls": "error",
-        "noInnerDeclarations": "error",
-        "noInvalidConstructorSuper": "error",
-        "noNonoctalDecimalEscape": "error",
-        "noPrecisionLoss": "error",
-        "noSelfAssign": "error",
-        "noSetterReturn": "error",
-        "noSwitchDeclarations": "error",
-        "noUndeclaredVariables": "error",
-        "noUnreachable": "error",
-        "noUnreachableSuper": "error",
-        "noUnsafeFinally": "error",
-        "noUnsafeOptionalChaining": "error",
-        "noUnusedLabels": "error",
-        "noUnusedVariables": "error",
-        "useIsNan": "error",
-        "useValidForDirection": "error",
-        "useYield": "error",
-        "useImportExtensions": {
-          "level": "error",
-          "options": {
-            "forceJsExtensions": true
-          }
-        },
-        "noInvalidBuiltinInstantiation": "error",
-        "useValidTypeof": "error"
-      },
-      "security": {
-        "noDangerouslySetInnerHtml": "error"
-      },
-      "style": {
-        "useConst": "error",
-        "useTemplate": "error"
-      },
-      "suspicious": {
-        "noAsyncPromiseExecutor": "error",
-        "noCatchAssign": "error",
-        "noClassAssign": "error",
-        "noCompareNegZero": "error",
-        "noControlCharactersInRegex": "error",
-        "noDebugger": "error",
-        "noDoubleEquals": "error",
-        "noDuplicateCase": "error",
-        "noDuplicateClassMembers": "error",
-        "noDuplicateObjectKeys": "error",
-        "noDuplicateParameters": "error",
-        "noEmptyBlockStatements": "error",
-        "noExplicitAny": "error",
-        "noExtraNonNullAssertion": "error",
-        "noFallthroughSwitchClause": "error",
-        "noFunctionAssign": "error",
-        "noGlobalAssign": "error",
-        "noImportAssign": "error",
-        "noMisleadingCharacterClass": "error",
-        "noPrototypeBuiltins": "error",
-        "noRedeclare": "error",
-        "noShadowRestrictedNames": "error",
-        "noUnsafeNegation": "error",
-        "useGetterReturn": "error",
-        "noWith": "error",
-        "noVar": "error"
-      }
-    }
-  },
   "css": {
     "parser": {
       "tailwindDirectives": true
     }
   },
   "javascript": {
-    "globals": ["__APP_VERSION__"],
-    "formatter": {
-      "jsxQuoteStyle": "double",
-      "quoteProperties": "asNeeded",
-      "trailingCommas": "all",
-      "semicolons": "always",
-      "arrowParentheses": "always",
-      "bracketSpacing": true,
-      "bracketSameLine": false,
-      "quoteStyle": "single",
-      "attributePosition": "auto"
-    }
+    "globals": ["__APP_VERSION__"]
   },
   "overrides": [
     {
@@ -136,26 +31,28 @@
             "useConst": "off"
           },
           "correctness": {
-            "useImportExtensions": "off",
             "noUnusedVariables": "off",
-            "noUndeclaredVariables": "off",
-            "noUnusedImports": "off"
+            "noUnusedImports": "off",
+            "noUndeclaredVariables": "off"
           }
         }
       }
     },
     {
-      "includes": ["**/i18n/**/*.ts", "**/shortcuts/**/index.ts", "**/components/ui/index.ts"],
+      "includes": ["database/migrations/**"],
       "linter": {
         "rules": {
-          "correctness": {
-            "useImportExtensions": "off"
+          "style": {
+            "useFilenamingConvention": "off"
           }
         }
       }
     },
     {
-      "includes": ["apps/frontend/**/*.{test,spec}.ts"],
+      "includes": ["dangerfile.ts", "packages/danger/**"],
+      "javascript": {
+        "globals": ["danger", "fail", "warn", "message", "markdown"]
+      },
       "linter": {
         "rules": {
           "correctness": {
@@ -170,32 +67,6 @@
         "rules": {
           "suspicious": {
             "noUnknownAtRules": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["apps/backend/tests/**/*"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noExplicitAny": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["dangerfile.ts", "packages/danger/**/*.ts"],
-      "javascript": {
-        "globals": ["danger", "fail", "warn", "message", "markdown"]
-      },
-      "linter": {
-        "rules": {
-          "correctness": {
-            "useImportExtensions": "off"
-          },
-          "style": {
-            "useNodejsImportProtocol": "off"
           }
         }
       }

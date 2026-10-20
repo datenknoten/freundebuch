@@ -89,11 +89,12 @@ describe('subresource descriptor i18n keys', () => {
       ['deleteDescriptionKey', descriptor.deleteDescriptionKey],
     ];
 
-    it.each(
-      keys.filter((entry): entry is [string, string] => entry[1] !== undefined),
-    )('%s resolves to a string', (_prop, key) => {
-      expect(resolve(key), key).toBeTypeOf('string');
-    });
+    it.each(keys.filter((entry): entry is [string, string] => entry[1] !== undefined))(
+      '%s resolves to a string',
+      (_prop, key) => {
+        expect(resolve(key), key).toBeTypeOf('string');
+      },
+    );
   });
 
   it.each(menuOptions)('%s labelKey resolves to a string', (_name, option) => {

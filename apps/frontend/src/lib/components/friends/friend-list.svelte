@@ -37,7 +37,6 @@ import {
   toFriendGridItem,
 } from '$shared';
 import FacetChips from '../search/facet-chips.svelte';
-// biome-ignore lint/style/useImportType: FacetDropdown is used both as type and value (bind:this)
 import FacetDropdown from '../search/facet-dropdown.svelte';
 import ColumnChooser from './column-chooser.svelte';
 import FriendGrid from './friend-grid.svelte';

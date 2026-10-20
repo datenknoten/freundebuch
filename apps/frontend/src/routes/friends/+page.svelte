@@ -3,7 +3,6 @@ import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-// biome-ignore lint/style/useImportType: FriendList is used both as type and value (bind:this)
 import FriendList from '$lib/components/friends/friend-list.svelte';
 import { Button, PageShell } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';

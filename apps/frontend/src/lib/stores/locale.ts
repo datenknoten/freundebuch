@@ -97,4 +97,4 @@ export const isLocaleInitialized = derived(locale, ($locale) => $locale.isInitia
 /**
  * Export supported languages for use in UI
  */
-export { supportedLanguages, type SupportedLanguage };
+export { type SupportedLanguage, supportedLanguages };

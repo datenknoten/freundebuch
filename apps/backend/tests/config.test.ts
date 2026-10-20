@@ -38,15 +38,15 @@ describe('getConfig', () => {
       expect(() => getConfig()).toThrow('openssl rand -hex 32');
     });
 
-    it.each([
-      'your-secret',
-      'REPLACE',
-    ])('should reject the %s placeholder too', (placeholder: string) => {
-      vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
-      vi.stubEnv('BETTER_AUTH_SECRET', `prefix-${placeholder}-suffix-padding-to-32-chars`);
+    it.each(['your-secret', 'REPLACE'])(
+      'should reject the %s placeholder too',
+      (placeholder: string) => {
+        vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');
+        vi.stubEnv('BETTER_AUTH_SECRET', `prefix-${placeholder}-suffix-padding-to-32-chars`);
 
-      expect(() => getConfig()).toThrow('Configuration validation failed');
-    });
+        expect(() => getConfig()).toThrow('Configuration validation failed');
+      },
+    );
 
     it('should succeed with only required fields', () => {
       vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/test');

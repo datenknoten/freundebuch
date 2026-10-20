@@ -24,7 +24,6 @@ describe('rate limiting', () => {
   function appFor(userId: string | undefined): Hono<AppContext> {
     const app = new Hono<AppContext>();
     app.use('*', async (c, next) => {
-      // biome-ignore lint/suspicious/noExplicitAny: minimal logger stand-in for the middleware
       c.set('logger', silentLogger as any);
       if (userId !== undefined) {
         c.set('user', { userId, email: `${userId}@example.com` });
@@ -97,7 +96,6 @@ describe('rate limiting', () => {
     function tunnelApp(): Hono<AppContext> {
       const app = new Hono<AppContext>();
       app.use('*', async (c, next) => {
-        // biome-ignore lint/suspicious/noExplicitAny: minimal logger stand-in for the middleware
         c.set('logger', silentLogger as any);
         return next();
       });

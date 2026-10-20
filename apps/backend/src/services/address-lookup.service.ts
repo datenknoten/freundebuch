@@ -15,7 +15,7 @@ export interface PostalCodeInfo {
   city: string;
 }
 
-export type { Street, HouseNumber };
+export type { HouseNumber, Street };
 
 /** DACH countries supported by PostGIS address data */
 const DACH_COUNTRIES = ['DE', 'AT', 'CH'];
