@@ -13,7 +13,9 @@ const i18n = createI18n();
 const category = $derived($filterModeCategory);
 const prefix = $derived($filterModePrefix);
 const categoryLabel = $derived(
-  category ? $i18n.t(FILTER_FIELD_I18N_KEYS[category] ?? category) : null,
+  category !== null && category !== undefined
+    ? $i18n.t(FILTER_FIELD_I18N_KEYS[category] ?? category)
+    : null,
 );
 </script>
 

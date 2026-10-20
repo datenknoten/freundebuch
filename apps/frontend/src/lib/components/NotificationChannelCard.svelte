@@ -1,9 +1,9 @@
 <script lang="ts">
+import TestMessageButton from '$lib/components/TestMessageButton.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { NotificationChannelResponse } from '$shared';
-import TestMessageButton from './TestMessageButton.svelte';
 
 const i18n = createI18n();
 
@@ -23,7 +23,7 @@ let { channel, ontoggle, onedit, ondelete }: Props = $props();
  */
 const platformLabel = $derived($i18n.t(`profile.messagingReminders.platform.${channel.platform}`));
 
-const credentialSummary = $derived(() => {
+function computeCredentialSummary() {
   switch (channel.platform) {
     case 'telegram':
       return channel.credentials.chatId === undefined
@@ -36,17 +36,19 @@ const credentialSummary = $derived(() => {
     default:
       return '';
   }
-});
+}
+
+const credentialSummary = $derived.by(computeCredentialSummary);
 
 let confirmingDelete = $state(false);
 
 function handleToggle() {
-  ontoggle(channel.externalId, !channel.isEnabled);
+  ontoggle(channel.externalId, channel.isEnabled === false);
 }
 
 // The list owns the request and its error banner; ConfirmDialog only needs a
 // settled promise to close itself on.
-function handleDelete(): Promise<void> {
+function handleDelete() {
   ondelete(channel.externalId);
   return Promise.resolve();
 }
@@ -65,7 +67,7 @@ function handleDelete(): Promise<void> {
         {platformLabel}
       </div>
       <div class="text-sm font-body text-gray-500 truncate">
-        {credentialSummary()}
+        {credentialSummary}
       </div>
     </div>
   </div>

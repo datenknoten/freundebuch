@@ -3,14 +3,14 @@ import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { getAppContext } from '$lib/app-context.js';
+import EncounterTypeIcon from '$lib/components/encounters/EncounterTypeIcon.svelte';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
+import KeyboardHintBadge from '$lib/components/KeyboardHintBadge.svelte';
 import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import type { EncounterListItemResponse } from '$shared';
-import FriendAvatar from '../friends/FriendAvatar.svelte';
-import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
-import EncounterTypeIcon from './EncounterTypeIcon.svelte';
-import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display';
+import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display.js';
 
 const keyboardModes = getAppContext().stores.keyboardModes;
 const isOpenEncounterModeActive = keyboardModes.encounters.isActive;
@@ -34,8 +34,7 @@ let displayTitle = $derived(encounterDisplayTitle($i18n.t, encounter));
 let keyHint = $derived(index === undefined ? '' : getKeyboardHint(index));
 let openShortcut = $derived(keyHint.length > 0 ? `o ${keyHint}` : undefined);
 
-// Format date for display
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string) {
   const date = new Date(dateStr);
   return date.toLocaleDateString(undefined, {
     year: 'numeric',

@@ -3,7 +3,7 @@ import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
+import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing.js';
 
 const notificationChannelsApi = getAppContext().api.notificationChannels;
 const i18n = createI18n();
@@ -28,9 +28,11 @@ async function handleTest() {
   } finally {
     isLoading = false;
   }
-  setTimeout(() => {
-    result = null;
-  }, TRANSIENT_FEEDBACK_MS);
+  setTimeout(clearResult, TRANSIENT_FEEDBACK_MS);
+}
+
+function clearResult() {
+  result = null;
 }
 </script>
 

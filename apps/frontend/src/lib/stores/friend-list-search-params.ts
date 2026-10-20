@@ -8,7 +8,7 @@ export function buildSearchParams(state: FriendListFilterState) {
     params.set('q', query);
   }
   for (const [key, values] of Object.entries(state.filters)) {
-    if (Array.isArray(values) && values.length > 0) {
+    if (Array.isArray(values) === true && values.length > 0) {
       params.set(key, values.join(','));
     }
   }

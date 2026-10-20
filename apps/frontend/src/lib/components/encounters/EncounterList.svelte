@@ -8,6 +8,7 @@ import { goto } from '$app/navigation';
 import type { EncounterListParams } from '$lib/api/encounters.js';
 import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
+import EncounterCard from '$lib/components/encounters/EncounterCard.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
@@ -15,8 +16,7 @@ import SearchInput from '$lib/components/ui/SearchInput.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { ENCOUNTER_TYPES, type EncounterType } from '$shared';
-import EncounterCard from './EncounterCard.svelte';
-import { encounterTypeLabel } from './encounter-display';
+import { encounterTypeLabel } from './encounter-display.js';
 
 const visibleEncounterIds = getAppContext().stores.keyboardModes.encounters.visibleItems;
 
@@ -25,9 +25,7 @@ const encounters = getAppContext().stores.encounters;
 const encountersList = encounters.list;
 
 interface Props {
-  /** Friend ID to filter encounters by */
   friendId?: string;
-  /** Initial search query */
   initialSearch?: string;
 }
 
@@ -50,23 +48,28 @@ let hasActiveFilters = $derived(
   searchQuery.length > 0 || fromDate.length > 0 || toDate.length > 0 || selectedType.length > 0,
 );
 
+function syncVisibleEncounterIds() {
+  visibleEncounterIds.set(encounterItems.map((e) => e.id));
+}
+
 // Update visible encounter IDs for keyboard navigation
-$effect(() => {
-  const ids = encounterItems.map((e) => e.id);
-  visibleEncounterIds.set(ids);
-});
+$effect(syncVisibleEncounterIds);
 
 // Open the first result when pressing Enter in the search box
 function openFirstResult() {
   const first = encounterItems[0];
-  if (!first) return;
+  if (first === undefined) {
+    return;
+  }
   void goto(`/encounters/${first.id}`);
 }
 
-// Load encounters on mount (not in $effect to avoid infinite loop)
-onMount(() => {
+function reloadEncounters() {
   void loadEncounters();
-});
+}
+
+// Load encounters on mount (not in $effect to avoid infinite loop)
+onMount(reloadEncounters);
 
 async function loadEncounters(page = 1) {
   const params: EncounterListParams = {
@@ -74,19 +77,19 @@ async function loadEncounters(page = 1) {
     pageSize: pagination.pageSize,
   };
 
-  if (friendId) {
+  if (friendId !== undefined && friendId !== '') {
     params.friendId = friendId;
   }
-  if (searchQuery.trim()) {
+  if (searchQuery.trim() !== '') {
     params.search = searchQuery.trim();
   }
-  if (fromDate) {
+  if (fromDate !== '') {
     params.fromDate = fromDate;
   }
-  if (toDate) {
+  if (toDate !== '') {
     params.toDate = toDate;
   }
-  if (selectedType) {
+  if (selectedType !== '') {
     params.type = selectedType;
   }
 
@@ -96,13 +99,11 @@ async function loadEncounters(page = 1) {
 function handleSearchInput(value: string) {
   searchQuery = value;
 
-  if (debounceTimer) {
+  if (debounceTimer !== null) {
     clearTimeout(debounceTimer);
   }
 
-  debounceTimer = setTimeout(() => {
-    void loadEncounters();
-  }, 300);
+  debounceTimer = setTimeout(reloadEncounters, 300);
 }
 
 function handleDateChange() {

@@ -12,8 +12,7 @@ export interface DisplayableEncounter {
 
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
 
-/** Localized name of an interaction type, e.g. "Phone call". */
-export function encounterTypeLabel(t: Translate, type: EncounterType): string {
+export function encounterTypeLabel(t: Translate, type: EncounterType) {
   return t(`encounters.types.${type}`);
 }
 
@@ -22,13 +21,11 @@ export function encounterTypeLabel(t: Translate, type: EncounterType): string {
  * the active language; when the list is a preview, the remaining count is rendered
  * via the localized `encounters.friendCountMore` string instead of a hard-coded "+N".
  */
-function friendNames(
-  t: Translate,
-  friends: { displayName: string }[],
-  friendCount?: number,
-): string {
+function friendNames(t: Translate, friends: { displayName: string }[], friendCount?: number) {
   const names = friends.map((f) => f.displayName);
-  if (names.length === 0) return '';
+  if (names.length === 0) {
+    return '';
+  }
 
   const locale = getCurrentLanguage();
   const total = friendCount ?? names.length;
@@ -46,11 +43,15 @@ function friendNames(
  * otherwise derives a label from the interaction type and friends
  * (e.g. "Phone call with Sarah") so calls/messages don't need a title.
  */
-export function encounterDisplayTitle(t: Translate, e: DisplayableEncounter): string {
-  if (e.title && e.title.trim().length > 0) return e.title;
+export function encounterDisplayTitle(t: Translate, e: DisplayableEncounter) {
+  if (e.title !== null && e.title.trim().length > 0) {
+    return e.title;
+  }
   const names = friendNames(t, e.friends, e.friendCount);
   // Without any friend names, fall back to the plain type label to avoid a
   // dangling "Phone call with " (e.g. badge with no friendName prop).
-  if (!names) return encounterTypeLabel(t, e.encounterType);
+  if (names === '') {
+    return encounterTypeLabel(t, e.encounterType);
+  }
   return t(`encounters.derivedTitle.${e.encounterType}`, { names });
 }

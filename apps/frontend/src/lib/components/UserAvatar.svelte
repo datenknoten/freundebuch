@@ -10,9 +10,11 @@ interface Props {
 
 let { email, size = 'md' }: Props = $props();
 
-function getInitial(email: string): string {
+function getInitial(email: string) {
   const localPart = email.split('@')[0];
-  if (!localPart) return '?';
+  if (localPart === undefined || localPart === '') {
+    return '?';
+  }
   return localPart.charAt(0).toUpperCase();
 }
 

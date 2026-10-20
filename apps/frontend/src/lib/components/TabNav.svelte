@@ -20,7 +20,9 @@ let buttons = $state<(HTMLButtonElement | null)[]>([]);
  */
 function handleKeydown(event: KeyboardEvent) {
   const current = tabs.findIndex((tab) => tab.id === active);
-  if (current === -1) return;
+  if (current === -1) {
+    return;
+  }
 
   let next: number;
   if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
@@ -36,7 +38,9 @@ function handleKeydown(event: KeyboardEvent) {
   }
 
   const target = tabs[next];
-  if (target === undefined) return;
+  if (target === undefined) {
+    return;
+  }
   event.preventDefault();
   onselect(target.id);
   buttons[next]?.focus();

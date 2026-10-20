@@ -1,9 +1,9 @@
 <script lang="ts">
 import AlertBanner from '$lib/components/AlertBanner.svelte';
+import Button from '$lib/components/ui/Button.svelte';
+import Modal from '$lib/components/ui/Modal.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import Button from './Button.svelte';
 import type { ButtonVariant } from './button-classes.js';
-import Modal from './Modal.svelte';
 
 interface Props {
   title: string;

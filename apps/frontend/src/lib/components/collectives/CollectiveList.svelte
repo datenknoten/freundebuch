@@ -10,13 +10,13 @@ import { goto } from '$app/navigation';
 import type { CollectiveListParams } from '$lib/api/collectives.js';
 import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
+import CollectiveGrid from '$lib/components/collectives/CollectiveGrid.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import SearchInput from '$lib/components/ui/SearchInput.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import CollectiveGrid from './CollectiveGrid.svelte';
 
 const visibleCollectiveIds = getAppContext().stores.keyboardModes.collectives.visibleItems;
 
@@ -47,19 +47,20 @@ let collectiveItems = $derived($collectivesList);
 let pagination = $derived($collectives.pagination);
 let types = $derived($collectiveTypes);
 
-// Update visible collective IDs for keyboard navigation
-$effect(() => {
-  const ids = collectiveItems.map((c) => c.id);
-  visibleCollectiveIds.set(ids);
-});
+function syncVisibleCollectiveIds() {
+  visibleCollectiveIds.set(collectiveItems.map((c) => c.id));
+}
 
-// Load types and collectives on mount
-onMount(async () => {
+$effect(syncVisibleCollectiveIds);
+
+async function loadInitialData() {
   if (types.length === 0) {
     await collectives.loadTypes();
   }
   await loadCollectives();
-});
+}
+
+onMount(loadInitialData);
 
 async function loadCollectives(page = 1) {
   const params: CollectiveListParams = {
@@ -67,26 +68,28 @@ async function loadCollectives(page = 1) {
     pageSize: pagination.pageSize,
   };
 
-  if (selectedTypeId) {
+  if (selectedTypeId !== '') {
     params.typeId = selectedTypeId;
   }
-  if (searchQuery.trim()) {
+  if (searchQuery.trim() !== '') {
     params.search = searchQuery.trim();
   }
 
   await collectives.loadCollectives(params);
 }
 
+function reloadCollectives() {
+  void loadCollectives();
+}
+
 function handleSearchInput(value: string) {
   searchQuery = value;
 
-  if (debounceTimer) {
+  if (debounceTimer !== null) {
     clearTimeout(debounceTimer);
   }
 
-  debounceTimer = setTimeout(() => {
-    void loadCollectives();
-  }, 300);
+  debounceTimer = setTimeout(reloadCollectives, 300);
 }
 
 function handleTypeChange(e: Event) {
@@ -132,31 +135,33 @@ export function goToNextPage() {
   }
 }
 
+type CollectiveItem = (typeof collectiveItems)[number];
+
+function compareItems(a: CollectiveItem, b: CollectiveItem) {
+  let cmp = 0;
+  switch (sortBy) {
+    case 'name':
+      cmp = a.name.localeCompare(b.name);
+      break;
+    case 'created_at':
+      cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      break;
+    case 'member_count':
+      cmp = a.activeMemberCount - b.activeMemberCount;
+      break;
+  }
+  return sortOrder === 'asc' ? cmp : -cmp;
+}
+
 // Client-side sorted items (until API supports sorting)
-let sortedItems = $derived.by(() => {
-  const items = [...collectiveItems];
-  items.sort((a, b) => {
-    let cmp = 0;
-    switch (sortBy) {
-      case 'name':
-        cmp = a.name.localeCompare(b.name);
-        break;
-      case 'created_at':
-        cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        break;
-      case 'member_count':
-        cmp = a.activeMemberCount - b.activeMemberCount;
-        break;
-    }
-    return sortOrder === 'asc' ? cmp : -cmp;
-  });
-  return items;
-});
+let sortedItems = $derived([...collectiveItems].sort(compareItems));
 
 // Open the first result when pressing Enter in the search box
 function openFirstResult() {
   const first = sortedItems[0];
-  if (!first) return;
+  if (first === undefined) {
+    return;
+  }
   void goto(`/collectives/${first.id}`);
 }
 </script>

@@ -6,7 +6,7 @@ import TabNav from '$lib/components/TabNav.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
+import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing.js';
 
 const currentUser = getAppContext().stores.auth.currentUser;
 
@@ -30,11 +30,13 @@ const tabs = $derived([
   { id: 'other' as const, label: $i18n.t('profile.mcp.tabs.other') },
 ]);
 
+function clearCopied() {
+  copied = false;
+}
+
 function flagCopied() {
   copied = true;
-  setTimeout(() => {
-    copied = false;
-  }, TRANSIENT_FEEDBACK_MS);
+  setTimeout(clearCopied, TRANSIENT_FEEDBACK_MS);
 }
 
 async function copyUrl() {

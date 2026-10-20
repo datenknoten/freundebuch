@@ -26,23 +26,21 @@ function handleCropComplete(event: OnCropCompleteEvent) {
   croppedAreaPixels = event.pixels;
 }
 
-/**
- * Creates an HTMLImageElement from a URL
- */
-function createImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+function createImage(url: string) {
+  function loadImage(
+    resolve: (image: HTMLImageElement) => void,
+    reject: (reason: unknown) => void,
+  ) {
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', (error) => reject(error));
+    image.addEventListener('error', reject);
     image.setAttribute('crossOrigin', 'anonymous');
     image.src = url;
-  });
+  }
+  return new Promise(loadImage);
 }
 
-/**
- * Crops the image using canvas and returns a Blob
- */
-async function getCroppedImg(imageSrc: string, pixelCrop: CropArea): Promise<Blob> {
+async function getCroppedImg(imageSrc: string, pixelCrop: CropArea) {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -51,11 +49,9 @@ async function getCroppedImg(imageSrc: string, pixelCrop: CropArea): Promise<Blo
     throw new InvariantError('The canvas has no 2d context');
   }
 
-  // Set canvas size to the cropped area size
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
 
-  // Draw the cropped image
   ctx.drawImage(
     image,
     pixelCrop.x,
@@ -68,24 +64,23 @@ async function getCroppedImg(imageSrc: string, pixelCrop: CropArea): Promise<Blo
     pixelCrop.height,
   );
 
-  // Return as blob
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob !== null) {
-          resolve(blob);
-        } else {
-          reject(new InvariantError('Canvas is empty'));
-        }
-      },
-      'image/jpeg',
-      0.9,
-    );
-  });
+  function exportBlob(resolve: (blob: Blob) => void, reject: (reason: unknown) => void) {
+    function settle(blob: Blob | null) {
+      if (blob !== null) {
+        resolve(blob);
+      } else {
+        reject(new InvariantError('Canvas is empty'));
+      }
+    }
+    canvas.toBlob(settle, 'image/jpeg', 0.9);
+  }
+  return new Promise(exportBlob);
 }
 
 async function handleConfirm() {
-  if (!croppedAreaPixels) return;
+  if (croppedAreaPixels === null) {
+    return;
+  }
 
   isProcessing = true;
   try {

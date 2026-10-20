@@ -1,7 +1,7 @@
 <script lang="ts">
+import CircleChip from '$lib/components/circles/CircleChip.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { CircleSummaryResponse } from '$shared';
-import CircleChip from './CircleChip.svelte';
 
 const i18n = createI18n();
 
@@ -21,9 +21,9 @@ let { circles, size = 'sm', maxVisible = 3, removable = false, onremove }: Props
 
 let visibleCircles = $derived(circles.slice(0, maxVisible));
 let hiddenCount = $derived(Math.max(0, circles.length - maxVisible));
-let showingAll = $state(false);
+let showingAll = $state<boolean>(false);
 
-let displayCircles = $derived(showingAll ? circles : visibleCircles);
+let displayCircles = $derived(showingAll === true ? circles : visibleCircles);
 </script>
 
 {#if circles.length > 0}

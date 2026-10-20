@@ -2,13 +2,13 @@
 import { get } from 'svelte/store';
 import type { AddressData } from '$lib/api/address-data.js';
 import { getAppContext } from '$lib/app-context.js';
+import HierarchicalAddressInput from '$lib/components/friends/HierarchicalAddressInput.svelte';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { type AddressResponse, type AddressType, isCountryCode } from '$shared';
-import HierarchicalAddressInput from '../HierarchicalAddressInput.svelte';
 
 const defaultCountry = getAppContext().stores.auth.defaultCountry;
 
@@ -27,11 +27,15 @@ let { initialData, defaultPrimary, disabled = false, onchange }: Props = $props(
 let addressType = $state<AddressType>((() => initialData?.addressType ?? 'home')());
 let label = $state((() => initialData?.label ?? '')());
 let isPrimary = $state((() => initialData?.isPrimary ?? defaultPrimary ?? false)());
-const initialCountryCode = (() => {
-  if (initialData === undefined) return get(defaultCountry) ?? '';
+function resolveInitialCountryCode() {
+  if (initialData === undefined) {
+    return get(defaultCountry) ?? '';
+  }
   const stored = initialData.country;
-  return stored !== undefined && isCountryCode(stored) ? stored : '';
-})();
+  return stored !== undefined && isCountryCode(stored) === true ? stored : '';
+}
+
+const initialCountryCode = resolveInitialCountryCode();
 
 // Address data from HierarchicalAddressInput
 let addressData = $state<{
@@ -43,15 +47,14 @@ let addressData = $state<{
   street_line2?: string;
 } | null>(null);
 
-createDirtyTracker(
-  () => {
-    addressType;
-    label;
-    isPrimary;
-    addressData;
-  },
-  () => onchange,
-);
+function trackDirtyFields() {
+  addressType;
+  label;
+  isPrimary;
+  addressData;
+}
+
+createDirtyTracker(trackDirtyFields, () => onchange);
 
 const addressTypeOptions = $derived([
   { value: 'home' as const, label: $i18n.t('subresources.address.types.home') },
@@ -73,6 +76,7 @@ function handleAddressChange(data: {
 }
 
 export function getData() {
+  const trimmedLabel = label.trim();
   return {
     country: addressData?.country ?? initialCountryCode,
     postalCode: addressData?.postal_code ?? initialData?.postalCode ?? '',
@@ -81,27 +85,27 @@ export function getData() {
     streetLine1: addressData?.street_line1 ?? initialData?.streetLine1 ?? '',
     streetLine2: addressData?.street_line2 ?? initialData?.streetLine2,
     addressType,
-    label: label.trim() || undefined,
+    label: trimmedLabel === '' ? undefined : trimmedLabel,
     isPrimary,
   } satisfies AddressData;
 }
 
-export function isValid(): boolean {
+export function isValid() {
   // At minimum, require a country and some address content
   const data = getData();
   return (
     data.country !== undefined &&
-    isCountryCode(data.country) &&
-    !!(data.city || data.streetLine1 || data.postalCode)
+    isCountryCode(data.country) === true &&
+    (data.city !== '' || data.streetLine1 !== '' || data.postalCode !== '')
   );
 }
 
-// Parse initial street line 1 to extract street name and house number
-function parseStreetLine1(streetLine1?: string): { street: string; houseNumber: string } {
-  if (!streetLine1) return { street: '', houseNumber: '' };
-  // Try to extract house number from end of street line
+function parseStreetLine1(streetLine1?: string) {
+  if (streetLine1 === undefined || streetLine1 === '') {
+    return { street: '', houseNumber: '' };
+  }
   const match = streetLine1.match(/^(.+?)\s+(\d+\S*)$/);
-  if (match) {
+  if (match !== null) {
     return { street: match[1] ?? '', houseNumber: match[2] ?? '' };
   }
   return { street: streetLine1, houseNumber: '' };

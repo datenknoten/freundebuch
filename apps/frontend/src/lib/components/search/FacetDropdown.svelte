@@ -2,6 +2,7 @@
 import { tick } from 'svelte';
 import Funnel from 'svelte-heros-v2/Funnel.svelte';
 import { getAppContext } from '$lib/app-context.js';
+import CircleChip from '$lib/components/circles/CircleChip.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
@@ -17,7 +18,6 @@ import {
   type FacetGroupsResponse,
   isArrayFacetField,
 } from '$shared';
-import CircleChip from '../circles/CircleChip.svelte';
 
 const keyboardModes = getAppContext().stores.keyboardModes;
 const filterModeCategory = keyboardModes.filter.category;
@@ -53,9 +53,11 @@ let modalContentRef = $state<HTMLDivElement | null>(null);
 // Maximum items to show with keyboard hints (26 letters * 9 numbers = 234 max)
 const MAX_KEYBOARD_ITEMS = 234;
 
-// Build a flat list of filter values for a given category (for keyboard navigation)
-function getCategoryValues(category: string): { field: ArrayFacetField; value: string }[] {
-  if (!facets) return [];
+// Flat list of filter values for a category, for keyboard navigation
+function getCategoryValues(category: string) {
+  if (facets === null) {
+    return [];
+  }
 
   switch (category) {
     case 'country':
@@ -116,17 +118,19 @@ function getCategoryValues(category: string): { field: ArrayFacetField; value: s
   }
 }
 
-// Track current category values for keyboard hints
 let currentCategoryValues = $derived(
-  $filterModeCategory ? getCategoryValues($filterModeCategory) : [],
+  $filterModeCategory !== null && $filterModeCategory !== ''
+    ? getCategoryValues($filterModeCategory)
+    : [],
 );
 
-// Auto-scroll to selected section when filter mode activates
-$effect(() => {
-  if ($isFilterModeActive && $filterModeCategory) {
+function scrollWhenFilterModeActivates() {
+  if ($isFilterModeActive === true && $filterModeCategory !== null && $filterModeCategory !== '') {
     void scrollToSelectedCategory();
   }
-});
+}
+
+$effect(scrollWhenFilterModeActivates);
 
 // Waits for the modal to render before scrolling to the selected category section.
 async function scrollToSelectedCategory() {
@@ -144,43 +148,42 @@ async function scrollToSelectedCategory() {
     targetRef = circlesSectionRef;
   }
 
-  if (targetRef && modalContentRef) {
+  if (targetRef !== null && modalContentRef !== null) {
     targetRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
-// Close keyboard filter mode
 function closeKeyboardFilterMode() {
   isFilterModeActive.set(false);
   filterModeCategory.set(null);
   filterModePrefix.set(null);
 }
 
-// Close regular dropdown
 function closeDropdown() {
   isOpen = false;
 }
 
-// Method to toggle filter by index (called from keyboard shortcuts)
+// Called from keyboard shortcuts
 export function toggleFilterByIndex(index: number) {
   const entry = currentCategoryValues[index];
-  if (entry === undefined) return;
+  if (entry === undefined) {
+    return;
+  }
   toggleFilter(entry.field, entry.value);
 }
 
-// Count total active filters (only array-type fields)
-let activeCount = $derived(
-  Object.entries(activeFilters).reduce((sum, [field, value]) => {
-    if (isArrayFacetField(field as keyof FacetFilters) && Array.isArray(value)) {
-      return sum + value.length;
-    }
-    return sum;
-  }, 0),
-);
+function addActiveArrayFilterCount(sum: number, [field, value]: [string, unknown]) {
+  if (isArrayFacetField(field as keyof FacetFilters) === true && Array.isArray(value) === true) {
+    return sum + value.length;
+  }
+  return sum;
+}
 
-// Check if facets are available (use circlesWithMembers for circle check)
+let activeCount = $derived(Object.entries(activeFilters).reduce(addActiveArrayFilterCount, 0));
+
+// Circles count only when they have members
 let hasFacets = $derived(
-  facets &&
+  facets !== null &&
     (facets.location.length > 0 ||
       facets.professional.length > 0 ||
       facets.relationship.length > 0 ||
@@ -189,45 +192,52 @@ let hasFacets = $derived(
 
 function toggleFilter(field: ArrayFacetField, value: string) {
   const current = activeFilters[field] ?? [];
-  const newValues = current.includes(value)
-    ? current.filter((v) => v !== value)
-    : [...current, value];
+  const newValues =
+    current.includes(value) === true ? current.filter((v) => v !== value) : [...current, value];
 
   onFilterChange({
     ...activeFilters,
-    [field]: newValues.length ? newValues : undefined,
+    [field]: newValues.length > 0 ? newValues : undefined,
   });
 }
 
-function isFilterActive(field: ArrayFacetField, value: string): boolean {
+function isFilterActive(field: ArrayFacetField, value: string) {
   return (activeFilters[field] ?? []).includes(value);
 }
 
 function handleClickOutside(event: MouseEvent) {
   const target = event.target as HTMLElement;
-  if (!target.closest('.facet-dropdown')) {
+  if (target.closest('.facet-dropdown') === null) {
     isOpen = false;
   }
 }
 
-$effect(() => {
-  if (!isOpen) return undefined;
+function removeOutsideClickListener() {
+  document.removeEventListener('click', handleClickOutside);
+}
+
+function listenForOutsideClicksWhileOpen() {
+  if (isOpen === false) {
+    return undefined;
+  }
   document.addEventListener('click', handleClickOutside);
-  return () => document.removeEventListener('click', handleClickOutside);
-});
+  return removeOutsideClickListener;
+}
+
+$effect(listenForOutsideClicksWhileOpen);
+
+function handleWindowKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && isOpen === true && $isFilterModeActive === false) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeDropdown();
+  }
+}
 </script>
 
 <!-- Escape closes the anchored dropdown. The keyboard-filter modal owns its own
      Escape handling (native <dialog>), so it must not be handled twice. -->
-<svelte:window
-  onkeydown={(e) => {
-    if (e.key === 'Escape' && isOpen && !$isFilterModeActive) {
-      e.preventDefault();
-      e.stopPropagation();
-      closeDropdown();
-    }
-  }}
-/>
+<svelte:window onkeydown={handleWindowKeydown} />
 
 <div class="relative facet-dropdown">
   <Button

@@ -36,7 +36,6 @@ async function handleSubmit(e: SubmitEvent) {
 
   try {
     await auth.register(email, password);
-    // Redirect to home page after successful registration
     await goto('/');
   } catch (err) {
     error =

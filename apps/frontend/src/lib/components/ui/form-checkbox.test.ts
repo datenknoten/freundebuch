@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '$lib/test/render.js';
-import FormCheckbox from './FormCheckbox.svelte';
+import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 
 describe('FormCheckbox', () => {
   describe('when rendered', () => {

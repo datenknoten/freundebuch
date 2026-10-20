@@ -35,18 +35,21 @@ let {
 }: Props = $props();
 
 // Initialize query with value if we have one (for editing existing addresses)
-let query = $state((() => value || '')());
+let query = $state((() => value ?? '')());
 let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
 let inputElement = $state<HTMLInputElement | undefined>(undefined);
 let manualEntry = $state(false);
 
-// Filter streets based on query
-const filteredStreets = $derived(() => {
+function filterStreets() {
   const q = query.toLowerCase().trim();
-  if (!q) return streets;
+  if (q === '') {
+    return streets;
+  }
   return streets.filter((street) => street.name.toLowerCase().includes(q));
-});
+}
+
+const filteredStreets = $derived.by(filterStreets);
 
 function selectStreet(street: StreetInfoResponse) {
   query = '';
@@ -62,7 +65,7 @@ function handleInput() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (freeTextMode || manualEntry) {
+  if (freeTextMode === true || manualEntry === true) {
     // In free text mode, just update the value on Enter
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -71,7 +74,7 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  if (!showDropdown) {
+  if (showDropdown === false) {
     if (e.key === 'ArrowDown' || e.key === 'Enter') {
       e.preventDefault();
       showDropdown = true;
@@ -79,7 +82,7 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  const list = filteredStreets();
+  const list = filteredStreets;
 
   switch (e.key) {
     case 'ArrowDown':
@@ -101,7 +104,7 @@ function handleKeydown(e: KeyboardEvent) {
         showDropdown = false;
       } else if (highlighted !== undefined) {
         selectStreet(highlighted);
-      } else if (query.trim() && topMatch !== undefined) {
+      } else if (query.trim() !== '' && topMatch !== undefined) {
         // No explicit highlight, but the user searched and there are matches:
         // select the top match so Enter confirms the visible result.
         selectStreet(topMatch);
@@ -120,33 +123,39 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+function closeAndCommit() {
+  showDropdown = false;
+  highlightedIndex = -1;
+  // If in manual entry mode and user blurred, commit the value
+  if ((manualEntry === true || freeTextMode === true) && query !== '') {
+    onSelect?.(query, true);
+  }
+}
+
 function handleBlur() {
-  setTimeout(() => {
-    showDropdown = false;
-    highlightedIndex = -1;
-    // If in manual entry mode and user blurred, commit the value
-    if ((manualEntry || freeTextMode) && query) {
-      onSelect?.(query, true);
-    }
-  }, 200);
+  setTimeout(closeAndCommit, 200);
 }
 
 function handleFocus() {
-  if (!freeTextMode && !manualEntry && streets.length > 0) {
+  if (freeTextMode === false && manualEntry === false && streets.length > 0) {
     showDropdown = true;
   }
 }
 
+function focusInput() {
+  inputElement?.focus();
+}
+
 function activateInput() {
-  if (disabled) return;
+  if (disabled === true) {
+    return;
+  }
   query = '';
   manualEntry = false;
-  if (!freeTextMode && streets.length > 0) {
+  if (freeTextMode === false && streets.length > 0) {
     showDropdown = true;
   }
-  requestAnimationFrame(() => {
-    inputElement?.focus();
-  });
+  requestAnimationFrame(focusInput);
 }
 
 function handleButtonKeydown(e: KeyboardEvent) {
@@ -160,9 +169,7 @@ function enableManualEntry() {
   manualEntry = true;
   showDropdown = false;
   query = '';
-  requestAnimationFrame(() => {
-    inputElement?.focus();
-  });
+  requestAnimationFrame(focusInput);
 }
 </script>
 
@@ -227,7 +234,7 @@ function enableManualEntry() {
       class="absolute z-(--z-popover) w-full mt-1 {SURFACE_CLASSES.listbox}"
       role="listbox"
     >
-      {#each filteredStreets() as street, index}
+      {#each filteredStreets as street, index}
         <li role="option" aria-selected={highlightedIndex === index} class="cursor-pointer">
           <button
             type="button"
@@ -245,20 +252,20 @@ function enableManualEntry() {
       <!-- "Enter manually" option -->
       <li
         role="option"
-        aria-selected={highlightedIndex === filteredStreets().length}
+        aria-selected={highlightedIndex === filteredStreets.length}
         class="cursor-pointer border-t border-gray-100"
       >
         <button
           type="button"
           onclick={enableManualEntry}
-          class="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 transition-colors text-left {highlightedIndex === filteredStreets().length ? 'bg-gray-100' : ''}"
+          class="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 transition-colors text-left {highlightedIndex === filteredStreets.length ? 'bg-gray-100' : ''}"
         >
           <PencilSquare class="w-4 h-4 text-gray-400" strokeWidth="2" />
           <span class="font-body text-sm text-gray-600">{$i18n.t('address.enterManually')}</span>
         </button>
       </li>
 
-      {#if filteredStreets().length === 0}
+      {#if filteredStreets.length === 0}
         <li class="px-3 py-2 text-sm text-gray-500 font-body">
           {$i18n.t('address.noMatchingStreets')}
         </li>

@@ -4,7 +4,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { replaceState } from '$app/navigation';
 import { page } from '$app/stores';
-import { openWithKeyboard } from '$lib/actions/auto-focus';
+import { openWithKeyboard } from '$lib/actions/auto-focus.js';
 import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import CircleEditModal from '$lib/components/circles/CircleEditModal.svelte';
@@ -19,7 +19,7 @@ import PageShell from '$lib/components/ui/PageShell.svelte';
 import SearchInput from '$lib/components/ui/SearchInput.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { DEFAULT_CIRCLE_COLOR } from '$lib/utils/circle-colors';
+import { DEFAULT_CIRCLE_COLOR } from '$lib/utils/circle-colors.js';
 import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import type { CircleResponse } from '$shared';
 
@@ -43,34 +43,43 @@ let deleteConfirmCircle = $state<CircleResponse | null>(null);
 let deletingCircleId = $state<string | null>(null);
 let searchQuery = $state('');
 
-// Load circles when auth is ready
-$effect(() => {
-  if ($isAuthInitialized && !hasLoaded) {
+function loadCirclesWhenAuthReady() {
+  if ($isAuthInitialized === true && hasLoaded === false) {
     hasLoaded = true;
     void circles.loadCircles();
   }
-});
+}
+$effect(loadCirclesWhenAuthReady);
 
-// Set up keyboard shortcut event listeners
-onMount(() => {
-  function handleNewCircle() {
-    openCreateModal();
+function handleNewCircle() {
+  openCreateModal();
+}
+
+function handleEditCircle(e: CustomEvent<{ circleId: string }>) {
+  const circle = findCircle(e.detail.circleId);
+  if (circle !== undefined) {
+    openEditModal(circle);
   }
+}
 
-  function handleEditCircle(e: CustomEvent<{ circleId: string }>) {
-    const circle = $circlesList.find((c) => c.id === e.detail.circleId);
-    if (circle) {
-      openEditModal(circle);
-    }
+function handleDeleteCircle(e: CustomEvent<{ circleId: string }>) {
+  const circle = findCircle(e.detail.circleId);
+  if (circle !== undefined) {
+    openDeleteConfirm(circle);
   }
+}
 
-  function handleDeleteCircle(e: CustomEvent<{ circleId: string }>) {
-    const circle = $circlesList.find((c) => c.id === e.detail.circleId);
-    if (circle) {
-      openDeleteConfirm(circle);
-    }
-  }
+function findCircle(circleId: string) {
+  return $circlesList.find((c) => c.id === circleId);
+}
 
+function removeShortcutListeners() {
+  window.removeEventListener('shortcut:new-circle', handleNewCircle);
+  window.removeEventListener('shortcut:edit-circle', handleEditCircle as EventListener);
+  window.removeEventListener('shortcut:delete-circle', handleDeleteCircle as EventListener);
+}
+
+function setUpShortcuts() {
   window.addEventListener('shortcut:new-circle', handleNewCircle);
   window.addEventListener('shortcut:edit-circle', handleEditCircle as EventListener);
   window.addEventListener('shortcut:delete-circle', handleDeleteCircle as EventListener);
@@ -84,12 +93,9 @@ onMount(() => {
     replaceState(cleaned.pathname + cleaned.search, {});
   }
 
-  return () => {
-    window.removeEventListener('shortcut:new-circle', handleNewCircle);
-    window.removeEventListener('shortcut:edit-circle', handleEditCircle as EventListener);
-    window.removeEventListener('shortcut:delete-circle', handleDeleteCircle as EventListener);
-  };
-});
+  return removeShortcutListeners;
+}
+onMount(setUpShortcuts);
 
 // Tap/click/swipe callers wrap these in openWithKeyboard() so the modal mounts
 // inside the gesture and its auto-focused name input claims the mobile
@@ -119,8 +125,10 @@ function closeDeleteConfirm() {
   deleteConfirmCircle = null;
 }
 
-async function handleDelete(): Promise<void> {
-  if (!deleteConfirmCircle) return;
+async function handleDelete() {
+  if (deleteConfirmCircle === null) {
+    return;
+  }
 
   deletingCircleId = deleteConfirmCircle.id;
   try {
@@ -130,8 +138,7 @@ async function handleDelete(): Promise<void> {
   }
 }
 
-// Get child circles for a given circle
-function getChildCircles(parentId: string | null): CircleResponse[] {
+function getChildCircles(parentId: string | null) {
   return $circlesList.filter((c) => c.parentCircleId === parentId);
 }
 
@@ -149,36 +156,43 @@ function renderCircleTree(parentId: string | null = null, depth: number = 0): Ci
 let hierarchicalCircles = $derived(renderCircleTree(null, 0));
 
 // When user is searching, render flat filtered list (drops hierarchy intentionally so matches surface)
-let visibleCircles = $derived.by(() => {
+function filterVisibleCircles() {
   const q = searchQuery.trim().toLowerCase();
-  if (!q) return hierarchicalCircles;
+  if (q === '') {
+    return hierarchicalCircles;
+  }
   return $circlesList
     .filter((c) => c.name.toLowerCase().includes(q))
     .map((c) => ({ ...c, sortOrder: 0 }));
-});
+}
+let visibleCircles = $derived.by(filterVisibleCircles);
 let isSearching = $derived(searchQuery.trim().length > 0);
 
-// Update visible circle IDs for keyboard navigation
-$effect(() => {
+function syncVisibleCircleIds() {
   visibleCircleIds.set(visibleCircles.map((c) => c.id));
-});
+}
+$effect(syncVisibleCircleIds);
 
 // Check if keyboard hints should be shown
-let showKeyboardHints = $derived($isEditCircleModeActive || $isDeleteCircleModeActive);
+let showKeyboardHints = $derived(
+  $isEditCircleModeActive === true || $isDeleteCircleModeActive === true,
+);
 
 // Get the current prefix for keyboard hints
 let currentPrefix = $derived(
-  $isEditCircleModeActive ? $editCircleModePrefix : $deleteCircleModePrefix,
+  $isEditCircleModeActive === true ? $editCircleModePrefix : $deleteCircleModePrefix,
 );
 
-// Calculate actual depth for each circle
-function getActualDepth(circle: CircleResponse): number {
+function getActualDepth(circle: CircleResponse) {
   let d = 0;
   let current = circle;
-  while (current.parentCircleId) {
+  while (current.parentCircleId !== null && current.parentCircleId !== undefined) {
     d++;
-    const parent = $circlesList.find((c) => c.id === current.parentCircleId);
-    if (!parent) break;
+    const parentId = current.parentCircleId;
+    const parent = $circlesList.find((c) => c.id === parentId);
+    if (parent === undefined) {
+      break;
+    }
     current = parent;
   }
   return d;

@@ -34,20 +34,22 @@ const availableColumns: ColumnId[] = [
   'updatedAt',
 ];
 
-function isColumnVisible(columnId: ColumnId): boolean {
+function isColumnVisible(columnId: ColumnId) {
   return columns.includes(columnId);
 }
-
-function isColumnRequired(columnId: ColumnId): boolean {
+function isColumnRequired(columnId: ColumnId) {
   return REQUIRED_COLUMNS.includes(columnId);
 }
 
 function toggleColumn(columnId: ColumnId) {
-  if (isColumnRequired(columnId)) return;
+  if (isColumnRequired(columnId) === true) {
+    return;
+  }
 
-  const newColumns = isColumnVisible(columnId)
-    ? columns.filter((c) => c !== columnId)
-    : [...columns, columnId];
+  const newColumns =
+    isColumnVisible(columnId) === true
+      ? columns.filter((c) => c !== columnId)
+      : [...columns, columnId];
 
   // Maintain a consistent order based on availableColumns
   const orderedColumns = availableColumns.filter((c) => newColumns.includes(c));
@@ -58,28 +60,36 @@ function resetToDefaults() {
   onColumnsChange([...DEFAULT_COLUMNS]);
 }
 
+function toggleOpen(event: MouseEvent) {
+  event.stopPropagation();
+  isOpen = isOpen === false;
+}
+
 function handleClickOutside(event: MouseEvent) {
   const target = event.target as HTMLElement;
-  if (!target.closest('.column-chooser')) {
+  if (target.closest('.column-chooser') === null) {
     isOpen = false;
   }
 }
 
-$effect(() => {
-  if (!isOpen) return undefined;
+function listenForOutsideClicks() {
+  if (isOpen === false) {
+    return undefined;
+  }
   document.addEventListener('click', handleClickOutside);
-  return () => document.removeEventListener('click', handleClickOutside);
-});
+  return function stopListening() {
+    document.removeEventListener('click', handleClickOutside);
+  };
+}
+
+$effect(listenForOutsideClicks);
 </script>
 
 <div class="relative column-chooser">
   <Button
     variant="secondary"
     size="sm"
-    onclick={(e) => {
-      e.stopPropagation();
-      isOpen = !isOpen;
-    }}
+    onclick={toggleOpen}
     title={$i18n.t('aria.chooseColumns')}
     aria-label={$i18n.t('aria.chooseColumns')}
     aria-expanded={isOpen}

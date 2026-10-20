@@ -4,6 +4,11 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import type { RelationshipCreateData } from '$lib/api/friend-details.js';
 import { getAppContext } from '$lib/app-context.js';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
+import DetailActions from '$lib/components/friends/subresources/DetailActions.svelte';
+import DetailEditModal from '$lib/components/friends/subresources/DetailEditModal.svelte';
+import RelationshipEditForm from '$lib/components/friends/subresources/RelationshipEditForm.svelte';
+import KeyboardHintBadge from '$lib/components/KeyboardHintBadge.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
@@ -14,13 +19,8 @@ import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import {
   RELATIONSHIP_CATEGORIES,
   RELATIONSHIP_CATEGORY_STYLE,
-} from '$lib/utils/relationship-categories';
+} from '$lib/utils/relationship-categories.js';
 import type { RelationshipCategory, RelationshipResponse } from '$shared';
-import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
-import FriendAvatar from './FriendAvatar.svelte';
-import DetailActions from './subresources/DetailActions.svelte';
-import DetailEditModal from './subresources/DetailEditModal.svelte';
-import RelationshipEditForm from './subresources/RelationshipEditForm.svelte';
 
 const { stores } = getAppContext();
 const friends = stores.friends;
@@ -65,8 +65,7 @@ let relationshipFormRef = $state<{
   isValid: () => boolean;
 } | null>(null);
 
-// Group relationships by category
-const groupedRelationships = $derived(() => {
+function groupRelationships() {
   const groups: Record<RelationshipCategory, RelationshipResponse[]> = {
     family: [],
     professional: [],
@@ -78,26 +77,30 @@ const groupedRelationships = $derived(() => {
   }
 
   return groups;
-});
+}
 
 // Map relationship IDs to their flat badge index (family → professional → social order)
-let relationshipBadgeIndex = $derived.by(() => {
-  if (linkStartIndex === undefined) return new Map<string, number>();
-  const groups = groupedRelationships();
+function buildBadgeIndex() {
+  if (linkStartIndex === undefined) {
+    return new Map<string, number>();
+  }
   const map = new Map<string, number>();
   let counter = 0;
   for (const category of RELATIONSHIP_CATEGORIES) {
-    for (const rel of groups[category]) {
+    for (const rel of groupedRelationships[category]) {
       map.set(rel.id, linkStartIndex + counter);
       counter++;
     }
   }
   return map;
-});
+}
+
+const groupedRelationships = $derived.by(groupRelationships);
+let relationshipBadgeIndex = $derived.by(buildBadgeIndex);
 
 function startEditing(relationship: RelationshipResponse) {
   editingRelationshipId = relationship.id;
-  editNotes = relationship.notes || '';
+  editNotes = relationship.notes ?? '';
 }
 
 function cancelEditing() {
@@ -108,8 +111,9 @@ function cancelEditing() {
 async function saveNotes(relationshipId: string) {
   isSavingNotes = true;
   try {
+    const trimmedNotes = editNotes.trim();
     await friends.updateRelationship(friendId, relationshipId, {
-      notes: editNotes.trim() || undefined,
+      notes: trimmedNotes === '' ? undefined : trimmedNotes,
     });
     editingRelationshipId = null;
     editNotes = '';
@@ -131,7 +135,9 @@ function closeDeleteConfirm() {
 }
 
 async function handleDelete() {
-  if (deleteConfirmId === null) return;
+  if (deleteConfirmId === null) {
+    return;
+  }
   isDeleting = deleteConfirmId;
   try {
     await friends.deleteRelationship(friendId, deleteConfirmId);
@@ -155,8 +161,12 @@ function closeAddRelationship() {
 }
 
 async function handleAddRelationship() {
-  if (!relationshipFormRef) return;
-  if (!relationshipFormRef.isValid()) return;
+  if (relationshipFormRef === null) {
+    return;
+  }
+  if (relationshipFormRef.isValid() === false) {
+    return;
+  }
   isAddLoading = true;
   addError = null;
 
@@ -170,15 +180,17 @@ async function handleAddRelationship() {
   }
 }
 
-onMount(() => {
+function listenForAddShortcut() {
   function handleAddRelationshipEvent() {
     openAddRelationship();
   }
   window.addEventListener('shortcut:add-relationship', handleAddRelationshipEvent);
-  return () => {
+  return function removeAddShortcutListener() {
     window.removeEventListener('shortcut:add-relationship', handleAddRelationshipEvent);
   };
-});
+}
+
+onMount(listenForAddShortcut);
 </script>
 
 {#if relationships.length > 0}
@@ -198,7 +210,7 @@ onMount(() => {
 
   <div class="space-y-4">
     {#each RELATIONSHIP_CATEGORIES as category}
-      {@const rels = groupedRelationships()[category]}
+      {@const rels = groupedRelationships[category]}
       {#if rels.length > 0}
         <div class="space-y-2">
           <h4 class="text-sm font-body font-semibold {RELATIONSHIP_CATEGORY_STYLE[category].textColor}">

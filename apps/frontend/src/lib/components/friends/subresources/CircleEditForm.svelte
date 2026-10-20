@@ -21,38 +21,36 @@ interface Props {
 
 let { existingCircles = [], disabled = false, onchange }: Props = $props();
 
-// Form state
 let selectedCircleId = $state('');
 
-// Load circles on mount if not already loaded
-onMount(() => {
+function loadCirclesIfMissing() {
   if ($circles.circles.length === 0) {
     void circles.loadCircles();
   }
-});
+}
 
-// Get available circles (exclude already assigned ones)
+onMount(loadCirclesIfMissing);
+
 let existingCircleIds = $derived(new Set(existingCircles.map((c) => c.id)));
-let availableCircles = $derived($circlesList.filter((c) => !existingCircleIds.has(c.id)));
+let availableCircles = $derived($circlesList.filter((c) => existingCircleIds.has(c.id) === false));
 
-// Build tree structure for dropdown with indentation
-let availableCirclesTree = $derived.by(() => {
-  function buildTree(
-    parentId: string | null,
-    depth: number,
-  ): Array<{ circle: CircleResponse; depth: number }> {
-    const result: Array<{ circle: CircleResponse; depth: number }> = [];
-    const children = availableCircles.filter((c) => c.parentCircleId === parentId);
+function buildTree(parentId: string | null, depth: number) {
+  const result: Array<{ circle: CircleResponse; depth: number }> = [];
+  const children = availableCircles.filter((c) => c.parentCircleId === parentId);
 
-    for (const child of children) {
-      result.push({ circle: child, depth });
-      result.push(...buildTree(child.id, depth + 1));
-    }
-    return result;
+  for (const child of children) {
+    result.push({ circle: child, depth });
+    result.push(...buildTree(child.id, depth + 1));
   }
+  return result;
+}
 
+// Tree order with depth drives the indentation in the dropdown.
+function computeAvailableCirclesTree() {
   return buildTree(null, 0);
-});
+}
+
+let availableCirclesTree = $derived.by(computeAvailableCirclesTree);
 
 let circleOptions = $derived(
   availableCirclesTree.map(({ circle, depth }) => ({
@@ -61,20 +59,19 @@ let circleOptions = $derived(
   })),
 );
 
-createDirtyTracker(
-  () => {
-    selectedCircleId;
-  },
-  () => onchange,
-);
+function trackDirtyFields() {
+  selectedCircleId;
+}
 
-export function getData(): { circleId: string } {
+createDirtyTracker(trackDirtyFields, () => onchange);
+
+export function getData() {
   return {
     circleId: selectedCircleId,
   };
 }
 
-export function isValid(): boolean {
+export function isValid() {
   return selectedCircleId.length > 0;
 }
 

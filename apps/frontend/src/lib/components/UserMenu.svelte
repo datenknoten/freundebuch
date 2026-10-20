@@ -7,10 +7,10 @@ import User from 'svelte-heros-v2/User.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import { getAppContext } from '$lib/app-context.js';
+import UserAvatar from '$lib/components/UserAvatar.svelte';
 import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
 import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import UserAvatar from './UserAvatar.svelte';
 
 const logger = getAppContext().logger;
 const auth = getAppContext().stores.auth;
@@ -23,7 +23,7 @@ let buttonRef = $state<HTMLButtonElement | null>(null);
 let menuRef = $state<HTMLDivElement | null>(null);
 
 function toggle() {
-  isOpen = !isOpen;
+  isOpen = isOpen === false;
 }
 
 function close() {
@@ -41,7 +41,7 @@ async function handleLogout() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && isOpen) {
+  if (e.key === 'Escape' && isOpen === true) {
     e.preventDefault();
     close();
     buttonRef?.focus();
@@ -50,10 +50,10 @@ function handleKeydown(e: KeyboardEvent) {
 
 function handleClickOutside(e: MouseEvent) {
   if (
-    isOpen &&
-    menuRef &&
-    !menuRef.contains(e.target as Node) &&
-    !buttonRef?.contains(e.target as Node)
+    isOpen === true &&
+    menuRef !== null &&
+    menuRef.contains(e.target as Node) === false &&
+    buttonRef?.contains(e.target as Node) !== true
   ) {
     close();
   }

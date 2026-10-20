@@ -1,8 +1,8 @@
 <script lang="ts">
+import SubresourceRow from '$lib/components/friends/subresources/SubresourceRow.svelte';
 import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { ContactCollectiveSummaryResponse } from '$shared';
-import SubresourceRow from './SubresourceRow.svelte';
 
 const i18n = createI18n();
 

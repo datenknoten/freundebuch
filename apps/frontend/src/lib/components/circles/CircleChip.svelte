@@ -23,17 +23,15 @@ interface Props {
 
 let { circle, size = 'sm', onclick, removable = false, onremove }: Props = $props();
 
-// Get the path parts for this circle (ancestors + current name)
-function getCirclePathParts(
-  circleId: string,
-  circlesMap: Map<string, CircleResponse>,
-): { ancestors: string[]; name: string } {
+function getCirclePathParts(circleId: string, circlesMap: Map<string, CircleResponse>) {
   const parts: string[] = [];
   let currentId: string | null = circleId;
 
-  while (currentId) {
+  while (currentId !== null && currentId !== '') {
     const c = circlesMap.get(currentId);
-    if (!c) break;
+    if (c === undefined) {
+      break;
+    }
     parts.unshift(c.name);
     currentId = c.parentCircleId;
   }
@@ -51,17 +49,17 @@ function getCirclePathParts(
 
 let pathParts = $derived(getCirclePathParts(circle.id, $circlesById));
 
-// Get contrasting text color for background
-function getTextColor(hexColor: string | null): string {
-  if (!hexColor) return 'text-gray-700';
+function getTextColor(hexColor: string | null) {
+  if (hexColor === null || hexColor === '') {
+    return 'text-gray-700';
+  }
 
-  // Parse hex color
   const hex = hexColor.replace('#', '');
   const r = parseInt(hex.substring(0, 2), 16);
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
 
-  // Calculate luminance
+  // Perceived luminance (ITU-R BT.601 weights)
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
   return luminance > 0.5 ? 'text-gray-900' : 'text-white';

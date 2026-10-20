@@ -16,13 +16,14 @@ const isAuthInitialized = getAppContext().stores.auth.isInitialized;
 
 const i18n = createI18n();
 
-// Load friend when auth is ready and page params change
-$effect(() => {
+// Reload when auth is ready and whenever the page params change.
+function loadFriendWhenAuthReady() {
   const id = $page.params.id;
-  if ($isAuthInitialized && id) {
+  if ($isAuthInitialized === true && id !== undefined && id !== '') {
     void friends.loadFriend(id);
   }
-});
+}
+$effect(loadFriendWhenAuthReady);
 
 // Dynamic page title based on friend name
 const pageTitle = $derived(

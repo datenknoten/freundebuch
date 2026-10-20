@@ -2,10 +2,10 @@
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { autoFocus } from '$lib/actions/auto-focus';
+import Spinner from '$lib/components/ui/Spinner.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { FOCUS_RING } from './focus-ring.js';
 import { FORM_CLASSES } from './form-classes.js';
-import Spinner from './Spinner.svelte';
 
 interface Props {
   value: string;

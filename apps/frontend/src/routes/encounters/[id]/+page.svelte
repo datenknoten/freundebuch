@@ -25,38 +25,42 @@ let isEditing = $state(false);
 
 let hasLoaded = $state(false);
 
-// Load encounter when auth is ready
-$effect(() => {
-  if ($isAuthInitialized && encounterId && !hasLoaded) {
+function loadEncounterWhenAuthReady() {
+  if ($isAuthInitialized === true && encounterId !== undefined && hasLoaded === false) {
     hasLoaded = true;
     void encounters.loadEncounter(encounterId);
   }
-});
+}
+$effect(loadEncounterWhenAuthReady);
 
 // Reset when navigating to a different encounter
-$effect(() => {
-  if (encounterId) {
+function resetOnEncounterChange() {
+  if (encounterId !== undefined) {
     hasLoaded = false;
     isEditing = false;
   }
-});
+}
+$effect(resetOnEncounterChange);
 
 function handleEdit() {
   isEditing = true;
 }
 
 function handleShortcutEdit() {
-  if (encounter && !isEditing) {
+  if (encounter !== null && isEditing === false) {
     isEditing = true;
   }
 }
 
-$effect(() => {
+function removeShortcutEditListener() {
+  window.removeEventListener('shortcut:edit-encounter', handleShortcutEdit);
+}
+
+function listenForShortcutEdit() {
   window.addEventListener('shortcut:edit-encounter', handleShortcutEdit);
-  return () => {
-    window.removeEventListener('shortcut:edit-encounter', handleShortcutEdit);
-  };
-});
+  return removeShortcutEditListener;
+}
+$effect(listenForShortcutEdit);
 
 function handleEditSuccess(_updatedEncounter: EncounterResponse) {
   isEditing = false;

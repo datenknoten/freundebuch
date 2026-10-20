@@ -2,7 +2,12 @@
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { Compartment, EditorState, Transaction } from '@codemirror/state';
-import { placeholder as cmPlaceholder, EditorView, keymap } from '@codemirror/view';
+import {
+  placeholder as cmPlaceholder,
+  EditorView,
+  keymap,
+  type ViewUpdate,
+} from '@codemirror/view';
 import { onDestroy, onMount } from 'svelte';
 import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
@@ -13,9 +18,9 @@ import {
   atomicMarkdownSyntax,
   extendEmphasisPair,
   inlinePreview,
-} from './inline-preview';
-import './inline-preview/inline-preview.css';
-import { mentionAutocomplete } from './mentions';
+} from './inline-preview/index.js';
+import '$lib/editor/inline-preview/inline-preview.css';
+import { mentionAutocomplete } from './mentions.js';
 
 interface Props {
   /** Raw markdown — the source of truth. Two-way bound. */
@@ -56,11 +61,11 @@ const attrsConf = new Compartment();
 const mentionsConf = new Compartment();
 
 function placeholderExt(text: string) {
-  return text ? cmPlaceholder(text) : [];
+  return text !== '' ? cmPlaceholder(text) : [];
 }
 function attrsExt(forId: string, label: string) {
   return EditorView.contentAttributes.of(
-    forId ? { 'aria-labelledby': forId } : { 'aria-label': label },
+    forId !== '' ? { 'aria-labelledby': forId } : { 'aria-label': label },
   );
 }
 
@@ -84,20 +89,22 @@ const SAFE_LINK_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
 // auth endpoints, file downloads — falls through to the new-tab `window.open`
 // so we don't trash unsaved form state or break server-served responses.
 const APP_ROUTE_PREFIXES = ['/friends/', '/collectives/', '/encounters/', '/circles'];
-function isAppRoute(pathname: string): boolean {
+function isAppRoute(pathname: string) {
   return APP_ROUTE_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-function openSafeLink(url: string): void {
+function openSafeLink(url: string) {
   try {
     const parsed = new URL(url, window.location.href);
     // Same-origin link to a known app route (e.g. an `@`-mention target like
     // /friends/{id}) — navigate in-app so the user stays in the SPA.
-    if (parsed.origin === window.location.origin && isAppRoute(parsed.pathname)) {
+    if (parsed.origin === window.location.origin && isAppRoute(parsed.pathname) === true) {
       void goto(parsed.pathname + parsed.search + parsed.hash);
       return;
     }
-    if (!SAFE_LINK_SCHEMES.includes(parsed.protocol)) return;
+    if (SAFE_LINK_SCHEMES.includes(parsed.protocol) === false) {
+      return;
+    }
     window.open(parsed.href, '_blank', 'noopener,noreferrer');
   } catch {
     // Malformed URL — ignore rather than open anything.
@@ -108,7 +115,9 @@ function openSafeLink(url: string): void {
 // in-place language switch won't relabel an open editor's list — acceptable,
 // since the list is transient and forms are typically opened fresh.
 function mentionExtension() {
-  if (!mentions) return [];
+  if (mentions === false) {
+    return [];
+  }
   const t = get(i18n).t;
   return mentionAutocomplete(
     {
@@ -120,7 +129,13 @@ function mentionExtension() {
   );
 }
 
-onMount(() => {
+function syncValueFromEditor(u: ViewUpdate) {
+  if (u.docChanged === true) {
+    value = u.state.doc.toString();
+  }
+}
+
+function mountEditor() {
   view = new EditorView({
     parent: host,
     state: EditorState.create({
@@ -141,41 +156,49 @@ onMount(() => {
         inlineFieldTheme,
         EditorView.lineWrapping,
         placeholderConf.of(placeholderExt(placeholder)),
-        editableConf.of(EditorView.editable.of(!disabled)),
+        editableConf.of(EditorView.editable.of(disabled === false)),
         attrsConf.of(attrsExt(labelledBy, ariaLabel)),
-        EditorView.updateListener.of((u) => {
-          if (u.docChanged) value = u.state.doc.toString();
-        }),
+        EditorView.updateListener.of(syncValueFromEditor),
       ],
     }),
   });
-});
+}
+
+onMount(mountEditor);
 
 // Mirror a disabled <textarea>: actually toggle CM editability (the CSS
 // pointer-events guard alone wouldn't block keyboard input on a focused
 // editor). Blur on disable so a focused editor releases the caret.
-$effect(() => {
-  if (!view) return;
-  view.dispatch({ effects: editableConf.reconfigure(EditorView.editable.of(!disabled)) });
-  if (disabled && view.hasFocus) view.contentDOM.blur();
-});
+function syncEditable() {
+  if (view === undefined) {
+    return;
+  }
+  view.dispatch({ effects: editableConf.reconfigure(EditorView.editable.of(disabled === false)) });
+  if (disabled === true && view.hasFocus === true) {
+    view.contentDOM.blur();
+  }
+}
+$effect(syncEditable);
 
 // Keep the (translatable) placeholder and label attributes live when the
 // props change — e.g. an in-place language switch.
-$effect(() => {
+function syncPlaceholder() {
   view?.dispatch({ effects: placeholderConf.reconfigure(placeholderExt(placeholder)) });
-});
-$effect(() => {
+}
+function syncAttrs() {
   view?.dispatch({ effects: attrsConf.reconfigure(attrsExt(labelledBy, ariaLabel)) });
-});
-$effect(() => {
+}
+function syncMentions() {
   view?.dispatch({ effects: mentionsConf.reconfigure(mentionExtension()) });
-});
+}
+$effect(syncPlaceholder);
+$effect(syncAttrs);
+$effect(syncMentions);
 
 // Reconcile external value changes (e.g. switching edit target) without
 // clobbering the cursor or looping back through the update listener.
-$effect(() => {
-  if (view && value !== view.state.doc.toString()) {
+function syncValueToEditor() {
+  if (view !== undefined && value !== view.state.doc.toString()) {
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: value },
       // An external swap isn't the user's edit — keep it out of undo history
@@ -183,9 +206,13 @@ $effect(() => {
       annotations: Transaction.addToHistory.of(false),
     });
   }
-});
+}
+$effect(syncValueToEditor);
 
-onDestroy(() => view?.destroy());
+function destroyEditor() {
+  view?.destroy();
+}
+onDestroy(destroyEditor);
 </script>
 
 <div

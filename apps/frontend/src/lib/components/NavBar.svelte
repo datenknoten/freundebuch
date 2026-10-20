@@ -12,15 +12,15 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-import { focusTrap } from '$lib/actions/focus-trap';
+import { focusTrap } from '$lib/actions/focus-trap.js';
 import { getAppContext } from '$lib/app-context.js';
+import LegalLinks from '$lib/components/LegalLinks.svelte';
+import UserMenu from '$lib/components/UserMenu.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { motionDuration } from '$lib/utils/motion';
-import LegalLinks from './LegalLinks.svelte';
-import UserMenu from './UserMenu.svelte';
+import { motionDuration } from '$lib/utils/motion.js';
 
 const { logger, stores } = getAppContext();
 const overlay = stores.overlay;
@@ -34,7 +34,8 @@ const signupEnabled = getAppContext().stores.instance.signupEnabled;
 const i18n = createI18n();
 
 // Detect platform for keyboard shortcut hint
-const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+const isMac =
+  typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform) === true;
 
 let isMobileMenuOpen = $state(false);
 

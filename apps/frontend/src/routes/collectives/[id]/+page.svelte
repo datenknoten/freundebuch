@@ -25,21 +25,22 @@ let isEditing = $state(false);
 
 let hasLoaded = $state(false);
 
-// Load collective when auth is ready
-$effect(() => {
-  if ($isAuthInitialized && collectiveId && !hasLoaded) {
+function loadCollectiveWhenAuthReady() {
+  if ($isAuthInitialized === true && collectiveId !== undefined && hasLoaded === false) {
     hasLoaded = true;
     void collectives.loadCollective(collectiveId);
   }
-});
+}
+$effect(loadCollectiveWhenAuthReady);
 
 // Reset when navigating to a different collective
-$effect(() => {
-  if (collectiveId) {
+function resetOnCollectiveChange() {
+  if (collectiveId !== undefined) {
     hasLoaded = false;
     isEditing = false;
   }
-});
+}
+$effect(resetOnCollectiveChange);
 
 function handleEdit() {
   isEditing = true;
@@ -54,17 +55,20 @@ function handleEditCancel() {
 }
 
 function handleShortcutEdit() {
-  if (collective && !isEditing) {
+  if (collective !== null && isEditing === false) {
     isEditing = true;
   }
 }
 
-$effect(() => {
+function removeShortcutEditListener() {
+  window.removeEventListener('shortcut:edit-collective', handleShortcutEdit);
+}
+
+function listenForShortcutEdit() {
   window.addEventListener('shortcut:edit-collective', handleShortcutEdit);
-  return () => {
-    window.removeEventListener('shortcut:edit-collective', handleShortcutEdit);
-  };
-});
+  return removeShortcutEditListener;
+}
+$effect(listenForShortcutEdit);
 </script>
 
 <svelte:head>

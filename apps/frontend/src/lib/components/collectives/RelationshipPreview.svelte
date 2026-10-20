@@ -1,8 +1,8 @@
 <script lang="ts">
 import ArrowRight from 'svelte-heros-v2/ArrowRight.svelte';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { RelationshipPreviewResponse } from '$shared';
-import FriendAvatar from '../friends/FriendAvatar.svelte';
 
 const i18n = createI18n();
 
@@ -12,7 +12,7 @@ interface Props {
 
 let { preview }: Props = $props();
 
-let newRelationships = $derived(preview.relationships.filter((r) => !r.alreadyExists));
+let newRelationships = $derived(preview.relationships.filter((r) => r.alreadyExists === false));
 let existingRelationships = $derived(preview.relationships.filter((r) => r.alreadyExists));
 </script>
 

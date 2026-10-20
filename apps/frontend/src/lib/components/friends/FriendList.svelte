@@ -20,23 +20,22 @@ import { createI18n } from '$lib/i18n/i18n.js';
 
 const i18n = createI18n();
 
+import ColumnChooser from '$lib/components/friends/ColumnChooser.svelte';
+import FriendGrid from '$lib/components/friends/FriendGrid.svelte';
+import FacetChips from '$lib/components/search/FacetChips.svelte';
+import FacetDropdown from '$lib/components/search/FacetDropdown.svelte';
 import {
   type ArrayFacetField,
   type ColumnId,
   DEFAULT_COLUMNS,
   type FacetFilters,
   type FacetGroupsResponse,
-  type FriendGridItem,
   type GlobalSearchResultResponse,
   type PageSize,
   type SearchSortBy,
   searchResultToFriendGridItem,
   toFriendGridItem,
 } from '$shared';
-import FacetChips from '../search/FacetChips.svelte';
-import FacetDropdown from '../search/FacetDropdown.svelte';
-import ColumnChooser from './ColumnChooser.svelte';
-import FriendGrid from './FriendGrid.svelte';
 
 const { api, logger, stores } = getAppContext();
 const friends = stores.friends;
@@ -88,20 +87,26 @@ let isFacetsLoading = $state(false);
 
 // Derived state
 let isSearchMode = $derived(searchQuery.trim().length >= 2);
-let hasActiveFilters = $derived(Object.values(activeFilters).some((arr) => arr && arr.length > 0));
-let isFilterMode = $derived(hasActiveFilters && !isSearchMode);
+let hasActiveFilters = $derived(
+  Object.values(activeFilters).some((arr) => arr !== undefined && arr.length > 0),
+);
+let isFilterMode = $derived(hasActiveFilters === true && isSearchMode === false);
 let showNoResults = $derived(
-  (isSearchMode || isFilterMode) && !isSearching && searchResults.length === 0,
+  (isSearchMode === true || isFilterMode === true) &&
+    isSearching === false &&
+    searchResults.length === 0,
 );
 let currentPageSize = $derived($friendsPageSize);
 
 // Return URL for navigation back from friend detail (preserves search/filter state)
 let returnUrl = $derived($page.url.pathname + $page.url.search);
 
-// Persist filter state to store for restoration when navigating back
-$effect(() => {
+function persistFilterState() {
   friendListFilter.setState(searchQuery, activeFilters);
-});
+}
+
+// Persist filter state to store for restoration when navigating back
+$effect(persistFilterState);
 
 // Columns - use user preferences or defaults
 let currentColumns = $derived<ColumnId[]>(
@@ -122,14 +127,14 @@ function handleSearchInput(value: string) {
   searchPage = 1; // Reset to first page on new search
 
   // Clear any pending debounce
-  if (debounceTimer) {
+  if (debounceTimer !== null) {
     clearTimeout(debounceTimer);
   }
 
   const hasQuery = value.trim().length >= 2;
 
   // If no query and no active filters, clear results
-  if (!hasQuery && !hasActiveFilters) {
+  if (hasQuery === false && hasActiveFilters === false) {
     searchResults = [];
     searchTotal = 0;
     searchTotalPages = 0;
@@ -141,27 +146,31 @@ function handleSearchInput(value: string) {
 
   isSearching = true;
 
-  debounceTimer = setTimeout(async () => {
+  async function notifyAndSearch() {
     // Notify parent of query change (debounced to prevent pushState spam)
     onQueryChange?.(value);
     await performSearch();
-  }, 300);
+  }
+
+  debounceTimer = setTimeout(notifyAndSearch, 300);
 }
 
 async function performSearch() {
   const hasQuery = searchQuery.trim().length >= 2;
 
   // Need either a query or active filters
-  if (!hasQuery && !hasActiveFilters) return;
+  if (hasQuery === false && hasActiveFilters === false) {
+    return;
+  }
 
   isSearching = true;
   try {
     const result = await api.friendSearch.facetedSearch({
-      query: hasQuery ? searchQuery.trim() : undefined,
+      query: hasQuery === true ? searchQuery.trim() : undefined,
       page: searchPage,
       pageSize: currentPageSize,
-      sortBy: hasQuery ? searchSortBy : sortBy,
-      sortOrder: hasQuery ? searchSortOrder : sortOrder,
+      sortBy: hasQuery === true ? searchSortBy : sortBy,
+      sortOrder: hasQuery === true ? searchSortOrder : sortOrder,
       filters: activeFilters,
       shouldIncludeFacets: true,
     });
@@ -216,7 +225,7 @@ function handleRemoveFilter(field: ArrayFacetField, value: string) {
   onFiltersChange?.(newFilters);
 
   // If no more filters and no search query, just reload the facets
-  if (!hasActiveFilters && !isSearchMode) {
+  if (hasActiveFilters === false && isSearchMode === false) {
     searchResults = [];
     searchTotal = 0;
     searchTotalPages = 0;
@@ -232,7 +241,7 @@ function handleClearAllFilters() {
   onFiltersChange?.({});
 
   // If no search query, clear results and just reload facets
-  if (!isSearchMode) {
+  if (isSearchMode === false) {
     searchResults = [];
     searchTotal = 0;
     searchTotalPages = 0;
@@ -259,7 +268,7 @@ async function loadFacets() {
 }
 
 async function loadPage(page: number) {
-  if (isSearchMode || isFilterMode) {
+  if (isSearchMode === true || isFilterMode === true) {
     searchPage = page;
     await performSearch();
   } else {
@@ -273,7 +282,7 @@ async function loadPage(page: number) {
 }
 
 async function handleSortChange() {
-  if (isSearchMode) {
+  if (isSearchMode === true) {
     searchPage = 1;
     await performSearch();
   } else {
@@ -282,7 +291,7 @@ async function handleSortChange() {
 }
 
 function toggleSortOrder() {
-  if (isSearchMode) {
+  if (isSearchMode === true) {
     searchSortOrder = searchSortOrder === 'asc' ? 'desc' : 'asc';
   } else {
     sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
@@ -305,7 +314,7 @@ async function handlePageSizeChange(newSize: PageSize) {
   void auth.updatePreferences({ friendsPageSize: newSize });
 
   // Reload with new page size, reset to page 1
-  if (isSearchMode) {
+  if (isSearchMode === true) {
     searchPage = 1;
     await performSearch();
   } else {
@@ -320,7 +329,7 @@ async function handlePageSizeChange(newSize: PageSize) {
 
 // Navigate to previous page (for keyboard shortcut)
 export function goToPreviousPage() {
-  const currentPage = isSearchMode ? searchPage : $friends.page;
+  const currentPage = isSearchMode === true ? searchPage : $friends.page;
   if (currentPage > 1) {
     void loadPage(currentPage - 1);
   }
@@ -328,34 +337,39 @@ export function goToPreviousPage() {
 
 // Navigate to next page (for keyboard shortcut)
 export function goToNextPage() {
-  const totalPages = isSearchMode ? searchTotalPages : $friends.totalPages;
-  const currentPage = isSearchMode ? searchPage : $friends.page;
+  const totalPages = isSearchMode === true ? searchTotalPages : $friends.totalPages;
+  const currentPage = isSearchMode === true ? searchPage : $friends.page;
   if (currentPage < totalPages) {
     void loadPage(currentPage + 1);
   }
 }
 
-// Initialize search if there's an initial query or filters
-$effect(() => {
-  const hasInitialFilters = Object.values(initialFilters).some((arr) => arr && arr.length > 0);
-  if (initialQuery && initialQuery.trim().length >= 2) {
+function runInitialSearch() {
+  const hasInitialFilters = Object.values(initialFilters).some(
+    (arr) => arr !== undefined && arr.length > 0,
+  );
+  if (initialQuery.trim().length >= 2) {
     handleSearchInput(initialQuery);
-  } else if (hasInitialFilters) {
+  } else if (hasInitialFilters === true) {
     // Filters without query - trigger filter-only search
     void performSearch();
   }
-});
+}
 
-// Load facets on mount (when auth is initialized)
-$effect(() => {
-  if ($auth.isInitialized && !facets) {
+// Initialize search if there's an initial query or filters
+$effect(runInitialSearch);
+
+function loadFacetsOnceAuthenticated() {
+  if ($auth.isInitialized === true && facets === null) {
     void loadFacets();
   }
-});
+}
 
-// Update visible friend IDs for keyboard navigation
-$effect(() => {
-  if (!isSearchMode && !isFilterMode) {
+// Load facets on mount (when auth is initialized)
+$effect(loadFacetsOnceAuthenticated);
+
+function syncVisibleFriendIds() {
+  if (isSearchMode === false && isFilterMode === false) {
     const ids = $friendList.map((c) => c.id);
     visibleFriendIds.set(ids);
   } else if (searchResults.length > 0) {
@@ -364,10 +378,12 @@ $effect(() => {
   } else {
     visibleFriendIds.set([]);
   }
-});
+}
 
-// Listen for keyboard filter shortcuts
-onMount(() => {
+// Update visible friend IDs for keyboard navigation
+$effect(syncVisibleFriendIds);
+
+function registerFilterShortcuts() {
   function handleFilterToggle(e: Event) {
     const event = e as CustomEvent<{ category: string; index: number }>;
     facetDropdownRef?.toggleFilterByIndex(event.detail.index);
@@ -383,37 +399,48 @@ onMount(() => {
   window.addEventListener('shortcut:filter-toggle', handleFilterToggle);
   window.addEventListener('shortcut:clear-filters', handleClearFilters);
 
-  return () => {
+  return function removeFilterShortcuts() {
     window.removeEventListener('shortcut:filter-toggle', handleFilterToggle);
     window.removeEventListener('shortcut:clear-filters', handleClearFilters);
   };
-});
+}
+
+// Listen for keyboard filter shortcuts
+onMount(registerFilterShortcuts);
 
 // Computed values for display
-let displayTotal = $derived(isSearchMode || isFilterMode ? searchTotal : $friends.total);
-let displayPage = $derived(isSearchMode || isFilterMode ? searchPage : $friends.page);
-let displayTotalPages = $derived(
-  isSearchMode || isFilterMode ? searchTotalPages : $friends.totalPages,
+let displayTotal = $derived(
+  isSearchMode === true || isFilterMode === true ? searchTotal : $friends.total,
 );
-let currentSortBy = $derived(isSearchMode ? searchSortBy : sortBy);
-let currentSortOrder = $derived(isSearchMode ? searchSortOrder : sortOrder);
+let displayPage = $derived(
+  isSearchMode === true || isFilterMode === true ? searchPage : $friends.page,
+);
+let displayTotalPages = $derived(
+  isSearchMode === true || isFilterMode === true ? searchTotalPages : $friends.totalPages,
+);
+let currentSortBy = $derived(isSearchMode === true ? searchSortBy : sortBy);
+let currentSortOrder = $derived(isSearchMode === true ? searchSortOrder : sortOrder);
+
+function buildGridItems() {
+  if (isSearchMode === true || isFilterMode === true) {
+    return searchResults.map(searchResultToFriendGridItem);
+  }
+  return $friendList.map(toFriendGridItem);
+}
 
 // Convert items to unified FriendGridItem format
-let gridItems = $derived.by<FriendGridItem[]>(() => {
-  if (isSearchMode || isFilterMode) {
-    return searchResults.map(searchResultToFriendGridItem);
-  } else {
-    return $friendList.map(toFriendGridItem);
-  }
-});
+let gridItems = $derived.by(buildGridItems);
 
 // Open the first result when pressing Enter in the search box
 function openFirstResult() {
   const first = gridItems[0];
-  if (!first) return;
-  const url = returnUrl
-    ? `/friends/${first.id}?from=${encodeURIComponent(returnUrl)}`
-    : `/friends/${first.id}`;
+  if (first === undefined) {
+    return;
+  }
+  const url =
+    returnUrl !== ''
+      ? `/friends/${first.id}?from=${encodeURIComponent(returnUrl)}`
+      : `/friends/${first.id}`;
   void goto(url);
 }
 </script>

@@ -7,7 +7,7 @@ interface Props {
 
 let { displayName, photoUrl, size = 'md' }: Props = $props();
 
-function getInitials(name: string): string {
+function getInitials(name: string) {
   const parts = name.trim().split(/\s+/);
   const first = parts[0] ?? '';
   if (parts.length === 1) {

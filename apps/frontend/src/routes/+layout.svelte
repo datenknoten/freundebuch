@@ -1,5 +1,6 @@
 <script lang="ts">
 import Plus from 'svelte-heros-v2/Plus.svelte';
+// biome-ignore lint/correctness/useImportExtensions: a stylesheet, not a module; its fix would rewrite it to `.js`
 import '../app.css';
 import type { Snippet } from 'svelte';
 import { onMount, untrack } from 'svelte';
@@ -42,17 +43,14 @@ const currentLanguage = locale.currentLanguage;
 const isLocaleInitialized = locale.isInitialized;
 const session = appContext.stores.session;
 
-// Create i18n store for reactive translations
 const i18n = createI18n();
 
-// Initialize auth state and i18n on app load
-onMount(async () => {
-  // Initialize auth first to get user preferences
+async function initializeApp() {
+  // Auth first: its user preferences pick the initial locale.
   const user = await auth.initialize();
-
-  // Initialize locale with user's language preference if available
   await locale.initialize(user?.preferences?.language);
-});
+}
+onMount(initializeApp);
 
 // Preload circles when the user is authenticated. The circles store caches
 // the result, so this only fetches once and is shared by every consumer
@@ -60,22 +58,29 @@ onMount(async () => {
 // path so it doesn't compete with the current page's initial data requests
 // (e.g. the dashboard's consolidated request).
 let circlesPreloaded = false;
-$effect(() => {
-  if (!$isAuthInitialized) return;
+function preloadIfStillAuthenticated() {
+  // Re-check auth: the user may have logged out (or the session may have
+  // expired) between scheduling and this callback firing, in which case we
+  // must not issue an unauthenticated request.
+  if (get(isAuthenticated) === true) {
+    void circles.preloadCircles();
+  }
+}
 
-  if ($isAuthenticated) {
-    if (circlesPreloaded) return;
+function syncCirclesPreload() {
+  if ($isAuthInitialized === false) {
+    return;
+  }
+
+  if ($isAuthenticated === true) {
+    if (circlesPreloaded === true) {
+      return;
+    }
     circlesPreloaded = true;
-    const preload = () => {
-      // Re-check auth: the user may have logged out (or the session may have
-      // expired) between scheduling and this callback firing, in which case we
-      // must not issue an unauthenticated request.
-      if (get(isAuthenticated)) void circles.preloadCircles();
-    };
     if (typeof requestIdleCallback === 'function') {
-      requestIdleCallback(preload);
+      requestIdleCallback(preloadIfStillAuthenticated);
     } else {
-      setTimeout(preload, 0);
+      setTimeout(preloadIfStillAuthenticated, 0);
     }
   } else {
     // On logout/session loss, drop the previous user's cached circles and
@@ -83,38 +88,49 @@ $effect(() => {
     circlesPreloaded = false;
     circles.clear();
   }
-});
+}
+$effect(syncCirclesPreload);
 
 // Sync language when user preferences change (e.g., after login)
-$effect(() => {
+function syncPreferredLanguage() {
   const prefs = $userPreferences;
-  if ($isLocaleInitialized && prefs?.language && prefs.language !== locale.getLanguage()) {
+  if (
+    $isLocaleInitialized === true &&
+    prefs?.language !== undefined &&
+    prefs.language !== locale.getLanguage()
+  ) {
     void locale.setLanguage(prefs.language);
   }
-});
+}
+$effect(syncPreferredLanguage);
 
 // Keep the document language in sync with the active locale. `app.html` ships
 // a static `lang="en"`, which would otherwise make screen readers pronounce
 // German content with English phonetics.
-$effect(() => {
-  if (typeof document === 'undefined') return;
+function syncDocumentLanguage() {
+  if (typeof document === 'undefined') {
+    return;
+  }
   document.documentElement.lang = $currentLanguage;
-});
+}
+$effect(syncDocumentLanguage);
 
 // Routes exempt from onboarding redirect. `/oauth/` is exempt so the OAuth
 // consent step is not interrupted mid-flow (which would drop the consent code).
 const onboardingExemptPaths = ['/onboarding', '/auth/', '/oauth/'];
 
-// Redirect to onboarding if user needs to complete it
-$effect(() => {
-  if ($isAuthInitialized && $needsOnboarding) {
-    const currentPath = $page.url.pathname;
-    const isExempt = onboardingExemptPaths.some((path) => currentPath.startsWith(path));
-    if (!isExempt) {
+function isOnboardingExempt(pathname: string) {
+  return onboardingExemptPaths.some((path) => pathname.startsWith(path));
+}
+
+function redirectToOnboarding() {
+  if ($isAuthInitialized === true && $needsOnboarding === true) {
+    if (isOnboardingExempt($page.url.pathname) === false) {
       void goto('/onboarding');
     }
   }
-});
+}
+$effect(redirectToOnboarding);
 
 // Hide the FAB while the user is creating a new entity (any /new route, e.g.
 // /friends/new, /encounters/new, /collectives/new) so an accidental tap can't
@@ -123,11 +139,11 @@ $effect(() => {
 // it too: every create target is behind the onboarding guard, so the FAB would
 // only bounce the user straight back.
 const showFab = $derived(
-  $isAuthenticated &&
-    !onboardingExemptPaths.some((path) => $page.url.pathname.startsWith(path)) &&
-    !$page.url.pathname.endsWith('/new') &&
-    !$page.url.pathname.match(/^\/friends\/[^/]+$/) &&
-    !$page.url.pathname.match(/^\/collectives\/[^/]+$/),
+  $isAuthenticated === true &&
+    isOnboardingExempt($page.url.pathname) === false &&
+    $page.url.pathname.endsWith('/new') === false &&
+    $page.url.pathname.match(/^\/friends\/[^/]+$/) === null &&
+    $page.url.pathname.match(/^\/collectives\/[^/]+$/) === null,
 );
 
 let createMenuOpen = $state(false);
@@ -136,12 +152,13 @@ let createMenuOpen = $state(false);
 // query-param-only updates) so the bottom-sheet overlay can never linger on a
 // route where the FAB is hidden.
 let lastHref = $page.url.href;
-$effect(() => {
+function closeCreateMenuOnNavigation() {
   if ($page.url.href !== lastHref) {
     lastHref = $page.url.href;
     createMenuOpen = false;
   }
-});
+}
+$effect(closeCreateMenuOnNavigation);
 
 function handleCreateSelect(choice: FabCreateChoice) {
   createMenuOpen = false;

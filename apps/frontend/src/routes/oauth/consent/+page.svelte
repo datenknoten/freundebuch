@@ -24,13 +24,13 @@ let error = $state('');
 
 // Human-readable descriptions for the standard scopes; unknown scopes fall
 // back to showing the raw scope string.
-function scopeLabel(scope: string): string {
+function scopeLabel(scope: string) {
   const key = `oauth.consent.scopes.${scope}`;
   const translated = $i18n.t(key);
   return translated === key ? scope : translated;
 }
 
-onMount(async () => {
+async function resolveClientName() {
   if (clientId === '') {
     return;
   }
@@ -41,7 +41,8 @@ onMount(async () => {
     // The subtitle falls back to the client id.
     logger.warn({ err }, 'Failed to resolve the OAuth client name');
   }
-});
+}
+onMount(resolveClientName);
 
 async function submitConsent(isAccepted: boolean) {
   if (isSubmitting === true) {

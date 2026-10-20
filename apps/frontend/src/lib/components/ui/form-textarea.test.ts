@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '$lib/test/render.js';
-import FormTextarea from './FormTextarea.svelte';
+import FormTextarea from '$lib/components/ui/FormTextarea.svelte';
 
 describe('FormTextarea', () => {
   describe('when rendered', () => {

@@ -178,10 +178,13 @@ export class AuthStore {
    */
   public async updatePreferences(changes: UserPreferences) {
     this.state.update((state) => ({ ...state, preferences: { ...state.preferences, ...changes } }));
+    const logger = this.logger;
     await retryWithBackoff(() => this.persistPreferences(changes), {
       maxAttempts: PREFERENCES_RETRY_ATTEMPTS,
       initialDelay: PREFERENCES_RETRY_DELAY_MS,
-      onRetry: (attempt, err) => this.logger.warn({ err, attempt }, 'Preferences update failed'),
+      onRetry(attempt, err) {
+        logger.warn({ err, attempt }, 'Preferences update failed');
+      },
     });
   }
 

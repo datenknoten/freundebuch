@@ -26,7 +26,17 @@ const i18n = createI18n();
 
 // The self-profile display name is provided by /api/auth/me (via the auth
 // store), so no extra request is needed to greet the user by name.
-let userDisplayName = $derived($currentUser?.displayName || $currentUser?.email || '');
+function greetingName() {
+  const user = $currentUser;
+  if (user === null || user === undefined) {
+    return '';
+  }
+  if (user.displayName !== undefined && user.displayName !== '') {
+    return user.displayName;
+  }
+  return user.email;
+}
+let userDisplayName = $derived.by(greetingName);
 
 // Dashboard widgets share a single request via /api/friends/dashboard rather
 // than each fetching independently.
@@ -39,11 +49,15 @@ let isDashboardLoading = $state(true);
 let dashboardError = $state<string | null>(null);
 let dashboardLoaded = false;
 
-$effect(() => {
-  if (!$isAuthInitialized) return;
+function loadDashboardWhenAuthenticated() {
+  if ($isAuthInitialized === false) {
+    return;
+  }
 
-  if ($isAuthenticated) {
-    if (dashboardLoaded) return;
+  if ($isAuthenticated === true) {
+    if (dashboardLoaded === true) {
+      return;
+    }
     dashboardLoaded = true;
     void loadDashboard();
   } else {
@@ -51,7 +65,8 @@ $effect(() => {
     // instead of showing the previous (or empty) state.
     dashboardLoaded = false;
   }
-});
+}
+$effect(loadDashboardWhenAuthenticated);
 
 async function loadDashboard() {
   isDashboardLoading = true;

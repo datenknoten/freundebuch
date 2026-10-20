@@ -8,7 +8,7 @@ import { changeLanguage, initI18n, type SupportedLanguage } from '$lib/i18n/i18n
  * against the bundle (rather than a literal) is what keeps a hard-coded English string
  * from sneaking back into a component.
  */
-export async function useLanguage(lang: SupportedLanguage): Promise<void> {
+export async function useLanguage(lang: SupportedLanguage) {
   await initI18n(lang);
   await changeLanguage(lang);
 }
@@ -34,7 +34,7 @@ const LOCALE_METHODS: LocaleMethod[] = [
   'toLocaleTimeString',
 ];
 
-export function withDefaultLocale<T>(locale: string, fn: () => T): T {
+export function withDefaultLocale<T>(locale: string, fn: () => T) {
   const originals = LOCALE_METHODS.map((name) => [name, Date.prototype[name]] as const);
 
   for (const [name, original] of originals) {
@@ -42,7 +42,7 @@ export function withDefaultLocale<T>(locale: string, fn: () => T): T {
       this: Date,
       locales?: Intl.LocalesArgument,
       options?: Intl.DateTimeFormatOptions,
-    ): string {
+    ) {
       return (
         original as (l?: Intl.LocalesArgument, o?: Intl.DateTimeFormatOptions) => string
       ).call(this, locales ?? locale, options);

@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import Spinner from '$lib/components/ui/Spinner.svelte';
 import { type ButtonSize, type ButtonVariant, buttonClasses } from './button-classes.js';
-import Spinner from './Spinner.svelte';
 
 interface Props {
   variant?: ButtonVariant;
@@ -49,15 +49,15 @@ let {
 }: Props = $props();
 
 const classes = $derived(
-  `${buttonClasses(variant, size)}${block ? ' w-full' : ''}${className.length > 0 ? ` ${className}` : ''}`,
+  `${buttonClasses(variant, size)}${block === true ? ' w-full' : ''}${className.length > 0 ? ` ${className}` : ''}`,
 );
 const spinnerSize = $derived(size === 'lg' ? 'md' : 'sm');
-const inert = $derived(disabled || loading);
+const inert = $derived(disabled === true || loading === true);
 
 // A disabled `<button>` swallows clicks by itself, but an `<a href>` does not:
 // the link variant has to refuse the navigation and the handler explicitly.
 function handleClick(event: MouseEvent) {
-  if (inert) {
+  if (inert === true) {
     event.preventDefault();
     return;
   }

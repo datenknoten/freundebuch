@@ -1,12 +1,12 @@
 <script lang="ts">
 import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import { getAppContext } from '$lib/app-context.js';
+import AddressMapModal from '$lib/components/friends/subresources/AddressMapModal.svelte';
+import SubresourceRow from '$lib/components/friends/subresources/SubresourceRow.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { type AddressResponse, type AddressType, countryDisplayName } from '$shared';
-import AddressMapModal from './AddressMapModal.svelte';
-import SubresourceRow from './SubresourceRow.svelte';
 
 const currentLanguage = getAppContext().stores.locale.currentLanguage;
 
@@ -24,22 +24,36 @@ let showMap = $state(false);
 
 const hasCoordinates = $derived(address.latitude != null && address.longitude != null);
 
-function addressTypeLabel(type: AddressType): string {
+function addressTypeLabel(type: AddressType) {
   return $i18n.t(`subresources.address.types.${type}`);
 }
 
-function formatAddress(addr: AddressResponse, language: string): string[] {
+function isNonEmpty(part: string | undefined) {
+  return part !== undefined && part !== '';
+}
+
+function formatAddress(addr: AddressResponse, language: string) {
   const lines: string[] = [];
-  if (addr.streetLine1) lines.push(addr.streetLine1);
-  if (addr.streetLine2) lines.push(addr.streetLine2);
-  const cityLine = [addr.postalCode, addr.city].filter(Boolean).join(' ');
-  if (cityLine) lines.push(cityLine);
-  if (addr.stateProvince) lines.push(addr.stateProvince);
-  if (addr.country) lines.push(countryDisplayName(addr.country, language));
+  if (addr.streetLine1 !== undefined && addr.streetLine1 !== '') {
+    lines.push(addr.streetLine1);
+  }
+  if (addr.streetLine2 !== undefined && addr.streetLine2 !== '') {
+    lines.push(addr.streetLine2);
+  }
+  const cityLine = [addr.postalCode, addr.city].filter(isNonEmpty).join(' ');
+  if (cityLine !== '') {
+    lines.push(cityLine);
+  }
+  if (addr.stateProvince !== undefined && addr.stateProvince !== '') {
+    lines.push(addr.stateProvince);
+  }
+  if (addr.country !== undefined && addr.country !== '') {
+    lines.push(countryDisplayName(addr.country, language));
+  }
   return lines;
 }
 
-function formatAddressLabel(addr: AddressResponse, language: string): string {
+function formatAddressLabel(addr: AddressResponse, language: string) {
   return formatAddress(addr, language).join(', ');
 }
 

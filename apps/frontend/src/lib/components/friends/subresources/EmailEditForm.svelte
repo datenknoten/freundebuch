@@ -24,15 +24,14 @@ let emailType = $state<EmailType>((() => initialData?.emailType ?? 'personal')()
 let label = $state((() => initialData?.label ?? '')());
 let isPrimary = $state((() => initialData?.isPrimary ?? defaultPrimary ?? false)());
 
-createDirtyTracker(
-  () => {
-    emailAddress;
-    emailType;
-    label;
-    isPrimary;
-  },
-  () => onchange,
-);
+function trackDirtyFields() {
+  emailAddress;
+  emailType;
+  label;
+  isPrimary;
+}
+
+createDirtyTracker(trackDirtyFields, () => onchange);
 
 const emailTypeOptions = $derived([
   { value: 'personal' as const, label: $i18n.t('subresources.email.types.personal') },
@@ -41,17 +40,18 @@ const emailTypeOptions = $derived([
 ]);
 
 export function getData() {
+  const trimmedLabel = label.trim();
   return {
     emailAddress: emailAddress.trim(),
     emailType,
-    label: label.trim() || undefined,
+    label: trimmedLabel === '' ? undefined : trimmedLabel,
     isPrimary,
   } satisfies EmailData;
 }
 
-export function isValid(): boolean {
+export function isValid() {
   const email = emailAddress.trim();
-  return email.length > 0 && email.includes('@');
+  return email.length > 0 && email.includes('@') === true;
 }
 </script>
 

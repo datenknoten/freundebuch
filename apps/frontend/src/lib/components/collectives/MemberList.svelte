@@ -4,11 +4,11 @@ import NoSymbol from 'svelte-heros-v2/NoSymbol.svelte';
 import Tag from 'svelte-heros-v2/Tag.svelte';
 import Trash from 'svelte-heros-v2/Trash.svelte';
 import { getAppContext } from '$lib/app-context.js';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
+import KeyboardHintBadge from '$lib/components/KeyboardHintBadge.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import type { CollectiveMemberResponse } from '$shared';
-import FriendAvatar from '../friends/FriendAvatar.svelte';
-import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
 
 const keyboardModes = getAppContext().stores.keyboardModes;
 const isOpenMemberModeActive = keyboardModes.members.isActive;
@@ -35,10 +35,12 @@ let {
 }: Props = $props();
 
 let activeMembers = $derived(members.filter((m) => m.isActive));
-let inactiveMembers = $derived(members.filter((m) => !m.isActive));
+let inactiveMembers = $derived(members.filter((m) => m.isActive === false));
 
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '';
+function formatDate(dateStr: string | null) {
+  if (dateStr === null || dateStr === '') {
+    return '';
+  }
   const date = new Date(dateStr);
   return date.toLocaleDateString(undefined, {
     year: 'numeric',

@@ -6,6 +6,9 @@ import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
 import Star from 'svelte-heros-v2/Star.svelte';
 import { goto } from '$app/navigation';
 import { getAppContext } from '$lib/app-context.js';
+import CircleChips from '$lib/components/circles/CircleChips.svelte';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
+import KeyboardHintBadge from '$lib/components/KeyboardHintBadge.svelte';
 import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
 import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
@@ -19,9 +22,6 @@ import {
   countryDisplayName,
   type FriendGridItem,
 } from '$shared';
-import CircleChips from '../circles/CircleChips.svelte';
-import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
-import FriendAvatar from './FriendAvatar.svelte';
 
 const keyboardModes = getAppContext().stores.keyboardModes;
 const isOpenModeActive = keyboardModes.friends.isActive;
@@ -32,8 +32,10 @@ const currentLanguage = getAppContext().stores.locale.currentLanguage;
 const i18n = createI18n();
 
 /** Sanitize search headline HTML to only allow <mark> tags for highlighting */
-function sanitizeHeadline(html: string | null | undefined): string {
-  if (!html) return '';
+function sanitizeHeadline(html: string | null | undefined) {
+  if (html === null || html === undefined || html === '') {
+    return '';
+  }
   return DOMPurify.sanitize(html, { ALLOWED_TAGS: ['mark'] });
 }
 
@@ -64,9 +66,9 @@ let {
   onSortChange,
 }: Props = $props();
 
-function getFriendDetailUrl(itemId: string): string {
+function getFriendDetailUrl(itemId: string) {
   const baseUrl = `/friends/${itemId}`;
-  if (returnUrl) {
+  if (returnUrl !== undefined && returnUrl !== '') {
     return `${baseUrl}?from=${encodeURIComponent(returnUrl)}`;
   }
   return baseUrl;
@@ -82,26 +84,24 @@ function handleLinkClick(e: MouseEvent) {
 }
 
 function handleSort(column: ColumnId) {
-  // Only allow sorting on sortable columns
   const definition = COLUMN_DEFINITIONS[column];
-  if (!definition.isSortable) return;
+  if (definition.isSortable === false) {
+    return;
+  }
 
-  // Map column ID to sort field
   const sortField = mapColumnToSortBy(column);
-  if (!sortField) return;
+  if (sortField === null) {
+    return;
+  }
 
   if (sortBy === sortField) {
-    // Toggle sort order
     onSortChange(sortField, sortOrder === 'asc' ? 'desc' : 'asc');
   } else {
-    // New column, default to ascending
     onSortChange(sortField, 'asc');
   }
 }
 
-function mapColumnToSortBy(
-  columnId: ColumnId,
-): 'display_name' | 'created_at' | 'updated_at' | null {
+function mapColumnToSortBy(columnId: ColumnId) {
   switch (columnId) {
     case 'displayName':
       return 'display_name';
@@ -114,8 +114,10 @@ function mapColumnToSortBy(
   }
 }
 
-function formatDate(dateString: string | undefined): string {
-  if (!dateString) return '';
+function formatDate(dateString: string | undefined) {
+  if (dateString === undefined || dateString === '') {
+    return '';
+  }
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
@@ -124,8 +126,10 @@ function formatDate(dateString: string | undefined): string {
   });
 }
 
-function formatBirthday(dateString: string | undefined, format: BirthdayFormat): string {
-  if (!dateString) return '';
+function formatBirthday(dateString: string | undefined, format: BirthdayFormat) {
+  if (dateString === undefined || dateString === '') {
+    return '';
+  }
   // Birthday is stored as YYYY-MM-DD
   const [, month = '', day = ''] = dateString.split('-');
   const monthNum = parseInt(month, 10);

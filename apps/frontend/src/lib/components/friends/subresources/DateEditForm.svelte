@@ -23,15 +23,14 @@ let yearKnown = $state((() => initialData?.yearKnown ?? true)());
 let dateType = $state<DateType>((() => initialData?.dateType ?? 'birthday')());
 let label = $state((() => initialData?.label ?? '')());
 
-createDirtyTracker(
-  () => {
-    dateValue;
-    yearKnown;
-    dateType;
-    label;
-  },
-  () => onchange,
-);
+function trackDirtyFields() {
+  dateValue;
+  yearKnown;
+  dateType;
+  label;
+}
+
+createDirtyTracker(trackDirtyFields, () => onchange);
 
 const dateTypeOptions = $derived([
   { value: 'birthday' as const, label: $i18n.t('subresources.date.types.birthday') },
@@ -40,15 +39,16 @@ const dateTypeOptions = $derived([
 ]);
 
 export function getData() {
+  const trimmedLabel = label.trim();
   return {
     dateValue,
     yearKnown,
     dateType,
-    label: label.trim() || undefined,
+    label: trimmedLabel === '' ? undefined : trimmedLabel,
   } satisfies DateData;
 }
 
-export function isValid(): boolean {
+export function isValid() {
   return dateValue.trim().length > 0;
 }
 </script>

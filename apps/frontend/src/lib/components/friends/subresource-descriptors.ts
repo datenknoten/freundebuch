@@ -1,4 +1,3 @@
-// biome-ignore-all lint/correctness/useImportExtensions: Svelte imports need .svelte extension
 /**
  * Data-driven descriptors for a friend's CRUD sub-resources.
  *
@@ -36,6 +35,26 @@ import type {
 import type { FriendNoteData, FriendNotesApi } from '$lib/api/friend-notes.js';
 import type { PhoneData } from '$lib/api/phone-data.js';
 import type { UrlData } from '$lib/api/url-data.js';
+import AddressEditForm from '$lib/components/friends/subresources/AddressEditForm.svelte';
+import AddressRow from '$lib/components/friends/subresources/AddressRow.svelte';
+import AddToCollectiveModal from '$lib/components/friends/subresources/AddToCollectiveModal.svelte';
+import CircleEditForm from '$lib/components/friends/subresources/CircleEditForm.svelte';
+import CircleRow from '$lib/components/friends/subresources/CircleRow.svelte';
+import CollectiveRow from '$lib/components/friends/subresources/CollectiveRow.svelte';
+import DateEditForm from '$lib/components/friends/subresources/DateEditForm.svelte';
+import DateRow from '$lib/components/friends/subresources/DateRow.svelte';
+import EmailEditForm from '$lib/components/friends/subresources/EmailEditForm.svelte';
+import EmailRow from '$lib/components/friends/subresources/EmailRow.svelte';
+import NoteEditForm from '$lib/components/friends/subresources/NoteEditForm.svelte';
+import NoteRow from '$lib/components/friends/subresources/NoteRow.svelte';
+import PhoneEditForm from '$lib/components/friends/subresources/PhoneEditForm.svelte';
+import PhoneRow from '$lib/components/friends/subresources/PhoneRow.svelte';
+import ProfessionalHistoryEditForm from '$lib/components/friends/subresources/ProfessionalHistoryEditForm.svelte';
+import ProfessionalHistoryRow from '$lib/components/friends/subresources/ProfessionalHistoryRow.svelte';
+import SocialProfileEditForm from '$lib/components/friends/subresources/SocialProfileEditForm.svelte';
+import SocialProfileRow from '$lib/components/friends/subresources/SocialProfileRow.svelte';
+import UrlEditForm from '$lib/components/friends/subresources/UrlEditForm.svelte';
+import UrlRow from '$lib/components/friends/subresources/UrlRow.svelte';
 import type { FriendsStore } from '$lib/stores/friends.js';
 import type {
   AddressResponse,
@@ -58,28 +77,8 @@ import {
   primaryAwareFormProps,
   type SubresourceDescriptor,
   type Translate,
-} from '../subresources/types';
-import AddressEditForm from './subresources/AddressEditForm.svelte';
-import AddressRow from './subresources/AddressRow.svelte';
-import AddToCollectiveModal from './subresources/AddToCollectiveModal.svelte';
-import CircleEditForm from './subresources/CircleEditForm.svelte';
-import CircleRow from './subresources/CircleRow.svelte';
-import CollectiveRow from './subresources/CollectiveRow.svelte';
-import DateEditForm from './subresources/DateEditForm.svelte';
-import DateRow from './subresources/DateRow.svelte';
-import EmailEditForm from './subresources/EmailEditForm.svelte';
-import EmailRow from './subresources/EmailRow.svelte';
-import NoteEditForm from './subresources/NoteEditForm.svelte';
-import NoteRow from './subresources/NoteRow.svelte';
+} from '../subresources/types.js';
 import { noteExcerpt } from './subresources/note-excerpt.js';
-import PhoneEditForm from './subresources/PhoneEditForm.svelte';
-import PhoneRow from './subresources/PhoneRow.svelte';
-import ProfessionalHistoryEditForm from './subresources/ProfessionalHistoryEditForm.svelte';
-import ProfessionalHistoryRow from './subresources/ProfessionalHistoryRow.svelte';
-import SocialProfileEditForm from './subresources/SocialProfileEditForm.svelte';
-import SocialProfileRow from './subresources/SocialProfileRow.svelte';
-import UrlEditForm from './subresources/UrlEditForm.svelte';
-import UrlRow from './subresources/UrlRow.svelte';
 
 export interface FriendDescriptorsOptions {
   friendsStore: FriendsStore;
@@ -136,9 +135,10 @@ function mapPhoneError(err: unknown, t: Translate) {
 
 /** The friend store owns addresses, so refetch the friend; the section's own reload is inert here. */
 function scheduleAddressRefetch(friendsStore: FriendsStore, friendId: string) {
-  const timers = ADDRESS_REFETCH_DELAYS_MS.map((delay) =>
-    setTimeout(() => void friendsStore.refreshFriend(friendId), delay),
-  );
+  function refetchFriend() {
+    void friendsStore.refreshFriend(friendId);
+  }
+  const timers = ADDRESS_REFETCH_DELAYS_MS.map((delay) => setTimeout(refetchFriend, delay));
   return function cancelAddressRefetch() {
     for (const timer of timers) {
       clearTimeout(timer);
@@ -159,15 +159,25 @@ export function createFriendDescriptors(options: FriendDescriptorsOptions) {
     addShortcutLabel: 'shortcuts.add.phone',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.phoneNumber',
-    create: (friendId, data) => friendsStore.addPhone(friendId, data),
-    update: (friendId, id, data) => friendsStore.updatePhone(friendId, id, data),
-    remove: (friendId, item) => friendsStore.deletePhone(friendId, item.id),
+    create(friendId, data) {
+      return friendsStore.addPhone(friendId, data);
+    },
+    update(friendId, id, data) {
+      return friendsStore.updatePhone(friendId, id, data);
+    },
+    remove(friendId, item) {
+      return friendsStore.deletePhone(friendId, item.id);
+    },
     tracksDirty: true,
     FormComponent: PhoneEditForm,
     formProps: primaryAwareFormProps,
     RowComponent: PhoneRow,
-    rowProps: (item) => ({ phone: item }),
-    deleteName: (item) => item.phoneNumber,
+    rowProps(item) {
+      return { phone: item };
+    },
+    deleteName(item) {
+      return item.phoneNumber;
+    },
     deleteTitleKey: 'friendDetail.modal.deletePhoneNumber',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeletePhone',
     mapError: mapPhoneError,
@@ -183,15 +193,25 @@ export function createFriendDescriptors(options: FriendDescriptorsOptions) {
     addShortcutLabel: 'shortcuts.add.email',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.emailAddress',
-    create: (friendId, data) => friendsStore.addEmail(friendId, data),
-    update: (friendId, id, data) => friendsStore.updateEmail(friendId, id, data),
-    remove: (friendId, item) => friendsStore.deleteEmail(friendId, item.id),
+    create(friendId, data) {
+      return friendsStore.addEmail(friendId, data);
+    },
+    update(friendId, id, data) {
+      return friendsStore.updateEmail(friendId, id, data);
+    },
+    remove(friendId, item) {
+      return friendsStore.deleteEmail(friendId, item.id);
+    },
     tracksDirty: true,
     FormComponent: EmailEditForm,
     formProps: primaryAwareFormProps,
     RowComponent: EmailRow,
-    rowProps: (item) => ({ email: item }),
-    deleteName: (item) => item.emailAddress,
+    rowProps(item) {
+      return { email: item };
+    },
+    deleteName(item) {
+      return item.emailAddress;
+    },
     deleteTitleKey: 'friendDetail.modal.deleteEmailAddress',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
   });
@@ -206,15 +226,25 @@ export function createFriendDescriptors(options: FriendDescriptorsOptions) {
     addShortcutLabel: 'shortcuts.add.address',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.address',
-    create: (friendId, data) => friendsStore.addAddress(friendId, data),
-    update: (friendId, id, data) => friendsStore.updateAddress(friendId, id, data),
-    remove: (friendId, item) => friendsStore.deleteAddress(friendId, item.id),
-    afterSave: (_reload, friendId) => scheduleAddressRefetch(friendsStore, friendId),
+    create(friendId, data) {
+      return friendsStore.addAddress(friendId, data);
+    },
+    update(friendId, id, data) {
+      return friendsStore.updateAddress(friendId, id, data);
+    },
+    remove(friendId, item) {
+      return friendsStore.deleteAddress(friendId, item.id);
+    },
+    afterSave(_reload, friendId) {
+      return scheduleAddressRefetch(friendsStore, friendId);
+    },
     tracksDirty: true,
     FormComponent: AddressEditForm,
     formProps: primaryAwareFormProps,
     RowComponent: AddressRow,
-    rowProps: (item) => ({ address: item }),
+    rowProps(item) {
+      return { address: item };
+    },
     deleteName: addressDeleteName,
     deleteTitleKey: 'friendDetail.modal.deleteAddress',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeleteAddress',
@@ -230,15 +260,25 @@ export function createFriendDescriptors(options: FriendDescriptorsOptions) {
     addShortcutLabel: 'shortcuts.add.url',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.websiteUrl',
-    create: (friendId, data) => friendsStore.addUrl(friendId, data),
-    update: (friendId, id, data) => friendsStore.updateUrl(friendId, id, data),
-    remove: (friendId, item) => friendsStore.deleteUrl(friendId, item.id),
+    create(friendId, data) {
+      return friendsStore.addUrl(friendId, data);
+    },
+    update(friendId, id, data) {
+      return friendsStore.updateUrl(friendId, id, data);
+    },
+    remove(friendId, item) {
+      return friendsStore.deleteUrl(friendId, item.id);
+    },
     tracksDirty: true,
     FormComponent: UrlEditForm,
     formProps: editFormProps,
     RowComponent: UrlRow,
-    rowProps: (item) => ({ url: item }),
-    deleteName: (item) => item.url,
+    rowProps(item) {
+      return { url: item };
+    },
+    deleteName(item) {
+      return item.url;
+    },
     deleteTitleKey: 'friendDetail.modal.deleteWebsite',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeleteWebsite',
   });
@@ -253,18 +293,28 @@ export function createFriendDescriptors(options: FriendDescriptorsOptions) {
     addShortcutLabel: 'shortcuts.add.socialProfile',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.socialProfile',
-    create: (friendId, data) => friendsStore.addSocialProfile(friendId, data),
-    update: (friendId, id, data) => friendsStore.updateSocialProfile(friendId, id, data),
-    remove: (friendId, item) => friendsStore.deleteSocialProfile(friendId, item.id),
+    create(friendId, data) {
+      return friendsStore.addSocialProfile(friendId, data);
+    },
+    update(friendId, id, data) {
+      return friendsStore.updateSocialProfile(friendId, id, data);
+    },
+    remove(friendId, item) {
+      return friendsStore.deleteSocialProfile(friendId, item.id);
+    },
     tracksDirty: true,
     FormComponent: SocialProfileEditForm,
     formProps: editFormProps,
     RowComponent: SocialProfileRow,
-    rowProps: (item) => ({ profile: item }),
+    rowProps(item) {
+      return { profile: item };
+    },
     // Only a profile that carries a URL is openable, so only those take part in
     // the friend detail page's "o" link sequence.
     linkable: hasProfileUrl,
-    deleteName: (item) => item.username ?? item.profileUrl ?? item.platform,
+    deleteName(item) {
+      return item.username ?? item.profileUrl ?? item.platform;
+    },
     deleteTitleKey: 'friendDetail.modal.deleteSocialProfile',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeleteSocial',
   });
@@ -279,15 +329,25 @@ export function createFriendDescriptors(options: FriendDescriptorsOptions) {
     addShortcutLabel: 'shortcuts.add.date',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.importantDate',
-    create: (friendId, data) => friendsStore.addDate(friendId, data),
-    update: (friendId, id, data) => friendsStore.updateDate(friendId, id, data),
-    remove: (friendId, item) => friendsStore.deleteDate(friendId, item.id),
+    create(friendId, data) {
+      return friendsStore.addDate(friendId, data);
+    },
+    update(friendId, id, data) {
+      return friendsStore.updateDate(friendId, id, data);
+    },
+    remove(friendId, item) {
+      return friendsStore.deleteDate(friendId, item.id);
+    },
     tracksDirty: true,
     FormComponent: DateEditForm,
     formProps: editFormProps,
     RowComponent: DateRow,
-    rowProps: (item) => ({ date: item }),
-    deleteName: (item) => item.dateValue,
+    rowProps(item) {
+      return { date: item };
+    },
+    deleteName(item) {
+      return item.dateValue;
+    },
     deleteTitleKey: 'friendDetail.modal.deleteDate',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeleteDate',
   });
@@ -305,16 +365,25 @@ export function createFriendDescriptors(options: FriendDescriptorsOptions) {
     addShortcutLabel: 'shortcuts.add.workExperience',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.employment',
-    create: (friendId, data) => friendsStore.addProfessionalHistory(friendId, data),
-    update: (friendId, id, data) => friendsStore.updateProfessionalHistory(friendId, id, data),
-    remove: (friendId, item) => friendsStore.deleteProfessionalHistory(friendId, item.id),
+    create(friendId, data) {
+      return friendsStore.addProfessionalHistory(friendId, data);
+    },
+    update(friendId, id, data) {
+      return friendsStore.updateProfessionalHistory(friendId, id, data);
+    },
+    remove(friendId, item) {
+      return friendsStore.deleteProfessionalHistory(friendId, item.id);
+    },
     tracksDirty: true,
     FormComponent: ProfessionalHistoryEditForm,
     formProps: primaryAwareFormProps,
     RowComponent: ProfessionalHistoryRow,
-    rowProps: (item) => ({ history: item }),
-    deleteName: (item, t) =>
-      item.jobTitle ?? item.organization ?? t('friendDetail.modal.employment'),
+    rowProps(item) {
+      return { history: item };
+    },
+    deleteName(item, t) {
+      return item.jobTitle ?? item.organization ?? t('friendDetail.modal.employment');
+    },
     deleteTitleKey: 'friendDetail.modal.deleteEmployment',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmployment',
   });
@@ -330,14 +399,24 @@ export function createFriendDescriptors(options: FriendDescriptorsOptions) {
     // A friend joins an existing circle; there is nothing to edit in place.
     editable: false,
     modalTypeNameKey: 'friendDetail.modal.circle',
-    create: (friendId, data) => friendsStore.addCircle(friendId, data.circleId),
-    remove: (friendId, item) => friendsStore.removeCircle(friendId, item.id),
+    create(friendId, data) {
+      return friendsStore.addCircle(friendId, data.circleId);
+    },
+    remove(friendId, item) {
+      return friendsStore.removeCircle(friendId, item.id);
+    },
     tracksDirty: true,
     FormComponent: CircleEditForm,
-    formProps: ({ items, isLoading }) => ({ existingCircles: items, disabled: isLoading }),
+    formProps({ items, isLoading }) {
+      return { existingCircles: items, disabled: isLoading };
+    },
     RowComponent: CircleRow,
-    rowProps: (item) => ({ circle: item }),
-    deleteName: (item) => item.name,
+    rowProps(item) {
+      return { circle: item };
+    },
+    deleteName(item) {
+      return item.name;
+    },
     deleteTitleKey: 'friendDetail.modal.removeFromCircleTitle',
     deleteDescriptionKey: 'friendDetail.modal.confirmRemoveCircle',
   });
@@ -353,19 +432,33 @@ export function createFriendDescriptors(options: FriendDescriptorsOptions) {
     addShortcutLabel: 'shortcuts.add.note',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.note',
-    load: (friendId) => friendNotesApi.listNotes(friendId),
-    create: (friendId, data) => friendNotesApi.addNote(friendId, data),
-    update: (friendId, id, data) => friendNotesApi.updateNote(friendId, id, data),
-    remove: (friendId, item) => friendNotesApi.deleteNote(friendId, item.id),
+    load(friendId) {
+      return friendNotesApi.listNotes(friendId);
+    },
+    create(friendId, data) {
+      return friendNotesApi.addNote(friendId, data);
+    },
+    update(friendId, id, data) {
+      return friendNotesApi.updateNote(friendId, id, data);
+    },
+    remove(friendId, item) {
+      return friendNotesApi.deleteNote(friendId, item.id);
+    },
     // A create, update or delete can change another note's supersede state, and the
     // server orders the list newest first, so the section reloads after every change.
     reloadAfterMutate: true,
     tracksDirty: true,
     FormComponent: NoteEditForm,
-    formProps: (ctx) => ({ ...editFormProps(ctx), friendId: ctx.ownerId, notes: ctx.items }),
+    formProps(ctx) {
+      return { ...editFormProps(ctx), friendId: ctx.ownerId, notes: ctx.items };
+    },
     RowComponent: NoteRow,
-    rowProps: (item) => ({ note: item }),
-    deleteName: (item) => noteExcerpt(item.content),
+    rowProps(item) {
+      return { note: item };
+    },
+    deleteName(item) {
+      return noteExcerpt(item.content);
+    },
     deleteTitleKey: 'friendDetail.modal.deleteNote',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeleteNote',
   });
@@ -401,20 +494,26 @@ export function createCollectiveDescriptor(options: CollectiveDescriptorOptions)
     addShortcut: 'a o',
     addShortcutLabel: 'shortcuts.add.collective',
     editable: false,
-    remove: async (_friendId, item) => {
+    async remove(_friendId, item) {
       await collectiveMembersApi.removeMember(item.id, item.membershipId);
       onChanged();
     },
     AddComponent: AddToCollectiveModal,
-    addProps: ({ ownerId, ownerName, items }) => ({
-      friendId: ownerId,
-      friendDisplayName: ownerName,
-      existingCollectiveIds: items.map((item) => item.id),
-      onSuccess: onChanged,
-    }),
+    addProps({ ownerId, ownerName, items }) {
+      return {
+        friendId: ownerId,
+        friendDisplayName: ownerName,
+        existingCollectiveIds: items.map((item) => item.id),
+        onSuccess: onChanged,
+      };
+    },
     RowComponent: CollectiveRow,
-    rowProps: (item) => ({ collective: item }),
-    deleteName: (item) => item.name,
+    rowProps(item) {
+      return { collective: item };
+    },
+    deleteName(item) {
+      return item.name;
+    },
     deleteTitleKey: 'friendDetail.modal.removeFromCollectiveTitle',
     deleteDescriptionKey: 'friendDetail.modal.confirmRemoveCollective',
   });

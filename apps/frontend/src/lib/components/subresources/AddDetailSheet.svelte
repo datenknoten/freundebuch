@@ -3,7 +3,7 @@ import Button from '$lib/components/ui/Button.svelte';
 import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
 import Modal from '$lib/components/ui/Modal.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import type { AddDetailOption } from './types';
+import type { AddDetailOption } from './types.js';
 
 const i18n = createI18n();
 

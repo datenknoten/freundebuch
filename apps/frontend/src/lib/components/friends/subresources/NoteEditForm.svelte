@@ -3,14 +3,14 @@ import { onMount } from 'svelte';
 import type { FriendNoteData } from '$lib/api/friend-notes.js';
 import { getAppContext } from '$lib/app-context.js';
 import { encounterDisplayTitle } from '$lib/components/encounters/encounter-display';
+import FriendSearchInput from '$lib/components/friends/FriendSearchInput.svelte';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import MarkdownField from '$lib/editor/MarkdownField.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { FriendNoteResponse, FriendSearchResultResponse } from '$shared';
-import FriendSearchInput from '../FriendSearchInput.svelte';
-import { noteExcerpt } from './note-excerpt';
+import { noteExcerpt } from './note-excerpt.js';
 
 const i18n = createI18n();
 const { api, logger } = getAppContext();
@@ -41,17 +41,16 @@ let sourceFriend = $state<FriendSearchResultResponse | null>(
 let supersedesNoteId = $state((() => initialData?.supersedesNoteId ?? '')());
 let encounterOptions = $state<Option[]>([]);
 
-createDirtyTracker(
-  () => {
-    content;
-    encounterId;
-    sourceFriend;
-    supersedesNoteId;
-  },
-  () => onchange,
-);
+function trackDirtyFields() {
+  content;
+  encounterId;
+  sourceFriend;
+  supersedesNoteId;
+}
 
-function formatDate(dateStr: string): string {
+createDirtyTracker(trackDirtyFields, () => onchange);
+
+function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
@@ -59,7 +58,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-onMount(async () => {
+async function loadEncounterOptions() {
   const options: Option[] = [];
   try {
     const page = await api.encounters.listEncounters({ pageSize: 20 });
@@ -73,21 +72,23 @@ onMount(async () => {
     logger.error({ err }, 'Failed to load encounters for the note form');
   }
   const current = initialData?.encounter ?? null;
-  if (current !== null && !options.some((option) => option.value === current.id)) {
+  if (current !== null && options.some((option) => option.value === current.id) === false) {
     options.push({
       value: current.id,
       label: `${encounterDisplayTitle($i18n.t, { ...current, friends: [] })} · ${formatDate(current.encounterDate)}`,
     });
   }
   encounterOptions = options;
-});
+}
+
+onMount(loadEncounterOptions);
 
 const encounterSelectOptions = $derived<Option[]>([
   { value: '', label: $i18n.t('subresources.note.noEncounter') },
   ...encounterOptions,
 ]);
 
-function noteLabel(note: FriendNoteResponse): string {
+function noteLabel(note: FriendNoteResponse) {
   return `${noteExcerpt(note.content)} · ${formatDate(note.createdAt)}`;
 }
 
@@ -112,7 +113,7 @@ export function getData() {
   } satisfies FriendNoteData;
 }
 
-export function isValid(): boolean {
+export function isValid() {
   return content.trim().length > 0;
 }
 </script>

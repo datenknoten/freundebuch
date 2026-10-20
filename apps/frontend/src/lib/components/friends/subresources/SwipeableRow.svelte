@@ -29,9 +29,13 @@ let isHorizontalSwipe = $state<boolean | null>(null);
 let hapticTriggered = $state(false);
 
 function handleTouchStart(e: TouchEvent) {
-  if (disabled) return;
+  if (disabled === true) {
+    return;
+  }
   const touch = e.touches[0];
-  if (touch === undefined) return;
+  if (touch === undefined) {
+    return;
+  }
   startX = touch.clientX;
   startY = touch.clientY;
   isSwiping = true;
@@ -40,10 +44,14 @@ function handleTouchStart(e: TouchEvent) {
 }
 
 function handleTouchMove(e: TouchEvent) {
-  if (!isSwiping || disabled) return;
+  if (isSwiping === false || disabled === true) {
+    return;
+  }
 
   const touch = e.touches[0];
-  if (touch === undefined) return;
+  if (touch === undefined) {
+    return;
+  }
   const touchX = touch.clientX;
   const touchY = touch.clientY;
   const deltaX = touchX - startX;
@@ -57,7 +65,7 @@ function handleTouchMove(e: TouchEvent) {
   }
 
   // Only handle horizontal swipes
-  if (!isHorizontalSwipe) {
+  if (isHorizontalSwipe !== true) {
     return;
   }
 
@@ -68,8 +76,8 @@ function handleTouchMove(e: TouchEvent) {
   swipeOffset = deltaX * RESISTANCE;
 
   // Trigger haptic feedback at threshold crossing
-  if (Math.abs(swipeOffset) >= MIN_SWIPE && !hapticTriggered) {
-    if (navigator.vibrate) {
+  if (Math.abs(swipeOffset) >= MIN_SWIPE && hapticTriggered === false) {
+    if (typeof navigator.vibrate === 'function') {
       navigator.vibrate(10);
     }
     hapticTriggered = true;
@@ -77,15 +85,17 @@ function handleTouchMove(e: TouchEvent) {
 }
 
 function handleTouchEnd() {
-  if (!isSwiping || disabled) return;
+  if (isSwiping === false || disabled === true) {
+    return;
+  }
   isSwiping = false;
 
   const finalOffset = swipeOffset;
 
-  if (finalOffset < -FULL_SWIPE && onSwipeLeft) {
+  if (finalOffset < -FULL_SWIPE && onSwipeLeft !== undefined) {
     // Full swipe left - trigger delete
     onSwipeLeft();
-  } else if (finalOffset > FULL_SWIPE && onSwipeRight) {
+  } else if (finalOffset > FULL_SWIPE && onSwipeRight !== undefined) {
     // Full swipe right - trigger edit
     onSwipeRight();
   }

@@ -5,6 +5,8 @@ import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import { getAppContext } from '$lib/app-context.js';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
+import KeyboardHintBadge from '$lib/components/KeyboardHintBadge.svelte';
 import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { FOCUS_RING } from '$lib/components/ui/focus-ring.js';
 import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
@@ -16,8 +18,6 @@ import {
 } from '$lib/utils/collective-types';
 import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import type { CollectiveListItemResponse } from '$shared';
-import FriendAvatar from '../friends/FriendAvatar.svelte';
-import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
 
 const keyboardModes = getAppContext().stores.keyboardModes;
 const isOpenCollectiveModeActive = keyboardModes.collectives.isActive;
@@ -69,7 +69,9 @@ function handleLinkClick(e: MouseEvent) {
 }
 
 function handleSort(column: ColumnDef) {
-  if (!column.sortField) return;
+  if (column.sortField === undefined) {
+    return;
+  }
 
   if (sortBy === column.sortField) {
     onSortChange(column.sortField, sortOrder === 'asc' ? 'desc' : 'asc');
@@ -78,8 +80,10 @@ function handleSort(column: ColumnDef) {
   }
 }
 
-function formatDate(dateString: string | undefined): string {
-  if (!dateString) return '';
+function formatDate(dateString: string | undefined) {
+  if (dateString === undefined || dateString === '') {
+    return '';
+  }
   const date = new Date(dateString);
   return date.toLocaleDateString(undefined, {
     year: 'numeric',

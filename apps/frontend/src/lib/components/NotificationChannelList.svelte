@@ -3,6 +3,8 @@ import { onMount } from 'svelte';
 import Bell from 'svelte-heros-v2/Bell.svelte';
 import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
+import NotificationChannelCard from '$lib/components/NotificationChannelCard.svelte';
+import NotificationChannelForm from '$lib/components/NotificationChannelForm.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
@@ -12,8 +14,6 @@ import type {
   NotificationChannelResponse,
   NotificationChannelUpdateInput,
 } from '$shared';
-import NotificationChannelCard from './NotificationChannelCard.svelte';
-import NotificationChannelForm from './NotificationChannelForm.svelte';
 
 const notificationChannels = getAppContext().stores.notificationChannels;
 
@@ -24,9 +24,11 @@ let editingChannel = $state<NotificationChannelResponse | undefined>(undefined);
 let formError = $state('');
 let isSubmitting = $state(false);
 
-onMount(() => {
+function loadChannels() {
   void notificationChannels.loadChannels();
-});
+}
+
+onMount(loadChannels);
 
 function handleAddChannel() {
   editingChannel = undefined;
@@ -52,7 +54,7 @@ async function handleSubmitForm(
   isSubmitting = true;
   formError = '';
   try {
-    if (editingChannel) {
+    if (editingChannel !== undefined) {
       await notificationChannels.updateChannel(
         editingChannel.externalId,
         input as NotificationChannelUpdateInput,

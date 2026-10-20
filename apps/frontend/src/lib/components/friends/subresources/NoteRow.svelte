@@ -1,10 +1,10 @@
 <script lang="ts">
 import { encounterDisplayTitle } from '$lib/components/encounters/encounter-display';
+import SubresourceRow from '$lib/components/friends/subresources/SubresourceRow.svelte';
 import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import MarkdownView from '$lib/editor/MarkdownView.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { FriendNoteResponse } from '$shared';
-import SubresourceRow from './SubresourceRow.svelte';
 
 interface Props {
   note: FriendNoteResponse;

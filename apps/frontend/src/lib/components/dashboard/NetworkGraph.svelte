@@ -11,7 +11,7 @@ import { createI18n } from '$lib/i18n/i18n.js';
 import {
   RELATIONSHIP_CATEGORIES,
   RELATIONSHIP_CATEGORY_STYLE,
-} from '$lib/utils/relationship-categories';
+} from '$lib/utils/relationship-categories.js';
 import type {
   NetworkGraphLinkResponse,
   NetworkGraphNodeResponse,
@@ -33,7 +33,7 @@ let { graphData = null, isLoading = false, error = null, onRetry }: Props = $pro
 
 let container = $state<HTMLDivElement | null>(null);
 let svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
-let simulation: d3.Simulation<SimulationNode, SimulationLink>;
+let simulation: d3.Simulation<SimulationNode, SimulationLink> | undefined;
 
 // Extended node type for D3 simulation (D3 adds x, y, fx, fy properties)
 type SimulationNode = NetworkGraphNodeResponse & d3.SimulationNodeDatum;
@@ -44,16 +44,34 @@ type SimulationLink = Omit<NetworkGraphLinkResponse, 'source' | 'target'> & {
   target: SimulationNode | string;
 };
 
-function initializeGraph() {
-  if (!container || !graphData || graphData.nodes.length === 0) return;
+function getX(nodeRef: SimulationNode | string) {
+  if (typeof nodeRef === 'string') {
+    return 0;
+  }
+  return nodeRef.x ?? 0;
+}
 
-  // Clear any existing SVG
+function getY(nodeRef: SimulationNode | string) {
+  if (typeof nodeRef === 'string') {
+    return 0;
+  }
+  return nodeRef.y ?? 0;
+}
+
+function navigateToFriend(_event: MouseEvent, d: SimulationNode) {
+  window.location.href = `/friends/${d.id}`;
+}
+
+function initializeGraph() {
+  if (container === null || graphData === null || graphData.nodes.length === 0) {
+    return;
+  }
+
   d3.select(container).selectAll('svg').remove();
 
   const width = container.clientWidth;
   const height = 400;
 
-  // Create SVG
   svg = d3
     .select(container)
     .append('svg')
@@ -62,25 +80,24 @@ function initializeGraph() {
     .attr('viewBox', [0, 0, width, height])
     .attr('class', 'network-graph');
 
-  // Create a group for zoom/pan
   const g = svg.append('g');
 
-  // Add zoom behavior
+  function applyZoomTransform(event: d3.D3ZoomEvent<SVGSVGElement, unknown>) {
+    g.attr('transform', event.transform.toString());
+  }
+
   const zoom = d3
     .zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.3, 3])
-    .on('zoom', (event) => {
-      g.attr('transform', event.transform);
-    });
+    .on('zoom', applyZoomTransform);
 
   svg.call(zoom);
 
-  // Create copies of data for D3 mutation
+  // Copies, because D3 mutates nodes and links in place
   const nodes: SimulationNode[] = graphData.nodes.map((d) => ({ ...d }));
   const links: SimulationLink[] = graphData.links.map((d) => ({ ...d }));
 
-  // Create force simulation
-  simulation = d3
+  const sim = d3
     .forceSimulation(nodes)
     .force(
       'link',
@@ -92,8 +109,9 @@ function initializeGraph() {
     .force('charge', d3.forceManyBody().strength(-200))
     .force('center', d3.forceCenter(width / 2, height / 2))
     .force('collision', d3.forceCollide().radius(30));
+  simulation = sim;
 
-  // Create arrow markers for directed edges
+  // Arrow markers for directed edges
   const defs = svg.append('defs');
 
   for (const category of RELATIONSHIP_CATEGORIES) {
@@ -111,7 +129,6 @@ function initializeGraph() {
       .attr('d', 'M0,-5L10,0L0,5');
   }
 
-  // Create links
   const link = g
     .append('g')
     .attr('class', 'links')
@@ -122,7 +139,6 @@ function initializeGraph() {
     .attr('stroke-opacity', 0.6)
     .attr('stroke-width', 2);
 
-  // Create node groups
   const node = g
     .append('g')
     .attr('class', 'nodes')
@@ -138,36 +154,33 @@ function initializeGraph() {
         .on('end', dragended),
     );
 
-  // Add circles to nodes
   node
     .append('circle')
-    .attr('r', (d) => (d.isFavorite ? 18 : 14))
+    .attr('r', (d) => (d.isFavorite === true ? 18 : 14))
     .attr('fill', '#fff')
-    .attr('stroke', (d) => (d.isFavorite ? '#D4A574' : '#2D5016'))
-    .attr('stroke-width', (d) => (d.isFavorite ? 3 : 2));
+    .attr('stroke', (d) => (d.isFavorite === true ? '#D4A574' : '#2D5016'))
+    .attr('stroke-width', (d) => (d.isFavorite === true ? 3 : 2));
 
-  // Add images or initials to nodes
-  node.each(function (d) {
+  function renderNodeContent(this: SVGGElement, d: SimulationNode) {
     const nodeGroup = d3.select(this);
-    if (d.photoThumbnailUrl) {
-      // Add clip path for circular image
+    if (d.photoThumbnailUrl !== undefined && d.photoThumbnailUrl !== '') {
+      // Clip path for the circular image
       const clipId = `clip-${d.id.replace(/-/g, '')}`;
       defs
         .append('clipPath')
         .attr('id', clipId)
         .append('circle')
-        .attr('r', d.isFavorite ? 15 : 11);
+        .attr('r', d.isFavorite === true ? 15 : 11);
 
       nodeGroup
         .append('image')
         .attr('xlink:href', d.photoThumbnailUrl)
-        .attr('x', d.isFavorite ? -15 : -11)
-        .attr('y', d.isFavorite ? -15 : -11)
-        .attr('width', d.isFavorite ? 30 : 22)
-        .attr('height', d.isFavorite ? 30 : 22)
+        .attr('x', d.isFavorite === true ? -15 : -11)
+        .attr('y', d.isFavorite === true ? -15 : -11)
+        .attr('width', d.isFavorite === true ? 30 : 22)
+        .attr('height', d.isFavorite === true ? 30 : 22)
         .attr('clip-path', `url(#${clipId})`);
     } else {
-      // Add initials
       const initials = d.displayName
         .split(' ')
         .map((n) => n[0])
@@ -179,33 +192,20 @@ function initializeGraph() {
         .append('text')
         .attr('text-anchor', 'middle')
         .attr('dy', '0.35em')
-        .attr('font-size', d.isFavorite ? '10px' : '8px')
+        .attr('font-size', d.isFavorite === true ? '10px' : '8px')
         .attr('font-family', 'Merriweather, serif')
         .attr('fill', '#2D5016')
         .text(initials);
     }
-  });
+  }
 
-  // Add tooltips
+  node.each(renderNodeContent);
+
   node.append('title').text((d) => d.displayName);
 
-  // Add click handler to navigate to friend
-  node.style('cursor', 'pointer').on('click', (_event, d) => {
-    window.location.href = `/friends/${d.id}`;
-  });
+  node.style('cursor', 'pointer').on('click', navigateToFriend);
 
-  // Helper to get x/y from source/target (handles both string and node object)
-  const getX = (nodeRef: SimulationNode | string): number => {
-    if (typeof nodeRef === 'string') return 0;
-    return nodeRef.x ?? 0;
-  };
-  const getY = (nodeRef: SimulationNode | string): number => {
-    if (typeof nodeRef === 'string') return 0;
-    return nodeRef.y ?? 0;
-  };
-
-  // Update positions on tick
-  simulation.on('tick', () => {
+  function updatePositions() {
     link
       .attr('x1', (d) => getX(d.source))
       .attr('y1', (d) => getY(d.source))
@@ -213,13 +213,17 @@ function initializeGraph() {
       .attr('y2', (d) => getY(d.target));
 
     node.attr('transform', (d) => `translate(${d.x ?? 0},${d.y ?? 0})`);
-  });
+  }
+
+  sim.on('tick', updatePositions);
 
   function dragstarted(
     event: d3.D3DragEvent<SVGGElement, SimulationNode, SimulationNode>,
     d: SimulationNode,
   ) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
+    if (event.active === 0) {
+      sim.alphaTarget(0.3).restart();
+    }
     d.fx = d.x;
     d.fy = d.y;
   }
@@ -236,30 +240,33 @@ function initializeGraph() {
     event: d3.D3DragEvent<SVGGElement, SimulationNode, SimulationNode>,
     d: SimulationNode,
   ) {
-    if (!event.active) simulation.alphaTarget(0);
+    if (event.active === 0) {
+      sim.alphaTarget(0);
+    }
     d.fx = null;
     d.fy = null;
   }
 }
 
-// Watch for graphData changes to initialize the graph
-$effect(() => {
-  if (graphData && !isLoading) {
-    // Use setTimeout to ensure the container is rendered
-    setTimeout(() => initializeGraph(), 0);
+function scheduleGraphInitialization() {
+  if (graphData !== null && isLoading === false) {
+    // Defer so the container is rendered first
+    setTimeout(initializeGraph, 0);
   }
-});
+}
 
-onDestroy(() => {
-  // Stop the simulation to prevent further callbacks
-  if (simulation) {
+$effect(scheduleGraphInitialization);
+
+function teardownGraph() {
+  if (simulation !== undefined) {
     simulation.stop();
   }
-  // Remove all SVG elements to prevent memory leaks
-  if (container) {
+  if (container !== null) {
     d3.select(container).selectAll('svg').remove();
   }
-});
+}
+
+onDestroy(teardownGraph);
 </script>
 
 <div class={SURFACE_CLASSES.page}>

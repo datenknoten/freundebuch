@@ -5,7 +5,7 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import { getAppContext } from '$lib/app-context.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { LastEncounterSummaryResponse } from '$shared';
-import { encounterDisplayTitle } from './encounter-display';
+import { encounterDisplayTitle } from './encounter-display.js';
 
 const i18n = createI18n();
 const encountersApi = getAppContext().api.encounters;
@@ -22,15 +22,15 @@ let isLoading = $state(true);
 let error = $state<string | null>(null);
 
 let displayTitle = $derived(
-  lastEncounter
-    ? encounterDisplayTitle($i18n.t, {
+  lastEncounter === undefined
+    ? ''
+    : encounterDisplayTitle($i18n.t, {
         ...lastEncounter,
-        friends: friendName ? [{ displayName: friendName }] : [],
-      })
-    : '',
+        friends: friendName === undefined || friendName === '' ? [] : [{ displayName: friendName }],
+      }),
 );
 
-onMount(async () => {
+async function loadLastEncounter() {
   try {
     lastEncounter = await encountersApi.findLastEncounter(friendId);
   } catch (err) {
@@ -38,16 +38,24 @@ onMount(async () => {
   } finally {
     isLoading = false;
   }
-});
+}
 
-function formatDate(dateStr: string): string {
+onMount(loadLastEncounter);
+
+function formatDate(dateStr: string) {
   const date = new Date(dateStr);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return $i18n.t('encounters.lastSeen.today');
-  if (diffDays === 1) return $i18n.t('encounters.lastSeen.yesterday');
-  if (diffDays < 7) return $i18n.t('encounters.lastSeen.daysAgo', { count: diffDays });
+  if (diffDays === 0) {
+    return $i18n.t('encounters.lastSeen.today');
+  }
+  if (diffDays === 1) {
+    return $i18n.t('encounters.lastSeen.yesterday');
+  }
+  if (diffDays < 7) {
+    return $i18n.t('encounters.lastSeen.daysAgo', { count: diffDays });
+  }
   if (diffDays < 30) {
     return $i18n.t('encounters.lastSeen.weeksAgo', { count: Math.floor(diffDays / 7) });
   }
@@ -57,7 +65,7 @@ function formatDate(dateStr: string): string {
   return $i18n.t('encounters.lastSeen.yearsAgo', { count: Math.floor(diffDays / 365) });
 }
 
-function getDateColor(dateStr: string): string {
+function getDateColor(dateStr: string) {
   const date = new Date(dateStr);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));

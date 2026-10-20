@@ -5,10 +5,14 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import { goto } from '$app/navigation';
 import { openWithKeyboard } from '$lib/actions/auto-focus';
 import { getAppContext } from '$lib/app-context.js';
+import MemberSection from '$lib/components/collectives/MemberSection.svelte';
 import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
 } from '$lib/components/FabCreateMenu.svelte';
+import AddDetailDropdown from '$lib/components/subresources/AddDetailDropdown.svelte';
+import AddDetailSheet from '$lib/components/subresources/AddDetailSheet.svelte';
+import SubresourceSection from '$lib/components/subresources/SubresourceSection.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
@@ -23,11 +27,7 @@ import {
   getTypeIconComponent,
 } from '$lib/utils/collective-types';
 import { type CollectiveResponse, countryDisplayName } from '$shared';
-import AddDetailDropdown from '../subresources/AddDetailDropdown.svelte';
-import AddDetailSheet from '../subresources/AddDetailSheet.svelte';
-import SubresourceSection from '../subresources/SubresourceSection.svelte';
-import MemberSection from './MemberSection.svelte';
-import { createCollectiveDescriptors } from './subresource-descriptors';
+import { createCollectiveDescriptors } from './subresource-descriptors.js';
 
 const currentLanguage = getAppContext().stores.locale.currentLanguage;
 
@@ -64,14 +64,18 @@ function dispatchAddEvent(shortcutEvent: string) {
   window.dispatchEvent(new CustomEvent(shortcutEvent));
 }
 
-function formatAddress(c: CollectiveResponse, language: string): string | null {
+function isFilled(part: string | null): part is string {
+  return part !== null && part !== '';
+}
+
+function formatAddress(c: CollectiveResponse, language: string) {
   const parts = [
     c.address.streetLine1,
     c.address.streetLine2,
-    [c.address.postalCode, c.address.city].filter(Boolean).join(' '),
+    [c.address.postalCode, c.address.city].filter(isFilled).join(' '),
     c.address.stateProvince,
     c.address.country === null ? null : countryDisplayName(c.address.country, language),
-  ].filter(Boolean);
+  ].filter(isFilled);
   return parts.length > 0 ? parts.join(', ') : null;
 }
 

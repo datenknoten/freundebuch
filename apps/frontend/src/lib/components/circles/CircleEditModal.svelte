@@ -3,6 +3,7 @@ import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import type { CircleData } from '$lib/api/circles.js';
 import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
+import CircleChip from '$lib/components/circles/CircleChip.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
@@ -10,7 +11,6 @@ import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
 import Modal from '$lib/components/ui/Modal.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { CIRCLE_COLORS, type CircleResponse } from '$shared';
-import CircleChip from './CircleChip.svelte';
 
 const i18n = createI18n();
 const circles = getAppContext().stores.circles;
@@ -23,12 +23,11 @@ interface Props {
 
 let { circle = null, onClose }: Props = $props();
 
-const isEditing = $derived(!!circle);
+const isEditing = $derived(circle !== null);
 
 const uid = $props.id();
 const formId = `circle-form-${uid}`;
 
-// Form state
 let formName = $state('');
 let formColor = $state<string>(CIRCLE_COLORS[5]);
 let formParentId = $state<string | null>(null);
@@ -40,8 +39,7 @@ let showUnsavedWarning = $state(false);
 // Track which circle we initialized for (to detect when circle prop changes)
 let initializedForCircleId = $state<string | null | undefined>(undefined);
 
-// Initialize/re-initialize form when circle prop changes
-$effect(() => {
+function syncFormWithCircle() {
   const circleId = circle?.id ?? null;
   if (initializedForCircleId !== circleId) {
     formName = circle?.name ?? '';
@@ -51,10 +49,12 @@ $effect(() => {
     nameError = undefined;
     initializedForCircleId = circleId;
   }
-});
+}
 
-// Get valid parent options (exclude the current circle and its children to prevent circular references)
-function getParentOptionsTree(): Array<{ circle: CircleResponse; depth: number }> {
+$effect(syncFormWithCircle);
+
+// Exclude the current circle and its descendants to prevent circular parent references
+function getParentOptionsTree() {
   const currentCircleId = circle?.id ?? null;
 
   function getDescendantIds(parentId: string): Set<string> {
@@ -71,8 +71,13 @@ function getParentOptionsTree(): Array<{ circle: CircleResponse; depth: number }
     return ids;
   }
 
-  const excludeIds = currentCircleId ? getDescendantIds(currentCircleId) : new Set<string>();
-  if (currentCircleId) excludeIds.add(currentCircleId);
+  const excludeIds =
+    currentCircleId !== null && currentCircleId !== ''
+      ? getDescendantIds(currentCircleId)
+      : new Set<string>();
+  if (currentCircleId !== null && currentCircleId !== '') {
+    excludeIds.add(currentCircleId);
+  }
 
   function buildTree(
     parentId: string | null,
@@ -80,7 +85,7 @@ function getParentOptionsTree(): Array<{ circle: CircleResponse; depth: number }
   ): Array<{ circle: CircleResponse; depth: number }> {
     const result: Array<{ circle: CircleResponse; depth: number }> = [];
     const children = $circlesList.filter(
-      (c) => c.parentCircleId === parentId && !excludeIds.has(c.id),
+      (c) => c.parentCircleId === parentId && excludeIds.has(c.id) === false,
     );
 
     for (const child of children) {
@@ -112,7 +117,7 @@ async function handleSubmit(e: SubmitEvent) {
       parentCircleId: formParentId,
     };
 
-    if (isEditing && circle) {
+    if (isEditing === true && circle !== null) {
       await circles.updateCircle(circle.id, input);
     } else {
       await circles.createCircle(input);
@@ -129,9 +134,8 @@ async function handleSubmit(e: SubmitEvent) {
   }
 }
 
-// Check if form has unsaved changes
-function isDirty(): boolean {
-  if (isEditing) {
+function isDirty() {
+  if (isEditing === true) {
     return (
       formName !== circle?.name ||
       formColor !== circle?.color ||
@@ -142,9 +146,11 @@ function isDirty(): boolean {
 }
 
 function handleClose() {
-  if (isSubmitting) return;
+  if (isSubmitting === true) {
+    return;
+  }
 
-  if (isDirty()) {
+  if (isDirty() === true) {
     showUnsavedWarning = true;
   } else {
     onClose();
@@ -163,7 +169,7 @@ function cancelClose() {
 // Escape, the backdrop and the header X all land here: while the unsaved-changes
 // question is up they answer it with "keep editing" instead of asking again.
 function handleDismiss() {
-  if (showUnsavedWarning) {
+  if (showUnsavedWarning === true) {
     cancelClose();
     return;
   }

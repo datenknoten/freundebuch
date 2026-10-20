@@ -22,6 +22,10 @@ let isLoading = $state(false);
 let error = $state('');
 let success = $state(false);
 
+function redirectToLogin() {
+  void goto('/auth/login');
+}
+
 async function handleSubmit(e: SubmitEvent) {
   e.preventDefault();
   error = '';
@@ -45,7 +49,7 @@ async function handleSubmit(e: SubmitEvent) {
       token,
     });
 
-    if (result.error) {
+    if (result.error !== null && result.error !== undefined) {
       error = result.error.message ?? $i18n.t('auth.resetPassword.error.generic');
       isLoading = false;
       return;
@@ -54,10 +58,7 @@ async function handleSubmit(e: SubmitEvent) {
     success = true;
     isLoading = false;
 
-    // Redirect to login after 2 seconds
-    setTimeout(() => {
-      void goto('/auth/login');
-    }, 2000);
+    setTimeout(redirectToLogin, 2000);
   } catch (err) {
     error = err instanceof Error ? err.message : $i18n.t('auth.resetPassword.error.generic');
     isLoading = false;

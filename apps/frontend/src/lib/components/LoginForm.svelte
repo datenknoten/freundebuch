@@ -32,6 +32,13 @@ let isLoading = $state(false);
 let isPasskeyLoading = $state(false);
 let error = $state('');
 
+function messageOr(message: string | null | undefined, fallback: string) {
+  if (message === null || message === undefined || message === '') {
+    return fallback;
+  }
+  return message;
+}
+
 /**
  * When the OAuth/MCP authorization server redirects an unauthenticated
  * `authorize` request to this login page, it forwards the original authorize
@@ -41,29 +48,31 @@ let error = $state('');
  * authorize endpoint re-validates redirect_uri against the registered client,
  * so this cannot be turned into an open redirect.
  */
-function resolveOAuthContinuation(): string | null {
-  if (typeof window === 'undefined') return null;
+function resolveOAuthContinuation() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
   const params = new URLSearchParams(window.location.search);
-  if (params.get('client_id') && params.get('redirect_uri') && params.get('response_type')) {
+  const required = ['client_id', 'redirect_uri', 'response_type'];
+  if (required.every((key) => (params.get(key) ?? '') !== '') === true) {
     return `/api/auth/mcp/authorize?${params.toString()}`;
   }
   return null;
 }
 
 function handleSuccess() {
-  if (onSuccess) {
+  if (onSuccess !== undefined) {
     onSuccess();
     return;
   }
 
   const oauthContinuation = resolveOAuthContinuation();
-  if (oauthContinuation) {
+  if (oauthContinuation !== null) {
     // Full navigation (not SPA goto): the authorize endpoint is a backend route.
     window.location.href = oauthContinuation;
     return;
   }
 
-  // Redirect to home page after successful login
   void goto('/');
 }
 
@@ -90,8 +99,9 @@ async function handlePasskeySignIn() {
 
   try {
     const result = await authClient.signIn.passkey();
-    if (result?.error) {
-      error = result.error.message || $i18n.t('profile.passkeys.signInFailed');
+    const failure = result?.error;
+    if (failure !== null && failure !== undefined) {
+      error = messageOr(failure.message, $i18n.t('profile.passkeys.signInFailed'));
       isPasskeyLoading = false;
     } else {
       // Refresh the auth store so the app has the user data

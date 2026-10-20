@@ -50,7 +50,9 @@ function isSearchable(query: string) {
 }
 
 function hasFilters(filters: FacetFilters) {
-  return Object.values(filters).some((values) => Array.isArray(values) && values.length > 0);
+  return Object.values(filters).some(
+    (values) => Array.isArray(values) === true && values.length > 0,
+  );
 }
 
 function withoutFilterValue(filters: FacetFilters, field: ArrayFacetField, value: string) {
@@ -63,6 +65,10 @@ function withRecentSearch(state: SearchState, query: string) {
     (recent) => recent.toLowerCase() !== query.toLowerCase(),
   );
   return { ...state, recentSearches: [query, ...others].slice(0, RECENT_SEARCH_LIMIT) };
+}
+
+function withoutRecentSearch(state: SearchState, query: string) {
+  return { ...state, recentSearches: state.recentSearches.filter((recent) => recent !== query) };
 }
 
 function nextIndex(state: SearchState) {
@@ -147,7 +153,7 @@ export class SearchStore {
       error: null,
     }));
     this.scheduleSearch(query, get(this.state).filters);
-    if (options.shouldLoadFacets === true && isSearchable(query)) {
+    if (options.shouldLoadFacets === true && isSearchable(query) === true) {
       this.scheduleFacets(query);
     }
   }
@@ -189,10 +195,7 @@ export class SearchStore {
   public async deleteRecentSearch(query: string) {
     try {
       await this.friendSearchApi.deleteRecentSearch(query);
-      this.state.update((state) => ({
-        ...state,
-        recentSearches: state.recentSearches.filter((recent) => recent !== query),
-      }));
+      this.state.update((state) => withoutRecentSearch(state, query));
     } catch (err) {
       this.logger.error({ err }, 'Failed to delete recent search');
     }
@@ -228,7 +231,7 @@ export class SearchStore {
   private applyFilters(filters: FacetFilters) {
     this.state.update((state) => ({ ...state, filters, isSearching: true }));
     const { query } = get(this.state);
-    if (isSearchable(query)) {
+    if (isSearchable(query) === true) {
       this.scheduleSearch(query, filters);
     }
   }
@@ -250,7 +253,7 @@ export class SearchStore {
       return;
     }
     try {
-      if (hasFilters(filters)) {
+      if (hasFilters(filters) === true) {
         const response = await this.friendSearchApi.facetedSearch({
           query,
           filters,

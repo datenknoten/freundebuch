@@ -31,22 +31,20 @@ const STRING_ARRAY_KEYS = [
 ] as const;
 const ALL_FACET_KEYS = [...STRING_ARRAY_KEYS, 'relationship_category'] as const;
 
-// Get initial query and filters from URL
 let initialQuery = $derived($page.url.searchParams.get('q') ?? '');
-let initialFilters = $derived.by<FacetFilters>(() => {
+
+function parseFiltersFromUrl() {
   const filters: FacetFilters = {};
 
-  // Parse string array filters
   for (const key of STRING_ARRAY_KEYS) {
     const value = $page.url.searchParams.get(key);
-    if (value) {
+    if (value !== null && value !== '') {
       filters[key] = value.split(',');
     }
   }
 
-  // Parse relationship_category with proper type
   const relationshipCategory = $page.url.searchParams.get('relationship_category');
-  if (relationshipCategory) {
+  if (relationshipCategory !== null && relationshipCategory !== '') {
     filters.relationship_category = relationshipCategory.split(',') as (
       | 'family'
       | 'professional'
@@ -55,75 +53,70 @@ let initialFilters = $derived.by<FacetFilters>(() => {
   }
 
   return filters;
-});
+}
+let initialFilters = $derived.by<FacetFilters>(parseFiltersFromUrl);
 
-// Handle query changes from the FriendList component
 function handleQueryChange(query: string) {
   updateUrl(query, undefined);
 }
 
-// Handle filter changes from the FriendList component
 function handleFiltersChange(filters: FacetFilters) {
   updateUrl(undefined, filters);
 }
 
-// Update URL with query and/or filters
 function updateUrl(query?: string, filters?: FacetFilters) {
   const url = new URL($page.url);
 
-  // Update query if provided
   if (query !== undefined) {
-    if (query.trim()) {
+    if (query.trim() !== '') {
       url.searchParams.set('q', query.trim());
     } else {
       url.searchParams.delete('q');
     }
   }
 
-  // Update filters if provided
   if (filters !== undefined) {
-    // Remove all existing filter params
     for (const key of ALL_FACET_KEYS) {
       url.searchParams.delete(key);
     }
-    // Add new filter params
     for (const [key, values] of Object.entries(filters)) {
-      if (values && values.length > 0) {
+      if (values !== undefined && values.length > 0) {
         url.searchParams.set(key, values.join(','));
       }
     }
   }
 
-  // Update URL without navigation (replaceState)
+  // replaceState: filter edits must not pile up history entries.
   void goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
 }
 
-// Load friends when auth is ready
-$effect(() => {
-  if ($isAuthInitialized && !hasLoaded) {
+function loadFriendsWhenAuthReady() {
+  if ($isAuthInitialized === true && hasLoaded === false) {
     hasLoaded = true;
     void friends.loadFriends({ pageSize: $friendsPageSize });
   }
-});
+}
+$effect(loadFriendsWhenAuthReady);
 
-// Listen for keyboard shortcuts for pagination
-onMount(() => {
-  function handlePreviousPage() {
-    friendListRef?.goToPreviousPage();
-  }
+function handlePreviousPage() {
+  friendListRef?.goToPreviousPage();
+}
 
-  function handleNextPage() {
-    friendListRef?.goToNextPage();
-  }
+function handleNextPage() {
+  friendListRef?.goToNextPage();
+}
 
+function removePaginationShortcuts() {
+  window.removeEventListener('shortcut:previous-page', handlePreviousPage);
+  window.removeEventListener('shortcut:next-page', handleNextPage);
+}
+
+function listenForPaginationShortcuts() {
   window.addEventListener('shortcut:previous-page', handlePreviousPage);
   window.addEventListener('shortcut:next-page', handleNextPage);
-
-  return () => {
-    window.removeEventListener('shortcut:previous-page', handlePreviousPage);
-    window.removeEventListener('shortcut:next-page', handleNextPage);
-  };
-});
+  return removePaginationShortcuts;
+}
+onMount(listenForPaginationShortcuts);
 </script>
 
 <svelte:head>

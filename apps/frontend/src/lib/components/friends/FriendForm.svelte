@@ -5,6 +5,8 @@ import { goto } from '$app/navigation';
 import type { FriendCreateData } from '$lib/api/friend-create-data.js';
 import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
+import ImageCropModal from '$lib/components/friends/ImageCropModal.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
@@ -14,10 +16,7 @@ import Spinner from '$lib/components/ui/Spinner.svelte';
 import MarkdownEditor from '$lib/editor/MarkdownEditor.svelte';
 import MarkdownField from '$lib/editor/MarkdownField.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import type { FriendResponse } from '$shared';
-import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
-import FriendAvatar from './FriendAvatar.svelte';
-import ImageCropModal from './ImageCropModal.svelte';
+import { ALLOWED_MIME_TYPES, type FriendResponse, MAX_FILE_SIZE } from '$shared';
 
 const i18n = createI18n();
 const { api, logger, stores } = getAppContext();
@@ -49,7 +48,7 @@ let {
   addToCollective,
 }: Props = $props();
 
-const isEditing = $derived(!!friend && !isOnboarding);
+const isEditing = $derived(friend !== undefined && isOnboarding === false);
 
 // Photo state - initialize with functions to capture initial values
 let photoUrl = $state((() => friend?.photoUrl)());
@@ -91,21 +90,28 @@ const generatedDisplayName = $derived(
 let lastAutoDisplayName = (() => friend?.displayName ?? '')();
 let displayNameSyncPrimed = false;
 
-$effect(() => {
+function syncDisplayName() {
   const generated = generatedDisplayName;
-  untrack(() => {
+  function applyGeneratedDisplayName() {
     // The first run only primes the baseline: an existing friend keeps the
     // display name it was saved with, however its name parts read.
-    if (!displayNameSyncPrimed) {
+    if (displayNameSyncPrimed === false) {
       displayNameSyncPrimed = true;
       return;
     }
-    if (generated.length === 0) return;
-    if (displayName !== lastAutoDisplayName && displayName.trim().length > 0) return;
+    if (generated.length === 0) {
+      return;
+    }
+    if (displayName !== lastAutoDisplayName && displayName.trim().length > 0) {
+      return;
+    }
     displayName = generated;
     lastAutoDisplayName = generated;
-  });
-});
+  }
+  untrack(applyGeneratedDisplayName);
+}
+
+$effect(syncDisplayName);
 
 // Epic 1B: Interests field - initialize with function to capture initial value
 // Note: Professional information (job, org, dept) is now managed in the Professional History subresource
@@ -120,7 +126,14 @@ let internalIsLoading = $state(false);
 const isLoading = $derived(externalIsLoading ?? internalIsLoading);
 let error = $state('');
 
-// Photo handling
+function emptyToUndefined(value: string) {
+  return value === '' ? undefined : value;
+}
+
+function emptyToNull(value: string) {
+  return value === '' ? null : value;
+}
+
 function triggerPhotoUpload() {
   fileInput?.click();
 }
@@ -130,10 +143,11 @@ async function handlePhotoSelect(e: Event) {
   const file = input.files?.[0];
   photoError = '';
 
-  if (!file) return;
+  if (file === undefined) {
+    return;
+  }
 
-  // Validate file type
-  if (!ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number])) {
+  if (ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number]) === false) {
     photoError = $i18n.t('friendForm.photo.invalidType', {
       types: ALLOWED_MIME_TYPES.map((t) => t.replace('image/', '')).join(', '),
     });
@@ -146,12 +160,12 @@ async function handlePhotoSelect(e: Event) {
     return;
   }
 
-  // Create data URL for crop modal
   const reader = new FileReader();
-  reader.onload = () => {
+  function openCropModal() {
     cropImageUrl = reader.result as string;
     showCropModal = true;
-  };
+  }
+  reader.onload = openCropModal;
   reader.readAsDataURL(file);
 
   // Reset file input so the same file can be selected again
@@ -170,7 +184,7 @@ async function handleCropComplete(croppedBlob: Blob) {
   photoPreview = URL.createObjectURL(croppedBlob);
 
   // If editing, upload immediately
-  if (isEditing && friend) {
+  if (isEditing === true && friend !== undefined) {
     await uploadPhoto();
   }
 }
@@ -181,7 +195,9 @@ function handleCropCancel() {
 }
 
 async function uploadPhoto() {
-  if (!photoFile || !friend) return;
+  if (photoFile === null || friend === undefined) {
+    return;
+  }
 
   isUploadingPhoto = true;
   photoError = '';
@@ -204,7 +220,9 @@ async function uploadPhoto() {
 let confirmingPhotoRemoval = $state(false);
 
 async function handleDeletePhoto() {
-  if (!friend) return;
+  if (friend === undefined) {
+    return;
+  }
 
   isUploadingPhoto = true;
 
@@ -226,35 +244,35 @@ async function handleSubmit(e: Event) {
   try {
     // Met info is only sent when one of its fields is filled
     const metInfo =
-      metDate || metLocation || metContext
+      metDate !== '' || metLocation !== '' || metContext !== ''
         ? {
-            metDate: metDate || undefined,
-            metLocation: metLocation || undefined,
-            metContext: metContext || undefined,
+            metDate: emptyToUndefined(metDate),
+            metLocation: emptyToUndefined(metLocation),
+            metContext: emptyToUndefined(metContext),
           }
         : undefined;
 
     // Professional history and the other sub-resources are added on the detail page
     const friendData: FriendCreateData = {
       displayName,
-      nickname: nickname || undefined,
-      namePrefix: namePrefix || undefined,
-      nameFirst: nameFirst || undefined,
-      nameMiddle: nameMiddle || undefined,
-      nameLast: nameLast || undefined,
-      nameSuffix: nameSuffix || undefined,
-      maidenName: maidenName || undefined,
-      interests: interests || undefined,
+      nickname: emptyToUndefined(nickname),
+      namePrefix: emptyToUndefined(namePrefix),
+      nameFirst: emptyToUndefined(nameFirst),
+      nameMiddle: emptyToUndefined(nameMiddle),
+      nameLast: emptyToUndefined(nameLast),
+      nameSuffix: emptyToUndefined(nameSuffix),
+      maidenName: emptyToUndefined(maidenName),
+      interests: emptyToUndefined(interests),
       metInfo,
     };
 
     // Onboarding mode - call the custom submit handler
-    if (isOnboarding && onSubmitProp) {
+    if (isOnboarding === true && onSubmitProp !== undefined) {
       await onSubmitProp(friendData);
       return; // Parent handles navigation
     }
 
-    if (isEditing && friend) {
+    if (isEditing === true && friend !== undefined) {
       await updateAndNavigate(friend.id, metInfo);
       return;
     }
@@ -271,14 +289,14 @@ async function handleSubmit(e: Event) {
 async function updateAndNavigate(friendId: string, metInfo: FriendCreateData['metInfo']) {
   await friends.updateFriend(friendId, {
     displayName,
-    nickname: nickname || null,
-    namePrefix: namePrefix || null,
-    nameFirst: nameFirst || null,
-    nameMiddle: nameMiddle || null,
-    nameLast: nameLast || null,
-    nameSuffix: nameSuffix || null,
-    maidenName: maidenName || null,
-    interests: interests || null,
+    nickname: emptyToNull(nickname),
+    namePrefix: emptyToNull(namePrefix),
+    nameFirst: emptyToNull(nameFirst),
+    nameMiddle: emptyToNull(nameMiddle),
+    nameLast: emptyToNull(nameLast),
+    nameSuffix: emptyToNull(nameSuffix),
+    maidenName: emptyToNull(maidenName),
+    interests: emptyToNull(interests),
   });
   if (metInfo !== undefined) {
     await friends.setMetInfo(friendId, metInfo);
@@ -289,7 +307,10 @@ async function updateAndNavigate(friendId: string, metInfo: FriendCreateData['me
 // Core fields only: sub-resources are added inline on the detail page after creation.
 async function createAndNavigate(friendData: FriendCreateData) {
   const newFriend = await friends.createFriend(friendData);
-  if (addToCollective !== undefined && (await joinCollective(addToCollective, newFriend.id))) {
+  if (
+    addToCollective !== undefined &&
+    (await joinCollective(addToCollective, newFriend.id)) === true
+  ) {
     // Only return to the collective once the friend is actually a member
     await goto(`/collectives/${addToCollective.id}`);
     return;
@@ -302,8 +323,11 @@ async function createAndNavigate(friendData: FriendCreateData) {
 // nothing is lost.
 async function joinCollective(collective: { id: string; roleId?: string }, friendId: string) {
   try {
-    const roleId = collective.roleId || (await findDefaultRoleId(collective.id));
-    if (!roleId) {
+    const roleId =
+      collective.roleId !== undefined && collective.roleId !== ''
+        ? collective.roleId
+        : await findDefaultRoleId(collective.id);
+    if (roleId === undefined || roleId === '') {
       return false;
     }
     await api.collectiveMembers.addMember(collective.id, { friendId, roleId });

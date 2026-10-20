@@ -1,8 +1,8 @@
 <script lang="ts">
+import SubresourceRow from '$lib/components/friends/subresources/SubresourceRow.svelte';
 import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { EmailResponse, EmailType } from '$shared';
-import SubresourceRow from './SubresourceRow.svelte';
 
 interface Props {
   email: EmailResponse;
@@ -17,7 +17,7 @@ let { email, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $prop
 
 const i18n = createI18n();
 
-function emailTypeLabel(type: EmailType): string {
+function emailTypeLabel(type: EmailType) {
   return $i18n.t(`subresources.email.types.${type}`);
 }
 </script>

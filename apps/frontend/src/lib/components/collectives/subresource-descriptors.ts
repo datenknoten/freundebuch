@@ -21,6 +21,16 @@ import type { CollectivesApi } from '$lib/api/collectives.js';
 import type { EmailData } from '$lib/api/email-data.js';
 import type { PhoneData } from '$lib/api/phone-data.js';
 import type { UrlData } from '$lib/api/url-data.js';
+import AddressEditForm from '$lib/components/friends/subresources/AddressEditForm.svelte';
+import AddressRow from '$lib/components/friends/subresources/AddressRow.svelte';
+import CircleEditForm from '$lib/components/friends/subresources/CircleEditForm.svelte';
+import CircleRow from '$lib/components/friends/subresources/CircleRow.svelte';
+import EmailEditForm from '$lib/components/friends/subresources/EmailEditForm.svelte';
+import EmailRow from '$lib/components/friends/subresources/EmailRow.svelte';
+import PhoneEditForm from '$lib/components/friends/subresources/PhoneEditForm.svelte';
+import PhoneRow from '$lib/components/friends/subresources/PhoneRow.svelte';
+import UrlEditForm from '$lib/components/friends/subresources/UrlEditForm.svelte';
+import UrlRow from '$lib/components/friends/subresources/UrlRow.svelte';
 import type {
   AddressResponse,
   CollectiveCircleResponse,
@@ -28,16 +38,6 @@ import type {
   PhoneResponse,
   UrlResponse,
 } from '$shared';
-import AddressEditForm from '../friends/subresources/AddressEditForm.svelte';
-import AddressRow from '../friends/subresources/AddressRow.svelte';
-import CircleEditForm from '../friends/subresources/CircleEditForm.svelte';
-import CircleRow from '../friends/subresources/CircleRow.svelte';
-import EmailEditForm from '../friends/subresources/EmailEditForm.svelte';
-import EmailRow from '../friends/subresources/EmailRow.svelte';
-import PhoneEditForm from '../friends/subresources/PhoneEditForm.svelte';
-import PhoneRow from '../friends/subresources/PhoneRow.svelte';
-import UrlEditForm from '../friends/subresources/UrlEditForm.svelte';
-import UrlRow from '../friends/subresources/UrlRow.svelte';
 import {
   addDetailOption,
   addressDeleteName,
@@ -46,7 +46,7 @@ import {
   primaryAwareFormProps,
   type SubresourceDescriptor,
   type Translate,
-} from '../subresources/types';
+} from '../subresources/types.js';
 
 export interface CollectiveDescriptorsOptions {
   collectivesApi: CollectivesApi;
@@ -73,9 +73,10 @@ function mapPhoneError(err: unknown, t: Translate) {
 // Geocoding runs asynchronously on the backend; refetch a few times to pick up
 // coordinates once they land.
 function refetchUntilGeocoded(reload: () => Promise<unknown>) {
-  const timers = ADDRESS_REFETCH_DELAYS_MS.map((delay) =>
-    setTimeout(() => void reload().catch(() => undefined), delay),
-  );
+  function refetch() {
+    void reload().catch(() => undefined);
+  }
+  const timers = ADDRESS_REFETCH_DELAYS_MS.map((delay) => setTimeout(refetch, delay));
   return function cancelRefetch() {
     for (const timer of timers) {
       clearTimeout(timer);
@@ -94,15 +95,27 @@ function createPhoneDescriptor(api: CollectiveContactsApi) {
     addShortcutLabel: 'shortcuts.add.phone',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.phoneNumber',
-    load: (cid) => api.listPhones(cid),
-    create: (cid, data) => api.addPhone(cid, data),
-    update: (cid, id, data) => api.updatePhone(cid, id, data),
-    remove: (cid, item) => api.deletePhone(cid, item.id),
+    load(cid) {
+      return api.listPhones(cid);
+    },
+    create(cid, data) {
+      return api.addPhone(cid, data);
+    },
+    update(cid, id, data) {
+      return api.updatePhone(cid, id, data);
+    },
+    remove(cid, item) {
+      return api.deletePhone(cid, item.id);
+    },
     FormComponent: PhoneEditForm,
     formProps: primaryAwareFormProps,
     RowComponent: PhoneRow,
-    rowProps: (phone) => ({ phone }),
-    deleteName: (phone) => phone.phoneNumber,
+    rowProps(phone) {
+      return { phone };
+    },
+    deleteName(phone) {
+      return phone.phoneNumber;
+    },
     deleteTitleKey: 'friendDetail.modal.deletePhoneNumber',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeletePhone',
     mapError: mapPhoneError,
@@ -120,15 +133,27 @@ function createEmailDescriptor(api: CollectiveContactsApi) {
     addShortcutLabel: 'shortcuts.add.email',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.emailAddress',
-    load: (cid) => api.listEmails(cid),
-    create: (cid, data) => api.addEmail(cid, data),
-    update: (cid, id, data) => api.updateEmail(cid, id, data),
-    remove: (cid, item) => api.deleteEmail(cid, item.id),
+    load(cid) {
+      return api.listEmails(cid);
+    },
+    create(cid, data) {
+      return api.addEmail(cid, data);
+    },
+    update(cid, id, data) {
+      return api.updateEmail(cid, id, data);
+    },
+    remove(cid, item) {
+      return api.deleteEmail(cid, item.id);
+    },
     FormComponent: EmailEditForm,
     formProps: primaryAwareFormProps,
     RowComponent: EmailRow,
-    rowProps: (email) => ({ email }),
-    deleteName: (email) => email.emailAddress,
+    rowProps(email) {
+      return { email };
+    },
+    deleteName(email) {
+      return email.emailAddress;
+    },
     deleteTitleKey: 'friendDetail.modal.deleteEmailAddress',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
   });
@@ -145,15 +170,25 @@ function createAddressDescriptor(api: CollectiveContactsApi) {
     addShortcutLabel: 'shortcuts.add.address',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.address',
-    load: (cid) => api.listAddresses(cid),
-    create: (cid, data) => api.addAddress(cid, data),
-    update: (cid, id, data) => api.updateAddress(cid, id, data),
-    remove: (cid, item) => api.deleteAddress(cid, item.id),
+    load(cid) {
+      return api.listAddresses(cid);
+    },
+    create(cid, data) {
+      return api.addAddress(cid, data);
+    },
+    update(cid, id, data) {
+      return api.updateAddress(cid, id, data);
+    },
+    remove(cid, item) {
+      return api.deleteAddress(cid, item.id);
+    },
     afterSave: refetchUntilGeocoded,
     FormComponent: AddressEditForm,
     formProps: primaryAwareFormProps,
     RowComponent: AddressRow,
-    rowProps: (address) => ({ address }),
+    rowProps(address) {
+      return { address };
+    },
     deleteName: addressDeleteName,
     deleteTitleKey: 'friendDetail.modal.deleteAddress',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeleteAddress',
@@ -171,15 +206,27 @@ function createUrlDescriptor(api: CollectiveContactsApi) {
     addShortcutLabel: 'shortcuts.add.url',
     editable: true,
     modalTypeNameKey: 'friendDetail.modal.websiteUrl',
-    load: (cid) => api.listUrls(cid),
-    create: (cid, data) => api.addUrl(cid, data),
-    update: (cid, id, data) => api.updateUrl(cid, id, data),
-    remove: (cid, item) => api.deleteUrl(cid, item.id),
+    load(cid) {
+      return api.listUrls(cid);
+    },
+    create(cid, data) {
+      return api.addUrl(cid, data);
+    },
+    update(cid, id, data) {
+      return api.updateUrl(cid, id, data);
+    },
+    remove(cid, item) {
+      return api.deleteUrl(cid, item.id);
+    },
     FormComponent: UrlEditForm,
     formProps: editFormProps,
     RowComponent: UrlRow,
-    rowProps: (url) => ({ url }),
-    deleteName: (url) => url.url,
+    rowProps(url) {
+      return { url };
+    },
+    deleteName(url) {
+      return url.url;
+    },
     deleteTitleKey: 'friendDetail.modal.deleteWebsite',
     deleteDescriptionKey: 'friendDetail.modal.confirmDeleteWebsite',
   });
@@ -196,16 +243,28 @@ function createCircleDescriptor(api: CollectivesApi) {
     addShortcutLabel: 'shortcuts.add.circle',
     editable: false,
     modalTypeNameKey: 'friendDetail.modal.circle',
-    load: (cid) => api.listCollectiveCircles(cid),
-    create: (cid, data) => api.addCollectiveToCircle(cid, data.circleId),
-    remove: (cid, item) => api.removeCollectiveFromCircle(cid, item.id),
+    load(cid) {
+      return api.listCollectiveCircles(cid);
+    },
+    create(cid, data) {
+      return api.addCollectiveToCircle(cid, data.circleId);
+    },
+    remove(cid, item) {
+      return api.removeCollectiveFromCircle(cid, item.id);
+    },
     reloadAfterMutate: true,
     tracksDirty: true,
     FormComponent: CircleEditForm,
-    formProps: ({ items, isLoading }) => ({ existingCircles: items, disabled: isLoading }),
+    formProps({ items, isLoading }) {
+      return { existingCircles: items, disabled: isLoading };
+    },
     RowComponent: CircleRow,
-    rowProps: (circle) => ({ circle }),
-    deleteName: (circle) => circle.name,
+    rowProps(circle) {
+      return { circle };
+    },
+    deleteName(circle) {
+      return circle.name;
+    },
     deleteTitleKey: 'collectives.detail.removeFromCircleTitle',
     deleteDescriptionKey: 'collectives.detail.confirmRemoveCircle',
   });

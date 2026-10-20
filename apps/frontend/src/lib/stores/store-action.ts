@@ -12,7 +12,7 @@ export async function storeAction<S extends { isLoading: boolean; error: string 
   onSuccess: (state: S, result: T) => Partial<S>,
   fallbackError: string,
   onError?: (state: S) => Partial<S>,
-): Promise<T> {
+) {
   update((state) => ({ ...state, isLoading: true, error: null }));
 
   try {

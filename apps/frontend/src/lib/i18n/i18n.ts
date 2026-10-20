@@ -1,8 +1,8 @@
 import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { createI18nStore } from 'svelte-i18next';
-import de from './locales/de.json';
-import en from './locales/en.json';
+import de from '$lib/i18n/locales/de.json';
+import en from '$lib/i18n/locales/en.json';
 
 export const DEFAULT_NS = 'translation';
 export const SUPPORTED_LANGUAGES = ['en', 'de'] as const;

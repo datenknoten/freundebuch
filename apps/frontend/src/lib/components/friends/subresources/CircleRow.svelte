@@ -1,8 +1,8 @@
 <script lang="ts">
 import CircleChip from '$lib/components/circles/CircleChip.svelte';
+import SubresourceRow from '$lib/components/friends/subresources/SubresourceRow.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { CircleSummaryResponse } from '$shared';
-import SubresourceRow from './SubresourceRow.svelte';
 
 interface Props {
   circle: CircleSummaryResponse;

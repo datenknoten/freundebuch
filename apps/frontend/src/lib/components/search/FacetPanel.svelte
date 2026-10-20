@@ -15,7 +15,6 @@ interface Props {
 
 let { facets, activeFilters, onFilterChange, isLoading = false }: Props = $props();
 
-// Track which sections are expanded
 let expandedSections = $state<Record<string, boolean>>({
   location: true,
   professional: true,
@@ -23,28 +22,26 @@ let expandedSections = $state<Record<string, boolean>>({
 });
 
 function toggleSection(section: string) {
-  expandedSections[section] = !expandedSections[section];
+  expandedSections[section] = expandedSections[section] !== true;
 }
 
 function toggleFilter(field: ArrayFacetField, value: string) {
   const current = activeFilters[field] ?? [];
-  const newValues = current.includes(value)
-    ? current.filter((v) => v !== value)
-    : [...current, value];
+  const newValues =
+    current.includes(value) === true ? current.filter((v) => v !== value) : [...current, value];
 
   onFilterChange({
     ...activeFilters,
-    [field]: newValues.length ? newValues : undefined,
+    [field]: newValues.length > 0 ? newValues : undefined,
   });
 }
 
-function isFilterActive(field: ArrayFacetField, value: string): boolean {
+function isFilterActive(field: ArrayFacetField, value: string) {
   return (activeFilters[field] ?? []).includes(value);
 }
 
-// Check if facets are available
 let hasFacets = $derived(
-  facets &&
+  facets !== null &&
     (facets.location.length > 0 ||
       facets.professional.length > 0 ||
       facets.relationship.length > 0),

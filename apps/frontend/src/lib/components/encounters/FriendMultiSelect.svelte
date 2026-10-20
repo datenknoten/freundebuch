@@ -2,26 +2,21 @@
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { getAppContext } from '$lib/app-context.js';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
 import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { FriendSearchResultResponse } from '$shared';
-import FriendAvatar from '../friends/FriendAvatar.svelte';
 
 const i18n = createI18n();
 const friends = getAppContext().stores.friends;
 
 interface Props {
-  /** Selected friend IDs */
   selectedFriends: FriendSearchResultResponse[];
-  /** Placeholder text for the input */
   placeholder?: string;
-  /** Maximum number of search results to show */
   limit?: number;
-  /** Whether the input is disabled */
   disabled?: boolean;
-  /** Called when selection changes */
   onChange?: (friends: FriendSearchResultResponse[]) => void;
 }
 
@@ -41,27 +36,32 @@ let highlightedIndex = $state(-1);
 let inputElement: HTMLInputElement;
 let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
-// Filter out already selected friends from results
-let filteredResults = $derived(results.filter((r) => !selectedFriends.some((s) => s.id === r.id)));
+function isUnselected(result: FriendSearchResultResponse) {
+  return selectedFriends.some((s) => s.id === result.id) === false;
+}
+
+let filteredResults = $derived(results.filter(isUnselected));
+
+function runSearch() {
+  void performSearch();
+}
 
 function handleInput() {
-  if (debounceTimeout) {
+  if (debounceTimeout !== null) {
     clearTimeout(debounceTimeout);
   }
 
-  if (!query.trim()) {
+  if (query.trim() === '') {
     results = [];
     showDropdown = false;
     return;
   }
 
-  debounceTimeout = setTimeout(async () => {
-    await performSearch();
-  }, 300);
+  debounceTimeout = setTimeout(runSearch, 300);
 }
 
 async function performSearch() {
-  if (!query.trim()) {
+  if (query.trim() === '') {
     results = [];
     showDropdown = false;
     return;
@@ -96,7 +96,9 @@ function removeFriend(friendId: string) {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (!showDropdown) return;
+  if (showDropdown === false) {
+    return;
+  }
 
   switch (e.key) {
     case 'ArrowDown':
@@ -113,7 +115,7 @@ function handleKeydown(e: KeyboardEvent) {
       const topMatch = filteredResults[0];
       if (highlighted !== undefined) {
         addFriend(highlighted);
-      } else if (query.trim() && topMatch !== undefined) {
+      } else if (query.trim() !== '' && topMatch !== undefined) {
         // No explicit highlight, but the user searched and there are matches:
         // add the top match so Enter confirms the visible result.
         addFriend(topMatch);
@@ -127,11 +129,13 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+function hideDropdown() {
+  showDropdown = false;
+  highlightedIndex = -1;
+}
+
 function handleBlur() {
-  setTimeout(() => {
-    showDropdown = false;
-    highlightedIndex = -1;
-  }, 200);
+  setTimeout(hideDropdown, 200);
 }
 
 function handleFocus() {

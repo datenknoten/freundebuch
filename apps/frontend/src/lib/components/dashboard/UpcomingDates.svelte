@@ -32,16 +32,17 @@ let {
   limit = 10,
 }: Props = $props();
 
-function formatDateType(type: DateType): string {
+function formatDateType(type: DateType) {
   const typeKeys: Record<DateType, string> = {
     birthday: 'dashboard.dateLabels.birthday',
     anniversary: 'dashboard.dateLabels.anniversary',
     other: 'dashboard.dateLabels.date',
   };
-  return $i18n.t(typeKeys[type]) || type;
+  const label = $i18n.t(typeKeys[type]);
+  return label !== '' ? label : type;
 }
 
-function formatDate(dateValue: string): string {
+function formatDate(dateValue: string) {
   try {
     const d = new Date(dateValue);
     return d.toLocaleDateString(undefined, {
@@ -53,7 +54,7 @@ function formatDate(dateValue: string): string {
   }
 }
 
-function formatDaysUntil(daysUntil: number): string {
+function formatDaysUntil(daysUntil: number) {
   if (daysUntil === 0) {
     return $i18n.t('dashboard.timeLabels.today');
   } else if (daysUntil === 1) {
@@ -71,7 +72,7 @@ function formatDaysUntil(daysUntil: number): string {
  * Tone of the countdown chip. `amber-warm` is the palette's "needs attention
  * soon" accent and has no `CHIP_CLASSES` tone of its own.
  */
-function getDaysUntilClass(daysUntil: number): string {
+function getDaysUntilClass(daysUntil: number) {
   if (daysUntil === 0) {
     return CHIP_CLASSES.forest;
   } else if (daysUntil <= 7) {

@@ -14,12 +14,12 @@ const i18n = createI18n();
 let isLoading = $state(false);
 let error = $state('');
 
-// Redirect if already onboarded
-$effect(() => {
-  if ($auth.isInitialized && $auth.user?.hasCompletedOnboarding) {
+function redirectIfOnboarded() {
+  if ($auth.isInitialized === true && $auth.user?.hasCompletedOnboarding === true) {
     void goto('/friends');
   }
-});
+}
+$effect(redirectIfOnboarded);
 
 async function handleSubmit(data: FriendCreateData) {
   isLoading = true;

@@ -30,28 +30,28 @@ let toMonth = $state((() => initialData?.toMonth ?? null)() as number | null);
 let toYear = $state((() => initialData?.toYear ?? null)() as number | null);
 let isPrimary = $state((() => initialData?.isPrimary ?? defaultPrimary ?? false)());
 let isCurrentPosition = $state(
-  (() => !initialData || (initialData.toMonth === null && initialData.toYear === null))(),
+  (() =>
+    initialData === undefined || (initialData.toMonth === null && initialData.toYear === null))(),
 );
 
-createDirtyTracker(
-  () => {
-    jobTitle;
-    organization;
-    department;
-    notes;
-    fromMonth;
-    fromYear;
-    toMonth;
-    toYear;
-    isPrimary;
-    isCurrentPosition;
-  },
-  () => onchange,
-);
+function trackDirtyFields() {
+  jobTitle;
+  organization;
+  department;
+  notes;
+  fromMonth;
+  fromYear;
+  toMonth;
+  toYear;
+  isPrimary;
+  isCurrentPosition;
+}
+
+createDirtyTracker(trackDirtyFields, () => onchange);
 
 // When toggling current position, clear or set the end date
-$effect(() => {
-  if (isCurrentPosition) {
+function syncEndDate() {
+  if (isCurrentPosition === true) {
     toMonth = null;
     toYear = null;
   } else if (toMonth === null && toYear === null) {
@@ -59,37 +59,44 @@ $effect(() => {
     toMonth = new Date().getMonth() + 1;
     toYear = new Date().getFullYear();
   }
-});
+}
+
+$effect(syncEndDate);
+
+function trimmedOrNull(value: string) {
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
 
 export function getData() {
   return {
-    jobTitle: jobTitle.trim() || null,
-    organization: organization.trim() || null,
-    department: department.trim() || null,
-    notes: notes.trim() || null,
+    jobTitle: trimmedOrNull(jobTitle),
+    organization: trimmedOrNull(organization),
+    department: trimmedOrNull(department),
+    notes: trimmedOrNull(notes),
     fromMonth,
     fromYear,
-    toMonth: isCurrentPosition ? null : toMonth,
-    toYear: isCurrentPosition ? null : toYear,
+    toMonth: isCurrentPosition === true ? null : toMonth,
+    toYear: isCurrentPosition === true ? null : toYear,
     isPrimary,
   } satisfies ProfessionalHistoryData;
 }
 
-export function isValid(): boolean {
+export function isValid() {
   // At least job_title or organization must be provided
   const hasContent = jobTitle.trim().length > 0 || organization.trim().length > 0;
   // from_month and from_year are required and must be valid
   const hasValidFromDate = fromMonth >= 1 && fromMonth <= 12 && fromYear > 0;
   // If not current position, to dates must be valid and >= from dates
   const hasValidToDate =
-    isCurrentPosition ||
+    isCurrentPosition === true ||
     (toMonth !== null &&
       toYear !== null &&
       toMonth >= 1 &&
       toMonth <= 12 &&
       toYear > 0 &&
       (toYear > fromYear || (toYear === fromYear && toMonth >= fromMonth)));
-  return hasContent && hasValidFromDate && hasValidToDate;
+  return hasContent === true && hasValidFromDate === true && hasValidToDate === true;
 }
 
 // Month names - using derived for reactive translations

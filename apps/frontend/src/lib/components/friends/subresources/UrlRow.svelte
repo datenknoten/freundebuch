@@ -1,7 +1,7 @@
 <script lang="ts">
+import SubresourceRow from '$lib/components/friends/subresources/SubresourceRow.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { UrlResponse, UrlType } from '$shared';
-import SubresourceRow from './SubresourceRow.svelte';
 
 interface Props {
   url: UrlResponse;
@@ -16,11 +16,11 @@ let { url, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $props(
 
 const i18n = createI18n();
 
-function urlTypeLabel(type: UrlType): string {
+function urlTypeLabel(type: UrlType) {
   return $i18n.t(`subresources.url.types.${type}`);
 }
 
-function formatUrl(rawUrl: string): string {
+function formatUrl(rawUrl: string) {
   try {
     const parsed = new URL(rawUrl);
     return parsed.hostname + (parsed.pathname !== '/' ? parsed.pathname : '');

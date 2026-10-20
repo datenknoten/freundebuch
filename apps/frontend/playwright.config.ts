@@ -1,11 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const isCi = process.env.CI !== undefined && process.env.CI !== '';
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  forbidOnly: isCi,
+  retries: isCi === true ? 2 : 0,
+  workers: isCi === true ? 1 : undefined,
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:5173',
@@ -22,6 +24,6 @@ export default defineConfig({
   webServer: {
     command: 'aube run build && aube run preview',
     port: 5173,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: isCi === false,
   },
 });

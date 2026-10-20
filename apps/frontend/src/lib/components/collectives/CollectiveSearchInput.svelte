@@ -3,28 +3,23 @@ import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { autoFocus } from '$lib/actions/auto-focus';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { CollectiveListItemResponse } from '$shared';
-import FriendAvatar from '../friends/FriendAvatar.svelte';
 
 const i18n = createI18n();
 
 interface Props {
-  /** The collectives available for selection */
   collectives: CollectiveListItemResponse[];
   /** The currently selected collective ID (external id), or '' when none */
   value: string;
-  /** Placeholder text for the search input */
   placeholder?: string;
-  /** Whether the input is disabled */
   disabled?: boolean;
-  /** Whether to autofocus the input on mount */
   autofocus?: boolean;
   /** Called when a collective is selected (viaKeyboard is true if Enter was used) */
   onSelect?: (collectiveId: string, viaKeyboard: boolean) => void;
-  /** Called when the current selection is cleared */
   onClear?: () => void;
   /** Unique ID prefix for ARIA attributes (defaults to 'collective-search') */
   id?: string;
@@ -46,15 +41,23 @@ let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
 let inputElement = $state<HTMLInputElement | undefined>(undefined);
 
+function matchesQuery(c: CollectiveListItemResponse, q: string) {
+  return (
+    c.name.toLowerCase().includes(q) === true || c.type.name.toLowerCase().includes(q) === true
+  );
+}
+
+function filterCollectives() {
+  const q = query.toLowerCase().trim();
+  if (q === '') {
+    return collectives;
+  }
+  return collectives.filter((c) => matchesQuery(c, q));
+}
+
 // Filter collectives based on query (matches name or type name).
 // An empty query shows the full list as suggestions on focus.
-const filteredCollectives = $derived.by(() => {
-  const q = query.toLowerCase().trim();
-  if (!q) return collectives;
-  return collectives.filter(
-    (c) => c.name.toLowerCase().includes(q) || c.type.name.toLowerCase().includes(q),
-  );
-});
+const filteredCollectives = $derived.by(filterCollectives);
 
 // The currently selected collective object, if any.
 const selectedCollective = $derived(collectives.find((c) => c.id === value) ?? null);
@@ -72,7 +75,7 @@ function handleInput() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (!showDropdown) {
+  if (showDropdown === false) {
     if (e.key === 'ArrowDown' || e.key === 'Enter') {
       e.preventDefault();
       showDropdown = true;
@@ -97,7 +100,7 @@ function handleKeydown(e: KeyboardEvent) {
       const topMatch = list[0];
       if (highlighted !== undefined) {
         selectCollective(highlighted, true);
-      } else if (query.trim() && topMatch !== undefined) {
+      } else if (query.trim() !== '' && topMatch !== undefined) {
         // No explicit highlight, but the user searched and there are matches:
         // select the top match so Enter confirms the visible result.
         selectCollective(topMatch, true);
@@ -117,27 +120,33 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+function resetDropdown() {
+  showDropdown = false;
+  highlightedIndex = -1;
+  query = '';
+}
+
 function handleBlur() {
   // Delay hiding the dropdown to allow click events on results.
-  setTimeout(() => {
-    showDropdown = false;
-    highlightedIndex = -1;
-    query = '';
-  }, 200);
+  setTimeout(resetDropdown, 200);
 }
 
 function handleFocus() {
   showDropdown = true;
 }
 
+function focusInput() {
+  inputElement?.focus();
+}
+
 function activateInput() {
-  if (disabled) return;
+  if (disabled === true) {
+    return;
+  }
   query = '';
   showDropdown = true;
   // Defer focus so the input is rendered before focusing.
-  requestAnimationFrame(() => {
-    inputElement?.focus();
-  });
+  requestAnimationFrame(focusInput);
 }
 
 function handleButtonKeydown(e: KeyboardEvent) {
@@ -156,9 +165,7 @@ function handleClear() {
   // focus to the search input that takes its place instead of letting focus
   // fall back to the document body.
   showDropdown = false;
-  requestAnimationFrame(() => {
-    inputElement?.focus();
-  });
+  requestAnimationFrame(focusInput);
 }
 </script>
 

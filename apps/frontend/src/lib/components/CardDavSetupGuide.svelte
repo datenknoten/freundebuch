@@ -6,7 +6,7 @@ import TabNav from '$lib/components/TabNav.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing';
+import { TRANSIENT_FEEDBACK_MS } from '$lib/utils/timing.js';
 
 const currentUser = getAppContext().stores.auth.currentUser;
 
@@ -18,9 +18,10 @@ interface Props {
 
 let { serverUrl = '' }: Props = $props();
 
-// Derive the CardDAV URL from the current location if not provided
 const carddavUrl = $derived(
-  serverUrl || `${typeof window !== 'undefined' ? window.location.origin : ''}/carddav/`,
+  serverUrl !== ''
+    ? serverUrl
+    : `${typeof window !== 'undefined' ? window.location.origin : ''}/carddav/`,
 );
 
 type CardDavTab = 'ios' | 'macos' | 'thunderbird';
@@ -34,11 +35,13 @@ const tabs = $derived([
   { id: 'thunderbird' as const, label: $i18n.t('profile.carddav.thunderbird') },
 ]);
 
+function clearCopied() {
+  copied = false;
+}
+
 function flagCopied() {
   copied = true;
-  setTimeout(() => {
-    copied = false;
-  }, TRANSIENT_FEEDBACK_MS);
+  setTimeout(clearCopied, TRANSIENT_FEEDBACK_MS);
 }
 
 async function copyUrl() {

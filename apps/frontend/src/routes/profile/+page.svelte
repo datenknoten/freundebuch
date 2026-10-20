@@ -21,13 +21,15 @@ const notificationChannels = stores.notificationChannels;
 const i18n = createI18n();
 
 const pageTitle = $derived(
-  $currentUser?.email ? `${$currentUser.email} | Freundebuch` : 'Profile | Freundebuch',
+  $currentUser?.email !== undefined && $currentUser.email !== ''
+    ? `${$currentUser.email} | Freundebuch`
+    : 'Profile | Freundebuch',
 );
 
 let passkeyCount = $state(0);
 let appPasswordCount = $state(0);
 
-onMount(async () => {
+async function loadProfileCounts() {
   try {
     const [passkeyResult, appPasswords] = await Promise.all([
       authClient.passkey.listUserPasskeys(),
@@ -40,7 +42,8 @@ onMount(async () => {
     // Counts stay at 0: the cards show their "No X" status.
     logger.warn({ err }, 'Failed to load the profile counts');
   }
-});
+}
+onMount(loadProfileCounts);
 
 const accountStatus = $derived($currentUser?.email ?? '');
 

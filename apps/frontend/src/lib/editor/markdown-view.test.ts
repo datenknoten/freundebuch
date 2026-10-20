@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderMarkdown } from './MarkdownView.svelte';
+import { renderMarkdown } from '$lib/editor/MarkdownView.svelte';
 
 describe('renderMarkdown', () => {
   it('renders markdown headings as HTML', () => {

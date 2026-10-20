@@ -1,7 +1,7 @@
 import { createRawSnippet } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '$lib/test/render.js';
-import Fab from './Fab.svelte';
+import Fab from '$lib/components/ui/Fab.svelte';
 
 const icon = createRawSnippet(() => ({ render: () => '<span>+</span>' }));
 

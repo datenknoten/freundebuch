@@ -52,65 +52,48 @@ async function checkOnboardingStatus(apiUrl: string, cookie: string) {
 }
 
 /**
- * SvelteKit server hook to handle authentication
- * This runs on every request and protects routes that require authentication
- *
- * Better Auth manages sessions via cookies. We check for the presence of
- * Better Auth's session cookie to determine authentication state.
+ * Better Auth manages sessions via cookies, so the presence of its session cookie decides the
+ * authentication state here.
  */
-const authHandle: Handle = async ({ event, resolve }) => {
+async function authHandle({ event, resolve }: Parameters<Handle>[0]) {
   event.locals.config = config;
 
-  // Better Auth session cookie name
-  const sessionCookie =
-    event.cookies.get('better-auth.session_token') ||
-    event.cookies.get('__Secure-better-auth.session_token');
-  const hasSession = !!sessionCookie;
+  const sessionToken = event.cookies.get('better-auth.session_token');
+  const secureSessionToken = event.cookies.get('__Secure-better-auth.session_token');
+  const hasSession =
+    (sessionToken !== undefined && sessionToken !== '') ||
+    (secureSessionToken !== undefined && secureSessionToken !== '');
 
-  // Define protected routes that require authentication
   const protectedRoutes = ['/profile', '/friends', '/onboarding'];
-
-  // Check if the current route is protected
   const isProtectedRoute = protectedRoutes.some((route) => event.url.pathname.startsWith(route));
-
-  // If route is protected and user is not authenticated, redirect to login
-  if (isProtectedRoute && !hasSession) {
+  if (isProtectedRoute === true && hasSession === false) {
     throw redirect(303, `/auth/login?redirect=${event.url.pathname}`);
   }
 
-  // Define auth routes that authenticated users shouldn't access
   const authRoutes = ['/auth/login', '/auth/register'];
-
-  // Check if the current route is an auth route
   const isAuthRoute = authRoutes.some((route) => event.url.pathname.startsWith(route));
-
-  // If user is authenticated and tries to access auth routes, redirect to home
-  if (isAuthRoute && hasSession) {
+  if (isAuthRoute === true && hasSession === true) {
     throw redirect(303, '/');
   }
 
-  // Check onboarding status for authenticated users on routes that require it
-  // Routes exempt from onboarding check: /onboarding, /auth/, /api/
   const onboardingExemptRoutes = ['/onboarding', '/auth/', '/api/'];
-  const requiresOnboarding =
-    hasSession && !onboardingExemptRoutes.some((r) => event.url.pathname.startsWith(r));
+  const isOnboardingExempt = onboardingExemptRoutes.some((r) => event.url.pathname.startsWith(r));
 
-  if (requiresOnboarding) {
-    // Forward all cookies to the backend for session-based auth
-    const cookieHeader = event.request.headers.get('cookie') || '';
+  if (hasSession === true && isOnboardingExempt === false) {
+    const cookieHeader = event.request.headers.get('cookie') ?? '';
     const hasCompletedOnboarding = await checkOnboardingStatus(
       event.locals.config.API_URL,
       cookieHeader,
     );
-    if (!hasCompletedOnboarding) {
+    if (hasCompletedOnboarding === false) {
       throw redirect(303, '/onboarding');
     }
   }
 
   return resolve(event);
-};
+}
 
-// Chain Sentry handle with auth handle
+// Sentry's handle runs first so it traces the auth redirects.
 export const handle = sequence(Sentry.sentryHandle(), authHandle);
 
 export const handleError = Sentry.handleErrorWithSentry();

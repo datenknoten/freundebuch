@@ -1,8 +1,9 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
-import { openWithKeyboard } from '$lib/actions/auto-focus';
+import { openWithKeyboard } from '$lib/actions/auto-focus.js';
 import { getAppContext } from '$lib/app-context.js';
+import DetailEditModal from '$lib/components/friends/subresources/DetailEditModal.svelte';
 import KeyboardHintBadge from '$lib/components/KeyboardHintBadge.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
@@ -10,8 +11,7 @@ import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
 import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
-import DetailEditModal from '../friends/subresources/DetailEditModal.svelte';
-import type { SubresourceDescriptor, SubresourceFormExports, SubresourceItem } from './types';
+import type { SubresourceDescriptor, SubresourceFormExports, SubresourceItem } from './types.js';
 
 const { logger, stores } = getAppContext();
 const keyboardModes = stores.keyboardModes;
@@ -40,8 +40,10 @@ interface Props {
 
 let { descriptor, ownerId, ownerName, items: providedItems, linkStartIndex }: Props = $props();
 
-// Local helper so descriptors (plain modules) can resolve translations.
-const translate = (key: string, params?: Record<string, unknown>): string => $i18n.t(key, params);
+// Lets descriptors (plain modules) resolve translations.
+function translate(key: string, params?: Record<string, unknown>) {
+  return $i18n.t(key, params);
+}
 
 /** Items the section loaded itself; unused when the caller provides them. */
 let loadedItems = $state<SubresourceItem[]>([]);
@@ -51,7 +53,7 @@ const items = $derived(providedItems ?? loadedItems);
 // Edit modal state
 let editingId = $state<string | null>(null);
 let editingData = $state<SubresourceItem | null>(null);
-let isAdding = $state(false);
+let isAdding = $state<boolean>(false);
 let isEditLoading = $state(false);
 let editError = $state<string | null>(null);
 let isDirty = $state(false);
@@ -66,22 +68,30 @@ let deleteConfirmName = $state('');
 // is added, and nothing else.
 const customAdd = $derived('AddComponent' in descriptor ? descriptor : null);
 const formDriven = $derived('AddComponent' in descriptor ? null : descriptor);
-const showModal = $derived(isAdding || editingId !== null);
+const showModal = $derived(isAdding === true || editingId !== null);
 
 // Hint badges number the rows that actually register a link in the detail
 // page's "o" sequence, so a row without one (a social profile with no URL)
 // neither gets a badge nor shifts the rows after it.
-const rows = $derived.by(() => {
+function computeRows() {
   const start = linkStartIndex;
-  if (start === undefined) return items.map((item) => ({ item, badgeIndex: undefined }));
+  if (start === undefined) {
+    return items.map((item) => ({ item, badgeIndex: undefined }));
+  }
+  const result: { item: SubresourceItem; badgeIndex: number | undefined }[] = [];
   let offset = 0;
-  return items.map((item) => {
-    if (descriptor.linkable?.(item) === false) return { item, badgeIndex: undefined };
-    const badgeIndex = start + offset;
+  for (const item of items) {
+    if (descriptor.linkable?.(item) === false) {
+      result.push({ item, badgeIndex: undefined });
+      continue;
+    }
+    result.push({ item, badgeIndex: start + offset });
     offset += 1;
-    return { item, badgeIndex };
-  });
-});
+  }
+  return result;
+}
+
+const rows = $derived.by(computeRows);
 
 // Dynamic components (Svelte 5 renders capitalised reactive values as components)
 const Icon = $derived(descriptor.icon);
@@ -105,13 +115,17 @@ let reloadSeq = 0;
 let cancelAfterSave: (() => void) | null = null;
 
 async function reload() {
-  if (descriptor.load === undefined) return;
+  if (descriptor.load === undefined) {
+    return;
+  }
   const seq = ++reloadSeq;
   const requestedId = ownerId;
   const loaded = await descriptor.load(requestedId);
   // Drop stale responses: ignore this load if a newer one has since started, or
   // if the owner changed while it was in flight. The latest reload wins.
-  if (seq !== reloadSeq || requestedId !== ownerId) return;
+  if (seq !== reloadSeq || requestedId !== ownerId) {
+    return;
+  }
   loadedItems = loaded;
 }
 
@@ -120,7 +134,7 @@ async function reload() {
 // without unmounting — without a reset the previous owner's items and any open
 // edit/delete modal would linger (and mutations would target the new ownerId).
 let loadedOwnerId: string | undefined;
-$effect(() => {
+function resetForOwner() {
   const id = ownerId;
   if (id.length > 0 && id !== loadedOwnerId) {
     loadedOwnerId = id;
@@ -132,15 +146,23 @@ $effect(() => {
     closeDeleteConfirm();
     void reload().catch((err) => logger.error({ err }, 'Failed to load sub-resources'));
   }
-});
+}
+
+$effect(resetForOwner);
+
+function cancelPendingRefetch() {
+  cancelAfterSave?.();
+  cancelAfterSave = null;
+}
+
+function registerRefetchTeardown() {
+  return cancelPendingRefetch;
+}
 
 // Untracked, so the teardown runs when the section goes away and not on every
 // re-run of the effect above — a pending refetch belongs to the owner on
 // screen, and that owner has not changed just because the props did.
-$effect(() => () => {
-  cancelAfterSave?.();
-  cancelAfterSave = null;
-});
+$effect(registerRefetchTeardown);
 
 function openAdd() {
   editingId = null;
@@ -174,7 +196,9 @@ function closeModal() {
 }
 
 async function handleSave() {
-  if (formDriven === null || formRef === null || !formRef.isValid()) return;
+  if (formDriven === null || formRef === null || formRef.isValid() === false) {
+    return;
+  }
   isEditLoading = true;
   editError = null;
   try {
@@ -183,7 +207,7 @@ async function handleSave() {
       const updated = await formDriven.update(ownerId, editingId, data);
       if (descriptor.reloadAfterMutate === true) {
         await reload();
-      } else if (ownsItems) {
+      } else if (ownsItems === true) {
         loadedItems = loadedItems.map((item) => (item.id === editingId ? updated : item));
       }
     } else if (descriptor.reloadAfterMutate === true) {
@@ -191,7 +215,7 @@ async function handleSave() {
       await reload();
     } else {
       const created = await formDriven.create(ownerId, data);
-      if (ownsItems) {
+      if (ownsItems === true) {
         loadedItems = [...loadedItems, created as SubresourceItem];
       }
     }
@@ -222,11 +246,13 @@ function closeDeleteConfirm() {
 
 async function handleDelete() {
   const target = deleteConfirmItem;
-  if (target === null) return;
+  if (target === null) {
+    return;
+  }
   deletingId = target.id;
   try {
     await descriptor.remove(ownerId, target);
-    if (ownsItems) {
+    if (ownsItems === true) {
       if (descriptor.reloadAfterMutate === true) {
         await reload();
       } else {
@@ -238,16 +264,21 @@ async function handleDelete() {
   }
 }
 
+function handleAddShortcut() {
+  openAdd();
+}
+
+function removeAddShortcutListener() {
+  window.removeEventListener(descriptor.shortcutEvent, handleAddShortcut);
+}
+
 // Keyboard shortcut: open this section's add modal
-onMount(() => {
-  function handleAddShortcut() {
-    openAdd();
-  }
+function listenForAddShortcut() {
   window.addEventListener(descriptor.shortcutEvent, handleAddShortcut);
-  return () => {
-    window.removeEventListener(descriptor.shortcutEvent, handleAddShortcut);
-  };
-});
+  return removeAddShortcutListener;
+}
+
+onMount(listenForAddShortcut);
 </script>
 
 {#if items.length > 0}

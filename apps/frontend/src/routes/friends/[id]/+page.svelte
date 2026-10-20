@@ -16,28 +16,28 @@ const isAuthInitialized = getAppContext().stores.auth.isInitialized;
 
 const i18n = createI18n();
 
-// Load friend when auth is ready and page params change
-$effect(() => {
+// Reload when auth is ready and whenever the page params change.
+function loadFriendWhenAuthReady() {
   const id = $page.params.id;
-  if ($isAuthInitialized && id) {
+  if ($isAuthInitialized === true && id !== undefined && id !== '') {
     void friends.loadFriend(id);
   }
-});
+}
+$effect(loadFriendWhenAuthReady);
 
-// Dynamic page title based on friend name
 const pageTitle = $derived(
-  $currentFriend ? `${$currentFriend.displayName} | Freundebuch` : 'Friend | Freundebuch',
+  $currentFriend !== null ? `${$currentFriend.displayName} | Freundebuch` : 'Friend | Freundebuch',
 );
 
-// Get return URL from query parameter (with security validation)
-const backUrl = $derived.by(() => {
+function backUrlFromQuery() {
   const from = $page.url.searchParams.get('from');
   // Only allow returning to /friends paths for security
-  if (from?.startsWith('/friends')) {
+  if (from?.startsWith('/friends') === true) {
     return from;
   }
   return '/friends';
-});
+}
+const backUrl = $derived.by(backUrlFromQuery);
 </script>
 
 <svelte:head>

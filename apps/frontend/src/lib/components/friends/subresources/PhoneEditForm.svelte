@@ -24,15 +24,14 @@ let phoneType = $state<PhoneType>((() => initialData?.phoneType ?? 'mobile')());
 let label = $state((() => initialData?.label ?? '')());
 let isPrimary = $state((() => initialData?.isPrimary ?? defaultPrimary ?? false)());
 
-createDirtyTracker(
-  () => {
-    phoneNumber;
-    phoneType;
-    label;
-    isPrimary;
-  },
-  () => onchange,
-);
+function trackDirtyFields() {
+  phoneNumber;
+  phoneType;
+  label;
+  isPrimary;
+}
+
+createDirtyTracker(trackDirtyFields, () => onchange);
 
 const phoneTypeOptions = $derived([
   { value: 'mobile' as const, label: $i18n.t('subresources.phone.types.mobile') },
@@ -43,15 +42,16 @@ const phoneTypeOptions = $derived([
 ]);
 
 export function getData() {
+  const trimmedLabel = label.trim();
   return {
     phoneNumber: phoneNumber.trim(),
     phoneType,
-    label: label.trim() || undefined,
+    label: trimmedLabel === '' ? undefined : trimmedLabel,
     isPrimary,
   } satisfies PhoneData;
 }
 
-export function isValid(): boolean {
+export function isValid() {
   return phoneNumber.trim().length > 0;
 }
 </script>

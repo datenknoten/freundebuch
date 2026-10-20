@@ -1,7 +1,7 @@
 import { createRawSnippet } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '$lib/test/render.js';
-import Button from './Button.svelte';
+import Button from '$lib/components/ui/Button.svelte';
 
 // i18n returns the key so the spinner's sr-only label is stable.
 vi.mock('$lib/i18n/i18n.js', () => ({

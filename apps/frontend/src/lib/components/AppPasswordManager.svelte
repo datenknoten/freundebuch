@@ -26,9 +26,7 @@ let revokingId = $state<string | null>(null);
 let revokeConfirmId = $state<string | null>(null);
 let revokeConfirmName = $state('');
 
-onMount(async () => {
-  await loadPasswords();
-});
+onMount(loadPasswords);
 
 async function loadPasswords() {
   isLoading = true;
@@ -47,7 +45,9 @@ async function loadPasswords() {
 
 async function handleCreate(event: SubmitEvent) {
   event.preventDefault();
-  if (newPasswordName.trim().length === 0) return;
+  if (newPasswordName.trim().length === 0) {
+    return;
+  }
 
   isCreating = true;
   error = '';
@@ -79,7 +79,9 @@ function closeRevokeConfirm() {
 // reason, so the failure is visible where the action was taken.
 async function handleRevoke() {
   const id = revokeConfirmId;
-  if (id === null) return;
+  if (id === null) {
+    return;
+  }
   revokingId = id;
   error = '';
   try {
@@ -94,8 +96,10 @@ function dismissCreatedPassword() {
   createdPassword = null;
 }
 
-function formatDate(dateString: string | null): string {
-  if (dateString === null) return $i18n.t('profile.appPasswords.never');
+function formatDate(dateString: string | null) {
+  if (dateString === null) {
+    return $i18n.t('profile.appPasswords.never');
+  }
   return new Date(dateString).toLocaleDateString(getCurrentLanguage(), {
     year: 'numeric',
     month: 'short',

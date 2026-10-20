@@ -1,5 +1,5 @@
 <script lang="ts">
-import MarkdownEditor from './MarkdownEditor.svelte';
+import MarkdownEditor from '$lib/editor/MarkdownEditor.svelte';
 
 interface Props {
   /** Raw markdown — two-way bound. */

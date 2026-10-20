@@ -1,6 +1,7 @@
 <script lang="ts">
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { getAppContext } from '$lib/app-context.js';
+import CircleChip from '$lib/components/circles/CircleChip.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import {
   type ArrayFacetField,
@@ -8,7 +9,6 @@ import {
   type FacetFilters,
   isArrayFacetField,
 } from '$shared';
-import CircleChip from '../circles/CircleChip.svelte';
 
 const currentLanguage = getAppContext().stores.locale.currentLanguage;
 
@@ -34,16 +34,16 @@ const fieldLabelKeys: Record<ArrayFacetField, string> = {
   circles: 'facets.fields.circles',
 };
 
-// Flatten filters into chip array (only array-type fields)
-function getChips(
-  t: typeof $i18n.t,
-  language: string,
-): Array<{ field: ArrayFacetField; value: string; label: string }> {
+function getChips(t: typeof $i18n.t, language: string) {
   const result: Array<{ field: ArrayFacetField; value: string; label: string }> = [];
 
   for (const [field, values] of Object.entries(filters)) {
     const facetField = field as keyof FacetFilters;
-    if (isArrayFacetField(facetField) && Array.isArray(values) && values.length > 0) {
+    if (
+      isArrayFacetField(facetField) === true &&
+      Array.isArray(values) === true &&
+      values.length > 0
+    ) {
       for (const value of values) {
         result.push({
           field: facetField,

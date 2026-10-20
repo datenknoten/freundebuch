@@ -45,34 +45,39 @@ export class ApiClient {
   }
 
   public async request<S extends Type>(schema: S, endpoint: string, init: RequestInit = {}) {
-    const response = await this.send(endpoint, init, true);
+    const response = await this.send(endpoint, init);
     if (response.status === NO_CONTENT_STATUS) {
       return parseWith(schema, undefined);
     }
     return parseWith(schema, await response.json());
   }
 
-  private async send(
-    endpoint: string,
-    init: RequestInit,
-    shouldReplayOnUnauthorized: boolean,
-  ): Promise<Response> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+  private async send(endpoint: string, init: RequestInit) {
+    const response = await this.fetchEndpoint(endpoint, init);
+    if (response.ok === true) {
+      return response;
+    }
+    if (response.status === UNAUTHORIZED_STATUS && (await this.onUnauthorized()) === true) {
+      const replayed = await this.fetchEndpoint(endpoint, init);
+      if (replayed.ok === true) {
+        return replayed;
+      }
+      throw await this.toApiError(replayed);
+    }
+    throw await this.toApiError(response);
+  }
+
+  private fetchEndpoint(endpoint: string, init: RequestInit) {
+    return fetch(`${this.baseUrl}${endpoint}`, {
       ...init,
       headers: buildHeaders(init),
       credentials: 'include',
     });
-    if (response.ok === true) {
-      return response;
-    }
-    if (response.status === UNAUTHORIZED_STATUS && shouldReplayOnUnauthorized === true) {
-      const isReAuthenticated = await this.onUnauthorized();
-      if (isReAuthenticated === true) {
-        return this.send(endpoint, init, false);
-      }
-    }
+  }
+
+  private async toApiError(response: Response) {
     const body = await this.readErrorBody(response);
-    throw new ApiError(response.status, body.error, { code: body.code, details: body.details });
+    return new ApiError(response.status, body.error, { code: body.code, details: body.details });
   }
 
   private async readErrorBody(response: Response) {

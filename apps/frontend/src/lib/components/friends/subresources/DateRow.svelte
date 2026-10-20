@@ -1,7 +1,7 @@
 <script lang="ts">
+import SubresourceRow from '$lib/components/friends/subresources/SubresourceRow.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { DateType, FriendDateResponse } from '$shared';
-import SubresourceRow from './SubresourceRow.svelte';
 
 interface Props {
   date: FriendDateResponse;
@@ -14,10 +14,10 @@ let { date, onEdit, onDelete, isDeleting = false }: Props = $props();
 
 const i18n = createI18n();
 
-function formatDate(dateValue: string, yearKnown: boolean): string {
+function formatDate(dateValue: string, yearKnown: boolean) {
   try {
     const d = new Date(dateValue);
-    if (yearKnown) {
+    if (yearKnown === true) {
       return d.toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'long',
@@ -34,7 +34,7 @@ function formatDate(dateValue: string, yearKnown: boolean): string {
   }
 }
 
-function dateTypeLabel(type: DateType): string {
+function dateTypeLabel(type: DateType) {
   return $i18n.t(`subresources.date.types.${type}`);
 }
 </script>

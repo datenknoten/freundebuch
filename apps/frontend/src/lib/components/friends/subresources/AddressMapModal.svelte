@@ -1,7 +1,7 @@
 <script lang="ts">
+import AddressMap from '$lib/components/friends/subresources/AddressMap.svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
-import AddressMap from './AddressMap.svelte';
 
 const i18n = createI18n();
 
@@ -20,15 +20,22 @@ let { latitude, longitude, addressLabel, onClose }: Props = $props();
 // map swallowing the pan that would bring it back. `touch-none` on the dialog
 // covers the rest; iOS Safari also drives page zoom through its proprietary
 // `gesture*` events, which Leaflet doesn't use, so cancel them while open.
-$effect(() => {
-  const preventPageZoom = (event: Event) => event.preventDefault();
+function preventPageZoom(event: Event) {
+  event.preventDefault();
+}
+
+function blockPageZoomGestures() {
   document.addEventListener('gesturestart', preventPageZoom);
   document.addEventListener('gesturechange', preventPageZoom);
-  return () => {
-    document.removeEventListener('gesturestart', preventPageZoom);
-    document.removeEventListener('gesturechange', preventPageZoom);
-  };
-});
+  return removePageZoomGestureListeners;
+}
+
+function removePageZoomGestureListeners() {
+  document.removeEventListener('gesturestart', preventPageZoom);
+  document.removeEventListener('gesturechange', preventPageZoom);
+}
+
+$effect(blockPageZoomGestures);
 </script>
 
 <!-- Rendered only while open (the caller guards it), so Leaflet initialises on

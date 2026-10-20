@@ -15,7 +15,6 @@ import {
   type CompletionContext,
   type CompletionResult,
 } from '@codemirror/autocomplete';
-import type { Extension } from '@codemirror/state';
 import type { CollectivesApi } from '$lib/api/collectives.js';
 import type { EncountersApi } from '$lib/api/encounters.js';
 import type { FriendSearchApi } from '$lib/api/friend-search.js';
@@ -49,14 +48,15 @@ export interface MentionSearchApis {
   encounters: EncountersApi;
 }
 
-/** Build a readable label for an encounter, which may have no title. */
 function encounterLabel(item: {
   title: string | null;
   encounterType: string;
   encounterDate: string;
-}): string {
+}) {
   const title = item.title?.trim();
-  if (title) return title;
+  if (title !== undefined && title !== '') {
+    return title;
+  }
   // Fall back to "<type> · <date>" so untitled encounters stay identifiable.
   return `${item.encounterType} · ${item.encounterDate.slice(0, 10)}`;
 }
@@ -65,7 +65,7 @@ function encounterLabel(item: {
  * Query every mentionable entity type in parallel. Uses `allSettled` so one
  * failing endpoint doesn't blank out the whole list.
  */
-async function searchMentionables(apis: MentionSearchApis, query: string): Promise<Mentionable[]> {
+async function searchMentionables(apis: MentionSearchApis, query: string) {
   const [friends, collectives, encounters] = await Promise.allSettled([
     apis.friendSearch.searchFriends({ query, limit: PER_TYPE_LIMIT }),
     apis.collectives.listCollectives({ search: query, pageSize: PER_TYPE_LIMIT }),
@@ -103,7 +103,7 @@ const MENTION_TOKEN = /@[\p{L}\p{N}_'.-]*/u;
  * spill the rest as literal text. CommonMark only requires escaping `\`, `[`,
  * and `]` inside `[…]`; `(` / `)` are fine because the label is brace-balanced.
  */
-function escapeLinkLabel(s: string): string {
+function escapeLinkLabel(s: string) {
   return s.replace(/[\\[\]]/g, '\\$&');
 }
 
@@ -119,20 +119,39 @@ function makeMentionSource(typeLabels: MentionTypeLabels, apis: MentionSearchApi
   // cancel editor B's pending query. CodeMirror discards results from
   // superseded queries, so a late resolve can't clobber a newer list.
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  function debouncedSearch(query: string): Promise<Mentionable[]> {
+  function debouncedSearch(query: string) {
     const { promise, resolve } = Promise.withResolvers<Mentionable[]>();
     clearTimeout(debounceTimer ?? undefined);
-    debounceTimer = setTimeout(() => {
+    debounceTimer = setTimeout(runSearch, DEBOUNCE_MS);
+    function runSearch() {
       resolve(searchMentionables(apis, query));
-    }, DEBOUNCE_MS);
+    }
     return promise;
   }
 
-  return async function mentionSource(
-    context: CompletionContext,
-  ): Promise<CompletionResult | null> {
+  function toCompletion(item: Mentionable) {
+    const completion: Completion = {
+      label: item.label,
+      detail: kindLabel[item.kind],
+      // Drives the left-edge icon class (cm-completionIcon-friend, …) so the
+      // three kinds are visually distinguishable even before reading detail.
+      type: item.kind,
+      apply(view, _completion, from, to) {
+        const insert = `[${escapeLinkLabel(item.label)}](${item.url})`;
+        view.dispatch({
+          changes: { from, to, insert },
+          selection: { anchor: from + insert.length },
+        });
+      },
+    };
+    return completion;
+  }
+
+  return async function mentionSource(context: CompletionContext) {
     const match = context.matchBefore(MENTION_TOKEN);
-    if (!match) return null;
+    if (match === null) {
+      return null;
+    }
 
     // Require start-of-line or whitespace before `@`. Without this guard,
     // typing inside an email (`alice@example.com`) or a handle (`@scope/pkg`)
@@ -141,33 +160,26 @@ function makeMentionSource(typeLabels: MentionTypeLabels, apis: MentionSearchApi
     // peek one char back in the document.
     if (match.from > 0) {
       const charBefore = context.state.doc.sliceString(match.from - 1, match.from);
-      if (!/\s/.test(charBefore)) return null;
+      if (/\s/.test(charBefore) === false) {
+        return null;
+      }
     }
 
     const query = match.text.slice(1); // drop the leading "@"
     // Wait for at least one character unless the user explicitly opened the
     // list (Ctrl-Space) — an empty query would fetch an arbitrary top slice.
-    if (query.length === 0 && !context.explicit) return null;
+    if (query.length === 0 && context.explicit === false) {
+      return null;
+    }
 
     const items = await debouncedSearch(query);
-    if (items.length === 0) return null;
+    if (items.length === 0) {
+      return null;
+    }
 
-    const options: Completion[] = items.map((item) => ({
-      label: item.label,
-      detail: kindLabel[item.kind],
-      // Drives the left-edge icon class (cm-completionIcon-friend, …) so the
-      // three kinds are visually distinguishable even before reading detail.
-      type: item.kind,
-      apply: (view, _completion, from, to) => {
-        const insert = `[${escapeLinkLabel(item.label)}](${item.url})`;
-        view.dispatch({
-          changes: { from, to, insert },
-          selection: { anchor: from + insert.length },
-        });
-      },
-    }));
+    const options = items.map(toCompletion);
 
-    return {
+    const result: CompletionResult = {
       from: match.from,
       to: match.to,
       options,
@@ -177,6 +189,7 @@ function makeMentionSource(typeLabels: MentionTypeLabels, apis: MentionSearchApi
       // of client-filtering as the user types (no validFor).
       filter: false,
     };
+    return result;
   };
 }
 
@@ -184,10 +197,7 @@ function makeMentionSource(typeLabels: MentionTypeLabels, apis: MentionSearchApi
  * Autocomplete extension that turns `@`-typed text into entity links.
  * `typeLabels` carries the already-localized kind names for the dropdown.
  */
-export function mentionAutocomplete(
-  typeLabels: MentionTypeLabels,
-  apis: MentionSearchApis,
-): Extension {
+export function mentionAutocomplete(typeLabels: MentionTypeLabels, apis: MentionSearchApis) {
   return autocompletion({
     override: [makeMentionSource(typeLabels, apis)],
     activateOnTyping: true,

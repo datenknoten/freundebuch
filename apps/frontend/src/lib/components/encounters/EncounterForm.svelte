@@ -3,6 +3,8 @@ import { goto } from '$app/navigation';
 import type { EncounterCreateData, EncounterUpdateData } from '$lib/api/encounters.js';
 import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
+import EncounterTypeIcon from '$lib/components/encounters/EncounterTypeIcon.svelte';
+import FriendMultiSelect from '$lib/components/encounters/FriendMultiSelect.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
@@ -14,21 +16,15 @@ import {
   type EncounterType,
   type FriendSearchResultResponse,
 } from '$shared';
-import EncounterTypeIcon from './EncounterTypeIcon.svelte';
-import { encounterTypeLabel } from './encounter-display';
-import FriendMultiSelect from './FriendMultiSelect.svelte';
+import { encounterTypeLabel } from './encounter-display.js';
 
 const i18n = createI18n();
 const encounters = getAppContext().stores.encounters;
 
 interface Props {
-  /** Existing encounter for edit mode */
   encounter?: EncounterResponse;
-  /** Pre-selected friend for new encounter */
   preSelectedFriend?: FriendSearchResultResponse;
-  /** Called on successful save */
   onSuccess?: (encounter: EncounterResponse) => void;
-  /** Called when form is cancelled */
   onCancel?: () => void;
 }
 
@@ -36,7 +32,6 @@ let { encounter, preSelectedFriend, onSuccess, onCancel }: Props = $props();
 
 let isEditMode = $derived(encounter !== undefined);
 
-// Form state
 let title = $state(encounter?.title ?? '');
 let encounterType = $state<EncounterType>(encounter?.encounterType ?? 'in_person');
 let encounterDate = $state(encounter?.encounterDate ?? new Date().toISOString().slice(0, 10));
@@ -47,7 +42,7 @@ let selectedFriends = $state<FriendSearchResultResponse[]>(
     id: f.id,
     displayName: f.displayName,
     photoThumbnailUrl: f.photoUrl ?? undefined,
-  })) ?? (preSelectedFriend ? [preSelectedFriend] : []),
+  })) ?? (preSelectedFriend === undefined ? [] : [preSelectedFriend]),
 );
 
 let isSubmitting = $state(false);
@@ -66,7 +61,7 @@ function handleFriendsChange(friends: FriendSearchResultResponse[]) {
 async function handleSubmit(e: Event) {
   e.preventDefault();
 
-  if (!isValid) {
+  if (isValid === false) {
     error = $i18n.t('encounters.form.validationError');
     return;
   }
@@ -77,29 +72,31 @@ async function handleSubmit(e: Event) {
   try {
     let result: EncounterResponse;
 
-    if (isEditMode && encounter) {
+    if (isEditMode === true && encounter !== undefined) {
+      const trimmedLocation = locationText.trim();
       const input: EncounterUpdateData = {
-        title: title.trim() || null,
+        title: title.trim() === '' ? null : title.trim(),
         encounterType,
         encounterDate,
         friendIds: selectedFriends.map((f) => f.id),
-        locationText: showLocation ? locationText.trim() || null : null,
-        description: description.trim() || null,
+        locationText: showLocation === true && trimmedLocation !== '' ? trimmedLocation : null,
+        description: description.trim() === '' ? null : description.trim(),
       };
       result = await encounters.updateEncounter(encounter.id, input);
     } else {
+      const trimmedLocation = locationText.trim();
       const input: EncounterCreateData = {
-        title: title.trim() || undefined,
+        title: title.trim() === '' ? undefined : title.trim(),
         encounterType,
         encounterDate,
         friendIds: selectedFriends.map((f) => f.id),
-        locationText: showLocation ? locationText.trim() || undefined : undefined,
-        description: description.trim() || undefined,
+        locationText: showLocation === true && trimmedLocation !== '' ? trimmedLocation : undefined,
+        description: description.trim() === '' ? undefined : description.trim(),
       };
       result = await encounters.createEncounter(input);
     }
 
-    if (onSuccess) {
+    if (onSuccess !== undefined) {
       onSuccess(result);
     } else {
       void goto(`/encounters/${result.id}`);
@@ -115,7 +112,7 @@ async function handleSubmit(e: Event) {
 }
 
 function handleCancel() {
-  if (onCancel) {
+  if (onCancel !== undefined) {
     onCancel();
   } else {
     void goto('/encounters');

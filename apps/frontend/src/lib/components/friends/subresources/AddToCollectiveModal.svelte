@@ -5,6 +5,7 @@ import { getAppContext } from '$lib/app-context.js';
 import AlertBanner from '$lib/components/AlertBanner.svelte';
 import CollectiveSearchInput from '$lib/components/collectives/CollectiveSearchInput.svelte';
 import RelationshipPreview from '$lib/components/collectives/RelationshipPreview.svelte';
+import DetailEditModal from '$lib/components/friends/subresources/DetailEditModal.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
@@ -17,7 +18,6 @@ import type {
   CollectiveTypeResponse,
   RelationshipPreviewResponse,
 } from '$shared';
-import DetailEditModal from './DetailEditModal.svelte';
 
 const i18n = createI18n();
 const { api, logger, stores } = getAppContext();
@@ -33,12 +33,10 @@ interface Props {
 
 let { friendId, friendDisplayName, existingCollectiveIds, onSuccess, onClose }: Props = $props();
 
-// Data state
 let allCollectives = $state<CollectiveListItemResponse[]>([]);
 let types = $state<CollectiveTypeResponse[]>([]);
 let isLoadingData = $state(true);
 
-// Form state
 let selectedCollectiveId = $state('');
 let selectedRoleId = $state('');
 let skipAutoRelationships = $state(false);
@@ -48,30 +46,35 @@ let isSubmitting = $state(false);
 let error = $state<string | null>(null);
 let previewAbortController: AbortController | null = null;
 
-// Derived: filter out collectives the friend is already in
 let existingSet = $derived(new Set(existingCollectiveIds));
 let availableCollectives = $derived(
-  allCollectives.filter((c) => !existingSet.has(c.id) && !c.deletedAt),
+  allCollectives.filter(
+    (c) => existingSet.has(c.id) === false && (c.deletedAt === null || c.deletedAt === ''),
+  ),
 );
 
-// Derived: roles for the selected collective's type
 let selectedCollective = $derived(
   availableCollectives.find((c) => c.id === selectedCollectiveId) ?? null,
 );
-let rolesForSelected = $derived.by(() => {
-  if (!selectedCollective) return [] as CollectiveRoleResponse[];
-  const typeObj = types.find((t) => t.id === selectedCollective.type.id);
+
+function computeRolesForSelected() {
+  if (selectedCollective === null) {
+    return [] as CollectiveRoleResponse[];
+  }
+  const typeId = selectedCollective.type.id;
+  const typeObj = types.find((t) => t.id === typeId);
   return typeObj?.roles.toSorted((a, b) => a.sortOrder - b.sortOrder) ?? [];
-});
+}
+
+let rolesForSelected = $derived.by(computeRolesForSelected);
 
 let isValid = $derived(selectedCollectiveId !== '' && selectedRoleId !== '');
 
-// Load collectives and types on mount
 // 1000 is a practical upper bound for a personal contacts app.
 // If a user ever hits this limit the dropdown will silently omit extras.
 const MAX_COLLECTIVES_PAGE_SIZE = 1000;
 
-onMount(async () => {
+async function loadCollectivesAndTypes() {
   try {
     await Promise.all([
       collectives.loadCollectives({ pageSize: MAX_COLLECTIVES_PAGE_SIZE }),
@@ -85,32 +88,38 @@ onMount(async () => {
   } finally {
     isLoadingData = false;
   }
-});
+}
 
-// Auto-select first role when collective changes
-$effect(() => {
+onMount(loadCollectivesAndTypes);
+
+function autoSelectFirstRole() {
   const firstRole = rolesForSelected[0];
-  if (selectedCollectiveId && firstRole !== undefined) {
+  if (selectedCollectiveId !== '' && firstRole !== undefined) {
     // Only set if current selection is invalid
-    if (!rolesForSelected.find((r) => r.id === selectedRoleId)) {
+    if (rolesForSelected.find((r) => r.id === selectedRoleId) === undefined) {
       selectedRoleId = firstRole.id;
     }
   } else {
     selectedRoleId = '';
   }
-});
+}
 
-// Load relationship preview when both collective and role are selected
-$effect(() => {
-  if (selectedCollectiveId && selectedRoleId) {
+$effect(autoSelectFirstRole);
+
+function syncPreview() {
+  if (selectedCollectiveId !== '' && selectedRoleId !== '') {
     void loadPreview();
   } else {
     preview = null;
   }
-});
+}
+
+$effect(syncPreview);
 
 async function loadPreview() {
-  if (!selectedCollectiveId || !selectedRoleId) return;
+  if (selectedCollectiveId === '' || selectedRoleId === '') {
+    return;
+  }
 
   previewAbortController?.abort();
   previewAbortController = new AbortController();
@@ -123,19 +132,25 @@ async function loadPreview() {
       { friendId, roleId: selectedRoleId },
       signal,
     );
-    if (!signal.aborted) preview = result;
+    if (signal.aborted === false) {
+      preview = result;
+    }
   } catch (err) {
-    if (!signal.aborted) {
+    if (signal.aborted === false) {
       logger.error({ err }, 'Failed to load relationship preview');
       preview = null;
     }
   } finally {
-    if (!signal.aborted) isLoadingPreview = false;
+    if (signal.aborted === false) {
+      isLoadingPreview = false;
+    }
   }
 }
 
 async function handleSubmit() {
-  if (!isValid) return;
+  if (isValid === false) {
+    return;
+  }
 
   isSubmitting = true;
   error = null;

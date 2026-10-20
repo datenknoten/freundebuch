@@ -12,12 +12,14 @@ md.disable('image');
 // can take the click (no full reload, no new tab). Matches the allowlist in
 // MarkdownEditor.svelte; `@`-mentions insert paths under these prefixes.
 const APP_ROUTE_PREFIXES = ['/friends/', '/collectives/', '/encounters/', '/circles'];
-function isAppRoute(href: string): boolean {
+function isAppRoute(href: string) {
   // markdown-it linkifies bare URLs to absolute hrefs; `[text](path)` keeps
   // the raw path. Only path-relative hrefs can be app routes here — absolute
   // URLs would have to match origin at click time, which we can't know at
   // render time. Mentions always insert `/…` paths, so this covers them.
-  if (!href.startsWith('/')) return false;
+  if (href.startsWith('/') === false) {
+    return false;
+  }
   return APP_ROUTE_PREFIXES.some((p) => href.startsWith(p));
 }
 
@@ -25,13 +27,18 @@ function isAppRoute(href: string): boolean {
 // module-local, so this is scoped to encounter notes — unlike a global
 // DOMPurify.addHook, which would mutate every sanitize() call in the app).
 // Covers both `[text](url)` links and linkified bare URLs.
-const defaultLinkOpen =
-  md.renderer.rules.link_open ??
-  ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
-md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+type RenderRule = NonNullable<typeof md.renderer.rules.link_open>;
+
+function renderTokenDefault(...[tokens, idx, options, _env, self]: Parameters<RenderRule>) {
+  return self.renderToken(tokens, idx, options);
+}
+
+const defaultLinkOpen = md.renderer.rules.link_open ?? renderTokenDefault;
+
+function hardenLinkOpen(...[tokens, idx, options, env, self]: Parameters<RenderRule>) {
   const token = tokens[idx];
   const href = token?.attrGet('href') ?? '';
-  if (isAppRoute(href)) {
+  if (isAppRoute(href) === true) {
     // App-route link (e.g. an `@`-mention target) — no `target="_blank"`, so
     // SvelteKit's same-origin click interception routes it through the
     // client-side router instead of opening a new tab.
@@ -41,9 +48,10 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
     token?.attrSet('rel', 'noopener noreferrer nofollow');
   }
   return defaultLinkOpen(tokens, idx, options, env, self);
-};
+}
+md.renderer.rules.link_open = hardenLinkOpen;
 
-export function renderMarkdown(source: string): string {
+export function renderMarkdown(source: string) {
   // html:false already neutralizes raw HTML; DOMPurify is the belt to that
   // suspenders, and the only thing standing between note text and the DOM.
   // FORBID_TAGS img backstops the parser-level image disable above;

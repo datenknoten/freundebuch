@@ -52,7 +52,7 @@ function selectSuggestion(suggestion: PostalCodeInfoResponse) {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (!showDropdown || suggestions.length === 0) {
+  if (showDropdown === false || suggestions.length === 0) {
     if (e.key === 'ArrowDown' && suggestions.length > 0) {
       e.preventDefault();
       showDropdown = true;
@@ -94,11 +94,13 @@ function handleFocus() {
   }
 }
 
+function closeDropdown() {
+  showDropdown = false;
+  highlightedIndex = -1;
+}
+
 function handleBlur() {
-  setTimeout(() => {
-    showDropdown = false;
-    highlightedIndex = -1;
-  }, 200);
+  setTimeout(closeDropdown, 200);
 }
 
 // Expose focus method for parent component

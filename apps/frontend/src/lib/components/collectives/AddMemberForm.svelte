@@ -1,5 +1,8 @@
 <script lang="ts">
 import { getAppContext } from '$lib/app-context.js';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
+import RelationshipPreview from '$lib/components/collectives/RelationshipPreview.svelte';
+import FriendSearchInput from '$lib/components/friends/FriendSearchInput.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
@@ -11,9 +14,6 @@ import type {
   FriendSearchResultResponse,
   RelationshipPreviewResponse,
 } from '$shared';
-import AlertBanner from '../AlertBanner.svelte';
-import FriendSearchInput from '../friends/FriendSearchInput.svelte';
-import RelationshipPreview from './RelationshipPreview.svelte';
 
 const i18n = createI18n();
 const { api, logger } = getAppContext();
@@ -57,15 +57,19 @@ let previewAbortController: AbortController | null = null;
 
 let isValid = $derived(selectedFriend !== null && selectedRoleId !== '');
 
-// Link to create a brand-new friend, carrying the collective context along
-let createNewFriendHref = $derived.by(() => {
+function buildCreateNewFriendHref() {
   const params = new URLSearchParams({
     collectiveId,
     collectiveName,
   });
-  if (selectedRoleId) params.set('roleId', selectedRoleId);
+  if (selectedRoleId !== '') {
+    params.set('roleId', selectedRoleId);
+  }
   return `/friends/new?${params.toString()}`;
-});
+}
+
+// Link to create a brand-new friend, carrying the collective context along
+let createNewFriendHref = $derived.by(buildCreateNewFriendHref);
 
 function handleFriendSelect(friend: FriendSearchResultResponse, _viaKeyboard: boolean) {
   selectedFriend = friend;
@@ -87,20 +91,22 @@ async function loadPreview(friend: FriendSearchResultResponse, roleId: string) {
       { friendId: friend.id, roleId },
       signal,
     );
-    if (!signal.aborted) preview = result;
+    if (signal.aborted === false) {
+      preview = result;
+    }
   } catch (err) {
-    if (!signal.aborted) {
+    if (signal.aborted === false) {
       logger.error({ err }, 'Failed to load relationship preview');
       preview = null;
     }
   } finally {
-    if (!signal.aborted) isLoadingPreview = false;
+    if (signal.aborted === false) {
+      isLoadingPreview = false;
+    }
   }
 }
 
-// The preview depends on both the friend and the role, so it is derived from
-// them rather than reloaded from each control's change handler.
-$effect(() => {
+function reloadPreview() {
   const friend = selectedFriend;
   const roleId = selectedRoleId;
 
@@ -110,12 +116,16 @@ $effect(() => {
   }
 
   void loadPreview(friend, roleId);
-});
+}
+
+// The preview depends on both the friend and the role, so it is derived from
+// them rather than reloaded from each control's change handler.
+$effect(reloadPreview);
 
 async function handleSubmit(e: Event) {
   e.preventDefault();
 
-  if (!isValid || !selectedFriend) {
+  if (isValid === false || selectedFriend === null) {
     error = $i18n.t('collectives.addMember.validationError');
     return;
   }

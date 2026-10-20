@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, screen, waitFor } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
-import Modal from './Modal.svelte';
+import Modal from '$lib/components/ui/Modal.svelte';
 
 vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({

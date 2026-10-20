@@ -13,7 +13,7 @@ md.disable('image');
  * `@`-mention `[Anna](/friends/…)` becomes `Anna`. Blocks and line breaks
  * collapse into single spaces.
  */
-export function markdownToPlainText(source: string): string {
+export function markdownToPlainText(source: string) {
   const parts: string[] = [];
   for (const token of md.parse(source, {})) {
     if (token.type === 'inline' && token.children !== null) {

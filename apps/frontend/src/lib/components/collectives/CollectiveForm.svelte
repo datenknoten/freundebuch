@@ -26,9 +26,8 @@ interface Props {
 
 let { collective, onSuccess, onCancel }: Props = $props();
 
-let isEditMode = $derived(!!collective);
+let isEditMode = $derived(collective !== undefined);
 
-// Form state
 let name = $state(collective?.name ?? '');
 let selectedTypeId = $state(collective?.type.id ?? '');
 let notes = $state(collective?.notes ?? '');
@@ -36,20 +35,20 @@ let notes = $state(collective?.notes ?? '');
 let isSubmitting = $state(false);
 let error = $state('');
 
-// Load types on mount
 let types = $derived($collectiveTypes);
 let isLoadingTypes = $derived($collectives.isLoadingTypes);
 let typeOptions = $derived(types.map((type) => ({ value: type.id, label: type.name })));
 
 onMount(() => collectives.preloadTypes());
 
-// Validation
-let isValid = $derived(name.trim().length > 0 && (isEditMode || selectedTypeId.length > 0));
+let isValid = $derived(
+  name.trim().length > 0 && (isEditMode === true || selectedTypeId.length > 0),
+);
 
 async function handleSubmit(e: Event) {
   e.preventDefault();
 
-  if (!isValid) {
+  if (isValid === false) {
     error = $i18n.t('collectives.form.validationError');
     return;
   }
@@ -59,7 +58,7 @@ async function handleSubmit(e: Event) {
 
   try {
     const result = await saveCollective();
-    if (onSuccess) {
+    if (onSuccess !== undefined) {
       onSuccess(result);
       return;
     }
@@ -75,23 +74,23 @@ async function handleSubmit(e: Event) {
 }
 
 function saveCollective() {
-  if (isEditMode && collective) {
+  if (isEditMode === true && collective !== undefined) {
     const input: CollectiveUpdateData = {
       name: name.trim(),
-      notes: notes.trim() || null,
+      notes: notes.trim() === '' ? null : notes.trim(),
     };
     return collectives.updateCollective(collective.id, input);
   }
   const input: CollectiveCreateData = {
     name: name.trim(),
     collectiveTypeId: selectedTypeId,
-    notes: notes.trim() || undefined,
+    notes: notes.trim() === '' ? undefined : notes.trim(),
   };
   return collectives.createCollective(input);
 }
 
 function handleCancel() {
-  if (onCancel) {
+  if (onCancel !== undefined) {
     onCancel();
     return;
   }

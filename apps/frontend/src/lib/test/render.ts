@@ -17,7 +17,7 @@ export { tick } from 'svelte';
  * the form actually renders, so a missing control fails with the id rather
  * than a null dereference several lines later.
  */
-export function control(id: string): HTMLInputElement | HTMLSelectElement {
+export function control(id: string) {
   const el = document.querySelector(`#${id}`);
   if (el === null) {
     throw new InvariantError(`no control with id ${id}`);
@@ -26,7 +26,7 @@ export function control(id: string): HTMLInputElement | HTMLSelectElement {
 }
 
 /** The text of the `<label for=id>` bound to {@link control}'s field. */
-export function labelFor(id: string): string {
+export function labelFor(id: string) {
   const el = document.querySelector(`label[for="${id}"]`);
   if (el === null) {
     throw new InvariantError(`no label for ${id}`);

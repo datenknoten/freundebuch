@@ -1,6 +1,11 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { getAppContext } from '$lib/app-context.js';
+import CitySelect from '$lib/components/friends/CitySelect.svelte';
+import CountrySelect from '$lib/components/friends/CountrySelect.svelte';
+import HouseNumberInput from '$lib/components/friends/HouseNumberInput.svelte';
+import PostalCodeInput from '$lib/components/friends/PostalCodeInput.svelte';
+import StreetInput from '$lib/components/friends/StreetInput.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import {
@@ -11,11 +16,6 @@ import {
   type PostalCodeInfoResponse,
   type StreetInfoResponse,
 } from '$shared';
-import CitySelect from './CitySelect.svelte';
-import CountrySelect from './CountrySelect.svelte';
-import HouseNumberInput from './HouseNumberInput.svelte';
-import PostalCodeInput from './PostalCodeInput.svelte';
-import StreetInput from './StreetInput.svelte';
 
 const { api, logger } = getAppContext();
 const addressLookupApi = api.addressLookup;
@@ -69,7 +69,7 @@ let {
 
 // State for each step - initialize with functions to capture initial values
 let selectedCountryCode = $state(
-  (() => (isCountryCode(initialCountryCode) ? initialCountryCode : ''))(),
+  (() => (isCountryCode(initialCountryCode) === true ? initialCountryCode : ''))(),
 );
 let postalCode = $state((() => initialPostalCode)());
 let selectedCity = $state((() => initialCity)());
@@ -107,25 +107,27 @@ let houseNumberAbortController: AbortController | null = null;
 let postalCodeInputRef: { focus: () => void } | undefined;
 
 // When editing an existing address, preload cities/streets/house numbers in background
-onMount(() => {
-  if (selectedCountryCode && postalCode) {
+function preloadOnMount() {
+  if (selectedCountryCode !== '' && postalCode !== '') {
     void preloadExistingAddress();
   }
-});
+}
+
+onMount(preloadOnMount);
 
 async function preloadExistingAddress() {
   await loadCities();
-  if (!selectedCity) {
+  if (selectedCity === '') {
     return;
   }
   scheduleStreetLoad();
-  if (selectedStreet) {
+  if (selectedStreet !== '') {
     scheduleHouseNumberLoad();
   }
 }
 
 async function loadCities() {
-  if (!selectedCountryCode || postalCode.length < 3) {
+  if (selectedCountryCode === '' || postalCode.length < 3) {
     cities = [];
     return;
   }
@@ -137,7 +139,7 @@ async function loadCities() {
     const onlyCity = cities.length === 1 ? cities[0] : undefined;
     if (onlyCity !== undefined) {
       selectedCity = onlyCity.city;
-      selectedState = onlyCity.state || '';
+      selectedState = onlyCity.state ?? '';
       // Load streets for the auto-selected city
       scheduleStreetLoad();
     }
@@ -150,11 +152,11 @@ async function loadCities() {
 }
 
 function cancelStreetLoad() {
-  if (streetDebounceTimer) {
+  if (streetDebounceTimer !== null) {
     clearTimeout(streetDebounceTimer);
     streetDebounceTimer = null;
   }
-  if (streetAbortController) {
+  if (streetAbortController !== null) {
     streetAbortController.abort();
     streetAbortController = null;
   }
@@ -163,44 +165,46 @@ function cancelStreetLoad() {
 function scheduleStreetLoad() {
   cancelStreetLoad();
 
-  if (!selectedCountryCode || !postalCode || !selectedCity) {
+  if (selectedCountryCode === '' || postalCode === '' || selectedCity === '') {
     streets = [];
     isLoadingStreets = false;
     return;
   }
 
   isLoadingStreets = true;
-  streetDebounceTimer = setTimeout(async () => {
-    streetAbortController = new AbortController();
-    streetFreeText = false;
-    try {
-      streets = await addressLookupApi.listStreets({
-        countryCode: selectedCountryCode,
-        city: selectedCity,
-        postalCode,
-      });
-      if (streets.length === 0) {
-        streetFreeText = true;
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        return; // Request was cancelled, ignore
-      }
-      logger.error({ err: error }, 'Failed to load streets');
-      streets = [];
+  streetDebounceTimer = setTimeout(loadStreets, 300);
+}
+
+async function loadStreets() {
+  streetAbortController = new AbortController();
+  streetFreeText = false;
+  try {
+    streets = await addressLookupApi.listStreets({
+      countryCode: selectedCountryCode,
+      city: selectedCity,
+      postalCode,
+    });
+    if (streets.length === 0) {
       streetFreeText = true;
-    } finally {
-      isLoadingStreets = false;
     }
-  }, 300);
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return; // Request was cancelled, ignore
+    }
+    logger.error({ err: error }, 'Failed to load streets');
+    streets = [];
+    streetFreeText = true;
+  } finally {
+    isLoadingStreets = false;
+  }
 }
 
 function cancelHouseNumberLoad() {
-  if (houseNumberDebounceTimer) {
+  if (houseNumberDebounceTimer !== null) {
     clearTimeout(houseNumberDebounceTimer);
     houseNumberDebounceTimer = null;
   }
-  if (houseNumberAbortController) {
+  if (houseNumberAbortController !== null) {
     houseNumberAbortController.abort();
     houseNumberAbortController = null;
   }
@@ -209,40 +213,60 @@ function cancelHouseNumberLoad() {
 function scheduleHouseNumberLoad() {
   cancelHouseNumberLoad();
 
-  if (!selectedCountryCode || !postalCode || !selectedCity || !selectedStreet || streetFreeText) {
+  if (
+    selectedCountryCode === '' ||
+    postalCode === '' ||
+    selectedCity === '' ||
+    selectedStreet === '' ||
+    streetFreeText === true
+  ) {
     houseNumbers = [];
     isLoadingHouseNumbers = false;
-    if (streetFreeText) {
+    if (streetFreeText === true) {
       houseNumberFreeText = true;
     }
     return;
   }
 
   isLoadingHouseNumbers = true;
-  houseNumberDebounceTimer = setTimeout(async () => {
-    houseNumberAbortController = new AbortController();
-    houseNumberFreeText = false;
-    try {
-      houseNumbers = await addressLookupApi.listHouseNumbers({
-        countryCode: selectedCountryCode,
-        city: selectedCity,
-        postalCode,
-        street: selectedStreet,
-      });
-      if (houseNumbers.length === 0) {
-        houseNumberFreeText = true;
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        return; // Request was cancelled, ignore
-      }
-      logger.error({ err: error }, 'Failed to load house numbers');
-      houseNumbers = [];
+  houseNumberDebounceTimer = setTimeout(loadHouseNumbers, 300);
+}
+
+async function loadHouseNumbers() {
+  houseNumberAbortController = new AbortController();
+  houseNumberFreeText = false;
+  try {
+    houseNumbers = await addressLookupApi.listHouseNumbers({
+      countryCode: selectedCountryCode,
+      city: selectedCity,
+      postalCode,
+      street: selectedStreet,
+    });
+    if (houseNumbers.length === 0) {
       houseNumberFreeText = true;
-    } finally {
-      isLoadingHouseNumbers = false;
     }
-  }, 300);
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return; // Request was cancelled, ignore
+    }
+    logger.error({ err: error }, 'Failed to load house numbers');
+    houseNumbers = [];
+    houseNumberFreeText = true;
+  } finally {
+    isLoadingHouseNumbers = false;
+  }
+}
+
+function focusPostalCode() {
+  postalCodeInputRef?.focus();
+}
+
+function triggerCityLoad() {
+  void loadCities();
+}
+
+function triggerPostalCodeSuggestions() {
+  void loadPostalCodeSuggestions();
 }
 
 function handleCountryChange(code: string, viaKeyboard: boolean = false) {
@@ -265,15 +289,13 @@ function handleCountryChange(code: string, viaKeyboard: boolean = false) {
   emitChange();
 
   // Focus postal code if selected via keyboard
-  if (viaKeyboard) {
-    requestAnimationFrame(() => {
-      postalCodeInputRef?.focus();
-    });
+  if (viaKeyboard === true) {
+    requestAnimationFrame(focusPostalCode);
   }
 }
 
 async function loadPostalCodeSuggestions() {
-  if (!selectedCountryCode || postalCode.length < 2) {
+  if (selectedCountryCode === '' || postalCode.length < 2) {
     postalCodeSuggestions = [];
     return;
   }
@@ -293,24 +315,20 @@ function handlePostalCodeChange(value: string) {
   cancelHouseNumberLoad();
 
   // Debounce the city lookup
-  if (postalCodeDebounceTimer) {
+  if (postalCodeDebounceTimer !== null) {
     clearTimeout(postalCodeDebounceTimer);
   }
 
-  if (value.length >= 3 && selectedCountryCode) {
-    postalCodeDebounceTimer = setTimeout(() => {
-      void loadCities();
-    }, 300);
+  if (value.length >= 3 && selectedCountryCode !== '') {
+    postalCodeDebounceTimer = setTimeout(triggerCityLoad, 300);
   }
 
   // Debounce the postal-code prefix suggestions (separate, shorter trigger)
-  if (postalSuggestDebounceTimer) {
+  if (postalSuggestDebounceTimer !== null) {
     clearTimeout(postalSuggestDebounceTimer);
   }
-  if (value.length >= 2 && selectedCountryCode) {
-    postalSuggestDebounceTimer = setTimeout(() => {
-      void loadPostalCodeSuggestions();
-    }, 300);
+  if (value.length >= 2 && selectedCountryCode !== '') {
+    postalSuggestDebounceTimer = setTimeout(triggerPostalCodeSuggestions, 300);
   } else {
     postalCodeSuggestions = [];
   }
@@ -331,13 +349,13 @@ function handlePostalCodeSuggestionSelect(code: string, city: string) {
 
 function handleCitySelect(city: CityInfoResponse) {
   selectedCity = city.city;
-  selectedState = city.state || '';
+  selectedState = city.state ?? '';
   // Cancel pending street/house number loads when city changes
   cancelStreetLoad();
   cancelHouseNumberLoad();
 
   // Schedule street load if we have enough data
-  if (selectedCountryCode && postalCode) {
+  if (selectedCountryCode !== '' && postalCode !== '') {
     scheduleStreetLoad();
   }
 
@@ -351,7 +369,12 @@ function handleStreetSelect(street: string, isFreeText: boolean) {
   cancelHouseNumberLoad();
 
   // Schedule house number load if we have enough data and not in free text mode
-  if (!isFreeText && selectedCountryCode && postalCode && selectedCity) {
+  if (
+    isFreeText === false &&
+    selectedCountryCode !== '' &&
+    postalCode !== '' &&
+    selectedCity !== ''
+  ) {
     scheduleHouseNumberLoad();
   } else {
     houseNumberFreeText = true;
@@ -377,11 +400,11 @@ function emitChange() {
 
   onChange?.({
     country: selectedCountryCode,
-    postal_code: postalCode || '',
-    city: selectedCity || '',
-    state_province: selectedState || undefined,
-    street_line1: streetLine1 || '',
-    street_line2: streetLine2 || undefined,
+    postal_code: postalCode,
+    city: selectedCity,
+    state_province: selectedState === '' ? undefined : selectedState,
+    street_line1: streetLine1,
+    street_line2: streetLine2 === '' ? undefined : streetLine2,
     address_type: addressType,
   });
 }

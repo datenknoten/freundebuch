@@ -4,6 +4,9 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import UserPlus from 'svelte-heros-v2/UserPlus.svelte';
 import type { MembershipDeactivateData } from '$lib/api/collective-members.js';
 import { getAppContext } from '$lib/app-context.js';
+import AddMemberForm from '$lib/components/collectives/AddMemberForm.svelte';
+import MemberList from '$lib/components/collectives/MemberList.svelte';
+import DetailEditModal from '$lib/components/friends/subresources/DetailEditModal.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
@@ -12,9 +15,6 @@ import Modal from '$lib/components/ui/Modal.svelte';
 import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { CollectiveResponse } from '$shared';
-import DetailEditModal from '../friends/subresources/DetailEditModal.svelte';
-import AddMemberForm from './AddMemberForm.svelte';
-import MemberList from './MemberList.svelte';
 
 const visibleMemberContactIds = getAppContext().stores.keyboardModes.members.visibleItems;
 
@@ -41,19 +41,21 @@ let removeConfirmMemberName = $derived(
   collective.members.find((m) => m.id === removeConfirmMemberId)?.contact.displayName,
 );
 
-// Track visible member contact IDs for keyboard open mode
-$effect(() => {
+function syncVisibleMemberContactIds() {
   const activeMembers = collective.members.filter((m) => m.isActive);
-  const ids = activeMembers.map((m) => m.contact.id);
-  visibleMemberContactIds.set(ids);
-});
+  visibleMemberContactIds.set(activeMembers.map((m) => m.contact.id));
+}
+
+// Track visible member contact IDs for keyboard open mode
+$effect(syncVisibleMemberContactIds);
 
 // Reset modal state when the collective changes. The route can swap the
 // collective prop without unmounting this component; a lingering add/deactivate
 // modal would otherwise show stale member IDs and confirm against the new
 // collective.id.
 let activeCollectiveId: string | undefined;
-$effect(() => {
+
+function resetOnCollectiveChange() {
   const id = collective.id;
   if (activeCollectiveId !== undefined && id !== activeCollectiveId) {
     showAddMember = false;
@@ -63,7 +65,9 @@ $effect(() => {
     removeConfirmMemberId = null;
   }
   activeCollectiveId = id;
-});
+}
+
+$effect(resetOnCollectiveChange);
 
 async function handleAddMember(contactId: string, roleId: string, skipAutoRelationships?: boolean) {
   await collectives.addMember(collective.id, {
@@ -87,7 +91,9 @@ function closeDeactivateModal() {
 }
 
 async function handleDeactivateConfirm() {
-  if (deactivatingMemberId === null) return;
+  if (deactivatingMemberId === null) {
+    return;
+  }
   const trimmedReason = deactivateReason.trim();
   const input: MembershipDeactivateData = {
     reason: trimmedReason.length > 0 ? trimmedReason : null,
@@ -116,20 +122,27 @@ function openRemoveConfirm(memberId: string) {
 // Rejections propagate to ConfirmDialog, which stays open and shows the reason.
 async function handleRemoveConfirm() {
   const memberId = removeConfirmMemberId;
-  if (memberId === null) return;
+  if (memberId === null) {
+    return;
+  }
   await collectives.removeMember(collective.id, memberId);
 }
 
-// Keyboard shortcut: open the add-member modal
-onMount(() => {
-  function handleAddMemberShortcut() {
-    showAddMember = true;
-  }
+function handleAddMemberShortcut() {
+  showAddMember = true;
+}
+
+function unsubscribeAddMemberShortcut() {
+  window.removeEventListener('shortcut:collective-add-member', handleAddMemberShortcut);
+}
+
+function subscribeAddMemberShortcut() {
   window.addEventListener('shortcut:collective-add-member', handleAddMemberShortcut);
-  return () => {
-    window.removeEventListener('shortcut:collective-add-member', handleAddMemberShortcut);
-  };
-});
+  return unsubscribeAddMemberShortcut;
+}
+
+// Keyboard shortcut: open the add-member modal
+onMount(subscribeAddMemberShortcut);
 </script>
 
 <section class="space-y-2">

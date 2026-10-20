@@ -7,8 +7,7 @@ import { createI18n } from '$lib/i18n/i18n.js';
 
 const i18n = createI18n();
 
-// Get the reset token from URL query parameter
-const token = $derived($page.url.searchParams.get('token') || '');
+const token = $derived($page.url.searchParams.get('token') ?? '');
 </script>
 
 <svelte:head>

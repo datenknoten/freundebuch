@@ -9,7 +9,7 @@ import { createI18n } from '$lib/i18n/i18n.js';
 import {
   RELATIONSHIP_CATEGORIES,
   RELATIONSHIP_CATEGORY_STYLE,
-} from '$lib/utils/relationship-categories';
+} from '$lib/utils/relationship-categories.js';
 import type {
   RelationshipCategory,
   RelationshipTypeId,
@@ -41,7 +41,7 @@ let inputElement = $state<HTMLInputElement | undefined>(undefined);
 
 // Flatten all types for filtering; the category comes from the grouped shape,
 // so it is always one of the three known categories.
-const allTypes = $derived(() => {
+function flattenTypes() {
   const types: Array<RelationshipTypeResponse & { category: RelationshipCategory }> = [];
   for (const category of RELATIONSHIP_CATEGORIES) {
     for (const type of relationshipTypes[category]) {
@@ -49,27 +49,33 @@ const allTypes = $derived(() => {
     }
   }
   return types;
-});
+}
 
-// Filter types based on query
-const filteredTypes = $derived(() => {
+function filterTypes() {
   const q = query.toLowerCase().trim();
-  if (!q) return allTypes();
-  return allTypes().filter(
+  if (q === '') {
+    return allTypes;
+  }
+  return allTypes.filter(
     (type) =>
-      type.label.toLowerCase().includes(q) ||
-      type.id.toLowerCase().includes(q) ||
-      type.category.toLowerCase().includes(q),
+      type.label.toLowerCase().includes(q) === true ||
+      type.id.toLowerCase().includes(q) === true ||
+      type.category.toLowerCase().includes(q) === true,
   );
-});
+}
+
+const allTypes = $derived.by(flattenTypes);
+const filteredTypes = $derived.by(filterTypes);
 
 let containerElement: HTMLDivElement;
 
-onMount(() => {
-  if (autofocus && inputElement) {
-    requestAnimationFrame(() => {
-      inputElement?.focus();
-    });
+function focusInput() {
+  inputElement?.focus();
+}
+
+function setupActivation() {
+  if (autofocus === true && inputElement !== undefined) {
+    requestAnimationFrame(focusInput);
   }
 
   // Listen for activate event from parent
@@ -79,8 +85,12 @@ onMount(() => {
 
   const parent = containerElement?.parentElement;
   parent?.addEventListener('activate', handleActivate);
-  return () => parent?.removeEventListener('activate', handleActivate);
-});
+  return function removeActivateListener() {
+    parent?.removeEventListener('activate', handleActivate);
+  };
+}
+
+onMount(setupActivation);
 
 function selectType(type: RelationshipTypeResponse & { category: string }, viaKeyboard = false) {
   query = '';
@@ -95,7 +105,7 @@ function handleInput() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (!showDropdown) {
+  if (showDropdown === false) {
     if (e.key === 'ArrowDown' || e.key === 'Enter') {
       e.preventDefault();
       showDropdown = true;
@@ -103,7 +113,7 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  const types = filteredTypes();
+  const types = filteredTypes;
 
   switch (e.key) {
     case 'ArrowDown':
@@ -120,7 +130,7 @@ function handleKeydown(e: KeyboardEvent) {
       const topMatch = types[0];
       if (highlighted !== undefined) {
         selectType(highlighted, true);
-      } else if (query.trim() && topMatch !== undefined) {
+      } else if (query.trim() !== '' && topMatch !== undefined) {
         // No explicit highlight, but the user searched and there are matches:
         // select the top match so Enter confirms the visible result.
         selectType(topMatch, true);
@@ -140,12 +150,14 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+function resetDropdown() {
+  showDropdown = false;
+  highlightedIndex = -1;
+  query = '';
+}
+
 function handleBlur() {
-  setTimeout(() => {
-    showDropdown = false;
-    highlightedIndex = -1;
-    query = '';
-  }, 200);
+  setTimeout(resetDropdown, 200);
 }
 
 function handleFocus() {
@@ -153,13 +165,13 @@ function handleFocus() {
 }
 
 function activateInput() {
-  if (disabled) return;
+  if (disabled === true) {
+    return;
+  }
   query = '';
   showDropdown = true;
   // Use requestAnimationFrame to ensure the input is rendered before focusing
-  requestAnimationFrame(() => {
-    inputElement?.focus();
-  });
+  requestAnimationFrame(focusInput);
 }
 
 function handleButtonKeydown(e: KeyboardEvent) {
@@ -185,7 +197,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
           : 'bg-white cursor-pointer hover:border-gray-400'}"
       >
         <div class="flex items-center gap-2">
-          {#each allTypes().filter((t) => t.id === value) as type}
+          {#each allTypes.filter((t) => t.id === value) as type}
             <span
               class="{CHIP_CLASSES.base} {RELATIONSHIP_CATEGORY_STYLE[type.category]
                 .bgColor} {RELATIONSHIP_CATEGORY_STYLE[type.category].textColor}"
@@ -228,7 +240,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
       class="absolute z-(--z-popover) w-full mt-1 {SURFACE_CLASSES.listbox}"
       role="listbox"
     >
-      {#each filteredTypes() as type, index}
+      {#each filteredTypes as type, index}
         <li
           role="option"
           aria-selected={highlightedIndex === index}
@@ -250,7 +262,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
         </li>
       {/each}
 
-      {#if filteredTypes().length === 0}
+      {#if filteredTypes.length === 0}
         <li class="px-3 py-2 text-sm text-gray-500 font-body">
           {$i18n.t('address.noMatchingTypes')}
         </li>

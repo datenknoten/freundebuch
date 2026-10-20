@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '$lib/test/render.js';
-import FormInput from './FormInput.svelte';
+import FormInput from '$lib/components/ui/FormInput.svelte';
 
 describe('FormInput', () => {
   describe('when rendered', () => {

@@ -27,7 +27,7 @@ let freeTextValue = $state((() => value)());
 function handleChange(e: Event) {
   const target = e.target as HTMLSelectElement;
   const selectedCity = cities.find((c) => c.city === target.value);
-  if (selectedCity) {
+  if (selectedCity !== undefined) {
     onSelect?.(selectedCity);
   }
 }
@@ -38,7 +38,7 @@ function handleFreeTextInput(e: Event) {
 }
 
 function handleFreeTextBlur() {
-  if (freeTextValue) {
+  if (freeTextValue !== '') {
     onSelect?.({ city: freeTextValue, state: undefined, stateCode: undefined });
   }
 }
@@ -46,15 +46,14 @@ function handleFreeTextBlur() {
 function handleFreeTextKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') {
     e.preventDefault();
-    if (freeTextValue) {
+    if (freeTextValue !== '') {
       onSelect?.({ city: freeTextValue, state: undefined, stateCode: undefined });
     }
   }
 }
 
-// Format city display with state if available
-function formatCityDisplay(city: CityInfoResponse): string {
-  if (city.state) {
+function formatCityDisplay(city: CityInfoResponse) {
+  if (city.state !== undefined && city.state !== '') {
     return `${city.city}, ${city.state}`;
   }
   return city.city;

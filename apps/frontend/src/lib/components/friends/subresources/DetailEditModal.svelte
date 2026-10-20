@@ -52,8 +52,10 @@ const formId = `detail-edit-form-${uid}`;
 let showUnsavedWarning = $state(false);
 
 function handleClose() {
-  if (isLoading) return;
-  if (isDirty) {
+  if (isLoading === true) {
+    return;
+  }
+  if (isDirty === true) {
     showUnsavedWarning = true;
     return;
   }
@@ -72,7 +74,7 @@ function keepEditing() {
 // Escape, the backdrop and the header X all land here: while the question is
 // up they answer it with "keep editing" instead of asking it again.
 function handleDismiss() {
-  if (showUnsavedWarning) {
+  if (showUnsavedWarning === true) {
     keepEditing();
     return;
   }

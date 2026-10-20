@@ -1,7 +1,7 @@
 <script lang="ts">
+import SubresourceRow from '$lib/components/friends/subresources/SubresourceRow.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { SocialPlatform, SocialProfileResponse } from '$shared';
-import SubresourceRow from './SubresourceRow.svelte';
 
 interface Props {
   profile: SocialProfileResponse;
@@ -16,18 +16,19 @@ let { profile, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $pr
 
 const i18n = createI18n();
 
-function platformLabel(platform: SocialPlatform): string {
+function platformLabel(platform: SocialPlatform) {
   return $i18n.t(`subresources.social.platforms.${platform}`);
 }
 
-function getDisplayText(): string {
-  if (profile.username) {
+function getDisplayText() {
+  if (profile.username !== undefined && profile.username !== '') {
     return `@${profile.username}`;
   }
-  if (profile.profileUrl) {
+  if (profile.profileUrl !== undefined && profile.profileUrl !== '') {
     try {
       const url = new URL(profile.profileUrl);
-      return url.pathname.replace(/^\//, '') || url.hostname;
+      const path = url.pathname.replace(/^\//, '');
+      return path === '' ? url.hostname : path;
     } catch {
       return profile.profileUrl;
     }
@@ -35,8 +36,8 @@ function getDisplayText(): string {
   return platformLabel(profile.platform);
 }
 
-function getLink(): string | null {
-  return profile.profileUrl || null;
+function getLink() {
+  return profile.profileUrl === undefined || profile.profileUrl === '' ? null : profile.profileUrl;
 }
 </script>
 

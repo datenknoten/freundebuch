@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
-import ConfirmDialog from './ConfirmDialog.svelte';
+import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 
 vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({

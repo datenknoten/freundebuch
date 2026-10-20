@@ -20,19 +20,19 @@ import type { FriendDetailLink } from '$lib/stores/keyboard-modes.js';
 
 const i18n = createI18n();
 
+import LastEncounterBadge from '$lib/components/encounters/LastEncounterBadge.svelte';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
+import RelationshipsSection from '$lib/components/friends/RelationshipsSection.svelte';
+import AddDetailDropdown from '$lib/components/subresources/AddDetailDropdown.svelte';
+import AddDetailSheet from '$lib/components/subresources/AddDetailSheet.svelte';
+import SubresourceSection from '$lib/components/subresources/SubresourceSection.svelte';
 import type { ContactCollectiveSummaryResponse, FriendResponse } from '$shared';
-import LastEncounterBadge from '../encounters/LastEncounterBadge.svelte';
-import AddDetailDropdown from '../subresources/AddDetailDropdown.svelte';
-import AddDetailSheet from '../subresources/AddDetailSheet.svelte';
-import SubresourceSection from '../subresources/SubresourceSection.svelte';
-import FriendAvatar from './FriendAvatar.svelte';
-import RelationshipsSection from './RelationshipsSection.svelte';
 import {
   createCollectiveDescriptor,
   createFriendAddDetailOptions,
   createFriendDescriptors,
   hasProfileUrl,
-} from './subresource-descriptors';
+} from './subresource-descriptors.js';
 
 const { api, logger, stores } = getAppContext();
 const friends = stores.friends;
@@ -47,12 +47,13 @@ let { friend }: Props = $props();
 // Collectives state (loaded separately from friend data)
 let collectives = $state<ContactCollectiveSummaryResponse[]>([]);
 
-// Load collectives on mount
-$effect(() => {
-  if (friend.id) {
+function loadCollectivesOnFriendChange() {
+  if (friend.id !== '') {
     void loadCollectives();
   }
-});
+}
+
+$effect(loadCollectivesOnFriendChange);
 
 function reloadCollectives() {
   void loadCollectives();
@@ -107,8 +108,7 @@ let relationshipStartIndex = $derived(
     collectives.length,
 );
 
-// Computed link list for keyboard shortcut navigation
-let friendDetailLinks = $derived.by(() => {
+function buildFriendDetailLinks() {
   const links: FriendDetailLink[] = [];
 
   for (const phone of friend.phones) {
@@ -121,14 +121,14 @@ let friendDetailLinks = $derived.by(() => {
     links.push({ url: url.url, type: 'external' });
   }
   for (const profile of friend.socialProfiles ?? []) {
-    if (hasProfileUrl(profile)) {
+    if (hasProfileUrl(profile) === true) {
       links.push({ url: profile.profileUrl, type: 'external' });
     }
   }
   for (const collective of collectives) {
     links.push({ url: `/collectives/${collective.id}`, type: 'internal' });
   }
-  if (friend.relationships) {
+  if (friend.relationships !== undefined) {
     // Match RelationshipsSection grouping order: family → professional → social
     for (const category of ['family', 'professional', 'social'] as const) {
       for (const rel of friend.relationships.filter((r) => r.relationshipCategory === category)) {
@@ -138,15 +138,18 @@ let friendDetailLinks = $derived.by(() => {
   }
 
   return links;
-});
+}
 
-// Sync link list to store for KeyboardShortcuts to read
-$effect(() => {
+let friendDetailLinks = $derived.by(buildFriendDetailLinks);
+
+function syncFriendDetailLinks() {
   visibleFriendDetailLinks.set(friendDetailLinks);
-  return () => {
+  return function clearFriendDetailLinks() {
     visibleFriendDetailLinks.set([]);
   };
-});
+}
+
+$effect(syncFriendDetailLinks);
 
 // Friend deletion state (ConfirmDialog owns the in-flight and error state)
 let showDeleteConfirm = $state(false);
@@ -168,8 +171,7 @@ function dispatchAddEvent(shortcutEvent: string) {
   window.dispatchEvent(new CustomEvent(shortcutEvent));
 }
 
-// Keyboard shortcut event listeners
-onMount(() => {
+function registerShortcutListeners() {
   function handleLogEncounter() {
     void goto(
       `/encounters/new?friendId=${friend.id}&friendName=${encodeURIComponent(friend.displayName)}`,
@@ -179,7 +181,9 @@ onMount(() => {
   function handleOpenFriendLink(e: Event) {
     const { index } = (e as CustomEvent).detail;
     const link = friendDetailLinks[index];
-    if (!link) return;
+    if (link === undefined) {
+      return;
+    }
 
     switch (link.type) {
       case 'internal':
@@ -197,11 +201,13 @@ onMount(() => {
   window.addEventListener('shortcut:log-encounter', handleLogEncounter);
   window.addEventListener('shortcut:open-friend-link', handleOpenFriendLink);
 
-  return () => {
+  return function removeShortcutListeners() {
     window.removeEventListener('shortcut:log-encounter', handleLogEncounter);
     window.removeEventListener('shortcut:open-friend-link', handleOpenFriendLink);
   };
-});
+}
+
+onMount(registerShortcutListeners);
 </script>
 
 <div class="space-y-6">

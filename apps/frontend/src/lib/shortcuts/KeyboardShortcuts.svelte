@@ -3,11 +3,11 @@ import { onMount } from 'svelte';
 import { page } from '$app/stores';
 import { getAppContext } from '$lib/app-context.js';
 import { createI18n } from '$lib/i18n/i18n.js';
-import FilterPanel from './components/FilterPanel.svelte';
-import HelpDialog from './components/HelpDialog.svelte';
-import HintModePanel from './components/HintModePanel.svelte';
-import MenuPanel from './components/MenuPanel.svelte';
-import ShortcutHintToast from './components/ShortcutHintToast.svelte';
+import FilterPanel from '$lib/shortcuts/components/FilterPanel.svelte';
+import HelpDialog from '$lib/shortcuts/components/HelpDialog.svelte';
+import HintModePanel from '$lib/shortcuts/components/HintModePanel.svelte';
+import MenuPanel from '$lib/shortcuts/components/MenuPanel.svelte';
+import ShortcutHintToast from '$lib/shortcuts/components/ShortcutHintToast.svelte';
 import {
   COLLECTIVE_DETAIL_ACTIONS,
   CREATION_SHORTCUTS,

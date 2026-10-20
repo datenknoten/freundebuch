@@ -22,7 +22,7 @@ let mapContainer: HTMLDivElement;
 let map: L.Map | null = null;
 let marker: L.Marker | null = null;
 
-onMount(async () => {
+async function initializeMap() {
   // Dynamically import Leaflet and its CSS to keep the initial bundle small.
   const [leafletModule] = await Promise.all([
     import('leaflet'),
@@ -51,30 +51,38 @@ onMount(async () => {
 
   marker = leafletModule.marker([latitude, longitude], { icon: defaultIcon }).addTo(map);
 
-  if (addressLabel) {
+  if (addressLabel !== '') {
     marker.bindPopup(addressLabel);
   }
-});
+}
+
+onMount(initializeMap);
 
 // Reactively update the view when coordinates or label change after mount.
-$effect(() => {
-  if (!map || !marker) return;
+function syncMapView() {
+  if (map === null || marker === null) {
+    return;
+  }
   map.setView([latitude, longitude]);
   marker.setLatLng([latitude, longitude]);
-  if (addressLabel) {
+  if (addressLabel !== '') {
     marker.bindPopup(addressLabel);
   } else {
     marker.unbindPopup();
   }
-});
+}
 
-onDestroy(() => {
-  if (map) {
+$effect(syncMapView);
+
+function destroyMap() {
+  if (map !== null) {
     map.remove();
     map = null;
     marker = null;
   }
-});
+}
+
+onDestroy(destroyMap);
 </script>
 
 <div bind:this={mapContainer} class="w-full {heightClass} rounded-lg overflow-hidden border border-gray-200"></div>

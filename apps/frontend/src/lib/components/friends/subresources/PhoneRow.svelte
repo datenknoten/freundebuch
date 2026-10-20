@@ -1,8 +1,8 @@
 <script lang="ts">
+import SubresourceRow from '$lib/components/friends/subresources/SubresourceRow.svelte';
 import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { PhoneResponse, PhoneType } from '$shared';
-import SubresourceRow from './SubresourceRow.svelte';
 
 interface Props {
   phone: PhoneResponse;
@@ -17,7 +17,7 @@ let { phone, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $prop
 
 const i18n = createI18n();
 
-function phoneTypeLabel(type: PhoneType): string {
+function phoneTypeLabel(type: PhoneType) {
   return $i18n.t(`subresources.phone.types.${type}`);
 }
 </script>

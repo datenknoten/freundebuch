@@ -8,8 +8,11 @@ import Plus from 'svelte-heros-v2/Plus.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
 import { goto } from '$app/navigation';
-import { focusTrap } from '$lib/actions/focus-trap';
+import { focusTrap } from '$lib/actions/focus-trap.js';
 import { getAppContext } from '$lib/app-context.js';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
+import FacetChips from '$lib/components/search/FacetChips.svelte';
+import FacetDropdown from '$lib/components/search/FacetDropdown.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import { CODE_CLASSES } from '$lib/components/ui/code-classes.js';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
@@ -18,9 +21,6 @@ import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { findMatchSourceBadge } from '$lib/utils/match-source.js';
 import type { ArrayFacetField, FacetFilters } from '$shared';
-import FriendAvatar from './friends/FriendAvatar.svelte';
-import FacetChips from './search/FacetChips.svelte';
-import FacetDropdown from './search/FacetDropdown.svelte';
 
 const i18n = createI18n();
 const search = getAppContext().stores.search;
@@ -30,12 +30,13 @@ const isFacetsLoading = search.isFacetsLoading;
 const hasActiveFilters = search.hasActiveFilters;
 
 /** Sanitize search headline HTML to only allow <mark> tags for highlighting */
-function sanitizeHeadline(html: string | null | undefined): string {
-  if (!html) return '';
+function sanitizeHeadline(html: string | null | undefined) {
+  if (html === null || html === undefined || html === '') {
+    return '';
+  }
   return DOMPurify.sanitize(html, { ALLOWED_TAGS: ['mark'] });
 }
 
-// Get store values reactively
 let searchState = $derived($search);
 let facets = $derived($searchFacets);
 let facetsLoading = $derived($isFacetsLoading);
@@ -43,11 +44,12 @@ let showFilters = $derived($hasActiveFilters);
 
 // Load recent searches when the modal opens. Focus is not handled here: the
 // store focuses the input itself, synchronously inside whatever opened it.
-$effect(() => {
-  if ($isSearchOpen) {
+function loadRecentSearchesOnOpen() {
+  if ($isSearchOpen === true) {
     void search.loadRecentSearches();
   }
-});
+}
+$effect(loadRecentSearchesOnOpen);
 
 // Hand the input to the store so open() can focus it inside the user's tap.
 function registerInput(node: HTMLInputElement) {
@@ -59,16 +61,16 @@ function registerInput(node: HTMLInputElement) {
   };
 }
 
-// Handle click outside to close
 function handleBackdropClick(e: MouseEvent) {
   if (e.target === e.currentTarget) {
     search.close();
   }
 }
 
-// Handle keyboard navigation
 function handleKeydown(e: KeyboardEvent) {
-  if (!$isSearchOpen) return;
+  if ($isSearchOpen === false) {
+    return;
+  }
 
   switch (e.key) {
     case 'Escape':
@@ -85,10 +87,10 @@ function handleKeydown(e: KeyboardEvent) {
       break;
     case 'Enter':
       e.preventDefault();
-      if (e.altKey) {
+      if (e.altKey === true) {
         // Alt/Option+Enter: Create new friend
         void navigateToNewFriend();
-      } else if (e.metaKey || e.ctrlKey) {
+      } else if (e.metaKey === true || e.ctrlKey === true) {
         // Cmd/Ctrl+Enter: Navigate to friends list with search
         void navigateToFriendsList();
       } else {
@@ -98,10 +100,8 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
-// Handle selecting a result or recent search
 function handleSelect() {
   if (searchState.query.trim().length < 2) {
-    // Selecting from recent searches
     const selectedQuery = searchState.recentSearches[searchState.selectedIndex];
     if (selectedQuery !== undefined) {
       search.setQuery(selectedQuery);
@@ -109,16 +109,13 @@ function handleSelect() {
     return;
   }
 
-  // Selecting from search results
   const friend = searchState.results[searchState.selectedIndex];
   if (friend !== undefined) {
     void navigateToFriend(friend.id);
   }
 }
 
-// Navigate to friend and close search
 async function navigateToFriend(friendId: string) {
-  // Save to recent searches
   if (searchState.query.trim().length >= 2) {
     void search.addRecentSearch(searchState.query.trim());
   }
@@ -126,7 +123,6 @@ async function navigateToFriend(friendId: string) {
   await goto(`/friends/${friendId}`);
 }
 
-// Navigate to friends list with search query
 async function navigateToFriendsList() {
   if (searchState.query.trim().length >= 2) {
     void search.addRecentSearch(searchState.query.trim());
@@ -139,21 +135,19 @@ async function navigateToFriendsList() {
   );
 }
 
-// Navigate to create new friend
 async function navigateToNewFriend() {
   search.close();
   await goto('/friends/new');
 }
 
 // Detect platform for keyboard shortcut hint
-const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+const isMac =
+  typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform) === true;
 
-// Handle clicking on a recent search
 function handleRecentSearchClick(query: string) {
   search.setQuery(query);
 }
 
-// Handle deleting a recent search
 function handleDeleteRecentSearch(e: MouseEvent, query: string) {
   e.stopPropagation();
   void search.deleteRecentSearch(query);
@@ -166,20 +160,26 @@ let showRecentSearches = $derived(
 );
 let showEmptyState = $derived(
   searchState.query.trim().length >= 2 &&
-    !searchState.isSearching &&
+    searchState.isSearching === false &&
     searchState.results.length === 0,
 );
 
-onMount(() => {
-  // Add global keydown listener for Escape
-  const handleGlobalKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && $isSearchOpen) {
-      search.close();
-    }
-  };
+function handleGlobalKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && $isSearchOpen === true) {
+    search.close();
+  }
+}
+
+function removeGlobalKeydown() {
+  window.removeEventListener('keydown', handleGlobalKeydown);
+}
+
+function addGlobalKeydown() {
   window.addEventListener('keydown', handleGlobalKeydown);
-  return () => window.removeEventListener('keydown', handleGlobalKeydown);
-});
+  return removeGlobalKeydown;
+}
+
+onMount(addGlobalKeydown);
 </script>
 
 <!--

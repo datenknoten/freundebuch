@@ -1,8 +1,8 @@
 <script lang="ts">
+import SubresourceRow from '$lib/components/friends/subresources/SubresourceRow.svelte';
 import { CHIP_CLASSES } from '$lib/components/ui/chip-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { ProfessionalHistoryResponse } from '$shared';
-import SubresourceRow from './SubresourceRow.svelte';
 
 interface Props {
   history: ProfessionalHistoryResponse;
@@ -20,7 +20,7 @@ const i18n = createI18n();
  * "Mai 2019" instead of "May 2019". `undefined` defers to the runtime locale, matching
  * the sibling rows (and the `withDefaultLocale` test helper).
  */
-function formatMonthYear(month: number, year: number): string {
+function formatMonthYear(month: number, year: number) {
   return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString(undefined, {
     month: 'short',
     year: 'numeric',
@@ -28,28 +28,42 @@ function formatMonthYear(month: number, year: number): string {
   });
 }
 
-function formatDateRange(): string {
+function formatDateRange() {
   const from = formatMonthYear(history.fromMonth, history.fromYear);
   const to =
-    history.toMonth && history.toYear
+    history.toMonth !== null &&
+    history.toMonth !== 0 &&
+    history.toYear !== null &&
+    history.toYear !== 0
       ? formatMonthYear(history.toMonth, history.toYear)
       : $i18n.t('subresources.employment.present');
   return `${from} - ${to}`;
 }
 
-function getMainText(): string {
-  if (history.jobTitle && history.organization) {
+function getMainText() {
+  if (
+    history.jobTitle !== undefined &&
+    history.jobTitle !== '' &&
+    history.organization !== undefined &&
+    history.organization !== ''
+  ) {
     return $i18n.t('subresources.employment.atOrganization', {
       jobTitle: history.jobTitle,
       organization: history.organization,
     });
   }
-  return history.jobTitle || history.organization || $i18n.t('subresources.employment.untitled');
+  if (history.jobTitle !== undefined && history.jobTitle !== '') {
+    return history.jobTitle;
+  }
+  if (history.organization !== undefined && history.organization !== '') {
+    return history.organization;
+  }
+  return $i18n.t('subresources.employment.untitled');
 }
 
-function getSubText(): string {
+function getSubText() {
   const parts: string[] = [];
-  if (history.department) {
+  if (history.department !== undefined && history.department !== '') {
     parts.push(history.department);
   }
   parts.push(formatDateRange());

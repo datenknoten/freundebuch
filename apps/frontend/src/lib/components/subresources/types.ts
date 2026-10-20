@@ -63,14 +63,12 @@ export interface FormPropsContext<TItem extends SubresourceItem = SubresourceIte
 export function editFormProps<TItem extends SubresourceItem>({
   editingData,
   isLoading,
-}: FormPropsContext<TItem>): Record<string, unknown> {
+}: FormPropsContext<TItem>) {
   return { initialData: editingData ?? undefined, disabled: isLoading };
 }
 
 /** The same, plus the "first entry is primary" default. */
-export function primaryAwareFormProps<TItem extends SubresourceItem>(
-  ctx: FormPropsContext<TItem>,
-): Record<string, unknown> {
+export function primaryAwareFormProps<TItem extends SubresourceItem>(ctx: FormPropsContext<TItem>) {
   return {
     ...editFormProps(ctx),
     defaultPrimary: ctx.editingId === null && ctx.itemCount === 0,
@@ -81,11 +79,13 @@ export function primaryAwareFormProps<TItem extends SubresourceItem>(
  * An address has no single naming field, so the delete dialog falls back
  * through street, city and finally a generic phrase.
  */
-export function addressDeleteName(address: AddressResponse, t: Translate): string {
+export function addressDeleteName(address: AddressResponse, t: Translate) {
   if (address.streetLine1 !== undefined && address.streetLine1.length > 0) {
     return address.streetLine1;
   }
-  if (address.city !== undefined && address.city.length > 0) return address.city;
+  if (address.city !== undefined && address.city.length > 0) {
+    return address.city;
+  }
   return t('subresources.address.thisAddress');
 }
 
@@ -108,7 +108,7 @@ export function addDetailOption(
   descriptor: SubresourceDescriptor,
   labelKey: string,
   shortcut?: string,
-): AddDetailOption {
+) {
   return {
     key: descriptor.key,
     icon: descriptor.icon,
@@ -229,6 +229,6 @@ export type SubresourceDescriptor = SubresourceDescriptorBase<
  */
 export function defineDescriptor<TItem extends SubresourceItem, TInput>(
   descriptor: AuthoredDescriptor<TItem, TInput>,
-): SubresourceDescriptor {
+) {
   return descriptor as unknown as SubresourceDescriptor;
 }

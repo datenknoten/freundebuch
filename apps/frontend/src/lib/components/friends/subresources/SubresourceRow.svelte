@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import DetailActions from '$lib/components/friends/subresources/DetailActions.svelte';
+import SwipeableRow from '$lib/components/friends/subresources/SwipeableRow.svelte';
 import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
-import DetailActions from './DetailActions.svelte';
-import SwipeableRow from './SwipeableRow.svelte';
 
 interface Props {
   /** Omit for add-only types (circle, collective): they have nothing to edit. */

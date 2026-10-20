@@ -2,6 +2,8 @@
 import { onMount } from 'svelte';
 import type { RelationshipCreateData } from '$lib/api/friend-details.js';
 import { getAppContext } from '$lib/app-context.js';
+import FriendSearchInput from '$lib/components/friends/FriendSearchInput.svelte';
+import RelationshipTypeInput from '$lib/components/friends/RelationshipTypeInput.svelte';
 import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormTextarea from '$lib/components/ui/FormTextarea.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
@@ -13,8 +15,6 @@ import type {
   RelationshipTypeId,
   RelationshipTypesGroupedResponse,
 } from '$shared';
-import FriendSearchInput from '../FriendSearchInput.svelte';
-import RelationshipTypeInput from '../RelationshipTypeInput.svelte';
 
 const i18n = createI18n();
 const friends = getAppContext().stores.friends;
@@ -37,38 +37,43 @@ let relationshipTypes = $state<RelationshipTypesGroupedResponse | null>(null);
 let loadError = $state('');
 let relationshipTypeContainer: HTMLDivElement;
 
-onMount(async () => {
+async function loadRelationshipTypes() {
   try {
     relationshipTypes = await friends.loadRelationshipTypes();
   } catch {
     loadError = $i18n.t('relationshipSection.failedToLoadTypes');
   }
-});
+}
 
-createDirtyTracker(
-  () => {
-    selectedFriend;
-    relationshipTypeId;
-    notes;
-  },
-  () => onchange,
-);
+onMount(loadRelationshipTypes);
+
+function trackDirtyFields() {
+  selectedFriend;
+  relationshipTypeId;
+  notes;
+}
+
+createDirtyTracker(trackDirtyFields, () => onchange);
 
 function handleFriendSelect(friend: FriendSearchResultResponse, viaKeyboard: boolean) {
   selectedFriend = friend;
-  if (viaKeyboard) {
-    requestAnimationFrame(() => {
-      relationshipTypeContainer?.dispatchEvent(new CustomEvent('activate', { bubbles: false }));
-    });
+  if (viaKeyboard === true) {
+    requestAnimationFrame(activateRelationshipTypeInput);
   }
+}
+
+function activateRelationshipTypeInput() {
+  relationshipTypeContainer?.dispatchEvent(new CustomEvent('activate', { bubbles: false }));
+}
+
+function focusNotes() {
+  document.getElementById('relationship-notes')?.focus();
 }
 
 function handleRelationshipTypeSelect(typeId: RelationshipTypeId, viaKeyboard: boolean) {
   relationshipTypeId = typeId;
-  if (viaKeyboard) {
-    requestAnimationFrame(() => {
-      document.getElementById('relationship-notes')?.focus();
-    });
+  if (viaKeyboard === true) {
+    requestAnimationFrame(focusNotes);
   }
 }
 
@@ -82,14 +87,15 @@ export function getData() {
       'getData() called without a selected friend; guard with isValid() first',
     );
   }
+  const trimmedNotes = notes.trim();
   return {
     relatedFriendId: selectedFriend.id,
     relationshipTypeId,
-    notes: notes.trim() || undefined,
+    notes: trimmedNotes === '' ? undefined : trimmedNotes,
   } satisfies RelationshipCreateData;
 }
 
-export function isValid(): boolean {
+export function isValid() {
   return selectedFriend !== null && relationshipTypes !== null;
 }
 </script>

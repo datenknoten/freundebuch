@@ -3,7 +3,7 @@ import { flushSync } from 'svelte';
 import { get } from 'svelte/store';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-import { openWithKeyboard } from '$lib/actions/auto-focus';
+import { openWithKeyboard } from '$lib/actions/auto-focus.js';
 
 export type FabCreateChoice = 'friend' | 'encounter' | 'circle' | 'collective';
 

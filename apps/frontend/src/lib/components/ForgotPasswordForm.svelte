@@ -25,7 +25,7 @@ async function handleSubmit(e: SubmitEvent) {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     });
 
-    if (result.error) {
+    if (result.error !== null && result.error !== undefined) {
       error = result.error.message ?? $i18n.t('auth.forgotPassword.error.generic');
       isLoading = false;
       return;

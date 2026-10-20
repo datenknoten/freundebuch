@@ -29,20 +29,25 @@ let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
 let inputElement = $state<HTMLInputElement | undefined>(undefined);
 
-// Filter countries based on query
-const filteredCountries = $derived(() => {
+function filterCountries() {
   const q = query.toLowerCase().trim();
-  if (!q) return countries;
+  if (q === '') {
+    return countries;
+  }
   return countries.filter(
-    (country) => country.name.toLowerCase().includes(q) || country.code.toLowerCase().includes(q),
+    (country) =>
+      country.name.toLowerCase().includes(q) === true ||
+      country.code.toLowerCase().includes(q) === true,
   );
-});
+}
 
-// Get the selected country's name
-const selectedName = $derived(() => {
+function findSelectedName() {
   const country = countries.find((c) => c.code === value);
   return country?.name ?? '';
-});
+}
+
+const filteredCountries = $derived.by(filterCountries);
+const selectedName = $derived.by(findSelectedName);
 
 function selectCountry(country: CountryInfoResponse, viaKeyboard: boolean = false) {
   query = '';
@@ -57,7 +62,7 @@ function handleInput() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (!showDropdown) {
+  if (showDropdown === false) {
     if (e.key === 'ArrowDown' || e.key === 'Enter') {
       e.preventDefault();
       showDropdown = true;
@@ -65,7 +70,7 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  const list = filteredCountries();
+  const list = filteredCountries;
 
   switch (e.key) {
     case 'ArrowDown':
@@ -82,7 +87,7 @@ function handleKeydown(e: KeyboardEvent) {
       const topMatch = list[0];
       if (highlighted !== undefined) {
         selectCountry(highlighted, true);
-      } else if (query.trim() && topMatch !== undefined) {
+      } else if (query.trim() !== '' && topMatch !== undefined) {
         // No explicit highlight, but the user searched and there are matches:
         // select the top match so Enter confirms the visible result.
         selectCountry(topMatch, true);
@@ -102,25 +107,31 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+function resetDropdown() {
+  showDropdown = false;
+  highlightedIndex = -1;
+  query = '';
+}
+
 function handleBlur() {
-  setTimeout(() => {
-    showDropdown = false;
-    highlightedIndex = -1;
-    query = '';
-  }, 200);
+  setTimeout(resetDropdown, 200);
 }
 
 function handleFocus() {
   showDropdown = true;
 }
 
+function focusInput() {
+  inputElement?.focus();
+}
+
 function activateInput() {
-  if (disabled) return;
+  if (disabled === true) {
+    return;
+  }
   query = '';
   showDropdown = true;
-  requestAnimationFrame(() => {
-    inputElement?.focus();
-  });
+  requestAnimationFrame(focusInput);
 }
 
 function handleButtonKeydown(e: KeyboardEvent) {
@@ -148,7 +159,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
       >
         <div class="flex items-center gap-2">
           <span class="text-gray-500">{value}</span>
-          <span class="text-gray-900">{selectedName()}</span>
+          <span class="text-gray-900">{selectedName}</span>
         </div>
         <ChevronDown class="w-4 h-4 text-gray-400" strokeWidth="2" />
       </button>
@@ -186,7 +197,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
       class="absolute z-(--z-popover) w-full mt-1 {SURFACE_CLASSES.listbox}"
       role="listbox"
     >
-      {#each filteredCountries() as country, index}
+      {#each filteredCountries as country, index}
         <li role="option" aria-selected={highlightedIndex === index} class="cursor-pointer">
           <button
             type="button"
@@ -199,7 +210,7 @@ function handleButtonKeydown(e: KeyboardEvent) {
         </li>
       {/each}
 
-      {#if filteredCountries().length === 0}
+      {#if filteredCountries.length === 0}
         <li class="px-3 py-2 text-sm text-gray-500 font-body">{$i18n.t('countrySelect.noMatchingCountries')}</li>
       {/if}
     </ul>

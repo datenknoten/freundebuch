@@ -1,15 +1,18 @@
 import { readFileSync } from 'node:fs';
+import { parseJson } from '@datenknoten/kit/schema';
 import { sentrySvelteKit } from '@sentry/sveltekit';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { svelteTesting } from '@testing-library/svelte/vite';
+import { type } from 'arktype';
 import { defineConfig } from 'vitest/config';
 
-const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
+const pkg = parseJson(type({ version: 'string' }), readFileSync('./package.json', 'utf-8'));
 
 export default defineConfig({
   plugins: [
     sentrySvelteKit({
-      autoUploadSourceMaps: !!process.env.SENTRY_AUTH_TOKEN,
+      autoUploadSourceMaps:
+        process.env.SENTRY_AUTH_TOKEN !== undefined && process.env.SENTRY_AUTH_TOKEN !== '',
       adapter: 'other', // Using static adapter
       sourceMapsUploadOptions: {
         org: 'datenknoten-it-nx',
@@ -20,7 +23,7 @@ export default defineConfig({
     // Enables Svelte 5 component testing under jsdom (browser resolve
     // condition + auto-cleanup). Test-only — excluded from dev/preview/prod
     // builds so it can't affect production module resolution.
-    ...(process.env.VITEST ? [svelteTesting()] : []),
+    ...(process.env.VITEST !== undefined && process.env.VITEST !== '' ? [svelteTesting()] : []),
   ],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),

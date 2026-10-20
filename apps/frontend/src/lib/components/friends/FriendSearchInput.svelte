@@ -2,14 +2,14 @@
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import XMark from 'svelte-heros-v2/XMark.svelte';
-import { autoFocus } from '$lib/actions/auto-focus';
+import { autoFocus } from '$lib/actions/auto-focus.js';
 import { getAppContext } from '$lib/app-context.js';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
 import { SURFACE_CLASSES } from '$lib/components/ui/surface-classes.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type { FriendSearchResultResponse } from '$shared';
-import FriendAvatar from './FriendAvatar.svelte';
 
 const i18n = createI18n();
 const { api, stores } = getAppContext();
@@ -67,30 +67,39 @@ let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // When there is no query, show the suggestion list (like the relationship-type
 // and postal-code dropdowns, which surface options on focus).
-let displayResults = $derived(query.trim() ? results : suggestions);
-let isLoading = $derived(query.trim() ? isSearching : isLoadingSuggestions);
+let displayResults = $derived(query.trim() !== '' ? results : suggestions);
+let isLoading = $derived(query.trim() !== '' ? isSearching : isLoadingSuggestions);
 
-function isItemDisabled(friend: FriendSearchResultResponse): string | null {
+function isItemDisabled(friend: FriendSearchResultResponse) {
   return disabledCheck?.(friend) ?? null;
 }
 
-function findNextSelectableIndex(current: number, direction: 1 | -1): number {
+function isItemSelectable(friend: FriendSearchResultResponse) {
+  const label = isItemDisabled(friend);
+  return label === null || label === '';
+}
+
+function findNextSelectableIndex(current: number, direction: 1 | -1) {
   let next = current + direction;
   while (next >= 0 && next < displayResults.length) {
     const candidate = displayResults[next];
-    if (candidate !== undefined && !isItemDisabled(candidate)) {
+    if (candidate !== undefined && isItemSelectable(candidate) === true) {
       return next;
     }
     next += direction;
   }
   // If going down and nothing found, stay at current; if going up past -1, allow -1
-  if (direction === -1 && next < 0) return -1;
+  if (direction === -1 && next < 0) {
+    return -1;
+  }
   return current;
 }
 
 // Load an initial list of friends to show before the user types anything.
 async function loadSuggestions() {
-  if (suggestionsLoaded || isLoadingSuggestions) return;
+  if (suggestionsLoaded === true || isLoadingSuggestions === true) {
+    return;
+  }
 
   isLoadingSuggestions = true;
   try {
@@ -111,31 +120,30 @@ async function loadSuggestions() {
     suggestions = [];
   } finally {
     isLoadingSuggestions = false;
-    if (!query.trim()) highlightedIndex = findNextSelectableIndex(-1, 1);
+    if (query.trim() === '') {
+      highlightedIndex = findNextSelectableIndex(-1, 1);
+    }
   }
 }
 
-// Debounced search
 function handleInput() {
-  if (debounceTimeout) {
+  if (debounceTimeout !== null) {
     clearTimeout(debounceTimeout);
   }
 
   showDropdown = true;
 
-  if (!query.trim()) {
+  if (query.trim() === '') {
     results = [];
     highlightedIndex = findNextSelectableIndex(-1, 1);
     return;
   }
 
-  debounceTimeout = setTimeout(async () => {
-    await performSearch();
-  }, 300);
+  debounceTimeout = setTimeout(performSearch, 300);
 }
 
 async function performSearch() {
-  if (!query.trim()) {
+  if (query.trim() === '') {
     results = [];
     return;
   }
@@ -153,7 +161,9 @@ async function performSearch() {
 }
 
 function selectFriend(friend: FriendSearchResultResponse, viaKeyboard = false) {
-  if (isItemDisabled(friend)) return;
+  if (isItemSelectable(friend) === false) {
+    return;
+  }
   query = '';
   results = [];
   showDropdown = false;
@@ -161,25 +171,29 @@ function selectFriend(friend: FriendSearchResultResponse, viaKeyboard = false) {
   onSelect?.(friend, viaKeyboard);
 }
 
+function focusInput() {
+  inputElement?.focus();
+}
+
 function clearSelection() {
-  if (disabled) return;
+  if (disabled === true) {
+    return;
+  }
   onClear?.();
   // Re-open the search so the user can pick another friend straight away.
   query = '';
-  requestAnimationFrame(() => {
-    inputElement?.focus();
-  });
+  requestAnimationFrame(focusInput);
 }
 
 // Open the search input and dropdown from the inline selected-value button.
 function activateInput() {
-  if (disabled) return;
+  if (disabled === true) {
+    return;
+  }
   query = '';
   showDropdown = true;
   void loadSuggestions();
-  requestAnimationFrame(() => {
-    inputElement?.focus();
-  });
+  requestAnimationFrame(focusInput);
 }
 
 function handleButtonKeydown(e: KeyboardEvent) {
@@ -190,12 +204,12 @@ function handleButtonKeydown(e: KeyboardEvent) {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (!showDropdown) {
+  if (showDropdown === false) {
     // Match the relationship-type / postal-code dropdowns: open on ArrowDown/Enter.
     if (e.key === 'ArrowDown' || e.key === 'Enter') {
       e.preventDefault();
       showDropdown = true;
-      if (!query.trim()) {
+      if (query.trim() === '') {
         void loadSuggestions();
       }
     }
@@ -230,17 +244,19 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+function hideDropdown() {
+  showDropdown = false;
+  highlightedIndex = -1;
+}
+
 function handleBlur() {
   // Delay hiding dropdown to allow click events on results
-  setTimeout(() => {
-    showDropdown = false;
-    highlightedIndex = -1;
-  }, 200);
+  setTimeout(hideDropdown, 200);
 }
 
 function handleFocus() {
   showDropdown = true;
-  if (!query.trim()) {
+  if (query.trim() === '') {
     void loadSuggestions();
   }
 }

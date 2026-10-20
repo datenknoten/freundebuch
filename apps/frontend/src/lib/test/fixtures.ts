@@ -27,16 +27,15 @@ import type {
 } from '$shared';
 
 let counter = 0;
-/** Deterministic id generator: `friend-1`, `phone-2`, ... */
-function nextId(prefix: string): string {
+function nextId(prefix: string) {
   counter += 1;
   return `${prefix}-${counter}`;
 }
 
 const TIMESTAMP = '2026-01-01T00:00:00.000Z';
 
-export function aPhone(overrides: Partial<PhoneResponse> = {}): PhoneResponse {
-  return {
+export function aPhone(overrides: Partial<PhoneResponse> = {}) {
+  const value: PhoneResponse = {
     id: nextId('phone'),
     phoneNumber: '+1 555 0100',
     phoneType: 'mobile',
@@ -44,10 +43,11 @@ export function aPhone(overrides: Partial<PhoneResponse> = {}): PhoneResponse {
     createdAt: TIMESTAMP,
     ...overrides,
   };
+  return value;
 }
 
-export function anEmail(overrides: Partial<EmailResponse> = {}): EmailResponse {
-  return {
+export function anEmail(overrides: Partial<EmailResponse> = {}) {
+  const value: EmailResponse = {
     id: nextId('email'),
     emailAddress: 'friend@example.com',
     emailType: 'personal',
@@ -55,10 +55,11 @@ export function anEmail(overrides: Partial<EmailResponse> = {}): EmailResponse {
     createdAt: TIMESTAMP,
     ...overrides,
   };
+  return value;
 }
 
-export function anAddress(overrides: Partial<AddressResponse> = {}): AddressResponse {
-  return {
+export function anAddress(overrides: Partial<AddressResponse> = {}) {
+  const value: AddressResponse = {
     id: nextId('address'),
     streetLine1: '1 Example St',
     city: 'Berlin',
@@ -68,20 +69,22 @@ export function anAddress(overrides: Partial<AddressResponse> = {}): AddressResp
     createdAt: TIMESTAMP,
     ...overrides,
   };
+  return value;
 }
 
-export function aUrl(overrides: Partial<UrlResponse> = {}): UrlResponse {
-  return {
+export function aUrl(overrides: Partial<UrlResponse> = {}) {
+  const value: UrlResponse = {
     id: nextId('url'),
     url: 'https://example.com',
     urlType: 'personal',
     createdAt: TIMESTAMP,
     ...overrides,
   };
+  return value;
 }
 
-export function aFriendDate(overrides: Partial<FriendDateResponse> = {}): FriendDateResponse {
-  return {
+export function aFriendDate(overrides: Partial<FriendDateResponse> = {}) {
+  const value: FriendDateResponse = {
     id: nextId('date'),
     dateValue: '1990-05-15',
     yearKnown: true,
@@ -89,10 +92,11 @@ export function aFriendDate(overrides: Partial<FriendDateResponse> = {}): Friend
     createdAt: TIMESTAMP,
     ...overrides,
   };
+  return value;
 }
 
-export function aFriendNote(overrides: Partial<FriendNoteResponse> = {}): FriendNoteResponse {
-  return {
+export function aFriendNote(overrides: Partial<FriendNoteResponse> = {}) {
+  const value: FriendNoteResponse = {
     id: nextId('note'),
     content: 'Likes hiking',
     encounter: null,
@@ -103,10 +107,11 @@ export function aFriendNote(overrides: Partial<FriendNoteResponse> = {}): Friend
     updatedAt: TIMESTAMP,
     ...overrides,
   };
+  return value;
 }
 
-export function aFriend(overrides: Partial<FriendResponse> = {}): FriendResponse {
-  return {
+export function aFriend(overrides: Partial<FriendResponse> = {}) {
+  const value: FriendResponse = {
     id: nextId('friend'),
     displayName: 'Test Friend',
     phones: [],
@@ -120,12 +125,11 @@ export function aFriend(overrides: Partial<FriendResponse> = {}): FriendResponse
     updatedAt: TIMESTAMP,
     ...overrides,
   };
+  return value;
 }
 
-export function aFriendListItem(
-  overrides: Partial<FriendListItemResponse> = {},
-): FriendListItemResponse {
-  return {
+export function aFriendListItem(overrides: Partial<FriendListItemResponse> = {}) {
+  const value: FriendListItemResponse = {
     id: nextId('friend'),
     displayName: 'Test Friend',
     circles: [],
@@ -134,24 +138,22 @@ export function aFriendListItem(
     updatedAt: TIMESTAMP,
     ...overrides,
   };
+  return value;
 }
 
-export function aCollectiveRole(
-  overrides: Partial<CollectiveRoleResponse> = {},
-): CollectiveRoleResponse {
-  return {
+export function aCollectiveRole(overrides: Partial<CollectiveRoleResponse> = {}) {
+  const value: CollectiveRoleResponse = {
     id: nextId('role'),
     roleKey: 'member',
     label: 'Member',
     sortOrder: 0,
     ...overrides,
   };
+  return value;
 }
 
-export function aCollectiveType(
-  overrides: Partial<CollectiveTypeResponse> = {},
-): CollectiveTypeResponse {
-  return {
+export function aCollectiveType(overrides: Partial<CollectiveTypeResponse> = {}) {
+  const value: CollectiveTypeResponse = {
     id: nextId('collective-type'),
     name: 'Club',
     description: null,
@@ -161,12 +163,11 @@ export function aCollectiveType(
     updatedAt: TIMESTAMP,
     ...overrides,
   };
+  return value;
 }
 
-export function aCollectiveMember(
-  overrides: Partial<CollectiveMemberResponse> = {},
-): CollectiveMemberResponse {
-  return {
+export function aCollectiveMember(overrides: Partial<CollectiveMemberResponse> = {}) {
+  const value: CollectiveMemberResponse = {
     id: nextId('membership'),
     contact: { id: nextId('friend'), displayName: 'Test Friend', photoUrl: null },
     role: aCollectiveRole(),
@@ -179,10 +180,11 @@ export function aCollectiveMember(
     updatedAt: TIMESTAMP,
     ...overrides,
   };
+  return value;
 }
 
-export function aCollective(overrides: Partial<CollectiveResponse> = {}): CollectiveResponse {
-  return {
+export function aCollective(overrides: Partial<CollectiveResponse> = {}) {
+  const value: CollectiveResponse = {
     id: nextId('collective'),
     name: 'Test Collective',
     type: aCollectiveType(),
@@ -205,6 +207,7 @@ export function aCollective(overrides: Partial<CollectiveResponse> = {}): Collec
     deletedAt: null,
     ...overrides,
   };
+  return value;
 }
 
 export function aCircle(overrides: Partial<CircleResponse> = {}) {

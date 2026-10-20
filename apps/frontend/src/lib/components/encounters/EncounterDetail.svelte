@@ -5,6 +5,9 @@ import MapPin from 'svelte-heros-v2/MapPin.svelte';
 import Users from 'svelte-heros-v2/Users.svelte';
 import { goto } from '$app/navigation';
 import { getAppContext } from '$lib/app-context.js';
+import EncounterTypeIcon from '$lib/components/encounters/EncounterTypeIcon.svelte';
+import FriendAvatar from '$lib/components/friends/FriendAvatar.svelte';
+import KeyboardHintBadge from '$lib/components/KeyboardHintBadge.svelte';
 import Button from '$lib/components/ui/Button.svelte';
 import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 import { HEADING_CLASSES } from '$lib/components/ui/heading-classes.js';
@@ -13,10 +16,7 @@ import MarkdownView from '$lib/editor/MarkdownView.svelte';
 import { createI18n } from '$lib/i18n/i18n.js';
 import { getKeyboardHint } from '$lib/utils/keyboard-hint.js';
 import type { EncounterResponse } from '$shared';
-import FriendAvatar from '../friends/FriendAvatar.svelte';
-import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
-import EncounterTypeIcon from './EncounterTypeIcon.svelte';
-import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display';
+import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display.js';
 
 const keyboardModes = getAppContext().stores.keyboardModes;
 const isOpenEncounterFriendModeActive = keyboardModes.encounterFriends.isActive;
@@ -38,12 +38,14 @@ let showDeleteConfirm = $state(false);
 
 let displayTitle = $derived(encounterDisplayTitle($i18n.t, encounter));
 
-// Track visible friend IDs for keyboard open mode (o)
-$effect(() => {
+function syncVisibleEncounterFriendIds() {
   visibleEncounterFriendIds.set(encounter.friends.map((f) => f.id));
-});
+}
 
-function formatDate(dateStr: string): string {
+// Track visible friend IDs for keyboard open mode (o)
+$effect(syncVisibleEncounterFriendIds);
+
+function formatDate(dateStr: string) {
   const date = new Date(dateStr);
   return date.toLocaleDateString(undefined, {
     weekday: 'long',
@@ -53,7 +55,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function formatTimestamp(isoStr: string): string {
+function formatTimestamp(isoStr: string) {
   const date = new Date(isoStr);
   return date.toLocaleDateString(undefined, {
     year: 'numeric',

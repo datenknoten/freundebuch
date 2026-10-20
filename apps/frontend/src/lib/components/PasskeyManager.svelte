@@ -39,9 +39,14 @@ let editName = $state('');
 let deleteConfirmId = $state<string | null>(null);
 let deleteConfirmName = $state('');
 
-onMount(async () => {
-  await loadPasskeys();
-});
+function messageOr(message: string | null | undefined, fallback: string) {
+  if (message === null || message === undefined || message === '') {
+    return fallback;
+  }
+  return message;
+}
+
+onMount(loadPasskeys);
 
 async function loadPasskeys() {
   isLoading = true;
@@ -64,8 +69,9 @@ async function handleAdd() {
   error = '';
   try {
     const result = await authClient.passkey.addPasskey();
-    if (result?.error) {
-      error = result.error.message || $i18n.t('profile.passkeys.failedToRegister');
+    const failure = result?.error;
+    if (failure !== null && failure !== undefined) {
+      error = messageOr(failure.message, $i18n.t('profile.passkeys.failedToRegister'));
     } else {
       await loadPasskeys();
     }
@@ -81,7 +87,7 @@ async function handleAdd() {
 
 function openDeleteConfirm(pk: Passkey) {
   deleteConfirmId = pk.id;
-  deleteConfirmName = pk.name || $i18n.t('profile.passkeys.unnamedPasskey');
+  deleteConfirmName = messageOr(pk.name, $i18n.t('profile.passkeys.unnamedPasskey'));
 }
 
 function closeDeleteConfirm() {
@@ -93,14 +99,17 @@ function closeDeleteConfirm() {
 // reason, so the failure is visible where the action was taken.
 async function handleDelete() {
   const id = deleteConfirmId;
-  if (id === null) return;
+  if (id === null) {
+    return;
+  }
   deletingId = id;
   error = '';
   try {
     const result = await authClient.passkey.deletePasskey({ id });
-    if (result?.error) {
+    const failure = result?.error;
+    if (failure !== null && failure !== undefined) {
       throw new PasskeyDeletionError(
-        result.error.message || $i18n.t('profile.passkeys.failedToDelete'),
+        messageOr(failure.message, $i18n.t('profile.passkeys.failedToDelete')),
       );
     }
     await loadPasskeys();
@@ -111,7 +120,7 @@ async function handleDelete() {
 
 function startEditing(pk: Passkey) {
   editingId = pk.id;
-  editName = pk.name || '';
+  editName = pk.name ?? '';
 }
 
 async function saveEdit(id: string) {
@@ -119,10 +128,11 @@ async function saveEdit(id: string) {
   try {
     const result = await authClient.passkey.updatePasskey({
       id,
-      name: editName.trim() || $i18n.t('profile.passkeys.unnamedPasskey'),
+      name: messageOr(editName.trim(), $i18n.t('profile.passkeys.unnamedPasskey')),
     });
-    if (result?.error) {
-      error = result.error.message || $i18n.t('profile.passkeys.failedToRename');
+    const failure = result?.error;
+    if (failure !== null && failure !== undefined) {
+      error = messageOr(failure.message, $i18n.t('profile.passkeys.failedToRename'));
     } else {
       editingId = null;
       await loadPasskeys();
@@ -140,7 +150,7 @@ function cancelEdit() {
   editName = '';
 }
 
-function formatDate(date: Date | string): string {
+function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString(getCurrentLanguage(), {
     year: 'numeric',
     month: 'short',
@@ -148,9 +158,13 @@ function formatDate(date: Date | string): string {
   });
 }
 
-function deviceTypeLabel(type: string | null): string {
-  if (type === 'multiDevice') return $i18n.t('profile.passkeys.deviceType.multiDevice');
-  if (type === 'singleDevice') return $i18n.t('profile.passkeys.deviceType.singleDevice');
+function deviceTypeLabel(type: string | null) {
+  if (type === 'multiDevice') {
+    return $i18n.t('profile.passkeys.deviceType.multiDevice');
+  }
+  if (type === 'singleDevice') {
+    return $i18n.t('profile.passkeys.deviceType.singleDevice');
+  }
   return $i18n.t('profile.passkeys.deviceType.unknown');
 }
 </script>

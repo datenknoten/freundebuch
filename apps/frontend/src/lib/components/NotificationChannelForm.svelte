@@ -67,20 +67,32 @@ function handleSubmit(event: SubmitEvent) {
   const credentials: Record<string, string> = {};
   switch (platform) {
     case 'telegram':
-      if (botToken.length > 0) credentials.botToken = botToken;
-      if (chatId.length > 0) credentials.chatId = chatId;
+      if (botToken.length > 0) {
+        credentials.botToken = botToken;
+      }
+      if (chatId.length > 0) {
+        credentials.chatId = chatId;
+      }
       break;
     case 'matrix':
-      if (homeserver.length > 0) credentials.homeserver = homeserver;
-      if (accessToken.length > 0) credentials.accessToken = accessToken;
-      if (roomId.length > 0) credentials.roomId = roomId;
+      if (homeserver.length > 0) {
+        credentials.homeserver = homeserver;
+      }
+      if (accessToken.length > 0) {
+        credentials.accessToken = accessToken;
+      }
+      if (roomId.length > 0) {
+        credentials.roomId = roomId;
+      }
       break;
     case 'discord':
-      if (webhookUrl.length > 0) credentials.webhookUrl = webhookUrl;
+      if (webhookUrl.length > 0) {
+        credentials.webhookUrl = webhookUrl;
+      }
       break;
   }
 
-  if (isEditMode) {
+  if (isEditMode === true) {
     const input: NotificationChannelUpdateInput = {
       isEnabled,
       lookaheadDays: Number(lookaheadDays),

@@ -21,14 +21,13 @@ let platform = $state<SocialPlatform>((() => initialData?.platform ?? 'linkedin'
 let profileUrl = $state((() => initialData?.profileUrl ?? '')());
 let username = $state((() => initialData?.username ?? '')());
 
-createDirtyTracker(
-  () => {
-    platform;
-    profileUrl;
-    username;
-  },
-  () => onchange,
-);
+function trackDirtyFields() {
+  platform;
+  profileUrl;
+  username;
+}
+
+createDirtyTracker(trackDirtyFields, () => onchange);
 
 // Platform keys for i18n lookup
 const platformKeys: SocialPlatform[] = [
@@ -44,15 +43,20 @@ const platformOptions = $derived(
   platformKeys.map((p) => ({ value: p, label: $i18n.t(`subresources.social.platforms.${p}`) })),
 );
 
+function trimmedOrNull(value: string) {
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
 export function getData() {
   return {
     platform,
-    profileUrl: profileUrl.trim() || null,
-    username: username.trim() || null,
+    profileUrl: trimmedOrNull(profileUrl),
+    username: trimmedOrNull(username),
   } satisfies SocialProfileData;
 }
 
-export function isValid(): boolean {
+export function isValid() {
   // At least one of profile_url or username must be provided
   return profileUrl.trim().length > 0 || username.trim().length > 0;
 }
