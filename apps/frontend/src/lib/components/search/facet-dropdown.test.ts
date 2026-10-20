@@ -1,12 +1,13 @@
 import type { ComponentProps } from 'svelte';
 import { get } from 'svelte/store';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import FacetDropdown from '$lib/components/search/FacetDropdown.svelte';
+import { InvariantError } from '$lib/errors/invariant.error.js';
 import { useLanguage } from '$lib/test/locale.js';
 import { fireEvent, screen, tick, waitFor, within } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
 import type { FacetGroupsResponse } from '$shared';
-import FacetDropdown from './FacetDropdown.svelte';
 
 const context = createTestAppContext();
 const isFilterModeActive = context.stores.keyboardModes.filter.isActive;
@@ -18,8 +19,8 @@ async function useCountryLanguage(lang: 'en' | 'de') {
   await context.stores.locale.setLanguage(lang);
 }
 
-function someFacets(overrides: Partial<FacetGroupsResponse> = {}): FacetGroupsResponse {
-  return {
+function someFacets(overrides: Partial<FacetGroupsResponse> = {}) {
+  const facets: FacetGroupsResponse = {
     location: [
       {
         field: 'country',
@@ -49,6 +50,7 @@ function someFacets(overrides: Partial<FacetGroupsResponse> = {}): FacetGroupsRe
     ],
     ...overrides,
   };
+  return facets;
 }
 
 const NO_FACETS: FacetGroupsResponse = {
@@ -88,16 +90,17 @@ describe('FacetDropdown', () => {
   });
 
   afterAll(() => {
-    delete (Element.prototype as Partial<Element>).scrollIntoView;
+    Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
   });
 
   beforeEach(async () => {
+    vi.clearAllMocks();
     await useCountryLanguage('en');
   });
 
   afterEach(() => {
     context.stores.keyboardModes.reset();
-    scrollIntoView.mockClear();
+    vi.restoreAllMocks();
   });
 
   describe('dropdown', () => {
@@ -120,7 +123,11 @@ describe('FacetDropdown', () => {
     it('lists other facets by their raw value', async () => {
       renderDropdown();
       await openDropdown();
-      const location = within(screen.getByText('City').parentElement as HTMLElement);
+      const cityGroup = screen.getByText('City').parentElement;
+      if (cityGroup === null) {
+        throw new InvariantError('the City heading has no group');
+      }
+      const location = within(cityGroup);
 
       expect(location.getByRole('checkbox', { name: /DE/ })).toBeTruthy();
       expect(location.queryByText('Germany')).toBeNull();
@@ -151,8 +158,8 @@ describe('FacetDropdown', () => {
     it('removes an active value and drops the field once empty', async () => {
       const { onFilterChange } = renderDropdown({ activeFilters: { country: ['DE'] } });
       await openDropdown();
-      const germany = screen.getByRole('checkbox', { name: /Germany/ }) as HTMLInputElement;
-      expect(germany.checked).toBe(true);
+      const germany = screen.getByRole('checkbox', { name: /Germany/ });
+      expect(germany).toHaveProperty('checked', true);
 
       await fireEvent.click(germany);
 

@@ -5,7 +5,8 @@ import { useLanguage } from '$lib/test/locale.js';
 import { screen, tick, waitFor } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
-import EditPage from './+page.svelte';
+// biome-ignore lint/correctness/useImportExtensions: routes have no alias, and the fix would rewrite the component import to `.js`
+import FriendEditPage from './+page.svelte';
 
 vi.mock('$app/stores', () => ({
   page: readable({ params: { id: 'f1' }, url: new URL('http://localhost/friends/f1/edit') }),
@@ -23,7 +24,7 @@ async function createInitializedContext() {
   return context;
 }
 
-describe('friend edit page', () => {
+describe('FriendEditPage', () => {
   beforeAll(async () => {
     await useLanguage('en');
   });
@@ -42,7 +43,7 @@ describe('friend edit page', () => {
       vi.spyOn(context.api.friends, 'getFriend').mockResolvedValue(
         aFriend({ id: 'f1', displayName: 'Ada' }),
       );
-      renderWithContext(EditPage, { props: {}, context });
+      renderWithContext(FriendEditPage, { props: {}, context });
       const field = await screen.findByLabelText(/Display Name/);
 
       // A photo delete — or any store action — flips isLoading for the whole store.
@@ -59,7 +60,7 @@ describe('friend edit page', () => {
       const context = await createInitializedContext();
       vi.spyOn(context.api.friends, 'getFriend').mockReturnValue(never());
 
-      renderWithContext(EditPage, { props: {}, context });
+      renderWithContext(FriendEditPage, { props: {}, context });
 
       await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
       expect(screen.queryByLabelText(/Display Name/)).toBeNull();

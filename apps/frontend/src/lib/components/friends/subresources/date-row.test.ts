@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import DateRow from '$lib/components/friends/subresources/DateRow.svelte';
 import en from '$lib/i18n/locales/en.json';
 import { aFriendDate } from '$lib/test/fixtures.js';
 import { itemAt } from '$lib/test/item-at.js';
 import { useLanguage, withDefaultLocale } from '$lib/test/locale.js';
 import { fireEvent, render, screen } from '$lib/test/render.js';
-import DateRow from './DateRow.svelte';
 
 const strings = en.subresources;
 
@@ -19,7 +19,12 @@ describe('DateRow', () => {
   const props = { onEdit: vi.fn(), onDelete: vi.fn() };
 
   beforeEach(async () => {
+    vi.clearAllMocks();
     await useLanguage('en');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('year visibility', () => {
@@ -98,15 +103,17 @@ describe('DateRow', () => {
     });
   });
 
-  it('invokes onEdit and onDelete from the row actions', async () => {
-    const onEdit = vi.fn();
-    const onDelete = vi.fn();
-    render(DateRow, { date: aFriendDate(), onEdit, onDelete });
+  describe('row actions', () => {
+    it('invokes onEdit and onDelete from the row actions', async () => {
+      const onEdit = vi.fn();
+      const onDelete = vi.fn();
+      render(DateRow, { date: aFriendDate(), onEdit, onDelete });
 
-    await fireEvent.click(itemAt(screen.getAllByLabelText(strings.date.editAria), 0));
-    await fireEvent.click(itemAt(screen.getAllByLabelText(strings.date.deleteAria), 0));
+      await fireEvent.click(itemAt(screen.getAllByLabelText(strings.date.editAria), 0));
+      await fireEvent.click(itemAt(screen.getAllByLabelText(strings.date.deleteAria), 0));
 
-    expect(onEdit).toHaveBeenCalledTimes(1);
-    expect(onDelete).toHaveBeenCalledTimes(1);
+      expect(onEdit).toHaveBeenCalledTimes(1);
+      expect(onDelete).toHaveBeenCalledTimes(1);
+    });
   });
 });

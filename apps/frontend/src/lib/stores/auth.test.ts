@@ -8,10 +8,12 @@ import { createAppAuthClient } from '../auth-client.js';
 import { AuthStore } from './auth.js';
 import { SessionStore } from './session.js';
 
-const h = vi.hoisted(() => ({
-  // Runs the wrapped call once, so persisting preferences needs no backoff timers.
-  retryWithBackoff: vi.fn((persist: () => Promise<unknown>) => persist()),
-}));
+// Runs the wrapped call once, so persisting preferences needs no backoff timers.
+function createRetryFake() {
+  return { retryWithBackoff: vi.fn((persist: () => Promise<unknown>) => persist()) };
+}
+
+const h = vi.hoisted(createRetryFake);
 
 vi.mock('../utils/retry.js', () => ({ retryWithBackoff: h.retryWithBackoff }));
 

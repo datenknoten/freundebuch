@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '$lib/test/render.js';
 import FormSelect from '$lib/components/ui/FormSelect.svelte';
+import { render, screen } from '$lib/test/render.js';
 
 describe('FormSelect', () => {
   describe('when rendered', () => {

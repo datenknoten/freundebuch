@@ -1,21 +1,15 @@
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import MemberSection from '$lib/components/collectives/MemberSection.svelte';
 import { aCollective, aCollectiveMember } from '$lib/test/fixtures.js';
 import { itemAt } from '$lib/test/item-at.js';
 import { fireEvent, screen, waitFor, within } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
 import type { CollectiveResponse } from '$shared';
-import MemberSection from './MemberSection.svelte';
 
-vi.mock('$lib/i18n/i18n.js', () => ({
-  createI18n: () => ({
-    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
-      run({ t: (k: string) => k });
-      return () => undefined;
-    },
-  }),
-}));
+// i18n returns the key so assertions can target stable label keys.
+vi.mock('$lib/i18n/i18n.js', () => import('$lib/test/i18n-key-mock.js'));
 
 function aCollectiveWithMembers() {
   const active = aCollectiveMember({ isActive: true });

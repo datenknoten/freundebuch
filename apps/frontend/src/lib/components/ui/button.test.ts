@@ -1,19 +1,28 @@
 import { createRawSnippet } from 'svelte';
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '$lib/test/render.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Button from '$lib/components/ui/Button.svelte';
+import { fireEvent, render, screen } from '$lib/test/render.js';
 
 // i18n returns the key so the spinner's sr-only label is stable.
-vi.mock('$lib/i18n/i18n.js', () => ({
-  createI18n: () => ({
-    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
-      run({ t: (k: string) => k });
-      return () => undefined;
-    },
-  }),
-}));
+vi.mock('$lib/i18n/i18n.js', () => import('$lib/test/i18n-key-mock.js'));
 
-const label = (text: string) => createRawSnippet(() => ({ render: () => `<span>${text}</span>` }));
+function label(text: string) {
+  return createRawSnippet(function renderLabel() {
+    return {
+      render() {
+        return `<span>${text}</span>`;
+      },
+    };
+  });
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('Button', () => {
   describe('with an href', () => {

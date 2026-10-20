@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { markdownToPlainText } from './plain-text';
+import { markdownToPlainText } from './plain-text.js';
 
 describe('markdownToPlainText', () => {
   it('keeps only the link text of an @-mention', () => {

@@ -1,23 +1,16 @@
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { goto } from '$app/navigation';
+import CollectiveDetail from '$lib/components/collectives/CollectiveDetail.svelte';
 import { aCollective, aCollectiveMember } from '$lib/test/fixtures.js';
 import { fireEvent, screen, waitFor, within } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
 import type { CollectiveResponse } from '$shared';
-import CollectiveDetail from './CollectiveDetail.svelte';
 
-vi.mock('$lib/i18n/i18n.js', () => ({
-  createI18n: () => ({
-    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
-      run({ t: (k: string) => k });
-      return () => undefined;
-    },
-  }),
-}));
-
-const goto = vi.fn();
-vi.mock('$app/navigation', () => ({ goto: (...args: unknown[]) => goto(...args) }));
+// i18n returns the key so assertions can target stable label keys.
+vi.mock('$lib/i18n/i18n.js', () => import('$lib/test/i18n-key-mock.js'));
+vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
 function createContext() {
   const context = createTestAppContext();

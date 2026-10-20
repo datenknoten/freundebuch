@@ -9,24 +9,24 @@ test.describe('Authentication Flow', () => {
     await page.goto('/');
   });
 
-  test('should show sign in and sign up buttons when not authenticated', async ({ page }) => {
+  test('shows the sign-in and sign-up buttons when not authenticated', async ({ page }) => {
     await expect(page.getByRole('link', { name: 'Sign In' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Get Started' })).toBeVisible();
   });
 
-  test('should navigate to login page', async ({ page }) => {
+  test('navigates to the login page', async ({ page }) => {
     await page.getByRole('link', { name: 'Sign in' }).click();
     await expect(page).toHaveURL('/auth/login');
     await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
   });
 
-  test('should navigate to register page', async ({ page }) => {
+  test('navigates to the register page', async ({ page }) => {
     await page.getByRole('link', { name: 'Get Started' }).click();
     await expect(page).toHaveURL('/auth/register');
     await expect(page.getByRole('heading', { name: 'Create an account' })).toBeVisible();
   });
 
-  test('should show validation errors on login form', async ({ page }) => {
+  test('shows validation errors on the login form', async ({ page }) => {
     await page.goto('/auth/login');
 
     // Try to submit empty form
@@ -37,7 +37,7 @@ test.describe('Authentication Flow', () => {
     await expect(emailInput).toHaveAttribute('required', '');
   });
 
-  test('should show validation errors on registration form', async ({ page }) => {
+  test('shows validation errors on the registration form', async ({ page }) => {
     await page.goto('/auth/register');
 
     // Fill in email but not password
@@ -51,7 +51,7 @@ test.describe('Authentication Flow', () => {
     await expect(passwordInput).toHaveAttribute('required', '');
   });
 
-  test('should navigate between auth pages', async ({ page }) => {
+  test('navigates between the auth pages', async ({ page }) => {
     // Start at login
     await page.goto('/auth/login');
 
@@ -71,7 +71,7 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible();
   });
 
-  test('should show password mismatch error on registration', async ({ page }) => {
+  test('shows a password mismatch error on registration', async ({ page }) => {
     await page.goto('/auth/register');
 
     await page.getByLabel('Email address').fill('test@example.com');
@@ -85,7 +85,7 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByText('Passwords do not match')).toBeVisible();
   });
 
-  test('should show password length error on registration', async ({ page }) => {
+  test('shows a password length error on registration', async ({ page }) => {
     await page.goto('/auth/register');
 
     await page.getByLabel('Email address').fill('test@example.com');
@@ -99,7 +99,7 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByText('Password must be at least 8 characters')).toBeVisible();
   });
 
-  test('forgot password flow', async ({ page }) => {
+  test('walks through the forgot-password flow', async ({ page }) => {
     await page.goto('/auth/forgot-password');
 
     // Fill in email
@@ -114,7 +114,7 @@ test.describe('Authentication Flow', () => {
     ).toBeVisible();
   });
 
-  test('should require terms acceptance on registration', async ({ page }) => {
+  test('requires terms acceptance on registration', async ({ page }) => {
     await page.goto('/auth/register');
 
     const termsCheckbox = page.getByLabel(/I agree to the/);
@@ -128,7 +128,7 @@ test.describe('Authentication Flow', () => {
 });
 
 test.describe('Navigation Bar', () => {
-  test('should show correct navigation items when not authenticated', async ({ page }) => {
+  test('shows the anonymous navigation items when not authenticated', async ({ page }) => {
     await page.goto('/');
 
     // Check navbar shows Sign in and Sign up
@@ -141,7 +141,7 @@ test.describe('Navigation Bar', () => {
     await expect(navbar.getByRole('button', { name: 'Logout' })).not.toBeVisible();
   });
 
-  test('should have Freundebuch logo/link', async ({ page }) => {
+  test('links the Freundebuch logo home', async ({ page }) => {
     await page.goto('/');
 
     const logo = page.locator('nav').getByRole('link', { name: 'Freundebuch' });
@@ -154,9 +154,7 @@ test.describe('Navigation Bar', () => {
 });
 
 test.describe('Protected Routes', () => {
-  test('should redirect to login when accessing profile without authentication', async ({
-    page,
-  }) => {
+  test('redirects to login when the profile is opened without authentication', async ({ page }) => {
     // Try to access profile page directly
     await page.goto('/profile');
 
@@ -166,7 +164,7 @@ test.describe('Protected Routes', () => {
 });
 
 test.describe('Accessibility', () => {
-  test('login form should have proper labels', async ({ page }) => {
+  test('labels the login form fields', async ({ page }) => {
     await page.goto('/auth/login');
 
     // Check for proper labels
@@ -174,7 +172,7 @@ test.describe('Accessibility', () => {
     await expect(page.getByLabel('Password')).toBeVisible();
   });
 
-  test('registration form should have proper labels', async ({ page }) => {
+  test('labels the registration form fields', async ({ page }) => {
     await page.goto('/auth/register');
 
     // Check for proper labels
@@ -183,7 +181,7 @@ test.describe('Accessibility', () => {
     await expect(page.getByLabel('Confirm password')).toBeVisible();
   });
 
-  test('forms should have submit buttons', async ({ page }) => {
+  test('gives every auth form a submit button', async ({ page }) => {
     await page.goto('/auth/login');
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
 

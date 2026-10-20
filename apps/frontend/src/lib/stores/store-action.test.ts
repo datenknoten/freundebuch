@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { itemAt } from '$lib/test/item-at';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { itemAt } from '$lib/test/item-at.js';
 import { ApiError } from '../api/api-error.js';
 import { storeAction } from './store-action.js';
 
@@ -11,103 +11,122 @@ interface TestState {
 
 function createMockUpdate() {
   const states: TestState[] = [];
-  const update = (fn: (state: TestState) => TestState) => {
+  function update(fn: (state: TestState) => TestState) {
     const current =
       states.length > 0
         ? itemAt(states, states.length - 1)
         : { isLoading: false, error: null, data: null };
     states.push(fn(current));
-  };
+  }
   return { update, states };
 }
 
 describe('storeAction', () => {
-  it('sets isLoading to true before the API call', async () => {
-    const { update, states } = createMockUpdate();
-    const apiFn = vi.fn().mockResolvedValue('result');
-
-    await storeAction(update, apiFn, () => ({}), 'fallback');
-
-    expect(itemAt(states, 0).isLoading).toBe(true);
-    expect(itemAt(states, 0).error).toBeNull();
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('sets isLoading to false after success', async () => {
-    const { update, states } = createMockUpdate();
-    const apiFn = vi.fn().mockResolvedValue('result');
-
-    await storeAction(update, apiFn, () => ({}), 'fallback');
-
-    const finalState = itemAt(states, states.length - 1);
-    expect(finalState.isLoading).toBe(false);
-    expect(finalState.error).toBeNull();
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('calls onSuccess and merges the result into state', async () => {
-    const { update, states } = createMockUpdate();
-    const apiFn = vi.fn().mockResolvedValue('new-data');
+  describe('when the call succeeds', () => {
+    it('sets isLoading to true before the API call', async () => {
+      const { update, states } = createMockUpdate();
+      const apiFn = vi.fn().mockResolvedValue('result');
 
-    await storeAction(update, apiFn, (_state, result) => ({ data: result as string }), 'fallback');
+      await storeAction(update, apiFn, () => ({}), 'fallback');
 
-    const finalState = itemAt(states, states.length - 1);
-    expect(finalState.data).toBe('new-data');
-  });
+      expect(itemAt(states, 0).isLoading).toBe(true);
+      expect(itemAt(states, 0).error).toBeNull();
+    });
 
-  it('returns the API result', async () => {
-    const { update } = createMockUpdate();
-    const apiFn = vi.fn().mockResolvedValue({ id: 42 });
+    it('sets isLoading to false after success', async () => {
+      const { update, states } = createMockUpdate();
+      const apiFn = vi.fn().mockResolvedValue('result');
 
-    const result = await storeAction(update, apiFn, () => ({}), 'fallback');
+      await storeAction(update, apiFn, () => ({}), 'fallback');
 
-    expect(result).toEqual({ id: 42 });
-  });
+      const finalState = itemAt(states, states.length - 1);
+      expect(finalState.isLoading).toBe(false);
+      expect(finalState.error).toBeNull();
+    });
 
-  it('uses error.message for ApiError', async () => {
-    const { update, states } = createMockUpdate();
-    const apiError = new ApiError(400, 'Bad request');
-    const apiFn = vi.fn().mockRejectedValue(apiError);
+    it('calls onSuccess and merges the result into state', async () => {
+      const { update, states } = createMockUpdate();
+      const apiFn = vi.fn().mockResolvedValue('new-data');
 
-    await expect(storeAction(update, apiFn, () => ({}), 'fallback')).rejects.toThrow(apiError);
-
-    const finalState = itemAt(states, states.length - 1);
-    expect(finalState.error).toBe('Bad request');
-    expect(finalState.isLoading).toBe(false);
-  });
-
-  it('uses fallbackError for unknown errors', async () => {
-    const { update, states } = createMockUpdate();
-    const apiFn = vi.fn().mockRejectedValue(new Error('random'));
-
-    await expect(storeAction(update, apiFn, () => ({}), 'Something went wrong')).rejects.toThrow();
-
-    const finalState = itemAt(states, states.length - 1);
-    expect(finalState.error).toBe('Something went wrong');
-  });
-
-  it('calls onError callback and merges its result on error', async () => {
-    const { update, states } = createMockUpdate();
-    const apiFn = vi.fn().mockRejectedValue(new Error('fail'));
-
-    await expect(
-      storeAction(
+      await storeAction(
         update,
         apiFn,
-        () => ({}),
+        (_state, result) => ({ data: result as string }),
         'fallback',
-        () => ({ data: null }),
-      ),
-    ).rejects.toThrow();
+      );
 
-    const finalState = itemAt(states, states.length - 1);
-    expect(finalState.data).toBeNull();
-    expect(finalState.error).toBe('fallback');
+      const finalState = itemAt(states, states.length - 1);
+      expect(finalState.data).toBe('new-data');
+    });
+
+    it('returns the API result', async () => {
+      const { update } = createMockUpdate();
+      const apiFn = vi.fn().mockResolvedValue({ id: 42 });
+
+      const result = await storeAction(update, apiFn, () => ({}), 'fallback');
+
+      expect(result).toEqual({ id: 42 });
+    });
   });
 
-  it('re-throws the original error', async () => {
-    const { update } = createMockUpdate();
-    const originalError = new Error('original');
-    const apiFn = vi.fn().mockRejectedValue(originalError);
+  describe('when the call fails', () => {
+    it('uses error.message for ApiError', async () => {
+      const { update, states } = createMockUpdate();
+      const apiError = new ApiError(400, 'Bad request');
+      const apiFn = vi.fn().mockRejectedValue(apiError);
 
-    await expect(storeAction(update, apiFn, () => ({}), 'fallback')).rejects.toBe(originalError);
+      await expect(storeAction(update, apiFn, () => ({}), 'fallback')).rejects.toThrow(apiError);
+
+      const finalState = itemAt(states, states.length - 1);
+      expect(finalState.error).toBe('Bad request');
+      expect(finalState.isLoading).toBe(false);
+    });
+
+    it('uses fallbackError for unknown errors', async () => {
+      const { update, states } = createMockUpdate();
+      const apiFn = vi.fn().mockRejectedValue(new Error('random'));
+
+      await expect(
+        storeAction(update, apiFn, () => ({}), 'Something went wrong'),
+      ).rejects.toThrow();
+
+      const finalState = itemAt(states, states.length - 1);
+      expect(finalState.error).toBe('Something went wrong');
+    });
+
+    it('calls onError callback and merges its result on error', async () => {
+      const { update, states } = createMockUpdate();
+      const apiFn = vi.fn().mockRejectedValue(new Error('fail'));
+
+      await expect(
+        storeAction(
+          update,
+          apiFn,
+          () => ({}),
+          'fallback',
+          () => ({ data: null }),
+        ),
+      ).rejects.toThrow();
+
+      const finalState = itemAt(states, states.length - 1);
+      expect(finalState.data).toBeNull();
+      expect(finalState.error).toBe('fallback');
+    });
+
+    it('re-throws the original error', async () => {
+      const { update } = createMockUpdate();
+      const originalError = new Error('original');
+      const apiFn = vi.fn().mockRejectedValue(originalError);
+
+      await expect(storeAction(update, apiFn, () => ({}), 'fallback')).rejects.toBe(originalError);
+    });
   });
 });

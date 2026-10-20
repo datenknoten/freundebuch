@@ -1,54 +1,66 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import TabNav from '$lib/components/TabNav.svelte';
 import { fireEvent, render, screen } from '$lib/test/render.js';
-import TabNav from './TabNav.svelte';
 
-const tabs = [
+const TABS = [
   { id: 'ios', label: 'iOS' },
   { id: 'macos', label: 'macOS' },
   { id: 'thunderbird', label: 'Thunderbird' },
 ];
 
 describe('TabNav', () => {
-  it('marks only the active tab as selected', () => {
-    render(TabNav, { tabs, active: 'macos', onselect: () => undefined });
-
-    expect(screen.getByRole('tab', { name: 'iOS' }).getAttribute('aria-selected')).toBe('false');
-    expect(screen.getByRole('tab', { name: 'macOS' }).getAttribute('aria-selected')).toBe('true');
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('keeps a single tab stop', () => {
-    render(TabNav, { tabs, active: 'macos', onselect: () => undefined });
-
-    expect(screen.getByRole('tab', { name: 'macOS' }).getAttribute('tabindex')).toBe('0');
-    expect(screen.getByRole('tab', { name: 'iOS' }).getAttribute('tabindex')).toBe('-1');
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('selects a tab on click', async () => {
-    const onselect = vi.fn();
-    render(TabNav, { tabs, active: 'ios', onselect });
+  describe('rendering', () => {
+    it('marks only the active tab as selected', () => {
+      render(TabNav, { tabs: TABS, active: 'macos', onselect: vi.fn() });
 
-    await fireEvent.click(screen.getByRole('tab', { name: 'Thunderbird' }));
+      expect(screen.getByRole('tab', { name: 'iOS' }).getAttribute('aria-selected')).toBe('false');
+      expect(screen.getByRole('tab', { name: 'macOS' }).getAttribute('aria-selected')).toBe('true');
+    });
 
-    expect(onselect).toHaveBeenCalledWith('thunderbird');
+    it('keeps a single tab stop', () => {
+      render(TabNav, { tabs: TABS, active: 'macos', onselect: vi.fn() });
+
+      expect(screen.getByRole('tab', { name: 'macOS' }).getAttribute('tabindex')).toBe('0');
+      expect(screen.getByRole('tab', { name: 'iOS' }).getAttribute('tabindex')).toBe('-1');
+    });
   });
 
-  it('moves the selection with the arrow keys and wraps around', async () => {
-    const onselect = vi.fn();
-    render(TabNav, { tabs, active: 'ios', onselect });
+  describe('selecting', () => {
+    it('selects a tab on click', async () => {
+      const onselect = vi.fn();
+      render(TabNav, { tabs: TABS, active: 'ios', onselect });
 
-    await fireEvent.keyDown(screen.getByRole('tab', { name: 'iOS' }), { key: 'ArrowRight' });
-    expect(onselect).toHaveBeenLastCalledWith('macos');
+      await fireEvent.click(screen.getByRole('tab', { name: 'Thunderbird' }));
 
-    await fireEvent.keyDown(screen.getByRole('tab', { name: 'iOS' }), { key: 'ArrowLeft' });
-    expect(onselect).toHaveBeenLastCalledWith('thunderbird');
-  });
+      expect(onselect).toHaveBeenCalledWith('thunderbird');
+    });
 
-  it('ignores unrelated keys', async () => {
-    const onselect = vi.fn();
-    render(TabNav, { tabs, active: 'ios', onselect });
+    it('moves the selection with the arrow keys and wraps around', async () => {
+      const onselect = vi.fn();
+      render(TabNav, { tabs: TABS, active: 'ios', onselect });
 
-    await fireEvent.keyDown(screen.getByRole('tab', { name: 'iOS' }), { key: 'a' });
+      await fireEvent.keyDown(screen.getByRole('tab', { name: 'iOS' }), { key: 'ArrowRight' });
+      expect(onselect).toHaveBeenLastCalledWith('macos');
 
-    expect(onselect).not.toHaveBeenCalled();
+      await fireEvent.keyDown(screen.getByRole('tab', { name: 'iOS' }), { key: 'ArrowLeft' });
+      expect(onselect).toHaveBeenLastCalledWith('thunderbird');
+    });
+
+    it('ignores unrelated keys', async () => {
+      const onselect = vi.fn();
+      render(TabNav, { tabs: TABS, active: 'ios', onselect });
+
+      await fireEvent.keyDown(screen.getByRole('tab', { name: 'iOS' }), { key: 'a' });
+
+      expect(onselect).not.toHaveBeenCalled();
+    });
   });
 });

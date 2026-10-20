@@ -1,58 +1,83 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import CircleEditModal from '$lib/components/circles/CircleEditModal.svelte';
+import { InvariantError } from '$lib/errors/invariant.error.js';
+import { useLanguage } from '$lib/test/locale.js';
 import { fireEvent, screen } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
-import CircleEditModal from './CircleEditModal.svelte';
 
-// i18n returns the key so assertions can target stable label keys.
-vi.mock('$lib/i18n/i18n.js', () => ({
-  createI18n: () => ({
-    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
-      run({ t: (k: string) => k });
-      return () => undefined;
-    },
-  }),
-}));
+function getDialog() {
+  const dialog = screen.getByRole('dialog');
+  if (dialog instanceof HTMLDialogElement) {
+    return dialog;
+  }
+  throw new InvariantError('the dialog role is not a <dialog>');
+}
+
+function getForm() {
+  const form = getDialog().querySelector('form');
+  if (form === null) {
+    throw new InvariantError('the dialog holds no <form>');
+  }
+  return form;
+}
+
+function pressEscape() {
+  // Escape reaches the dialog as the native `cancel` event.
+  return fireEvent(getDialog(), new Event('cancel', { cancelable: true }));
+}
 
 describe('CircleEditModal', () => {
-  it('renders the form inside an open dialog', () => {
-    renderWithContext(CircleEditModal, { props: { onClose: vi.fn() } });
-
-    const dialog = screen.getByRole('dialog') as HTMLDialogElement;
-    expect(dialog.open).toBe(true);
-    expect(screen.getByLabelText(/circles\.form\.name/)).toBeTruthy();
-    expect(screen.getByText('circles.form.createCircle')).toBeTruthy();
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await useLanguage('en');
   });
 
-  it('asks before discarding edits, and Escape answers "keep editing"', async () => {
-    const onClose = vi.fn();
-    renderWithContext(CircleEditModal, { props: { onClose } });
-
-    const input = screen.getByLabelText(/circles\.form\.name/);
-    await fireEvent.input(input, { target: { value: 'Family' } });
-
-    // Escape reaches the dialog as the native `cancel` event.
-    await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
-    expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByText('subresources.common.unsavedChangesTitle')).toBeTruthy();
-
-    // A second Escape dismisses the question instead of asking it again.
-    await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
-    expect(screen.queryByText('subresources.common.unsavedChangesTitle')).toBeNull();
-    expect(onClose).not.toHaveBeenCalled();
-
-    await fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
-    await fireEvent.click(screen.getByText('subresources.common.discardChanges'));
-    expect(onClose).toHaveBeenCalledTimes(1);
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('reports the empty name on the field itself', async () => {
-    renderWithContext(CircleEditModal, { props: { onClose: vi.fn() } });
+  describe('opening', () => {
+    it('renders the form inside an open dialog', () => {
+      renderWithContext(CircleEditModal, { props: { onClose: vi.fn() } });
 
-    await fireEvent.submit(screen.getByRole('dialog').querySelector('form') as HTMLFormElement);
+      expect(getDialog().open).toBe(true);
+      expect(screen.getByLabelText(/^Name/)).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Create Circle' })).toBeTruthy();
+    });
+  });
 
-    const input = screen.getByLabelText(/circles\.form\.name/);
-    expect(input.getAttribute('aria-invalid')).toBe('true');
-    expect(input.getAttribute('aria-describedby')).toContain('circle-name-error');
-    expect(screen.getByText('circles.form.nameRequired')).toBeTruthy();
+  describe('closing with edits', () => {
+    it('asks before discarding edits, and Escape answers "keep editing"', async () => {
+      const onClose = vi.fn();
+      renderWithContext(CircleEditModal, { props: { onClose } });
+
+      await fireEvent.input(screen.getByLabelText(/^Name/), { target: { value: 'Family' } });
+
+      await pressEscape();
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByText('Unsaved Changes')).toBeTruthy();
+
+      // A second Escape dismisses the question instead of asking it again.
+      await pressEscape();
+      expect(screen.queryByText('Unsaved Changes')).toBeNull();
+      expect(onClose).not.toHaveBeenCalled();
+
+      await pressEscape();
+      await fireEvent.click(screen.getByText('Discard Changes'));
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('validation', () => {
+    it('reports the empty name on the field itself', async () => {
+      renderWithContext(CircleEditModal, { props: { onClose: vi.fn() } });
+
+      await fireEvent.submit(getForm());
+
+      const input = screen.getByLabelText(/^Name/);
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+      expect(input.getAttribute('aria-describedby')).toContain('circle-name-error');
+      expect(screen.getByText('Circle name is required')).toBeTruthy();
+    });
   });
 });

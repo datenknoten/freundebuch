@@ -12,8 +12,16 @@ function createSearchStore() {
   return new SearchStore({ friendSearchApi, logger: createRootLogger({ LOG_LEVEL: 'silent' }) });
 }
 
-function aHit(id: string): GlobalSearchResultResponse {
-  return { id, displayName: id, rank: 1, headline: null, matchSource: null, circles: [] };
+function aHit(id: string) {
+  const hit: GlobalSearchResultResponse = {
+    id,
+    displayName: id,
+    rank: 1,
+    headline: null,
+    matchSource: null,
+    circles: [],
+  };
+  return hit;
 }
 
 const ONE_PAGE = { page: 1, pageSize: 10, totalCount: 1, totalPages: 1 };

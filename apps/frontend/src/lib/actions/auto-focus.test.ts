@@ -1,18 +1,28 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import type * as Svelte from 'svelte';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Spy on flushSync (keeping the real implementation) to assert that
 // openWithKeyboard flushes synchronously, after applying the state change.
 const flushSync = vi.hoisted(() => vi.fn());
-vi.mock('svelte', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('svelte')>();
+vi.mock('svelte', mockSvelte);
+
+async function mockSvelte(importOriginal: () => Promise<typeof Svelte>) {
+  const actual = await importOriginal();
   flushSync.mockImplementation(actual.flushSync);
-  return { ...actual, flushSync: (...args: unknown[]) => flushSync(...args) };
+  function spiedFlushSync(...args: unknown[]) {
+    return flushSync(...args);
+  }
+  return { ...actual, flushSync: spiedFlushSync };
+}
+
+import { autoFocus, openWithKeyboard } from './auto-focus.js';
+
+beforeEach(() => {
+  vi.clearAllMocks();
 });
 
-import { autoFocus, openWithKeyboard } from './auto-focus';
-
 afterEach(() => {
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
   document.body.innerHTML = '';
 });
 

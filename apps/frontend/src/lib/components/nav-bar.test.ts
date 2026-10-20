@@ -1,20 +1,13 @@
 import { get, readable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import NavBar from '$lib/components/NavBar.svelte';
 import { itemAt } from '$lib/test/item-at.js';
 import { cleanup, fireEvent, screen } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
-import NavBar from './NavBar.svelte';
 
 // i18n returns the key so assertions can target stable label keys.
-vi.mock('$lib/i18n/i18n.js', () => ({
-  createI18n: () => ({
-    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
-      run({ t: (k: string) => k });
-      return () => undefined;
-    },
-  }),
-}));
+vi.mock('$lib/i18n/i18n.js', () => import('$lib/test/i18n-key-mock.js'));
 
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 

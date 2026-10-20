@@ -1,21 +1,22 @@
 import { type ComponentProps, createRawSnippet, tick } from 'svelte';
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import Modal from '$lib/components/ui/Modal.svelte';
 import { cleanup, fireEvent, screen, waitFor } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
-import Modal from '$lib/components/ui/Modal.svelte';
 
-vi.mock('$lib/i18n/i18n.js', () => ({
-  createI18n: () => ({
-    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
-      run({ t: (k: string) => k });
-      return () => undefined;
+vi.mock('$lib/i18n/i18n.js', () => import('$lib/test/i18n-key-mock.js'));
+
+function renderBody() {
+  return {
+    render() {
+      return '<p>Body</p>';
     },
-  }),
-}));
+  };
+}
 
-const body = createRawSnippet(() => ({ render: () => '<p>Body</p>' }));
+const BODY = createRawSnippet(renderBody);
 
 function noop() {
   return undefined;
@@ -26,7 +27,7 @@ function renderModal(
   context = createTestAppContext(),
 ) {
   const rendered = renderWithContext(Modal, {
-    props: { title: 'Edit email', onClose: noop, children: body, ...props },
+    props: { title: 'Edit email', onClose: noop, children: BODY, ...props },
     context,
   });
   return { ...rendered, context };

@@ -4,8 +4,8 @@ import { InvariantError } from '$lib/errors/invariant.error.js';
 import { anAddress, anEmail, aPhone, aUrl } from '$lib/test/fixtures.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
 import type { CollectiveCircleResponse } from '$shared';
-import type { SubresourceDescriptor } from '../subresources/types';
-import { createCollectiveDescriptors } from './subresource-descriptors';
+import type { SubresourceDescriptor } from '../subresources/types.js';
+import { createCollectiveDescriptors } from './subresource-descriptors.js';
 
 const { api } = createTestAppContext();
 const { contactDescriptors, circleDescriptor, addDetailOptions } = createCollectiveDescriptors({

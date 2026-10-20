@@ -1,12 +1,12 @@
 import type { ComponentProps } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import FriendGrid from '$lib/components/friends/FriendGrid.svelte';
 import { itemAt } from '$lib/test/item-at.js';
 import { useLanguage } from '$lib/test/locale.js';
 import { fireEvent, screen, within } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
 import type { ColumnId, FriendGridItem } from '$shared';
-import FriendGrid from './FriendGrid.svelte';
 
 const navigation = vi.hoisted(() => ({ goto: vi.fn() }));
 vi.mock('$app/navigation', () => navigation);
@@ -18,10 +18,18 @@ async function useCountryLanguage(lang: 'en' | 'de') {
   await context.stores.locale.setLanguage(lang);
 }
 
+const DEFAULT_COLUMNS: ColumnId[] = ['avatar', 'displayName'];
+
 let nextId = 0;
-function anItem(overrides: Partial<FriendGridItem> = {}): FriendGridItem {
+function anItem(overrides: Partial<FriendGridItem> = {}) {
   nextId += 1;
-  return { id: `friend-${nextId}`, displayName: 'Ada Lovelace', circles: [], ...overrides };
+  const item: FriendGridItem = {
+    id: `friend-${nextId}`,
+    displayName: 'Ada Lovelace',
+    circles: [],
+    ...overrides,
+  };
+  return item;
 }
 
 function renderGrid(props: Partial<ComponentProps<typeof FriendGrid>> = {}) {
@@ -30,7 +38,7 @@ function renderGrid(props: Partial<ComponentProps<typeof FriendGrid>> = {}) {
     context,
     props: {
       items: [anItem()],
-      columns: ['avatar', 'displayName'] as ColumnId[],
+      columns: DEFAULT_COLUMNS,
       sortBy: 'display_name',
       sortOrder: 'asc',
       birthdayFormat: 'iso',
@@ -42,27 +50,28 @@ function renderGrid(props: Partial<ComponentProps<typeof FriendGrid>> = {}) {
 }
 
 /** The desktop table body rows (header row excluded). */
-function bodyRows(): HTMLElement[] {
+function bodyRows() {
   return within(screen.getByRole('table')).getAllByRole('row').slice(1);
 }
 
 /** The text of the desktop table cell for `column` in the first body row. */
-function cellText(columns: ColumnId[], column: ColumnId): string {
+function cellText(columns: ColumnId[], column: ColumnId) {
   const cells = within(itemAt(bodyRows(), 0)).getAllByRole('cell');
   return itemAt(cells, columns.indexOf(column)).textContent?.trim() ?? '';
 }
 
-function header(name: string): HTMLElement {
+function header(name: string) {
   return within(screen.getByRole('table')).getByRole('columnheader', { name });
 }
 
 describe('FriendGrid', () => {
   beforeEach(async () => {
+    vi.clearAllMocks();
     await useCountryLanguage('en');
   });
 
   afterEach(() => {
-    navigation.goto.mockReset();
+    vi.restoreAllMocks();
   });
 
   describe('country column', () => {

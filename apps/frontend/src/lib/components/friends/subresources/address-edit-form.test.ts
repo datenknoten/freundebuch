@@ -1,11 +1,11 @@
 import type { ComponentProps } from 'svelte';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppContext } from '$lib/app-context.js';
+import AddressEditForm from '$lib/components/friends/subresources/AddressEditForm.svelte';
 import { anAddress } from '$lib/test/fixtures.js';
 import { useLanguage } from '$lib/test/locale.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
-import AddressEditForm from './AddressEditForm.svelte';
 
 let context: AppContext;
 

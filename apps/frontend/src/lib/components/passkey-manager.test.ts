@@ -1,16 +1,26 @@
+import { readable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import PasskeyManager from '$lib/components/PasskeyManager.svelte';
 import { fireEvent, screen, waitFor, within } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
-import PasskeyManager from './PasskeyManager.svelte';
 
+// The mock factory must not hold nested arrows (M13), so the echo `t` is named.
+function echoKey(key: string) {
+  return key;
+}
+
+function createEchoI18n() {
+  return readable({ t: echoKey });
+}
+
+function currentLanguage() {
+  return 'en';
+}
+
+// i18n returns the key so assertions can target stable label keys.
 vi.mock('$lib/i18n/i18n.js', () => ({
-  createI18n: () => ({
-    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
-      run({ t: (k: string) => k });
-      return () => undefined;
-    },
-  }),
-  getCurrentLanguage: () => 'en',
+  createI18n: createEchoI18n,
+  getCurrentLanguage: currentLanguage,
 }));
 
 const A_PASSKEY = {
@@ -68,33 +78,35 @@ afterEach(() => {
 });
 
 describe('PasskeyManager', () => {
-  it('deletes a passkey only after the confirmation dialog', async () => {
-    const dialog = await openDeleteConfirmation();
+  describe('deleting a passkey', () => {
+    it('deletes a passkey only after the confirmation dialog', async () => {
+      const dialog = await openDeleteConfirmation();
 
-    expect(within(dialog).getByText('profile.passkeys.deleteTitle')).toBeTruthy();
-    expect(within(dialog).getByText('YubiKey')).toBeTruthy();
-    expect(deleteRequests()).toEqual([]);
+      expect(within(dialog).getByText('profile.passkeys.deleteTitle')).toBeTruthy();
+      expect(within(dialog).getByText('YubiKey')).toBeTruthy();
+      expect(deleteRequests()).toEqual([]);
 
-    await fireEvent.click(within(dialog).getByText('common.delete'));
-    await waitFor(() => expect(deleteRequests()).toHaveLength(1));
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-  });
+      await fireEvent.click(within(dialog).getByText('common.delete'));
+      await waitFor(() => expect(deleteRequests()).toHaveLength(1));
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    });
 
-  it('keeps the passkey when the dialog is cancelled', async () => {
-    const dialog = await openDeleteConfirmation();
+    it('keeps the passkey when the dialog is cancelled', async () => {
+      const dialog = await openDeleteConfirmation();
 
-    await fireEvent.click(within(dialog).getByText('common.cancel'));
-    expect(deleteRequests()).toEqual([]);
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
+      await fireEvent.click(within(dialog).getByText('common.cancel'));
+      expect(deleteRequests()).toEqual([]);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
 
-  it('keeps the dialog open and shows the reason when deletion fails', async () => {
-    deleteAnswer = { message: 'still in use' };
-    const dialog = await openDeleteConfirmation();
+    it('keeps the dialog open and shows the reason when deletion fails', async () => {
+      deleteAnswer = { message: 'still in use' };
+      const dialog = await openDeleteConfirmation();
 
-    await fireEvent.click(within(dialog).getByText('common.delete'));
+      await fireEvent.click(within(dialog).getByText('common.delete'));
 
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('still in use'));
-    expect(screen.getByRole('dialog')).toBeTruthy();
+      await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('still in use'));
+      expect(screen.getByRole('dialog')).toBeTruthy();
+    });
   });
 });

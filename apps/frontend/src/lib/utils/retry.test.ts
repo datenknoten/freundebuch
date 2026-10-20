@@ -1,14 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { itemAt } from '$lib/test/item-at';
+import { itemAt } from '$lib/test/item-at.js';
 import { retryWithBackoff } from './retry.js';
 
 describe('retryWithBackoff', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.useFakeTimers();
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   describe('when the function succeeds', () => {

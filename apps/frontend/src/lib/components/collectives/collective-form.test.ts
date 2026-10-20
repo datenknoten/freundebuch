@@ -1,10 +1,11 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import CollectiveForm from '$lib/components/collectives/CollectiveForm.svelte';
+import { InvariantError } from '$lib/errors/invariant.error.js';
 import { aCollective, aCollectiveType } from '$lib/test/fixtures.js';
 import { useLanguage } from '$lib/test/locale.js';
 import { control, labelFor, waitFor } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
-import CollectiveForm from './CollectiveForm.svelte';
 
 function createContext() {
   const context = createTestAppContext();
@@ -15,6 +16,18 @@ function createContext() {
     ],
   });
   return context;
+}
+
+function typeSelect() {
+  const select = control('type');
+  if (select instanceof HTMLSelectElement) {
+    return select;
+  }
+  throw new InvariantError('the type control is not a select');
+}
+
+function optionLabels(select: HTMLSelectElement) {
+  return [...select.options].map((option) => option.textContent);
 }
 
 describe('CollectiveForm', () => {
@@ -37,16 +50,8 @@ describe('CollectiveForm', () => {
       expect(labelFor('name')).toContain('Name');
       expect(labelFor('name')).toContain('*');
       expect(control('name').required).toBe(true);
-
-      const type = control('type') as HTMLSelectElement;
-      expect(type.tagName).toBe('SELECT');
-      await waitFor(() =>
-        expect([...type.options].map((o) => o.textContent)).toEqual([
-          'Select a type...',
-          'Band',
-          'Club',
-        ]),
-      );
+      const type = typeSelect();
+      await waitFor(() => expect(optionLabels(type)).toEqual(['Select a type...', 'Band', 'Club']));
       expect(type.getAttribute('aria-describedby')).toBe('type-helper');
     });
   });
@@ -59,8 +64,8 @@ describe('CollectiveForm', () => {
       });
       renderWithContext(CollectiveForm, { props: { collective }, context: createContext() });
 
-      const type = control('type') as HTMLInputElement;
-      expect(type.tagName).toBe('INPUT');
+      const type = control('type');
+      expect(type).toBeInstanceOf(HTMLInputElement);
       expect(type.value).toBe('Band');
       expect(type.disabled).toBe(true);
       expect(document.querySelectorAll('label[for="type"]').length).toBe(1);

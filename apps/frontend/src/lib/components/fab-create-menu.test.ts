@@ -1,42 +1,35 @@
-import { get } from 'svelte/store';
+import type * as Svelte from 'svelte';
+import { get, readable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { goto } from '$app/navigation';
+import FabCreateMenu, { navigateForCreateChoice } from '$lib/components/FabCreateMenu.svelte';
 import { fireEvent, screen } from '$lib/test/render.js';
 import { renderWithContext } from '$lib/test/render-with-context.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
-import FabCreateMenu, { navigateForCreateChoice } from './FabCreateMenu.svelte';
 
 // i18n returns the key so assertions can target stable label keys.
-vi.mock('$lib/i18n/i18n.js', () => ({
-  createI18n: () => ({
-    subscribe: (run: (v: { t: (k: string) => string }) => void) => {
-      run({ t: (k: string) => k });
-      return () => undefined;
-    },
-  }),
-}));
-
-const goto = vi.fn();
-vi.mock('$app/navigation', () => ({ goto: (...args: unknown[]) => goto(...args) }));
+vi.mock('$lib/i18n/i18n.js', () => import('$lib/test/i18n-key-mock.js'));
+vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
 // navigateForCreateChoice reads the current route; pretend we're on /circles so
 // the "create circle in place" branch runs.
-vi.mock('$app/stores', () => ({
-  page: {
-    subscribe: (run: (v: { url: URL }) => void) => {
-      run({ url: new URL('http://localhost/circles') });
-      return () => undefined;
-    },
-  },
-}));
+vi.mock('$app/stores', () => ({ page: readable({ url: new URL('http://localhost/circles') }) }));
 
 // Spy on flushSync (keeping the real implementation) so the circle branch's
 // two synchronous flushes can be ordered against the modal-open event.
 const flushSync = vi.hoisted(() => vi.fn());
-vi.mock('svelte', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('svelte')>();
+
+function spyFlushSync(...args: unknown[]) {
+  return flushSync(...args);
+}
+
+async function mockSvelte(importOriginal: <T>() => Promise<T>) {
+  const actual = await importOriginal<typeof Svelte>();
   flushSync.mockImplementation(actual.flushSync);
-  return { ...actual, flushSync: (...args: unknown[]) => flushSync(...args) };
-});
+  return { ...actual, flushSync: spyFlushSync };
+}
+
+vi.mock('svelte', mockSvelte);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -108,7 +101,7 @@ describe('FabCreateMenu', () => {
 
 describe('navigateForCreateChoice', () => {
   describe('for a non-circle choice', () => {
-    it('routes non-circle choices straight to their create flow', () => {
+    it('routes straight to the create flow', () => {
       navigateForCreateChoice('friend');
       expect(goto).toHaveBeenCalledWith('/friends/new');
     });
@@ -121,8 +114,10 @@ describe('navigateForCreateChoice', () => {
     // otherwise land after the modal's autofocus and drop the keyboard.
     it('opens the circle modal synchronously, flushing the menu teardown first', () => {
       const flushesBeforeDispatch: number[] = [];
-      const listener = () => flushesBeforeDispatch.push(flushSync.mock.calls.length);
-      window.addEventListener('shortcut:new-circle', listener);
+      function recordFlushCount() {
+        flushesBeforeDispatch.push(flushSync.mock.calls.length);
+      }
+      window.addEventListener('shortcut:new-circle', recordFlushCount);
       try {
         navigateForCreateChoice('circle');
 
@@ -132,7 +127,7 @@ describe('navigateForCreateChoice', () => {
         expect(flushSync).toHaveBeenCalledTimes(2);
         expect(goto).not.toHaveBeenCalled();
       } finally {
-        window.removeEventListener('shortcut:new-circle', listener);
+        window.removeEventListener('shortcut:new-circle', recordFlushCount);
       }
     });
   });

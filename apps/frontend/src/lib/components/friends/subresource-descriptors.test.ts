@@ -1,26 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '$lib/api/api-error.js';
-import { createTestAppContext } from '$lib/test/test-app-context.js';
-import type { SocialProfileResponse } from '$shared';
 import {
   createCollectiveDescriptor,
   createFriendAddDetailOptions,
   createFriendDescriptors,
   hasProfileUrl,
-} from './subresource-descriptors';
+} from '$lib/components/friends/subresource-descriptors.js';
+import { createTestAppContext } from '$lib/test/test-app-context.js';
+import type { SocialProfileResponse } from '$shared';
 
 // i18n stubbed as an echo so the mapped keys are observable.
 function t(key: string) {
   return key;
 }
 
-function aSocialProfile(overrides: Partial<SocialProfileResponse> = {}): SocialProfileResponse {
-  return {
+function aSocialProfile(overrides: Partial<SocialProfileResponse> = {}) {
+  const profile: SocialProfileResponse = {
     id: 'social-1',
     platform: 'github',
     createdAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
   };
+  return profile;
 }
 
 function setUp() {
@@ -39,15 +40,21 @@ function setUp() {
   return { descriptors, collectiveDescriptor, refreshFriend };
 }
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('createFriendDescriptors', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.useFakeTimers();
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   describe('address', () => {

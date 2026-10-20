@@ -8,11 +8,15 @@ import { AuthStore } from './auth.js';
 import { LocaleStore } from './locale.js';
 import { SessionStore } from './session.js';
 
-const h = vi.hoisted(() => ({
-  initI18n: vi.fn(async () => undefined),
-  changeLanguage: vi.fn(async () => undefined),
-  getCurrentLanguage: vi.fn(() => 'en'),
-}));
+function createI18nFake() {
+  return {
+    initI18n: vi.fn(async () => undefined),
+    changeLanguage: vi.fn(async () => undefined),
+    getCurrentLanguage: vi.fn(() => 'en'),
+  };
+}
+
+const h = vi.hoisted(createI18nFake);
 
 vi.mock('$lib/i18n/i18n.js', () => h);
 

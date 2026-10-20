@@ -1,66 +1,78 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import SocialProfileRow from '$lib/components/friends/subresources/SocialProfileRow.svelte';
 import en from '$lib/i18n/locales/en.json';
 import { itemAt } from '$lib/test/item-at.js';
 import { useLanguage } from '$lib/test/locale.js';
 import { render, screen } from '$lib/test/render.js';
 import type { SocialProfileResponse } from '$shared';
-import SocialProfileRow from './SocialProfileRow.svelte';
 
 const strings = en.subresources;
 
-const profile = (overrides: Partial<SocialProfileResponse> = {}): SocialProfileResponse => ({
-  id: 'sp-1',
-  platform: 'github',
-  createdAt: '2026-01-01T00:00:00.000Z',
-  ...overrides,
-});
+function aSocialProfile(overrides: Partial<SocialProfileResponse> = {}) {
+  const profile: SocialProfileResponse = {
+    id: 'sp-1',
+    platform: 'github',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  };
+  return profile;
+}
 
 // Renders twice (mobile + desktop), so queries use *All*.
 describe('SocialProfileRow', () => {
   beforeEach(async () => {
+    vi.clearAllMocks();
     await useLanguage('en');
   });
 
-  it('shows @username and the platform label when a username is set', () => {
-    render(SocialProfileRow, {
-      profile: profile({ username: 'ada', platform: 'github' }),
-      onEdit: vi.fn(),
-      onDelete: vi.fn(),
-    });
-
-    expect(screen.getAllByText('@ada').length).toBeGreaterThan(0);
-    expect(screen.getAllByText(strings.social.platforms.github).length).toBeGreaterThan(0);
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('links to the profile URL when there is no username', () => {
-    render(SocialProfileRow, {
-      profile: profile({ username: undefined, profileUrl: 'https://x.com/ada' }),
-      onEdit: vi.fn(),
-      onDelete: vi.fn(),
-    });
+  describe('with a username', () => {
+    it('shows @username and the platform label when a username is set', () => {
+      render(SocialProfileRow, {
+        profile: aSocialProfile({ username: 'ada', platform: 'github' }),
+        onEdit: vi.fn(),
+        onDelete: vi.fn(),
+      });
 
-    expect(itemAt(screen.getAllByRole('link'), 0).getAttribute('href')).toBe('https://x.com/ada');
+      expect(screen.getAllByText('@ada').length).toBeGreaterThan(0);
+      expect(screen.getAllByText(strings.social.platforms.github).length).toBeGreaterThan(0);
+    });
   });
 
-  it('falls back to the platform label as plain text when neither is set', () => {
-    render(SocialProfileRow, {
-      profile: profile({ platform: 'other', username: undefined, profileUrl: undefined }),
-      onEdit: vi.fn(),
-      onDelete: vi.fn(),
+  describe('without a username', () => {
+    it('links to the profile URL when there is no username', () => {
+      render(SocialProfileRow, {
+        profile: aSocialProfile({ username: undefined, profileUrl: 'https://x.com/ada' }),
+        onEdit: vi.fn(),
+        onDelete: vi.fn(),
+      });
+
+      expect(itemAt(screen.getAllByRole('link'), 0).getAttribute('href')).toBe('https://x.com/ada');
     });
 
-    expect(screen.queryByRole('link')).toBeNull();
-    expect(screen.getAllByText(strings.social.platforms.other).length).toBeGreaterThan(0);
-  });
+    it('falls back to the platform label as plain text when neither is set', () => {
+      render(SocialProfileRow, {
+        profile: aSocialProfile({ platform: 'other', username: undefined, profileUrl: undefined }),
+        onEdit: vi.fn(),
+        onDelete: vi.fn(),
+      });
 
-  it('translates the fallback platform label', async () => {
-    await useLanguage('de');
-    render(SocialProfileRow, {
-      profile: profile({ platform: 'other', username: undefined, profileUrl: undefined }),
-      onEdit: vi.fn(),
-      onDelete: vi.fn(),
+      expect(screen.queryByRole('link')).toBeNull();
+      expect(screen.getAllByText(strings.social.platforms.other).length).toBeGreaterThan(0);
     });
 
-    expect(screen.getAllByText('Sonstige').length).toBeGreaterThan(0);
+    it('translates the fallback platform label', async () => {
+      await useLanguage('de');
+      render(SocialProfileRow, {
+        profile: aSocialProfile({ platform: 'other', username: undefined, profileUrl: undefined }),
+        onEdit: vi.fn(),
+        onDelete: vi.fn(),
+      });
+
+      expect(screen.getAllByText('Sonstige').length).toBeGreaterThan(0);
+    });
   });
 });
