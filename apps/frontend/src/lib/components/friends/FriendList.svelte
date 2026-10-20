@@ -267,18 +267,22 @@ async function loadFacets() {
   }
 }
 
+// The store keeps a failure in its error state, which the banner above the list shows.
+async function loadFriendList(page: number, pageSize: number) {
+  try {
+    await friends.loadFriends({ page, pageSize, sortBy, sortOrder });
+  } catch (err) {
+    logger.error({ err }, 'Failed to load friends');
+  }
+}
+
 async function loadPage(page: number) {
   if (isSearchMode === true || isFilterMode === true) {
     searchPage = page;
     await performSearch();
-  } else {
-    await friends.loadFriends({
-      page,
-      pageSize: currentPageSize,
-      sortBy,
-      sortOrder,
-    });
+    return;
   }
+  await loadFriendList(page, currentPageSize);
 }
 
 async function handleSortChange() {
@@ -317,14 +321,9 @@ async function handlePageSizeChange(newSize: PageSize) {
   if (isSearchMode === true) {
     searchPage = 1;
     await performSearch();
-  } else {
-    await friends.loadFriends({
-      page: 1,
-      pageSize: newSize,
-      sortBy,
-      sortOrder,
-    });
+    return;
   }
+  await loadFriendList(1, newSize);
 }
 
 // Navigate to previous page (for keyboard shortcut)
@@ -461,6 +460,8 @@ function openFirstResult() {
 
   {#if searchError}
     <AlertBanner variant="error">{searchError}</AlertBanner>
+  {:else if isSearchMode === false && isFilterMode === false && $friends.error !== null}
+    <AlertBanner variant="error">{$friends.error}</AlertBanner>
   {/if}
 
   <!-- Facet filters bar (always visible) -->

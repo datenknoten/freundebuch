@@ -11,6 +11,7 @@ import { createI18n } from '$lib/i18n/i18n.js';
 import type { FacetFilters } from '$shared';
 
 const friends = getAppContext().stores.friends;
+const logger = getAppContext().logger;
 const auth = getAppContext().stores.auth;
 const friendsPageSize = auth.friendsPageSize;
 const isAuthInitialized = auth.isInitialized;
@@ -90,10 +91,19 @@ function updateUrl(query?: string, filters?: FacetFilters) {
   void goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
 }
 
+// The store keeps the failure in its error state, which FriendList shows.
+async function loadInitialFriends() {
+  try {
+    await friends.loadFriends({ pageSize: $friendsPageSize });
+  } catch (err) {
+    logger.error({ err }, 'Failed to load friends');
+  }
+}
+
 function loadFriendsWhenAuthReady() {
   if ($isAuthInitialized === true && hasLoaded === false) {
     hasLoaded = true;
-    void friends.loadFriends({ pageSize: $friendsPageSize });
+    void loadInitialFriends();
   }
 }
 $effect(loadFriendsWhenAuthReady);
