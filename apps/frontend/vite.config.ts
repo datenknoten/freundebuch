@@ -7,6 +7,7 @@ import { type } from 'arktype';
 import { defineConfig } from 'vitest/config';
 
 const pkg = parseJson(type({ version: 'string' }), readFileSync('./package.json', 'utf-8'));
+const isVitest = process.env.VITEST !== undefined && process.env.VITEST !== '';
 
 export default defineConfig({
   plugins: [
@@ -23,18 +24,18 @@ export default defineConfig({
     // Enables Svelte 5 component testing under jsdom (browser resolve
     // condition + auto-cleanup). Test-only — excluded from dev/preview/prod
     // builds so it can't affect production module resolution.
-    ...(process.env.VITEST !== undefined && process.env.VITEST !== '' ? [svelteTesting()] : []),
+    ...(isVitest === true ? [svelteTesting()] : []),
   ],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
-  resolve: {
-    alias: [
-      // The package's Node entry requires every locale through a dynamic `require`, which the SSR
-      // bundle cannot resolve, so loading hooks.server.ts at build time crashes. $shared registers
-      // the locales it needs itself, so the plain entry (the browser one) serves both sides.
-      { find: /^i18n-iso-countries$/, replacement: 'i18n-iso-countries/index.js' },
-    ],
+  ssr: {
+    // Bundled into the SSR output, the package's Node entry cannot resolve the locale files it
+    // requires dynamically, so loading hooks.server.ts crashes; Node loads it natively instead.
+    // An alias to the browser entry fixed the build but broke the dev server, whose SSR module
+    // runner cannot evaluate that CommonJS file. Vitest keeps inlining it: externalised, the
+    // locale JSON imports of $shared would need import attributes.
+    external: isVitest === true ? [] : ['i18n-iso-countries'],
   },
   build: {
     // Generate sourcemaps for Sentry (hidden = not referenced in JS files)
