@@ -1,5 +1,6 @@
 import { type } from 'arktype';
 import { CountryCodeSchema } from '../countries/country-code-schema.js';
+import { CollectiveNameSchema } from './collective-name-schema.js';
 
 /**
  * Collective types and validation schemas for Epic 12: Collectives
@@ -14,7 +15,7 @@ import { CountryCodeSchema } from '../countries/country-code-schema.js';
 
 /** Schema for creating a collective */
 export const CollectiveCreateInputSchema = type({
-  name: 'string > 0',
+  name: CollectiveNameSchema,
   collective_type_id: 'string.uuid', // External ID of the collective type
   'notes?': 'string | null',
   'photo_url?': 'string | null',
@@ -25,17 +26,6 @@ export const CollectiveCreateInputSchema = type({
   'address_state_province?': 'string | null',
   'address_postal_code?': 'string | null',
   'address_country?': CountryCodeSchema.or('null'),
-}).narrow((data, ctx) => {
-  // Validate name length
-  if (data.name.trim().length === 0) {
-    ctx.mustBe('a collective with a non-empty name');
-    return false;
-  }
-  if (data.name.length > 200) {
-    ctx.mustBe('a collective with a name of 200 characters or less');
-    return false;
-  }
-  return true;
 });
 
 export type CollectiveCreateInput = typeof CollectiveCreateInputSchema.infer;

@@ -1163,6 +1163,23 @@ describe('Search API - Integration Tests', () => {
 
         expect(response.status).toBe(400);
       });
+
+      it('rejects an unknown relationship_category with 400 naming the value', async () => {
+        const { app, testUser } = getContext();
+
+        const request = new Request(
+          'http://localhost/api/friends/search/faceted?relationship_category=family,enemies',
+          { method: 'GET', headers: authHeaders(testUser.sessionCookies) },
+        );
+
+        const response = await app.fetch(request);
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual({
+          error: 'Invalid relationship_category: enemies',
+          details: { relationship_category: ['enemies'] },
+        });
+      });
     });
   });
 

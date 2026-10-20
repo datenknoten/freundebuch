@@ -50,7 +50,7 @@ export class CollectivePhoneService extends SubResourceService<
             phoneNumber: input.phone_number,
             phoneType: input.phone_type,
             label: input.label ?? null,
-            isPrimary: input.is_primary ?? false,
+            isPrimary: input.is_primary,
           },
           client,
         );
@@ -68,7 +68,7 @@ export class CollectivePhoneService extends SubResourceService<
             phoneNumber: input.phone_number,
             phoneType: input.phone_type,
             label: input.label ?? null,
-            isPrimary: input.is_primary ?? false,
+            isPrimary: input.is_primary,
           },
           client,
         );
@@ -92,7 +92,7 @@ export class CollectivePhoneService extends SubResourceService<
         return clearPrimaryPhone.run({ userExternalId, collectiveExternalId }, client);
       },
 
-      isPrimary: (input) => input.is_primary ?? false,
+      isPrimary: (input) => input.is_primary,
 
       setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 

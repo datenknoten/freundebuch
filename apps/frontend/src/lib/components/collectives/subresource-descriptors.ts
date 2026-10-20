@@ -39,11 +39,11 @@ import {
   updateUrl,
 } from '$lib/api/collectives';
 import type {
-  AddressInput,
+  AddressInputSchema,
   AddressResponse,
-  EmailInput,
+  EmailInputSchema,
   EmailResponse,
-  PhoneInput,
+  PhoneInputSchema,
   PhoneResponse,
   UrlInput,
   UrlResponse,
@@ -81,7 +81,7 @@ export type {
   SubresourceItem,
 } from '../subresources/types';
 
-const phoneDescriptor = defineDescriptor<PhoneResponse, PhoneInput>({
+const phoneDescriptor = defineDescriptor<PhoneResponse, typeof PhoneInputSchema.inferIn>({
   key: 'phone',
   shortcutEvent: 'shortcut:collective-add-phone',
   icon: PhoneIcon,
@@ -92,8 +92,8 @@ const phoneDescriptor = defineDescriptor<PhoneResponse, PhoneInput>({
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.phoneNumber',
   load: (cid) => listPhones(cid),
-  create: (cid, data: PhoneInput) => addPhone(cid, data),
-  update: (cid, id, data: PhoneInput) => updatePhone(cid, id, data),
+  create: (cid, data: typeof PhoneInputSchema.inferIn) => addPhone(cid, data),
+  update: (cid, id, data: typeof PhoneInputSchema.inferIn) => updatePhone(cid, id, data),
   remove: (cid, item) => deletePhone(cid, item.id),
   FormComponent: PhoneEditForm,
   formProps: primaryAwareFormProps,
@@ -112,7 +112,7 @@ const phoneDescriptor = defineDescriptor<PhoneResponse, PhoneInput>({
   },
 });
 
-const emailDescriptor = defineDescriptor<EmailResponse, EmailInput>({
+const emailDescriptor = defineDescriptor<EmailResponse, typeof EmailInputSchema.inferIn>({
   key: 'email',
   shortcutEvent: 'shortcut:collective-add-email',
   icon: Envelope,
@@ -123,8 +123,8 @@ const emailDescriptor = defineDescriptor<EmailResponse, EmailInput>({
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.emailAddress',
   load: (cid) => listEmails(cid),
-  create: (cid, data: EmailInput) => addEmail(cid, data),
-  update: (cid, id, data: EmailInput) => updateEmail(cid, id, data),
+  create: (cid, data: typeof EmailInputSchema.inferIn) => addEmail(cid, data),
+  update: (cid, id, data: typeof EmailInputSchema.inferIn) => updateEmail(cid, id, data),
   remove: (cid, item) => deleteEmail(cid, item.id),
   FormComponent: EmailEditForm,
   formProps: primaryAwareFormProps,
@@ -135,7 +135,7 @@ const emailDescriptor = defineDescriptor<EmailResponse, EmailInput>({
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
 });
 
-const addressDescriptor = defineDescriptor<AddressResponse, AddressInput>({
+const addressDescriptor = defineDescriptor<AddressResponse, typeof AddressInputSchema.inferIn>({
   key: 'address',
   shortcutEvent: 'shortcut:collective-add-address',
   icon: MapPin,
@@ -146,8 +146,8 @@ const addressDescriptor = defineDescriptor<AddressResponse, AddressInput>({
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.address',
   load: (cid) => listAddresses(cid),
-  create: (cid, data: AddressInput) => addAddress(cid, data),
-  update: (cid, id, data: AddressInput) => updateAddress(cid, id, data),
+  create: (cid, data: typeof AddressInputSchema.inferIn) => addAddress(cid, data),
+  update: (cid, id, data: typeof AddressInputSchema.inferIn) => updateAddress(cid, id, data),
   remove: (cid, item) => deleteAddress(cid, item.id),
   // Geocoding runs asynchronously on the backend; refetch a few times to pick up
   // coordinates once they land.

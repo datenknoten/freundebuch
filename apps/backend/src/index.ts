@@ -2,6 +2,7 @@
 // This ensures pg and other modules are properly instrumented
 import './instrument.js';
 
+import { ValidationError as KitValidationError } from '@datenknoten/kit';
 import type { ErrorResponse } from '@freundebuch/shared/index.js';
 import { serve } from '@hono/node-server';
 import * as Sentry from '@sentry/node';
@@ -28,7 +29,7 @@ import { initializeAddressCaches } from './utils/cache.js';
 import { getConfig } from './utils/config.js';
 import { encryptLegacyNotificationCredentials } from './utils/credentials-crypto.js';
 import { checkDatabaseConnection, createPool, setupGracefulShutdown } from './utils/db.js';
-import { DatabaseConnectionError, isAppError, toError } from './utils/errors.js';
+import { DatabaseConnectionError, isAppError, toError, ValidationError } from './utils/errors.js';
 import { createLogger } from './utils/logger.js';
 import { setupCleanupScheduler, setupNotificationScheduler } from './utils/scheduler.js';
 
@@ -96,7 +97,12 @@ export async function createApp(pool: pg.Pool) {
   app.route('/api/notification-channels', notificationChannelsRoutes);
 
   // Error handling
-  app.onError((err, c) => {
+  app.onError((thrown, c) => {
+    // Shared parsers throw kit's ValidationError; answer it like the local one.
+    const err =
+      thrown instanceof KitValidationError
+        ? new ValidationError(thrown.message, thrown.details)
+        : thrown;
     // Fall back to a fresh logger: an error thrown before the context
     // middleware runs would leave c.get('logger') undefined.
     const pinoLogger = c.get('logger') ?? createLogger();

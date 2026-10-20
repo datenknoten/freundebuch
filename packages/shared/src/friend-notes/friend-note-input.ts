@@ -1,4 +1,11 @@
-import { type } from 'arktype';
+import { type Traversal, type } from 'arktype';
+
+function checkContent(content: string, ctx: Traversal): boolean {
+  if (content.trim().length > 0) {
+    return true;
+  }
+  return ctx.mustBe('non-empty note content');
+}
 
 /**
  * Friend notes (Epic 15): timestamped free-text notes about a friend.
@@ -7,16 +14,10 @@ import { type } from 'arktype';
  * link field means `null`.
  */
 export const FriendNoteInputSchema = type({
-  content: 'string',
+  content: type('string').narrow(checkContent),
   'encounter_id?': 'string.uuid | null',
   'source_friend_id?': 'string.uuid | null',
   'supersedes_note_id?': 'string.uuid | null',
-}).narrow((data, ctx) => {
-  if (data.content.trim().length === 0) {
-    ctx.mustBe('a note with non-empty content');
-    return false;
-  }
-  return true;
 });
 
 export type FriendNoteInput = typeof FriendNoteInputSchema.infer;

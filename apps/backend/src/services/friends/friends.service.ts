@@ -310,43 +310,38 @@ export class FriendsService {
       phones = await this.phoneService.createMany(
         userExternalId,
         friendExternalId,
-        data.phones ?? [],
+        data.phones,
         client,
       );
       emails = await this.emailService.createMany(
         userExternalId,
         friendExternalId,
-        data.emails ?? [],
+        data.emails,
         client,
       );
       addresses = await this.addressService.createMany(
         userExternalId,
         friendExternalId,
-        data.addresses ?? [],
+        data.addresses,
         client,
       );
-      urls = await this.urlService.createMany(
-        userExternalId,
-        friendExternalId,
-        data.urls ?? [],
-        client,
-      );
+      urls = await this.urlService.createMany(userExternalId, friendExternalId, data.urls, client);
       dates = await this.dateService.createMany(
         userExternalId,
         friendExternalId,
-        data.dates ?? [],
+        data.dates,
         client,
       );
       socialProfiles = await this.socialProfileService.createMany(
         userExternalId,
         friendExternalId,
-        data.social_profiles ?? [],
+        data.social_profiles,
         client,
       );
       professionalHistory = await this.professionalHistoryService.createMany(
         userExternalId,
         friendExternalId,
-        data.professional_history ?? [],
+        data.professional_history,
         client,
       );
 

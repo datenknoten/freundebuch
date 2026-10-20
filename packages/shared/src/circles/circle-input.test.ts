@@ -15,14 +15,14 @@ describe('CircleInputSchema', () => {
   it('rejects an invalid hex color without hash', () => {
     const result = CircleInputSchema({ name: 'Work', color: '3B82F6' });
     expect(result.summary).toMatchInlineSnapshot(
-      `"must be a circle with a valid hex color (e.g., #3B82F6) (was {"name":"Work","color":"3B82F6"})"`,
+      `"color must be a valid hex color (e.g., #3B82F6) or "" (was "3B82F6")"`,
     );
   });
 
   it('rejects an invalid hex color with wrong length', () => {
     const result = CircleInputSchema({ name: 'Work', color: '#3B8' });
     expect(result.summary).toMatchInlineSnapshot(
-      `"must be a circle with a valid hex color (e.g., #3B82F6) (was {"name":"Work","color":"#3B8"})"`,
+      `"color must be a valid hex color (e.g., #3B82F6) or "" (was "#3B8")"`,
     );
   });
 

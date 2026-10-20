@@ -1,5 +1,5 @@
 import type {
-  AddressInput,
+  AddressInputSchema,
   AddressResponse,
   CollectiveCreateInput,
   CollectiveListResponse,
@@ -8,12 +8,12 @@ import type {
   CollectiveTypeListResponse,
   CollectiveTypeResponse,
   CollectiveUpdateInput,
-  EmailInput,
+  EmailInputSchema,
   EmailResponse,
   MembershipCreateInput,
   MembershipDeactivateInput,
   MembershipUpdateInput,
-  PhoneInput,
+  PhoneInputSchema,
   PhoneResponse,
   RelationshipPreviewInput,
   RelationshipPreviewResponse,
@@ -230,7 +230,10 @@ export async function listPhones(collectiveId: string): Promise<PhoneResponse[]>
   return apiRequest<PhoneResponse[]>(`/api/collectives/${collectiveId}/phones`);
 }
 
-export async function addPhone(collectiveId: string, data: PhoneInput): Promise<PhoneResponse> {
+export async function addPhone(
+  collectiveId: string,
+  data: typeof PhoneInputSchema.inferIn,
+): Promise<PhoneResponse> {
   return apiRequest<PhoneResponse>(`/api/collectives/${collectiveId}/phones`, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -240,7 +243,7 @@ export async function addPhone(collectiveId: string, data: PhoneInput): Promise<
 export async function updatePhone(
   collectiveId: string,
   phoneId: string,
-  data: Partial<PhoneInput>,
+  data: Partial<typeof PhoneInputSchema.inferIn>,
 ): Promise<PhoneResponse> {
   return apiRequest<PhoneResponse>(`/api/collectives/${collectiveId}/phones/${phoneId}`, {
     method: 'PUT',
@@ -265,7 +268,10 @@ export async function listEmails(collectiveId: string): Promise<EmailResponse[]>
   return apiRequest<EmailResponse[]>(`/api/collectives/${collectiveId}/emails`);
 }
 
-export async function addEmail(collectiveId: string, data: EmailInput): Promise<EmailResponse> {
+export async function addEmail(
+  collectiveId: string,
+  data: typeof EmailInputSchema.inferIn,
+): Promise<EmailResponse> {
   return apiRequest<EmailResponse>(`/api/collectives/${collectiveId}/emails`, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -275,7 +281,7 @@ export async function addEmail(collectiveId: string, data: EmailInput): Promise<
 export async function updateEmail(
   collectiveId: string,
   emailId: string,
-  data: Partial<EmailInput>,
+  data: Partial<typeof EmailInputSchema.inferIn>,
 ): Promise<EmailResponse> {
   return apiRequest<EmailResponse>(`/api/collectives/${collectiveId}/emails/${emailId}`, {
     method: 'PUT',
@@ -302,7 +308,7 @@ export async function listAddresses(collectiveId: string): Promise<AddressRespon
 
 export async function addAddress(
   collectiveId: string,
-  data: AddressInput,
+  data: typeof AddressInputSchema.inferIn,
 ): Promise<AddressResponse> {
   return apiRequest<AddressResponse>(`/api/collectives/${collectiveId}/addresses`, {
     method: 'POST',
@@ -313,7 +319,7 @@ export async function addAddress(
 export async function updateAddress(
   collectiveId: string,
   addressId: string,
-  data: Partial<AddressInput>,
+  data: Partial<typeof AddressInputSchema.inferIn>,
 ): Promise<AddressResponse> {
   return apiRequest<AddressResponse>(`/api/collectives/${collectiveId}/addresses/${addressId}`, {
     method: 'PUT',

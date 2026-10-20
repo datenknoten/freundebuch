@@ -1,16 +1,16 @@
 import type {
-  AddressInput,
+  AddressInputSchema,
   AddressResponse,
   CircleSummaryResponse,
-  DateInput,
-  EmailInput,
+  DateInputSchema,
+  EmailInputSchema,
   EmailResponse,
   FriendDateResponse,
   MetInfoInput,
   MetInfoResponse,
-  PhoneInput,
+  PhoneInputSchema,
   PhoneResponse,
-  ProfessionalHistoryInput,
+  ProfessionalHistoryInputSchema,
   ProfessionalHistoryResponse,
   RelationshipCreateInput,
   RelationshipResponse,
@@ -37,7 +37,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Phone Operations
     // =========================================================================
 
-    addPhone: (friendId: string, data: PhoneInput): Promise<PhoneResponse> =>
+    addPhone: (friendId: string, data: typeof PhoneInputSchema.inferIn): Promise<PhoneResponse> =>
       storeAction(
         update,
         () => friendsApi.addPhone(friendId, data),
@@ -52,7 +52,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     updatePhone: (
       friendId: string,
       phoneId: string,
-      data: Partial<PhoneInput>,
+      data: Partial<typeof PhoneInputSchema.inferIn>,
     ): Promise<PhoneResponse> =>
       storeAction(
         update,
@@ -87,7 +87,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Email Operations
     // =========================================================================
 
-    addEmail: (friendId: string, data: EmailInput): Promise<EmailResponse> =>
+    addEmail: (friendId: string, data: typeof EmailInputSchema.inferIn): Promise<EmailResponse> =>
       storeAction(
         update,
         () => friendsApi.addEmail(friendId, data),
@@ -102,7 +102,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     updateEmail: (
       friendId: string,
       emailId: string,
-      data: Partial<EmailInput>,
+      data: Partial<typeof EmailInputSchema.inferIn>,
     ): Promise<EmailResponse> =>
       storeAction(
         update,
@@ -137,7 +137,10 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Address Operations
     // =========================================================================
 
-    addAddress: (friendId: string, data: AddressInput): Promise<AddressResponse> =>
+    addAddress: (
+      friendId: string,
+      data: typeof AddressInputSchema.inferIn,
+    ): Promise<AddressResponse> =>
       storeAction(
         update,
         () => friendsApi.addAddress(friendId, data),
@@ -152,7 +155,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     updateAddress: (
       friendId: string,
       addressId: string,
-      data: Partial<AddressInput>,
+      data: Partial<typeof AddressInputSchema.inferIn>,
     ): Promise<AddressResponse> =>
       storeAction(
         update,
@@ -271,7 +274,10 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Date Operations
     // =========================================================================
 
-    addDate: (friendId: string, data: DateInput): Promise<FriendDateResponse> =>
+    addDate: (
+      friendId: string,
+      data: typeof DateInputSchema.inferIn,
+    ): Promise<FriendDateResponse> =>
       storeAction(
         update,
         () => friendsApi.addDate(friendId, data),
@@ -283,7 +289,11 @@ export function createSubresourceOps(update: FriendsUpdate) {
         'Failed to add date',
       ),
 
-    updateDate: (friendId: string, dateId: string, data: DateInput): Promise<FriendDateResponse> =>
+    updateDate: (
+      friendId: string,
+      dateId: string,
+      data: typeof DateInputSchema.inferIn,
+    ): Promise<FriendDateResponse> =>
       storeAction(
         update,
         () => friendsApi.updateDate(friendId, dateId, data),
@@ -405,7 +415,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
 
     addProfessionalHistory: (
       friendId: string,
-      data: ProfessionalHistoryInput,
+      data: typeof ProfessionalHistoryInputSchema.inferIn,
     ): Promise<ProfessionalHistoryResponse> =>
       storeAction(
         update,
@@ -424,7 +434,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     updateProfessionalHistory: (
       friendId: string,
       historyId: string,
-      data: ProfessionalHistoryInput,
+      data: typeof ProfessionalHistoryInputSchema.inferIn,
     ): Promise<ProfessionalHistoryResponse> =>
       storeAction(
         update,

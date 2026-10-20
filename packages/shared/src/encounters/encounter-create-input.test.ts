@@ -68,7 +68,16 @@ describe('EncounterInputSchema', () => {
       encounter_date: '2025-01-15',
       friend_ids: [],
     });
-    expect(result.summary).toContain('at least one friend');
+    expect(result.summary).toContain('friend_ids must be non-empty');
+  });
+
+  it('reports an invalid date and empty friend_ids together', () => {
+    const result = EncounterCreateInputSchema({
+      encounter_date: '01/15/2025',
+      friend_ids: [],
+    });
+    expect(result.summary).toContain('encounter_date must be a valid date (YYYY-MM-DD format)');
+    expect(result.summary).toContain('friend_ids must be non-empty');
   });
 
   it('rejects an empty title when one is provided', () => {

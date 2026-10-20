@@ -1,4 +1,9 @@
-import type { FriendCreateInput, FriendResponse, UserPreferences, UserResponse } from '$shared';
+import type {
+  FriendCreateInputSchema,
+  FriendResponse,
+  UserPreferences,
+  UserResponse,
+} from '$shared';
 import { apiRequest } from './client.js';
 
 export { ApiError } from './client.js';
@@ -67,7 +72,9 @@ export async function setSelfProfile(friendId: string): Promise<{ selfProfileId:
  * Create a new friend and set it as the user's self-profile
  * Used during onboarding
  */
-export async function createSelfProfile(data: FriendCreateInput): Promise<FriendResponse> {
+export async function createSelfProfile(
+  data: typeof FriendCreateInputSchema.inferIn,
+): Promise<FriendResponse> {
   return apiRequest<FriendResponse>('/api/users/me/self-profile', {
     method: 'POST',
     body: JSON.stringify(data),

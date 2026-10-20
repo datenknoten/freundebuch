@@ -1,6 +1,6 @@
 import { derived, writable } from 'svelte/store';
 import type {
-  FriendCreateInput,
+  FriendCreateInputSchema,
   FriendListItemResponse,
   FriendResponse,
   FriendSearchResultResponse,
@@ -79,7 +79,7 @@ function createFriendsStore() {
         () => ({ currentFriend: null }),
       ),
 
-    createFriend: (data: FriendCreateInput) =>
+    createFriend: (data: typeof FriendCreateInputSchema.inferIn) =>
       storeAction(
         update,
         () => friendsApi.createFriend(data),

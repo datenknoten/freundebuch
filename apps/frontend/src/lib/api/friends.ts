@@ -1,14 +1,14 @@
 import type {
-  AddressInput,
+  AddressInputSchema,
   AddressResponse,
   ContactCollectiveSummaryResponse,
   DashboardResponse,
-  DateInput,
-  EmailInput,
+  DateInputSchema,
+  EmailInputSchema,
   EmailResponse,
   FacetedSearchResponse,
   FacetFilters,
-  FriendCreateInput,
+  FriendCreateInputSchema,
   FriendDateResponse,
   FriendListResponse,
   FriendNoteInput,
@@ -21,9 +21,9 @@ import type {
   MetInfoResponse,
   NetworkGraphResponse,
   PaginatedSearchResponse,
-  PhoneInput,
+  PhoneInputSchema,
   PhoneResponse,
-  ProfessionalHistoryInput,
+  ProfessionalHistoryInputSchema,
   ProfessionalHistoryResponse,
   RelationshipCreateInput,
   RelationshipResponse,
@@ -83,7 +83,9 @@ export async function getFriend(id: string): Promise<FriendResponse> {
 /**
  * Create a new friend
  */
-export async function createFriend(data: FriendCreateInput): Promise<FriendResponse> {
+export async function createFriend(
+  data: typeof FriendCreateInputSchema.inferIn,
+): Promise<FriendResponse> {
   return apiRequest<FriendResponse>('/api/friends', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -116,7 +118,10 @@ export async function deleteFriend(id: string): Promise<{ message: string }> {
 /**
  * Add a phone number to a friend
  */
-export async function addPhone(friendId: string, data: PhoneInput): Promise<PhoneResponse> {
+export async function addPhone(
+  friendId: string,
+  data: typeof PhoneInputSchema.inferIn,
+): Promise<PhoneResponse> {
   return apiRequest<PhoneResponse>(`/api/friends/${friendId}/phones`, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -129,7 +134,7 @@ export async function addPhone(friendId: string, data: PhoneInput): Promise<Phon
 export async function updatePhone(
   friendId: string,
   phoneId: string,
-  data: Partial<PhoneInput>,
+  data: Partial<typeof PhoneInputSchema.inferIn>,
 ): Promise<PhoneResponse> {
   return apiRequest<PhoneResponse>(`/api/friends/${friendId}/phones/${phoneId}`, {
     method: 'PUT',
@@ -153,7 +158,10 @@ export async function deletePhone(friendId: string, phoneId: string): Promise<{ 
 /**
  * Add an email to a friend
  */
-export async function addEmail(friendId: string, data: EmailInput): Promise<EmailResponse> {
+export async function addEmail(
+  friendId: string,
+  data: typeof EmailInputSchema.inferIn,
+): Promise<EmailResponse> {
   return apiRequest<EmailResponse>(`/api/friends/${friendId}/emails`, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -166,7 +174,7 @@ export async function addEmail(friendId: string, data: EmailInput): Promise<Emai
 export async function updateEmail(
   friendId: string,
   emailId: string,
-  data: Partial<EmailInput>,
+  data: Partial<typeof EmailInputSchema.inferIn>,
 ): Promise<EmailResponse> {
   return apiRequest<EmailResponse>(`/api/friends/${friendId}/emails/${emailId}`, {
     method: 'PUT',
@@ -190,7 +198,10 @@ export async function deleteEmail(friendId: string, emailId: string): Promise<{ 
 /**
  * Add an address to a friend
  */
-export async function addAddress(friendId: string, data: AddressInput): Promise<AddressResponse> {
+export async function addAddress(
+  friendId: string,
+  data: typeof AddressInputSchema.inferIn,
+): Promise<AddressResponse> {
   return apiRequest<AddressResponse>(`/api/friends/${friendId}/addresses`, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -203,7 +214,7 @@ export async function addAddress(friendId: string, data: AddressInput): Promise<
 export async function updateAddress(
   friendId: string,
   addressId: string,
-  data: Partial<AddressInput>,
+  data: Partial<typeof AddressInputSchema.inferIn>,
 ): Promise<AddressResponse> {
   return apiRequest<AddressResponse>(`/api/friends/${friendId}/addresses/${addressId}`, {
     method: 'PUT',
@@ -298,7 +309,10 @@ export async function deletePhoto(friendId: string): Promise<{ message: string }
 /**
  * Add an important date to a friend
  */
-export async function addDate(friendId: string, data: DateInput): Promise<FriendDateResponse> {
+export async function addDate(
+  friendId: string,
+  data: typeof DateInputSchema.inferIn,
+): Promise<FriendDateResponse> {
   return apiRequest<FriendDateResponse>(`/api/friends/${friendId}/dates`, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -311,7 +325,7 @@ export async function addDate(friendId: string, data: DateInput): Promise<Friend
 export async function updateDate(
   friendId: string,
   dateId: string,
-  data: DateInput,
+  data: typeof DateInputSchema.inferIn,
 ): Promise<FriendDateResponse> {
   return apiRequest<FriendDateResponse>(`/api/friends/${friendId}/dates/${dateId}`, {
     method: 'PUT',
@@ -473,7 +487,7 @@ export async function deleteSocialProfile(
  */
 export async function addProfessionalHistory(
   friendId: string,
-  data: ProfessionalHistoryInput,
+  data: typeof ProfessionalHistoryInputSchema.inferIn,
 ): Promise<ProfessionalHistoryResponse> {
   return apiRequest<ProfessionalHistoryResponse>(`/api/friends/${friendId}/professional-history`, {
     method: 'POST',
@@ -487,7 +501,7 @@ export async function addProfessionalHistory(
 export async function updateProfessionalHistory(
   friendId: string,
   historyId: string,
-  data: ProfessionalHistoryInput,
+  data: typeof ProfessionalHistoryInputSchema.inferIn,
 ): Promise<ProfessionalHistoryResponse> {
   return apiRequest<ProfessionalHistoryResponse>(
     `/api/friends/${friendId}/professional-history/${historyId}`,

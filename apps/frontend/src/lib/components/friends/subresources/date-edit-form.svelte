@@ -1,7 +1,7 @@
 <script lang="ts">
 import { createDirtyTracker, FormCheckbox, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { DateInput, DateType, FriendDateResponse } from '$shared';
+import type { DateInputSchema, DateType, FriendDateResponse } from '$shared';
 
 const i18n = createI18n();
 
@@ -35,7 +35,7 @@ const dateTypeOptions = $derived([
   { value: 'other' as const, label: $i18n.t('subresources.date.types.other') },
 ]);
 
-export function getData(): DateInput {
+export function getData(): typeof DateInputSchema.inferIn {
   return {
     date_value: dateValue,
     year_known: yearKnown,

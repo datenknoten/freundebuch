@@ -7,7 +7,7 @@ import {
   formClasses,
 } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { ProfessionalHistoryInput, ProfessionalHistoryResponse } from '$shared';
+import type { ProfessionalHistoryInputSchema, ProfessionalHistoryResponse } from '$shared';
 
 const i18n = createI18n();
 
@@ -62,7 +62,7 @@ $effect(() => {
   }
 });
 
-export function getData(): ProfessionalHistoryInput {
+export function getData(): typeof ProfessionalHistoryInputSchema.inferIn {
   return {
     job_title: jobTitle.trim() || null,
     organization: organization.trim() || null,

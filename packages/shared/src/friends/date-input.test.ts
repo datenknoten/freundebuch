@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { DateInputSchema } from './date-input.js';
 
 describe('DateInputSchema', () => {
-  it('accepts a valid date', () => {
+  it('accepts a valid date and defaults year_known to true', () => {
     const result = DateInputSchema({
       date_value: '1990-05-15',
       date_type: 'birthday',
     });
-    expect(result).toEqual({ date_value: '1990-05-15', date_type: 'birthday' });
+    expect(result).toEqual({ date_value: '1990-05-15', year_known: true, date_type: 'birthday' });
   });
 
   it('accepts a date with year_known flag', () => {

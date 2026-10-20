@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ProfessionalHistoryInputSchema } from './professional-history-input.js';
 
 describe('ProfessionalHistoryInputSchema', () => {
-  it('accepts an entry with job_title only', () => {
+  it('accepts an entry with job_title only and defaults is_primary to false', () => {
     const result = ProfessionalHistoryInputSchema({
       job_title: 'Engineer',
       from_month: 1,
@@ -12,6 +12,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       job_title: 'Engineer',
       from_month: 1,
       from_year: 2020,
+      is_primary: false,
     });
   });
 
@@ -25,6 +26,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       organization: 'Acme Corp',
       from_month: 6,
       from_year: 2019,
+      is_primary: false,
     });
   });
 
@@ -34,7 +36,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       from_year: 2020,
     });
     expect(result.summary).toMatchInlineSnapshot(
-      `"must be a professional history entry with either job_title or organization (was {"from_month":1,"from_year":2020})"`,
+      `"must be a professional history entry with either job_title or organization (was {"from_month":1,"from_year":2020,"is_primary":false})"`,
     );
   });
 
@@ -55,7 +57,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       to_month: 6,
     });
     expect(result.summary).toMatchInlineSnapshot(
-      `"must be a professional history entry with both to_month and to_year set or both null (was {"job_title":"Engineer","from_month":1,"from_year":2020,"to_month":6})"`,
+      `"must be a professional history entry with both to_month and to_year set or both null (was {"job_title":"Engineer","from_month":1,"from_year":2020,"to_month":6,"is_primary":false})"`,
     );
   });
 
@@ -68,7 +70,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       to_year: 2020,
     });
     expect(result.summary).toMatchInlineSnapshot(
-      `"must be a professional history entry with end date after or equal to start date (was {"job_title":"Engineer","from_month":6,"from_year":2020,"to_month":1,"to_year":2020})"`,
+      `"must be a professional history entry with end date after or equal to start date (was {"job_title":"Engineer","from_month":6,"from_year":2020,"to_month":1,"to_year":2020,"is_primary":false})"`,
     );
   });
 
@@ -86,6 +88,7 @@ describe('ProfessionalHistoryInputSchema', () => {
       from_year: 2020,
       to_month: 6,
       to_year: 2020,
+      is_primary: false,
     });
   });
 });

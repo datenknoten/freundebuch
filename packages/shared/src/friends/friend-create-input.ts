@@ -20,18 +20,32 @@ export const FriendCreateInputSchema = type({
   'name_suffix?': 'string',
   'maiden_name?': 'string',
   // Epic 1A sub-resources
-  'phones?': PhoneInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
-  'emails?': EmailInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
-  'addresses?': AddressInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
-  'urls?': UrlInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
+  phones: PhoneInputSchema.array()
+    .atMostLength(MAX_SUB_RESOURCES)
+    .default(() => []),
+  emails: EmailInputSchema.array()
+    .atMostLength(MAX_SUB_RESOURCES)
+    .default(() => []),
+  addresses: AddressInputSchema.array()
+    .atMostLength(MAX_SUB_RESOURCES)
+    .default(() => []),
+  urls: UrlInputSchema.array()
+    .atMostLength(MAX_SUB_RESOURCES)
+    .default(() => []),
   // Professional history (replaces job_title, organization, department, work_notes)
-  'professional_history?': ProfessionalHistoryInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
+  professional_history: ProfessionalHistoryInputSchema.array()
+    .atMostLength(MAX_SUB_RESOURCES)
+    .default(() => []),
   // Personal interests (not employment-related)
   'interests?': 'string',
   // Epic 1B: Extended sub-resources
-  'dates?': DateInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
+  dates: DateInputSchema.array()
+    .atMostLength(MAX_SUB_RESOURCES)
+    .default(() => []),
   'met_info?': MetInfoInputSchema,
-  'social_profiles?': SocialProfileInputSchema.array().atMostLength(MAX_SUB_RESOURCES),
+  social_profiles: SocialProfileInputSchema.array()
+    .atMostLength(MAX_SUB_RESOURCES)
+    .default(() => []),
 }).narrow((data, ctx) => {
   // Validate only one primary phone
   if (data.phones) {

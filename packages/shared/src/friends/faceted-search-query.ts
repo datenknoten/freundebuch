@@ -1,3 +1,4 @@
+import { ValidationError } from '@datenknoten/kit';
 import {
   type PaginationOptions,
   PaginationQuerySchema,
@@ -6,7 +7,7 @@ import {
 import { parseSortQuery, type SortOptions, sortQueryFields } from '../sorting/sort-query.js';
 import { DEFAULT_FRIEND_PAGE_SIZE } from './default-friend-page-size.js';
 import type { FacetFilters } from './facet-filters.js';
-import type { RelationshipCategory } from './relationship-category.js';
+import { type RelationshipCategory, RelationshipCategorySchema } from './relationship-category.js';
 import { type SearchSortBy, SearchSortBySchema, searchSortOrderFor } from './search-sort-by.js';
 
 /** Schema for faceted search query parameters */
@@ -36,6 +37,25 @@ export interface FacetedSearchOptions extends PaginationOptions, SortOptions<Sea
   query?: string; // Optional - can search with query OR filter-only
   filters: FacetFilters;
   shouldIncludeFacets: boolean;
+}
+
+function isRelationshipCategory(value: string): value is RelationshipCategory {
+  return RelationshipCategorySchema.allows(value);
+}
+
+function parseRelationshipCategories(
+  values: string[] | undefined,
+): RelationshipCategory[] | undefined {
+  if (values === undefined) {
+    return undefined;
+  }
+  const invalid = values.filter((value) => isRelationshipCategory(value) === false);
+  if (invalid.length > 0) {
+    throw new ValidationError(`Invalid relationship_category: ${invalid.join(', ')}`, {
+      relationship_category: invalid,
+    });
+  }
+  return values.filter(isRelationshipCategory);
 }
 
 export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearchOptions {
@@ -72,9 +92,9 @@ export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearc
       organization: parseFilterArray(query.organization),
       job_title: parseFilterArray(query.job_title),
       department: parseFilterArray(query.department),
-      relationship_category: parseFilterArray(query.relationship_category) as
-        | RelationshipCategory[]
-        | undefined,
+      relationship_category: parseRelationshipCategories(
+        parseFilterArray(query.relationship_category),
+      ),
       // Epic 4: Categorization & Organization filters
       circles: parseFilterArray(query.circles),
       favorites: query.favorites === 'true' ? true : undefined,

@@ -16,7 +16,7 @@ import MarkdownEditor from '$lib/editor/markdown-editor.svelte';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
-import type { FriendCreateInput, FriendResponse } from '$shared';
+import type { FriendCreateInputSchema, FriendResponse } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
 import FriendAvatar from './friend-avatar.svelte';
 import ImageCropModal from './image-crop-modal.svelte';
@@ -31,7 +31,7 @@ interface Props {
   /** Onboarding mode - for creating the user's self-friend */
   isOnboarding?: boolean;
   /** Custom submit handler (used in onboarding mode) */
-  onSubmit?: (data: FriendCreateInput) => Promise<void>;
+  onSubmit?: (data: typeof FriendCreateInputSchema.inferIn) => Promise<void>;
   /** Custom submit button label */
   submitLabel?: string;
   /** External loading state (used in onboarding mode) */
@@ -233,7 +233,7 @@ async function handleSubmit(e: Event) {
 
     // Build the friend data for creating/onboarding
     // Note: Professional history is now managed as a subresource from the detail page
-    const friendData: FriendCreateInput = {
+    const friendData: typeof FriendCreateInputSchema.inferIn = {
       display_name: displayName,
       nickname: nickname || undefined,
       name_prefix: namePrefix || undefined,

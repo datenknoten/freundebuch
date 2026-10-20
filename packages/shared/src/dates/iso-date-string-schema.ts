@@ -10,4 +10,6 @@ import { type } from 'arktype';
  */
 
 /** The only date shape this API accepts on the wire. */
-export const IsoDateStringSchema = type('/^\\d{4}-\\d{2}-\\d{2}$/');
+export const IsoDateStringSchema = type('string')
+  .matching(/^\d{4}-\d{2}-\d{2}$/)
+  .describe('a valid date (YYYY-MM-DD format)');

@@ -27,19 +27,19 @@ import { removeMember } from '$lib/api/collectives';
 import { addNote, deleteNote, listNotes, updateNote } from '$lib/api/friends';
 import { friends } from '$lib/stores/friends';
 import type {
-  AddressInput,
+  AddressInputSchema,
   AddressResponse,
   CircleSummaryResponse,
   ContactCollectiveSummaryResponse,
-  DateInput,
-  EmailInput,
+  DateInputSchema,
+  EmailInputSchema,
   EmailResponse,
   FriendDateResponse,
   FriendNoteInput,
   FriendNoteResponse,
-  PhoneInput,
+  PhoneInputSchema,
   PhoneResponse,
-  ProfessionalHistoryInput,
+  ProfessionalHistoryInputSchema,
   ProfessionalHistoryResponse,
   SocialProfileInput,
   SocialProfileResponse,
@@ -79,7 +79,7 @@ import {
   UrlRow,
 } from './subresources';
 
-export const phoneDescriptor = defineDescriptor<PhoneResponse, PhoneInput>({
+export const phoneDescriptor = defineDescriptor<PhoneResponse, typeof PhoneInputSchema.inferIn>({
   key: 'phone',
   shortcutEvent: 'shortcut:add-phone',
   icon: PhoneIcon,
@@ -89,8 +89,9 @@ export const phoneDescriptor = defineDescriptor<PhoneResponse, PhoneInput>({
   addShortcutLabel: 'shortcuts.add.phone',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.phoneNumber',
-  create: (friendId, data: PhoneInput) => friends.addPhone(friendId, data),
-  update: (friendId, id, data: PhoneInput) => friends.updatePhone(friendId, id, data),
+  create: (friendId, data: typeof PhoneInputSchema.inferIn) => friends.addPhone(friendId, data),
+  update: (friendId, id, data: typeof PhoneInputSchema.inferIn) =>
+    friends.updatePhone(friendId, id, data),
   remove: (friendId, item) => friends.deletePhone(friendId, item.id),
   tracksDirty: true,
   FormComponent: PhoneEditForm,
@@ -110,7 +111,7 @@ export const phoneDescriptor = defineDescriptor<PhoneResponse, PhoneInput>({
   },
 });
 
-export const emailDescriptor = defineDescriptor<EmailResponse, EmailInput>({
+export const emailDescriptor = defineDescriptor<EmailResponse, typeof EmailInputSchema.inferIn>({
   key: 'email',
   shortcutEvent: 'shortcut:add-email',
   icon: Envelope,
@@ -120,8 +121,9 @@ export const emailDescriptor = defineDescriptor<EmailResponse, EmailInput>({
   addShortcutLabel: 'shortcuts.add.email',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.emailAddress',
-  create: (friendId, data: EmailInput) => friends.addEmail(friendId, data),
-  update: (friendId, id, data: EmailInput) => friends.updateEmail(friendId, id, data),
+  create: (friendId, data: typeof EmailInputSchema.inferIn) => friends.addEmail(friendId, data),
+  update: (friendId, id, data: typeof EmailInputSchema.inferIn) =>
+    friends.updateEmail(friendId, id, data),
   remove: (friendId, item) => friends.deleteEmail(friendId, item.id),
   tracksDirty: true,
   FormComponent: EmailEditForm,
@@ -133,7 +135,10 @@ export const emailDescriptor = defineDescriptor<EmailResponse, EmailInput>({
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
 });
 
-export const addressDescriptor = defineDescriptor<AddressResponse, AddressInput>({
+export const addressDescriptor = defineDescriptor<
+  AddressResponse,
+  typeof AddressInputSchema.inferIn
+>({
   key: 'address',
   shortcutEvent: 'shortcut:add-address',
   icon: MapPin,
@@ -143,8 +148,9 @@ export const addressDescriptor = defineDescriptor<AddressResponse, AddressInput>
   addShortcutLabel: 'shortcuts.add.address',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.address',
-  create: (friendId, data: AddressInput) => friends.addAddress(friendId, data),
-  update: (friendId, id, data: AddressInput) => friends.updateAddress(friendId, id, data),
+  create: (friendId, data: typeof AddressInputSchema.inferIn) => friends.addAddress(friendId, data),
+  update: (friendId, id, data: typeof AddressInputSchema.inferIn) =>
+    friends.updateAddress(friendId, id, data),
   remove: (friendId, item) => friends.deleteAddress(friendId, item.id),
   // Geocoding runs asynchronously on the backend after the write commits. The
   // friend store owns these items, so refetch the friend (the section's own
@@ -228,7 +234,7 @@ export const socialProfileDescriptor = defineDescriptor<SocialProfileResponse, S
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteSocial',
 });
 
-export const dateDescriptor = defineDescriptor<FriendDateResponse, DateInput>({
+export const dateDescriptor = defineDescriptor<FriendDateResponse, typeof DateInputSchema.inferIn>({
   key: 'date',
   shortcutEvent: 'shortcut:add-date',
   icon: Calendar,
@@ -238,8 +244,9 @@ export const dateDescriptor = defineDescriptor<FriendDateResponse, DateInput>({
   addShortcutLabel: 'shortcuts.add.date',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.importantDate',
-  create: (friendId, data: DateInput) => friends.addDate(friendId, data),
-  update: (friendId, id, data: DateInput) => friends.updateDate(friendId, id, data),
+  create: (friendId, data: typeof DateInputSchema.inferIn) => friends.addDate(friendId, data),
+  update: (friendId, id, data: typeof DateInputSchema.inferIn) =>
+    friends.updateDate(friendId, id, data),
   remove: (friendId, item) => friends.deleteDate(friendId, item.id),
   tracksDirty: true,
   FormComponent: DateEditForm,
@@ -253,7 +260,7 @@ export const dateDescriptor = defineDescriptor<FriendDateResponse, DateInput>({
 
 export const professionalHistoryDescriptor = defineDescriptor<
   ProfessionalHistoryResponse,
-  ProfessionalHistoryInput
+  typeof ProfessionalHistoryInputSchema.inferIn
 >({
   key: 'professional',
   shortcutEvent: 'shortcut:add-professional',
@@ -264,9 +271,9 @@ export const professionalHistoryDescriptor = defineDescriptor<
   addShortcutLabel: 'shortcuts.add.workExperience',
   editable: true,
   modalTypeNameKey: 'friendDetail.modal.employment',
-  create: (friendId, data: ProfessionalHistoryInput) =>
+  create: (friendId, data: typeof ProfessionalHistoryInputSchema.inferIn) =>
     friends.addProfessionalHistory(friendId, data),
-  update: (friendId, id, data: ProfessionalHistoryInput) =>
+  update: (friendId, id, data: typeof ProfessionalHistoryInputSchema.inferIn) =>
     friends.updateProfessionalHistory(friendId, id, data),
   remove: (friendId, item) => friends.deleteProfessionalHistory(friendId, item.id),
   tracksDirty: true,

@@ -50,7 +50,7 @@ export class CollectiveEmailService extends SubResourceService<
             emailAddress: input.email_address,
             emailType: input.email_type,
             label: input.label ?? null,
-            isPrimary: input.is_primary ?? false,
+            isPrimary: input.is_primary,
           },
           client,
         );
@@ -68,7 +68,7 @@ export class CollectiveEmailService extends SubResourceService<
             emailAddress: input.email_address,
             emailType: input.email_type,
             label: input.label ?? null,
-            isPrimary: input.is_primary ?? false,
+            isPrimary: input.is_primary,
           },
           client,
         );
@@ -92,7 +92,7 @@ export class CollectiveEmailService extends SubResourceService<
         return clearPrimaryEmail.run({ userExternalId, collectiveExternalId }, client);
       },
 
-      isPrimary: (input) => input.is_primary ?? false,
+      isPrimary: (input) => input.is_primary,
 
       setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 

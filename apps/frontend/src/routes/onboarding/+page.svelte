@@ -6,7 +6,7 @@ import FriendForm from '$lib/components/friends/friend-form.svelte';
 import { PageShell } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { auth, refreshUserData } from '$lib/stores/auth';
-import type { FriendCreateInput } from '$shared';
+import type { FriendCreateInputSchema } from '$shared';
 
 const i18n = createI18n();
 
@@ -20,7 +20,7 @@ $effect(() => {
   }
 });
 
-async function handleSubmit(data: FriendCreateInput) {
+async function handleSubmit(data: typeof FriendCreateInputSchema.inferIn) {
   isLoading = true;
   error = '';
 

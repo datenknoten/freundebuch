@@ -12,7 +12,7 @@ export const AddressInputSchema = type({
   'country?': CountryCodeSchema,
   address_type: AddressTypeSchema,
   'label?': 'string',
-  'is_primary?': 'boolean',
+  is_primary: 'boolean = false',
 });
 
 export type AddressInput = typeof AddressInputSchema.infer;

@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { EmailInputSchema } from './email-input.js';
 
 describe('EmailInputSchema', () => {
-  it('accepts a valid email', () => {
+  it('accepts a valid email and defaults is_primary to false', () => {
     const result = EmailInputSchema({
       email_address: 'test@example.com',
       email_type: 'personal',
     });
-    expect(result).toEqual({ email_address: 'test@example.com', email_type: 'personal' });
+    expect(result).toEqual({
+      email_address: 'test@example.com',
+      email_type: 'personal',
+      is_primary: false,
+    });
   });
 
   it('rejects an invalid email', () => {

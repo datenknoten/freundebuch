@@ -1,7 +1,7 @@
 <script lang="ts">
 import { createDirtyTracker, FormCheckbox, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { EmailInput, EmailResponse, EmailType } from '$shared';
+import type { EmailInputSchema, EmailResponse, EmailType } from '$shared';
 
 const i18n = createI18n();
 
@@ -36,7 +36,7 @@ const emailTypeOptions = $derived([
   { value: 'other' as const, label: $i18n.t('subresources.email.types.other') },
 ]);
 
-export function getData(): EmailInput {
+export function getData(): typeof EmailInputSchema.inferIn {
   return {
     email_address: emailAddress.trim(),
     email_type: emailType,

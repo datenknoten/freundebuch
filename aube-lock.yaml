@@ -78,6 +78,9 @@ importers:
       '@better-auth/passkey':
         specifier: 1.6.22
         version: 1.6.22(@better-auth/core@1.6.22(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.6.7))(jose@6.2.13)(kysely@0.29.7)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.22(@sveltejs/kit@2.70.2(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.56.4)(vite@7.3.5))(svelte@5.56.4)(typescript@5.9.3)(vite@7.3.5))(pg@8.16.3)(svelte@5.56.4)(vitest@4.1.11(@vitest/coverage-v8@4.1.11)(jsdom@27.3.0)(vite@7.3.5)))(better-call@1.3.7(zod@4.6.7))(nanostores@1.5.5)
+      '@datenknoten/kit':
+        specifier: 1.1.0
+        version: 1.1.0(arktype@2.2.8)(pino@10.4.0)
       '@freundebuch/shared':
         specifier: workspace:*
         version: link:../../packages/shared

@@ -21,7 +21,7 @@ export const PhoneInputSchema = type({
   phone_number: PhoneNumberSchema,
   phone_type: PhoneTypeSchema,
   'label?': 'string',
-  'is_primary?': 'boolean',
+  is_primary: 'boolean = false',
 });
 
 export type PhoneInput = typeof PhoneInputSchema.infer;

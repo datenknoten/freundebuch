@@ -59,7 +59,7 @@ export class ProfessionalHistoryService extends SubResourceService<
             fromYear: input.from_year,
             toMonth: input.to_month ?? null,
             toYear: input.to_year ?? null,
-            isPrimary: input.is_primary ?? false,
+            isPrimary: input.is_primary,
           },
           client,
         );
@@ -82,7 +82,7 @@ export class ProfessionalHistoryService extends SubResourceService<
             fromYear: input.from_year,
             toMonth: input.to_month ?? null,
             toYear: input.to_year ?? null,
-            isPrimary: input.is_primary ?? false,
+            isPrimary: input.is_primary,
           },
           client,
         );
@@ -106,7 +106,7 @@ export class ProfessionalHistoryService extends SubResourceService<
         return clearPrimaryProfessionalHistory.run({ userExternalId, friendExternalId }, client);
       },
 
-      isPrimary: (input) => input.is_primary ?? false,
+      isPrimary: (input) => input.is_primary,
 
       setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
 

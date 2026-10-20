@@ -1,7 +1,7 @@
 <script lang="ts">
 import { createDirtyTracker, FormCheckbox, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { PhoneInput, PhoneResponse, PhoneType } from '$shared';
+import type { PhoneInputSchema, PhoneResponse, PhoneType } from '$shared';
 
 const i18n = createI18n();
 
@@ -38,7 +38,7 @@ const phoneTypeOptions = $derived([
   { value: 'other' as const, label: $i18n.t('subresources.phone.types.other') },
 ]);
 
-export function getData(): PhoneInput {
+export function getData(): typeof PhoneInputSchema.inferIn {
   return {
     phone_number: phoneNumber.trim(),
     phone_type: phoneType,

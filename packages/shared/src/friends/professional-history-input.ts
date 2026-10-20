@@ -12,7 +12,7 @@ export const ProfessionalHistoryInputSchema = type({
   from_year: 'number.integer',
   'to_month?': '1 <= number.integer <= 12 | null',
   'to_year?': 'number.integer | null',
-  'is_primary?': 'boolean',
+  is_primary: 'boolean = false',
 }).narrow((data, ctx) => {
   // At least one of job_title or organization must be provided
   const hasJobTitle = data.job_title && data.job_title.trim().length > 0;
