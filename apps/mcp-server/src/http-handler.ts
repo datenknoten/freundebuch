@@ -51,7 +51,8 @@ export function getClientIp(req: IncomingMessage): string {
       .split(',')
       .map((value) => value.trim())
       .filter((value) => value.length > 0);
-    if (hops.length > 0) return hops[hops.length - 1];
+    const lastHop = hops.at(-1);
+    if (lastHop !== undefined) return lastHop;
   }
 
   return req.socket.remoteAddress ?? 'unknown';
@@ -203,7 +204,7 @@ function readSessionIdHeader(
   let count = 0;
   let value: string | undefined;
   for (let i = 0; i < req.rawHeaders.length; i += 2) {
-    if (req.rawHeaders[i].toLowerCase() === 'mcp-session-id') {
+    if (req.rawHeaders[i]?.toLowerCase() === 'mcp-session-id') {
       count++;
       if (count === 1) value = req.rawHeaders[i + 1];
       if (count > 1) {

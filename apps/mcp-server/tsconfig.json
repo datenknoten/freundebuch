@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@datenknoten/tsconfig/tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
     "types": ["node", "vitest/globals"],

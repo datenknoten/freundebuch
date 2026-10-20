@@ -88,6 +88,6 @@ export function getPublicBaseUrl(req: IncomingMessage, configuredBaseUrl?: strin
     (typeof req.headers.host === 'string' && req.headers.host) ||
     'localhost';
   // Only the first proto value is meaningful if a comma-joined list slips through.
-  const scheme = proto.split(',')[0].trim();
+  const scheme = (proto.split(',')[0] ?? proto).trim();
   return `${scheme}://${host}`;
 }

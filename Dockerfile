@@ -117,7 +117,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy workspace configuration
 COPY mise.toml ./
 COPY aube-workspace.yaml package.json aube-lock.yaml ./
-COPY tsconfig.base.json ./
 
 # Copy every workspace package.json: aube 2.x refuses a frozen install when a
 # lockfile importer has no manifest.
