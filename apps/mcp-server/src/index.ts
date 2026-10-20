@@ -52,6 +52,12 @@ async function main() {
     min: config.DATABASE_POOL_MIN,
     max: config.DATABASE_POOL_MAX,
   });
+  const dbLogger = logger.child({ module: 'db' });
+  // pg emits 'error' on the pool when the server drops an idle client; without a
+  // listener Node treats it as unhandled and the process exits.
+  pool.on('error', function logIdleClientError(err) {
+    dbLogger.error({ err }, 'Idle pg client error');
+  });
   const authPool = createAuthPool({ config, logger: logger.child({ module: 'auth-db' }) });
   const auth = createAuth({ config, pool: authPool, logger: logger.child({ module: 'auth' }) });
   const services = createServices({ db: pool, logger, photoConfig: config });
