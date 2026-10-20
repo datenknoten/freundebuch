@@ -2,7 +2,7 @@ import { type AppError, ConflictError } from '@datenknoten/kit';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
-import { rethrowUniqueViolation } from '../../utils/rethrow-unique-violation.js';
+import { toUniqueViolationError } from '../../utils/to-unique-violation-error.js';
 import { withTransaction } from '../../utils/with-transaction.js';
 
 /**
@@ -159,10 +159,7 @@ export abstract class SubResourceService<
     this.config = options.definition;
   }
 
-  /**
-   * List all sub-resources for an owner.
-   */
-  public async list(userExternalId: string, ownerExternalId: string): Promise<TOutput[]> {
+  public async list(userExternalId: string, ownerExternalId: string) {
     this.logger.debug(
       { ownerExternalId, resource: this.config.resourceName },
       'Listing sub-resources',
@@ -183,13 +180,22 @@ export abstract class SubResourceService<
       'Adding sub-resource',
     );
 
-    return withTransaction(this.db, async (txClient) => {
-      const created = await this.addWithin(txClient, userExternalId, ownerExternalId, data);
-      if (created === undefined) {
-        throw new this.config.ownerNotFound(ownerExternalId);
-      }
-      return created;
-    });
+    return withTransaction(this.db, (txClient) =>
+      this.addOrThrow(txClient, userExternalId, ownerExternalId, data),
+    );
+  }
+
+  private async addOrThrow(
+    client: pg.PoolClient,
+    userExternalId: string,
+    ownerExternalId: string,
+    data: TData,
+  ) {
+    const created = await this.addWithin(client, userExternalId, ownerExternalId, data);
+    if (created === undefined) {
+      throw new this.config.ownerNotFound(ownerExternalId);
+    }
+    return created;
   }
 
   /**
@@ -202,9 +208,9 @@ export abstract class SubResourceService<
     userExternalId: string,
     ownerExternalId: string,
     data: TData,
-  ): Promise<TOutput | undefined> {
+  ) {
     // Auto-set primary if this is the first entry.
-    if (this.config.hasPrimaryFlag && this.config.setIsPrimary !== undefined) {
+    if (this.config.hasPrimaryFlag === true && this.config.setIsPrimary !== undefined) {
       const existing = await this.config.listFn({ userExternalId, ownerExternalId }, client);
       if (existing.length === 0) {
         data = this.config.setIsPrimary(data, true);
@@ -212,7 +218,7 @@ export abstract class SubResourceService<
     }
 
     if (
-      this.config.hasPrimaryFlag &&
+      this.config.hasPrimaryFlag === true &&
       this.config.clearPrimaryFn !== undefined &&
       this.config.isPrimary?.(data) === true
     ) {
@@ -239,37 +245,41 @@ export abstract class SubResourceService<
     ownerExternalId: string,
     resourceExternalId: string,
     data: TData,
-  ): Promise<TOutput> {
+  ) {
     this.logger.debug(
       { ownerExternalId, resourceExternalId, resource: this.config.resourceName },
       'Updating sub-resource',
     );
 
-    return withTransaction(this.db, async (txClient) => {
-      if (
-        this.config.hasPrimaryFlag &&
-        this.config.clearPrimaryFn !== undefined &&
-        this.config.isPrimary?.(data) === true
-      ) {
-        await this.config.clearPrimaryFn({ userExternalId, ownerExternalId }, txClient);
-      }
-
-      const result = await this.write(() =>
-        this.config.updateFn(
-          { userExternalId, ownerExternalId, resourceExternalId, data },
-          txClient,
-        ),
-      );
-      if (result === undefined) {
-        throw new ResourceNotFoundError(this.config.resourceLabel, resourceExternalId);
-      }
-      return this.config.mapResult(result);
-    });
+    return withTransaction(this.db, (txClient) =>
+      this.updateWithin(txClient, userExternalId, ownerExternalId, resourceExternalId, data),
+    );
   }
 
-  /**
-   * Delete a sub-resource.
-   */
+  private async updateWithin(
+    txClient: pg.PoolClient,
+    userExternalId: string,
+    ownerExternalId: string,
+    resourceExternalId: string,
+    data: TData,
+  ) {
+    if (
+      this.config.hasPrimaryFlag === true &&
+      this.config.clearPrimaryFn !== undefined &&
+      this.config.isPrimary?.(data) === true
+    ) {
+      await this.config.clearPrimaryFn({ userExternalId, ownerExternalId }, txClient);
+    }
+
+    const result = await this.write(() =>
+      this.config.updateFn({ userExternalId, ownerExternalId, resourceExternalId, data }, txClient),
+    );
+    if (result === undefined) {
+      throw new ResourceNotFoundError(this.config.resourceLabel, resourceExternalId);
+    }
+    return this.config.mapResult(result);
+  }
+
   public async delete(userExternalId: string, ownerExternalId: string, resourceExternalId: string) {
     this.logger.debug(
       { ownerExternalId, resourceExternalId, resource: this.config.resourceName },
@@ -293,22 +303,20 @@ export abstract class SubResourceService<
    * loser hits the partial unique index. That is a conflict the client can
    * retry, not the 500 an unhandled driver error produces.
    */
-  private async write<T>(fn: () => Promise<T[]>): Promise<T | undefined> {
+  private async write<T>(fn: () => Promise<T[]>) {
     try {
       const [row] = await fn();
       return row;
     } catch (error) {
-      rethrowUniqueViolation(
+      const conflict = new ConflictError(
+        `Another primary ${this.config.resourceName} was set concurrently; retry`,
+      );
+      function concurrentPrimary() {
+        return conflict;
+      }
+      throw toUniqueViolationError(
         error,
-        Object.fromEntries(
-          SINGLE_PRIMARY_INDEXES.map((index) => [
-            index,
-            () =>
-              new ConflictError(
-                `Another primary ${this.config.resourceName} was set concurrently; retry`,
-              ),
-          ]),
-        ),
+        Object.fromEntries(SINGLE_PRIMARY_INDEXES.map((index) => [index, concurrentPrimary])),
       );
     }
   }
@@ -324,7 +332,7 @@ export abstract class SubResourceService<
     ownerExternalId: string,
     inputs: TData[],
     client: pg.Pool | pg.PoolClient,
-  ): Promise<TOutput[]> {
+  ) {
     const results: TOutput[] = [];
     for (const data of inputs) {
       const created = await this.addWithin(client, userExternalId, ownerExternalId, data);

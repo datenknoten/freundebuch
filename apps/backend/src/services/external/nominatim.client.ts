@@ -29,22 +29,21 @@ export class NominatimClient {
 
   constructor(options: NominatimClientOptions) {
     const { logger, contactEmail } = options;
+    const hasContactEmail = contactEmail !== undefined && contactEmail !== '';
     this.logger = logger;
-    this.userAgent = contactEmail
-      ? `Freundebuch/2.0 (address geocoding; ${contactEmail})`
-      : 'Freundebuch/2.0 (address geocoding)';
+    this.userAgent =
+      hasContactEmail === true
+        ? `Freundebuch/2.0 (address geocoding; ${contactEmail})`
+        : 'Freundebuch/2.0 (address geocoding)';
 
-    if (!contactEmail) {
+    if (hasContactEmail === false) {
       logger.warn(
         'NOMINATIM_CONTACT_EMAIL not set — OSM Nominatim usage policy requires identifying contact info. Geocoding may be rate-limited or blocked.',
       );
     }
   }
 
-  /**
-   * Geocode an address to lat/lon coordinates; undefined when it cannot be located.
-   * Uses structured query parameters for better accuracy.
-   */
+  /** Resolves to undefined when the address cannot be located. */
   public async geocode(
     countryCode: string,
     city: string,
@@ -76,7 +75,7 @@ export class NominatimClient {
     }
   }
 
-  private async waitForRateLimit(): Promise<void> {
+  private async waitForRateLimit() {
     const elapsed = Date.now() - this.lastRequestTime;
     if (elapsed < this.minRequestInterval) {
       await new Promise((resolve) => setTimeout(resolve, this.minRequestInterval - elapsed));
@@ -98,8 +97,9 @@ export class NominatimClient {
       limit: '1',
     });
 
-    if (street) {
-      const streetValue = houseNumber ? `${houseNumber} ${street}` : street;
+    if (street !== undefined && street !== '') {
+      const streetValue =
+        houseNumber !== undefined && houseNumber !== '' ? `${houseNumber} ${street}` : street;
       params.set('street', streetValue);
     }
 
@@ -117,7 +117,7 @@ export class NominatimClient {
         },
       });
 
-      if (!response.ok) {
+      if (response.ok === false) {
         this.logger.warn(
           { status: response.status, countryCode, city },
           'Nominatim geocode request failed',
@@ -143,7 +143,7 @@ export class NominatimClient {
       const latitude = Number.parseFloat(result.lat);
       const longitude = Number.parseFloat(result.lon);
 
-      if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+      if (Number.isNaN(latitude) === true || Number.isNaN(longitude) === true) {
         this.logger.warn({ result }, 'Nominatim returned invalid coordinates');
         return undefined;
       }

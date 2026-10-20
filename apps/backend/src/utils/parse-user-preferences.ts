@@ -1,5 +1,5 @@
-import { type UserPreferences, UserPreferencesSchema } from '@freundebuch/shared/index.js';
+import { UserPreferencesSchema } from '@freundebuch/shared/index.js';
 
-export function parseUserPreferences(value: unknown): UserPreferences {
+export function parseUserPreferences(value: unknown) {
   return UserPreferencesSchema.assert(value);
 }

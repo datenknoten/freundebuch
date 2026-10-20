@@ -12,10 +12,6 @@ export function createCollectiveCirclesRoutes(options: CollectiveCirclesRoutesOp
   const { collectiveCircleService } = options;
   const app = new Hono<AppContext>();
 
-  /**
-   * GET /api/collectives/:id/circles
-   * Get all circles a collective belongs to
-   */
   app.get('/', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
@@ -25,10 +21,7 @@ export function createCollectiveCirclesRoutes(options: CollectiveCirclesRoutesOp
     return c.json(circles);
   });
 
-  /**
-   * GET /api/collectives/:id/circles/available
-   * Get available circles (not already assigned to collective)
-   */
+  // Circles the collective is not yet assigned to
   app.get('/available', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
@@ -38,10 +31,6 @@ export function createCollectiveCirclesRoutes(options: CollectiveCirclesRoutesOp
     return c.json(circles);
   });
 
-  /**
-   * POST /api/collectives/:id/circles/:circleId
-   * Add collective to a circle
-   */
   app.post('/:circleId', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id');
@@ -52,10 +41,6 @@ export function createCollectiveCirclesRoutes(options: CollectiveCirclesRoutesOp
     return c.json({ message: 'Collective added to circle successfully' }, 201);
   });
 
-  /**
-   * DELETE /api/collectives/:id/circles/:circleId
-   * Remove collective from a circle
-   */
   app.delete('/:circleId', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id');

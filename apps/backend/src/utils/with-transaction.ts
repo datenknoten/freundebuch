@@ -5,10 +5,7 @@ import type pg from 'pg';
  * ROLLBACK on error. Rollback and release failures are swallowed so they
  * can't mask the original error, and the client is always released.
  */
-export async function withTransaction<T>(
-  pool: pg.Pool,
-  fn: (client: pg.PoolClient) => Promise<T>,
-): Promise<T> {
+export async function withTransaction<T>(pool: pg.Pool, fn: (client: pg.PoolClient) => Promise<T>) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');

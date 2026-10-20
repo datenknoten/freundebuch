@@ -7,15 +7,11 @@ import { encrypt } from './encrypt.js';
  * envelope is passed through so a re-save never double-wraps; a v1 envelope is
  * re-wrapped so it gains the context binding.
  */
-export function encryptOptional(
-  value: string | null | undefined,
-  context: string,
-  key: Buffer,
-): string | null {
+export function encryptOptional(value: string | null | undefined, context: string, key: Buffer) {
   if (value === null || value === undefined) {
     return null;
   }
-  if (value.startsWith(ENVELOPE_PREFIX_V2)) {
+  if (value.startsWith(ENVELOPE_PREFIX_V2) === true) {
     return value;
   }
   return encrypt(decrypt(value, context, key), context, key);

@@ -16,19 +16,17 @@ import {
 } from '../../base/sub-resource.service.js';
 import type { EmailData } from '../../friends/sub-resources/email.service.js';
 
-const mapRow = (row: IGetEmailsByCollectiveIdResult): EmailResponse => ({
-  id: row.external_id,
-  emailAddress: row.email_address,
-  emailType: parseEmailType(row.email_type),
-  label: row.label ?? undefined,
-  isPrimary: row.is_primary,
-  createdAt: row.created_at.toISOString(),
-});
+function mapRow(row: IGetEmailsByCollectiveIdResult) {
+  return {
+    id: row.external_id,
+    emailAddress: row.email_address,
+    emailType: parseEmailType(row.email_type),
+    label: row.label ?? undefined,
+    isPrimary: row.is_primary,
+    createdAt: row.created_at.toISOString(),
+  } satisfies EmailResponse;
+}
 
-/**
- * EmailService handles all email-related operations for collectives.
- * Extends SubResourceService for common CRUD operations.
- */
 export class CollectiveEmailService extends SubResourceService<
   EmailData,
   EmailResponse,
@@ -45,10 +43,7 @@ export class CollectiveEmailService extends SubResourceService<
         ownerNotFound: CollectiveNotFoundError,
         hasPrimaryFlag: true,
 
-        createFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId, data },
-          client,
-        ) => {
+        async createFn({ userExternalId, ownerExternalId: collectiveExternalId, data }, client) {
           return createEmail.run(
             {
               userExternalId,
@@ -62,10 +57,10 @@ export class CollectiveEmailService extends SubResourceService<
           );
         },
 
-        updateFn: async (
+        async updateFn(
           { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, data },
           client,
-        ) => {
+        ) {
           return updateEmail.run(
             {
               userExternalId,
@@ -80,10 +75,10 @@ export class CollectiveEmailService extends SubResourceService<
           );
         },
 
-        deleteFn: async (
+        async deleteFn(
           { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
           client,
-        ) => {
+        ) {
           return deleteEmail.run(
             {
               userExternalId,
@@ -94,18 +89,19 @@ export class CollectiveEmailService extends SubResourceService<
           );
         },
 
-        clearPrimaryFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId },
-          client,
-        ) => {
+        async clearPrimaryFn({ userExternalId, ownerExternalId: collectiveExternalId }, client) {
           return clearPrimaryEmail.run({ userExternalId, collectiveExternalId }, client);
         },
 
-        isPrimary: (data) => data.isPrimary,
+        isPrimary(data) {
+          return data.isPrimary;
+        },
 
-        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
+        setIsPrimary(data, isPrimary) {
+          return { ...data, isPrimary };
+        },
 
-        listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+        async listFn({ userExternalId, ownerExternalId: collectiveExternalId }, client) {
           return getEmailsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
         },
 

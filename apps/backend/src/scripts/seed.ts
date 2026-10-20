@@ -1,11 +1,5 @@
-/**
- * Seed script for demo data
- *
- * Creates a demo user with friends, circles, and encounters for testing purposes.
- *
- * Usage: aube seed
- *        aube seed --reset   (delete the existing demo user first)
- */
+// Usage: aube seed
+//        aube seed --reset   (delete the existing demo user first)
 
 import { exitWith, rejectUsage } from '@datenknoten/kit/cli';
 import bcrypt from 'bcrypt';
@@ -17,20 +11,15 @@ import { DataIntegrityError } from '../errors/data-integrity.error.js';
 import { formatDateOnly } from '../utils/date.js';
 
 const SALT_ROUNDS = 10;
-async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS);
-}
 
 const { Pool } = pg;
 
-// Demo user credentials
 const DEMO_USER = {
   email: 'demo@freundebuch.app',
   password: 'DemoPassword123!',
   displayName: 'Demo User',
 };
 
-// Demo friends to create
 const DEMO_FRIENDS = [
   { displayName: 'Anna Müller', nickname: 'Annie' },
   { displayName: 'Max Schneider', nickname: null },
@@ -42,14 +31,13 @@ const DEMO_FRIENDS = [
   { displayName: 'Leon Schmidt', nickname: 'Leo' },
 ];
 
-// Demo circles to create
 const DEMO_CIRCLES = [
   { name: 'Close Friends', color: '#10B981' },
   { name: 'Work Colleagues', color: '#3B82F6' },
   { name: 'University', color: '#8B5CF6' },
 ];
 
-// Demo encounters to create (with relative dates)
+// daysAgo is relative to the day the seed runs
 const DEMO_ENCOUNTERS = [
   {
     title: 'Coffee at Starbucks',
@@ -109,7 +97,6 @@ async function seed(options: SeedOptions) {
   console.log('Starting database seeding...\n');
 
   try {
-    // Check if demo user already exists
     const existingUser = await pool.query<{ id: string }>(
       'SELECT id FROM auth."user" WHERE email = $1',
       [DEMO_USER.email],
@@ -117,7 +104,7 @@ async function seed(options: SeedOptions) {
 
     const [existingRow] = existingUser.rows;
     if (existingRow !== undefined) {
-      if (!reset) {
+      if (reset === false) {
         console.log(`Demo user (${DEMO_USER.email}) already exists. Skipping seed.`);
         console.log('\nRe-run with --reset to delete and re-seed it:');
         console.log('  aube seed --reset');
@@ -133,7 +120,6 @@ async function seed(options: SeedOptions) {
       await pool.query('DELETE FROM auth.users WHERE external_id = $1::uuid', [userExternalId]);
     }
 
-    // Start transaction
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -141,14 +127,13 @@ async function seed(options: SeedOptions) {
       // 1. Create demo user: allocate the legacy FK anchor, then adopt its UUID
       //    as the Better Auth user id (ADR 0003).
       console.log('Creating demo user...');
-      const passwordHash = await hashPassword(DEMO_USER.password);
+      const passwordHash = await bcrypt.hash(DEMO_USER.password, SALT_ROUNDS);
       const userResult = await client.query(
         'INSERT INTO auth.users DEFAULT VALUES RETURNING id, external_id',
       );
       const userId = userResult.rows[0].id;
       const userExternalId = userResult.rows[0].external_id;
 
-      // Also insert into Better Auth user and account tables
       await client.query(
         `INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
          VALUES ($1, $2, $3, false, NOW(), NOW())`,
@@ -161,7 +146,7 @@ async function seed(options: SeedOptions) {
       );
       console.log(`  Created user: ${DEMO_USER.email} (${userExternalId})`);
 
-      // 2. Create self-profile for onboarding
+      // Onboarding requires a self-profile
       console.log('\nCreating self-profile...');
       const selfProfileResult = await client.query(
         `INSERT INTO friends.friends (user_id, display_name)
@@ -177,7 +162,6 @@ async function seed(options: SeedOptions) {
       ]);
       console.log(`  Created self-profile: ${DEMO_USER.displayName}`);
 
-      // 3. Create demo friends
       console.log('\nCreating demo friends...');
       const friendIds: string[] = [];
       for (const friend of DEMO_FRIENDS) {
@@ -191,7 +175,6 @@ async function seed(options: SeedOptions) {
         console.log(`  Created friend: ${friend.displayName}`);
       }
 
-      // 4. Create demo circles
       console.log('\nCreating demo circles...');
       const circleIds: string[] = [];
       for (const circle of DEMO_CIRCLES) {
@@ -205,7 +188,6 @@ async function seed(options: SeedOptions) {
         console.log(`  Created circle: ${circle.name}`);
       }
 
-      // 5. Assign some friends to circles
       console.log('\nAssigning friends to circles...');
       // Close Friends: Anna, Sophie
       await assignFriendToCircle(client, friendIds[0], circleIds[0]);
@@ -224,7 +206,6 @@ async function seed(options: SeedOptions) {
       await assignFriendToCircle(client, friendIds[7], circleIds[2]);
       console.log('  Added Max, Jonas, Mia, and Leon to University');
 
-      // 6. Create demo encounters
       console.log('\nCreating demo encounters...');
       for (const encounter of DEMO_ENCOUNTERS) {
         const encounterDate = new Date();
@@ -239,7 +220,6 @@ async function seed(options: SeedOptions) {
         );
         const encounterId = encounterResult.rows[0].id;
 
-        // Add friends to the encounter
         for (const friendIndex of encounter.friendIndices) {
           const friendExternalId = friendIds[friendIndex];
           await client.query(

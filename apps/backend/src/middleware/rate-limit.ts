@@ -1,5 +1,5 @@
 import { getConnInfo } from '@hono/node-server/conninfo';
-import type { Context, MiddlewareHandler, Next } from 'hono';
+import type { Context, Next } from 'hono';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import type { Config } from '../config.js';
 import type { AppContext } from '../types/context.js';
@@ -81,14 +81,14 @@ export interface RateLimitMiddlewareOptions {
 function getClientIdentifier(
   c: Context,
   config: Pick<Config, 'TRUST_PROXY' | 'TRUSTED_PROXY_HOPS'>,
-): string {
-  if (config.TRUST_PROXY) {
+) {
+  if (config.TRUST_PROXY === true) {
     const forwarded = c.req.header('X-Forwarded-For');
-    if (forwarded) {
+    if (forwarded !== undefined && forwarded !== '') {
       const hops = forwarded
         .split(',')
         .map((part) => part.trim())
-        .filter(Boolean);
+        .filter((part) => part !== '');
       const index = Math.max(0, hops.length - config.TRUSTED_PROXY_HOPS);
       const hop = hops[index];
       if (hop !== undefined) {
@@ -96,14 +96,14 @@ function getClientIdentifier(
       }
     }
     const realIp = c.req.header('X-Real-IP');
-    if (realIp) {
+    if (realIp !== undefined && realIp !== '') {
       return realIp;
     }
   }
 
   try {
     const address = getConnInfo(c).remote.address;
-    if (address) {
+    if (address !== undefined && address !== '') {
       return address;
     }
   } catch {
@@ -137,9 +137,7 @@ async function consumePoint(limiter: RateLimiterMemory, key: string) {
  * authenticated, and fall back to the client address otherwise (the limiter
  * mounted before authMiddleware, or an unauthenticated request).
  */
-export function createRateLimitMiddleware(
-  options: RateLimitMiddlewareOptions,
-): MiddlewareHandler<AppContext> {
+export function createRateLimitMiddleware(options: RateLimitMiddlewareOptions) {
   const { config, limiter: name } = options;
   const spec: LimitSpec = LIMITS[name];
   const limiter = new RateLimiterMemory({
@@ -152,7 +150,7 @@ export function createRateLimitMiddleware(
     if (config.RATE_LIMIT_ENABLED === false) {
       return next();
     }
-    const userId = spec.isKeyedByUser ? c.get('user')?.userId : undefined;
+    const userId = spec.isKeyedByUser === true ? c.get('user')?.userId : undefined;
     const key = userId === undefined ? getClientIdentifier(c, config) : `user:${userId}`;
 
     const msBeforeNext = await consumePoint(limiter, key);

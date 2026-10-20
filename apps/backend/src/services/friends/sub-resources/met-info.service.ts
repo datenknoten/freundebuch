@@ -21,11 +21,7 @@ export interface MetInfoServiceOptions {
   logger: Logger;
 }
 
-/**
- * MetInfoService handles met information operations for friends.
- * Note: This service uses upsert semantics (not standard CRUD) and
- * does not extend SubResourceService due to its unique requirements.
- */
+/** Not a SubResourceService: a friend holds at most one met-info row, written by upsert. */
 export class MetInfoService {
   private readonly db: pg.Pool;
   private readonly logger: Logger;
@@ -35,9 +31,6 @@ export class MetInfoService {
     this.logger = options.logger;
   }
 
-  /**
-   * Set or update met information for a friend (upsert semantics)
-   */
   public async set(
     userExternalId: string,
     friendExternalId: string,
@@ -62,9 +55,6 @@ export class MetInfoService {
     return this.mapMetInfo(metInfo);
   }
 
-  /**
-   * Delete met information for a friend
-   */
   public async delete(userExternalId: string, friendExternalId: string) {
     this.logger.debug({ friendExternalId }, 'Deleting met info');
 
@@ -74,10 +64,7 @@ export class MetInfoService {
     }
   }
 
-  /**
-   * Map a met info row to the MetInfo type
-   */
-  public mapMetInfo(row: IGetMetInfoByFriendIdResult): MetInfoResponse {
+  public mapMetInfo(row: IGetMetInfoByFriendIdResult) {
     const metDate = formatDateOnly(row.met_date);
     return {
       id: row.external_id,
@@ -86,6 +73,6 @@ export class MetInfoService {
       metContext: row.met_context ?? undefined,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
-    };
+    } satisfies MetInfoResponse;
   }
 }

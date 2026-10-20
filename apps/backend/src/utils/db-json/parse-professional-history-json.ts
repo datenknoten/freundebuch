@@ -18,9 +18,6 @@ const ProfessionalHistoryJsonRowSchema = type({
 
 export type ProfessionalHistoryJsonRow = typeof ProfessionalHistoryJsonRowSchema.infer;
 
-export function parseProfessionalHistoryJson(
-  value: unknown,
-  logger: Logger,
-): ProfessionalHistoryJsonRow[] {
+export function parseProfessionalHistoryJson(value: unknown, logger: Logger) {
   return safeArray(value, ProfessionalHistoryJsonRowSchema, logger, 'professionalHistory');
 }

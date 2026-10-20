@@ -5,7 +5,7 @@ import { formatDateOnly } from './date.js';
 // timezone. This matters: CI runs in UTC, where the bug this function exists to
 // prevent is invisible. Without forcing a non-UTC zone these tests would pass
 // against the broken `toISOString().split('T')[0]` implementation.
-function inTimezone<T>(tz: string, fn: () => T): T {
+function inTimezone<T>(tz: string, fn: () => T) {
   vi.stubEnv('TZ', tz);
   return fn();
 }

@@ -20,15 +20,10 @@ export function createAppPasswordsRoutes(options: AppPasswordsRoutesOptions) {
   const { appPasswordsService, authMiddleware, onboardingMiddleware } = options;
   const app = new Hono<AppContext>();
 
-  // Apply auth middleware to all routes
   app.use('*', authMiddleware);
-  // Apply onboarding middleware to require profile
   app.use('*', onboardingMiddleware);
 
-  /**
-   * GET /api/app-passwords
-   * List all active app passwords for the current user
-   */
+  // Active app passwords only
   app.get('/', async (c) => {
     const authUser = getAuthUser(c);
     const passwords = await appPasswordsService.listAppPasswords(authUser.userId);
@@ -36,11 +31,7 @@ export function createAppPasswordsRoutes(options: AppPasswordsRoutesOptions) {
     return c.json<AppPasswordResponse[]>(passwords);
   });
 
-  /**
-   * POST /api/app-passwords
-   * Create a new app password
-   * Returns the password only once
-   */
+  // The response is the only time the password is returned
   app.post('/', async (c) => {
     const authUser = getAuthUser(c);
     const validated = await parseBody(c, AppPasswordCreateInputSchema);
@@ -50,10 +41,6 @@ export function createAppPasswordsRoutes(options: AppPasswordsRoutesOptions) {
     return c.json<AppPasswordCreateResponse>(result, 201);
   });
 
-  /**
-   * DELETE /api/app-passwords/:id
-   * Revoke an app password
-   */
   app.delete('/:id', async (c) => {
     const authUser = getAuthUser(c);
     const appPasswordId = requireUuidParam(c, 'id', 'app password ID format');

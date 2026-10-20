@@ -24,7 +24,7 @@ import {
 import { createWildcardQuery } from '../../utils/create-wildcard-query.js';
 import { parseRelationshipCategory } from '../../utils/parse-relationship-category.js';
 import { parseRelationshipTypeId } from '../../utils/parse-relationship-type-id.js';
-import { rethrowUniqueViolation } from '../../utils/rethrow-unique-violation.js';
+import { toUniqueViolationError } from '../../utils/to-unique-violation-error.js';
 import { withTransaction } from '../../utils/with-transaction.js';
 
 export interface RelationshipServiceOptions {
@@ -42,10 +42,46 @@ export interface RelationshipUpdateData {
   notes?: string | null;
 }
 
-/**
- * RelationshipService handles all relationship functionality between friends.
- * Extracted from FriendsService for better separation of concerns.
- */
+function relationshipExists() {
+  return new ConflictError('This relationship already exists');
+}
+
+async function insertRelationshipPair(
+  client: pg.PoolClient,
+  userExternalId: string,
+  friendExternalId: string,
+  data: RelationshipCreateData,
+) {
+  const [relationship] = await createRelationship.run(
+    {
+      userExternalId,
+      friendExternalId,
+      relatedFriendExternalId: data.relatedFriendId,
+      relationshipTypeId: data.relationshipTypeId,
+      notes: data.notes ?? null,
+    },
+    client,
+  );
+
+  if (relationship === undefined) {
+    throw new FriendNotFoundError(friendExternalId);
+  }
+
+  // The inverse type may not exist; the query then inserts nothing.
+  await createInverseRelationship.run(
+    {
+      userExternalId,
+      friendExternalId,
+      relatedFriendExternalId: data.relatedFriendId,
+      relationshipTypeId: data.relationshipTypeId,
+      notes: data.notes ?? null,
+    },
+    client,
+  );
+
+  return relationship.external_id;
+}
+
 export class RelationshipService {
   private readonly db: pg.Pool;
   private readonly logger: Logger;
@@ -55,10 +91,7 @@ export class RelationshipService {
     this.logger = options.logger;
   }
 
-  /**
-   * Get all relationship types grouped by category
-   */
-  public async getRelationshipTypes(): Promise<RelationshipTypesGroupedResponse> {
+  public async getRelationshipTypes() {
     this.logger.debug('Getting relationship types');
 
     const types = await getAllRelationshipTypes.run(undefined, this.db);
@@ -89,14 +122,12 @@ export class RelationshipService {
     return grouped;
   }
 
-  /**
-   * Add a relationship between two friends (creates inverse automatically)
-   */
+  /** Creates the inverse relationship as well. */
   public async addRelationship(
     userExternalId: string,
     friendExternalId: string,
     data: RelationshipCreateData,
-  ): Promise<RelationshipResponse> {
+  ) {
     this.logger.debug(
       { friendExternalId, relatedFriendExternalId: data.relatedFriendId },
       'Adding relationship',
@@ -106,44 +137,14 @@ export class RelationshipService {
     // failure in between previously left a one-way edge.
     let relationshipExternalId: string;
     try {
-      relationshipExternalId = await withTransaction(this.db, async (client) => {
-        const [relationship] = await createRelationship.run(
-          {
-            userExternalId,
-            friendExternalId,
-            relatedFriendExternalId: data.relatedFriendId,
-            relationshipTypeId: data.relationshipTypeId,
-            notes: data.notes ?? null,
-          },
-          client,
-        );
-
-        if (relationship === undefined) {
-          throw new FriendNotFoundError(friendExternalId);
-        }
-
-        // Create the inverse relationship (if inverse type exists)
-        await createInverseRelationship.run(
-          {
-            userExternalId,
-            friendExternalId,
-            relatedFriendExternalId: data.relatedFriendId,
-            relationshipTypeId: data.relationshipTypeId,
-            notes: data.notes ?? null,
-          },
-          client,
-        );
-
-        return relationship.external_id;
-      });
+      relationshipExternalId = await withTransaction(this.db, (client) =>
+        insertRelationshipPair(client, userExternalId, friendExternalId, data),
+      );
     } catch (error) {
       // A pair can only be related once by a given type.
-      rethrowUniqueViolation(error, {
-        unique_relationship: () => new ConflictError('This relationship already exists'),
-      });
+      throw toUniqueViolationError(error, { unique_relationship: relationshipExists });
     }
 
-    // Fetch the full relationship with related friend info
     const [fullRelationship] = await getRelationshipById.run(
       {
         userExternalId,
@@ -169,15 +170,12 @@ export class RelationshipService {
     return this.mapRelationship(fullRelationship);
   }
 
-  /**
-   * Update a relationship's notes
-   */
   public async updateRelationship(
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
     data: RelationshipUpdateData,
-  ): Promise<RelationshipResponse> {
+  ) {
     this.logger.debug({ friendExternalId, relationshipExternalId }, 'Updating relationship');
 
     const [updated] = await updateRelationship.run(
@@ -194,7 +192,6 @@ export class RelationshipService {
       throw new ResourceNotFoundError('Relationship', relationshipExternalId);
     }
 
-    // Fetch the full relationship with related friend info
     const [fullRelationship] = await getRelationshipById.run(
       {
         userExternalId,
@@ -213,14 +210,12 @@ export class RelationshipService {
     return this.mapRelationship(fullRelationship);
   }
 
-  /**
-   * Delete a relationship (and its inverse)
-   */
+  /** Deletes the inverse relationship as well. */
   public async deleteRelationship(
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
-  ): Promise<void> {
+  ) {
     this.logger.debug({ friendExternalId, relationshipExternalId }, 'Deleting relationship');
 
     // Delete the primary relationship and its inverse together so an inverse
@@ -263,15 +258,12 @@ export class RelationshipService {
     this.logger.info({ friendExternalId, relationshipExternalId }, 'Relationship deleted');
   }
 
-  /**
-   * Search friends by name (for autocomplete)
-   */
   public async searchFriends(
     userExternalId: string,
     query: string,
     excludeFriendExternalId?: string,
     limit = 10,
-  ): Promise<FriendSearchResultResponse[]> {
+  ) {
     this.logger.debug({ query, excludeFriendExternalId }, 'Searching friends');
 
     const searchPattern = createWildcardQuery(query);
@@ -286,17 +278,17 @@ export class RelationshipService {
       this.db,
     );
 
-    return results.map((r) => ({
-      id: r.external_id,
-      displayName: r.display_name,
-      photoThumbnailUrl: r.photo_thumbnail_url ?? undefined,
-    }));
+    return results.map(
+      (r) =>
+        ({
+          id: r.external_id,
+          displayName: r.display_name,
+          photoThumbnailUrl: r.photo_thumbnail_url ?? undefined,
+        }) satisfies FriendSearchResultResponse,
+    );
   }
 
-  /**
-   * Map a relationship row to the Relationship type
-   */
-  public mapRelationship(row: IGetRelationshipsByFriendIdResult): RelationshipResponse {
+  public mapRelationship(row: IGetRelationshipsByFriendIdResult) {
     return {
       id: row.external_id,
       relatedFriendId: row.related_friend_external_id,
@@ -307,6 +299,6 @@ export class RelationshipService {
       relationshipCategory: parseRelationshipCategory(row.relationship_category),
       notes: row.notes ?? undefined,
       createdAt: row.created_at.toISOString(),
-    };
+    } satisfies RelationshipResponse;
   }
 }

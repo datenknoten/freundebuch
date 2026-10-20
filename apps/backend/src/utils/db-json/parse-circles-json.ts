@@ -10,6 +10,6 @@ const CircleJsonRowSchema = type({
 
 export type CircleJsonRow = typeof CircleJsonRowSchema.infer;
 
-export function parseCirclesJson(value: unknown, logger: Logger): CircleJsonRow[] {
+export function parseCirclesJson(value: unknown, logger: Logger) {
   return safeArray(value, CircleJsonRowSchema, logger, 'circles');
 }

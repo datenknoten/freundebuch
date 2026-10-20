@@ -16,9 +16,9 @@ import { requireUuidParam } from '../utils/require-uuid-param.js';
 function mapCircleInput(input: CircleInput) {
   return {
     name: input.name,
-    ...(input.color !== undefined && { color: input.color }),
-    ...(input.parent_circle_id !== undefined && { parentCircleId: input.parent_circle_id }),
-    ...(input.sort_order !== undefined && { sortOrder: input.sort_order }),
+    ...(input.color === undefined ? {} : { color: input.color }),
+    ...(input.parent_circle_id === undefined ? {} : { parentCircleId: input.parent_circle_id }),
+    ...(input.sort_order === undefined ? {} : { sortOrder: input.sort_order }),
   };
 }
 
@@ -33,23 +33,11 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
   const { circlesService, authMiddleware, onboardingMiddleware, rateLimitMiddleware } = options;
   const app = new Hono<AppContext>();
 
-  // Apply auth middleware to all circle routes
   app.use('*', authMiddleware);
-  // Apply rate limiting to prevent abuse
   app.use('*', rateLimitMiddleware);
-  // Apply onboarding middleware to require self-friend before using circles
   app.use('*', onboardingMiddleware);
 
-  // ============================================================================
-  // Circle CRUD Routes
-  // ============================================================================
-
-  /**
-   * GET /api/circles
-   * List all circles for the authenticated user.
-   * Emits an ETag so warm reloads can revalidate cheaply (304) without
-   * serving stale data.
-   */
+  // The ETag lets warm reloads revalidate cheaply (304) without serving stale data.
   app.get('/', etag(), async (c) => {
     const user = getAuthUser(c);
     const circles = await circlesService.listCircles(user.userId);
@@ -57,10 +45,6 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
     return c.json(circles);
   });
 
-  /**
-   * POST /api/circles
-   * Create a new circle
-   */
   app.post('/', async (c) => {
     const user = getAuthUser(c);
 
@@ -70,11 +54,7 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
     return c.json(circle, 201);
   });
 
-  /**
-   * PUT /api/circles/reorder
-   * Batch reorder circles by updating their sort_order
-   * NOTE: This must be defined before /:id to avoid being caught by the wildcard
-   */
+  // Must be defined before /:id to avoid being caught by the wildcard
   app.put('/reorder', async (c) => {
     const user = getAuthUser(c);
 
@@ -87,10 +67,6 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
     return c.json({ success: true });
   });
 
-  /**
-   * GET /api/circles/:id
-   * Get a single circle by ID
-   */
   app.get('/:id', async (c) => {
     const user = getAuthUser(c);
     const circleId = requireUuidParam(c, 'id', 'circle ID');
@@ -99,10 +75,6 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
     return c.json(circle);
   });
 
-  /**
-   * PUT /api/circles/:id
-   * Update a circle
-   */
   app.put('/:id', async (c) => {
     const user = getAuthUser(c);
     const circleId = requireUuidParam(c, 'id', 'circle ID');
@@ -116,10 +88,7 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
     return c.json(circle);
   });
 
-  /**
-   * DELETE /api/circles/:id
-   * Delete a circle (friends remain, just unassigned from this circle)
-   */
+  // Friends remain, just unassigned from this circle
   app.delete('/:id', async (c) => {
     const user = getAuthUser(c);
     const circleId = requireUuidParam(c, 'id', 'circle ID');
@@ -128,10 +97,7 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
     return c.json({ success: true });
   });
 
-  /**
-   * POST /api/circles/:id/merge
-   * Merge another circle into this one (move all friends from source, then delete source)
-   */
+  // Moves all friends from the source, then deletes it
   app.post('/:id/merge', async (c) => {
     const user = getAuthUser(c);
     const targetCircleId = requireUuidParam(c, 'id', 'target circle ID');

@@ -25,7 +25,7 @@ import {
   removeFriendFromCircle,
   setFriendCircles,
 } from '../models/queries/friend-circles.queries.js';
-import { rethrowUniqueViolation } from '../utils/rethrow-unique-violation.js';
+import { toUniqueViolationError } from '../utils/to-unique-violation-error.js';
 
 export interface CirclesServiceOptions {
   db: Pool;
@@ -44,9 +44,6 @@ export interface CircleOrderData {
   sortOrder: number;
 }
 
-/**
- * Service for managing circles (categorization/organization feature)
- */
 export class CirclesService {
   private readonly db: Pool;
 
@@ -54,14 +51,9 @@ export class CirclesService {
     this.db = options.db;
   }
 
-  // ============================================================================
-  // Circle CRUD
-  // ============================================================================
+  //#region Circle CRUD
 
-  /**
-   * List all circles for a user
-   */
-  public async listCircles(userExternalId: string): Promise<CircleResponse[]> {
+  public async listCircles(userExternalId: string) {
     const results = await getCirclesByUserId.run({ userExternalId }, this.db);
     return results.map((row) => this.mapCircle(row));
   }
@@ -101,8 +93,10 @@ export class CirclesService {
       // Re-read to include the friend count
       return await this.getCircle(userExternalId, created.external_id);
     } catch (error) {
-      rethrowUniqueViolation(error, {
-        idx_circles_unique_name: () => new CircleNameExistsError(),
+      throw toUniqueViolationError(error, {
+        idx_circles_unique_name() {
+          return new CircleNameExistsError();
+        },
       });
     }
   }
@@ -139,26 +133,24 @@ export class CirclesService {
       // Re-read to include the friend count
       return await this.getCircle(userExternalId, updated.external_id);
     } catch (error) {
-      rethrowUniqueViolation(error, {
-        idx_circles_unique_name: () => new CircleNameExistsError(),
+      throw toUniqueViolationError(error, {
+        idx_circles_unique_name() {
+          return new CircleNameExistsError();
+        },
       });
     }
   }
 
-  /**
-   * Check if setting a parent would create a circular reference
-   */
   private async checkForCircularReference(
     userExternalId: string,
     circleExternalId: string,
     newParentExternalId: string,
-  ): Promise<void> {
+  ) {
     // Walk up the ancestor chain from the proposed parent
     let currentId: string | null = newParentExternalId;
     const visited = new Set<string>();
 
-    while (currentId) {
-      // If we find ourselves in the ancestor chain, it's a cycle
+    while (currentId !== null) {
       if (currentId === circleExternalId) {
         throw new CircularReferenceError(
           'Cannot set parent: would create circular reference in hierarchy',
@@ -166,20 +158,17 @@ export class CirclesService {
       }
 
       // Prevent infinite loops from existing bad data
-      if (visited.has(currentId)) {
+      if (visited.has(currentId) === true) {
         break;
       }
       visited.add(currentId);
 
-      // Get the parent of the current circle
       const current = await this.findCircle(userExternalId, currentId);
       currentId = current?.parentCircleId ?? null;
     }
   }
 
-  /**
-   * Delete a circle (friends remain, just unassigned from this circle)
-   */
+  /** Friends remain, just unassigned from this circle. */
   public async deleteCircle(userExternalId: string, circleExternalId: string) {
     const results = await deleteCircle.run({ userExternalId, circleExternalId }, this.db);
     if (results.length === 0) {
@@ -187,9 +176,7 @@ export class CirclesService {
     }
   }
 
-  /**
-   * Reorder circles by updating their sort_order (uses transaction for consistency)
-   */
+  /** One transaction, so a failed update leaves the old order intact. */
   public async reorderCircles(userExternalId: string, order: CircleOrderData[]) {
     const client = await this.db.connect();
     try {
@@ -213,10 +200,7 @@ export class CirclesService {
     }
   }
 
-  /**
-   * Merge one circle into another (move all friends, then delete source)
-   * Uses transaction to ensure atomicity
-   */
+  /** Moves all friends to the target, then deletes the source, atomically. */
   public async mergeCircles(
     userExternalId: string,
     targetCircleExternalId: string,
@@ -226,7 +210,6 @@ export class CirclesService {
     try {
       await client.query('BEGIN');
 
-      // Move all friends from source to target
       await mergeCircles.run(
         {
           userExternalId,
@@ -236,7 +219,6 @@ export class CirclesService {
         client,
       );
 
-      // Delete the source circle
       const deleteResult = await deleteCircle.run(
         { userExternalId, circleExternalId: sourceCircleExternalId },
         client,
@@ -256,35 +238,25 @@ export class CirclesService {
     return this.getCircle(userExternalId, targetCircleExternalId);
   }
 
-  // ============================================================================
-  // Friend-Circle Assignment
-  // ============================================================================
+  //#endregion
 
-  /**
-   * Get all circles for a specific friend
-   */
-  public async getCirclesForFriend(
-    userExternalId: string,
-    friendExternalId: string,
-  ): Promise<CircleSummaryResponse[]> {
+  //#region Friend-Circle Assignment
+
+  public async getCirclesForFriend(userExternalId: string, friendExternalId: string) {
     const results = await getCirclesByFriendId.run({ userExternalId, friendExternalId }, this.db);
     return results.map((row) => this.mapCircleSummary(row));
   }
 
-  /**
-   * Set circles for a friend (replaces all existing assignments)
-   * Uses transaction to ensure atomicity
-   */
+  /** Replaces all existing assignments atomically. */
   public async setFriendCircles(
     userExternalId: string,
     friendExternalId: string,
     circleIds: string[],
-  ): Promise<CircleSummaryResponse[]> {
+  ) {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
 
-      // Clear existing assignments
       await clearFriendCircles.run({ userExternalId, friendExternalId }, client);
 
       const inserted: ISetFriendCirclesResult[] =
@@ -309,7 +281,7 @@ export class CirclesService {
                 id: row.circle_external_id,
                 name: row.circle_name,
                 color: row.circle_color,
-              },
+              } satisfies CircleSummaryResponse,
             ]
           : [],
       );
@@ -321,9 +293,6 @@ export class CirclesService {
     }
   }
 
-  /**
-   * Add a friend to a single circle
-   */
   public async addFriendToCircle(
     userExternalId: string,
     friendExternalId: string,
@@ -360,9 +329,6 @@ export class CirclesService {
     };
   }
 
-  /**
-   * Remove a friend from a circle
-   */
   public async removeFriendFromCircle(
     userExternalId: string,
     friendExternalId: string,
@@ -380,11 +346,11 @@ export class CirclesService {
     }
   }
 
-  // ============================================================================
-  // Mappers
-  // ============================================================================
+  //#endregion
 
-  private mapCircle(row: IGetCirclesByUserIdResult | IGetCircleByIdResult): CircleResponse {
+  //#region Mappers
+
+  private mapCircle(row: IGetCirclesByUserIdResult | IGetCircleByIdResult) {
     return {
       id: row.external_id,
       name: row.name,
@@ -394,14 +360,16 @@ export class CirclesService {
       friendCount: row.friend_count ?? 0,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
-    };
+    } satisfies CircleResponse;
   }
 
-  private mapCircleSummary(row: IGetCirclesByFriendIdResult): CircleSummaryResponse {
+  private mapCircleSummary(row: IGetCirclesByFriendIdResult) {
     return {
       id: row.external_id,
       name: row.name,
       color: row.color,
-    };
+    } satisfies CircleSummaryResponse;
   }
+
+  //#endregion
 }

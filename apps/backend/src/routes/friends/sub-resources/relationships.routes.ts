@@ -33,17 +33,12 @@ function mapRelationshipUpdateInput(input: RelationshipUpdateInput) {
   return data;
 }
 
-export function createRelationshipsRoutes(options: RelationshipsRoutesOptions): Hono<AppContext> {
+export function createRelationshipsRoutes(options: RelationshipsRoutesOptions) {
   const app = new Hono<AppContext>();
 
-  /**
-   * POST /api/friends/:id/relationships
-   * Add a relationship to a friend (creates inverse automatically)
-   *
-   * Hand-written rather than generated: the pair is symmetric (self-relationships
-   * are rejected, and the inverse edge is created in the same transaction), so it
-   * does not fit the sub-resource shape.
-   */
+  // Hand-written rather than generated: the pair is symmetric (self-relationships
+  // are rejected, and the inverse edge is created in the same transaction), so it
+  // does not fit the sub-resource shape.
   app.post('/', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');
@@ -65,10 +60,6 @@ export function createRelationshipsRoutes(options: RelationshipsRoutesOptions): 
     return c.json(relationship, 201);
   });
 
-  /**
-   * PUT /api/friends/:id/relationships/:relationshipId
-   * Update a relationship's notes
-   */
   app.put('/:relationshipId', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id');
@@ -85,10 +76,7 @@ export function createRelationshipsRoutes(options: RelationshipsRoutesOptions): 
     return c.json(relationship);
   });
 
-  /**
-   * DELETE /api/friends/:id/relationships/:relationshipId
-   * Delete a relationship (and its inverse)
-   */
+  // Also deletes the inverse
   app.delete('/:relationshipId', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id');

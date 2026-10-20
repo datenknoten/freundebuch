@@ -11,13 +11,10 @@ export interface MetInfoRoutesOptions {
   friendsService: FriendsService;
 }
 
-export function createMetInfoRoutes(options: MetInfoRoutesOptions): Hono<AppContext> {
+export function createMetInfoRoutes(options: MetInfoRoutesOptions) {
   const app = new Hono<AppContext>();
 
-  /**
-   * PUT /api/friends/:id/met-info
-   * Set or update how/where met information (upsert)
-   */
+  // Upsert
   app.put('/', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');
@@ -26,10 +23,6 @@ export function createMetInfoRoutes(options: MetInfoRoutesOptions): Hono<AppCont
     return c.json(await options.friendsService.setMetInfo(user.userId, friendId, data));
   });
 
-  /**
-   * DELETE /api/friends/:id/met-info
-   * Delete how/where met information
-   */
   app.delete('/', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');

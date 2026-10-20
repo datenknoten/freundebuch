@@ -1,5 +1,5 @@
 import { ConflictError, ValidationError } from '@datenknoten/kit';
-import type { EncounterType, FriendNoteResponse } from '@freundebuch/shared/index.js';
+import { EncounterTypeSchema, type FriendNoteResponse } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { EncounterNotFoundError } from '../../../errors/encounter-not-found.error.js';
@@ -16,7 +16,7 @@ import {
 } from '../../../models/queries/friend-notes.queries.js';
 import { getFriendInternalId } from '../../../models/queries/friends.queries.js';
 import { formatDateOnly } from '../../../utils/date.js';
-import { rethrowUniqueViolation } from '../../../utils/rethrow-unique-violation.js';
+import { toUniqueViolationError } from '../../../utils/to-unique-violation-error.js';
 import { withTransaction } from '../../../utils/with-transaction.js';
 
 /** A note write. PUT replaces the whole note, so an omitted link means "no link". */
@@ -45,8 +45,14 @@ export interface FriendNotesServiceOptions {
   logger: Logger;
 }
 
+function supersedeConflict() {
+  return new ConflictError('This note already has a newer version');
+}
+
+const SUPERSEDE_CONFLICTS = { idx_friend_notes_supersedes_note_id: supersedeConflict };
+
 /**
- * FriendNotesService handles timestamped free-text notes about a friend (Epic 15).
+ * FriendNotesService handles timestamped free-text notes about a friend.
  *
  * It does not extend SubResourceService: a note write must tell the client
  * which reference failed (unknown encounter, unknown source friend, unknown
@@ -61,13 +67,7 @@ export class FriendNotesService {
     this.logger = options.logger;
   }
 
-  /**
-   * List a friend's notes, newest first.
-   */
-  public async list(
-    userExternalId: string,
-    friendExternalId: string,
-  ): Promise<FriendNoteResponse[]> {
+  public async list(userExternalId: string, friendExternalId: string) {
     this.logger.debug({ friendExternalId }, 'Listing notes');
 
     await this.resolveFriendId(this.db, userExternalId, friendExternalId);
@@ -78,88 +78,92 @@ export class FriendNotesService {
     return rows.map((row) => this.mapRow(row));
   }
 
-  /**
-   * Add a note to a friend.
-   */
-  public async create(
+  public async create(userExternalId: string, friendExternalId: string, data: FriendNoteData) {
+    this.logger.debug({ friendExternalId }, 'Adding note');
+
+    return withTransaction(this.db, (client) =>
+      this.createWithin(client, userExternalId, friendExternalId, data),
+    );
+  }
+
+  private async createWithin(
+    client: pg.PoolClient,
     userExternalId: string,
     friendExternalId: string,
     data: FriendNoteData,
-  ): Promise<FriendNoteResponse> {
-    this.logger.debug({ friendExternalId }, 'Adding note');
+  ) {
+    const friendId = await this.resolveFriendId(client, userExternalId, friendExternalId);
+    const refs = await this.resolveRefs(client, userExternalId, friendExternalId, data, null);
 
-    return withTransaction(this.db, async (client) => {
-      const friendId = await this.resolveFriendId(client, userExternalId, friendExternalId);
-      const refs = await this.resolveRefs(client, userExternalId, friendExternalId, data, null);
+    let created: { external_id: string }[];
+    try {
+      created = await createFriendNote.run(
+        { userExternalId, friendId, content: data.content.trim(), ...refs },
+        client,
+      );
+    } catch (error) {
+      throw toUniqueViolationError(error, SUPERSEDE_CONFLICTS);
+    }
+    const [createdNote] = created;
+    if (createdNote === undefined) {
+      throw new FriendNotFoundError(friendExternalId);
+    }
 
-      let created: { external_id: string }[];
-      try {
-        created = await createFriendNote.run(
-          { userExternalId, friendId, content: data.content.trim(), ...refs },
-          client,
-        );
-      } catch (error) {
-        this.rethrowSupersedeConflict(error);
-      }
-      const [createdNote] = created;
-      if (createdNote === undefined) {
-        throw new FriendNotFoundError(friendExternalId);
-      }
-
-      return this.readNote(client, userExternalId, friendExternalId, createdNote.external_id);
-    });
+    return this.readNote(client, userExternalId, friendExternalId, createdNote.external_id);
   }
 
-  /**
-   * Replace a note. An omitted link field clears the link.
-   */
+  /** An omitted link field clears the link. */
   public async update(
     userExternalId: string,
     friendExternalId: string,
     noteExternalId: string,
     data: FriendNoteData,
-  ): Promise<FriendNoteResponse> {
+  ) {
     this.logger.debug({ friendExternalId, noteExternalId }, 'Updating note');
 
-    return withTransaction(this.db, async (client) => {
-      const friendId = await this.resolveFriendId(client, userExternalId, friendExternalId);
-      const [note] = await getFriendNoteInternalId.run(
-        { userExternalId, friendExternalId, noteExternalId },
-        client,
-      );
-      if (note === undefined) {
-        throw new ResourceNotFoundError('Note', noteExternalId);
-      }
-      const refs = await this.resolveRefs(client, userExternalId, friendExternalId, data, {
-        externalId: noteExternalId,
-        id: note.id,
-      });
-
-      let updated: { external_id: string }[];
-      try {
-        updated = await updateFriendNote.run(
-          { userExternalId, friendId, noteId: note.id, content: data.content.trim(), ...refs },
-          client,
-        );
-      } catch (error) {
-        this.rethrowSupersedeConflict(error);
-      }
-      if (updated.length === 0) {
-        throw new ResourceNotFoundError('Note', noteExternalId);
-      }
-
-      return this.readNote(client, userExternalId, friendExternalId, noteExternalId);
-    });
+    return withTransaction(this.db, (client) =>
+      this.updateWithin(client, userExternalId, friendExternalId, noteExternalId, data),
+    );
   }
 
-  /**
-   * Delete a note. A newer note that superseded it loses its supersede link.
-   */
-  public async delete(
+  private async updateWithin(
+    client: pg.PoolClient,
     userExternalId: string,
     friendExternalId: string,
     noteExternalId: string,
-  ): Promise<void> {
+    data: FriendNoteData,
+  ) {
+    const friendId = await this.resolveFriendId(client, userExternalId, friendExternalId);
+    const [note] = await getFriendNoteInternalId.run(
+      { userExternalId, friendExternalId, noteExternalId },
+      client,
+    );
+    if (note === undefined) {
+      throw new ResourceNotFoundError('Note', noteExternalId);
+    }
+    const refs = await this.resolveRefs(client, userExternalId, friendExternalId, data, {
+      externalId: noteExternalId,
+      id: note.id,
+    });
+
+    let updated: { external_id: string }[];
+    try {
+      updated = await updateFriendNote.run(
+        { userExternalId, friendId, noteId: note.id, content: data.content.trim(), ...refs },
+        client,
+      );
+    } catch (error) {
+      throw toUniqueViolationError(error, SUPERSEDE_CONFLICTS);
+    }
+    if (updated.length === 0) {
+      throw new ResourceNotFoundError('Note', noteExternalId);
+    }
+
+    return this.readNote(client, userExternalId, friendExternalId, noteExternalId);
+  }
+
+  /** A newer note that superseded the deleted one loses its supersede link. */
+  public async delete(userExternalId: string, friendExternalId: string, noteExternalId: string) {
     this.logger.debug({ friendExternalId, noteExternalId }, 'Deleting note');
 
     const deleted = await deleteFriendNote.run(
@@ -175,7 +179,7 @@ export class FriendNotesService {
     client: pg.Pool | pg.PoolClient,
     userExternalId: string,
     friendExternalId: string,
-  ): Promise<number> {
+  ) {
     const [friend] = await getFriendInternalId.run({ userExternalId, friendExternalId }, client);
     if (friend === undefined) {
       throw new FriendNotFoundError(friendExternalId);
@@ -195,7 +199,7 @@ export class FriendNotesService {
     friendExternalId: string,
     data: FriendNoteData,
     current: CurrentNote | null,
-  ): Promise<ResolvedNoteRefs> {
+  ) {
     let encounterId: number | null = null;
     if (data.encounterId !== undefined && data.encounterId !== null) {
       const [encounter] = await getEncounterInternalId.run(
@@ -234,14 +238,7 @@ export class FriendNotesService {
       supersedesNoteId = target.id;
     }
 
-    return { encounterId, sourceFriendId, supersedesNoteId };
-  }
-
-  private rethrowSupersedeConflict(error: unknown): never {
-    rethrowUniqueViolation(error, {
-      idx_friend_notes_supersedes_note_id: () =>
-        new ConflictError('This note already has a newer version'),
-    });
+    return { encounterId, sourceFriendId, supersedesNoteId } satisfies ResolvedNoteRefs;
   }
 
   private async readNote(
@@ -249,7 +246,7 @@ export class FriendNotesService {
     userExternalId: string,
     friendExternalId: string,
     noteExternalId: string,
-  ): Promise<FriendNoteResponse> {
+  ) {
     const [row] = await getFriendNotes.run(
       { userExternalId, friendExternalId, noteExternalId },
       client,
@@ -260,7 +257,7 @@ export class FriendNotesService {
     return this.mapRow(row);
   }
 
-  private mapRow(row: IGetFriendNotesResult): FriendNoteResponse {
+  private mapRow(row: IGetFriendNotesResult) {
     return {
       id: row.external_id,
       content: row.content,
@@ -270,7 +267,7 @@ export class FriendNotesService {
           : {
               id: row.encounter_external_id,
               title: row.encounter_title,
-              encounterType: row.encounter_type as EncounterType,
+              encounterType: EncounterTypeSchema.assert(row.encounter_type),
               encounterDate: formatDateOnly(row.encounter_date),
             },
       sourceFriend:
@@ -285,6 +282,6 @@ export class FriendNotesService {
       supersededByNoteId: row.superseded_by_note_external_id,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
-    };
+    } satisfies FriendNoteResponse;
   }
 }

@@ -93,9 +93,9 @@ export function createAuth(options: AuthOptions) {
       revokeSessionsOnPasswordReset: true,
       password: {
         // Custom verify to support both bcrypt (legacy) and scrypt (Better Auth default)
-        verify: async ({ hash, password }) => {
+        async verify({ hash, password }) {
           // bcrypt hashes start with $2b$ or $2a$
-          if (hash.startsWith('$2b$') || hash.startsWith('$2a$')) {
+          if (hash.startsWith('$2b$') === true || hash.startsWith('$2a$') === true) {
             try {
               return await bcrypt.compare(password, hash);
             } catch {
@@ -112,7 +112,7 @@ export function createAuth(options: AuthOptions) {
           }
         },
       },
-      sendResetPassword: async ({ user, url }, _request) => {
+      async sendResetPassword({ user, url }, _request) {
         logger.info({ userId: user.id }, 'Password reset requested');
         const mailer = createMailer(config, logger);
         if (mailer === null) {
@@ -151,7 +151,7 @@ export function createAuth(options: AuthOptions) {
     // signed up while this instance had no mailer (all of them, historically).
     emailVerification: {
       sendOnSignUp: isMailConfigured(config),
-      sendVerificationEmail: async ({ user, url }, _request) => {
+      async sendVerificationEmail({ user, url }, _request) {
         const mailer = createMailer(config, logger);
         if (mailer === null) {
           logger.warn({ kind: 'email-verification' }, 'SMTP not configured; email not sent');
@@ -346,13 +346,13 @@ export function createAuth(options: AuthOptions) {
           // Raw pool.query rather than PgTyped: the auth pool runs with
           // search_path=auth while the generated queries assume the main pool's
           // default search_path.
-          before: async () => {
+          async before() {
             const {
               rows: [row],
             } = await authPool.query<{ external_id: string }>(
               'INSERT INTO auth.users DEFAULT VALUES RETURNING external_id',
             );
-            if (!row) {
+            if (row === undefined) {
               throw new LegacyUserAllocationError();
             }
             return { data: { id: row.external_id } };
@@ -362,7 +362,7 @@ export function createAuth(options: AuthOptions) {
           // auth.users is the FK anchor for every domain table, so dropping it
           // cascades the user's friends, encounters and collectives. There is
           // no DB-level FK between the two identity tables to do this for us.
-          after: async (user: { id: string }) => {
+          async after(user: { id: string }) {
             await authPool.query('DELETE FROM auth.users WHERE external_id = $1::uuid', [user.id]);
           },
         },

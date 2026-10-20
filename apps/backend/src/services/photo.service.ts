@@ -40,42 +40,34 @@ export class PhotoService {
     this.baseUrl = `${options.config.BACKEND_URL}/api/uploads/friends`;
   }
 
-  /**
-   * Validate and process an uploaded photo
-   */
-  public async uploadPhoto(friendExternalId: string, file: File): Promise<PhotoUploadResponse> {
+  public async uploadPhoto(friendExternalId: string, file: File) {
     this.logger.debug({ friendExternalId, fileName: file.name }, 'Processing photo upload');
 
     // Defense-in-depth: Validate friendExternalId is a valid UUID
-    if (!isValidUuid(friendExternalId)) {
+    if (isValidUuid(friendExternalId) === false) {
       throw new PhotoUploadError('Invalid friend ID', 'INVALID_FRIEND_ID');
     }
 
     // Defense-in-depth: Verify path stays within upload directory
     const friendDir = path.join(this.uploadDir, friendExternalId);
-    if (!isPathWithinBase(this.uploadDir, friendExternalId)) {
+    if (isPathWithinBase(this.uploadDir, friendExternalId) === false) {
       this.logger.warn({ friendExternalId }, 'Path traversal attempt detected');
       throw new PhotoUploadError('Invalid friend ID', 'INVALID_FRIEND_ID');
     }
 
-    // Validate file type using ArkType schema
     const mimeTypeResult = PhotoMimeTypeSchema(file.type);
     if (mimeTypeResult instanceof type.errors) {
       throw new PhotoUploadError(PHOTO_VALIDATION_ERRORS.INVALID_FILE_TYPE, 'INVALID_FILE_TYPE');
     }
 
-    // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       throw new PhotoUploadError(PHOTO_VALIDATION_ERRORS.FILE_TOO_LARGE, 'FILE_TOO_LARGE');
     }
 
-    // Create directory for friend photos
     await mkdir(friendDir, { recursive: true });
 
-    // Get file extension based on mime type
     const ext = this.getExtension(file.type);
 
-    // Process the image
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -90,7 +82,6 @@ export class PhotoService {
       throw new PhotoUploadError(PHOTO_VALIDATION_ERRORS.INVALID_IMAGE, 'INVALID_IMAGE');
     }
 
-    // Generate filenames
     const originalFilename = `photo.${ext}`;
     const thumbnailFilename = `photo_thumb.${ext}`;
     const originalPath = path.join(friendDir, originalFilename);
@@ -146,22 +137,19 @@ export class PhotoService {
     return {
       photoUrl: `${this.baseUrl}/${friendExternalId}/${originalFilename}`,
       photoThumbnailUrl: `${this.baseUrl}/${friendExternalId}/${thumbnailFilename}`,
-    };
+    } satisfies PhotoUploadResponse;
   }
 
-  /**
-   * Delete a friend's photos
-   */
-  public async deletePhoto(friendExternalId: string): Promise<void> {
+  public async deletePhoto(friendExternalId: string) {
     this.logger.debug({ friendExternalId }, 'Deleting friend photos');
 
     // Defense-in-depth: Validate friendExternalId is a valid UUID
-    if (!isValidUuid(friendExternalId)) {
+    if (isValidUuid(friendExternalId) === false) {
       throw new PhotoUploadError('Invalid friend ID', 'INVALID_FRIEND_ID');
     }
 
     // Defense-in-depth: Verify path stays within upload directory
-    if (!isPathWithinBase(this.uploadDir, friendExternalId)) {
+    if (isPathWithinBase(this.uploadDir, friendExternalId) === false) {
       this.logger.warn({ friendExternalId }, 'Path traversal attempt detected');
       throw new PhotoUploadError('Invalid friend ID', 'INVALID_FRIEND_ID');
     }
@@ -174,20 +162,18 @@ export class PhotoService {
       this.logger.info({ friendExternalId }, 'Photos deleted successfully');
     } catch (error) {
       // Directory doesn't exist, that's fine
-      if (!isNodeError(error) || error.code !== 'ENOENT') {
+      if (isNodeError(error) === false || error.code !== 'ENOENT') {
         throw error;
       }
     }
   }
 
-  /**
-   * Get the uploads directory path for serving static files
-   */
-  public getUploadDir(): string {
+  /** The uploads directory, for serving static files. */
+  public getUploadDir() {
     return this.uploadDir;
   }
 
-  private getExtension(mimeType: string): string {
+  private getExtension(mimeType: string) {
     switch (mimeType) {
       case 'image/jpeg':
         return 'jpg';
@@ -205,7 +191,7 @@ export class PhotoService {
    * from the filename; writing buffers has to pin it explicitly, or a
    * mislabelled upload would land as e.g. JPEG bytes in a `.png` file.
    */
-  private getFormat(mimeType: string): 'jpeg' | 'png' | 'webp' {
+  private getFormat(mimeType: string) {
     switch (mimeType) {
       case 'image/png':
         return 'png';

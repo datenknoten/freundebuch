@@ -33,11 +33,7 @@ export interface DateServiceOptions {
   logger: Logger;
 }
 
-/**
- * DateService handles all date-related operations for friends.
- * Note: This service has special logic for birthday validation and
- * does not extend SubResourceService due to its unique requirements.
- */
+/** Not a SubResourceService: a friend may hold only one birthday. */
 export class DateService {
   private readonly db: pg.Pool;
   private readonly logger: Logger;
@@ -47,22 +43,13 @@ export class DateService {
     this.logger = options.logger;
   }
 
-  /**
-   * List a friend's important dates.
-   */
-  public async list(
-    userExternalId: string,
-    friendExternalId: string,
-  ): Promise<FriendDateResponse[]> {
+  public async list(userExternalId: string, friendExternalId: string) {
     this.logger.debug({ friendExternalId }, 'Listing dates');
     const rows = await getDatesByFriendId.run({ userExternalId, friendExternalId }, this.db);
     return rows.map((row) => this.mapDate(row));
   }
 
-  /**
-   * Add an important date to a friend.
-   * Throws BirthdayAlreadyExistsError if trying to add a second birthday.
-   */
+  /** @throws {BirthdayAlreadyExistsError} when the friend already has a birthday. */
   public async add(userExternalId: string, friendExternalId: string, data: DateData) {
     const created = await this.insert(this.db, userExternalId, friendExternalId, data);
     if (created === undefined) {
@@ -71,9 +58,6 @@ export class DateService {
     return created;
   }
 
-  /**
-   * Update an existing date
-   */
   public async update(
     userExternalId: string,
     friendExternalId: string,
@@ -100,9 +84,6 @@ export class DateService {
     return this.mapDate(date);
   }
 
-  /**
-   * Delete a date
-   */
   public async delete(userExternalId: string, friendExternalId: string, dateExternalId: string) {
     this.logger.debug({ friendExternalId, dateExternalId }, 'Deleting date');
 
@@ -116,15 +97,15 @@ export class DateService {
   }
 
   /**
-   * Create multiple dates for a friend on the caller's transaction (friend
-   * creation writes the friend row and all its dates atomically).
+   * Runs on the caller's transaction: friend creation writes the friend row and
+   * all its dates atomically.
    */
   public async createMany(
     userExternalId: string,
     friendExternalId: string,
     dates: DateData[],
     client?: pg.Pool | pg.PoolClient,
-  ): Promise<FriendDateResponse[]> {
+  ) {
     const results: FriendDateResponse[] = [];
 
     for (const date of dates) {
@@ -137,13 +118,10 @@ export class DateService {
     return results;
   }
 
-  /**
-   * Get upcoming dates across all friends
-   */
   public async getUpcomingDates(
     userExternalId: string,
     options: { days?: number; limit?: number } = {},
-  ): Promise<UpcomingDateResponse[]> {
+  ) {
     const { days = 30, limit = 10 } = options;
     this.logger.debug({ days, limit }, 'Getting upcoming dates');
 
@@ -168,7 +146,6 @@ export class DateService {
   ) {
     this.logger.debug({ friendExternalId }, 'Adding date');
 
-    // Only one birthday per friend.
     if (data.dateType === 'birthday') {
       const [countResult] = await countBirthdaysForFriend.run(
         { userExternalId, friendExternalId },
@@ -196,10 +173,7 @@ export class DateService {
     return this.mapDate(date);
   }
 
-  /**
-   * Map a date row to the FriendDate type
-   */
-  public mapDate(row: IGetDatesByFriendIdResult): FriendDateResponse {
+  public mapDate(row: IGetDatesByFriendIdResult) {
     const dateValue = formatDateOnly(row.date_value);
     return {
       id: row.external_id,
@@ -208,13 +182,10 @@ export class DateService {
       dateType: parseDateType(row.date_type),
       label: row.label ?? undefined,
       createdAt: row.created_at.toISOString(),
-    };
+    } satisfies FriendDateResponse;
   }
 
-  /**
-   * Map an upcoming date row to the UpcomingDate type
-   */
-  private mapUpcomingDate(row: IGetUpcomingDatesResult): UpcomingDateResponse {
+  private mapUpcomingDate(row: IGetUpcomingDatesResult) {
     const dateValue = formatDateOnly(row.date_value);
     return {
       id: row.date_external_id,
@@ -228,6 +199,6 @@ export class DateService {
         displayName: row.friend_display_name,
         photoThumbnailUrl: row.friend_photo_thumbnail_url ?? undefined,
       },
-    };
+    } satisfies UpcomingDateResponse;
   }
 }

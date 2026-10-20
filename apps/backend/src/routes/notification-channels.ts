@@ -18,10 +18,8 @@ import type { AppContext } from '../types/context.js';
 import { parseBody } from '../utils/parse-body.js';
 import { requireUuidParam } from '../utils/require-uuid-param.js';
 
-/**
- * Validate platform-specific credentials (all fields required — for creation)
- */
-function validateCredentials(platform: string, credentials: object): Record<string, string> {
+// All fields required, for creation
+function validateCredentials(platform: string, credentials: object) {
   let validated: unknown;
   switch (platform) {
     case 'telegram':
@@ -41,17 +39,14 @@ function validateCredentials(platform: string, credentials: object): Record<stri
     throw new ValidationError('Invalid credentials', validated);
   }
 
+  // Every platform's credentials schema is an object of string fields; the
+  // switch above loses that per-branch type.
   return validated as Record<string, string>;
 }
 
-/**
- * Validate platform-specific credentials (all fields optional — for updates)
- * Tokens are omitted from API responses for security, so partial updates must be allowed.
- */
-function validateCredentialsForUpdate(
-  platform: string,
-  credentials: object,
-): Record<string, string> {
+// All fields optional, for updates: tokens are omitted from API responses for
+// security, so partial updates must be allowed.
+function validateCredentialsForUpdate(platform: string, credentials: object) {
   let validated: unknown;
   switch (platform) {
     case 'telegram':
@@ -71,6 +66,8 @@ function validateCredentialsForUpdate(
     throw new ValidationError('Invalid credentials', validated);
   }
 
+  // Every platform's credentials update schema is an object of string fields;
+  // the switch above loses that per-branch type.
   return validated as Record<string, string>;
 }
 
@@ -92,19 +89,10 @@ export function createNotificationChannelsRoutes(options: NotificationChannelsRo
   } = options;
   const app = new Hono<AppContext>();
 
-  // Apply auth, onboarding, and rate limiting middleware to all routes
   app.use('*', authMiddleware);
   app.use('*', onboardingMiddleware);
   app.use('*', rateLimitMiddleware);
 
-  // ============================================================================
-  // Routes
-  // ============================================================================
-
-  /**
-   * GET /api/notification-channels
-   * List all channels for the authenticated user
-   */
   app.get('/', async (c) => {
     const user = getAuthUser(c);
 
@@ -113,17 +101,12 @@ export function createNotificationChannelsRoutes(options: NotificationChannelsRo
     return c.json(result);
   });
 
-  /**
-   * POST /api/notification-channels
-   * Create a new notification channel
-   */
   app.post('/', async (c) => {
     const user = getAuthUser(c);
 
-    // First pass: validate top-level shape
+    // Two passes: the top-level shape first, then the platform-specific credentials
     const validated = await parseBody(c, NotificationChannelCreateInputSchema);
 
-    // Second pass: validate platform-specific credentials
     const credentials = validateCredentials(validated.platform, validated.credentials);
 
     const result = await notificationChannelsService.createChannel(user.userId, {
@@ -137,10 +120,6 @@ export function createNotificationChannelsRoutes(options: NotificationChannelsRo
     return c.json(result, 201);
   });
 
-  /**
-   * GET /api/notification-channels/:channelId
-   * Get a single channel by external ID
-   */
   app.get('/:channelId', async (c) => {
     const user = getAuthUser(c);
     const channelId = requireUuidParam(c, 'channelId', 'channel ID');
@@ -150,20 +129,15 @@ export function createNotificationChannelsRoutes(options: NotificationChannelsRo
     return c.json(result);
   });
 
-  /**
-   * PUT /api/notification-channels/:channelId
-   * Update an existing channel
-   */
   app.put('/:channelId', async (c) => {
     const user = getAuthUser(c);
     const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
-    // First pass: validate top-level shape
     const validated = await parseBody(c, NotificationChannelUpdateInputSchema);
 
-    // If credentials provided, fetch existing channel to know the platform
+    // Credentials are validated per platform, which only the existing channel knows
     let credentials: Record<string, string> | undefined;
-    if (validated.credentials) {
+    if (validated.credentials !== undefined) {
       const existing = await notificationChannelsService.getChannel(user.userId, channelId);
       credentials = validateCredentialsForUpdate(existing.platform, validated.credentials);
     }
@@ -178,10 +152,6 @@ export function createNotificationChannelsRoutes(options: NotificationChannelsRo
     return c.json(result);
   });
 
-  /**
-   * DELETE /api/notification-channels/:channelId
-   * Delete a channel
-   */
   app.delete('/:channelId', async (c) => {
     const user = getAuthUser(c);
     const channelId = requireUuidParam(c, 'channelId', 'channel ID');
@@ -191,10 +161,7 @@ export function createNotificationChannelsRoutes(options: NotificationChannelsRo
     return c.json({ success: true });
   });
 
-  /**
-   * POST /api/notification-channels/:channelId/test
-   * Send a test message to verify the channel works
-   */
+  // Sends a test message to verify the channel works
   app.post('/:channelId/test', testRateLimitMiddleware, async (c) => {
     const user = getAuthUser(c);
     const channelId = requireUuidParam(c, 'channelId', 'channel ID');
@@ -204,10 +171,6 @@ export function createNotificationChannelsRoutes(options: NotificationChannelsRo
     return c.json({ success: true });
   });
 
-  /**
-   * PATCH /api/notification-channels/:channelId/toggle
-   * Enable or disable a channel
-   */
   app.patch('/:channelId/toggle', async (c) => {
     const user = getAuthUser(c);
     const channelId = requireUuidParam(c, 'channelId', 'channel ID');

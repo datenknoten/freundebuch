@@ -22,19 +22,17 @@ export interface EmailData {
   isPrimary: boolean;
 }
 
-const mapRow = (row: IGetEmailsByFriendIdResult): EmailResponse => ({
-  id: row.external_id,
-  emailAddress: row.email_address,
-  emailType: parseEmailType(row.email_type),
-  label: row.label ?? undefined,
-  isPrimary: row.is_primary,
-  createdAt: row.created_at.toISOString(),
-});
+function mapRow(row: IGetEmailsByFriendIdResult) {
+  return {
+    id: row.external_id,
+    emailAddress: row.email_address,
+    emailType: parseEmailType(row.email_type),
+    label: row.label ?? undefined,
+    isPrimary: row.is_primary,
+    createdAt: row.created_at.toISOString(),
+  } satisfies EmailResponse;
+}
 
-/**
- * EmailService handles all email-related operations for friends.
- * Extends SubResourceService for common CRUD operations.
- */
 export class EmailService extends SubResourceService<
   EmailData,
   EmailResponse,
@@ -51,7 +49,7 @@ export class EmailService extends SubResourceService<
         ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: true,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
+        async createFn({ userExternalId, ownerExternalId: friendExternalId, data }, client) {
           return createEmail.run(
             {
               userExternalId,
@@ -65,10 +63,10 @@ export class EmailService extends SubResourceService<
           );
         },
 
-        updateFn: async (
+        async updateFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
-        ) => {
+        ) {
           return updateEmail.run(
             {
               userExternalId,
@@ -83,10 +81,10 @@ export class EmailService extends SubResourceService<
           );
         },
 
-        deleteFn: async (
+        async deleteFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        ) => {
+        ) {
           return deleteEmail.run(
             {
               userExternalId,
@@ -97,15 +95,19 @@ export class EmailService extends SubResourceService<
           );
         },
 
-        clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        async clearPrimaryFn({ userExternalId, ownerExternalId: friendExternalId }, client) {
           return clearPrimaryEmail.run({ userExternalId, friendExternalId }, client);
         },
 
-        isPrimary: (data) => data.isPrimary,
+        isPrimary(data) {
+          return data.isPrimary;
+        },
 
-        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
+        setIsPrimary(data, isPrimary) {
+          return { ...data, isPrimary };
+        },
 
-        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        async listFn({ userExternalId, ownerExternalId: friendExternalId }, client) {
           return getEmailsByFriendId.run({ userExternalId, friendExternalId }, client);
         },
 

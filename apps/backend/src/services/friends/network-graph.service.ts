@@ -17,10 +17,6 @@ export interface NetworkGraphServiceOptions {
   logger: Logger;
 }
 
-/**
- * NetworkGraphService handles network graph data for visualization.
- * Extracted from FriendsService for better separation of concerns.
- */
 export class NetworkGraphService {
   private readonly db: pg.Pool;
   private readonly logger: Logger;
@@ -30,14 +26,10 @@ export class NetworkGraphService {
     this.logger = options.logger;
   }
 
-  /**
-   * Get network graph data for visualization
-   * Returns all non-archived friends as nodes and their relationships as links
-   */
-  public async getNetworkGraphData(userExternalId: string): Promise<NetworkGraphResponse> {
+  /** Nodes are the non-archived friends; links are their relationships. */
+  public async getNetworkGraphData(userExternalId: string) {
     this.logger.debug({ userExternalId }, 'Fetching network graph data');
 
-    // Fetch nodes and links in parallel using PgTyped queries
     const [nodesResult, linksResult] = await Promise.all([
       getNetworkGraphNodes.run({ userExternalId }, this.db),
       getNetworkGraphLinks.run({ userExternalId }, this.db),
@@ -50,11 +42,10 @@ export class NetworkGraphService {
       isFavorite: row.is_favorite,
     }));
 
-    // Create a set of valid node IDs for filtering links
     const nodeIds = new Set(nodes.map((n) => n.id));
 
     const links: NetworkGraphLinkResponse[] = linksResult
-      .filter((row) => nodeIds.has(row.source_id) && nodeIds.has(row.target_id))
+      .filter((row) => nodeIds.has(row.source_id) === true && nodeIds.has(row.target_id) === true)
       .map((row) => ({
         source: row.source_id,
         target: row.target_id,
@@ -68,6 +59,6 @@ export class NetworkGraphService {
       'Network graph data fetched',
     );
 
-    return { nodes, links };
+    return { nodes, links } satisfies NetworkGraphResponse;
   }
 }

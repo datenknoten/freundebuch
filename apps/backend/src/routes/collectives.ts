@@ -38,7 +38,6 @@ import type { AppContext } from '../types/context.js';
 import { parseBody } from '../utils/parse-body.js';
 import { requireUuidParam } from '../utils/require-uuid-param.js';
 
-// Sub-resource routes
 import { createCollectiveAddressesRoutes } from './collectives/sub-resources/addresses.routes.js';
 import { createCollectiveCirclesRoutes } from './collectives/sub-resources/circles.routes.js';
 import { createCollectiveEmailsRoutes } from './collectives/sub-resources/emails.routes.js';
@@ -148,31 +147,19 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
   } = options;
   const app = new Hono<AppContext>();
 
-  // Apply auth middleware to all collective routes
   app.use('*', authMiddleware);
-  // Apply rate limiting to prevent abuse
   app.use('*', rateLimitMiddleware);
-  // Apply onboarding middleware to require self-friend before using collectives
   app.use('*', onboardingMiddleware);
 
-  // ============================================================================
-  // Collective Types Routes
-  // ============================================================================
+  //#region Collective types
 
-  /**
-   * GET /api/collectives/types
-   * List all collective types available to the user
-   */
   app.get('/types', async (c) => {
     const user = getAuthUser(c);
     const result = await collectiveTypesService.listTypes(user.userId);
     return c.json(result);
   });
 
-  /**
-   * GET /api/collectives/types/:id
-   * Get a single collective type with roles and rules
-   */
+  // Includes roles and rules
   app.get('/types/:id', async (c) => {
     const user = getAuthUser(c);
     const typeId = requireUuidParam(c, 'id', 'type ID');
@@ -181,14 +168,10 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json(collectiveType);
   });
 
-  // ============================================================================
-  // Collective CRUD Routes
-  // ============================================================================
+  //#endregion
 
-  /**
-   * GET /api/collectives
-   * List all collectives for the authenticated user with pagination and filtering
-   */
+  //#region Collective CRUD
+
   app.get('/', async (c) => {
     const user = getAuthUser(c);
 
@@ -205,10 +188,6 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json(result);
   });
 
-  /**
-   * POST /api/collectives
-   * Create a new collective
-   */
   app.post('/', async (c) => {
     const user = getAuthUser(c);
 
@@ -221,10 +200,7 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json(collective, 201);
   });
 
-  /**
-   * GET /api/collectives/:id
-   * Get a single collective by ID with all members
-   */
+  // Includes all members
   app.get('/:id', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
@@ -233,10 +209,6 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json(collective);
   });
 
-  /**
-   * PUT /api/collectives/:id
-   * Update a collective
-   */
   app.put('/:id', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
@@ -250,10 +222,7 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json(collective);
   });
 
-  /**
-   * DELETE /api/collectives/:id
-   * Soft delete a collective
-   */
+  // Soft delete
   app.delete('/:id', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
@@ -262,14 +231,11 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json({ success: true });
   });
 
-  // ============================================================================
-  // Membership Routes
-  // ============================================================================
+  //#endregion
 
-  /**
-   * POST /api/collectives/:id/members/preview
-   * Preview relationships that would be created when adding a member
-   */
+  //#region Memberships
+
+  // Previews the relationships that adding a member would create
   app.post('/:id/members/preview', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
@@ -283,10 +249,6 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json(preview);
   });
 
-  /**
-   * POST /api/collectives/:id/members
-   * Add a member to a collective
-   */
   app.post('/:id/members', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
@@ -300,10 +262,6 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json(member, 201);
   });
 
-  /**
-   * DELETE /api/collectives/:id/members/:memberId
-   * Remove a member from a collective
-   */
   app.delete('/:id/members/:memberId', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
@@ -313,17 +271,13 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json({ success: true });
   });
 
-  /**
-   * PUT /api/collectives/:id/members/:memberId/role
-   * Change a member's role
-   */
   app.put('/:id/members/:memberId/role', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
     const memberId = requireUuidParam(c, 'memberId', 'member ID');
     const validated = await parseBody(c, MembershipUpdateInputSchema);
 
-    if (!validated.role_id) {
+    if (validated.role_id === undefined) {
       throw new ValidationError('role_id is required');
     }
     const member = await membershipsService.updateMemberRole(
@@ -336,10 +290,6 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json(member);
   });
 
-  /**
-   * POST /api/collectives/:id/members/:memberId/deactivate
-   * Deactivate a member
-   */
   app.post('/:id/members/:memberId/deactivate', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
@@ -355,10 +305,6 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json(member);
   });
 
-  /**
-   * POST /api/collectives/:id/members/:memberId/reactivate
-   * Reactivate a member
-   */
   app.post('/:id/members/:memberId/reactivate', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
@@ -368,11 +314,8 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     return c.json(member);
   });
 
-  // ============================================================================
-  // Sub-resource Routes
-  // ============================================================================
+  //#endregion
 
-  // Mount sub-resource routes under /:id/
   app.route(
     '/:id/phones',
     createCollectivePhonesRoutes({ collectivePhoneService, collectiveAddressService }),

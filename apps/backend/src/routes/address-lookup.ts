@@ -4,10 +4,6 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import type { AddressLookupService } from '../services/address-lookup.service.js';
 import type { AppContext } from '../types/context.js';
 
-// ============================================================================
-// Query Schemas
-// ============================================================================
-
 // ISO-3166-1 alpha-2 country code. Restricting the shape here is the primary
 // guard against Overpass QL injection via the country parameter (the value is
 // interpolated into the upstream query string).
@@ -51,22 +47,13 @@ export function createAddressLookupRoutes(options: AddressLookupRoutesOptions) {
     options;
   const app = new Hono<AppContext>();
 
-  // Apply auth middleware to all address-lookup routes
   app.use('*', authMiddleware);
-  // Apply onboarding middleware to require profile
   app.use('*', onboardingMiddleware);
   // Bound outbound geocoder traffic per client (Overpass/Nominatim usage policies
   // apply per deployment IP).
   app.use('*', rateLimitMiddleware);
 
-  // ============================================================================
-  // Routes
-  // ============================================================================
-
-  /**
-   * GET /api/address-lookup/postal-codes
-   * Search postal codes by prefix (autocomplete). Returns postal-code/city pairs.
-   */
+  // Prefix search for autocomplete; returns postal-code/city pairs
   app.get('/postal-codes', async (c) => {
     const query = c.req.query();
 
@@ -82,10 +69,6 @@ export function createAddressLookupRoutes(options: AddressLookupRoutesOptions) {
     return c.json(postalCodes);
   });
 
-  /**
-   * GET /api/address-lookup/cities
-   * Get cities for a postal code in a country
-   */
   app.get('/cities', async (c) => {
     const query = c.req.query();
 
@@ -101,10 +84,6 @@ export function createAddressLookupRoutes(options: AddressLookupRoutesOptions) {
     return c.json(cities);
   });
 
-  /**
-   * GET /api/address-lookup/streets
-   * Get streets for a city/postal code
-   */
   app.get('/streets', async (c) => {
     const query = c.req.query();
 
@@ -121,10 +100,6 @@ export function createAddressLookupRoutes(options: AddressLookupRoutesOptions) {
     return c.json(streets);
   });
 
-  /**
-   * GET /api/address-lookup/house-numbers
-   * Get house numbers for a street
-   */
   app.get('/house-numbers', async (c) => {
     const query = c.req.query();
 

@@ -22,19 +22,17 @@ export interface PhoneData {
   isPrimary: boolean;
 }
 
-const mapRow = (row: IGetPhonesByFriendIdResult): PhoneResponse => ({
-  id: row.external_id,
-  phoneNumber: row.phone_number,
-  phoneType: parsePhoneType(row.phone_type),
-  label: row.label ?? undefined,
-  isPrimary: row.is_primary,
-  createdAt: row.created_at.toISOString(),
-});
+function mapRow(row: IGetPhonesByFriendIdResult) {
+  return {
+    id: row.external_id,
+    phoneNumber: row.phone_number,
+    phoneType: parsePhoneType(row.phone_type),
+    label: row.label ?? undefined,
+    isPrimary: row.is_primary,
+    createdAt: row.created_at.toISOString(),
+  } satisfies PhoneResponse;
+}
 
-/**
- * PhoneService handles all phone-related operations for friends.
- * Extends SubResourceService for common CRUD operations.
- */
 export class PhoneService extends SubResourceService<
   PhoneData,
   PhoneResponse,
@@ -51,7 +49,7 @@ export class PhoneService extends SubResourceService<
         ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: true,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
+        async createFn({ userExternalId, ownerExternalId: friendExternalId, data }, client) {
           return createPhone.run(
             {
               userExternalId,
@@ -65,10 +63,10 @@ export class PhoneService extends SubResourceService<
           );
         },
 
-        updateFn: async (
+        async updateFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
-        ) => {
+        ) {
           return updatePhone.run(
             {
               userExternalId,
@@ -83,10 +81,10 @@ export class PhoneService extends SubResourceService<
           );
         },
 
-        deleteFn: async (
+        async deleteFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        ) => {
+        ) {
           return deletePhone.run(
             {
               userExternalId,
@@ -97,15 +95,19 @@ export class PhoneService extends SubResourceService<
           );
         },
 
-        clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        async clearPrimaryFn({ userExternalId, ownerExternalId: friendExternalId }, client) {
           return clearPrimaryPhone.run({ userExternalId, friendExternalId }, client);
         },
 
-        isPrimary: (data) => data.isPrimary,
+        isPrimary(data) {
+          return data.isPrimary;
+        },
 
-        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
+        setIsPrimary(data, isPrimary) {
+          return { ...data, isPrimary };
+        },
 
-        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        async listFn({ userExternalId, ownerExternalId: friendExternalId }, client) {
           return getPhonesByFriendId.run({ userExternalId, friendExternalId }, client);
         },
 

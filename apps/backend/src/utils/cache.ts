@@ -11,13 +11,6 @@ import {
   upsertAddressCacheEntry,
 } from '../models/queries/address-cache.queries.js';
 
-// ============================================================================
-// Arktype schemas for cached data validation
-// ============================================================================
-
-/**
- * Schema for Street from Overpass API
- */
 const StreetSchema = type({
   name: 'string',
   'type?': 'string',
@@ -25,9 +18,6 @@ const StreetSchema = type({
 
 const StreetArraySchema = type(StreetSchema, '[]');
 
-/**
- * Schema for HouseNumber from Overpass API
- */
 const HouseNumberSchema = type({
   number: 'string',
   'street?': 'string',
@@ -35,31 +25,26 @@ const HouseNumberSchema = type({
 
 const HouseNumberArraySchema = type(HouseNumberSchema, '[]');
 
-// Type aliases for the validated types
 export type StreetCached = typeof StreetSchema.infer;
 export type HouseNumberCached = typeof HouseNumberSchema.infer;
 
-// Validator function type
 type Validator<T> = (data: unknown) => T | undefined;
 
-/**
- * Create a validator function from an arktype schema
- */
-function createValidator<T>(schema: { assert: (data: unknown) => T }): Validator<T> {
-  return (data: unknown): T | undefined => {
-    try {
-      return schema.assert(data);
-    } catch {
-      return undefined;
-    }
-  };
+function validateStreets(data: unknown) {
+  try {
+    return StreetArraySchema.assert(data);
+  } catch {
+    return undefined;
+  }
 }
 
-// Pre-built validators for each cache type
-const validators = {
-  streets: createValidator(StreetArraySchema),
-  houseNumbers: createValidator(HouseNumberArraySchema),
-};
+function validateHouseNumbers(data: unknown) {
+  try {
+    return HouseNumberArraySchema.assert(data);
+  } catch {
+    return undefined;
+  }
+}
 
 export interface AddressCacheOptions<T> {
   /** Time-to-live in hours for cache entries */
@@ -80,9 +65,7 @@ export interface AddressCacheOptions<T> {
 }
 
 /**
- * Persistent cache with LRU eviction and database backing.
- * Uses in-memory LRU cache for fast access with database persistence
- * to survive deployments.
+ * In-memory LRU in front of a database tier, so entries survive deployments.
  */
 export class AddressCache<T extends object> {
   private readonly memoryCache: LRUCache<string, T>;
@@ -104,11 +87,7 @@ export class AddressCache<T extends object> {
     });
   }
 
-  /**
-   * Get a value from cache (memory first, then database)
-   */
-  public async get(key: string): Promise<T | undefined> {
-    // Check memory cache first
+  public async get(key: string) {
     const memValue = this.memoryCache.get(key);
     if (memValue !== undefined) {
       return memValue;
@@ -133,7 +112,6 @@ export class AddressCache<T extends object> {
         return undefined;
       }
 
-      // Populate memory cache with validated value
       this.memoryCache.set(key, validated);
       return validated;
     } catch (error) {
@@ -145,11 +123,7 @@ export class AddressCache<T extends object> {
     }
   }
 
-  /**
-   * Store a value in cache (both memory and database)
-   */
-  public async set(key: string, value: T): Promise<void> {
-    // Always set in memory cache
+  public async set(key: string, value: T) {
     this.memoryCache.set(key, value);
 
     try {
@@ -175,8 +149,8 @@ export class AddressCache<T extends object> {
    * well, so a key that survived a deployment in the database but not in
    * memory is not reported missing.
    */
-  public async has(key: string): Promise<boolean> {
-    if (this.memoryCache.has(key)) {
+  public async has(key: string) {
+    if (this.memoryCache.has(key) === true) {
       return true;
     }
 
@@ -193,16 +167,13 @@ export class AddressCache<T extends object> {
    * Remove a specific key from both the memory and database tiers. Deleting
    * from memory alone would let the entry resurrect from the DB on next get().
    */
-  public async delete(key: string): Promise<boolean> {
+  public async delete(key: string) {
     const hasExisted = this.memoryCache.delete(key);
     await this.deleteFromDatabase(key);
     return hasExisted;
   }
 
-  /**
-   * Clear all entries from both the memory and database tiers.
-   */
-  public async clear(): Promise<void> {
+  public async clear() {
     this.memoryCache.clear();
     try {
       await clearAddressCache.run(undefined, this.db);
@@ -211,8 +182,7 @@ export class AddressCache<T extends object> {
     }
   }
 
-  /** Best-effort delete of a single key from the database tier. */
-  private async deleteFromDatabase(key: string): Promise<void> {
+  private async deleteFromDatabase(key: string) {
     try {
       await deleteAddressCacheEntry.run({ cacheKey: key }, this.db);
     } catch (error) {
@@ -223,11 +193,8 @@ export class AddressCache<T extends object> {
     }
   }
 
-  /**
-   * Remove all expired entries from database.
-   * Called by the cleanup scheduler.
-   */
-  public async cleanupDatabase(): Promise<number> {
+  /** Called by the cleanup scheduler. */
+  public async cleanupDatabase() {
     try {
       const result = await deleteExpiredAddressCacheEntries.run(undefined, this.db);
       return result.length;
@@ -237,43 +204,33 @@ export class AddressCache<T extends object> {
     }
   }
 
-  /**
-   * Get the current size of the memory cache
-   */
-  public get size(): number {
+  public get size() {
     return this.memoryCache.size;
   }
 }
 
-// Cache configuration constants
 const CACHE_CONFIG = {
   streets: { ttlHours: 24, maxSize: 1000 },
   houseNumbers: { ttlHours: 24, maxSize: 2000 },
 };
 
-/**
- * Create the streets cache with arktype validation
- */
 export function createStreetsCache(
   dependencies: Pick<AddressCacheOptions<unknown>, 'db' | 'logger'>,
 ) {
   return new AddressCache<StreetCached[]>({
     ...CACHE_CONFIG.streets,
-    validator: validators.streets,
+    validator: validateStreets,
     db: dependencies.db,
     logger: dependencies.logger.child({ module: 'address-cache' }),
   });
 }
 
-/**
- * Create the house numbers cache with arktype validation
- */
 export function createHouseNumbersCache(
   dependencies: Pick<AddressCacheOptions<unknown>, 'db' | 'logger'>,
 ) {
   return new AddressCache<HouseNumberCached[]>({
     ...CACHE_CONFIG.houseNumbers,
-    validator: validators.houseNumbers,
+    validator: validateHouseNumbers,
     db: dependencies.db,
     logger: dependencies.logger.child({ module: 'address-cache' }),
   });

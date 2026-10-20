@@ -9,6 +9,6 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
  * This provides defense-in-depth against path traversal attacks
  * when UUIDs are used in file paths.
  */
-export function isValidUuid(value: string): boolean {
+export function isValidUuid(value: string) {
   return UUID_REGEX.test(value);
 }

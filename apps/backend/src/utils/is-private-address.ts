@@ -33,7 +33,7 @@ BLOCKED.addSubnet('ff00::', 8, 'ipv6'); // multicast
  * Hostnames and anything else that is not an IP literal are not this
  * function's business and return false.
  */
-export function isPrivateAddress(address: string): boolean {
+export function isPrivateAddress(address: string) {
   const value = address
     .trim()
     .toLowerCase()

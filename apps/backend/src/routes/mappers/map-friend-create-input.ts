@@ -26,6 +26,6 @@ export function mapFriendCreateInput(input: FriendCreateInput) {
     dates: input.dates.map(mapDateInput),
     socialProfiles: input.social_profiles.map(mapSocialProfileInput),
     professionalHistory: input.professional_history.map(mapProfessionalHistoryInput),
-    ...(input.met_info !== undefined && { metInfo: mapMetInfoInput(input.met_info) }),
+    ...(input.met_info === undefined ? {} : { metInfo: mapMetInfoInput(input.met_info) }),
   };
 }

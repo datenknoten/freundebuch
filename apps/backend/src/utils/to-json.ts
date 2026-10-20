@@ -7,7 +7,7 @@ import type { Json } from '../models/queries/users.queries.js';
  * arrays, non-finite numbers become `null`, and a `Date` becomes its ISO string.
  * Throws `DataIntegrityError` for a value JSON cannot represent at all, such as a bigint.
  */
-export function toJson(value: unknown): Json {
+export function toJson(value: unknown) {
   const json = toJsonValue(value);
   if (json === undefined) {
     throw new DataIntegrityError('non-JSON value');

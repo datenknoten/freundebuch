@@ -20,6 +20,6 @@ const AddressJsonRowSchema = type({
 
 export type AddressJsonRow = typeof AddressJsonRowSchema.infer;
 
-export function parseAddressesJson(value: unknown, logger: Logger): AddressJsonRow[] {
+export function parseAddressesJson(value: unknown, logger: Logger) {
   return safeArray(value, AddressJsonRowSchema, logger, 'addresses');
 }

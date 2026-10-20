@@ -21,9 +21,6 @@ export interface CollectiveTypesServiceOptions {
   db: Pool;
 }
 
-/**
- * Service for managing collective types (family, company, club, friend_group)
- */
 export class CollectiveTypesService {
   private readonly db: Pool;
 
@@ -31,29 +28,22 @@ export class CollectiveTypesService {
     this.db = options.db;
   }
 
-  /**
-   * List all collective types available to a user (system defaults + custom)
-   */
-  public async listTypes(userExternalId: string): Promise<CollectiveTypeListResponse> {
+  public async listTypes(userExternalId: string) {
     const typesResult = await getCollectiveTypes.run({ userExternalId }, this.db);
-
-    // Fetch roles for each type in parallel
     const types = await Promise.all(
-      typesResult.map(async (typeRow) => {
-        const rolesResult = await getRolesForType.run(
-          { typeExternalId: typeRow.external_id, userExternalId },
-          this.db,
-        );
-        return this.mapCollectiveType(typeRow, rolesResult);
-      }),
+      typesResult.map((typeRow) => this.loadTypeWithRoles(userExternalId, typeRow)),
     );
-
-    return { types };
+    return { types } satisfies CollectiveTypeListResponse;
   }
 
-  /**
-   * Get a single collective type with roles and rules; throws when it does not exist
-   */
+  private async loadTypeWithRoles(userExternalId: string, typeRow: IGetCollectiveTypesResult) {
+    const rolesResult = await getRolesForType.run(
+      { typeExternalId: typeRow.external_id, userExternalId },
+      this.db,
+    );
+    return this.mapCollectiveType(typeRow, rolesResult);
+  }
+
   public async getType(userExternalId: string, typeExternalId: string) {
     const typeResults = await getCollectiveTypeById.run(
       { userExternalId, typeExternalId },
@@ -65,7 +55,6 @@ export class CollectiveTypesService {
       throw new ResourceNotFoundError('Collective type', typeExternalId);
     }
 
-    // Fetch roles and rules in parallel
     const [rolesResult, rulesResult] = await Promise.all([
       getRolesForType.run({ typeExternalId, userExternalId }, this.db),
       getRulesForType.run({ typeExternalId, userExternalId }, this.db),
@@ -74,14 +63,9 @@ export class CollectiveTypesService {
     return this.mapCollectiveTypeWithRules(typeRow, rolesResult, rulesResult);
   }
 
-  // ============================================================================
-  // Mappers
-  // ============================================================================
+  //#region Mappers
 
-  private mapCollectiveType(
-    row: IGetCollectiveTypesResult,
-    roles: IGetRolesForTypeResult[],
-  ): CollectiveTypeResponse {
+  private mapCollectiveType(row: IGetCollectiveTypesResult, roles: IGetRolesForTypeResult[]) {
     return {
       id: row.external_id,
       name: row.name,
@@ -90,14 +74,14 @@ export class CollectiveTypesService {
       roles: roles.map((r) => mapRole(r)),
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
-    };
+    } satisfies CollectiveTypeResponse;
   }
 
   private mapCollectiveTypeWithRules(
     row: IGetCollectiveTypesResult,
     roles: IGetRolesForTypeResult[],
     rules: IGetRulesForTypeResult[],
-  ): CollectiveTypeResponse {
+  ) {
     return {
       id: row.external_id,
       name: row.name,
@@ -107,10 +91,10 @@ export class CollectiveTypesService {
       rules: rules.map((r) => this.mapRule(r)),
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
-    };
+    } satisfies CollectiveTypeResponse;
   }
 
-  private mapRule(row: IGetRulesForTypeResult): CollectiveRelationshipRuleResponse {
+  private mapRule(row: IGetRulesForTypeResult) {
     return {
       newMemberRoleId: row.new_member_role_id,
       newMemberRoleKey: row.new_member_role_key,
@@ -118,6 +102,8 @@ export class CollectiveTypesService {
       existingMemberRoleKey: row.existing_member_role_key,
       relationshipTypeId: row.relationship_type_id,
       relationshipDirection: parseRelationshipDirection(row.relationship_direction),
-    };
+    } satisfies CollectiveRelationshipRuleResponse;
   }
+
+  //#endregion
 }

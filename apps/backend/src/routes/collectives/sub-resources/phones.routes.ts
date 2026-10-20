@@ -15,12 +15,9 @@ export function createCollectivePhonesRoutes(options: CollectivePhonesRoutesOpti
   const { collectivePhoneService, collectiveAddressService } = options;
 
   /** Country for interpreting a national-format number: the collective's primary address. */
-  async function collectivePrimaryCountry(
-    userId: string,
-    collectiveId: string,
-  ): Promise<string | undefined> {
+  async function collectivePrimaryCountry(userId: string, collectiveId: string) {
     const addresses = await collectiveAddressService.list(userId, collectiveId);
-    return (addresses.find((address) => address.isPrimary) ?? addresses[0])?.country;
+    return (addresses.find((address) => address.isPrimary === true) ?? addresses[0])?.country;
   }
 
   return createSubResourceRouter({

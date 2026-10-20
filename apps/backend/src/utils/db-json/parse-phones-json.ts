@@ -13,6 +13,6 @@ const PhoneJsonRowSchema = type({
 
 export type PhoneJsonRow = typeof PhoneJsonRowSchema.infer;
 
-export function parsePhonesJson(value: unknown, logger: Logger): PhoneJsonRow[] {
+export function parsePhonesJson(value: unknown, logger: Logger) {
   return safeArray(value, PhoneJsonRowSchema, logger, 'phones');
 }

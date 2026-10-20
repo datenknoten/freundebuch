@@ -1,4 +1,4 @@
-import type { Context, MiddlewareHandler, Next } from 'hono';
+import type { Context, Next } from 'hono';
 import { AuthenticationError } from '../errors/authentication.error.js';
 import type { Auth } from '../lib/auth.js';
 import type { AppContext } from '../types/context.js';
@@ -18,16 +18,11 @@ export interface AuthMiddlewareOptions {
 }
 
 /**
- * Middleware to authenticate requests using Better Auth sessions.
- * Validates the session cookie via Better Auth's API and stores the
- * full session in context so handlers don't need a second lookup.
- *
- * The session's user id *is* the domain user id, so there is no per-request
- * lookup to translate between identity tables.
+ * Stores the full Better Auth session in context so handlers don't need a
+ * second lookup. The session's user id *is* the domain user id, so there is
+ * no per-request lookup to translate between identity tables.
  */
-export function createAuthMiddleware(
-  options: AuthMiddlewareOptions,
-): MiddlewareHandler<AppContext> {
+export function createAuthMiddleware(options: AuthMiddlewareOptions) {
   const { auth } = options;
 
   return async function authMiddleware(c: Context<AppContext>, next: Next) {
@@ -35,7 +30,7 @@ export function createAuthMiddleware(
       headers: c.req.raw.headers,
     });
 
-    if (!session) {
+    if (session === null) {
       throw new AuthenticationError('Unauthorized');
     }
 
@@ -44,17 +39,14 @@ export function createAuthMiddleware(
       email: session.user.email,
     });
 
-    // Store full session so handlers can access selfProfileId, preferences, etc.
-    // without a redundant getSession() call
+    // Handlers read selfProfileId, preferences, etc. from here instead of a
+    // redundant getSession() call
     c.set('session', session);
 
     return next();
   };
 }
 
-/**
- * Get authenticated user from context
- */
-export function getAuthUser(c: Context<AppContext>): AuthContext {
+export function getAuthUser(c: Context<AppContext>) {
   return c.get('user');
 }

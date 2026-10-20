@@ -20,31 +20,38 @@ export interface SearchRoutesOptions {
   friendsService: FriendsService;
 }
 
-export function createSearchRoutes(options: SearchRoutesOptions): Hono<AppContext> {
+/** Clamps the `limit` query param to 1..max; absent, empty, `0` or non-numeric yields 10. */
+function parseLimit(value: string | undefined, max: number) {
+  if (value === undefined || value === '') {
+    return 10;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Math.min(max, Math.max(1, Number.isNaN(parsed) === true || parsed === 0 ? 10 : parsed));
+}
+
+export function createSearchRoutes(options: SearchRoutesOptions) {
   const app = new Hono<AppContext>();
 
-  /**
-   * GET /api/friends/search
-   * Search friends by name (for autocomplete)
-   */
+  // Name search for autocomplete
   app.get('/', async (c) => {
     const user = getAuthUser(c);
 
     const query = c.req.query('q');
     const exclude = c.req.query('exclude');
-    const limitParam = c.req.query('limit');
 
-    if (!query || query.trim().length === 0) {
+    if (query === undefined || query.trim().length === 0) {
       throw new ValidationError('Query parameter "q" is required');
     }
 
-    if (exclude && ExcludeParamSchema(exclude) instanceof type.errors) {
+    if (
+      exclude !== undefined &&
+      exclude !== '' &&
+      ExcludeParamSchema(exclude) instanceof type.errors
+    ) {
       throw new ValidationError('Invalid exclude parameter');
     }
 
-    const limit = limitParam
-      ? Math.min(50, Math.max(1, Number.parseInt(limitParam, 10) || 10))
-      : 10;
+    const limit = parseLimit(c.req.query('limit'), 50);
 
     const results = await options.friendsService.searchFriends(
       user.userId,
@@ -56,19 +63,14 @@ export function createSearchRoutes(options: SearchRoutesOptions): Hono<AppContex
     return c.json(results);
   });
 
-  /**
-   * GET /api/friends/search/full
-   * Full-text search across friends with relevance ranking
-   * Searches: names, organization, job title, work notes, emails, phones,
-   * relationship notes, and met context
-   */
+  // Relevance-ranked search across names, organization, job title, work notes,
+  // emails, phones, relationship notes, and met context
   app.get('/full', async (c) => {
     const user = getAuthUser(c);
 
     const query = c.req.query('q');
-    const limitParam = c.req.query('limit');
 
-    if (!query || query.trim().length === 0) {
+    if (query === undefined || query.trim().length === 0) {
       throw new ValidationError('Query parameter "q" is required');
     }
 
@@ -77,20 +79,14 @@ export function createSearchRoutes(options: SearchRoutesOptions): Hono<AppContex
       throw new ValidationError('Query must be at least 2 characters');
     }
 
-    const limit = limitParam
-      ? Math.min(50, Math.max(1, Number.parseInt(limitParam, 10) || 10))
-      : 10;
+    const limit = parseLimit(c.req.query('limit'), 50);
 
     const results = await options.friendsService.fullTextSearch(user.userId, query.trim(), limit);
 
     return c.json(results);
   });
 
-  /**
-   * GET /api/friends/search/paginated
-   * Paginated full-text search with sorting options
-   * Used by in-page search for friends list
-   */
+  // Used by the in-page search of the friends list
   app.get('/paginated', async (c) => {
     const user = getAuthUser(c);
 
@@ -112,12 +108,8 @@ export function createSearchRoutes(options: SearchRoutesOptions): Hono<AppContex
     return c.json(results);
   });
 
-  /**
-   * GET /api/friends/search/faceted
-   * Faceted full-text search with filter support and optional facet aggregation
-   * Supports filtering by location, professional, and relationship facets
-   * Can be used with a search query, filters, or both
-   */
+  // Faceted search on location, professional, and relationship facets, with
+  // optional facet aggregation; works with a query, filters, or both
   app.get('/faceted', async (c) => {
     const user = getAuthUser(c);
 
@@ -128,21 +120,19 @@ export function createSearchRoutes(options: SearchRoutesOptions): Hono<AppContex
       throw new ValidationError('Invalid query parameters', validated);
     }
 
-    // Check if we have a valid search query
-    const hasQuery = validated.q && validated.q.trim().length >= 2;
+    const hasQuery = validated.q !== undefined && validated.q.trim().length >= 2;
 
-    // Check if we have any active filters
-    const hasFilters =
-      validated.country ||
-      validated.city ||
-      validated.organization ||
-      validated.job_title ||
-      validated.department ||
-      validated.relationship_category ||
-      validated.circles;
+    const hasFilters = [
+      validated.country,
+      validated.city,
+      validated.organization,
+      validated.job_title,
+      validated.department,
+      validated.relationship_category,
+      validated.circles,
+    ].some((value) => value !== undefined && value !== '');
 
-    // Require at least a query, filters, or include_facets
-    if (!hasQuery && !hasFilters && validated.include_facets !== 'true') {
+    if (hasQuery === false && hasFilters === false && validated.include_facets !== 'true') {
       throw new ValidationError(
         'Either a search query (2+ characters), filters, or include_facets=true is required',
       );
@@ -150,36 +140,25 @@ export function createSearchRoutes(options: SearchRoutesOptions): Hono<AppContex
 
     const searchOptions = parseFacetedSearchQuery(validated);
 
-    // Use appropriate method based on whether query is present
     // filterOnlyList handles both filter-only and facets-only requests
-    const results = hasQuery
-      ? await options.friendsService.facetedSearch(user.userId, searchOptions)
-      : await options.friendsService.filterOnlyList(user.userId, searchOptions);
+    const results =
+      hasQuery === true
+        ? await options.friendsService.facetedSearch(user.userId, searchOptions)
+        : await options.friendsService.filterOnlyList(user.userId, searchOptions);
 
     return c.json(results);
   });
 
-  /**
-   * GET /api/friends/search/recent
-   * Get user's recent search queries
-   */
   app.get('/recent', async (c) => {
     const user = getAuthUser(c);
 
-    const limitParam = c.req.query('limit');
-    const limit = limitParam
-      ? Math.min(20, Math.max(1, Number.parseInt(limitParam, 10) || 10))
-      : 10;
+    const limit = parseLimit(c.req.query('limit'), 20);
 
     const recentSearches = await options.friendsService.getRecentSearches(user.userId, limit);
 
     return c.json(recentSearches);
   });
 
-  /**
-   * POST /api/friends/search/recent
-   * Add or update a recent search query
-   */
   app.post('/recent', async (c) => {
     const user = getAuthUser(c);
 
@@ -194,10 +173,6 @@ export function createSearchRoutes(options: SearchRoutesOptions): Hono<AppContex
     return c.json({ success: true }, 201);
   });
 
-  /**
-   * DELETE /api/friends/search/recent/:query
-   * Delete a specific recent search
-   */
   app.delete('/recent/:query', async (c) => {
     const user = getAuthUser(c);
     const query = decodeURIComponent(c.req.param('query'));
@@ -207,10 +182,6 @@ export function createSearchRoutes(options: SearchRoutesOptions): Hono<AppContex
     return c.json({ success: true });
   });
 
-  /**
-   * DELETE /api/friends/search/recent
-   * Clear all recent searches
-   */
   app.delete('/recent', async (c) => {
     const user = getAuthUser(c);
 

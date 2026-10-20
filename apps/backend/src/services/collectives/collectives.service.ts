@@ -34,7 +34,7 @@ import {
 const PREVIEW_MEMBER_LIMIT = 3;
 
 /** Escape special ILIKE pattern characters to prevent wildcard injection */
-function escapeIlike(input: string): string {
+function escapeIlike(input: string) {
   return input.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
 }
 
@@ -70,9 +70,6 @@ export interface CollectiveUpdateData {
   addressCountry?: string | null;
 }
 
-/**
- * Service for managing collectives (families, companies, clubs, friend groups)
- */
 export class CollectivesService {
   private readonly db: Pool;
 
@@ -80,21 +77,13 @@ export class CollectivesService {
     this.db = options.db;
   }
 
-  // ============================================================================
-  // Collective CRUD
-  // ============================================================================
+  //#region Collective CRUD
 
-  /**
-   * List all collectives for a user with pagination and filtering
-   */
-  public async listCollectives(
-    userExternalId: string,
-    options: CollectiveListOptions,
-  ): Promise<CollectiveListResponse> {
+  public async listCollectives(userExternalId: string, options: CollectiveListOptions) {
     const offset = (options.page - 1) * options.pageSize;
-    const escapedSearch = options.search ? escapeIlike(options.search) : null;
+    const escapedSearch =
+      options.search === undefined || options.search === '' ? null : escapeIlike(options.search);
 
-    // Get collectives and count in parallel
     const [collectivesResult, countResult] = await Promise.all([
       getCollectivesByUserId.run(
         {
@@ -120,7 +109,6 @@ export class CollectivesService {
 
     const totalCount = countResult[0]?.total_count ?? 0;
 
-    // Get member previews for all collectives in a single batch query
     const collectiveIds = collectivesResult.map((row) => row.external_id);
     const allPreviews =
       collectiveIds.length > 0
@@ -142,10 +130,9 @@ export class CollectivesService {
       previewsByCollective.set(preview.collective_external_id, existing);
     }
 
-    const data: CollectiveListItemResponse[] = collectivesResult.map((row) => {
-      const members = previewsByCollective.get(row.external_id) ?? [];
-      return this.mapCollectiveListItem(row, members);
-    });
+    const data = collectivesResult.map((row) =>
+      this.mapCollectiveListItem(row, previewsByCollective.get(row.external_id) ?? []),
+    );
 
     return {
       data,
@@ -155,12 +142,9 @@ export class CollectivesService {
         totalCount,
         totalPages: Math.ceil(totalCount / options.pageSize),
       },
-    };
+    } satisfies CollectiveListResponse;
   }
 
-  /**
-   * Find a single collective by ID with all members
-   */
   public async findCollective(userExternalId: string, collectiveExternalId: string) {
     const results = await getCollectiveById.run({ userExternalId, collectiveExternalId }, this.db);
 
@@ -183,9 +167,6 @@ export class CollectivesService {
     return this.mapCollective(collectiveRow, membersResult, rolesResult);
   }
 
-  /**
-   * Get a single collective by ID with all members; throws when it does not exist
-   */
   public async getCollective(userExternalId: string, collectiveExternalId: string) {
     const collective = await this.findCollective(userExternalId, collectiveExternalId);
     if (collective === undefined) {
@@ -194,13 +175,7 @@ export class CollectivesService {
     return collective;
   }
 
-  /**
-   * Create a new collective
-   */
-  public async createCollective(
-    userExternalId: string,
-    data: CollectiveCreateData,
-  ): Promise<CollectiveResponse> {
+  public async createCollective(userExternalId: string, data: CollectiveCreateData) {
     const results = await createCollective.run(
       {
         userExternalId,
@@ -232,14 +207,11 @@ export class CollectivesService {
     return collective;
   }
 
-  /**
-   * Update an existing collective
-   */
   public async updateCollective(
     userExternalId: string,
     collectiveExternalId: string,
     data: CollectiveUpdateData,
-  ): Promise<CollectiveResponse> {
+  ) {
     const results = await updateCollective.run(
       {
         userExternalId,
@@ -285,13 +257,7 @@ export class CollectivesService {
     }
   }
 
-  /**
-   * Get all collectives a contact belongs to
-   */
-  public async getCollectivesForContact(
-    userExternalId: string,
-    contactExternalId: string,
-  ): Promise<ContactCollectiveSummaryResponse[]> {
+  public async getCollectivesForContact(userExternalId: string, contactExternalId: string) {
     const results = await getCollectivesForContact.run(
       { userExternalId, contactExternalId },
       this.db,
@@ -300,15 +266,15 @@ export class CollectivesService {
     return results.map((row) => this.mapContactCollectiveSummary(row));
   }
 
-  // ============================================================================
-  // Mappers
-  // ============================================================================
+  //#endregion
+
+  //#region Mappers
 
   private mapCollective(
     row: IGetCollectiveByIdResult,
     members: IGetMembersByCollectiveIdResult[],
     roles: IGetRolesForTypeResult[],
-  ): CollectiveResponse {
+  ) {
     const type: CollectiveTypeResponse = {
       id: row.type_external_id,
       name: row.type_name,
@@ -341,14 +307,14 @@ export class CollectivesService {
       members: members.map((m) => mapMember(m)),
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
-      deletedAt: row.deleted_at ? row.deleted_at.toISOString() : null,
-    };
+      deletedAt: row.deleted_at === null ? null : row.deleted_at.toISOString(),
+    } satisfies CollectiveResponse;
   }
 
   private mapCollectiveListItem(
     row: IGetCollectivesByUserIdResult,
     memberPreview: IGetMemberPreviewBatchResult[],
-  ): CollectiveListItemResponse {
+  ) {
     return {
       id: row.external_id,
       name: row.name,
@@ -362,21 +328,19 @@ export class CollectivesService {
       activeMemberCount: row.active_member_count ?? 0,
       memberPreview: memberPreview.map((m) => this.mapMemberContact(m)),
       createdAt: row.created_at.toISOString(),
-      deletedAt: row.deleted_at ? row.deleted_at.toISOString() : null,
-    };
+      deletedAt: row.deleted_at === null ? null : row.deleted_at.toISOString(),
+    } satisfies CollectiveListItemResponse;
   }
 
-  private mapMemberContact(row: IGetMemberPreviewBatchResult): CollectiveMemberContactResponse {
+  private mapMemberContact(row: IGetMemberPreviewBatchResult) {
     return {
       id: row.external_id,
       displayName: row.display_name ?? 'Unknown',
       photoUrl: row.photo_url,
-    };
+    } satisfies CollectiveMemberContactResponse;
   }
 
-  private mapContactCollectiveSummary(
-    row: IGetCollectivesForContactResult,
-  ): ContactCollectiveSummaryResponse {
+  private mapContactCollectiveSummary(row: IGetCollectivesForContactResult) {
     return {
       id: row.collective_external_id,
       name: row.collective_name,
@@ -389,6 +353,8 @@ export class CollectivesService {
       },
       membershipId: row.membership_external_id,
       isActive: row.is_active,
-    };
+    } satisfies ContactCollectiveSummaryResponse;
   }
+
+  //#endregion
 }

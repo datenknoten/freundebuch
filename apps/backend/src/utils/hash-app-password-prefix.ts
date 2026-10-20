@@ -10,6 +10,6 @@ import crypto from 'node:crypto';
  * value useless on its own. `apps/sabredav` computes the same value with
  * `substr(hash('sha256', $prefix), 0, 16)`.
  */
-export function hashAppPasswordPrefix(prefix: string): string {
+export function hashAppPasswordPrefix(prefix: string) {
   return crypto.createHash('sha256').update(prefix).digest('hex').slice(0, 16);
 }

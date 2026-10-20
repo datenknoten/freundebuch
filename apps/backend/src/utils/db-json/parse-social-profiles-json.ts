@@ -12,6 +12,6 @@ const SocialProfileJsonRowSchema = type({
 
 export type SocialProfileJsonRow = typeof SocialProfileJsonRowSchema.infer;
 
-export function parseSocialProfilesJson(value: unknown, logger: Logger): SocialProfileJsonRow[] {
+export function parseSocialProfilesJson(value: unknown, logger: Logger) {
   return safeArray(value, SocialProfileJsonRowSchema, logger, 'socialProfiles');
 }

@@ -5,7 +5,7 @@ import { decrypt } from './decrypt.js';
  * must keep working after a secret rotation (so the user can re-enter the
  * credential through the UI).
  */
-export function tryDecrypt(value: string, context: string, key: Buffer): string | null {
+export function tryDecrypt(value: string, context: string, key: Buffer) {
   try {
     return decrypt(value, context, key);
   } catch {

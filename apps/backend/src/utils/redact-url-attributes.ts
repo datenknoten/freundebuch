@@ -2,7 +2,7 @@ import { redactBotToken } from './redact-bot-token.js';
 
 const URL_ATTRIBUTES = ['http.url', 'url'];
 
-export function redactUrlAttributes(data: Record<string, unknown> | undefined): void {
+export function redactUrlAttributes(data: Record<string, unknown> | undefined) {
   if (data === undefined) {
     return;
   }

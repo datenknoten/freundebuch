@@ -31,7 +31,7 @@ export async function encryptLegacyNotificationCredentials(
   db: pg.Pool,
   logger: Logger,
   key: Buffer,
-): Promise<number> {
+) {
   const { rows } = await db.query<LegacyCredentialRow>(
     `SELECT nc.id,
             u.external_id AS user_external_id,
@@ -49,10 +49,8 @@ export async function encryptLegacyNotificationCredentials(
   let rewritten = 0;
 
   for (const row of rows) {
-    let hasChanged = false;
-
-    const upgrade = (value: string | null, column: CredentialColumn): string | null => {
-      if (value === null || value.startsWith(ENVELOPE_PREFIX_V2)) {
+    function upgrade(value: string | null, column: CredentialColumn) {
+      if (value === null || value.startsWith(ENVELOPE_PREFIX_V2) === true) {
         return value;
       }
       const context = credentialContext(row.user_external_id, column);
@@ -64,15 +62,19 @@ export async function encryptLegacyNotificationCredentials(
         );
         return value;
       }
-      hasChanged = true;
       return encrypt(plain, context, key);
-    };
+    }
 
     const telegramBotToken = upgrade(row.telegram_bot_token, 'telegram_bot_token');
     const matrixAccessToken = upgrade(row.matrix_access_token, 'matrix_access_token');
     const discordWebhookUrl = upgrade(row.discord_webhook_url, 'discord_webhook_url');
 
-    if (!hasChanged) {
+    // `upgrade` returns its input unchanged unless it re-encrypted the value.
+    const hasChanged =
+      telegramBotToken !== row.telegram_bot_token ||
+      matrixAccessToken !== row.matrix_access_token ||
+      discordWebhookUrl !== row.discord_webhook_url;
+    if (hasChanged === false) {
       continue;
     }
 

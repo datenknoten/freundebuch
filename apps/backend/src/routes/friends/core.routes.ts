@@ -51,13 +51,9 @@ function mapFriendUpdateInput(input: FriendUpdateInput) {
   return data;
 }
 
-export function createCoreRoutes(options: CoreRoutesOptions): Hono<AppContext> {
+export function createCoreRoutes(options: CoreRoutesOptions) {
   const app = new Hono<AppContext>();
 
-  /**
-   * GET /api/friends
-   * List friends with pagination and sorting
-   */
   app.get('/', async (c) => {
     const user = getAuthUser(c);
 
@@ -74,10 +70,7 @@ export function createCoreRoutes(options: CoreRoutesOptions): Hono<AppContext> {
     return c.json(result);
   });
 
-  /**
-   * GET /api/friends/:id
-   * Get a single friend with all related data
-   */
+  // Includes all related data
   app.get('/:id', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');
@@ -87,10 +80,6 @@ export function createCoreRoutes(options: CoreRoutesOptions): Hono<AppContext> {
     return c.json(friend);
   });
 
-  /**
-   * POST /api/friends
-   * Create a new friend
-   */
   app.post('/', async (c) => {
     const user = getAuthUser(c);
 
@@ -104,10 +93,6 @@ export function createCoreRoutes(options: CoreRoutesOptions): Hono<AppContext> {
     return c.json(friend, 201);
   });
 
-  /**
-   * PUT /api/friends/:id
-   * Update an existing friend
-   */
   app.put('/:id', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');
@@ -122,17 +107,13 @@ export function createCoreRoutes(options: CoreRoutesOptions): Hono<AppContext> {
     return c.json(friend);
   });
 
-  /**
-   * DELETE /api/friends/:id
-   * Soft delete a friend and remove associated photo files
-   */
+  // Soft delete; deleteFriend also removes the photo files
   app.delete('/:id', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');
 
     await options.friendsService.deleteFriend(user.userId, friendId);
 
-    // Photo cleanup now happens inside deleteFriend so all callers get it.
     return c.json({ message: 'Friend deleted successfully' });
   });
 

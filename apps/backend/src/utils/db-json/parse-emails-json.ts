@@ -13,6 +13,6 @@ const EmailJsonRowSchema = type({
 
 export type EmailJsonRow = typeof EmailJsonRowSchema.infer;
 
-export function parseEmailsJson(value: unknown, logger: Logger): EmailJsonRow[] {
+export function parseEmailsJson(value: unknown, logger: Logger) {
   return safeArray(value, EmailJsonRowSchema, logger, 'emails');
 }

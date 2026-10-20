@@ -37,26 +37,25 @@ export interface AddressData {
   isPrimary: boolean;
 }
 
-const mapRow = (row: IGetAddressesByFriendIdResult): AddressResponse => ({
-  id: row.external_id,
-  streetLine1: row.street_line1 ?? undefined,
-  streetLine2: row.street_line2 ?? undefined,
-  city: row.city ?? undefined,
-  stateProvince: row.state_province ?? undefined,
-  postalCode: row.postal_code ?? undefined,
-  country: row.country ?? undefined,
-  addressType: parseAddressType(row.address_type),
-  label: row.label ?? undefined,
-  isPrimary: row.is_primary,
-  latitude: row.latitude ?? undefined,
-  longitude: row.longitude ?? undefined,
-  createdAt: row.created_at.toISOString(),
-});
+function mapRow(row: IGetAddressesByFriendIdResult) {
+  return {
+    id: row.external_id,
+    streetLine1: row.street_line1 ?? undefined,
+    streetLine2: row.street_line2 ?? undefined,
+    city: row.city ?? undefined,
+    stateProvince: row.state_province ?? undefined,
+    postalCode: row.postal_code ?? undefined,
+    country: row.country ?? undefined,
+    addressType: parseAddressType(row.address_type),
+    label: row.label ?? undefined,
+    isPrimary: row.is_primary,
+    latitude: row.latitude ?? undefined,
+    longitude: row.longitude ?? undefined,
+    createdAt: row.created_at.toISOString(),
+  } satisfies AddressResponse;
+}
 
 /**
- * AddressService handles all address-related operations for friends.
- * Extends SubResourceService for common CRUD operations.
- *
  * Geocoding runs in the background after a successful write so saves are
  * never blocked on slow or rate-limited external geocode calls. On update,
  * existing coordinates are preserved when the address fields haven't
@@ -80,7 +79,7 @@ export class AddressService extends SubResourceService<
         ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: true,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
+        async createFn({ userExternalId, ownerExternalId: friendExternalId, data }, client) {
           return createAddress.run(
             {
               userExternalId,
@@ -101,10 +100,10 @@ export class AddressService extends SubResourceService<
           );
         },
 
-        updateFn: async (
+        async updateFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
-        ) => {
+        ) {
           return updateAddress.run(
             {
               userExternalId,
@@ -126,10 +125,10 @@ export class AddressService extends SubResourceService<
           );
         },
 
-        deleteFn: async (
+        async deleteFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        ) => {
+        ) {
           return deleteAddress.run(
             {
               userExternalId,
@@ -140,15 +139,19 @@ export class AddressService extends SubResourceService<
           );
         },
 
-        clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        async clearPrimaryFn({ userExternalId, ownerExternalId: friendExternalId }, client) {
           return clearPrimaryAddress.run({ userExternalId, friendExternalId }, client);
         },
 
-        isPrimary: (data) => data.isPrimary,
+        isPrimary(data) {
+          return data.isPrimary;
+        },
 
-        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
+        setIsPrimary(data, isPrimary) {
+          return { ...data, isPrimary };
+        },
 
-        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        async listFn({ userExternalId, ownerExternalId: friendExternalId }, client) {
           return getAddressesByFriendId.run({ userExternalId, friendExternalId }, client);
         },
 
@@ -227,7 +230,7 @@ export class AddressService extends SubResourceService<
     userExternalId: string,
     addressExternalId: string,
     data: AddressData,
-  ): void {
+  ) {
     const service = this.addressLookupService;
     const country = data.country;
     if (service === undefined || country === undefined || country === '') {
@@ -240,10 +243,10 @@ export class AddressService extends SubResourceService<
     const postalCode = data.postalCode ?? '';
     const { street, houseNumber } = parseStreetLine(data.streetLine1);
 
-    setImmediate(async () => {
+    async function persistGeocode(geocoder: AddressLookupService, geocodeCountry: string) {
       try {
-        const location = await service.geocodeAddress(
-          country,
+        const location = await geocoder.geocodeAddress(
+          geocodeCountry,
           city,
           postalCode,
           street,
@@ -266,6 +269,8 @@ export class AddressService extends SubResourceService<
       } catch (error) {
         logger.warn({ err: error, addressExternalId }, 'Background address geocode failed');
       }
-    });
+    }
+
+    setImmediate(persistGeocode, service, country);
   }
 }

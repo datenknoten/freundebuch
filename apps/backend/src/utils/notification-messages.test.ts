@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IGetUpcomingDatesResult } from '../models/queries/friend-dates.queries.js';
 import { formatNotificationMessage } from './notification-messages.js';
 
-function makeDate(overrides: Partial<IGetUpcomingDatesResult>): IGetUpcomingDatesResult {
+function makeDate(overrides: Partial<IGetUpcomingDatesResult>) {
   return {
     date_external_id: 'date-1',
     date_type: 'birthday',

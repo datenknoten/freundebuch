@@ -15,34 +15,20 @@ export function createUsersRoutes(options: UsersRoutesOptions) {
   const { usersService, authMiddleware } = options;
   const app = new Hono<AppContext>();
 
-  // Apply auth middleware to all user routes
   app.use('*', authMiddleware);
 
-  /**
-   * GET /api/users/me
-   * Get the current user's profile
-   */
   app.get('/me', async (c) => {
     return c.json(await usersService.getMe(getAuthUser(c).userId));
   });
 
-  // ============================================================================
-  // Self-Profile Routes (for onboarding)
-  // ============================================================================
+  //#region Self-profile (onboarding)
 
-  /**
-   * GET /api/users/me/self-profile
-   * Get the current user's self-profile external ID
-   */
   app.get('/me/self-profile', async (c) => {
     const selfProfileId = await usersService.getSelfProfileId(getAuthUser(c).userId);
     return c.json({ selfProfileId });
   });
 
-  /**
-   * PUT /api/users/me/self-profile
-   * Set an existing friend as the user's self-profile
-   */
+  // Sets an existing friend as the self-profile
   app.put('/me/self-profile', async (c) => {
     const { friendId } = await parseBody(c, SelfProfileSetInputSchema);
     const selfProfileId = await usersService.setSelfProfile(getAuthUser(c).userId, friendId);
@@ -50,11 +36,7 @@ export function createUsersRoutes(options: UsersRoutesOptions) {
     return c.json({ selfProfileId });
   });
 
-  /**
-   * POST /api/users/me/self-profile
-   * Create a new friend and set it as the user's self-profile
-   * Used during onboarding
-   */
+  // Creates a new friend as the self-profile, during onboarding
   app.post('/me/self-profile', async (c) => {
     const input = await parseBody(c, FriendCreateInputSchema);
     const friend = await usersService.createSelfProfile(
@@ -64,6 +46,8 @@ export function createUsersRoutes(options: UsersRoutesOptions) {
 
     return c.json(friend, 201);
   });
+
+  //#endregion
 
   return app;
 }

@@ -1,5 +1,5 @@
 import type pg from 'pg';
 
-export async function closePool(pool: pg.Pool): Promise<void> {
+export async function closePool(pool: pg.Pool) {
   await pool.end();
 }

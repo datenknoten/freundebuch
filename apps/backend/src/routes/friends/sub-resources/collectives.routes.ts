@@ -8,13 +8,9 @@ export interface CollectivesRoutesOptions {
   collectivesService: CollectivesService;
 }
 
-export function createCollectivesRoutes(options: CollectivesRoutesOptions): Hono<AppContext> {
+export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
   const app = new Hono<AppContext>();
 
-  /**
-   * GET /api/friends/:id/collectives
-   * Get all collectives this friend belongs to
-   */
   app.get('/', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');

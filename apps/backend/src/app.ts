@@ -1,6 +1,6 @@
 import { handleError } from '@datenknoten/kit/http';
 import * as Sentry from '@sentry/node';
-import { Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { secureHeaders } from 'hono/secure-headers';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
@@ -57,7 +57,6 @@ export async function createApp(options: AppOptions) {
     return createRateLimitMiddleware({ config, limiter });
   }
 
-  // Global context middleware - inject the request logger
   app.use('*', async (c, next) => {
     const requestId = crypto.randomUUID();
     c.set('logger', logger.child({ requestId }));
@@ -68,7 +67,6 @@ export async function createApp(options: AppOptions) {
     await next();
   });
 
-  // Middleware
   app.use('*', httpLoggerMiddleware);
   app.use(
     '*',
@@ -92,7 +90,6 @@ export async function createApp(options: AppOptions) {
   // This continues traces from the frontend for distributed tracing
   app.use('*', sentryTracingMiddleware);
 
-  // Routes
   app.route('/health', createHealthRoutes(services));
   app.route(
     '/api/auth',
@@ -171,8 +168,7 @@ export async function createApp(options: AppOptions) {
     }),
   );
 
-  // Error handling
-  app.onError((err, c) => {
+  function onAppError(err: Error, c: Context<AppContext>) {
     // Fall back to the root logger: an error thrown before the context
     // middleware runs would leave c.get('logger') undefined.
     const { status, body } = handleError(err, c.get('logger') ?? logger);
@@ -187,12 +183,10 @@ export async function createApp(options: AppOptions) {
     // handleError only answers with the statusCode of an HttpError subclass or
     // 400/404/500, all of which carry a body.
     return c.json(body, status as ContentfulStatusCode);
-  });
+  }
 
-  // 404 handler
-  app.notFound((c) => {
-    return c.json({ error: 'Not Found' }, 404);
-  });
+  app.onError(onAppError);
+  app.notFound((c) => c.json({ error: 'Not Found' }, 404));
 
   return app;
 }

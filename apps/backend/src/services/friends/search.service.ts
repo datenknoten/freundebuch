@@ -42,10 +42,6 @@ export interface SearchServiceOptions {
   logger: Logger;
 }
 
-/**
- * SearchService handles all full-text search functionality for friends.
- * Extracted from FriendsService for better separation of concerns.
- */
 export class SearchService {
   private readonly db: pg.Pool;
   private readonly logger: Logger;
@@ -56,15 +52,10 @@ export class SearchService {
   }
 
   /**
-   * Full-text search across friends with relevance ranking
-   * Searches: names, organization, job title, work notes, emails, phones,
-   * relationship notes, and met context
+   * Ranks by relevance across names, organization, job title, work notes,
+   * emails, phones, relationship notes and met context.
    */
-  public async fullTextSearch(
-    userExternalId: string,
-    query: string,
-    limit = 10,
-  ): Promise<GlobalSearchResultResponse[]> {
+  public async fullTextSearch(userExternalId: string, query: string, limit = 10) {
     this.logger.debug({ query, limit }, 'Full-text searching friends');
 
     const results = await fullTextSearchFriends.run(
@@ -80,14 +71,8 @@ export class SearchService {
     return results.map((r) => this.mapGlobalSearchResult(r));
   }
 
-  /**
-   * Paginated full-text search with sorting options
-   * Used by in-page search for friends list
-   */
-  public async paginatedSearch(
-    userExternalId: string,
-    options: SearchOptions,
-  ): Promise<PaginatedSearchResponse> {
+  /** Backs the in-page search of the friends list. */
+  public async paginatedSearch(userExternalId: string, options: SearchOptions) {
     const { query, page, pageSize, sortBy, sortOrder } = options;
     const offset = (page - 1) * pageSize;
 
@@ -116,21 +101,13 @@ export class SearchService {
         totalCount: total,
         totalPages: Math.ceil(total / pageSize),
       },
-    };
+    } satisfies PaginatedSearchResponse;
   }
 
-  /**
-   * Faceted full-text search with filter support and optional facet aggregation
-   * Supports filtering by location, professional, and relationship facets
-   */
-  public async facetedSearch(
-    userExternalId: string,
-    options: FacetedSearchOptions,
-  ): Promise<FacetedSearchResponse> {
+  public async facetedSearch(userExternalId: string, options: FacetedSearchOptions) {
     const { query, page, pageSize, sortBy, sortOrder, filters, shouldIncludeFacets } = options;
 
-    // This method requires a query - use filterOnlyList for filter-only searches
-    if (!query) {
+    if (query === undefined || query === '') {
       throw new InvalidSearchParametersError(
         'facetedSearch requires a query - use filterOnlyList for filter-only searches',
       );
@@ -144,7 +121,6 @@ export class SearchService {
       'Faceted search',
     );
 
-    // Execute main search with filters
     const results = await facetedSearch.run(
       {
         userExternalId,
@@ -177,8 +153,7 @@ export class SearchService {
       },
     };
 
-    // Fetch facet counts if requested
-    if (shouldIncludeFacets) {
+    if (shouldIncludeFacets === true) {
       const [facetRows, circleRows] = await Promise.all([
         getFacetCounts.run({ userExternalId, query, wildcardQuery }, this.db),
         getCircleFacetCounts.run({ userExternalId }, this.db),
@@ -189,14 +164,7 @@ export class SearchService {
     return response;
   }
 
-  /**
-   * Filter-only list with optional facet aggregation
-   * Used when no search query is provided but filters may be applied
-   */
-  public async filterOnlyList(
-    userExternalId: string,
-    options: FacetedSearchOptions,
-  ): Promise<FacetedSearchResponse> {
+  public async filterOnlyList(userExternalId: string, options: FacetedSearchOptions) {
     const { page, pageSize, sortBy, sortOrder, filters, shouldIncludeFacets } = options;
     const offset = (page - 1) * pageSize;
 
@@ -205,7 +173,6 @@ export class SearchService {
       'Filter-only list',
     );
 
-    // Execute filter-only query
     const results = await filterOnlyList.run(
       {
         userExternalId,
@@ -236,8 +203,8 @@ export class SearchService {
       },
     };
 
-    // Fetch facet counts if requested (uses all friends, not search-filtered)
-    if (shouldIncludeFacets) {
+    // Facet counts span all friends, not just the filtered ones.
+    if (shouldIncludeFacets === true) {
       const [facetRows, circleRows] = await Promise.all([
         getAllFacetCounts.run({ userExternalId }, this.db),
         getCircleFacetCounts.run({ userExternalId }, this.db),
@@ -248,10 +215,7 @@ export class SearchService {
     return response;
   }
 
-  /**
-   * Get user's recent search queries
-   */
-  public async getRecentSearches(userExternalId: string, limit = 10): Promise<string[]> {
+  public async getRecentSearches(userExternalId: string, limit = 10) {
     this.logger.debug({ limit }, 'Getting recent searches');
 
     const results = await getRecentSearches.run({ userExternalId, limit }, this.db);
@@ -259,20 +223,14 @@ export class SearchService {
     return results.map((r) => r.query);
   }
 
-  /**
-   * Add or update a recent search query
-   * If the query already exists, updates the searched_at timestamp
-   */
-  public async addRecentSearch(userExternalId: string, query: string): Promise<void> {
+  /** An existing query only gets its searched_at timestamp bumped. */
+  public async addRecentSearch(userExternalId: string, query: string) {
     this.logger.debug({ query }, 'Adding recent search');
 
     await addRecentSearch.run({ userExternalId, query }, this.db);
   }
 
-  /**
-   * Delete a specific recent search query
-   */
-  public async deleteRecentSearch(userExternalId: string, query: string): Promise<void> {
+  public async deleteRecentSearch(userExternalId: string, query: string) {
     this.logger.debug({ query }, 'Deleting recent search');
 
     const result = await deleteRecentSearch.run({ userExternalId, query }, this.db);
@@ -282,20 +240,13 @@ export class SearchService {
     }
   }
 
-  /**
-   * Clear all recent searches for a user
-   */
-  public async clearRecentSearches(userExternalId: string): Promise<void> {
+  public async clearRecentSearches(userExternalId: string) {
     this.logger.debug('Clearing all recent searches');
 
     await clearRecentSearches.run({ userExternalId }, this.db);
   }
 
-  // ============================================================================
-  // Private Helper Methods
-  // ============================================================================
-
-  private mapGlobalSearchResult(row: IFullTextSearchFriendsResult): GlobalSearchResultResponse {
+  private mapGlobalSearchResult(row: IFullTextSearchFriendsResult) {
     return {
       id: row.external_id,
       displayName: row.display_name,
@@ -309,12 +260,10 @@ export class SearchService {
       headline: sanitizeSearchHeadline(row.headline),
       matchSource: parseMatchSource(row.match_source ?? null),
       circles: [], // Circles not included in this query
-    };
+    } satisfies GlobalSearchResultResponse;
   }
 
-  private mapPaginatedSearchResult(
-    row: IPaginatedFullTextSearchResult,
-  ): GlobalSearchResultResponse {
+  private mapPaginatedSearchResult(row: IPaginatedFullTextSearchResult) {
     return {
       id: row.external_id,
       displayName: row.display_name,
@@ -328,11 +277,10 @@ export class SearchService {
       headline: sanitizeSearchHeadline(row.headline),
       matchSource: parseMatchSource(row.match_source ?? null),
       circles: [], // Circles not included in this query
-    };
+    } satisfies GlobalSearchResultResponse;
   }
 
-  private mapFacetedSearchResult(row: IFacetedSearchResult): GlobalSearchResultResponse {
-    // Parse circles from JSON
+  private mapFacetedSearchResult(row: IFacetedSearchResult) {
     const circlesRaw = parseCirclesJson(row.circles, this.logger);
 
     return {
@@ -352,11 +300,10 @@ export class SearchService {
         name: c.name,
         color: c.color,
       })),
-    };
+    } satisfies GlobalSearchResultResponse;
   }
 
-  private mapFilterOnlyResult(row: IFilterOnlyListResult): GlobalSearchResultResponse {
-    // Parse circles from JSON
+  private mapFilterOnlyResult(row: IFilterOnlyListResult) {
     const circlesRaw = parseCirclesJson(row.circles, this.logger);
 
     return {
@@ -375,16 +322,13 @@ export class SearchService {
         name: c.name,
         color: c.color,
       })),
-    };
+    } satisfies GlobalSearchResultResponse;
   }
 
-  /**
-   * Aggregate raw facet count rows into grouped facet structure
-   */
   private aggregateFacets(
     rows: IGetFacetCountsResult[],
     circleRows: IGetCircleFacetCountsResult[] = [],
-  ): FacetGroupsResponse {
+  ) {
     const facets: FacetGroupsResponse = {
       location: [],
       professional: [],
@@ -392,21 +336,27 @@ export class SearchService {
       circles: [],
     };
 
-    // Group rows by facet_field
     const groupedByField = new Map<string, FacetValueResponse[]>();
 
     for (const row of rows) {
-      if (!row.facet_field || !row.facet_value || row.count === null) continue;
+      if (
+        row.facet_field === null ||
+        row.facet_field === '' ||
+        row.facet_value === null ||
+        row.facet_value === '' ||
+        row.count === null
+      ) {
+        continue;
+      }
 
       const existing = groupedByField.get(row.facet_field);
-      if (existing) {
+      if (existing !== undefined) {
         existing.push({ value: row.facet_value, count: row.count });
       } else {
         groupedByField.set(row.facet_field, [{ value: row.facet_value, count: row.count }]);
       }
     }
 
-    // Map field labels
     const fieldLabels = {
       country: 'Country',
       city: 'City',
@@ -416,25 +366,22 @@ export class SearchService {
       relationship_category: 'Relationship',
     };
 
-    // Build location facets
     for (const field of ['country', 'city'] as const) {
       const values = groupedByField.get(field);
-      if (values) {
+      if (values !== undefined) {
         facets.location.push({ field, label: fieldLabels[field], values });
       }
     }
 
-    // Build professional facets
     for (const field of ['organization', 'job_title', 'department'] as const) {
       const values = groupedByField.get(field);
-      if (values) {
+      if (values !== undefined) {
         facets.professional.push({ field, label: fieldLabels[field], values });
       }
     }
 
-    // Build relationship facets
     const relationshipValues = groupedByField.get('relationship_category');
-    if (relationshipValues) {
+    if (relationshipValues !== undefined) {
       facets.relationship.push({
         field: 'relationship_category',
         label: fieldLabels.relationship_category,
@@ -442,9 +389,8 @@ export class SearchService {
       });
     }
 
-    // Build circle facets
     facets.circles = circleRows
-      .filter((row) => row.value && row.count !== null)
+      .filter((row) => row.value !== '' && row.count !== null)
       .map((row) => ({
         value: row.value,
         label: row.label,

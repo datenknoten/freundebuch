@@ -5,6 +5,6 @@ export type CredentialColumn = 'telegram_bot_token' | 'matrix_access_token' | 'd
  * The associated data a v2 ciphertext is bound to. Changing the shape of this
  * string invalidates every stored credential, so it is deliberately boring.
  */
-export function credentialContext(userExternalId: string, column: CredentialColumn): string {
+export function credentialContext(userExternalId: string, column: CredentialColumn) {
   return `notification-channel:${userExternalId}:${column}`;
 }

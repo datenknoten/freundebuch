@@ -12,9 +12,9 @@ const MetInfoJsonRowSchema = type({
 
 export type MetInfoJsonRow = typeof MetInfoJsonRowSchema.infer;
 
-export function parseMetInfoJson(value: unknown, logger: Logger): MetInfoJsonRow | null {
+export function parseMetInfoJson(value: unknown, logger: Logger) {
   try {
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    if (typeof value === 'object' && value !== null && Array.isArray(value) === false) {
       return MetInfoJsonRowSchema.assert(value);
     }
   } catch (error) {

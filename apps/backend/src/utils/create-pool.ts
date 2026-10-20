@@ -8,65 +8,60 @@ import { wrapClient } from './wrap-client.js';
 const { Pool } = pg;
 
 /**
- * Wraps a pg.Pool to capture stack traces for query errors.
- * This ensures that when database errors occur, the full application
- * stack trace is preserved, showing which route/service initiated the query.
+ * Keeps the application stack on query errors, so a database error shows which
+ * route or service issued the query.
  */
-function wrapPool(originalPool: pg.Pool): pg.Pool {
+function wrapPool(originalPool: pg.Pool) {
   // biome-ignore lint/suspicious/noExplicitAny: preserving pg's query overload signature
   const originalQuery: (...args: any[]) => any = originalPool.query.bind(originalPool);
   // biome-ignore lint/suspicious/noExplicitAny: preserving pg's connect overload signature
   const originalConnect: (...args: any[]) => any = originalPool.connect.bind(originalPool);
 
-  // Override query to capture stack trace at call site
   const wrappedPoolQuery = function (
     this: pg.Pool,
     // biome-ignore lint/suspicious/noExplicitAny: pg.Pool.query has complex overloads
     ...args: [queryTextOrConfig: any, ...rest: any[]]
-    // biome-ignore lint/suspicious/noExplicitAny: pg.Pool.query has complex return types
-  ): any {
+  ) {
     const callSiteError = new Error();
     Error.captureStackTrace?.(callSiteError, wrappedPoolQuery);
 
     const result = originalQuery(...args);
 
     if (result instanceof Promise) {
-      return result.catch((error: unknown) => {
-        throw enhanceErrorWithStack(error, callSiteError.stack ?? '');
-      });
+      return result.catch(rethrowWithCallSite);
     }
     return result;
+
+    function rethrowWithCallSite(error: unknown) {
+      throw enhanceErrorWithStack(error, callSiteError.stack ?? '');
+    }
   };
 
   // biome-ignore lint/suspicious/noExplicitAny: matching pg's query signature
   originalPool.query = wrappedPoolQuery as any;
 
-  // Override connect to wrap the returned client
   const wrappedConnect = function (
     this: pg.Pool,
     // biome-ignore lint/suspicious/noExplicitAny: pg.Pool.connect has complex overloads
     callback?: any,
-    // biome-ignore lint/suspicious/noExplicitAny: pg.Pool.connect has complex return types
-  ): any {
-    // Handle callback style
+  ) {
     if (typeof callback === 'function') {
-      return originalConnect(
-        (
-          err: Error | undefined,
-          client: pg.PoolClient | undefined,
-          release: (release?: boolean) => void,
-        ) => {
-          if (err || !client) {
-            callback(err, client, release);
-          } else {
-            callback(undefined, wrapClient(client), release);
-          }
-        },
-      );
+      return originalConnect(forwardWrappedClient);
     }
 
-    // Handle promise style
     return connectAndWrap();
+
+    function forwardWrappedClient(
+      err: Error | null | undefined,
+      client: pg.PoolClient | undefined,
+      release: (release?: boolean) => void,
+    ) {
+      if ((err !== undefined && err !== null) || client === undefined) {
+        callback(err, client, release);
+      } else {
+        callback(undefined, wrapClient(client), release);
+      }
+    }
   };
 
   async function connectAndWrap() {

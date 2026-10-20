@@ -18,8 +18,7 @@ export type PrimaryCountryLookup = (
  *
  * Clients send what the user typed, which is usually national format. The
  * country is guessed from the owner's primary address, falling back to the
- * Accept-Language header. Four hand-written copies of this lived in the phone
- * route files (friend and collective, create and update).
+ * Accept-Language header.
  */
 export function normalizePhoneBody(primaryCountry: PrimaryCountryLookup) {
   return async function normalize(
@@ -27,8 +26,8 @@ export function normalizePhoneBody(primaryCountry: PrimaryCountryLookup) {
     ownerId: string,
     body: Record<string, unknown>,
     acceptLanguage: string | undefined,
-  ): Promise<Record<string, unknown>> {
-    if (typeof body.phone_number !== 'string' || body.phone_number.startsWith('+')) {
+  ) {
+    if (typeof body.phone_number !== 'string' || body.phone_number.startsWith('+') === true) {
       return body;
     }
 
@@ -40,7 +39,7 @@ export function normalizePhoneBody(primaryCountry: PrimaryCountryLookup) {
     const normalized = normalizePhoneNumber(body.phone_number, countryCode);
     // Still not E.164: no usable address, ambiguous locale, or the number is
     // invalid for the guessed country.
-    if (!normalized.startsWith('+')) {
+    if (normalized.startsWith('+') === false) {
       throw new PhoneCountryUnknownError();
     }
 

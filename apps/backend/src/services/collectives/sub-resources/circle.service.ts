@@ -16,9 +16,6 @@ export interface CollectiveCircleServiceOptions {
   logger: Logger;
 }
 
-/**
- * CircleService handles circle membership for collectives.
- */
 export class CollectiveCircleService {
   private readonly db: pg.Pool;
   private readonly logger: Logger;
@@ -28,13 +25,7 @@ export class CollectiveCircleService {
     this.logger = options.logger;
   }
 
-  /**
-   * Get all circles a collective belongs to
-   */
-  public async getCircles(
-    userExternalId: string,
-    collectiveExternalId: string,
-  ): Promise<CollectiveCircleResponse[]> {
+  public async getCircles(userExternalId: string, collectiveExternalId: string) {
     this.logger.debug({ collectiveExternalId }, 'Getting circles for collective');
 
     const rows = await getCirclesByCollectiveId.run(
@@ -45,22 +36,15 @@ export class CollectiveCircleService {
     return rows.map(this.mapCircle);
   }
 
-  /**
-   * Get available circles (not already assigned to collective)
-   */
-  public async getAvailableCircles(
-    userExternalId: string,
-    collectiveExternalId: string,
-  ): Promise<CircleSummaryResponse[]> {
+  public async getAvailableCircles(userExternalId: string, collectiveExternalId: string) {
     this.logger.debug({ collectiveExternalId }, 'Getting available circles for collective');
 
     const rows = await getAvailableCircles.run({ userExternalId, collectiveExternalId }, this.db);
 
-    return rows.map((row) => ({
-      id: row.external_id,
-      name: row.name,
-      color: row.color,
-    }));
+    return rows.map(
+      (row) =>
+        ({ id: row.external_id, name: row.name, color: row.color }) satisfies CircleSummaryResponse,
+    );
   }
 
   /**
@@ -83,9 +67,6 @@ export class CollectiveCircleService {
     }
   }
 
-  /**
-   * Remove collective from a circle
-   */
   public async removeFromCircle(
     userExternalId: string,
     collectiveExternalId: string,
@@ -105,12 +86,12 @@ export class CollectiveCircleService {
     }
   }
 
-  private mapCircle(row: IGetCirclesByCollectiveIdResult): CollectiveCircleResponse {
+  private mapCircle(row: IGetCirclesByCollectiveIdResult) {
     return {
       id: row.circle_external_id,
       name: row.circle_name,
       color: row.circle_color,
       createdAt: row.created_at.toISOString(),
-    };
+    } satisfies CollectiveCircleResponse;
   }
 }

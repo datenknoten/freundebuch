@@ -1,19 +1,11 @@
 import type {
   FacetedSearchOptions,
-  FacetedSearchResponse,
   FriendListItemResponse,
   FriendListOptions,
   FriendListResponse,
   FriendResponse,
-  FriendSearchResultResponse,
-  GlobalSearchResultResponse,
   MetInfoResponse,
-  NetworkGraphResponse,
-  PaginatedSearchResponse,
-  RelationshipResponse,
-  RelationshipTypesGroupedResponse,
   SearchOptions,
-  UpcomingDateResponse,
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
@@ -124,10 +116,7 @@ export interface FriendsServiceOptions {
   metInfoService: MetInfoService;
 }
 
-/**
- * FriendsService is the main orchestrator for friend-related operations.
- * It delegates to specialized services for specific functionality.
- */
+/** Orchestrates friend operations and delegates to the specialized services. */
 export class FriendsService {
   private readonly db: pg.Pool;
   private readonly logger: Logger;
@@ -161,17 +150,9 @@ export class FriendsService {
     this.metInfoService = options.metInfoService;
   }
 
-  // ============================================================================
-  // Friend CRUD Operations
-  // ============================================================================
+  //#region Friend CRUD
 
-  /**
-   * List friends for a user with pagination and sorting
-   */
-  public async listFriends(
-    userExternalId: string,
-    options: FriendListOptions,
-  ): Promise<FriendListResponse> {
+  public async listFriends(userExternalId: string, options: FriendListOptions) {
     this.logger.debug({ userExternalId, options }, 'Listing friends');
 
     const offset = (options.page - 1) * options.pageSize;
@@ -206,12 +187,9 @@ export class FriendsService {
         totalCount: total,
         totalPages: Math.ceil(total / options.pageSize),
       },
-    };
+    } satisfies FriendListResponse;
   }
 
-  /**
-   * Get a single friend by ID with all related data
-   */
   public async findFriend(userExternalId: string, friendExternalId: string) {
     this.logger.debug({ userExternalId, friendExternalId }, 'Getting friend');
 
@@ -234,13 +212,7 @@ export class FriendsService {
     return friend;
   }
 
-  /**
-   * Create a new friend with optional sub-resources
-   */
-  public async createFriend(
-    userExternalId: string,
-    data: FriendCreateData,
-  ): Promise<FriendResponse> {
+  public async createFriend(userExternalId: string, data: FriendCreateData) {
     this.logger.info({ userExternalId }, 'Creating friend');
 
     // The friend row and all its sub-resources must be created atomically:
@@ -277,7 +249,7 @@ export class FriendsService {
         client,
       );
 
-      if (!created) {
+      if (created === undefined) {
         throw new FriendCreationError();
       }
       friend = created;
@@ -373,17 +345,14 @@ export class FriendsService {
       circles: [],
       createdAt: friend.created_at.toISOString(),
       updatedAt: friend.updated_at.toISOString(),
-    };
+    } satisfies FriendResponse;
   }
 
-  /**
-   * Update an existing friend
-   */
   public async updateFriend(
     userExternalId: string,
     friendExternalId: string,
     data: FriendUpdateData,
-  ): Promise<FriendResponse> {
+  ) {
     this.logger.info({ userExternalId, friendExternalId }, 'Updating friend');
 
     const [updated] = await updateFriend.run(
@@ -420,10 +389,7 @@ export class FriendsService {
     return this.getFriend(userExternalId, friendExternalId);
   }
 
-  /**
-   * Soft delete a friend
-   */
-  public async deleteFriend(userExternalId: string, friendExternalId: string): Promise<void> {
+  public async deleteFriend(userExternalId: string, friendExternalId: string) {
     this.logger.info({ userExternalId, friendExternalId }, 'Deleting friend');
 
     const result = await softDeleteFriend.run({ userExternalId, friendExternalId }, this.db);
@@ -444,16 +410,16 @@ export class FriendsService {
     this.logger.info({ friendExternalId }, 'Friend deleted successfully');
   }
 
-  // ============================================================================
-  // Photo Methods
-  // ============================================================================
+  //#endregion
+
+  //#region Photo
 
   public async updatePhoto(
     userExternalId: string,
     friendExternalId: string,
     photoUrl: string | null,
     photoThumbnailUrl: string | null,
-  ): Promise<void> {
+  ) {
     this.logger.debug({ friendExternalId }, 'Updating photo');
 
     const result = await updateFriendPhoto.run(
@@ -471,11 +437,11 @@ export class FriendsService {
     }
   }
 
-  // ============================================================================
-  // Favorites & Archive Methods
-  // ============================================================================
+  //#endregion
 
-  public async toggleFavorite(userExternalId: string, friendExternalId: string): Promise<boolean> {
+  //#region Favorites and archive
+
+  public async toggleFavorite(userExternalId: string, friendExternalId: string) {
     this.logger.debug({ friendExternalId }, 'Toggling favorite status');
 
     const [result] = await toggleFavorite.run({ userExternalId, friendExternalId }, this.db);
@@ -492,11 +458,7 @@ export class FriendsService {
     return result.is_favorite;
   }
 
-  public async archiveFriend(
-    userExternalId: string,
-    friendExternalId: string,
-    reason?: string,
-  ): Promise<void> {
+  public async archiveFriend(userExternalId: string, friendExternalId: string, reason?: string) {
     this.logger.debug({ friendExternalId, reason }, 'Archiving friend');
 
     const [result] = await archiveFriend.run(
@@ -515,7 +477,7 @@ export class FriendsService {
     this.logger.info({ friendExternalId }, 'Friend archived');
   }
 
-  public async unarchiveFriend(userExternalId: string, friendExternalId: string): Promise<void> {
+  public async unarchiveFriend(userExternalId: string, friendExternalId: string) {
     this.logger.debug({ friendExternalId }, 'Unarchiving friend');
 
     const [result] = await unarchiveFriend.run({ userExternalId, friendExternalId }, this.db);
@@ -530,13 +492,13 @@ export class FriendsService {
   public async getUpcomingDates(
     userExternalId: string,
     options: { days?: number; limit?: number } = {},
-  ): Promise<UpcomingDateResponse[]> {
+  ) {
     return this.dateService.getUpcomingDates(userExternalId, options);
   }
 
-  // ============================================================================
-  // Met Info Methods (delegated)
-  // ============================================================================
+  //#endregion
+
+  //#region Met info
 
   public async setMetInfo(userExternalId: string, friendExternalId: string, data: MetInfoData) {
     return this.metInfoService.set(userExternalId, friendExternalId, data);
@@ -546,11 +508,11 @@ export class FriendsService {
     return this.metInfoService.delete(userExternalId, friendExternalId);
   }
 
-  // ============================================================================
-  // Relationship Methods (delegated)
-  // ============================================================================
+  //#endregion
 
-  public async getRelationshipTypes(): Promise<RelationshipTypesGroupedResponse> {
+  //#region Relationships
+
+  public async getRelationshipTypes() {
     return this.relationshipService.getRelationshipTypes();
   }
 
@@ -558,7 +520,7 @@ export class FriendsService {
     userExternalId: string,
     friendExternalId: string,
     data: RelationshipCreateData,
-  ): Promise<RelationshipResponse> {
+  ) {
     return this.relationshipService.addRelationship(userExternalId, friendExternalId, data);
   }
 
@@ -567,7 +529,7 @@ export class FriendsService {
     friendExternalId: string,
     relationshipExternalId: string,
     data: RelationshipUpdateData,
-  ): Promise<RelationshipResponse> {
+  ) {
     return this.relationshipService.updateRelationship(
       userExternalId,
       friendExternalId,
@@ -580,7 +542,7 @@ export class FriendsService {
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
-  ): Promise<void> {
+  ) {
     return this.relationshipService.deleteRelationship(
       userExternalId,
       friendExternalId,
@@ -593,7 +555,7 @@ export class FriendsService {
     query: string,
     excludeFriendExternalId?: string,
     limit = 10,
-  ): Promise<FriendSearchResultResponse[]> {
+  ) {
     return this.relationshipService.searchFriends(
       userExternalId,
       query,
@@ -602,68 +564,55 @@ export class FriendsService {
     );
   }
 
-  // ============================================================================
-  // Full-Text Search Methods (delegated)
-  // ============================================================================
+  //#endregion
 
-  public async fullTextSearch(
-    userExternalId: string,
-    query: string,
-    limit = 10,
-  ): Promise<GlobalSearchResultResponse[]> {
+  //#region Full-text search
+
+  public async fullTextSearch(userExternalId: string, query: string, limit = 10) {
     return this.searchService.fullTextSearch(userExternalId, query, limit);
   }
 
-  public async paginatedSearch(
-    userExternalId: string,
-    options: SearchOptions,
-  ): Promise<PaginatedSearchResponse> {
+  public async paginatedSearch(userExternalId: string, options: SearchOptions) {
     return this.searchService.paginatedSearch(userExternalId, options);
   }
 
-  public async facetedSearch(
-    userExternalId: string,
-    options: FacetedSearchOptions,
-  ): Promise<FacetedSearchResponse> {
+  public async facetedSearch(userExternalId: string, options: FacetedSearchOptions) {
     return this.searchService.facetedSearch(userExternalId, options);
   }
 
-  public async filterOnlyList(
-    userExternalId: string,
-    options: FacetedSearchOptions,
-  ): Promise<FacetedSearchResponse> {
+  public async filterOnlyList(userExternalId: string, options: FacetedSearchOptions) {
     return this.searchService.filterOnlyList(userExternalId, options);
   }
 
-  public async getRecentSearches(userExternalId: string, limit = 10): Promise<string[]> {
+  public async getRecentSearches(userExternalId: string, limit = 10) {
     return this.searchService.getRecentSearches(userExternalId, limit);
   }
 
-  public async addRecentSearch(userExternalId: string, query: string): Promise<void> {
+  public async addRecentSearch(userExternalId: string, query: string) {
     return this.searchService.addRecentSearch(userExternalId, query);
   }
 
-  public async deleteRecentSearch(userExternalId: string, query: string): Promise<void> {
+  public async deleteRecentSearch(userExternalId: string, query: string) {
     return this.searchService.deleteRecentSearch(userExternalId, query);
   }
 
-  public async clearRecentSearches(userExternalId: string): Promise<void> {
+  public async clearRecentSearches(userExternalId: string) {
     return this.searchService.clearRecentSearches(userExternalId);
   }
 
-  // ============================================================================
-  // Network Graph Methods (delegated)
-  // ============================================================================
+  //#endregion
 
-  public async getNetworkGraphData(userExternalId: string): Promise<NetworkGraphResponse> {
+  //#region Network graph
+
+  public async getNetworkGraphData(userExternalId: string) {
     return this.networkGraphService.getNetworkGraphData(userExternalId);
   }
 
-  // ============================================================================
-  // Private Helper Methods
-  // ============================================================================
+  //#endregion
 
-  private mapFriendListItem(row: IGetFriendsByUserIdResult): FriendListItemResponse {
+  //#region Mapping
+
+  private mapFriendListItem(row: IGetFriendsByUserIdResult) {
     const circlesRaw = parseCirclesJson(row.circles, this.logger);
 
     const birthday = formatDateOnly(row.birthday);
@@ -691,10 +640,10 @@ export class FriendsService {
       })),
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
-    };
+    } satisfies FriendListItemResponse;
   }
 
-  private mapFriendWithEmbeddedRelations(friend: IGetFriendByIdResult): FriendResponse {
+  private mapFriendWithEmbeddedRelations(friend: IGetFriendByIdResult) {
     const phones = parsePhonesJson(friend.phones, this.logger);
     const emails = parseEmailsJson(friend.emails, this.logger);
     const addresses = parseAddressesJson(friend.addresses, this.logger);
@@ -781,16 +730,17 @@ export class FriendsService {
         label: d.label ?? undefined,
         createdAt: d.created_at,
       })),
-      metInfo: metInfoRaw
-        ? {
-            id: metInfoRaw.external_id,
-            metDate: metInfoRaw.met_date ?? undefined,
-            metLocation: metInfoRaw.met_location ?? undefined,
-            metContext: metInfoRaw.met_context ?? undefined,
-            createdAt: metInfoRaw.created_at,
-            updatedAt: metInfoRaw.updated_at,
-          }
-        : undefined,
+      metInfo:
+        metInfoRaw !== null
+          ? {
+              id: metInfoRaw.external_id,
+              metDate: metInfoRaw.met_date ?? undefined,
+              metLocation: metInfoRaw.met_location ?? undefined,
+              metContext: metInfoRaw.met_context ?? undefined,
+              createdAt: metInfoRaw.created_at,
+              updatedAt: metInfoRaw.updated_at,
+            }
+          : undefined,
       socialProfiles: socialProfiles.map((sp) => ({
         id: sp.external_id,
         platform: parseSocialPlatform(sp.platform),
@@ -819,6 +769,8 @@ export class FriendsService {
       })),
       createdAt: friend.created_at.toISOString(),
       updatedAt: friend.updated_at.toISOString(),
-    };
+    } satisfies FriendResponse;
   }
+
+  //#endregion
 }

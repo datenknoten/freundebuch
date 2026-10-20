@@ -1,7 +1,7 @@
 import { createCipheriv, randomBytes } from 'node:crypto';
 import { ALGORITHM, ENVELOPE_PREFIX_V2, IV_BYTES } from './credential-envelope.js';
 
-export function encrypt(plain: string, context: string, key: Buffer): string {
+export function encrypt(plain: string, context: string, key: Buffer) {
   const iv = randomBytes(IV_BYTES);
   const cipher = createCipheriv(ALGORITHM, key, iv);
   cipher.setAAD(Buffer.from(context, 'utf8'));

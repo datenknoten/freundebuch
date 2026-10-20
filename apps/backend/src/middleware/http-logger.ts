@@ -1,11 +1,7 @@
-import type { MiddlewareHandler } from 'hono';
+import type { Context, Next } from 'hono';
 import type { AppContext } from '../types/context.js';
 
-/**
- * HTTP request logger middleware using Pino.
- * Logs incoming requests and outgoing responses with timing information.
- */
-export const httpLoggerMiddleware: MiddlewareHandler<AppContext> = async (c, next) => {
+export async function httpLoggerMiddleware(c: Context<AppContext>, next: Next) {
   const start = Date.now();
   const method = c.req.method;
   const path = c.req.path;
@@ -28,4 +24,4 @@ export const httpLoggerMiddleware: MiddlewareHandler<AppContext> = async (c, nex
     },
     `${method} ${path} ${status} ${duration}ms`,
   );
-};
+}

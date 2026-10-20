@@ -49,29 +49,19 @@ export interface FriendsRoutesOptions {
   collectivesService: CollectivesService;
 }
 
-export function createFriendsRoutes(options: FriendsRoutesOptions): Hono<AppContext> {
+export function createFriendsRoutes(options: FriendsRoutesOptions) {
   const app = new Hono<AppContext>();
 
-  // Apply auth middleware to all friend routes
   app.use('*', options.authMiddleware);
-  // Apply onboarding middleware to require self-friend before using friends
   app.use('*', options.onboardingMiddleware);
-  // Apply rate limiting to all friend routes
   app.use('*', options.rateLimitMiddleware);
 
-  // Dashboard routes (must be before /:id to avoid being caught by wildcard)
+  // Dashboard and search must be mounted before /:id to avoid being caught by the wildcard
   app.route('/', createDashboardRoutes(options));
-
-  // Search routes (must be before /:id to avoid being caught by wildcard)
   app.route('/search', createSearchRoutes(options));
-
-  // Core friend CRUD routes
   app.route('/', createCoreRoutes(options));
-
-  // Organization routes (photos, circles, favorites, archive)
   app.route('/', createOrganizationRoutes(options));
 
-  // Sub-resource routes - mounted under /:id
   app.route('/:id/phones', createPhonesRoutes(options));
   app.route('/:id/emails', createEmailsRoutes(options));
   app.route('/:id/addresses', createAddressesRoutes(options));

@@ -9,10 +9,7 @@ import { pruneFriendChanges } from '../models/queries/friend-changes.queries.js'
 import { deleteOrphanLegacyUsers } from '../models/queries/users.queries.js';
 import { toError } from './to-error.js';
 
-/**
- * Run cleanup immediately (useful for testing or manual trigger)
- */
-export async function runCleanupNow(pool: pg.Pool, logger: Logger): Promise<void> {
+export async function runCleanupNow(pool: pg.Pool, logger: Logger) {
   logger.info('Running immediate cleanup of orphan identity rows and expired cache');
 
   try {

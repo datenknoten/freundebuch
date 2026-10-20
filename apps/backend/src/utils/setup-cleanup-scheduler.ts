@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node';
-import cron, { type ScheduledTask } from 'node-cron';
+import cron from 'node-cron';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
@@ -10,18 +10,18 @@ import { pruneFriendChanges } from '../models/queries/friend-changes.queries.js'
 import { deleteOrphanLegacyUsers } from '../models/queries/users.queries.js';
 import { toError } from './to-error.js';
 
-/**
- * Setup scheduled cleanup tasks for expired tokens and sessions
- * Runs every hour at minute 0
- */
-export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): ScheduledTask {
+/** Hourly cleanup of orphan identity rows, the address cache and the friend change log. */
+export function setupCleanupScheduler(pool: pg.Pool, logger: Logger) {
   // node-cron does not await async callbacks, so a slow run could overlap the
   // next tick. Skip a tick if the previous run is still in flight.
   let isRunning = false;
-  // Run cleanup every hour at minute 0
-  // Cron expression: "0 * * * *" = at minute 0 of every hour
-  const task = cron.schedule('0 * * * *', async () => {
-    if (isRunning) {
+  const task = cron.schedule('0 * * * *', runCleanup);
+
+  logger.info('Cleanup scheduler initialized - runs every hour');
+  return task;
+
+  async function runCleanup() {
+    if (isRunning === true) {
       logger.warn('Cleanup still running from a previous tick, skipping');
       return;
     }
@@ -69,8 +69,5 @@ export function setupCleanupScheduler(pool: pg.Pool, logger: Logger): ScheduledT
     } finally {
       isRunning = false;
     }
-  });
-
-  logger.info('Cleanup scheduler initialized - runs every hour');
-  return task;
+  }
 }

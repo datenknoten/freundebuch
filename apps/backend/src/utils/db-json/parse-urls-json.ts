@@ -12,6 +12,6 @@ const UrlJsonRowSchema = type({
 
 export type UrlJsonRow = typeof UrlJsonRowSchema.infer;
 
-export function parseUrlsJson(value: unknown, logger: Logger): UrlJsonRow[] {
+export function parseUrlsJson(value: unknown, logger: Logger) {
   return safeArray(value, UrlJsonRowSchema, logger, 'urls');
 }

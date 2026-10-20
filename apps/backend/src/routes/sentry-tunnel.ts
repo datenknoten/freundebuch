@@ -12,21 +12,15 @@ const MAX_ENVELOPE_BYTES = 1_000_000; // 1 MB
 
 const EnvelopeHeaderSchema = type({ 'dsn?': 'string' });
 
-/**
- * Allowed Sentry ingest hosts to prevent SSRF attacks.
- * Only requests to official Sentry domains are forwarded.
- */
+// Allowed Sentry ingest hosts: only official Sentry domains are forwarded, to
+// prevent SSRF.
 const ALLOWED_SENTRY_HOST_SUFFIXES = [
   '.ingest.sentry.io',
   '.ingest.us.sentry.io',
   '.ingest.de.sentry.io',
 ];
 
-/**
- * Validates that a hostname is an allowed Sentry ingest host.
- * Prevents SSRF by ensuring we only forward requests to Sentry's servers.
- */
-function isAllowedSentryHost(hostname: string): boolean {
+function isAllowedSentryHost(hostname: string) {
   const normalizedHost = hostname.toLowerCase();
   return ALLOWED_SENTRY_HOST_SUFFIXES.some((suffix) => normalizedHost.endsWith(suffix));
 }
@@ -39,17 +33,17 @@ export function createSentryTunnelRoutes(options: SentryTunnelRoutesOptions) {
   const { rateLimitMiddleware } = options;
   const sentryTunnelRoutes = new Hono<AppContext>();
 
-  /**
-   * Sentry tunnel endpoint that proxies Sentry events from the frontend
-   * This allows the frontend to send events without exposing the Sentry DSN
-   * and avoids ad blockers that block direct Sentry requests
-   */
+  // Proxies Sentry events from the frontend, so the frontend sends events
+  // without exposing the Sentry DSN and ad blockers that block direct Sentry
+  // requests are avoided.
   sentryTunnelRoutes.post(
     '/',
     rateLimitMiddleware,
     bodyLimit({
       maxSize: MAX_ENVELOPE_BYTES,
-      onError: (c) => c.json({ error: 'Envelope too large' }, 413),
+      onError(c) {
+        return c.json({ error: 'Envelope too large' }, 413);
+      },
     }),
     async (c) => {
       const logger = c.get('logger');
@@ -71,13 +65,13 @@ export function createSentryTunnelRoutes(options: SentryTunnelRoutesOptions) {
       // SECURITY: Validate that the DSN host is an allowed Sentry domain
       // This prevents SSRF attacks where an attacker could make the server
       // send requests to arbitrary URLs
-      if (!isAllowedSentryHost(dsn.host)) {
+      if (isAllowedSentryHost(dsn.host) === false) {
         logger.warn({ host: dsn.host }, 'Rejected Sentry tunnel request to non-allowed host');
         throw new ValidationError('Invalid Sentry host');
       }
 
       const projectId = dsn.pathname.replace('/', '');
-      if (!projectId || !/^\d+$/.test(projectId)) {
+      if (projectId === '' || /^\d+$/.test(projectId) === false) {
         throw new ValidationError('Invalid project ID');
       }
 
@@ -96,13 +90,14 @@ export function createSentryTunnelRoutes(options: SentryTunnelRoutesOptions) {
         throw new ExternalServiceError('Sentry', 'Failed to tunnel Sentry request');
       }
 
-      if (response.ok) {
+      if (response.ok === true) {
         return c.json({ success: true }, 200);
       }
 
       // Pass an upstream 4xx through as-is (preserving e.g. 429 rate limiting),
       // and collapse upstream 5xx to 502 (a bad-gateway from our perspective).
       logger.warn({ upstreamStatus: response.status }, 'Sentry upstream rejected envelope');
+      // A non-ok status below 500 is an upstream 4xx, and every 4xx carries a body.
       const status: ContentfulStatusCode =
         response.status >= 500 ? 502 : (response.status as ContentfulStatusCode);
       return c.json({ success: false, error: 'Sentry rejected the envelope' }, status);

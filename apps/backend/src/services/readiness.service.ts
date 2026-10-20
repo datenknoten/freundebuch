@@ -39,7 +39,7 @@ export interface ReadinessResponse {
  */
 const READINESS_TTL_MS = 5_000;
 
-async function isPoolReachable(pool: pg.Pool): Promise<boolean> {
+async function isPoolReachable(pool: pg.Pool) {
   let client: pg.PoolClient | undefined;
   try {
     // connect() must be inside the try: a down or saturated pool throws here,
@@ -66,7 +66,7 @@ export class ReadinessService {
     this.config = options.config;
   }
 
-  public getReadiness(): Promise<ReadinessResponse> {
+  public getReadiness() {
     if (this.cachedReadiness === null || Date.now() - this.cachedReadiness.at >= READINESS_TTL_MS) {
       const entry = { at: Date.now(), result: this.computeReadiness() };
       this.cachedReadiness = entry;
@@ -92,7 +92,7 @@ export class ReadinessService {
   }
 
   /** Drops the memoised readiness body. For tests that change the environment. */
-  public resetCache(): void {
+  public resetCache() {
     this.cachedReadiness = null;
   }
 
@@ -101,20 +101,20 @@ export class ReadinessService {
    * main one and Better Auth's, which is separate) plus the uploads volume, which
    * is a bind mount in production and silently read-only when misconfigured.
    */
-  private async computeReadiness(): Promise<ReadinessResponse> {
+  private async computeReadiness() {
     const [db, authDb, uploads] = await Promise.all([
       this.isPoolHealthy(this.db, 'Readiness: main database check failed'),
       this.isPoolHealthy(this.authDb, 'Readiness: auth database check failed'),
       this.isUploadDirWritable(),
     ]);
 
-    const isReady = db && authDb && uploads;
+    const isReady = db === true && authDb === true && uploads === true;
     return {
-      status: isReady ? 'ready' : 'not_ready',
+      status: isReady === true ? 'ready' : 'not_ready',
       checks: { db, authDb, uploads },
-      signupEnabled: !this.config.DISABLE_SIGNUP,
+      signupEnabled: this.config.DISABLE_SIGNUP === false,
       emailEnabled: isMailConfigured(this.config),
-    };
+    } satisfies ReadinessResponse;
   }
 
   private async isPoolHealthy(pool: pg.Pool, failureMessage: string) {

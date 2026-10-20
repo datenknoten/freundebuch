@@ -1,6 +1,5 @@
 import { ValidationError } from '@datenknoten/kit';
 import type {
-  FriendResponse,
   PreferencesResponse,
   UserPreferences,
   UserResponse,
@@ -32,12 +31,7 @@ export interface UsersServiceOptions {
   isSignupDisabled: boolean;
 }
 
-/**
- * Reads and writes the current user's own record and self-profile.
- *
- * These four operations were inline in `routes/users.ts`, which meant the
- * `User` DTO was assembled in three places and one path threw a raw `Error`.
- */
+/** Reads and writes the current user's own record and self-profile. */
 export class UsersService {
   private readonly db: pg.Pool;
   private readonly logger: Logger;
@@ -51,7 +45,7 @@ export class UsersService {
     this.isSignupDisabled = options.isSignupDisabled;
   }
 
-  public async hasSelfProfile(userId: string): Promise<boolean> {
+  public async hasSelfProfile(userId: string) {
     const result = await hasSelfProfile.run({ userExternalId: userId }, this.db);
     return result[0]?.has_self_profile === true;
   }
@@ -61,13 +55,13 @@ export class UsersService {
    * answers 400; the auth route calls this first so the client gets the
    * documented 403 SIGNUP_DISABLED.
    */
-  public assertSignupAllowed(): void {
-    if (this.isSignupDisabled) {
+  public assertSignupAllowed() {
+    if (this.isSignupDisabled === true) {
       throw new SignupDisabledError();
     }
   }
 
-  public async getMeWithPreferences(authUser: AuthContext): Promise<UserWithPreferencesResponse> {
+  public async getMeWithPreferences(authUser: AuthContext) {
     // Look up the self-profile external_id and preferences from auth."user"
     // directly instead of trusting the session: the session cookie cache (5 min)
     // holds a stale null right after onboarding sets the self-profile via SQL,
@@ -88,27 +82,21 @@ export class UsersService {
       // Same reason as selfProfileId above: session.user.preferences is the
       // cached copy, so a language change reverted on reload until it expired.
       preferences: parseUserPreferences(result[0]?.preferences ?? {}),
-    };
+    } satisfies UserWithPreferencesResponse;
   }
 
-  public async updatePreferences(
-    userId: string,
-    input: UserPreferences,
-  ): Promise<PreferencesResponse> {
-    // Get current preferences
+  public async updatePreferences(userId: string, input: UserPreferences) {
     const [user] = await getUserWithPreferences.run({ externalId: userId }, this.db);
     if (user === undefined) {
       throw new UserNotFoundError(userId);
     }
 
-    // Merge with existing preferences
     const currentPreferences = parseUserPreferences(user.preferences ?? {});
     const newPreferences = {
       ...currentPreferences,
       ...input,
     };
 
-    // Update in database
     const [updated] = await updateUserPreferences.run(
       {
         externalId: userId,
@@ -124,10 +112,10 @@ export class UsersService {
 
     return {
       preferences: parseUserPreferences(updated.preferences),
-    };
+    } satisfies PreferencesResponse;
   }
 
-  public async getMe(userId: string): Promise<UserResponse> {
+  public async getMe(userId: string) {
     const [user] = await getUserWithSelfProfile.run({ userExternalId: userId }, this.db);
 
     if (user === undefined) {
@@ -137,12 +125,12 @@ export class UsersService {
     return this.mapUser(user);
   }
 
-  public async getSelfProfileId(userId: string): Promise<string | null> {
+  public async getSelfProfileId(userId: string) {
     const result = await getUserSelfProfile.run({ userExternalId: userId }, this.db);
     return result[0]?.self_profile_external_id ?? null;
   }
 
-  public async setSelfProfile(userId: string, friendExternalId: string): Promise<string | null> {
+  public async setSelfProfile(userId: string, friendExternalId: string) {
     const result = await setUserSelfProfile.run(
       { userExternalId: userId, friendExternalId },
       this.db,
@@ -161,7 +149,7 @@ export class UsersService {
    * Onboarding: create a friend for the user themselves and point
    * `self_profile_id` at it.
    */
-  public async createSelfProfile(userId: string, data: FriendCreateData): Promise<FriendResponse> {
+  public async createSelfProfile(userId: string, data: FriendCreateData) {
     if ((await this.getSelfProfileId(userId)) !== null) {
       throw new ValidationError('Self-profile already exists');
     }
@@ -184,7 +172,7 @@ export class UsersService {
     return newFriend;
   }
 
-  private mapUser(row: IGetUserWithSelfProfileResult): UserResponse {
+  private mapUser(row: IGetUserWithSelfProfileResult) {
     const selfProfileExternalId = row.self_profile_external_id;
 
     return {
@@ -195,6 +183,6 @@ export class UsersService {
       selfProfileId: selfProfileExternalId ?? undefined,
       displayName: row.self_profile_display_name ?? undefined,
       hasCompletedOnboarding: selfProfileExternalId !== null,
-    };
+    } satisfies UserResponse;
   }
 }

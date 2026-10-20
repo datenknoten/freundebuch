@@ -29,12 +29,12 @@ function mapEncounterCreateInput(input: EncounterCreateInput) {
 /** Only present keys are set: an absent key leaves the field untouched. */
 function mapEncounterUpdateInput(input: EncounterUpdateInput) {
   return {
-    ...(input.title !== undefined && { title: input.title }),
-    ...(input.encounter_date !== undefined && { encounterDate: input.encounter_date }),
-    ...(input.encounter_type !== undefined && { encounterType: input.encounter_type }),
-    ...(input.friend_ids !== undefined && { friendIds: input.friend_ids }),
-    ...(input.location_text !== undefined && { locationText: input.location_text }),
-    ...(input.description !== undefined && { description: input.description }),
+    ...(input.title === undefined ? {} : { title: input.title }),
+    ...(input.encounter_date === undefined ? {} : { encounterDate: input.encounter_date }),
+    ...(input.encounter_type === undefined ? {} : { encounterType: input.encounter_type }),
+    ...(input.friend_ids === undefined ? {} : { friendIds: input.friend_ids }),
+    ...(input.location_text === undefined ? {} : { locationText: input.location_text }),
+    ...(input.description === undefined ? {} : { description: input.description }),
   };
 }
 
@@ -49,21 +49,10 @@ export function createEncountersRoutes(options: EncountersRoutesOptions) {
   const { encountersService, authMiddleware, onboardingMiddleware, rateLimitMiddleware } = options;
   const app = new Hono<AppContext>();
 
-  // Apply auth middleware to all encounter routes
   app.use('*', authMiddleware);
-  // Apply rate limiting to prevent abuse
   app.use('*', rateLimitMiddleware);
-  // Apply onboarding middleware to require self-friend before using encounters
   app.use('*', onboardingMiddleware);
 
-  // ============================================================================
-  // Encounter CRUD Routes
-  // ============================================================================
-
-  /**
-   * GET /api/encounters
-   * List all encounters for the authenticated user with pagination and filtering
-   */
   app.get('/', async (c) => {
     const user = getAuthUser(c);
 
@@ -80,10 +69,6 @@ export function createEncountersRoutes(options: EncountersRoutesOptions) {
     return c.json(result);
   });
 
-  /**
-   * POST /api/encounters
-   * Create a new encounter
-   */
   app.post('/', async (c) => {
     const user = getAuthUser(c);
 
@@ -96,10 +81,6 @@ export function createEncountersRoutes(options: EncountersRoutesOptions) {
     return c.json(encounter, 201);
   });
 
-  /**
-   * GET /api/encounters/:id
-   * Get a single encounter by ID
-   */
   app.get('/:id', async (c) => {
     const user = getAuthUser(c);
     const encounterId = requireUuidParam(c, 'id', 'encounter ID');
@@ -108,10 +89,6 @@ export function createEncountersRoutes(options: EncountersRoutesOptions) {
     return c.json(encounter);
   });
 
-  /**
-   * PUT /api/encounters/:id
-   * Update an encounter
-   */
   app.put('/:id', async (c) => {
     const user = getAuthUser(c);
     const encounterId = requireUuidParam(c, 'id', 'encounter ID');
@@ -125,10 +102,6 @@ export function createEncountersRoutes(options: EncountersRoutesOptions) {
     return c.json(encounter);
   });
 
-  /**
-   * DELETE /api/encounters/:id
-   * Delete an encounter
-   */
   app.delete('/:id', async (c) => {
     const user = getAuthUser(c);
     const encounterId = requireUuidParam(c, 'id', 'encounter ID');

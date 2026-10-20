@@ -20,19 +20,16 @@ export interface SocialProfileData {
   username?: string | null;
 }
 
-const mapRow = (row: IGetSocialProfilesByFriendIdResult): SocialProfileResponse => ({
-  id: row.external_id,
-  platform: parseSocialPlatform(row.platform),
-  profileUrl: row.profile_url ?? undefined,
-  username: row.username ?? undefined,
-  createdAt: row.created_at.toISOString(),
-});
+function mapRow(row: IGetSocialProfilesByFriendIdResult) {
+  return {
+    id: row.external_id,
+    platform: parseSocialPlatform(row.platform),
+    profileUrl: row.profile_url ?? undefined,
+    username: row.username ?? undefined,
+    createdAt: row.created_at.toISOString(),
+  } satisfies SocialProfileResponse;
+}
 
-/**
- * SocialProfileService handles all social profile operations for friends.
- * Extends SubResourceService for common CRUD operations.
- * Note: Social profiles do not have a primary flag.
- */
 export class SocialProfileService extends SubResourceService<
   SocialProfileData,
   SocialProfileResponse,
@@ -49,7 +46,7 @@ export class SocialProfileService extends SubResourceService<
         ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: false,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
+        async createFn({ userExternalId, ownerExternalId: friendExternalId, data }, client) {
           return createSocialProfile.run(
             {
               userExternalId,
@@ -62,10 +59,10 @@ export class SocialProfileService extends SubResourceService<
           );
         },
 
-        updateFn: async (
+        async updateFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
-        ) => {
+        ) {
           return updateSocialProfile.run(
             {
               userExternalId,
@@ -79,10 +76,10 @@ export class SocialProfileService extends SubResourceService<
           );
         },
 
-        deleteFn: async (
+        async deleteFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        ) => {
+        ) {
           return deleteSocialProfile.run(
             {
               userExternalId,
@@ -93,7 +90,7 @@ export class SocialProfileService extends SubResourceService<
           );
         },
 
-        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        async listFn({ userExternalId, ownerExternalId: friendExternalId }, client) {
           return getSocialProfilesByFriendId.run({ userExternalId, friendExternalId }, client);
         },
 

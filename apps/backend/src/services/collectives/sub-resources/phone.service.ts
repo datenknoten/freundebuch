@@ -16,19 +16,17 @@ import {
 } from '../../base/sub-resource.service.js';
 import type { PhoneData } from '../../friends/sub-resources/phone.service.js';
 
-const mapRow = (row: IGetPhonesByCollectiveIdResult): PhoneResponse => ({
-  id: row.external_id,
-  phoneNumber: row.phone_number,
-  phoneType: parsePhoneType(row.phone_type),
-  label: row.label ?? undefined,
-  isPrimary: row.is_primary,
-  createdAt: row.created_at.toISOString(),
-});
+function mapRow(row: IGetPhonesByCollectiveIdResult) {
+  return {
+    id: row.external_id,
+    phoneNumber: row.phone_number,
+    phoneType: parsePhoneType(row.phone_type),
+    label: row.label ?? undefined,
+    isPrimary: row.is_primary,
+    createdAt: row.created_at.toISOString(),
+  } satisfies PhoneResponse;
+}
 
-/**
- * PhoneService handles all phone-related operations for collectives.
- * Extends SubResourceService for common CRUD operations.
- */
 export class CollectivePhoneService extends SubResourceService<
   PhoneData,
   PhoneResponse,
@@ -45,10 +43,7 @@ export class CollectivePhoneService extends SubResourceService<
         ownerNotFound: CollectiveNotFoundError,
         hasPrimaryFlag: true,
 
-        createFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId, data },
-          client,
-        ) => {
+        async createFn({ userExternalId, ownerExternalId: collectiveExternalId, data }, client) {
           return createPhone.run(
             {
               userExternalId,
@@ -62,10 +57,10 @@ export class CollectivePhoneService extends SubResourceService<
           );
         },
 
-        updateFn: async (
+        async updateFn(
           { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, data },
           client,
-        ) => {
+        ) {
           return updatePhone.run(
             {
               userExternalId,
@@ -80,10 +75,10 @@ export class CollectivePhoneService extends SubResourceService<
           );
         },
 
-        deleteFn: async (
+        async deleteFn(
           { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
           client,
-        ) => {
+        ) {
           return deletePhone.run(
             {
               userExternalId,
@@ -94,18 +89,19 @@ export class CollectivePhoneService extends SubResourceService<
           );
         },
 
-        clearPrimaryFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId },
-          client,
-        ) => {
+        async clearPrimaryFn({ userExternalId, ownerExternalId: collectiveExternalId }, client) {
           return clearPrimaryPhone.run({ userExternalId, collectiveExternalId }, client);
         },
 
-        isPrimary: (data) => data.isPrimary,
+        isPrimary(data) {
+          return data.isPrimary;
+        },
 
-        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
+        setIsPrimary(data, isPrimary) {
+          return { ...data, isPrimary };
+        },
 
-        listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+        async listFn({ userExternalId, ownerExternalId: collectiveExternalId }, client) {
           return getPhonesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
         },
 

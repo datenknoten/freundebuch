@@ -20,8 +20,10 @@ export function safeArray<T>(
   schema: { assert: (data: unknown) => T },
   logger: Logger,
   resource: string,
-): T[] {
-  if (!Array.isArray(value)) return [];
+) {
+  if (Array.isArray(value) === false) {
+    return [];
+  }
   const results: T[] = [];
   for (const [index, element] of value.entries()) {
     try {

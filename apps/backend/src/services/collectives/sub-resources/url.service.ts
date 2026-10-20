@@ -15,18 +15,16 @@ import {
 } from '../../base/sub-resource.service.js';
 import type { UrlData } from '../../friends/sub-resources/url.service.js';
 
-const mapRow = (row: IGetUrlsByCollectiveIdResult): UrlResponse => ({
-  id: row.external_id,
-  url: row.url,
-  urlType: parseUrlType(row.url_type),
-  label: row.label ?? undefined,
-  createdAt: row.created_at.toISOString(),
-});
+function mapRow(row: IGetUrlsByCollectiveIdResult) {
+  return {
+    id: row.external_id,
+    url: row.url,
+    urlType: parseUrlType(row.url_type),
+    label: row.label ?? undefined,
+    createdAt: row.created_at.toISOString(),
+  } satisfies UrlResponse;
+}
 
-/**
- * UrlService handles all URL-related operations for collectives.
- * Extends SubResourceService for common CRUD operations.
- */
 export class CollectiveUrlService extends SubResourceService<
   UrlData,
   UrlResponse,
@@ -43,10 +41,7 @@ export class CollectiveUrlService extends SubResourceService<
         ownerNotFound: CollectiveNotFoundError,
         hasPrimaryFlag: false,
 
-        createFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId, data },
-          client,
-        ) => {
+        async createFn({ userExternalId, ownerExternalId: collectiveExternalId, data }, client) {
           return createUrl.run(
             {
               userExternalId,
@@ -59,10 +54,10 @@ export class CollectiveUrlService extends SubResourceService<
           );
         },
 
-        updateFn: async (
+        async updateFn(
           { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, data },
           client,
-        ) => {
+        ) {
           return updateUrl.run(
             {
               userExternalId,
@@ -76,10 +71,10 @@ export class CollectiveUrlService extends SubResourceService<
           );
         },
 
-        deleteFn: async (
+        async deleteFn(
           { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
           client,
-        ) => {
+        ) {
           return deleteUrl.run(
             {
               userExternalId,
@@ -90,7 +85,7 @@ export class CollectiveUrlService extends SubResourceService<
           );
         },
 
-        listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+        async listFn({ userExternalId, ownerExternalId: collectiveExternalId }, client) {
           return getUrlsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
         },
 

@@ -65,7 +65,7 @@ export interface SubResourceRouterConfig<TSchema extends Type, TData, TOutput> {
  */
 export function createSubResourceRouter<TSchema extends Type, TData, TOutput>(
   config: SubResourceRouterConfig<TSchema, TData, TOutput>,
-): Hono<AppContext> {
+) {
   const app = new Hono<AppContext>();
 
   async function readBody(c: Context<AppContext>, userId: string, ownerId: string) {

@@ -4,7 +4,7 @@ import { NotificationDeliveryError } from '../../errors/notification-delivery.er
 import { isPrivateAddress } from '../../utils/is-private-address.js';
 
 /**
- * Validate that a homeserver URL points to a public address.
+ * Resolves the homeserver and rejects it unless every address is public.
  *
  * The lexical checks alone were bypassable: a public hostname (or a wildcard
  * DNS service like nip.io) can resolve to a loopback or RFC-1918 address, so
@@ -13,7 +13,7 @@ import { isPrivateAddress } from '../../utils/is-private-address.js';
  * (DNS rebinding); the token is scoped to the user's own homeserver, so the
  * remaining exposure is a request without a useful response channel.
  */
-async function assertPublicHomeserver(homeserver: string): Promise<void> {
+async function assertPublicHomeserver(homeserver: string) {
   let parsed: URL;
   try {
     parsed = new URL(homeserver);
@@ -27,11 +27,11 @@ async function assertPublicHomeserver(homeserver: string): Promise<void> {
 
   const hostname = parsed.hostname.toLowerCase().replace(/^\[|]$/g, '');
 
-  if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+  if (hostname === 'localhost' || hostname.endsWith('.localhost') === true) {
     throw new ValidationError('Homeserver URL must be a public address');
   }
 
-  if (isPrivateAddress(hostname)) {
+  if (isPrivateAddress(hostname) === true) {
     throw new ValidationError('Homeserver URL must be a public address');
   }
 
@@ -42,21 +42,18 @@ async function assertPublicHomeserver(homeserver: string): Promise<void> {
     throw new ValidationError('Homeserver hostname does not resolve');
   }
 
-  if (addresses.some((entry) => isPrivateAddress(entry.address))) {
+  if (addresses.some((entry) => isPrivateAddress(entry.address)) === true) {
     throw new ValidationError('Homeserver URL must be a public address');
   }
 }
 
-/**
- * Send a message via Matrix client API
- */
 export async function sendMatrixMessage(
   homeserver: string,
   accessToken: string,
   roomId: string,
   text: string,
   html: string,
-): Promise<void> {
+) {
   await assertPublicHomeserver(homeserver);
 
   const txnId = `freundebuch-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -82,7 +79,7 @@ export async function sendMatrixMessage(
     signal: AbortSignal.timeout(10_000),
   });
 
-  if (!response.ok) {
+  if (response.ok === false) {
     const errorText = await response.text().catch(() => 'Unknown error');
     throw new NotificationDeliveryError('Matrix', errorText, response.status);
   }

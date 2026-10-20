@@ -8,7 +8,7 @@ import { isRecord } from './is-record.js';
  * before a schema can accept it. Returns a shallow copy, so callers can mutate
  * freely.
  */
-export async function parseRawObject(c: Context): Promise<Record<string, unknown>> {
+export async function parseRawObject(c: Context) {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -16,7 +16,7 @@ export async function parseRawObject(c: Context): Promise<Record<string, unknown
     throw new ValidationError('Invalid JSON');
   }
 
-  if (!isRecord(body)) {
+  if (isRecord(body) === false) {
     throw new ValidationError('Invalid JSON');
   }
   return { ...body };

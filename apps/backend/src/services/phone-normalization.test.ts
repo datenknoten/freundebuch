@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PhoneCountryUnknownError } from '../errors/phone-country-unknown.error.js';
 import { normalizePhoneBody } from './phone-normalization.js';
 
-function normalize(
-  storedCountry: string | null,
-  phone: string,
-  acceptLanguage?: string,
-): Promise<Record<string, unknown>> {
+function normalize(storedCountry: string | null, phone: string, acceptLanguage?: string) {
   const run = normalizePhoneBody(async () => storedCountry);
   return run('user-1', 'owner-1', { phone_number: phone }, acceptLanguage);
 }

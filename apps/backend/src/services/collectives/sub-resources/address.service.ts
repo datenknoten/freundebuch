@@ -26,26 +26,25 @@ export interface CollectiveAddressServiceOptions extends SubResourceServiceOptio
   addressLookupService?: AddressLookupService;
 }
 
-const mapRow = (row: IGetAddressesByCollectiveIdResult): AddressResponse => ({
-  id: row.external_id,
-  streetLine1: row.street_line1 ?? undefined,
-  streetLine2: row.street_line2 ?? undefined,
-  city: row.city ?? undefined,
-  stateProvince: row.state_province ?? undefined,
-  postalCode: row.postal_code ?? undefined,
-  country: row.country ?? undefined,
-  addressType: parseAddressType(row.address_type),
-  label: row.label ?? undefined,
-  isPrimary: row.is_primary,
-  latitude: row.latitude ?? undefined,
-  longitude: row.longitude ?? undefined,
-  createdAt: row.created_at.toISOString(),
-});
+function mapRow(row: IGetAddressesByCollectiveIdResult) {
+  return {
+    id: row.external_id,
+    streetLine1: row.street_line1 ?? undefined,
+    streetLine2: row.street_line2 ?? undefined,
+    city: row.city ?? undefined,
+    stateProvince: row.state_province ?? undefined,
+    postalCode: row.postal_code ?? undefined,
+    country: row.country ?? undefined,
+    addressType: parseAddressType(row.address_type),
+    label: row.label ?? undefined,
+    isPrimary: row.is_primary,
+    latitude: row.latitude ?? undefined,
+    longitude: row.longitude ?? undefined,
+    createdAt: row.created_at.toISOString(),
+  } satisfies AddressResponse;
+}
 
 /**
- * AddressService handles all address-related operations for collectives.
- * Extends SubResourceService for common CRUD operations.
- *
  * Geocoding runs in the background after a successful write so saves are
  * never blocked on slow or rate-limited external geocode calls.
  */
@@ -67,10 +66,7 @@ export class CollectiveAddressService extends SubResourceService<
         ownerNotFound: CollectiveNotFoundError,
         hasPrimaryFlag: true,
 
-        createFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId, data },
-          client,
-        ) => {
+        async createFn({ userExternalId, ownerExternalId: collectiveExternalId, data }, client) {
           return createAddress.run(
             {
               userExternalId,
@@ -91,10 +87,10 @@ export class CollectiveAddressService extends SubResourceService<
           );
         },
 
-        updateFn: async (
+        async updateFn(
           { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, data },
           client,
-        ) => {
+        ) {
           return updateAddress.run(
             {
               userExternalId,
@@ -116,10 +112,10 @@ export class CollectiveAddressService extends SubResourceService<
           );
         },
 
-        deleteFn: async (
+        async deleteFn(
           { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
           client,
-        ) => {
+        ) {
           return deleteAddress.run(
             {
               userExternalId,
@@ -130,18 +126,19 @@ export class CollectiveAddressService extends SubResourceService<
           );
         },
 
-        clearPrimaryFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId },
-          client,
-        ) => {
+        async clearPrimaryFn({ userExternalId, ownerExternalId: collectiveExternalId }, client) {
           return clearPrimaryAddress.run({ userExternalId, collectiveExternalId }, client);
         },
 
-        isPrimary: (data) => data.isPrimary,
+        isPrimary(data) {
+          return data.isPrimary;
+        },
 
-        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
+        setIsPrimary(data, isPrimary) {
+          return { ...data, isPrimary };
+        },
 
-        listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+        async listFn({ userExternalId, ownerExternalId: collectiveExternalId }, client) {
           return getAddressesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
         },
 
@@ -217,51 +214,53 @@ export class CollectiveAddressService extends SubResourceService<
     userExternalId: string,
     addressExternalId: string,
     data: AddressData,
-  ): void {
+  ) {
     const service = this.addressLookupService;
     const country = data.country;
     if (service === undefined || country === undefined || country === '') {
       return;
     }
 
-    const logger = this.logger;
-    const db = this.db;
+    setImmediate(
+      () =>
+        void this.geocodeInBackground(service, userExternalId, addressExternalId, country, data),
+    );
+  }
+
+  private async geocodeInBackground(
+    service: AddressLookupService,
+    userExternalId: string,
+    addressExternalId: string,
+    country: string,
+    data: AddressData,
+  ) {
     const city = data.city ?? '';
     const postalCode = data.postalCode ?? '';
     const { street, houseNumber } = parseStreetLine(data.streetLine1);
-
-    setImmediate(async () => {
-      try {
-        const location = await service.geocodeAddress(
-          country,
-          city,
-          postalCode,
-          street,
-          houseNumber,
+    try {
+      const location = await service.geocodeAddress(country, city, postalCode, street, houseNumber);
+      if (location === undefined) {
+        this.logger.debug(
+          { addressExternalId },
+          'Background geocode returned no result for collective address',
         );
-        if (location === undefined) {
-          logger.debug(
-            { addressExternalId },
-            'Background geocode returned no result for collective address',
-          );
-          return;
-        }
-        await updateAddressCoordinates.run(
-          {
-            addressExternalId,
-            userExternalId,
-            latitude: location.latitude,
-            longitude: location.longitude,
-          },
-          db,
-        );
-        logger.debug({ addressExternalId, ...location }, 'Background geocode persisted');
-      } catch (error) {
-        logger.warn(
-          { err: error, addressExternalId },
-          'Background collective address geocode failed',
-        );
+        return;
       }
-    });
+      await updateAddressCoordinates.run(
+        {
+          addressExternalId,
+          userExternalId,
+          latitude: location.latitude,
+          longitude: location.longitude,
+        },
+        this.db,
+      );
+      this.logger.debug({ addressExternalId, ...location }, 'Background geocode persisted');
+    } catch (error) {
+      this.logger.warn(
+        { err: error, addressExternalId },
+        'Background collective address geocode failed',
+      );
+    }
   }
 }

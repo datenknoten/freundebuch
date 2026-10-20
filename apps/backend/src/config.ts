@@ -12,10 +12,10 @@ const BooleanString = type('"true" | "false" | "TRUE" | "FALSE" | "1" | "0" | bo
 // than and(/regex/) because the arktype summary for a negative lookahead is
 // `must be matched by /^(?!...)/`, which tells the operator nothing.
 const PLACEHOLDER_SECRET = /change-this|your-secret|REPLACE/;
-const SecretType = type('string >= 32').narrow(
-  (value, ctx) =>
-    !PLACEHOLDER_SECRET.test(value) ||
-    ctx.mustBe('a generated secret (e.g. `openssl rand -hex 32`), not the placeholder'),
+const SecretType = type('string >= 32').narrow((value, ctx) =>
+  PLACEHOLDER_SECRET.test(value) === true
+    ? ctx.mustBe('a generated secret (e.g. `openssl rand -hex 32`), not the placeholder')
+    : true,
 );
 
 // Validate the connection string shape at boot rather than failing on first

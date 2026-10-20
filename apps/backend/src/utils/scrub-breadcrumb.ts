@@ -8,7 +8,7 @@ import { redactBotToken } from './redact-bot-token.js';
  * captured after a Telegram delivery ships the bot token in
  * `data.url`.
  */
-export function scrubBreadcrumb(crumb: Sentry.Breadcrumb): Sentry.Breadcrumb {
+export function scrubBreadcrumb(crumb: Sentry.Breadcrumb) {
   const url = crumb.data?.url;
   if (typeof url === 'string' && crumb.data !== undefined) {
     crumb.data.url = redactBotToken(url);

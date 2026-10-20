@@ -26,24 +26,22 @@ export interface ProfessionalHistoryData {
   isPrimary: boolean;
 }
 
-const mapRow = (row: IGetProfessionalHistoryByFriendIdResult): ProfessionalHistoryResponse => ({
-  id: row.external_id,
-  jobTitle: row.job_title ?? undefined,
-  organization: row.organization ?? undefined,
-  department: row.department ?? undefined,
-  notes: row.notes ?? undefined,
-  fromMonth: row.from_month,
-  fromYear: row.from_year,
-  toMonth: row.to_month,
-  toYear: row.to_year,
-  isPrimary: row.is_primary,
-  createdAt: row.created_at.toISOString(),
-});
+function mapRow(row: IGetProfessionalHistoryByFriendIdResult) {
+  return {
+    id: row.external_id,
+    jobTitle: row.job_title ?? undefined,
+    organization: row.organization ?? undefined,
+    department: row.department ?? undefined,
+    notes: row.notes ?? undefined,
+    fromMonth: row.from_month,
+    fromYear: row.from_year,
+    toMonth: row.to_month,
+    toYear: row.to_year,
+    isPrimary: row.is_primary,
+    createdAt: row.created_at.toISOString(),
+  } satisfies ProfessionalHistoryResponse;
+}
 
-/**
- * ProfessionalHistoryService handles all professional history operations for friends.
- * Extends SubResourceService for common CRUD operations.
- */
 export class ProfessionalHistoryService extends SubResourceService<
   ProfessionalHistoryData,
   ProfessionalHistoryResponse,
@@ -60,7 +58,7 @@ export class ProfessionalHistoryService extends SubResourceService<
         ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: true,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
+        async createFn({ userExternalId, ownerExternalId: friendExternalId, data }, client) {
           return createProfessionalHistory.run(
             {
               userExternalId,
@@ -79,10 +77,10 @@ export class ProfessionalHistoryService extends SubResourceService<
           );
         },
 
-        updateFn: async (
+        async updateFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
-        ) => {
+        ) {
           return updateProfessionalHistory.run(
             {
               userExternalId,
@@ -102,10 +100,10 @@ export class ProfessionalHistoryService extends SubResourceService<
           );
         },
 
-        deleteFn: async (
+        async deleteFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        ) => {
+        ) {
           return deleteProfessionalHistory.run(
             {
               userExternalId,
@@ -116,15 +114,19 @@ export class ProfessionalHistoryService extends SubResourceService<
           );
         },
 
-        clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        async clearPrimaryFn({ userExternalId, ownerExternalId: friendExternalId }, client) {
           return clearPrimaryProfessionalHistory.run({ userExternalId, friendExternalId }, client);
         },
 
-        isPrimary: (data) => data.isPrimary,
+        isPrimary(data) {
+          return data.isPrimary;
+        },
 
-        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
+        setIsPrimary(data, isPrimary) {
+          return { ...data, isPrimary };
+        },
 
-        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        async listFn({ userExternalId, ownerExternalId: friendExternalId }, client) {
           return getProfessionalHistoryByFriendId.run({ userExternalId, friendExternalId }, client);
         },
 

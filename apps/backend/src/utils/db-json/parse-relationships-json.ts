@@ -16,6 +16,6 @@ const RelationshipJsonRowSchema = type({
 
 export type RelationshipJsonRow = typeof RelationshipJsonRowSchema.infer;
 
-export function parseRelationshipsJson(value: unknown, logger: Logger): RelationshipJsonRow[] {
+export function parseRelationshipsJson(value: unknown, logger: Logger) {
   return safeArray(value, RelationshipJsonRowSchema, logger, 'relationships');
 }

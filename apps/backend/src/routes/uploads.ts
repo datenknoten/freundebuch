@@ -19,7 +19,7 @@ import { requireUuidParam } from '../utils/require-uuid-param.js';
  * more than one candidate or the `W/` prefix, so those clients re-downloaded
  * an unchanged photo on each request.
  */
-function etagMatches(header: string | undefined, etag: string): boolean {
+function etagMatches(header: string | undefined, etag: string) {
   if (header === undefined) {
     return false;
   }
@@ -40,29 +40,28 @@ export function createUploadsRoutes(options: UploadsRoutesOptions) {
   const { friendsService, photoService, authMiddleware, onboardingMiddleware } = options;
   const app = new Hono<AppContext>();
 
-  // Apply auth middleware to all upload routes
   app.use('*', authMiddleware);
-  // Apply onboarding middleware to require profile
   app.use('*', onboardingMiddleware);
 
-  /**
-   * GET /api/uploads/friends/:friendId/:filename
-   * Serve uploaded friend photos (only to the owner)
-   */
+  // Serves uploaded friend photos, only to the owner
   app.get('/friends/:friendId/:filename', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'friendId', 'friend ID');
     const filename = c.req.param('filename');
 
-    // Verify the user owns this friend
+    // Verifies the user owns this friend
     await friendsService.getFriend(user.userId, friendId);
 
-    // Validate filename to prevent directory traversal
-    if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    // Prevent directory traversal
+    if (
+      filename === '' ||
+      filename.includes('..') === true ||
+      filename.includes('/') === true ||
+      filename.includes('\\') === true
+    ) {
       throw new ValidationError('Invalid filename');
     }
 
-    // Only allow specific filenames
     const allowedFilenames = [
       'photo.jpg',
       'photo.png',
@@ -71,14 +70,13 @@ export function createUploadsRoutes(options: UploadsRoutesOptions) {
       'photo_thumb.png',
       'photo_thumb.webp',
     ];
-    if (!allowedFilenames.includes(filename)) {
+    if (allowedFilenames.includes(filename) === false) {
       throw new ValidationError('Invalid filename');
     }
 
     const uploadDir = photoService.getUploadDir();
     const filePath = path.join(uploadDir, friendId, filename);
 
-    // Determine content type
     const ext = path.extname(filename).toLowerCase();
     const contentTypes: Record<string, string> = {
       '.jpg': 'image/jpeg',
@@ -92,13 +90,13 @@ export function createUploadsRoutes(options: UploadsRoutesOptions) {
     try {
       fileStat = await stat(filePath);
     } catch (error) {
-      if (isNodeError(error) && error.code === 'ENOENT') {
+      if (isNodeError(error) === true && error.code === 'ENOENT') {
         throw new ResourceNotFoundError('Photo', `${friendId}/${filename}`);
       }
       throw error;
     }
 
-    if (!fileStat.isFile()) {
+    if (fileStat.isFile() === false) {
       throw new ResourceNotFoundError('Photo', `${friendId}/${filename}`);
     }
 
@@ -111,7 +109,7 @@ export function createUploadsRoutes(options: UploadsRoutesOptions) {
     c.header('Cache-Control', 'private, max-age=86400'); // 1 day cache, browser only
     c.header('Last-Modified', fileStat.mtime.toUTCString());
 
-    if (etagMatches(c.req.header('If-None-Match'), etag)) {
+    if (etagMatches(c.req.header('If-None-Match'), etag) === true) {
       return c.body(null, 304);
     }
 

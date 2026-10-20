@@ -48,10 +48,8 @@ export class AppPasswordsService {
     this.logger = options.logger;
   }
 
-  /**
-   * Format raw bytes as a readable password (xxxx-xxxx-xxxx-xxxx)
-   */
-  private formatPassword(password: string): string {
+  /** Readable form of the raw password: xxxx-xxxx-xxxx-xxxx */
+  private formatPassword(password: string) {
     const chunks: string[] = [];
     for (let i = 0; i < password.length; i += FORMAT_CHUNK_SIZE) {
       chunks.push(password.slice(i, i + FORMAT_CHUNK_SIZE));
@@ -69,10 +67,10 @@ export class AppPasswordsService {
    * all dashes. This preserves legacy behavior for malformed input — garbage
    * into bcrypt simply fails the compare and produces a 401.
    */
-  private unformatPassword(input: string): string {
+  private unformatPassword(input: string) {
     const hasWellFormattedLength =
       input.length >= FORMAT_STRIDE && (input.length + 1) % FORMAT_STRIDE === 0;
-    if (!hasWellFormattedLength) {
+    if (hasWellFormattedLength === false) {
       return input.replace(/-/g, '');
     }
     let out = '';
@@ -88,34 +86,29 @@ export class AppPasswordsService {
     return out;
   }
 
-  /**
-   * List all active app passwords for a user
-   */
-  public async listAppPasswords(userExternalId: string): Promise<AppPasswordResponse[]> {
+  public async listAppPasswords(userExternalId: string) {
     this.logger.debug({ userId: userExternalId }, 'Listing app passwords');
 
     const results = await getAppPasswordsByUserExternalId.run({ userExternalId }, this.db);
 
-    return results.map((row) => ({
-      externalId: row.external_id,
-      name: row.name,
-      lastUsedAt: row.last_used_at?.toISOString() ?? null,
-      createdAt: row.created_at.toISOString(),
-    }));
+    return results.map(
+      (row) =>
+        ({
+          externalId: row.external_id,
+          name: row.name,
+          lastUsedAt: row.last_used_at?.toISOString() ?? null,
+          createdAt: row.created_at.toISOString(),
+        }) satisfies AppPasswordResponse,
+    );
   }
 
   /**
-   * Create a new app password
-   * Returns the password only once - it cannot be retrieved later
-   * @throws MaxAppPasswordsExceededError if user has too many app passwords
+   * Returns the password only once - it cannot be retrieved later.
+   * @throws {MaxAppPasswordsExceededError} if the user has too many app passwords
    */
-  public async createAppPassword(
-    userExternalId: string,
-    name: string,
-  ): Promise<AppPasswordCreateResponse> {
+  public async createAppPassword(userExternalId: string, name: string) {
     this.logger.info({ userId: userExternalId }, 'Creating app password');
 
-    // Check if user has reached the maximum number of app passwords
     const existingPasswords = await this.listAppPasswords(userExternalId);
     if (existingPasswords.length >= MAX_APP_PASSWORDS_PER_USER) {
       this.logger.warn(
@@ -125,7 +118,6 @@ export class AppPasswordsService {
       throw new MaxAppPasswordsExceededError(MAX_APP_PASSWORDS_PER_USER);
     }
 
-    // Generate a random password
     const rawPassword = crypto.randomBytes(PASSWORD_LENGTH).toString('base64url');
     const password = this.formatPassword(rawPassword);
     const passwordPrefix = rawPassword.substring(0, PREFIX_LENGTH);
@@ -142,7 +134,7 @@ export class AppPasswordsService {
     );
 
     const row = results[0];
-    if (!row) {
+    if (row === undefined) {
       this.logger.error({ userId: userExternalId }, 'Failed to create app password');
       throw new AppPasswordCreationError();
     }
@@ -161,12 +153,10 @@ export class AppPasswordsService {
       password, // Only returned once!
       lastUsedAt: null,
       createdAt: row.created_at.toISOString(),
-    };
+    } satisfies AppPasswordCreateResponse;
   }
 
-  /**
-   * Revoke an app password (soft delete)
-   */
+  /** Soft delete. */
   public async revokeAppPassword(userExternalId: string, appPasswordExternalId: string) {
     this.logger.info(
       { userId: userExternalId, passwordId: appPasswordExternalId },
@@ -196,9 +186,8 @@ export class AppPasswordsService {
   }
 
   /**
-   * Verify an app password for HTTP Basic Auth
-   * Used by CardDAV/CalDAV authentication
-   * Returns user info if valid, undefined if not authenticated
+   * HTTP Basic Auth for CardDAV/CalDAV. Returns user info if valid, undefined
+   * if not authenticated.
    */
   public async verifyAppPassword(email: string, password: string) {
     this.logger.debug('Verifying app password');
@@ -219,7 +208,6 @@ export class AppPasswordsService {
       return undefined;
     }
 
-    // Find matching app passwords by prefix
     const appPasswords = await getAppPasswordsByUserIdAndPrefix.run(
       {
         userId: user.id,
@@ -234,12 +222,10 @@ export class AppPasswordsService {
       return undefined;
     }
 
-    // Try each matching password
     for (const ap of appPasswords) {
       const isValid = await bcrypt.compare(rawPassword, ap.password_hash);
 
       if (isValid === true) {
-        // Update last_used_at
         await updateAppPasswordLastUsed.run({ id: ap.id }, this.db);
 
         this.logger.info({ passwordId: ap.external_id }, 'App password verified successfully');

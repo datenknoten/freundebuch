@@ -1,5 +1,5 @@
 {
-  "$schema": "../../node_modules/@biomejs/biome/configuration_schema.json",
+  "$schema": "../../../node_modules/@biomejs/biome/configuration_schema.json",
   "root": false,
   "files": {
     "includes": [
@@ -125,7 +125,7 @@
   },
   "overrides": [
     {
-      "includes": ["tests/**/*"],
+      "includes": ["**/*"],
       "linter": {
         "rules": {
           "suspicious": {

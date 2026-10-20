@@ -12,7 +12,7 @@ const OverpassResponseSchema = type({
   elements: type({ 'tags?': 'Record<string, string>' }).array(),
 });
 
-// Collator for natural sorting of house numbers
+// Numeric collation sorts house numbers 1, 2, 10, 10a, 10/1.
 const naturalCollator = new Intl.Collator(undefined, {
   numeric: true,
   sensitivity: 'base',
@@ -41,17 +41,10 @@ export class OverpassClient {
     this.houseNumberCache = options.houseNumberCache;
   }
 
-  /**
-   * Get streets for a city and postal code
-   */
-  public async getStreets(
-    countryCode: string,
-    city: string,
-    postalCode: string,
-  ): Promise<Street[]> {
+  public async getStreets(countryCode: string, city: string, postalCode: string) {
     const cacheKey = `streets:${countryCode}:${postalCode}:${city}`;
     const cached = await this.streetCache.get(cacheKey);
-    if (cached) {
+    if (cached !== undefined) {
       this.logger.debug({ countryCode, city, postalCode }, 'Overpass streets cache hit');
       return cached;
     }
@@ -59,13 +52,12 @@ export class OverpassClient {
     const query = this.buildStreetQuery(countryCode, city, postalCode);
     const response = await this.executeQuery(query);
 
-    // Extract unique street names from addr:street tags
     const streetNames = new Set<string>();
     const streetsWithType: Street[] = [];
 
     for (const element of response.elements) {
       const streetName = element.tags?.['addr:street'];
-      if (streetName && !streetNames.has(streetName)) {
+      if (streetName !== undefined && streetName !== '' && streetNames.has(streetName) === false) {
         streetNames.add(streetName);
         streetsWithType.push({
           name: streetName,
@@ -73,25 +65,21 @@ export class OverpassClient {
       }
     }
 
-    // Sort streets alphabetically
     streetsWithType.sort((a, b) => a.name.localeCompare(b.name));
 
     await this.streetCache.set(cacheKey, streetsWithType);
     return streetsWithType;
   }
 
-  /**
-   * Get house numbers for a street
-   */
   public async getHouseNumbers(
     countryCode: string,
     city: string,
     postalCode: string,
     street: string,
-  ): Promise<HouseNumber[]> {
+  ) {
     const cacheKey = `housenumbers:${countryCode}:${postalCode}:${city}:${street}`;
     const cached = await this.houseNumberCache.get(cacheKey);
-    if (cached) {
+    if (cached !== undefined) {
       this.logger.debug(
         { countryCode, city, postalCode, street },
         'Overpass house numbers cache hit',
@@ -102,14 +90,13 @@ export class OverpassClient {
     const query = this.buildHouseNumberQuery(countryCode, city, postalCode, street);
     const response = await this.executeQuery(query);
 
-    // Extract unique house numbers
     const numberSet = new Set<string>();
     const houseNumbers: HouseNumber[] = [];
 
     for (const element of response.elements) {
       const number = element.tags?.['addr:housenumber'];
       const addrStreet = element.tags?.['addr:street'];
-      if (number && !numberSet.has(number)) {
+      if (number !== undefined && number !== '' && numberSet.has(number) === false) {
         numberSet.add(number);
         houseNumbers.push({
           number,
@@ -118,24 +105,18 @@ export class OverpassClient {
       }
     }
 
-    // Sort house numbers naturally using Intl.Collator (handles 1, 2, 10, 10a, 10/1, etc.)
     houseNumbers.sort((a, b) => naturalCollator.compare(a.number, b.number));
 
     await this.houseNumberCache.set(cacheKey, houseNumbers);
     return houseNumbers;
   }
 
-  /**
-   * Build Overpass query for streets in a city/postal code area
-   * Strategy: Find addresses with this postal code and extract unique street names
-   */
-  private buildStreetQuery(countryCode: string, city: string, postalCode: string): string {
+  /** Selects addresses by postal code and reads street names from their tags. */
+  private buildStreetQuery(countryCode: string, city: string, postalCode: string) {
     const escapedCountry = this.escapeOverpassString(countryCode);
     const escapedCity = this.escapeOverpassString(city);
     const escapedPostalCode = this.escapeOverpassString(postalCode);
 
-    // Query addresses with the postal code to get street names
-    // This is more reliable than trying to find city areas with postal_code tags
     return `
 [out:json][timeout:25];
 area["ISO3166-1"="${escapedCountry}"]->.country;
@@ -149,16 +130,13 @@ out tags;
     `.trim();
   }
 
-  /**
-   * Build Overpass query for house numbers on a street
-   * Strategy: Find addresses with this postal code and street name
-   */
+  /** Selects addresses by postal code and street name. */
   private buildHouseNumberQuery(
     countryCode: string,
     _city: string,
     postalCode: string,
     street: string,
-  ): string {
+  ) {
     const escapedCountry = this.escapeOverpassString(countryCode);
     const escapedPostalCode = this.escapeOverpassString(postalCode);
     const escapedStreet = this.escapeOverpassString(street);
@@ -174,13 +152,9 @@ out tags;
     `.trim();
   }
 
-  /**
-   * Execute an Overpass query with fallback
-   */
   private async executeQuery(query: string) {
     this.logger.debug({ query }, 'Executing Overpass query');
 
-    // Try primary endpoint first
     try {
       return await this.fetchOverpass(this.primaryUrl, query);
     } catch (primaryError) {
@@ -189,7 +163,6 @@ out tags;
         'Primary Overpass endpoint failed, trying fallback',
       );
 
-      // Try fallback endpoint
       try {
         return await this.fetchOverpass(this.fallbackUrl, query);
       } catch (fallbackError) {
@@ -199,9 +172,6 @@ out tags;
     }
   }
 
-  /**
-   * Execute a fetch to an Overpass endpoint
-   */
   private async fetchOverpass(url: string, query: string) {
     const response = await fetch(url, {
       method: 'POST',
@@ -211,7 +181,7 @@ out tags;
       body: `data=${encodeURIComponent(query)}`,
     });
 
-    if (!response.ok) {
+    if (response.ok === false) {
       const errorText = await response.text();
       throw new OverpassApiError(
         `Overpass API error ${response.status}: ${errorText}`,
@@ -227,12 +197,8 @@ out tags;
     return data;
   }
 
-  /**
-   * Escape special characters for Overpass QL strings.
-   * Handles backslashes, quotes, newlines, and other control characters.
-   */
-  private escapeOverpassString(str: string): string {
-    // First, remove control characters (ASCII 0-31 except tab, newline, carriage return)
+  /** Strips control characters, then escapes what Overpass QL treats specially in strings. */
+  private escapeOverpassString(str: string) {
     // biome-ignore lint/suspicious/noControlCharactersInRegex: intentionally matching control chars
     const withoutControlChars = str.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
     return withoutControlChars

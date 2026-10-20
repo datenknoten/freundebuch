@@ -11,46 +11,41 @@ import { enhanceErrorWithStack } from './enhance-error-with-stack.js';
 const WRAPPED = Symbol.for('freundebuch.queryWrapped');
 
 /**
- * Wraps a pg.PoolClient to capture stack traces for query errors.
- * Idempotent: a client whose query is already wrapped is returned unchanged,
- * so reusing a pooled client never stacks wrappers.
- *
- * Exported for testing.
+ * Keeps the application stack on query errors. Idempotent: a client whose query
+ * is already wrapped is returned unchanged, so reusing a pooled client never
+ * stacks wrappers.
  */
-export function wrapClient(client: pg.PoolClient): pg.PoolClient {
-  // biome-ignore lint/suspicious/noExplicitAny: marker property on the pg client
-  if ((client as any)[WRAPPED]) {
+export function wrapClient(client: pg.PoolClient) {
+  if (WRAPPED in client) {
     return client;
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: preserving pg's query overload signature
   const originalQuery: (...args: any[]) => any = client.query.bind(client);
 
-  // Override query to capture stack trace
   const wrappedQuery = function (
     this: pg.PoolClient,
     // biome-ignore lint/suspicious/noExplicitAny: pg.PoolClient.query has complex overloads
     ...args: [queryTextOrConfig: any, ...rest: any[]]
-    // biome-ignore lint/suspicious/noExplicitAny: pg.PoolClient.query has complex return types
-  ): any {
+  ) {
     const callSiteError = new Error();
     Error.captureStackTrace?.(callSiteError, wrappedQuery);
 
     const result = originalQuery(...args);
 
-    // Handle both Promise and callback patterns
     if (result instanceof Promise) {
-      return result.catch((error: unknown) => {
-        throw enhanceErrorWithStack(error, callSiteError.stack ?? '');
-      });
+      return result.catch(rethrowWithCallSite);
     }
     return result;
+
+    function rethrowWithCallSite(error: unknown) {
+      throw enhanceErrorWithStack(error, callSiteError.stack ?? '');
+    }
   };
 
   // biome-ignore lint/suspicious/noExplicitAny: matching pg's query signature
   client.query = wrappedQuery as any;
-  // biome-ignore lint/suspicious/noExplicitAny: marker property on the pg client
-  (client as any)[WRAPPED] = true;
+  Reflect.set(client, WRAPPED, true);
 
   return client;
 }

@@ -20,19 +20,16 @@ export interface UrlData {
   label?: string;
 }
 
-const mapRow = (row: IGetUrlsByFriendIdResult): UrlResponse => ({
-  id: row.external_id,
-  url: row.url,
-  urlType: parseUrlType(row.url_type),
-  label: row.label ?? undefined,
-  createdAt: row.created_at.toISOString(),
-});
+function mapRow(row: IGetUrlsByFriendIdResult) {
+  return {
+    id: row.external_id,
+    url: row.url,
+    urlType: parseUrlType(row.url_type),
+    label: row.label ?? undefined,
+    createdAt: row.created_at.toISOString(),
+  } satisfies UrlResponse;
+}
 
-/**
- * UrlService handles all URL-related operations for friends.
- * Extends SubResourceService for common CRUD operations.
- * Note: URLs do not have a primary flag.
- */
 export class UrlService extends SubResourceService<
   UrlData,
   UrlResponse,
@@ -49,7 +46,7 @@ export class UrlService extends SubResourceService<
         ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: false,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
+        async createFn({ userExternalId, ownerExternalId: friendExternalId, data }, client) {
           return createUrl.run(
             {
               userExternalId,
@@ -62,10 +59,10 @@ export class UrlService extends SubResourceService<
           );
         },
 
-        updateFn: async (
+        async updateFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
-        ) => {
+        ) {
           return updateUrl.run(
             {
               userExternalId,
@@ -79,10 +76,10 @@ export class UrlService extends SubResourceService<
           );
         },
 
-        deleteFn: async (
+        async deleteFn(
           { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        ) => {
+        ) {
           return deleteUrl.run(
             {
               userExternalId,
@@ -93,7 +90,7 @@ export class UrlService extends SubResourceService<
           );
         },
 
-        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+        async listFn({ userExternalId, ownerExternalId: friendExternalId }, client) {
           return getUrlsByFriendId.run({ userExternalId, friendExternalId }, client);
         },
 

@@ -5,6 +5,7 @@ import type {
   EncounterListResponse,
   EncounterResponse,
   EncounterType,
+  LastEncounterSummaryResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
 import { EncounterCreationError } from '../errors/encounter-creation.error.js';
@@ -57,9 +58,6 @@ export interface EncounterUpdateData {
   description?: string | null;
 }
 
-/**
- * Service for managing encounters (meeting tracking feature)
- */
 export class EncountersService {
   private readonly db: Pool;
 
@@ -67,20 +65,11 @@ export class EncountersService {
     this.db = options.db;
   }
 
-  // ============================================================================
-  // Encounter CRUD
-  // ============================================================================
+  //#region Encounter CRUD
 
-  /**
-   * List all encounters for a user with pagination and filtering
-   */
-  public async listEncounters(
-    userExternalId: string,
-    options: EncounterListOptions,
-  ): Promise<EncounterListResponse> {
+  public async listEncounters(userExternalId: string, options: EncounterListOptions) {
     const offset = (options.page - 1) * options.pageSize;
 
-    // Get encounters and count in parallel
     const [encountersResult, countResult] = await Promise.all([
       getEncountersByUserId.run(
         {
@@ -124,7 +113,7 @@ export class EncountersService {
     const previewsByEncounter = new Map<string, typeof previewRows>();
     for (const preview of previewRows) {
       const list = previewsByEncounter.get(preview.encounter_external_id);
-      if (list) {
+      if (list !== undefined) {
         list.push(preview);
       } else {
         previewsByEncounter.set(preview.encounter_external_id, [preview]);
@@ -143,7 +132,7 @@ export class EncountersService {
         totalCount,
         totalPages: Math.ceil(totalCount / options.pageSize),
       },
-    };
+    } satisfies EncounterListResponse;
   }
 
   public async findEncounter(userExternalId: string, encounterExternalId: string) {
@@ -164,9 +153,6 @@ export class EncountersService {
     return encounter;
   }
 
-  /**
-   * Create a new encounter with friend assignments
-   */
   public async createEncounter(userExternalId: string, data: EncounterCreateData) {
     const client = await this.db.connect();
     try {
@@ -210,9 +196,6 @@ export class EncountersService {
     }
   }
 
-  /**
-   * Update an existing encounter
-   */
   public async updateEncounter(
     userExternalId: string,
     encounterExternalId: string,
@@ -274,9 +257,6 @@ export class EncountersService {
     }
   }
 
-  /**
-   * Delete an encounter
-   */
   public async deleteEncounter(userExternalId: string, encounterExternalId: string) {
     const results = await deleteEncounter.run({ userExternalId, encounterExternalId }, this.db);
     if (results.length === 0) {
@@ -284,9 +264,7 @@ export class EncountersService {
     }
   }
 
-  /**
-   * Get the most recent encounter with a specific friend
-   */
+  /** The most recent encounter with a friend. */
   public async getLastEncounterForFriend(userExternalId: string, friendExternalId: string) {
     const [row] = await getLastEncounterForFriend.run(
       { userExternalId, friendExternalId },
@@ -298,22 +276,24 @@ export class EncountersService {
     return {
       id: row.external_id,
       title: row.title,
+      // The column is a CHECK-constrained text holding exactly ENCOUNTER_TYPES.
       encounterType: row.encounter_type as EncounterType,
       encounterDate: formatDateOnly(row.encounter_date),
-    };
+    } satisfies LastEncounterSummaryResponse;
   }
 
-  // ============================================================================
-  // Mappers
-  // ============================================================================
+  //#endregion
+
+  //#region Mappers
 
   private mapEncounter(
     row: IGetEncounterByIdResult,
     friends: IGetEncounterFriendsResult[] | EncounterFriendSummaryResponse[],
-  ): EncounterResponse {
+  ) {
     return {
       id: row.external_id,
       title: row.title,
+      // The column is a CHECK-constrained text holding exactly ENCOUNTER_TYPES.
       encounterType: row.encounter_type as EncounterType,
       encounterDate: formatDateOnly(row.encounter_date),
       locationText: row.location_text,
@@ -321,36 +301,35 @@ export class EncountersService {
       friends: friends.map((f) => ('id' in f ? f : this.mapFriendSummary(f))),
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
-    };
+    } satisfies EncounterResponse;
   }
 
   private mapEncounterListItem(
     row: IGetEncountersByUserIdResult,
     friends: IGetEncounterFriendsResult[],
-  ): EncounterListItemResponse {
+  ) {
     return {
       id: row.external_id,
       title: row.title,
+      // The column is a CHECK-constrained text holding exactly ENCOUNTER_TYPES.
       encounterType: row.encounter_type as EncounterType,
       encounterDate: formatDateOnly(row.encounter_date),
       locationText: row.location_text,
       friendCount: row.friend_count ?? 0,
       friends: friends.map((f) => this.mapFriendSummary(f)),
       createdAt: row.created_at.toISOString(),
-    };
+    } satisfies EncounterListItemResponse;
   }
 
-  private mapFriendSummary(row: IGetEncounterFriendsResult): EncounterFriendSummaryResponse {
+  private mapFriendSummary(row: IGetEncounterFriendsResult) {
     return {
       id: row.external_id,
       displayName: row.display_name ?? 'Unknown',
       photoUrl: row.photo_url,
-    };
+    } satisfies EncounterFriendSummaryResponse;
   }
 
-  private mapFriendResults(
-    results: ISetEncounterFriendsResult[],
-  ): EncounterFriendSummaryResponse[] {
+  private mapFriendResults(results: ISetEncounterFriendsResult[]) {
     return results.flatMap((r) =>
       r.friend_external_id !== null && r.friend_display_name !== null
         ? [
@@ -358,9 +337,11 @@ export class EncountersService {
               id: r.friend_external_id,
               displayName: r.friend_display_name,
               photoUrl: r.friend_photo_url,
-            },
+            } satisfies EncounterFriendSummaryResponse,
           ]
         : [],
     );
   }
+
+  //#endregion
 }

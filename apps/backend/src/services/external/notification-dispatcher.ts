@@ -5,15 +5,12 @@ import { sendDiscordMessage } from './discord.client.js';
 import { sendMatrixMessage } from './matrix.client.js';
 import { sendTelegramMessage } from './telegram.client.js';
 
-/**
- * Dispatch a notification message to the appropriate platform
- */
 export async function dispatchNotification(
   channel: IGetEnabledChannelsDueAtResult,
   plainText: string,
   htmlText: string,
   credentialsKey: Buffer,
-): Promise<void> {
+) {
   switch (channel.platform) {
     case 'telegram':
       await sendTelegramMessage(

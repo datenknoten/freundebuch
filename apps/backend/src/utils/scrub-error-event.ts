@@ -9,7 +9,7 @@ import { SENSITIVE_LOG_KEYS } from './sensitive-log-keys.js';
  * them. Covers the same three carriers a captured exception has: the trace
  * context it inherits, its own request URL, and the breadcrumb trail.
  */
-export function scrubErrorEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
+export function scrubErrorEvent(event: Sentry.ErrorEvent) {
   redactUrlAttributes(event.contexts?.trace?.data);
 
   if (typeof event.request?.url === 'string') {

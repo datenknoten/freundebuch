@@ -16,7 +16,7 @@ import {
 import { type CredentialColumn, credentialContext } from '../utils/credential-context.js';
 import { decrypt } from '../utils/decrypt.js';
 import { encryptOptional } from '../utils/encrypt-optional.js';
-import { rethrowUniqueViolation } from '../utils/rethrow-unique-violation.js';
+import { toUniqueViolationError } from '../utils/to-unique-violation-error.js';
 import { tryDecrypt } from '../utils/try-decrypt.js';
 import { sendDiscordMessage } from './external/discord.client.js';
 import { sendMatrixMessage } from './external/matrix.client.js';
@@ -45,9 +45,6 @@ export interface NotificationChannelUpdateData {
   credentials?: Record<string, string>;
 }
 
-/**
- * Service for managing notification channels (messaging bot configurations)
- */
 export class NotificationChannelsService {
   private readonly db: Pool;
   private readonly credentialsKey: Buffer;
@@ -57,21 +54,14 @@ export class NotificationChannelsService {
     this.credentialsKey = options.credentialsKey;
   }
 
-  /**
-   * List all channels for a user (credentials masked)
-   */
-  public async listChannels(userExternalId: string): Promise<NotificationChannelResponse[]> {
+  /** Credentials come back masked. */
+  public async listChannels(userExternalId: string) {
     const results = await getChannelsByUserId.run({ userExternalId }, this.db);
     return results.map((row) => this.mapChannel(userExternalId, row));
   }
 
-  /**
-   * Get a single channel by external ID (credentials masked)
-   */
-  public async getChannel(
-    userExternalId: string,
-    channelExternalId: string,
-  ): Promise<NotificationChannelResponse> {
+  /** Credentials come back masked. */
+  public async getChannel(userExternalId: string, channelExternalId: string) {
     const results = await getChannelByExternalId.run(
       { userExternalId, channelExternalId },
       this.db,
@@ -83,13 +73,7 @@ export class NotificationChannelsService {
     return this.mapChannel(userExternalId, row);
   }
 
-  /**
-   * Create a new notification channel
-   */
-  public async createChannel(
-    userExternalId: string,
-    data: NotificationChannelCreateData,
-  ): Promise<NotificationChannelResponse> {
+  public async createChannel(userExternalId: string, data: NotificationChannelCreateData) {
     try {
       const results = await createChannel.run(
         {
@@ -127,21 +111,19 @@ export class NotificationChannelsService {
 
       return this.mapChannel(userExternalId, row);
     } catch (error) {
-      rethrowUniqueViolation(error, {
-        uq_notification_channels_user_platform: () =>
-          new NotificationChannelAlreadyExistsError(data.platform),
+      throw toUniqueViolationError(error, {
+        uq_notification_channels_user_platform() {
+          return new NotificationChannelAlreadyExistsError(data.platform);
+        },
       });
     }
   }
 
-  /**
-   * Update an existing notification channel
-   */
   public async updateChannel(
     userExternalId: string,
     channelExternalId: string,
     data: NotificationChannelUpdateData,
-  ): Promise<NotificationChannelResponse> {
+  ) {
     const results = await updateChannel.run(
       {
         userExternalId,
@@ -179,9 +161,6 @@ export class NotificationChannelsService {
     return this.mapChannel(userExternalId, row);
   }
 
-  /**
-   * Delete a notification channel
-   */
   public async deleteChannel(userExternalId: string, channelExternalId: string) {
     const results = await deleteChannel.run({ userExternalId, channelExternalId }, this.db);
     if (results.length === 0) {
@@ -189,21 +168,16 @@ export class NotificationChannelsService {
     }
   }
 
-  /**
-   * Toggle a channel's enabled/disabled state
-   */
   public async toggleChannel(
     userExternalId: string,
     channelExternalId: string,
     isEnabled: boolean,
-  ): Promise<NotificationChannelResponse> {
+  ) {
     return this.updateChannel(userExternalId, channelExternalId, { isEnabled });
   }
 
-  /**
-   * Send a test message to verify channel configuration
-   */
-  public async sendTestMessage(userExternalId: string, channelExternalId: string): Promise<void> {
+  /** Sends a test message to verify the channel configuration. */
+  public async sendTestMessage(userExternalId: string, channelExternalId: string) {
     const results = await getChannelByExternalId.run(
       { userExternalId, channelExternalId },
       this.db,
@@ -257,11 +231,7 @@ export class NotificationChannelsService {
     }
   }
 
-  // ============================================================================
-  // Private Helpers
-  // ============================================================================
-
-  private mapChannel(userExternalId: string, row: ChannelRow): NotificationChannelResponse {
+  private mapChannel(userExternalId: string, row: ChannelRow) {
     const credentials: NotificationChannelResponse['credentials'] = {};
 
     switch (row.platform) {
@@ -297,6 +267,7 @@ export class NotificationChannelsService {
 
     return {
       externalId: row.external_id,
+      // The column is CHECK-constrained to the NotificationPlatform values.
       platform: row.platform as NotificationChannelResponse['platform'],
       isEnabled: row.is_enabled,
       lookaheadDays: row.lookahead_days,
@@ -304,7 +275,7 @@ export class NotificationChannelsService {
       credentials,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
-    };
+    } satisfies NotificationChannelResponse;
   }
 
   /**
@@ -317,10 +288,14 @@ export class NotificationChannelsService {
     userExternalId: string,
     column: CredentialColumn,
     value: string | null | undefined,
-  ): string | undefined {
-    if (value === null || value === undefined || value === '') return undefined;
+  ) {
+    if (value === null || value === undefined || value === '') {
+      return undefined;
+    }
     const plain = tryDecrypt(value, credentialContext(userExternalId, column), this.credentialsKey);
-    if (plain === null || plain.length <= 4) return '****';
+    if (plain === null || plain.length <= 4) {
+      return '****';
+    }
     return `...${plain.slice(-4)}`;
   }
 }

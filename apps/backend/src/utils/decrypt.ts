@@ -11,9 +11,9 @@ import { ALGORITHM, ENVELOPE_PREFIX_V1, ENVELOPE_PREFIX_V2 } from './credential-
  * key, a tampered value, or a v2 ciphertext presented under the wrong context
  * must not silently degrade to garbage.
  */
-export function decrypt(value: string, context: string, key: Buffer): string {
+export function decrypt(value: string, context: string, key: Buffer) {
   const isV2 = value.startsWith(ENVELOPE_PREFIX_V2);
-  if (!isV2 && !value.startsWith(ENVELOPE_PREFIX_V1)) {
+  if (isV2 === false && value.startsWith(ENVELOPE_PREFIX_V1) === false) {
     return value;
   }
 
@@ -27,7 +27,7 @@ export function decrypt(value: string, context: string, key: Buffer): string {
     const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(iv, 'base64url'));
     // v1 was written without associated data; setting it there would fail the
     // tag check on every legacy row.
-    if (isV2) {
+    if (isV2 === true) {
       decipher.setAAD(Buffer.from(context, 'utf8'));
     }
     decipher.setAuthTag(Buffer.from(authTag, 'base64url'));

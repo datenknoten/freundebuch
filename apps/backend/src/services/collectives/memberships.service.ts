@@ -1,6 +1,5 @@
 import type {
   CollectiveMemberContactResponse,
-  CollectiveMemberResponse,
   CollectiveRoleResponse,
   RelationshipPreviewItemResponse,
   RelationshipPreviewResponse,
@@ -59,9 +58,6 @@ export interface RelationshipPreviewData {
   roleId: string;
 }
 
-/**
- * Service for managing collective memberships and auto-relationships
- */
 export class MembershipsService {
   private readonly db: Pool;
 
@@ -69,18 +65,13 @@ export class MembershipsService {
     this.db = options.db;
   }
 
-  // ============================================================================
-  // Membership Operations
-  // ============================================================================
+  //#region Membership Operations
 
-  /**
-   * Add a member to a collective with auto-relationship creation
-   */
   public async addMember(
     userExternalId: string,
     collectiveExternalId: string,
     data: MembershipCreateData,
-  ): Promise<CollectiveMemberResponse> {
+  ) {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
@@ -91,11 +82,10 @@ export class MembershipsService {
         client,
       );
 
-      if (duplicateCheck[0]?.count && duplicateCheck[0].count > 0) {
+      if ((duplicateCheck[0]?.count ?? 0) > 0) {
         throw new DuplicateMembershipError();
       }
 
-      // Get internal IDs
       const [collectiveResult, contactResult, roleResult] = await Promise.all([
         getCollectiveInternalId.run({ userExternalId, collectiveExternalId }, client),
         getContactInternalId.run({ userExternalId, contactExternalId: data.friendId }, client),
@@ -122,7 +112,6 @@ export class MembershipsService {
       const contactId = contact.id;
       const roleId = role.id;
 
-      // Create the membership
       const membershipResult = await addMembership.run(
         {
           collectiveId,
@@ -142,14 +131,12 @@ export class MembershipsService {
       const membershipId = createdMembership.id;
       const membershipExternalId = createdMembership.external_id;
 
-      // Create auto-relationships unless skipped
       if (data.shouldSkipAutoRelationships !== true) {
         await this.createAutoRelationships(client, collectiveId, contactId, roleId, membershipId);
       }
 
       await client.query('COMMIT');
 
-      // Fetch and return the full membership
       const membership = await getMembershipById.run(
         { userExternalId, collectiveExternalId, membershipExternalId },
         this.db,
@@ -177,15 +164,12 @@ export class MembershipsService {
     }
   }
 
-  /**
-   * Update a member's role
-   */
   public async updateMemberRole(
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
     roleExternalId: string,
-  ): Promise<CollectiveMemberResponse> {
+  ) {
     const roleResult = await getRoleInternalId.run(
       { userExternalId, collectiveExternalId, roleExternalId },
       this.db,
@@ -223,15 +207,12 @@ export class MembershipsService {
     return mapMember(membershipRow);
   }
 
-  /**
-   * Deactivate a membership
-   */
   public async deactivateMember(
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
     data: MembershipDeactivateData,
-  ): Promise<CollectiveMemberResponse> {
+  ) {
     const results = await deactivateMembership.run(
       {
         userExternalId,
@@ -260,14 +241,11 @@ export class MembershipsService {
     return mapMember(membershipRow);
   }
 
-  /**
-   * Reactivate a membership
-   */
   public async reactivateMember(
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
-  ): Promise<CollectiveMemberResponse> {
+  ) {
     const results = await reactivateMembership.run(
       { userExternalId, collectiveExternalId, membershipExternalId },
       this.db,
@@ -290,9 +268,6 @@ export class MembershipsService {
     return mapMember(membershipRow);
   }
 
-  /**
-   * Remove a membership and its associated relationships; throws when it does not exist
-   */
   public async removeMember(
     userExternalId: string,
     collectiveExternalId: string,
@@ -302,7 +277,6 @@ export class MembershipsService {
     try {
       await client.query('BEGIN');
 
-      // Get the membership internal ID first
       const membershipResult = await getMembershipById.run(
         { userExternalId, collectiveExternalId, membershipExternalId },
         client,
@@ -315,10 +289,8 @@ export class MembershipsService {
 
       const membershipId = membershipRow.id;
 
-      // Delete relationships created by this membership
       await deleteRelationshipsByMembershipId.run({ membershipId }, client);
 
-      // Delete the membership
       const deleteResult = await removeMembership.run(
         { userExternalId, collectiveExternalId, membershipExternalId },
         client,
@@ -345,29 +317,24 @@ export class MembershipsService {
     }
   }
 
-  // ============================================================================
-  // Relationship Preview
-  // ============================================================================
+  //#endregion
 
-  /**
-   * Preview relationships that would be created when adding a member
-   */
+  //#region Relationship Preview
+
   public async previewRelationships(
     userExternalId: string,
     collectiveExternalId: string,
     data: RelationshipPreviewData,
-  ): Promise<RelationshipPreviewResponse> {
-    // Check if the contact is already an active member
+  ) {
     const duplicateCheck = await checkDuplicateActiveMembership.run(
       { userExternalId, collectiveExternalId, contactExternalId: data.friendId },
       this.db,
     );
 
-    if (duplicateCheck[0]?.count && duplicateCheck[0].count > 0) {
+    if ((duplicateCheck[0]?.count ?? 0) > 0) {
       throw new DuplicateMembershipError();
     }
 
-    // Get contact info
     const contactResult = await getContactInfo.run(
       { userExternalId, contactExternalId: data.friendId },
       this.db,
@@ -384,7 +351,6 @@ export class MembershipsService {
       photoUrl: contact.photo_url,
     };
 
-    // Get collective internal ID
     const collectiveResult = await getCollectiveInternalId.run(
       { userExternalId, collectiveExternalId },
       this.db,
@@ -397,7 +363,6 @@ export class MembershipsService {
 
     const collectiveId = collective.id;
 
-    // Get collective type ID
     const typeResult = await getCollectiveTypeIdForCollective.run({ collectiveId }, this.db);
     const [typeRow] = typeResult;
     if (typeRow === undefined) {
@@ -406,7 +371,6 @@ export class MembershipsService {
 
     const collectiveTypeId = typeRow.collective_type_id;
 
-    // Get role info
     const roleResult = await getRoleInternalId.run(
       { userExternalId, collectiveExternalId, roleExternalId: data.roleId },
       this.db,
@@ -419,10 +383,8 @@ export class MembershipsService {
 
     const newMemberRoleId = role.id;
 
-    // Get rules for this collective type
     const rules = await getRulesForTypeInternal.run({ collectiveTypeId }, this.db);
 
-    // Get other active members
     const otherMembers = await getOtherActiveMembers.run(
       { collectiveId, excludeContactId: contact.id },
       this.db,
@@ -448,12 +410,10 @@ export class MembershipsService {
       }
     }
 
-    // Calculate relationships that would be created
     const relationships: RelationshipPreviewItemResponse[] = [];
     let existingRelationshipsSkipped = 0;
 
     for (const existingMember of otherMembers) {
-      // Find matching rules
       const matchingRules = rules.filter(
         (rule) =>
           rule.new_member_role_id === newMemberRoleId &&
@@ -462,9 +422,10 @@ export class MembershipsService {
 
       for (const rule of matchingRules) {
         const typeInfo = typeInfoMap.get(rule.relationship_type_id);
-        if (!typeInfo) continue;
+        if (typeInfo === undefined) {
+          continue;
+        }
 
-        // Determine relationships based on direction
         if (
           rule.relationship_direction === 'new_member' ||
           rule.relationship_direction === 'both'
@@ -490,7 +451,9 @@ export class MembershipsService {
             alreadyExists: isExisting,
           });
 
-          if (isExisting) existingRelationshipsSkipped++;
+          if (isExisting === true) {
+            existingRelationshipsSkipped++;
+          }
         }
 
         if (
@@ -518,12 +481,13 @@ export class MembershipsService {
             alreadyExists: isExisting,
           });
 
-          if (isExisting) existingRelationshipsSkipped++;
+          if (isExisting === true) {
+            existingRelationshipsSkipped++;
+          }
         }
       }
     }
 
-    // We need to fetch role info - get from collective
     const roleInfo = await this.getRoleInfo(userExternalId, collectiveExternalId, data.roleId);
 
     return {
@@ -531,24 +495,20 @@ export class MembershipsService {
       role: roleInfo,
       relationships,
       existingRelationshipsSkipped,
-    };
+    } satisfies RelationshipPreviewResponse;
   }
 
-  // ============================================================================
-  // Auto-Relationship Logic
-  // ============================================================================
+  //#endregion
 
-  /**
-   * Create automatic relationships based on collective type rules
-   */
+  //#region Auto-Relationship Logic
+
   private async createAutoRelationships(
     client: PoolClient,
     collectiveId: number,
     newContactId: number,
     newMemberRoleId: number,
     membershipId: number,
-  ): Promise<void> {
-    // Get collective type ID
+  ) {
     const typeResult = await getCollectiveTypeIdForCollective.run({ collectiveId }, client);
     const [typeRow] = typeResult;
     if (typeRow === undefined) {
@@ -557,18 +517,14 @@ export class MembershipsService {
 
     const collectiveTypeId = typeRow.collective_type_id;
 
-    // Get rules for this collective type
     const rules = await getRulesForTypeInternal.run({ collectiveTypeId }, client);
 
-    // Get other active members
     const otherMembers = await getOtherActiveMembers.run(
       { collectiveId, excludeContactId: newContactId },
       client,
     );
 
-    // Create relationships based on rules
     for (const existingMember of otherMembers) {
-      // Find matching rules where new member's role matches and existing member's role matches
       const matchingRules = rules.filter(
         (rule) =>
           rule.new_member_role_id === newMemberRoleId &&
@@ -603,7 +559,7 @@ export class MembershipsService {
     newContactId: number,
     existingContactId: number,
     membershipId: number,
-  ): Promise<void> {
+  ) {
     const direction = parseRelationshipDirection(rule.relationship_direction);
 
     // Look up the inverse type so we can create the reciprocal edge. Every
@@ -644,7 +600,7 @@ export class MembershipsService {
     relationshipTypeId: string,
     inverseTypeId: string | null,
     membershipId: number,
-  ): Promise<void> {
+  ) {
     await createRelationshipWithSource.run(
       {
         fromFriendId: fromContactId,
@@ -655,7 +611,7 @@ export class MembershipsService {
       client,
     );
 
-    if (inverseTypeId) {
+    if (inverseTypeId !== null) {
       await createRelationshipWithSource.run(
         {
           fromFriendId: toContactId,
@@ -668,14 +624,11 @@ export class MembershipsService {
     }
   }
 
-  /**
-   * Check if a relationship already exists
-   */
   private async hasRelationship(
     fromFriendId: number,
     toFriendId: number,
     relationshipTypeId: string,
-  ): Promise<boolean> {
+  ) {
     const result = await checkRelationshipExists.run(
       { fromFriendId, toFriendId, relationshipTypeId },
       this.db,
@@ -683,14 +636,11 @@ export class MembershipsService {
     return (result[0]?.count ?? 0) > 0;
   }
 
-  /**
-   * Get role info for preview response
-   */
   private async getRoleInfo(
     userExternalId: string,
     collectiveExternalId: string,
     roleExternalId: string,
-  ): Promise<CollectiveRoleResponse> {
+  ) {
     const result = await getRoleByExternalId.run(
       { userExternalId, collectiveExternalId, roleExternalId },
       this.db,
@@ -706,10 +656,8 @@ export class MembershipsService {
       roleKey: role.role_key,
       label: role.label,
       sortOrder: role.sort_order,
-    };
+    } satisfies CollectiveRoleResponse;
   }
 
-  // ============================================================================
-  // Mappers
-  // ============================================================================
+  //#endregion
 }

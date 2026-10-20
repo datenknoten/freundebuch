@@ -67,15 +67,15 @@ function hasCreateTransport(value: unknown): value is NodemailerModule {
  * nodemailer is published as CJS with an ESM wrapper; depending on the
  * interop path `createTransport` sits on the namespace or on `default`.
  */
-function resolveNodemailer(module: unknown): NodemailerModule {
-  if (hasCreateTransport(module)) {
+function resolveNodemailer(module: unknown) {
+  if (hasCreateTransport(module) === true) {
     return module;
   }
   if (
     typeof module === 'object' &&
     module !== null &&
     'default' in module &&
-    hasCreateTransport(module.default)
+    hasCreateTransport(module.default) === true
   ) {
     return module.default;
   }
@@ -87,7 +87,7 @@ function resolveNodemailer(module: unknown): NodemailerModule {
 // build a fresh transport instead of reusing a stale one.
 let cached: { key: string; transport: SmtpTransport } | null = null;
 
-async function getTransport(options: SmtpTransportOptions): Promise<SmtpTransport> {
+async function getTransport(options: SmtpTransportOptions) {
   const key = `${options.host}:${options.port}:${options.secure}:${options.auth?.user ?? ''}`;
   if (cached !== null && cached.key === key) {
     return cached.transport;
@@ -102,7 +102,7 @@ async function getTransport(options: SmtpTransportOptions): Promise<SmtpTranspor
   return transport;
 }
 
-function defaultFrom(config: MailConfig): string {
+function defaultFrom(config: MailConfig) {
   try {
     return `Freundebuch <no-reply@${new URL(config.FRONTEND_URL).hostname}>`;
   } catch {
@@ -113,7 +113,7 @@ function defaultFrom(config: MailConfig): string {
 /**
  * @returns a mailer, or `null` when SMTP_HOST is unset.
  */
-export function createMailer(config: MailConfig, logger: Logger): Mailer | null {
+export function createMailer(config: MailConfig, logger: Logger) {
   const host = config.SMTP_HOST;
   if (host === undefined || host === '') {
     return null;
@@ -121,7 +121,7 @@ export function createMailer(config: MailConfig, logger: Logger): Mailer | null 
 
   // Port 465 is implicit TLS; 587/25 upgrade via STARTTLS. SMTP_SECURE lets an
   // operator override the guess for a non-standard port.
-  const port = config.SMTP_PORT ?? (config.SMTP_SECURE ? 465 : 587);
+  const port = config.SMTP_PORT ?? (config.SMTP_SECURE === true ? 465 : 587);
   const user = config.SMTP_USER;
   const isAuthenticated = user !== undefined && user !== '';
   const options: SmtpTransportOptions = {
@@ -131,13 +131,13 @@ export function createMailer(config: MailConfig, logger: Logger): Mailer | null 
     // Credentials never go over a connection that failed to upgrade: on a
     // plaintext port an authenticated relay must complete STARTTLS or the
     // send fails instead of sending the password in the clear.
-    requireTLS: !config.SMTP_SECURE && isAuthenticated,
-    ...(isAuthenticated ? { auth: { user, pass: config.SMTP_PASSWORD ?? '' } } : {}),
+    requireTLS: config.SMTP_SECURE === false && isAuthenticated === true,
+    ...(isAuthenticated === true ? { auth: { user, pass: config.SMTP_PASSWORD ?? '' } } : {}),
   };
   const from = config.SMTP_FROM ?? defaultFrom(config);
 
   return {
-    send: async (to: string, subject: string, text: string, html?: string): Promise<void> => {
+    async send(to: string, subject: string, text: string, html?: string) {
       const transport = await getTransport(options);
       await transport.sendMail({
         from,
@@ -150,5 +150,5 @@ export function createMailer(config: MailConfig, logger: Logger): Mailer | null 
       // subject is enough to correlate a delivery with a request.
       logger.info({ subject }, 'Email sent');
     },
-  };
+  } satisfies Mailer;
 }

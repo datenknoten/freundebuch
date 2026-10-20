@@ -1,7 +1,7 @@
 import { DataIntegrityError } from '../errors/data-integrity.error.js';
 
 export function makeEnumParser<T>(schema: { assert: (data: unknown) => T }, label: string) {
-  return (value: string): T => {
+  function parseEnum(value: string) {
     try {
       return schema.assert(value);
     } catch {
@@ -10,5 +10,6 @@ export function makeEnumParser<T>(schema: { assert: (data: unknown) => T }, labe
       // of the message because that message is returned to the client.
       throw new DataIntegrityError(label);
     }
-  };
+  }
+  return parseEnum;
 }

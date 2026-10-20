@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node';
-import cron, { type ScheduledTask } from 'node-cron';
+import cron from 'node-cron';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import type { Config } from '../config.js';
@@ -20,17 +20,19 @@ export interface NotificationSchedulerOptions {
   config: Pick<Config, 'FRONTEND_URL'>;
 }
 
-/**
- * Setup notification scheduler for daily date digest messages
- * Runs every minute to check for channels due for notification
- */
-export function setupNotificationScheduler(options: NotificationSchedulerOptions): ScheduledTask {
+/** Checks every minute for channels due for their daily date digest. */
+export function setupNotificationScheduler(options: NotificationSchedulerOptions) {
   const { logger } = options;
   // Skip a tick if the previous dispatch run is still in flight. Without this,
   // a run taking >60s overlaps the next and could double-send a digest.
   let isRunning = false;
-  const task = cron.schedule('* * * * *', async () => {
-    if (isRunning) {
+  const task = cron.schedule('* * * * *', runDispatch);
+
+  logger.info('Notification scheduler initialized - runs every minute');
+  return task;
+
+  async function runDispatch() {
+    if (isRunning === true) {
       logger.warn('Notification dispatch still running from a previous tick, skipping');
       return;
     }
@@ -40,17 +42,11 @@ export function setupNotificationScheduler(options: NotificationSchedulerOptions
     } finally {
       isRunning = false;
     }
-  });
-
-  logger.info('Notification scheduler initialized - runs every minute');
-  return task;
+  }
 }
 
-/**
- * Query and dispatch all notification channels due at the current minute.
- * Extracted so the overlap guard in setupNotificationScheduler stays readable.
- */
-async function dispatchDueNotifications(options: NotificationSchedulerOptions): Promise<void> {
+/** Extracted so the overlap guard in setupNotificationScheduler stays readable. */
+async function dispatchDueNotifications(options: NotificationSchedulerOptions) {
   const { pool, logger, credentialsKey, config } = options;
   const now = new Date();
   const currentTime = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}`;
@@ -69,7 +65,9 @@ async function dispatchDueNotifications(options: NotificationSchedulerOptions): 
     return;
   }
 
-  if (dueChannels.length === 0) return;
+  if (dueChannels.length === 0) {
+    return;
+  }
 
   const instanceUrl =
     config.FRONTEND_URL !== 'http://localhost:5173' ? config.FRONTEND_URL : undefined;

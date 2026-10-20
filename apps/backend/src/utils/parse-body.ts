@@ -9,7 +9,7 @@ import { validate } from './validate.js';
  * into one call: throws ValidationError on malformed JSON or schema failure,
  * otherwise returns the validated value.
  */
-export async function parseBody<S extends Type>(c: Context, schema: S): Promise<S['infer']> {
+export async function parseBody<S extends Type>(c: Context, schema: S) {
   let body: unknown;
   try {
     body = await c.req.json();

@@ -16,7 +16,7 @@
  */
 export function formatDateOnly(value: Date | string): string;
 export function formatDateOnly(value: Date | string | null | undefined): string | undefined;
-export function formatDateOnly(value: Date | string | null | undefined): string | undefined {
+export function formatDateOnly(value: Date | string | null | undefined) {
   if (value === null || value === undefined) {
     return undefined;
   }

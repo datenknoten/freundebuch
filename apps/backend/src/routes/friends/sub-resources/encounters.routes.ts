@@ -11,13 +11,9 @@ export interface EncountersRoutesOptions {
   encountersService: EncountersService;
 }
 
-export function createEncountersRoutes(options: EncountersRoutesOptions): Hono<AppContext> {
+export function createEncountersRoutes(options: EncountersRoutesOptions) {
   const app = new Hono<AppContext>();
 
-  /**
-   * GET /api/friends/:id/encounters
-   * Get all encounters with a specific friend
-   */
   app.get('/', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');
@@ -37,10 +33,6 @@ export function createEncountersRoutes(options: EncountersRoutesOptions): Hono<A
     return c.json(result);
   });
 
-  /**
-   * GET /api/friends/:id/last-encounter
-   * Get the most recent encounter with a specific friend
-   */
   app.get('/last', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');

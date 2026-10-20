@@ -25,21 +25,22 @@ const pkgVersion = typeof pkg.version === 'string' ? pkg.version : 'unknown';
 // install, library dev/prod branches) while ENV describes the deployment this
 // process is part of. Sentry wants the latter.
 const sentryDsn = process.env.SENTRY_DSN;
-const appEnv = process.env.ENV || 'development';
+const rawEnv = process.env.ENV;
+const appEnv = rawEnv === undefined || rawEnv === '' ? 'development' : rawEnv;
 
 const isProduction = appEnv === 'production';
 
-if (sentryDsn) {
+if (sentryDsn !== undefined && sentryDsn !== '') {
   Sentry.init({
     dsn: sentryDsn,
     environment: appEnv,
     release: `freundebuch-backend@${pkgVersion}`,
 
     // Full tracing in dev for debugging; sample in production to bound cost.
-    tracesSampleRate: isProduction ? 0.1 : 1.0,
+    tracesSampleRate: isProduction === true ? 0.1 : 1.0,
 
     // Default PII (request IP, headers) only outside production.
-    sendDefaultPii: !isProduction,
+    sendDefaultPii: isProduction === false,
 
     // Capture pino log messages as breadcrumbs and errors, and trace postgres queries
     integrations: [
@@ -53,8 +54,8 @@ if (sentryDsn) {
     ignoreTransactions: [/^GET \/health(\/ready)?$/],
 
     // Strip sensitive attributes from forwarded logs before they leave the process.
-    beforeSendLog: (log) => {
-      if (log.attributes) {
+    beforeSendLog(log) {
+      if (log.attributes !== undefined) {
         for (const key of SENSITIVE_LOG_KEYS) {
           if (key in log.attributes) {
             delete log.attributes[key];
@@ -66,7 +67,7 @@ if (sentryDsn) {
 
     // Spans are not covered by beforeSendLog; scrub the credential-bearing
     // request paths out of the trace itself.
-    beforeSendTransaction: (event) => {
+    beforeSendTransaction(event) {
       for (const span of event.spans ?? []) {
         if (span.description !== undefined) {
           span.description = redactBotToken(span.description);

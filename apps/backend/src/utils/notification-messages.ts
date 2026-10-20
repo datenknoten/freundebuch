@@ -21,12 +21,20 @@ const locales: { en: LocaleStrings } & Record<string, LocaleStrings> = {
     header: 'Freundebuch - Upcoming dates',
     today: 'Today',
     tomorrow: 'Tomorrow',
-    inDays: (n) => `In ${n} days`,
+    inDays(n) {
+      return `In ${n} days`;
+    },
     birthday: 'birthday',
     anniversary: 'wedding anniversary',
-    birthdayAge: (n) => `turns ${n}`,
-    yearsCount: (n) => `${n} year${n === 1 ? '' : 's'}`,
-    footer: (url) => `View your Freundebuch: ${url}`,
+    birthdayAge(n) {
+      return `turns ${n}`;
+    },
+    yearsCount(n) {
+      return `${n} year${n === 1 ? '' : 's'}`;
+    },
+    footer(url) {
+      return `View your Freundebuch: ${url}`;
+    },
     months: [
       'January',
       'February',
@@ -49,12 +57,20 @@ const locales: { en: LocaleStrings } & Record<string, LocaleStrings> = {
     header: 'Freundebuch - Bevorstehende Termine',
     today: 'Heute',
     tomorrow: 'Morgen',
-    inDays: (n) => `In ${n} Tagen`,
+    inDays(n) {
+      return `In ${n} Tagen`;
+    },
     birthday: 'Geburtstag',
     anniversary: 'Hochzeitstag',
-    birthdayAge: (n) => `wird ${n}`,
-    yearsCount: (n) => `${n} Jahr${n === 1 ? '' : 'e'}`,
-    footer: (url) => `Dein Freundebuch öffnen: ${url}`,
+    birthdayAge(n) {
+      return `wird ${n}`;
+    },
+    yearsCount(n) {
+      return `${n} Jahr${n === 1 ? '' : 'e'}`;
+    },
+    footer(url) {
+      return `Dein Freundebuch öffnen: ${url}`;
+    },
     months: [
       'Januar',
       'Februar',
@@ -75,23 +91,31 @@ const locales: { en: LocaleStrings } & Record<string, LocaleStrings> = {
   },
 };
 
-function getLocale(lang: string): LocaleStrings {
+function getLocale(lang: string) {
   return locales[lang] ?? locales.en;
 }
 
-function getDayPhrase(l: LocaleStrings, daysUntil: number): string {
-  if (daysUntil === 0) return l.today;
-  if (daysUntil === 1) return l.tomorrow;
+function getDayPhrase(l: LocaleStrings, daysUntil: number) {
+  if (daysUntil === 0) {
+    return l.today;
+  }
+  if (daysUntil === 1) {
+    return l.tomorrow;
+  }
   return l.inDays(daysUntil);
 }
 
-function getEventLabel(l: LocaleStrings, dateType: string, label: string | null): string {
-  if (dateType === 'birthday') return l.birthday;
-  if (dateType === 'anniversary') return l.anniversary;
+function getEventLabel(l: LocaleStrings, dateType: string, label: string | null) {
+  if (dateType === 'birthday') {
+    return l.birthday;
+  }
+  if (dateType === 'anniversary') {
+    return l.anniversary;
+  }
   return label ?? dateType;
 }
 
-function extractMonthDay(date: Date): { month: number; day: number } {
+function extractMonthDay(date: Date) {
   const month = date.getMonth() + 1;
   const day = date.getDate();
   return { month, day };
@@ -103,28 +127,33 @@ function extractMonthDay(date: Date): { month: number; day: number } {
  * the age keeps the notification consistent with the query logic, including its
  * leap-year handling (e.g. a Feb 29 date is shown as Feb 28 in non-leap years).
  */
-function getUpcomingOccurrence(daysUntil: number): Date {
+function getUpcomingOccurrence(daysUntil: number) {
   const now = new Date();
   // All-local date arithmetic, matching how date_value is read.
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntil);
 }
 
 /**
- * Compute the age (or number of years) the date marks on its upcoming
- * occurrence. Returns null when the birth year is unknown or the resulting age
- * is not a positive number.
+ * Age (or number of years) the date marks on its upcoming occurrence; null when
+ * the birth year is unknown or the age is not positive.
  */
-function computeAge(dateValue: Date, isYearKnown: boolean, occurrence: Date): number | null {
-  if (!isYearKnown) return null;
+function computeAge(dateValue: Date, isYearKnown: boolean, occurrence: Date) {
+  if (isYearKnown === false) {
+    return null;
+  }
 
   const age = occurrence.getFullYear() - dateValue.getFullYear();
 
   return age > 0 ? age : null;
 }
 
-function getAgePhrase(l: LocaleStrings, dateType: string, age: number | null): string | null {
-  if (age === null) return null;
-  if (dateType === 'birthday') return l.birthdayAge(age);
+function getAgePhrase(l: LocaleStrings, dateType: string, age: number | null) {
+  if (age === null) {
+    return null;
+  }
+  if (dateType === 'birthday') {
+    return l.birthdayAge(age);
+  }
   return l.yearsCount(age);
 }
 
@@ -134,7 +163,7 @@ function getAgePhrase(l: LocaleStrings, dateType: string, age: number | null): s
  * the friend's display name and custom date labels must be escaped to prevent
  * HTML injection.
  */
-function escapeHtml(value: string): string {
+function escapeHtml(value: string) {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -143,15 +172,12 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-/**
- * Format upcoming dates into a notification message
- * Returns both plain text and HTML versions
- */
+/** Returns both a plain-text and an HTML version of the digest. */
 export function formatNotificationMessage(
   dates: IGetUpcomingDatesResult[],
   locale: string,
   instanceUrl?: string,
-): { plain: string; html: string } {
+) {
   const l = getLocale(locale);
 
   const plainLines: string[] = [l.header, ''];
@@ -167,7 +193,7 @@ export function formatNotificationMessage(
 
     const age = computeAge(date.date_value, date.year_known, occurrence);
     const agePhrase = getAgePhrase(l, date.date_type, age);
-    const datePart = agePhrase ? `${formattedDate}, ${agePhrase}` : formattedDate;
+    const datePart = agePhrase !== null ? `${formattedDate}, ${agePhrase}` : formattedDate;
 
     const plainLine = `${dayPhrase}: ${date.friend_display_name}'s ${eventLabel} (${datePart})`;
     const htmlLine = `${dayPhrase}: <b>${escapeHtml(date.friend_display_name)}</b>'s ${escapeHtml(eventLabel)} (${escapeHtml(datePart)})`;
@@ -176,7 +202,7 @@ export function formatNotificationMessage(
     htmlLines.push(htmlLine);
   }
 
-  if (instanceUrl) {
+  if (instanceUrl !== undefined && instanceUrl !== '') {
     plainLines.push('', l.footer(instanceUrl));
     htmlLines.push(
       '',

@@ -35,7 +35,7 @@ export interface RoleRow {
   sort_order: number;
 }
 
-export function mapMember(row: MemberRow): CollectiveMemberResponse {
+export function mapMember(row: MemberRow) {
   return {
     id: row.membership_external_id,
     contact: {
@@ -51,19 +51,19 @@ export function mapMember(row: MemberRow): CollectiveMemberResponse {
     },
     isActive: row.is_active,
     inactiveReason: row.inactive_reason,
-    inactiveDate: row.inactive_date ? formatDateOnly(row.inactive_date) : null,
-    joinedDate: row.joined_date ? formatDateOnly(row.joined_date) : null,
+    inactiveDate: row.inactive_date === null ? null : formatDateOnly(row.inactive_date),
+    joinedDate: row.joined_date === null ? null : formatDateOnly(row.joined_date),
     notes: row.notes,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
-  };
+  } satisfies CollectiveMemberResponse;
 }
 
-export function mapRole(row: RoleRow): CollectiveRoleResponse {
+export function mapRole(row: RoleRow) {
   return {
     id: row.external_id,
     roleKey: row.role_key,
     label: row.label,
     sortOrder: row.sort_order,
-  };
+  } satisfies CollectiveRoleResponse;
 }

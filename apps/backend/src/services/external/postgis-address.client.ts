@@ -1,8 +1,7 @@
 import type pg from 'pg';
 import type { Logger } from 'pino';
-import type { HouseNumber, Street } from './overpass.client.js';
 
-// Collator for natural sorting of house numbers
+// Numeric collation sorts house numbers 1, 2, 10, 10a, 10/1.
 const naturalCollator = new Intl.Collator(undefined, {
   numeric: true,
   sensitivity: 'base',
@@ -13,10 +12,7 @@ export interface PostGISAddressClientOptions {
   logger: Logger;
 }
 
-/**
- * PostGIS-based address lookup client for DACH countries.
- * Uses local OSM data stored in the geodata schema for fast address autocomplete.
- */
+/** Reads the local OSM import in the geodata schema (DACH countries). */
 export class PostGISAddressClient {
   private readonly db: pg.Pool;
   private readonly logger: Logger;
@@ -27,17 +23,12 @@ export class PostGISAddressClient {
   }
 
   /**
-   * Get distinct cities for a postal code.
-   *
    * Uses the `cities_by_postal` materialized view, which already excludes the
    * `'Unknown'` placeholder used for OSM rows without an `addr:city` tag (see
    * scripts/osm-import/import-region.sh). The PostGIS data has no
    * state/province column, so callers get city names only.
    */
-  public async getCitiesByPostalCode(
-    countryCode: string,
-    postalCode: string,
-  ): Promise<{ city: string }[]> {
+  public async getCitiesByPostalCode(countryCode: string, postalCode: string) {
     const result = await this.db.query<{ city: string }>(
       `SELECT city
        FROM geodata.cities_by_postal
@@ -55,18 +46,12 @@ export class PostGISAddressClient {
   }
 
   /**
-   * Search postal codes by prefix, returning postal-code/city pairs.
-   *
    * Backs the postal-code autocomplete (e.g. typing "55" suggests "55116 —
    * Mainz"). Uses the `cities_by_postal` materialized view, which is indexed
    * with `text_pattern_ops` so the prefix `LIKE` is index-backed. Results are
    * capped by `limit` to keep short prefixes cheap.
    */
-  public async searchPostalCodes(
-    countryCode: string,
-    prefix: string,
-    limit = 20,
-  ): Promise<{ postalCode: string; city: string }[]> {
+  public async searchPostalCodes(countryCode: string, prefix: string, limit = 20) {
     const result = await this.db.query<{ postal_code: string; city: string }>(
       `SELECT postal_code, city
        FROM geodata.cities_by_postal
@@ -84,15 +69,8 @@ export class PostGISAddressClient {
     return result.rows.map((row) => ({ postalCode: row.postal_code, city: row.city }));
   }
 
-  /**
-   * Get streets for a postal code.
-   * Uses the materialized view for fast distinct lookups.
-   */
-  public async getStreets(
-    countryCode: string,
-    _city: string,
-    postalCode: string,
-  ): Promise<Street[]> {
+  /** Reads the materialized view for fast distinct lookups. */
+  public async getStreets(countryCode: string, _city: string, postalCode: string) {
     const result = await this.db.query<{ street: string }>(
       `SELECT street
        FROM geodata.streets_by_postal
@@ -109,16 +87,13 @@ export class PostGISAddressClient {
     return result.rows.map((row) => ({ name: row.street }));
   }
 
-  /**
-   * Get house numbers for a street.
-   * Uses the materialized view for fast distinct lookups.
-   */
+  /** Reads the materialized view for fast distinct lookups. */
   public async getHouseNumbers(
     countryCode: string,
     _city: string,
     postalCode: string,
     street: string,
-  ): Promise<HouseNumber[]> {
+  ) {
     const result = await this.db.query<{ house_number: string }>(
       `SELECT house_number
        FROM geodata.housenumbers_by_street
@@ -131,18 +106,14 @@ export class PostGISAddressClient {
       'PostGIS house numbers query completed',
     );
 
-    // Sort house numbers naturally (handles 1, 2, 10, 10a, 10/1, etc.)
     const houseNumbers = result.rows.map((row) => ({ number: row.house_number }));
     houseNumbers.sort((a, b) => naturalCollator.compare(a.number, b.number));
 
     return houseNumbers;
   }
 
-  /**
-   * Check if PostGIS address data is available and has data for DACH countries.
-   * This can be used to determine whether to use PostGIS or fall back to Overpass.
-   */
-  public async isAvailable(): Promise<boolean> {
+  /** Lets callers decide between PostGIS and the Overpass fallback. */
+  public async isAvailable() {
     try {
       const result = await this.db.query<{ count: string }>(
         `SELECT COUNT(*) as count
@@ -150,17 +121,14 @@ export class PostGISAddressClient {
          WHERE country_code IN ('DE', 'AT', 'CH')
          LIMIT 1`,
       );
-      return Number.parseInt(result.rows[0]?.count || '0', 10) > 0;
+      return Number.parseInt(result.rows[0]?.count ?? '0', 10) > 0;
     } catch (error) {
       this.logger.debug({ err: error }, 'PostGIS availability check failed');
       return false;
     }
   }
 
-  /**
-   * Check if data is available for a specific country.
-   */
-  public async hasDataForCountry(countryCode: string): Promise<boolean> {
+  public async hasDataForCountry(countryCode: string) {
     try {
       const result = await this.db.query<{ exists: boolean }>(
         `SELECT EXISTS(
@@ -170,17 +138,14 @@ export class PostGISAddressClient {
          ) as exists`,
         [countryCode.toUpperCase()],
       );
-      return result.rows[0]?.exists || false;
+      return result.rows[0]?.exists === true;
     } catch (error) {
       this.logger.debug({ err: error, countryCode }, 'PostGIS country check failed');
       return false;
     }
   }
 
-  /**
-   * Geocode an address using stored OSM location data; undefined when no row matches.
-   * Returns coordinates from the geodata.addresses table.
-   */
+  /** Resolves to undefined when no row matches. */
   public async geocodeAddress(
     countryCode: string,
     postalCode: string,
@@ -227,18 +192,7 @@ export class PostGISAddressClient {
     }
   }
 
-  /**
-   * Get statistics about imported address data.
-   * Useful for monitoring and debugging.
-   */
-  public async getStats(): Promise<
-    {
-      countryCode: string;
-      addressCount: number;
-      postalCodeCount: number;
-      streetCount: number;
-    }[]
-  > {
+  public async getStats() {
     try {
       const result = await this.db.query<{
         country_code: string;

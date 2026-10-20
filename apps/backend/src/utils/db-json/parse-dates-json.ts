@@ -13,6 +13,6 @@ const DateJsonRowSchema = type({
 
 export type DateJsonRow = typeof DateJsonRowSchema.infer;
 
-export function parseDatesJson(value: unknown, logger: Logger): DateJsonRow[] {
+export function parseDatesJson(value: unknown, logger: Logger) {
   return safeArray(value, DateJsonRowSchema, logger, 'dates');
 }

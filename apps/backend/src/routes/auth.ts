@@ -26,13 +26,9 @@ export function createAuthRoutes(options: AuthRoutesOptions) {
   } = options;
   const app = new Hono<AppContext>();
 
-  /**
-   * Mount Better Auth handler for all standard auth endpoints.
-   * Better Auth handles: sign-in/email, sign-up/email, sign-out,
-   * forget-password, reset-password, get-session, etc.
-   */
+  // Better Auth handles sign-in/email, sign-up/email, sign-out,
+  // forget-password, reset-password, get-session, etc.
   app.on(['POST', 'GET'], '/*', async (c, next) => {
-    // Check if this is a custom route we handle ourselves
     const path = new URL(c.req.url).pathname;
     const customPaths = [
       '/api/auth/me',
@@ -41,7 +37,10 @@ export function createAuthRoutes(options: AuthRoutesOptions) {
     ];
     // Prefixes for custom routes with dynamic path segments.
     const customPrefixes = ['/api/auth/oauth2/client/'];
-    if (customPaths.some((p) => path === p) || customPrefixes.some((p) => path.startsWith(p))) {
+    if (
+      customPaths.includes(path) === true ||
+      customPrefixes.some((p) => path.startsWith(p)) === true
+    ) {
       return next();
     }
 
@@ -53,26 +52,16 @@ export function createAuthRoutes(options: AuthRoutesOptions) {
       usersService.assertSignupAllowed();
     }
 
-    // Delegate to Better Auth handler
     return auth.handler(c.req.raw);
   });
 
-  /**
-   * GET /api/auth/me
-   * Get the current authenticated user with preferences.
-   *
-   * Reads the self-profile and preferences from the database rather than the
-   * Better Auth session, whose cookie cache can be stale (see
-   * UsersService.getMeWithPreferences).
-   */
+  // Reads the self-profile and preferences from the database rather than the
+  // Better Auth session, whose cookie cache can be stale (see
+  // UsersService.getMeWithPreferences).
   app.get('/me', authMiddleware, async (c) => {
     return c.json(await usersService.getMeWithPreferences(getAuthUser(c)));
   });
 
-  /**
-   * PATCH /api/auth/preferences
-   * Update user preferences
-   */
   app.patch('/preferences', authMiddleware, async (c) => {
     const authUser = getAuthUser(c);
 
@@ -83,14 +72,9 @@ export function createAuthRoutes(options: AuthRoutesOptions) {
     );
   });
 
-  /**
-   * GET /api/auth/passkey/list-user-passkeys
-   * List all passkeys for the authenticated user.
-   *
-   * Facade over Better Auth's internal API with a dedicated rate limit
-   * (30 req/min) instead of the global auth rate limit (5 req/min),
-   * since this read-only endpoint is called frequently by the UI.
-   */
+  // Facade over Better Auth's internal API with a dedicated rate limit
+  // (30 req/min) instead of the global auth rate limit (5 req/min), since this
+  // read-only endpoint is called frequently by the UI.
   app.get(
     '/passkey/list-user-passkeys',
     authMiddleware,
@@ -103,22 +87,18 @@ export function createAuthRoutes(options: AuthRoutesOptions) {
     },
   );
 
-  /**
-   * GET /api/auth/oauth2/client/:id
-   * Resolve a registered OAuth client's display name (and icon) by client_id.
-   *
-   * The /oauth/consent screen calls this so it can show a friendly client name
-   * (e.g. "Claude") instead of the opaque, DCR-generated client id. The Better
-   * Auth `mcp` plugin does not expose the oidc-provider's `/oauth2/client/:id`
-   * endpoint (it only re-exports the consent endpoint), so we provide it here.
-   *
-   * Gated on a valid session: the consent flow only reaches the page after login,
-   * and this prevents anonymous enumeration of registered clients. We don't use
-   * authMiddleware because this read doesn't need the legacy-user bridge.
-   */
+  // The /oauth/consent screen shows a friendly client name (e.g. "Claude")
+  // instead of the opaque, DCR-generated client id. The Better Auth `mcp`
+  // plugin does not expose the oidc-provider's `/oauth2/client/:id` endpoint
+  // (it only re-exports the consent endpoint), so we provide it here.
+  //
+  // Gated on a valid session: the consent flow only reaches the page after
+  // login, and this prevents anonymous enumeration of registered clients. We
+  // don't use authMiddleware because this read doesn't need the legacy-user
+  // bridge.
   app.get('/oauth2/client/:id', async (c) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    if (!session) {
+    if (session === null) {
       throw new AuthenticationError('Unauthorized');
     }
 
