@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import { aPhone, fireEvent, render, screen, useLanguage } from '$lib/test';
+import { aPhone, fireEvent, itemAt, render, screen, useLanguage } from '$lib/test';
 import PhoneRow from './phone-row.svelte';
 
 const strings = en.subresources;
@@ -18,7 +18,7 @@ describe('PhoneRow', () => {
       onDelete: vi.fn(),
     });
 
-    const link = screen.getAllByRole('link')[0];
+    const link = itemAt(screen.getAllByRole('link'), 0);
     expect(link.getAttribute('href')).toBe('tel:+1 555 0100');
     expect(screen.getAllByText(strings.phone.types.work).length).toBeGreaterThan(0);
   });
@@ -51,10 +51,10 @@ describe('PhoneRow', () => {
     const onDelete = vi.fn();
     render(PhoneRow, { phone: aPhone(), onEdit, onDelete });
 
-    await fireEvent.click(screen.getAllByLabelText(strings.phone.editAria)[0]);
+    await fireEvent.click(itemAt(screen.getAllByLabelText(strings.phone.editAria), 0));
     expect(onEdit).toHaveBeenCalledTimes(1);
 
-    await fireEvent.click(screen.getAllByLabelText(strings.phone.deleteAria)[0]);
+    await fireEvent.click(itemAt(screen.getAllByLabelText(strings.phone.deleteAria), 0));
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import { aFriendDate, fireEvent, render, screen, useLanguage, withDefaultLocale } from '$lib/test';
+import {
+  aFriendDate,
+  fireEvent,
+  itemAt,
+  render,
+  screen,
+  useLanguage,
+  withDefaultLocale,
+} from '$lib/test';
 import DateRow from './date-row.svelte';
 
 const strings = en.subresources;
@@ -100,8 +108,8 @@ describe('DateRow', () => {
     const onDelete = vi.fn();
     render(DateRow, { date: aFriendDate(), onEdit, onDelete });
 
-    await fireEvent.click(screen.getAllByLabelText(strings.date.editAria)[0]);
-    await fireEvent.click(screen.getAllByLabelText(strings.date.deleteAria)[0]);
+    await fireEvent.click(itemAt(screen.getAllByLabelText(strings.date.editAria), 0));
+    await fireEvent.click(itemAt(screen.getAllByLabelText(strings.date.deleteAria), 0));
 
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);

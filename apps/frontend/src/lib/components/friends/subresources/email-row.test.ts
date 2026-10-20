@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import { anEmail, fireEvent, render, screen, useLanguage } from '$lib/test';
+import { anEmail, fireEvent, itemAt, render, screen, useLanguage } from '$lib/test';
 import EmailRow from './email-row.svelte';
 
 const strings = en.subresources;
@@ -18,7 +18,9 @@ describe('EmailRow', () => {
       onDelete: vi.fn(),
     });
 
-    expect(screen.getAllByRole('link')[0].getAttribute('href')).toBe('mailto:ada@example.com');
+    expect(itemAt(screen.getAllByRole('link'), 0).getAttribute('href')).toBe(
+      'mailto:ada@example.com',
+    );
     expect(screen.getAllByText(strings.email.types.work).length).toBeGreaterThan(0);
   });
 
@@ -44,8 +46,8 @@ describe('EmailRow', () => {
     const onDelete = vi.fn();
     render(EmailRow, { email: anEmail(), onEdit, onDelete });
 
-    await fireEvent.click(screen.getAllByLabelText(strings.email.editAria)[0]);
-    await fireEvent.click(screen.getAllByLabelText(strings.email.deleteAria)[0]);
+    await fireEvent.click(itemAt(screen.getAllByLabelText(strings.email.editAria), 0));
+    await fireEvent.click(itemAt(screen.getAllByLabelText(strings.email.deleteAria), 0));
 
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);

@@ -14,12 +14,7 @@ import { Button, ConfirmDialog, Fab, headingClasses } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
-import {
-  type FriendDetailLink,
-  isOpenFriendLinkModeActive,
-  openFriendLinkModePrefix,
-  visibleFriendDetailLinks,
-} from '$lib/stores/ui';
+import { type FriendDetailLink, visibleFriendDetailLinks } from '$lib/stores/ui';
 
 const i18n = createI18n();
 
@@ -53,7 +48,6 @@ let { friend }: Props = $props();
 
 // Collectives state (loaded separately from friend data)
 let collectives = $state<ContactCollectiveSummaryResponse[]>([]);
-let collectivesLoading = $state(false);
 
 // Load collectives on mount
 $effect(() => {
@@ -69,13 +63,10 @@ const collectiveDescriptor = createCollectiveDescriptor(() => {
 });
 
 async function loadCollectives() {
-  collectivesLoading = true;
   try {
     collectives = await getCollectivesForFriend(friend.id);
   } catch (err) {
     console.error('Failed to load collectives:', err);
-  } finally {
-    collectivesLoading = false;
   }
 }
 

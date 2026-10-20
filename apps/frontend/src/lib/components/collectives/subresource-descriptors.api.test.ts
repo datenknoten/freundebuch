@@ -37,7 +37,18 @@ function formDriven(descriptor: SubresourceDescriptor) {
   return descriptor;
 }
 
-const byKey = Object.fromEntries(contactDescriptors.map((d) => [d.key, formDriven(d)]));
+function contactDescriptor(key: string) {
+  const descriptor = contactDescriptors.find((d) => d.key === key);
+  if (descriptor === undefined) throw new Error(`no ${key} descriptor`);
+  return formDriven(descriptor);
+}
+
+const byKey = {
+  phone: contactDescriptor('phone'),
+  email: contactDescriptor('email'),
+  address: contactDescriptor('address'),
+  url: contactDescriptor('url'),
+};
 const circle = formDriven(circleDescriptor);
 
 afterEach(() => {
@@ -131,7 +142,7 @@ describe('descriptor formProps', () => {
     const url = aUrl();
     const urlProps = byKey.url.formProps?.(ctx({ editingData: url }));
     expect(urlProps).toMatchObject({ initialData: url });
-    expect(urlProps.defaultPrimary).toBeUndefined();
+    expect(urlProps?.defaultPrimary).toBeUndefined();
   });
 
   it('hands circle the current items as existingCircles', () => {

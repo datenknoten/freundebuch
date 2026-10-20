@@ -5,6 +5,7 @@ import {
   aCollective,
   aCollectiveMember,
   fireEvent,
+  itemAt,
   render,
   screen,
   waitFor,
@@ -135,7 +136,7 @@ describe('MemberSection', () => {
     const { collective } = aCollectiveWithMembers();
     render(MemberSection, { collective });
 
-    await fireEvent.click(screen.getAllByTitle('collectives.removeMember')[0]);
+    await fireEvent.click(itemAt(screen.getAllByTitle('collectives.removeMember'), 0));
     await fireEvent.click(screen.getByText('common.remove'));
 
     await waitFor(() => expect(errorSpy).toHaveBeenCalled());
@@ -156,7 +157,7 @@ describe('MemberSection', () => {
     const { collective, active } = aCollectiveWithMembers();
     render(MemberSection, { collective });
 
-    await fireEvent.click(screen.getAllByTitle('collectives.removeMember')[0]);
+    await fireEvent.click(itemAt(screen.getAllByTitle('collectives.removeMember'), 0));
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText(active.contact.displayName)).toBeTruthy();
 
@@ -169,7 +170,7 @@ describe('MemberSection', () => {
     const { collective } = aCollectiveWithMembers();
     render(MemberSection, { collective });
 
-    await fireEvent.click(screen.getAllByTitle('collectives.removeMember')[0]);
+    await fireEvent.click(itemAt(screen.getAllByTitle('collectives.removeMember'), 0));
     await fireEvent.click(screen.getByText('common.cancel'));
 
     expect(removeMember).not.toHaveBeenCalled();

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import { aUrl, render, screen, useLanguage } from '$lib/test';
+import { aUrl, itemAt, render, screen, useLanguage } from '$lib/test';
 import UrlRow from './url-row.svelte';
 
 const strings = en.subresources;
@@ -18,7 +18,7 @@ describe('UrlRow', () => {
       onDelete: vi.fn(),
     });
 
-    const link = screen.getAllByRole('link')[0];
+    const link = itemAt(screen.getAllByRole('link'), 0);
     expect(link.getAttribute('href')).toBe('https://example.com/blog');
     expect(link.getAttribute('target')).toBe('_blank');
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');

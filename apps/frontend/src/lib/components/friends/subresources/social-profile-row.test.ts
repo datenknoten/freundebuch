@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import { render, screen, useLanguage } from '$lib/test';
+import { itemAt, render, screen, useLanguage } from '$lib/test';
 import type { SocialProfileResponse } from '$shared';
 import SocialProfileRow from './social-profile-row.svelte';
 
@@ -37,7 +37,7 @@ describe('SocialProfileRow', () => {
       onDelete: vi.fn(),
     });
 
-    expect(screen.getAllByRole('link')[0].getAttribute('href')).toBe('https://x.com/ada');
+    expect(itemAt(screen.getAllByRole('link'), 0).getAttribute('href')).toBe('https://x.com/ada');
   });
 
   it('falls back to the platform label as plain text when neither is set', () => {

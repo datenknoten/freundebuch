@@ -1,5 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { anAddress, fireEvent, render, screen, useLanguage, waitFor, within } from '$lib/test';
+import {
+  anAddress,
+  fireEvent,
+  itemAt,
+  render,
+  screen,
+  useLanguage,
+  waitFor,
+  within,
+} from '$lib/test';
 import AddressRow from './address-row.svelte';
 
 // Hoisted above the mock factory so the test body and the mocked module share
@@ -84,10 +93,10 @@ describe('AddressRow', () => {
       onDelete: vi.fn(),
     });
 
-    await fireEvent.click(screen.getAllByText('Karte anzeigen')[0]);
+    await fireEvent.click(itemAt(screen.getAllByText('Karte anzeigen'), 0));
 
     // The row body renders twice (mobile + desktop), so both copies open the map.
-    const dialog = screen.getAllByRole('dialog')[0];
+    const dialog = itemAt(screen.getAllByRole('dialog'), 0);
     expect(within(dialog).getByText('Hauptstr. 1, 10115 Berlin, Deutschland')).toBeTruthy();
     // Let Leaflet finish its async mount before cleanup removes the container.
     await waitFor(() => expect(dialog.querySelector('.leaflet-container')).not.toBeNull());

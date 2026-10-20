@@ -1,11 +1,11 @@
 import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { addMember } from '$lib/api/collectives';
-import { aPhone, fireEvent, render, screen, waitFor, within } from '$lib/test';
+import { aPhone, fireEvent, itemAt, render, screen, waitFor, within } from '$lib/test';
 import { createCollectiveDescriptor } from '../friends/subresource-descriptors';
 import { CircleRow, PhoneEditForm, PhoneRow } from '../friends/subresources';
 import SubresourceSection from './subresource-section.svelte';
-import type { SubresourceDescriptor, SubresourceItem } from './types';
+import type { AuthoredDescriptor, SubresourceDescriptor, SubresourceItem } from './types';
 
 // Echo i18n keys so titles/labels are assertable without translation files.
 vi.mock('$lib/i18n/index.js', () => ({
@@ -58,7 +58,7 @@ vi.mock('$lib/api/collectives', () => ({
  * no API module mocking required.
  */
 function fakePhoneDescriptor(
-  overrides: Partial<SubresourceDescriptor> = {},
+  overrides: Partial<AuthoredDescriptor<SubresourceItem, unknown>> = {},
 ): SubresourceDescriptor {
   return {
     key: 'phone',
@@ -156,7 +156,9 @@ describe('SubresourceSection', () => {
     });
     renderSection(descriptor);
 
-    await fireEvent.click((await screen.findAllByLabelText('subresources.phone.editAria'))[0]);
+    await fireEvent.click(
+      itemAt(await screen.findAllByLabelText('subresources.phone.editAria'), 0),
+    );
     expect(await screen.findByText('friendDetail.modal.edit modal.type')).toBeTruthy();
 
     await fireEvent.input(await screen.findByLabelText(/subresources\.phone\.phoneNumber/), {
@@ -183,7 +185,9 @@ describe('SubresourceSection', () => {
     });
     renderSection(descriptor);
 
-    await fireEvent.click((await screen.findAllByLabelText('subresources.phone.deleteAria'))[0]);
+    await fireEvent.click(
+      itemAt(await screen.findAllByLabelText('subresources.phone.deleteAria'), 0),
+    );
     expect(await screen.findByText('modal.deletePhone')).toBeTruthy();
 
     await fireEvent.click(within(screen.getByRole('dialog')).getByText('common.delete'));
@@ -217,7 +221,9 @@ describe('SubresourceSection', () => {
     expect((await screen.findAllByText('+1 555 0200')).length).toBeGreaterThan(0);
 
     // Delete -> remove() then reload() drops it again.
-    await fireEvent.click((await screen.findAllByLabelText('subresources.phone.deleteAria'))[0]);
+    await fireEvent.click(
+      itemAt(await screen.findAllByLabelText('subresources.phone.deleteAria'), 0),
+    );
     await fireEvent.click(within(screen.getByRole('dialog')).getByText('common.delete'));
     await waitFor(() => expect(remove).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.queryAllByText('+1 555 0200')).toHaveLength(0));
@@ -233,7 +239,9 @@ describe('SubresourceSection', () => {
     const descriptor = fakePhoneDescriptor({ load, update, reloadAfterMutate: true });
     renderSection(descriptor);
 
-    await fireEvent.click((await screen.findAllByLabelText('subresources.phone.editAria'))[0]);
+    await fireEvent.click(
+      itemAt(await screen.findAllByLabelText('subresources.phone.editAria'), 0),
+    );
     await fireEvent.input(await screen.findByLabelText(/subresources\.phone\.phoneNumber/), {
       target: { value: '+1 555 0200' },
     });
@@ -289,7 +297,9 @@ describe('SubresourceSection', () => {
     });
 
     // Open the edit modal on the first collective.
-    await fireEvent.click((await screen.findAllByLabelText('subresources.phone.editAria'))[0]);
+    await fireEvent.click(
+      itemAt(await screen.findAllByLabelText('subresources.phone.editAria'), 0),
+    );
     expect(await screen.findByText('friendDetail.modal.edit modal.type')).toBeTruthy();
 
     // Navigate to another collective without unmounting the component.
@@ -426,7 +436,7 @@ describe('SubresourceSection', () => {
     const reloadLoad = deferred<SubresourceItem[]>();
     const pending = [mountLoad.promise, reloadLoad.promise];
     let call = 0;
-    const load = vi.fn(() => pending[call++]);
+    const load = vi.fn(() => itemAt(pending, call++));
     // reloadAfterMutate makes create() trigger a second reload for the same id.
     const descriptor = fakePhoneDescriptor({
       load,

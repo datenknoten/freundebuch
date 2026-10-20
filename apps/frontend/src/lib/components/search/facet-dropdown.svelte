@@ -159,9 +159,9 @@ function closeDropdown() {
 
 // Method to toggle filter by index (called from keyboard shortcuts)
 export function toggleFilterByIndex(index: number) {
-  if (index < 0 || index >= currentCategoryValues.length) return;
-  const { field, value } = currentCategoryValues[index];
-  toggleFilter(field, value);
+  const entry = currentCategoryValues[index];
+  if (entry === undefined) return;
+  toggleFilter(entry.field, entry.value);
 }
 
 // Count total active filters (only array-type fields)
@@ -207,10 +207,9 @@ function handleClickOutside(event: MouseEvent) {
 }
 
 $effect(() => {
-  if (isOpen) {
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }
+  if (!isOpen) return undefined;
+  document.addEventListener('click', handleClickOutside);
+  return () => document.removeEventListener('click', handleClickOutside);
 });
 </script>
 

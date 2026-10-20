@@ -61,12 +61,6 @@ const filteredTypes = $derived(() => {
   );
 });
 
-// Get the selected type's label
-const selectedLabel = $derived(() => {
-  const type = allTypes().find((t) => t.id === value);
-  return type?.label ?? '';
-});
-
 let containerElement: HTMLDivElement;
 
 onMount(() => {
@@ -118,16 +112,19 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       highlightedIndex = Math.max(highlightedIndex - 1, -1);
       break;
-    case 'Enter':
+    case 'Enter': {
       e.preventDefault();
-      if (highlightedIndex >= 0 && highlightedIndex < types.length) {
-        selectType(types[highlightedIndex], true);
-      } else if (query.trim() && types.length > 0) {
+      const highlighted = types[highlightedIndex];
+      const topMatch = types[0];
+      if (highlighted !== undefined) {
+        selectType(highlighted, true);
+      } else if (query.trim() && topMatch !== undefined) {
         // No explicit highlight, but the user searched and there are matches:
         // select the top match so Enter confirms the visible result.
-        selectType(types[0], true);
+        selectType(topMatch, true);
       }
       break;
+    }
     case 'Escape':
       showDropdown = false;
       highlightedIndex = -1;

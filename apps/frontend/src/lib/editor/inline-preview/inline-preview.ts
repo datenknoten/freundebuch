@@ -88,8 +88,8 @@ function linkIconHitTarget(event: MouseEvent, root?: HTMLElement): HTMLElement |
   // opener and treat pointerdown in that zone as "on the icon", not
   // "inside editable link text".
   const rects = Array.from(linkEl.getClientRects());
-  if (rects.length === 0) return null;
-  const lastRect = rects[rects.length - 1];
+  const lastRect = rects.at(-1);
+  if (lastRect === undefined) return null;
   const emSize = parseFloat(window.getComputedStyle(linkEl).fontSize);
   const iconZone = emSize * 1.25;
   const onIcon =
@@ -219,7 +219,7 @@ const INLINE_MARK_CLASS: Record<string, string> = {
 };
 
 class BulletWidget extends WidgetType {
-  eq(): boolean {
+  override eq(): boolean {
     return true;
   }
   toDOM(): HTMLElement {
@@ -232,7 +232,7 @@ class BulletWidget extends WidgetType {
     span.textContent = '•';
     return span;
   }
-  ignoreEvent(): boolean {
+  override ignoreEvent(): boolean {
     return false;
   }
 }
@@ -244,7 +244,7 @@ class TaskCheckboxWidget extends WidgetType {
     super();
   }
 
-  eq(other: TaskCheckboxWidget): boolean {
+  override eq(other: TaskCheckboxWidget): boolean {
     return other.checked === this.checked;
   }
 
@@ -277,7 +277,7 @@ class TaskCheckboxWidget extends WidgetType {
     return input;
   }
 
-  ignoreEvent(event: Event): boolean {
+  override ignoreEvent(event: Event): boolean {
     return event.type === 'mousedown' || event.type === 'click';
   }
 }
@@ -809,7 +809,7 @@ function insertTightListItem(view: EditorView): boolean {
   const prefix = lineText.match(/^(\s*)([-*+])(\s+)/);
   if (!prefix) return false;
 
-  const [whole, indent, marker] = prefix;
+  const [whole, indent = '', marker] = prefix;
   const rest = lineText.slice(whole.length);
 
   const taskMatch = rest.match(/^(\[[ xX]\])(\s*)/);

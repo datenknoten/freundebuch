@@ -1,5 +1,6 @@
 import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { itemAt } from '$lib/test/item-at';
 
 vi.mock('$shared', () => ({}));
 
@@ -90,7 +91,7 @@ describe('apiRequest', () => {
       body: formData,
     });
 
-    const callArgs = vi.mocked(fetch).mock.calls[0];
+    const callArgs = itemAt(vi.mocked(fetch).mock.calls, 0);
     const headers = (callArgs[1] as RequestInit).headers as Record<string, string>;
     expect(headers['Content-Type']).toBeUndefined();
   });

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { itemAt } from '$lib/test/item-at';
 import { retryWithBackoff } from './retry.js';
 
 describe('retryWithBackoff', () => {
@@ -65,7 +66,7 @@ describe('retryWithBackoff', () => {
     await vi.runAllTimersAsync();
     await promise;
 
-    const [, error] = onRetry.mock.calls[0];
+    const [, error] = itemAt(onRetry.mock.calls, 0);
     expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe('string failure');
   });

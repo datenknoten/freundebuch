@@ -88,7 +88,11 @@ export function getData(): typeof AddressInputSchema.inferIn {
 export function isValid(): boolean {
   // At minimum, require a country and some address content
   const data = getData();
-  return isCountryCode(data.country) && !!(data.city || data.street_line1 || data.postal_code);
+  return (
+    data.country !== undefined &&
+    isCountryCode(data.country) &&
+    !!(data.city || data.street_line1 || data.postal_code)
+  );
 }
 
 // Parse initial street line 1 to extract street name and house number
@@ -97,7 +101,7 @@ function parseStreetLine1(streetLine1?: string): { street: string; houseNumber: 
   // Try to extract house number from end of street line
   const match = streetLine1.match(/^(.+?)\s+(\d+\S*)$/);
   if (match) {
-    return { street: match[1], houseNumber: match[2] };
+    return { street: match[1] ?? '', houseNumber: match[2] ?? '' };
   }
   return { street: streetLine1, houseNumber: '' };
 }

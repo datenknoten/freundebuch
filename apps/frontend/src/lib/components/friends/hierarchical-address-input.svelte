@@ -130,9 +130,10 @@ async function loadCities() {
   try {
     cities = await addressApi.getCities(selectedCountryCode, postalCode);
     // Auto-select if only one result
-    if (cities.length === 1) {
-      selectedCity = cities[0].city;
-      selectedState = cities[0].state || '';
+    const onlyCity = cities.length === 1 ? cities[0] : undefined;
+    if (onlyCity !== undefined) {
+      selectedCity = onlyCity.city;
+      selectedState = onlyCity.state || '';
       // Load streets for the auto-selected city
       scheduleStreetLoad();
     }

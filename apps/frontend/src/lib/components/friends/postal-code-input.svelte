@@ -67,12 +67,14 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       highlightedIndex = Math.max(highlightedIndex - 1, -1);
       break;
-    case 'Enter':
-      if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
+    case 'Enter': {
+      const highlighted = suggestions[highlightedIndex];
+      if (highlighted !== undefined) {
         e.preventDefault();
-        selectSuggestion(suggestions[highlightedIndex]);
+        selectSuggestion(highlighted);
       }
       break;
+    }
     case 'Escape':
       showDropdown = false;
       highlightedIndex = -1;

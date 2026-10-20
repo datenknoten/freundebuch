@@ -22,7 +22,7 @@ interface Props {
   onchange?: () => void;
 }
 
-let { friendId, existingRelationshipFriendIds = [], disabled = false, onchange }: Props = $props();
+let { friendId, disabled = false, onchange }: Props = $props();
 
 let selectedFriend = $state<FriendSearchResultResponse | null>(null);
 let relationshipTypeId = $state<RelationshipTypeId>('friend');

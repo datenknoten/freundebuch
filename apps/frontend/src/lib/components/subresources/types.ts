@@ -119,8 +119,11 @@ export function addDetailOption(
   };
 }
 
-/** Everything both add paths share. */
-interface SubresourceDescriptorBase<TItem extends SubresourceItem> {
+/**
+ * Everything both add paths share. `TRow` follows the same split as the form
+ * component: `never` props for authors, spreadable props for the section.
+ */
+interface SubresourceDescriptorBase<TItem extends SubresourceItem, TRow> {
   key: string;
   /** Window event the keyboard system dispatches to open this section's add modal. */
   shortcutEvent: string;
@@ -156,7 +159,7 @@ interface SubresourceDescriptorBase<TItem extends SubresourceItem> {
    * the section unmounts, so a scheduled refetch never lands on another owner.
    */
   afterSave?: (reload: () => Promise<void>, ownerId: string) => () => void;
-  RowComponent: Component;
+  RowComponent: TRow;
   rowProps: (item: TItem) => Record<string, unknown>;
   /**
    * Whether this row registers a keyboard-openable link. Rows that do not get
@@ -202,14 +205,17 @@ interface AddComponentArm<TAdd> {
 }
 
 /** A descriptor as its author writes it, checked against its own types. */
-export type AuthoredDescriptor<
-  TItem extends SubresourceItem,
-  TInput,
-> = SubresourceDescriptorBase<TItem> &
+export type AuthoredDescriptor<TItem extends SubresourceItem, TInput> = SubresourceDescriptorBase<
+  TItem,
+  Component<never>
+> &
   (FormDrivenArm<TItem, TInput, AuthoredFormComponent<TInput>> | AddComponentArm<Component<never>>);
 
 /** A descriptor as the section consumes it, with the item/input types erased. */
-export type SubresourceDescriptor = SubresourceDescriptorBase<SubresourceItem> &
+export type SubresourceDescriptor = SubresourceDescriptorBase<
+  SubresourceItem,
+  Component<Record<string, unknown>>
+> &
   (
     | FormDrivenArm<SubresourceItem, unknown, SubresourceFormComponent>
     | AddComponentArm<Component<Record<string, unknown>>>

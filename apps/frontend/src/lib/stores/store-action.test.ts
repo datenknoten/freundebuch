@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { itemAt } from '$lib/test/item-at';
 
 // Mock the auth API module to provide ApiError without triggering the full auth store chain
 vi.mock('../api/auth.js', () => {
@@ -32,7 +33,9 @@ function createMockUpdate() {
   const states: TestState[] = [];
   const update = (fn: (state: TestState) => TestState) => {
     const current =
-      states.length > 0 ? states[states.length - 1] : { isLoading: false, error: null, data: null };
+      states.length > 0
+        ? itemAt(states, states.length - 1)
+        : { isLoading: false, error: null, data: null };
     states.push(fn(current));
   };
   return { update, states };
@@ -45,8 +48,8 @@ describe('storeAction', () => {
 
     await storeAction(update, apiFn, () => ({}), 'fallback');
 
-    expect(states[0].isLoading).toBe(true);
-    expect(states[0].error).toBeNull();
+    expect(itemAt(states, 0).isLoading).toBe(true);
+    expect(itemAt(states, 0).error).toBeNull();
   });
 
   it('sets isLoading to false after success', async () => {
@@ -55,7 +58,7 @@ describe('storeAction', () => {
 
     await storeAction(update, apiFn, () => ({}), 'fallback');
 
-    const finalState = states[states.length - 1];
+    const finalState = itemAt(states, states.length - 1);
     expect(finalState.isLoading).toBe(false);
     expect(finalState.error).toBeNull();
   });
@@ -66,7 +69,7 @@ describe('storeAction', () => {
 
     await storeAction(update, apiFn, (_state, result) => ({ data: result as string }), 'fallback');
 
-    const finalState = states[states.length - 1];
+    const finalState = itemAt(states, states.length - 1);
     expect(finalState.data).toBe('new-data');
   });
 
@@ -86,7 +89,7 @@ describe('storeAction', () => {
 
     await expect(storeAction(update, apiFn, () => ({}), 'fallback')).rejects.toThrow(apiError);
 
-    const finalState = states[states.length - 1];
+    const finalState = itemAt(states, states.length - 1);
     expect(finalState.error).toBe('Bad request');
     expect(finalState.isLoading).toBe(false);
   });
@@ -97,7 +100,7 @@ describe('storeAction', () => {
 
     await expect(storeAction(update, apiFn, () => ({}), 'Something went wrong')).rejects.toThrow();
 
-    const finalState = states[states.length - 1];
+    const finalState = itemAt(states, states.length - 1);
     expect(finalState.error).toBe('Something went wrong');
   });
 
@@ -115,7 +118,7 @@ describe('storeAction', () => {
       ),
     ).rejects.toThrow();
 
-    const finalState = states[states.length - 1];
+    const finalState = itemAt(states, states.length - 1);
     expect(finalState.data).toBeNull();
     expect(finalState.error).toBe('fallback');
   });

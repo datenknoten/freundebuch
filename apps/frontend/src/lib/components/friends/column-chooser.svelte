@@ -66,10 +66,9 @@ function handleClickOutside(event: MouseEvent) {
 }
 
 $effect(() => {
-  if (isOpen) {
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }
+  if (!isOpen) return undefined;
+  document.addEventListener('click', handleClickOutside);
+  return () => document.removeEventListener('click', handleClickOutside);
 });
 </script>
 

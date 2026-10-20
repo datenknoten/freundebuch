@@ -2,7 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$shared', () => ({}));
 
-import { aCollective, aCollectiveMember, jsonResponse, restoreFetch, stubFetch } from '$lib/test';
+import {
+  aCollective,
+  aCollectiveMember,
+  itemAt,
+  jsonResponse,
+  restoreFetch,
+  stubFetch,
+} from '$lib/test';
 import {
   addMember,
   createCollective,
@@ -47,7 +54,7 @@ describe('collectives API', () => {
 
       await listCollectives({ page: 2, pageSize: 50, typeId: 'club-1', includeDeleted: true });
 
-      const url = fetchMock.mock.calls[0][0] as string;
+      const url = itemAt(fetchMock.mock.calls, 0)[0] as string;
       expect(url).toContain('page=2');
       expect(url).toContain('page_size=50');
       expect(url).toContain('type_id=club-1');

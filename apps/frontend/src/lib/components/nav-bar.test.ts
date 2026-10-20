@@ -1,7 +1,7 @@
 import { get, readable, writable } from 'svelte/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isModalOpen, resetOpenOverlays } from '$lib/stores/ui';
-import { cleanup, fireEvent, render, screen } from '$lib/test';
+import { cleanup, fireEvent, itemAt, render, screen } from '$lib/test';
 import NavBar from './nav-bar.svelte';
 
 // i18n returns the key so assertions can target stable label keys.
@@ -48,7 +48,7 @@ describe('NavBar search trigger', () => {
     const triggers = screen.getAllByLabelText('aria.search');
     expect(triggers.length).toBeGreaterThan(0);
 
-    await fireEvent.click(triggers[0]);
+    await fireEvent.click(itemAt(triggers, 0));
 
     expect(searchOpen).toHaveBeenCalledTimes(1);
   });

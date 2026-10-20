@@ -35,8 +35,6 @@ function sanitizeHeadline(html: string | null | undefined): string {
   return DOMPurify.sanitize(html, { ALLOWED_TAGS: ['mark'] });
 }
 
-let containerElement = $state<HTMLDivElement | undefined>(undefined);
-
 // Get store values reactively
 let searchState = $derived($search);
 let facets = $derived($searchFacets);
@@ -104,19 +102,16 @@ function handleKeydown(e: KeyboardEvent) {
 function handleSelect() {
   if (searchState.query.trim().length < 2) {
     // Selecting from recent searches
-    if (
-      searchState.recentSearches.length > 0 &&
-      searchState.selectedIndex < searchState.recentSearches.length
-    ) {
-      const selectedQuery = searchState.recentSearches[searchState.selectedIndex];
+    const selectedQuery = searchState.recentSearches[searchState.selectedIndex];
+    if (selectedQuery !== undefined) {
       search.setQuery(selectedQuery);
     }
     return;
   }
 
   // Selecting from search results
-  if (searchState.results.length > 0 && searchState.selectedIndex < searchState.results.length) {
-    const friend = searchState.results[searchState.selectedIndex];
+  const friend = searchState.results[searchState.selectedIndex];
+  if (friend !== undefined) {
     navigateToFriend(friend.id);
   }
 }
@@ -206,7 +201,6 @@ onMount(() => {
 >
   <!-- Modal container -->
   <div
-    bind:this={containerElement}
     use:focusTrap={$isSearchOpen}
     class="w-full max-w-xl overflow-hidden {surfaceClasses.modal}"
   >

@@ -99,10 +99,11 @@ onMount(async () => {
 
 // Auto-select first role when collective changes
 $effect(() => {
-  if (selectedCollectiveId && rolesForSelected.length > 0) {
+  const firstRole = rolesForSelected[0];
+  if (selectedCollectiveId && firstRole !== undefined) {
     // Only set if current selection is invalid
     if (!rolesForSelected.find((r) => r.id === selectedRoleId)) {
-      selectedRoleId = rolesForSelected[0].id;
+      selectedRoleId = firstRole.id;
     }
   } else {
     selectedRoleId = '';

@@ -7,7 +7,7 @@ import FriendList from '$lib/components/friends/friend-list.svelte';
 import { Button, PageShell } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { friendsPageSize, isAuthInitialized } from '$lib/stores/auth';
-import { friendListFilter, friends } from '$lib/stores/friends';
+import { friends } from '$lib/stores/friends';
 import type { FacetFilters } from '$shared';
 
 const i18n = createI18n();

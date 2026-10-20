@@ -31,7 +31,7 @@ let showAddMember = $state(false);
 let showDeactivateModal = $state(false);
 let deactivatingMemberId = $state<string | null>(null);
 let deactivateReason = $state('');
-let deactivateDate = $state(new Date().toISOString().split('T')[0]);
+let deactivateDate = $state(new Date().toISOString().slice(0, 10));
 
 // Member removal confirmation (ConfirmDialog owns the in-flight state)
 let removeConfirmMemberId = $state<string | null>(null);
@@ -75,7 +75,7 @@ async function handleAddMember(contactId: string, roleId: string, skipAutoRelati
 function handleDeactivateClick(memberId: string) {
   deactivatingMemberId = memberId;
   deactivateReason = '';
-  deactivateDate = new Date().toISOString().split('T')[0];
+  deactivateDate = new Date().toISOString().slice(0, 10);
   showDeactivateModal = true;
 }
 

@@ -13,7 +13,7 @@ let { email, size = 'md' }: Props = $props();
 function getInitial(email: string): string {
   const localPart = email.split('@')[0];
   if (!localPart) return '?';
-  return localPart[0].toUpperCase();
+  return localPart.charAt(0).toUpperCase();
 }
 
 const sizeClasses = {

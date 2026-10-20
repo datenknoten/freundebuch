@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, useLanguage, within } from '$lib/test';
+import { fireEvent, itemAt, render, screen, useLanguage, within } from '$lib/test';
 import type { ColumnId, FriendGridItem } from '$shared';
 import FriendGrid from './friend-grid.svelte';
 
@@ -62,8 +62,8 @@ function bodyRows(): HTMLElement[] {
 
 /** The text of the desktop table cell for `column` in the first body row. */
 function cellText(columns: ColumnId[], column: ColumnId): string {
-  const cells = within(bodyRows()[0]).getAllByRole('cell');
-  return cells[columns.indexOf(column)].textContent?.trim() ?? '';
+  const cells = within(itemAt(bodyRows(), 0)).getAllByRole('cell');
+  return itemAt(cells, columns.indexOf(column)).textContent?.trim() ?? '';
 }
 
 function header(name: string): HTMLElement {
@@ -169,7 +169,9 @@ describe('FriendGrid', () => {
         columns,
         items: [anItem({ isFavorite: true }), anItem({ displayName: 'Grace Hopper' })],
       });
-      const [favorite, other] = bodyRows();
+      const rows = bodyRows();
+      const favorite = itemAt(rows, 0);
+      const other = itemAt(rows, 1);
 
       expect(within(favorite).queryAllByRole('img')).toHaveLength(1);
       expect(within(other).queryAllByRole('img')).toHaveLength(0);
@@ -289,7 +291,7 @@ describe('FriendGrid', () => {
     it('opens the friend when the row is clicked', async () => {
       renderGrid({ items: [anItem({ id: 'friend-42' })] });
 
-      await fireEvent.click(bodyRows()[0]);
+      await fireEvent.click(itemAt(bodyRows(), 0));
 
       expect(navigation.goto).toHaveBeenCalledWith('/friends/friend-42');
     });
@@ -307,7 +309,7 @@ describe('FriendGrid', () => {
         expected,
       );
 
-      await fireEvent.click(bodyRows()[0]);
+      await fireEvent.click(itemAt(bodyRows(), 0));
       expect(navigation.goto).toHaveBeenCalledWith(expected);
     });
 
@@ -330,7 +332,9 @@ describe('FriendGrid', () => {
       });
 
       expect(header('Match')).toBeTruthy();
-      const [byEmail, byName] = bodyRows();
+      const rows = bodyRows();
+      const byEmail = itemAt(rows, 0);
+      const byName = itemAt(rows, 1);
       expect(within(byEmail).getByText('Email')).toBeTruthy();
       expect(within(byName).queryByText('Email')).toBeNull();
     });
@@ -344,7 +348,7 @@ describe('FriendGrid', () => {
       const marks = document.querySelectorAll('mark');
       // One in the table, one in the card.
       expect(marks).toHaveLength(2);
-      expect(marks[0].textContent).toBe('Babbage');
+      expect(itemAt(marks, 0).textContent).toBe('Babbage');
       expect(document.querySelector('script')).toBeNull();
     });
 
@@ -406,9 +410,11 @@ describe('FriendGrid', () => {
           anItem({ displayName: 'Grace Hopper' }),
         ],
       });
-      const [marked, plain] = card()
+      const items = card()
         .getAllByRole('listitem')
         .map((item) => within(item));
+      const marked = itemAt(items, 0);
+      const plain = itemAt(items, 1);
 
       // The favorite star is one image more than the plain card's chevron.
       expect(marked.getAllByRole('img')).toHaveLength(plain.getAllByRole('img').length + 1);

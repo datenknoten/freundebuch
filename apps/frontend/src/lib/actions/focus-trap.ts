@@ -27,10 +27,9 @@ export function focusTrap(node: HTMLElement, enabled: boolean = true) {
     if (!active || event.key !== 'Tab') return;
 
     const elements = focusable(node);
-    if (elements.length === 0) return;
-
     const first = elements[0];
     const last = elements[elements.length - 1];
+    if (first === undefined || last === undefined) return;
 
     // Focus sits outside the trapped set (a backdrop with tabindex="-1", or a
     // node that has since been removed): Tab would walk into the page behind.

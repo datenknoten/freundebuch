@@ -104,16 +104,19 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       highlightedIndex = Math.max(highlightedIndex - 1, -1);
       break;
-    case 'Enter':
+    case 'Enter': {
       e.preventDefault();
-      if (highlightedIndex >= 0 && highlightedIndex < filteredResults.length) {
-        addFriend(filteredResults[highlightedIndex]);
-      } else if (query.trim() && filteredResults.length > 0) {
+      const highlighted = filteredResults[highlightedIndex];
+      const topMatch = filteredResults[0];
+      if (highlighted !== undefined) {
+        addFriend(highlighted);
+      } else if (query.trim() && topMatch !== undefined) {
         // No explicit highlight, but the user searched and there are matches:
         // add the top match so Enter confirms the visible result.
-        addFriend(filteredResults[0]);
+        addFriend(topMatch);
       }
       break;
+    }
     case 'Escape':
       showDropdown = false;
       highlightedIndex = -1;

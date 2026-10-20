@@ -71,7 +71,7 @@ function createAuthStore() {
         const result = await authClient.signUp.email({
           email,
           password,
-          name: email.split('@')[0],
+          name: email.split('@')[0] ?? '',
         });
 
         if (result.error) {

@@ -97,11 +97,11 @@ function isInsideFencedCodeBeforeLine(doc: string, lineNumber: number): boolean 
   let markerLength = 0;
 
   for (let i = 0; i < lineNumber - 1; i++) {
-    const match = lines[i].match(/^ {0,3}(`{3,}|~{3,})/);
-    if (!match) continue;
+    const fence = lines[i]?.match(/^ {0,3}(`{3,}|~{3,})/)?.[1];
+    if (fence === undefined) continue;
 
-    const currentMarker = match[1][0] as '`' | '~';
-    const currentLength = match[1].length;
+    const currentMarker = fence.charAt(0) as '`' | '~';
+    const currentLength = fence.length;
     if (!marker) {
       marker = currentMarker;
       markerLength = currentLength;

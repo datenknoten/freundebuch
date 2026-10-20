@@ -16,16 +16,17 @@
  */
 export function createUpdateRecorder<T>(initial: T) {
   const states: T[] = [];
+  let latest = initial;
   const update = (fn: (state: T) => T): void => {
-    const current = states.length > 0 ? states[states.length - 1] : initial;
-    states.push(fn(current));
+    latest = fn(latest);
+    states.push(latest);
   };
   return {
     update,
     states,
     /** The most recently recorded state, or `initial` if none yet. */
     get last(): T {
-      return states.length > 0 ? states[states.length - 1] : initial;
+      return latest;
     },
   };
 }

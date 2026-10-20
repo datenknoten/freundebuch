@@ -119,7 +119,7 @@ function formatDate(dateString: string | undefined): string {
 function formatBirthday(dateString: string | undefined, format: BirthdayFormat): string {
   if (!dateString) return '';
   // Birthday is stored as YYYY-MM-DD
-  const [year, month, day] = dateString.split('-');
+  const [, month = '', day = ''] = dateString.split('-');
   const monthNum = parseInt(month, 10);
   const dayNum = parseInt(day, 10);
 

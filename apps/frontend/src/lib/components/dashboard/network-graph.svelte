@@ -123,7 +123,7 @@ function initializeGraph() {
   const node = g
     .append('g')
     .attr('class', 'nodes')
-    .selectAll('g')
+    .selectAll<SVGGElement, SimulationNode>('g')
     .data(nodes)
     .join('g')
     .attr('class', 'node')

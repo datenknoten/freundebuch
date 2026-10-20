@@ -74,7 +74,8 @@ function isItemDisabled(friend: FriendSearchResultResponse): string | null {
 function findNextSelectableIndex(current: number, direction: 1 | -1): number {
   let next = current + direction;
   while (next >= 0 && next < displayResults.length) {
-    if (!isItemDisabled(displayResults[next])) {
+    const candidate = displayResults[next];
+    if (candidate !== undefined && !isItemDisabled(candidate)) {
       return next;
     }
     next += direction;
@@ -205,12 +206,14 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       highlightedIndex = findNextSelectableIndex(highlightedIndex, -1);
       break;
-    case 'Enter':
+    case 'Enter': {
       e.preventDefault();
-      if (highlightedIndex >= 0 && highlightedIndex < displayResults.length) {
-        selectFriend(displayResults[highlightedIndex], true);
+      const highlighted = displayResults[highlightedIndex];
+      if (highlighted !== undefined) {
+        selectFriend(highlighted, true);
       }
       break;
+    }
     case 'Escape':
       showDropdown = false;
       highlightedIndex = -1;

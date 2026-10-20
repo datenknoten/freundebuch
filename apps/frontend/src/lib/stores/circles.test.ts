@@ -125,7 +125,7 @@ describe('circles store', () => {
 
       const ids = get(circles).circles.map((c) => c.id);
       expect(ids).toEqual(['target']);
-      expect(get(circles).circles[0].name).toBe('Merged');
+      expect(get(circles).circles[0]?.name).toBe('Merged');
     });
   });
 

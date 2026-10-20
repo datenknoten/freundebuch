@@ -110,7 +110,7 @@ describe('encounters store', () => {
     await encounters.updateEncounter('e-1', { title: 'Renamed' } as never);
 
     const state = get(encounters);
-    expect(state.encounters[0].title).toBe('Renamed');
+    expect(state.encounters[0]?.title).toBe('Renamed');
     expect(state.currentEncounter?.title).toBe('Renamed');
   });
 

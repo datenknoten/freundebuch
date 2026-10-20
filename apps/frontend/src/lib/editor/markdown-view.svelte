@@ -29,15 +29,16 @@ const defaultLinkOpen =
   md.renderer.rules.link_open ??
   ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
 md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
-  const href = tokens[idx].attrGet('href') ?? '';
+  const token = tokens[idx];
+  const href = token?.attrGet('href') ?? '';
   if (isAppRoute(href)) {
     // App-route link (e.g. an `@`-mention target) — no `target="_blank"`, so
     // SvelteKit's same-origin click interception routes it through the
     // client-side router instead of opening a new tab.
-    tokens[idx].attrSet('rel', 'noopener');
+    token?.attrSet('rel', 'noopener');
   } else {
-    tokens[idx].attrSet('target', '_blank');
-    tokens[idx].attrSet('rel', 'noopener noreferrer nofollow');
+    token?.attrSet('target', '_blank');
+    token?.attrSet('rel', 'noopener noreferrer nofollow');
   }
   return defaultLinkOpen(tokens, idx, options, env, self);
 };

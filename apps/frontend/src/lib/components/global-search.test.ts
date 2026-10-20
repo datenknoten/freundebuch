@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '$lib/test';
+import { cleanup, fireEvent, itemAt, render, screen, waitFor } from '$lib/test';
 import GlobalSearch from './global-search.svelte';
 
 // i18n returns the key so assertions can target stable label keys.
@@ -114,7 +114,7 @@ describe('GlobalSearch', () => {
     search.open();
 
     await screen.findByText('Dori');
-    const [removeDori] = screen.getAllByLabelText('aria.removeRecentSearch');
+    const removeDori = itemAt(screen.getAllByLabelText('aria.removeRecentSearch'), 0);
     await fireEvent.click(removeDori);
 
     await waitFor(() => {

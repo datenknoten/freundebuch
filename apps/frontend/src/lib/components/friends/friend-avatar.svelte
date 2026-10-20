@@ -1,7 +1,7 @@
 <script lang="ts">
 interface Props {
   displayName: string;
-  photoUrl?: string;
+  photoUrl?: string | null;
   size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
@@ -9,10 +9,12 @@ let { displayName, photoUrl, size = 'md' }: Props = $props();
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
+  const first = parts[0] ?? '';
   if (parts.length === 1) {
-    return parts[0].substring(0, 2).toUpperCase();
+    return first.substring(0, 2).toUpperCase();
   }
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  const last = parts.at(-1) ?? '';
+  return (first.charAt(0) + last.charAt(0)).toUpperCase();
 }
 
 const sizeClasses = {

@@ -90,19 +90,22 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       highlightedIndex = Math.max(highlightedIndex - 1, -1);
       break;
-    case 'Enter':
+    case 'Enter': {
       e.preventDefault();
+      const highlighted = list[highlightedIndex];
+      const topMatch = list[0];
       if (highlightedIndex === list.length) {
         manualEntry = true;
         showDropdown = false;
-      } else if (highlightedIndex >= 0 && highlightedIndex < list.length) {
-        selectNumber(list[highlightedIndex]);
-      } else if (query.trim() && list.length > 0) {
+      } else if (highlighted !== undefined) {
+        selectNumber(highlighted);
+      } else if (query.trim() && topMatch !== undefined) {
         // No explicit highlight, but the user searched and there are matches:
         // select the top match so Enter confirms the visible result.
-        selectNumber(list[0]);
+        selectNumber(topMatch);
       }
       break;
+    }
     case 'Escape':
       showDropdown = false;
       highlightedIndex = -1;

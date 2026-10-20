@@ -23,7 +23,6 @@ const RESISTANCE = 0.8; // Movement dampening
 // Touch state
 let startX = $state(0);
 let startY = $state(0);
-let currentX = $state(0);
 let swipeOffset = $state(0);
 let isSwiping = $state(false);
 let isHorizontalSwipe = $state<boolean | null>(null);
@@ -31,9 +30,10 @@ let hapticTriggered = $state(false);
 
 function handleTouchStart(e: TouchEvent) {
   if (disabled) return;
-  startX = e.touches[0].clientX;
-  startY = e.touches[0].clientY;
-  currentX = startX;
+  const touch = e.touches[0];
+  if (touch === undefined) return;
+  startX = touch.clientX;
+  startY = touch.clientY;
   isSwiping = true;
   isHorizontalSwipe = null;
   hapticTriggered = false;
@@ -42,8 +42,10 @@ function handleTouchStart(e: TouchEvent) {
 function handleTouchMove(e: TouchEvent) {
   if (!isSwiping || disabled) return;
 
-  const touchX = e.touches[0].clientX;
-  const touchY = e.touches[0].clientY;
+  const touch = e.touches[0];
+  if (touch === undefined) return;
+  const touchX = touch.clientX;
+  const touchY = touch.clientY;
   const deltaX = touchX - startX;
   const deltaY = touchY - startY;
 
@@ -62,7 +64,6 @@ function handleTouchMove(e: TouchEvent) {
   // Prevent vertical scrolling during horizontal swipe
   e.preventDefault();
 
-  currentX = touchX;
   // Apply resistance (0.8x movement)
   swipeOffset = deltaX * RESISTANCE;
 

@@ -1,8 +1,6 @@
 <script lang="ts">
-import { onMount } from 'svelte';
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import FaceSmile from 'svelte-heros-v2/FaceSmile.svelte';
-import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import EncounterDetail from '$lib/components/encounters/encounter-detail.svelte';
 import EncounterForm from '$lib/components/encounters/encounter-form.svelte';

@@ -16,7 +16,6 @@ let preSelectedFriend = $derived.by<FriendSearchResultResponse | undefined>(() =
     return {
       id: friendId,
       displayName: friendName,
-      photoThumbnailUrl: null,
     };
   }
   return undefined;

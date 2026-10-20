@@ -73,16 +73,19 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       highlightedIndex = Math.max(highlightedIndex - 1, -1);
       break;
-    case 'Enter':
+    case 'Enter': {
       e.preventDefault();
-      if (highlightedIndex >= 0 && highlightedIndex < list.length) {
-        selectCountry(list[highlightedIndex], true);
-      } else if (query.trim() && list.length > 0) {
+      const highlighted = list[highlightedIndex];
+      const topMatch = list[0];
+      if (highlighted !== undefined) {
+        selectCountry(highlighted, true);
+      } else if (query.trim() && topMatch !== undefined) {
         // No explicit highlight, but the user searched and there are matches:
         // select the top match so Enter confirms the visible result.
-        selectCountry(list[0], true);
+        selectCountry(topMatch, true);
       }
       break;
+    }
     case 'Escape':
       showDropdown = false;
       highlightedIndex = -1;

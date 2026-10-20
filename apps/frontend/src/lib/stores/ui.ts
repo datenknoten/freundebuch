@@ -95,8 +95,8 @@ export function getIndexFromHint(hint: string): number {
 
   if (hint.length === 2) {
     // Letter + digit: a1 maps to index 9, b1 maps to index 18, etc.
-    const letter = hint[0].toLowerCase();
-    const num = parseInt(hint[1], 10);
+    const letter = hint.charAt(0).toLowerCase();
+    const num = parseInt(hint.charAt(1), 10);
 
     if (letter >= 'a' && letter <= 'z' && num >= 1 && num <= 9) {
       const letterIndex = letter.charCodeAt(0) - 97; // 'a' = 0, 'b' = 1, etc.

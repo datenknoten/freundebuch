@@ -37,14 +37,14 @@ let isEditMode = $derived(encounter !== undefined);
 // Form state
 let title = $state(encounter?.title ?? '');
 let encounterType = $state<EncounterType>(encounter?.encounterType ?? 'in_person');
-let encounterDate = $state(encounter?.encounterDate ?? new Date().toISOString().split('T')[0]);
+let encounterDate = $state(encounter?.encounterDate ?? new Date().toISOString().slice(0, 10));
 let locationText = $state(encounter?.locationText ?? '');
 let description = $state(encounter?.description ?? '');
 let selectedFriends = $state<FriendSearchResultResponse[]>(
   encounter?.friends.map((f) => ({
     id: f.id,
     displayName: f.displayName,
-    photoThumbnailUrl: f.photoUrl,
+    photoThumbnailUrl: f.photoUrl ?? undefined,
   })) ?? (preSelectedFriend ? [preSelectedFriend] : []),
 );
 

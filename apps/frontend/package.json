@@ -10,6 +10,7 @@
     "@codemirror/language": "6.12.3",
     "@codemirror/state": "6.6.0",
     "@codemirror/view": "6.43.0",
+    "@datenknoten/kit": "1.1.0",
     "@lezer/common": "1.5.2",
     "@lezer/highlight": "1.2.3",
     "@sentry/sveltekit": "10.32.1",
@@ -26,6 +27,7 @@
     "svelte-i18next": "2.2.2"
   },
   "devDependencies": {
+    "@datenknoten/tsconfig": "1.1.0",
     "@playwright/test": "1.57.0",
     "@sveltejs/adapter-static": "3.0.8",
     "@sveltejs/kit": "2.70.2",
@@ -49,7 +51,6 @@
   },
   "scripts": {
     "build": "vite build",
-    "check": "aube run sync && svelte-check --tsconfig ./tsconfig.json",
     "dev": "vite dev --host",
     "preview": "vite preview",
     "sync": "svelte-kit sync",
@@ -58,7 +59,7 @@
     "test:e2e": "playwright test",
     "test:unit": "vitest run --reporter=verbose",
     "test:watch": "vitest",
-    "type-check": "svelte-check --tsconfig ./tsconfig.json"
+    "type-check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "license": "AGPL-3.0-only",
   "private": true,

@@ -13,7 +13,18 @@ function formDriven(descriptor: SubresourceDescriptor) {
 // i18n is stubbed here as an echo so the address fallback key is observable.
 const t = (key: string) => key;
 
-const byKey = Object.fromEntries(contactDescriptors.map((d) => [d.key, formDriven(d)]));
+function contactDescriptor(key: string) {
+  const descriptor = contactDescriptors.find((d) => d.key === key);
+  if (descriptor === undefined) throw new Error(`no ${key} descriptor`);
+  return formDriven(descriptor);
+}
+
+const byKey = {
+  phone: contactDescriptor('phone'),
+  email: contactDescriptor('email'),
+  address: contactDescriptor('address'),
+  url: contactDescriptor('url'),
+};
 
 const aCircle = (overrides: Partial<CollectiveCircleInfo> = {}): CollectiveCircleInfo => ({
   id: 'circle-1',

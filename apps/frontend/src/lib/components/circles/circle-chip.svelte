@@ -37,13 +37,14 @@ function getCirclePathParts(
     currentId = c.parentCircleId;
   }
 
-  if (parts.length === 0) {
+  const name = parts.at(-1);
+  if (name === undefined) {
     return { ancestors: [], name: circle.name };
   }
 
   return {
     ancestors: parts.slice(0, -1),
-    name: parts[parts.length - 1],
+    name,
   };
 }
 

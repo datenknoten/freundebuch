@@ -59,6 +59,8 @@ function formatCityDisplay(city: CityInfoResponse): string {
   }
   return city.city;
 }
+
+const singleCity = $derived(cities.length === 1 ? cities[0] : undefined);
 </script>
 
 <div class="relative">
@@ -77,10 +79,10 @@ function formatCityDisplay(city: CityInfoResponse): string {
       {disabled}
       class={formClasses.inputSm}
     />
-  {:else if cities.length === 1}
+  {:else if singleCity !== undefined}
     <!-- Auto-selected single city - show as read-only -->
     <div class="{formClasses.inputSm} bg-gray-50 text-gray-700">
-      {formatCityDisplay(cities[0])}
+      {formatCityDisplay(singleCity)}
     </div>
   {:else}
     <!-- Multiple cities - show dropdown -->

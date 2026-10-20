@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$shared', () => ({}));
 
-import { jsonResponse, restoreFetch, stubFetch } from '$lib/test';
+import { itemAt, jsonResponse, restoreFetch, stubFetch } from '$lib/test';
 import {
   createEncounter,
   deleteEncounter,
@@ -33,7 +33,7 @@ describe('encounters API', () => {
 
     await listEncounters({ page: 2, pageSize: 25, friendId: 'f-1', type: 'in_person' as never });
 
-    const url = fetchMock.mock.calls[0][0] as string;
+    const url = itemAt(fetchMock.mock.calls, 0)[0] as string;
     expect(url.startsWith('/api/encounters?')).toBe(true);
     expect(url).toContain('page=2');
     expect(url).toContain('page_size=25');
@@ -77,7 +77,7 @@ describe('encounters API', () => {
 
     await getFriendEncounters('f-1', { page: 1 });
 
-    const url = fetchMock.mock.calls[0][0] as string;
+    const url = itemAt(fetchMock.mock.calls, 0)[0] as string;
     expect(url.startsWith('/api/friends/f-1/encounters')).toBe(true);
     expect(url).not.toContain('friend_id');
     expect(url).toContain('page=1');

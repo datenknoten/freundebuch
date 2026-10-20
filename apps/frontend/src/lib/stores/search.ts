@@ -44,12 +44,12 @@ const initialState: SearchState = {
 /**
  * Debounce helper
  */
-function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return ((...args: unknown[]) => {
+function debounce<TArgs extends unknown[]>(fn: (...args: TArgs) => void, delay: number) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  return (...args: TArgs) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => fn(...args), delay);
-  }) as T;
+  };
 }
 
 /**

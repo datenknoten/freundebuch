@@ -89,20 +89,23 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       highlightedIndex = Math.max(highlightedIndex - 1, -1);
       break;
-    case 'Enter':
+    case 'Enter': {
       e.preventDefault();
+      const highlighted = list[highlightedIndex];
+      const topMatch = list[0];
       if (highlightedIndex === list.length) {
         // "Enter manually" option selected
         manualEntry = true;
         showDropdown = false;
-      } else if (highlightedIndex >= 0 && highlightedIndex < list.length) {
-        selectStreet(list[highlightedIndex]);
-      } else if (query.trim() && list.length > 0) {
+      } else if (highlighted !== undefined) {
+        selectStreet(highlighted);
+      } else if (query.trim() && topMatch !== undefined) {
         // No explicit highlight, but the user searched and there are matches:
         // select the top match so Enter confirms the visible result.
-        selectStreet(list[0]);
+        selectStreet(topMatch);
       }
       break;
+    }
     case 'Escape':
       showDropdown = false;
       highlightedIndex = -1;
