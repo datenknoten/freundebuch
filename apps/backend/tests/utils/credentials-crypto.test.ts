@@ -7,16 +7,16 @@ import { encrypt } from '../../src/utils/encrypt.js';
 import { encryptOptional } from '../../src/utils/encrypt-optional.js';
 import { isEncrypted } from '../../src/utils/is-encrypted.js';
 import { tryDecrypt } from '../../src/utils/try-decrypt.js';
+import { TEST_AUTH_SECRET } from '../helpers/test-env.js';
 
-const SECRET = 'test-better-auth-secret-test-better-auth-secret-1';
-const KEY = deriveCredentialsKey(SECRET);
+const KEY = deriveCredentialsKey(TEST_AUTH_SECRET);
 const TOKEN = '1234567890:AAExampleTelegramBotTokenValue';
 const CONTEXT = credentialContext('11111111-1111-4111-8111-111111111111', 'telegram_bot_token');
 
 /** A v1 envelope: same key and cipher, no associated data. */
-function legacyV1Envelope(plain: string): string {
+function legacyV1Envelope(plain: string) {
   const key = Buffer.from(
-    hkdfSync('sha256', SECRET, 'freundebuch', 'notification-credentials', 32),
+    hkdfSync('sha256', TEST_AUTH_SECRET, 'freundebuch', 'notification-credentials', 32),
   );
   const iv = Buffer.alloc(12, 7);
   const cipher = createCipheriv('aes-256-gcm', key, iv);
@@ -28,7 +28,7 @@ function legacyV1Envelope(plain: string): string {
   ].join(':')}`;
 }
 
-describe('credentials-crypto', () => {
+describe('credential encryption', () => {
   it('round-trips a credential', () => {
     const envelope = encrypt(TOKEN, CONTEXT, KEY);
     expect(decrypt(envelope, CONTEXT, KEY)).toBe(TOKEN);
@@ -46,9 +46,8 @@ describe('credentials-crypto', () => {
 
   it('rejects a tampered ciphertext', () => {
     const [prefix, version, iv, tag, ciphertext = ''] = encrypt(TOKEN, CONTEXT, KEY).split(':');
-    const flipped = ciphertext.startsWith('A')
-      ? `B${ciphertext.slice(1)}`
-      : `A${ciphertext.slice(1)}`;
+    const flipped =
+      ciphertext.startsWith('A') === true ? `B${ciphertext.slice(1)}` : `A${ciphertext.slice(1)}`;
     const tampered = [prefix, version, iv, tag, flipped].join(':');
 
     expect(() => decrypt(tampered, CONTEXT, KEY)).toThrow('could not be decrypted');

@@ -1,7 +1,14 @@
-import type { Hono } from 'hono';
-import type pg from 'pg';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { AppContext } from '../../src/types/context.js';
+import { parseWith } from '@datenknoten/kit/schema';
+import {
+  CollectiveListResponseSchema,
+  CollectiveMemberResponseSchema,
+  CollectiveResponseSchema,
+  CollectiveTypeListResponseSchema,
+  EmailResponseSchema,
+  FriendResponseSchema,
+} from '@freundebuch/shared/index.js';
+import { type } from 'arktype';
+import { afterAll, assert, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   type AuthTestContext,
@@ -13,13 +20,15 @@ import {
 import { authHeaders, createAuthenticatedUser, createTestFriend } from './friends.helpers.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
+const SuccessResponseSchema = type({ success: 'boolean' });
+
 /**
  * Real collectives integration suite (TEST-2). Replaces the previous inline
  * route test, which mocked auth to null so every request hit the 401 wall and
  * asserted [400, 401] — exercising nothing. Runs against real PostgreSQL and
  * covers CRUD, the transactional membership lifecycle, and sub-resources.
  */
-describe('Collectives API - Integration', () => {
+describe('Collectives API', () => {
   let context: AuthTestContext;
   let user: { externalId: string; email: string; sessionCookies: string };
   let typeId: string;
@@ -38,31 +47,63 @@ describe('Collectives API - Integration', () => {
     user = await createAuthenticatedUser(context.pool, 'collectives@example.com', 'Password123!');
     await completeTestUserOnboarding(context.pool, user.externalId);
 
-    const typesRes = await req('GET', '/api/collectives/types');
-    const type = (await json(typesRes)).types[0];
-    typeId = type.id;
-    roleId = type.roles[0].id;
+    const types = await listTypes(user.sessionCookies);
+    const [firstType] = types;
+    assert.isDefined(firstType, 'the system-default collective types exist');
+    const [firstRole] = firstType.roles;
+    assert.isDefined(firstRole, 'the first collective type has a role');
+    typeId = firstType.id;
+    roleId = firstRole.id;
   });
 
   afterAll(async () => {
     await teardownAuthTests(context);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  const appOf = (): Hono<AppContext> => context.app;
-  const poolOf = (): pg.Pool => context.pool;
-
-  async function req(method: string, path: string, body?: unknown): Promise<Response> {
-    const init: RequestInit = { method, headers: authHeaders(user.sessionCookies) };
-    if (body !== undefined) init.body = JSON.stringify(body);
-    return appOf().fetch(new Request(`http://localhost${path}`, init));
+  async function req(
+    method: string,
+    path: string,
+    body?: unknown,
+    sessionCookies = user.sessionCookies,
+  ) {
+    const init: RequestInit = { method, headers: authHeaders(sessionCookies) };
+    if (body !== undefined) {
+      init.body = JSON.stringify(body);
+    }
+    return context.app.fetch(new Request(`http://localhost${path}`, init));
   }
 
-  const json = (res: Response): Promise<any> => res.json();
+  async function listTypes(sessionCookies: string) {
+    const res = await req('GET', '/api/collectives/types', undefined, sessionCookies);
+    return parseWith(CollectiveTypeListResponseSchema, await res.json()).types;
+  }
 
-  async function createCollective(name = 'Test Collective'): Promise<string> {
+  async function familyRoles() {
+    const family = (await listTypes(user.sessionCookies)).find((t) => t.name === 'Family');
+    assert.isDefined(family, 'the Family type is a system default');
+    const parentRole = family.roles.find((r) => r.roleKey === 'parent');
+    const childRole = family.roles.find((r) => r.roleKey === 'child');
+    assert.isDefined(parentRole, 'Family defines a parent role');
+    assert.isDefined(childRole, 'Family defines a child role');
+    return { familyId: family.id, parentRoleId: parentRole.id, childRoleId: childRole.id };
+  }
+
+  async function parseCollective(res: Response) {
+    return parseWith(CollectiveResponseSchema, await res.json());
+  }
+
+  async function parseMember(res: Response) {
+    return parseWith(CollectiveMemberResponseSchema, await res.json());
+  }
+
+  async function parseFriend(res: Response) {
+    return parseWith(FriendResponseSchema, await res.json());
+  }
+
+  async function createCollective(name = 'Test Collective') {
     const res = await req('POST', '/api/collectives', { name, collective_type_id: typeId });
     expect(res.status).toBe(201);
-    return (await json(res)).id;
+    return (await parseCollective(res)).id;
   }
 
   describe('CRUD', () => {
@@ -73,26 +114,29 @@ describe('Collectives API - Integration', () => {
         notes: 'Monthly',
       });
       expect(created.status).toBe(201);
-      const body = await json(created);
+      const body = await parseCollective(created);
       expect(body.name).toBe('Book Club');
       expect(body.memberCount).toBe(0);
       const id = body.id;
 
       const got = await req('GET', `/api/collectives/${id}`);
       expect(got.status).toBe(200);
-      expect((await json(got)).name).toBe('Book Club');
+      expect((await parseCollective(got)).name).toBe('Book Club');
 
       const updated = await req('PUT', `/api/collectives/${id}`, { name: 'Book Club Renamed' });
       expect(updated.status).toBe(200);
-      expect((await json(updated)).name).toBe('Book Club Renamed');
+      expect((await parseCollective(updated)).name).toBe('Book Club Renamed');
 
       const deleted = await req('DELETE', `/api/collectives/${id}`);
       expect(deleted.status).toBe(200);
-      expect((await json(deleted)).success).toBe(true);
+      expect(parseWith(SuccessResponseSchema, await deleted.json()).success).toBe(true);
 
       // Soft-deleted: gone from the default listing.
-      const list = await req('GET', '/api/collectives');
-      expect((await json(list)).data.some((c: { id: string }) => c.id === id)).toBe(false);
+      const list = parseWith(
+        CollectiveListResponseSchema,
+        await (await req('GET', '/api/collectives')).json(),
+      );
+      expect(list.data.some((c) => c.id === id)).toBe(false);
     });
 
     it('lists collectives with the shared pagination shape', async () => {
@@ -101,7 +145,7 @@ describe('Collectives API - Integration', () => {
 
       const list = await req('GET', '/api/collectives?page=1&page_size=1');
       expect(list.status).toBe(200);
-      const body = await json(list);
+      const body = parseWith(CollectiveListResponseSchema, await list.json());
       expect(body.data.length).toBe(1);
       expect(body.pagination.totalCount).toBe(2);
       expect(body.pagination.totalPages).toBe(2);
@@ -117,21 +161,21 @@ describe('Collectives API - Integration', () => {
   describe('membership lifecycle', () => {
     it('adds, deactivates, reactivates, re-roles and removes a member', async () => {
       const collectiveId = await createCollective();
-      const friendId = await createTestFriend(poolOf(), user.externalId, 'Member One');
+      const friendId = await createTestFriend(context.pool, user.externalId, 'Member One');
 
       const added = await req('POST', `/api/collectives/${collectiveId}/members`, {
         friend_id: friendId,
         role_id: roleId,
       });
       expect(added.status).toBe(201);
-      const member = await json(added);
+      const member = await parseMember(added);
       expect(member.isActive).toBe(true);
       expect(member.contact.id).toBe(friendId);
       const memberId = member.id;
 
       // The auto-relationship insert + membership insert are one transaction;
       // a successful add means the collective now reports the member.
-      const afterAdd = await json(await req('GET', `/api/collectives/${collectiveId}`));
+      const afterAdd = await parseCollective(await req('GET', `/api/collectives/${collectiveId}`));
       expect(afterAdd.memberCount).toBe(1);
       expect(afterAdd.activeMemberCount).toBe(1);
 
@@ -141,7 +185,7 @@ describe('Collectives API - Integration', () => {
         { reason: 'Moved away' },
       );
       expect(deactivated.status).toBe(200);
-      expect((await json(deactivated)).isActive).toBe(false);
+      expect((await parseMember(deactivated)).isActive).toBe(false);
 
       const reactivated = await req(
         'POST',
@@ -149,60 +193,56 @@ describe('Collectives API - Integration', () => {
         {},
       );
       expect(reactivated.status).toBe(200);
-      const reBody = await json(reactivated);
+      const reBody = await parseMember(reactivated);
       expect(reBody.isActive).toBe(true);
       expect(reBody.inactiveReason).toBeNull();
 
       const removed = await req('DELETE', `/api/collectives/${collectiveId}/members/${memberId}`);
       expect(removed.status).toBe(200);
-      expect((await json(removed)).success).toBe(true);
+      expect(parseWith(SuccessResponseSchema, await removed.json()).success).toBe(true);
 
-      const afterRemove = await json(await req('GET', `/api/collectives/${collectiveId}`));
+      const afterRemove = await parseCollective(
+        await req('GET', `/api/collectives/${collectiveId}`),
+      );
       expect(afterRemove.memberCount).toBe(0);
     });
 
     it('makes auto-created relationships visible on both contacts', async () => {
       // Use the Family type, which defines parent/child auto-relationship rules.
-      const types = (await json(await req('GET', '/api/collectives/types'))).types;
-      const family = types.find((t: any) => t.name === 'Family');
-      expect(family).toBeDefined();
-      const parentRole = family.roles.find((r: any) => r.roleKey === 'parent');
-      const childRole = family.roles.find((r: any) => r.roleKey === 'child');
+      const { familyId, parentRoleId, childRoleId } = await familyRoles();
 
       const res = await req('POST', '/api/collectives', {
         name: 'The Smiths',
-        collective_type_id: family.id,
+        collective_type_id: familyId,
       });
       expect(res.status).toBe(201);
-      const collectiveId = (await json(res)).id;
+      const collectiveId = (await parseCollective(res)).id;
 
-      const parentId = await createTestFriend(poolOf(), user.externalId, 'Parent Smith');
-      const childId = await createTestFriend(poolOf(), user.externalId, 'Child Smith');
+      const parentId = await createTestFriend(context.pool, user.externalId, 'Parent Smith');
+      const childId = await createTestFriend(context.pool, user.externalId, 'Child Smith');
 
       const addParent = await req('POST', `/api/collectives/${collectiveId}/members`, {
         friend_id: parentId,
-        role_id: parentRole.id,
+        role_id: parentRoleId,
       });
       expect(addParent.status).toBe(201);
 
       const addChild = await req('POST', `/api/collectives/${collectiveId}/members`, {
         friend_id: childId,
-        role_id: childRole.id,
+        role_id: childRoleId,
       });
       expect(addChild.status).toBe(201);
 
       // The existing edge (parent --[parent]--> child) shows on the parent...
-      const parent = await json(await req('GET', `/api/friends/${parentId}`));
-      const parentToChild = parent.relationships.find((r: any) => r.relatedFriendId === childId);
-      expect(parentToChild).toBeDefined();
-      expect(parentToChild.relationshipTypeId).toBe('parent');
+      const parent = await parseFriend(await req('GET', `/api/friends/${parentId}`));
+      const parentToChild = parent.relationships?.find((r) => r.relatedFriendId === childId);
+      expect(parentToChild?.relationshipTypeId).toBe('parent');
 
       // ...and, critically, the reciprocal edge (child --[child]--> parent) is
       // now created so the relationship is also visible on the child.
-      const child = await json(await req('GET', `/api/friends/${childId}`));
-      const childToParent = child.relationships.find((r: any) => r.relatedFriendId === parentId);
-      expect(childToParent).toBeDefined();
-      expect(childToParent.relationshipTypeId).toBe('child');
+      const child = await parseFriend(await req('GET', `/api/friends/${childId}`));
+      const childToParent = child.relationships?.find((r) => r.relatedFriendId === parentId);
+      expect(childToParent?.relationshipTypeId).toBe('child');
     });
 
     /**
@@ -212,20 +252,17 @@ describe('Collectives API - Integration', () => {
      * deleted a relationship the user had entered by hand.
      */
     it('keeps a manual relationship when a membership that re-derived it is removed', async () => {
-      const types = (await json(await req('GET', '/api/collectives/types'))).types;
-      const family = types.find((t: { name: string }) => t.name === 'Family');
-      const parentRole = family.roles.find((r: { roleKey: string }) => r.roleKey === 'parent');
-      const childRole = family.roles.find((r: { roleKey: string }) => r.roleKey === 'child');
+      const { familyId, parentRoleId, childRoleId } = await familyRoles();
 
       const res = await req('POST', '/api/collectives', {
         name: 'The Manuals',
-        collective_type_id: family.id,
+        collective_type_id: familyId,
       });
       expect(res.status).toBe(201);
-      const collectiveId = (await json(res)).id;
+      const collectiveId = (await parseCollective(res)).id;
 
-      const parentId = await createTestFriend(poolOf(), user.externalId, 'Parent Manual');
-      const childId = await createTestFriend(poolOf(), user.externalId, 'Child Manual');
+      const parentId = await createTestFriend(context.pool, user.externalId, 'Parent Manual');
+      const childId = await createTestFriend(context.pool, user.externalId, 'Child Manual');
 
       // Entered by hand, before any collective exists: parent --[parent]--> child
       // plus the reciprocal child --[child]--> parent.
@@ -237,17 +274,17 @@ describe('Collectives API - Integration', () => {
 
       const addParent = await req('POST', `/api/collectives/${collectiveId}/members`, {
         friend_id: parentId,
-        role_id: parentRole.id,
+        role_id: parentRoleId,
       });
       expect(addParent.status).toBe(201);
 
       // Adding the child re-derives exactly the manual pair from the Family rules.
       const addChild = await req('POST', `/api/collectives/${collectiveId}/members`, {
         friend_id: childId,
-        role_id: childRole.id,
+        role_id: childRoleId,
       });
       expect(addChild.status).toBe(201);
-      const childMembershipId = (await json(addChild)).id;
+      const childMembershipId = (await parseMember(addChild)).id;
 
       const removed = await req(
         'DELETE',
@@ -255,24 +292,22 @@ describe('Collectives API - Integration', () => {
       );
       expect(removed.status).toBe(200);
 
-      const parent = await json(await req('GET', `/api/friends/${parentId}`));
+      const parent = await parseFriend(await req('GET', `/api/friends/${parentId}`));
       expect(
-        parent.relationships.some(
-          (r: { relatedFriendId: string; relationshipTypeId: string }) =>
-            r.relatedFriendId === childId && r.relationshipTypeId === 'parent',
+        parent.relationships?.some(
+          (r) => r.relatedFriendId === childId && r.relationshipTypeId === 'parent',
         ),
       ).toBe(true);
 
-      const child = await json(await req('GET', `/api/friends/${childId}`));
+      const child = await parseFriend(await req('GET', `/api/friends/${childId}`));
       expect(
-        child.relationships.some(
-          (r: { relatedFriendId: string; relationshipTypeId: string }) =>
-            r.relatedFriendId === parentId && r.relationshipTypeId === 'child',
+        child.relationships?.some(
+          (r) => r.relatedFriendId === parentId && r.relationshipTypeId === 'child',
         ),
       ).toBe(true);
 
       // Still owned by nobody, so a future membership cannot claim it either.
-      const { rows } = await poolOf().query<{ source_membership_id: number | null }>(
+      const { rows } = await context.pool.query<{ source_membership_id: number | null }>(
         `SELECT r.source_membership_id
            FROM friends.friend_relationships r
            INNER JOIN friends.friends f ON f.id = r.friend_id
@@ -284,7 +319,7 @@ describe('Collectives API - Integration', () => {
 
     it('rejects adding the same friend twice', async () => {
       const collectiveId = await createCollective();
-      const friendId = await createTestFriend(poolOf(), user.externalId, 'Member Twice');
+      const friendId = await createTestFriend(context.pool, user.externalId, 'Member Twice');
 
       const first = await req('POST', `/api/collectives/${collectiveId}/members`, {
         friend_id: friendId,
@@ -307,38 +342,37 @@ describe('Collectives API - Integration', () => {
      */
     it('does not disclose another user\u2019s membership as a duplicate', async () => {
       const otherUser = await createAuthenticatedUser(
-        poolOf(),
+        context.pool,
         'collectives-other@example.com',
         'Password123!',
       );
-      await completeTestUserOnboarding(poolOf(), otherUser.externalId);
+      await completeTestUserOnboarding(context.pool, otherUser.externalId);
 
       // The other user's own collective and member, created with their session.
-      const otherTypes = await appOf().fetch(
-        new Request('http://localhost/api/collectives/types', {
-          headers: authHeaders(otherUser.sessionCookies),
-        }),
-      );
-      const otherType = (await json(otherTypes)).types[0];
-      const otherCollective = await appOf().fetch(
-        new Request('http://localhost/api/collectives', {
-          method: 'POST',
-          headers: authHeaders(otherUser.sessionCookies),
-          body: JSON.stringify({ name: 'Their Club', collective_type_id: otherType.id }),
-        }),
+      const [otherType] = await listTypes(otherUser.sessionCookies);
+      assert.isDefined(otherType, 'the system-default collective types exist');
+      const [otherRole] = otherType.roles;
+      assert.isDefined(otherRole, 'the first collective type has a role');
+      const otherCollective = await req(
+        'POST',
+        '/api/collectives',
+        { name: 'Their Club', collective_type_id: otherType.id },
+        otherUser.sessionCookies,
       );
       expect(otherCollective.status).toBe(201);
-      const otherCollectiveId = (await json(otherCollective)).id;
-      const otherFriendId = await createTestFriend(poolOf(), otherUser.externalId, 'Their Member');
-      const otherAdd = await appOf().fetch(
-        new Request(`http://localhost/api/collectives/${otherCollectiveId}/members`, {
-          method: 'POST',
-          headers: authHeaders(otherUser.sessionCookies),
-          body: JSON.stringify({ friend_id: otherFriendId, role_id: otherType.roles[0].id }),
-        }),
+      const otherCollectiveId = (await parseCollective(otherCollective)).id;
+      const otherFriendId = await createTestFriend(
+        context.pool,
+        otherUser.externalId,
+        'Their Member',
+      );
+      const otherAdd = await req(
+        'POST',
+        `/api/collectives/${otherCollectiveId}/members`,
+        { friend_id: otherFriendId, role_id: otherRole.id },
+        otherUser.sessionCookies,
       );
       expect(otherAdd.status).toBe(201);
-
       // Our user asks about that pair: not found, never "duplicate".
       const probe = await req('POST', `/api/collectives/${otherCollectiveId}/members`, {
         friend_id: otherFriendId,
@@ -358,7 +392,7 @@ describe('Collectives API - Integration', () => {
         is_primary: true,
       });
       expect(email.status).toBe(201);
-      expect((await json(email)).isPrimary).toBe(true);
+      expect(parseWith(EmailResponseSchema, await email.json()).isPrimary).toBe(true);
 
       const phone = await req('POST', `/api/collectives/${collectiveId}/phones`, {
         phone_number: '+14155552671',
@@ -382,7 +416,7 @@ describe('Collectives API - Integration', () => {
       expect(address.status).toBe(201);
 
       const emails = await req('GET', `/api/collectives/${collectiveId}/emails`);
-      expect((await json(emails)).length).toBe(1);
+      expect(parseWith(EmailResponseSchema.array(), await emails.json()).length).toBe(1);
     });
   });
 });

@@ -5,7 +5,7 @@ import { toJson } from '../../src/utils/to-json.js';
 describe('toJson', () => {
   describe('with an object', () => {
     it('drops undefined, function and symbol properties like JSON.stringify', () => {
-      const value = { a: 1, b: undefined, c: () => 1, d: Symbol('x'), e: null };
+      const value = { a: 1, b: undefined, c: Math.max, d: Symbol('x'), e: null };
 
       expect(toJson(value)).toEqual({ a: 1, e: null });
     });

@@ -1,15 +1,24 @@
-import type { Hono } from 'hono';
-import type pg from 'pg';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { AppContext } from '../../src/types/context.js';
+import { parseWith } from '@datenknoten/kit/schema';
+import {
+  CircleResponseSchema,
+  CollectiveResponseSchema,
+  CollectiveTypeListResponseSchema,
+  CollectiveTypeResponseSchema,
+  EmailResponseSchema,
+  EncounterResponseSchema,
+  FriendResponseSchema,
+  NotificationChannelResponseSchema,
+} from '@freundebuch/shared';
+import { afterAll, assert, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   type AuthTestContext,
   completeTestUserOnboarding,
+  firstRow,
   setupAuthTests,
   teardownAuthTests,
 } from './auth.helpers.js';
-import { authHeaders, createAuthenticatedUser, createTestFriend } from './friends.helpers.js';
+import { createAuthenticatedUser, createTestFriend, sendAs } from './friends.helpers.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 /**
@@ -38,23 +47,18 @@ describe('Cross-user authorization', () => {
     await teardownAuthTests(context);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  const app = (): Hono<AppContext> => context.app;
-  const pool = (): pg.Pool => context.pool;
+  function pool() {
+    return context.pool;
+  }
 
   /** Issue a request as user B (the attacker) against an id owned by user A. */
-  async function asB(method: string, path: string, body?: unknown): Promise<Response> {
-    const init: RequestInit = { method, headers: authHeaders(userB.sessionCookies) };
-    if (body !== undefined) init.body = JSON.stringify(body);
-    return app().fetch(new Request(`http://localhost${path}`, init));
+  function asB(method: string, path: string, body?: unknown) {
+    return sendAs(context.app, userB.sessionCookies, method, path, body);
   }
 
-  async function asA(method: string, path: string, body?: unknown): Promise<Response> {
-    const init: RequestInit = { method, headers: authHeaders(userA.sessionCookies) };
-    if (body !== undefined) init.body = JSON.stringify(body);
-    return app().fetch(new Request(`http://localhost${path}`, init));
+  function asA(method: string, path: string, body?: unknown) {
+    return sendAs(context.app, userA.sessionCookies, method, path, body);
   }
-
-  const json = (res: Response): Promise<any> => res.json();
 
   describe('friends', () => {
     it('hides another user friend from GET/PUT/DELETE', async () => {
@@ -69,7 +73,7 @@ describe('Cross-user authorization', () => {
       // The friend must remain untouched and owned by A.
       const owner = await asA('GET', `/api/friends/${friendId}`);
       expect(owner.status).toBe(200);
-      expect((await json(owner)).displayName).toBe('A Friend');
+      expect(parseWith(FriendResponseSchema, await owner.json()).displayName).toBe('A Friend');
     });
   });
 
@@ -83,7 +87,7 @@ describe('Cross-user authorization', () => {
         email_type: 'personal',
       });
       expect(created.status).toBe(201);
-      const emailId = (await json(created)).id;
+      const emailId = parseWith(EmailResponseSchema, await created.json()).id;
 
       // B cannot touch the parent friend's sub-resources.
       expect(
@@ -119,7 +123,7 @@ describe('Cross-user authorization', () => {
     it('hides another user circle from GET/PUT/DELETE', async () => {
       const created = await asA('POST', '/api/circles', { name: 'A Circle' });
       expect(created.status).toBe(201);
-      const circleId = (await json(created)).id;
+      const circleId = parseWith(CircleResponseSchema, await created.json()).id;
 
       expect((await asB('GET', `/api/circles/${circleId}`)).status).toBe(404);
       expect((await asB('PUT', `/api/circles/${circleId}`, { name: 'hacked' })).status).toBe(404);
@@ -136,7 +140,7 @@ describe('Cross-user authorization', () => {
         friend_ids: [friendId],
       });
       expect(created.status).toBe(201);
-      const encounterId = (await json(created)).id;
+      const encounterId = parseWith(EncounterResponseSchema, await created.json()).id;
 
       expect((await asB('GET', `/api/encounters/${encounterId}`)).status).toBe(404);
       expect((await asB('PUT', `/api/encounters/${encounterId}`, { title: 'hacked' })).status).toBe(
@@ -149,14 +153,16 @@ describe('Cross-user authorization', () => {
   describe('collectives', () => {
     it('hides another user collective from GET/PUT/DELETE', async () => {
       const typesRes = await asA('GET', '/api/collectives/types');
-      const typeId = (await json(typesRes)).types[0].id;
+      const [systemType] = parseWith(CollectiveTypeListResponseSchema, await typesRes.json()).types;
+      assert.isDefined(systemType, 'the system collective types are seeded by migration');
+      const typeId = systemType.id;
 
       const created = await asA('POST', '/api/collectives', {
         name: 'A Collective',
         collective_type_id: typeId,
       });
       expect(created.status).toBe(201);
-      const collectiveId = (await json(created)).id;
+      const collectiveId = parseWith(CollectiveResponseSchema, await created.json()).id;
 
       expect((await asB('GET', `/api/collectives/${collectiveId}`)).status).toBe(404);
       expect(
@@ -176,8 +182,7 @@ describe('Cross-user authorization', () => {
            RETURNING external_id`,
         [userA.externalId],
       );
-      const typeId = inserted.rows[0]?.external_id;
-      expect(typeId).toBeTruthy();
+      const typeId = firstRow(inserted).external_id;
 
       await pool().query(
         `INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
@@ -189,15 +194,16 @@ describe('Cross-user authorization', () => {
       // A sees the type and its role.
       const owner = await asA('GET', `/api/collectives/types/${typeId}`);
       expect(owner.status).toBe(200);
-      expect((await json(owner)).roles.map((r: { label: string }) => r.label)).toContain(
-        'Secret Role',
-      );
+      const ownerType = parseWith(CollectiveTypeResponseSchema, await owner.json());
+      expect(ownerType.roles.map((role) => role.label)).toContain('Secret Role');
 
       // B must not, and must not learn the role labels either.
       expect((await asB('GET', `/api/collectives/types/${typeId}`)).status).toBe(404);
 
       const listed = await asB('GET', '/api/collectives/types');
-      const ids = (await json(listed)).types.map((t: { id: string }) => t.id);
+      const ids = parseWith(CollectiveTypeListResponseSchema, await listed.json()).types.map(
+        (type) => type.id,
+      );
       expect(ids).not.toContain(typeId);
     });
 
@@ -209,7 +215,7 @@ describe('Cross-user authorization', () => {
            RETURNING external_id`,
         [userA.externalId],
       );
-      const donorTypeId = inserted.rows[0]?.external_id;
+      const donorTypeId = firstRow(inserted).external_id;
 
       const role = await pool().query<{ external_id: string }>(
         `INSERT INTO collectives.collective_roles (collective_type_id, role_key, label, sort_order)
@@ -218,17 +224,19 @@ describe('Cross-user authorization', () => {
            RETURNING external_id`,
         [donorTypeId],
       );
-      const foreignRoleId = role.rows[0]?.external_id;
+      const foreignRoleId = firstRow(role).external_id;
 
       // B builds a legitimate collective of a system type and a friend of their own.
       const typesRes = await asB('GET', '/api/collectives/types');
-      const systemTypeId = (await json(typesRes)).types[0].id;
+      const [systemType] = parseWith(CollectiveTypeListResponseSchema, await typesRes.json()).types;
+      assert.isDefined(systemType, 'the system collective types are seeded by migration');
+      const systemTypeId = systemType.id;
       const createdCollective = await asB('POST', '/api/collectives', {
         name: 'B Collective',
         collective_type_id: systemTypeId,
       });
       expect(createdCollective.status).toBe(201);
-      const bCollectiveId = (await json(createdCollective)).id;
+      const bCollectiveId = parseWith(CollectiveResponseSchema, await createdCollective.json()).id;
       const bFriendId = await createTestFriend(pool(), userB.externalId, 'B Friend');
 
       // The role belongs to A's type, so it must not resolve for B.
@@ -252,7 +260,10 @@ describe('Cross-user authorization', () => {
         },
       });
       expect(created.status).toBe(201);
-      const channelId = (await json(created)).externalId;
+      const channelId = parseWith(
+        NotificationChannelResponseSchema,
+        await created.json(),
+      ).externalId;
 
       expect((await asB('GET', `/api/notification-channels/${channelId}`)).status).toBe(404);
       expect(

@@ -13,7 +13,7 @@ const TELEGRAM_URL_REDACTED = 'https://api.telegram.org/bot[redacted]/sendMessag
  * even `contexts.trace` requires span/trace ids that say nothing about
  * scrubbing.
  */
-function errorEvent(partial: Record<string, unknown>): Sentry.ErrorEvent {
+function errorEvent(partial: Record<string, unknown>) {
   return partial as unknown as Sentry.ErrorEvent;
 }
 

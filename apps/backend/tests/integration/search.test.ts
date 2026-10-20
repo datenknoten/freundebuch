@@ -1,5 +1,16 @@
+import { parseWith } from '@datenknoten/kit/schema';
+import {
+  ErrorResponseSchema,
+  FacetedSearchResponseSchema,
+  FriendSearchResultResponseSchema,
+  GlobalSearchResultResponseSchema,
+  PaginatedSearchResponseSchema,
+} from '@freundebuch/shared/index.js';
+import { type } from 'arktype';
 import type pg from 'pg';
 import { describe, expect, it } from 'vitest';
+import { completeTestUserOnboarding } from './auth.helpers.js';
+import { createAuthenticatedUser } from './friends.helpers.js';
 import {
   authHeaders,
   createCircleWithFriend,
@@ -13,14 +24,11 @@ import {
   createFriendWithPhone,
   createFriendWithWorkNotes,
   createTestFriend,
+  type SearchTestContext,
   setupSearchTestSuite,
 } from './search.helpers.js';
 
-/** Subset of the search response used by the German-dictionary assertions */
-interface SearchResultItem {
-  displayName: string;
-  matchSource: string | null;
-}
+const RecentSearchesResponseSchema = type('string[]');
 
 /**
  * Create a friend with interests (weight C in the search vector)
@@ -30,7 +38,7 @@ async function createFriendWithInterests(
   userExternalId: string,
   displayName: string,
   interests: string,
-): Promise<string> {
+) {
   const friendExternalId = await createTestFriend(pool, userExternalId, displayName);
 
   await pool.query('UPDATE friends.friends SET interests = $2 WHERE external_id = $1', [
@@ -41,16 +49,24 @@ async function createFriendWithInterests(
   return friendExternalId;
 }
 
-describe('Search API - Integration Tests', () => {
-  const { getContext } = setupSearchTestSuite();
+async function fetchFilterOnlyListing(context: SearchTestContext, sortOrder: 'asc' | 'desc') {
+  const response = await context.app.fetch(
+    new Request(
+      `http://localhost/api/friends/search/faceted?organization=Acme Corp&sort_by=display_name&sort_order=${sortOrder}`,
+      { method: 'GET', headers: authHeaders(context.testUser.sessionCookies) },
+    ),
+  );
+  expect(response.status).toBe(200);
+  const body = parseWith(FacetedSearchResponseSchema, await response.json());
+  return body.data.map((row) => row.displayName);
+}
 
-  // ============================================================================
-  // Full-Text Search: GET /api/friends/search/full
-  // ============================================================================
+describe('Friend search API', () => {
+  const { getContext } = setupSearchTestSuite();
 
   describe('GET /api/friends/search/full', () => {
     describe('Basic Search Functionality', () => {
-      it('should return matching friends by display name', async () => {
+      it('returns matching friends by display name', async () => {
         const { app, pool, testUser } = getContext();
 
         await createTestFriend(pool, testUser.externalId, 'Alice Smith');
@@ -63,15 +79,15 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(Array.isArray(body)).toBe(true);
         expect(body.length).toBe(2);
-        expect(body.every((r: any) => r.displayName.toLowerCase().includes('alice'))).toBe(true);
+        expect(body.every((r) => r.displayName.toLowerCase().includes('alice'))).toBe(true);
       });
 
-      it('should return empty array when no matches found', async () => {
+      it('returns empty array when no matches found', async () => {
         const { app, pool, testUser } = getContext();
 
         await createTestFriend(pool, testUser.externalId, 'Alice Smith');
@@ -83,14 +99,14 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(Array.isArray(body)).toBe(true);
         expect(body.length).toBe(0);
       });
 
-      it('should search by first name', async () => {
+      it('searches by first name', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithFullName(pool, testUser.externalId, 'Dr. Smith', 'John', 'Smith');
@@ -102,14 +118,14 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Dr. Smith');
+        expect(body[0]?.displayName).toBe('Dr. Smith');
       });
 
-      it('should search by last name', async () => {
+      it('searches by last name', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithFullName(pool, testUser.externalId, 'John Smith', 'John', 'Smith');
@@ -122,14 +138,14 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(2);
-        expect(body.every((r: any) => r.displayName.includes('Smith'))).toBe(true);
+        expect(body.every((r) => r.displayName.includes('Smith'))).toBe(true);
       });
 
-      it('should search by organization', async () => {
+      it('searches by organization', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithOrganization(pool, testUser.externalId, 'Alice', 'Acme Corporation');
@@ -142,14 +158,14 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(2);
-        expect(body.every((r: any) => r.organization?.toLowerCase().includes('acme'))).toBe(true);
+        expect(body.every((r) => r.organization?.toLowerCase().includes('acme'))).toBe(true);
       });
 
-      it('should search by job title', async () => {
+      it('searches by job title', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithOrganization(
@@ -180,16 +196,16 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(2);
-        expect(body.every((r: any) => r.jobTitle?.toLowerCase().includes('engineer'))).toBe(true);
+        expect(body.every((r) => r.jobTitle?.toLowerCase().includes('engineer'))).toBe(true);
       });
     });
 
     describe('Search by Related Data', () => {
-      it('should search by email address', async () => {
+      it('searches by email address', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithEmail(pool, testUser.externalId, 'Alice', 'alice@example.com');
@@ -201,15 +217,15 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Alice');
-        expect(body[0].matchSource).toBe('email');
+        expect(body[0]?.displayName).toBe('Alice');
+        expect(body[0]?.matchSource).toBe('email');
       });
 
-      it('should search by phone number', async () => {
+      it('searches by phone number', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithPhone(pool, testUser.externalId, 'Alice', '+14155551234');
@@ -221,21 +237,19 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Alice');
-        expect(body[0].matchSource).toBe('phone');
+        expect(body[0]?.displayName).toBe('Alice');
+        expect(body[0]?.matchSource).toBe('phone');
       });
 
-      it('should NOT match phone numbers when query has no digits', async () => {
+      it('does not match phone numbers when query has no digits', async () => {
         const { app, pool, testUser } = getContext();
 
-        // Create friends with phone numbers but no "patsch" anywhere
         await createFriendWithPhone(pool, testUser.externalId, 'Alice Smith', '+14155551234');
         await createFriendWithPhone(pool, testUser.externalId, 'Bob Jones', '+13105559999');
-        // Create one friend that actually matches "patsch"
         await createTestFriend(pool, testUser.externalId, 'Christian Patsch');
 
         const request = new Request('http://localhost/api/friends/search/full?q=patsch', {
@@ -244,19 +258,17 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
-        // Should only find Christian Patsch, NOT the friends with phone numbers
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Christian Patsch');
-        expect(body[0].matchSource).toBe('friend');
-        // Verify phone-only friends are NOT returned
-        expect(body.some((r: any) => r.displayName === 'Alice Smith')).toBe(false);
-        expect(body.some((r: any) => r.displayName === 'Bob Jones')).toBe(false);
+        expect(body[0]?.displayName).toBe('Christian Patsch');
+        expect(body[0]?.matchSource).toBe('friend');
+        expect(body.some((r) => r.displayName === 'Alice Smith')).toBe(false);
+        expect(body.some((r) => r.displayName === 'Bob Jones')).toBe(false);
       });
 
-      it('should search by relationship notes', async () => {
+      it('searches by relationship notes', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithNotes(pool, testUser.externalId, 'Alice', 'Met at tech conference');
@@ -268,15 +280,15 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Alice');
-        expect(body[0].matchSource).toBe('notes');
+        expect(body[0]?.displayName).toBe('Alice');
+        expect(body[0]?.matchSource).toBe('notes');
       });
 
-      it('should search by friend notes with German stemming', async () => {
+      it('searches by friend notes with German stemming', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithFriendNote(
@@ -294,7 +306,7 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body = (await response.json()) as SearchResultItem[];
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body).toHaveLength(1);
@@ -302,7 +314,7 @@ describe('Search API - Integration Tests', () => {
         expect(body[0]?.matchSource).toBe('notes');
       });
 
-      it('should search by met context', async () => {
+      it('searches by met context', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithMetContext(
@@ -319,15 +331,15 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Alice');
-        expect(body[0].matchSource).toBe('notes');
+        expect(body[0]?.displayName).toBe('Alice');
+        expect(body[0]?.matchSource).toBe('notes');
       });
 
-      it('should search by work notes', async () => {
+      it('searches by work notes', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithWorkNotes(
@@ -344,16 +356,16 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Alice');
+        expect(body[0]?.displayName).toBe('Alice');
       });
     });
 
     describe('German Dictionary', () => {
-      it('should match a German stem across inflections', async () => {
+      it('matches a German stem across inflections', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithInterests(pool, testUser.externalId, 'Anna Leser', 'Bücher lesen');
@@ -365,7 +377,7 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body = (await response.json()) as SearchResultItem[];
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
@@ -373,7 +385,7 @@ describe('Search API - Integration Tests', () => {
         expect(body[0]?.matchSource).toBe('friend');
       });
 
-      it('should match a German verb regardless of conjugation', async () => {
+      it('matches a German verb regardless of conjugation', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithInterests(pool, testUser.externalId, 'Anna Leser', 'Bücher lesen');
@@ -385,14 +397,14 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body = (await response.json()) as SearchResultItem[];
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
         expect(body[0]?.displayName).toBe('Anna Leser');
       });
 
-      it('should match a formatted phone number by its digits alone', async () => {
+      it('matches a formatted phone number by its digits alone', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithPhone(pool, testUser.externalId, 'Bernd Berlin', '+49 30 1234 5678');
@@ -404,7 +416,7 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body = (await response.json()) as SearchResultItem[];
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
@@ -414,10 +426,9 @@ describe('Search API - Integration Tests', () => {
     });
 
     describe('Search Result Quality', () => {
-      it('should only return results that match the search term', async () => {
+      it('only returns results that match the search term', async () => {
         const { app, pool, testUser } = getContext();
 
-        // Create friends with various names
         await createTestFriend(pool, testUser.externalId, 'Antonia Patsch');
         await createTestFriend(pool, testUser.externalId, 'Christian Patsch');
         await createTestFriend(pool, testUser.externalId, 'Anja Schumacher');
@@ -430,22 +441,19 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
-        // Should ONLY return friends whose data matches "patsch"
         expect(body.length).toBe(2);
-        expect(body.every((r: any) => r.displayName.toLowerCase().includes('patsch'))).toBe(true);
-        // Should NOT include Schumacher, Werner, or Schmitt
-        expect(body.some((r: any) => r.displayName.includes('Schumacher'))).toBe(false);
-        expect(body.some((r: any) => r.displayName.includes('Werner'))).toBe(false);
-        expect(body.some((r: any) => r.displayName.includes('Schmitt'))).toBe(false);
+        expect(body.every((r) => r.displayName.toLowerCase().includes('patsch'))).toBe(true);
+        expect(body.some((r) => r.displayName.includes('Schumacher'))).toBe(false);
+        expect(body.some((r) => r.displayName.includes('Werner'))).toBe(false);
+        expect(body.some((r) => r.displayName.includes('Schmitt'))).toBe(false);
       });
 
-      it('should return relevance-ranked results', async () => {
+      it('returns relevance-ranked results', async () => {
         const { app, pool, testUser } = getContext();
 
-        // Create friends with different levels of name matching
         await createTestFriend(pool, testUser.externalId, 'Alice Smith');
         await createFriendWithOrganization(pool, testUser.externalId, 'Bob Jones', 'Alice Corp');
         await createFriendWithWorkNotes(
@@ -461,16 +469,16 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBeGreaterThanOrEqual(1);
         // Name matches should have highest rank
-        expect(body[0].displayName).toBe('Alice Smith');
-        expect(body[0].rank).toBeGreaterThan(0);
+        expect(body[0]?.displayName).toBe('Alice Smith');
+        expect(body[0]?.rank).toBeGreaterThan(0);
       });
 
-      it('should include headline with marked search terms', async () => {
+      it('includes headline with marked search terms', async () => {
         const { app, pool, testUser } = getContext();
 
         await createTestFriend(pool, testUser.externalId, 'Alice Smith');
@@ -481,19 +489,18 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].headline).toBeDefined();
+        expect(body[0]?.headline).toBeDefined();
         // Headline should contain mark tags (sanitized)
-        expect(body[0].headline).toMatch(/<mark>.*<\/mark>/);
+        expect(body[0]?.headline).toMatch(/<mark>.*<\/mark>/);
       });
 
-      it('should return primary email and phone in results', async () => {
+      it('returns primary email and phone in results', async () => {
         const { app, pool, testUser } = getContext();
 
-        // Create friend with email - helper sets it as primary
         const friendId = await createFriendWithEmail(
           pool,
           testUser.externalId,
@@ -501,15 +508,14 @@ describe('Search API - Integration Tests', () => {
           'alice@example.com',
         );
 
-        // Add phone to same friend
-        const friendResult = await pool.query(
+        const friendResult = await pool.query<{ id: string }>(
           'SELECT id FROM friends.friends WHERE external_id = $1',
           [friendId],
         );
         await pool.query(
           `INSERT INTO friends.friend_phones (friend_id, phone_number, phone_type, is_primary)
            VALUES ($1, '+14155551234', 'mobile', true)`,
-          [friendResult.rows[0].id],
+          [friendResult.rows[0]?.id],
         );
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice', {
@@ -518,20 +524,19 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].primaryEmail).toBe('alice@example.com');
-        expect(body[0].primaryPhone).toBe('+14155551234');
+        expect(body[0]?.primaryEmail).toBe('alice@example.com');
+        expect(body[0]?.primaryPhone).toBe('+14155551234');
       });
     });
 
     describe('Search Limit Parameter', () => {
-      it('should respect limit parameter', async () => {
+      it('respects limit parameter', async () => {
         const { app, pool, testUser } = getContext();
 
-        // Create many friends with same prefix
         for (let i = 0; i < 10; i++) {
           await createTestFriend(pool, testUser.externalId, `Alice ${i}`);
         }
@@ -542,16 +547,15 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(3);
       });
 
-      it('should default to 10 results', async () => {
+      it('defaults to 10 results', async () => {
         const { app, pool, testUser } = getContext();
 
-        // Create 15 friends with same prefix
         for (let i = 0; i < 15; i++) {
           await createTestFriend(pool, testUser.externalId, `Alice ${i}`);
         }
@@ -562,13 +566,13 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(10);
       });
 
-      it('should cap limit at 50', async () => {
+      it('accepts a limit above the cap of 50', async () => {
         const { app, testUser } = getContext();
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice&limit=100', {
@@ -584,7 +588,7 @@ describe('Search API - Integration Tests', () => {
     });
 
     describe('Validation', () => {
-      it('should reject empty query', async () => {
+      it('rejects empty query', async () => {
         const { app, testUser } = getContext();
 
         const request = new Request('http://localhost/api/friends/search/full?q=', {
@@ -597,7 +601,7 @@ describe('Search API - Integration Tests', () => {
         expect(response.status).toBe(400);
       });
 
-      it('should reject missing query parameter', async () => {
+      it('rejects missing query parameter', async () => {
         const { app, testUser } = getContext();
 
         const request = new Request('http://localhost/api/friends/search/full', {
@@ -610,7 +614,7 @@ describe('Search API - Integration Tests', () => {
         expect(response.status).toBe(400);
       });
 
-      it('should reject query shorter than 2 characters', async () => {
+      it('rejects query shorter than 2 characters', async () => {
         const { app, testUser } = getContext();
 
         const request = new Request('http://localhost/api/friends/search/full?q=a', {
@@ -623,7 +627,7 @@ describe('Search API - Integration Tests', () => {
         expect(response.status).toBe(400);
       });
 
-      it('should require authentication', async () => {
+      it('requires authentication', async () => {
         const { app } = getContext();
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice', {
@@ -637,12 +641,9 @@ describe('Search API - Integration Tests', () => {
     });
 
     describe('User Isolation', () => {
-      it('should only return friends belonging to authenticated user', async () => {
+      it('only returns friends belonging to authenticated user', async () => {
         const { app, pool, testUser } = getContext();
-        const { createAuthenticatedUser } = await import('./friends.helpers.js');
-        const { completeTestUserOnboarding } = await import('./auth.helpers.js');
 
-        // Create another user with friends
         const otherUser = await createAuthenticatedUser(
           pool,
           'other-search@example.com',
@@ -651,7 +652,6 @@ describe('Search API - Integration Tests', () => {
         await completeTestUserOnboarding(pool, otherUser.externalId);
         await createTestFriend(pool, otherUser.externalId, 'Alice Other');
 
-        // Create friend for test user
         await createTestFriend(pool, testUser.externalId, 'Alice Mine');
 
         const request = new Request('http://localhost/api/friends/search/full?q=alice', {
@@ -660,130 +660,239 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Alice Mine');
+        expect(body[0]?.displayName).toBe('Alice Mine');
+      });
+    });
+
+    describe('Edge Cases', () => {
+      it('matches a query containing an apostrophe', async () => {
+        const { app, pool, testUser } = getContext();
+
+        await createTestFriend(pool, testUser.externalId, "Alice O'Brien");
+        await createTestFriend(pool, testUser.externalId, 'Bob Smith');
+
+        const request = new Request(
+          `http://localhost/api/friends/search/full?q=${encodeURIComponent("O'Brien")}`,
+          {
+            method: 'GET',
+            headers: authHeaders(testUser.sessionCookies),
+          },
+        );
+
+        const response = await app.fetch(request);
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
+
+        expect(response.status).toBe(200);
+        expect(body.length).toBe(1);
+        expect(body[0]?.displayName).toBe("Alice O'Brien");
+      });
+
+      it('matches a query containing umlauts', async () => {
+        const { app, pool, testUser } = getContext();
+
+        await createTestFriend(pool, testUser.externalId, 'Müller Schmidt');
+        await createTestFriend(pool, testUser.externalId, 'Bob Smith');
+
+        const request = new Request(
+          `http://localhost/api/friends/search/full?q=${encodeURIComponent('Müller')}`,
+          {
+            method: 'GET',
+            headers: authHeaders(testUser.sessionCookies),
+          },
+        );
+
+        const response = await app.fetch(request);
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
+
+        expect(response.status).toBe(200);
+        expect(body.length).toBe(1);
+        expect(body[0]?.displayName).toBe('Müller Schmidt');
+      });
+
+      it('rejects a whitespace-only query', async () => {
+        const { app, testUser } = getContext();
+
+        const request = new Request('http://localhost/api/friends/search/full?q=   ', {
+          method: 'GET',
+          headers: authHeaders(testUser.sessionCookies),
+        });
+
+        const response = await app.fetch(request);
+
+        expect(response.status).toBe(400);
+      });
+
+      it('matches a query with multiple words', async () => {
+        const { app, pool, testUser } = getContext();
+
+        await createTestFriend(pool, testUser.externalId, 'Alice Marie Smith');
+        await createTestFriend(pool, testUser.externalId, 'Alice Johnson');
+        await createTestFriend(pool, testUser.externalId, 'Bob Smith');
+
+        const request = new Request('http://localhost/api/friends/search/full?q=alice smith', {
+          method: 'GET',
+          headers: authHeaders(testUser.sessionCookies),
+        });
+
+        const response = await app.fetch(request);
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
+
+        expect(response.status).toBe(200);
+        // Should find Alice Marie Smith (best match) at minimum
+        expect(body.length).toBeGreaterThanOrEqual(1);
+      });
+
+      it('does not return deleted friends', async () => {
+        const { app, pool, testUser } = getContext();
+
+        const friendId = await createTestFriend(pool, testUser.externalId, 'Alice Deleted');
+        await createTestFriend(pool, testUser.externalId, 'Alice Active');
+
+        await pool.query('UPDATE friends.friends SET deleted_at = NOW() WHERE external_id = $1', [
+          friendId,
+        ]);
+
+        const request = new Request('http://localhost/api/friends/search/full?q=alice', {
+          method: 'GET',
+          headers: authHeaders(testUser.sessionCookies),
+        });
+
+        const response = await app.fetch(request);
+        const body = parseWith(GlobalSearchResultResponseSchema.array(), await response.json());
+
+        expect(response.status).toBe(200);
+        expect(body.length).toBe(1);
+        expect(body[0]?.displayName).toBe('Alice Active');
+      });
+
+      it('accepts a 200-character query', async () => {
+        const { app, testUser } = getContext();
+
+        const longQuery = 'a'.repeat(200);
+
+        const request = new Request(`http://localhost/api/friends/search/full?q=${longQuery}`, {
+          method: 'GET',
+          headers: authHeaders(testUser.sessionCookies),
+        });
+
+        const response = await app.fetch(request);
+
+        // Should not crash, may return empty results
+        expect(response.status).toBe(200);
       });
     });
   });
 
-  // ============================================================================
-  // Paginated Search: GET /api/friends/search/paginated
-  // ============================================================================
-
   describe('GET /api/friends/search/paginated', () => {
-    it('should return paginated search results', async () => {
-      const { app, pool, testUser } = getContext();
+    describe('with a matching query', () => {
+      it('returns paginated search results', async () => {
+        const { app, pool, testUser } = getContext();
 
-      // Create 15 friends
-      for (let i = 0; i < 15; i++) {
-        await createTestFriend(pool, testUser.externalId, `Alice ${String(i).padStart(2, '0')}`);
-      }
+        for (let i = 0; i < 15; i++) {
+          await createTestFriend(pool, testUser.externalId, `Alice ${String(i).padStart(2, '0')}`);
+        }
 
-      const request = new Request(
-        'http://localhost/api/friends/search/paginated?q=alice&page=1&page_size=5',
-        {
-          method: 'GET',
-          headers: authHeaders(testUser.sessionCookies),
-        },
-      );
+        const request = new Request(
+          'http://localhost/api/friends/search/paginated?q=alice&page=1&page_size=5',
+          {
+            method: 'GET',
+            headers: authHeaders(testUser.sessionCookies),
+          },
+        );
 
-      const response = await app.fetch(request);
-      const body: any = await response.json();
+        const response = await app.fetch(request);
+        const body = parseWith(PaginatedSearchResponseSchema, await response.json());
 
-      expect(response.status).toBe(200);
-      expect(body.data.length).toBe(5);
-      expect(body.pagination.totalCount).toBe(15);
-      expect(body.pagination.page).toBe(1);
-      expect(body.pagination.pageSize).toBe(5);
-      expect(body.pagination.totalPages).toBe(3);
-    });
+        expect(response.status).toBe(200);
+        expect(body.data.length).toBe(5);
+        expect(body.pagination.totalCount).toBe(15);
+        expect(body.pagination.page).toBe(1);
+        expect(body.pagination.pageSize).toBe(5);
+        expect(body.pagination.totalPages).toBe(3);
+      });
 
-    it('should support sorting by display name', async () => {
-      const { app, pool, testUser } = getContext();
+      it('supports sorting by display name', async () => {
+        const { app, pool, testUser } = getContext();
 
-      await createTestFriend(pool, testUser.externalId, 'Alice C');
-      await createTestFriend(pool, testUser.externalId, 'Alice A');
-      await createTestFriend(pool, testUser.externalId, 'Alice B');
+        await createTestFriend(pool, testUser.externalId, 'Alice C');
+        await createTestFriend(pool, testUser.externalId, 'Alice A');
+        await createTestFriend(pool, testUser.externalId, 'Alice B');
 
-      const request = new Request(
-        'http://localhost/api/friends/search/paginated?q=alice&sort_by=display_name&sort_order=asc',
-        {
-          method: 'GET',
-          headers: authHeaders(testUser.sessionCookies),
-        },
-      );
+        const request = new Request(
+          'http://localhost/api/friends/search/paginated?q=alice&sort_by=display_name&sort_order=asc',
+          {
+            method: 'GET',
+            headers: authHeaders(testUser.sessionCookies),
+          },
+        );
 
-      const response = await app.fetch(request);
-      const body: any = await response.json();
+        const response = await app.fetch(request);
+        const body = parseWith(PaginatedSearchResponseSchema, await response.json());
 
-      expect(response.status).toBe(200);
-      expect(body.data[0].displayName).toBe('Alice A');
-      expect(body.data[1].displayName).toBe('Alice B');
-      expect(body.data[2].displayName).toBe('Alice C');
-    });
+        expect(response.status).toBe(200);
+        expect(body.data[0]?.displayName).toBe('Alice A');
+        expect(body.data[1]?.displayName).toBe('Alice B');
+        expect(body.data[2]?.displayName).toBe('Alice C');
+      });
 
-    it('should support sorting by relevance', async () => {
-      const { app, pool, testUser } = getContext();
+      it('supports sorting by relevance', async () => {
+        const { app, pool, testUser } = getContext();
 
-      // Name with alice should rank higher
-      await createTestFriend(pool, testUser.externalId, 'Alice Smith');
-      await createFriendWithOrganization(pool, testUser.externalId, 'Bob Jones', 'Alice Corp');
+        // Name with alice should rank higher
+        await createTestFriend(pool, testUser.externalId, 'Alice Smith');
+        await createFriendWithOrganization(pool, testUser.externalId, 'Bob Jones', 'Alice Corp');
 
-      const request = new Request(
-        'http://localhost/api/friends/search/paginated?q=alice&sort_by=relevance&sort_order=desc',
-        {
-          method: 'GET',
-          headers: authHeaders(testUser.sessionCookies),
-        },
-      );
+        const request = new Request(
+          'http://localhost/api/friends/search/paginated?q=alice&sort_by=relevance&sort_order=desc',
+          {
+            method: 'GET',
+            headers: authHeaders(testUser.sessionCookies),
+          },
+        );
 
-      const response = await app.fetch(request);
-      const body: any = await response.json();
+        const response = await app.fetch(request);
+        const body = parseWith(PaginatedSearchResponseSchema, await response.json());
 
-      expect(response.status).toBe(200);
-      // Direct name match should be first
-      expect(body.data[0].displayName).toBe('Alice Smith');
-    });
+        expect(response.status).toBe(200);
+        expect(body.data[0]?.displayName).toBe('Alice Smith');
+      });
 
-    it('should return correct page of results', async () => {
-      const { app, pool, testUser } = getContext();
+      it('returns correct page of results', async () => {
+        const { app, pool, testUser } = getContext();
 
-      // Create 10 friends with numbers for easy sorting
-      for (let i = 0; i < 10; i++) {
-        await createTestFriend(pool, testUser.externalId, `Alice ${String(i).padStart(2, '0')}`);
-      }
+        for (let i = 0; i < 10; i++) {
+          await createTestFriend(pool, testUser.externalId, `Alice ${String(i).padStart(2, '0')}`);
+        }
 
-      const request = new Request(
-        'http://localhost/api/friends/search/paginated?q=alice&page=2&page_size=3&sort_by=display_name&sort_order=asc',
-        {
-          method: 'GET',
-          headers: authHeaders(testUser.sessionCookies),
-        },
-      );
+        const request = new Request(
+          'http://localhost/api/friends/search/paginated?q=alice&page=2&page_size=3&sort_by=display_name&sort_order=asc',
+          {
+            method: 'GET',
+            headers: authHeaders(testUser.sessionCookies),
+          },
+        );
 
-      const response = await app.fetch(request);
-      const body: any = await response.json();
+        const response = await app.fetch(request);
+        const body = parseWith(PaginatedSearchResponseSchema, await response.json());
 
-      expect(response.status).toBe(200);
-      expect(body.data.length).toBe(3);
-      expect(body.pagination.page).toBe(2);
-      // Page 2 with pageSize 3 should have items 3, 4, 5 (0-indexed: 03, 04, 05)
-      expect(body.data[0].displayName).toBe('Alice 03');
-      expect(body.data[1].displayName).toBe('Alice 04');
-      expect(body.data[2].displayName).toBe('Alice 05');
+        expect(response.status).toBe(200);
+        expect(body.data.length).toBe(3);
+        expect(body.pagination.page).toBe(2);
+        // Page 2 with pageSize 3 should have items 3, 4, 5 (0-indexed: 03, 04, 05)
+        expect(body.data[0]?.displayName).toBe('Alice 03');
+        expect(body.data[1]?.displayName).toBe('Alice 04');
+        expect(body.data[2]?.displayName).toBe('Alice 05');
+      });
     });
   });
 
-  // ============================================================================
-  // Faceted Search: GET /api/friends/search/faceted
-  // ============================================================================
-
   describe('GET /api/friends/search/faceted', () => {
     describe('Search with Filters', () => {
-      it('should filter by city', async () => {
+      it('filters by city', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithAddress(pool, testUser.externalId, 'Alice NYC', 'New York', 'US');
@@ -799,14 +908,14 @@ describe('Search API - Integration Tests', () => {
         );
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.data.length).toBe(1);
-        expect(body.data[0].displayName).toBe('Alice NYC');
+        expect(body.data[0]?.displayName).toBe('Alice NYC');
       });
 
-      it('should filter by country', async () => {
+      it('filters by country', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithAddress(pool, testUser.externalId, 'Alice USA', 'New York', 'US');
@@ -822,14 +931,14 @@ describe('Search API - Integration Tests', () => {
         );
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.data.length).toBe(1);
-        expect(body.data[0].displayName).toBe('Alice USA');
+        expect(body.data[0]?.displayName).toBe('Alice USA');
       });
 
-      it('should filter by organization', async () => {
+      it('filters by organization', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithOrganization(pool, testUser.externalId, 'Alice Acme', 'Acme Corp');
@@ -845,14 +954,14 @@ describe('Search API - Integration Tests', () => {
         );
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.data.length).toBe(1);
-        expect(body.data[0].displayName).toBe('Alice Acme');
+        expect(body.data[0]?.displayName).toBe('Alice Acme');
       });
 
-      it('should filter by job title', async () => {
+      it('filters by job title', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithOrganization(
@@ -886,14 +995,14 @@ describe('Search API - Integration Tests', () => {
         );
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.data.length).toBe(1);
-        expect(body.data[0].displayName).toBe('Alice Eng');
+        expect(body.data[0]?.displayName).toBe('Alice Eng');
       });
 
-      it('should filter by circle', async () => {
+      it('filters by circle', async () => {
         const { app, pool, testUser } = getContext();
 
         const friend1Id = await createTestFriend(pool, testUser.externalId, 'Alice Circle1');
@@ -916,32 +1025,30 @@ describe('Search API - Integration Tests', () => {
         );
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.data.length).toBe(1);
-        expect(body.data[0].displayName).toBe('Alice Circle1');
+        expect(body.data[0]?.displayName).toBe('Alice Circle1');
       });
 
-      it('should combine multiple filters with AND logic', async () => {
+      it('combines multiple filters with AND logic', async () => {
         const { app, pool, testUser } = getContext();
 
-        // Create friends with various attribute combinations
         const friend1Id = await createFriendWithOrganization(
           pool,
           testUser.externalId,
           'Alice Match',
           'Acme Corp',
         );
-        // Add address to friend1
-        const friend1Result = await pool.query(
+        const friend1Result = await pool.query<{ id: string }>(
           'SELECT id FROM friends.friends WHERE external_id = $1',
           [friend1Id],
         );
         await pool.query(
           `INSERT INTO friends.friend_addresses (friend_id, city, country, address_type, is_primary)
            VALUES ($1, 'New York', 'US', 'home', true)`,
-          [friend1Result.rows[0].id],
+          [friend1Result.rows[0]?.id],
         );
 
         await createFriendWithOrganization(pool, testUser.externalId, 'Alice OrgOnly', 'Acme Corp');
@@ -963,19 +1070,18 @@ describe('Search API - Integration Tests', () => {
         );
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.data.length).toBe(1);
-        expect(body.data[0].displayName).toBe('Alice Match');
+        expect(body.data[0]?.displayName).toBe('Alice Match');
       });
     });
 
     describe('Search Results Must Match Query', () => {
-      it('should only return results matching both query AND filters', async () => {
+      it('only returns results matching both query AND filters', async () => {
         const { app, pool, testUser } = getContext();
 
-        // Create friends: some match query, some match filter, one matches both
         await createFriendWithOrganization(pool, testUser.externalId, 'Alice Acme', 'Acme Corp');
         await createFriendWithOrganization(pool, testUser.externalId, 'Bob Acme', 'Acme Corp');
         await createFriendWithOrganization(pool, testUser.externalId, 'Alice Other', 'Other Corp');
@@ -989,18 +1095,16 @@ describe('Search API - Integration Tests', () => {
         );
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
-        // Should only return the one that matches BOTH query AND filter
         expect(body.data.length).toBe(1);
-        expect(body.data[0].displayName).toBe('Alice Acme');
+        expect(body.data[0]?.displayName).toBe('Alice Acme');
       });
 
-      it('should not return results that only match filter but not query', async () => {
+      it('does not return results that only match filter but not query', async () => {
         const { app, pool, testUser } = getContext();
 
-        // This tests the bug shown in the screenshot:
         // Searching for "patsch" should NOT return people who don't have "patsch" anywhere
         // even if they match some filter criteria
 
@@ -1038,19 +1142,18 @@ describe('Search API - Integration Tests', () => {
         );
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
-        // Should ONLY return people with "patsch" in their searchable data
         expect(body.data.length).toBe(2);
-        expect(body.data.every((r: any) => r.displayName.includes('Patsch'))).toBe(true);
-        expect(body.data.some((r: any) => r.displayName.includes('Schumacher'))).toBe(false);
-        expect(body.data.some((r: any) => r.displayName.includes('Werner'))).toBe(false);
+        expect(body.data.every((r) => r.displayName.includes('Patsch'))).toBe(true);
+        expect(body.data.some((r) => r.displayName.includes('Schumacher'))).toBe(false);
+        expect(body.data.some((r) => r.displayName.includes('Werner'))).toBe(false);
       });
     });
 
     describe('Facet Counts', () => {
-      it('should return facet counts when include_facets=true', async () => {
+      it('returns facet counts when include_facets=true', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithOrganization(pool, testUser.externalId, 'Alice 1', 'Acme Corp');
@@ -1066,18 +1169,16 @@ describe('Search API - Integration Tests', () => {
         );
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.facets).toBeDefined();
-        expect(body.facets.professional).toBeDefined();
-        // Should have organization facets
-        const orgFacet = body.facets.professional.find((f: any) => f.field === 'organization');
-        expect(orgFacet).toBeDefined();
-        expect(orgFacet.values.length).toBeGreaterThan(0);
+        expect(body.facets?.professional).toBeDefined();
+        const orgFacet = body.facets?.professional.find((f) => f.field === 'organization');
+        expect(orgFacet?.values.length).toBeGreaterThan(0);
       });
 
-      it('should return circle information in results', async () => {
+      it('returns circle information in results', async () => {
         const { app, pool, testUser } = getContext();
 
         const friendId = await createTestFriend(pool, testUser.externalId, 'Alice WithCircle');
@@ -1089,18 +1190,16 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.data.length).toBe(1);
-        expect(body.data[0].circles).toBeDefined();
-        expect(body.data[0].circles.length).toBe(1);
-        expect(body.data[0].circles[0].name).toBe('Friends');
+        expect(body.data[0]?.circles.map((circle) => circle.name)).toEqual(['Friends']);
       });
     });
 
     describe('Filter-Only Mode (No Query)', () => {
-      it('should work with only filters and no search query', async () => {
+      it('works with only filters and no search query', async () => {
         const { app, pool, testUser } = getContext();
 
         await createFriendWithOrganization(pool, testUser.externalId, 'Alice', 'Acme Corp');
@@ -1116,11 +1215,11 @@ describe('Search API - Integration Tests', () => {
         );
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(FacetedSearchResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.data.length).toBe(2);
-        expect(body.data.every((r: any) => r.organization === 'Acme Corp')).toBe(true);
+        expect(body.data.every((r) => r.organization === 'Acme Corp')).toBe(true);
       });
 
       /**
@@ -1128,30 +1227,19 @@ describe('Search API - Integration Tests', () => {
        * reorder, so the query has to carry it out as sort_position and order
        * the result by it — the same way the two query-based siblings do.
        */
-      it('should return a filter-only listing in the requested order', async () => {
-        const { app, pool, testUser } = getContext();
+      it('returns a filter-only listing in the requested order', async () => {
+        const context = getContext();
+        const { pool, testUser } = context;
 
         await createFriendWithOrganization(pool, testUser.externalId, 'Charlie', 'Acme Corp');
         await createFriendWithOrganization(pool, testUser.externalId, 'Alice', 'Acme Corp');
         await createFriendWithOrganization(pool, testUser.externalId, 'Bob', 'Acme Corp');
 
-        const listing = async (sortOrder: 'asc' | 'desc'): Promise<string[]> => {
-          const response = await app.fetch(
-            new Request(
-              `http://localhost/api/friends/search/faceted?organization=Acme Corp&sort_by=display_name&sort_order=${sortOrder}`,
-              { method: 'GET', headers: authHeaders(testUser.sessionCookies) },
-            ),
-          );
-          expect(response.status).toBe(200);
-          const body = (await response.json()) as { data: Array<{ displayName: string }> };
-          return body.data.map((row) => row.displayName);
-        };
-
-        expect(await listing('asc')).toEqual(['Alice', 'Bob', 'Charlie']);
-        expect(await listing('desc')).toEqual(['Charlie', 'Bob', 'Alice']);
+        expect(await fetchFilterOnlyListing(context, 'asc')).toEqual(['Alice', 'Bob', 'Charlie']);
+        expect(await fetchFilterOnlyListing(context, 'desc')).toEqual(['Charlie', 'Bob', 'Alice']);
       });
 
-      it('should reject request with no query and no filters', async () => {
+      it('rejects request with no query and no filters', async () => {
         const { app, testUser } = getContext();
 
         const request = new Request('http://localhost/api/friends/search/faceted', {
@@ -1175,7 +1263,7 @@ describe('Search API - Integration Tests', () => {
         const response = await app.fetch(request);
 
         expect(response.status).toBe(400);
-        expect(await response.json()).toEqual({
+        expect(parseWith(ErrorResponseSchema, await response.json())).toEqual({
           error: 'Invalid relationship_category: enemies',
           code: 'VALIDATION_ERROR',
           details: { relationship_category: ['enemies'] },
@@ -1184,13 +1272,9 @@ describe('Search API - Integration Tests', () => {
     });
   });
 
-  // ============================================================================
-  // Recent Searches: /api/friends/search/recent
-  // ============================================================================
-
-  describe('Recent Searches', () => {
-    describe('GET /api/friends/search/recent', () => {
-      it('should return empty array when no recent searches', async () => {
+  describe('GET /api/friends/search/recent', () => {
+    describe('when no search was stored', () => {
+      it('returns empty array when no recent searches', async () => {
         const { app, testUser } = getContext();
 
         const request = new Request('http://localhost/api/friends/search/recent', {
@@ -1199,17 +1283,18 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(RecentSearchesResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(Array.isArray(body)).toBe(true);
         expect(body.length).toBe(0);
       });
+    });
 
-      it('should return recent searches in order', async () => {
+    describe('when searches were stored', () => {
+      it('returns recent searches in order', async () => {
         const { app, testUser } = getContext();
 
-        // Add searches
         for (const query of ['alice', 'bob', 'charlie']) {
           const addRequest = new Request('http://localhost/api/friends/search/recent', {
             method: 'POST',
@@ -1225,7 +1310,7 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(RecentSearchesResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(3);
@@ -1235,10 +1320,9 @@ describe('Search API - Integration Tests', () => {
         expect(body[2]).toBe('alice');
       });
 
-      it('should respect limit parameter', async () => {
+      it('respects limit parameter', async () => {
         const { app, testUser } = getContext();
 
-        // Add 5 searches
         for (let i = 0; i < 5; i++) {
           const addRequest = new Request('http://localhost/api/friends/search/recent', {
             method: 'POST',
@@ -1254,15 +1338,17 @@ describe('Search API - Integration Tests', () => {
         });
 
         const response = await app.fetch(request);
-        const body: any = await response.json();
+        const body = parseWith(RecentSearchesResponseSchema, await response.json());
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(3);
       });
     });
+  });
 
-    describe('POST /api/friends/search/recent', () => {
-      it('should add a recent search', async () => {
+  describe('POST /api/friends/search/recent', () => {
+    describe('with a valid query', () => {
+      it('adds a recent search', async () => {
         const { app, testUser } = getContext();
 
         const addRequest = new Request('http://localhost/api/friends/search/recent', {
@@ -1275,22 +1361,20 @@ describe('Search API - Integration Tests', () => {
 
         expect(addResponse.status).toBe(201);
 
-        // Verify it was added
         const getRequest = new Request('http://localhost/api/friends/search/recent', {
           method: 'GET',
           headers: authHeaders(testUser.sessionCookies),
         });
 
         const getResponse = await app.fetch(getRequest);
-        const body: any = await getResponse.json();
+        const body = parseWith(RecentSearchesResponseSchema, await getResponse.json());
 
         expect(body).toContain('test search');
       });
 
-      it('should update timestamp when adding duplicate search', async () => {
+      it('updates timestamp when adding duplicate search', async () => {
         const { app, testUser } = getContext();
 
-        // Add first search
         await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'POST',
@@ -1299,7 +1383,6 @@ describe('Search API - Integration Tests', () => {
           }),
         );
 
-        // Add second search
         await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'POST',
@@ -1317,21 +1400,22 @@ describe('Search API - Integration Tests', () => {
           }),
         );
 
-        // Get recent searches
         const response = await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'GET',
             headers: authHeaders(testUser.sessionCookies),
           }),
         );
-        const body: any = await response.json();
+        const body = parseWith(RecentSearchesResponseSchema, await response.json());
 
         expect(body.length).toBe(2);
         expect(body[0]).toBe('alice'); // Most recent
         expect(body[1]).toBe('bob');
       });
+    });
 
-      it('should reject empty query', async () => {
+    describe('with an invalid query', () => {
+      it('rejects empty query', async () => {
         const { app, testUser } = getContext();
 
         const request = new Request('http://localhost/api/friends/search/recent', {
@@ -1345,7 +1429,7 @@ describe('Search API - Integration Tests', () => {
         expect(response.status).toBe(400);
       });
 
-      it('should reject query shorter than 2 characters', async () => {
+      it('rejects query shorter than 2 characters', async () => {
         const { app, testUser } = getContext();
 
         const request = new Request('http://localhost/api/friends/search/recent', {
@@ -1359,12 +1443,13 @@ describe('Search API - Integration Tests', () => {
         expect(response.status).toBe(400);
       });
     });
+  });
 
-    describe('DELETE /api/friends/search/recent/:query', () => {
-      it('should delete a specific recent search', async () => {
+  describe('DELETE /api/friends/search/recent/:query', () => {
+    describe('when the search exists', () => {
+      it('deletes a specific recent search', async () => {
         const { app, testUser } = getContext();
 
-        // Add searches
         for (const query of ['alice', 'bob', 'charlie']) {
           await app.fetch(
             new Request('http://localhost/api/friends/search/recent', {
@@ -1375,7 +1460,6 @@ describe('Search API - Integration Tests', () => {
           );
         }
 
-        // Delete one
         const deleteResponse = await app.fetch(
           new Request('http://localhost/api/friends/search/recent/bob', {
             method: 'DELETE',
@@ -1385,22 +1469,23 @@ describe('Search API - Integration Tests', () => {
 
         expect(deleteResponse.status).toBe(200);
 
-        // Verify it was deleted
         const getResponse = await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'GET',
             headers: authHeaders(testUser.sessionCookies),
           }),
         );
-        const body: any = await getResponse.json();
+        const body = parseWith(RecentSearchesResponseSchema, await getResponse.json());
 
         expect(body.length).toBe(2);
         expect(body).not.toContain('bob');
         expect(body).toContain('alice');
         expect(body).toContain('charlie');
       });
+    });
 
-      it('should return 404 for non-existent search', async () => {
+    describe('when the search does not exist', () => {
+      it('returns 404 for non-existent search', async () => {
         const { app, testUser } = getContext();
 
         const response = await app.fetch(
@@ -1413,12 +1498,13 @@ describe('Search API - Integration Tests', () => {
         expect(response.status).toBe(404);
       });
     });
+  });
 
-    describe('DELETE /api/friends/search/recent', () => {
-      it('should clear all recent searches', async () => {
+  describe('DELETE /api/friends/search/recent', () => {
+    describe('when searches were stored', () => {
+      it('clears all recent searches', async () => {
         const { app, testUser } = getContext();
 
-        // Add searches
         for (const query of ['alice', 'bob', 'charlie']) {
           await app.fetch(
             new Request('http://localhost/api/friends/search/recent', {
@@ -1429,7 +1515,6 @@ describe('Search API - Integration Tests', () => {
           );
         }
 
-        // Clear all
         const clearResponse = await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'DELETE',
@@ -1439,207 +1524,82 @@ describe('Search API - Integration Tests', () => {
 
         expect(clearResponse.status).toBe(200);
 
-        // Verify all were deleted
         const getResponse = await app.fetch(
           new Request('http://localhost/api/friends/search/recent', {
             method: 'GET',
             headers: authHeaders(testUser.sessionCookies),
           }),
         );
-        const body: any = await getResponse.json();
+        const body = parseWith(RecentSearchesResponseSchema, await getResponse.json());
 
         expect(body.length).toBe(0);
       });
     });
   });
 
-  // ============================================================================
-  // Edge Cases and Special Characters
-  // ============================================================================
+  describe('GET /api/friends/search', () => {
+    describe('with a valid query', () => {
+      it('returns matching friends for autocomplete', async () => {
+        const { app, pool, testUser } = getContext();
 
-  describe('Edge Cases', () => {
-    it('should handle special characters in search query', async () => {
-      const { app, pool, testUser } = getContext();
+        await createTestFriend(pool, testUser.externalId, 'Alice Smith');
+        await createTestFriend(pool, testUser.externalId, 'Alice Johnson');
+        await createTestFriend(pool, testUser.externalId, 'Bob Jones');
 
-      await createTestFriend(pool, testUser.externalId, "Alice O'Brien");
-      await createTestFriend(pool, testUser.externalId, 'Bob Smith');
-
-      const request = new Request(
-        `http://localhost/api/friends/search/full?q=${encodeURIComponent("O'Brien")}`,
-        {
+        const request = new Request('http://localhost/api/friends/search?q=alice', {
           method: 'GET',
           headers: authHeaders(testUser.sessionCookies),
-        },
-      );
+        });
 
-      const response = await app.fetch(request);
-      const body: any = await response.json();
+        const response = await app.fetch(request);
+        const body = parseWith(FriendSearchResultResponseSchema.array(), await response.json());
 
-      expect(response.status).toBe(200);
-      expect(body.length).toBe(1);
-      expect(body[0].displayName).toBe("Alice O'Brien");
-    });
-
-    it('should handle unicode characters in search query', async () => {
-      const { app, pool, testUser } = getContext();
-
-      await createTestFriend(pool, testUser.externalId, 'Müller Schmidt');
-      await createTestFriend(pool, testUser.externalId, 'Bob Smith');
-
-      const request = new Request(
-        `http://localhost/api/friends/search/full?q=${encodeURIComponent('Müller')}`,
-        {
-          method: 'GET',
-          headers: authHeaders(testUser.sessionCookies),
-        },
-      );
-
-      const response = await app.fetch(request);
-      const body: any = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(body.length).toBe(1);
-      expect(body[0].displayName).toBe('Müller Schmidt');
-    });
-
-    it('should handle whitespace-only query', async () => {
-      const { app, testUser } = getContext();
-
-      const request = new Request('http://localhost/api/friends/search/full?q=   ', {
-        method: 'GET',
-        headers: authHeaders(testUser.sessionCookies),
+        expect(response.status).toBe(200);
+        expect(Array.isArray(body)).toBe(true);
+        expect(body.length).toBe(2);
+        expect(body[0]).toHaveProperty('id');
+        expect(body[0]).toHaveProperty('displayName');
       });
 
-      const response = await app.fetch(request);
+      it('omits the friend named in the exclude parameter', async () => {
+        const { app, pool, testUser } = getContext();
 
-      expect(response.status).toBe(400);
-    });
+        const friend1 = await createTestFriend(pool, testUser.externalId, 'Alice Smith');
+        await createTestFriend(pool, testUser.externalId, 'Alice Johnson');
 
-    it('should handle query with multiple words', async () => {
-      const { app, pool, testUser } = getContext();
+        const request = new Request(
+          `http://localhost/api/friends/search?q=alice&exclude=${friend1}`,
+          {
+            method: 'GET',
+            headers: authHeaders(testUser.sessionCookies),
+          },
+        );
 
-      await createTestFriend(pool, testUser.externalId, 'Alice Marie Smith');
-      await createTestFriend(pool, testUser.externalId, 'Alice Johnson');
-      await createTestFriend(pool, testUser.externalId, 'Bob Smith');
+        const response = await app.fetch(request);
+        const body = parseWith(FriendSearchResultResponseSchema.array(), await response.json());
 
-      const request = new Request('http://localhost/api/friends/search/full?q=alice smith', {
-        method: 'GET',
-        headers: authHeaders(testUser.sessionCookies),
+        expect(response.status).toBe(200);
+        expect(body.length).toBe(1);
+        expect(body[0]?.displayName).toBe('Alice Johnson');
       });
-
-      const response = await app.fetch(request);
-      const body: any = await response.json();
-
-      expect(response.status).toBe(200);
-      // Should find Alice Marie Smith (best match) at minimum
-      expect(body.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should not return deleted friends', async () => {
-      const { app, pool, testUser } = getContext();
+    describe('with an invalid exclude parameter', () => {
+      it('rejects invalid exclude UUID', async () => {
+        const { app, testUser } = getContext();
 
-      const friendId = await createTestFriend(pool, testUser.externalId, 'Alice Deleted');
-      await createTestFriend(pool, testUser.externalId, 'Alice Active');
+        const request = new Request(
+          'http://localhost/api/friends/search?q=alice&exclude=invalid-uuid',
+          {
+            method: 'GET',
+            headers: authHeaders(testUser.sessionCookies),
+          },
+        );
 
-      // Soft delete one friend
-      await pool.query('UPDATE friends.friends SET deleted_at = NOW() WHERE external_id = $1', [
-        friendId,
-      ]);
+        const response = await app.fetch(request);
 
-      const request = new Request('http://localhost/api/friends/search/full?q=alice', {
-        method: 'GET',
-        headers: authHeaders(testUser.sessionCookies),
+        expect(response.status).toBe(400);
       });
-
-      const response = await app.fetch(request);
-      const body: any = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(body.length).toBe(1);
-      expect(body[0].displayName).toBe('Alice Active');
-    });
-
-    it('should handle very long search queries', async () => {
-      const { app, testUser } = getContext();
-
-      const longQuery = 'a'.repeat(200);
-
-      const request = new Request(`http://localhost/api/friends/search/full?q=${longQuery}`, {
-        method: 'GET',
-        headers: authHeaders(testUser.sessionCookies),
-      });
-
-      const response = await app.fetch(request);
-
-      // Should not crash, may return empty results
-      expect(response.status).toBe(200);
-    });
-  });
-
-  // ============================================================================
-  // Autocomplete Search: GET /api/friends/search
-  // ============================================================================
-
-  describe('GET /api/friends/search (Autocomplete)', () => {
-    it('should return matching friends for autocomplete', async () => {
-      const { app, pool, testUser } = getContext();
-
-      await createTestFriend(pool, testUser.externalId, 'Alice Smith');
-      await createTestFriend(pool, testUser.externalId, 'Alice Johnson');
-      await createTestFriend(pool, testUser.externalId, 'Bob Jones');
-
-      const request = new Request('http://localhost/api/friends/search?q=alice', {
-        method: 'GET',
-        headers: authHeaders(testUser.sessionCookies),
-      });
-
-      const response = await app.fetch(request);
-      const body: any = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(Array.isArray(body)).toBe(true);
-      expect(body.length).toBe(2);
-      // Autocomplete results have simpler structure
-      expect(body[0]).toHaveProperty('id');
-      expect(body[0]).toHaveProperty('displayName');
-    });
-
-    it('should support exclude parameter', async () => {
-      const { app, pool, testUser } = getContext();
-
-      const friend1 = await createTestFriend(pool, testUser.externalId, 'Alice Smith');
-      await createTestFriend(pool, testUser.externalId, 'Alice Johnson');
-
-      const request = new Request(
-        `http://localhost/api/friends/search?q=alice&exclude=${friend1}`,
-        {
-          method: 'GET',
-          headers: authHeaders(testUser.sessionCookies),
-        },
-      );
-
-      const response = await app.fetch(request);
-      const body: any = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(body.length).toBe(1);
-      expect(body[0].displayName).toBe('Alice Johnson');
-    });
-
-    it('should reject invalid exclude UUID', async () => {
-      const { app, testUser } = getContext();
-
-      const request = new Request(
-        'http://localhost/api/friends/search?q=alice&exclude=invalid-uuid',
-        {
-          method: 'GET',
-          headers: authHeaders(testUser.sessionCookies),
-        },
-      );
-
-      const response = await app.fetch(request);
-
-      expect(response.status).toBe(400);
     });
   });
 });

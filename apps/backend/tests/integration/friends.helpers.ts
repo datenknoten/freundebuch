@@ -1,11 +1,13 @@
 import type pg from 'pg';
-import { afterAll, beforeAll, beforeEach } from 'vitest';
+import { afterAll, assert, beforeAll, beforeEach } from 'vitest';
 
 import {
+  type AppFetcher,
   type AuthTestContext,
   completeTestUserOnboarding,
   createBetterAuthSession,
   createTestUser,
+  firstRow,
   setupAuthTests,
   teardownAuthTests,
   truncateUserData,
@@ -23,11 +25,7 @@ export interface FriendsTestContext extends AuthTestContext {
 /**
  * Create a test user and return with session cookies for authentication
  */
-export async function createAuthenticatedUser(
-  pool: pg.Pool,
-  email: string,
-  _password: string,
-): Promise<{ externalId: string; email: string; sessionCookies: string }> {
+export async function createAuthenticatedUser(pool: pg.Pool, email: string, _password: string) {
   // The stored account password is never verified in tests — sessions are
   // created directly via createBetterAuthSession — so a placeholder hash is
   // sufficient and avoids depending on the (removed) legacy bcrypt helper.
@@ -45,12 +43,8 @@ export async function createAuthenticatedUser(
 /**
  * Helper to create a friend directly in the database
  */
-export async function createTestFriend(
-  pool: pg.Pool,
-  userExternalId: string,
-  displayName: string,
-): Promise<string> {
-  const result = await pool.query(
+export async function createTestFriend(pool: pg.Pool, userExternalId: string, displayName: string) {
+  const result = await pool.query<{ external_id: string }>(
     `INSERT INTO friends.friends (user_id, display_name)
      SELECT u.id, $2
      FROM auth.users u
@@ -59,53 +53,63 @@ export async function createTestFriend(
     [userExternalId, displayName],
   );
 
-  return result.rows[0].external_id;
+  return firstRow(result).external_id;
 }
 
 /**
  * Helper to get friend from database
  */
-export async function getTestFriend(
-  pool: pg.Pool,
-  friendExternalId: string,
-): Promise<{ displayName: string; deletedAt: Date | null } | null> {
-  const result = await pool.query(
+export async function getTestFriend(pool: pg.Pool, friendExternalId: string) {
+  const result = await pool.query<{ display_name: string; deleted_at: Date | null }>(
     'SELECT display_name, deleted_at FROM friends.friends WHERE external_id = $1',
     [friendExternalId],
   );
 
-  if (result.rows.length === 0) {
+  const [row] = result.rows;
+  if (row === undefined) {
     return null;
   }
 
-  return {
-    displayName: result.rows[0].display_name,
-    deletedAt: result.rows[0].deleted_at,
-  };
+  return { displayName: row.display_name, deletedAt: row.deleted_at };
 }
 
 /**
  * Helper to count friends for a user
  */
-export async function countUserFriends(pool: pg.Pool, userExternalId: string): Promise<number> {
-  const result = await pool.query(
+export async function countUserFriends(pool: pg.Pool, userExternalId: string) {
+  const result = await pool.query<{ count: string }>(
     `SELECT COUNT(*) FROM friends.friends c
      JOIN auth.users u ON c.user_id = u.id
      WHERE u.external_id = $1 AND c.deleted_at IS NULL`,
     [userExternalId],
   );
 
-  return Number.parseInt(result.rows[0].count, 10);
+  return Number.parseInt(firstRow(result).count, 10);
 }
 
 /**
  * Helper to make authenticated request using session cookies
  */
-export function authHeaders(sessionCookies: string): Record<string, string> {
+export function authHeaders(sessionCookies: string) {
   return {
     Cookie: sessionCookies,
     'Content-Type': 'application/json',
   };
+}
+
+/** Send a JSON request with a user's session cookies; `body` is serialised when given. */
+export function sendAs(
+  app: AppFetcher,
+  sessionCookies: string,
+  method: string,
+  path: string,
+  body?: unknown,
+) {
+  const init: RequestInit = { method, headers: authHeaders(sessionCookies) };
+  if (body !== undefined) {
+    init.body = JSON.stringify(body);
+  }
+  return app.fetch(new Request(`http://localhost${path}`, init));
 }
 
 /**
@@ -113,8 +117,8 @@ export function authHeaders(sessionCookies: string): Record<string, string> {
  * config variables for the suite's app.
  */
 export function setupFriendsTestSuite(env: Record<string, string> = {}) {
-  let authContext: AuthTestContext;
-  let context: FriendsTestContext;
+  let authContext: AuthTestContext | undefined;
+  let context: FriendsTestContext | undefined;
 
   beforeAll(async () => {
     authContext = await setupAuthTests(env);
@@ -123,6 +127,7 @@ export function setupFriendsTestSuite(env: Record<string, string> = {}) {
   beforeEach(async () => {
     // Wipe every user-owned row, then rebuild the fixture user: a test must not
     // inherit rows (or a session) from its predecessors.
+    assert.isDefined(authContext, 'the suite context is set in beforeAll');
     await truncateUserData(authContext.pool);
     const testUser = await createAuthenticatedUser(
       authContext.pool,
@@ -137,7 +142,10 @@ export function setupFriendsTestSuite(env: Record<string, string> = {}) {
     await teardownAuthTests(authContext);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  return {
-    getContext: () => context,
-  };
+  function getContext() {
+    assert.isDefined(context, 'the test context is set in beforeEach');
+    return context;
+  }
+
+  return { getContext };
 }

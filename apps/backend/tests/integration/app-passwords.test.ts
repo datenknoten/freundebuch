@@ -1,3 +1,10 @@
+import { parseWith } from '@datenknoten/kit/schema';
+import {
+  AppPasswordCreateResponseSchema,
+  AppPasswordResponseSchema,
+  ErrorResponseSchema,
+} from '@freundebuch/shared';
+import { type } from 'arktype';
 import bcrypt from 'bcrypt';
 import pino from 'pino';
 import { describe, expect, it } from 'vitest';
@@ -7,10 +14,14 @@ import {
   completeTestUserOnboarding,
   createBetterAuthSession,
   createTestUser,
+  firstRow,
   setupAuthTestSuite,
 } from './auth.helpers.js';
 
-describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
+const AppPasswordListResponseSchema = AppPasswordResponseSchema.array();
+const SuccessResponseSchema = type({ success: 'boolean' });
+
+describe('/api/app-passwords', { timeout: 30000 }, () => {
   const { getContext } = setupAuthTestSuite();
 
   /**
@@ -27,7 +38,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
   }
 
   describe('GET /api/app-passwords', () => {
-    it('should return 401 when not authenticated', async () => {
+    it('returns 401 when not authenticated', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -39,7 +50,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       expect(response.status).toBe(401);
     });
 
-    it('should return empty array when no passwords exist', async () => {
+    it('returns empty array when no passwords exist', async () => {
       const { app } = getContext();
       const { sessionCookies } = await createUserAndLogin(
         'apppw-empty@test.com',
@@ -56,11 +67,11 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       );
 
       expect(response.status).toBe(200);
-      const body: any = await response.json();
+      const body = parseWith(AppPasswordListResponseSchema, await response.json());
       expect(body).toEqual([]);
     });
 
-    it('should return list of app passwords', async () => {
+    it('returns list of app passwords', async () => {
       const { app } = getContext();
       const { sessionCookies } = await createUserAndLogin('apppw-list@test.com', 'TestPassword123');
 
@@ -87,7 +98,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       );
 
       expect(response.status).toBe(200);
-      const passwords = (await response.json()) as any[];
+      const passwords = parseWith(AppPasswordListResponseSchema, await response.json());
       expect(passwords).toHaveLength(1);
       expect(passwords[0]).toHaveProperty('externalId');
       expect(passwords[0]).toHaveProperty('name', 'Test iPhone');
@@ -101,7 +112,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
   });
 
   describe('POST /api/app-passwords', () => {
-    it('should return 401 when not authenticated', async () => {
+    it('returns 401 when not authenticated', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -115,7 +126,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       expect(response.status).toBe(401);
     });
 
-    it('should create an app password and return it with the secret', async () => {
+    it('creates an app password and returns it with the secret', async () => {
       const { app } = getContext();
       const { sessionCookies } = await createUserAndLogin(
         'apppw-create@test.com',
@@ -134,7 +145,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       );
 
       expect(response.status).toBe(201);
-      const body: any = await response.json();
+      const body = parseWith(AppPasswordCreateResponseSchema, await response.json());
       expect(body).toHaveProperty('externalId');
       expect(body).toHaveProperty('name', 'My Thunderbird');
       expect(body).toHaveProperty('password');
@@ -151,7 +162,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       expect(body.password.slice(5, 9)).toBe(body.passwordPrefix.slice(4, 8));
     });
 
-    it('should return 400 for missing name', async () => {
+    it('returns 400 for missing name', async () => {
       const { app } = getContext();
       const { sessionCookies } = await createUserAndLogin(
         'apppw-noname@test.com',
@@ -172,7 +183,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       expect(response.status).toBe(400);
     });
 
-    it('should return 429 when max passwords limit reached', async () => {
+    it('returns 429 when max passwords limit reached', async () => {
       const { app } = getContext();
       const { sessionCookies } = await createUserAndLogin(
         'apppw-limit@test.com',
@@ -206,13 +217,13 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       );
 
       expect(response.status).toBe(429);
-      const body: any = await response.json();
+      const body = parseWith(ErrorResponseSchema, await response.json());
       expect(body.error).toContain('Maximum');
     });
   });
 
   describe('DELETE /api/app-passwords/:id', () => {
-    it('should return 401 when not authenticated', async () => {
+    it('returns 401 when not authenticated', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -224,7 +235,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       expect(response.status).toBe(401);
     });
 
-    it('should revoke an app password', async () => {
+    it('revokes an app password', async () => {
       const { app } = getContext();
       const { sessionCookies } = await createUserAndLogin(
         'apppw-revoke@test.com',
@@ -243,7 +254,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         }),
       );
 
-      const created: any = await createResponse.json();
+      const created = parseWith(AppPasswordCreateResponseSchema, await createResponse.json());
 
       // Delete it
       const response = await app.fetch(
@@ -256,7 +267,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       );
 
       expect(response.status).toBe(200);
-      const body: any = await response.json();
+      const body = parseWith(SuccessResponseSchema, await response.json());
       expect(body.success).toBe(true);
 
       // Verify it's no longer listed
@@ -269,11 +280,11 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         }),
       );
 
-      const list = (await listResponse.json()) as any[];
+      const list = parseWith(AppPasswordListResponseSchema, await listResponse.json());
       expect(list).toHaveLength(0);
     });
 
-    it('should return 404 for non-existent password', async () => {
+    it('returns 404 for non-existent password', async () => {
       const { app } = getContext();
       const { sessionCookies } = await createUserAndLogin('apppw-404@test.com', 'TestPassword123');
 
@@ -290,7 +301,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       expect(response.status).toBe(404);
     });
 
-    it('should return 400 for invalid UUID format', async () => {
+    it('returns 400 for invalid UUID format', async () => {
       const { app } = getContext();
       const { sessionCookies } = await createUserAndLogin(
         'apppw-invalid-uuid@test.com',
@@ -309,7 +320,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       expect(response.status).toBe(400);
     });
 
-    it('should not allow revoking another user password', async () => {
+    it('does not allow revoking another user password', async () => {
       const { app } = getContext();
 
       // Create user 1 and their password
@@ -327,7 +338,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
           body: JSON.stringify({ name: 'User1 Password' }),
         }),
       );
-      const created: any = await createResponse.json();
+      const created = parseWith(AppPasswordCreateResponseSchema, await createResponse.json());
 
       // Create user 2
       const { sessionCookies: sessionCookies2 } = await createUserAndLogin(
@@ -350,7 +361,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
   });
 
   describe('App password verification flow', () => {
-    it('should work end-to-end: create, list, verify, revoke', async () => {
+    it('lists, verifies and revokes a created password end to end', async () => {
       const { app, pool } = getContext();
       const testEmail = 'apppw-e2e@test.com';
       const testPassword = 'TestPassword123';
@@ -369,7 +380,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       );
 
       expect(createResponse.status).toBe(201);
-      const created: any = await createResponse.json();
+      const created = parseWith(AppPasswordCreateResponseSchema, await createResponse.json());
 
       // 2. Verify the password is listed
       const listResponse = await app.fetch(
@@ -381,20 +392,21 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         }),
       );
 
-      const list = (await listResponse.json()) as any[];
+      const list = parseWith(AppPasswordListResponseSchema, await listResponse.json());
       expect(list).toHaveLength(1);
-      expect(list[0].externalId).toBe(created.externalId);
+      expect(list[0]?.externalId).toBe(created.externalId);
 
       // 3. Verify the password was stored in database
-      const dbResult = await pool.query(
+      const dbResult = await pool.query<{ password_hash: string; password_prefix: string }>(
         'SELECT password_hash, password_prefix FROM auth.app_passwords WHERE external_id = $1',
         [created.externalId],
       );
       expect(dbResult.rows.length).toBe(1);
-      expect(dbResult.rows[0].password_hash).toMatch(/^\$2[aby]\$\d{2}\$/); // bcrypt format
+      const stored = firstRow(dbResult);
+      expect(stored.password_hash).toMatch(/^\$2[aby]\$\d{2}\$/); // bcrypt format
       // The stored prefix is sha256(raw prefix) truncated to 16 hex chars.
-      expect(dbResult.rows[0].password_prefix).toBe(hashAppPasswordPrefix(created.passwordPrefix));
-      expect(dbResult.rows[0].password_prefix).not.toBe(created.passwordPrefix);
+      expect(stored.password_prefix).toBe(hashAppPasswordPrefix(created.passwordPrefix));
+      expect(stored.password_prefix).not.toBe(created.passwordPrefix);
 
       // 4. Revoke the password
       const revokeResponse = await app.fetch(
@@ -418,18 +430,18 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
         }),
       );
 
-      const finalList = (await finalListResponse.json()) as any[];
+      const finalList = parseWith(AppPasswordListResponseSchema, await finalListResponse.json());
       expect(finalList).toHaveLength(0);
 
       // 6. Verify the password is soft-deleted (revoked_at is set)
-      const finalDbResult = await pool.query(
+      const finalDbResult = await pool.query<{ revoked_at: Date | null }>(
         'SELECT revoked_at FROM auth.app_passwords WHERE external_id = $1',
         [created.externalId],
       );
-      expect(finalDbResult.rows[0].revoked_at).not.toBeNull();
+      expect(firstRow(finalDbResult).revoked_at).not.toBeNull();
     });
 
-    it('should authenticate the created password against the hashed prefix in the database', async () => {
+    it('authenticates the created password against the hashed prefix in the database', async () => {
       const { app, pool } = getContext();
       const testEmail = 'apppw-verify@test.com';
       const { sessionCookies } = await createUserAndLogin(testEmail, 'TestPassword123');
@@ -444,11 +456,7 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
           body: JSON.stringify({ name: 'Verify Test' }),
         }),
       );
-      const created = (await createResponse.json()) as {
-        externalId: string;
-        password: string;
-        passwordPrefix: string;
-      };
+      const created = parseWith(AppPasswordCreateResponseSchema, await createResponse.json());
 
       const service = new AppPasswordsService({ db: pool, logger: pino({ level: 'silent' }) });
 

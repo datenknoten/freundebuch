@@ -1,7 +1,11 @@
 import { Writable } from 'node:stream';
+import { parseJson } from '@datenknoten/kit/schema';
+import { type } from 'arktype';
 import pino from 'pino';
 import { describe, expect, it } from 'vitest';
 import { LOG_REDACT_PATHS } from '../../src/utils/logger.js';
+
+const LogLineSchema = type('Record<string, unknown>');
 
 /**
  * The redaction list is a security control, so it is tested through pino
@@ -9,7 +13,7 @@ import { LOG_REDACT_PATHS } from '../../src/utils/logger.js';
  * in the log line, and pino's path syntax (single vs. double wildcard, bracket
  * forms) is where the mistakes are.
  */
-function logOnce(payload: Record<string, unknown>): Record<string, unknown> {
+function logOnce(payload: Record<string, unknown>) {
   const lines: string[] = [];
   const destination = new Writable({
     write(chunk, _encoding, callback) {
@@ -22,7 +26,7 @@ function logOnce(payload: Record<string, unknown>): Record<string, unknown> {
   logger.info(payload);
 
   expect(lines).toHaveLength(1);
-  return JSON.parse(lines[0] ?? '') as Record<string, unknown>;
+  return parseJson(LogLineSchema, lines[0] ?? '');
 }
 
 describe('LOG_REDACT_PATHS', () => {

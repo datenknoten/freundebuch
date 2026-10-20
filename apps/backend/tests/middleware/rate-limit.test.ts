@@ -18,7 +18,7 @@ function limitedConfig(env: Record<string, string> = {}) {
  * (a household, an office, a mobile carrier) previously shared a single bucket,
  * so one heavy client locked out the rest.
  */
-describe('rate limiting', () => {
+describe('createRateLimitMiddleware', () => {
   function friendsLimiter(env: Record<string, string> = {}) {
     return createRateLimitMiddleware({ config: limitedConfig(env), limiter: 'friends' });
   }
@@ -41,53 +41,57 @@ describe('rate limiting', () => {
     return app;
   }
 
-  async function drain(app: Hono<AppContext>, attempts: number): Promise<number> {
+  async function drain(app: Hono<AppContext>, attempts: number) {
     let lastStatus = 0;
     for (let i = 0; i < attempts; i++) {
       lastStatus = (await app.request('/')).status;
-      if (lastStatus === 429) break;
+      if (lastStatus === 429) {
+        break;
+      }
     }
     return lastStatus;
   }
 
-  it('does not throttle a second user when the first exhausts the limit', async () => {
-    const rateLimitMiddleware = friendsLimiter();
-    const userA = appFor('user-a', rateLimitMiddleware);
-    const userB = appFor('user-b', rateLimitMiddleware);
+  describe('keying authenticated users', () => {
+    it('does not throttle a second user when the first exhausts the limit', async () => {
+      const rateLimitMiddleware = friendsLimiter();
+      const userA = appFor('user-a', rateLimitMiddleware);
+      const userB = appFor('user-b', rateLimitMiddleware);
 
-    // The friends budget is 100/min; drain it for user A.
-    expect(await drain(userA, 600)).toBe(429);
+      // The friends budget is 100/min; drain it for user A.
+      expect(await drain(userA, 600)).toBe(429);
 
-    // User B has an untouched bucket.
-    const responseB = await userB.request('/');
-    expect(responseB.status).toBe(200);
-  });
-
-  it('falls back to the client address when there is no authenticated user', async () => {
-    const anonymous = appFor(undefined);
-
-    // No user in context: the middleware must still work rather than throw.
-    const response = await anonymous.request('/');
-    expect(response.status).toBe(200);
-  });
-
-  it('sends Retry-After when the limit trips', async () => {
-    const app = appFor('user-retry');
-
-    expect(await drain(app, 600)).toBe(429);
-
-    const blocked = await app.request('/');
-    expect(blocked.status).toBe(429);
-    expect(blocked.headers.get('Retry-After')).toBeTruthy();
-    expect(await blocked.json()).toMatchObject({
-      error: 'Too many requests. Please try again later.',
+      // User B has an untouched bucket.
+      const responseB = await userB.request('/');
+      expect(responseB.status).toBe(200);
     });
-  });
 
-  it('lets every request through when RATE_LIMIT_ENABLED is false', async () => {
-    const app = appFor('user-unlimited', friendsLimiter({ RATE_LIMIT_ENABLED: 'false' }));
+    it('falls back to the client address when there is no authenticated user', async () => {
+      const anonymous = appFor(undefined);
 
-    expect(await drain(app, 300)).toBe(200);
+      // No user in context: the middleware must still work rather than throw.
+      const response = await anonymous.request('/');
+      expect(response.status).toBe(200);
+    });
+
+    it('sends Retry-After when the limit trips', async () => {
+      const app = appFor('user-retry');
+
+      expect(await drain(app, 600)).toBe(429);
+
+      const blocked = await app.request('/');
+      expect(blocked.status).toBe(429);
+      expect(blocked.headers.get('Retry-After')).toBeTruthy();
+      expect(await blocked.json()).toMatchObject({
+        error: 'Too many requests. Please try again later.',
+      });
+    });
+
+    it('lets every request through when RATE_LIMIT_ENABLED is false', async () => {
+      const app = appFor('user-unlimited', friendsLimiter({ RATE_LIMIT_ENABLED: 'false' }));
+
+      expect(await drain(app, 300)).toBe(200);
+    });
   });
 
   /**
@@ -98,7 +102,7 @@ describe('rate limiting', () => {
    * The sentry-tunnel limiter is the unauthenticated one, so its key is always
    * the client identifier - which is exactly what these assertions probe.
    */
-  describe('client identifier', () => {
+  describe('keying anonymous clients', () => {
     function tunnelApp(env: Record<string, string> = {}) {
       const app = new Hono<AppContext>();
       app.use('*', async (c, next) => {
@@ -117,11 +121,13 @@ describe('rate limiting', () => {
       app: Hono<AppContext>,
       headers: Record<string, string>,
       attempts: number,
-    ): Promise<number> {
+    ) {
       let lastStatus = 0;
       for (let i = 0; i < attempts; i++) {
         lastStatus = (await app.request('/', { headers })).status;
-        if (lastStatus === 429) break;
+        if (lastStatus === 429) {
+          break;
+        }
       }
       return lastStatus;
     }

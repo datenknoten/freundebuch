@@ -1,33 +1,8 @@
 import bcrypt from 'bcrypt';
+import type pg from 'pg';
 import pino from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppPasswordNotFoundError } from '../../src/errors/app-password-not-found.error.js';
-import { AppPasswordsService } from '../../src/services/app-passwords.service.js';
-import { hashAppPasswordPrefix } from '../../src/utils/hash-app-password-prefix.js';
-
-// Mock the PgTyped queries
-vi.mock('../../src/models/queries/app-passwords.queries.js', () => ({
-  getAppPasswordsByUserExternalId: {
-    run: vi.fn(),
-  },
-  createAppPassword: {
-    run: vi.fn(),
-  },
-  revokeAppPassword: {
-    run: vi.fn(),
-  },
-  getUserByEmailWithInternalId: {
-    run: vi.fn(),
-  },
-  getAppPasswordsByUserIdAndPrefix: {
-    run: vi.fn(),
-  },
-  updateAppPasswordLastUsed: {
-    run: vi.fn(),
-  },
-}));
-
-// Import mocked queries
 import {
   createAppPassword,
   getAppPasswordsByUserExternalId,
@@ -36,20 +11,30 @@ import {
   revokeAppPassword,
   updateAppPasswordLastUsed,
 } from '../../src/models/queries/app-passwords.queries.js';
+import { AppPasswordsService } from '../../src/services/app-passwords.service.js';
+import { hashAppPasswordPrefix } from '../../src/utils/hash-app-password-prefix.js';
 
 const VALID_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 const VALID_PASSWORD_ID = '6ba7b810-9dad-41d4-80b5-ec8bdd0e9ef0';
 
 describe('AppPasswordsService', () => {
   let service: AppPasswordsService;
-  let mockDb: any;
-  let mockLogger: pino.Logger;
+  // Every query is spied on below, so the pool is never touched.
+  const mockDb = {} as pg.Pool;
 
   beforeEach(() => {
-    mockDb = {};
-    mockLogger = pino({ level: 'silent' });
-    service = new AppPasswordsService({ db: mockDb, logger: mockLogger });
     vi.clearAllMocks();
+    for (const query of [
+      getAppPasswordsByUserExternalId,
+      createAppPassword,
+      revokeAppPassword,
+      getUserByEmailWithInternalId,
+      getAppPasswordsByUserIdAndPrefix,
+      updateAppPasswordLastUsed,
+    ]) {
+      vi.spyOn(query, 'run').mockResolvedValue([]);
+    }
+    service = new AppPasswordsService({ db: mockDb, logger: pino({ level: 'silent' }) });
   });
 
   afterEach(() => {
@@ -69,7 +54,7 @@ describe('AppPasswordsService', () => {
   });
 
   describe('listAppPasswords', () => {
-    it('should return empty array when no passwords exist', async () => {
+    it('returns empty array when no passwords exist', async () => {
       vi.mocked(getAppPasswordsByUserExternalId.run).mockResolvedValue([]);
 
       const result = await service.listAppPasswords(VALID_USER_ID);
@@ -81,7 +66,7 @@ describe('AppPasswordsService', () => {
       );
     });
 
-    it('should return mapped passwords', async () => {
+    it('returns mapped passwords', async () => {
       const now = new Date('2024-01-15T12:00:00Z');
       vi.mocked(getAppPasswordsByUserExternalId.run).mockResolvedValue([
         {
@@ -119,7 +104,7 @@ describe('AppPasswordsService', () => {
       vi.mocked(getAppPasswordsByUserExternalId.run).mockResolvedValue([]);
     });
 
-    it('should create and return password with secret', async () => {
+    it('creates and returns a password with secret', async () => {
       const createdAt = new Date('2024-01-15T12:00:00Z');
       vi.mocked(createAppPassword.run).mockResolvedValue([
         {
@@ -138,7 +123,7 @@ describe('AppPasswordsService', () => {
       expect(result.createdAt).toBe('2024-01-15T12:00:00.000Z');
     });
 
-    it('should throw error if creation fails', async () => {
+    it('throws error if creation fails', async () => {
       vi.mocked(createAppPassword.run).mockResolvedValue([]);
 
       await expect(service.createAppPassword(VALID_USER_ID, 'My iPhone')).rejects.toThrow(
@@ -146,7 +131,7 @@ describe('AppPasswordsService', () => {
       );
     });
 
-    it('should hash the password before storing', async () => {
+    it('hashes the password before storing', async () => {
       const createdAt = new Date('2024-01-15T12:00:00Z');
       vi.mocked(createAppPassword.run).mockResolvedValue([
         {
@@ -170,7 +155,7 @@ describe('AppPasswordsService', () => {
       );
     });
 
-    it('should store a hashed prefix but return the raw one', async () => {
+    it('stores a hashed prefix but returns the raw one', async () => {
       const createdAt = new Date('2024-01-15T12:00:00Z');
       vi.mocked(createAppPassword.run).mockResolvedValue([
         {
@@ -195,7 +180,7 @@ describe('AppPasswordsService', () => {
       expect(stored).toMatch(/^[0-9a-f]{16}$/);
     });
 
-    it('should format password with dashes', async () => {
+    it('formats password with dashes', async () => {
       const createdAt = new Date('2024-01-15T12:00:00Z');
       vi.mocked(createAppPassword.run).mockResolvedValue([
         {
@@ -221,7 +206,7 @@ describe('AppPasswordsService', () => {
   });
 
   describe('revokeAppPassword', () => {
-    it('should resolve when password is revoked', async () => {
+    it('resolves when password is revoked', async () => {
       vi.mocked(revokeAppPassword.run).mockResolvedValue([{ external_id: VALID_PASSWORD_ID }]);
 
       await service.revokeAppPassword(VALID_USER_ID, VALID_PASSWORD_ID);
@@ -235,7 +220,7 @@ describe('AppPasswordsService', () => {
       );
     });
 
-    it('should throw AppPasswordNotFoundError when password not found', async () => {
+    it('throws AppPasswordNotFoundError when password not found', async () => {
       vi.mocked(revokeAppPassword.run).mockResolvedValue([]);
 
       await expect(service.revokeAppPassword(VALID_USER_ID, VALID_PASSWORD_ID)).rejects.toThrow(
@@ -248,7 +233,7 @@ describe('AppPasswordsService', () => {
     const testEmail = 'user@example.com';
     const testPassword = 'abcd1234efgh5678ijkl9012';
 
-    it('should return undefined for unknown user', async () => {
+    it('returns undefined for unknown user', async () => {
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([]);
 
       const result = await service.verifyAppPassword(testEmail, testPassword);
@@ -256,7 +241,7 @@ describe('AppPasswordsService', () => {
       expect(result).toBeUndefined();
     });
 
-    it('should still spend one bcrypt compare for an unknown email', async () => {
+    it('still spends one bcrypt compare for an unknown email', async () => {
       // Otherwise the response time tells an attacker which addresses exist.
       const compareSpy = vi.spyOn(bcrypt, 'compare');
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([]);
@@ -268,7 +253,7 @@ describe('AppPasswordsService', () => {
       expect(compareSpy).toHaveBeenCalledWith(testPassword, expect.stringMatching(/^\$2[aby]\$/));
     });
 
-    it('should return undefined when no matching prefix', async () => {
+    it('returns undefined when no matching prefix', async () => {
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
         { id: 1, external_id: VALID_USER_ID, email: testEmail },
       ]);
@@ -279,7 +264,7 @@ describe('AppPasswordsService', () => {
       expect(result).toBeUndefined();
     });
 
-    it('should still spend one bcrypt compare when no stored prefix matches', async () => {
+    it('still spends one bcrypt compare when no stored prefix matches', async () => {
       const compareSpy = vi.spyOn(bcrypt, 'compare');
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
         { id: 1, external_id: VALID_USER_ID, email: testEmail },
@@ -292,7 +277,7 @@ describe('AppPasswordsService', () => {
       expect(compareSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should return undefined for wrong password', async () => {
+    it('returns undefined for wrong password', async () => {
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
         { id: 1, external_id: VALID_USER_ID, email: testEmail },
       ]);
@@ -311,7 +296,7 @@ describe('AppPasswordsService', () => {
       expect(result).toBeUndefined();
     });
 
-    it('should return context for correct password', async () => {
+    it('returns context for correct password', async () => {
       const passwordHash = await bcrypt.hash(testPassword, 10);
 
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
@@ -335,7 +320,7 @@ describe('AppPasswordsService', () => {
       });
     });
 
-    it('should handle password with dashes', async () => {
+    it('handles password with dashes', async () => {
       const rawPassword = 'abcd1234efgh5678ijkl9012';
       const formattedPassword = 'abcd-1234-efgh-5678-ijkl-9012';
       const passwordHash = await bcrypt.hash(rawPassword, 10);
@@ -358,7 +343,7 @@ describe('AppPasswordsService', () => {
       expect(result?.userId).toBe(VALID_USER_ID);
     });
 
-    it('should preserve raw dashes that are part of base64url', async () => {
+    it('preserves raw dashes that are part of base64url', async () => {
       // Regression: verifyAppPassword used to strip ALL dashes, corrupting passwords
       // whose base64url raw contains '-' (a valid base64url char).
       // Raw: 32-char base64url with embedded '-'. Format inserts '-' after each 4 chars:
@@ -390,7 +375,7 @@ describe('AppPasswordsService', () => {
       );
     });
 
-    it('should fall back to strip-all-dashes when separator slots are malformed', async () => {
+    it('falls back to strip-all-dashes when separator slots are malformed', async () => {
       // Input has well-formatted length (39 chars) but a non-'-' sits where a
       // format separator should be. Rather than passing the mangled string to
       // bcrypt, the service falls back to the legacy strip-all-dashes path.
@@ -419,7 +404,7 @@ describe('AppPasswordsService', () => {
       );
     });
 
-    it('should update last_used_at on successful verification', async () => {
+    it('updates last_used_at on successful verification', async () => {
       const passwordHash = await bcrypt.hash(testPassword, 10);
 
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
@@ -439,7 +424,7 @@ describe('AppPasswordsService', () => {
       expect(updateAppPasswordLastUsed.run).toHaveBeenCalledWith({ id: 1 }, mockDb);
     });
 
-    it('should try multiple passwords with same prefix', async () => {
+    it('tries multiple passwords with same prefix', async () => {
       const wrongHash = await bcrypt.hash('wrong123wrong456wrong789', 10);
       const correctHash = await bcrypt.hash(testPassword, 10);
 
@@ -467,7 +452,7 @@ describe('AppPasswordsService', () => {
       expect(updateAppPasswordLastUsed.run).toHaveBeenCalledWith({ id: 2 }, mockDb);
     });
 
-    it('should extract correct prefix from password', async () => {
+    it('extracts correct prefix from password', async () => {
       const password = 'abcd1234efgh5678';
       const passwordHash = await bcrypt.hash(password, 10);
 

@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { formatDateOnly } from './date.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { formatDateOnly } from '../../src/utils/date.js';
 
 // Node re-reads process.env.TZ, so stubbing it genuinely moves the process
 // timezone. This matters: CI runs in UTC, where the bug this function exists to
@@ -11,8 +11,13 @@ function inTimezone<T>(tz: string, fn: () => T) {
 }
 
 describe('formatDateOnly', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   describe('timezone independence', () => {

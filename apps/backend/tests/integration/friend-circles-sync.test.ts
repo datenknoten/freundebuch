@@ -1,6 +1,6 @@
-import type { Hono } from 'hono';
+import { parseWith } from '@datenknoten/kit/schema';
+import { CircleResponseSchema } from '@freundebuch/shared/index.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { AppContext } from '../../src/types/context.js';
 
 import {
   type AuthTestContext,
@@ -20,7 +20,7 @@ import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
  * reverting the assignment. `friends.friend_circles` had no
  * `log_subresource_change` trigger until 1789045371456.
  */
-describe('Friend circle assignments - CardDAV change log', () => {
+describe('friends.friend_changes log for circle assignments', () => {
   let context: AuthTestContext;
   let user: { externalId: string; email: string; sessionCookies: string };
   let friendId: string;
@@ -44,27 +44,18 @@ describe('Friend circle assignments - CardDAV change log', () => {
     await teardownAuthTests(context);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  const appOf = (): Hono<AppContext> => context.app;
-
-  async function req(method: string, path: string, body?: unknown): Promise<Response> {
+  async function req(method: string, path: string, body?: unknown) {
     const init: RequestInit = { method, headers: authHeaders(user.sessionCookies) };
-    if (body !== undefined) init.body = JSON.stringify(body);
-    return appOf().fetch(new Request(`http://localhost${path}`, init));
+    if (body !== undefined) {
+      init.body = JSON.stringify(body);
+    }
+    return context.app.fetch(new Request(`http://localhost${path}`, init));
   }
 
-  async function createCircle(name: string): Promise<string> {
+  async function createCircle(name: string) {
     const res = await req('POST', '/api/circles', { name });
     expect(res.status).toBe(201);
-    const body: unknown = await res.json();
-    if (
-      body === null ||
-      typeof body !== 'object' ||
-      !('id' in body) ||
-      typeof body.id !== 'string'
-    ) {
-      throw new Error(`circle creation returned no id: ${JSON.stringify(body)}`);
-    }
-    return body.id;
+    return parseWith(CircleResponseSchema, await res.json()).id;
   }
 
   /**
@@ -72,7 +63,7 @@ describe('Friend circle assignments - CardDAV change log', () => {
    * `friends.friends` so the test also proves the logged row identifies the
    * friend (the junction table has no `external_id` of its own).
    */
-  async function changeLog(): Promise<{ changeType: string; displayName: string }[]> {
+  async function changeLog() {
     const result = await context.pool.query<{ change_type: string; display_name: string }>(
       `SELECT fc.change_type, f.display_name
          FROM friends.friend_changes fc

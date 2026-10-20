@@ -1,14 +1,20 @@
-import { describe, expect, it } from 'vitest';
-import { setupAuthTestSuite } from './auth.helpers.js';
+import { parseJson, parseWith } from '@datenknoten/kit/schema';
+import { type } from 'arktype';
+import type { Pool } from 'pg';
+import { assert, describe, expect, it } from 'vitest';
+import {
+  type AppFetcher,
+  BetterAuthErrorResponseSchema,
+  BetterAuthSessionResponseSchema,
+  setupAuthTestSuite,
+} from './auth.helpers.js';
+
+const ResetRequestResponseSchema = type({ status: 'boolean' });
 
 /**
  * Helper to register a user via Better Auth's sign-up endpoint.
  */
-async function signUp(
-  app: { fetch: (req: Request) => Response | Promise<Response> },
-  email: string,
-  password: string,
-) {
+async function signUp(app: AppFetcher, email: string, password: string) {
   const response = await app.fetch(
     new Request('http://localhost/api/auth/sign-up/email', {
       method: 'POST',
@@ -22,11 +28,7 @@ async function signUp(
 /**
  * Helper to sign in via Better Auth's sign-in endpoint.
  */
-async function signIn(
-  app: { fetch: (req: Request) => Response | Promise<Response> },
-  email: string,
-  password: string,
-) {
+async function signIn(app: AppFetcher, email: string, password: string) {
   const response = await app.fetch(
     new Request('http://localhost/api/auth/sign-in/email', {
       method: 'POST',
@@ -40,10 +42,7 @@ async function signIn(
 /**
  * Helper to request a password reset via Better Auth.
  */
-async function requestPasswordReset(
-  app: { fetch: (req: Request) => Response | Promise<Response> },
-  email: string,
-) {
+async function requestPasswordReset(app: AppFetcher, email: string) {
   const response = await app.fetch(
     new Request('http://localhost/api/auth/request-password-reset', {
       method: 'POST',
@@ -61,12 +60,12 @@ async function requestPasswordReset(
  * The reset URL logged by sendResetPassword contains the token as a query param.
  * We query the DB directly to retrieve the token for testing.
  */
-async function getResetTokenFromDb(pool: import('pg').Pool, email: string): Promise<string | null> {
+async function getResetTokenFromDb(pool: Pool, email: string) {
   // Better Auth stores verification entries with:
   //   identifier = 'reset-password:<token>'
   //   value = user ID
   // We join with auth."user" to filter by email.
-  const result = await pool.query(
+  const result = await pool.query<{ identifier: string }>(
     `SELECT v.identifier
      FROM auth.verification v
      JOIN auth."user" u ON v.value = u.id
@@ -76,19 +75,17 @@ async function getResetTokenFromDb(pool: import('pg').Pool, email: string): Prom
     [email],
   );
 
-  if (result.rows.length === 0) return null;
-  // Extract the token from the identifier (strip 'reset-password:' prefix)
-  return result.rows[0].identifier.replace('reset-password:', '');
+  const [row] = result.rows;
+  if (row === undefined) {
+    return undefined;
+  }
+  return row.identifier.replace('reset-password:', '');
 }
 
 /**
  * Helper to reset password via Better Auth.
  */
-async function resetPassword(
-  app: { fetch: (req: Request) => Response | Promise<Response> },
-  token: string,
-  newPassword: string,
-) {
+async function resetPassword(app: AppFetcher, token: string, newPassword: string) {
   const response = await app.fetch(
     new Request('http://localhost/api/auth/reset-password', {
       method: 'POST',
@@ -99,11 +96,11 @@ async function resetPassword(
   return response;
 }
 
-describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
+describe('Better Auth password reset', () => {
   const { getContext } = setupAuthTestSuite();
 
   describe('POST /api/auth/forget-password', () => {
-    it('should successfully request password reset for existing user', async () => {
+    it('requests password reset for existing user', async () => {
       const { app, pool } = getContext();
 
       const email = 'resetuser@example.com';
@@ -118,9 +115,8 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
 
       // Better Auth may return { status: true } or an empty body for forget-password
       const text = await resetResponse.text();
-      if (text) {
-        const body = JSON.parse(text);
-        expect(body).toHaveProperty('status', true);
+      if (text !== '') {
+        expect(parseJson(ResetRequestResponseSchema, text).status).toBe(true);
       }
 
       // Verify a verification token was stored in the database
@@ -141,7 +137,7 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
       expect(expiresAt.getTime()).toBeGreaterThan(now.getTime());
     });
 
-    it('should return success even for non-existent user (prevent user enumeration)', async () => {
+    it('returns success even for non-existent user (prevent user enumeration)', async () => {
       const { app } = getContext();
 
       const resetResponse = await requestPasswordReset(app, 'nonexistent@example.com');
@@ -151,13 +147,12 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
 
       // Better Auth may return { status: true } or an empty body
       const text = await resetResponse.text();
-      if (text) {
-        const body = JSON.parse(text);
-        expect(body).toHaveProperty('status', true);
+      if (text !== '') {
+        expect(parseJson(ResetRequestResponseSchema, text).status).toBe(true);
       }
     });
 
-    it('should allow multiple reset requests (creates new verification each time)', async () => {
+    it('allows multiple reset requests (creates new verification each time)', async () => {
       const { app, pool } = getContext();
 
       const email = 'multiplereset@example.com';
@@ -188,7 +183,7 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
   });
 
   describe('POST /api/auth/reset-password', () => {
-    it('should successfully reset password with valid token', async () => {
+    it('resets password with valid token', async () => {
       const { app, pool } = getContext();
 
       const email = 'validreset@example.com';
@@ -203,10 +198,10 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
 
       // Get the token from the database
       const token = await getResetTokenFromDb(pool, email);
-      expect(token).toBeTruthy();
+      assert(token !== undefined, 'a reset token was stored');
 
       // Reset password
-      const resetResponse = await resetPassword(app, token as string, newPassword);
+      const resetResponse = await resetPassword(app, token, newPassword);
 
       expect(resetResponse.status).toBe(200);
 
@@ -219,7 +214,7 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
       expect(newLoginResponse.status).toBe(200);
     });
 
-    it('should invalidate all user sessions after password reset', async () => {
+    it('invalidates all user sessions after password reset', async () => {
       const { app, pool } = getContext();
 
       const email = 'sessioninvalidate@example.com';
@@ -228,8 +223,11 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
 
       // Register (creates 1st session)
       const registerResponse = await signUp(app, email, oldPassword);
-      const registerBody: any = await registerResponse.json();
-      const userId = registerBody.user?.id;
+      const registerBody = parseWith(
+        BetterAuthSessionResponseSchema,
+        await registerResponse.json(),
+      );
+      const userId = registerBody.user.id;
 
       // Login again (creates 2nd session)
       await signIn(app, email, oldPassword);
@@ -244,9 +242,9 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
       // Request and complete password reset
       await requestPasswordReset(app, email);
       const token = await getResetTokenFromDb(pool, email);
-      expect(token).toBeTruthy();
+      assert(token !== undefined, 'a reset token was stored');
 
-      await resetPassword(app, token as string, newPassword);
+      await resetPassword(app, token, newPassword);
 
       // Verify all sessions were deleted after password reset
       const sessionsAfter = await pool.query(
@@ -256,7 +254,7 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
       expect(parseInt(sessionsAfter.rows[0].count, 10)).toBe(0);
     });
 
-    it('should reject an invalid/nonexistent token', async () => {
+    it('rejects an invalid/nonexistent token', async () => {
       const { app } = getContext();
 
       const resetResponse = await resetPassword(
@@ -270,13 +268,12 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
 
       // The response should indicate an error; safely parse the body
       const text = await resetResponse.text();
-      if (text) {
-        const body = JSON.parse(text);
-        expect(body).toBeDefined();
+      if (text !== '') {
+        expect(parseJson(BetterAuthErrorResponseSchema, text).message).not.toBe('');
       }
     });
 
-    it('should reject an already-used token', async () => {
+    it('rejects an already-used token', async () => {
       const { app, pool } = getContext();
 
       const email = 'usedtoken@example.com';
@@ -288,20 +285,20 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
       // Get reset token
       await requestPasswordReset(app, email);
       const token = await getResetTokenFromDb(pool, email);
-      expect(token).toBeTruthy();
+      assert(token !== undefined, 'a reset token was stored');
 
       // Use token once
-      const response1 = await resetPassword(app, token as string, 'NewPassword123');
+      const response1 = await resetPassword(app, token, 'NewPassword123');
       expect(response1.status).toBe(200);
 
       // Try to use the same token again
-      const response2 = await resetPassword(app, token as string, 'AnotherPassword456');
+      const response2 = await resetPassword(app, token, 'AnotherPassword456');
 
       // Should be rejected (token consumed on first use)
       expect(response2.status).not.toBe(200);
     });
 
-    it('should reject an expired token', async () => {
+    it('rejects an expired token', async () => {
       const { app, pool } = getContext();
 
       const email = 'expiredtoken@example.com';
@@ -313,7 +310,7 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
       // Get reset token
       await requestPasswordReset(app, email);
       const token = await getResetTokenFromDb(pool, email);
-      expect(token).toBeTruthy();
+      assert(token !== undefined, 'a reset token was stored');
 
       // Manually expire the verification entry in the database
       await pool.query(
@@ -323,7 +320,7 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
       );
 
       // Try to use the expired token
-      const resetResponse = await resetPassword(app, token as string, 'NewPassword123');
+      const resetResponse = await resetPassword(app, token, 'NewPassword123');
 
       // Should be rejected
       expect(resetResponse.status).not.toBe(200);
@@ -331,7 +328,7 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
   });
 
   describe('Password Reset Flow - Complete Integration', () => {
-    it('should complete full password reset flow: request reset -> reset -> sign in', async () => {
+    it('completes full password reset flow: request reset -> reset -> sign in', async () => {
       const { app, pool } = getContext();
 
       const email = 'fullflow@example.com';
@@ -348,20 +345,20 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
 
       // Step 3: Get token from DB and reset password
       const token = await getResetTokenFromDb(pool, email);
-      expect(token).toBeTruthy();
+      assert(token !== undefined, 'a reset token was stored');
 
-      const resetResponse = await resetPassword(app, token as string, newPassword);
+      const resetResponse = await resetPassword(app, token, newPassword);
       expect(resetResponse.status).toBe(200);
 
       // Step 4: Sign in with new password
       const loginResponse = await signIn(app, email, newPassword);
       expect(loginResponse.status).toBe(200);
 
-      const loginBody: any = await loginResponse.json();
+      const loginBody = parseWith(BetterAuthSessionResponseSchema, await loginResponse.json());
       expect(loginBody).toHaveProperty('user');
     });
 
-    it('should handle multiple users with simultaneous reset requests', async () => {
+    it('handles multiple users with simultaneous reset requests', async () => {
       const { app, pool } = getContext();
 
       const user1Email = 'user1reset@example.com';
@@ -380,16 +377,16 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
       await requestPasswordReset(app, user2Email);
       const token2 = await getResetTokenFromDb(pool, user2Email);
 
-      expect(token1).toBeTruthy();
-      expect(token2).toBeTruthy();
+      assert(token1 !== undefined, 'a reset token was stored');
+      assert(token2 !== undefined, 'a reset token was stored');
       expect(token1).not.toBe(token2);
 
       // User 1 resets password
-      const reset1Response = await resetPassword(app, token1 as string, 'NewPassword1!');
+      const reset1Response = await resetPassword(app, token1, 'NewPassword1!');
       expect(reset1Response.status).toBe(200);
 
       // User 2's token should still be valid
-      const reset2Response = await resetPassword(app, token2 as string, 'NewPassword2!');
+      const reset2Response = await resetPassword(app, token2, 'NewPassword2!');
       expect(reset2Response.status).toBe(200);
 
       // Both should be able to sign in with their new passwords
@@ -400,7 +397,7 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
       expect(login2Response.status).toBe(200);
     });
 
-    it('should hash the new password (not store plaintext)', async () => {
+    it('stores the new password hashed, not in plaintext', async () => {
       const { app, pool } = getContext();
 
       const email = 'hashcheck@example.com';
@@ -411,9 +408,9 @@ describe('Auth Endpoints - Password Reset Flow (Better Auth)', () => {
       await signUp(app, email, oldPassword);
       await requestPasswordReset(app, email);
       const token = await getResetTokenFromDb(pool, email);
-      expect(token).toBeTruthy();
+      assert(token !== undefined, 'a reset token was stored');
 
-      await resetPassword(app, token as string, newPassword);
+      await resetPassword(app, token, newPassword);
 
       // Check password in Better Auth account table
       const accountResult = await pool.query(

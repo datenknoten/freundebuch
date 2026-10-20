@@ -1,6 +1,6 @@
-import type { Hono } from 'hono';
+import { parseWith } from '@datenknoten/kit/schema';
+import { CircleResponseSchema } from '@freundebuch/shared/index.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { AppContext } from '../../src/types/context.js';
 
 import {
   type AuthTestContext,
@@ -16,7 +16,7 @@ import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
  * Circles integration suite (TEST-3). Covers CRUD plus the transactional
  * batch operations (reorder, merge) that previously had no coverage.
  */
-describe('Circles API - Integration', () => {
+describe('Circles API', () => {
   let context: AuthTestContext;
   let user: { externalId: string; email: string; sessionCookies: string };
 
@@ -36,96 +36,107 @@ describe('Circles API - Integration', () => {
     await teardownAuthTests(context);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  const appOf = (): Hono<AppContext> => context.app;
-
-  async function req(method: string, path: string, body?: unknown): Promise<Response> {
+  async function req(method: string, path: string, body?: unknown) {
     const init: RequestInit = { method, headers: authHeaders(user.sessionCookies) };
-    if (body !== undefined) init.body = JSON.stringify(body);
-    return appOf().fetch(new Request(`http://localhost${path}`, init));
+    if (body !== undefined) {
+      init.body = JSON.stringify(body);
+    }
+    return context.app.fetch(new Request(`http://localhost${path}`, init));
   }
 
-  const json = (res: Response): Promise<any> => res.json();
+  async function parseCircle(res: Response) {
+    return parseWith(CircleResponseSchema, await res.json());
+  }
 
-  async function createCircle(name: string, sortOrder = 0): Promise<string> {
+  async function createCircle(name: string, sortOrder = 0) {
     const res = await req('POST', '/api/circles', { name, sort_order: sortOrder });
     expect(res.status).toBe(201);
-    return (await json(res)).id;
+    return (await parseCircle(res)).id;
   }
 
-  it('creates, reads, updates and deletes a circle', async () => {
-    const created = await req('POST', '/api/circles', { name: 'Work', color: '#3B82F6' });
-    expect(created.status).toBe(201);
-    const id = (await json(created)).id;
+  describe('CRUD', () => {
+    it('creates, reads, updates and deletes a circle', async () => {
+      const created = await req('POST', '/api/circles', { name: 'Work', color: '#3B82F6' });
+      expect(created.status).toBe(201);
+      const id = (await parseCircle(created)).id;
 
-    expect((await json(await req('GET', `/api/circles/${id}`))).name).toBe('Work');
+      expect((await parseCircle(await req('GET', `/api/circles/${id}`))).name).toBe('Work');
 
-    const updated = await req('PUT', `/api/circles/${id}`, { name: 'Colleagues' });
-    expect(updated.status).toBe(200);
-    expect((await json(updated)).name).toBe('Colleagues');
+      const updated = await req('PUT', `/api/circles/${id}`, { name: 'Colleagues' });
+      expect(updated.status).toBe(200);
+      expect((await parseCircle(updated)).name).toBe('Colleagues');
 
-    expect((await req('DELETE', `/api/circles/${id}`)).status).toBe(200);
-    expect((await req('GET', `/api/circles/${id}`)).status).toBe(404);
-  });
-
-  it('reorders circles atomically', async () => {
-    const a = await createCircle('A', 0);
-    const b = await createCircle('B', 1);
-    const c = await createCircle('C', 2);
-
-    const res = await req('PUT', '/api/circles/reorder', {
-      order: [
-        { id: a, sort_order: 2 },
-        { id: b, sort_order: 0 },
-        { id: c, sort_order: 1 },
-      ],
+      expect((await req('DELETE', `/api/circles/${id}`)).status).toBe(200);
+      expect((await req('GET', `/api/circles/${id}`)).status).toBe(404);
     });
-    expect(res.status).toBe(200);
-
-    const list = await json(await req('GET', '/api/circles'));
-    const byId = Object.fromEntries(
-      list.map((x: { id: string; sortOrder: number }) => [x.id, x.sortOrder]),
-    );
-    expect(byId[a]).toBe(2);
-    expect(byId[b]).toBe(0);
-    expect(byId[c]).toBe(1);
   });
 
-  /**
-   * `sort_order` lands in an `integer` column. node-postgres sends parameters
-   * as text, so Postgres rejects "1.5" with `invalid input syntax for type
-   * integer` - an unhandled driver error, i.e. a 500 for what is plainly a bad
-   * request. The boundary has to reject it instead.
-   */
-  it('rejects a non-integer sort_order with 400 rather than failing in the driver', async () => {
-    const a = await createCircle('A', 0);
+  describe('PUT /api/circles/reorder', () => {
+    it('reorders circles atomically', async () => {
+      const a = await createCircle('A', 0);
+      const b = await createCircle('B', 1);
+      const c = await createCircle('C', 2);
 
-    const res = await req('PUT', '/api/circles/reorder', {
-      order: [{ id: a, sort_order: 1.5 }],
+      const res = await req('PUT', '/api/circles/reorder', {
+        order: [
+          { id: a, sort_order: 2 },
+          { id: b, sort_order: 0 },
+          { id: c, sort_order: 1 },
+        ],
+      });
+      expect(res.status).toBe(200);
+
+      const list = parseWith(
+        CircleResponseSchema.array(),
+        await (await req('GET', '/api/circles')).json(),
+      );
+      const byId = Object.fromEntries(list.map((x) => [x.id, x.sortOrder]));
+      expect(byId[a]).toBe(2);
+      expect(byId[b]).toBe(0);
+      expect(byId[c]).toBe(1);
     });
 
-    expect(res.status).toBe(400);
+    /**
+     * `sort_order` lands in an `integer` column. node-postgres sends parameters
+     * as text, so Postgres rejects "1.5" with `invalid input syntax for type
+     * integer` - an unhandled driver error, i.e. a 500 for what is plainly a bad
+     * request. The boundary has to reject it instead.
+     */
+    it('rejects a non-integer sort_order with 400 rather than failing in the driver', async () => {
+      const a = await createCircle('A', 0);
 
-    // The circle keeps its original position.
-    const list = await json(await req('GET', '/api/circles'));
-    const row = list.find((x: { id: string }) => x.id === a);
-    expect(row.sortOrder).toBe(0);
+      const res = await req('PUT', '/api/circles/reorder', {
+        order: [{ id: a, sort_order: 1.5 }],
+      });
+
+      expect(res.status).toBe(400);
+
+      // The circle keeps its original position.
+      const list = parseWith(
+        CircleResponseSchema.array(),
+        await (await req('GET', '/api/circles')).json(),
+      );
+      expect(list.find((x) => x.id === a)?.sortOrder).toBe(0);
+    });
   });
 
-  it('merges one circle into another', async () => {
-    const target = await createCircle('Target');
-    const source = await createCircle('Source');
+  describe('POST /api/circles/:id/merge', () => {
+    it('merges one circle into another', async () => {
+      const target = await createCircle('Target');
+      const source = await createCircle('Source');
 
-    const res = await req('POST', `/api/circles/${target}/merge`, { source_circle_id: source });
-    expect(res.status).toBe(200);
+      const res = await req('POST', `/api/circles/${target}/merge`, { source_circle_id: source });
+      expect(res.status).toBe(200);
 
-    // The source circle is gone after a successful merge.
-    expect((await req('GET', `/api/circles/${source}`)).status).toBe(404);
-    expect((await req('GET', `/api/circles/${target}`)).status).toBe(200);
-  });
+      // The source circle is gone after a successful merge.
+      expect((await req('GET', `/api/circles/${source}`)).status).toBe(404);
+      expect((await req('GET', `/api/circles/${target}`)).status).toBe(200);
+    });
 
-  it('rejects merging a circle into itself', async () => {
-    const id = await createCircle('Solo');
-    const res = await req('POST', `/api/circles/${id}/merge`, { source_circle_id: id });
-    expect(res.status).toBe(400);
+    it('rejects merging a circle into itself', async () => {
+      const id = await createCircle('Solo');
+      const res = await req('POST', `/api/circles/${id}/merge`, { source_circle_id: id });
+      expect(res.status).toBe(400);
+    });
   });
 });

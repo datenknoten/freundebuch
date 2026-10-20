@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import type { Logger } from 'pino';
-import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadConfig } from '../../src/config.js';
 import { deriveCredentialsKey } from '../../src/utils/derive-credentials-key.js';
 import { setupNotificationScheduler } from '../../src/utils/setup-notification-scheduler.js';
@@ -18,40 +18,40 @@ const KEY = deriveCredentialsKey(TEST_AUTH_SECRET);
  * then mark) treated duplicates as the retry mechanism.
  *
  * `cron.schedule` is mocked to capture the callback instead of waiting a
- * minute; nothing else about `setupNotificationScheduler` is replaced.
+ * minute, and the dispatcher because the scheduler options take no sender.
  * `vi.hoisted` is needed because `vi.mock` factories are hoisted above these
  * declarations and would otherwise read them in their temporal dead zone.
  */
-const mocks = vi.hoisted(() => ({
-  scheduled: [] as (() => Promise<void>)[],
-  dispatchNotification: vi.fn(async () => undefined),
-}));
+function createMocks() {
+  const scheduled: (() => Promise<void>)[] = [];
+  function schedule(_expression: string, task: () => Promise<void>) {
+    scheduled.push(task);
+    return { stop: vi.fn(), start: vi.fn() };
+  }
+  return { scheduled, schedule, dispatchNotification: vi.fn() };
+}
 
-vi.mock('node-cron', () => ({
-  default: {
-    schedule: (_expr: string, fn: () => Promise<void>) => {
-      mocks.scheduled.push(fn);
-      return { stop: vi.fn(), start: vi.fn() };
-    },
-  },
-}));
+const mocks = vi.hoisted(createMocks);
+
+vi.mock('node-cron', () => ({ default: { schedule: mocks.schedule } }));
 
 vi.mock('../../src/services/external/notification-dispatcher.js', () => ({
   dispatchNotification: mocks.dispatchNotification,
 }));
 
-interface QueryResult {
-  rows: Record<string, unknown>[];
-}
-type QueryFn = (text: string, values?: unknown[]) => Promise<QueryResult>;
-
-function silentLogger(): Logger {
+function silentLogger() {
+  // The scheduler only logs at these four levels; a full pino instance adds nothing.
   return {
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
     debug: vi.fn(),
   } as unknown as Logger;
+}
+
+function fakePool(query: (text: string) => Promise<{ rows: unknown[] }>) {
+  // The dispatcher only calls pool.query; the fake covers exactly that surface.
+  return { query: vi.fn(query) } as unknown as pg.Pool;
 }
 
 /** One channel due right now, so the dispatcher has something to claim. */
@@ -83,35 +83,42 @@ const UPCOMING_DATE = {
   friend_photo_thumbnail_url: null,
 };
 
-describe('notification dispatch', () => {
+function failQuery() {
+  return Promise.reject(new Error('connection terminated'));
+}
+
+describe('setupNotificationScheduler', () => {
   /** SQL text in call order, so ordering assertions are possible. */
   let statements: string[];
 
   beforeEach(() => {
+    vi.clearAllMocks();
     mocks.scheduled.length = 0;
-    mocks.dispatchNotification.mockClear();
     statements = [];
   });
 
-  /** @param claimWins whether the conditional UPDATE returns its row */
-  function poolFor(claimWins: boolean): pg.Pool {
-    const query: Mock<QueryFn> = vi.fn(async (text: string) => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function poolFor(isClaimWon: boolean) {
+    async function query(text: string) {
       statements.push(text);
-      if (text.includes('UPDATE system.notification_channels')) {
-        return { rows: claimWins ? [{ id: DUE_CHANNEL.id }] : [] };
+      if (text.includes('UPDATE system.notification_channels') === true) {
+        return { rows: isClaimWon === true ? [{ id: DUE_CHANNEL.id }] : [] };
       }
-      if (text.includes('system.notification_channels')) {
+      if (text.includes('system.notification_channels') === true) {
         return { rows: [DUE_CHANNEL] };
       }
-      if (text.includes('friend_dates')) {
+      if (text.includes('friend_dates') === true) {
         return { rows: [UPCOMING_DATE] };
       }
       return { rows: [] };
-    });
-    return { query } as unknown as pg.Pool;
+    }
+    return fakePool(query);
   }
 
-  async function runOneTick(pool: pg.Pool): Promise<void> {
+  async function runOneTick(pool: pg.Pool) {
     setupNotificationScheduler({
       pool: pool,
       logger: silentLogger(),
@@ -151,18 +158,18 @@ describe('notification dispatch', () => {
       release = resolve;
     });
 
-    const query: Mock<QueryFn> = vi.fn(async (text: string) => {
+    async function query(text: string) {
       statements.push(text);
-      if (text.includes('system.notification_channels')) {
+      if (text.includes('system.notification_channels') === true) {
         await gate;
         return { rows: [] };
       }
       return { rows: [] };
-    });
+    }
     const logger = silentLogger();
 
     setupNotificationScheduler({
-      pool: { query } as unknown as pg.Pool,
+      pool: fakePool(query),
       logger: logger,
       credentialsKey: KEY,
       config: CONFIG,
@@ -180,13 +187,10 @@ describe('notification dispatch', () => {
   });
 
   it('reports a failed channel query and dispatches nothing', async () => {
-    const query: Mock<QueryFn> = vi.fn(async () => {
-      throw new Error('connection terminated');
-    });
     const logger = silentLogger();
 
     setupNotificationScheduler({
-      pool: { query } as unknown as pg.Pool,
+      pool: fakePool(failQuery),
       logger: logger,
       credentialsKey: KEY,
       config: CONFIG,

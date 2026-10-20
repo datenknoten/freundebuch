@@ -1,7 +1,16 @@
+import { parseWith } from '@datenknoten/kit/schema';
+import { UserWithPreferencesResponseSchema } from '@freundebuch/shared';
 import { describe, expect, it } from 'vitest';
-import { completeTestUserOnboarding, extractCookies, setupAuthTestSuite } from './auth.helpers.js';
+import {
+  BetterAuthSessionResponseSchema,
+  completeTestUserOnboarding,
+  extractCookies,
+  firstRow,
+  setupAuthTestSuite,
+  withoutSessionDataCookie,
+} from './auth.helpers.js';
 
-describe('Auth Endpoints - Happy Path Integration Tests', () => {
+describe('Better Auth endpoints: happy path', () => {
   const { getContext } = setupAuthTestSuite();
 
   /**
@@ -16,7 +25,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       body: JSON.stringify({ email, password, name }),
     });
     const response = await app.fetch(request);
-    const body: any = await response.json();
+    const body = parseWith(BetterAuthSessionResponseSchema, await response.json());
     return { response, body };
   }
 
@@ -31,26 +40,26 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       body: JSON.stringify({ email, password }),
     });
     const response = await app.fetch(request);
-    const body: any = await response.json();
+    const body = parseWith(BetterAuthSessionResponseSchema, await response.json());
     return { response, body };
   }
 
   /**
    * Helper: count sessions for a Better Auth user in auth.session (singular).
    */
-  async function countBetterAuthSessions(userId: string): Promise<number> {
+  async function countBetterAuthSessions(userId: string) {
     const { pool } = getContext();
-    const result = await pool.query(
+    const result = await pool.query<{ count: number }>(
       'SELECT COUNT(*)::int AS count FROM auth.session WHERE user_id = $1',
       [userId],
     );
-    return result.rows[0].count;
+    return firstRow(result).count;
   }
 
   /**
    * Helper: check whether a session token exists in auth.session.
    */
-  async function betterAuthSessionExists(token: string): Promise<boolean> {
+  async function betterAuthSessionExists(token: string | null) {
     const { pool } = getContext();
     const result = await pool.query('SELECT id FROM auth.session WHERE token = $1', [token]);
     return result.rows.length > 0;
@@ -59,7 +68,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
   // ── Sign-Up ──────────────────────────────────────────────────────────
 
   describe('POST /api/auth/sign-up/email', () => {
-    it('should successfully register a new user', async () => {
+    it('registers a new user', async () => {
       const { pool } = getContext();
       const { response, body } = await signUp('newuser@example.com', 'SecurePassword123');
 
@@ -106,7 +115,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(exists).toBe(true);
     });
 
-    it('should create a session automatically on sign-up (autoSignIn)', async () => {
+    it('creates a session automatically on sign-up (autoSignIn)', async () => {
       const { response, body } = await signUp('autosignin@example.com', 'SecurePassword123');
 
       expect(response.status).toBe(200);
@@ -117,7 +126,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(count).toBe(1);
     });
 
-    it('should set session cookie with correct attributes', async () => {
+    it('sets session cookie with correct attributes', async () => {
       const { response } = await signUp('cookie-test@example.com', 'SecurePassword123');
       expect(response.status).toBe(200);
 
@@ -130,7 +139,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(cookieHeader).toContain('Path=/');
     });
 
-    it('should give the new user one identity across both tables', async () => {
+    it('gives the new user one identity across both tables', async () => {
       const { app, pool } = getContext();
       const { response, body } = await signUp('identity@example.com', 'SecurePassword123');
       expect(response.status).toBe(200);
@@ -170,7 +179,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(friends.status).toBe(200);
     });
 
-    it('should cascade domain data when the user is deleted', async () => {
+    it('cascades domain data when the user is deleted', async () => {
       const { pool } = getContext();
       const { body } = await signUp('cascade@example.com', 'SecurePassword123');
 
@@ -197,31 +206,31 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
      * rather than a constraint, so the reaper must never touch a row that has
      * domain data no matter how the pairing broke.
      */
-    it('should not reap a legacy row that owns friends', async () => {
+    it('does not reap a legacy row that owns friends', async () => {
       const { pool } = getContext();
 
       // An established account whose Better Auth counterpart has gone missing.
-      const established = await pool.query(
+      const established = await pool.query<{ id: number }>(
         `INSERT INTO auth.users (created_at) VALUES (now() - interval '2 days')
          RETURNING id`,
       );
-      const establishedId = established.rows[0].id as number;
+      const establishedId = firstRow(established).id;
       await pool.query(
         `INSERT INTO friends.friends (user_id, display_name) VALUES ($1, 'Not Doomed')`,
         [establishedId],
       );
 
       // A failed sign-up: same age, no domain data. The only intended target.
-      const failedSignUp = await pool.query(
+      const failedSignUp = await pool.query<{ id: number }>(
         `INSERT INTO auth.users (created_at) VALUES (now() - interval '2 days')
          RETURNING id`,
       );
-      const failedSignUpId = failedSignUp.rows[0].id as number;
+      const failedSignUpId = firstRow(failedSignUp).id;
 
       const reaped = await pool.query(`SELECT auth.delete_orphan_legacy_users() AS deleted`);
       expect(reaped.rows[0].deleted).toBe(1);
 
-      const survivors = await pool.query(
+      const survivors = await pool.query<{ id: number }>(
         `SELECT id FROM auth.users WHERE id = ANY($1::int[]) ORDER BY id`,
         [[establishedId, failedSignUpId]],
       );
@@ -232,7 +241,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
   // ── Sign-In ──────────────────────────────────────────────────────────
 
   describe('POST /api/auth/sign-in/email', () => {
-    it('should successfully sign in with correct credentials', async () => {
+    it('signs in with correct credentials', async () => {
       const email = 'logintest@example.com';
       const password = 'SecurePassword123';
 
@@ -264,7 +273,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(exists).toBe(true);
     });
 
-    it('should create a new session on each sign-in', async () => {
+    it('creates a new session on each sign-in', async () => {
       const email = 'multisession@example.com';
       const password = 'SecurePassword123';
 
@@ -285,7 +294,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(sessionCount).toBe(2);
     });
 
-    it('should return different session tokens on each sign-in', async () => {
+    it('returns different session tokens on each sign-in', async () => {
       const email = 'uniquesession@example.com';
       const password = 'SecurePassword123';
 
@@ -306,7 +315,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
   // ── Sign-Out ─────────────────────────────────────────────────────────
 
   describe('POST /api/auth/sign-out', () => {
-    it('should successfully sign out and delete session', async () => {
+    it('signs out and deletes the session', async () => {
       const { app } = getContext();
 
       const email = 'logouttest@example.com';
@@ -346,7 +355,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(exists).toBe(false);
     });
 
-    it('should only delete the specific session (not all user sessions)', async () => {
+    it('only deletes the specific session (not all user sessions)', async () => {
       const { app } = getContext();
 
       const email = 'multidevicelogout@example.com';
@@ -394,7 +403,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
   // ── GET /api/auth/me ─────────────────────────────────────────────────
 
   describe('GET /api/auth/me', () => {
-    it('should return the current authenticated user', async () => {
+    it('returns the current authenticated user', async () => {
       const { app } = getContext();
 
       const email = 'metest@example.com';
@@ -413,7 +422,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       });
 
       const meResponse = await app.fetch(meRequest);
-      const meBody: any = await meResponse.json();
+      const meBody = parseWith(UserWithPreferencesResponseSchema, await meResponse.json());
 
       expect(meResponse.status).toBe(200);
       expect(meBody).toHaveProperty('user');
@@ -426,7 +435,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
      * five minutes, so reading preferences off it made a language change revert
      * on the next page load until the cache expired.
      */
-    it('should return preferences written moments ago, not the cookie-cached copy', async () => {
+    it('returns preferences written moments ago, not the cookie-cached copy', async () => {
       const { app } = getContext();
 
       const { response: regResponse } = await signUp('me-prefs@example.com', 'SecurePassword123');
@@ -450,14 +459,12 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
         }),
       );
       expect(meResponse.status).toBe(200);
-      const meBody = (await meResponse.json()) as {
-        preferences: { language?: string; friendsPageSize?: number };
-      };
+      const meBody = parseWith(UserWithPreferencesResponseSchema, await meResponse.json());
       expect(meBody.preferences.language).toBe('de');
       expect(meBody.preferences.friendsPageSize).toBe(50);
     });
 
-    it('should store, clear and validate the default country preference', async () => {
+    it('stores, clears and validates the default country preference', async () => {
       const { app } = getContext();
 
       const { response: regResponse } = await signUp(
@@ -466,15 +473,16 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       );
       const cookies = extractCookies(regResponse);
 
-      const patch = (body: Record<string, unknown>) =>
-        app.fetch(
+      function patch(body: Record<string, unknown>) {
+        return app.fetch(
           new Request('http://localhost/api/auth/preferences', {
             method: 'PATCH',
             headers: { Cookie: cookies, 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
           }),
         );
-      const readDefaultCountry = async () => {
+      }
+      async function readDefaultCountry() {
         const meResponse = await app.fetch(
           new Request('http://localhost/api/auth/me', {
             method: 'GET',
@@ -482,11 +490,9 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
           }),
         );
         expect(meResponse.status).toBe(200);
-        const meBody = (await meResponse.json()) as {
-          preferences: { defaultCountry?: string | null };
-        };
+        const meBody = parseWith(UserWithPreferencesResponseSchema, await meResponse.json());
         return meBody.preferences.defaultCountry;
-      };
+      }
 
       expect((await patch({ defaultCountry: 'AT' })).status).toBe(200);
       expect(await readDefaultCountry()).toBe('AT');
@@ -498,7 +504,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(await readDefaultCountry()).toBeNull();
     });
 
-    it('should return 401 without a session cookie', async () => {
+    it('returns 401 without a session cookie', async () => {
       const { app } = getContext();
 
       const meRequest = new Request('http://localhost/api/auth/me', {
@@ -510,7 +516,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
       expect(meResponse.status).toBe(401);
     });
 
-    it('should return 401 after sign-out', async () => {
+    it('returns 401 after sign-out', async () => {
       const { app } = getContext();
 
       const email = 'me-after-logout@example.com';
@@ -530,10 +536,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
 
       // Strip the session_data cache cookie to simulate browser behavior:
       // sign-out sets Max-Age=0 on session_data, so browsers delete it.
-      const sessionTokenOnly = cookies
-        .split('; ')
-        .filter((c) => !c.startsWith('better-auth.session_data='))
-        .join('; ');
+      const sessionTokenOnly = withoutSessionDataCookie(cookies);
 
       // Try /api/auth/me with the now-invalidated cookies
       const meRequest = new Request('http://localhost/api/auth/me', {

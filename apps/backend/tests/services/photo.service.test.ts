@@ -1,6 +1,7 @@
+import type { Stats } from 'node:fs';
 import { PHOTO_VALIDATION_ERRORS } from '@freundebuch/shared/index.js';
 import pino from 'pino';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PhotoUploadError } from '../../src/errors/photo-upload.error.js';
 import { PhotoService } from '../../src/services/photo.service.js';
 
@@ -11,18 +12,18 @@ const VALID_FRIEND_ID_2 = '6ba7b810-9dad-41d4-80b5-ec8bdd0e9ef0';
 // Mock sharp. uploadPhoto decodes to buffers and writes them itself, so the
 // stub ends at toBuffer(); a filesystem failure is a writeFile rejection, not
 // a sharp one (see photo.service.decode.test.ts).
-vi.mock('sharp', () => ({
-  default: vi.fn(() => {
-    const pipeline = {
-      metadata: vi.fn().mockResolvedValue({ width: 1000, height: 1000 }),
-      resize: vi.fn().mockReturnThis(),
-      toFormat: vi.fn().mockReturnThis(),
-      toBuffer: vi.fn().mockResolvedValue(Buffer.from('encoded')),
-      clone: vi.fn(() => pipeline),
-    };
-    return pipeline;
-  }),
-}));
+function createSharpPipeline() {
+  const pipeline = {
+    metadata: vi.fn().mockResolvedValue({ width: 1000, height: 1000 }),
+    resize: vi.fn().mockReturnThis(),
+    toFormat: vi.fn().mockReturnThis(),
+    toBuffer: vi.fn().mockResolvedValue(Buffer.from('encoded')),
+    clone: vi.fn(() => pipeline),
+  };
+  return pipeline;
+}
+
+vi.mock('sharp', () => ({ default: vi.fn(createSharpPipeline) }));
 
 // Mock fs/promises
 vi.mock('node:fs/promises', () => ({
@@ -45,8 +46,12 @@ describe('PhotoService', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe('uploadPhoto', () => {
-    it('should reject invalid file type (GIF)', async () => {
+    it('rejects invalid file type (GIF)', async () => {
       const mockFile = new File(['fake gif data'], 'photo.gif', { type: 'image/gif' });
 
       await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toThrow(
@@ -59,7 +64,7 @@ describe('PhotoService', () => {
       });
     });
 
-    it('should reject invalid file type (BMP)', async () => {
+    it('rejects invalid file type (BMP)', async () => {
       const mockFile = new File(['fake bmp data'], 'photo.bmp', { type: 'image/bmp' });
 
       await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toThrow(
@@ -71,7 +76,7 @@ describe('PhotoService', () => {
       });
     });
 
-    it('should reject file exceeding size limit', async () => {
+    it('rejects file exceeding size limit', async () => {
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       // Mock the size property to be over 5MB
       Object.defineProperty(mockFile, 'size', { value: 10 * 1024 * 1024 }); // 10MB
@@ -86,7 +91,7 @@ describe('PhotoService', () => {
       });
     });
 
-    it('should reject file just over the size limit', async () => {
+    it('rejects file just over the size limit', async () => {
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       // Mock the size property to be just over 5MB
       Object.defineProperty(mockFile, 'size', { value: 5 * 1024 * 1024 + 1 });
@@ -100,7 +105,7 @@ describe('PhotoService', () => {
       });
     });
 
-    it('should accept valid JPEG file', async () => {
+    it('accepts valid JPEG file', async () => {
       const mockFile = new File(['fake jpeg data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 1024 * 1024 }); // 1MB
 
@@ -113,7 +118,7 @@ describe('PhotoService', () => {
       expect(result.photoThumbnailUrl).toContain('thumb');
     });
 
-    it('should accept valid PNG file', async () => {
+    it('accepts valid PNG file', async () => {
       const mockFile = new File(['fake png data'], 'photo.png', { type: 'image/png' });
       Object.defineProperty(mockFile, 'size', { value: 1024 * 1024 });
 
@@ -122,7 +127,7 @@ describe('PhotoService', () => {
       expect(result.photoUrl).toContain('.png');
     });
 
-    it('should accept valid WebP file', async () => {
+    it('accepts valid WebP file', async () => {
       const mockFile = new File(['fake webp data'], 'photo.webp', { type: 'image/webp' });
       Object.defineProperty(mockFile, 'size', { value: 1024 * 1024 });
 
@@ -131,7 +136,7 @@ describe('PhotoService', () => {
       expect(result.photoUrl).toContain('.webp');
     });
 
-    it('should accept file at exactly the size limit', async () => {
+    it('accepts file at exactly the size limit', async () => {
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 5 * 1024 * 1024 }); // Exactly 5MB
 
@@ -140,7 +145,7 @@ describe('PhotoService', () => {
       expect(result).toHaveProperty('photoUrl');
     });
 
-    it('should create directory for friend photos', async () => {
+    it('creates directory for friend photos', async () => {
       const { mkdir } = await import('node:fs/promises');
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 1024 });
@@ -152,7 +157,7 @@ describe('PhotoService', () => {
       });
     });
 
-    it('should return URLs with correct format', async () => {
+    it('returns URLs with correct format', async () => {
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 1024 });
 
@@ -166,7 +171,7 @@ describe('PhotoService', () => {
       );
     });
 
-    it('should reject invalid friend ID (path traversal attempt)', async () => {
+    it('rejects invalid friend ID (path traversal attempt)', async () => {
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 1024 });
 
@@ -179,7 +184,7 @@ describe('PhotoService', () => {
       });
     });
 
-    it('should reject non-UUID friend ID', async () => {
+    it('rejects non-UUID friend ID', async () => {
       const mockFile = new File(['fake image data'], 'photo.jpg', { type: 'image/jpeg' });
       Object.defineProperty(mockFile, 'size', { value: 1024 });
 
@@ -194,9 +199,10 @@ describe('PhotoService', () => {
   });
 
   describe('deletePhoto', () => {
-    it('should delete existing photo directory', async () => {
+    it('deletes existing photo directory', async () => {
       const { stat, rm } = await import('node:fs/promises');
-      vi.mocked(stat).mockResolvedValue({} as any);
+      // deletePhoto only checks that stat resolves; no field of the result is read.
+      vi.mocked(stat).mockResolvedValue({} as Stats);
 
       await photoService.deletePhoto(VALID_FRIEND_ID);
 
@@ -205,14 +211,14 @@ describe('PhotoService', () => {
       });
     });
 
-    it('should handle non-existent directory gracefully', async () => {
+    it('handles non-existent directory gracefully', async () => {
       const { stat } = await import('node:fs/promises');
       vi.mocked(stat).mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
 
       await expect(photoService.deletePhoto(VALID_FRIEND_ID_2)).resolves.not.toThrow();
     });
 
-    it('should throw on other file system errors', async () => {
+    it('throws on other file system errors', async () => {
       const { stat } = await import('node:fs/promises');
       vi.mocked(stat).mockRejectedValue(Object.assign(new Error('EACCES'), { code: 'EACCES' }));
 
@@ -221,7 +227,7 @@ describe('PhotoService', () => {
       });
     });
 
-    it('should reject invalid friend ID (path traversal attempt)', async () => {
+    it('rejects invalid friend ID (path traversal attempt)', async () => {
       await expect(photoService.deletePhoto('../../../etc')).rejects.toThrow(PhotoUploadError);
 
       await expect(photoService.deletePhoto('../../../etc')).rejects.toMatchObject({
@@ -229,7 +235,7 @@ describe('PhotoService', () => {
       });
     });
 
-    it('should reject non-UUID friend ID', async () => {
+    it('rejects non-UUID friend ID', async () => {
       await expect(photoService.deletePhoto('not-a-uuid')).rejects.toThrow(PhotoUploadError);
 
       await expect(photoService.deletePhoto('not-a-uuid')).rejects.toMatchObject({
@@ -239,7 +245,7 @@ describe('PhotoService', () => {
   });
 
   describe('getUploadDir', () => {
-    it('should return configured upload directory', () => {
+    it('returns configured upload directory', () => {
       const dir = photoService.getUploadDir();
 
       expect(dir).toBe('/tmp/test-uploads');
@@ -248,7 +254,7 @@ describe('PhotoService', () => {
 });
 
 describe('PhotoUploadError', () => {
-  it('should create error with message and code', () => {
+  it('creates error with message and code', () => {
     const error = new PhotoUploadError('Test error', 'TEST_CODE');
 
     expect(error.message).toBe('Test error');
@@ -256,7 +262,7 @@ describe('PhotoUploadError', () => {
     expect(error.name).toBe('PhotoUploadError');
   });
 
-  it('should be an instance of Error', () => {
+  it('is an instance of Error', () => {
     const error = new PhotoUploadError('Test error', 'TEST_CODE');
 
     expect(error).toBeInstanceOf(Error);

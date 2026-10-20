@@ -24,7 +24,7 @@ const VALID_FRIEND_ID = '550e8400-e29b-41d4-a716-446655440000';
 const RUNS_AS_ROOT = process.getuid?.() === 0;
 
 /** A PNG whose header parses but whose compressed pixel data is garbage. */
-async function pngWithCorruptPixelData(): Promise<Uint8Array<ArrayBuffer>> {
+async function pngWithCorruptPixelData() {
   const valid = await sharp({
     create: { width: 64, height: 64, channels: 3, background: { r: 1, g: 2, b: 3 } },
   })
@@ -46,62 +46,61 @@ async function pngWithCorruptPixelData(): Promise<Uint8Array<ArrayBuffer>> {
   return new Uint8Array(corrupt);
 }
 
-describe('PhotoService decode failures', () => {
-  let uploadDir: string;
-  let photoService: PhotoService;
+describe('PhotoService', () => {
+  describe('decoding real images', () => {
+    let uploadDir: string;
+    let photoService: PhotoService;
 
-  beforeEach(async () => {
-    uploadDir = await mkdtemp(path.join(tmpdir(), 'freundebuch-photos-'));
-    photoService = new PhotoService({
-      logger: pino({ level: 'silent' }),
-      config: { BACKEND_URL: 'http://localhost:3000', UPLOAD_DIR: uploadDir },
+    beforeEach(async () => {
+      uploadDir = await mkdtemp(path.join(tmpdir(), 'freundebuch-photos-'));
+      photoService = new PhotoService({
+        logger: pino({ level: 'silent' }),
+        config: { BACKEND_URL: 'http://localhost:3000', UPLOAD_DIR: uploadDir },
+      });
     });
-  });
 
-  afterEach(async () => {
-    await rm(uploadDir, { recursive: true, force: true });
-  });
+    afterEach(async () => {
+      await rm(uploadDir, { recursive: true, force: true });
+    });
 
-  it('rejects an image that only fails once its pixels are decoded', async () => {
-    const file = new File([await pngWithCorruptPixelData()], 'photo.png', { type: 'image/png' });
+    it('rejects an image that only fails once its pixels are decoded', async () => {
+      const file = new File([await pngWithCorruptPixelData()], 'photo.png', { type: 'image/png' });
 
-    const upload = photoService.uploadPhoto(VALID_FRIEND_ID, file);
+      const upload = photoService.uploadPhoto(VALID_FRIEND_ID, file);
 
-    await expect(upload).rejects.toBeInstanceOf(PhotoUploadError);
-    await expect(upload).rejects.toMatchObject({ code: 'INVALID_IMAGE' });
-  });
+      await expect(upload).rejects.toBeInstanceOf(PhotoUploadError);
+      await expect(upload).rejects.toMatchObject({ code: 'INVALID_IMAGE' });
+    });
 
-  it('still stores an image whose pixels decode', async () => {
-    const valid = await sharp({
-      create: { width: 64, height: 64, channels: 3, background: { r: 1, g: 2, b: 3 } },
-    })
-      .png()
-      .toBuffer();
+    it('still stores an image whose pixels decode', async () => {
+      const valid = await sharp({
+        create: { width: 64, height: 64, channels: 3, background: { r: 1, g: 2, b: 3 } },
+      })
+        .png()
+        .toBuffer();
 
-    const result = await photoService.uploadPhoto(
-      VALID_FRIEND_ID,
-      new File([new Uint8Array(valid)], 'photo.png', { type: 'image/png' }),
-    );
+      const result = await photoService.uploadPhoto(
+        VALID_FRIEND_ID,
+        new File([new Uint8Array(valid)], 'photo.png', { type: 'image/png' }),
+      );
 
-    expect(result.photoUrl).toContain('photo.png');
-    const friendDir = path.join(uploadDir, VALID_FRIEND_ID);
-    expect(await readdir(friendDir)).toEqual(
-      expect.arrayContaining(['photo.png', 'photo_thumb.png']),
-    );
-    // The buffers are encoded explicitly now that toFile() no longer derives
-    // the format from the filename, so the bytes must still match the name.
-    expect((await sharp(path.join(friendDir, 'photo.png')).metadata()).format).toBe('png');
-    expect((await sharp(path.join(friendDir, 'photo_thumb.png')).metadata()).format).toBe('png');
-  });
+      expect(result.photoUrl).toContain('photo.png');
+      const friendDir = path.join(uploadDir, VALID_FRIEND_ID);
+      expect(await readdir(friendDir)).toEqual(
+        expect.arrayContaining(['photo.png', 'photo_thumb.png']),
+      );
+      // The buffers are encoded explicitly now that toFile() no longer derives
+      // the format from the filename, so the bytes must still match the name.
+      expect((await sharp(path.join(friendDir, 'photo.png')).metadata()).format).toBe('png');
+      expect((await sharp(path.join(friendDir, 'photo_thumb.png')).metadata()).format).toBe('png');
+    });
 
-  /**
-   * A read-only uploads volume is an operator problem, not a bad upload. It
-   * used to be reported as `400 Invalid image file` and logged below warn, so
-   * the operator got no signal at all.
-   */
-  it.skipIf(RUNS_AS_ROOT)(
-    'propagates a filesystem failure instead of blaming the image',
-    async () => {
+    /**
+     * A read-only uploads volume is an operator problem, not a bad upload. It
+     * used to be reported as `400 Invalid image file` and logged below warn, so
+     * the operator got no signal at all.
+     */
+    async function propagatesFilesystemFailure() {
       const valid = await sharp({
         create: { width: 64, height: 64, channels: 3, background: { r: 1, g: 2, b: 3 } },
       })
@@ -125,6 +124,11 @@ describe('PhotoService decode failures', () => {
       } finally {
         await chmod(friendDir, 0o700);
       }
-    },
-  );
+    }
+
+    it.skipIf(RUNS_AS_ROOT)(
+      'propagates a filesystem failure instead of blaming the image',
+      propagatesFilesystemFailure,
+    );
+  });
 });

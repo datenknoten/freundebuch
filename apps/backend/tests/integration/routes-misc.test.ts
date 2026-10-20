@@ -1,6 +1,6 @@
-import type { Hono } from 'hono';
+import { parseWith } from '@datenknoten/kit/schema';
+import { UserResponseSchema } from '@freundebuch/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { AppContext } from '../../src/types/context.js';
 
 import {
   type AuthTestContext,
@@ -8,7 +8,12 @@ import {
   setupAuthTests,
   teardownAuthTests,
 } from './auth.helpers.js';
-import { authHeaders, createAuthenticatedUser, createTestFriend } from './friends.helpers.js';
+import {
+  authHeaders,
+  createAuthenticatedUser,
+  createTestFriend,
+  sendAs,
+} from './friends.helpers.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 /**
@@ -16,7 +21,7 @@ import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
  * the unauthenticated Sentry tunnel (SSRF + validation), and the
  * users/onboarding flow.
  */
-describe('Misc routes - Integration', () => {
+describe('Misc routes', () => {
   let context: AuthTestContext;
   // Onboarded user for the upload tests (uploads are behind the onboarding gate).
   let user: { externalId: string; email: string; sessionCookies: string };
@@ -31,15 +36,9 @@ describe('Misc routes - Integration', () => {
     await teardownAuthTests(context);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  const appOf = (): Hono<AppContext> => context.app;
-
-  async function asUser(method: string, path: string, body?: unknown): Promise<Response> {
-    const init: RequestInit = { method, headers: authHeaders(user.sessionCookies) };
-    if (body !== undefined) init.body = JSON.stringify(body);
-    return appOf().fetch(new Request(`http://localhost${path}`, init));
+  function asUser(method: string, path: string, body?: unknown) {
+    return sendAs(context.app, user.sessionCookies, method, path, body);
   }
-
-  const json = (res: Response): Promise<any> => res.json();
 
   describe('uploads', () => {
     it('rejects a non-UUID friend id with 400', async () => {
@@ -49,7 +48,7 @@ describe('Misc routes - Integration', () => {
 
     it('rejects a path-traversal filename', async () => {
       const friendId = await createTestFriend(context.pool, user.externalId, 'Photo Friend');
-      const res = await appOf().fetch(
+      const res = await context.app.fetch(
         new Request(
           `http://localhost/api/uploads/friends/${friendId}/${encodeURIComponent('../../etc/passwd')}`,
           { headers: authHeaders(user.sessionCookies) },
@@ -66,8 +65,8 @@ describe('Misc routes - Integration', () => {
   });
 
   describe('sentry tunnel', () => {
-    async function tunnel(body: string): Promise<Response> {
-      return appOf().fetch(
+    async function tunnel(body: string) {
+      return context.app.fetch(
         new Request('http://localhost/api/sentry-tunnel', { method: 'POST', body }),
       );
     }
@@ -94,13 +93,13 @@ describe('Misc routes - Integration', () => {
       );
       const meHeaders = authHeaders(fresh.sessionCookies);
 
-      const me = await appOf().fetch(
+      const me = await context.app.fetch(
         new Request('http://localhost/api/users/me', { headers: meHeaders }),
       );
       expect(me.status).toBe(200);
-      expect((await json(me)).hasCompletedOnboarding).toBe(false);
+      expect(parseWith(UserResponseSchema, await me.json()).hasCompletedOnboarding).toBe(false);
 
-      const created = await appOf().fetch(
+      const created = await context.app.fetch(
         new Request('http://localhost/api/users/me/self-profile', {
           method: 'POST',
           headers: meHeaders,
@@ -109,10 +108,10 @@ describe('Misc routes - Integration', () => {
       );
       expect(created.status).toBe(201);
 
-      const after = await appOf().fetch(
+      const after = await context.app.fetch(
         new Request('http://localhost/api/users/me', { headers: meHeaders }),
       );
-      expect((await json(after)).hasCompletedOnboarding).toBe(true);
+      expect(parseWith(UserResponseSchema, await after.json()).hasCompletedOnboarding).toBe(true);
     });
 
     it('blocks an onboarding-gated route until the self-profile exists', async () => {
@@ -122,7 +121,7 @@ describe('Misc routes - Integration', () => {
         'gated@example.com',
         'Password123!',
       );
-      const res = await appOf().fetch(
+      const res = await context.app.fetch(
         new Request('http://localhost/api/friends', { headers: authHeaders(gated.sessionCookies) }),
       );
       expect(res.status).toBe(403);

@@ -12,6 +12,7 @@ const FALLBACK_URL = 'https://overpass.fallback.example/api/interpreter';
 
 function aClient() {
   // The caches only call `query`; a pool stub without rows makes every read miss.
+  // The client only reaches the database through pool.query.
   const db = { query: vi.fn().mockResolvedValue({ rows: [] }) } as unknown as pg.Pool;
   return new OverpassClient({
     primaryUrl: PRIMARY_URL,

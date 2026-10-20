@@ -1,7 +1,7 @@
 import net from 'node:net';
 import type { Logger } from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadConfig } from '../../src/config.js';
+import { type Config, loadConfig } from '../../src/config.js';
 import { createMailer } from '../../src/services/mailer.js';
 import { isMailConfigured } from '../../src/utils/is-mail-configured.js';
 import { TEST_ENV } from '../helpers/test-env.js';
@@ -23,26 +23,44 @@ interface Sink {
   messages: string[];
   /** Every command verb the client sent, in order. */
   commands: string[];
-  close: () => Promise<void>;
+  close(): Promise<void>;
 }
 
-async function startSink(): Promise<Sink> {
+async function startSink() {
   const messages: string[] = [];
   const commands: string[] = [];
 
-  const server = net.createServer((socket) => {
-    let inData = false;
+  function answerCommand(socket: net.Socket, line: string) {
+    commands.push((line.split(' ')[0] ?? '').toUpperCase());
+    if (line.startsWith('EHLO') === true || line.startsWith('HELO') === true) {
+      socket.write('250-sink\r\n250 OK\r\n');
+    } else if (line.startsWith('STARTTLS') === true) {
+      // A relay without TLS: the sink cannot complete a handshake, so it
+      // refuses the upgrade the way such a server does.
+      socket.write('454 TLS not available\r\n');
+    } else if (line.startsWith('MAIL') === true || line.startsWith('RCPT') === true) {
+      socket.write('250 OK\r\n');
+    } else if (line.startsWith('DATA') === true) {
+      socket.write('354 send it\r\n');
+    } else if (line.startsWith('QUIT') === true) {
+      socket.write('221 bye\r\n');
+      socket.end();
+    } else {
+      socket.write('250 OK\r\n');
+    }
+  }
+
+  function handleSocket(socket: net.Socket) {
+    let isInData = false;
     let buffer = '';
 
-    socket.write('220 sink ESMTP\r\n');
-    socket.on('error', () => undefined);
-    socket.on('data', (chunk) => {
+    function handleData(chunk: Buffer) {
       const text = chunk.toString();
 
-      if (inData) {
+      if (isInData === true) {
         buffer += text;
-        if (buffer.includes('\r\n.\r\n')) {
-          inData = false;
+        if (buffer.includes('\r\n.\r\n') === true) {
+          isInData = false;
           messages.push(buffer);
           buffer = '';
           socket.write('250 OK queued\r\n');
@@ -50,44 +68,41 @@ async function startSink(): Promise<Sink> {
         return;
       }
 
-      for (const line of text.split('\r\n').filter(Boolean)) {
-        commands.push((line.split(' ')[0] ?? '').toUpperCase());
-        if (line.startsWith('EHLO') || line.startsWith('HELO')) {
-          socket.write('250-sink\r\n250 OK\r\n');
-        } else if (line.startsWith('STARTTLS')) {
-          // A relay without TLS: the sink cannot complete a handshake, so it
-          // refuses the upgrade the way such a server does.
-          socket.write('454 TLS not available\r\n');
-        } else if (line.startsWith('MAIL') || line.startsWith('RCPT')) {
-          socket.write('250 OK\r\n');
-        } else if (line.startsWith('DATA')) {
-          inData = true;
-          socket.write('354 send it\r\n');
-        } else if (line.startsWith('QUIT')) {
-          socket.write('221 bye\r\n');
-          socket.end();
-        } else {
-          socket.write('250 OK\r\n');
+      for (const line of text.split('\r\n')) {
+        if (line === '') {
+          continue;
+        }
+        answerCommand(socket, line);
+        if (line.startsWith('DATA') === true) {
+          isInData = true;
         }
       }
-    });
-  });
+    }
+
+    socket.write('220 sink ESMTP\r\n');
+    socket.on('error', ignore);
+    socket.on('data', handleData);
+  }
+
+  const server = net.createServer(handleSocket);
 
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const port = (server.address() as net.AddressInfo).port;
+  // A TCP listener always reports an AddressInfo, never a pipe name.
+  const { port } = server.address() as net.AddressInfo;
 
-  return {
-    port,
-    messages,
-    commands,
-    close: () =>
-      new Promise<void>((resolve) => {
-        server.close(() => resolve());
-      }),
-  };
+  function close() {
+    return new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+
+  return { port, messages, commands, close };
 }
 
-function silentLogger(): Logger {
+function ignore() {
+  return undefined;
+}
+
+function silentLogger() {
+  // The mailer only calls these four levels; a full pino instance adds nothing.
   return {
     info: vi.fn(),
     warn: vi.fn(),
@@ -96,14 +111,24 @@ function silentLogger(): Logger {
   } as unknown as Logger;
 }
 
-describe('SMTP mailer', () => {
+function requireMailer(config: Config, logger: Logger) {
+  const mailer = createMailer(config, logger);
+  if (mailer === null) {
+    throw new Error('mailer was null despite SMTP_HOST');
+  }
+  return mailer;
+}
+
+describe('createMailer', () => {
   let sink: Sink;
 
   beforeEach(async () => {
+    vi.clearAllMocks();
     sink = await startSink();
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await sink.close();
   });
 
@@ -130,8 +155,7 @@ describe('SMTP mailer', () => {
     const config = smtpConfig();
     expect(isMailConfigured(config)).toBe(true);
 
-    const mailer = createMailer(config, silentLogger());
-    if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
+    const mailer = requireMailer(config, silentLogger());
 
     await mailer.send(
       'user@example.com',
@@ -148,8 +172,7 @@ describe('SMTP mailer', () => {
   });
 
   it('derives the From address from FRONTEND_URL when SMTP_FROM is unset', async () => {
-    const mailer = createMailer(smtpConfig(), silentLogger());
-    if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
+    const mailer = requireMailer(smtpConfig(), silentLogger());
 
     await mailer.send('user@example.com', 'Subject', 'body');
 
@@ -157,11 +180,10 @@ describe('SMTP mailer', () => {
   });
 
   it('prefers an explicit SMTP_FROM over the derived address', async () => {
-    const mailer = createMailer(
+    const mailer = requireMailer(
       smtpConfig({ SMTP_FROM: 'Freundebuch <hello@other.example>' }),
       silentLogger(),
     );
-    if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
 
     await mailer.send('user@example.com', 'Subject', 'body');
 
@@ -171,21 +193,17 @@ describe('SMTP mailer', () => {
 
   it('keeps the recipient out of the log line but records the subject', async () => {
     const logger = silentLogger();
-    const mailer = createMailer(smtpConfig(), logger);
-    if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
+    const mailer = requireMailer(smtpConfig(), logger);
 
     await mailer.send('user@example.com', 'Reset your password', 'body');
 
     expect(logger.info).toHaveBeenCalledWith({ subject: 'Reset your password' }, 'Email sent');
-    const logged = JSON.stringify(
-      (logger.info as unknown as { mock: { calls: unknown[] } }).mock.calls,
-    );
+    const logged = JSON.stringify(vi.mocked(logger.info).mock.calls);
     expect(logged).not.toContain('user@example.com');
   });
 
   it('sends an html alternative only when one is supplied', async () => {
-    const mailer = createMailer(smtpConfig(), silentLogger());
-    if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
+    const mailer = requireMailer(smtpConfig(), silentLogger());
 
     await mailer.send('user@example.com', 'Text only', 'just text');
     expect(sink.messages[0]).not.toContain('text/html');
@@ -195,11 +213,10 @@ describe('SMTP mailer', () => {
   });
 
   it('refuses to send credentials over a relay that cannot upgrade to TLS', async () => {
-    const mailer = createMailer(
+    const mailer = requireMailer(
       smtpConfig({ SMTP_USER: 'relay-user', SMTP_PASSWORD: 'relay-password' }),
       silentLogger(),
     );
-    if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
 
     await expect(mailer.send('user@example.com', 'Subject', 'body')).rejects.toThrow(/STARTTLS/i);
     expect(sink.commands).toContain('STARTTLS');
@@ -207,8 +224,7 @@ describe('SMTP mailer', () => {
   });
 
   it('does not demand STARTTLS when no credentials are configured', async () => {
-    const mailer = createMailer(smtpConfig(), silentLogger());
-    if (mailer === null) throw new Error('mailer was null despite SMTP_HOST');
+    const mailer = requireMailer(smtpConfig(), silentLogger());
 
     await mailer.send('user@example.com', 'Subject', 'body');
 

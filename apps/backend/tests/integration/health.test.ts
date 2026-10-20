@@ -2,13 +2,15 @@ import { randomUUID } from 'node:crypto';
 import { chmod, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { parseWith } from '@datenknoten/kit/schema';
+import { type } from 'arktype';
 import { Hono } from 'hono';
 import pg from 'pg';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHealthRoutes } from '../../src/routes/health.js';
 import { ReadinessService } from '../../src/services/readiness.service.js';
 import type { AppContext } from '../../src/types/context.js';
-import { type AuthTestContext, setupAuthTestSuite } from './auth.helpers.js';
+import { type AuthTestContext, ignorePoolError, setupAuthTestSuite } from './auth.helpers.js';
 
 // The repo's own apps/backend/uploads is created by the dev container and
 // owned by root, so the check has to run against a directory this process
@@ -42,14 +44,30 @@ function healthAppWith(context: AuthTestContext, pool: pg.Pool = context.pool) {
  */
 const RUNS_AS_ROOT = process.getuid?.() === 0;
 
-describe('Health Endpoint Integration Tests', () => {
+const LivenessResponseSchema = type({ status: 'string', release: 'string' });
+const ReadinessResponseSchema = type({
+  status: 'string',
+  checks: { db: 'boolean', authDb: 'boolean', uploads: 'boolean' },
+  signupEnabled: 'boolean',
+  emailEnabled: 'boolean',
+});
+
+describe('/health', () => {
   const { getContext } = setupAuthTestSuite({ UPLOAD_DIR });
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe('GET /health (liveness)', () => {
-    it('should return 200 with status and release', async () => {
+    it('returns 200 with status and release', async () => {
       const { app } = getContext();
       const response = await app.fetch(new Request('http://localhost/health'));
-      const body = (await response.json()) as { status: string; release: string };
+      const body = parseWith(LivenessResponseSchema, await response.json());
 
       expect(response.status).toBe(200);
       expect(body.status).toBe('ok');
@@ -57,15 +75,15 @@ describe('Health Endpoint Integration Tests', () => {
       expect(body.release.length).toBeGreaterThan(0);
     });
 
-    it('should not report uptime or database state any more', async () => {
+    it('does not report uptime or database state any more', async () => {
       const { app } = getContext();
       const response = await app.fetch(new Request('http://localhost/health'));
-      const body = (await response.json()) as Record<string, unknown>;
+      const body = parseWith(type('Record<string, unknown>'), await response.json());
 
       expect(Object.keys(body).sort()).toEqual(['release', 'status']);
     });
 
-    it('should not touch the database', async () => {
+    it('does not touch the database', async () => {
       const { app, pool } = getContext();
       const connect = vi.spyOn(pool, 'connect');
 
@@ -73,7 +91,6 @@ describe('Health Endpoint Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(connect).not.toHaveBeenCalled();
-      connect.mockRestore();
     });
   });
 
@@ -89,17 +106,12 @@ describe('Health Endpoint Integration Tests', () => {
       await rm(uploadDir, { recursive: true, force: true });
     });
 
-    it('should report every dependency healthy', async () => {
+    it('reports every dependency healthy', async () => {
       // The readiness body is memoised for a few seconds; every case changes the
       // environment it reports on, so it gets an app with a fresh cache.
       const { app } = healthAppWith(getContext());
       const response = await app.fetch(new Request('http://localhost/health/ready'));
-      const body = (await response.json()) as {
-        status: string;
-        checks: { db: boolean; authDb: boolean; uploads: boolean };
-        signupEnabled: boolean;
-        emailEnabled: boolean;
-      };
+      const body = parseWith(ReadinessResponseSchema, await response.json());
 
       // Assert the individual checks first: a failure then names the broken
       // dependency instead of just reporting 503.
@@ -111,43 +123,35 @@ describe('Health Endpoint Integration Tests', () => {
       expect(body.emailEnabled).toBe(false);
     });
 
-    it.skipIf(RUNS_AS_ROOT)(
-      'should return 503 when the uploads directory is not writable',
-      async () => {
-        const { app } = healthAppWith(getContext());
-        // Read+execute only: the photo service could not create a friend
-        // directory here, which is exactly the read-only-mount case.
-        await chmod(uploadDir, 0o500);
+    it('returns 503 when the uploads directory is not writable', {
+      skip: RUNS_AS_ROOT,
+    }, async () => {
+      const { app } = healthAppWith(getContext());
+      // Read+execute only: the photo service could not create a friend
+      // directory here, which is exactly the read-only-mount case.
+      await chmod(uploadDir, 0o500);
 
-        const response = await app.fetch(new Request('http://localhost/health/ready'));
-        const body = (await response.json()) as {
-          status: string;
-          checks: { db: boolean; authDb: boolean; uploads: boolean };
-        };
+      const response = await app.fetch(new Request('http://localhost/health/ready'));
+      const body = parseWith(ReadinessResponseSchema, await response.json());
 
-        expect(body.checks).toEqual({ db: true, authDb: true, uploads: false });
-        expect(response.status).toBe(503);
-        expect(body.status).toBe('not_ready');
-      },
-    );
+      expect(body.checks).toEqual({ db: true, authDb: true, uploads: false });
+      expect(response.status).toBe(503);
+      expect(body.status).toBe('not_ready');
+    });
 
-    it('should return 503 and mark the failing check when the main pool is down', async () => {
+    it('returns 503 and marks the failing check when the main pool is down', async () => {
       // A dedicated app over an unreachable pool: the suite's own pool must
       // stay usable for the remaining tests and for teardown.
       const failingPool = new pg.Pool({
         connectionString: 'postgresql://invalid:5432/invalid',
         connectionTimeoutMillis: 1000,
       });
-      failingPool.on('error', () => {
-        // Expected while the pool fails to connect.
-      });
+      // Expected while the pool fails to connect.
+      failingPool.on('error', ignorePoolError);
       const { app: failingApp } = healthAppWith(getContext(), failingPool);
 
       const response = await failingApp.fetch(new Request('http://localhost/health/ready'));
-      const body = (await response.json()) as {
-        status: string;
-        checks: { db: boolean; authDb: boolean };
-      };
+      const body = parseWith(ReadinessResponseSchema, await response.json());
 
       expect(response.status).toBe(503);
       expect(body.status).toBe('not_ready');
@@ -155,27 +159,24 @@ describe('Health Endpoint Integration Tests', () => {
       // The auth pool is independent and still healthy.
       expect(body.checks.authDb).toBe(true);
 
-      await failingPool.end().catch(() => {
-        // Ignore errors from an already-failed pool.
-      });
+      // Ending an already-failed pool may reject; that is expected.
+      await failingPool.end().catch(ignorePoolError);
     });
 
-    it('should keep liveness green while readiness fails', async () => {
+    it('keeps liveness green while readiness fails', async () => {
       const failingPool = new pg.Pool({
         connectionString: 'postgresql://invalid:5432/invalid',
         connectionTimeoutMillis: 1000,
       });
-      failingPool.on('error', () => {
-        // Expected while the pool fails to connect.
-      });
+      // Expected while the pool fails to connect.
+      failingPool.on('error', ignorePoolError);
       const { app: failingApp } = healthAppWith(getContext(), failingPool);
 
       const response = await failingApp.fetch(new Request('http://localhost/health'));
 
       expect(response.status).toBe(200);
-      await failingPool.end().catch(() => {
-        // Ignore errors from an already-failed pool.
-      });
+      // Ending an already-failed pool may reject; that is expected.
+      await failingPool.end().catch(ignorePoolError);
     });
 
     /**
@@ -183,7 +184,7 @@ describe('Health Endpoint Integration Tests', () => {
      * so an uncached check would take a client out of both pools per anonymous
      * request and starve sign-in under a burst.
      */
-    it('should compute the readiness body at most once per TTL', async () => {
+    it('computes the readiness body at most once per TTL', async () => {
       const { pool } = getContext();
       const { app, readinessService } = healthAppWith(getContext());
       const connect = vi.spyOn(pool, 'connect');
@@ -200,8 +201,6 @@ describe('Health Endpoint Integration Tests', () => {
       readinessService.resetCache();
       await app.fetch(new Request('http://localhost/health/ready'));
       expect(connect).toHaveBeenCalledTimes(2);
-
-      connect.mockRestore();
     });
   });
 });

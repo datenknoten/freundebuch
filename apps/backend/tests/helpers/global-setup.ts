@@ -29,22 +29,36 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * port forwarding requires.
  */
 const silentLogger = {
-  info: () => undefined,
-  warn: () => undefined,
-  error: () => undefined,
-  debug: () => undefined,
+  info() {
+    return undefined;
+  },
+  warn() {
+    return undefined;
+  },
+  error() {
+    return undefined;
+  },
+  debug() {
+    return undefined;
+  },
 };
 
 const TEMPLATE_DATABASE = 'test';
 
 /** Swap the database name in a postgres connection URI. */
-function withDatabase(uri: string, databaseName: string): string {
+function withDatabase(uri: string, databaseName: string) {
   const url = new URL(uri);
   url.pathname = `/${databaseName}`;
   return url.toString();
 }
 
-async function createTemplateDatabase(serverUri: string): Promise<() => Promise<void>> {
+let stopTemplate: () => Promise<void> = noop;
+
+async function noop() {
+  return undefined;
+}
+
+async function createTemplateDatabase(serverUri: string) {
   const adminUri = withDatabase(serverUri, 'postgres');
   const adminPool = new pg.Pool({ connectionString: adminUri, max: 1 });
   try {
@@ -54,24 +68,24 @@ async function createTemplateDatabase(serverUri: string): Promise<() => Promise<
     await adminPool.end();
   }
 
-  return async () => {
+  async function dropTemplate() {
     const cleanupPool = new pg.Pool({ connectionString: adminUri, max: 1 });
     try {
       await cleanupPool.query(`DROP DATABASE IF EXISTS "${TEMPLATE_DATABASE}" WITH (FORCE)`);
     } finally {
       await cleanupPool.end();
     }
-  };
+  }
+  return dropTemplate;
 }
 
-export default async function setup({ provide }: GlobalSetupContext): Promise<() => Promise<void>> {
+export async function setup({ provide }: GlobalSetupContext) {
   const externalServerUri = process.env.TEST_DATABASE_URL;
 
   let templateUri: string;
-  let teardown: () => Promise<void>;
 
   if (externalServerUri !== undefined && externalServerUri !== '') {
-    teardown = await createTemplateDatabase(externalServerUri);
+    stopTemplate = await createTemplateDatabase(externalServerUri);
     templateUri = withDatabase(externalServerUri, TEMPLATE_DATABASE);
   } else {
     const container = await new PostgreSqlContainer('imresamu/postgis:18-3.6.1-trixie')
@@ -82,9 +96,10 @@ export default async function setup({ provide }: GlobalSetupContext): Promise<()
       .withWaitStrategy(Wait.forHealthCheck())
       .start();
     templateUri = container.getConnectionUri();
-    teardown = async () => {
+    async function stopContainer() {
       await container.stop();
-    };
+    }
+    stopTemplate = stopContainer;
   }
 
   // Migrate the template database; suites clone it per file.
@@ -107,8 +122,10 @@ export default async function setup({ provide }: GlobalSetupContext): Promise<()
 
   // host:port/credentials the workers use to reach the shared template.
   provide('pgContainerUri', templateUri);
+}
 
-  return teardown;
+export async function teardown() {
+  await stopTemplate();
 }
 
 declare module 'vitest' {

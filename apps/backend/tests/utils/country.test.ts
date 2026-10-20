@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { localeToCountry } from './country.js';
+import { localeToCountry } from '../../src/utils/country.js';
 
 describe('localeToCountry', () => {
   it('returns undefined when the header is missing or empty', () => {

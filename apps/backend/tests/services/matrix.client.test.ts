@@ -1,6 +1,6 @@
 import dns from 'node:dns';
 import { ValidationError } from '@datenknoten/kit';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotificationDeliveryError } from '../../src/errors/notification-delivery.error.js';
 import { sendMatrixMessage } from '../../src/services/external/matrix.client.js';
 
@@ -8,16 +8,21 @@ import { sendMatrixMessage } from '../../src/services/external/matrix.client.js'
  * The SSRF guard has to survive a *public* hostname that resolves to a private
  * address, which is why the resolver is stubbed rather than the URL string.
  */
-function stubLookup(...addresses: string[]): void {
+function stubLookup(...addresses: string[]) {
   vi.spyOn(dns.promises, 'lookup').mockResolvedValue(
+    // lookup is overloaded; the spy types against the single-address overload, the client uses `all: true`.
     addresses.map((address) => ({
       address,
-      family: address.includes(':') ? 6 : 4,
+      family: address.includes(':') === true ? 6 : 4,
     })) as never,
   );
 }
 
 describe('sendMatrixMessage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });

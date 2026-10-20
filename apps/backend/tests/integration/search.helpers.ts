@@ -1,9 +1,10 @@
 import type pg from 'pg';
-import { afterAll, beforeAll, beforeEach } from 'vitest';
+import { afterAll, assert, beforeAll, beforeEach } from 'vitest';
 
 import {
   type AuthTestContext,
   completeTestUserOnboarding,
+  firstRow,
   setupAuthTests,
   teardownAuthTests,
   truncateUserData,
@@ -36,20 +37,21 @@ export async function createFriendWithOrganization(
   displayName: string,
   organization: string,
   jobTitle?: string,
-): Promise<string> {
+) {
   // Create the friend
   const friendId = await createTestFriend(pool, userExternalId, displayName);
 
   // Get internal ID for friend
-  const friendResult = await pool.query('SELECT id FROM friends.friends WHERE external_id = $1', [
-    friendId,
-  ]);
+  const friendResult = await pool.query<{ id: string }>(
+    'SELECT id FROM friends.friends WHERE external_id = $1',
+    [friendId],
+  );
 
   // Add professional history entry with organization
   await pool.query(
     `INSERT INTO friends.friend_professional_history (friend_id, organization, job_title, from_month, from_year, is_primary)
      VALUES ($1, $2, $3, 1, 2024, true)`,
-    [friendResult.rows[0].id, organization, jobTitle ?? null],
+    [firstRow(friendResult).id, organization, jobTitle ?? null],
   );
 
   return friendId;
@@ -63,18 +65,19 @@ export async function createFriendWithEmail(
   userExternalId: string,
   displayName: string,
   emailAddress: string,
-): Promise<string> {
+) {
   const friendId = await createTestFriend(pool, userExternalId, displayName);
 
   // Get internal ID for friend
-  const friendResult = await pool.query('SELECT id FROM friends.friends WHERE external_id = $1', [
-    friendId,
-  ]);
+  const friendResult = await pool.query<{ id: string }>(
+    'SELECT id FROM friends.friends WHERE external_id = $1',
+    [friendId],
+  );
 
   await pool.query(
     `INSERT INTO friends.friend_emails (friend_id, email_address, email_type, is_primary)
      VALUES ($1, $2, 'personal', true)`,
-    [friendResult.rows[0].id, emailAddress],
+    [firstRow(friendResult).id, emailAddress],
   );
 
   return friendId;
@@ -88,17 +91,18 @@ export async function createFriendWithPhone(
   userExternalId: string,
   displayName: string,
   phoneNumber: string,
-): Promise<string> {
+) {
   const friendId = await createTestFriend(pool, userExternalId, displayName);
 
-  const friendResult = await pool.query('SELECT id FROM friends.friends WHERE external_id = $1', [
-    friendId,
-  ]);
+  const friendResult = await pool.query<{ id: string }>(
+    'SELECT id FROM friends.friends WHERE external_id = $1',
+    [friendId],
+  );
 
   await pool.query(
     `INSERT INTO friends.friend_phones (friend_id, phone_number, phone_type, is_primary)
      VALUES ($1, $2, 'mobile', true)`,
-    [friendResult.rows[0].id, phoneNumber],
+    [firstRow(friendResult).id, phoneNumber],
   );
 
   return friendId;
@@ -113,18 +117,19 @@ export async function createFriendWithNotes(
   userExternalId: string,
   displayName: string,
   notes: string,
-): Promise<string> {
+) {
   // Create main friend
   const friendId = await createTestFriend(pool, userExternalId, displayName);
 
   // Create a dummy related friend for the relationship
   const relatedFriendId = await createTestFriend(pool, userExternalId, `Related to ${displayName}`);
 
-  const friendResult = await pool.query('SELECT id FROM friends.friends WHERE external_id = $1', [
-    friendId,
-  ]);
+  const friendResult = await pool.query<{ id: string }>(
+    'SELECT id FROM friends.friends WHERE external_id = $1',
+    [friendId],
+  );
 
-  const relatedFriendResult = await pool.query(
+  const relatedFriendResult = await pool.query<{ id: string }>(
     'SELECT id FROM friends.friends WHERE external_id = $1',
     [relatedFriendId],
   );
@@ -133,7 +138,7 @@ export async function createFriendWithNotes(
   await pool.query(
     `INSERT INTO friends.friend_relationships (friend_id, related_friend_id, relationship_type_id, notes)
      VALUES ($1, $2, 'friend', $3)`,
-    [friendResult.rows[0].id, relatedFriendResult.rows[0].id, notes],
+    [firstRow(friendResult).id, firstRow(relatedFriendResult).id, notes],
   );
 
   return friendId;
@@ -147,17 +152,18 @@ export async function createFriendWithMetContext(
   userExternalId: string,
   displayName: string,
   metContext: string,
-): Promise<string> {
+) {
   const friendId = await createTestFriend(pool, userExternalId, displayName);
 
-  const friendResult = await pool.query('SELECT id FROM friends.friends WHERE external_id = $1', [
-    friendId,
-  ]);
+  const friendResult = await pool.query<{ id: string }>(
+    'SELECT id FROM friends.friends WHERE external_id = $1',
+    [friendId],
+  );
 
   await pool.query(
     `INSERT INTO friends.friend_met_info (friend_id, met_context, met_date)
      VALUES ($1, $2, CURRENT_DATE)`,
-    [friendResult.rows[0].id, metContext],
+    [firstRow(friendResult).id, metContext],
   );
 
   return friendId;
@@ -171,7 +177,7 @@ export async function createFriendWithFriendNote(
   userExternalId: string,
   displayName: string,
   content: string,
-): Promise<string> {
+) {
   const friendId = await createTestFriend(pool, userExternalId, displayName);
 
   await pool.query(
@@ -192,17 +198,18 @@ export async function createFriendWithAddress(
   displayName: string,
   city: string,
   country: string,
-): Promise<string> {
+) {
   const friendId = await createTestFriend(pool, userExternalId, displayName);
 
-  const friendResult = await pool.query('SELECT id FROM friends.friends WHERE external_id = $1', [
-    friendId,
-  ]);
+  const friendResult = await pool.query<{ id: string }>(
+    'SELECT id FROM friends.friends WHERE external_id = $1',
+    [friendId],
+  );
 
   await pool.query(
     `INSERT INTO friends.friend_addresses (friend_id, city, country, address_type, is_primary)
      VALUES ($1, $2, $3, 'home', true)`,
-    [friendResult.rows[0].id, city, country],
+    [firstRow(friendResult).id, city, country],
   );
 
   return friendId;
@@ -216,33 +223,35 @@ export async function createCircleWithFriend(
   userExternalId: string,
   circleName: string,
   friendExternalId: string,
-): Promise<string> {
+) {
   // Get user ID
-  const userResult = await pool.query('SELECT id FROM auth.users WHERE external_id = $1', [
-    userExternalId,
-  ]);
+  const userResult = await pool.query<{ id: string }>(
+    'SELECT id FROM auth.users WHERE external_id = $1',
+    [userExternalId],
+  );
 
   // Create circle
-  const circleResult = await pool.query(
+  const circleResult = await pool.query<{ id: string; external_id: string }>(
     `INSERT INTO friends.circles (user_id, name, color)
      VALUES ($1, $2, '#3b82f6')
      RETURNING external_id, id`,
-    [userResult.rows[0].id, circleName],
+    [firstRow(userResult).id, circleName],
   );
 
   // Get friend internal ID
-  const friendResult = await pool.query('SELECT id FROM friends.friends WHERE external_id = $1', [
-    friendExternalId,
-  ]);
+  const friendResult = await pool.query<{ id: string }>(
+    'SELECT id FROM friends.friends WHERE external_id = $1',
+    [friendExternalId],
+  );
 
   // Assign friend to circle
   await pool.query(
     `INSERT INTO friends.friend_circles (friend_id, circle_id)
      VALUES ($1, $2)`,
-    [friendResult.rows[0].id, circleResult.rows[0].id],
+    [firstRow(friendResult).id, firstRow(circleResult).id],
   );
 
-  return circleResult.rows[0].external_id;
+  return firstRow(circleResult).external_id;
 }
 
 /**
@@ -254,8 +263,8 @@ export async function createFriendWithFullName(
   displayName: string,
   firstName: string,
   lastName: string,
-): Promise<string> {
-  const result = await pool.query(
+) {
+  const result = await pool.query<{ external_id: string }>(
     `INSERT INTO friends.friends (user_id, display_name, name_first, name_last)
      SELECT u.id, $2, $3, $4
      FROM auth.users u
@@ -264,7 +273,7 @@ export async function createFriendWithFullName(
     [userExternalId, displayName, firstName, lastName],
   );
 
-  return result.rows[0].external_id;
+  return firstRow(result).external_id;
 }
 
 /**
@@ -275,20 +284,21 @@ export async function createFriendWithWorkNotes(
   userExternalId: string,
   displayName: string,
   workNotes: string,
-): Promise<string> {
+) {
   // Create the friend
   const friendId = await createTestFriend(pool, userExternalId, displayName);
 
   // Get internal ID for friend
-  const friendResult = await pool.query('SELECT id FROM friends.friends WHERE external_id = $1', [
-    friendId,
-  ]);
+  const friendResult = await pool.query<{ id: string }>(
+    'SELECT id FROM friends.friends WHERE external_id = $1',
+    [friendId],
+  );
 
   // Add professional history entry with notes
   await pool.query(
     `INSERT INTO friends.friend_professional_history (friend_id, notes, from_month, from_year, is_primary)
      VALUES ($1, $2, 1, 2024, true)`,
-    [friendResult.rows[0].id, workNotes],
+    [firstRow(friendResult).id, workNotes],
   );
 
   return friendId;
@@ -298,8 +308,8 @@ export async function createFriendWithWorkNotes(
  * Setup function for beforeAll in search test files
  */
 export function setupSearchTestSuite() {
-  let authContext: AuthTestContext;
-  let context: SearchTestContext;
+  let authContext: AuthTestContext | undefined;
+  let context: SearchTestContext | undefined;
 
   beforeAll(async () => {
     authContext = await setupAuthTests();
@@ -308,6 +318,7 @@ export function setupSearchTestSuite() {
   beforeEach(async () => {
     // Wipe every user-owned row, then rebuild the fixture user: search
     // assertions count results, so an inherited friend silently breaks them.
+    assert.isDefined(authContext, 'the suite context is set in beforeAll');
     await truncateUserData(authContext.pool);
     const testUser = await createAuthenticatedUser(
       authContext.pool,
@@ -322,7 +333,10 @@ export function setupSearchTestSuite() {
     await teardownAuthTests(authContext);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  return {
-    getContext: () => context,
-  };
+  function getContext() {
+    assert.isDefined(context, 'the test context is set in beforeEach');
+    return context;
+  }
+
+  return { getContext };
 }

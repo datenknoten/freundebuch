@@ -1,15 +1,20 @@
+import { parseWith } from '@datenknoten/kit/schema';
+import type { Pool } from 'pg';
 import { describe, expect, it } from 'vitest';
-import { extractCookies, extractSessionToken, setupAuthTestSuite } from './auth.helpers.js';
+import {
+  type AppFetcher,
+  BetterAuthSessionResponseSchema,
+  extractCookies,
+  extractSessionToken,
+  firstRow,
+  setupAuthTestSuite,
+  withoutSessionDataCookie,
+} from './auth.helpers.js';
 
 /**
  * Helper to sign up a new user via Better Auth and return cookies + response body.
  */
-async function signUp(
-  app: { fetch: (req: Request) => Response | Promise<Response> },
-  email: string,
-  password: string,
-  name?: string,
-) {
+async function signUp(app: AppFetcher, email: string, password: string, name?: string) {
   const response = await app.fetch(
     new Request('http://localhost/api/auth/sign-up/email', {
       method: 'POST',
@@ -18,7 +23,7 @@ async function signUp(
     }),
   );
 
-  const body: any = await response.json();
+  const body = parseWith(BetterAuthSessionResponseSchema, await response.json());
   const cookies = extractCookies(response);
 
   return { response, body, cookies };
@@ -27,11 +32,7 @@ async function signUp(
 /**
  * Helper to sign in via Better Auth and return cookies + response body.
  */
-async function signIn(
-  app: { fetch: (req: Request) => Response | Promise<Response> },
-  email: string,
-  password: string,
-) {
+async function signIn(app: AppFetcher, email: string, password: string) {
   const response = await app.fetch(
     new Request('http://localhost/api/auth/sign-in/email', {
       method: 'POST',
@@ -40,7 +41,7 @@ async function signIn(
     }),
   );
 
-  const body: any = await response.json();
+  const body = parseWith(BetterAuthSessionResponseSchema, await response.json());
   const cookies = extractCookies(response);
 
   return { response, body, cookies };
@@ -49,10 +50,7 @@ async function signIn(
 /**
  * Helper to sign out via Better Auth using session cookies.
  */
-async function signOut(
-  app: { fetch: (req: Request) => Response | Promise<Response> },
-  cookies: string,
-) {
+async function signOut(app: AppFetcher, cookies: string) {
   const response = await app.fetch(
     new Request('http://localhost/api/auth/sign-out', {
       method: 'POST',
@@ -66,16 +64,19 @@ async function signOut(
 /**
  * Count sessions for a user in the Better Auth session table.
  */
-async function countBetterAuthSessions(pool: import('pg').Pool, userId: string): Promise<number> {
-  const result = await pool.query('SELECT COUNT(*) FROM auth.session WHERE user_id = $1', [userId]);
-  return parseInt(result.rows[0].count, 10);
+async function countBetterAuthSessions(pool: Pool, userId: string) {
+  const result = await pool.query<{ count: string }>(
+    'SELECT COUNT(*) FROM auth.session WHERE user_id = $1',
+    [userId],
+  );
+  return Number.parseInt(firstRow(result).count, 10);
 }
 
-describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
+describe('Better Auth endpoints: edge cases', () => {
   const { getContext } = setupAuthTestSuite();
 
   describe('Complete User Journey', () => {
-    it('should handle complete user lifecycle: sign-up -> sign-in -> sign-out -> sign-in again', async () => {
+    it('handles complete user lifecycle: sign-up -> sign-in -> sign-out -> sign-in again', async () => {
       const { app, pool } = getContext();
 
       const email = 'lifecycle@example.com';
@@ -123,7 +124,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
   });
 
   describe('Multi-Device Scenarios', () => {
-    it('should support user signed in on multiple devices simultaneously', async () => {
+    it('supports user signed in on multiple devices simultaneously', async () => {
       const { app, pool } = getContext();
 
       const email = 'multidevice@example.com';
@@ -169,10 +170,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       // Device 1 session should be invalidated.
       // Strip the session_data cache cookie to simulate browser behavior:
       // sign-out sets Max-Age=0 on session_data, so browsers delete it.
-      const device1TokenOnly = device1Cookies
-        .split('; ')
-        .filter((c) => !c.startsWith('better-auth.session_data='))
-        .join('; ');
+      const device1TokenOnly = withoutSessionDataCookie(device1Cookies);
       const me1Response = await app.fetch(
         new Request('http://localhost/api/auth/me', {
           method: 'GET',
@@ -184,7 +182,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
   });
 
   describe('Session Expiration', () => {
-    it('should reject expired session tokens', async () => {
+    it('rejects expired session tokens', async () => {
       const { app, pool } = getContext();
 
       const email = 'expiredsession@example.com';
@@ -202,10 +200,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
 
       // Strip the session_data cache cookie so Better Auth checks the DB
       // instead of returning the cached (now-stale) session data
-      const sessionTokenOnly = cookies
-        .split('; ')
-        .filter((c) => !c.startsWith('better-auth.session_data='))
-        .join('; ');
+      const sessionTokenOnly = withoutSessionDataCookie(cookies);
 
       // Try to access a protected route with expired session
       const meResponse = await app.fetch(
@@ -220,7 +215,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
   });
 
   describe('Database Constraint Tests', () => {
-    it('should enforce unique email constraint on Better Auth user table', async () => {
+    it('enforces unique email constraint on Better Auth user table', async () => {
       const { pool } = getContext();
 
       const email = 'unique-ba@example.com';
@@ -242,7 +237,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       ).rejects.toThrow();
     });
 
-    it('should enforce unique session token constraint', async () => {
+    it('enforces unique session token constraint', async () => {
       const { pool } = getContext();
 
       const email = 'sessionunique-ba@example.com';
@@ -275,7 +270,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       ).rejects.toThrow();
     });
 
-    it('should cascade delete sessions when Better Auth user is deleted', async () => {
+    it('deletes the sessions when the Better Auth user is deleted', async () => {
       const { app, pool } = getContext();
 
       const email = 'cascadedelete-ba@example.com';
@@ -300,7 +295,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       expect(sessionCount).toBe(0);
     });
 
-    it('should cascade delete accounts when Better Auth user is deleted', async () => {
+    it('deletes the accounts when the Better Auth user is deleted', async () => {
       const { app, pool } = getContext();
 
       const email = 'cascadeaccount-ba@example.com';
@@ -328,7 +323,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
   });
 
   describe('Boundary & Special Values', () => {
-    it('should handle very long email addresses', async () => {
+    it('handles very long email addresses', async () => {
       const { app } = getContext();
 
       // Email with 254 characters (max valid length)
@@ -350,7 +345,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       expect([200, 400, 422]).toContain(response.status);
     });
 
-    it('should handle password with exactly minimum length', async () => {
+    it('handles password with exactly minimum length', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -368,7 +363,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should handle password with special characters', async () => {
+    it('handles password with special characters', async () => {
       const { app } = getContext();
 
       const specialPasswords = [
@@ -396,7 +391,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       }
     });
 
-    it('should handle very long passwords', async () => {
+    it('handles very long passwords', async () => {
       const { app } = getContext();
 
       const longPassword = `A1!${'a'.repeat(200)}`;
@@ -417,7 +412,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       expect([200, 400, 422]).toContain(response.status);
     });
 
-    it('should handle email with plus addressing (RFC 5233)', async () => {
+    it('handles email with plus addressing (RFC 5233)', async () => {
       const { app } = getContext();
 
       const email = 'user+test-ba@example.com';
@@ -430,7 +425,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
   });
 
   describe('Concurrent Operations', () => {
-    it('should handle concurrent sign-up attempts with same email', async () => {
+    it('handles concurrent sign-up attempts with same email', async () => {
       const { app } = getContext();
 
       const email = 'concurrent-signup@example.com';
@@ -457,7 +452,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       expect(failureCount).toBe(4);
     });
 
-    it('should handle concurrent sign-in attempts', async () => {
+    it('handles concurrent sign-in attempts', async () => {
       const { app } = getContext();
 
       const email = 'concurrent-signin@example.com';
@@ -479,24 +474,19 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
 
       const responses = await Promise.all(requests);
 
-      // All should succeed
-      responses.forEach((response) => {
+      for (const response of responses) {
         expect(response.status).toBe(200);
-      });
+      }
 
-      // All should have unique session cookies
-      const tokens = responses.map((r) => {
-        const cookies = extractCookies(r);
-        return extractSessionToken(cookies);
-      });
-      const uniqueTokens = new Set(tokens.filter(Boolean));
+      const tokens = responses.map((response) => extractSessionToken(extractCookies(response)));
+      const uniqueTokens = new Set(tokens.filter((token) => token !== null && token !== ''));
 
       expect(uniqueTokens.size).toBe(5);
     });
   });
 
   describe('Session Cookie Handling', () => {
-    it('should reject requests without session cookie on protected routes', async () => {
+    it('rejects requests without session cookie on protected routes', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -508,7 +498,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should reject requests with invalid session cookie', async () => {
+    it('rejects requests with invalid session cookie', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -521,7 +511,7 @@ describe('Auth Endpoints - Edge Cases & Integration (Better Auth)', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should set session cookie on successful sign-in', async () => {
+    it('sets session cookie on successful sign-in', async () => {
       const { app } = getContext();
 
       const email = 'cookie-check@example.com';

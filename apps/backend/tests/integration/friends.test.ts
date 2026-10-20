@@ -1,17 +1,43 @@
+import { parseWith } from '@datenknoten/kit/schema';
+import {
+  AddressResponseSchema,
+  EmailResponseSchema,
+  ErrorResponseSchema,
+  FriendListResponseSchema,
+  FriendResponseSchema,
+  PhoneResponseSchema,
+  UrlResponseSchema,
+} from '@freundebuch/shared/index.js';
+import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 import {
   authHeaders,
   countUserFriends,
+  createAuthenticatedUser,
   createTestFriend,
   getTestFriend,
   setupFriendsTestSuite,
 } from './friends.helpers.js';
 
-describe('Friends API - Integration Tests', () => {
+const MessageResponseSchema = type({ message: 'string' });
+
+function aPhoneInput(index: number) {
+  return { phone_number: `+1212555${String(1000 + index).padStart(4, '0')}`, phone_type: 'mobile' };
+}
+
+function anEmailInput(index: number) {
+  return { email_address: `test${index}@example.com`, email_type: 'personal' };
+}
+
+function aUrlInput(index: number) {
+  return { url: `https://example${index}.com`, url_type: 'personal' };
+}
+
+describe('Friends API', () => {
   const { getContext } = setupFriendsTestSuite();
 
   describe('GET /api/friends', () => {
-    it('should return only self-profile when no other friends exist', async () => {
+    it('returns only the self-profile when no other friends exist', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -20,22 +46,21 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(FriendListResponseSchema, await response.json());
 
       expect(response.status).toBe(200);
       // Self-profile is always present (created during onboarding)
       expect(body.data.length).toBe(1);
-      expect(body.data[0].displayName).toBe('Test User (Self)');
+      expect(body.data[0]?.displayName).toBe('Test User (Self)');
       expect(body.pagination.totalCount).toBe(1);
       expect(body.pagination.page).toBe(1);
       expect(body.pagination.pageSize).toBe(25);
       expect(body.pagination.totalPages).toBe(1);
     });
 
-    it('should return paginated friends list', async () => {
+    it('paginates the friends list', async () => {
       const { app, pool, testUser } = getContext();
 
-      // Create test friends (self-profile already exists from onboarding)
       await createTestFriend(pool, testUser.externalId, 'Alice');
       await createTestFriend(pool, testUser.externalId, 'Bob');
       await createTestFriend(pool, testUser.externalId, 'Charlie');
@@ -46,7 +71,7 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(FriendListResponseSchema, await response.json());
 
       expect(response.status).toBe(200);
       expect(body.data.length).toBe(2);
@@ -57,7 +82,7 @@ describe('Friends API - Integration Tests', () => {
       expect(body.pagination.totalPages).toBe(2);
     });
 
-    it('should sort friends by display name', async () => {
+    it('sorts friends by display name', async () => {
       const { app, pool, testUser } = getContext();
 
       await createTestFriend(pool, testUser.externalId, 'Charlie');
@@ -73,15 +98,15 @@ describe('Friends API - Integration Tests', () => {
       );
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(FriendListResponseSchema, await response.json());
 
       expect(response.status).toBe(200);
-      expect(body.data[0].displayName).toBe('Alice');
-      expect(body.data[1].displayName).toBe('Bob');
-      expect(body.data[2].displayName).toBe('Charlie');
+      expect(body.data[0]?.displayName).toBe('Alice');
+      expect(body.data[1]?.displayName).toBe('Bob');
+      expect(body.data[2]?.displayName).toBe('Charlie');
     });
 
-    it('should require authentication', async () => {
+    it('rejects an unauthenticated request with 401', async () => {
       const { app } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -95,7 +120,7 @@ describe('Friends API - Integration Tests', () => {
   });
 
   describe('POST /api/friends', () => {
-    it('should create a friend with just display name', async () => {
+    it('creates a friend from a display name alone', async () => {
       const { app, pool, testUser } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -107,7 +132,7 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(FriendResponseSchema, await response.json());
 
       expect(response.status).toBe(201);
       expect(body).toHaveProperty('id');
@@ -119,12 +144,12 @@ describe('Friends API - Integration Tests', () => {
       expect(body).toHaveProperty('createdAt');
       expect(body).toHaveProperty('updatedAt');
 
-      // Verify in database (includes self-profile + new friend)
+      // The self-profile created during onboarding counts too.
       const count = await countUserFriends(pool, testUser.externalId);
       expect(count).toBe(2);
     });
 
-    it('should create a friend with full name parts', async () => {
+    it('creates a friend with all name parts', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -141,7 +166,7 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(FriendResponseSchema, await response.json());
 
       expect(response.status).toBe(201);
       expect(body.displayName).toBe('Dr. John M. Smith Jr.');
@@ -152,7 +177,7 @@ describe('Friends API - Integration Tests', () => {
       expect(body.nameSuffix).toBe('Jr.');
     });
 
-    it('should create a friend with phones, emails, addresses, and urls', async () => {
+    it('creates a friend with phones, emails, addresses and urls', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -181,21 +206,21 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(FriendResponseSchema, await response.json());
 
       expect(response.status).toBe(201);
       expect(body.phones.length).toBe(2);
-      expect(body.phones[0].phoneNumber).toBe('+12125551234');
-      expect(body.phones[0].isPrimary).toBe(true);
+      expect(body.phones[0]?.phoneNumber).toBe('+12125551234');
+      expect(body.phones[0]?.isPrimary).toBe(true);
       expect(body.emails.length).toBe(1);
-      expect(body.emails[0].emailAddress).toBe('test@example.com');
+      expect(body.emails[0]?.emailAddress).toBe('test@example.com');
       expect(body.addresses.length).toBe(1);
-      expect(body.addresses[0].city).toBe('Anytown');
+      expect(body.addresses[0]?.city).toBe('Anytown');
       expect(body.urls.length).toBe(1);
-      expect(body.urls[0].url).toBe('https://example.com');
+      expect(body.urls[0]?.url).toBe('https://example.com');
     });
 
-    it('should reject invalid email format', async () => {
+    it('rejects an invalid email format with 400', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -212,7 +237,7 @@ describe('Friends API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should reject empty display name', async () => {
+    it('rejects an empty display name with 400', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -230,12 +255,11 @@ describe('Friends API - Integration Tests', () => {
   });
 
   describe('GET /api/friends/:id', () => {
-    it('should return a friend with all related data', async () => {
+    it('returns a friend with its related data', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'John Doe');
 
-      // Add phone directly in database
       await pool.query(
         `INSERT INTO friends.friend_phones (friend_id, phone_number, phone_type, is_primary)
          SELECT c.id, '+12125551234', 'mobile', true
@@ -249,16 +273,16 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(FriendResponseSchema, await response.json());
 
       expect(response.status).toBe(200);
       expect(body.id).toBe(friendId);
       expect(body.displayName).toBe('John Doe');
       expect(body.phones.length).toBe(1);
-      expect(body.phones[0].phoneNumber).toBe('+12125551234');
+      expect(body.phones[0]?.phoneNumber).toBe('+12125551234');
     });
 
-    it('should return 404 for non-existent friend', async () => {
+    it('returns 404 for a non-existent friend', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request(
@@ -276,7 +300,7 @@ describe('Friends API - Integration Tests', () => {
   });
 
   describe('PUT /api/friends/:id', () => {
-    it('should update friend display name', async () => {
+    it('updates the display name', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Old Name');
@@ -290,20 +314,18 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(FriendResponseSchema, await response.json());
 
       expect(response.status).toBe(200);
       expect(body.displayName).toBe('New Name');
 
-      // Verify in database
       const friend = await getTestFriend(pool, friendId);
       expect(friend?.displayName).toBe('New Name');
     });
 
-    it('should update name parts to null', async () => {
+    it('clears a name part set to null', async () => {
       const { app, pool, testUser } = getContext();
 
-      // Create friend with name parts
       const friendId = await createTestFriend(pool, testUser.externalId, 'Dr. John Smith');
       await pool.query("UPDATE friends.friends SET name_prefix = 'Dr.' WHERE external_id = $1", [
         friendId,
@@ -318,13 +340,13 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(FriendResponseSchema, await response.json());
 
       expect(response.status).toBe(200);
       expect(body.namePrefix).toBeUndefined();
     });
 
-    it('should return 404 for non-existent friend', async () => {
+    it('returns 404 for a non-existent friend', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request(
@@ -343,7 +365,7 @@ describe('Friends API - Integration Tests', () => {
   });
 
   describe('DELETE /api/friends/:id', () => {
-    it('should soft delete a friend', async () => {
+    it('soft-deletes the friend and hides it from the list', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'To Be Deleted');
@@ -354,12 +376,11 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(MessageResponseSchema, await response.json());
 
       expect(response.status).toBe(200);
       expect(body.message).toBe('Friend deleted successfully');
 
-      // Verify soft delete in database
       const friend = await getTestFriend(pool, friendId);
       expect(friend?.deletedAt).not.toBeNull();
 
@@ -370,13 +391,13 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const listResponse = await app.fetch(listRequest);
-      const listBody: any = await listResponse.json();
+      const listBody = parseWith(FriendListResponseSchema, await listResponse.json());
 
       expect(listBody.data.length).toBe(1);
-      expect(listBody.data[0].displayName).toBe('Test User (Self)');
+      expect(listBody.data[0]?.displayName).toBe('Test User (Self)');
     });
 
-    it('should return 404 for non-existent friend', async () => {
+    it('returns 404 for a non-existent friend', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request(
@@ -393,8 +414,8 @@ describe('Friends API - Integration Tests', () => {
     });
   });
 
-  describe('Relationship Routes', () => {
-    it('should return 409 when the same relationship is created twice', async () => {
+  describe('POST /api/friends/:id/relationships', () => {
+    it('returns 409 when the same relationship is created twice', async () => {
       const { app, pool, testUser } = getContext();
 
       const headers = authHeaders(testUser.sessionCookies);
@@ -424,13 +445,13 @@ describe('Friends API - Integration Tests', () => {
       );
 
       expect(second.status).toBe(409);
-      expect(await second.json()).toMatchObject({
+      expect(parseWith(ErrorResponseSchema, await second.json())).toMatchObject({
         error: 'This relationship already exists',
         code: 'CONFLICT',
       });
     });
 
-    it('should reject a relationship with self', async () => {
+    it('rejects a relationship with self with 400', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Self Rel');
@@ -447,14 +468,14 @@ describe('Friends API - Integration Tests', () => {
       );
 
       expect(response.status).toBe(400);
-      expect(await response.json()).toMatchObject({
+      expect(parseWith(ErrorResponseSchema, await response.json())).toMatchObject({
         error: 'Cannot create relationship with self',
       });
     });
   });
 
-  describe('Phone Sub-resource Routes', () => {
-    it('should add a phone to a friend', async () => {
+  describe('/api/friends/:id/phones', () => {
+    it('adds a phone to a friend', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
@@ -470,7 +491,7 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(PhoneResponseSchema, await response.json());
 
       expect(response.status).toBe(201);
       expect(body).toHaveProperty('id');
@@ -479,7 +500,7 @@ describe('Friends API - Integration Tests', () => {
       expect(body.isPrimary).toBe(true);
     });
 
-    it('should list a friend phones', async () => {
+    it('lists the phones of a friend, the first one primary', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'List Phones Friend');
@@ -499,8 +520,7 @@ describe('Friends API - Integration Tests', () => {
       );
       expect(listed.status).toBe(200);
 
-      const phones = (await listed.json()) as Array<{ phoneNumber: string; isPrimary: boolean }>;
-      expect(Array.isArray(phones)).toBe(true);
+      const phones = parseWith(PhoneResponseSchema.array(), await listed.json());
       expect(phones.map((phone) => phone.phoneNumber)).toContain('+12125559999');
       // First entry of an empty set becomes the primary automatically.
       expect(phones[0]?.isPrimary).toBe(true);
@@ -549,13 +569,13 @@ describe('Friends API - Integration Tests', () => {
       const listed = await app.fetch(
         new Request(`http://localhost/api/friends/${friendId}/phones`, { headers }),
       );
-      const phones = (await listed.json()) as Array<{ phoneNumber: string; isPrimary: boolean }>;
+      const phones = parseWith(PhoneResponseSchema.array(), await listed.json());
       expect(phones.length).toBe(1);
       expect(phones[0]?.phoneNumber).toBe('+12125550001');
       expect(phones[0]?.isPrimary).toBe(true);
     });
 
-    it('should 404 listing phones of a non-existent friend', async () => {
+    it('lists no phones for a non-existent friend', async () => {
       const { app, testUser } = getContext();
 
       const response = await app.fetch(
@@ -566,10 +586,10 @@ describe('Friends API - Integration Tests', () => {
 
       // An unknown owner has no sub-resources; the list is simply empty.
       expect(response.status).toBe(200);
-      expect(await response.json()).toEqual([]);
+      expect(parseWith(PhoneResponseSchema.array(), await response.json())).toEqual([]);
     });
 
-    it('should return 400 for a malformed JSON body', async () => {
+    it('returns 400 for a malformed JSON body', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Bad Body Friend');
@@ -583,10 +603,12 @@ describe('Friends API - Integration Tests', () => {
       );
 
       expect(response.status).toBe(400);
-      expect(await response.json()).toMatchObject({ error: 'Invalid JSON' });
+      expect(parseWith(ErrorResponseSchema, await response.json())).toMatchObject({
+        error: 'Invalid JSON',
+      });
     });
 
-    it('should return 400 for a non-UUID friend id', async () => {
+    it('returns 400 for a non-UUID friend id', async () => {
       const { app, testUser } = getContext();
 
       const response = await app.fetch(
@@ -596,15 +618,16 @@ describe('Friends API - Integration Tests', () => {
       );
 
       expect(response.status).toBe(400);
-      expect(await response.json()).toMatchObject({ error: 'Invalid friend ID' });
+      expect(parseWith(ErrorResponseSchema, await response.json())).toMatchObject({
+        error: 'Invalid friend ID',
+      });
     });
 
-    it('should delete a phone from a friend', async () => {
+    it('deletes a phone from a friend', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
 
-      // Add phone
       const addRequest = new Request(`http://localhost/api/friends/${friendId}/phones`, {
         method: 'POST',
         headers: authHeaders(testUser.sessionCookies),
@@ -615,10 +638,9 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const addResponse = await app.fetch(addRequest);
-      const addBody: any = await addResponse.json();
+      const addBody = parseWith(PhoneResponseSchema, await addResponse.json());
       const phoneId = addBody.id;
 
-      // Delete phone
       const deleteRequest = new Request(
         `http://localhost/api/friends/${friendId}/phones/${phoneId}`,
         {
@@ -631,21 +653,20 @@ describe('Friends API - Integration Tests', () => {
 
       expect(deleteResponse.status).toBe(200);
 
-      // Verify phone is gone
       const getRequest = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'GET',
         headers: authHeaders(testUser.sessionCookies),
       });
 
       const getResponse = await app.fetch(getRequest);
-      const getBody: any = await getResponse.json();
+      const getBody = parseWith(FriendResponseSchema, await getResponse.json());
 
       expect(getBody.phones.length).toBe(0);
     });
   });
 
-  describe('Email Sub-resource Routes', () => {
-    it('should add an email to a friend', async () => {
+  describe('POST /api/friends/:id/emails', () => {
+    it('adds an email to a friend', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
@@ -661,7 +682,7 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(EmailResponseSchema, await response.json());
 
       expect(response.status).toBe(201);
       expect(body.emailAddress).toBe('test@example.com');
@@ -670,8 +691,8 @@ describe('Friends API - Integration Tests', () => {
     });
   });
 
-  describe('Address Sub-resource Routes', () => {
-    it('should add an address to a friend', async () => {
+  describe('POST /api/friends/:id/addresses', () => {
+    it('adds an address to a friend', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
@@ -690,7 +711,7 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(AddressResponseSchema, await response.json());
 
       expect(response.status).toBe(201);
       expect(body.streetLine1).toBe('123 Main St');
@@ -698,7 +719,7 @@ describe('Friends API - Integration Tests', () => {
       expect(body.addressType).toBe('home');
     });
 
-    it('should reject an address whose country is not an ISO code', async () => {
+    it('rejects an address whose country is not an ISO code', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
@@ -719,8 +740,8 @@ describe('Friends API - Integration Tests', () => {
     });
   });
 
-  describe('URL Sub-resource Routes', () => {
-    it('should add a URL to a friend', async () => {
+  describe('POST /api/friends/:id/urls', () => {
+    it('adds a URL to a friend', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Test Friend');
@@ -735,7 +756,7 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(UrlResponseSchema, await response.json());
 
       expect(response.status).toBe(201);
       expect(body.url).toBe('https://example.com');
@@ -743,18 +764,14 @@ describe('Friends API - Integration Tests', () => {
     });
   });
 
-  describe('Authorization', () => {
-    it('should not allow accessing another user friends', async () => {
+  describe('GET /api/friends/:id across users', () => {
+    it('returns 404 for a friend of another user', async () => {
       const { app, pool, testUser } = getContext();
-      const { createAuthenticatedUser } = await import('./friends.helpers.js');
 
-      // Create another user
       const otherUser = await createAuthenticatedUser(pool, 'other@example.com', 'Password123!');
 
-      // Create friend for other user
       const friendId = await createTestFriend(pool, otherUser.externalId, 'Other User Friend');
 
-      // Try to access with testUser's token
       const request = new Request(`http://localhost/api/friends/${friendId}`, {
         method: 'GET',
         headers: authHeaders(testUser.sessionCookies),
@@ -762,12 +779,13 @@ describe('Friends API - Integration Tests', () => {
 
       const response = await app.fetch(request);
 
-      expect(response.status).toBe(404); // Not found because it belongs to another user
+      // Another user's friend is indistinguishable from a missing one.
+      expect(response.status).toBe(404);
     });
   });
 
-  describe('Multiple Primary Validation', () => {
-    it('should reject friend creation with multiple primary phones', async () => {
+  describe('POST /api/friends primary flags', () => {
+    it('rejects multiple primary phones with 400', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -787,7 +805,7 @@ describe('Friends API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should reject friend creation with multiple primary emails', async () => {
+    it('rejects multiple primary emails with 400', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -807,7 +825,7 @@ describe('Friends API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should reject friend creation with multiple primary addresses', async () => {
+    it('rejects multiple primary addresses with 400', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -827,7 +845,7 @@ describe('Friends API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should allow friend creation with one primary per type', async () => {
+    it('accepts one primary per type', async () => {
       const { app, testUser } = getContext();
 
       const request = new Request('http://localhost/api/friends', {
@@ -847,7 +865,7 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(FriendResponseSchema, await response.json());
 
       expect(response.status).toBe(201);
       expect(body.phones.length).toBe(2);
@@ -855,15 +873,11 @@ describe('Friends API - Integration Tests', () => {
     });
   });
 
-  describe('Sub-resource Limit Validation', () => {
-    it('should reject friend creation with more than 30 phones', async () => {
+  describe('POST /api/friends sub-resource limits', () => {
+    it('rejects more than 30 phones with 400', async () => {
       const { app, testUser } = getContext();
 
-      // Generate 31 valid phone numbers
-      const phones = Array.from({ length: 31 }, (_, i) => ({
-        phone_number: `+1212555${String(1000 + i).padStart(4, '0')}`,
-        phone_type: 'mobile' as const,
-      }));
+      const phones = Array.from({ length: 31 }, (_, index) => aPhoneInput(index));
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
@@ -879,14 +893,10 @@ describe('Friends API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should reject friend creation with more than 30 emails', async () => {
+    it('rejects more than 30 emails with 400', async () => {
       const { app, testUser } = getContext();
 
-      // Generate 31 emails
-      const emails = Array.from({ length: 31 }, (_, i) => ({
-        email_address: `test${i}@example.com`,
-        email_type: 'personal' as const,
-      }));
+      const emails = Array.from({ length: 31 }, (_, index) => anEmailInput(index));
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
@@ -902,14 +912,10 @@ describe('Friends API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should reject friend creation with more than 30 urls', async () => {
+    it('rejects more than 30 urls with 400', async () => {
       const { app, testUser } = getContext();
 
-      // Generate 31 URLs
-      const urls = Array.from({ length: 31 }, (_, i) => ({
-        url: `https://example${i}.com`,
-        url_type: 'personal' as const,
-      }));
+      const urls = Array.from({ length: 31 }, (_, index) => aUrlInput(index));
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
@@ -925,14 +931,10 @@ describe('Friends API - Integration Tests', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should allow friend creation with exactly 30 phones', async () => {
+    it('accepts exactly 30 phones', async () => {
       const { app, testUser } = getContext();
 
-      // Generate exactly 30 valid phone numbers
-      const phones = Array.from({ length: 30 }, (_, i) => ({
-        phone_number: `+1212555${String(1000 + i).padStart(4, '0')}`,
-        phone_type: 'mobile' as const,
-      }));
+      const phones = Array.from({ length: 30 }, (_, index) => aPhoneInput(index));
 
       const request = new Request('http://localhost/api/friends', {
         method: 'POST',
@@ -949,31 +951,28 @@ describe('Friends API - Integration Tests', () => {
     });
   });
 
-  describe('Photo Routes', () => {
-    it('should return 400 for missing photo file', async () => {
+  describe('/api/friends/:id/photo', () => {
+    it('returns 400 when no photo file is attached', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Photo Test');
-
-      const formData = new FormData();
-      // No photo attached
 
       const request = new Request(`http://localhost/api/friends/${friendId}/photo`, {
         method: 'POST',
         headers: {
           Cookie: testUser.sessionCookies,
         },
-        body: formData,
+        body: new FormData(),
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(ErrorResponseSchema, await response.json());
 
       expect(response.status).toBe(400);
       expect(body.error).toBe('No photo file provided');
     });
 
-    it('should return 413 before buffering an oversized photo', async () => {
+    it('returns 413 before buffering an oversized photo', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Photo Test');
@@ -997,7 +996,7 @@ describe('Friends API - Integration Tests', () => {
       expect(response.status).toBe(413);
     });
 
-    it('should return 404 for photo upload to non-existent friend', async () => {
+    it('returns 404 when uploading to a non-existent friend', async () => {
       const { app, testUser } = getContext();
 
       const formData = new FormData();
@@ -1020,7 +1019,7 @@ describe('Friends API - Integration Tests', () => {
       expect(response.status).toBe(404);
     });
 
-    it('should require authentication for photo upload', async () => {
+    it('rejects an unauthenticated upload with 401', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Photo Test');
@@ -1039,7 +1038,7 @@ describe('Friends API - Integration Tests', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should delete photo for existing friend', async () => {
+    it('deletes the photo of an existing friend', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Photo Delete Test');
@@ -1050,13 +1049,13 @@ describe('Friends API - Integration Tests', () => {
       });
 
       const response = await app.fetch(request);
-      const body: any = await response.json();
+      const body = parseWith(MessageResponseSchema, await response.json());
 
       expect(response.status).toBe(200);
       expect(body.message).toBe('Photo deleted successfully');
     });
 
-    it('should require authentication for photo delete', async () => {
+    it('rejects an unauthenticated delete with 401', async () => {
       const { app, pool, testUser } = getContext();
 
       const friendId = await createTestFriend(pool, testUser.externalId, 'Photo Delete Test');

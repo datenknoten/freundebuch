@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseStreetLine } from './parse-street-line.js';
+import { parseStreetLine } from '../../src/utils/parse-street-line.js';
 
 describe('parseStreetLine', () => {
   it('returns empty object when input is undefined', () => {

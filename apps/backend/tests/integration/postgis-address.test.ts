@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { clearTestData, insertTestAddresses, setupPostGISTestSuite } from './postgis.helpers.js';
 
-describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () => {
+describe('PostGISAddressClient', { timeout: 60000 }, () => {
   const { getContext } = setupPostGISTestSuite();
 
   beforeEach(async () => {
@@ -10,7 +10,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
   });
 
   describe('getStreets', () => {
-    it('should return streets for a postal code', async () => {
+    it('returns streets for a postal code', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -45,7 +45,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(streets.map((s) => s.name)).toContain('Chausseestraße');
     });
 
-    it('should return streets sorted alphabetically', async () => {
+    it('returns streets sorted alphabetically', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -61,7 +61,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(streets[2]?.name).toBe('Zwingerstraße');
     });
 
-    it('should return empty array for non-existent postal code', async () => {
+    it('returns an empty array for a non-existent postal code', async () => {
       const { client } = getContext();
 
       const streets = await client.getStreets('DE', 'Berlin', '99999');
@@ -69,7 +69,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(streets).toHaveLength(0);
     });
 
-    it('should return distinct streets even with multiple addresses on same street', async () => {
+    it('returns distinct streets even with multiple addresses on the same street', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -102,7 +102,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(streets[0]?.name).toBe('Torstraße');
     });
 
-    it('should handle case-insensitive country codes', async () => {
+    it('matches country codes case-insensitively', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -116,7 +116,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(streetsUpper).toHaveLength(1);
     });
 
-    it('should filter by country code correctly', async () => {
+    it('filters by country code', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -136,7 +136,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
   });
 
   describe('getCitiesByPostalCode', () => {
-    it('should return distinct cities for a postal code', async () => {
+    it('returns distinct cities for a postal code', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -150,7 +150,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(cities.map((c) => c.city)).toEqual(['Berlin', 'Mitte']);
     });
 
-    it("should filter out the 'Unknown' placeholder city", async () => {
+    it("filters out the 'Unknown' placeholder city", async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -168,7 +168,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(cities.map((c) => c.city)).toEqual(['Odernheim am Glan']);
     });
 
-    it('should return empty array for non-existent postal code', async () => {
+    it('returns an empty array for a non-existent postal code', async () => {
       const { client } = getContext();
 
       const cities = await client.getCitiesByPostalCode('DE', '99999');
@@ -176,7 +176,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(cities).toHaveLength(0);
     });
 
-    it('should handle case-insensitive country codes', async () => {
+    it('matches country codes case-insensitively', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -190,7 +190,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
   });
 
   describe('searchPostalCodes', () => {
-    it('should return postal-code/city pairs matching a prefix', async () => {
+    it('returns postal-code/city pairs matching a prefix', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -214,7 +214,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       ]);
     });
 
-    it("should exclude the 'Unknown' placeholder city", async () => {
+    it("excludes the 'Unknown' placeholder city", async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -227,7 +227,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(results).toEqual([{ postalCode: '55116', city: 'Mainz' }]);
     });
 
-    it('should respect the limit', async () => {
+    it('respects the limit', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -243,7 +243,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(results[1]?.postalCode).toBe('55118');
     });
 
-    it('should return empty array when nothing matches the prefix', async () => {
+    it('returns an empty array when nothing matches the prefix', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -255,7 +255,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(results).toHaveLength(0);
     });
 
-    it('should filter by country code', async () => {
+    it('filters by country code', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -270,7 +270,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
   });
 
   describe('getHouseNumbers', () => {
-    it('should return house numbers for a street', async () => {
+    it('returns house numbers for a street', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -305,7 +305,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(houseNumbers.map((h) => h.number)).toContain('10');
     });
 
-    it('should sort house numbers naturally (1, 2, 10, not 1, 10, 2)', async () => {
+    it('sorts house numbers naturally (1, 2, 10, not 1, 10, 2)', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -344,7 +344,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(houseNumbers.map((h) => h.number)).toEqual(['1', '2', '10', '20']);
     });
 
-    it('should sort house numbers with letters naturally (10, 10a, 10b, 11)', async () => {
+    it('sorts house numbers with letters naturally (10, 10a, 10b, 11)', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -383,7 +383,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(houseNumbers.map((h) => h.number)).toEqual(['10', '10a', '10b', '11']);
     });
 
-    it('should return empty array for non-existent street', async () => {
+    it('returns an empty array for a non-existent street', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -406,7 +406,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(houseNumbers).toHaveLength(0);
     });
 
-    it('should return distinct house numbers', async () => {
+    it('returns distinct house numbers', async () => {
       const { pool, client } = getContext();
 
       // Insert duplicate house numbers (can happen with different OSM entries)
@@ -443,7 +443,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
   });
 
   describe('isAvailable', () => {
-    it('should return false when no DACH addresses exist', async () => {
+    it('returns false when no DACH addresses exist', async () => {
       const { client } = getContext();
 
       const available = await client.isAvailable();
@@ -451,7 +451,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(available).toBe(false);
     });
 
-    it('should return true when German addresses exist', async () => {
+    it('returns true when German addresses exist', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -463,7 +463,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(available).toBe(true);
     });
 
-    it('should return true when Austrian addresses exist', async () => {
+    it('returns true when Austrian addresses exist', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -475,7 +475,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(available).toBe(true);
     });
 
-    it('should return true when Swiss addresses exist', async () => {
+    it('returns true when Swiss addresses exist', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -489,7 +489,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
   });
 
   describe('hasDataForCountry', () => {
-    it('should return false when no data exists for country', async () => {
+    it('returns false when no data exists for the country', async () => {
       const { client } = getContext();
 
       const hasData = await client.hasDataForCountry('DE');
@@ -497,7 +497,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(hasData).toBe(false);
     });
 
-    it('should return true when data exists for country', async () => {
+    it('returns true when data exists for the country', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -509,7 +509,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(hasData).toBe(true);
     });
 
-    it('should handle case-insensitive country codes', async () => {
+    it('matches country codes case-insensitively', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -525,7 +525,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
   });
 
   describe('getStats', () => {
-    it('should return empty array when no data exists', async () => {
+    it('returns an empty array when no data exists', async () => {
       const { client } = getContext();
 
       const stats = await client.getStats();
@@ -533,7 +533,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(stats).toHaveLength(0);
     });
 
-    it('should return statistics for imported data', async () => {
+    it('returns statistics for imported data', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -584,7 +584,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(atStats?.streetCount).toBe(1);
     });
 
-    it('should return stats sorted by country code', async () => {
+    it('returns stats sorted by country code', async () => {
       const { pool, client } = getContext();
 
       await insertTestAddresses(pool, [
@@ -615,8 +615,8 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
     });
   });
 
-  describe('PostGIS extension', () => {
-    it('should have PostGIS extension enabled', async () => {
+  describe('database setup', () => {
+    it('has the PostGIS extension enabled', async () => {
       const { pool } = getContext();
 
       const result = await pool.query<{ extname: string }>(
@@ -627,7 +627,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(result.rows[0]?.extname).toBe('postgis');
     });
 
-    it('should have location column with geometry type', async () => {
+    it('has a location column with geometry type', async () => {
       const { pool } = getContext();
 
       const result = await pool.query<{ column_name: string; udt_name: string }>(
@@ -642,7 +642,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       expect(result.rows[0]?.udt_name).toBe('geometry');
     });
 
-    it('should have spatial GIST index on location column', async () => {
+    it('has a spatial GIST index on the location column', async () => {
       const { pool } = getContext();
 
       const result = await pool.query<{ indexname: string }>(

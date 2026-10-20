@@ -1,9 +1,9 @@
 import { ConfigurationError } from '@datenknoten/kit';
 import { describe, expect, it } from 'vitest';
 import { loadConfig } from '../src/config.js';
+import { TEST_AUTH_SECRET as SECRET } from './helpers/test-env.js';
 
 const DATABASE_URL = 'postgresql://localhost:5432/test';
-const SECRET = 'test-better-auth-secret-test-better-auth-secret-1';
 const REQUIRED = { DATABASE_URL, BETTER_AUTH_SECRET: SECRET } as const;
 
 describe('loadConfig', () => {

@@ -1,6 +1,6 @@
-import type { Hono } from 'hono';
+import { parseWith } from '@datenknoten/kit/schema';
+import { NotificationChannelResponseSchema } from '@freundebuch/shared';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { AppContext } from '../../src/types/context.js';
 
 import {
   type AuthTestContext,
@@ -9,7 +9,7 @@ import {
   teardownAuthTests,
   truncateUserData,
 } from './auth.helpers.js';
-import { authHeaders, createAuthenticatedUser } from './friends.helpers.js';
+import { createAuthenticatedUser, sendAs } from './friends.helpers.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/123456789/abcdefghijklmnopqrstuvwxyz';
@@ -20,7 +20,7 @@ const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/123456789/abcdefghijkl
  * external service, so it is only exercised against a missing channel (404),
  * which short-circuits before any network call.
  */
-describe('Notification Channels API - Integration', () => {
+describe('/api/notification-channels', () => {
   let context: AuthTestContext;
   let user: { externalId: string; email: string; sessionCookies: string };
 
@@ -40,17 +40,11 @@ describe('Notification Channels API - Integration', () => {
     await teardownAuthTests(context);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  const appOf = (): Hono<AppContext> => context.app;
-
-  async function req(method: string, path: string, body?: unknown): Promise<Response> {
-    const init: RequestInit = { method, headers: authHeaders(user.sessionCookies) };
-    if (body !== undefined) init.body = JSON.stringify(body);
-    return appOf().fetch(new Request(`http://localhost${path}`, init));
+  function req(method: string, path: string, body?: unknown) {
+    return sendAs(context.app, user.sessionCookies, method, path, body);
   }
 
-  const json = (res: Response): Promise<any> => res.json();
-
-  async function createDiscordChannel(): Promise<string> {
+  async function createDiscordChannel() {
     const res = await req('POST', '/api/notification-channels', {
       platform: 'discord',
       isEnabled: true,
@@ -59,91 +53,101 @@ describe('Notification Channels API - Integration', () => {
       credentials: { webhookUrl: DISCORD_WEBHOOK },
     });
     expect(res.status).toBe(201);
-    return (await json(res)).externalId;
+    return parseWith(NotificationChannelResponseSchema, await res.json()).externalId;
   }
 
-  it('creates, lists, gets, updates and deletes a channel', async () => {
-    const id = await createDiscordChannel();
+  describe('channel lifecycle', () => {
+    it('creates, lists, gets, updates and deletes a channel', async () => {
+      const id = await createDiscordChannel();
 
-    const list = await req('GET', '/api/notification-channels');
-    expect(list.status).toBe(200);
-    expect((await json(list)).length).toBe(1);
+      const list = await req('GET', '/api/notification-channels');
+      expect(list.status).toBe(200);
+      expect(parseWith(NotificationChannelResponseSchema.array(), await list.json())).toHaveLength(
+        1,
+      );
 
-    const got = await req('GET', `/api/notification-channels/${id}`);
-    expect(got.status).toBe(200);
-    const body = await json(got);
-    expect(body.platform).toBe('discord');
-    // The webhook secret must be masked in responses, not echoed in full.
-    expect(body.credentials.webhookUrl).not.toBe(DISCORD_WEBHOOK);
+      const got = await req('GET', `/api/notification-channels/${id}`);
+      expect(got.status).toBe(200);
+      const body = parseWith(NotificationChannelResponseSchema, await got.json());
+      expect(body.platform).toBe('discord');
+      // The webhook secret must be masked in responses, not echoed in full.
+      expect(body.credentials).not.toHaveProperty('webhookUrl', DISCORD_WEBHOOK);
 
-    const updated = await req('PUT', `/api/notification-channels/${id}`, { lookaheadDays: 14 });
-    expect(updated.status).toBe(200);
-    expect((await json(updated)).lookaheadDays).toBe(14);
+      const updated = await req('PUT', `/api/notification-channels/${id}`, { lookaheadDays: 14 });
+      expect(updated.status).toBe(200);
+      expect(parseWith(NotificationChannelResponseSchema, await updated.json()).lookaheadDays).toBe(
+        14,
+      );
 
-    const deleted = await req('DELETE', `/api/notification-channels/${id}`);
-    expect(deleted.status).toBe(200);
-    expect((await req('GET', `/api/notification-channels/${id}`)).status).toBe(404);
-  });
-
-  it('toggles enabled state', async () => {
-    const id = await createDiscordChannel();
-    const res = await req('PATCH', `/api/notification-channels/${id}/toggle`, { isEnabled: false });
-    expect(res.status).toBe(200);
-    expect((await json(res)).isEnabled).toBe(false);
-  });
-
-  it('rejects an invalid notify time', async () => {
-    const res = await req('POST', '/api/notification-channels', {
-      platform: 'discord',
-      isEnabled: true,
-      lookaheadDays: 7,
-      notifyTime: '99:99',
-      credentials: { webhookUrl: DISCORD_WEBHOOK },
+      const deleted = await req('DELETE', `/api/notification-channels/${id}`);
+      expect(deleted.status).toBe(200);
+      expect((await req('GET', `/api/notification-channels/${id}`)).status).toBe(404);
     });
-    expect(res.status).toBe(400);
-  });
 
-  it('returns 404 when test-sending a missing channel', async () => {
-    const res = await req(
-      'POST',
-      '/api/notification-channels/00000000-0000-0000-0000-000000000000/test',
-    );
-    expect(res.status).toBe(404);
-  });
-
-  /**
-   * `sendMatrixMessage` rejects any protocol other than https as part of its
-   * SSRF guard, and nothing validates the URL when the channel is created. An
-   * `http://` homeserver therefore used to be accepted and stored, and the
-   * failure only surfaced later - once a day, inside the digest scheduler.
-   */
-  it('rejects an http matrix homeserver at creation', async () => {
-    const res = await req('POST', '/api/notification-channels', {
-      platform: 'matrix',
-      isEnabled: true,
-      lookaheadDays: 7,
-      notifyTime: '09:00',
-      credentials: {
-        homeserver: 'http://matrix.example.com',
-        accessToken: 'syt_token',
-        roomId: '!room:example.com',
-      },
+    it('toggles enabled state', async () => {
+      const id = await createDiscordChannel();
+      const res = await req('PATCH', `/api/notification-channels/${id}/toggle`, {
+        isEnabled: false,
+      });
+      expect(res.status).toBe(200);
+      expect(parseWith(NotificationChannelResponseSchema, await res.json()).isEnabled).toBe(false);
     });
-    expect(res.status).toBe(400);
   });
 
-  it('accepts an https matrix homeserver', async () => {
-    const res = await req('POST', '/api/notification-channels', {
-      platform: 'matrix',
-      isEnabled: true,
-      lookaheadDays: 7,
-      notifyTime: '09:00',
-      credentials: {
-        homeserver: 'https://matrix.example.com',
-        accessToken: 'syt_token',
-        roomId: '!room:example.com',
-      },
+  describe('input validation', () => {
+    it('rejects an invalid notify time', async () => {
+      const res = await req('POST', '/api/notification-channels', {
+        platform: 'discord',
+        isEnabled: true,
+        lookaheadDays: 7,
+        notifyTime: '99:99',
+        credentials: { webhookUrl: DISCORD_WEBHOOK },
+      });
+      expect(res.status).toBe(400);
     });
-    expect(res.status).toBe(201);
+
+    it('returns 404 when test-sending a missing channel', async () => {
+      const res = await req(
+        'POST',
+        '/api/notification-channels/00000000-0000-0000-0000-000000000000/test',
+      );
+      expect(res.status).toBe(404);
+    });
+
+    /**
+     * `sendMatrixMessage` rejects any protocol other than https as part of its
+     * SSRF guard, and nothing validates the URL when the channel is created. An
+     * `http://` homeserver therefore used to be accepted and stored, and the
+     * failure only surfaced later - once a day, inside the digest scheduler.
+     */
+    it('rejects an http matrix homeserver at creation', async () => {
+      const res = await req('POST', '/api/notification-channels', {
+        platform: 'matrix',
+        isEnabled: true,
+        lookaheadDays: 7,
+        notifyTime: '09:00',
+        credentials: {
+          homeserver: 'http://matrix.example.com',
+          accessToken: 'syt_token',
+          roomId: '!room:example.com',
+        },
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('accepts an https matrix homeserver', async () => {
+      const res = await req('POST', '/api/notification-channels', {
+        platform: 'matrix',
+        isEnabled: true,
+        lookaheadDays: 7,
+        notifyTime: '09:00',
+        credentials: {
+          homeserver: 'https://matrix.example.com',
+          accessToken: 'syt_token',
+          roomId: '!room:example.com',
+        },
+      });
+      expect(res.status).toBe(201);
+    });
   });
 });

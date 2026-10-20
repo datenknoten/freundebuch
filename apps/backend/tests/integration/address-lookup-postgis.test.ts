@@ -1,3 +1,5 @@
+import { parseWith } from '@datenknoten/kit/schema';
+import { CityInfoResponseSchema, PostalCodeInfoResponseSchema } from '@freundebuch/shared/index.js';
 import bcrypt from 'bcrypt';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -17,7 +19,7 @@ import { insertTestAddresses } from './postgis.helpers.js';
  * The default address-lookup.test.ts covers the PostGIS-disabled path
  * (validation + empty-list fallback); this file covers the data path.
  */
-describe('Address Lookup API - PostGIS full-stack', { timeout: 60000 }, () => {
+describe('Address lookup API with PostGIS (/api/address-lookup)', { timeout: 60000 }, () => {
   // PostGIS is enabled for this file only.
   const { getContext } = setupAuthTestSuite({
     POSTGIS_ADDRESS_ENABLED: 'true',
@@ -52,7 +54,7 @@ describe('Address Lookup API - PostGIS full-stack', { timeout: 60000 }, () => {
     await pool.query('DELETE FROM geodata.import_batches');
   });
 
-  function get(path: string) {
+  async function get(path: string) {
     const { app } = getContext();
     return app.fetch(
       new Request(`http://localhost${path}`, {
@@ -62,39 +64,43 @@ describe('Address Lookup API - PostGIS full-stack', { timeout: 60000 }, () => {
     );
   }
 
-  describe('GET /cities (PostGIS-backed)', () => {
+  async function parseCities(response: Response) {
+    return parseWith(CityInfoResponseSchema.array(), await response.json());
+  }
+
+  async function parsePostalCodes(response: Response) {
+    return parseWith(PostalCodeInfoResponseSchema.array(), await response.json());
+  }
+
+  describe('GET /api/address-lookup/cities', () => {
     it('resolves a postal code to its city', async () => {
       const response = await get('/api/address-lookup/cities?country=DE&postal_code=55116');
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as Array<{ city: string }>;
-      expect(body).toEqual([{ city: 'Mainz' }]);
+      expect(await parseCities(response)).toEqual([{ city: 'Mainz' }]);
     });
 
     it('returns multiple cities for one postal code and excludes the Unknown placeholder', async () => {
       const response = await get('/api/address-lookup/cities?country=DE&postal_code=10115');
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as Array<{ city: string }>;
-      expect(body.map((c) => c.city)).toEqual(['Berlin']);
+      expect((await parseCities(response)).map((c) => c.city)).toEqual(['Berlin']);
     });
 
     it('returns an empty list for a non-DACH country (DACH-only gate)', async () => {
       const response = await get('/api/address-lookup/cities?country=US&postal_code=90210');
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as Array<{ city: string }>;
-      expect(body).toEqual([]);
+      expect(await parseCities(response)).toEqual([]);
     });
   });
 
-  describe('GET /postal-codes (PostGIS-backed)', () => {
+  describe('GET /api/address-lookup/postal-codes', () => {
     it('returns postal-code/city pairs for a prefix', async () => {
       const response = await get('/api/address-lookup/postal-codes?country=DE&prefix=55');
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as Array<{ postalCode: string; city: string }>;
-      expect(body).toEqual([
+      expect(await parsePostalCodes(response)).toEqual([
         { postalCode: '55116', city: 'Mainz' },
         { postalCode: '55118', city: 'Mainz' },
         { postalCode: '55571', city: 'Odernheim am Glan' },
@@ -105,16 +111,14 @@ describe('Address Lookup API - PostGIS full-stack', { timeout: 60000 }, () => {
       const response = await get('/api/address-lookup/postal-codes?country=DE&prefix=10');
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as Array<{ postalCode: string; city: string }>;
-      expect(body).toEqual([{ postalCode: '10115', city: 'Berlin' }]);
+      expect(await parsePostalCodes(response)).toEqual([{ postalCode: '10115', city: 'Berlin' }]);
     });
 
     it('returns an empty list for a non-DACH country', async () => {
       const response = await get('/api/address-lookup/postal-codes?country=US&prefix=90');
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as Array<{ postalCode: string; city: string }>;
-      expect(body).toEqual([]);
+      expect(await parsePostalCodes(response)).toEqual([]);
     });
   });
 });

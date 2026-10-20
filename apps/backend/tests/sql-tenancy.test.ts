@@ -81,9 +81,13 @@ interface Block {
   sql: string;
 }
 
-function readBlocks(): Block[] {
+function isSqlFile(file: string) {
+  return file.endsWith('.sql');
+}
+
+function readBlocks() {
   const blocks: Block[] = [];
-  for (const file of readdirSync(QUERY_DIR).filter((f) => f.endsWith('.sql'))) {
+  for (const file of readdirSync(QUERY_DIR).filter(isSqlFile)) {
     const contents = readFileSync(path.join(QUERY_DIR, file), 'utf8');
     // PgTyped delimits queries with `/* @name Foo */`.
     const parts = contents.split(/\/\*\s*@name\s+(\w+)\s*\*\//);
@@ -98,7 +102,11 @@ function readBlocks(): Block[] {
   return blocks;
 }
 
-describe('SQL tenancy', () => {
+function touchesUserOwnedTable(block: Block) {
+  return USER_OWNED.some((table) => block.sql.includes(table));
+}
+
+describe('PgTyped query tenancy', () => {
   const blocks = readBlocks();
 
   it('finds every query block', () => {
@@ -107,8 +115,8 @@ describe('SQL tenancy', () => {
 
   it('scopes every query on a user-owned table to auth.users', () => {
     const offenders = blocks
-      .filter((block) => USER_OWNED.some((table) => block.sql.includes(table)))
-      .filter((block) => !block.sql.includes('auth.users'))
+      .filter(touchesUserOwnedTable)
+      .filter((block) => block.sql.includes('auth.users') === false)
       .filter((block) => ALLOWLIST[block.name] === undefined)
       .map((block) => `${block.file}: ${block.name}`);
 
@@ -123,10 +131,11 @@ describe('SQL tenancy', () => {
    */
   it('keeps the allowlist free of stale entries', () => {
     const byName = new Map(blocks.map((block) => [block.name, block]));
-    const stale = Object.keys(ALLOWLIST).filter((name) => {
+    function isStale(name: string) {
       const block = byName.get(name);
-      return block === undefined || block.sql.includes('auth.users');
-    });
+      return block === undefined || block.sql.includes('auth.users') === true;
+    }
+    const stale = Object.keys(ALLOWLIST).filter(isStale);
 
     expect(stale).toEqual([]);
   });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PhoneCountryUnknownError } from '../errors/phone-country-unknown.error.js';
-import { normalizePhoneBody } from './phone-normalization.js';
+import { PhoneCountryUnknownError } from '../../src/errors/phone-country-unknown.error.js';
+import { normalizePhoneBody } from '../../src/services/phone-normalization.js';
 
 function normalize(storedCountry: string | null, phone: string, acceptLanguage?: string) {
   const run = normalizePhoneBody(async () => storedCountry);

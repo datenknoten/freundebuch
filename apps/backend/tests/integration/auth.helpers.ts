@@ -1,9 +1,10 @@
 import crypto from 'node:crypto';
 import { createRootLogger } from '@datenknoten/kit/logger';
+import { type } from 'arktype';
 import type { Hono } from 'hono';
 import pg from 'pg';
 import type { Logger } from 'pino';
-import { afterAll, beforeAll, inject } from 'vitest';
+import { afterAll, assert, beforeAll, inject } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { type Config, loadConfig } from '../../src/config.js';
 import { type Auth, createAuth } from '../../src/lib/auth.js';
@@ -11,6 +12,23 @@ import { createAuthPool } from '../../src/lib/auth-pool.js';
 import type { AppContext } from '../../src/types/context.js';
 import { TEST_AUTH_SECRET, TEST_ENV } from '../helpers/test-env.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
+
+/** Better Auth's sign-up and sign-in body; `token` is null when no session was started. */
+export const BetterAuthSessionResponseSchema = type({
+  token: 'string | null',
+  user: { id: 'string', email: 'string', name: 'string' },
+});
+
+/** Better Auth's own error body, which differs from the app's `ErrorResponse`. */
+export const BetterAuthErrorResponseSchema = type({
+  'code?': 'string',
+  message: 'string',
+});
+
+/** The slice of the Hono app a request helper needs. */
+export interface AppFetcher {
+  fetch(request: Request): Response | Promise<Response>;
+}
 
 export interface AuthTestContext {
   pool: pg.Pool;
@@ -30,12 +48,12 @@ export interface AuthTestContext {
  * hosts where Docker cannot publish ports (global-setup accepts
  * TEST_DATABASE_URL for exactly that case).
  */
-export function sharedServerUri(): string {
+export function sharedServerUri() {
   return inject('pgContainerUri');
 }
 
 /** Swap the database name in a postgres connection URI. */
-function withDatabase(uri: string, databaseName: string): string {
+function withDatabase(uri: string, databaseName: string) {
   const url = new URL(uri);
   url.pathname = `/${databaseName}`;
   return url.toString();
@@ -51,10 +69,7 @@ function withDatabase(uri: string, databaseName: string): string {
  * connecting to `test` here would make concurrent workers fail with "source
  * database is being accessed by other users".
  */
-export async function cloneTemplateDatabase(): Promise<{
-  databaseName: string;
-  databaseUri: string;
-}> {
+export async function cloneTemplateDatabase() {
   const serverUri = sharedServerUri();
   const databaseName = `test_${crypto.randomUUID().replace(/-/g, '')}`;
 
@@ -72,7 +87,7 @@ export async function cloneTemplateDatabase(): Promise<{
 }
 
 /** Drop a database created by {@link cloneTemplateDatabase}. */
-export async function dropClonedDatabase(databaseName: string): Promise<void> {
+export async function dropClonedDatabase(databaseName: string) {
   const adminPool = new pg.Pool({
     connectionString: withDatabase(sharedServerUri(), 'postgres'),
     max: 1,
@@ -98,7 +113,7 @@ const TEST_POOL_MAX = 4;
  * Set up test environment: clone a fresh database from the migrated template
  * and boot the app against it. `env` adds or overrides config variables.
  */
-export async function setupAuthTests(env: Record<string, string> = {}): Promise<AuthTestContext> {
+export async function setupAuthTests(env: Record<string, string> = {}) {
   const { databaseName, databaseUri } = await cloneTemplateDatabase();
 
   const config = loadConfig({
@@ -125,14 +140,25 @@ export async function setupAuthTests(env: Record<string, string> = {}): Promise<
     min: TEST_POOL_MIN,
     max: TEST_POOL_MAX,
   });
-  pool.on('error', () => {
-    // Ignore — expected during teardown.
-  });
+  // Connection errors are expected while teardown drains the pool.
+  pool.on('error', ignorePoolError);
 
   const authPool = createAuthPool({ config, logger });
   const auth = createAuth({ config, pool: authPool, logger });
   const app = await createApp({ config, logger, pool, authPool, auth });
-  return { pool, authPool, auth, config, logger, app, databaseName };
+  const context: AuthTestContext = { pool, authPool, auth, config, logger, app, databaseName };
+  return context;
+}
+
+/** The single row an `INSERT … RETURNING` or lookup query must produce. */
+export function firstRow<T extends pg.QueryResultRow>(result: pg.QueryResult<T>) {
+  const [row] = result.rows;
+  assert.isDefined(row, 'the query returned no row');
+  return row;
+}
+
+export function ignorePoolError() {
+  return undefined;
 }
 
 /** A second app over the suite's pools, with config variables changed for one test. */
@@ -143,15 +169,13 @@ export async function createAppWithConfig(context: AuthTestContext, overrides: P
 /**
  * Tear down test environment: drain the pools and drop the cloned database.
  */
-export async function teardownAuthTests(context: AuthTestContext): Promise<void> {
-  if (!context) {
+export async function teardownAuthTests(context: AuthTestContext | undefined) {
+  if (context === undefined) {
     return;
   }
   // Drain Better Auth's pool before ending the app pool.
   await context.authPool.end();
-  if (context.pool) {
-    await context.pool.end();
-  }
+  await context.pool.end();
   await dropClonedDatabase(context.databaseName);
 }
 
@@ -159,13 +183,14 @@ export async function teardownAuthTests(context: AuthTestContext): Promise<void>
  * Helper to extract session token from cookie header.
  * Supports both Better Auth cookie names.
  */
-export function extractSessionToken(cookieHeader: string | null): string | null {
-  if (!cookieHeader) return null;
+export function extractSessionToken(cookieHeader: string | null) {
+  if (cookieHeader === null || cookieHeader === '') {
+    return null;
+  }
 
-  // Better Auth uses 'better-auth.session_token' or '__Secure-better-auth.session_token'
   const match =
-    cookieHeader.match(/better-auth\.session_token=([^;]+)/) ||
-    cookieHeader.match(/__Secure-better-auth\.session_token=([^;]+)/) ||
+    cookieHeader.match(/better-auth\.session_token=([^;]+)/) ??
+    cookieHeader.match(/__Secure-better-auth\.session_token=([^;]+)/) ??
     // Legacy fallback
     cookieHeader.match(/session_token=([^;]+)/);
   return match?.[1] ?? null;
@@ -174,9 +199,23 @@ export function extractSessionToken(cookieHeader: string | null): string | null 
 /**
  * Helper to extract all cookies from set-cookie headers for use in subsequent requests
  */
-export function extractCookies(response: Response): string {
-  const setCookieHeaders = response.headers.getSetCookie?.() || [];
-  return setCookieHeaders.map((h) => h.split(';')[0]).join('; ');
+export function extractCookies(response: Response) {
+  return response.headers
+    .getSetCookie()
+    .map((header) => header.split(';')[0])
+    .join('; ');
+}
+
+/**
+ * Drop Better Auth's `session_data` cache cookie, as a browser does after
+ * sign-out sets its Max-Age to 0, so the server checks the session in the
+ * database instead of trusting the cached copy.
+ */
+export function withoutSessionDataCookie(cookies: string) {
+  return cookies
+    .split('; ')
+    .filter((cookie) => cookie.startsWith('better-auth.session_data=') === false)
+    .join('; ');
 }
 
 /**
@@ -186,13 +225,11 @@ export function extractCookies(response: Response): string {
  * user id, mirroring what the `user.create.before` hook does in production
  * (ADR 0003).
  */
-export async function createTestUser(
-  pool: pg.Pool,
-  email: string,
-  passwordHash: string,
-): Promise<{ externalId: string; email: string }> {
-  const result = await pool.query('INSERT INTO auth.users DEFAULT VALUES RETURNING external_id');
-  const externalId = result.rows[0].external_id;
+export async function createTestUser(pool: pg.Pool, email: string, passwordHash: string) {
+  const result = await pool.query<{ external_id: string }>(
+    'INSERT INTO auth.users DEFAULT VALUES RETURNING external_id',
+  );
+  const externalId = firstRow(result).external_id;
 
   await pool.query(
     `INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
@@ -211,32 +248,25 @@ export async function createTestUser(
 /**
  * Helper to get a user's identity row by email
  */
-export async function getUserByEmail(
-  pool: pg.Pool,
-  email: string,
-): Promise<{ externalId: string; email: string } | null> {
-  const result = await pool.query('SELECT id, email FROM auth."user" WHERE email = $1', [email]);
-
-  if (result.rows.length === 0) {
+export async function getUserByEmail(pool: pg.Pool, email: string) {
+  const result = await pool.query<{ id: string; email: string }>(
+    'SELECT id, email FROM auth."user" WHERE email = $1',
+    [email],
+  );
+  const [row] = result.rows;
+  if (row === undefined) {
     return null;
   }
 
-  return {
-    externalId: result.rows[0].id,
-    email: result.rows[0].email,
-  };
+  return { externalId: row.id, email: row.email };
 }
 
 /**
  * Helper to complete onboarding for a test user by creating a self-profile
  * This is required for the user to pass the onboarding middleware
  */
-export async function completeTestUserOnboarding(
-  pool: pg.Pool,
-  userExternalId: string,
-): Promise<string> {
-  // Create a self-profile for the user
-  const friendResult = await pool.query(
+export async function completeTestUserOnboarding(pool: pg.Pool, userExternalId: string) {
+  const friendResult = await pool.query<{ id: string; external_id: string }>(
     `INSERT INTO friends.friends (user_id, display_name)
      SELECT u.id, 'Test User (Self)'
      FROM auth.users u
@@ -245,8 +275,9 @@ export async function completeTestUserOnboarding(
     [userExternalId],
   );
 
-  const friendInternalId = friendResult.rows[0].id;
-  const friendId = friendResult.rows[0].external_id;
+  const friend = firstRow(friendResult);
+  const friendInternalId = friend.id;
+  const friendId = friend.external_id;
 
   // self_profile_id lives only on the Better Auth row (ADR 0003).
   await pool.query(`UPDATE auth."user" SET self_profile_id = $1 WHERE id = $2`, [
@@ -267,7 +298,7 @@ export async function completeTestUserOnboarding(
  * parent-last so a table that ever loses its ON DELETE CASCADE fails here
  * instead of leaking rows.
  */
-export async function truncateUserData(pool: pg.Pool): Promise<void> {
+export async function truncateUserData(pool: pg.Pool) {
   await pool.query(`
     DELETE FROM encounters.encounters;
     DELETE FROM collectives.collective_memberships;
@@ -290,7 +321,7 @@ export async function truncateUserData(pool: pg.Pool): Promise<void> {
  * Compute HMAC-SHA256 signature for Hono signed cookies.
  * Matches the algorithm used by Hono's setSignedCookie / getSignedCookie.
  */
-async function makeHonoCookieSignature(value: string, secret: string): Promise<string> {
+async function makeHonoCookieSignature(value: string, secret: string) {
   const key = await globalThis.crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(secret),
@@ -313,7 +344,7 @@ async function makeHonoCookieSignature(value: string, secret: string): Promise<s
  * The cookie must be signed with HMAC-SHA256 to match how Better Auth / Hono
  * sets and reads signed cookies (via setSignedCookie / getSignedCookie).
  */
-export async function createBetterAuthSession(pool: pg.Pool, userId: string): Promise<string> {
+export async function createBetterAuthSession(pool: pg.Pool, userId: string) {
   const token = crypto.randomBytes(24).toString('base64url'); // ~32 chars, matching BA format
   const sessionId = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
@@ -333,7 +364,7 @@ export async function createBetterAuthSession(pool: pg.Pool, userId: string): Pr
  * Setup function for beforeAll in test files
  */
 export function setupAuthTestSuite(env: Record<string, string> = {}) {
-  let context: AuthTestContext;
+  let context: AuthTestContext | undefined;
 
   beforeAll(async () => {
     context = await setupAuthTests(env);
@@ -343,7 +374,10 @@ export function setupAuthTestSuite(env: Record<string, string> = {}) {
     await teardownAuthTests(context);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  return {
-    getContext: () => context,
-  };
+  function getContext() {
+    assert.isDefined(context, 'the suite context is set in beforeAll');
+    return context;
+  }
+
+  return { getContext };
 }

@@ -2,7 +2,7 @@ import pg from 'pg';
 import pino from 'pino';
 import { afterAll, assert, beforeAll } from 'vitest';
 import { PostGISAddressClient } from '../../src/services/external/postgis-address.client.js';
-import { cloneTemplateDatabase, dropClonedDatabase } from './auth.helpers.js';
+import { cloneTemplateDatabase, dropClonedDatabase, ignorePoolError } from './auth.helpers.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
 
 export interface PostGISTestContext {
@@ -23,30 +23,28 @@ const silentLogger = pino({ level: 'silent' });
  * bound to it. The geodata fixture is loaded per test via
  * {@link insertTestAddresses}.
  */
-export async function setupPostGISTests(): Promise<PostGISTestContext> {
+export async function setupPostGISTests() {
   const { databaseName, databaseUri } = await cloneTemplateDatabase();
 
   // Small pool: parallel workers share one server's connection budget.
   const pool = new pg.Pool({ connectionString: databaseUri, min: 1, max: 4 });
-  pool.on('error', () => {
-    // Ignore — expected during teardown.
-  });
+  // Connection errors are expected while teardown drains the pool.
+  pool.on('error', ignorePoolError);
 
   const client = new PostGISAddressClient({ db: pool, logger: silentLogger });
 
-  return { pool, client, databaseName };
+  const context: PostGISTestContext = { pool, client, databaseName };
+  return context;
 }
 
 /**
  * Tear down test environment: drain the pool and drop the cloned database.
  */
-export async function teardownPostGISTests(context: PostGISTestContext): Promise<void> {
-  if (!context) {
+export async function teardownPostGISTests(context: PostGISTestContext | undefined) {
+  if (context === undefined) {
     return;
   }
-  if (context.pool) {
-    await context.pool.end();
-  }
+  await context.pool.end();
   await dropClonedDatabase(context.databaseName);
 }
 
@@ -62,13 +60,13 @@ export async function insertTestAddresses(
     street: string;
     houseNumber?: string;
   }>,
-): Promise<string> {
+) {
   // First create an import batch
   const batchResult = await pool.query<{ external_id: string }>(
     `INSERT INTO geodata.import_batches (country_code, source_file, status)
      VALUES ($1, 'test-import.pbf', 'completed')
      RETURNING external_id`,
-    [addresses[0]?.countryCode || 'DE'],
+    [addresses[0]?.countryCode ?? 'DE'],
   );
 
   const [batch] = batchResult.rows;
@@ -85,7 +83,7 @@ export async function insertTestAddresses(
         addr.postalCode,
         addr.city,
         addr.street,
-        addr.houseNumber || null,
+        addr.houseNumber ?? null,
         batchId,
       ],
     );
@@ -102,7 +100,7 @@ export async function insertTestAddresses(
 /**
  * Clear all test data from geodata tables
  */
-export async function clearTestData(pool: pg.Pool): Promise<void> {
+export async function clearTestData(pool: pg.Pool) {
   await pool.query('DELETE FROM geodata.addresses');
   await pool.query('DELETE FROM geodata.import_batches');
   await pool.query('REFRESH MATERIALIZED VIEW geodata.cities_by_postal');
@@ -114,7 +112,7 @@ export async function clearTestData(pool: pg.Pool): Promise<void> {
  * Setup function for beforeAll in test files
  */
 export function setupPostGISTestSuite() {
-  let context: PostGISTestContext;
+  let context: PostGISTestContext | undefined;
 
   beforeAll(async () => {
     context = await setupPostGISTests();
@@ -124,7 +122,10 @@ export function setupPostGISTestSuite() {
     await teardownPostGISTests(context);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  return {
-    getContext: () => context,
-  };
+  function getContext() {
+    assert.isDefined(context, 'the suite context is set in beforeAll');
+    return context;
+  }
+
+  return { getContext };
 }

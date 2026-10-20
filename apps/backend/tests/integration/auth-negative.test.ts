@@ -1,7 +1,14 @@
+import { parseWith } from '@datenknoten/kit/schema';
+import { UserWithPreferencesResponseSchema } from '@freundebuch/shared';
 import { describe, expect, it } from 'vitest';
-import { extractCookies, setupAuthTestSuite } from './auth.helpers.js';
+import {
+  BetterAuthErrorResponseSchema,
+  extractCookies,
+  setupAuthTestSuite,
+  withoutSessionDataCookie,
+} from './auth.helpers.js';
 
-describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
+describe('Better Auth endpoints: rejected requests', () => {
   const { getContext } = setupAuthTestSuite();
 
   /**
@@ -21,7 +28,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       }),
     );
     const cookies = extractCookies(response);
-    const body: any = await response.json();
+    const body: unknown = await response.json();
     return { response, cookies, body };
   }
 
@@ -41,12 +48,12 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       }),
     );
     const cookies = extractCookies(response);
-    const body: any = await response.json();
+    const body: unknown = await response.json();
     return { response, cookies, body };
   }
 
   describe('POST /api/auth/sign-up/email - Validation', () => {
-    it('should reject missing email', async () => {
+    it('rejects missing email', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -61,7 +68,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should reject missing password', async () => {
+    it('rejects missing password', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -76,7 +83,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should reject missing name', async () => {
+    it('rejects missing name', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -94,7 +101,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should reject invalid email format', async () => {
+    it('rejects invalid email format', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -113,7 +120,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should reject password shorter than 8 characters', async () => {
+    it('rejects password shorter than 8 characters', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -132,7 +139,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should reject empty password', async () => {
+    it('rejects empty password', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -151,7 +158,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should reject empty email', async () => {
+    it('rejects empty email', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -170,7 +177,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should reject malformed JSON', async () => {
+    it('rejects malformed JSON', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -185,7 +192,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeGreaterThanOrEqual(400);
     });
 
-    it('should reject empty request body', async () => {
+    it('rejects empty request body', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -200,7 +207,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should reject duplicate email', async () => {
+    it('rejects duplicate email', async () => {
       const { app } = getContext();
 
       const email = 'neg-duplicate@example.com';
@@ -225,7 +232,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(secondBody).toHaveProperty('code');
     });
 
-    it('should reject duplicate email with different case', async () => {
+    it('rejects duplicate email with different case', async () => {
       const { app } = getContext();
 
       const password = 'SecurePassword123';
@@ -254,7 +261,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
   });
 
   describe('POST /api/auth/sign-in/email - Security', () => {
-    it('should reject missing email', async () => {
+    it('rejects missing email', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -269,7 +276,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should reject missing password', async () => {
+    it('rejects missing password', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -284,7 +291,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should reject non-existent user', async () => {
+    it('rejects non-existent user', async () => {
       const { app } = getContext();
 
       const { response, body } = await signInUser(
@@ -299,7 +306,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(body).toHaveProperty('code');
     });
 
-    it('should reject wrong password', async () => {
+    it('rejects wrong password', async () => {
       const { app } = getContext();
 
       const email = 'neg-wrongpwd@example.com';
@@ -317,7 +324,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(body).toHaveProperty('code');
     });
 
-    it('should not reveal whether a user exists via different error messages', async () => {
+    it('does not reveal whether a user exists via different error messages', async () => {
       const { app } = getContext();
 
       const existingEmail = 'neg-exists@example.com';
@@ -346,10 +353,12 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response1.status).toBe(response2.status);
 
       // Error codes should match to prevent user enumeration
-      expect(body1.code).toBe(body2.code);
+      const error1 = parseWith(BetterAuthErrorResponseSchema, body1);
+      const error2 = parseWith(BetterAuthErrorResponseSchema, body2);
+      expect(error1.code).toBe(error2.code);
     });
 
-    it('should reject empty password', async () => {
+    it('rejects empty password', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -366,7 +375,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
   });
 
   describe('POST /api/auth/sign-out - Error Cases', () => {
-    it('should handle sign-out when no session cookie is provided', async () => {
+    it('handles sign-out when no session cookie is provided', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -379,7 +388,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should handle sign-out with empty session cookie', async () => {
+    it('handles sign-out with empty session cookie', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -395,7 +404,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should handle sign-out with invalid session cookie gracefully', async () => {
+    it('handles sign-out with invalid session cookie gracefully', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -411,7 +420,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should handle double sign-out with the same session', async () => {
+    it('handles double sign-out with the same session', async () => {
       const { app } = getContext();
 
       const email = 'neg-doublelogout@example.com';
@@ -445,7 +454,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
   });
 
   describe('GET /api/auth/me - Session Validation', () => {
-    it('should return 401 when no session cookie is provided', async () => {
+    it('returns 401 when no session cookie is provided', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -457,7 +466,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should return 401 for invalid session cookie', async () => {
+    it('returns 401 for invalid session cookie', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -472,7 +481,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should return 401 for expired/signed-out session', async () => {
+    it('returns 401 for expired/signed-out session', async () => {
       const { app } = getContext();
 
       const email = 'neg-expiredme@example.com';
@@ -497,10 +506,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
 
       // Strip the session_data cache cookie to simulate browser behavior:
       // sign-out sets Max-Age=0 on session_data, so browsers delete it.
-      const sessionTokenOnly = cookies
-        .split('; ')
-        .filter((c) => !c.startsWith('better-auth.session_data='))
-        .join('; ');
+      const sessionTokenOnly = withoutSessionDataCookie(cookies);
 
       // Try to access /me with the now-invalidated session
       const meResponse = await app.fetch(
@@ -513,7 +519,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(meResponse.status).toBe(401);
     });
 
-    it('should return 401 after session is manually expired in the database', async () => {
+    it('returns 401 after session is manually expired in the database', async () => {
       const { app, pool } = getContext();
 
       const email = 'neg-dbexpired@example.com';
@@ -537,10 +543,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
 
       // Strip the session_data cache cookie so Better Auth checks the DB
       // instead of returning the cached (now-stale) session data
-      const sessionTokenOnly = cookies
-        .split('; ')
-        .filter((c) => !c.startsWith('better-auth.session_data='))
-        .join('; ');
+      const sessionTokenOnly = withoutSessionDataCookie(cookies);
 
       // Try to access /me with expired session
       const meResponse = await app.fetch(
@@ -555,7 +558,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
   });
 
   describe('SQL Injection Prevention', () => {
-    it('should safely handle SQL injection attempt in email during sign-up', async () => {
+    it('safely handles SQL injection attempt in email during sign-up', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -574,7 +577,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect([200, 400, 422]).toContain(response.status);
     });
 
-    it('should safely handle SQL injection attempt in password', async () => {
+    it('safely handles SQL injection attempt in password', async () => {
       const { app } = getContext();
 
       const response = await app.fetch(
@@ -600,7 +603,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(result.rows[0].exists).toBe(true);
     });
 
-    it('should safely handle SQL injection attempt in sign-in', async () => {
+    it('safely handles SQL injection attempt in sign-in', async () => {
       const { app } = getContext();
 
       const { response } = await signInUser(app, "' OR '1'='1' --", "' OR '1'='1' --");
@@ -613,7 +616,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
   });
 
   describe('XSS Prevention', () => {
-    it('should safely handle XSS attempt in email', async () => {
+    it('safely handles XSS attempt in email', async () => {
       const { app } = getContext();
 
       const xssEmail = '<script>alert("xss")</script>@example.com';
@@ -635,7 +638,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should safely handle XSS attempt in name field', async () => {
+    it('safely handles XSS attempt in name field', async () => {
       const { app } = getContext();
 
       const xssName = '<script>alert("xss")</script>';
@@ -664,7 +667,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
       }
     });
 
-    it('should safely store and retrieve email with special characters', async () => {
+    it('stores and returns an email with special characters unchanged', async () => {
       const { app } = getContext();
 
       const specialEmail = 'test+neg-special@example.com';
@@ -686,7 +689,7 @@ describe('Auth Endpoints - Negative Tests (Better Auth)', () => {
         );
 
         if (meResponse.status === 200) {
-          const meBody: any = await meResponse.json();
+          const meBody = parseWith(UserWithPreferencesResponseSchema, await meResponse.json());
           expect(meBody.user.email).toBe(specialEmail);
         }
       }
