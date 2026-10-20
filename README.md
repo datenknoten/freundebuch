@@ -27,7 +27,7 @@ It's a sandbox, so experiment as much as you like. Just don't store anything you
 
 ```bash
 # Prerequisites: PostgreSQL 18+ (or Docker), plus mise (https://mise.jdx.dev)
-# mise installs Node, aube (pnpm-compatible runner), hk, and pkl automatically.
+# mise installs Node, aube (package manager), hk, and pkl automatically.
 mise install
 aube install
 mise run docker:up

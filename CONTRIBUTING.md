@@ -44,7 +44,7 @@ Freundebuch follows a **trunk-based development** model. Keep branches short-liv
 git clone git@gitlab.com:datenknoten/freundebuch.git
 cd freundebuch
 mise install        # installs all pinned tools and registers git hooks via hk
-aube install        # installs JS dependencies (reads pnpm-lock.yaml)
+aube install        # installs JS dependencies (reads aube-lock.yaml)
 
 # Start the database
 mise run docker:up
@@ -57,7 +57,7 @@ aube seed
 aube dev
 ```
 
-If you don't use mise, install Node 24, [aube](https://github.com/endevco/aube), PHP 8.4, and Composer 2 manually, then run `aube install`. Git hooks register automatically only if [hk](https://hk.jdx.dev) is on your `PATH` when you run `aube install`.
+If you don't use mise, install Node 24, [aube](https://github.com/aubepkg/aube), PHP 8.4, and Composer 2 manually, then run `aube install`. Git hooks register automatically only if [hk](https://hk.jdx.dev) is on your `PATH` when you run `aube install`.
 
 ### 2. Create a Branch
 

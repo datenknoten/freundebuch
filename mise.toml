@@ -7,9 +7,12 @@
 
 [tools]
 node = "24.9.0"
-# Fast Node.js package manager that reads pnpm-lock.yaml — https://github.com/endevco/aube
-# This repo uses aube exclusively; pnpm is no longer installed.
-aube = "1.2.0"
+# Fast Node.js package manager; the repo's only one — https://github.com/aubepkg/aube
+# Explicit backend: mise releases from before the move to aubepkg/aube resolve
+# the `aube` shorthand to jdx/aube, and 2.x releases fail that attestation check.
+# Not 2.8.0: its node-gyp bootstrap dies with SIGILL on arm64 when node-gyp is
+# not cached yet, which breaks the all-in-one image's `aube ci`.
+"github:aubepkg/aube" = "2.7.2"
 
 # PHP runtime + dependency manager for apps/sabredav
 # TODO Need to figure out if there is a reasonable php distribution that does not need compilation

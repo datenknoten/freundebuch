@@ -11,7 +11,7 @@
 # and prunes to a self-contained prod tree under /app; each runtime target is a
 # slim node base that just copies that tree (the native modules built under the
 # mise builder are glibc-compatible with bookworm, verified by the CI smoke
-# build). aube reads pnpm-lock.yaml. MISE_NO_HOOKS skips the dev-only postinstall
+# build). aube reads aube-lock.yaml. MISE_NO_HOOKS skips the dev-only postinstall
 # hook; XDG_CACHE_HOME + package-import-method=copy keep aube's store inside /app.
 # ============================================
 
@@ -41,14 +41,17 @@ COPY mise.toml ./
 RUN mise install
 
 # Copy workspace configuration.
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY aube-workspace.yaml package.json aube-lock.yaml ./
 COPY tsconfig.base.json ./
 
-# Copy package.json files for all workspaces that participate in either prod image.
-# mcp-server depends on @freundebuch/backend (workspace dep), so backend's
-# package.json is required even for the mcp-server target.
+# Copy every workspace package.json: aube 2.x refuses a frozen install when a
+# lockfile importer has no manifest. The install below is filtered to the
+# workspaces of the two prod images; mcp-server depends on @freundebuch/backend
+# (workspace dep), so backend is installed even for the mcp-server target.
 COPY apps/backend/package.json ./apps/backend/
+COPY apps/frontend/package.json ./apps/frontend/
 COPY apps/mcp-server/package.json ./apps/mcp-server/
+COPY packages/danger/package.json ./packages/danger/
 COPY packages/shared/package.json ./packages/shared/
 
 # Make the installed tree self-contained under /app so `COPY /app` into the
@@ -64,9 +67,12 @@ COPY packages/shared/package.json ./packages/shared/
 ENV XDG_CACHE_HOME=/app/.aube-cache
 RUN printf 'package-import-method=copy\n' > .npmrc
 
-# Install all dependencies. `aube ci` treats the lockfile as the source of truth
-# and honors onlyBuiltDependencies (pnpm-workspace.yaml) to build native modules.
-RUN aube ci
+# Install all dependencies of backend, mcp-server and shared from the lockfile.
+# aube honors onlyBuiltDependencies (aube-workspace.yaml) to build native modules.
+RUN aube install --frozen-lockfile \
+      --filter @freundebuch/backend \
+      --filter @freundebuch/mcp-server \
+      --filter @freundebuch/shared
 
 # Copy source code
 COPY packages/shared ./packages/shared

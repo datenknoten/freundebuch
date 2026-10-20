@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-.pnpm-store/
 
 # Build outputs
 dist/
@@ -58,7 +57,6 @@ friend-detail.png
 logs/
 *.log
 npm-debug.log*
-pnpm-debug.log*
 
 # Temporary files
 *.tmp

@@ -36,7 +36,7 @@ default:
       paths: [.mise/data]
     - key:
         prefix: aube
-        files: [pnpm-lock.yaml]
+        files: [aube-lock.yaml]
       paths: [.aube/store]
 
 # Plain Postgres for jobs that run migrations directly (no testcontainers). The

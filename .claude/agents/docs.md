@@ -79,7 +79,7 @@ const friend = await getFriend(id);
 ```
 
 ```bash
-pnpm dev
+aube dev
 ```
 ````
 

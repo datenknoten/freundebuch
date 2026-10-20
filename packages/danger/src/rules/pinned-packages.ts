@@ -11,7 +11,7 @@ function checkDeps(
   if (!deps) return;
 
   for (const [name, version] of Object.entries(deps)) {
-    // Allow pnpm workspace protocol
+    // Allow the workspace: protocol for workspace packages
     if (version.startsWith('workspace:')) continue;
 
     if (UNPINNED_PATTERN.test(version)) {

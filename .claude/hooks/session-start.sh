@@ -47,7 +47,7 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -q 'mise/shims' "$CLAUDE_ENV_FILE" 2>
   {
     echo 'export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"'
     echo 'export HK_MISE=1'
-    # So manual `aube`/`pnpm` commands later in the session also clear the
+    # So manual `aube`/`npx` commands later in the session also clear the
     # sandbox's TLS-intercepting proxy (see NPM_CONFIG_STRICT_SSL note above).
     echo 'export NPM_CONFIG_STRICT_SSL=false'
   } >> "$CLAUDE_ENV_FILE"

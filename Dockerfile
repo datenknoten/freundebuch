@@ -116,13 +116,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy workspace configuration
 COPY mise.toml ./
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY aube-workspace.yaml package.json aube-lock.yaml ./
 COPY tsconfig.base.json ./
 
-# Copy all package.json files for dependency resolution
+# Copy every workspace package.json: aube 2.x refuses a frozen install when a
+# lockfile importer has no manifest.
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/frontend/package.json ./apps/frontend/
 COPY apps/mcp-server/package.json ./apps/mcp-server/
+COPY packages/danger/package.json ./packages/danger/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install the toolchain pinned in mise.toml, then all JS dependencies.
@@ -193,9 +195,13 @@ RUN sed -i 's#^error_log = .*#error_log = /proc/self/fd/2#' /etc/php/8.2/fpm/php
 
 # Copy workspace configuration for production dependencies
 COPY mise.toml ./
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY aube-workspace.yaml package.json aube-lock.yaml ./
+# Every workspace manifest is needed for the frozen install (see deps stage);
+# --filter-prod below keeps the install to backend, mcp-server and shared.
 COPY apps/backend/package.json ./apps/backend/
+COPY apps/frontend/package.json ./apps/frontend/
 COPY apps/mcp-server/package.json ./apps/mcp-server/
+COPY packages/danger/package.json ./packages/danger/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install the toolchain pinned in mise.toml, then production dependencies only.
@@ -209,7 +215,10 @@ COPY packages/shared/package.json ./packages/shared/
 # chown below hands to `node` along with the rest of /app.
 RUN mise install
 RUN --mount=type=cache,id=aube,target=/root/.local/share/aube/store \
-    aube install --prod --disable-global-virtual-store
+    aube install --prod --frozen-lockfile --disable-global-virtual-store \
+      --filter-prod @freundebuch/backend \
+      --filter-prod @freundebuch/mcp-server \
+      --filter-prod @freundebuch/shared
 
 # Copy built artifacts from parallel build stages
 COPY --from=shared-builder /app/packages/shared/dist ./packages/shared/dist

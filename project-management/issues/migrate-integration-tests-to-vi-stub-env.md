@@ -123,7 +123,7 @@ The helper files currently import from `vitest` but do not import `vi`. Each aff
 - [ ] Each `afterAll` that previously called multiple `delete process.env.X` statements now calls `vi.unstubAllEnvs()` once, followed by `resetConfig()` as before
 - [ ] `vi` is imported from `vitest` in every file that calls `vi.stubEnv` or `vi.unstubAllEnvs`
 - [ ] No `process.env` mutations remain in `apps/backend/tests/integration/` (verify with `grep -r 'process\.env\.' apps/backend/tests/integration/`)
-- [ ] All integration tests pass after the change (`pnpm --filter backend test:integration`)
+- [ ] All integration tests pass after the change (`aube --filter @freundebuch/backend run test:integration`)
 - [ ] `health.test.ts` is not modified (it is already correct and serves as the reference)
 
 ---

@@ -10,18 +10,18 @@
   "rebaseWhen": "conflicted",
   "postUpgradeTasks": {
     "commands": [
-      "git checkout {{{baseBranch}}} -- pnpm-lock.yaml",
-      "npx --yes @endevco/aube@1.2.0 install --lockfile-only --fix-lockfile"
+      "git checkout {{{baseBranch}}} -- aube-lock.yaml",
+      "npx --yes @endevco/aube@2.7.2 install --lockfile-only --fix-lockfile"
     ],
-    "fileFilters": ["pnpm-lock.yaml"],
+    "fileFilters": ["aube-lock.yaml"],
     "executionMode": "branch"
   },
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": ["at any time"],
     "postUpgradeTasks": {
-      "commands": ["rm -f pnpm-lock.yaml", "npx --yes @endevco/aube@1.2.0 install --lockfile-only"],
-      "fileFilters": ["pnpm-lock.yaml"],
+      "commands": ["rm -f aube-lock.yaml", "npx --yes @endevco/aube@2.7.2 install --lockfile-only"],
+      "fileFilters": ["aube-lock.yaml"],
       "executionMode": "branch"
     }
   },
@@ -43,7 +43,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "The aube that regenerates pnpm-lock.yaml in postUpgradeTasks must stay on the version that mise.toml pins",
+      "description": "The aube that regenerates aube-lock.yaml in postUpgradeTasks must stay on the version that mise.toml pins",
       "managerFilePatterns": ["/^renovate\\.json$/"],
       "matchStrings": ["@endevco/aube@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
       "depNameTemplate": "@endevco/aube",

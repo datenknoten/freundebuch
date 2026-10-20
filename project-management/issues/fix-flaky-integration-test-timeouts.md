@@ -16,12 +16,12 @@ Two integration tests in `apps/backend/tests/integration/auth-edge-cases.test.ts
 
 ## Observed Behavior
 
-During the pre-push hook (`pnpm --filter backend test`), the following tests fail with `Error: Test timed out in 5000ms`:
+During the pre-push hook (`aube --filter @freundebuch/backend run test`), the following tests fail with `Error: Test timed out in 5000ms`:
 
 1. **"should handle concurrent sign-in attempts"** (line 460) — signs up a user, then fires 10 concurrent sign-in requests. Each sign-in involves bcrypt password verification, which is CPU-intensive by design.
 2. **"should set session cookie on successful sign-in"** (line 524) — signs up a user, then signs in once. Simple test, but likely starved of resources when other suites run concurrently.
 
-When run in isolation (`pnpm vitest run tests/integration/auth-edge-cases.test.ts`), both pass comfortably:
+When run in isolation (`aube exec vitest run tests/integration/auth-edge-cases.test.ts`), both pass comfortably:
 - Concurrent sign-in: ~2100ms
 - Session cookie: ~400ms
 
@@ -98,7 +98,7 @@ Refactor the test helpers to use a shared PostgreSQL container across all integr
 
 ## Acceptance Criteria
 
-- [ ] The full integration test suite (`pnpm --filter backend test`) passes reliably on repeated runs
+- [ ] The full integration test suite (`aube --filter @freundebuch/backend run test`) passes reliably on repeated runs
 - [ ] The pre-push hook does not fail due to test timeouts under normal conditions
 - [ ] The chosen fix does not mask real test failures (i.e., don't just set timeouts to 60s)
 

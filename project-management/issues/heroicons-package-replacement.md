@@ -187,7 +187,7 @@ Alternatively, if using a custom wrapper:
 - [ ] No visual regressions: every icon looks identical before and after the migration (same size, stroke, variant)
 - [ ] All existing Tailwind size classes (`w-4 h-4`, `w-5 h-5`, `w-6 h-6`) and color classes are preserved
 - [ ] A manual smoke test of key pages (Friends list, Friend detail, Circles, Encounters, Collectives, Settings, Global search) confirms icons render correctly
-- [ ] The production bundle size is the same or smaller than before (verify with `pnpm --filter frontend build` and inspecting chunk sizes)
+- [ ] The production bundle size is the same or smaller than before (verify with `aube --filter @freundebuch/frontend run build` and inspecting chunk sizes)
 - [ ] No hardcoded path data remains in any component (verified with `grep -r 'stroke-linecap="round" stroke-linejoin="round"' apps/frontend/src` returning no results)
 - [ ] `apps/frontend/AGENTS.md` is updated with the new icon usage pattern
 - [ ] TypeScript compilation succeeds with no errors or warnings related to icon components

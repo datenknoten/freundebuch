@@ -7,4 +7,4 @@
 
 [tools]
 node = "24.9.0"
-aube = "1.2.0"
+"github:aubepkg/aube" = "2.7.2"

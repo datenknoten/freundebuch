@@ -141,7 +141,8 @@ dependency-audit:
   allow_failure: true
   script:
     # The image's entrypoint is the binary at /, and nothing puts it on PATH.
-    - /osv-scanner scan source --lockfile=pnpm-lock.yaml --lockfile=apps/sabredav/composer.lock
+    # osv-scanner has no aube extractor; aube-lock.yaml uses the pnpm v9 shape.
+    - /osv-scanner scan source --lockfile=pnpm-lock.yaml:aube-lock.yaml --lockfile=apps/sabredav/composer.lock
 
 danger:
   extends: .node

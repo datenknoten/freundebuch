@@ -16,7 +16,7 @@ Tool versions are managed by [mise](https://mise.jdx.dev). With mise installed a
 
 ```bash
 mise install        # installs node, aube, hk, pkl (versions pinned in mise.toml)
-aube install        # installs JS dependencies from pnpm-lock.yaml
+aube install        # installs JS dependencies from aube-lock.yaml
 ```
 
 `mise install` also runs hk's `postinstall` hook, which installs the git hooks defined in [`hk.pkl`](../hk.pkl). See [git-workflow.md](./git-workflow.md#git-hooks-hk) for the hook layout.
@@ -25,7 +25,7 @@ The list of pinned tools lives in [`mise.toml`](../mise.toml). Use `mise.local.t
 
 ### Package Manager: aube
 
-This repo uses [aube](https://github.com/endevco/aube), a fast Node.js package manager that reads and writes `pnpm-lock.yaml` in place. The CLI is pnpm-compatible: `aube install`, `aube --filter <pkg> run <script>`, `aube --recursive run <script>`, `aube ci`, etc.
+This repo uses [aube](https://github.com/aubepkg/aube), a fast Node.js package manager. The workspace is defined in `aube-workspace.yaml`, and dependencies are locked in `aube-lock.yaml`. Common commands: `aube install`, `aube --filter <pkg> run <script>`, `aube --recursive run <script>`, `aube ci`, etc.
 
 ```bash
 aube install          # install deps
@@ -35,7 +35,7 @@ aube <script>         # run a root-level package.json script
 aubr <script>         # = aube run <script>, auto-installs if deps are stale
 ```
 
-pnpm itself is not installed by mise; `aube` is the only supported runner. The lockfile remains `pnpm-lock.yaml` so contributors using pnpm directly out of habit will not break it, but all documented commands assume aube.
+aube is the only supported package manager, and mise installs no other. To regenerate the lockfile from scratch, run `rm aube-lock.yaml && aube install --lockfile-only`.
 
 ### Composite tasks via mise
 

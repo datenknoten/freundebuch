@@ -48,7 +48,6 @@ commitlint.config.mjs
 # node_modules (with absolute host-path symlinks) into the image and breaks it.
 node_modules/
 **/node_modules/
-.pnpm-store/
 **/.aube/
 
 # Build outputs (will be built fresh in container)
@@ -77,7 +76,6 @@ test-results/
 logs/
 *.log
 npm-debug.log*
-pnpm-debug.log*
 
 # Temporary files
 *.tmp

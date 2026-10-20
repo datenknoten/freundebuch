@@ -17,7 +17,7 @@ This is a personal relationship tool, not a business/sales CRM.
 | MCP | Node.js + @modelcontextprotocol/server | AI assistant access over Streamable HTTP |
 | Database | PostgreSQL + PostGIS + PgTyped | Type-safe spatial queries |
 | Shared | TypeScript + ArkType | Cross-app types and runtime validation |
-| Package Manager | aube (pnpm-compatible workspaces) | Monorepo management |
+| Package Manager | aube (workspaces) | Monorepo management |
 | Code Quality | Biome | Linting + formatting |
 | Testing | Vitest + Playwright + PHPUnit | Unit, integration, E2E |
 | Migrations | node-pg-migrate | Database schema management |

@@ -15,13 +15,15 @@ COPY mise.toml ./
 RUN mise install
 
 # Copy workspace configuration
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY aube-workspace.yaml package.json aube-lock.yaml ./
 COPY tsconfig.base.json ./
 
-# Copy all workspace package.json files (needed for lockfile resolution)
+# Copy every workspace package.json: aube 2.x refuses a frozen install when a
+# lockfile importer has no manifest.
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/frontend/package.json ./apps/frontend/
 COPY apps/mcp-server/package.json ./apps/mcp-server/
+COPY packages/danger/package.json ./packages/danger/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies
