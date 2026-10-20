@@ -1,200 +1,139 @@
-import {
-  type PreferencesResponse,
-  UserPreferencesSchema,
-  type UserWithPreferencesResponse,
-} from '@freundebuch/shared/index.js';
-import { Hono } from 'hono';
+import { type PreferencesResponse, UserPreferencesSchema } from '@freundebuch/shared/index.js';
+import { Hono, type MiddlewareHandler } from 'hono';
 import { AuthenticationError } from '../errors/authentication.error.js';
-import { ResourceNotFoundError } from '../errors/resource-not-found.error.js';
-import { SignupDisabledError } from '../errors/signup-disabled.error.js';
 import { UserNotFoundError } from '../errors/user-not-found.error.js';
-import { authMiddleware, getAuthSession, getAuthUser } from '../middleware/auth.js';
-import { passkeyListRateLimitMiddleware } from '../middleware/rate-limit.js';
-import { getOAuthClientByClientId } from '../models/queries/oauth.queries.js';
-import {
-  getUserSelfProfile,
-  getUserWithPreferences,
-  updateUserPreferences,
-} from '../models/queries/users.queries.js';
+import type { Auth } from '../lib/auth.js';
+import { getAuthSession, getAuthUser } from '../middleware/auth.js';
+import type { OAuthClientsService } from '../services/oauth-clients.service.js';
+import type { UsersService } from '../services/users.service.js';
 import type { AppContext } from '../types/context.js';
-import { parseBody } from '../utils/http.js';
-import { parseUserPreferences, toJson } from '../utils/type-guards.js';
+import { parseBody } from '../utils/parse-body.js';
 
-const app = new Hono<AppContext>();
+export interface AuthRoutesOptions {
+  auth: Auth;
+  usersService: UsersService;
+  oauthClientsService: OAuthClientsService;
+  authMiddleware: MiddlewareHandler<AppContext>;
+  passkeyListRateLimitMiddleware: MiddlewareHandler<AppContext>;
+}
 
-/**
- * Mount Better Auth handler for all standard auth endpoints.
- * Better Auth handles: sign-in/email, sign-up/email, sign-out,
- * forget-password, reset-password, get-session, etc.
- */
-app.on(['POST', 'GET'], '/*', async (c, next) => {
-  // Check if this is a custom route we handle ourselves
-  const path = new URL(c.req.url).pathname;
-  const customPaths = [
-    '/api/auth/me',
-    '/api/auth/preferences',
-    '/api/auth/passkey/list-user-passkeys',
-  ];
-  // Prefixes for custom routes with dynamic path segments.
-  const customPrefixes = ['/api/auth/oauth2/client/'];
-  if (customPaths.some((p) => path === p) || customPrefixes.some((p) => path.startsWith(p))) {
-    return next();
-  }
+export function createAuthRoutes(options: AuthRoutesOptions) {
+  const {
+    auth,
+    usersService,
+    oauthClientsService,
+    authMiddleware,
+    passkeyListRateLimitMiddleware,
+  } = options;
+  const app = new Hono<AppContext>();
 
-  // Registration gate for private instances. Better Auth's `disableSignUp`
-  // answers 400; this gate runs first so the client gets the documented 403
-  // SIGNUP_DISABLED. The config is read only for that one path, so every other
-  // auth request stays a pure passthrough.
-  if (path === '/api/auth/sign-up/email' && c.get('config').DISABLE_SIGNUP) {
-    throw new SignupDisabledError();
-  }
+  /**
+   * Mount Better Auth handler for all standard auth endpoints.
+   * Better Auth handles: sign-in/email, sign-up/email, sign-out,
+   * forget-password, reset-password, get-session, etc.
+   */
+  app.on(['POST', 'GET'], '/*', async (c, next) => {
+    // Check if this is a custom route we handle ourselves
+    const path = new URL(c.req.url).pathname;
+    const customPaths = [
+      '/api/auth/me',
+      '/api/auth/preferences',
+      '/api/auth/passkey/list-user-passkeys',
+    ];
+    // Prefixes for custom routes with dynamic path segments.
+    const customPrefixes = ['/api/auth/oauth2/client/'];
+    if (customPaths.some((p) => path === p) || customPrefixes.some((p) => path.startsWith(p))) {
+      return next();
+    }
 
-  // Delegate to Better Auth handler
-  return c.get('auth').handler(c.req.raw);
-});
+    // Registration gate for private instances. Better Auth's `disableSignUp`
+    // answers 400; this gate runs first so the client gets the documented 403
+    // SIGNUP_DISABLED. The gate is checked only for that one path, so every other
+    // auth request stays a pure passthrough.
+    if (path === '/api/auth/sign-up/email') {
+      usersService.assertSignupAllowed();
+    }
 
-/**
- * GET /api/auth/me
- * Get the current authenticated user with preferences.
- *
- * Uses the Better Auth session directly for user data (preferences, selfProfileId)
- * rather than querying the legacy auth.users table, since Better Auth user IDs
- * are not UUIDs and the legacy external_id column is UUID-typed.
- */
-app.get('/me', authMiddleware, async (c) => {
-  const db = c.get('db');
-  const authUser = getAuthUser(c);
+    // Delegate to Better Auth handler
+    return auth.handler(c.req.raw);
+  });
 
-  // Use the session already resolved by authMiddleware (no second getSession() call)
-  const session = getAuthSession(c);
+  /**
+   * GET /api/auth/me
+   * Get the current authenticated user with preferences.
+   *
+   * Uses the Better Auth session directly for user data (preferences, selfProfileId)
+   * rather than querying the legacy auth.users table, since Better Auth user IDs
+   * are not UUIDs and the legacy external_id column is UUID-typed.
+   */
+  app.get('/me', authMiddleware, async (c) => {
+    const authUser = getAuthUser(c);
 
-  if (!session?.user) {
-    throw new UserNotFoundError(authUser.userId);
-  }
+    // Use the session already resolved by authMiddleware (no second getSession() call)
+    const session = getAuthSession(c);
 
-  // Look up the self-profile external_id and preferences from auth."user"
-  // directly instead of trusting the session: the session cookie cache (5 min)
-  // holds a stale null right after onboarding sets the self-profile via SQL,
-  // which trapped users in an onboarding redirect loop until the cache expired,
-  // and it serves stale preferences right after a PATCH.
-  const result = await getUserSelfProfile.run({ userExternalId: authUser.userId }, db);
-  const selfProfileExternalId = result[0]?.self_profile_external_id ?? null;
-  const selfProfileDisplayName = result[0]?.self_profile_display_name ?? null;
+    if (!session?.user) {
+      throw new UserNotFoundError(authUser.userId);
+    }
 
-  const response: UserWithPreferencesResponse = {
-    user: {
-      externalId: authUser.userId,
-      email: authUser.email,
-      selfProfileId: selfProfileExternalId ?? undefined,
-      displayName: selfProfileDisplayName ?? undefined,
-      hasCompletedOnboarding: selfProfileExternalId !== null,
+    return c.json(await usersService.getMeWithPreferences(authUser));
+  });
+
+  /**
+   * PATCH /api/auth/preferences
+   * Update user preferences
+   */
+  app.patch('/preferences', authMiddleware, async (c) => {
+    const authUser = getAuthUser(c);
+
+    const validated = await parseBody(c, UserPreferencesSchema);
+
+    return c.json<PreferencesResponse>(
+      await usersService.updatePreferences(authUser.userId, validated),
+    );
+  });
+
+  /**
+   * GET /api/auth/passkey/list-user-passkeys
+   * List all passkeys for the authenticated user.
+   *
+   * Facade over Better Auth's internal API with a dedicated rate limit
+   * (30 req/min) instead of the global auth rate limit (5 req/min),
+   * since this read-only endpoint is called frequently by the UI.
+   */
+  app.get(
+    '/passkey/list-user-passkeys',
+    authMiddleware,
+    passkeyListRateLimitMiddleware,
+    async (c) => {
+      const passkeys = await auth.api.listPasskeys({
+        headers: c.req.raw.headers,
+      });
+      return c.json(passkeys);
     },
-    // Same reason as selfProfileId above: session.user.preferences is the
-    // cached copy, so a language change reverted on reload until it expired.
-    preferences: parseUserPreferences(result[0]?.preferences ?? {}),
-  };
-
-  return c.json(response);
-});
-
-/**
- * PATCH /api/auth/preferences
- * Update user preferences
- */
-app.patch('/preferences', authMiddleware, async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const authUser = getAuthUser(c);
-
-  const validated = await parseBody(c, UserPreferencesSchema);
-
-  // Get current preferences
-  const users = await getUserWithPreferences.run({ externalId: authUser.userId }, db);
-
-  if (users.length === 0) {
-    throw new UserNotFoundError(authUser.userId);
-  }
-
-  const user = users[0];
-  if (!user) {
-    throw new UserNotFoundError(authUser.userId);
-  }
-
-  // Merge with existing preferences
-  const currentPreferences = parseUserPreferences(user.preferences ?? {});
-  const newPreferences = {
-    ...currentPreferences,
-    ...validated,
-  };
-
-  // Update in database
-  const result = await updateUserPreferences.run(
-    {
-      externalId: authUser.userId,
-      preferences: toJson(newPreferences),
-    },
-    db,
   );
 
-  if (result.length === 0) {
-    throw new UserNotFoundError(authUser.userId);
-  }
+  /**
+   * GET /api/auth/oauth2/client/:id
+   * Resolve a registered OAuth client's display name (and icon) by client_id.
+   *
+   * The /oauth/consent screen calls this so it can show a friendly client name
+   * (e.g. "Claude") instead of the opaque, DCR-generated client id. The Better
+   * Auth `mcp` plugin does not expose the oidc-provider's `/oauth2/client/:id`
+   * endpoint (it only re-exports the consent endpoint), so we provide it here.
+   *
+   * Gated on a valid session: the consent flow only reaches the page after login,
+   * and this prevents anonymous enumeration of registered clients. We don't use
+   * authMiddleware because this read doesn't need the legacy-user bridge.
+   */
+  app.get('/oauth2/client/:id', async (c) => {
+    const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    if (!session) {
+      throw new AuthenticationError('Unauthorized');
+    }
 
-  logger.info({ userId: authUser.userId }, 'User preferences updated');
-
-  return c.json<PreferencesResponse>({
-    preferences: parseUserPreferences(result[0]?.preferences),
+    return c.json(await oauthClientsService.getClientDisplay(c.req.param('id')));
   });
-});
 
-/**
- * GET /api/auth/passkey/list-user-passkeys
- * List all passkeys for the authenticated user.
- *
- * Facade over Better Auth's internal API with a dedicated rate limit
- * (30 req/min) instead of the global auth rate limit (5 req/min),
- * since this read-only endpoint is called frequently by the UI.
- */
-app.get(
-  '/passkey/list-user-passkeys',
-  authMiddleware,
-  passkeyListRateLimitMiddleware,
-  async (c) => {
-    const passkeys = await c.get('auth').api.listPasskeys({
-      headers: c.req.raw.headers,
-    });
-    return c.json(passkeys);
-  },
-);
-
-/**
- * GET /api/auth/oauth2/client/:id
- * Resolve a registered OAuth client's display name (and icon) by client_id.
- *
- * The /oauth/consent screen calls this so it can show a friendly client name
- * (e.g. "Claude") instead of the opaque, DCR-generated client id. The Better
- * Auth `mcp` plugin does not expose the oidc-provider's `/oauth2/client/:id`
- * endpoint (it only re-exports the consent endpoint), so we provide it here.
- *
- * Gated on a valid session: the consent flow only reaches the page after login,
- * and this prevents anonymous enumeration of registered clients. We don't use
- * authMiddleware because this read doesn't need the legacy-user bridge.
- */
-app.get('/oauth2/client/:id', async (c) => {
-  const session = await c.get('auth').api.getSession({ headers: c.req.raw.headers });
-  if (!session) {
-    throw new AuthenticationError('Unauthorized');
-  }
-
-  const db = c.get('db');
-  const clientId = c.req.param('id');
-  const [client] = await getOAuthClientByClientId.run({ clientId }, db);
-
-  if (!client) {
-    throw new ResourceNotFoundError('OAuth client', clientId);
-  }
-
-  return c.json({ clientId, name: client.name, icon: client.icon ?? null });
-});
-
-export default app;
+  return app;
+}

@@ -7,7 +7,7 @@ import {
   type IGetUrlsByCollectiveIdResult,
   updateUrl,
 } from '../../../models/queries/collective-urls.queries.js';
-import { parseUrlType } from '../../../utils/type-guards.js';
+import { parseUrlType } from '../../../utils/parse-url-type.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -33,64 +33,67 @@ export class CollectiveUrlService extends SubResourceService<
   IDeleteUrlResult
 > {
   constructor(options: SubResourceServiceOptions) {
-    super(options, {
-      resourceName: 'collective url',
-      hasPrimaryFlag: false,
+    super({
+      ...options,
+      definition: {
+        resourceName: 'collective url',
+        hasPrimaryFlag: false,
 
-      createFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, input },
-        client,
-      ) => {
-        return createUrl.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            url: input.url,
-            urlType: input.url_type,
-            label: input.label ?? null,
-          },
+        createFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return createUrl.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              url: input.url,
+              urlType: input.url_type,
+              label: input.label ?? null,
+            },
+            client,
+          );
+        },
 
-      updateFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
-        client,
-      ) => {
-        return updateUrl.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            urlExternalId: resourceExternalId,
-            url: input.url,
-            urlType: input.url_type,
-            label: input.label ?? null,
-          },
+        updateFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return updateUrl.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              urlExternalId: resourceExternalId,
+              url: input.url,
+              urlType: input.url_type,
+              label: input.label ?? null,
+            },
+            client,
+          );
+        },
 
-      deleteFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
-        client,
-      ) => {
-        return deleteUrl.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            urlExternalId: resourceExternalId,
-          },
+        deleteFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
           client,
-        );
+        ) => {
+          return deleteUrl.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              urlExternalId: resourceExternalId,
+            },
+            client,
+          );
+        },
+
+        listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+          return getUrlsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
+        },
+
+        mapListResult: mapRow,
+
+        mapResult: mapRow,
       },
-
-      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return getUrlsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      mapListResult: mapRow,
-
-      mapResult: mapRow,
     });
   }
 }

@@ -4,7 +4,10 @@ import { type Context, Hono } from 'hono';
 import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../middleware/auth.js';
 import type { AppContext } from '../../types/context.js';
-import { parseBody, parseRawObject, requireUuidParam, validate } from '../../utils/http.js';
+import { parseBody } from '../../utils/parse-body.js';
+import { parseRawObject } from '../../utils/parse-raw-object.js';
+import { requireUuidParam } from '../../utils/require-uuid-param.js';
+import { validate } from '../../utils/validate.js';
 
 /**
  * The slice of `SubResourceService` a generated router needs. Declared
@@ -45,16 +48,16 @@ export interface SubResourceRouterConfig<TSchema extends Type, TOutput> {
   ownerNotFound: new (
     ownerId: string,
   ) => AppError;
-  service: (c: Context<AppContext>) => SubResourceOperations<TSchema['infer'], TOutput>;
+  service: SubResourceOperations<TSchema['infer'], TOutput>;
   /**
    * Optional body rewrite before validation, for inputs the client cannot be
    * expected to send in canonical form (phone numbers).
    */
   preprocess?: (
-    c: Context<AppContext>,
     userId: string,
     ownerId: string,
     body: Record<string, unknown>,
+    acceptLanguage: string | undefined,
   ) => Promise<Record<string, unknown>>;
 }
 
@@ -79,14 +82,17 @@ export function createSubResourceRouter<TSchema extends Type, TOutput>(
       return parseBody(c, config.schema);
     }
     const raw = await parseRawObject(c);
-    return validate(config.schema, await config.preprocess(c, userId, ownerId, raw));
+    return validate(
+      config.schema,
+      await config.preprocess(userId, ownerId, raw, c.req.header('Accept-Language')),
+    );
   };
 
   app.get('/', async (c) => {
     const user = getAuthUser(c);
     const ownerId = requireUuidParam(c, config.ownerParam, config.ownerLabel);
 
-    return c.json(await config.service(c).list(user.userId, ownerId));
+    return c.json(await config.service.list(user.userId, ownerId));
   });
 
   app.post('/', async (c) => {
@@ -94,7 +100,7 @@ export function createSubResourceRouter<TSchema extends Type, TOutput>(
     const ownerId = requireUuidParam(c, config.ownerParam, config.ownerLabel);
     const input = await readBody(c, user.userId, ownerId);
 
-    const created = await config.service(c).add(user.userId, ownerId, input);
+    const created = await config.service.add(user.userId, ownerId, input);
     if (created === null) {
       throw new config.ownerNotFound(ownerId);
     }
@@ -108,7 +114,7 @@ export function createSubResourceRouter<TSchema extends Type, TOutput>(
     const resourceId = requireUuidParam(c, config.resourceParam, `${config.resourceLabel} ID`);
     const input = await readBody(c, user.userId, ownerId);
 
-    const updated = await config.service(c).update(user.userId, ownerId, resourceId, input);
+    const updated = await config.service.update(user.userId, ownerId, resourceId, input);
     if (updated === null) {
       throw new ResourceNotFoundError(config.resourceLabel, resourceId);
     }
@@ -121,7 +127,7 @@ export function createSubResourceRouter<TSchema extends Type, TOutput>(
     const ownerId = requireUuidParam(c, config.ownerParam, config.ownerLabel);
     const resourceId = requireUuidParam(c, config.resourceParam, `${config.resourceLabel} ID`);
 
-    const deleted = await config.service(c).delete(user.userId, ownerId, resourceId);
+    const deleted = await config.service.delete(user.userId, ownerId, resourceId);
     if (deleted === null || deleted === false) {
       throw new ResourceNotFoundError(config.resourceLabel, resourceId);
     }

@@ -1,7 +1,7 @@
 import dns from 'node:dns';
 import { ValidationError } from '@datenknoten/kit';
 import { NotificationDeliveryError } from '../../errors/notification-delivery.error.js';
-import { isPrivateAddress } from '../../utils/security.js';
+import { isPrivateAddress } from '../../utils/is-private-address.js';
 
 /**
  * Validate that a homeserver URL points to a public address.

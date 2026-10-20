@@ -24,12 +24,10 @@ interface Row {
 
 class TestSubResourceService extends SubResourceService<Input, Row, Row, Row, Row> {
   constructor(db: pg.Pool, overrides: Partial<SubResourceConfig<Input, Row, Row, Row, Row>> = {}) {
-    super(
-      {
-        db,
-        logger: { debug: () => undefined } as unknown as Logger,
-      },
-      {
+    super({
+      db,
+      logger: { debug: () => undefined } as unknown as Logger,
+      definition: {
         resourceName: 'phone',
         hasPrimaryFlag: false,
         createFn: () => Promise.reject(new Error('not used')),
@@ -40,7 +38,7 @@ class TestSubResourceService extends SubResourceService<Input, Row, Row, Row, Ro
         mapResult: (row) => row,
         ...overrides,
       },
-    );
+    });
   }
 }
 

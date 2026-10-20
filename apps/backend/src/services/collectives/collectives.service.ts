@@ -48,7 +48,7 @@ export interface CollectivesServiceOptions {
  * Service for managing collectives (families, companies, clubs, friend groups)
  */
 export class CollectivesService {
-  private db: Pool;
+  private readonly db: Pool;
 
   constructor(options: CollectivesServiceOptions) {
     this.db = options.db;
@@ -61,7 +61,7 @@ export class CollectivesService {
   /**
    * List all collectives for a user with pagination and filtering
    */
-  async listCollectives(
+  public async listCollectives(
     userExternalId: string,
     options: CollectiveListOptions,
   ): Promise<CollectiveListResponse> {
@@ -135,7 +135,7 @@ export class CollectivesService {
   /**
    * Get a single collective by ID with all members
    */
-  async getCollectiveById(
+  public async getCollectiveById(
     userExternalId: string,
     collectiveExternalId: string,
   ): Promise<CollectiveResponse | null> {
@@ -164,7 +164,7 @@ export class CollectivesService {
   /**
    * Create a new collective
    */
-  async createCollective(
+  public async createCollective(
     userExternalId: string,
     input: CollectiveCreateInput,
   ): Promise<CollectiveResponse> {
@@ -203,7 +203,7 @@ export class CollectivesService {
   /**
    * Update an existing collective
    */
-  async updateCollective(
+  public async updateCollective(
     userExternalId: string,
     collectiveExternalId: string,
     input: CollectiveUpdateInput,
@@ -252,7 +252,10 @@ export class CollectivesService {
   /**
    * Soft delete a collective
    */
-  async deleteCollective(userExternalId: string, collectiveExternalId: string): Promise<boolean> {
+  public async deleteCollective(
+    userExternalId: string,
+    collectiveExternalId: string,
+  ): Promise<boolean> {
     const results = await deleteCollective.run({ userExternalId, collectiveExternalId }, this.db);
     return results.length > 0;
   }
@@ -260,7 +263,7 @@ export class CollectivesService {
   /**
    * Get all collectives a contact belongs to
    */
-  async getCollectivesForContact(
+  public async getCollectivesForContact(
     userExternalId: string,
     contactExternalId: string,
   ): Promise<ContactCollectiveSummaryResponse[]> {

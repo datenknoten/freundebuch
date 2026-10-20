@@ -1,75 +1,72 @@
-import { AppPasswordCreateInputSchema } from '@freundebuch/shared/index.js';
-import { Hono } from 'hono';
-import { AppPasswordNotFoundError } from '../errors/app-password-not-found.error.js';
-import { authMiddleware, getAuthUser } from '../middleware/auth.js';
-import { onboardingMiddleware } from '../middleware/onboarding.js';
 import {
-  type AppPassword,
-  AppPasswordsService,
-  type AppPasswordWithSecret,
-} from '../services/app-passwords.service.js';
+  AppPasswordCreateInputSchema,
+  type AppPasswordCreateResponse,
+  type AppPasswordResponse,
+} from '@freundebuch/shared/index.js';
+import { Hono, type MiddlewareHandler } from 'hono';
+import { AppPasswordNotFoundError } from '../errors/app-password-not-found.error.js';
+import { getAuthUser } from '../middleware/auth.js';
+import type { AppPasswordsService } from '../services/app-passwords.service.js';
 import type { AppContext } from '../types/context.js';
-import { parseBody, requireUuidParam } from '../utils/http.js';
+import { parseBody } from '../utils/parse-body.js';
+import { requireUuidParam } from '../utils/require-uuid-param.js';
 
-const app = new Hono<AppContext>();
+export interface AppPasswordsRoutesOptions {
+  appPasswordsService: AppPasswordsService;
+  authMiddleware: MiddlewareHandler<AppContext>;
+  onboardingMiddleware: MiddlewareHandler<AppContext>;
+}
 
-// Apply auth middleware to all routes
-app.use('*', authMiddleware);
-// Apply onboarding middleware to require profile
-app.use('*', onboardingMiddleware);
+export function createAppPasswordsRoutes(options: AppPasswordsRoutesOptions) {
+  const { appPasswordsService, authMiddleware, onboardingMiddleware } = options;
+  const app = new Hono<AppContext>();
 
-/**
- * GET /api/app-passwords
- * List all active app passwords for the current user
- */
-app.get('/', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
+  // Apply auth middleware to all routes
+  app.use('*', authMiddleware);
+  // Apply onboarding middleware to require profile
+  app.use('*', onboardingMiddleware);
 
-  const authUser = getAuthUser(c);
-  const service = new AppPasswordsService({ db: db, logger: logger });
-  const passwords = await service.listAppPasswords(authUser.userId);
+  /**
+   * GET /api/app-passwords
+   * List all active app passwords for the current user
+   */
+  app.get('/', async (c) => {
+    const authUser = getAuthUser(c);
+    const passwords = await appPasswordsService.listAppPasswords(authUser.userId);
 
-  return c.json<AppPassword[]>(passwords);
-});
+    return c.json<AppPasswordResponse[]>(passwords);
+  });
 
-/**
- * POST /api/app-passwords
- * Create a new app password
- * Returns the password only once
- */
-app.post('/', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
+  /**
+   * POST /api/app-passwords
+   * Create a new app password
+   * Returns the password only once
+   */
+  app.post('/', async (c) => {
+    const authUser = getAuthUser(c);
+    const validated = await parseBody(c, AppPasswordCreateInputSchema);
 
-  const authUser = getAuthUser(c);
-  const validated = await parseBody(c, AppPasswordCreateInputSchema);
+    const result = await appPasswordsService.createAppPassword(authUser.userId, validated.name);
 
-  const service = new AppPasswordsService({ db: db, logger: logger });
-  const result = await service.createAppPassword(authUser.userId, validated.name);
+    return c.json<AppPasswordCreateResponse>(result, 201);
+  });
 
-  return c.json<AppPasswordWithSecret>(result, 201);
-});
+  /**
+   * DELETE /api/app-passwords/:id
+   * Revoke an app password
+   */
+  app.delete('/:id', async (c) => {
+    const authUser = getAuthUser(c);
+    const appPasswordId = requireUuidParam(c, 'id', 'app password ID format');
 
-/**
- * DELETE /api/app-passwords/:id
- * Revoke an app password
- */
-app.delete('/:id', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
+    const isRevoked = await appPasswordsService.revokeAppPassword(authUser.userId, appPasswordId);
 
-  const authUser = getAuthUser(c);
-  const appPasswordId = requireUuidParam(c, 'id', 'app password ID format');
+    if (!isRevoked) {
+      throw new AppPasswordNotFoundError(appPasswordId);
+    }
 
-  const service = new AppPasswordsService({ db: db, logger: logger });
-  const success = await service.revokeAppPassword(authUser.userId, appPasswordId);
+    return c.json({ success: true });
+  });
 
-  if (!success) {
-    throw new AppPasswordNotFoundError(appPasswordId);
-  }
-
-  return c.json({ success: true });
-});
-
-export default app;
+  return app;
+}

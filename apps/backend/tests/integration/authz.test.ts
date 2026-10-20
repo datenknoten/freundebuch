@@ -1,7 +1,6 @@
 import type { Hono } from 'hono';
 import type pg from 'pg';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { AppContext } from '../../src/types/context.js';
 
 import {
@@ -34,10 +33,6 @@ describe('Cross-user authorization', () => {
     await completeTestUserOnboarding(context.pool, userA.externalId);
     await completeTestUserOnboarding(context.pool, userB.externalId);
   }, SUITE_HOOK_TIMEOUT_MS);
-
-  beforeEach(() => {
-    resetRateLimiters();
-  });
 
   afterAll(async () => {
     await teardownAuthTests(context);

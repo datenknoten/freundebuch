@@ -1,4 +1,4 @@
-import type { Pool } from 'pg';
+import type pg from 'pg';
 import type { Logger } from 'pino';
 import type { GeocodedLocation } from './nominatim.client.js';
 import type { HouseNumber, Street } from './overpass.client.js';
@@ -9,15 +9,23 @@ const naturalCollator = new Intl.Collator(undefined, {
   sensitivity: 'base',
 });
 
+export interface PostGISAddressClientOptions {
+  db: pg.Pool;
+  logger: Logger;
+}
+
 /**
  * PostGIS-based address lookup client for DACH countries.
  * Uses local OSM data stored in the geodata schema for fast address autocomplete.
  */
 export class PostGISAddressClient {
-  constructor(
-    private pool: Pool,
-    private logger: Logger,
-  ) {}
+  private readonly db: pg.Pool;
+  private readonly logger: Logger;
+
+  constructor(options: PostGISAddressClientOptions) {
+    this.db = options.db;
+    this.logger = options.logger;
+  }
 
   /**
    * Get distinct cities for a postal code.
@@ -27,11 +35,11 @@ export class PostGISAddressClient {
    * scripts/osm-import/import-region.sh). The PostGIS data has no
    * state/province column, so callers get city names only.
    */
-  async getCitiesByPostalCode(
+  public async getCitiesByPostalCode(
     countryCode: string,
     postalCode: string,
   ): Promise<{ city: string }[]> {
-    const result = await this.pool.query<{ city: string }>(
+    const result = await this.db.query<{ city: string }>(
       `SELECT city
        FROM geodata.cities_by_postal
        WHERE country_code = $1 AND postal_code = $2
@@ -55,12 +63,12 @@ export class PostGISAddressClient {
    * with `text_pattern_ops` so the prefix `LIKE` is index-backed. Results are
    * capped by `limit` to keep short prefixes cheap.
    */
-  async searchPostalCodes(
+  public async searchPostalCodes(
     countryCode: string,
     prefix: string,
     limit = 20,
   ): Promise<{ postalCode: string; city: string }[]> {
-    const result = await this.pool.query<{ postal_code: string; city: string }>(
+    const result = await this.db.query<{ postal_code: string; city: string }>(
       `SELECT postal_code, city
        FROM geodata.cities_by_postal
        WHERE country_code = $1 AND postal_code LIKE $2 || '%'
@@ -81,8 +89,12 @@ export class PostGISAddressClient {
    * Get streets for a postal code.
    * Uses the materialized view for fast distinct lookups.
    */
-  async getStreets(countryCode: string, _city: string, postalCode: string): Promise<Street[]> {
-    const result = await this.pool.query<{ street: string }>(
+  public async getStreets(
+    countryCode: string,
+    _city: string,
+    postalCode: string,
+  ): Promise<Street[]> {
+    const result = await this.db.query<{ street: string }>(
       `SELECT street
        FROM geodata.streets_by_postal
        WHERE country_code = $1 AND postal_code = $2
@@ -102,13 +114,13 @@ export class PostGISAddressClient {
    * Get house numbers for a street.
    * Uses the materialized view for fast distinct lookups.
    */
-  async getHouseNumbers(
+  public async getHouseNumbers(
     countryCode: string,
     _city: string,
     postalCode: string,
     street: string,
   ): Promise<HouseNumber[]> {
-    const result = await this.pool.query<{ house_number: string }>(
+    const result = await this.db.query<{ house_number: string }>(
       `SELECT house_number
        FROM geodata.housenumbers_by_street
        WHERE country_code = $1 AND postal_code = $2 AND street = $3`,
@@ -131,9 +143,9 @@ export class PostGISAddressClient {
    * Check if PostGIS address data is available and has data for DACH countries.
    * This can be used to determine whether to use PostGIS or fall back to Overpass.
    */
-  async isAvailable(): Promise<boolean> {
+  public async isAvailable(): Promise<boolean> {
     try {
-      const result = await this.pool.query<{ count: string }>(
+      const result = await this.db.query<{ count: string }>(
         `SELECT COUNT(*) as count
          FROM geodata.addresses
          WHERE country_code IN ('DE', 'AT', 'CH')
@@ -149,9 +161,9 @@ export class PostGISAddressClient {
   /**
    * Check if data is available for a specific country.
    */
-  async hasDataForCountry(countryCode: string): Promise<boolean> {
+  public async hasDataForCountry(countryCode: string): Promise<boolean> {
     try {
-      const result = await this.pool.query<{ exists: boolean }>(
+      const result = await this.db.query<{ exists: boolean }>(
         `SELECT EXISTS(
            SELECT 1 FROM geodata.addresses
            WHERE country_code = $1
@@ -170,7 +182,7 @@ export class PostGISAddressClient {
    * Geocode an address using stored OSM location data.
    * Returns coordinates from the geodata.addresses table.
    */
-  async geocodeAddress(
+  public async geocodeAddress(
     countryCode: string,
     postalCode: string,
     city: string,
@@ -178,7 +190,7 @@ export class PostGISAddressClient {
     houseNumber?: string,
   ): Promise<GeocodedLocation | null> {
     try {
-      const result = await this.pool.query<{ latitude: number; longitude: number }>(
+      const result = await this.db.query<{ latitude: number; longitude: number }>(
         `SELECT ST_Y(location) as latitude, ST_X(location) as longitude
          FROM geodata.addresses
          WHERE country_code = $1
@@ -219,7 +231,7 @@ export class PostGISAddressClient {
    * Get statistics about imported address data.
    * Useful for monitoring and debugging.
    */
-  async getStats(): Promise<
+  public async getStats(): Promise<
     {
       countryCode: string;
       addressCount: number;
@@ -228,7 +240,7 @@ export class PostGISAddressClient {
     }[]
   > {
     try {
-      const result = await this.pool.query<{
+      const result = await this.db.query<{
         country_code: string;
         address_count: string;
         postal_code_count: string;

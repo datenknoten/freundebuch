@@ -31,25 +31,10 @@ import {
   type IPaginatedFullTextSearchResult,
   paginatedFullTextSearch,
 } from '../../models/queries/search.queries.js';
-import { parseCirclesJson } from '../../utils/db-json-schemas.js';
-import { sanitizeSearchHeadline } from '../../utils/security.js';
-import { parseMatchSource } from '../../utils/type-guards.js';
-
-/**
- * Escape special characters for PostgreSQL LIKE/ILIKE patterns.
- * Prevents SQL injection by escaping %, _, and \ characters.
- */
-export function escapeLikePattern(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
-}
-
-/**
- * Create a wildcard query for ILIKE patterns.
- * Escapes special characters and wraps with % for partial matching.
- */
-export function createWildcardQuery(query: string): string {
-  return `%${escapeLikePattern(query)}%`;
-}
+import { createWildcardQuery } from '../../utils/create-wildcard-query.js';
+import { parseCirclesJson } from '../../utils/db-json/parse-circles-json.js';
+import { parseMatchSource } from '../../utils/parse-match-source.js';
+import { sanitizeSearchHeadline } from '../../utils/sanitize-search-headline.js';
 
 export interface SearchServiceOptions {
   db: pg.Pool;
@@ -61,8 +46,8 @@ export interface SearchServiceOptions {
  * Extracted from FriendsService for better separation of concerns.
  */
 export class SearchService {
-  private db: pg.Pool;
-  private logger: Logger;
+  private readonly db: pg.Pool;
+  private readonly logger: Logger;
 
   constructor(options: SearchServiceOptions) {
     this.db = options.db;
@@ -74,7 +59,7 @@ export class SearchService {
    * Searches: names, organization, job title, work notes, emails, phones,
    * relationship notes, and met context
    */
-  async fullTextSearch(
+  public async fullTextSearch(
     userExternalId: string,
     query: string,
     limit = 10,
@@ -98,7 +83,7 @@ export class SearchService {
    * Paginated full-text search with sorting options
    * Used by in-page search for friends list
    */
-  async paginatedSearch(
+  public async paginatedSearch(
     userExternalId: string,
     options: SearchOptions,
   ): Promise<PaginatedSearchResponse> {
@@ -137,7 +122,7 @@ export class SearchService {
    * Faceted full-text search with filter support and optional facet aggregation
    * Supports filtering by location, professional, and relationship facets
    */
-  async facetedSearch(
+  public async facetedSearch(
     userExternalId: string,
     options: FacetedSearchOptions,
   ): Promise<FacetedSearchResponse> {
@@ -207,7 +192,7 @@ export class SearchService {
    * Filter-only list with optional facet aggregation
    * Used when no search query is provided but filters may be applied
    */
-  async filterOnlyList(
+  public async filterOnlyList(
     userExternalId: string,
     options: FacetedSearchOptions,
   ): Promise<FacetedSearchResponse> {
@@ -265,7 +250,7 @@ export class SearchService {
   /**
    * Get user's recent search queries
    */
-  async getRecentSearches(userExternalId: string, limit = 10): Promise<string[]> {
+  public async getRecentSearches(userExternalId: string, limit = 10): Promise<string[]> {
     this.logger.debug({ limit }, 'Getting recent searches');
 
     const results = await getRecentSearches.run({ userExternalId, limit }, this.db);
@@ -277,7 +262,7 @@ export class SearchService {
    * Add or update a recent search query
    * If the query already exists, updates the searched_at timestamp
    */
-  async addRecentSearch(userExternalId: string, query: string): Promise<void> {
+  public async addRecentSearch(userExternalId: string, query: string): Promise<void> {
     this.logger.debug({ query }, 'Adding recent search');
 
     await addRecentSearch.run({ userExternalId, query }, this.db);
@@ -286,7 +271,7 @@ export class SearchService {
   /**
    * Delete a specific recent search query
    */
-  async deleteRecentSearch(userExternalId: string, query: string): Promise<boolean> {
+  public async deleteRecentSearch(userExternalId: string, query: string): Promise<boolean> {
     this.logger.debug({ query }, 'Deleting recent search');
 
     const result = await deleteRecentSearch.run({ userExternalId, query }, this.db);
@@ -297,7 +282,7 @@ export class SearchService {
   /**
    * Clear all recent searches for a user
    */
-  async clearRecentSearches(userExternalId: string): Promise<void> {
+  public async clearRecentSearches(userExternalId: string): Promise<void> {
     this.logger.debug('Clearing all recent searches');
 
     await clearRecentSearches.run({ userExternalId }, this.db);

@@ -1,5 +1,6 @@
 import type { IGetEnabledChannelsDueAtResult } from '../../models/queries/notification-channels.queries.js';
-import { credentialContext, decrypt } from '../../utils/credentials-crypto.js';
+import { credentialContext } from '../../utils/credential-context.js';
+import { decrypt } from '../../utils/decrypt.js';
 import { sendDiscordMessage } from './discord.client.js';
 import { sendMatrixMessage } from './matrix.client.js';
 import { sendTelegramMessage } from './telegram.client.js';

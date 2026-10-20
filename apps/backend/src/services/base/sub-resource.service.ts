@@ -2,8 +2,8 @@ import { ConflictError } from '@datenknoten/kit';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { NoRowWrittenError } from '../../errors/no-row-written.error.js';
-import { withTransaction } from '../../utils/db.js';
-import { rethrowUniqueViolation } from '../../utils/pg-errors.js';
+import { rethrowUniqueViolation } from '../../utils/rethrow-unique-violation.js';
+import { withTransaction } from '../../utils/with-transaction.js';
 
 /**
  * Partial unique indexes that allow exactly one primary row per owner
@@ -82,7 +82,7 @@ export interface SubResourceConfig<
   isPrimary?: (input: TInput) => boolean;
 
   /** Function to set the primary flag on an input (for auto-primary) */
-  setIsPrimary?: (input: TInput, value: boolean) => TInput;
+  setIsPrimary?: (input: TInput, isPrimary: boolean) => TInput;
 
   /** Function to map database result to output type */
   mapResult: (result: TCreateResult | TUpdateResult) => TOutput;
@@ -91,6 +91,24 @@ export interface SubResourceConfig<
 export interface SubResourceServiceOptions {
   db: pg.Pool;
   logger: Logger;
+}
+
+export interface SubResourceServiceBaseOptions<
+  TInput,
+  TOutput,
+  TCreateResult,
+  TUpdateResult,
+  TDeleteResult,
+  TListResult = TCreateResult,
+> extends SubResourceServiceOptions {
+  definition: SubResourceConfig<
+    TInput,
+    TOutput,
+    TCreateResult,
+    TUpdateResult,
+    TDeleteResult,
+    TListResult
+  >;
 }
 
 /**
@@ -107,9 +125,9 @@ export abstract class SubResourceService<
   TDeleteResult,
   TListResult = TCreateResult,
 > {
-  protected db: pg.Pool;
-  protected logger: Logger;
-  protected config: SubResourceConfig<
+  protected readonly db: pg.Pool;
+  protected readonly logger: Logger;
+  protected readonly config: SubResourceConfig<
     TInput,
     TOutput,
     TCreateResult,
@@ -119,8 +137,7 @@ export abstract class SubResourceService<
   >;
 
   constructor(
-    options: SubResourceServiceOptions,
-    config: SubResourceConfig<
+    options: SubResourceServiceBaseOptions<
       TInput,
       TOutput,
       TCreateResult,
@@ -131,13 +148,13 @@ export abstract class SubResourceService<
   ) {
     this.db = options.db;
     this.logger = options.logger;
-    this.config = config;
+    this.config = options.definition;
   }
 
   /**
    * List all sub-resources for an owner.
    */
-  async list(userExternalId: string, ownerExternalId: string): Promise<TOutput[]> {
+  public async list(userExternalId: string, ownerExternalId: string): Promise<TOutput[]> {
     this.logger.debug(
       { ownerExternalId, resource: this.config.resourceName },
       'Listing sub-resources',
@@ -152,7 +169,7 @@ export abstract class SubResourceService<
    * Always runs in its own transaction: clearing the previous primary and
    * writing the new row must either both happen or neither.
    */
-  async add(
+  public async add(
     userExternalId: string,
     ownerExternalId: string,
     input: TInput,
@@ -217,7 +234,7 @@ export abstract class SubResourceService<
    * Always runs in its own transaction, and rolls back when the update matched
    * no row so a cleared primary flag is never left behind.
    */
-  async update(
+  public async update(
     userExternalId: string,
     ownerExternalId: string,
     resourceExternalId: string,
@@ -260,7 +277,7 @@ export abstract class SubResourceService<
   /**
    * Delete a sub-resource.
    */
-  async delete(
+  public async delete(
     userExternalId: string,
     ownerExternalId: string,
     resourceExternalId: string,
@@ -313,7 +330,7 @@ export abstract class SubResourceService<
    * so the client is required: without it the rows would land outside that
    * transaction and could not see the uncommitted owner.
    */
-  async createMany(
+  public async createMany(
     userExternalId: string,
     ownerExternalId: string,
     inputs: TInput[],

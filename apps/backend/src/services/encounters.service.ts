@@ -42,7 +42,7 @@ export interface EncountersServiceOptions {
  * Service for managing encounters (meeting tracking feature)
  */
 export class EncountersService {
-  private db: Pool;
+  private readonly db: Pool;
 
   constructor(options: EncountersServiceOptions) {
     this.db = options.db;
@@ -55,7 +55,7 @@ export class EncountersService {
   /**
    * List all encounters for a user with pagination and filtering
    */
-  async listEncounters(
+  public async listEncounters(
     userExternalId: string,
     options: EncounterListOptions,
   ): Promise<EncounterListResponse> {
@@ -130,7 +130,7 @@ export class EncountersService {
   /**
    * Get a single encounter by ID with all friends
    */
-  async getEncounterById(
+  public async getEncounterById(
     userExternalId: string,
     encounterExternalId: string,
   ): Promise<EncounterResponse | null> {
@@ -147,7 +147,7 @@ export class EncountersService {
   /**
    * Create a new encounter with friend assignments
    */
-  async createEncounter(
+  public async createEncounter(
     userExternalId: string,
     input: EncounterCreateInput,
   ): Promise<EncounterResponse> {
@@ -201,7 +201,7 @@ export class EncountersService {
   /**
    * Update an existing encounter
    */
-  async updateEncounter(
+  public async updateEncounter(
     userExternalId: string,
     encounterExternalId: string,
     input: EncounterUpdateInput,
@@ -275,7 +275,10 @@ export class EncountersService {
   /**
    * Delete an encounter
    */
-  async deleteEncounter(userExternalId: string, encounterExternalId: string): Promise<boolean> {
+  public async deleteEncounter(
+    userExternalId: string,
+    encounterExternalId: string,
+  ): Promise<boolean> {
     const results = await deleteEncounter.run({ userExternalId, encounterExternalId }, this.db);
     return results.length > 0;
   }
@@ -283,7 +286,7 @@ export class EncountersService {
   /**
    * Get the most recent encounter with a specific friend
    */
-  async getLastEncounterForFriend(
+  public async getLastEncounterForFriend(
     userExternalId: string,
     friendExternalId: string,
   ): Promise<LastEncounterSummaryResponse | null> {

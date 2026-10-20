@@ -1,7 +1,5 @@
 import { countryNameToCode, normalizePhoneNumber } from '@freundebuch/shared/index.js';
-import type { Context } from 'hono';
 import { PhoneCountryUnknownError } from '../errors/phone-country-unknown.error.js';
-import type { AppContext } from '../types/context.js';
 import { localeToCountry } from '../utils/country.js';
 
 /**
@@ -11,7 +9,6 @@ import { localeToCountry } from '../utils/country.js';
  * or null/undefined when unknown.
  */
 export type PrimaryCountryLookup = (
-  c: Context<AppContext>,
   userId: string,
   ownerId: string,
 ) => Promise<string | null | undefined>;
@@ -25,20 +22,20 @@ export type PrimaryCountryLookup = (
  * route files (friend and collective, create and update).
  */
 export function normalizePhoneBody(primaryCountry: PrimaryCountryLookup) {
-  return async (
-    c: Context<AppContext>,
+  return async function normalize(
     userId: string,
     ownerId: string,
     body: Record<string, unknown>,
-  ): Promise<Record<string, unknown>> => {
+    acceptLanguage: string | undefined,
+  ): Promise<Record<string, unknown>> {
     if (typeof body.phone_number !== 'string' || body.phone_number.startsWith('+')) {
       return body;
     }
 
-    const countryName = await primaryCountry(c, userId, ownerId);
+    const countryName = await primaryCountry(userId, ownerId);
     const countryCode =
       (countryName == null ? undefined : countryNameToCode(countryName)) ??
-      localeToCountry(c.req.header('Accept-Language'));
+      localeToCountry(acceptLanguage);
 
     const normalized = normalizePhoneNumber(body.phone_number, countryCode);
     // Still not E.164: no usable address, ambiguous locale, or the number is

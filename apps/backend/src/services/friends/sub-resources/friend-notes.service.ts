@@ -20,9 +20,8 @@ import {
 } from '../../../models/queries/friend-notes.queries.js';
 import { getFriendInternalId } from '../../../models/queries/friends.queries.js';
 import { formatDateOnly } from '../../../utils/date.js';
-import { withTransaction } from '../../../utils/db.js';
-import { rethrowUniqueViolation } from '../../../utils/pg-errors.js';
-import type { SubResourceServiceOptions } from '../../base/sub-resource.service.js';
+import { rethrowUniqueViolation } from '../../../utils/rethrow-unique-violation.js';
+import { withTransaction } from '../../../utils/with-transaction.js';
 
 /** Internal ids of the rows that a note links to; `null` means "no link". */
 interface ResolvedNoteRefs {
@@ -37,6 +36,11 @@ interface CurrentNote {
   id: number;
 }
 
+export interface FriendNotesServiceOptions {
+  db: pg.Pool;
+  logger: Logger;
+}
+
 /**
  * FriendNotesService handles timestamped free-text notes about a friend (Epic 15).
  *
@@ -46,10 +50,10 @@ interface CurrentNote {
  * method throws a typed error instead.
  */
 export class FriendNotesService {
-  private db: pg.Pool;
-  private logger: Logger;
+  private readonly db: pg.Pool;
+  private readonly logger: Logger;
 
-  constructor(options: SubResourceServiceOptions) {
+  constructor(options: FriendNotesServiceOptions) {
     this.db = options.db;
     this.logger = options.logger;
   }
@@ -57,7 +61,10 @@ export class FriendNotesService {
   /**
    * List a friend's notes, newest first.
    */
-  async list(userExternalId: string, friendExternalId: string): Promise<FriendNoteResponse[]> {
+  public async list(
+    userExternalId: string,
+    friendExternalId: string,
+  ): Promise<FriendNoteResponse[]> {
     this.logger.debug({ friendExternalId }, 'Listing notes');
 
     await this.resolveFriendId(this.db, userExternalId, friendExternalId);
@@ -71,7 +78,7 @@ export class FriendNotesService {
   /**
    * Add a note to a friend.
    */
-  async create(
+  public async create(
     userExternalId: string,
     friendExternalId: string,
     input: FriendNoteInput,
@@ -103,7 +110,7 @@ export class FriendNotesService {
   /**
    * Replace a note. An omitted link field clears the link.
    */
-  async update(
+  public async update(
     userExternalId: string,
     friendExternalId: string,
     noteExternalId: string,
@@ -145,7 +152,7 @@ export class FriendNotesService {
   /**
    * Delete a note. A newer note that superseded it loses its supersede link.
    */
-  async delete(
+  public async delete(
     userExternalId: string,
     friendExternalId: string,
     noteExternalId: string,

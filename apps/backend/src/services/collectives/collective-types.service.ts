@@ -14,7 +14,7 @@ import {
   type IGetRolesForTypeResult,
   type IGetRulesForTypeResult,
 } from '../../models/queries/collectives.queries.js';
-import { parseRelationshipDirection } from '../../utils/type-guards.js';
+import { parseRelationshipDirection } from '../../utils/parse-relationship-direction.js';
 
 export interface CollectiveTypesServiceOptions {
   db: Pool;
@@ -24,7 +24,7 @@ export interface CollectiveTypesServiceOptions {
  * Service for managing collective types (family, company, club, friend_group)
  */
 export class CollectiveTypesService {
-  private db: Pool;
+  private readonly db: Pool;
 
   constructor(options: CollectiveTypesServiceOptions) {
     this.db = options.db;
@@ -33,7 +33,7 @@ export class CollectiveTypesService {
   /**
    * List all collective types available to a user (system defaults + custom)
    */
-  async listTypes(userExternalId: string): Promise<CollectiveTypeListResponse> {
+  public async listTypes(userExternalId: string): Promise<CollectiveTypeListResponse> {
     const typesResult = await getCollectiveTypes.run({ userExternalId }, this.db);
 
     // Fetch roles for each type in parallel
@@ -53,7 +53,7 @@ export class CollectiveTypesService {
   /**
    * Get a single collective type with roles and rules
    */
-  async getTypeById(
+  public async getTypeById(
     userExternalId: string,
     typeExternalId: string,
   ): Promise<CollectiveTypeResponse | null> {

@@ -11,8 +11,9 @@ import {
   updateAddress,
   updateAddressCoordinates,
 } from '../../../models/queries/collective-addresses.queries.js';
-import { addressGeoFieldsChanged, parseStreetLine } from '../../../utils/address.js';
-import { parseAddressType } from '../../../utils/type-guards.js';
+import { addressGeoFieldsChanged } from '../../../utils/address-geo-fields-changed.js';
+import { parseAddressType } from '../../../utils/parse-address-type.js';
+import { parseStreetLine } from '../../../utils/parse-street-line.js';
 import type { AddressLookupService } from '../../address-lookup.service.js';
 import {
   SubResourceService,
@@ -53,91 +54,97 @@ export class CollectiveAddressService extends SubResourceService<
   IGetAddressesByCollectiveIdResult,
   IDeleteAddressResult
 > {
-  private addressLookupService?: AddressLookupService;
+  private readonly addressLookupService: AddressLookupService | undefined;
 
   constructor(options: CollectiveAddressServiceOptions) {
-    super(options, {
-      resourceName: 'collective address',
-      hasPrimaryFlag: true,
+    super({
+      ...options,
+      definition: {
+        resourceName: 'collective address',
+        hasPrimaryFlag: true,
 
-      createFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, input },
-        client,
-      ) => {
-        return createAddress.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            streetLine1: input.street_line1 ?? null,
-            streetLine2: input.street_line2 ?? null,
-            city: input.city ?? null,
-            stateProvince: input.state_province ?? null,
-            postalCode: input.postal_code ?? null,
-            country: input.country ?? null,
-            addressType: input.address_type,
-            label: input.label ?? null,
-            isPrimary: input.is_primary,
-            latitude: null,
-            longitude: null,
-          },
+        createFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return createAddress.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              streetLine1: input.street_line1 ?? null,
+              streetLine2: input.street_line2 ?? null,
+              city: input.city ?? null,
+              stateProvince: input.state_province ?? null,
+              postalCode: input.postal_code ?? null,
+              country: input.country ?? null,
+              addressType: input.address_type,
+              label: input.label ?? null,
+              isPrimary: input.is_primary,
+              latitude: null,
+              longitude: null,
+            },
+            client,
+          );
+        },
 
-      updateFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
-        client,
-      ) => {
-        return updateAddress.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            addressExternalId: resourceExternalId,
-            streetLine1: input.street_line1 ?? null,
-            streetLine2: input.street_line2 ?? null,
-            city: input.city ?? null,
-            stateProvince: input.state_province ?? null,
-            postalCode: input.postal_code ?? null,
-            country: input.country ?? null,
-            addressType: input.address_type,
-            label: input.label ?? null,
-            isPrimary: input.is_primary,
-            latitude: null,
-            longitude: null,
-          },
+        updateFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return updateAddress.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              addressExternalId: resourceExternalId,
+              streetLine1: input.street_line1 ?? null,
+              streetLine2: input.street_line2 ?? null,
+              city: input.city ?? null,
+              stateProvince: input.state_province ?? null,
+              postalCode: input.postal_code ?? null,
+              country: input.country ?? null,
+              addressType: input.address_type,
+              label: input.label ?? null,
+              isPrimary: input.is_primary,
+              latitude: null,
+              longitude: null,
+            },
+            client,
+          );
+        },
 
-      deleteFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
-        client,
-      ) => {
-        return deleteAddress.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            addressExternalId: resourceExternalId,
-          },
+        deleteFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
           client,
-        );
+        ) => {
+          return deleteAddress.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              addressExternalId: resourceExternalId,
+            },
+            client,
+          );
+        },
+
+        clearPrimaryFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId },
+          client,
+        ) => {
+          return clearPrimaryAddress.run({ userExternalId, collectiveExternalId }, client);
+        },
+
+        isPrimary: (input) => input.is_primary,
+
+        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+
+        listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+          return getAddressesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
+        },
+
+        mapListResult: mapRow,
+
+        mapResult: mapRow,
       },
-
-      clearPrimaryFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return clearPrimaryAddress.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      isPrimary: (input) => input.is_primary,
-
-      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
-
-      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return getAddressesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      mapListResult: mapRow,
-
-      mapResult: mapRow,
     });
 
     this.addressLookupService = options.addressLookupService;
@@ -160,7 +167,7 @@ export class CollectiveAddressService extends SubResourceService<
     return result;
   }
 
-  override async update(
+  public override async update(
     userExternalId: string,
     collectiveExternalId: string,
     resourceExternalId: string,
@@ -181,9 +188,9 @@ export class CollectiveAddressService extends SubResourceService<
       return result;
     }
 
-    const fieldsChanged = !existing || addressGeoFieldsChanged(input, existing);
+    const shouldGeocode = !existing || addressGeoFieldsChanged(input, existing);
 
-    if (fieldsChanged) {
+    if (shouldGeocode) {
       this.scheduleBackgroundGeocode(userExternalId, resourceExternalId, input);
       return result;
     }

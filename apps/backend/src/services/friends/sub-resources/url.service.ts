@@ -7,7 +7,7 @@ import {
   type IGetUrlsByFriendIdResult,
   updateUrl,
 } from '../../../models/queries/friend-urls.queries.js';
-import { parseUrlType } from '../../../utils/type-guards.js';
+import { parseUrlType } from '../../../utils/parse-url-type.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -34,61 +34,64 @@ export class UrlService extends SubResourceService<
   IDeleteUrlResult
 > {
   constructor(options: SubResourceServiceOptions) {
-    super(options, {
-      resourceName: 'URL',
-      hasPrimaryFlag: false,
+    super({
+      ...options,
+      definition: {
+        resourceName: 'URL',
+        hasPrimaryFlag: false,
 
-      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
-        return createUrl.run(
-          {
-            userExternalId,
-            friendExternalId,
-            url: input.url,
-            urlType: input.url_type,
-            label: input.label ?? null,
-          },
+        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
+          return createUrl.run(
+            {
+              userExternalId,
+              friendExternalId,
+              url: input.url,
+              urlType: input.url_type,
+              label: input.label ?? null,
+            },
+            client,
+          );
+        },
+
+        updateFn: async (
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return updateUrl.run(
+            {
+              userExternalId,
+              friendExternalId,
+              urlExternalId: resourceExternalId,
+              url: input.url,
+              urlType: input.url_type,
+              label: input.label ?? null,
+            },
+            client,
+          );
+        },
 
-      updateFn: async (
-        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
-        client,
-      ) => {
-        return updateUrl.run(
-          {
-            userExternalId,
-            friendExternalId,
-            urlExternalId: resourceExternalId,
-            url: input.url,
-            urlType: input.url_type,
-            label: input.label ?? null,
-          },
+        deleteFn: async (
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        );
+        ) => {
+          return deleteUrl.run(
+            {
+              userExternalId,
+              friendExternalId,
+              urlExternalId: resourceExternalId,
+            },
+            client,
+          );
+        },
+
+        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+          return getUrlsByFriendId.run({ userExternalId, friendExternalId }, client);
+        },
+
+        mapListResult: mapRow,
+
+        mapResult: mapRow,
       },
-
-      deleteFn: async (
-        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
-        client,
-      ) => {
-        return deleteUrl.run(
-          {
-            userExternalId,
-            friendExternalId,
-            urlExternalId: resourceExternalId,
-          },
-          client,
-        );
-      },
-
-      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return getUrlsByFriendId.run({ userExternalId, friendExternalId }, client);
-      },
-
-      mapListResult: mapRow,
-
-      mapResult: mapRow,
     });
   }
 }

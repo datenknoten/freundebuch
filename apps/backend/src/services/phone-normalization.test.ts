@@ -1,15 +1,6 @@
-import type { Context } from 'hono';
 import { describe, expect, it } from 'vitest';
 import { PhoneCountryUnknownError } from '../errors/phone-country-unknown.error.js';
-import type { AppContext } from '../types/context.js';
 import { normalizePhoneBody } from './phone-normalization.js';
-
-function contextWithLanguage(acceptLanguage?: string): Context<AppContext> {
-  const fake = {
-    req: { header: (name: string) => (name === 'Accept-Language' ? acceptLanguage : undefined) },
-  };
-  return fake as unknown as Context<AppContext>;
-}
 
 function normalize(
   storedCountry: string | null,
@@ -17,7 +8,7 @@ function normalize(
   acceptLanguage?: string,
 ): Promise<Record<string, unknown>> {
   const run = normalizePhoneBody(async () => storedCountry);
-  return run(contextWithLanguage(acceptLanguage), 'user-1', 'owner-1', { phone_number: phone });
+  return run('user-1', 'owner-1', { phone_number: phone }, acceptLanguage);
 }
 
 describe('normalizePhoneBody', () => {

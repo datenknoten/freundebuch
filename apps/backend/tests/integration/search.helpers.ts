@@ -1,6 +1,5 @@
 import type pg from 'pg';
 import { afterAll, beforeAll, beforeEach } from 'vitest';
-import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 
 import {
   type AuthTestContext,
@@ -307,7 +306,6 @@ export function setupSearchTestSuite() {
   }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
-    resetRateLimiters();
     // Wipe every user-owned row, then rebuild the fixture user: search
     // assertions count results, so an inherited friend silently breaks them.
     await truncateUserData(authContext.pool);

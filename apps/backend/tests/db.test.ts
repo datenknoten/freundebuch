@@ -2,13 +2,11 @@ import pg from 'pg';
 import { pino } from 'pino';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadConfig } from '../src/config.js';
-import {
-  checkDatabaseConnection,
-  closePool,
-  createPool,
-  setupGracefulShutdown,
-  wrapClient,
-} from '../src/utils/db.js';
+import { checkDatabaseConnection } from '../src/utils/check-database-connection.js';
+import { closePool } from '../src/utils/close-pool.js';
+import { createPool } from '../src/utils/create-pool.js';
+import { setupGracefulShutdown } from '../src/utils/setup-graceful-shutdown.js';
+import { wrapClient } from '../src/utils/wrap-client.js';
 import { TEST_ENV } from './helpers/test-env.js';
 
 // Mock pg module - use regular function to allow constructor usage

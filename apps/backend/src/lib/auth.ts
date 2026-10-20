@@ -2,13 +2,12 @@ import { passkey } from '@better-auth/passkey';
 import bcrypt from 'bcrypt';
 import { betterAuth } from 'better-auth';
 import { mcp } from 'better-auth/plugins';
-import pg from 'pg';
+import type pg from 'pg';
 import type { Logger } from 'pino';
 import type { Config } from '../config.js';
 import { LegacyUserAllocationError } from '../errors/legacy-user-allocation.error.js';
-import { createMailer, isMailConfigured, type MailConfig } from '../services/mailer.js';
-import type { PoolOptions } from '../utils/db.js';
-import { toError } from '../utils/to-error.js';
+import { createMailer, type MailConfig } from '../services/mailer.js';
+import { isMailConfigured } from '../utils/is-mail-configured.js';
 
 /** The config keys Better Auth reads; the MCP server supplies the same set. */
 export type AuthConfig = MailConfig &
@@ -58,32 +57,6 @@ export interface Auth {
     listPasskeys(context: HeadersContext): Promise<unknown>;
     getMcpSession(context: HeadersContext): Promise<McpSession | null>;
   };
-}
-
-/**
- * Better Auth requires search_path=auth, so it needs its own pool. Pool sizes
- * are halved from the main pool to keep total connections in check.
- */
-export function createAuthPool(options: PoolOptions) {
-  const { config, logger } = options;
-  const authPool = new pg.Pool({
-    connectionString: config.DATABASE_URL,
-    options: '-c search_path=auth',
-    min: Math.max(1, Math.floor(config.DATABASE_POOL_MIN / 2)),
-    max: Math.max(2, Math.floor(config.DATABASE_POOL_MAX / 2)),
-    connectionTimeoutMillis: config.DATABASE_CONNECTION_TIMEOUT_MS,
-    idleTimeoutMillis: config.DATABASE_IDLE_TIMEOUT_MS,
-    statement_timeout: config.DATABASE_STATEMENT_TIMEOUT_MS,
-    query_timeout: config.DATABASE_STATEMENT_TIMEOUT_MS,
-  });
-
-  // Without an 'error' listener, an idle-client error (DB restart, network
-  // blip) is emitted as an unhandled 'error' event and crashes the process.
-  authPool.on('error', (err) => {
-    logger.error({ err: toError(err) }, 'Idle pg client error');
-  });
-
-  return authPool;
 }
 
 export function createAuth(options: AuthOptions) {

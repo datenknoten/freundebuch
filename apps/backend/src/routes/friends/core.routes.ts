@@ -9,133 +9,104 @@ import { type } from 'arktype';
 import { Hono } from 'hono';
 import { FriendNotFoundError } from '../../errors/friend-not-found.error.js';
 import { getAuthUser } from '../../middleware/auth.js';
-import { FriendsService } from '../../services/friends/index.js';
-import { PhotoService } from '../../services/photo.service.js';
+import type { FriendsService } from '../../services/friends/friends.service.js';
 import type { AppContext } from '../../types/context.js';
-import { parseBody, requireUuidParam } from '../../utils/http.js';
+import { parseBody } from '../../utils/parse-body.js';
+import { requireUuidParam } from '../../utils/require-uuid-param.js';
 
-const app = new Hono<AppContext>();
+export interface CoreRoutesOptions {
+  friendsService: FriendsService;
+}
 
-/**
- * GET /api/friends
- * List friends with pagination and sorting
- */
-app.get('/', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
+export function createCoreRoutes(options: CoreRoutesOptions): Hono<AppContext> {
+  const app = new Hono<AppContext>();
 
-  const queryParams = c.req.query();
-  const validated = FriendListQuerySchema(queryParams);
+  /**
+   * GET /api/friends
+   * List friends with pagination and sorting
+   */
+  app.get('/', async (c) => {
+    const user = getAuthUser(c);
 
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid query parameters', validated);
-  }
+    const queryParams = c.req.query();
+    const validated = FriendListQuerySchema(queryParams);
 
-  const options = parseFriendListQuery(validated);
-  const friendsService = new FriendsService({
-    db: db,
-    logger: logger,
-    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+    if (validated instanceof type.errors) {
+      throw new ValidationError('Invalid query parameters', validated);
+    }
+
+    const listOptions = parseFriendListQuery(validated);
+    const result = await options.friendsService.listFriends(user.userId, listOptions);
+
+    return c.json(result);
   });
-  const result = await friendsService.listFriends(user.userId, options);
 
-  return c.json(result);
-});
+  /**
+   * GET /api/friends/:id
+   * Get a single friend with all related data
+   */
+  app.get('/:id', async (c) => {
+    const user = getAuthUser(c);
+    const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-/**
- * GET /api/friends/:id
- * Get a single friend with all related data
- */
-app.get('/:id', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = requireUuidParam(c, 'id', 'friend ID');
+    const friend = await options.friendsService.getFriendById(user.userId, friendId);
 
-  const friendsService = new FriendsService({
-    db: db,
-    logger: logger,
-    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+    if (!friend) {
+      throw new FriendNotFoundError(friendId);
+    }
+
+    return c.json(friend);
   });
-  const friend = await friendsService.getFriendById(user.userId, friendId);
 
-  if (!friend) {
-    throw new FriendNotFoundError(friendId);
-  }
+  /**
+   * POST /api/friends
+   * Create a new friend
+   */
+  app.post('/', async (c) => {
+    const user = getAuthUser(c);
 
-  return c.json(friend);
-});
+    const validated = await parseBody(c, FriendCreateInputSchema);
 
-/**
- * POST /api/friends
- * Create a new friend
- */
-app.post('/', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
+    const friend = await options.friendsService.createFriend(user.userId, validated);
 
-  const validated = await parseBody(c, FriendCreateInputSchema);
-
-  const friendsService = new FriendsService({
-    db: db,
-    logger: logger,
-    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+    return c.json(friend, 201);
   });
-  const friend = await friendsService.createFriend(user.userId, validated);
 
-  return c.json(friend, 201);
-});
+  /**
+   * PUT /api/friends/:id
+   * Update an existing friend
+   */
+  app.put('/:id', async (c) => {
+    const user = getAuthUser(c);
+    const friendId = requireUuidParam(c, 'id', 'friend ID');
+    const validated = await parseBody(c, FriendUpdateInputSchema);
 
-/**
- * PUT /api/friends/:id
- * Update an existing friend
- */
-app.put('/:id', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = requireUuidParam(c, 'id', 'friend ID');
-  const validated = await parseBody(c, FriendUpdateInputSchema);
+    const friend = await options.friendsService.updateFriend(user.userId, friendId, validated);
 
-  const friendsService = new FriendsService({
-    db: db,
-    logger: logger,
-    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+    if (!friend) {
+      throw new FriendNotFoundError(friendId);
+    }
+
+    return c.json(friend);
   });
-  const friend = await friendsService.updateFriend(user.userId, friendId, validated);
 
-  if (!friend) {
-    throw new FriendNotFoundError(friendId);
-  }
+  /**
+   * DELETE /api/friends/:id
+   * Soft delete a friend and remove associated photo files
+   */
+  app.delete('/:id', async (c) => {
+    const user = getAuthUser(c);
+    const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  return c.json(friend);
-});
+    const isDeleted = await options.friendsService.deleteFriend(user.userId, friendId);
 
-/**
- * DELETE /api/friends/:id
- * Soft delete a friend and remove associated photo files
- */
-app.delete('/:id', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = requireUuidParam(c, 'id', 'friend ID');
+    if (!isDeleted) {
+      throw new FriendNotFoundError(friendId);
+    }
 
-  const friendsService = new FriendsService({
-    db: db,
-    logger: logger,
-    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
+    // Photo cleanup now happens inside deleteFriend so all callers get it.
+    return c.json({ message: 'Friend deleted successfully' });
   });
-  const deleted = await friendsService.deleteFriend(user.userId, friendId);
 
-  if (!deleted) {
-    throw new FriendNotFoundError(friendId);
-  }
-
-  // Photo cleanup now happens inside deleteFriend so all callers get it.
-  return c.json({ message: 'Friend deleted successfully' });
-});
-
-export default app;
+  return app;
+}

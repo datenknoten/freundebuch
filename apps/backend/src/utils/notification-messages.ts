@@ -114,8 +114,8 @@ function getUpcomingOccurrence(daysUntil: number): Date {
  * occurrence. Returns null when the birth year is unknown or the resulting age
  * is not a positive number.
  */
-function computeAge(dateValue: Date, yearKnown: boolean, occurrence: Date): number | null {
-  if (!yearKnown) return null;
+function computeAge(dateValue: Date, isYearKnown: boolean, occurrence: Date): number | null {
+  if (!isYearKnown) return null;
 
   const age = occurrence.getFullYear() - dateValue.getFullYear();
 

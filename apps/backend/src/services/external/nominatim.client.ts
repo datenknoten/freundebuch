@@ -11,6 +11,11 @@ interface NominatimResult {
   display_name: string;
 }
 
+export interface NominatimClientOptions {
+  logger: Logger;
+  contactEmail?: string;
+}
+
 /**
  * Nominatim geocoding client for non-DACH countries.
  * Uses the OpenStreetMap Nominatim API with structured queries.
@@ -26,10 +31,11 @@ export class NominatimClient {
   private requestQueue: Promise<unknown> = Promise.resolve();
   private lastRequestTime = 0;
 
-  constructor(
-    private logger: Logger,
-    contactEmail?: string,
-  ) {
+  private readonly logger: Logger;
+
+  constructor(options: NominatimClientOptions) {
+    const { logger, contactEmail } = options;
+    this.logger = logger;
     this.userAgent = contactEmail
       ? `Freundebuch/2.0 (address geocoding; ${contactEmail})`
       : 'Freundebuch/2.0 (address geocoding)';
@@ -45,7 +51,7 @@ export class NominatimClient {
    * Geocode an address to lat/lon coordinates.
    * Uses structured query parameters for better accuracy.
    */
-  async geocode(
+  public async geocode(
     countryCode: string,
     city: string,
     postalCode: string,

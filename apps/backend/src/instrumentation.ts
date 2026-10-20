@@ -5,6 +5,11 @@
  */
 import { createRequire } from 'node:module';
 import * as Sentry from '@sentry/node';
+import { redactBotToken } from './utils/redact-bot-token.js';
+import { redactUrlAttributes } from './utils/redact-url-attributes.js';
+import { scrubBreadcrumb } from './utils/scrub-breadcrumb.js';
+import { scrubErrorEvent } from './utils/scrub-error-event.js';
+import { SENSITIVE_LOG_KEYS } from './utils/sensitive-log-keys.js';
 
 // Read version from package.json for release tracking
 const require = createRequire(import.meta.url);
@@ -23,97 +28,6 @@ const sentryDsn = process.env.SENTRY_DSN;
 const appEnv = process.env.ENV || 'development';
 
 const isProduction = appEnv === 'production';
-
-// Attribute keys that must never leave the process. Backstop for the pino
-// redaction in utils/logger.ts — forwarded log attributes are scrubbed here
-// too, since this is a personal CRM (names, emails, addresses) and the
-// notification channels hold credentials that grant access on their own.
-//
-// resetUrl/verificationUrl are deliberately still here even though
-// LOG_REDACT_PATHS no longer redacts them: the local debug log is the
-// documented no-SMTP recovery path, Sentry is not.
-export const SENSITIVE_LOG_KEYS = [
-  'email',
-  'newEmail',
-  'displayName',
-  'name',
-  'address',
-  'password',
-  'token',
-  'accessToken',
-  'botToken',
-  'webhookUrl',
-  'resetUrl',
-  'verificationUrl',
-  'authorization',
-];
-
-// Telegram puts the bot token in the request path
-// (https://api.telegram.org/bot<token>/sendMessage), so the outgoing-HTTP spans
-// carry it in their description and url attributes.
-const BOT_TOKEN_IN_PATH = /\/bot[^/\s]+\//g;
-const URL_ATTRIBUTES = ['http.url', 'url'];
-
-export function redactBotToken(value: string): string {
-  return value.replace(BOT_TOKEN_IN_PATH, '/bot[redacted]/');
-}
-
-export function redactUrlAttributes(data: Record<string, unknown> | undefined): void {
-  if (data === undefined) {
-    return;
-  }
-  for (const key of URL_ATTRIBUTES) {
-    const value = data[key];
-    if (typeof value === 'string') {
-      data[key] = redactBotToken(value);
-    }
-  }
-}
-
-/**
- * Breadcrumbs are attached to *error* events, which pass through neither
- * `beforeSendLog` nor `beforeSendTransaction`. Sentry's HTTP instrumentation
- * records every outgoing request as a breadcrumb, so an unrelated exception
- * captured after a Telegram delivery ships the bot token in
- * `data.url`.
- */
-export function scrubBreadcrumb(crumb: Sentry.Breadcrumb): Sentry.Breadcrumb {
-  const url = crumb.data?.url;
-  if (typeof url === 'string' && crumb.data !== undefined) {
-    crumb.data.url = redactBotToken(url);
-  }
-  if (typeof crumb.message === 'string') {
-    crumb.message = redactBotToken(crumb.message);
-  }
-  return crumb;
-}
-
-/**
- * `beforeSend` runs for error events only; the transaction hook never sees
- * them. Covers the same three carriers a captured exception has: the trace
- * context it inherits, its own request URL, and the breadcrumb trail.
- */
-export function scrubErrorEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
-  redactUrlAttributes(event.contexts?.trace?.data);
-
-  if (typeof event.request?.url === 'string') {
-    event.request.url = redactBotToken(event.request.url);
-  }
-
-  for (const crumb of event.breadcrumbs ?? []) {
-    scrubBreadcrumb(crumb);
-  }
-
-  if (event.extra !== undefined) {
-    for (const key of SENSITIVE_LOG_KEYS) {
-      if (key in event.extra) {
-        delete event.extra[key];
-      }
-    }
-  }
-
-  return event;
-}
 
 if (sentryDsn) {
   Sentry.init({

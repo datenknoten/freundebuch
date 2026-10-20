@@ -12,8 +12,9 @@ import type { Logger } from 'pino';
 import sharp, { type Sharp } from 'sharp';
 import type { Config } from '../config.js';
 import { PhotoUploadError } from '../errors/photo-upload.error.js';
-import { isPathWithinBase, isValidUuid } from '../utils/security.js';
-import { isNodeError } from '../utils/type-guards.js';
+import { isNodeError } from '../utils/is-node-error.js';
+import { isPathWithinBase } from '../utils/is-path-within-base.js';
+import { isValidUuid } from '../utils/is-valid-uuid.js';
 
 /**
  * Maximum number of pixels sharp will decode (50 MP ≈ 8660x5773). Well above
@@ -29,9 +30,9 @@ export interface PhotoServiceOptions {
 }
 
 export class PhotoService {
-  private logger: Logger;
-  private uploadDir: string;
-  private baseUrl: string;
+  private readonly logger: Logger;
+  private readonly uploadDir: string;
+  private readonly baseUrl: string;
 
   constructor(options: PhotoServiceOptions) {
     this.logger = options.logger;
@@ -42,7 +43,7 @@ export class PhotoService {
   /**
    * Validate and process an uploaded photo
    */
-  async uploadPhoto(friendExternalId: string, file: File): Promise<PhotoUploadResponse> {
+  public async uploadPhoto(friendExternalId: string, file: File): Promise<PhotoUploadResponse> {
     this.logger.debug({ friendExternalId, fileName: file.name }, 'Processing photo upload');
 
     // Defense-in-depth: Validate friendExternalId is a valid UUID
@@ -151,7 +152,7 @@ export class PhotoService {
   /**
    * Delete a friend's photos
    */
-  async deletePhoto(friendExternalId: string): Promise<void> {
+  public async deletePhoto(friendExternalId: string): Promise<void> {
     this.logger.debug({ friendExternalId }, 'Deleting friend photos');
 
     // Defense-in-depth: Validate friendExternalId is a valid UUID
@@ -182,7 +183,7 @@ export class PhotoService {
   /**
    * Get the uploads directory path for serving static files
    */
-  getUploadDir(): string {
+  public getUploadDir(): string {
     return this.uploadDir;
   }
 

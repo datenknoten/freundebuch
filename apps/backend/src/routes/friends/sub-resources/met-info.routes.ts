@@ -3,58 +3,52 @@ import { Hono } from 'hono';
 import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
 import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../../middleware/auth.js';
-import { FriendsService } from '../../../services/friends/index.js';
-import { PhotoService } from '../../../services/photo.service.js';
+import type { FriendsService } from '../../../services/friends/friends.service.js';
 import type { AppContext } from '../../../types/context.js';
-import { parseBody, requireUuidParam } from '../../../utils/http.js';
+import { parseBody } from '../../../utils/parse-body.js';
+import { requireUuidParam } from '../../../utils/require-uuid-param.js';
 
-const app = new Hono<AppContext>();
+export interface MetInfoRoutesOptions {
+  friendsService: FriendsService;
+}
 
-/**
- * PUT /api/friends/:id/met-info
- * Set or update how/where met information (upsert)
- */
-app.put('/', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = requireUuidParam(c, 'id', 'friend ID');
-  const validated = await parseBody(c, MetInfoInputSchema);
+export function createMetInfoRoutes(options: MetInfoRoutesOptions): Hono<AppContext> {
+  const app = new Hono<AppContext>();
 
-  const friendsService = new FriendsService({
-    db: db,
-    logger: c.get('logger'),
-    photoService: new PhotoService({ logger: c.get('logger'), config: c.get('config') }),
+  /**
+   * PUT /api/friends/:id/met-info
+   * Set or update how/where met information (upsert)
+   */
+  app.put('/', async (c) => {
+    const user = getAuthUser(c);
+    const friendId = requireUuidParam(c, 'id', 'friend ID');
+    const validated = await parseBody(c, MetInfoInputSchema);
+
+    const metInfo = await options.friendsService.setMetInfo(user.userId, friendId, validated);
+
+    if (!metInfo) {
+      throw new FriendNotFoundError(friendId);
+    }
+
+    return c.json(metInfo);
   });
-  const metInfo = await friendsService.setMetInfo(user.userId, friendId, validated);
 
-  if (!metInfo) {
-    throw new FriendNotFoundError(friendId);
-  }
+  /**
+   * DELETE /api/friends/:id/met-info
+   * Delete how/where met information
+   */
+  app.delete('/', async (c) => {
+    const user = getAuthUser(c);
+    const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  return c.json(metInfo);
-});
+    const isDeleted = await options.friendsService.deleteMetInfo(user.userId, friendId);
 
-/**
- * DELETE /api/friends/:id/met-info
- * Delete how/where met information
- */
-app.delete('/', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = requireUuidParam(c, 'id', 'friend ID');
+    if (!isDeleted) {
+      throw new ResourceNotFoundError('Met info', friendId);
+    }
 
-  const friendsService = new FriendsService({
-    db: db,
-    logger: c.get('logger'),
-    photoService: new PhotoService({ logger: c.get('logger'), config: c.get('config') }),
+    return c.json({ message: 'Met info deleted successfully' });
   });
-  const deleted = await friendsService.deleteMetInfo(user.userId, friendId);
 
-  if (!deleted) {
-    throw new ResourceNotFoundError('Met info', friendId);
-  }
-
-  return c.json({ message: 'Met info deleted successfully' });
-});
-
-export default app;
+  return app;
+}

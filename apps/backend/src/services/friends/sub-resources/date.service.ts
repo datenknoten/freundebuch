@@ -17,7 +17,7 @@ import {
   updateDate,
 } from '../../../models/queries/friend-dates.queries.js';
 import { formatDateOnly } from '../../../utils/date.js';
-import { parseDateType } from '../../../utils/type-guards.js';
+import { parseDateType } from '../../../utils/parse-date-type.js';
 
 export interface DateServiceOptions {
   db: pg.Pool;
@@ -30,8 +30,8 @@ export interface DateServiceOptions {
  * does not extend SubResourceService due to its unique requirements.
  */
 export class DateService {
-  private db: pg.Pool;
-  private logger: Logger;
+  private readonly db: pg.Pool;
+  private readonly logger: Logger;
 
   constructor(options: DateServiceOptions) {
     this.db = options.db;
@@ -41,7 +41,10 @@ export class DateService {
   /**
    * List a friend's important dates.
    */
-  async list(userExternalId: string, friendExternalId: string): Promise<FriendDateResponse[]> {
+  public async list(
+    userExternalId: string,
+    friendExternalId: string,
+  ): Promise<FriendDateResponse[]> {
     this.logger.debug({ friendExternalId }, 'Listing dates');
     const rows = await getDatesByFriendId.run({ userExternalId, friendExternalId }, this.db);
     return rows.map((row) => this.mapDate(row));
@@ -51,7 +54,7 @@ export class DateService {
    * Add an important date to a friend.
    * Throws BirthdayAlreadyExistsError if trying to add a second birthday.
    */
-  async add(
+  public async add(
     userExternalId: string,
     friendExternalId: string,
     data: DateInput,
@@ -94,7 +97,7 @@ export class DateService {
   /**
    * Update an existing date
    */
-  async update(
+  public async update(
     userExternalId: string,
     friendExternalId: string,
     dateExternalId: string,
@@ -128,7 +131,7 @@ export class DateService {
   /**
    * Delete a date
    */
-  async delete(
+  public async delete(
     userExternalId: string,
     friendExternalId: string,
     dateExternalId: string,
@@ -149,7 +152,7 @@ export class DateService {
   /**
    * Create multiple dates for a friend
    */
-  async createMany(
+  public async createMany(
     userExternalId: string,
     friendExternalId: string,
     dates: DateInput[],
@@ -170,7 +173,7 @@ export class DateService {
   /**
    * Get upcoming dates across all friends
    */
-  async getUpcomingDates(
+  public async getUpcomingDates(
     userExternalId: string,
     options: { days?: number; limit?: number } = {},
   ): Promise<UpcomingDateResponse[]> {
@@ -192,7 +195,7 @@ export class DateService {
   /**
    * Map a date row to the FriendDate type
    */
-  mapDate(row: IGetDatesByFriendIdResult): FriendDateResponse {
+  public mapDate(row: IGetDatesByFriendIdResult): FriendDateResponse {
     const dateValue = formatDateOnly(row.date_value);
     return {
       id: row.external_id,

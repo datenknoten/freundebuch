@@ -1,24 +1,8 @@
 import { ValidationError } from '@datenknoten/kit';
 import { type } from 'arktype';
-import { Hono } from 'hono';
-import { authMiddleware } from '../middleware/auth.js';
-import { onboardingMiddleware } from '../middleware/onboarding.js';
-import { addressLookupRateLimitMiddleware } from '../middleware/rate-limit.js';
-import { getAddressLookupService } from '../services/address-lookup.registry.js';
+import { Hono, type MiddlewareHandler } from 'hono';
+import type { AddressLookupService } from '../services/address-lookup.service.js';
 import type { AppContext } from '../types/context.js';
-
-const app = new Hono<AppContext>();
-
-// Apply auth middleware to all address-lookup routes
-app.use('*', authMiddleware);
-// Apply onboarding middleware to require profile
-app.use('*', onboardingMiddleware);
-// Bound outbound geocoder traffic per client (Overpass/Nominatim usage policies
-// apply per deployment IP).
-app.use('*', addressLookupRateLimitMiddleware);
-
-// Singletons live in services/address-lookup.registry.ts: services depend on
-// them too, and a route module is the wrong owner for that.
 
 // ============================================================================
 // Query Schemas
@@ -55,93 +39,108 @@ const HouseNumbersQuerySchema = type({
   street: 'string > 0',
 });
 
-// ============================================================================
-// Routes
-// ============================================================================
+export interface AddressLookupRoutesOptions {
+  addressLookupService: AddressLookupService;
+  authMiddleware: MiddlewareHandler<AppContext>;
+  onboardingMiddleware: MiddlewareHandler<AppContext>;
+  rateLimitMiddleware: MiddlewareHandler<AppContext>;
+}
 
-/**
- * GET /api/address-lookup/postal-codes
- * Search postal codes by prefix (autocomplete). Returns postal-code/city pairs.
- */
-app.get('/postal-codes', async (c) => {
-  const logger = c.get('logger');
-  const pool = c.get('db');
-  const query = c.req.query();
+export function createAddressLookupRoutes(options: AddressLookupRoutesOptions) {
+  const { addressLookupService, authMiddleware, onboardingMiddleware, rateLimitMiddleware } =
+    options;
+  const app = new Hono<AppContext>();
 
-  const validated = PostalCodesQuerySchema(query);
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid query parameters', validated);
-  }
+  // Apply auth middleware to all address-lookup routes
+  app.use('*', authMiddleware);
+  // Apply onboarding middleware to require profile
+  app.use('*', onboardingMiddleware);
+  // Bound outbound geocoder traffic per client (Overpass/Nominatim usage policies
+  // apply per deployment IP).
+  app.use('*', rateLimitMiddleware);
 
-  const service = getAddressLookupService(pool, logger, c.get('config'));
-  const postalCodes = await service.searchPostalCodes(validated.country, validated.prefix);
-  return c.json(postalCodes);
-});
+  // ============================================================================
+  // Routes
+  // ============================================================================
 
-/**
- * GET /api/address-lookup/cities
- * Get cities for a postal code in a country
- */
-app.get('/cities', async (c) => {
-  const logger = c.get('logger');
-  const pool = c.get('db');
-  const query = c.req.query();
+  /**
+   * GET /api/address-lookup/postal-codes
+   * Search postal codes by prefix (autocomplete). Returns postal-code/city pairs.
+   */
+  app.get('/postal-codes', async (c) => {
+    const query = c.req.query();
 
-  const validated = CitiesQuerySchema(query);
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid query parameters', validated);
-  }
+    const validated = PostalCodesQuerySchema(query);
+    if (validated instanceof type.errors) {
+      throw new ValidationError('Invalid query parameters', validated);
+    }
 
-  const service = getAddressLookupService(pool, logger, c.get('config'));
-  const cities = await service.getCitiesByPostalCode(validated.country, validated.postal_code);
-  return c.json(cities);
-});
+    const postalCodes = await addressLookupService.searchPostalCodes(
+      validated.country,
+      validated.prefix,
+    );
+    return c.json(postalCodes);
+  });
 
-/**
- * GET /api/address-lookup/streets
- * Get streets for a city/postal code
- */
-app.get('/streets', async (c) => {
-  const logger = c.get('logger');
-  const pool = c.get('db');
-  const query = c.req.query();
+  /**
+   * GET /api/address-lookup/cities
+   * Get cities for a postal code in a country
+   */
+  app.get('/cities', async (c) => {
+    const query = c.req.query();
 
-  const validated = StreetsQuerySchema(query);
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid query parameters', validated);
-  }
+    const validated = CitiesQuerySchema(query);
+    if (validated instanceof type.errors) {
+      throw new ValidationError('Invalid query parameters', validated);
+    }
 
-  const service = getAddressLookupService(pool, logger, c.get('config'));
-  const streets = await service.getStreets(
-    validated.country,
-    validated.city,
-    validated.postal_code,
-  );
-  return c.json(streets);
-});
+    const cities = await addressLookupService.getCitiesByPostalCode(
+      validated.country,
+      validated.postal_code,
+    );
+    return c.json(cities);
+  });
 
-/**
- * GET /api/address-lookup/house-numbers
- * Get house numbers for a street
- */
-app.get('/house-numbers', async (c) => {
-  const logger = c.get('logger');
-  const pool = c.get('db');
-  const query = c.req.query();
+  /**
+   * GET /api/address-lookup/streets
+   * Get streets for a city/postal code
+   */
+  app.get('/streets', async (c) => {
+    const query = c.req.query();
 
-  const validated = HouseNumbersQuerySchema(query);
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid query parameters', validated);
-  }
+    const validated = StreetsQuerySchema(query);
+    if (validated instanceof type.errors) {
+      throw new ValidationError('Invalid query parameters', validated);
+    }
 
-  const service = getAddressLookupService(pool, logger, c.get('config'));
-  const houseNumbers = await service.getHouseNumbers(
-    validated.country,
-    validated.city,
-    validated.postal_code,
-    validated.street,
-  );
-  return c.json(houseNumbers);
-});
+    const streets = await addressLookupService.getStreets(
+      validated.country,
+      validated.city,
+      validated.postal_code,
+    );
+    return c.json(streets);
+  });
 
-export default app;
+  /**
+   * GET /api/address-lookup/house-numbers
+   * Get house numbers for a street
+   */
+  app.get('/house-numbers', async (c) => {
+    const query = c.req.query();
+
+    const validated = HouseNumbersQuerySchema(query);
+    if (validated instanceof type.errors) {
+      throw new ValidationError('Invalid query parameters', validated);
+    }
+
+    const houseNumbers = await addressLookupService.getHouseNumbers(
+      validated.country,
+      validated.city,
+      validated.postal_code,
+      validated.street,
+    );
+    return c.json(houseNumbers);
+  });
+
+  return app;
+}

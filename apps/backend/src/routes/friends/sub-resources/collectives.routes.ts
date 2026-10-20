@@ -1,24 +1,31 @@
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
-import { CollectivesService } from '../../../services/collectives/index.js';
+import type { CollectivesService } from '../../../services/collectives/collectives.service.js';
 import type { AppContext } from '../../../types/context.js';
-import { requireUuidParam } from '../../../utils/http.js';
+import { requireUuidParam } from '../../../utils/require-uuid-param.js';
 
-const app = new Hono<AppContext>();
+export interface CollectivesRoutesOptions {
+  collectivesService: CollectivesService;
+}
 
-/**
- * GET /api/friends/:id/collectives
- * Get all collectives this friend belongs to
- */
-app.get('/', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = requireUuidParam(c, 'id', 'friend ID');
+export function createCollectivesRoutes(options: CollectivesRoutesOptions): Hono<AppContext> {
+  const app = new Hono<AppContext>();
 
-  const collectivesService = new CollectivesService({ db: db });
-  const collectives = await collectivesService.getCollectivesForContact(user.userId, friendId);
+  /**
+   * GET /api/friends/:id/collectives
+   * Get all collectives this friend belongs to
+   */
+  app.get('/', async (c) => {
+    const user = getAuthUser(c);
+    const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  return c.json(collectives);
-});
+    const collectives = await options.collectivesService.getCollectivesForContact(
+      user.userId,
+      friendId,
+    );
 
-export default app;
+    return c.json(collectives);
+  });
+
+  return app;
+}

@@ -6,6 +6,11 @@ import pino from 'pino';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { loadConfig } from '../../src/config.js';
 import type { Auth } from '../../src/lib/auth.js';
+import { createAuthMiddleware } from '../../src/middleware/auth.js';
+import { createRateLimitMiddleware } from '../../src/middleware/rate-limit.js';
+import type { FriendsService } from '../../src/services/friends/friends.service.js';
+import { OAuthClientsService } from '../../src/services/oauth-clients.service.js';
+import { UsersService } from '../../src/services/users.service.js';
 import type { AppContext } from '../../src/types/context.js';
 import { TEST_ENV } from '../helpers/test-env.js';
 
@@ -30,7 +35,7 @@ vi.mock('../../src/models/queries/oauth.queries.ts', () => ({
   getOAuthClientByClientId: { run: mockOAuthClientRun },
 }));
 
-import authRoutes from '../../src/routes/auth.js';
+import { createAuthRoutes } from '../../src/routes/auth.js';
 
 // These tests validate the auth route structure and custom endpoints (/me, /preferences).
 // Better Auth handler endpoints (sign-up, sign-in, sign-out, etc.) are tested
@@ -47,14 +52,29 @@ describe('Auth Routes', () => {
     logger = pino({ level: 'silent' });
 
     app.use('*', async (c, next) => {
-      c.set('db', mockDb);
       c.set('logger', logger);
-      c.set('auth', FAKE_AUTH);
-      c.set('config', loadConfig({ ...TEST_ENV }));
       await next();
     });
 
-    app.route('/api/auth', authRoutes);
+    app.route(
+      '/api/auth',
+      createAuthRoutes({
+        auth: FAKE_AUTH,
+        usersService: new UsersService({
+          db: mockDb,
+          logger,
+          // The auth routes under test never create a self-profile.
+          friendsService: {} as FriendsService,
+          isSignupDisabled: false,
+        }),
+        oauthClientsService: new OAuthClientsService({ db: mockDb }),
+        authMiddleware: createAuthMiddleware({ auth: FAKE_AUTH }),
+        passkeyListRateLimitMiddleware: createRateLimitMiddleware({
+          config: loadConfig({ ...TEST_ENV }),
+          limiter: 'passkeyList',
+        }),
+      }),
+    );
 
     app.onError((err, c) => {
       const { status, body } = handleError(err, logger);

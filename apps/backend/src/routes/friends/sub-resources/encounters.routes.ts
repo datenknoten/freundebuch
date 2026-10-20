@@ -4,54 +4,59 @@ import { type } from 'arktype';
 import { Hono } from 'hono';
 import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../../middleware/auth.js';
-import { EncountersService } from '../../../services/encounters.service.js';
+import type { EncountersService } from '../../../services/encounters.service.js';
 import type { AppContext } from '../../../types/context.js';
-import { requireUuidParam } from '../../../utils/http.js';
+import { requireUuidParam } from '../../../utils/require-uuid-param.js';
 
-const app = new Hono<AppContext>();
+export interface EncountersRoutesOptions {
+  encountersService: EncountersService;
+}
 
-/**
- * GET /api/friends/:id/encounters
- * Get all encounters with a specific friend
- */
-app.get('/', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = requireUuidParam(c, 'id', 'friend ID');
+export function createEncountersRoutes(options: EncountersRoutesOptions): Hono<AppContext> {
+  const app = new Hono<AppContext>();
 
-  const query = c.req.query();
-  const validated = EncounterListQuerySchema(query);
+  /**
+   * GET /api/friends/:id/encounters
+   * Get all encounters with a specific friend
+   */
+  app.get('/', async (c) => {
+    const user = getAuthUser(c);
+    const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid query parameters', validated);
-  }
+    const query = c.req.query();
+    const validated = EncounterListQuerySchema(query);
 
-  // Force filter by this friend
-  const options = parseEncounterListQuery({ ...validated, friend_id: friendId });
+    if (validated instanceof type.errors) {
+      throw new ValidationError('Invalid query parameters', validated);
+    }
 
-  const encountersService = new EncountersService({ db: db });
-  const result = await encountersService.listEncounters(user.userId, options);
+    // Force filter by this friend
+    const listOptions = parseEncounterListQuery({ ...validated, friend_id: friendId });
 
-  return c.json(result);
-});
+    const result = await options.encountersService.listEncounters(user.userId, listOptions);
 
-/**
- * GET /api/friends/:id/last-encounter
- * Get the most recent encounter with a specific friend
- */
-app.get('/last', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = requireUuidParam(c, 'id', 'friend ID');
+    return c.json(result);
+  });
 
-  const encountersService = new EncountersService({ db: db });
-  const lastEncounter = await encountersService.getLastEncounterForFriend(user.userId, friendId);
+  /**
+   * GET /api/friends/:id/last-encounter
+   * Get the most recent encounter with a specific friend
+   */
+  app.get('/last', async (c) => {
+    const user = getAuthUser(c);
+    const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-  if (!lastEncounter) {
-    throw new ResourceNotFoundError('Encounters', friendId);
-  }
+    const lastEncounter = await options.encountersService.getLastEncounterForFriend(
+      user.userId,
+      friendId,
+    );
 
-  return c.json(lastEncounter);
-});
+    if (!lastEncounter) {
+      throw new ResourceNotFoundError('Encounters', friendId);
+    }
 
-export default app;
+    return c.json(lastEncounter);
+  });
+
+  return app;
+}

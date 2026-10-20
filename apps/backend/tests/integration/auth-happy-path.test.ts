@@ -190,7 +190,7 @@ describe('Auth Endpoints - Happy Path Integration Tests', () => {
     });
 
     /**
-     * The hourly reaper (utils/scheduler.ts) exists for the legacy row a
+     * The hourly reaper (utils/setup-cleanup-scheduler.ts) exists for the legacy row a
      * failed sign-up leaves behind. auth.users is the ON DELETE CASCADE anchor
      * for friends, encounters and collectives, and the
      * `auth."user".id = auth.users.external_id::text` pairing is a convention

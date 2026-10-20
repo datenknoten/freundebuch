@@ -4,23 +4,15 @@ import { stat } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { ValidationError } from '@datenknoten/kit';
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import { FriendNotFoundError } from '../errors/friend-not-found.error.js';
 import { ResourceNotFoundError } from '../errors/resource-not-found.error.js';
-import { authMiddleware, getAuthUser } from '../middleware/auth.js';
-import { onboardingMiddleware } from '../middleware/onboarding.js';
-import { FriendsService } from '../services/friends/index.js';
-import { PhotoService } from '../services/photo.service.js';
+import { getAuthUser } from '../middleware/auth.js';
+import type { FriendsService } from '../services/friends/friends.service.js';
+import type { PhotoService } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
-import { requireUuidParam } from '../utils/http.js';
-import { isNodeError } from '../utils/type-guards.js';
-
-const app = new Hono<AppContext>();
-
-// Apply auth middleware to all upload routes
-app.use('*', authMiddleware);
-// Apply onboarding middleware to require profile
-app.use('*', onboardingMiddleware);
+import { isNodeError } from '../utils/is-node-error.js';
+import { requireUuidParam } from '../utils/require-uuid-param.js';
 
 /**
  * RFC 9110 If-None-Match: a comma-separated list, `*`, or weak validators.
@@ -38,94 +30,103 @@ function etagMatches(header: string | undefined, etag: string): boolean {
   return header.split(',').some((candidate) => candidate.trim().replace(/^W\//, '') === etag);
 }
 
-/**
- * GET /api/uploads/friends/:friendId/:filename
- * Serve uploaded friend photos (only to the owner)
- */
-app.get('/friends/:friendId/:filename', async (c) => {
-  const logger = c.get('logger');
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const friendId = requireUuidParam(c, 'friendId', 'friend ID');
-  const filename = c.req.param('filename');
+export interface UploadsRoutesOptions {
+  friendsService: FriendsService;
+  photoService: PhotoService;
+  authMiddleware: MiddlewareHandler<AppContext>;
+  onboardingMiddleware: MiddlewareHandler<AppContext>;
+}
 
-  // Verify the user owns this friend
-  const friendsService = new FriendsService({
-    db: db,
-    logger: logger,
-    photoService: new PhotoService({ logger: logger, config: c.get('config') }),
-  });
-  const friend = await friendsService.getFriendById(user.userId, friendId);
+export function createUploadsRoutes(options: UploadsRoutesOptions) {
+  const { friendsService, photoService, authMiddleware, onboardingMiddleware } = options;
+  const app = new Hono<AppContext>();
 
-  if (!friend) {
-    throw new FriendNotFoundError(friendId);
-  }
+  // Apply auth middleware to all upload routes
+  app.use('*', authMiddleware);
+  // Apply onboarding middleware to require profile
+  app.use('*', onboardingMiddleware);
 
-  // Validate filename to prevent directory traversal
-  if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-    throw new ValidationError('Invalid filename');
-  }
+  /**
+   * GET /api/uploads/friends/:friendId/:filename
+   * Serve uploaded friend photos (only to the owner)
+   */
+  app.get('/friends/:friendId/:filename', async (c) => {
+    const user = getAuthUser(c);
+    const friendId = requireUuidParam(c, 'friendId', 'friend ID');
+    const filename = c.req.param('filename');
 
-  // Only allow specific filenames
-  const allowedFilenames = [
-    'photo.jpg',
-    'photo.png',
-    'photo.webp',
-    'photo_thumb.jpg',
-    'photo_thumb.png',
-    'photo_thumb.webp',
-  ];
-  if (!allowedFilenames.includes(filename)) {
-    throw new ValidationError('Invalid filename');
-  }
+    // Verify the user owns this friend
+    const friend = await friendsService.getFriendById(user.userId, friendId);
 
-  const photoService = new PhotoService({ logger: logger, config: c.get('config') });
-  const uploadDir = photoService.getUploadDir();
-  const filePath = path.join(uploadDir, friendId, filename);
+    if (!friend) {
+      throw new FriendNotFoundError(friendId);
+    }
 
-  // Determine content type
-  const ext = path.extname(filename).toLowerCase();
-  const contentTypes: Record<string, string> = {
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.png': 'image/png',
-    '.webp': 'image/webp',
-  };
-  const contentType = contentTypes[ext] ?? 'application/octet-stream';
+    // Validate filename to prevent directory traversal
+    if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      throw new ValidationError('Invalid filename');
+    }
 
-  let fileStat: Stats;
-  try {
-    fileStat = await stat(filePath);
-  } catch (error) {
-    if (isNodeError(error) && error.code === 'ENOENT') {
+    // Only allow specific filenames
+    const allowedFilenames = [
+      'photo.jpg',
+      'photo.png',
+      'photo.webp',
+      'photo_thumb.jpg',
+      'photo_thumb.png',
+      'photo_thumb.webp',
+    ];
+    if (!allowedFilenames.includes(filename)) {
+      throw new ValidationError('Invalid filename');
+    }
+
+    const uploadDir = photoService.getUploadDir();
+    const filePath = path.join(uploadDir, friendId, filename);
+
+    // Determine content type
+    const ext = path.extname(filename).toLowerCase();
+    const contentTypes: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.webp': 'image/webp',
+    };
+    const contentType = contentTypes[ext] ?? 'application/octet-stream';
+
+    let fileStat: Stats;
+    try {
+      fileStat = await stat(filePath);
+    } catch (error) {
+      if (isNodeError(error) && error.code === 'ENOENT') {
+        throw new ResourceNotFoundError('Photo', `${friendId}/${filename}`);
+      }
+      throw error;
+    }
+
+    if (!fileStat.isFile()) {
       throw new ResourceNotFoundError('Photo', `${friendId}/${filename}`);
     }
-    throw error;
-  }
 
-  if (!fileStat.isFile()) {
-    throw new ResourceNotFoundError('Photo', `${friendId}/${filename}`);
-  }
+    // Photos are immutable per (friend, filename) until re-uploaded, and every
+    // re-upload changes size or mtime — so size+mtime is a sound strong validator
+    // and lets a friend-list render skip re-downloading every thumbnail.
+    const etag = `"${fileStat.size.toString(16)}-${Math.floor(fileStat.mtimeMs).toString(16)}"`;
 
-  // Photos are immutable per (friend, filename) until re-uploaded, and every
-  // re-upload changes size or mtime — so size+mtime is a sound strong validator
-  // and lets a friend-list render skip re-downloading every thumbnail.
-  const etag = `"${fileStat.size.toString(16)}-${Math.floor(fileStat.mtimeMs).toString(16)}"`;
+    c.header('ETag', etag);
+    c.header('Cache-Control', 'private, max-age=86400'); // 1 day cache, browser only
+    c.header('Last-Modified', fileStat.mtime.toUTCString());
 
-  c.header('ETag', etag);
-  c.header('Cache-Control', 'private, max-age=86400'); // 1 day cache, browser only
-  c.header('Last-Modified', fileStat.mtime.toUTCString());
+    if (etagMatches(c.req.header('If-None-Match'), etag)) {
+      return c.body(null, 304);
+    }
 
-  if (etagMatches(c.req.header('If-None-Match'), etag)) {
-    return c.body(null, 304);
-  }
+    c.header('Content-Type', contentType);
+    c.header('Content-Length', fileStat.size.toString());
 
-  c.header('Content-Type', contentType);
-  c.header('Content-Length', fileStat.size.toString());
+    // Stream rather than buffer: a 5 MB original would otherwise sit in the heap
+    // for the whole response.
+    return c.body(Readable.toWeb(createReadStream(filePath)));
+  });
 
-  // Stream rather than buffer: a 5 MB original would otherwise sit in the heap
-  // for the whole response.
-  return c.body(Readable.toWeb(createReadStream(filePath)));
-});
-
-export default app;
+  return app;
+}

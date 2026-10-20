@@ -3,11 +3,11 @@ import { createRootLogger } from '@datenknoten/kit/logger';
 import type { Hono } from 'hono';
 import pg from 'pg';
 import type { Logger } from 'pino';
-import { afterAll, beforeAll, beforeEach, inject } from 'vitest';
+import { afterAll, beforeAll, inject } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { type Config, loadConfig } from '../../src/config.js';
-import { type Auth, createAuth, createAuthPool } from '../../src/lib/auth.js';
-import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
+import { type Auth, createAuth } from '../../src/lib/auth.js';
+import { createAuthPool } from '../../src/lib/auth-pool.js';
 import type { AppContext } from '../../src/types/context.js';
 import { TEST_AUTH_SECRET, TEST_ENV } from '../helpers/test-env.js';
 import { SUITE_HOOK_TIMEOUT_MS } from './timeouts.js';
@@ -338,11 +338,6 @@ export function setupAuthTestSuite(env: Record<string, string> = {}) {
   beforeAll(async () => {
     context = await setupAuthTests(env);
   }, SUITE_HOOK_TIMEOUT_MS);
-
-  beforeEach(() => {
-    // Reset rate limiters before each test to avoid test interference
-    resetRateLimiters();
-  });
 
   afterAll(async () => {
     await teardownAuthTests(context);

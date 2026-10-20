@@ -1,65 +1,45 @@
+import type { CityInfoResponse, PostalCodeInfoResponse } from '@freundebuch/shared/index.js';
 import type { Logger } from 'pino';
-import type { GeocodedLocation } from './external/nominatim.client.js';
-import { NominatimClient } from './external/nominatim.client.js';
-import { type HouseNumber, OverpassClient, type Street } from './external/overpass.client.js';
+import type { GeocodedLocation, NominatimClient } from './external/nominatim.client.js';
+import type { HouseNumber, OverpassClient, Street } from './external/overpass.client.js';
 import type { PostGISAddressClient } from './external/postgis-address.client.js';
-
-export interface CityInfo {
-  city: string;
-  state?: string;
-  stateCode?: string;
-}
-
-export interface PostalCodeInfo {
-  postalCode: string;
-  city: string;
-}
-
-export type { HouseNumber, Street };
 
 /** DACH countries supported by PostGIS address data */
 const DACH_COUNTRIES = ['DE', 'AT', 'CH'];
 
 export interface AddressLookupServiceOptions {
-  overpassPrimaryUrl: string;
-  overpassFallbackUrl: string;
+  logger: Logger;
+  overpassClient: OverpassClient;
+  nominatimClient: NominatimClient;
+  /** PostGIS lookups are enabled exactly when a client is given. */
   postgisClient?: PostGISAddressClient;
-  postgisEnabled?: boolean;
-  postgisDachOnly?: boolean;
-  nominatimContactEmail?: string;
+  isPostgisDachOnly: boolean;
 }
 
 export class AddressLookupService {
-  private overpassClient: OverpassClient;
-  private nominatimClient: NominatimClient;
-  private postgisClient?: PostGISAddressClient;
-  private postgisEnabled: boolean;
-  private postgisDachOnly: boolean;
+  private readonly logger: Logger;
+  private readonly overpassClient: OverpassClient;
+  private readonly nominatimClient: NominatimClient;
+  private readonly postgisClient: PostGISAddressClient | undefined;
+  private readonly isPostgisDachOnly: boolean;
 
-  constructor(
-    options: AddressLookupServiceOptions,
-    private logger: Logger,
-  ) {
-    this.overpassClient = new OverpassClient(
-      options.overpassPrimaryUrl,
-      options.overpassFallbackUrl,
-      logger,
-    );
-    this.nominatimClient = new NominatimClient(logger, options.nominatimContactEmail);
+  constructor(options: AddressLookupServiceOptions) {
+    this.logger = options.logger;
+    this.overpassClient = options.overpassClient;
+    this.nominatimClient = options.nominatimClient;
     this.postgisClient = options.postgisClient;
-    this.postgisEnabled = options.postgisEnabled ?? false;
-    this.postgisDachOnly = options.postgisDachOnly ?? true;
+    this.isPostgisDachOnly = options.isPostgisDachOnly;
   }
 
   /**
    * Check if PostGIS should be used for this country
    */
   private shouldUsePostGIS(countryCode: string): boolean {
-    if (!this.postgisEnabled || !this.postgisClient) {
+    if (!this.postgisClient) {
       return false;
     }
 
-    if (this.postgisDachOnly) {
+    if (this.isPostgisDachOnly) {
       return DACH_COUNTRIES.includes(countryCode.toUpperCase());
     }
 
@@ -74,7 +54,10 @@ export class AddressLookupService {
    * returned and the frontend falls back to free-text entry. PostGIS-sourced
    * cities carry no state/province — the geodata schema has no such column.
    */
-  async getCitiesByPostalCode(countryCode: string, postalCode: string): Promise<CityInfo[]> {
+  public async getCitiesByPostalCode(
+    countryCode: string,
+    postalCode: string,
+  ): Promise<CityInfoResponse[]> {
     if (!this.shouldUsePostGIS(countryCode) || !this.postgisClient) {
       return [];
     }
@@ -98,7 +81,10 @@ export class AddressLookupService {
    * Backed entirely by PostGIS (DACH OSM data). Returns an empty list for
    * non-DACH countries or when PostGIS is disabled / has no matching data.
    */
-  async searchPostalCodes(countryCode: string, prefix: string): Promise<PostalCodeInfo[]> {
+  public async searchPostalCodes(
+    countryCode: string,
+    prefix: string,
+  ): Promise<PostalCodeInfoResponse[]> {
     if (!this.shouldUsePostGIS(countryCode) || !this.postgisClient) {
       return [];
     }
@@ -121,7 +107,11 @@ export class AddressLookupService {
    * Uses PostGIS for DACH countries (if enabled), falls back to Overpass
    * Returns empty array on error (frontend will enable free text input)
    */
-  async getStreets(countryCode: string, city: string, postalCode: string): Promise<Street[]> {
+  public async getStreets(
+    countryCode: string,
+    city: string,
+    postalCode: string,
+  ): Promise<Street[]> {
     // Try PostGIS first for DACH countries
     if (this.shouldUsePostGIS(countryCode) && this.postgisClient) {
       try {
@@ -163,7 +153,7 @@ export class AddressLookupService {
    * Uses PostGIS for DACH countries (if enabled), falls back to Overpass
    * Returns empty array on error (frontend will enable free text input)
    */
-  async getHouseNumbers(
+  public async getHouseNumbers(
     countryCode: string,
     city: string,
     postalCode: string,
@@ -215,7 +205,7 @@ export class AddressLookupService {
    * Uses PostGIS for DACH countries (if enabled), falls back to Nominatim.
    * Returns null if geocoding fails — never throws.
    */
-  async geocodeAddress(
+  public async geocodeAddress(
     countryCode: string,
     city: string,
     postalCode: string,

@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isPathWithinBase,
-  isPrivateAddress,
-  isValidUuid,
-  sanitizeSearchHeadline,
-} from '../src/utils/security.js';
+import { isPathWithinBase } from '../src/utils/is-path-within-base.js';
+import { isPrivateAddress } from '../src/utils/is-private-address.js';
+import { isValidUuid } from '../src/utils/is-valid-uuid.js';
+import { sanitizeSearchHeadline } from '../src/utils/sanitize-search-headline.js';
 
 describe('security.ts', () => {
   describe('isValidUuid', () => {

@@ -4,15 +4,15 @@ import { serve } from '@hono/node-server';
 import * as Sentry from '@sentry/node';
 import { createApp } from './app.js';
 import { loadConfig } from './config.js';
-import { createAuth, createAuthPool } from './lib/auth.js';
-import { initializeAddressCaches } from './utils/cache.js';
-import {
-  deriveCredentialsKey,
-  encryptLegacyNotificationCredentials,
-} from './utils/credentials-crypto.js';
-import { createPool, setupGracefulShutdown } from './utils/db.js';
+import { createAuth } from './lib/auth.js';
+import { createAuthPool } from './lib/auth-pool.js';
+import { createPool } from './utils/create-pool.js';
+import { deriveCredentialsKey } from './utils/derive-credentials-key.js';
+import { encryptLegacyNotificationCredentials } from './utils/encrypt-legacy-notification-credentials.js';
 import { LOG_REDACT_PATHS } from './utils/logger.js';
-import { setupCleanupScheduler, setupNotificationScheduler } from './utils/scheduler.js';
+import { setupCleanupScheduler } from './utils/setup-cleanup-scheduler.js';
+import { setupGracefulShutdown } from './utils/setup-graceful-shutdown.js';
+import { setupNotificationScheduler } from './utils/setup-notification-scheduler.js';
 import { toError } from './utils/to-error.js';
 
 const PRETTY_TRANSPORT = {
@@ -48,8 +48,6 @@ async function main() {
   const authPool = createAuthPool({ config, logger: logger.child({ module: 'auth-db' }) });
   const auth = createAuth({ config, pool: authPool, logger });
   const app = await createApp({ config, logger, pool, authPool, auth });
-
-  initializeAddressCaches(pool, logger);
 
   // One-shot conversion of credentials written before encryption at rest
   // existed. Idempotent, so it stays harmless on every later boot.

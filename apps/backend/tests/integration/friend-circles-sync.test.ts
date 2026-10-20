@@ -1,6 +1,5 @@
 import type { Hono } from 'hono';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
 
 import {
@@ -31,7 +30,6 @@ describe('Friend circle assignments - CardDAV change log', () => {
   }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
-    resetRateLimiters();
     await truncateUserData(context.pool);
     user = await createAuthenticatedUser(
       context.pool,

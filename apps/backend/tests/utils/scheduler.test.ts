@@ -2,8 +2,8 @@ import type pg from 'pg';
 import type { Logger } from 'pino';
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { loadConfig } from '../../src/config.js';
-import { deriveCredentialsKey } from '../../src/utils/credentials-crypto.js';
-import { setupNotificationScheduler } from '../../src/utils/scheduler.js';
+import { deriveCredentialsKey } from '../../src/utils/derive-credentials-key.js';
+import { setupNotificationScheduler } from '../../src/utils/setup-notification-scheduler.js';
 import { TEST_AUTH_SECRET, TEST_ENV } from '../helpers/test-env.js';
 
 const CONFIG = loadConfig({ ...TEST_ENV });

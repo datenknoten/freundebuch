@@ -11,25 +11,13 @@ import {
   TelegramCredentialsUpdateSchema,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import { NotificationChannelNotFoundError } from '../errors/notification-channel-not-found.error.js';
-import { authMiddleware, getAuthUser } from '../middleware/auth.js';
-import { onboardingMiddleware } from '../middleware/onboarding.js';
-import {
-  notificationChannelsRateLimitMiddleware,
-  notificationTestRateLimitMiddleware,
-} from '../middleware/rate-limit.js';
-import { NotificationChannelsService } from '../services/notification-channels.service.js';
+import { getAuthUser } from '../middleware/auth.js';
+import type { NotificationChannelsService } from '../services/notification-channels.service.js';
 import type { AppContext } from '../types/context.js';
-import { deriveCredentialsKey } from '../utils/credentials-crypto.js';
-import { parseBody, requireUuidParam } from '../utils/http.js';
-
-const app = new Hono<AppContext>();
-
-// Apply auth, onboarding, and rate limiting middleware to all routes
-app.use('*', authMiddleware);
-app.use('*', onboardingMiddleware);
-app.use('*', notificationChannelsRateLimitMiddleware);
+import { parseBody } from '../utils/parse-body.js';
+import { requireUuidParam } from '../utils/require-uuid-param.js';
 
 /**
  * Validate platform-specific credentials (all fields required — for creation)
@@ -87,168 +75,157 @@ function validateCredentialsForUpdate(
   return validated as Record<string, string>;
 }
 
-// ============================================================================
-// Routes
-// ============================================================================
+export interface NotificationChannelsRoutesOptions {
+  notificationChannelsService: NotificationChannelsService;
+  authMiddleware: MiddlewareHandler<AppContext>;
+  onboardingMiddleware: MiddlewareHandler<AppContext>;
+  rateLimitMiddleware: MiddlewareHandler<AppContext>;
+  testRateLimitMiddleware: MiddlewareHandler<AppContext>;
+}
 
-/**
- * GET /api/notification-channels
- * List all channels for the authenticated user
- */
-app.get('/', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
+export function createNotificationChannelsRoutes(options: NotificationChannelsRoutesOptions) {
+  const {
+    notificationChannelsService,
+    authMiddleware,
+    onboardingMiddleware,
+    rateLimitMiddleware,
+    testRateLimitMiddleware,
+  } = options;
+  const app = new Hono<AppContext>();
 
-  const service = new NotificationChannelsService({
-    db: db,
-    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
-  });
-  const result = await service.listChannels(user.userId);
+  // Apply auth, onboarding, and rate limiting middleware to all routes
+  app.use('*', authMiddleware);
+  app.use('*', onboardingMiddleware);
+  app.use('*', rateLimitMiddleware);
 
-  return c.json(result);
-});
+  // ============================================================================
+  // Routes
+  // ============================================================================
 
-/**
- * POST /api/notification-channels
- * Create a new notification channel
- */
-app.post('/', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
+  /**
+   * GET /api/notification-channels
+   * List all channels for the authenticated user
+   */
+  app.get('/', async (c) => {
+    const user = getAuthUser(c);
 
-  // First pass: validate top-level shape
-  const validated = await parseBody(c, NotificationChannelCreateInputSchema);
+    const result = await notificationChannelsService.listChannels(user.userId);
 
-  // Second pass: validate platform-specific credentials
-  const credentials = validateCredentials(validated.platform, validated.credentials);
-
-  const service = new NotificationChannelsService({
-    db: db,
-    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
-  });
-  const result = await service.createChannel(user.userId, {
-    platform: validated.platform,
-    isEnabled: validated.isEnabled,
-    lookaheadDays: validated.lookaheadDays,
-    notifyTime: validated.notifyTime,
-    credentials,
+    return c.json(result);
   });
 
-  return c.json(result, 201);
-});
+  /**
+   * POST /api/notification-channels
+   * Create a new notification channel
+   */
+  app.post('/', async (c) => {
+    const user = getAuthUser(c);
 
-/**
- * GET /api/notification-channels/:channelId
- * Get a single channel by external ID
- */
-app.get('/:channelId', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const channelId = requireUuidParam(c, 'channelId', 'channel ID');
+    // First pass: validate top-level shape
+    const validated = await parseBody(c, NotificationChannelCreateInputSchema);
 
-  const service = new NotificationChannelsService({
-    db: db,
-    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
-  });
-  const result = await service.getChannel(user.userId, channelId);
+    // Second pass: validate platform-specific credentials
+    const credentials = validateCredentials(validated.platform, validated.credentials);
 
-  return c.json(result);
-});
-
-/**
- * PUT /api/notification-channels/:channelId
- * Update an existing channel
- */
-app.put('/:channelId', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const channelId = requireUuidParam(c, 'channelId', 'channel ID');
-
-  // First pass: validate top-level shape
-  const validated = await parseBody(c, NotificationChannelUpdateInputSchema);
-
-  // If credentials provided, fetch existing channel to know the platform
-  let credentials: Record<string, string> | undefined;
-  if (validated.credentials) {
-    const service = new NotificationChannelsService({
-      db: db,
-      credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+    const result = await notificationChannelsService.createChannel(user.userId, {
+      platform: validated.platform,
+      isEnabled: validated.isEnabled,
+      lookaheadDays: validated.lookaheadDays,
+      notifyTime: validated.notifyTime,
+      credentials,
     });
-    const existing = await service.getChannel(user.userId, channelId);
-    credentials = validateCredentialsForUpdate(existing.platform, validated.credentials);
-  }
 
-  const service = new NotificationChannelsService({
-    db: db,
-    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
-  });
-  const result = await service.updateChannel(user.userId, channelId, {
-    isEnabled: validated.isEnabled,
-    lookaheadDays: validated.lookaheadDays,
-    notifyTime: validated.notifyTime,
-    credentials,
+    return c.json(result, 201);
   });
 
-  return c.json(result);
-});
+  /**
+   * GET /api/notification-channels/:channelId
+   * Get a single channel by external ID
+   */
+  app.get('/:channelId', async (c) => {
+    const user = getAuthUser(c);
+    const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
-/**
- * DELETE /api/notification-channels/:channelId
- * Delete a channel
- */
-app.delete('/:channelId', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const channelId = requireUuidParam(c, 'channelId', 'channel ID');
+    const result = await notificationChannelsService.getChannel(user.userId, channelId);
 
-  const service = new NotificationChannelsService({
-    db: db,
-    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+    return c.json(result);
   });
-  const deleted = await service.deleteChannel(user.userId, channelId);
 
-  if (!deleted) {
-    throw new NotificationChannelNotFoundError(channelId);
-  }
+  /**
+   * PUT /api/notification-channels/:channelId
+   * Update an existing channel
+   */
+  app.put('/:channelId', async (c) => {
+    const user = getAuthUser(c);
+    const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
-  return c.json({ success: true });
-});
+    // First pass: validate top-level shape
+    const validated = await parseBody(c, NotificationChannelUpdateInputSchema);
 
-/**
- * POST /api/notification-channels/:channelId/test
- * Send a test message to verify the channel works
- */
-app.post('/:channelId/test', notificationTestRateLimitMiddleware, async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const channelId = requireUuidParam(c, 'channelId', 'channel ID');
+    // If credentials provided, fetch existing channel to know the platform
+    let credentials: Record<string, string> | undefined;
+    if (validated.credentials) {
+      const existing = await notificationChannelsService.getChannel(user.userId, channelId);
+      credentials = validateCredentialsForUpdate(existing.platform, validated.credentials);
+    }
 
-  const service = new NotificationChannelsService({
-    db: db,
-    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+    const result = await notificationChannelsService.updateChannel(user.userId, channelId, {
+      isEnabled: validated.isEnabled,
+      lookaheadDays: validated.lookaheadDays,
+      notifyTime: validated.notifyTime,
+      credentials,
+    });
+
+    return c.json(result);
   });
-  await service.sendTestMessage(user.userId, channelId);
 
-  return c.json({ success: true });
-});
+  /**
+   * DELETE /api/notification-channels/:channelId
+   * Delete a channel
+   */
+  app.delete('/:channelId', async (c) => {
+    const user = getAuthUser(c);
+    const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
-/**
- * PATCH /api/notification-channels/:channelId/toggle
- * Enable or disable a channel
- */
-app.patch('/:channelId/toggle', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const channelId = requireUuidParam(c, 'channelId', 'channel ID');
-  const validated = await parseBody(c, NotificationChannelToggleInputSchema);
+    const isDeleted = await notificationChannelsService.deleteChannel(user.userId, channelId);
 
-  const service = new NotificationChannelsService({
-    db: db,
-    credentialsKey: deriveCredentialsKey(c.get('config').BETTER_AUTH_SECRET),
+    if (!isDeleted) {
+      throw new NotificationChannelNotFoundError(channelId);
+    }
+
+    return c.json({ success: true });
   });
-  const result = await service.toggleChannel(user.userId, channelId, validated.isEnabled);
 
-  return c.json(result);
-});
+  /**
+   * POST /api/notification-channels/:channelId/test
+   * Send a test message to verify the channel works
+   */
+  app.post('/:channelId/test', testRateLimitMiddleware, async (c) => {
+    const user = getAuthUser(c);
+    const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
-export default app;
+    await notificationChannelsService.sendTestMessage(user.userId, channelId);
+
+    return c.json({ success: true });
+  });
+
+  /**
+   * PATCH /api/notification-channels/:channelId/toggle
+   * Enable or disable a channel
+   */
+  app.patch('/:channelId/toggle', async (c) => {
+    const user = getAuthUser(c);
+    const channelId = requireUuidParam(c, 'channelId', 'channel ID');
+    const validated = await parseBody(c, NotificationChannelToggleInputSchema);
+
+    const result = await notificationChannelsService.toggleChannel(
+      user.userId,
+      channelId,
+      validated.isEnabled,
+    );
+
+    return c.json(result);
+  });
+
+  return app;
+}

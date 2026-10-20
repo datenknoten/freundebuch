@@ -38,7 +38,7 @@ import {
   removeMembership,
   updateMembershipRole,
 } from '../../models/queries/collectives.queries.js';
-import { parseRelationshipDirection } from '../../utils/type-guards.js';
+import { parseRelationshipDirection } from '../../utils/parse-relationship-direction.js';
 
 export interface MembershipsServiceOptions {
   db: Pool;
@@ -48,7 +48,7 @@ export interface MembershipsServiceOptions {
  * Service for managing collective memberships and auto-relationships
  */
 export class MembershipsService {
-  private db: Pool;
+  private readonly db: Pool;
 
   constructor(options: MembershipsServiceOptions) {
     this.db = options.db;
@@ -61,7 +61,7 @@ export class MembershipsService {
   /**
    * Add a member to a collective with auto-relationship creation
    */
-  async addMember(
+  public async addMember(
     userExternalId: string,
     collectiveExternalId: string,
     input: MembershipCreateInput,
@@ -165,7 +165,7 @@ export class MembershipsService {
   /**
    * Get a membership by ID
    */
-  async getMemberById(
+  public async getMemberById(
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
@@ -186,7 +186,7 @@ export class MembershipsService {
   /**
    * Update a member's role
    */
-  async updateMemberRole(
+  public async updateMemberRole(
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
@@ -232,7 +232,7 @@ export class MembershipsService {
   /**
    * Deactivate a membership
    */
-  async deactivateMember(
+  public async deactivateMember(
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
@@ -269,7 +269,7 @@ export class MembershipsService {
   /**
    * Reactivate a membership
    */
-  async reactivateMember(
+  public async reactivateMember(
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
@@ -299,7 +299,7 @@ export class MembershipsService {
   /**
    * Remove a membership and its associated relationships
    */
-  async removeMember(
+  public async removeMember(
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
@@ -356,7 +356,7 @@ export class MembershipsService {
   /**
    * Preview relationships that would be created when adding a member
    */
-  async previewRelationships(
+  public async previewRelationships(
     userExternalId: string,
     collectiveExternalId: string,
     input: RelationshipPreviewInput,
@@ -473,7 +473,7 @@ export class MembershipsService {
           rule.relationship_direction === 'new_member' ||
           rule.relationship_direction === 'both'
         ) {
-          const exists = await this.checkRelationshipExists(
+          const isExisting = await this.hasRelationship(
             contact.id,
             existingMember.contact_id,
             rule.relationship_type_id,
@@ -491,17 +491,17 @@ export class MembershipsService {
               label: typeInfo.label,
               category: typeInfo.category,
             },
-            alreadyExists: exists,
+            alreadyExists: isExisting,
           });
 
-          if (exists) existingRelationshipsSkipped++;
+          if (isExisting) existingRelationshipsSkipped++;
         }
 
         if (
           rule.relationship_direction === 'existing_member' ||
           rule.relationship_direction === 'both'
         ) {
-          const exists = await this.checkRelationshipExists(
+          const isExisting = await this.hasRelationship(
             existingMember.contact_id,
             contact.id,
             rule.relationship_type_id,
@@ -519,10 +519,10 @@ export class MembershipsService {
               label: typeInfo.label,
               category: typeInfo.category,
             },
-            alreadyExists: exists,
+            alreadyExists: isExisting,
           });
 
-          if (exists) existingRelationshipsSkipped++;
+          if (isExisting) existingRelationshipsSkipped++;
         }
       }
     }
@@ -675,7 +675,7 @@ export class MembershipsService {
   /**
    * Check if a relationship already exists
    */
-  private async checkRelationshipExists(
+  private async hasRelationship(
     fromFriendId: number,
     toFriendId: number,
     relationshipTypeId: string,

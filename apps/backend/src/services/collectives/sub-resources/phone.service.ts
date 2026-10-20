@@ -8,7 +8,7 @@ import {
   type IGetPhonesByCollectiveIdResult,
   updatePhone,
 } from '../../../models/queries/collective-phones.queries.js';
-import { parsePhoneType } from '../../../utils/type-guards.js';
+import { parsePhoneType } from '../../../utils/parse-phone-type.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -35,74 +35,80 @@ export class CollectivePhoneService extends SubResourceService<
   IDeletePhoneResult
 > {
   constructor(options: SubResourceServiceOptions) {
-    super(options, {
-      resourceName: 'collective phone',
-      hasPrimaryFlag: true,
+    super({
+      ...options,
+      definition: {
+        resourceName: 'collective phone',
+        hasPrimaryFlag: true,
 
-      createFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, input },
-        client,
-      ) => {
-        return createPhone.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            phoneNumber: input.phone_number,
-            phoneType: input.phone_type,
-            label: input.label ?? null,
-            isPrimary: input.is_primary,
-          },
+        createFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return createPhone.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              phoneNumber: input.phone_number,
+              phoneType: input.phone_type,
+              label: input.label ?? null,
+              isPrimary: input.is_primary,
+            },
+            client,
+          );
+        },
 
-      updateFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
-        client,
-      ) => {
-        return updatePhone.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            phoneExternalId: resourceExternalId,
-            phoneNumber: input.phone_number,
-            phoneType: input.phone_type,
-            label: input.label ?? null,
-            isPrimary: input.is_primary,
-          },
+        updateFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return updatePhone.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              phoneExternalId: resourceExternalId,
+              phoneNumber: input.phone_number,
+              phoneType: input.phone_type,
+              label: input.label ?? null,
+              isPrimary: input.is_primary,
+            },
+            client,
+          );
+        },
 
-      deleteFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
-        client,
-      ) => {
-        return deletePhone.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            phoneExternalId: resourceExternalId,
-          },
+        deleteFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
           client,
-        );
+        ) => {
+          return deletePhone.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              phoneExternalId: resourceExternalId,
+            },
+            client,
+          );
+        },
+
+        clearPrimaryFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId },
+          client,
+        ) => {
+          return clearPrimaryPhone.run({ userExternalId, collectiveExternalId }, client);
+        },
+
+        isPrimary: (input) => input.is_primary,
+
+        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+
+        listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+          return getPhonesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
+        },
+
+        mapListResult: mapRow,
+
+        mapResult: mapRow,
       },
-
-      clearPrimaryFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return clearPrimaryPhone.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      isPrimary: (input) => input.is_primary,
-
-      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
-
-      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return getPhonesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      mapListResult: mapRow,
-
-      mapResult: mapRow,
     });
   }
 }

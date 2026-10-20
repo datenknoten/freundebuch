@@ -32,7 +32,7 @@ export async function setupPostGISTests(): Promise<PostGISTestContext> {
     // Ignore — expected during teardown.
   });
 
-  const client = new PostGISAddressClient(pool, silentLogger);
+  const client = new PostGISAddressClient({ db: pool, logger: silentLogger });
 
   return { pool, client, databaseName };
 }

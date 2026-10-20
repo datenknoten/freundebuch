@@ -6,123 +6,117 @@ import {
   parseEncounterListQuery,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import { EncounterNotFoundError } from '../errors/encounter-not-found.error.js';
-import { authMiddleware, getAuthUser } from '../middleware/auth.js';
-import { onboardingMiddleware } from '../middleware/onboarding.js';
-import { encountersRateLimitMiddleware } from '../middleware/rate-limit.js';
-import { EncountersService } from '../services/encounters.service.js';
+import { getAuthUser } from '../middleware/auth.js';
+import type { EncountersService } from '../services/encounters.service.js';
 import type { AppContext } from '../types/context.js';
-import { parseBody, requireUuidParam } from '../utils/http.js';
+import { parseBody } from '../utils/parse-body.js';
+import { requireUuidParam } from '../utils/require-uuid-param.js';
 
-const app = new Hono<AppContext>();
+export interface EncountersRoutesOptions {
+  encountersService: EncountersService;
+  authMiddleware: MiddlewareHandler<AppContext>;
+  onboardingMiddleware: MiddlewareHandler<AppContext>;
+  rateLimitMiddleware: MiddlewareHandler<AppContext>;
+}
 
-// Apply auth middleware to all encounter routes
-app.use('*', authMiddleware);
-// Apply rate limiting to prevent abuse
-app.use('*', encountersRateLimitMiddleware);
-// Apply onboarding middleware to require self-friend before using encounters
-app.use('*', onboardingMiddleware);
+export function createEncountersRoutes(options: EncountersRoutesOptions) {
+  const { encountersService, authMiddleware, onboardingMiddleware, rateLimitMiddleware } = options;
+  const app = new Hono<AppContext>();
 
-// ============================================================================
-// Encounter CRUD Routes
-// ============================================================================
+  // Apply auth middleware to all encounter routes
+  app.use('*', authMiddleware);
+  // Apply rate limiting to prevent abuse
+  app.use('*', rateLimitMiddleware);
+  // Apply onboarding middleware to require self-friend before using encounters
+  app.use('*', onboardingMiddleware);
 
-/**
- * GET /api/encounters
- * List all encounters for the authenticated user with pagination and filtering
- */
-app.get('/', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
+  // ============================================================================
+  // Encounter CRUD Routes
+  // ============================================================================
 
-  const query = c.req.query();
-  const validated = EncounterListQuerySchema(query);
+  /**
+   * GET /api/encounters
+   * List all encounters for the authenticated user with pagination and filtering
+   */
+  app.get('/', async (c) => {
+    const user = getAuthUser(c);
 
-  if (validated instanceof type.errors) {
-    throw new ValidationError('Invalid query parameters', validated);
-  }
+    const query = c.req.query();
+    const validated = EncounterListQuerySchema(query);
 
-  const options = parseEncounterListQuery(validated);
+    if (validated instanceof type.errors) {
+      throw new ValidationError('Invalid query parameters', validated);
+    }
 
-  const encountersService = new EncountersService({ db: db });
-  const result = await encountersService.listEncounters(user.userId, options);
+    const listOptions = parseEncounterListQuery(validated);
+    const result = await encountersService.listEncounters(user.userId, listOptions);
 
-  return c.json(result);
-});
+    return c.json(result);
+  });
 
-/**
- * POST /api/encounters
- * Create a new encounter
- */
-app.post('/', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
+  /**
+   * POST /api/encounters
+   * Create a new encounter
+   */
+  app.post('/', async (c) => {
+    const user = getAuthUser(c);
 
-  const validated = await parseBody(c, EncounterCreateInputSchema);
+    const validated = await parseBody(c, EncounterCreateInputSchema);
+    const encounter = await encountersService.createEncounter(user.userId, validated);
 
-  const encountersService = new EncountersService({ db: db });
-  const encounter = await encountersService.createEncounter(user.userId, validated);
+    return c.json(encounter, 201);
+  });
 
-  return c.json(encounter, 201);
-});
+  /**
+   * GET /api/encounters/:id
+   * Get a single encounter by ID
+   */
+  app.get('/:id', async (c) => {
+    const user = getAuthUser(c);
+    const encounterId = requireUuidParam(c, 'id', 'encounter ID');
+    const encounter = await encountersService.getEncounterById(user.userId, encounterId);
 
-/**
- * GET /api/encounters/:id
- * Get a single encounter by ID
- */
-app.get('/:id', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const encounterId = requireUuidParam(c, 'id', 'encounter ID');
+    if (!encounter) {
+      throw new EncounterNotFoundError(encounterId);
+    }
 
-  const encountersService = new EncountersService({ db: db });
-  const encounter = await encountersService.getEncounterById(user.userId, encounterId);
+    return c.json(encounter);
+  });
 
-  if (!encounter) {
-    throw new EncounterNotFoundError(encounterId);
-  }
+  /**
+   * PUT /api/encounters/:id
+   * Update an encounter
+   */
+  app.put('/:id', async (c) => {
+    const user = getAuthUser(c);
+    const encounterId = requireUuidParam(c, 'id', 'encounter ID');
+    const validated = await parseBody(c, EncounterUpdateInputSchema);
+    const encounter = await encountersService.updateEncounter(user.userId, encounterId, validated);
 
-  return c.json(encounter);
-});
+    if (!encounter) {
+      throw new EncounterNotFoundError(encounterId);
+    }
 
-/**
- * PUT /api/encounters/:id
- * Update an encounter
- */
-app.put('/:id', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const encounterId = requireUuidParam(c, 'id', 'encounter ID');
-  const validated = await parseBody(c, EncounterUpdateInputSchema);
+    return c.json(encounter);
+  });
 
-  const encountersService = new EncountersService({ db: db });
-  const encounter = await encountersService.updateEncounter(user.userId, encounterId, validated);
+  /**
+   * DELETE /api/encounters/:id
+   * Delete an encounter
+   */
+  app.delete('/:id', async (c) => {
+    const user = getAuthUser(c);
+    const encounterId = requireUuidParam(c, 'id', 'encounter ID');
+    const isDeleted = await encountersService.deleteEncounter(user.userId, encounterId);
 
-  if (!encounter) {
-    throw new EncounterNotFoundError(encounterId);
-  }
+    if (!isDeleted) {
+      throw new EncounterNotFoundError(encounterId);
+    }
 
-  return c.json(encounter);
-});
+    return c.json({ success: true });
+  });
 
-/**
- * DELETE /api/encounters/:id
- * Delete an encounter
- */
-app.delete('/:id', async (c) => {
-  const db = c.get('db');
-  const user = getAuthUser(c);
-  const encounterId = requireUuidParam(c, 'id', 'encounter ID');
-
-  const encountersService = new EncountersService({ db: db });
-  const deleted = await encountersService.deleteEncounter(user.userId, encounterId);
-
-  if (!deleted) {
-    throw new EncounterNotFoundError(encounterId);
-  }
-
-  return c.json({ success: true });
-});
-
-export default app;
+  return app;
+}

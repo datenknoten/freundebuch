@@ -1,11 +1,9 @@
 import type * as Sentry from '@sentry/node';
 import { describe, expect, it } from 'vitest';
-import {
-  redactBotToken,
-  SENSITIVE_LOG_KEYS,
-  scrubBreadcrumb,
-  scrubErrorEvent,
-} from '../../src/instrumentation.js';
+import { redactBotToken } from '../../src/utils/redact-bot-token.js';
+import { scrubBreadcrumb } from '../../src/utils/scrub-breadcrumb.js';
+import { scrubErrorEvent } from '../../src/utils/scrub-error-event.js';
+import { SENSITIVE_LOG_KEYS } from '../../src/utils/sensitive-log-keys.js';
 
 const TELEGRAM_URL = 'https://api.telegram.org/bot123456:AAHsecret/sendMessage';
 const TELEGRAM_URL_REDACTED = 'https://api.telegram.org/bot[redacted]/sendMessage';

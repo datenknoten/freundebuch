@@ -1,67 +1,65 @@
 import { FriendCreateInputSchema, SelfProfileSetInputSchema } from '@freundebuch/shared/index.js';
-import { type Context, Hono } from 'hono';
-import { authMiddleware, getAuthUser } from '../middleware/auth.js';
-import { FriendsService } from '../services/friends/index.js';
-import { PhotoService } from '../services/photo.service.js';
-import { UsersService } from '../services/users.service.js';
+import { Hono, type MiddlewareHandler } from 'hono';
+import { getAuthUser } from '../middleware/auth.js';
+import type { UsersService } from '../services/users.service.js';
 import type { AppContext } from '../types/context.js';
-import { parseBody } from '../utils/http.js';
+import { parseBody } from '../utils/parse-body.js';
 
-const app = new Hono<AppContext>();
-
-// Apply auth middleware to all user routes
-app.use('*', authMiddleware);
-
-function usersService(c: Context<AppContext>) {
-  const db = c.get('db');
-  const logger = c.get('logger');
-  const photoService = new PhotoService({ logger, config: c.get('config') });
-  const friendsService = new FriendsService({ db, logger, photoService });
-  return new UsersService({ db, logger, friendsService });
+export interface UsersRoutesOptions {
+  usersService: UsersService;
+  authMiddleware: MiddlewareHandler<AppContext>;
 }
 
-/**
- * GET /api/users/me
- * Get the current user's profile
- */
-app.get('/me', async (c) => {
-  return c.json(await usersService(c).getMe(getAuthUser(c).userId));
-});
+export function createUsersRoutes(options: UsersRoutesOptions) {
+  const { usersService, authMiddleware } = options;
+  const app = new Hono<AppContext>();
 
-// ============================================================================
-// Self-Profile Routes (for onboarding)
-// ============================================================================
+  // Apply auth middleware to all user routes
+  app.use('*', authMiddleware);
 
-/**
- * GET /api/users/me/self-profile
- * Get the current user's self-profile external ID
- */
-app.get('/me/self-profile', async (c) => {
-  const selfProfileId = await usersService(c).getSelfProfileId(getAuthUser(c).userId);
-  return c.json({ selfProfileId });
-});
+  /**
+   * GET /api/users/me
+   * Get the current user's profile
+   */
+  app.get('/me', async (c) => {
+    return c.json(await usersService.getMe(getAuthUser(c).userId));
+  });
 
-/**
- * PUT /api/users/me/self-profile
- * Set an existing friend as the user's self-profile
- */
-app.put('/me/self-profile', async (c) => {
-  const { friendId } = await parseBody(c, SelfProfileSetInputSchema);
-  const selfProfileId = await usersService(c).setSelfProfile(getAuthUser(c).userId, friendId);
+  // ============================================================================
+  // Self-Profile Routes (for onboarding)
+  // ============================================================================
 
-  return c.json({ selfProfileId });
-});
+  /**
+   * GET /api/users/me/self-profile
+   * Get the current user's self-profile external ID
+   */
+  app.get('/me/self-profile', async (c) => {
+    const selfProfileId = await usersService.getSelfProfileId(getAuthUser(c).userId);
+    return c.json({ selfProfileId });
+  });
 
-/**
- * POST /api/users/me/self-profile
- * Create a new friend and set it as the user's self-profile
- * Used during onboarding
- */
-app.post('/me/self-profile', async (c) => {
-  const input = await parseBody(c, FriendCreateInputSchema);
-  const friend = await usersService(c).createSelfProfile(getAuthUser(c).userId, input);
+  /**
+   * PUT /api/users/me/self-profile
+   * Set an existing friend as the user's self-profile
+   */
+  app.put('/me/self-profile', async (c) => {
+    const { friendId } = await parseBody(c, SelfProfileSetInputSchema);
+    const selfProfileId = await usersService.setSelfProfile(getAuthUser(c).userId, friendId);
 
-  return c.json(friend, 201);
-});
+    return c.json({ selfProfileId });
+  });
 
-export default app;
+  /**
+   * POST /api/users/me/self-profile
+   * Create a new friend and set it as the user's self-profile
+   * Used during onboarding
+   */
+  app.post('/me/self-profile', async (c) => {
+    const input = await parseBody(c, FriendCreateInputSchema);
+    const friend = await usersService.createSelfProfile(getAuthUser(c).userId, input);
+
+    return c.json(friend, 201);
+  });
+
+  return app;
+}

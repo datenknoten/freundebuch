@@ -1,6 +1,5 @@
 import type pg from 'pg';
 import { afterAll, beforeAll, beforeEach } from 'vitest';
-import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 
 import {
   type AuthTestContext,
@@ -122,7 +121,6 @@ export function setupFriendsTestSuite(env: Record<string, string> = {}) {
   }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
-    resetRateLimiters();
     // Wipe every user-owned row, then rebuild the fixture user: a test must not
     // inherit rows (or a session) from its predecessors.
     await truncateUserData(authContext.pool);

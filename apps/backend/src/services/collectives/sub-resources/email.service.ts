@@ -8,7 +8,7 @@ import {
   type IGetEmailsByCollectiveIdResult,
   updateEmail,
 } from '../../../models/queries/collective-emails.queries.js';
-import { parseEmailType } from '../../../utils/type-guards.js';
+import { parseEmailType } from '../../../utils/parse-email-type.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -35,74 +35,80 @@ export class CollectiveEmailService extends SubResourceService<
   IDeleteEmailResult
 > {
   constructor(options: SubResourceServiceOptions) {
-    super(options, {
-      resourceName: 'collective email',
-      hasPrimaryFlag: true,
+    super({
+      ...options,
+      definition: {
+        resourceName: 'collective email',
+        hasPrimaryFlag: true,
 
-      createFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, input },
-        client,
-      ) => {
-        return createEmail.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            emailAddress: input.email_address,
-            emailType: input.email_type,
-            label: input.label ?? null,
-            isPrimary: input.is_primary,
-          },
+        createFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return createEmail.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              emailAddress: input.email_address,
+              emailType: input.email_type,
+              label: input.label ?? null,
+              isPrimary: input.is_primary,
+            },
+            client,
+          );
+        },
 
-      updateFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
-        client,
-      ) => {
-        return updateEmail.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            emailExternalId: resourceExternalId,
-            emailAddress: input.email_address,
-            emailType: input.email_type,
-            label: input.label ?? null,
-            isPrimary: input.is_primary,
-          },
+        updateFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return updateEmail.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              emailExternalId: resourceExternalId,
+              emailAddress: input.email_address,
+              emailType: input.email_type,
+              label: input.label ?? null,
+              isPrimary: input.is_primary,
+            },
+            client,
+          );
+        },
 
-      deleteFn: async (
-        { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
-        client,
-      ) => {
-        return deleteEmail.run(
-          {
-            userExternalId,
-            collectiveExternalId,
-            emailExternalId: resourceExternalId,
-          },
+        deleteFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId },
           client,
-        );
+        ) => {
+          return deleteEmail.run(
+            {
+              userExternalId,
+              collectiveExternalId,
+              emailExternalId: resourceExternalId,
+            },
+            client,
+          );
+        },
+
+        clearPrimaryFn: async (
+          { userExternalId, ownerExternalId: collectiveExternalId },
+          client,
+        ) => {
+          return clearPrimaryEmail.run({ userExternalId, collectiveExternalId }, client);
+        },
+
+        isPrimary: (input) => input.is_primary,
+
+        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+
+        listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
+          return getEmailsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
+        },
+
+        mapListResult: mapRow,
+
+        mapResult: mapRow,
       },
-
-      clearPrimaryFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return clearPrimaryEmail.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      isPrimary: (input) => input.is_primary,
-
-      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
-
-      listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
-        return getEmailsByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
-      },
-
-      mapListResult: mapRow,
-
-      mapResult: mapRow,
     });
   }
 }

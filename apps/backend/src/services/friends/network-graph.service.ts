@@ -9,7 +9,8 @@ import {
   getNetworkGraphLinks,
   getNetworkGraphNodes,
 } from '../../models/queries/friend-relationships.queries.js';
-import { parseRelationshipCategory, parseRelationshipTypeId } from '../../utils/type-guards.js';
+import { parseRelationshipCategory } from '../../utils/parse-relationship-category.js';
+import { parseRelationshipTypeId } from '../../utils/parse-relationship-type-id.js';
 
 export interface NetworkGraphServiceOptions {
   db: pg.Pool;
@@ -21,8 +22,8 @@ export interface NetworkGraphServiceOptions {
  * Extracted from FriendsService for better separation of concerns.
  */
 export class NetworkGraphService {
-  private db: pg.Pool;
-  private logger: Logger;
+  private readonly db: pg.Pool;
+  private readonly logger: Logger;
 
   constructor(options: NetworkGraphServiceOptions) {
     this.db = options.db;
@@ -33,7 +34,7 @@ export class NetworkGraphService {
    * Get network graph data for visualization
    * Returns all non-archived friends as nodes and their relationships as links
    */
-  async getNetworkGraphData(userExternalId: string): Promise<NetworkGraphResponse> {
+  public async getNetworkGraphData(userExternalId: string): Promise<NetworkGraphResponse> {
     this.logger.debug({ userExternalId }, 'Fetching network graph data');
 
     // Fetch nodes and links in parallel using PgTyped queries

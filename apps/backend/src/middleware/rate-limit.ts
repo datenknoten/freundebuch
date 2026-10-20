@@ -1,9 +1,9 @@
 import { getConnInfo } from '@hono/node-server/conninfo';
-import type { Context, Next } from 'hono';
+import type { Context, MiddlewareHandler, Next } from 'hono';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import type { Config } from '../config.js';
 import type { AppContext } from '../types/context.js';
-import { isRateLimiterRes } from '../utils/type-guards.js';
+import { isRateLimiterRes } from '../utils/is-rate-limiter-res.js';
 
 // Auth endpoint rate limiting is handled by Better Auth's rateLimit config
 // (5 req/min window), plus an nginx `limit_req` zone in front of /api/auth/.
@@ -18,58 +18,45 @@ interface LimitSpec {
    * so one heavy client cannot exhaust the limit for everyone behind the same
    * NAT; the limiter must therefore run *after* authMiddleware.
    */
-  keyedByUser: boolean;
+  isKeyedByUser: boolean;
   /** Response message when the limit trips. */
   message?: string;
 }
 
 /**
- * Every limiter in one table. Eight near-identical `new RateLimiterMemory`
- * blocks plus a second copy of all eight inside `resetRateLimiters` meant a
- * changed limit had to be edited twice, and drift was invisible.
+ * Every limiter in one table, so a changed limit is edited in one place.
  *
  * Memory-backed buckets are correct for the single-instance deployment
  * (see ADR 0004); a second replica would double every limit.
  */
 const LIMITS = {
-  friends: { points: 100, keyedByUser: true },
-  circles: { points: 60, keyedByUser: true },
-  encounters: { points: 60, keyedByUser: true },
-  collectives: { points: 120, keyedByUser: true },
-  notificationChannels: { points: 30, keyedByUser: true },
-  passkeyList: { points: 30, keyedByUser: true },
+  friends: { points: 100, isKeyedByUser: true },
+  circles: { points: 60, isKeyedByUser: true },
+  encounters: { points: 60, isKeyedByUser: true },
+  collectives: { points: 120, isKeyedByUser: true },
+  notificationChannels: { points: 30, isKeyedByUser: true },
+  passkeyList: { points: 30, isKeyedByUser: true },
   notificationTest: {
     points: 3,
     blockDuration: 120,
-    keyedByUser: true,
+    isKeyedByUser: true,
     message: 'Too many test messages. Please wait before trying again.',
   },
-  addressLookup: { points: 60, keyedByUser: true },
+  addressLookup: { points: 60, isKeyedByUser: true },
   // Unauthenticated: there is no user to key by.
-  sentryTunnel: { points: 60, keyedByUser: false },
+  sentryTunnel: { points: 60, isKeyedByUser: false },
 } as const satisfies Record<string, LimitSpec>;
 
-type LimiterName = keyof typeof LIMITS;
+export type LimiterName = keyof typeof LIMITS;
 
-function buildLimiters(): Record<LimiterName, RateLimiterMemory> {
-  const entries = Object.entries(LIMITS).map(([name, spec]) => [
-    name,
-    new RateLimiterMemory({
-      points: spec.points,
-      duration: 60,
-      blockDuration: ('blockDuration' in spec ? spec.blockDuration : undefined) ?? 60,
-    }),
-  ]);
-  return Object.fromEntries(entries) as Record<LimiterName, RateLimiterMemory>;
-}
+export type RateLimitConfig = Pick<
+  Config,
+  'RATE_LIMIT_ENABLED' | 'TRUST_PROXY' | 'TRUSTED_PROXY_HOPS'
+>;
 
-let limiters = buildLimiters();
-
-/**
- * Reset all rate limiters (for testing purposes)
- */
-export function resetRateLimiters(): void {
-  limiters = buildLimiters();
+export interface RateLimitMiddlewareOptions {
+  config: RateLimitConfig;
+  limiter: LimiterName;
 }
 
 /**
@@ -128,25 +115,32 @@ function getClientIdentifier(
 }
 
 /**
- * Build the middleware for one named limiter.
+ * Build the middleware for one named limiter. Each call owns a fresh bucket.
  *
  * Authenticated limiters key by `user:<id>` when the request has already been
  * authenticated, and fall back to the client address otherwise (the limiter
  * mounted before authMiddleware, or an unauthenticated request).
  */
-function rateLimit(name: LimiterName) {
+export function createRateLimitMiddleware(
+  options: RateLimitMiddlewareOptions,
+): MiddlewareHandler<AppContext> {
+  const { config, limiter: name } = options;
   const spec: LimitSpec = LIMITS[name];
+  const limiter = new RateLimiterMemory({
+    points: spec.points,
+    duration: 60,
+    blockDuration: spec.blockDuration ?? 60,
+  });
 
-  return async (c: Context<AppContext>, next: Next) => {
-    const config = c.get('config');
+  return async function rateLimitMiddleware(c: Context<AppContext>, next: Next) {
     if (config.RATE_LIMIT_ENABLED === false) {
       return next();
     }
-    const userId = spec.keyedByUser ? c.get('user')?.userId : undefined;
+    const userId = spec.isKeyedByUser ? c.get('user')?.userId : undefined;
     const key = userId === undefined ? getClientIdentifier(c, config) : `user:${userId}`;
 
     try {
-      await limiters[name].consume(key);
+      await limiter.consume(key);
       return next();
     } catch (error) {
       if (!isRateLimiterRes(error)) throw error;
@@ -158,15 +152,3 @@ function rateLimit(name: LimiterName) {
     }
   };
 }
-
-// Exported under the names the routers already mount, so this stays a
-// middleware-layer change.
-export const friendsRateLimitMiddleware = rateLimit('friends');
-export const circlesRateLimitMiddleware = rateLimit('circles');
-export const encountersRateLimitMiddleware = rateLimit('encounters');
-export const collectivesRateLimitMiddleware = rateLimit('collectives');
-export const notificationChannelsRateLimitMiddleware = rateLimit('notificationChannels');
-export const passkeyListRateLimitMiddleware = rateLimit('passkeyList');
-export const notificationTestRateLimitMiddleware = rateLimit('notificationTest');
-export const sentryTunnelRateLimitMiddleware = rateLimit('sentryTunnel');
-export const addressLookupRateLimitMiddleware = rateLimit('addressLookup');

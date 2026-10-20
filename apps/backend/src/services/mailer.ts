@@ -54,14 +54,6 @@ export type MailConfig = Pick<
   | 'SMTP_USER'
 >;
 
-/**
- * True when the deployment can send mail. Single source of truth for
- * `createMailer`'s null decision and for the readiness probe's `emailEnabled`.
- */
-export function isMailConfigured(config: Pick<Config, 'SMTP_HOST'>): boolean {
-  return config.SMTP_HOST !== undefined && config.SMTP_HOST !== '';
-}
-
 function hasCreateTransport(value: unknown): value is NodemailerModule {
   return (
     typeof value === 'object' &&
@@ -131,7 +123,7 @@ export function createMailer(config: MailConfig, logger: Logger): Mailer | null 
   // operator override the guess for a non-standard port.
   const port = config.SMTP_PORT ?? (config.SMTP_SECURE ? 465 : 587);
   const user = config.SMTP_USER;
-  const authenticated = user !== undefined && user !== '';
+  const isAuthenticated = user !== undefined && user !== '';
   const options: SmtpTransportOptions = {
     host,
     port,
@@ -139,8 +131,8 @@ export function createMailer(config: MailConfig, logger: Logger): Mailer | null 
     // Credentials never go over a connection that failed to upgrade: on a
     // plaintext port an authenticated relay must complete STARTTLS or the
     // send fails instead of sending the password in the clear.
-    requireTLS: !config.SMTP_SECURE && authenticated,
-    ...(authenticated ? { auth: { user, pass: config.SMTP_PASSWORD ?? '' } } : {}),
+    requireTLS: !config.SMTP_SECURE && isAuthenticated,
+    ...(isAuthenticated ? { auth: { user, pass: config.SMTP_PASSWORD ?? '' } } : {}),
   };
   const from = config.SMTP_FROM ?? defaultFrom(config);
 

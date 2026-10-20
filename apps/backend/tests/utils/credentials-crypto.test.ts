@@ -1,14 +1,12 @@
 import { createCipheriv, hkdfSync } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import {
-  credentialContext,
-  decrypt,
-  deriveCredentialsKey,
-  encrypt,
-  encryptOptional,
-  isEncrypted,
-  tryDecrypt,
-} from '../../src/utils/credentials-crypto.js';
+import { credentialContext } from '../../src/utils/credential-context.js';
+import { decrypt } from '../../src/utils/decrypt.js';
+import { deriveCredentialsKey } from '../../src/utils/derive-credentials-key.js';
+import { encrypt } from '../../src/utils/encrypt.js';
+import { encryptOptional } from '../../src/utils/encrypt-optional.js';
+import { isEncrypted } from '../../src/utils/is-encrypted.js';
+import { tryDecrypt } from '../../src/utils/try-decrypt.js';
 
 const SECRET = 'test-better-auth-secret-test-better-auth-secret-1';
 const KEY = deriveCredentialsKey(SECRET);

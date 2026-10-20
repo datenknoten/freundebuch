@@ -1,7 +1,7 @@
 import type pg from 'pg';
 import { pino } from 'pino';
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
-import { AddressCache, getStreetsCache } from '../../src/utils/cache.js';
+import { AddressCache, createStreetsCache } from '../../src/utils/cache.js';
 
 const SILENT_LOGGER = pino({ level: 'silent' });
 
@@ -31,8 +31,7 @@ describe('AddressCache database tier', () => {
     const { pool, query } = mockPool(async (text) =>
       text.includes('SELECT 1') ? { rows: [{ present: 1 }] } : { rows: [] },
     );
-    const cache = getStreetsCache();
-    cache.setPool(pool, SILENT_LOGGER);
+    const cache = createStreetsCache({ db: pool, logger: SILENT_LOGGER });
 
     await cache.set('streets:off:1', [{ name: 'Hauptstrasse' }]);
     expect(statements(query).some((sql) => sql.includes('INSERT INTO system.address_cache'))).toBe(
@@ -48,8 +47,7 @@ describe('AddressCache database tier', () => {
     const { pool, query } = mockPool(async (text) =>
       text.includes('SELECT cache_key') ? { rows: [{ cache_value: [{ nope: 1 }] }] } : { rows: [] },
     );
-    const cache = getStreetsCache();
-    cache.setPool(pool, SILENT_LOGGER);
+    const cache = createStreetsCache({ db: pool, logger: SILENT_LOGGER });
 
     await expect(cache.get('streets:broken')).resolves.toBeUndefined();
     expect(statements(query).some((sql) => sql.includes('DELETE FROM system.address_cache'))).toBe(
@@ -64,8 +62,7 @@ describe('AddressCache database tier', () => {
    */
   it('deletes from the database tier as well, so the entry cannot resurrect', async () => {
     const { pool, query } = mockPool(async () => ({ rows: [] }));
-    const cache = getStreetsCache();
-    cache.setPool(pool, SILENT_LOGGER);
+    const cache = createStreetsCache({ db: pool, logger: SILENT_LOGGER });
 
     await cache.set('streets:doomed', [{ name: 'Hauptstrasse' }]);
     await expect(cache.delete('streets:doomed')).resolves.toBe(true);
@@ -79,8 +76,7 @@ describe('AddressCache database tier', () => {
     // The persisted tier is not gated on POSTGIS_ADDRESS_ENABLED: rows written
     // by any instance still have to be purged.
     const { pool, query } = mockPool(async () => ({ rows: [] }));
-    const cache = getStreetsCache();
-    cache.setPool(pool, SILENT_LOGGER);
+    const cache = createStreetsCache({ db: pool, logger: SILENT_LOGGER });
 
     await cache.set('streets:kept', [{ name: 'Hauptstrasse' }]);
     await cache.clear();
@@ -95,8 +91,7 @@ describe('AddressCache database tier', () => {
     const { pool } = mockPool(async () => ({
       rows: [{ cache_key: 'a' }, { cache_key: 'b' }],
     }));
-    const cache = getStreetsCache();
-    cache.setPool(pool, SILENT_LOGGER);
+    const cache = createStreetsCache({ db: pool, logger: SILENT_LOGGER });
 
     await expect(cache.cleanupDatabase()).resolves.toBe(2);
   });
@@ -105,8 +100,7 @@ describe('AddressCache database tier', () => {
     const { pool } = mockPool(async () => {
       throw new Error('connection terminated');
     });
-    const cache = getStreetsCache();
-    cache.setPool(pool, SILENT_LOGGER);
+    const cache = createStreetsCache({ db: pool, logger: SILENT_LOGGER });
 
     // A cache is an optimisation; a broken one must degrade to a miss rather
     // than propagate and fail the request it was meant to speed up.
@@ -125,12 +119,23 @@ describe('AddressCache memory bounds', () => {
   /** Values are already the right shape here, so the validator is identity. */
   const passthrough = <T extends object>(value: unknown): T | undefined => value as T;
 
+  /** A database tier that never has a row, so every answer comes from memory. */
+  function memoryOnlyCache(ttlHours: number, maxSize: number) {
+    return new AddressCache<{ n: number }>({
+      ttlHours,
+      maxSize,
+      validator: passthrough,
+      db: mockPool(async () => ({ rows: [] })).pool,
+      logger: SILENT_LOGGER,
+    });
+  }
+
   afterEach(() => {
     vi.useRealTimers();
   });
 
   it('never exceeds maxSize and evicts the least recently used entry', async () => {
-    const cache = new AddressCache<{ n: number }>(24, 3, passthrough);
+    const cache = memoryOnlyCache(24, 3);
 
     for (const n of [1, 2, 3]) {
       await cache.set(`k${n}`, { n });
@@ -149,7 +154,7 @@ describe('AddressCache memory bounds', () => {
   });
 
   it('stays at the cap under sustained inserts', async () => {
-    const cache = new AddressCache<{ n: number }>(24, 10, passthrough);
+    const cache = memoryOnlyCache(24, 10);
 
     for (let n = 0; n < 500; n++) {
       await cache.set(`key-${n}`, { n });
@@ -167,7 +172,7 @@ describe('AddressCache memory bounds', () => {
     // 25 rather than a rounder number because lru-cache rejects a non-integer
     // ttl and the constructor derives it as `ttlHours * 60 * 60 * 1000`; 25ms
     // survives that stepwise multiply exactly, 20ms does not.
-    const cache = new AddressCache<{ n: number }>(25 / 3_600_000, 10, passthrough);
+    const cache = memoryOnlyCache(25 / 3_600_000, 10);
 
     await cache.set('fresh', { n: 1 });
     await expect(cache.get('fresh')).resolves.toEqual({ n: 1 });

@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
-import { createAuth, createAuthPool } from '@freundebuch/backend/lib/auth.js';
+import { createAuth } from '@freundebuch/backend/lib/auth.js';
+import { createAuthPool } from '@freundebuch/backend/lib/auth-pool.js';
 import pg from 'pg';
 import { getConfig } from './config.js';
 import { createMcpRequestHandler, type Session } from './http-handler.js';
@@ -18,7 +19,7 @@ const pool = new pg.Pool({
 const authPool = createAuthPool({ config, logger: logger.child({ module: 'auth-db' }) });
 const auth = createAuth({ config, pool: authPool, logger });
 
-const services = createServices(pool, logger, config);
+const services = createServices({ db: pool, logger, photoConfig: config });
 
 const sessions = new Map<string, Session>();
 

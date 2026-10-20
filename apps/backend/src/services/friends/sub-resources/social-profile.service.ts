@@ -7,7 +7,7 @@ import {
   type IGetSocialProfilesByFriendIdResult,
   updateSocialProfile,
 } from '../../../models/queries/friend-social-profiles.queries.js';
-import { parseSocialPlatform } from '../../../utils/type-guards.js';
+import { parseSocialPlatform } from '../../../utils/parse-social-platform.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -34,61 +34,64 @@ export class SocialProfileService extends SubResourceService<
   IDeleteSocialProfileResult
 > {
   constructor(options: SubResourceServiceOptions) {
-    super(options, {
-      resourceName: 'social profile',
-      hasPrimaryFlag: false,
+    super({
+      ...options,
+      definition: {
+        resourceName: 'social profile',
+        hasPrimaryFlag: false,
 
-      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
-        return createSocialProfile.run(
-          {
-            userExternalId,
-            friendExternalId,
-            platform: input.platform,
-            profileUrl: input.profile_url ?? null,
-            username: input.username ?? null,
-          },
+        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
+          return createSocialProfile.run(
+            {
+              userExternalId,
+              friendExternalId,
+              platform: input.platform,
+              profileUrl: input.profile_url ?? null,
+              username: input.username ?? null,
+            },
+            client,
+          );
+        },
+
+        updateFn: async (
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return updateSocialProfile.run(
+            {
+              userExternalId,
+              friendExternalId,
+              profileExternalId: resourceExternalId,
+              platform: input.platform,
+              profileUrl: input.profile_url ?? null,
+              username: input.username ?? null,
+            },
+            client,
+          );
+        },
 
-      updateFn: async (
-        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
-        client,
-      ) => {
-        return updateSocialProfile.run(
-          {
-            userExternalId,
-            friendExternalId,
-            profileExternalId: resourceExternalId,
-            platform: input.platform,
-            profileUrl: input.profile_url ?? null,
-            username: input.username ?? null,
-          },
+        deleteFn: async (
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        );
+        ) => {
+          return deleteSocialProfile.run(
+            {
+              userExternalId,
+              friendExternalId,
+              profileExternalId: resourceExternalId,
+            },
+            client,
+          );
+        },
+
+        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+          return getSocialProfilesByFriendId.run({ userExternalId, friendExternalId }, client);
+        },
+
+        mapListResult: mapRow,
+
+        mapResult: mapRow,
       },
-
-      deleteFn: async (
-        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
-        client,
-      ) => {
-        return deleteSocialProfile.run(
-          {
-            userExternalId,
-            friendExternalId,
-            profileExternalId: resourceExternalId,
-          },
-          client,
-        );
-      },
-
-      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return getSocialProfilesByFriendId.run({ userExternalId, friendExternalId }, client);
-      },
-
-      mapListResult: mapRow,
-
-      mapResult: mapRow,
     });
   }
 }

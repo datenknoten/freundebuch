@@ -2,7 +2,8 @@ import net from 'node:net';
 import type { Logger } from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadConfig } from '../../src/config.js';
-import { createMailer, isMailConfigured } from '../../src/services/mailer.js';
+import { createMailer } from '../../src/services/mailer.js';
+import { isMailConfigured } from '../../src/utils/is-mail-configured.js';
 import { TEST_ENV } from '../helpers/test-env.js';
 
 const FRONTEND_URL = 'https://friends.example.test';

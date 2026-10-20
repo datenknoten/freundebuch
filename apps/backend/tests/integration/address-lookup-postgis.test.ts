@@ -1,6 +1,5 @@
 import bcrypt from 'bcrypt';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { resetAddressService } from '../../src/services/address-lookup.registry.js';
 import {
   completeTestUserOnboarding,
   createBetterAuthSession,
@@ -28,10 +27,6 @@ describe('Address Lookup API - PostGIS full-stack', { timeout: 60000 }, () => {
   let sessionCookies: string;
 
   beforeAll(async () => {
-    // The address service is a lazily created singleton, so clearing it here
-    // makes the first request build it from this suite's config.
-    resetAddressService();
-
     const { pool } = getContext();
 
     // Seed OSM-style address data (includes the 'Unknown' placeholder that the
@@ -55,7 +50,6 @@ describe('Address Lookup API - PostGIS full-stack', { timeout: 60000 }, () => {
     const { pool } = getContext();
     await pool.query('DELETE FROM geodata.addresses');
     await pool.query('DELETE FROM geodata.import_batches');
-    resetAddressService();
   });
 
   function get(path: string) {

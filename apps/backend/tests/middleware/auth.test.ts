@@ -1,11 +1,10 @@
 import { handleError } from '@datenknoten/kit/http';
 import { Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import type pg from 'pg';
 import pino from 'pino';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Auth } from '../../src/lib/auth.js';
-import { authMiddleware, getAuthUser } from '../../src/middleware/auth.js';
+import { createAuthMiddleware, getAuthUser } from '../../src/middleware/auth.js';
 import type { AppContext } from '../../src/types/context.js';
 
 // Untyped: the fixtures carry the full Better Auth session, wider than AuthSession.
@@ -27,13 +26,7 @@ describe('authMiddleware', () => {
     app = new Hono<AppContext>();
     vi.clearAllMocks();
 
-    // Setup db context and test route with auth middleware
-    app.use('/protected/*', async (c, next) => {
-      c.set('db', {} as unknown as pg.Pool); // mock db pool
-      c.set('auth', FAKE_AUTH);
-      return next();
-    });
-    app.use('/protected/*', authMiddleware);
+    app.use('/protected/*', createAuthMiddleware({ auth: FAKE_AUTH }));
     app.get('/protected/resource', (c) => {
       const user = getAuthUser(c);
       return c.json({ message: 'success', user });

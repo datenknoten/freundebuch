@@ -20,10 +20,11 @@ import {
   searchFriends,
   updateRelationship,
 } from '../../models/queries/friend-relationships.queries.js';
-import { withTransaction } from '../../utils/db.js';
-import { rethrowUniqueViolation } from '../../utils/pg-errors.js';
-import { parseRelationshipCategory, parseRelationshipTypeId } from '../../utils/type-guards.js';
-import { createWildcardQuery } from './search.service.js';
+import { createWildcardQuery } from '../../utils/create-wildcard-query.js';
+import { parseRelationshipCategory } from '../../utils/parse-relationship-category.js';
+import { parseRelationshipTypeId } from '../../utils/parse-relationship-type-id.js';
+import { rethrowUniqueViolation } from '../../utils/rethrow-unique-violation.js';
+import { withTransaction } from '../../utils/with-transaction.js';
 
 export interface RelationshipServiceOptions {
   db: pg.Pool;
@@ -35,8 +36,8 @@ export interface RelationshipServiceOptions {
  * Extracted from FriendsService for better separation of concerns.
  */
 export class RelationshipService {
-  private db: pg.Pool;
-  private logger: Logger;
+  private readonly db: pg.Pool;
+  private readonly logger: Logger;
 
   constructor(options: RelationshipServiceOptions) {
     this.db = options.db;
@@ -46,7 +47,7 @@ export class RelationshipService {
   /**
    * Get all relationship types grouped by category
    */
-  async getRelationshipTypes(): Promise<RelationshipTypesGroupedResponse> {
+  public async getRelationshipTypes(): Promise<RelationshipTypesGroupedResponse> {
     this.logger.debug('Getting relationship types');
 
     const types = await getAllRelationshipTypes.run(undefined, this.db);
@@ -80,7 +81,7 @@ export class RelationshipService {
   /**
    * Add a relationship between two friends (creates inverse automatically)
    */
-  async addRelationship(
+  public async addRelationship(
     userExternalId: string,
     friendExternalId: string,
     data: RelationshipCreateInput,
@@ -164,7 +165,7 @@ export class RelationshipService {
   /**
    * Update a relationship's notes
    */
-  async updateRelationship(
+  public async updateRelationship(
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
@@ -208,7 +209,7 @@ export class RelationshipService {
   /**
    * Delete a relationship (and its inverse)
    */
-  async deleteRelationship(
+  public async deleteRelationship(
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
@@ -261,7 +262,7 @@ export class RelationshipService {
   /**
    * Search friends by name (for autocomplete)
    */
-  async searchFriends(
+  public async searchFriends(
     userExternalId: string,
     query: string,
     excludeFriendExternalId?: string,
@@ -291,7 +292,7 @@ export class RelationshipService {
   /**
    * Map a relationship row to the Relationship type
    */
-  mapRelationship(row: IGetRelationshipsByFriendIdResult): RelationshipResponse {
+  public mapRelationship(row: IGetRelationshipsByFriendIdResult): RelationshipResponse {
     return {
       id: row.external_id,
       relatedFriendId: row.related_friend_external_id,

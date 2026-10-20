@@ -37,47 +37,52 @@ import {
   updateFriendPhoto,
 } from '../../models/queries/friends.queries.js';
 import { formatDateOnly } from '../../utils/date.js';
-import {
-  parseAddressesJson,
-  parseCirclesJson,
-  parseDatesJson,
-  parseEmailsJson,
-  parseMetInfoJson,
-  parsePhonesJson,
-  parseProfessionalHistoryJson,
-  parseRelationshipsJson,
-  parseSocialProfilesJson,
-  parseUrlsJson,
-} from '../../utils/db-json-schemas.js';
-import {
-  parseAddressType,
-  parseDateType,
-  parseEmailType,
-  parsePhoneType,
-  parseRelationshipCategory,
-  parseRelationshipTypeId,
-  parseSocialPlatform,
-  parseUrlType,
-} from '../../utils/type-guards.js';
-import type { AddressLookupService } from '../address-lookup.service.js';
+import { parseAddressesJson } from '../../utils/db-json/parse-addresses-json.js';
+import { parseCirclesJson } from '../../utils/db-json/parse-circles-json.js';
+import { parseDatesJson } from '../../utils/db-json/parse-dates-json.js';
+import { parseEmailsJson } from '../../utils/db-json/parse-emails-json.js';
+import { parseMetInfoJson } from '../../utils/db-json/parse-met-info-json.js';
+import { parsePhonesJson } from '../../utils/db-json/parse-phones-json.js';
+import { parseProfessionalHistoryJson } from '../../utils/db-json/parse-professional-history-json.js';
+import { parseRelationshipsJson } from '../../utils/db-json/parse-relationships-json.js';
+import { parseSocialProfilesJson } from '../../utils/db-json/parse-social-profiles-json.js';
+import { parseUrlsJson } from '../../utils/db-json/parse-urls-json.js';
+import { parseAddressType } from '../../utils/parse-address-type.js';
+import { parseDateType } from '../../utils/parse-date-type.js';
+import { parseEmailType } from '../../utils/parse-email-type.js';
+import { parsePhoneType } from '../../utils/parse-phone-type.js';
+import { parseRelationshipCategory } from '../../utils/parse-relationship-category.js';
+import { parseRelationshipTypeId } from '../../utils/parse-relationship-type-id.js';
+import { parseSocialPlatform } from '../../utils/parse-social-platform.js';
+import { parseUrlType } from '../../utils/parse-url-type.js';
 import type { PhotoService } from '../photo.service.js';
-import { NetworkGraphService } from './network-graph.service.js';
-import { RelationshipService } from './relationship.service.js';
-import { SearchService } from './search.service.js';
-import { AddressService } from './sub-resources/address.service.js';
-import { DateService } from './sub-resources/date.service.js';
-import { EmailService } from './sub-resources/email.service.js';
-import { MetInfoService } from './sub-resources/met-info.service.js';
-import { PhoneService } from './sub-resources/phone.service.js';
-import { ProfessionalHistoryService } from './sub-resources/professional-history.service.js';
-import { SocialProfileService } from './sub-resources/social-profile.service.js';
-import { UrlService } from './sub-resources/url.service.js';
+import type { NetworkGraphService } from './network-graph.service.js';
+import type { RelationshipService } from './relationship.service.js';
+import type { SearchService } from './search.service.js';
+import type { AddressService } from './sub-resources/address.service.js';
+import type { DateService } from './sub-resources/date.service.js';
+import type { EmailService } from './sub-resources/email.service.js';
+import type { MetInfoService } from './sub-resources/met-info.service.js';
+import type { PhoneService } from './sub-resources/phone.service.js';
+import type { ProfessionalHistoryService } from './sub-resources/professional-history.service.js';
+import type { SocialProfileService } from './sub-resources/social-profile.service.js';
+import type { UrlService } from './sub-resources/url.service.js';
 
 export interface FriendsServiceOptions {
   db: pg.Pool;
   logger: Logger;
   photoService: PhotoService;
-  addressLookupService?: AddressLookupService;
+  searchService: SearchService;
+  relationshipService: RelationshipService;
+  networkGraphService: NetworkGraphService;
+  phoneService: PhoneService;
+  emailService: EmailService;
+  addressService: AddressService;
+  urlService: UrlService;
+  dateService: DateService;
+  socialProfileService: SocialProfileService;
+  professionalHistoryService: ProfessionalHistoryService;
+  metInfoService: MetInfoService;
 }
 
 /**
@@ -85,117 +90,36 @@ export interface FriendsServiceOptions {
  * It delegates to specialized services for specific functionality.
  */
 export class FriendsService {
-  private db: pg.Pool;
-  private logger: Logger;
+  private readonly db: pg.Pool;
+  private readonly logger: Logger;
   private readonly photoService: PhotoService;
-  private _addressLookupService?: AddressLookupService;
-
-  // Lazy-loaded service instances
-  private _searchService?: SearchService;
-  private _relationshipService?: RelationshipService;
-  private _networkGraphService?: NetworkGraphService;
-  private _phoneService?: PhoneService;
-  private _emailService?: EmailService;
-  private _addressService?: AddressService;
-  private _urlService?: UrlService;
-  private _dateService?: DateService;
-  private _socialProfileService?: SocialProfileService;
-  private _professionalHistoryService?: ProfessionalHistoryService;
-  private _metInfoService?: MetInfoService;
+  private readonly searchService: SearchService;
+  private readonly relationshipService: RelationshipService;
+  private readonly networkGraphService: NetworkGraphService;
+  private readonly phoneService: PhoneService;
+  private readonly emailService: EmailService;
+  private readonly addressService: AddressService;
+  private readonly urlService: UrlService;
+  private readonly dateService: DateService;
+  private readonly socialProfileService: SocialProfileService;
+  private readonly professionalHistoryService: ProfessionalHistoryService;
+  private readonly metInfoService: MetInfoService;
 
   constructor(options: FriendsServiceOptions) {
     this.db = options.db;
     this.logger = options.logger;
     this.photoService = options.photoService;
-    this._addressLookupService = options.addressLookupService;
-  }
-
-  // ============================================================================
-  // Service Accessors (lazy initialization)
-  // ============================================================================
-
-  private get searchService(): SearchService {
-    if (!this._searchService) {
-      this._searchService = new SearchService({ db: this.db, logger: this.logger });
-    }
-    return this._searchService;
-  }
-
-  private get relationshipService(): RelationshipService {
-    if (!this._relationshipService) {
-      this._relationshipService = new RelationshipService({ db: this.db, logger: this.logger });
-    }
-    return this._relationshipService;
-  }
-
-  private get networkGraphService(): NetworkGraphService {
-    if (!this._networkGraphService) {
-      this._networkGraphService = new NetworkGraphService({ db: this.db, logger: this.logger });
-    }
-    return this._networkGraphService;
-  }
-
-  private get phoneService(): PhoneService {
-    if (!this._phoneService) {
-      this._phoneService = new PhoneService({ db: this.db, logger: this.logger });
-    }
-    return this._phoneService;
-  }
-
-  private get emailService(): EmailService {
-    if (!this._emailService) {
-      this._emailService = new EmailService({ db: this.db, logger: this.logger });
-    }
-    return this._emailService;
-  }
-
-  private get addressService(): AddressService {
-    if (!this._addressService) {
-      this._addressService = new AddressService({
-        db: this.db,
-        logger: this.logger,
-        addressLookupService: this._addressLookupService,
-      });
-    }
-    return this._addressService;
-  }
-
-  private get urlService(): UrlService {
-    if (!this._urlService) {
-      this._urlService = new UrlService({ db: this.db, logger: this.logger });
-    }
-    return this._urlService;
-  }
-
-  private get dateService(): DateService {
-    if (!this._dateService) {
-      this._dateService = new DateService({ db: this.db, logger: this.logger });
-    }
-    return this._dateService;
-  }
-
-  private get socialProfileService(): SocialProfileService {
-    if (!this._socialProfileService) {
-      this._socialProfileService = new SocialProfileService({ db: this.db, logger: this.logger });
-    }
-    return this._socialProfileService;
-  }
-
-  private get professionalHistoryService(): ProfessionalHistoryService {
-    if (!this._professionalHistoryService) {
-      this._professionalHistoryService = new ProfessionalHistoryService({
-        db: this.db,
-        logger: this.logger,
-      });
-    }
-    return this._professionalHistoryService;
-  }
-
-  private get metInfoService(): MetInfoService {
-    if (!this._metInfoService) {
-      this._metInfoService = new MetInfoService({ db: this.db, logger: this.logger });
-    }
-    return this._metInfoService;
+    this.searchService = options.searchService;
+    this.relationshipService = options.relationshipService;
+    this.networkGraphService = options.networkGraphService;
+    this.phoneService = options.phoneService;
+    this.emailService = options.emailService;
+    this.addressService = options.addressService;
+    this.urlService = options.urlService;
+    this.dateService = options.dateService;
+    this.socialProfileService = options.socialProfileService;
+    this.professionalHistoryService = options.professionalHistoryService;
+    this.metInfoService = options.metInfoService;
   }
 
   // ============================================================================
@@ -205,7 +129,7 @@ export class FriendsService {
   /**
    * List friends for a user with pagination and sorting
    */
-  async listFriends(
+  public async listFriends(
     userExternalId: string,
     options: FriendListOptions,
   ): Promise<FriendListResponse> {
@@ -249,7 +173,7 @@ export class FriendsService {
   /**
    * Get a single friend by ID with all related data
    */
-  async getFriendById(
+  public async getFriendById(
     userExternalId: string,
     friendExternalId: string,
   ): Promise<FriendResponse | null> {
@@ -267,7 +191,10 @@ export class FriendsService {
   /**
    * Create a new friend with optional sub-resources
    */
-  async createFriend(userExternalId: string, data: FriendCreateInput): Promise<FriendResponse> {
+  public async createFriend(
+    userExternalId: string,
+    data: FriendCreateInput,
+  ): Promise<FriendResponse> {
     this.logger.info({ userExternalId }, 'Creating friend');
 
     // The friend row and all its sub-resources must be created atomically:
@@ -407,7 +334,7 @@ export class FriendsService {
   /**
    * Update an existing friend
    */
-  async updateFriend(
+  public async updateFriend(
     userExternalId: string,
     friendExternalId: string,
     data: FriendUpdateInput,
@@ -451,7 +378,7 @@ export class FriendsService {
   /**
    * Soft delete a friend
    */
-  async deleteFriend(userExternalId: string, friendExternalId: string): Promise<boolean> {
+  public async deleteFriend(userExternalId: string, friendExternalId: string): Promise<boolean> {
     this.logger.info({ userExternalId, friendExternalId }, 'Deleting friend');
 
     const result = await softDeleteFriend.run({ userExternalId, friendExternalId }, this.db);
@@ -477,7 +404,7 @@ export class FriendsService {
   // Photo Methods
   // ============================================================================
 
-  async updatePhoto(
+  public async updatePhoto(
     userExternalId: string,
     friendExternalId: string,
     photoUrl: string | null,
@@ -502,7 +429,10 @@ export class FriendsService {
   // Favorites & Archive Methods
   // ============================================================================
 
-  async toggleFavorite(userExternalId: string, friendExternalId: string): Promise<boolean | null> {
+  public async toggleFavorite(
+    userExternalId: string,
+    friendExternalId: string,
+  ): Promise<boolean | null> {
     this.logger.debug({ friendExternalId }, 'Toggling favorite status');
 
     const [result] = await toggleFavorite.run({ userExternalId, friendExternalId }, this.db);
@@ -519,7 +449,7 @@ export class FriendsService {
     return result.is_favorite;
   }
 
-  async archiveFriend(
+  public async archiveFriend(
     userExternalId: string,
     friendExternalId: string,
     reason?: string,
@@ -544,7 +474,7 @@ export class FriendsService {
     return true;
   }
 
-  async unarchiveFriend(userExternalId: string, friendExternalId: string): Promise<boolean> {
+  public async unarchiveFriend(userExternalId: string, friendExternalId: string): Promise<boolean> {
     this.logger.debug({ friendExternalId }, 'Unarchiving friend');
 
     const [result] = await unarchiveFriend.run({ userExternalId, friendExternalId }, this.db);
@@ -558,7 +488,7 @@ export class FriendsService {
     return true;
   }
 
-  async getUpcomingDates(
+  public async getUpcomingDates(
     userExternalId: string,
     options: { days?: number; limit?: number } = {},
   ): Promise<UpcomingDateResponse[]> {
@@ -569,7 +499,7 @@ export class FriendsService {
   // Met Info Methods (delegated)
   // ============================================================================
 
-  async setMetInfo(
+  public async setMetInfo(
     userExternalId: string,
     friendExternalId: string,
     data: MetInfoInput,
@@ -577,7 +507,7 @@ export class FriendsService {
     return this.metInfoService.set(userExternalId, friendExternalId, data);
   }
 
-  async deleteMetInfo(userExternalId: string, friendExternalId: string): Promise<boolean> {
+  public async deleteMetInfo(userExternalId: string, friendExternalId: string): Promise<boolean> {
     return this.metInfoService.delete(userExternalId, friendExternalId);
   }
 
@@ -585,11 +515,11 @@ export class FriendsService {
   // Relationship Methods (delegated)
   // ============================================================================
 
-  async getRelationshipTypes(): Promise<RelationshipTypesGroupedResponse> {
+  public async getRelationshipTypes(): Promise<RelationshipTypesGroupedResponse> {
     return this.relationshipService.getRelationshipTypes();
   }
 
-  async addRelationship(
+  public async addRelationship(
     userExternalId: string,
     friendExternalId: string,
     data: RelationshipCreateInput,
@@ -597,7 +527,7 @@ export class FriendsService {
     return this.relationshipService.addRelationship(userExternalId, friendExternalId, data);
   }
 
-  async updateRelationship(
+  public async updateRelationship(
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
@@ -611,7 +541,7 @@ export class FriendsService {
     );
   }
 
-  async deleteRelationship(
+  public async deleteRelationship(
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
@@ -623,7 +553,7 @@ export class FriendsService {
     );
   }
 
-  async searchFriends(
+  public async searchFriends(
     userExternalId: string,
     query: string,
     excludeFriendExternalId?: string,
@@ -641,7 +571,7 @@ export class FriendsService {
   // Full-Text Search Methods (delegated)
   // ============================================================================
 
-  async fullTextSearch(
+  public async fullTextSearch(
     userExternalId: string,
     query: string,
     limit = 10,
@@ -649,40 +579,40 @@ export class FriendsService {
     return this.searchService.fullTextSearch(userExternalId, query, limit);
   }
 
-  async paginatedSearch(
+  public async paginatedSearch(
     userExternalId: string,
     options: SearchOptions,
   ): Promise<PaginatedSearchResponse> {
     return this.searchService.paginatedSearch(userExternalId, options);
   }
 
-  async facetedSearch(
+  public async facetedSearch(
     userExternalId: string,
     options: FacetedSearchOptions,
   ): Promise<FacetedSearchResponse> {
     return this.searchService.facetedSearch(userExternalId, options);
   }
 
-  async filterOnlyList(
+  public async filterOnlyList(
     userExternalId: string,
     options: FacetedSearchOptions,
   ): Promise<FacetedSearchResponse> {
     return this.searchService.filterOnlyList(userExternalId, options);
   }
 
-  async getRecentSearches(userExternalId: string, limit = 10): Promise<string[]> {
+  public async getRecentSearches(userExternalId: string, limit = 10): Promise<string[]> {
     return this.searchService.getRecentSearches(userExternalId, limit);
   }
 
-  async addRecentSearch(userExternalId: string, query: string): Promise<void> {
+  public async addRecentSearch(userExternalId: string, query: string): Promise<void> {
     return this.searchService.addRecentSearch(userExternalId, query);
   }
 
-  async deleteRecentSearch(userExternalId: string, query: string): Promise<boolean> {
+  public async deleteRecentSearch(userExternalId: string, query: string): Promise<boolean> {
     return this.searchService.deleteRecentSearch(userExternalId, query);
   }
 
-  async clearRecentSearches(userExternalId: string): Promise<void> {
+  public async clearRecentSearches(userExternalId: string): Promise<void> {
     return this.searchService.clearRecentSearches(userExternalId);
   }
 
@@ -690,7 +620,7 @@ export class FriendsService {
   // Network Graph Methods (delegated)
   // ============================================================================
 
-  async getNetworkGraphData(userExternalId: string): Promise<NetworkGraphResponse> {
+  public async getNetworkGraphData(userExternalId: string): Promise<NetworkGraphResponse> {
     return this.networkGraphService.getNetworkGraphData(userExternalId);
   }
 

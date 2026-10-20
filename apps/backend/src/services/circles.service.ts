@@ -27,7 +27,7 @@ import {
   removeFriendFromCircle,
   setFriendCircles,
 } from '../models/queries/friend-circles.queries.js';
-import { rethrowUniqueViolation } from '../utils/pg-errors.js';
+import { rethrowUniqueViolation } from '../utils/rethrow-unique-violation.js';
 
 export interface CirclesServiceOptions {
   db: Pool;
@@ -37,7 +37,7 @@ export interface CirclesServiceOptions {
  * Service for managing circles (categorization/organization feature)
  */
 export class CirclesService {
-  private db: Pool;
+  private readonly db: Pool;
 
   constructor(options: CirclesServiceOptions) {
     this.db = options.db;
@@ -50,7 +50,7 @@ export class CirclesService {
   /**
    * List all circles for a user
    */
-  async listCircles(userExternalId: string): Promise<CircleResponse[]> {
+  public async listCircles(userExternalId: string): Promise<CircleResponse[]> {
     const results = await getCirclesByUserId.run({ userExternalId }, this.db);
     return results.map((row) => this.mapCircle(row));
   }
@@ -58,7 +58,7 @@ export class CirclesService {
   /**
    * Get a single circle by ID
    */
-  async getCircleById(
+  public async getCircleById(
     userExternalId: string,
     circleExternalId: string,
   ): Promise<CircleResponse | null> {
@@ -73,7 +73,10 @@ export class CirclesService {
   /**
    * Create a new circle
    */
-  async createCircle(userExternalId: string, input: CircleInput): Promise<CircleResponse | null> {
+  public async createCircle(
+    userExternalId: string,
+    input: CircleInput,
+  ): Promise<CircleResponse | null> {
     try {
       const results = await createCircle.run(
         {
@@ -103,16 +106,20 @@ export class CirclesService {
   /**
    * Update an existing circle
    */
-  async updateCircle(
+  public async updateCircle(
     userExternalId: string,
     circleExternalId: string,
     input: Partial<CircleInput>,
   ): Promise<CircleResponse | null> {
     // Check if parent_circle_id was explicitly provided (even if null to remove parent)
-    const updateParent = 'parent_circle_id' in input;
+    const shouldUpdateParent = 'parent_circle_id' in input;
 
     // Validate parent circle exists if provided and not null
-    if (updateParent && input.parent_circle_id !== null && input.parent_circle_id !== undefined) {
+    if (
+      shouldUpdateParent &&
+      input.parent_circle_id !== null &&
+      input.parent_circle_id !== undefined
+    ) {
       const parent = await this.getCircleById(userExternalId, input.parent_circle_id);
       if (!parent) {
         throw new CircleNotFoundError(input.parent_circle_id);
@@ -129,7 +136,7 @@ export class CirclesService {
 
     // Use sentinel value '__KEEP__' when parent_circle_id wasn't provided in input
     // NULL means explicitly remove the parent, actual ID means set new parent
-    const parentValue = updateParent ? (input.parent_circle_id ?? null) : '__KEEP__';
+    const parentValue = shouldUpdateParent ? (input.parent_circle_id ?? null) : '__KEEP__';
 
     try {
       const results = await updateCircle.run(
@@ -193,7 +200,7 @@ export class CirclesService {
   /**
    * Delete a circle (friends remain, just unassigned from this circle)
    */
-  async deleteCircle(userExternalId: string, circleExternalId: string): Promise<boolean> {
+  public async deleteCircle(userExternalId: string, circleExternalId: string): Promise<boolean> {
     const results = await deleteCircle.run({ userExternalId, circleExternalId }, this.db);
     return results.length > 0;
   }
@@ -201,7 +208,7 @@ export class CirclesService {
   /**
    * Reorder circles by updating their sort_order (uses transaction for consistency)
    */
-  async reorderCircles(
+  public async reorderCircles(
     userExternalId: string,
     order: { id: string; sort_order: number }[],
   ): Promise<void> {
@@ -231,7 +238,7 @@ export class CirclesService {
    * Merge one circle into another (move all friends, then delete source)
    * Uses transaction to ensure atomicity
    */
-  async mergeCircles(
+  public async mergeCircles(
     userExternalId: string,
     targetCircleExternalId: string,
     sourceCircleExternalId: string,
@@ -278,7 +285,7 @@ export class CirclesService {
   /**
    * Get all circles for a specific friend
    */
-  async getCirclesForFriend(
+  public async getCirclesForFriend(
     userExternalId: string,
     friendExternalId: string,
   ): Promise<CircleSummaryResponse[]> {
@@ -290,7 +297,7 @@ export class CirclesService {
    * Set circles for a friend (replaces all existing assignments)
    * Uses transaction to ensure atomicity
    */
-  async setFriendCircles(
+  public async setFriendCircles(
     userExternalId: string,
     friendExternalId: string,
     circleIds: string[],
@@ -341,7 +348,7 @@ export class CirclesService {
   /**
    * Add a friend to a single circle
    */
-  async addFriendToCircle(
+  public async addFriendToCircle(
     userExternalId: string,
     friendExternalId: string,
     circleExternalId: string,
@@ -366,7 +373,7 @@ export class CirclesService {
   /**
    * Remove a friend from a circle
    */
-  async removeFriendFromCircle(
+  public async removeFriendFromCircle(
     userExternalId: string,
     friendExternalId: string,
     circleExternalId: string,

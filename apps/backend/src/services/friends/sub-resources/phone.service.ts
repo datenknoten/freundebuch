@@ -8,7 +8,7 @@ import {
   type IGetPhonesByFriendIdResult,
   updatePhone,
 } from '../../../models/queries/friend-phones.queries.js';
-import { parsePhoneType } from '../../../utils/type-guards.js';
+import { parsePhoneType } from '../../../utils/parse-phone-type.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -35,71 +35,74 @@ export class PhoneService extends SubResourceService<
   IDeletePhoneResult
 > {
   constructor(options: SubResourceServiceOptions) {
-    super(options, {
-      resourceName: 'phone',
-      hasPrimaryFlag: true,
+    super({
+      ...options,
+      definition: {
+        resourceName: 'phone',
+        hasPrimaryFlag: true,
 
-      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
-        return createPhone.run(
-          {
-            userExternalId,
-            friendExternalId,
-            phoneNumber: input.phone_number,
-            phoneType: input.phone_type,
-            label: input.label ?? null,
-            isPrimary: input.is_primary,
-          },
+        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
+          return createPhone.run(
+            {
+              userExternalId,
+              friendExternalId,
+              phoneNumber: input.phone_number,
+              phoneType: input.phone_type,
+              label: input.label ?? null,
+              isPrimary: input.is_primary,
+            },
+            client,
+          );
+        },
+
+        updateFn: async (
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return updatePhone.run(
+            {
+              userExternalId,
+              friendExternalId,
+              phoneExternalId: resourceExternalId,
+              phoneNumber: input.phone_number,
+              phoneType: input.phone_type,
+              label: input.label ?? null,
+              isPrimary: input.is_primary,
+            },
+            client,
+          );
+        },
 
-      updateFn: async (
-        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
-        client,
-      ) => {
-        return updatePhone.run(
-          {
-            userExternalId,
-            friendExternalId,
-            phoneExternalId: resourceExternalId,
-            phoneNumber: input.phone_number,
-            phoneType: input.phone_type,
-            label: input.label ?? null,
-            isPrimary: input.is_primary,
-          },
+        deleteFn: async (
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        );
+        ) => {
+          return deletePhone.run(
+            {
+              userExternalId,
+              friendExternalId,
+              phoneExternalId: resourceExternalId,
+            },
+            client,
+          );
+        },
+
+        clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+          return clearPrimaryPhone.run({ userExternalId, friendExternalId }, client);
+        },
+
+        isPrimary: (input) => input.is_primary,
+
+        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+
+        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+          return getPhonesByFriendId.run({ userExternalId, friendExternalId }, client);
+        },
+
+        mapListResult: mapRow,
+
+        mapResult: mapRow,
       },
-
-      deleteFn: async (
-        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
-        client,
-      ) => {
-        return deletePhone.run(
-          {
-            userExternalId,
-            friendExternalId,
-            phoneExternalId: resourceExternalId,
-          },
-          client,
-        );
-      },
-
-      clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return clearPrimaryPhone.run({ userExternalId, friendExternalId }, client);
-      },
-
-      isPrimary: (input) => input.is_primary,
-
-      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
-
-      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return getPhonesByFriendId.run({ userExternalId, friendExternalId }, client);
-      },
-
-      mapListResult: mapRow,
-
-      mapResult: mapRow,
     });
   }
 }

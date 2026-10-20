@@ -1,3 +1,4 @@
+import type { CircleSummaryResponse, CollectiveCircleResponse } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
@@ -8,19 +9,6 @@ import {
   removeFromCircle,
 } from '../../../models/queries/collective-circles.queries.js';
 
-export interface CollectiveCircle {
-  id: string;
-  name: string;
-  color: string | null;
-  createdAt: string;
-}
-
-export interface AvailableCircle {
-  id: string;
-  name: string;
-  color: string | null;
-}
-
 export interface CollectiveCircleServiceOptions {
   db: pg.Pool;
   logger: Logger;
@@ -30,8 +18,8 @@ export interface CollectiveCircleServiceOptions {
  * CircleService handles circle membership for collectives.
  */
 export class CollectiveCircleService {
-  private db: pg.Pool;
-  private logger: Logger;
+  private readonly db: pg.Pool;
+  private readonly logger: Logger;
 
   constructor(options: CollectiveCircleServiceOptions) {
     this.db = options.db;
@@ -41,10 +29,10 @@ export class CollectiveCircleService {
   /**
    * Get all circles a collective belongs to
    */
-  async getCircles(
+  public async getCircles(
     userExternalId: string,
     collectiveExternalId: string,
-  ): Promise<CollectiveCircle[]> {
+  ): Promise<CollectiveCircleResponse[]> {
     this.logger.debug({ collectiveExternalId }, 'Getting circles for collective');
 
     const rows = await getCirclesByCollectiveId.run(
@@ -58,10 +46,10 @@ export class CollectiveCircleService {
   /**
    * Get available circles (not already assigned to collective)
    */
-  async getAvailableCircles(
+  public async getAvailableCircles(
     userExternalId: string,
     collectiveExternalId: string,
-  ): Promise<AvailableCircle[]> {
+  ): Promise<CircleSummaryResponse[]> {
     this.logger.debug({ collectiveExternalId }, 'Getting available circles for collective');
 
     const rows = await getAvailableCircles.run({ userExternalId, collectiveExternalId }, this.db);
@@ -76,7 +64,7 @@ export class CollectiveCircleService {
   /**
    * Add collective to a circle
    */
-  async addToCircle(
+  public async addToCircle(
     userExternalId: string,
     collectiveExternalId: string,
     circleExternalId: string,
@@ -94,7 +82,7 @@ export class CollectiveCircleService {
   /**
    * Remove collective from a circle
    */
-  async removeFromCircle(
+  public async removeFromCircle(
     userExternalId: string,
     collectiveExternalId: string,
     circleExternalId: string,
@@ -112,7 +100,7 @@ export class CollectiveCircleService {
     return result.length > 0;
   }
 
-  private mapCircle(row: IGetCirclesByCollectiveIdResult): CollectiveCircle {
+  private mapCircle(row: IGetCirclesByCollectiveIdResult): CollectiveCircleResponse {
     return {
       id: row.circle_external_id,
       name: row.circle_name,

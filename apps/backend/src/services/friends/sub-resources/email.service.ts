@@ -8,7 +8,7 @@ import {
   type IGetEmailsByFriendIdResult,
   updateEmail,
 } from '../../../models/queries/friend-emails.queries.js';
-import { parseEmailType } from '../../../utils/type-guards.js';
+import { parseEmailType } from '../../../utils/parse-email-type.js';
 import {
   SubResourceService,
   type SubResourceServiceOptions,
@@ -35,71 +35,74 @@ export class EmailService extends SubResourceService<
   IDeleteEmailResult
 > {
   constructor(options: SubResourceServiceOptions) {
-    super(options, {
-      resourceName: 'email',
-      hasPrimaryFlag: true,
+    super({
+      ...options,
+      definition: {
+        resourceName: 'email',
+        hasPrimaryFlag: true,
 
-      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
-        return createEmail.run(
-          {
-            userExternalId,
-            friendExternalId,
-            emailAddress: input.email_address,
-            emailType: input.email_type,
-            label: input.label ?? null,
-            isPrimary: input.is_primary,
-          },
+        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
+          return createEmail.run(
+            {
+              userExternalId,
+              friendExternalId,
+              emailAddress: input.email_address,
+              emailType: input.email_type,
+              label: input.label ?? null,
+              isPrimary: input.is_primary,
+            },
+            client,
+          );
+        },
+
+        updateFn: async (
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return updateEmail.run(
+            {
+              userExternalId,
+              friendExternalId,
+              emailExternalId: resourceExternalId,
+              emailAddress: input.email_address,
+              emailType: input.email_type,
+              label: input.label ?? null,
+              isPrimary: input.is_primary,
+            },
+            client,
+          );
+        },
 
-      updateFn: async (
-        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
-        client,
-      ) => {
-        return updateEmail.run(
-          {
-            userExternalId,
-            friendExternalId,
-            emailExternalId: resourceExternalId,
-            emailAddress: input.email_address,
-            emailType: input.email_type,
-            label: input.label ?? null,
-            isPrimary: input.is_primary,
-          },
+        deleteFn: async (
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        );
+        ) => {
+          return deleteEmail.run(
+            {
+              userExternalId,
+              friendExternalId,
+              emailExternalId: resourceExternalId,
+            },
+            client,
+          );
+        },
+
+        clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+          return clearPrimaryEmail.run({ userExternalId, friendExternalId }, client);
+        },
+
+        isPrimary: (input) => input.is_primary,
+
+        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+
+        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+          return getEmailsByFriendId.run({ userExternalId, friendExternalId }, client);
+        },
+
+        mapListResult: mapRow,
+
+        mapResult: mapRow,
       },
-
-      deleteFn: async (
-        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
-        client,
-      ) => {
-        return deleteEmail.run(
-          {
-            userExternalId,
-            friendExternalId,
-            emailExternalId: resourceExternalId,
-          },
-          client,
-        );
-      },
-
-      clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return clearPrimaryEmail.run({ userExternalId, friendExternalId }, client);
-      },
-
-      isPrimary: (input) => input.is_primary,
-
-      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
-
-      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return getEmailsByFriendId.run({ userExternalId, friendExternalId }, client);
-      },
-
-      mapListResult: mapRow,
-
-      mapResult: mapRow,
     });
   }
 }

@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import type { AppPasswordCreateResponse, AppPasswordResponse } from '@freundebuch/shared/index.js';
 import bcrypt from 'bcrypt';
 import type pg from 'pg';
 import type { Logger } from 'pino';
@@ -12,6 +13,7 @@ import {
   revokeAppPassword,
   updateAppPasswordLastUsed,
 } from '../models/queries/app-passwords.queries.js';
+import { hashAppPasswordPrefix } from '../utils/hash-app-password-prefix.js';
 
 const SALT_ROUNDS = 10;
 const PASSWORD_LENGTH = 24; // 24 bytes = 32 chars in base64url
@@ -31,33 +33,6 @@ const DUMMY_HASH = bcrypt.hashSync('dummy', SALT_ROUNDS);
 const FORMAT_CHUNK_SIZE = 4;
 const FORMAT_STRIDE = FORMAT_CHUNK_SIZE + 1; // chunk + one separator
 
-/**
- * Lookup key stored in `auth.app_passwords.password_prefix`: the first 16 hex
- * characters of sha256 over the first 8 characters of the raw password.
- *
- * The raw prefix is a third of the secret, so storing it in plaintext handed a
- * database dump both a head start and an offline oracle for confirming
- * guesses. Hashing keeps the indexed equality lookup while making the stored
- * value useless on its own. `apps/sabredav` computes the same value with
- * `substr(hash('sha256', $prefix), 0, 16)`.
- */
-export function hashAppPasswordPrefix(prefix: string): string {
-  return crypto.createHash('sha256').update(prefix).digest('hex').slice(0, 16);
-}
-
-export interface AppPassword {
-  externalId: string;
-  name: string;
-  lastUsedAt: string | null;
-  createdAt: string;
-}
-
-export interface AppPasswordWithSecret extends AppPassword {
-  password: string; // Only returned at creation time
-  /** Raw (unhashed) password prefix — returned at creation time only. */
-  passwordPrefix: string;
-}
-
 export interface BasicAuthContext {
   userId: string; // User's external_id
   email: string;
@@ -70,8 +45,8 @@ export interface AppPasswordsServiceOptions {
 }
 
 export class AppPasswordsService {
-  private db: pg.Pool;
-  private logger: Logger;
+  private readonly db: pg.Pool;
+  private readonly logger: Logger;
 
   constructor(options: AppPasswordsServiceOptions) {
     this.db = options.db;
@@ -121,7 +96,7 @@ export class AppPasswordsService {
   /**
    * List all active app passwords for a user
    */
-  async listAppPasswords(userExternalId: string): Promise<AppPassword[]> {
+  public async listAppPasswords(userExternalId: string): Promise<AppPasswordResponse[]> {
     this.logger.debug({ userId: userExternalId }, 'Listing app passwords');
 
     const results = await getAppPasswordsByUserExternalId.run({ userExternalId }, this.db);
@@ -139,7 +114,10 @@ export class AppPasswordsService {
    * Returns the password only once - it cannot be retrieved later
    * @throws MaxAppPasswordsExceededError if user has too many app passwords
    */
-  async createAppPassword(userExternalId: string, name: string): Promise<AppPasswordWithSecret> {
+  public async createAppPassword(
+    userExternalId: string,
+    name: string,
+  ): Promise<AppPasswordCreateResponse> {
     this.logger.info({ userId: userExternalId }, 'Creating app password');
 
     // Check if user has reached the maximum number of app passwords
@@ -194,7 +172,10 @@ export class AppPasswordsService {
   /**
    * Revoke an app password (soft delete)
    */
-  async revokeAppPassword(userExternalId: string, appPasswordExternalId: string): Promise<boolean> {
+  public async revokeAppPassword(
+    userExternalId: string,
+    appPasswordExternalId: string,
+  ): Promise<boolean> {
     this.logger.info(
       { userId: userExternalId, passwordId: appPasswordExternalId },
       'Revoking app password',
@@ -229,7 +210,10 @@ export class AppPasswordsService {
    * Used by CardDAV/CalDAV authentication
    * Returns user info if valid, null if invalid
    */
-  async verifyAppPassword(email: string, password: string): Promise<BasicAuthContext | null> {
+  public async verifyAppPassword(
+    email: string,
+    password: string,
+  ): Promise<BasicAuthContext | null> {
     this.logger.debug('Verifying app password');
 
     // Invert formatPassword to recover the raw base64url password. Must preserve

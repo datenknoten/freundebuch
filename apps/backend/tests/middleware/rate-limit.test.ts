@@ -1,12 +1,8 @@
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import { pino } from 'pino';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { loadConfig } from '../../src/config.js';
-import {
-  friendsRateLimitMiddleware,
-  resetRateLimiters,
-  sentryTunnelRateLimitMiddleware,
-} from '../../src/middleware/rate-limit.js';
+import { createRateLimitMiddleware } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
 import { TEST_ENV } from '../helpers/test-env.js';
 
@@ -23,25 +19,27 @@ function limitedConfig(env: Record<string, string> = {}) {
  * so one heavy client locked out the rest.
  */
 describe('rate limiting', () => {
-  function appFor(userId: string | undefined, env: Record<string, string> = {}) {
-    const config = limitedConfig(env);
+  function friendsLimiter(env: Record<string, string> = {}) {
+    return createRateLimitMiddleware({ config: limitedConfig(env), limiter: 'friends' });
+  }
+
+  /** An app per user; apps built from the same middleware share its buckets. */
+  function appFor(
+    userId: string | undefined,
+    rateLimitMiddleware: MiddlewareHandler<AppContext> = friendsLimiter(),
+  ) {
     const app = new Hono<AppContext>();
     app.use('*', async (c, next) => {
       c.set('logger', SILENT_LOGGER);
-      c.set('config', config);
       if (userId !== undefined) {
         c.set('user', { userId, email: `${userId}@example.com` });
       }
       return next();
     });
-    app.use('*', friendsRateLimitMiddleware);
+    app.use('*', rateLimitMiddleware);
     app.get('/', (c) => c.json({ ok: true }));
     return app;
   }
-
-  beforeEach(() => {
-    resetRateLimiters();
-  });
 
   async function drain(app: Hono<AppContext>, attempts: number): Promise<number> {
     let lastStatus = 0;
@@ -53,8 +51,9 @@ describe('rate limiting', () => {
   }
 
   it('does not throttle a second user when the first exhausts the limit', async () => {
-    const userA = appFor('user-a');
-    const userB = appFor('user-b');
+    const rateLimitMiddleware = friendsLimiter();
+    const userA = appFor('user-a', rateLimitMiddleware);
+    const userB = appFor('user-b', rateLimitMiddleware);
 
     // The friends budget is 100/min; drain it for user A.
     expect(await drain(userA, 600)).toBe(429);
@@ -86,7 +85,7 @@ describe('rate limiting', () => {
   });
 
   it('lets every request through when RATE_LIMIT_ENABLED is false', async () => {
-    const app = appFor('user-unlimited', { RATE_LIMIT_ENABLED: 'false' });
+    const app = appFor('user-unlimited', friendsLimiter({ RATE_LIMIT_ENABLED: 'false' }));
 
     expect(await drain(app, 300)).toBe(200);
   });
@@ -101,14 +100,15 @@ describe('rate limiting', () => {
    */
   describe('client identifier', () => {
     function tunnelApp(env: Record<string, string> = {}) {
-      const config = limitedConfig(env);
       const app = new Hono<AppContext>();
       app.use('*', async (c, next) => {
         c.set('logger', SILENT_LOGGER);
-        c.set('config', config);
         return next();
       });
-      app.use('*', sentryTunnelRateLimitMiddleware);
+      app.use(
+        '*',
+        createRateLimitMiddleware({ config: limitedConfig(env), limiter: 'sentryTunnel' }),
+      );
       app.get('/', (c) => c.json({ ok: true }));
       return app;
     }

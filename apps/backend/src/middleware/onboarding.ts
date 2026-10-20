@@ -1,8 +1,13 @@
-import type { Context, Next } from 'hono';
+import type { Context, MiddlewareHandler, Next } from 'hono';
 import { AuthenticationError } from '../errors/authentication.error.js';
 import { OnboardingRequiredError } from '../errors/onboarding-required.error.js';
-import { hasSelfProfile } from '../models/queries/users.queries.js';
+import type { UsersService } from '../services/users.service.js';
+import type { AppContext } from '../types/context.js';
 import { getAuthUser } from './auth.js';
+
+export interface OnboardingMiddlewareOptions {
+  usersService: UsersService;
+}
 
 /**
  * Middleware to ensure user has completed onboarding (has a profile)
@@ -17,25 +22,28 @@ import { getAuthUser } from './auth.js';
  * - /api/users/me/self-profile (used during onboarding itself)
  * - /health (health checks)
  */
-export async function onboardingMiddleware(c: Context, next: Next) {
-  const db = c.get('db');
-  const logger = c.get('logger');
+export function createOnboardingMiddleware(
+  options: OnboardingMiddlewareOptions,
+): MiddlewareHandler<AppContext> {
+  const { usersService } = options;
 
-  // Get authenticated user - this should always exist if authMiddleware ran first
-  const authUser = getAuthUser(c);
-  if (!authUser?.userId) {
-    logger.error(
-      'onboardingMiddleware called without authenticated user - ensure authMiddleware runs first',
-    );
-    throw new AuthenticationError('Unauthorized');
-  }
+  return async function onboardingMiddleware(c: Context<AppContext>, next: Next) {
+    const logger = c.get('logger');
 
-  const result = await hasSelfProfile.run({ userExternalId: authUser.userId }, db);
+    // Get authenticated user - this should always exist if authMiddleware ran first
+    const authUser = getAuthUser(c);
+    if (!authUser?.userId) {
+      logger.error(
+        'onboardingMiddleware called without authenticated user - ensure authMiddleware runs first',
+      );
+      throw new AuthenticationError('Unauthorized');
+    }
 
-  if (!result[0]?.has_self_profile) {
-    logger.info({ userId: authUser.userId }, 'User has not completed onboarding');
-    throw new OnboardingRequiredError();
-  }
+    if (!(await usersService.hasSelfProfile(authUser.userId))) {
+      logger.info({ userId: authUser.userId }, 'User has not completed onboarding');
+      throw new OnboardingRequiredError();
+    }
 
-  return next();
+    return next();
+  };
 }

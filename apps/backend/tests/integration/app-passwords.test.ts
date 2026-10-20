@@ -1,10 +1,8 @@
 import bcrypt from 'bcrypt';
 import pino from 'pino';
 import { describe, expect, it } from 'vitest';
-import {
-  AppPasswordsService,
-  hashAppPasswordPrefix,
-} from '../../src/services/app-passwords.service.js';
+import { AppPasswordsService } from '../../src/services/app-passwords.service.js';
+import { hashAppPasswordPrefix } from '../../src/utils/hash-app-password-prefix.js';
 import {
   completeTestUserOnboarding,
   createBetterAuthSession,

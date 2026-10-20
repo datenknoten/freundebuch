@@ -13,14 +13,11 @@ import {
   type IGetChannelsByUserIdResult,
   updateChannel,
 } from '../models/queries/notification-channels.queries.js';
-import {
-  type CredentialColumn,
-  credentialContext,
-  decrypt,
-  encryptOptional,
-  tryDecrypt,
-} from '../utils/credentials-crypto.js';
-import { rethrowUniqueViolation } from '../utils/pg-errors.js';
+import { type CredentialColumn, credentialContext } from '../utils/credential-context.js';
+import { decrypt } from '../utils/decrypt.js';
+import { encryptOptional } from '../utils/encrypt-optional.js';
+import { rethrowUniqueViolation } from '../utils/rethrow-unique-violation.js';
+import { tryDecrypt } from '../utils/try-decrypt.js';
 import { sendDiscordMessage } from './external/discord.client.js';
 import { sendMatrixMessage } from './external/matrix.client.js';
 import { sendTelegramMessage } from './external/telegram.client.js';
@@ -37,7 +34,7 @@ export interface NotificationChannelsServiceOptions {
  * Service for managing notification channels (messaging bot configurations)
  */
 export class NotificationChannelsService {
-  private db: Pool;
+  private readonly db: Pool;
   private readonly credentialsKey: Buffer;
 
   constructor(options: NotificationChannelsServiceOptions) {
@@ -48,7 +45,7 @@ export class NotificationChannelsService {
   /**
    * List all channels for a user (credentials masked)
    */
-  async listChannels(userExternalId: string): Promise<NotificationChannelResponse[]> {
+  public async listChannels(userExternalId: string): Promise<NotificationChannelResponse[]> {
     const results = await getChannelsByUserId.run({ userExternalId }, this.db);
     return results.map((row) => this.mapChannel(userExternalId, row));
   }
@@ -56,7 +53,7 @@ export class NotificationChannelsService {
   /**
    * Get a single channel by external ID (credentials masked)
    */
-  async getChannel(
+  public async getChannel(
     userExternalId: string,
     channelExternalId: string,
   ): Promise<NotificationChannelResponse> {
@@ -74,7 +71,7 @@ export class NotificationChannelsService {
   /**
    * Create a new notification channel
    */
-  async createChannel(
+  public async createChannel(
     userExternalId: string,
     input: {
       platform: string;
@@ -131,7 +128,7 @@ export class NotificationChannelsService {
   /**
    * Update an existing notification channel
    */
-  async updateChannel(
+  public async updateChannel(
     userExternalId: string,
     channelExternalId: string,
     input: {
@@ -181,7 +178,7 @@ export class NotificationChannelsService {
   /**
    * Delete a notification channel
    */
-  async deleteChannel(userExternalId: string, channelExternalId: string): Promise<boolean> {
+  public async deleteChannel(userExternalId: string, channelExternalId: string): Promise<boolean> {
     const results = await deleteChannel.run({ userExternalId, channelExternalId }, this.db);
     return results.length > 0;
   }
@@ -189,7 +186,7 @@ export class NotificationChannelsService {
   /**
    * Toggle a channel's enabled/disabled state
    */
-  async toggleChannel(
+  public async toggleChannel(
     userExternalId: string,
     channelExternalId: string,
     isEnabled: boolean,
@@ -200,7 +197,7 @@ export class NotificationChannelsService {
   /**
    * Send a test message to verify channel configuration
    */
-  async sendTestMessage(userExternalId: string, channelExternalId: string): Promise<void> {
+  public async sendTestMessage(userExternalId: string, channelExternalId: string): Promise<void> {
     const results = await getChannelByExternalId.run(
       { userExternalId, channelExternalId },
       this.db,

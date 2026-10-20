@@ -1,10 +1,8 @@
 import bcrypt from 'bcrypt';
 import pino from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  AppPasswordsService,
-  hashAppPasswordPrefix,
-} from '../../src/services/app-passwords.service.js';
+import { AppPasswordsService } from '../../src/services/app-passwords.service.js';
+import { hashAppPasswordPrefix } from '../../src/utils/hash-app-password-prefix.js';
 
 // Mock the PgTyped queries
 vi.mock('../../src/models/queries/app-passwords.queries.js', () => ({

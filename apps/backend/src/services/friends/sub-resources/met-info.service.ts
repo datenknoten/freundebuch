@@ -19,8 +19,8 @@ export interface MetInfoServiceOptions {
  * does not extend SubResourceService due to its unique requirements.
  */
 export class MetInfoService {
-  private db: pg.Pool;
-  private logger: Logger;
+  private readonly db: pg.Pool;
+  private readonly logger: Logger;
 
   constructor(options: MetInfoServiceOptions) {
     this.db = options.db;
@@ -30,7 +30,7 @@ export class MetInfoService {
   /**
    * Set or update met information for a friend (upsert semantics)
    */
-  async set(
+  public async set(
     userExternalId: string,
     friendExternalId: string,
     data: MetInfoInput,
@@ -61,7 +61,7 @@ export class MetInfoService {
   /**
    * Delete met information for a friend
    */
-  async delete(
+  public async delete(
     userExternalId: string,
     friendExternalId: string,
     client?: pg.Pool | pg.PoolClient,
@@ -78,7 +78,7 @@ export class MetInfoService {
   /**
    * Map a met info row to the MetInfo type
    */
-  mapMetInfo(row: IGetMetInfoByFriendIdResult): MetInfoResponse {
+  public mapMetInfo(row: IGetMetInfoByFriendIdResult): MetInfoResponse {
     const metDate = formatDateOnly(row.met_date);
     return {
       id: row.external_id,

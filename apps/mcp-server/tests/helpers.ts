@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import http from 'node:http';
-import { type Auth, createAuth, createAuthPool } from '@freundebuch/backend/lib/auth.js';
+import { type Auth, createAuth } from '@freundebuch/backend/lib/auth.js';
+import { createAuthPool } from '@freundebuch/backend/lib/auth-pool.js';
 import bcrypt from 'bcrypt';
 import pg from 'pg';
 import type { Logger } from 'pino';
@@ -355,7 +356,7 @@ export function setupMcpTestSuite() {
     });
 
     const logger: Logger = pino({ level: 'silent' });
-    const services = createServices(pool, logger, TEST_CONFIG);
+    const services = createServices({ db: pool, logger, photoConfig: TEST_CONFIG });
     const authPool = createAuthPool({
       config: {
         DATABASE_URL: databaseUri,

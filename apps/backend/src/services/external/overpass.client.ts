@@ -1,12 +1,6 @@
 import type { Logger } from 'pino';
 import { OverpassApiError } from '../../errors/overpass-api.error.js';
-import {
-  type AddressCache,
-  getHouseNumbersCache,
-  getStreetsCache,
-  type HouseNumberCached,
-  type StreetCached,
-} from '../../utils/cache.js';
+import type { AddressCache, HouseNumberCached, StreetCached } from '../../utils/cache.js';
 
 export type Street = StreetCached;
 
@@ -30,23 +24,37 @@ const naturalCollator = new Intl.Collator(undefined, {
   sensitivity: 'base',
 });
 
-export class OverpassClient {
-  private streetCache: AddressCache<StreetCached[]>;
-  private houseNumberCache: AddressCache<HouseNumberCached[]>;
+export interface OverpassClientOptions {
+  primaryUrl: string;
+  fallbackUrl: string;
+  logger: Logger;
+  streetCache: AddressCache<StreetCached[]>;
+  houseNumberCache: AddressCache<HouseNumberCached[]>;
+}
 
-  constructor(
-    private primaryUrl: string,
-    private fallbackUrl: string,
-    private logger: Logger,
-  ) {
-    this.streetCache = getStreetsCache();
-    this.houseNumberCache = getHouseNumbersCache();
+export class OverpassClient {
+  private readonly primaryUrl: string;
+  private readonly fallbackUrl: string;
+  private readonly logger: Logger;
+  private readonly streetCache: AddressCache<StreetCached[]>;
+  private readonly houseNumberCache: AddressCache<HouseNumberCached[]>;
+
+  constructor(options: OverpassClientOptions) {
+    this.primaryUrl = options.primaryUrl;
+    this.fallbackUrl = options.fallbackUrl;
+    this.logger = options.logger;
+    this.streetCache = options.streetCache;
+    this.houseNumberCache = options.houseNumberCache;
   }
 
   /**
    * Get streets for a city and postal code
    */
-  async getStreets(countryCode: string, city: string, postalCode: string): Promise<Street[]> {
+  public async getStreets(
+    countryCode: string,
+    city: string,
+    postalCode: string,
+  ): Promise<Street[]> {
     const cacheKey = `streets:${countryCode}:${postalCode}:${city}`;
     const cached = await this.streetCache.get(cacheKey);
     if (cached) {
@@ -81,7 +89,7 @@ export class OverpassClient {
   /**
    * Get house numbers for a street
    */
-  async getHouseNumbers(
+  public async getHouseNumbers(
     countryCode: string,
     city: string,
     postalCode: string,

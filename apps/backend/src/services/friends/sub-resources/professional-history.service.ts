@@ -42,81 +42,84 @@ export class ProfessionalHistoryService extends SubResourceService<
   IDeleteProfessionalHistoryResult
 > {
   constructor(options: SubResourceServiceOptions) {
-    super(options, {
-      resourceName: 'professional history',
-      hasPrimaryFlag: true,
+    super({
+      ...options,
+      definition: {
+        resourceName: 'professional history',
+        hasPrimaryFlag: true,
 
-      createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
-        return createProfessionalHistory.run(
-          {
-            userExternalId,
-            friendExternalId,
-            jobTitle: input.job_title ?? null,
-            organization: input.organization ?? null,
-            department: input.department ?? null,
-            notes: input.notes ?? null,
-            fromMonth: input.from_month,
-            fromYear: input.from_year,
-            toMonth: input.to_month ?? null,
-            toYear: input.to_year ?? null,
-            isPrimary: input.is_primary,
-          },
+        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
+          return createProfessionalHistory.run(
+            {
+              userExternalId,
+              friendExternalId,
+              jobTitle: input.job_title ?? null,
+              organization: input.organization ?? null,
+              department: input.department ?? null,
+              notes: input.notes ?? null,
+              fromMonth: input.from_month,
+              fromYear: input.from_year,
+              toMonth: input.to_month ?? null,
+              toYear: input.to_year ?? null,
+              isPrimary: input.is_primary,
+            },
+            client,
+          );
+        },
+
+        updateFn: async (
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
           client,
-        );
-      },
+        ) => {
+          return updateProfessionalHistory.run(
+            {
+              userExternalId,
+              friendExternalId,
+              historyExternalId: resourceExternalId,
+              jobTitle: input.job_title ?? null,
+              organization: input.organization ?? null,
+              department: input.department ?? null,
+              notes: input.notes ?? null,
+              fromMonth: input.from_month,
+              fromYear: input.from_year,
+              toMonth: input.to_month ?? null,
+              toYear: input.to_year ?? null,
+              isPrimary: input.is_primary,
+            },
+            client,
+          );
+        },
 
-      updateFn: async (
-        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
-        client,
-      ) => {
-        return updateProfessionalHistory.run(
-          {
-            userExternalId,
-            friendExternalId,
-            historyExternalId: resourceExternalId,
-            jobTitle: input.job_title ?? null,
-            organization: input.organization ?? null,
-            department: input.department ?? null,
-            notes: input.notes ?? null,
-            fromMonth: input.from_month,
-            fromYear: input.from_year,
-            toMonth: input.to_month ?? null,
-            toYear: input.to_year ?? null,
-            isPrimary: input.is_primary,
-          },
+        deleteFn: async (
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
           client,
-        );
+        ) => {
+          return deleteProfessionalHistory.run(
+            {
+              userExternalId,
+              friendExternalId,
+              historyExternalId: resourceExternalId,
+            },
+            client,
+          );
+        },
+
+        clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+          return clearPrimaryProfessionalHistory.run({ userExternalId, friendExternalId }, client);
+        },
+
+        isPrimary: (input) => input.is_primary,
+
+        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+
+        listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
+          return getProfessionalHistoryByFriendId.run({ userExternalId, friendExternalId }, client);
+        },
+
+        mapListResult: mapRow,
+
+        mapResult: mapRow,
       },
-
-      deleteFn: async (
-        { userExternalId, ownerExternalId: friendExternalId, resourceExternalId },
-        client,
-      ) => {
-        return deleteProfessionalHistory.run(
-          {
-            userExternalId,
-            friendExternalId,
-            historyExternalId: resourceExternalId,
-          },
-          client,
-        );
-      },
-
-      clearPrimaryFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return clearPrimaryProfessionalHistory.run({ userExternalId, friendExternalId }, client);
-      },
-
-      isPrimary: (input) => input.is_primary,
-
-      setIsPrimary: (input, value) => ({ ...input, is_primary: value }),
-
-      listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
-        return getProfessionalHistoryByFriendId.run({ userExternalId, friendExternalId }, client);
-      },
-
-      mapListResult: mapRow,
-
-      mapResult: mapRow,
     });
   }
 }

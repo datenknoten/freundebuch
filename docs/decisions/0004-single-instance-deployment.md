@@ -9,7 +9,7 @@ date: 2026-09-06
 
 Several parts of the backend hold state in the process rather than in Postgres:
 
-- **Schedulers.** `utils/scheduler.ts` registers `node-cron` jobs in-process —
+- **Schedulers.** `utils/setup-cleanup-scheduler.ts` and `utils/setup-notification-scheduler.ts` register `node-cron` jobs in-process —
   an hourly cleanup and the daily date digest that pushes to Telegram, Matrix
   and Discord.
 - **Rate limiters.** `middleware/rate-limit.ts` uses
@@ -35,7 +35,7 @@ What breaks with a second replica, concretely:
 
 - **Digests are sent twice.** Every replica's cron fires at the notify time and
   each reads the same due channels. The only guard is `last_notified_date`,
-  written *after* a successful send (`utils/scheduler.ts`), so two replicas
+  written *after* a successful send (`utils/setup-notification-scheduler.ts`), so two replicas
   that read the due set in the same minute both send before either marks the
   channel — and users get the digest twice.
 - **Rate limits multiply by the replica count.** With two replicas and

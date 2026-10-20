@@ -1,6 +1,5 @@
 import type { Hono } from 'hono';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { resetRateLimiters } from '../../src/middleware/rate-limit.js';
 import type { AppContext } from '../../src/types/context.js';
 
 import {
@@ -26,7 +25,6 @@ describe('Circles API - Integration', () => {
   }, SUITE_HOOK_TIMEOUT_MS);
 
   beforeEach(async () => {
-    resetRateLimiters();
     // Wipe every user-owned row and rebuild the fixture user, so no test
     // inherits circles (or a session) from its predecessors.
     await truncateUserData(context.pool);
