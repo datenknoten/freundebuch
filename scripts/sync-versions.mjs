@@ -1,20 +1,14 @@
 #!/usr/bin/env node
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { exitWith, rejectUsage } from '@datenknoten/kit/cli';
+import { parseJson } from '@datenknoten/kit/schema';
+import { type } from 'arktype';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const rootDir = join(__dirname, '..');
-
-const version = process.argv[2];
-
-if (!version) {
-  console.error('Usage: node sync-versions.mjs <version>');
-  process.exit(1);
-}
-
-const packagePaths = [
+const PACKAGE_PATHS = [
   'package.json',
   'apps/backend/package.json',
   'apps/frontend/package.json',
@@ -23,17 +17,40 @@ const packagePaths = [
   'packages/shared/package.json',
 ];
 
-for (const packagePath of packagePaths) {
+const PackageJsonSchema = type({ version: 'string' });
+
+const rootDir = join(import.meta.dirname, '..');
+
+/**
+ * @param {string} packagePath path relative to the repository root
+ * @param {string} version
+ */
+function syncVersion(packagePath, version) {
   const fullPath = join(rootDir, packagePath);
-  try {
-    const content = JSON.parse(readFileSync(fullPath, 'utf8'));
-    content.version = version;
-    writeFileSync(fullPath, `${JSON.stringify(content, null, 2)}\n`);
-    console.log(`Updated ${packagePath} to version ${version}`);
-  } catch (error) {
-    console.error(`Failed to update ${packagePath}:`, error.message);
-    process.exit(1);
-  }
+  const packageJson = parseJson(PackageJsonSchema, readFileSync(fullPath, 'utf8'));
+  writeFileSync(fullPath, `${JSON.stringify({ ...packageJson, version }, null, 2)}\n`);
+  console.log(`Updated ${packagePath} to version ${version}`);
 }
 
-console.log(`Successfully synced all packages to version ${version}`);
+async function main() {
+  const { version } = await yargs(hideBin(process.argv))
+    .command('$0 <version>', 'Write <version> into every workspace package.json', (command) =>
+      command.positional('version', {
+        type: 'string',
+        demandOption: true,
+        describe: 'The release version, e.g. 3.4.0',
+      }),
+    )
+    .version(false)
+    .strict()
+    .locale('en')
+    .fail(rejectUsage)
+    .parseAsync();
+
+  for (const packagePath of PACKAGE_PATHS) {
+    syncVersion(packagePath, version);
+  }
+  console.log(`Successfully synced all packages to version ${version}`);
+}
+
+void main().catch(exitWith);

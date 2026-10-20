@@ -1,19 +1,17 @@
 #!/usr/bin/env node
 
 import { mkdir } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { exitWith } from '@datenknoten/kit/cli';
 import sharp from 'sharp';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const rootDir = join(__dirname, '..');
+const rootDir = join(import.meta.dirname, '..');
 
-const SOURCE_LOGO = join(rootDir, 'resources', 'logo.png');
-const OUTPUT_DIR = join(rootDir, 'apps', 'frontend', 'static');
+const sourceLogo = join(rootDir, 'resources', 'logo.png');
+const outputDir = join(rootDir, 'apps', 'frontend', 'static');
 
-// Source dimensions: 1394 x 792
-// The open book is centered horizontally and positioned in the lower half
-// Extract a square region tightly focused on just the book
+// The source is 1394 x 792 px with the open book centered horizontally in the
+// lower half; this region frames just the book.
 const FAVICON_EXTRACT = {
   left: 247,
   top: 140,
@@ -30,11 +28,11 @@ const ICON_BG = { r: 0xfc, g: 0xf6, b: 0xe8, alpha: 1 };
  * Render the full logo centered on an opaque square canvas with padding.
  * @param {number} size output edge length in px
  * @param {number} padding fraction of the edge reserved as margin (per side)
- * @param {string} outName file name written into OUTPUT_DIR
+ * @param {string} outName file name written into outputDir
  */
 async function generateSquareIcon(size, padding, outName) {
   const content = Math.round(size * (1 - padding * 2));
-  const logo = await sharp(SOURCE_LOGO)
+  const logo = await sharp(sourceLogo)
     .resize(content, content, {
       fit: 'inside',
       background: { r: 0, g: 0, b: 0, alpha: 0 },
@@ -53,64 +51,54 @@ async function generateSquareIcon(size, padding, outName) {
       },
     ])
     .png()
-    .toFile(join(OUTPUT_DIR, outName));
+    .toFile(join(outputDir, outName));
   console.log(`Created: ${outName} (${size}x${size})`);
 }
 
-async function generateAssets() {
-  console.log('Generating logo assets from:', SOURCE_LOGO);
+/**
+ * @param {number} size output edge length in px
+ * @param {string} outName file name written into outputDir
+ */
+async function generateFavicon(size, outName) {
+  await sharp(sourceLogo)
+    .extract(FAVICON_EXTRACT)
+    .resize(size, size, { fit: 'cover' })
+    .png()
+    .toFile(join(outputDir, outName));
+  console.log(`Created: ${outName} (${size}x${size})`);
+}
 
-  await mkdir(OUTPUT_DIR, { recursive: true });
+async function main() {
+  console.log('Generating logo assets from:', sourceLogo);
 
-  const source = sharp(SOURCE_LOGO);
-  const metadata = await source.metadata();
+  await mkdir(outputDir, { recursive: true });
+
+  const metadata = await sharp(sourceLogo).metadata();
   console.log(`Source: ${metadata.width}x${metadata.height}`);
 
-  // 1. Favicon 32x32 (cropped to book area)
-  await sharp(SOURCE_LOGO)
-    .extract(FAVICON_EXTRACT)
-    .resize(32, 32, { fit: 'cover' })
-    .png()
-    .toFile(join(OUTPUT_DIR, 'favicon.png'));
-  console.log('Created: favicon.png (32x32)');
+  await generateFavicon(32, 'favicon.png');
+  await generateFavicon(16, 'favicon-16.png');
 
-  // 2. Favicon 16x16
-  await sharp(SOURCE_LOGO)
-    .extract(FAVICON_EXTRACT)
-    .resize(16, 16, { fit: 'cover' })
-    .png()
-    .toFile(join(OUTPUT_DIR, 'favicon-16.png'));
-  console.log('Created: favicon-16.png (16x16)');
-
-  // 3. Apple touch icon 180x180 (full logo on an opaque padded canvas)
   await generateSquareIcon(180, 0.1, 'apple-touch-icon.png');
-
-  // 3b. PWA manifest icons (full logo on an opaque padded canvas)
   await generateSquareIcon(192, 0.1, 'icon-192.png');
   await generateSquareIcon(512, 0.1, 'icon-512.png');
-
-  // 3c. Maskable PWA icon: extra padding so the logo stays inside the
-  // safe zone when the platform masks it to a circle/squircle.
+  // Maskable: extra padding keeps the logo inside the safe zone when the
+  // platform masks it to a circle or squircle.
   await generateSquareIcon(512, 0.2, 'icon-maskable-512.png');
 
-  // 4. Full logo for landing page (400px wide, proportional)
-  await sharp(SOURCE_LOGO)
+  await sharp(sourceLogo)
     .resize(400, null, { fit: 'inside' })
     .png()
-    .toFile(join(OUTPUT_DIR, 'logo.png'));
+    .toFile(join(outputDir, 'logo.png'));
   console.log('Created: logo.png (400px wide)');
 
-  // 5. Navbar logo (36px height, proportional)
-  await sharp(SOURCE_LOGO)
+  await sharp(sourceLogo)
     .resize(null, 36, { fit: 'inside' })
     .png()
-    .toFile(join(OUTPUT_DIR, 'logo-navbar.png'));
+    .toFile(join(outputDir, 'logo-navbar.png'));
   console.log('Created: logo-navbar.png (36px height)');
 
   console.log('\nAll assets generated successfully!');
 }
 
-generateAssets().catch((err) => {
-  console.error('Failed to generate assets:', err);
-  process.exit(1);
-});
+void main().catch(exitWith);

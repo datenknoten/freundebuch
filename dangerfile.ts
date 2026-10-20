@@ -1,9 +1,10 @@
-import { allRules } from './packages/danger/src/rules/index';
+import { exitWith } from '@datenknoten/kit/cli';
+import { DANGER_RULES } from './packages/danger/src/index';
 
 async function main() {
-  for (const rule of allRules) {
+  for (const rule of DANGER_RULES) {
     await rule();
   }
 }
 
-main();
+void main().catch(exitWith);

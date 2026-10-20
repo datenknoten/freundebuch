@@ -25,5 +25,6 @@ declare module 'danger-plugin-coverage' {
   /** Posts a coverage table for files changed in the PR. */
   export function coverage(options?: CoverageOptions): Promise<void>;
   const _default: typeof coverage;
+  // biome-ignore lint/style/noDefaultExport: declares the default export the published package ships
   export default _default;
 }

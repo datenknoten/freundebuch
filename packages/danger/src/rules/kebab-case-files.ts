@@ -1,6 +1,4 @@
-import * as path from 'path';
-import type { DangerRule } from '../types';
-import { isExemptFile, isIgnoredPath } from '../utils';
+import { basename as baseNameOf } from 'node:path';
 
 // Lowercase alphanumeric segments separated by single hyphens. A segment may
 // start with a digit so date-prefixed names (e.g. 2026-06-13-backend-review)
@@ -12,7 +10,9 @@ const KEBAB_CASE_STEM = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 // are uppercase alphanumerics separated by single hyphens or underscores.
 const SCREAMING_CASE_STEM = /^[A-Z0-9]+([_-][A-Z0-9]+)*$/;
 
-// Migration files use a "<timestamp>_<name>" pattern — strip the prefix before checking
+// A Svelte component's file name is the component name at the import.
+const PASCAL_CASE_STEM = /^[A-Z][A-Za-z0-9]*$/;
+
 const MIGRATION_PREFIX = /^\d+_/;
 
 // PSR-4 (apps/sabredav) resolves a class to a file of the same name, so
@@ -22,39 +22,77 @@ const MIGRATION_PREFIX = /^\d+_/;
 // than by preference.
 const PSR4_EXTENSION = '.php';
 
-function toKebabCase(name: string): string {
+const EXEMPT_BASENAMES: Record<string, true> = { LICENSE: true, Makefile: true, CODEOWNERS: true };
+
+// Dotfiles, Dockerfile variants, and SvelteKit's route files (+page.svelte) and aliases ($lib).
+const EXEMPT_PREFIXES = ['.', 'Dockerfile', '+', '$'] as const;
+
+const IGNORED_DIRS = [
+  'node_modules/',
+  'dist/',
+  '.svelte-kit/',
+  'vendor/',
+  'build/',
+  // Generated impeccable-design artifacts (e.g. timestamped critique files
+  // like 2026-06-14T08-26-30Z__<slug>.md) are not hand-authored source.
+  '.impeccable/',
+] as const;
+
+function isExempt(filePath: string, baseName: string) {
+  return (
+    IGNORED_DIRS.some((dir) => filePath.includes(dir)) === true ||
+    filePath.toLowerCase().endsWith(PSR4_EXTENSION) === true ||
+    EXEMPT_BASENAMES[baseName] === true ||
+    EXEMPT_PREFIXES.some((prefix) => baseName.startsWith(prefix)) === true
+  );
+}
+
+function toKebabCase(name: string) {
   return name
     .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
     .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
     .toLowerCase();
 }
 
-const kebabCaseFiles: DangerRule = () => {
-  for (const filePath of danger.git.created_files) {
-    if (isIgnoredPath(filePath)) continue;
-    if (isExemptFile(filePath)) continue;
-    if (filePath.toLowerCase().endsWith(PSR4_EXTENSION)) continue;
+function toPascalCase(name: string) {
+  return name
+    .split(/[-_]/)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join('');
+}
 
-    const basename = path.basename(filePath);
+function checkFileName(filePath: string) {
+  const baseName = baseNameOf(filePath);
+  if (isExempt(filePath, baseName) === true) {
+    return;
+  }
 
-    // Strip all extensions (e.g. "foo.test.ts" -> "foo")
-    let stem = basename.replace(/\..*$/, '');
+  const stem = baseName.replace(/\..*$/, '').replace(MIGRATION_PREFIX, '');
+  const extensions = baseName.slice(stem.length);
 
-    // Strip migration timestamp prefix (e.g. "1774799536929_fix-bug" -> "fix-bug")
-    stem = stem.replace(MIGRATION_PREFIX, '');
-
-    // Markdown docs may instead be fully UPPER_CASE (README.md, AGENTS.md, ...).
-    const isMarkdown = basename.toLowerCase().endsWith('.md');
-    if (isMarkdown && SCREAMING_CASE_STEM.test(stem)) continue;
-
-    if (!KEBAB_CASE_STEM.test(stem)) {
-      const suggestion = toKebabCase(stem);
+  if (baseName.endsWith('.svelte') === true) {
+    if (PASCAL_CASE_STEM.test(stem) === false) {
       fail(
-        `New file \`${filePath}\` does not use kebab-case. ` +
-          `Rename to \`${suggestion}${basename.slice(stem.length)}\`.`,
+        `New component \`${filePath}\` does not use PascalCase. Rename to \`${toPascalCase(stem)}${extensions}\`.`,
       );
     }
+    return;
   }
-};
 
-export default kebabCaseFiles;
+  if (baseName.toLowerCase().endsWith('.md') === true && SCREAMING_CASE_STEM.test(stem) === true) {
+    return;
+  }
+
+  if (KEBAB_CASE_STEM.test(stem) === false) {
+    fail(
+      `New file \`${filePath}\` does not use kebab-case. Rename to \`${toKebabCase(stem)}${extensions}\`.`,
+    );
+  }
+}
+
+/** Fails the MR for every created file whose name breaks the naming rules: PascalCase components, kebab-case everything else. */
+export function kebabCaseFiles() {
+  for (const filePath of danger.git.created_files) {
+    checkFileName(filePath);
+  }
+}

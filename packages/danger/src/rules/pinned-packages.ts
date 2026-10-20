@@ -1,20 +1,28 @@
-import * as fs from 'fs';
-import type { DangerRule } from '../types';
+import { readFileSync } from 'node:fs';
+import { parseJson } from '@datenknoten/kit/schema';
+import { type } from 'arktype';
 
 const UNPINNED_PATTERN = /^[\^~><!|*]/;
 
-function checkDeps(
-  deps: Record<string, string> | undefined,
-  section: string,
+/** peerDependencies state a supported range on purpose, so only these two sections are checked. */
+const PINNED_SECTIONS = ['dependencies', 'devDependencies'] as const;
+
+const PackageJsonSchema = type({
+  'dependencies?': 'Record<string, string>',
+  'devDependencies?': 'Record<string, string>',
+  'peerDependencies?': 'Record<string, string>',
+});
+
+function checkSection(
   filePath: string,
-): void {
-  if (!deps) return;
-
-  for (const [name, version] of Object.entries(deps)) {
-    // Allow the workspace: protocol for workspace packages
-    if (version.startsWith('workspace:')) continue;
-
-    if (UNPINNED_PATTERN.test(version)) {
+  section: string,
+  dependencies: Record<string, string> = {},
+) {
+  for (const [name, version] of Object.entries(dependencies)) {
+    if (version.startsWith('workspace:') === true) {
+      continue;
+    }
+    if (UNPINNED_PATTERN.test(version) === true) {
       fail(
         `\`${filePath}\`: dependency \`${name}\` in \`${section}\` must be pinned to an exact version (found \`${version}\`).`,
       );
@@ -22,18 +30,18 @@ function checkDeps(
   }
 }
 
-const pinnedPackages: DangerRule = () => {
-  const packageFiles = [...danger.git.modified_files, ...danger.git.created_files].filter((f) =>
-    f.endsWith('package.json'),
-  );
-
-  for (const filePath of packageFiles) {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const pkg = JSON.parse(content);
-
-    checkDeps(pkg.dependencies, 'dependencies', filePath);
-    checkDeps(pkg.devDependencies, 'devDependencies', filePath);
+/**
+ * Fails the MR for every range in the dependencies of a changed package.json.
+ *
+ * @throws {ValidationError} when a changed package.json is not valid JSON or its dependency
+ *   sections are not string maps.
+ */
+export function pinnedPackages() {
+  const changedFiles = [...danger.git.modified_files, ...danger.git.created_files];
+  for (const filePath of changedFiles.filter((file) => file.endsWith('package.json'))) {
+    const packageJson = parseJson(PackageJsonSchema, readFileSync(filePath, 'utf-8'));
+    for (const section of PINNED_SECTIONS) {
+      checkSection(filePath, section, packageJson[section]);
+    }
   }
-};
-
-export default pinnedPackages;
+}

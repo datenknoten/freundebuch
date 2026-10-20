@@ -1,11 +1,7 @@
 {
+  "extends": "@datenknoten/tsconfig/tsconfig.json",
   "compilerOptions": {
-    "strict": true,
-    "target": "ES2024",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "noEmit": true,
-    "types": ["node"]
+    "noEmit": true
   },
   "include": ["../../dangerfile.ts", "src/**/*.ts"]
 }
