@@ -8,7 +8,6 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
-import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../middleware/auth.js';
 import type { FriendsService } from '../../services/friends/friends.service.js';
 import type { AppContext } from '../../types/context.js';
@@ -203,11 +202,7 @@ export function createSearchRoutes(options: SearchRoutesOptions): Hono<AppContex
     const user = getAuthUser(c);
     const query = decodeURIComponent(c.req.param('query'));
 
-    const isDeleted = await options.friendsService.deleteRecentSearch(user.userId, query);
-
-    if (!isDeleted) {
-      throw new ResourceNotFoundError('Search query', query);
-    }
+    await options.friendsService.deleteRecentSearch(user.userId, query);
 
     return c.json({ success: true });
   });

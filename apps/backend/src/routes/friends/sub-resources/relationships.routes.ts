@@ -1,19 +1,36 @@
 import { ValidationError } from '@datenknoten/kit';
 import {
+  type RelationshipCreateInput,
   RelationshipCreateInputSchema,
+  type RelationshipUpdateInput,
   RelationshipUpdateInputSchema,
 } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
-import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
-import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../../middleware/auth.js';
 import type { FriendsService } from '../../../services/friends/friends.service.js';
+import type { RelationshipUpdateData } from '../../../services/friends/relationship.service.js';
 import type { AppContext } from '../../../types/context.js';
 import { parseBody } from '../../../utils/parse-body.js';
 import { requireUuidParam } from '../../../utils/require-uuid-param.js';
 
 export interface RelationshipsRoutesOptions {
   friendsService: FriendsService;
+}
+
+function mapRelationshipCreateInput(input: RelationshipCreateInput) {
+  return {
+    relatedFriendId: input.related_friend_id,
+    relationshipTypeId: input.relationship_type_id,
+    notes: input.notes,
+  };
+}
+
+function mapRelationshipUpdateInput(input: RelationshipUpdateInput) {
+  const data: RelationshipUpdateData = {};
+  if ('notes' in input) {
+    data.notes = input.notes;
+  }
+  return data;
 }
 
 export function createRelationshipsRoutes(options: RelationshipsRoutesOptions): Hono<AppContext> {
@@ -42,12 +59,8 @@ export function createRelationshipsRoutes(options: RelationshipsRoutesOptions): 
     const relationship = await options.friendsService.addRelationship(
       user.userId,
       friendId,
-      validated,
+      mapRelationshipCreateInput(validated),
     );
-
-    if (!relationship) {
-      throw new FriendNotFoundError(friendId);
-    }
 
     return c.json(relationship, 201);
   });
@@ -66,12 +79,8 @@ export function createRelationshipsRoutes(options: RelationshipsRoutesOptions): 
       user.userId,
       friendId,
       relationshipId,
-      validated,
+      mapRelationshipUpdateInput(validated),
     );
-
-    if (!relationship) {
-      throw new ResourceNotFoundError('Relationship', relationshipId);
-    }
 
     return c.json(relationship);
   });
@@ -85,15 +94,7 @@ export function createRelationshipsRoutes(options: RelationshipsRoutesOptions): 
     const friendId = requireUuidParam(c, 'id');
     const relationshipId = requireUuidParam(c, 'relationshipId');
 
-    const isDeleted = await options.friendsService.deleteRelationship(
-      user.userId,
-      friendId,
-      relationshipId,
-    );
-
-    if (!isDeleted) {
-      throw new ResourceNotFoundError('Relationship', relationshipId);
-    }
+    await options.friendsService.deleteRelationship(user.userId, friendId, relationshipId);
 
     return c.json({ message: 'Relationship deleted successfully' });
   });

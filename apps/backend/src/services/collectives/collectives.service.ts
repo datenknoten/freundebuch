@@ -1,13 +1,11 @@
 import type {
   CollectiveAddressResponse,
-  CollectiveCreateInput,
   CollectiveListItemResponse,
   CollectiveListOptions,
   CollectiveListResponse,
   CollectiveMemberContactResponse,
   CollectiveResponse,
   CollectiveTypeResponse,
-  CollectiveUpdateInput,
   ContactCollectiveSummaryResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
@@ -42,6 +40,34 @@ function escapeIlike(input: string): string {
 
 export interface CollectivesServiceOptions {
   db: Pool;
+}
+
+export interface CollectiveCreateData {
+  name: string;
+  collectiveTypeId: string;
+  notes?: string | null;
+  photoUrl?: string | null;
+  photoThumbnailUrl?: string | null;
+  addressStreetLine1?: string | null;
+  addressStreetLine2?: string | null;
+  addressCity?: string | null;
+  addressStateProvince?: string | null;
+  addressPostalCode?: string | null;
+  addressCountry?: string | null;
+}
+
+/** An absent key leaves the column untouched; `null` clears it. */
+export interface CollectiveUpdateData {
+  name?: string;
+  notes?: string | null;
+  photoUrl?: string | null;
+  photoThumbnailUrl?: string | null;
+  addressStreetLine1?: string | null;
+  addressStreetLine2?: string | null;
+  addressCity?: string | null;
+  addressStateProvince?: string | null;
+  addressPostalCode?: string | null;
+  addressCountry?: string | null;
 }
 
 /**
@@ -133,20 +159,16 @@ export class CollectivesService {
   }
 
   /**
-   * Get a single collective by ID with all members
+   * Find a single collective by ID with all members
    */
-  public async getCollectiveById(
-    userExternalId: string,
-    collectiveExternalId: string,
-  ): Promise<CollectiveResponse | null> {
+  public async findCollective(userExternalId: string, collectiveExternalId: string) {
     const results = await getCollectiveById.run({ userExternalId, collectiveExternalId }, this.db);
 
     const [collectiveRow] = results;
     if (collectiveRow === undefined) {
-      return null;
+      return undefined;
     }
 
-    // Fetch members and roles in parallel
     const [membersResult, rolesResult] = await Promise.all([
       getMembersByCollectiveId.run(
         { userExternalId, collectiveExternalId, includeInactive: true },
@@ -162,26 +184,37 @@ export class CollectivesService {
   }
 
   /**
+   * Get a single collective by ID with all members; throws when it does not exist
+   */
+  public async getCollective(userExternalId: string, collectiveExternalId: string) {
+    const collective = await this.findCollective(userExternalId, collectiveExternalId);
+    if (collective === undefined) {
+      throw new CollectiveNotFoundError(collectiveExternalId);
+    }
+    return collective;
+  }
+
+  /**
    * Create a new collective
    */
   public async createCollective(
     userExternalId: string,
-    input: CollectiveCreateInput,
+    data: CollectiveCreateData,
   ): Promise<CollectiveResponse> {
     const results = await createCollective.run(
       {
         userExternalId,
-        typeExternalId: input.collective_type_id,
-        name: input.name,
-        photoUrl: input.photo_url ?? null,
-        photoThumbnailUrl: input.photo_thumbnail_url ?? null,
-        notes: input.notes ?? null,
-        addressStreetLine1: input.address_street_line1 ?? null,
-        addressStreetLine2: input.address_street_line2 ?? null,
-        addressCity: input.address_city ?? null,
-        addressStateProvince: input.address_state_province ?? null,
-        addressPostalCode: input.address_postal_code ?? null,
-        addressCountry: input.address_country ?? null,
+        typeExternalId: data.collectiveTypeId,
+        name: data.name,
+        photoUrl: data.photoUrl ?? null,
+        photoThumbnailUrl: data.photoThumbnailUrl ?? null,
+        notes: data.notes ?? null,
+        addressStreetLine1: data.addressStreetLine1 ?? null,
+        addressStreetLine2: data.addressStreetLine2 ?? null,
+        addressCity: data.addressCity ?? null,
+        addressStateProvince: data.addressStateProvince ?? null,
+        addressPostalCode: data.addressPostalCode ?? null,
+        addressCountry: data.addressCountry ?? null,
       },
       this.db,
     );
@@ -191,9 +224,8 @@ export class CollectivesService {
       throw new CollectiveCreationError('Failed to create collective');
     }
 
-    // Fetch the full collective with type info
-    const collective = await this.getCollectiveById(userExternalId, created.external_id);
-    if (!collective) {
+    const collective = await this.findCollective(userExternalId, created.external_id);
+    if (collective === undefined) {
       throw new CollectiveCreationError('Failed to retrieve created collective');
     }
 
@@ -206,32 +238,32 @@ export class CollectivesService {
   public async updateCollective(
     userExternalId: string,
     collectiveExternalId: string,
-    input: CollectiveUpdateInput,
+    data: CollectiveUpdateData,
   ): Promise<CollectiveResponse> {
     const results = await updateCollective.run(
       {
         userExternalId,
         collectiveExternalId,
-        name: input.name ?? null,
-        updatePhotoUrl: 'photo_url' in input,
-        photoUrl: input.photo_url ?? null,
-        updatePhotoThumbnailUrl: 'photo_thumbnail_url' in input,
-        photoThumbnailUrl: input.photo_thumbnail_url ?? null,
-        updateNotes: 'notes' in input,
-        notes: input.notes ?? null,
+        name: data.name ?? null,
+        updatePhotoUrl: 'photoUrl' in data,
+        photoUrl: data.photoUrl ?? null,
+        updatePhotoThumbnailUrl: 'photoThumbnailUrl' in data,
+        photoThumbnailUrl: data.photoThumbnailUrl ?? null,
+        updateNotes: 'notes' in data,
+        notes: data.notes ?? null,
         updateAddress:
-          'address_street_line1' in input ||
-          'address_street_line2' in input ||
-          'address_city' in input ||
-          'address_state_province' in input ||
-          'address_postal_code' in input ||
-          'address_country' in input,
-        addressStreetLine1: input.address_street_line1 ?? null,
-        addressStreetLine2: input.address_street_line2 ?? null,
-        addressCity: input.address_city ?? null,
-        addressStateProvince: input.address_state_province ?? null,
-        addressPostalCode: input.address_postal_code ?? null,
-        addressCountry: input.address_country ?? null,
+          'addressStreetLine1' in data ||
+          'addressStreetLine2' in data ||
+          'addressCity' in data ||
+          'addressStateProvince' in data ||
+          'addressPostalCode' in data ||
+          'addressCountry' in data,
+        addressStreetLine1: data.addressStreetLine1 ?? null,
+        addressStreetLine2: data.addressStreetLine2 ?? null,
+        addressCity: data.addressCity ?? null,
+        addressStateProvince: data.addressStateProvince ?? null,
+        addressPostalCode: data.addressPostalCode ?? null,
+        addressCountry: data.addressCountry ?? null,
       },
       this.db,
     );
@@ -240,24 +272,17 @@ export class CollectivesService {
       throw new CollectiveNotFoundError(collectiveExternalId);
     }
 
-    // Fetch the full collective
-    const collective = await this.getCollectiveById(userExternalId, collectiveExternalId);
-    if (!collective) {
-      throw new CollectiveNotFoundError(collectiveExternalId);
-    }
-
-    return collective;
+    return this.getCollective(userExternalId, collectiveExternalId);
   }
 
   /**
-   * Soft delete a collective
+   * Soft delete a collective; throws when it does not exist
    */
-  public async deleteCollective(
-    userExternalId: string,
-    collectiveExternalId: string,
-  ): Promise<boolean> {
+  public async deleteCollective(userExternalId: string, collectiveExternalId: string) {
     const results = await deleteCollective.run({ userExternalId, collectiveExternalId }, this.db);
-    return results.length > 0;
+    if (results.length === 0) {
+      throw new CollectiveNotFoundError(collectiveExternalId);
+    }
   }
 
   /**

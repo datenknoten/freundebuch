@@ -1,7 +1,5 @@
-import type {
-  ProfessionalHistoryInput,
-  ProfessionalHistoryResponse,
-} from '@freundebuch/shared/index.js';
+import type { ProfessionalHistoryResponse } from '@freundebuch/shared/index.js';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
 import {
   clearPrimaryProfessionalHistory,
   createProfessionalHistory,
@@ -15,6 +13,18 @@ import {
   SubResourceService,
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
+
+export interface ProfessionalHistoryData {
+  jobTitle?: string | null;
+  organization?: string | null;
+  department?: string | null;
+  notes?: string | null;
+  fromMonth: number;
+  fromYear: number;
+  toMonth?: number | null;
+  toYear?: number | null;
+  isPrimary: boolean;
+}
 
 const mapRow = (row: IGetProfessionalHistoryByFriendIdResult): ProfessionalHistoryResponse => ({
   id: row.external_id,
@@ -35,7 +45,7 @@ const mapRow = (row: IGetProfessionalHistoryByFriendIdResult): ProfessionalHisto
  * Extends SubResourceService for common CRUD operations.
  */
 export class ProfessionalHistoryService extends SubResourceService<
-  ProfessionalHistoryInput,
+  ProfessionalHistoryData,
   ProfessionalHistoryResponse,
   IGetProfessionalHistoryByFriendIdResult,
   IGetProfessionalHistoryByFriendIdResult,
@@ -46,29 +56,31 @@ export class ProfessionalHistoryService extends SubResourceService<
       ...options,
       definition: {
         resourceName: 'professional history',
+        resourceLabel: 'Professional history entry',
+        ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: true,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
+        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
           return createProfessionalHistory.run(
             {
               userExternalId,
               friendExternalId,
-              jobTitle: input.job_title ?? null,
-              organization: input.organization ?? null,
-              department: input.department ?? null,
-              notes: input.notes ?? null,
-              fromMonth: input.from_month,
-              fromYear: input.from_year,
-              toMonth: input.to_month ?? null,
-              toYear: input.to_year ?? null,
-              isPrimary: input.is_primary,
+              jobTitle: data.jobTitle ?? null,
+              organization: data.organization ?? null,
+              department: data.department ?? null,
+              notes: data.notes ?? null,
+              fromMonth: data.fromMonth,
+              fromYear: data.fromYear,
+              toMonth: data.toMonth ?? null,
+              toYear: data.toYear ?? null,
+              isPrimary: data.isPrimary,
             },
             client,
           );
         },
 
         updateFn: async (
-          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
         ) => {
           return updateProfessionalHistory.run(
@@ -76,15 +88,15 @@ export class ProfessionalHistoryService extends SubResourceService<
               userExternalId,
               friendExternalId,
               historyExternalId: resourceExternalId,
-              jobTitle: input.job_title ?? null,
-              organization: input.organization ?? null,
-              department: input.department ?? null,
-              notes: input.notes ?? null,
-              fromMonth: input.from_month,
-              fromYear: input.from_year,
-              toMonth: input.to_month ?? null,
-              toYear: input.to_year ?? null,
-              isPrimary: input.is_primary,
+              jobTitle: data.jobTitle ?? null,
+              organization: data.organization ?? null,
+              department: data.department ?? null,
+              notes: data.notes ?? null,
+              fromMonth: data.fromMonth,
+              fromYear: data.fromYear,
+              toMonth: data.toMonth ?? null,
+              toYear: data.toYear ?? null,
+              isPrimary: data.isPrimary,
             },
             client,
           );
@@ -108,9 +120,9 @@ export class ProfessionalHistoryService extends SubResourceService<
           return clearPrimaryProfessionalHistory.run({ userExternalId, friendExternalId }, client);
         },
 
-        isPrimary: (input) => input.is_primary,
+        isPrimary: (data) => data.isPrimary,
 
-        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
 
         listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
           return getProfessionalHistoryByFriendId.run({ userExternalId, friendExternalId }, client);

@@ -1,4 +1,5 @@
-import type { PhoneInput, PhoneResponse } from '@freundebuch/shared/index.js';
+import type { PhoneResponse } from '@freundebuch/shared/index.js';
+import { CollectiveNotFoundError } from '../../../errors/collective-not-found.error.js';
 import {
   clearPrimaryPhone,
   createPhone,
@@ -13,6 +14,7 @@ import {
   SubResourceService,
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
+import type { PhoneData } from '../../friends/sub-resources/phone.service.js';
 
 const mapRow = (row: IGetPhonesByCollectiveIdResult): PhoneResponse => ({
   id: row.external_id,
@@ -28,7 +30,7 @@ const mapRow = (row: IGetPhonesByCollectiveIdResult): PhoneResponse => ({
  * Extends SubResourceService for common CRUD operations.
  */
 export class CollectivePhoneService extends SubResourceService<
-  PhoneInput,
+  PhoneData,
   PhoneResponse,
   IGetPhonesByCollectiveIdResult,
   IGetPhonesByCollectiveIdResult,
@@ -39,27 +41,29 @@ export class CollectivePhoneService extends SubResourceService<
       ...options,
       definition: {
         resourceName: 'collective phone',
+        resourceLabel: 'Phone',
+        ownerNotFound: CollectiveNotFoundError,
         hasPrimaryFlag: true,
 
         createFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId, input },
+          { userExternalId, ownerExternalId: collectiveExternalId, data },
           client,
         ) => {
           return createPhone.run(
             {
               userExternalId,
               collectiveExternalId,
-              phoneNumber: input.phone_number,
-              phoneType: input.phone_type,
-              label: input.label ?? null,
-              isPrimary: input.is_primary,
+              phoneNumber: data.phoneNumber,
+              phoneType: data.phoneType,
+              label: data.label ?? null,
+              isPrimary: data.isPrimary,
             },
             client,
           );
         },
 
         updateFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, data },
           client,
         ) => {
           return updatePhone.run(
@@ -67,10 +71,10 @@ export class CollectivePhoneService extends SubResourceService<
               userExternalId,
               collectiveExternalId,
               phoneExternalId: resourceExternalId,
-              phoneNumber: input.phone_number,
-              phoneType: input.phone_type,
-              label: input.label ?? null,
-              isPrimary: input.is_primary,
+              phoneNumber: data.phoneNumber,
+              phoneType: data.phoneType,
+              label: data.label ?? null,
+              isPrimary: data.isPrimary,
             },
             client,
           );
@@ -97,9 +101,9 @@ export class CollectivePhoneService extends SubResourceService<
           return clearPrimaryPhone.run({ userExternalId, collectiveExternalId }, client);
         },
 
-        isPrimary: (input) => input.is_primary,
+        isPrimary: (data) => data.isPrimary,
 
-        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
 
         listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
           return getPhonesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);

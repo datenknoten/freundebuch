@@ -1,9 +1,5 @@
 import { ConflictError, ValidationError } from '@datenknoten/kit';
-import type {
-  EncounterType,
-  FriendNoteInput,
-  FriendNoteResponse,
-} from '@freundebuch/shared/index.js';
+import type { EncounterType, FriendNoteResponse } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { EncounterNotFoundError } from '../../../errors/encounter-not-found.error.js';
@@ -22,6 +18,14 @@ import { getFriendInternalId } from '../../../models/queries/friends.queries.js'
 import { formatDateOnly } from '../../../utils/date.js';
 import { rethrowUniqueViolation } from '../../../utils/rethrow-unique-violation.js';
 import { withTransaction } from '../../../utils/with-transaction.js';
+
+/** A note write. PUT replaces the whole note, so an omitted link means "no link". */
+export interface FriendNoteData {
+  content: string;
+  encounterId?: string | null;
+  sourceFriendId?: string | null;
+  supersedesNoteId?: string | null;
+}
 
 /** Internal ids of the rows that a note links to; `null` means "no link". */
 interface ResolvedNoteRefs {
@@ -44,10 +48,9 @@ export interface FriendNotesServiceOptions {
 /**
  * FriendNotesService handles timestamped free-text notes about a friend (Epic 15).
  *
- * It does not extend SubResourceService: that base class reports every failure
- * as `null`, but a note write must tell the client which reference failed
- * (unknown encounter, unknown source friend, unknown superseded note). Every
- * method throws a typed error instead.
+ * It does not extend SubResourceService: a note write must tell the client
+ * which reference failed (unknown encounter, unknown source friend, unknown
+ * superseded note), and its references resolve to internal ids first.
  */
 export class FriendNotesService {
   private readonly db: pg.Pool;
@@ -81,18 +84,18 @@ export class FriendNotesService {
   public async create(
     userExternalId: string,
     friendExternalId: string,
-    input: FriendNoteInput,
+    data: FriendNoteData,
   ): Promise<FriendNoteResponse> {
     this.logger.debug({ friendExternalId }, 'Adding note');
 
     return withTransaction(this.db, async (client) => {
       const friendId = await this.resolveFriendId(client, userExternalId, friendExternalId);
-      const refs = await this.resolveRefs(client, userExternalId, friendExternalId, input, null);
+      const refs = await this.resolveRefs(client, userExternalId, friendExternalId, data, null);
 
       let created: { external_id: string }[];
       try {
         created = await createFriendNote.run(
-          { userExternalId, friendId, content: input.content.trim(), ...refs },
+          { userExternalId, friendId, content: data.content.trim(), ...refs },
           client,
         );
       } catch (error) {
@@ -114,7 +117,7 @@ export class FriendNotesService {
     userExternalId: string,
     friendExternalId: string,
     noteExternalId: string,
-    input: FriendNoteInput,
+    data: FriendNoteData,
   ): Promise<FriendNoteResponse> {
     this.logger.debug({ friendExternalId, noteExternalId }, 'Updating note');
 
@@ -127,7 +130,7 @@ export class FriendNotesService {
       if (note === undefined) {
         throw new ResourceNotFoundError('Note', noteExternalId);
       }
-      const refs = await this.resolveRefs(client, userExternalId, friendExternalId, input, {
+      const refs = await this.resolveRefs(client, userExternalId, friendExternalId, data, {
         externalId: noteExternalId,
         id: note.id,
       });
@@ -135,7 +138,7 @@ export class FriendNotesService {
       let updated: { external_id: string }[];
       try {
         updated = await updateFriendNote.run(
-          { userExternalId, friendId, noteId: note.id, content: input.content.trim(), ...refs },
+          { userExternalId, friendId, noteId: note.id, content: data.content.trim(), ...refs },
           client,
         );
       } catch (error) {
@@ -181,7 +184,7 @@ export class FriendNotesService {
   }
 
   /**
-   * Resolve the external ids in `input` to internal ids of the same user.
+   * Resolve the external ids in `data` to internal ids of the same user.
    *
    * The encounter does not have to include this friend: the friend that a note
    * is about usually was not present when the user heard it.
@@ -190,40 +193,40 @@ export class FriendNotesService {
     client: pg.PoolClient,
     userExternalId: string,
     friendExternalId: string,
-    input: FriendNoteInput,
+    data: FriendNoteData,
     current: CurrentNote | null,
   ): Promise<ResolvedNoteRefs> {
     let encounterId: number | null = null;
-    if (input.encounter_id !== undefined && input.encounter_id !== null) {
+    if (data.encounterId !== undefined && data.encounterId !== null) {
       const [encounter] = await getEncounterInternalId.run(
-        { userExternalId, encounterExternalId: input.encounter_id },
+        { userExternalId, encounterExternalId: data.encounterId },
         client,
       );
       if (encounter === undefined) {
-        throw new EncounterNotFoundError(input.encounter_id);
+        throw new EncounterNotFoundError(data.encounterId);
       }
       encounterId = encounter.id;
     }
 
     let sourceFriendId: number | null = null;
-    if (input.source_friend_id !== undefined && input.source_friend_id !== null) {
-      if (input.source_friend_id === friendExternalId) {
+    if (data.sourceFriendId !== undefined && data.sourceFriendId !== null) {
+      if (data.sourceFriendId === friendExternalId) {
         throw new ValidationError('A note cannot name its own friend as the source');
       }
-      sourceFriendId = await this.resolveFriendId(client, userExternalId, input.source_friend_id);
+      sourceFriendId = await this.resolveFriendId(client, userExternalId, data.sourceFriendId);
     }
 
     let supersedesNoteId: number | null = null;
-    if (input.supersedes_note_id !== undefined && input.supersedes_note_id !== null) {
-      if (input.supersedes_note_id === current?.externalId) {
+    if (data.supersedesNoteId !== undefined && data.supersedesNoteId !== null) {
+      if (data.supersedesNoteId === current?.externalId) {
         throw new ValidationError('A note cannot supersede itself');
       }
       const [target] = await getFriendNoteInternalId.run(
-        { userExternalId, friendExternalId, noteExternalId: input.supersedes_note_id },
+        { userExternalId, friendExternalId, noteExternalId: data.supersedesNoteId },
         client,
       );
       if (target === undefined) {
-        throw new ResourceNotFoundError('Superseded note', input.supersedes_note_id);
+        throw new ResourceNotFoundError('Superseded note', data.supersedesNoteId);
       }
       if (current !== null && target.id > current.id) {
         throw new ValidationError('A note can only supersede an older note');

@@ -4,7 +4,6 @@ import {
   type AppPasswordResponse,
 } from '@freundebuch/shared/index.js';
 import { Hono, type MiddlewareHandler } from 'hono';
-import { AppPasswordNotFoundError } from '../errors/app-password-not-found.error.js';
 import { getAuthUser } from '../middleware/auth.js';
 import type { AppPasswordsService } from '../services/app-passwords.service.js';
 import type { AppContext } from '../types/context.js';
@@ -59,11 +58,7 @@ export function createAppPasswordsRoutes(options: AppPasswordsRoutesOptions) {
     const authUser = getAuthUser(c);
     const appPasswordId = requireUuidParam(c, 'id', 'app password ID format');
 
-    const isRevoked = await appPasswordsService.revokeAppPassword(authUser.userId, appPasswordId);
-
-    if (!isRevoked) {
-      throw new AppPasswordNotFoundError(appPasswordId);
-    }
+    await appPasswordsService.revokeAppPassword(authUser.userId, appPasswordId);
 
     return c.json({ success: true });
   });

@@ -1,6 +1,8 @@
+import { ValidationError } from '@datenknoten/kit';
 import type { CircleSummaryResponse, CollectiveCircleResponse } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import {
   addToCircle,
   getAvailableCircles,
@@ -62,21 +64,23 @@ export class CollectiveCircleService {
   }
 
   /**
-   * Add collective to a circle
+   * Add collective to a circle. Fails when the collective or the circle is not
+   * the user's, or the collective already is in the circle.
    */
   public async addToCircle(
     userExternalId: string,
     collectiveExternalId: string,
     circleExternalId: string,
-  ): Promise<boolean> {
+  ) {
     this.logger.debug({ collectiveExternalId, circleExternalId }, 'Adding collective to circle');
 
-    const result = await addToCircle.run(
+    const added = await addToCircle.run(
       { userExternalId, collectiveExternalId, circleExternalId },
       this.db,
     );
-
-    return result.length > 0;
+    if (added.length === 0) {
+      throw new ValidationError('Failed to add collective to circle');
+    }
   }
 
   /**
@@ -86,18 +90,19 @@ export class CollectiveCircleService {
     userExternalId: string,
     collectiveExternalId: string,
     circleExternalId: string,
-  ): Promise<boolean> {
+  ) {
     this.logger.debug(
       { collectiveExternalId, circleExternalId },
       'Removing collective from circle',
     );
 
-    const result = await removeFromCircle.run(
+    const removed = await removeFromCircle.run(
       { userExternalId, collectiveExternalId, circleExternalId },
       this.db,
     );
-
-    return result.length > 0;
+    if (removed.length === 0) {
+      throw new ResourceNotFoundError('Circle membership', circleExternalId);
+    }
   }
 
   private mapCircle(row: IGetCirclesByCollectiveIdResult): CollectiveCircleResponse {

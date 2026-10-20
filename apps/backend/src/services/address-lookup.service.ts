@@ -1,6 +1,6 @@
 import type { CityInfoResponse, PostalCodeInfoResponse } from '@freundebuch/shared/index.js';
 import type { Logger } from 'pino';
-import type { GeocodedLocation, NominatimClient } from './external/nominatim.client.js';
+import type { NominatimClient } from './external/nominatim.client.js';
 import type { HouseNumber, OverpassClient, Street } from './external/overpass.client.js';
 import type { PostGISAddressClient } from './external/postgis-address.client.js';
 
@@ -203,7 +203,7 @@ export class AddressLookupService {
   /**
    * Geocode an address to lat/lon coordinates.
    * Uses PostGIS for DACH countries (if enabled), falls back to Nominatim.
-   * Returns null if geocoding fails — never throws.
+   * Returns undefined if geocoding fails — never throws.
    */
   public async geocodeAddress(
     countryCode: string,
@@ -211,14 +211,18 @@ export class AddressLookupService {
     postalCode: string,
     street?: string,
     houseNumber?: string,
-  ): Promise<GeocodedLocation | null> {
+  ) {
     // Need at least country + city or postal code
-    if (!countryCode || (!city && !postalCode)) {
-      return null;
+    if (countryCode === '' || (city === '' && postalCode === '')) {
+      return undefined;
     }
 
-    // Try PostGIS first for DACH countries
-    if (this.shouldUsePostGIS(countryCode) && this.postgisClient && street) {
+    if (
+      this.shouldUsePostGIS(countryCode) &&
+      this.postgisClient !== undefined &&
+      street !== undefined &&
+      street !== ''
+    ) {
       try {
         const location = await this.postgisClient.geocodeAddress(
           countryCode,
@@ -227,7 +231,7 @@ export class AddressLookupService {
           street,
           houseNumber,
         );
-        if (location) {
+        if (location !== undefined) {
           this.logger.debug({ countryCode, city, postalCode, street }, 'PostGIS geocode succeeded');
           return location;
         }
@@ -251,7 +255,7 @@ export class AddressLookupService {
         { err: error, countryCode, city, postalCode, street },
         'Nominatim geocode failed',
       );
-      return null;
+      return undefined;
     }
   }
 }

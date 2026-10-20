@@ -4,6 +4,7 @@ import type {
   CollectiveTypeResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
+import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
 import { mapRole } from '../../models/mappers/collectives.mappers.js';
 import {
   getCollectiveTypeById,
@@ -51,12 +52,9 @@ export class CollectiveTypesService {
   }
 
   /**
-   * Get a single collective type with roles and rules
+   * Get a single collective type with roles and rules; throws when it does not exist
    */
-  public async getTypeById(
-    userExternalId: string,
-    typeExternalId: string,
-  ): Promise<CollectiveTypeResponse | null> {
+  public async getType(userExternalId: string, typeExternalId: string) {
     const typeResults = await getCollectiveTypeById.run(
       { userExternalId, typeExternalId },
       this.db,
@@ -64,7 +62,7 @@ export class CollectiveTypesService {
 
     const [typeRow] = typeResults;
     if (typeRow === undefined) {
-      return null;
+      throw new ResourceNotFoundError('Collective type', typeExternalId);
     }
 
     // Fetch roles and rules in parallel

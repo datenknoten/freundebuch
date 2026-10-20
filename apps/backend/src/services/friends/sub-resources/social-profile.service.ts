@@ -1,4 +1,5 @@
-import type { SocialProfileInput, SocialProfileResponse } from '@freundebuch/shared/index.js';
+import type { SocialPlatform, SocialProfileResponse } from '@freundebuch/shared/index.js';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
 import {
   createSocialProfile,
   deleteSocialProfile,
@@ -12,6 +13,12 @@ import {
   SubResourceService,
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
+
+export interface SocialProfileData {
+  platform: SocialPlatform;
+  profileUrl?: string | null;
+  username?: string | null;
+}
 
 const mapRow = (row: IGetSocialProfilesByFriendIdResult): SocialProfileResponse => ({
   id: row.external_id,
@@ -27,7 +34,7 @@ const mapRow = (row: IGetSocialProfilesByFriendIdResult): SocialProfileResponse 
  * Note: Social profiles do not have a primary flag.
  */
 export class SocialProfileService extends SubResourceService<
-  SocialProfileInput,
+  SocialProfileData,
   SocialProfileResponse,
   IGetSocialProfilesByFriendIdResult,
   IGetSocialProfilesByFriendIdResult,
@@ -38,23 +45,25 @@ export class SocialProfileService extends SubResourceService<
       ...options,
       definition: {
         resourceName: 'social profile',
+        resourceLabel: 'Social profile',
+        ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: false,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
+        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
           return createSocialProfile.run(
             {
               userExternalId,
               friendExternalId,
-              platform: input.platform,
-              profileUrl: input.profile_url ?? null,
-              username: input.username ?? null,
+              platform: data.platform,
+              profileUrl: data.profileUrl ?? null,
+              username: data.username ?? null,
             },
             client,
           );
         },
 
         updateFn: async (
-          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
         ) => {
           return updateSocialProfile.run(
@@ -62,9 +71,9 @@ export class SocialProfileService extends SubResourceService<
               userExternalId,
               friendExternalId,
               profileExternalId: resourceExternalId,
-              platform: input.platform,
-              profileUrl: input.profile_url ?? null,
-              username: input.username ?? null,
+              platform: data.platform,
+              profileUrl: data.profileUrl ?? null,
+              username: data.username ?? null,
             },
             client,
           );

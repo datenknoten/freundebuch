@@ -70,17 +70,25 @@ export class ReadinessService {
     if (this.cachedReadiness === null || Date.now() - this.cachedReadiness.at >= READINESS_TTL_MS) {
       const entry = { at: Date.now(), result: this.computeReadiness() };
       this.cachedReadiness = entry;
-      // computeReadiness turns dependency failures into `false`, but it can
-      // still throw. A rejection must not stick for the
-      // whole TTL, so drop the entry and let the next caller re-check.
-      entry.result.catch(() => {
-        if (this.cachedReadiness === entry) {
-          this.cachedReadiness = null;
-        }
-      });
+      void this.forgetOnRejection(entry);
     }
 
     return this.cachedReadiness.result;
+  }
+
+  /**
+   * computeReadiness turns dependency failures into `false`, but it can still
+   * throw. A rejection must not stick for the whole TTL, so drop the entry and
+   * let the next caller re-check.
+   */
+  private async forgetOnRejection(entry: { at: number; result: Promise<ReadinessResponse> }) {
+    try {
+      await entry.result;
+    } catch {
+      if (this.cachedReadiness === entry) {
+        this.cachedReadiness = null;
+      }
+    }
   }
 
   /** Drops the memoised readiness body. For tests that change the environment. */
@@ -94,31 +102,10 @@ export class ReadinessService {
    * is a bind mount in production and silently read-only when misconfigured.
    */
   private async computeReadiness(): Promise<ReadinessResponse> {
-    const logger = this.logger;
-    const uploadDir = this.config.UPLOAD_DIR;
-
     const [db, authDb, uploads] = await Promise.all([
-      isPoolReachable(this.db).catch((error: unknown) => {
-        logger.error({ err: toError(error) }, 'Readiness: main database check failed');
-        return false;
-      }),
-      isPoolReachable(this.authDb).catch((error: unknown) => {
-        logger.error({ err: toError(error) }, 'Readiness: auth database check failed');
-        return false;
-      }),
-      // mkdir first: the photo service creates the tree lazily on the first
-      // upload, so on a fresh volume the directory does not exist yet and a bare
-      // access() would report a broken instance. mkdir is idempotent and fails
-      // for exactly the case we care about — a read-only or misowned mount.
-      mkdir(uploadDir, { recursive: true })
-        .then(() => access(uploadDir, constants.W_OK))
-        .then(
-          () => true,
-          (error: unknown) => {
-            logger.error({ err: toError(error), uploadDir }, 'Readiness: uploads dir not writable');
-            return false;
-          },
-        ),
+      this.isPoolHealthy(this.db, 'Readiness: main database check failed'),
+      this.isPoolHealthy(this.authDb, 'Readiness: auth database check failed'),
+      this.isUploadDirWritable(),
     ]);
 
     const isReady = db && authDb && uploads;
@@ -128,5 +115,30 @@ export class ReadinessService {
       signupEnabled: !this.config.DISABLE_SIGNUP,
       emailEnabled: isMailConfigured(this.config),
     };
+  }
+
+  private async isPoolHealthy(pool: pg.Pool, failureMessage: string) {
+    try {
+      return await isPoolReachable(pool);
+    } catch (error) {
+      this.logger.error({ err: toError(error) }, failureMessage);
+      return false;
+    }
+  }
+
+  private async isUploadDirWritable() {
+    const uploadDir = this.config.UPLOAD_DIR;
+    try {
+      // mkdir first: the photo service creates the tree lazily on the first
+      // upload, so on a fresh volume the directory does not exist yet and a bare
+      // access() would report a broken instance. mkdir is idempotent and fails
+      // for exactly the case we care about — a read-only or misowned mount.
+      await mkdir(uploadDir, { recursive: true });
+      await access(uploadDir, constants.W_OK);
+      return true;
+    } catch (error) {
+      this.logger.error({ err: toError(error), uploadDir }, 'Readiness: uploads dir not writable');
+      return false;
+    }
   }
 }

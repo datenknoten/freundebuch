@@ -20,18 +20,15 @@ export interface BearerAuthOptions {
  * Validate an `Authorization: Bearer <token>` header against the OAuth access
  * tokens issued by the co-located Better Auth authorization server.
  *
- * Returns null when the token is missing, unknown, or expired. getMcpSession
+ * Returns undefined when the token is missing, unknown, or expired. getMcpSession
  * only checks that the token exists — it does NOT enforce expiry — so we check
  * `accessTokenExpiresAt` here.
  */
-export async function verifyBearerToken(
-  req: IncomingMessage,
-  options: BearerAuthOptions,
-): Promise<BearerAuthContext | null> {
+export async function verifyBearerToken(req: IncomingMessage, options: BearerAuthOptions) {
   const { auth, pool, logger } = options;
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return null;
+  if (authHeader?.startsWith('Bearer ') !== true) {
+    return undefined;
   }
 
   // Forward only the Authorization header — that is all getMcpSession reads.
@@ -43,11 +40,11 @@ export async function verifyBearerToken(
     session = await auth.api.getMcpSession({ headers });
   } catch (err) {
     logger.error({ err }, 'Error validating MCP bearer token');
-    return null;
+    return undefined;
   }
 
-  if (!session?.userId) {
-    return null;
+  if (session?.userId === undefined || session.userId === '') {
+    return undefined;
   }
 
   // getMcpSession does not enforce expiry — reject expired/undated tokens.
@@ -56,7 +53,7 @@ export async function verifyBearerToken(
     : Number.NaN;
   if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
     logger.warn('MCP bearer token missing expiry or expired');
-    return null;
+    return undefined;
   }
 
   // The OAuth subject *is* the domain user id (ADR 0003); only the address for
@@ -65,13 +62,13 @@ export async function verifyBearerToken(
     'SELECT email FROM auth."user" WHERE id = $1 LIMIT 1',
     [session.userId],
   );
-  const row = result.rows[0];
-  if (!row) {
+  const [row] = result.rows;
+  if (row === undefined) {
     logger.warn({ userId: session.userId }, 'No user row for OAuth token subject');
-    return null;
+    return undefined;
   }
 
-  return { userId: session.userId, email: row.email };
+  return { userId: session.userId, email: row.email } satisfies BearerAuthContext;
 }
 
 /**

@@ -1,6 +1,5 @@
 import { ValidationError } from '@datenknoten/kit';
 import type {
-  FriendCreateInput,
   FriendResponse,
   PreferencesResponse,
   UserPreferences,
@@ -24,7 +23,7 @@ import {
 } from '../models/queries/users.queries.js';
 import { parseUserPreferences } from '../utils/parse-user-preferences.js';
 import { toJson } from '../utils/to-json.js';
-import type { FriendsService } from './friends/friends.service.js';
+import type { FriendCreateData, FriendsService } from './friends/friends.service.js';
 
 export interface UsersServiceOptions {
   db: pg.Pool;
@@ -97,14 +96,8 @@ export class UsersService {
     input: UserPreferences,
   ): Promise<PreferencesResponse> {
     // Get current preferences
-    const users = await getUserWithPreferences.run({ externalId: userId }, this.db);
-
-    if (users.length === 0) {
-      throw new UserNotFoundError(userId);
-    }
-
-    const user = users[0];
-    if (!user) {
+    const [user] = await getUserWithPreferences.run({ externalId: userId }, this.db);
+    if (user === undefined) {
       throw new UserNotFoundError(userId);
     }
 
@@ -116,29 +109,28 @@ export class UsersService {
     };
 
     // Update in database
-    const result = await updateUserPreferences.run(
+    const [updated] = await updateUserPreferences.run(
       {
         externalId: userId,
         preferences: toJson(newPreferences),
       },
       this.db,
     );
-
-    if (result.length === 0) {
+    if (updated === undefined) {
       throw new UserNotFoundError(userId);
     }
 
     this.logger.info({ userId }, 'User preferences updated');
 
     return {
-      preferences: parseUserPreferences(result[0]?.preferences),
+      preferences: parseUserPreferences(updated.preferences),
     };
   }
 
   public async getMe(userId: string): Promise<UserResponse> {
     const [user] = await getUserWithSelfProfile.run({ userExternalId: userId }, this.db);
 
-    if (!user) {
+    if (user === undefined) {
       throw new UserNotFoundError(userId);
     }
 
@@ -169,15 +161,12 @@ export class UsersService {
    * Onboarding: create a friend for the user themselves and point
    * `self_profile_id` at it.
    */
-  public async createSelfProfile(
-    userId: string,
-    input: FriendCreateInput,
-  ): Promise<FriendResponse> {
+  public async createSelfProfile(userId: string, data: FriendCreateData): Promise<FriendResponse> {
     if ((await this.getSelfProfileId(userId)) !== null) {
       throw new ValidationError('Self-profile already exists');
     }
 
-    const newFriend = await this.friendsService.createFriend(userId, input);
+    const newFriend = await this.friendsService.createFriend(userId, data);
 
     const setResult = await setUserSelfProfile.run(
       { userExternalId: userId, friendExternalId: newFriend.id },

@@ -1,5 +1,6 @@
-import type { AddressInput, AddressResponse } from '@freundebuch/shared/index.js';
+import type { AddressResponse } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
+import { CollectiveNotFoundError } from '../../../errors/collective-not-found.error.js';
 import {
   clearPrimaryAddress,
   createAddress,
@@ -19,6 +20,7 @@ import {
   SubResourceService,
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
+import type { AddressData } from '../../friends/sub-resources/address.service.js';
 
 export interface CollectiveAddressServiceOptions extends SubResourceServiceOptions {
   addressLookupService?: AddressLookupService;
@@ -48,7 +50,7 @@ const mapRow = (row: IGetAddressesByCollectiveIdResult): AddressResponse => ({
  * never blocked on slow or rate-limited external geocode calls.
  */
 export class CollectiveAddressService extends SubResourceService<
-  AddressInput,
+  AddressData,
   AddressResponse,
   IGetAddressesByCollectiveIdResult,
   IGetAddressesByCollectiveIdResult,
@@ -61,25 +63,27 @@ export class CollectiveAddressService extends SubResourceService<
       ...options,
       definition: {
         resourceName: 'collective address',
+        resourceLabel: 'Address',
+        ownerNotFound: CollectiveNotFoundError,
         hasPrimaryFlag: true,
 
         createFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId, input },
+          { userExternalId, ownerExternalId: collectiveExternalId, data },
           client,
         ) => {
           return createAddress.run(
             {
               userExternalId,
               collectiveExternalId,
-              streetLine1: input.street_line1 ?? null,
-              streetLine2: input.street_line2 ?? null,
-              city: input.city ?? null,
-              stateProvince: input.state_province ?? null,
-              postalCode: input.postal_code ?? null,
-              country: input.country ?? null,
-              addressType: input.address_type,
-              label: input.label ?? null,
-              isPrimary: input.is_primary,
+              streetLine1: data.streetLine1 ?? null,
+              streetLine2: data.streetLine2 ?? null,
+              city: data.city ?? null,
+              stateProvince: data.stateProvince ?? null,
+              postalCode: data.postalCode ?? null,
+              country: data.country ?? null,
+              addressType: data.addressType,
+              label: data.label ?? null,
+              isPrimary: data.isPrimary,
               latitude: null,
               longitude: null,
             },
@@ -88,7 +92,7 @@ export class CollectiveAddressService extends SubResourceService<
         },
 
         updateFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, data },
           client,
         ) => {
           return updateAddress.run(
@@ -96,15 +100,15 @@ export class CollectiveAddressService extends SubResourceService<
               userExternalId,
               collectiveExternalId,
               addressExternalId: resourceExternalId,
-              streetLine1: input.street_line1 ?? null,
-              streetLine2: input.street_line2 ?? null,
-              city: input.city ?? null,
-              stateProvince: input.state_province ?? null,
-              postalCode: input.postal_code ?? null,
-              country: input.country ?? null,
-              addressType: input.address_type,
-              label: input.label ?? null,
-              isPrimary: input.is_primary,
+              streetLine1: data.streetLine1 ?? null,
+              streetLine2: data.streetLine2 ?? null,
+              city: data.city ?? null,
+              stateProvince: data.stateProvince ?? null,
+              postalCode: data.postalCode ?? null,
+              country: data.country ?? null,
+              addressType: data.addressType,
+              label: data.label ?? null,
+              isPrimary: data.isPrimary,
               latitude: null,
               longitude: null,
             },
@@ -133,9 +137,9 @@ export class CollectiveAddressService extends SubResourceService<
           return clearPrimaryAddress.run({ userExternalId, collectiveExternalId }, client);
         },
 
-        isPrimary: (input) => input.is_primary,
+        isPrimary: (data) => data.isPrimary,
 
-        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
 
         listFn: async ({ userExternalId, ownerExternalId: collectiveExternalId }, client) => {
           return getAddressesByCollectiveId.run({ userExternalId, collectiveExternalId }, client);
@@ -158,11 +162,11 @@ export class CollectiveAddressService extends SubResourceService<
     client: pg.Pool | pg.PoolClient,
     userExternalId: string,
     collectiveExternalId: string,
-    input: AddressInput,
-  ): Promise<AddressResponse | null> {
-    const result = await super.addWithin(client, userExternalId, collectiveExternalId, input);
-    if (result !== null) {
-      this.scheduleBackgroundGeocode(userExternalId, result.id, input);
+    data: AddressData,
+  ) {
+    const result = await super.addWithin(client, userExternalId, collectiveExternalId, data);
+    if (result !== undefined) {
+      this.scheduleBackgroundGeocode(userExternalId, result.id, data);
     }
     return result;
   }
@@ -171,8 +175,8 @@ export class CollectiveAddressService extends SubResourceService<
     userExternalId: string,
     collectiveExternalId: string,
     resourceExternalId: string,
-    input: AddressInput,
-  ): Promise<AddressResponse | null> {
+    data: AddressData,
+  ) {
     const [existing] = await getAddressById.run(
       { addressExternalId: resourceExternalId, collectiveExternalId, userExternalId },
       this.db,
@@ -182,52 +186,49 @@ export class CollectiveAddressService extends SubResourceService<
       userExternalId,
       collectiveExternalId,
       resourceExternalId,
-      input,
+      data,
     );
-    if (!result) {
+
+    if (existing === undefined || addressGeoFieldsChanged(data, existing) === true) {
+      this.scheduleBackgroundGeocode(userExternalId, resourceExternalId, data);
       return result;
     }
 
-    const shouldGeocode = !existing || addressGeoFieldsChanged(input, existing);
-
-    if (shouldGeocode) {
-      this.scheduleBackgroundGeocode(userExternalId, resourceExternalId, input);
+    if (existing.latitude === null || existing.longitude === null) {
       return result;
     }
-
-    if (existing && existing.latitude != null && existing.longitude != null) {
-      await updateAddressCoordinates.run(
-        {
-          addressExternalId: resourceExternalId,
-          userExternalId,
-          latitude: existing.latitude,
-          longitude: existing.longitude,
-        },
-        this.db,
-      );
-      return {
-        ...result,
+    await updateAddressCoordinates.run(
+      {
+        addressExternalId: resourceExternalId,
+        userExternalId,
         latitude: existing.latitude,
         longitude: existing.longitude,
-      };
-    }
-    return result;
+      },
+      this.db,
+    );
+    return {
+      ...result,
+      latitude: existing.latitude,
+      longitude: existing.longitude,
+    };
   }
 
   private scheduleBackgroundGeocode(
     userExternalId: string,
     addressExternalId: string,
-    input: AddressInput,
+    data: AddressData,
   ): void {
-    if (!this.addressLookupService || !input.country) return;
-
     const service = this.addressLookupService;
+    const country = data.country;
+    if (service === undefined || country === undefined || country === '') {
+      return;
+    }
+
     const logger = this.logger;
     const db = this.db;
-    const country = input.country;
-    const city = input.city ?? '';
-    const postalCode = input.postal_code ?? '';
-    const { street, houseNumber } = parseStreetLine(input.street_line1);
+    const city = data.city ?? '';
+    const postalCode = data.postalCode ?? '';
+    const { street, houseNumber } = parseStreetLine(data.streetLine1);
 
     setImmediate(async () => {
       try {
@@ -238,7 +239,7 @@ export class CollectiveAddressService extends SubResourceService<
           street,
           houseNumber,
         );
-        if (!location) {
+        if (location === undefined) {
           logger.debug(
             { addressExternalId },
             'Background geocode returned no result for collective address',

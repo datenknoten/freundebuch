@@ -52,8 +52,8 @@ export function registerFriendsTools(
       }),
     },
     async ({ friendId }) => {
-      const friend = await services.friends.getFriendById(getUserId(), friendId);
-      if (!friend) {
+      const friend = await services.friends.findFriend(getUserId(), friendId);
+      if (friend === undefined) {
         return { content: [{ type: 'text' as const, text: 'Friend not found.' }] };
       }
       return { content: [{ type: 'text' as const, text: JSON.stringify(friend, null, 2) }] };

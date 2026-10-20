@@ -1,7 +1,7 @@
+import type { EncounterUpdateData } from '@freundebuch/backend/services/encounters.service.js';
 import {
   ENCOUNTER_TITLE_MAX_LENGTH,
   ENCOUNTER_TYPES,
-  type EncounterUpdateInput,
   IsoDateStringSchema,
 } from '@freundebuch/shared/index.js';
 import type { McpServer } from '@modelcontextprotocol/server';
@@ -64,8 +64,8 @@ export function registerEncountersTools(
       }),
     },
     async ({ encounterId }) => {
-      const encounter = await services.encounters.getEncounterById(getUserId(), encounterId);
-      if (!encounter) {
+      const encounter = await services.encounters.findEncounter(getUserId(), encounterId);
+      if (encounter === undefined) {
         return { content: [{ type: 'text' as const, text: 'Encounter not found.' }] };
       }
       return {
@@ -110,12 +110,12 @@ export function registerEncountersTools(
     },
     async ({ encounterDate, friendIds, encounterType, title, locationText, description }) => {
       const encounter = await services.encounters.createEncounter(getUserId(), {
-        encounter_date: encounterDate,
-        friend_ids: friendIds,
-        encounter_type: encounterType,
-        // `title` has no null variant in EncounterInput; treat an explicit null as unset.
+        encounterDate,
+        friendIds,
+        encounterType,
+        // `title` has no null variant on create; treat an explicit null as unset.
         title: title ?? undefined,
-        location_text: locationText,
+        locationText,
         description,
       });
       return {
@@ -165,32 +165,35 @@ export function registerEncountersTools(
       locationText,
       description,
     }) => {
-      // Only forward the fields that were actually supplied: the service uses
-      // `'field' in input` to tell "leave untouched" apart from "clear to null".
-      const update: EncounterUpdateInput = {};
+      const userId = getUserId();
+      const existing = await services.encounters.findEncounter(userId, encounterId);
+      if (existing === undefined) {
+        return { content: [{ type: 'text' as const, text: 'Encounter not found.' }] };
+      }
+
+      // Only forward supplied fields: an absent key leaves the field untouched,
+      // `null` clears it.
+      const update: EncounterUpdateData = {};
       if (encounterDate !== undefined) {
-        update.encounter_date = encounterDate;
+        update.encounterDate = encounterDate;
       }
       if (friendIds !== undefined) {
-        update.friend_ids = friendIds;
+        update.friendIds = friendIds;
       }
       if (encounterType !== undefined) {
-        update.encounter_type = encounterType;
+        update.encounterType = encounterType;
       }
       if (title !== undefined) {
         update.title = title;
       }
       if (locationText !== undefined) {
-        update.location_text = locationText;
+        update.locationText = locationText;
       }
       if (description !== undefined) {
         update.description = description;
       }
 
-      const encounter = await services.encounters.updateEncounter(getUserId(), encounterId, update);
-      if (encounter === null) {
-        return { content: [{ type: 'text' as const, text: 'Encounter not found.' }] };
-      }
+      const encounter = await services.encounters.updateEncounter(userId, encounterId, update);
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(encounter, null, 2) }],
       };

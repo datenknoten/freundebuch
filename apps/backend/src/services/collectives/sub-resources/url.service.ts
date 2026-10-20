@@ -1,4 +1,5 @@
-import type { UrlInput, UrlResponse } from '@freundebuch/shared/index.js';
+import type { UrlResponse } from '@freundebuch/shared/index.js';
+import { CollectiveNotFoundError } from '../../../errors/collective-not-found.error.js';
 import {
   createUrl,
   deleteUrl,
@@ -12,6 +13,7 @@ import {
   SubResourceService,
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
+import type { UrlData } from '../../friends/sub-resources/url.service.js';
 
 const mapRow = (row: IGetUrlsByCollectiveIdResult): UrlResponse => ({
   id: row.external_id,
@@ -26,7 +28,7 @@ const mapRow = (row: IGetUrlsByCollectiveIdResult): UrlResponse => ({
  * Extends SubResourceService for common CRUD operations.
  */
 export class CollectiveUrlService extends SubResourceService<
-  UrlInput,
+  UrlData,
   UrlResponse,
   IGetUrlsByCollectiveIdResult,
   IGetUrlsByCollectiveIdResult,
@@ -37,26 +39,28 @@ export class CollectiveUrlService extends SubResourceService<
       ...options,
       definition: {
         resourceName: 'collective url',
+        resourceLabel: 'Url',
+        ownerNotFound: CollectiveNotFoundError,
         hasPrimaryFlag: false,
 
         createFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId, input },
+          { userExternalId, ownerExternalId: collectiveExternalId, data },
           client,
         ) => {
           return createUrl.run(
             {
               userExternalId,
               collectiveExternalId,
-              url: input.url,
-              urlType: input.url_type,
-              label: input.label ?? null,
+              url: data.url,
+              urlType: data.urlType,
+              label: data.label ?? null,
             },
             client,
           );
         },
 
         updateFn: async (
-          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, input },
+          { userExternalId, ownerExternalId: collectiveExternalId, resourceExternalId, data },
           client,
         ) => {
           return updateUrl.run(
@@ -64,9 +68,9 @@ export class CollectiveUrlService extends SubResourceService<
               userExternalId,
               collectiveExternalId,
               urlExternalId: resourceExternalId,
-              url: input.url,
-              urlType: input.url_type,
-              label: input.label ?? null,
+              url: data.url,
+              urlType: data.urlType,
+              label: data.label ?? null,
             },
             client,
           );

@@ -1,12 +1,20 @@
-import type { MetInfoInput, MetInfoResponse } from '@freundebuch/shared/index.js';
+import type { MetInfoResponse } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
+import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import {
   deleteMetInfo,
   type IGetMetInfoByFriendIdResult,
   upsertMetInfo,
 } from '../../../models/queries/friend-met-info.queries.js';
 import { formatDateOnly } from '../../../utils/date.js';
+
+export interface MetInfoData {
+  metDate?: string | null;
+  metLocation?: string | null;
+  metContext?: string | null;
+}
 
 export interface MetInfoServiceOptions {
   db: pg.Pool;
@@ -33,46 +41,37 @@ export class MetInfoService {
   public async set(
     userExternalId: string,
     friendExternalId: string,
-    data: MetInfoInput,
+    data: MetInfoData,
     client?: pg.Pool | pg.PoolClient,
-  ): Promise<MetInfoResponse | null> {
+  ) {
     this.logger.debug({ friendExternalId }, 'Setting met info');
-
-    const dbClient = client ?? this.db;
 
     const [metInfo] = await upsertMetInfo.run(
       {
         userExternalId,
         friendExternalId,
-        metDate: data.met_date ?? null,
-        metLocation: data.met_location ?? null,
-        metContext: data.met_context ?? null,
+        metDate: data.metDate ?? null,
+        metLocation: data.metLocation ?? null,
+        metContext: data.metContext ?? null,
       },
-      dbClient,
+      client ?? this.db,
     );
-
-    if (!metInfo) {
-      return null;
+    if (metInfo === undefined) {
+      throw new FriendNotFoundError(friendExternalId);
     }
-
     return this.mapMetInfo(metInfo);
   }
 
   /**
    * Delete met information for a friend
    */
-  public async delete(
-    userExternalId: string,
-    friendExternalId: string,
-    client?: pg.Pool | pg.PoolClient,
-  ): Promise<boolean> {
+  public async delete(userExternalId: string, friendExternalId: string) {
     this.logger.debug({ friendExternalId }, 'Deleting met info');
 
-    const dbClient = client ?? this.db;
-
-    const result = await deleteMetInfo.run({ userExternalId, friendExternalId }, dbClient);
-
-    return result.length > 0;
+    const deleted = await deleteMetInfo.run({ userExternalId, friendExternalId }, this.db);
+    if (deleted.length === 0) {
+      throw new ResourceNotFoundError('Met info', friendExternalId);
+    }
   }
 
   /**

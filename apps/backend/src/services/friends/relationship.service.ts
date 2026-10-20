@@ -1,14 +1,15 @@
 import { ConflictError } from '@datenknoten/kit';
 import type {
   FriendSearchResultResponse,
-  RelationshipCreateInput,
   RelationshipResponse,
+  RelationshipTypeId,
   RelationshipTypeResponse,
   RelationshipTypesGroupedResponse,
-  RelationshipUpdateInput,
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { FriendNotFoundError } from '../../errors/friend-not-found.error.js';
+import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
 import {
   createInverseRelationship,
   createRelationship,
@@ -29,6 +30,16 @@ import { withTransaction } from '../../utils/with-transaction.js';
 export interface RelationshipServiceOptions {
   db: pg.Pool;
   logger: Logger;
+}
+
+export interface RelationshipCreateData {
+  relatedFriendId: string;
+  relationshipTypeId: RelationshipTypeId;
+  notes?: string;
+}
+
+export interface RelationshipUpdateData {
+  notes?: string | null;
 }
 
 /**
@@ -84,31 +95,31 @@ export class RelationshipService {
   public async addRelationship(
     userExternalId: string,
     friendExternalId: string,
-    data: RelationshipCreateInput,
-  ): Promise<RelationshipResponse | null> {
+    data: RelationshipCreateData,
+  ): Promise<RelationshipResponse> {
     this.logger.debug(
-      { friendExternalId, relatedFriendExternalId: data.related_friend_id },
+      { friendExternalId, relatedFriendExternalId: data.relatedFriendId },
       'Adding relationship',
     );
 
     // The primary relationship and its inverse must be created together; a
     // failure in between previously left a one-way edge.
-    let relationshipExternalId: string | null;
+    let relationshipExternalId: string;
     try {
       relationshipExternalId = await withTransaction(this.db, async (client) => {
         const [relationship] = await createRelationship.run(
           {
             userExternalId,
             friendExternalId,
-            relatedFriendExternalId: data.related_friend_id,
-            relationshipTypeId: data.relationship_type_id,
+            relatedFriendExternalId: data.relatedFriendId,
+            relationshipTypeId: data.relationshipTypeId,
             notes: data.notes ?? null,
           },
           client,
         );
 
-        if (!relationship) {
-          return null;
+        if (relationship === undefined) {
+          throw new FriendNotFoundError(friendExternalId);
         }
 
         // Create the inverse relationship (if inverse type exists)
@@ -116,8 +127,8 @@ export class RelationshipService {
           {
             userExternalId,
             friendExternalId,
-            relatedFriendExternalId: data.related_friend_id,
-            relationshipTypeId: data.relationship_type_id,
+            relatedFriendExternalId: data.relatedFriendId,
+            relationshipTypeId: data.relationshipTypeId,
             notes: data.notes ?? null,
           },
           client,
@@ -132,10 +143,6 @@ export class RelationshipService {
       });
     }
 
-    if (relationshipExternalId === null) {
-      return null;
-    }
-
     // Fetch the full relationship with related friend info
     const [fullRelationship] = await getRelationshipById.run(
       {
@@ -146,15 +153,15 @@ export class RelationshipService {
       this.db,
     );
 
-    if (!fullRelationship) {
-      return null;
+    if (fullRelationship === undefined) {
+      throw new FriendNotFoundError(friendExternalId);
     }
 
     this.logger.info(
       {
         friendExternalId,
-        relatedFriendExternalId: data.related_friend_id,
-        relationshipType: data.relationship_type_id,
+        relatedFriendExternalId: data.relatedFriendId,
+        relationshipType: data.relationshipTypeId,
       },
       'Relationship created successfully',
     );
@@ -169,8 +176,8 @@ export class RelationshipService {
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
-    data: RelationshipUpdateInput,
-  ): Promise<RelationshipResponse | null> {
+    data: RelationshipUpdateData,
+  ): Promise<RelationshipResponse> {
     this.logger.debug({ friendExternalId, relationshipExternalId }, 'Updating relationship');
 
     const [updated] = await updateRelationship.run(
@@ -183,8 +190,8 @@ export class RelationshipService {
       this.db,
     );
 
-    if (!updated) {
-      return null;
+    if (updated === undefined) {
+      throw new ResourceNotFoundError('Relationship', relationshipExternalId);
     }
 
     // Fetch the full relationship with related friend info
@@ -197,8 +204,8 @@ export class RelationshipService {
       this.db,
     );
 
-    if (!fullRelationship) {
-      return null;
+    if (fullRelationship === undefined) {
+      throw new ResourceNotFoundError('Relationship', relationshipExternalId);
     }
 
     this.logger.info({ friendExternalId, relationshipExternalId }, 'Relationship updated');
@@ -213,7 +220,7 @@ export class RelationshipService {
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.logger.debug({ friendExternalId, relationshipExternalId }, 'Deleting relationship');
 
     // Delete the primary relationship and its inverse together so an inverse
@@ -227,9 +234,8 @@ export class RelationshipService {
         client,
       );
 
-      if (!deleted) {
-        await client.query('ROLLBACK');
-        return false;
+      if (deleted === undefined) {
+        throw new ResourceNotFoundError('Relationship', relationshipExternalId);
       }
 
       await deleteInverseRelationship.run(
@@ -255,8 +261,6 @@ export class RelationshipService {
     }
 
     this.logger.info({ friendExternalId, relationshipExternalId }, 'Relationship deleted');
-
-    return true;
   }
 
   /**

@@ -1,8 +1,8 @@
 // Generated from one config by createSubResourceRouter.
 import { EmailInputSchema } from '@freundebuch/shared/index.js';
-import { CollectiveNotFoundError } from '../../../errors/collective-not-found.error.js';
 import type { CollectiveEmailService } from '../../../services/collectives/sub-resources/email.service.js';
 import { createSubResourceRouter } from '../../base/sub-resource.router.js';
+import { mapEmailInput } from '../../mappers/map-email-input.js';
 
 export interface CollectiveEmailsRoutesOptions {
   collectiveEmailService: CollectiveEmailService;
@@ -15,7 +15,7 @@ export function createCollectiveEmailsRoutes(options: CollectiveEmailsRoutesOpti
     resourceParam: 'emailId',
     resourceLabel: 'Email',
     schema: EmailInputSchema,
-    ownerNotFound: CollectiveNotFoundError,
+    mapInput: mapEmailInput,
     service: options.collectiveEmailService,
   });
 }

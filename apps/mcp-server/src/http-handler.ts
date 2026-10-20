@@ -242,11 +242,11 @@ export function createMcpRequestHandler(
     //  - Basic: app passwords (used by existing CLI/desktop clients).
     // Both resolve to the same `{ userId (legacy external_id), email }` shape.
     const authHeader = req.headers.authorization;
-    let authResult: { userId: string; email: string } | null = null;
+    let authResult: { userId: string; email: string } | undefined;
 
     if (authHeader?.startsWith('Bearer ')) {
       authResult = await verifyBearerToken(req, { auth, pool, logger });
-      if (!authResult) {
+      if (authResult === undefined) {
         logger.warn(
           { ip: getClientIp(req) },
           'MCP bearer-auth failure (infrastructure rate limiting should throttle repeats)',
@@ -266,7 +266,7 @@ export function createMcpRequestHandler(
       const password = decoded.slice(colonIndex + 1);
 
       const basicResult = await services.appPasswords.verifyAppPassword(email, password);
-      if (!basicResult) {
+      if (basicResult === undefined) {
         logger.warn(
           { ip: getClientIp(req), email },
           'MCP basic-auth failure (infrastructure rate limiting should throttle repeats)',
@@ -285,7 +285,7 @@ export function createMcpRequestHandler(
 
     // Every non-returning branch above assigns authResult; this guard also
     // narrows the type for the rest of the handler.
-    if (!authResult) {
+    if (authResult === undefined) {
       sendBearerUnauthorized(res, req, betterAuthUrl);
       return;
     }

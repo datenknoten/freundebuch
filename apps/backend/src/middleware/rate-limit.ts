@@ -115,6 +115,22 @@ function getClientIdentifier(
 }
 
 /**
+ * Consume one point for `key`. Resolves to undefined when the request is
+ * allowed, otherwise to the milliseconds until the next point frees up.
+ */
+async function consumePoint(limiter: RateLimiterMemory, key: string) {
+  try {
+    await limiter.consume(key);
+    return undefined;
+  } catch (error) {
+    if (isRateLimiterRes(error) === false) {
+      throw error;
+    }
+    return error.msBeforeNext;
+  }
+}
+
+/**
  * Build the middleware for one named limiter. Each call owns a fresh bucket.
  *
  * Authenticated limiters key by `user:<id>` when the request has already been
@@ -139,16 +155,15 @@ export function createRateLimitMiddleware(
     const userId = spec.isKeyedByUser ? c.get('user')?.userId : undefined;
     const key = userId === undefined ? getClientIdentifier(c, config) : `user:${userId}`;
 
-    try {
-      await limiter.consume(key);
+    const msBeforeNext = await consumePoint(limiter, key);
+    if (msBeforeNext === undefined) {
       return next();
-    } catch (error) {
-      if (!isRateLimiterRes(error)) throw error;
-      const retryAfter = Math.ceil(error.msBeforeNext / 1000);
-      c.get('logger').warn({ key, retryAfter, limiter: name }, 'Rate limit exceeded');
-      return c.json({ error: spec.message ?? 'Too many requests. Please try again later.' }, 429, {
-        'Retry-After': String(retryAfter),
-      });
     }
+
+    const retryAfter = Math.ceil(msBeforeNext / 1000);
+    c.get('logger').warn({ key, retryAfter, limiter: name }, 'Rate limit exceeded');
+    return c.json({ error: spec.message ?? 'Too many requests. Please try again later.' }, 429, {
+      'Retry-After': String(retryAfter),
+    });
   };
 }

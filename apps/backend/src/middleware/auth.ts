@@ -58,10 +58,3 @@ export function createAuthMiddleware(
 export function getAuthUser(c: Context<AppContext>): AuthContext {
   return c.get('user');
 }
-
-/**
- * Get the full Better Auth session from context (set by authMiddleware).
- */
-export function getAuthSession(c: Context<AppContext>) {
-  return c.get('session');
-}

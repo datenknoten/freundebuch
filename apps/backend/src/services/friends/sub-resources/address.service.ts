@@ -1,5 +1,6 @@
-import type { AddressInput, AddressResponse } from '@freundebuch/shared/index.js';
+import type { AddressResponse, AddressType } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
 import {
   clearPrimaryAddress,
   createAddress,
@@ -22,6 +23,18 @@ import {
 
 export interface AddressServiceOptions extends SubResourceServiceOptions {
   addressLookupService?: AddressLookupService;
+}
+
+export interface AddressData {
+  streetLine1?: string;
+  streetLine2?: string;
+  city?: string;
+  stateProvince?: string;
+  postalCode?: string;
+  country?: string;
+  addressType: AddressType;
+  label?: string;
+  isPrimary: boolean;
 }
 
 const mapRow = (row: IGetAddressesByFriendIdResult): AddressResponse => ({
@@ -50,7 +63,7 @@ const mapRow = (row: IGetAddressesByFriendIdResult): AddressResponse => ({
  * changed.
  */
 export class AddressService extends SubResourceService<
-  AddressInput,
+  AddressData,
   AddressResponse,
   IGetAddressesByFriendIdResult,
   IGetAddressesByFriendIdResult,
@@ -63,22 +76,24 @@ export class AddressService extends SubResourceService<
       ...options,
       definition: {
         resourceName: 'address',
+        resourceLabel: 'Address',
+        ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: true,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
+        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
           return createAddress.run(
             {
               userExternalId,
               friendExternalId,
-              streetLine1: input.street_line1 ?? null,
-              streetLine2: input.street_line2 ?? null,
-              city: input.city ?? null,
-              stateProvince: input.state_province ?? null,
-              postalCode: input.postal_code ?? null,
-              country: input.country ?? null,
-              addressType: input.address_type,
-              label: input.label ?? null,
-              isPrimary: input.is_primary,
+              streetLine1: data.streetLine1 ?? null,
+              streetLine2: data.streetLine2 ?? null,
+              city: data.city ?? null,
+              stateProvince: data.stateProvince ?? null,
+              postalCode: data.postalCode ?? null,
+              country: data.country ?? null,
+              addressType: data.addressType,
+              label: data.label ?? null,
+              isPrimary: data.isPrimary,
               latitude: null,
               longitude: null,
             },
@@ -87,7 +102,7 @@ export class AddressService extends SubResourceService<
         },
 
         updateFn: async (
-          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
         ) => {
           return updateAddress.run(
@@ -95,15 +110,15 @@ export class AddressService extends SubResourceService<
               userExternalId,
               friendExternalId,
               addressExternalId: resourceExternalId,
-              streetLine1: input.street_line1 ?? null,
-              streetLine2: input.street_line2 ?? null,
-              city: input.city ?? null,
-              stateProvince: input.state_province ?? null,
-              postalCode: input.postal_code ?? null,
-              country: input.country ?? null,
-              addressType: input.address_type,
-              label: input.label ?? null,
-              isPrimary: input.is_primary,
+              streetLine1: data.streetLine1 ?? null,
+              streetLine2: data.streetLine2 ?? null,
+              city: data.city ?? null,
+              stateProvince: data.stateProvince ?? null,
+              postalCode: data.postalCode ?? null,
+              country: data.country ?? null,
+              addressType: data.addressType,
+              label: data.label ?? null,
+              isPrimary: data.isPrimary,
               latitude: null,
               longitude: null,
             },
@@ -129,9 +144,9 @@ export class AddressService extends SubResourceService<
           return clearPrimaryAddress.run({ userExternalId, friendExternalId }, client);
         },
 
-        isPrimary: (input) => input.is_primary,
+        isPrimary: (data) => data.isPrimary,
 
-        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
 
         listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
           return getAddressesByFriendId.run({ userExternalId, friendExternalId }, client);
@@ -154,11 +169,11 @@ export class AddressService extends SubResourceService<
     client: pg.Pool | pg.PoolClient,
     userExternalId: string,
     friendExternalId: string,
-    input: AddressInput,
-  ): Promise<AddressResponse | null> {
-    const result = await super.addWithin(client, userExternalId, friendExternalId, input);
-    if (result !== null) {
-      this.scheduleBackgroundGeocode(userExternalId, result.id, input);
+    data: AddressData,
+  ) {
+    const result = await super.addWithin(client, userExternalId, friendExternalId, data);
+    if (result !== undefined) {
+      this.scheduleBackgroundGeocode(userExternalId, result.id, data);
     }
     return result;
   }
@@ -167,43 +182,38 @@ export class AddressService extends SubResourceService<
     userExternalId: string,
     friendExternalId: string,
     resourceExternalId: string,
-    input: AddressInput,
-  ): Promise<AddressResponse | null> {
+    data: AddressData,
+  ) {
     const [existing] = await getAddressById.run(
       { addressExternalId: resourceExternalId, friendExternalId, userExternalId },
       this.db,
     );
 
-    const result = await super.update(userExternalId, friendExternalId, resourceExternalId, input);
-    if (!result) {
-      return result;
-    }
+    const result = await super.update(userExternalId, friendExternalId, resourceExternalId, data);
 
-    const shouldGeocode = !existing || addressGeoFieldsChanged(input, existing);
-
-    if (shouldGeocode) {
-      this.scheduleBackgroundGeocode(userExternalId, resourceExternalId, input);
+    if (existing === undefined || addressGeoFieldsChanged(data, existing) === true) {
+      this.scheduleBackgroundGeocode(userExternalId, resourceExternalId, data);
       return result;
     }
 
     // Address unchanged — carry forward previously geocoded coordinates.
-    if (existing && existing.latitude != null && existing.longitude != null) {
-      await updateAddressCoordinates.run(
-        {
-          addressExternalId: resourceExternalId,
-          userExternalId,
-          latitude: existing.latitude,
-          longitude: existing.longitude,
-        },
-        this.db,
-      );
-      return {
-        ...result,
+    if (existing.latitude === null || existing.longitude === null) {
+      return result;
+    }
+    await updateAddressCoordinates.run(
+      {
+        addressExternalId: resourceExternalId,
+        userExternalId,
         latitude: existing.latitude,
         longitude: existing.longitude,
-      };
-    }
-    return result;
+      },
+      this.db,
+    );
+    return {
+      ...result,
+      latitude: existing.latitude,
+      longitude: existing.longitude,
+    };
   }
 
   /**
@@ -216,17 +226,19 @@ export class AddressService extends SubResourceService<
   private scheduleBackgroundGeocode(
     userExternalId: string,
     addressExternalId: string,
-    input: AddressInput,
+    data: AddressData,
   ): void {
-    if (!this.addressLookupService || !input.country) return;
-
     const service = this.addressLookupService;
+    const country = data.country;
+    if (service === undefined || country === undefined || country === '') {
+      return;
+    }
+
     const logger = this.logger;
     const db = this.db;
-    const country = input.country;
-    const city = input.city ?? '';
-    const postalCode = input.postal_code ?? '';
-    const { street, houseNumber } = parseStreetLine(input.street_line1);
+    const city = data.city ?? '';
+    const postalCode = data.postalCode ?? '';
+    const { street, houseNumber } = parseStreetLine(data.streetLine1);
 
     setImmediate(async () => {
       try {
@@ -237,7 +249,7 @@ export class AddressService extends SubResourceService<
           street,
           houseNumber,
         );
-        if (!location) {
+        if (location === undefined) {
           logger.debug({ addressExternalId }, 'Background geocode returned no result for address');
           return;
         }

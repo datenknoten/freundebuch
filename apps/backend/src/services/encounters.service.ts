@@ -1,16 +1,15 @@
 import type {
-  EncounterCreateInput,
   EncounterFriendSummaryResponse,
   EncounterListItemResponse,
   EncounterListOptions,
   EncounterListResponse,
   EncounterResponse,
   EncounterType,
-  EncounterUpdateInput,
-  LastEncounterSummaryResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
 import { EncounterCreationError } from '../errors/encounter-creation.error.js';
+import { EncounterNotFoundError } from '../errors/encounter-not-found.error.js';
+import { ResourceNotFoundError } from '../errors/resource-not-found.error.js';
 import {
   clearEncounterFriends,
   type ISetEncounterFriendsResult,
@@ -36,6 +35,26 @@ const PREVIEW_FRIEND_LIMIT = 3;
 
 export interface EncountersServiceOptions {
   db: Pool;
+}
+
+export interface EncounterCreateData {
+  title?: string;
+  encounterDate: string;
+  encounterType: EncounterType;
+  friendIds: string[];
+  locationText?: string | null;
+  description?: string | null;
+}
+
+/** Absent keys leave the field untouched; `null` clears it. */
+export interface EncounterUpdateData {
+  title?: string | null;
+  encounterDate?: string;
+  encounterType?: EncounterType;
+  /** Replaces the full friend list. */
+  friendIds?: string[];
+  locationText?: string | null;
+  description?: string | null;
 }
 
 /**
@@ -127,69 +146,62 @@ export class EncountersService {
     };
   }
 
-  /**
-   * Get a single encounter by ID with all friends
-   */
-  public async getEncounterById(
-    userExternalId: string,
-    encounterExternalId: string,
-  ): Promise<EncounterResponse | null> {
-    const results = await getEncounterById.run({ userExternalId, encounterExternalId }, this.db);
-    const [row] = results;
+  public async findEncounter(userExternalId: string, encounterExternalId: string) {
+    const [row] = await getEncounterById.run({ userExternalId, encounterExternalId }, this.db);
     if (row === undefined) {
-      return null;
+      return undefined;
     }
 
     const friends = await getEncounterFriends.run({ userExternalId, encounterExternalId }, this.db);
     return this.mapEncounter(row, friends);
   }
 
+  public async getEncounter(userExternalId: string, encounterExternalId: string) {
+    const encounter = await this.findEncounter(userExternalId, encounterExternalId);
+    if (encounter === undefined) {
+      throw new EncounterNotFoundError(encounterExternalId);
+    }
+    return encounter;
+  }
+
   /**
    * Create a new encounter with friend assignments
    */
-  public async createEncounter(
-    userExternalId: string,
-    input: EncounterCreateInput,
-  ): Promise<EncounterResponse> {
+  public async createEncounter(userExternalId: string, data: EncounterCreateData) {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
 
-      // Create the encounter
-      const encounterResults = await createEncounter.run(
+      const [encounter] = await createEncounter.run(
         {
           userExternalId,
-          title: input.title ?? null,
-          encounterType: input.encounter_type,
-          encounterDate: input.encounter_date,
-          locationText: input.location_text ?? null,
-          description: input.description ?? null,
+          title: data.title ?? null,
+          encounterType: data.encounterType,
+          encounterDate: data.encounterDate,
+          locationText: data.locationText ?? null,
+          description: data.description ?? null,
         },
         client,
       );
-
-      const [encounter] = encounterResults;
       if (encounter === undefined) {
         throw new EncounterCreationError();
       }
 
-      // Add friends to the encounter
-      let friends: EncounterFriendSummaryResponse[] = [];
-      if (input.friend_ids.length > 0) {
-        const friendResults = await setEncounterFriends.run(
-          {
-            encounterExternalId: encounter.external_id,
-            userExternalId,
-            friendExternalIds: input.friend_ids,
-          },
-          client,
-        );
-        friends = this.mapFriendResults(friendResults);
-      }
+      const friendResults: ISetEncounterFriendsResult[] =
+        data.friendIds.length === 0
+          ? []
+          : await setEncounterFriends.run(
+              {
+                encounterExternalId: encounter.external_id,
+                userExternalId,
+                friendExternalIds: data.friendIds,
+              },
+              client,
+            );
 
       await client.query('COMMIT');
 
-      return this.mapEncounter(encounter, friends);
+      return this.mapEncounter(encounter, this.mapFriendResults(friendResults));
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -204,66 +216,56 @@ export class EncountersService {
   public async updateEncounter(
     userExternalId: string,
     encounterExternalId: string,
-    input: EncounterUpdateInput,
-  ): Promise<EncounterResponse | null> {
+    data: EncounterUpdateData,
+  ) {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
 
-      // Update the encounter
-      const encounterResults = await updateEncounter.run(
+      const [encounter] = await updateEncounter.run(
         {
           userExternalId,
           encounterExternalId,
-          updateTitle: 'title' in input,
-          title: input.title ?? null,
-          encounterType: input.encounter_type ?? null,
-          encounterDate: input.encounter_date ?? null,
-          updateLocationText: 'location_text' in input,
-          locationText: input.location_text ?? null,
-          updateDescription: 'description' in input,
-          description: input.description ?? null,
+          updateTitle: data.title !== undefined,
+          title: data.title ?? null,
+          encounterType: data.encounterType ?? null,
+          encounterDate: data.encounterDate ?? null,
+          updateLocationText: data.locationText !== undefined,
+          locationText: data.locationText ?? null,
+          updateDescription: data.description !== undefined,
+          description: data.description ?? null,
         },
         client,
       );
-
-      const [encounter] = encounterResults;
       if (encounter === undefined) {
-        await client.query('ROLLBACK');
-        return null;
+        throw new EncounterNotFoundError(encounterExternalId);
       }
 
-      // Update friends if provided
-      let friends: EncounterFriendSummaryResponse[];
-      if (input.friend_ids !== undefined) {
-        // Clear existing friends and set new ones
-        await clearEncounterFriends.run({ encounterExternalId, userExternalId }, client);
-
-        if (input.friend_ids.length > 0) {
-          const friendResults = await setEncounterFriends.run(
-            {
-              encounterExternalId,
-              userExternalId,
-              friendExternalIds: input.friend_ids,
-            },
-            client,
-          );
-          friends = this.mapFriendResults(friendResults);
-        } else {
-          friends = [];
-        }
-      } else {
-        // Fetch existing friends
-        const friendResults = await getEncounterFriends.run(
+      if (data.friendIds === undefined) {
+        const existingFriends = await getEncounterFriends.run(
           { encounterExternalId, userExternalId },
           client,
         );
-        friends = friendResults.map((f) => this.mapFriendSummary(f));
+        await client.query('COMMIT');
+        return this.mapEncounter(encounter, existingFriends);
       }
+
+      await clearEncounterFriends.run({ encounterExternalId, userExternalId }, client);
+      const friendResults: ISetEncounterFriendsResult[] =
+        data.friendIds.length === 0
+          ? []
+          : await setEncounterFriends.run(
+              {
+                encounterExternalId,
+                userExternalId,
+                friendExternalIds: data.friendIds,
+              },
+              client,
+            );
 
       await client.query('COMMIT');
 
-      return this.mapEncounter(encounter, friends);
+      return this.mapEncounter(encounter, this.mapFriendResults(friendResults));
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -275,28 +277,23 @@ export class EncountersService {
   /**
    * Delete an encounter
    */
-  public async deleteEncounter(
-    userExternalId: string,
-    encounterExternalId: string,
-  ): Promise<boolean> {
+  public async deleteEncounter(userExternalId: string, encounterExternalId: string) {
     const results = await deleteEncounter.run({ userExternalId, encounterExternalId }, this.db);
-    return results.length > 0;
+    if (results.length === 0) {
+      throw new EncounterNotFoundError(encounterExternalId);
+    }
   }
 
   /**
    * Get the most recent encounter with a specific friend
    */
-  public async getLastEncounterForFriend(
-    userExternalId: string,
-    friendExternalId: string,
-  ): Promise<LastEncounterSummaryResponse | null> {
-    const results = await getLastEncounterForFriend.run(
+  public async getLastEncounterForFriend(userExternalId: string, friendExternalId: string) {
+    const [row] = await getLastEncounterForFriend.run(
       { userExternalId, friendExternalId },
       this.db,
     );
-    const [row] = results;
     if (row === undefined) {
-      return null;
+      throw new ResourceNotFoundError('Encounters', friendExternalId);
     }
     return {
       id: row.external_id,

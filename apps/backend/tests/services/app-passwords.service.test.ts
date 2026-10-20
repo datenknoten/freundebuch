@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import pino from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppPasswordNotFoundError } from '../../src/errors/app-password-not-found.error.js';
 import { AppPasswordsService } from '../../src/services/app-passwords.service.js';
 import { hashAppPasswordPrefix } from '../../src/utils/hash-app-password-prefix.js';
 
@@ -220,12 +221,11 @@ describe('AppPasswordsService', () => {
   });
 
   describe('revokeAppPassword', () => {
-    it('should return true when password is revoked', async () => {
+    it('should resolve when password is revoked', async () => {
       vi.mocked(revokeAppPassword.run).mockResolvedValue([{ external_id: VALID_PASSWORD_ID }]);
 
-      const result = await service.revokeAppPassword(VALID_USER_ID, VALID_PASSWORD_ID);
+      await service.revokeAppPassword(VALID_USER_ID, VALID_PASSWORD_ID);
 
-      expect(result).toBe(true);
       expect(revokeAppPassword.run).toHaveBeenCalledWith(
         {
           userExternalId: VALID_USER_ID,
@@ -235,12 +235,12 @@ describe('AppPasswordsService', () => {
       );
     });
 
-    it('should return false when password not found', async () => {
+    it('should throw AppPasswordNotFoundError when password not found', async () => {
       vi.mocked(revokeAppPassword.run).mockResolvedValue([]);
 
-      const result = await service.revokeAppPassword(VALID_USER_ID, VALID_PASSWORD_ID);
-
-      expect(result).toBe(false);
+      await expect(service.revokeAppPassword(VALID_USER_ID, VALID_PASSWORD_ID)).rejects.toThrow(
+        AppPasswordNotFoundError,
+      );
     });
   });
 
@@ -248,12 +248,12 @@ describe('AppPasswordsService', () => {
     const testEmail = 'user@example.com';
     const testPassword = 'abcd1234efgh5678ijkl9012';
 
-    it('should return null for unknown user', async () => {
+    it('should return undefined for unknown user', async () => {
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([]);
 
       const result = await service.verifyAppPassword(testEmail, testPassword);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
 
     it('should still spend one bcrypt compare for an unknown email', async () => {
@@ -263,12 +263,12 @@ describe('AppPasswordsService', () => {
 
       const result = await service.verifyAppPassword(testEmail, testPassword);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
       expect(compareSpy).toHaveBeenCalledTimes(1);
       expect(compareSpy).toHaveBeenCalledWith(testPassword, expect.stringMatching(/^\$2[aby]\$/));
     });
 
-    it('should return null when no matching prefix', async () => {
+    it('should return undefined when no matching prefix', async () => {
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
         { id: 1, external_id: VALID_USER_ID, email: testEmail },
       ]);
@@ -276,7 +276,7 @@ describe('AppPasswordsService', () => {
 
       const result = await service.verifyAppPassword(testEmail, testPassword);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
 
     it('should still spend one bcrypt compare when no stored prefix matches', async () => {
@@ -288,11 +288,11 @@ describe('AppPasswordsService', () => {
 
       const result = await service.verifyAppPassword(testEmail, testPassword);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
       expect(compareSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should return null for wrong password', async () => {
+    it('should return undefined for wrong password', async () => {
       vi.mocked(getUserByEmailWithInternalId.run).mockResolvedValue([
         { id: 1, external_id: VALID_USER_ID, email: testEmail },
       ]);
@@ -308,7 +308,7 @@ describe('AppPasswordsService', () => {
 
       const result = await service.verifyAppPassword(testEmail, testPassword);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
 
     it('should return context for correct password', async () => {
@@ -354,7 +354,7 @@ describe('AppPasswordsService', () => {
 
       const result = await service.verifyAppPassword(testEmail, formattedPassword);
 
-      expect(result).not.toBeNull();
+      expect(result).toBeDefined();
       expect(result?.userId).toBe(VALID_USER_ID);
     });
 
@@ -382,7 +382,7 @@ describe('AppPasswordsService', () => {
 
       const result = await service.verifyAppPassword(testEmail, formattedPassword);
 
-      expect(result).not.toBeNull();
+      expect(result).toBeDefined();
       expect(result?.userId).toBe(VALID_USER_ID);
       expect(getAppPasswordsByUserIdAndPrefix.run).toHaveBeenCalledWith(
         { userId: 1, prefix: hashAppPasswordPrefix('AAAA-BBB') },
@@ -411,7 +411,7 @@ describe('AppPasswordsService', () => {
 
       const result = await service.verifyAppPassword(testEmail, malformed);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
       // Prefix derived from fallback: strip all dashes → "abcdXefghijklmnopqrstuvwxyz1234567890"
       expect(getAppPasswordsByUserIdAndPrefix.run).toHaveBeenCalledWith(
         expect.objectContaining({ prefix: hashAppPasswordPrefix('abcdXefg') }),
@@ -462,7 +462,7 @@ describe('AppPasswordsService', () => {
 
       const result = await service.verifyAppPassword(testEmail, testPassword);
 
-      expect(result).not.toBeNull();
+      expect(result).toBeDefined();
       expect(result?.appPasswordId).toBe(VALID_PASSWORD_ID);
       expect(updateAppPasswordLastUsed.run).toHaveBeenCalledWith({ id: 2 }, mockDb);
     });

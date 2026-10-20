@@ -7,8 +7,6 @@ import {
 } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import { FriendNotFoundError } from '../../errors/friend-not-found.error.js';
-import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../middleware/auth.js';
 import type { CirclesService } from '../../services/circles.service.js';
 import type { FriendsService } from '../../services/friends/friends.service.js';
@@ -58,11 +56,7 @@ export function createOrganizationRoutes(options: OrganizationRoutesOptions): Ho
       }
 
       // Verify friend exists and belongs to user
-      const friend = await options.friendsService.getFriendById(user.userId, friendId);
-
-      if (!friend) {
-        throw new FriendNotFoundError(friendId);
-      }
+      await options.friendsService.getFriend(user.userId, friendId);
 
       // Upload photo
       const result = await options.photoService.uploadPhoto(friendId, file);
@@ -100,11 +94,7 @@ export function createOrganizationRoutes(options: OrganizationRoutesOptions): Ho
     // UUID-validated to prevent path traversal
     const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-    const friend = await options.friendsService.getFriendById(user.userId, friendId);
-
-    if (!friend) {
-      throw new FriendNotFoundError(friendId);
-    }
+    await options.friendsService.getFriend(user.userId, friendId);
 
     // Delete photo files
     await options.photoService.deletePhoto(friendId);
@@ -161,10 +151,6 @@ export function createOrganizationRoutes(options: OrganizationRoutesOptions): Ho
 
     const circle = await options.circlesService.addFriendToCircle(user.userId, friendId, circleId);
 
-    if (!circle) {
-      throw new ResourceNotFoundError('Friend or circle', `${friendId}/${circleId}`);
-    }
-
     return c.json(circle, 201);
   });
 
@@ -177,15 +163,7 @@ export function createOrganizationRoutes(options: OrganizationRoutesOptions): Ho
     const friendId = requireUuidParam(c, 'id');
     const circleId = requireUuidParam(c, 'circleId');
 
-    const isRemoved = await options.circlesService.removeFriendFromCircle(
-      user.userId,
-      friendId,
-      circleId,
-    );
-
-    if (!isRemoved) {
-      throw new ResourceNotFoundError('Friend-circle assignment', `${friendId}/${circleId}`);
-    }
+    await options.circlesService.removeFriendFromCircle(user.userId, friendId, circleId);
 
     return c.json({ message: 'Friend removed from circle successfully' });
   });
@@ -203,10 +181,6 @@ export function createOrganizationRoutes(options: OrganizationRoutesOptions): Ho
     const friendId = requireUuidParam(c, 'id', 'friend ID');
 
     const isFavorite = await options.friendsService.toggleFavorite(user.userId, friendId);
-
-    if (isFavorite === null) {
-      throw new FriendNotFoundError(friendId);
-    }
 
     return c.json({ is_favorite: isFavorite });
   });
@@ -233,15 +207,7 @@ export function createOrganizationRoutes(options: OrganizationRoutesOptions): Ho
 
     const validated = validate(ArchiveFriendInputSchema, body);
 
-    const isArchived = await options.friendsService.archiveFriend(
-      user.userId,
-      friendId,
-      validated.reason,
-    );
-
-    if (!isArchived) {
-      throw new FriendNotFoundError(friendId);
-    }
+    await options.friendsService.archiveFriend(user.userId, friendId, validated.reason);
 
     return c.json({ message: 'Friend archived successfully' });
   });
@@ -254,11 +220,7 @@ export function createOrganizationRoutes(options: OrganizationRoutesOptions): Ho
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');
 
-    const isUnarchived = await options.friendsService.unarchiveFriend(user.userId, friendId);
-
-    if (!isUnarchived) {
-      throw new FriendNotFoundError(friendId);
-    }
+    await options.friendsService.unarchiveFriend(user.userId, friendId);
 
     return c.json({ message: 'Friend unarchived successfully' });
   });

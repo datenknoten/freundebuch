@@ -2,7 +2,6 @@ import { ValidationError } from '@datenknoten/kit';
 import { EncounterListQuerySchema, parseEncounterListQuery } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
-import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../../middleware/auth.js';
 import type { EncountersService } from '../../../services/encounters.service.js';
 import type { AppContext } from '../../../types/context.js';
@@ -50,10 +49,6 @@ export function createEncountersRoutes(options: EncountersRoutesOptions): Hono<A
       user.userId,
       friendId,
     );
-
-    if (!lastEncounter) {
-      throw new ResourceNotFoundError('Encounters', friendId);
-    }
 
     return c.json(lastEncounter);
   });

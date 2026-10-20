@@ -1,18 +1,26 @@
 import { ValidationError } from '@datenknoten/kit';
 import {
+  type CircleInput,
   CircleInputSchema,
   CircleMergeInputSchema,
   CircleReorderInputSchema,
 } from '@freundebuch/shared/index.js';
 import { Hono, type MiddlewareHandler } from 'hono';
 import { etag } from 'hono/etag';
-import { CircleCreationError } from '../errors/circle-creation.error.js';
-import { CircleNotFoundError } from '../errors/circle-not-found.error.js';
 import { getAuthUser } from '../middleware/auth.js';
 import type { CirclesService } from '../services/circles.service.js';
 import type { AppContext } from '../types/context.js';
 import { parseBody } from '../utils/parse-body.js';
 import { requireUuidParam } from '../utils/require-uuid-param.js';
+
+function mapCircleInput(input: CircleInput) {
+  return {
+    name: input.name,
+    ...(input.color !== undefined && { color: input.color }),
+    ...(input.parent_circle_id !== undefined && { parentCircleId: input.parent_circle_id }),
+    ...(input.sort_order !== undefined && { sortOrder: input.sort_order }),
+  };
+}
 
 export interface CirclesRoutesOptions {
   circlesService: CirclesService;
@@ -57,11 +65,7 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
     const user = getAuthUser(c);
 
     const validated = await parseBody(c, CircleInputSchema);
-    const circle = await circlesService.createCircle(user.userId, validated);
-
-    if (!circle) {
-      throw new CircleCreationError();
-    }
+    const circle = await circlesService.createCircle(user.userId, mapCircleInput(validated));
 
     return c.json(circle, 201);
   });
@@ -75,7 +79,10 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
     const user = getAuthUser(c);
 
     const validated = await parseBody(c, CircleReorderInputSchema);
-    await circlesService.reorderCircles(user.userId, validated.order);
+    await circlesService.reorderCircles(
+      user.userId,
+      validated.order.map((item) => ({ id: item.id, sortOrder: item.sort_order })),
+    );
 
     return c.json({ success: true });
   });
@@ -87,11 +94,7 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
   app.get('/:id', async (c) => {
     const user = getAuthUser(c);
     const circleId = requireUuidParam(c, 'id', 'circle ID');
-    const circle = await circlesService.getCircleById(user.userId, circleId);
-
-    if (!circle) {
-      throw new CircleNotFoundError(circleId);
-    }
+    const circle = await circlesService.getCircle(user.userId, circleId);
 
     return c.json(circle);
   });
@@ -104,11 +107,11 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
     const user = getAuthUser(c);
     const circleId = requireUuidParam(c, 'id', 'circle ID');
     const validated = await parseBody(c, CircleInputSchema);
-    const circle = await circlesService.updateCircle(user.userId, circleId, validated);
-
-    if (!circle) {
-      throw new CircleNotFoundError(circleId);
-    }
+    const circle = await circlesService.updateCircle(
+      user.userId,
+      circleId,
+      mapCircleInput(validated),
+    );
 
     return c.json(circle);
   });
@@ -120,11 +123,7 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
   app.delete('/:id', async (c) => {
     const user = getAuthUser(c);
     const circleId = requireUuidParam(c, 'id', 'circle ID');
-    const isDeleted = await circlesService.deleteCircle(user.userId, circleId);
-
-    if (!isDeleted) {
-      throw new CircleNotFoundError(circleId);
-    }
+    await circlesService.deleteCircle(user.userId, circleId);
 
     return c.json({ success: true });
   });
@@ -146,10 +145,6 @@ export function createCirclesRoutes(options: CirclesRoutesOptions) {
       targetCircleId,
       validated.source_circle_id,
     );
-
-    if (!circle) {
-      throw new CircleNotFoundError(targetCircleId);
-    }
 
     return c.json(circle);
   });

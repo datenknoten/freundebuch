@@ -5,7 +5,6 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { ValidationError } from '@datenknoten/kit';
 import { Hono, type MiddlewareHandler } from 'hono';
-import { FriendNotFoundError } from '../errors/friend-not-found.error.js';
 import { ResourceNotFoundError } from '../errors/resource-not-found.error.js';
 import { getAuthUser } from '../middleware/auth.js';
 import type { FriendsService } from '../services/friends/friends.service.js';
@@ -56,11 +55,7 @@ export function createUploadsRoutes(options: UploadsRoutesOptions) {
     const filename = c.req.param('filename');
 
     // Verify the user owns this friend
-    const friend = await friendsService.getFriendById(user.userId, friendId);
-
-    if (!friend) {
-      throw new FriendNotFoundError(friendId);
-    }
+    await friendsService.getFriend(user.userId, friendId);
 
     // Validate filename to prevent directory traversal
     if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {

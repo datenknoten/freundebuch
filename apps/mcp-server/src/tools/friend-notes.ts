@@ -61,9 +61,9 @@ export function registerFriendNotesTools(
     async ({ friendId, content, encounterId, sourceFriendId, supersedesNoteId }) => {
       const note = await services.friendNotes.create(getUserId(), friendId, {
         content,
-        encounter_id: encounterId ?? null,
-        source_friend_id: sourceFriendId ?? null,
-        supersedes_note_id: supersedesNoteId ?? null,
+        encounterId: encounterId ?? null,
+        sourceFriendId: sourceFriendId ?? null,
+        supersedesNoteId: supersedesNoteId ?? null,
       });
       return { content: [{ type: 'text' as const, text: JSON.stringify(note, null, 2) }] };
     },

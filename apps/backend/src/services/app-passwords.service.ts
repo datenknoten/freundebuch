@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { AppPasswordCreationError } from '../errors/app-password-creation.error.js';
+import { AppPasswordNotFoundError } from '../errors/app-password-not-found.error.js';
 import { MaxAppPasswordsExceededError } from '../errors/max-app-passwords-exceeded.error.js';
 import {
   createAppPassword,
@@ -32,12 +33,6 @@ const DUMMY_HASH = bcrypt.hashSync('dummy', SALT_ROUNDS);
 // in sync.
 const FORMAT_CHUNK_SIZE = 4;
 const FORMAT_STRIDE = FORMAT_CHUNK_SIZE + 1; // chunk + one separator
-
-export interface BasicAuthContext {
-  userId: string; // User's external_id
-  email: string;
-  appPasswordId: string; // App password external_id
-}
 
 export interface AppPasswordsServiceOptions {
   db: pg.Pool;
@@ -172,10 +167,7 @@ export class AppPasswordsService {
   /**
    * Revoke an app password (soft delete)
    */
-  public async revokeAppPassword(
-    userExternalId: string,
-    appPasswordExternalId: string,
-  ): Promise<boolean> {
+  public async revokeAppPassword(userExternalId: string, appPasswordExternalId: string) {
     this.logger.info(
       { userId: userExternalId, passwordId: appPasswordExternalId },
       'Revoking app password',
@@ -194,26 +186,21 @@ export class AppPasswordsService {
         { userId: userExternalId, passwordId: appPasswordExternalId },
         'App password not found or already revoked',
       );
-      return false;
+      throw new AppPasswordNotFoundError(appPasswordExternalId);
     }
 
     this.logger.info(
       { userId: userExternalId, passwordId: appPasswordExternalId },
       'App password revoked',
     );
-
-    return true;
   }
 
   /**
    * Verify an app password for HTTP Basic Auth
    * Used by CardDAV/CalDAV authentication
-   * Returns user info if valid, null if invalid
+   * Returns user info if valid, undefined if not authenticated
    */
-  public async verifyAppPassword(
-    email: string,
-    password: string,
-  ): Promise<BasicAuthContext | null> {
+  public async verifyAppPassword(email: string, password: string) {
     this.logger.debug('Verifying app password');
 
     // Invert formatPassword to recover the raw base64url password. Must preserve
@@ -224,14 +211,12 @@ export class AppPasswordsService {
 
     // Emails are stored lowercase (CHECK constraint on both identity tables);
     // DAV/MCP clients send whatever the user typed.
-    const users = await getUserByEmailWithInternalId.run({ email: email.toLowerCase() }, this.db);
-
-    const user = users[0];
-    if (!user) {
+    const [user] = await getUserByEmailWithInternalId.run({ email: email.toLowerCase() }, this.db);
+    if (user === undefined) {
       // Spend the same bcrypt round a real candidate would have cost.
       await bcrypt.compare(rawPassword, DUMMY_HASH);
       this.logger.warn('User not found for app password verification');
-      return null;
+      return undefined;
     }
 
     // Find matching app passwords by prefix
@@ -246,14 +231,14 @@ export class AppPasswordsService {
     if (appPasswords.length === 0) {
       await bcrypt.compare(rawPassword, DUMMY_HASH);
       this.logger.warn('Invalid app password');
-      return null;
+      return undefined;
     }
 
     // Try each matching password
     for (const ap of appPasswords) {
       const isValid = await bcrypt.compare(rawPassword, ap.password_hash);
 
-      if (isValid) {
+      if (isValid === true) {
         // Update last_used_at
         await updateAppPasswordLastUsed.run({ id: ap.id }, this.db);
 
@@ -268,6 +253,6 @@ export class AppPasswordsService {
     }
 
     this.logger.warn('Invalid app password');
-    return null;
+    return undefined;
   }
 }

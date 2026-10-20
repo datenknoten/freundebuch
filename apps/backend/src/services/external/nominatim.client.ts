@@ -1,10 +1,5 @@
 import type { Logger } from 'pino';
 
-export interface GeocodedLocation {
-  latitude: number;
-  longitude: number;
-}
-
 interface NominatimResult {
   lat: string;
   lon: string;
@@ -48,7 +43,7 @@ export class NominatimClient {
   }
 
   /**
-   * Geocode an address to lat/lon coordinates.
+   * Geocode an address to lat/lon coordinates; undefined when it cannot be located.
    * Uses structured query parameters for better accuracy.
    */
   public async geocode(
@@ -57,7 +52,7 @@ export class NominatimClient {
     postalCode: string,
     street?: string,
     houseNumber?: string,
-  ): Promise<GeocodedLocation | null> {
+  ) {
     return this.enqueue(() => this.doGeocode(countryCode, city, postalCode, street, houseNumber));
   }
 
@@ -65,18 +60,21 @@ export class NominatimClient {
    * Serialize work onto the request queue. Each task waits for the previous
    * one to finish AND for the rate-limit window to elapse.
    */
-  private enqueue<T>(task: () => Promise<T>): Promise<T> {
-    const next = this.requestQueue.then(async () => {
-      await this.waitForRateLimit();
-      try {
-        return await task();
-      } finally {
-        this.lastRequestTime = Date.now();
-      }
-    });
+  private enqueue<T>(task: () => Promise<T>) {
+    const next = this.runAfter(this.requestQueue, task);
     // Swallow rejections on the chain itself so one failure doesn't poison the queue.
     this.requestQueue = next.catch(() => undefined);
     return next;
+  }
+
+  private async runAfter<T>(previous: Promise<unknown>, task: () => Promise<T>) {
+    await previous;
+    await this.waitForRateLimit();
+    try {
+      return await task();
+    } finally {
+      this.lastRequestTime = Date.now();
+    }
   }
 
   private async waitForRateLimit(): Promise<void> {
@@ -92,7 +90,7 @@ export class NominatimClient {
     postalCode: string,
     street?: string,
     houseNumber?: string,
-  ): Promise<GeocodedLocation | null> {
+  ) {
     const params = new URLSearchParams({
       format: 'json',
       countrycodes: countryCode.toLowerCase(),
@@ -125,7 +123,7 @@ export class NominatimClient {
           { status: response.status, countryCode, city },
           'Nominatim geocode request failed',
         );
-        return null;
+        return undefined;
       }
 
       const results = (await response.json()) as NominatimResult[];
@@ -136,7 +134,7 @@ export class NominatimClient {
           { countryCode, city, postalCode, street },
           'Nominatim returned no results',
         );
-        return null;
+        return undefined;
       }
 
       const latitude = Number.parseFloat(result.lat);
@@ -144,7 +142,7 @@ export class NominatimClient {
 
       if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
         this.logger.warn({ result }, 'Nominatim returned invalid coordinates');
-        return null;
+        return undefined;
       }
 
       this.logger.debug(
@@ -155,7 +153,7 @@ export class NominatimClient {
       return { latitude, longitude };
     } catch (error) {
       this.logger.warn({ err: error, countryCode, city, postalCode }, 'Nominatim geocode error');
-      return null;
+      return undefined;
     }
   }
 }

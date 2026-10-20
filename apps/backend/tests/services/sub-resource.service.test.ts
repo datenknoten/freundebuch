@@ -2,6 +2,8 @@ import { ConflictError } from '@datenknoten/kit';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { describe, expect, it } from 'vitest';
+import { FriendNotFoundError } from '../../src/errors/friend-not-found.error.js';
+import { ResourceNotFoundError } from '../../src/errors/resource-not-found.error.js';
 import {
   type SubResourceConfig,
   SubResourceService,
@@ -14,7 +16,7 @@ import {
  * error (500).
  */
 
-interface Input {
+interface Data {
   value: string;
 }
 
@@ -22,13 +24,15 @@ interface Row {
   value: string;
 }
 
-class TestSubResourceService extends SubResourceService<Input, Row, Row, Row, Row> {
-  constructor(db: pg.Pool, overrides: Partial<SubResourceConfig<Input, Row, Row, Row, Row>> = {}) {
+class TestSubResourceService extends SubResourceService<Data, Row, Row, Row, Row> {
+  constructor(db: pg.Pool, overrides: Partial<SubResourceConfig<Data, Row, Row, Row, Row>> = {}) {
     super({
       db,
       logger: { debug: () => undefined } as unknown as Logger,
       definition: {
         resourceName: 'phone',
+        resourceLabel: 'Phone',
+        ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: false,
         createFn: () => Promise.reject(new Error('not used')),
         updateFn: () => Promise.reject(new Error('not used')),
@@ -113,9 +117,10 @@ describe('SubResourceService primary handling for missing rows', () => {
       updateFn: () => Promise.resolve([]),
     });
 
-    await expect(
-      service.update('user-1', 'friend-1', 'does-not-exist', { value: '+1' }),
-    ).resolves.toBeNull();
+    const failure = service.update('user-1', 'friend-1', 'does-not-exist', { value: '+1' });
+
+    await expect(failure).rejects.toBeInstanceOf(ResourceNotFoundError);
+    await expect(failure).rejects.toMatchObject({ message: 'Phone not found: does-not-exist' });
     expect(clears).toBe(1);
     expect(statements).toEqual(['BEGIN', 'ROLLBACK']);
   });
@@ -129,7 +134,10 @@ describe('SubResourceService primary handling for missing rows', () => {
       createFn: () => Promise.resolve([]),
     });
 
-    await expect(service.add('user-1', 'unknown-owner', { value: '+1' })).resolves.toBeNull();
+    const failure = service.add('user-1', 'unknown-owner', { value: '+1' });
+
+    await expect(failure).rejects.toBeInstanceOf(FriendNotFoundError);
+    await expect(failure).rejects.toMatchObject({ message: 'Friend not found: unknown-owner' });
     expect(statements).toEqual(['BEGIN', 'ROLLBACK']);
   });
 
@@ -146,5 +154,16 @@ describe('SubResourceService primary handling for missing rows', () => {
       value: '+1',
     });
     expect(statements).toEqual(['BEGIN', 'COMMIT']);
+  });
+});
+
+describe('SubResourceService delete', () => {
+  it('rejects with the resource not-found error when no row was deleted', async () => {
+    const service = new TestSubResourceService(fakePool().pool);
+
+    const failure = service.delete('user-1', 'friend-1', 'does-not-exist');
+
+    await expect(failure).rejects.toBeInstanceOf(ResourceNotFoundError);
+    await expect(failure).rejects.toMatchObject({ message: 'Phone not found: does-not-exist' });
   });
 });

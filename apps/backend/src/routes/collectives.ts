@@ -1,23 +1,34 @@
 import { ValidationError } from '@datenknoten/kit';
 import {
+  type CollectiveCreateInput,
   CollectiveCreateInputSchema,
   CollectiveListQuerySchema,
+  type CollectiveUpdateInput,
   CollectiveUpdateInputSchema,
+  type MembershipCreateInput,
   MembershipCreateInputSchema,
+  type MembershipDeactivateInput,
   MembershipDeactivateInputSchema,
   MembershipUpdateInputSchema,
   parseCollectiveListQuery,
+  type RelationshipPreviewInput,
   RelationshipPreviewInputSchema,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono, type MiddlewareHandler } from 'hono';
-import { CollectiveNotFoundError } from '../errors/collective-not-found.error.js';
-import { MembershipNotFoundError } from '../errors/membership-not-found.error.js';
-import { ResourceNotFoundError } from '../errors/resource-not-found.error.js';
 import { getAuthUser } from '../middleware/auth.js';
 import type { CollectiveTypesService } from '../services/collectives/collective-types.service.js';
-import type { CollectivesService } from '../services/collectives/collectives.service.js';
-import type { MembershipsService } from '../services/collectives/memberships.service.js';
+import type {
+  CollectiveCreateData,
+  CollectivesService,
+  CollectiveUpdateData,
+} from '../services/collectives/collectives.service.js';
+import type {
+  MembershipCreateData,
+  MembershipDeactivateData,
+  MembershipsService,
+  RelationshipPreviewData,
+} from '../services/collectives/memberships.service.js';
 import type { CollectiveAddressService } from '../services/collectives/sub-resources/address.service.js';
 import type { CollectiveCircleService } from '../services/collectives/sub-resources/circle.service.js';
 import type { CollectiveEmailService } from '../services/collectives/sub-resources/email.service.js';
@@ -46,6 +57,79 @@ export interface CollectivesRoutesOptions {
   authMiddleware: MiddlewareHandler<AppContext>;
   onboardingMiddleware: MiddlewareHandler<AppContext>;
   rateLimitMiddleware: MiddlewareHandler<AppContext>;
+}
+
+function mapCollectiveCreateInput(input: CollectiveCreateInput) {
+  return {
+    name: input.name,
+    collectiveTypeId: input.collective_type_id,
+    notes: input.notes,
+    photoUrl: input.photo_url,
+    photoThumbnailUrl: input.photo_thumbnail_url,
+    addressStreetLine1: input.address_street_line1,
+    addressStreetLine2: input.address_street_line2,
+    addressCity: input.address_city,
+    addressStateProvince: input.address_state_province,
+    addressPostalCode: input.address_postal_code,
+    addressCountry: input.address_country,
+  } satisfies CollectiveCreateData;
+}
+
+// Only present keys are copied: the service treats an absent key as "leave untouched".
+function mapCollectiveUpdateInput(input: CollectiveUpdateInput) {
+  const data: CollectiveUpdateData = {};
+  if ('name' in input) {
+    data.name = input.name;
+  }
+  if ('notes' in input) {
+    data.notes = input.notes;
+  }
+  if ('photo_url' in input) {
+    data.photoUrl = input.photo_url;
+  }
+  if ('photo_thumbnail_url' in input) {
+    data.photoThumbnailUrl = input.photo_thumbnail_url;
+  }
+  if ('address_street_line1' in input) {
+    data.addressStreetLine1 = input.address_street_line1;
+  }
+  if ('address_street_line2' in input) {
+    data.addressStreetLine2 = input.address_street_line2;
+  }
+  if ('address_city' in input) {
+    data.addressCity = input.address_city;
+  }
+  if ('address_state_province' in input) {
+    data.addressStateProvince = input.address_state_province;
+  }
+  if ('address_postal_code' in input) {
+    data.addressPostalCode = input.address_postal_code;
+  }
+  if ('address_country' in input) {
+    data.addressCountry = input.address_country;
+  }
+  return data;
+}
+
+function mapMembershipCreateInput(input: MembershipCreateInput) {
+  return {
+    friendId: input.friend_id,
+    roleId: input.role_id,
+    joinedDate: input.joined_date,
+    notes: input.notes,
+    shouldSkipAutoRelationships: input.skip_auto_relationships,
+  } satisfies MembershipCreateData;
+}
+
+function mapMembershipDeactivateInput(input: MembershipDeactivateInput) {
+  return {
+    reason: input.reason,
+    inactiveDate: input.inactive_date,
+  } satisfies MembershipDeactivateData;
+}
+
+function mapRelationshipPreviewInput(input: RelationshipPreviewInput) {
+  return { friendId: input.friend_id, roleId: input.role_id } satisfies RelationshipPreviewData;
 }
 
 export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
@@ -92,11 +176,7 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
   app.get('/types/:id', async (c) => {
     const user = getAuthUser(c);
     const typeId = requireUuidParam(c, 'id', 'type ID');
-    const collectiveType = await collectiveTypesService.getTypeById(user.userId, typeId);
-
-    if (!collectiveType) {
-      throw new ResourceNotFoundError('Collective type', typeId);
-    }
+    const collectiveType = await collectiveTypesService.getType(user.userId, typeId);
 
     return c.json(collectiveType);
   });
@@ -133,7 +213,10 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     const user = getAuthUser(c);
 
     const validated = await parseBody(c, CollectiveCreateInputSchema);
-    const collective = await collectivesService.createCollective(user.userId, validated);
+    const collective = await collectivesService.createCollective(
+      user.userId,
+      mapCollectiveCreateInput(validated),
+    );
 
     return c.json(collective, 201);
   });
@@ -145,11 +228,7 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
   app.get('/:id', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
-    const collective = await collectivesService.getCollectiveById(user.userId, collectiveId);
-
-    if (!collective) {
-      throw new CollectiveNotFoundError(collectiveId);
-    }
+    const collective = await collectivesService.getCollective(user.userId, collectiveId);
 
     return c.json(collective);
   });
@@ -165,7 +244,7 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     const collective = await collectivesService.updateCollective(
       user.userId,
       collectiveId,
-      validated,
+      mapCollectiveUpdateInput(validated),
     );
 
     return c.json(collective);
@@ -178,11 +257,7 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
   app.delete('/:id', async (c) => {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
-    const isDeleted = await collectivesService.deleteCollective(user.userId, collectiveId);
-
-    if (!isDeleted) {
-      throw new CollectiveNotFoundError(collectiveId);
-    }
+    await collectivesService.deleteCollective(user.userId, collectiveId);
 
     return c.json({ success: true });
   });
@@ -202,7 +277,7 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     const preview = await membershipsService.previewRelationships(
       user.userId,
       collectiveId,
-      validated,
+      mapRelationshipPreviewInput(validated),
     );
 
     return c.json(preview);
@@ -216,7 +291,11 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
     const validated = await parseBody(c, MembershipCreateInputSchema);
-    const member = await membershipsService.addMember(user.userId, collectiveId, validated);
+    const member = await membershipsService.addMember(
+      user.userId,
+      collectiveId,
+      mapMembershipCreateInput(validated),
+    );
 
     return c.json(member, 201);
   });
@@ -229,11 +308,7 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
     const user = getAuthUser(c);
     const collectiveId = requireUuidParam(c, 'id', 'collective ID');
     const memberId = requireUuidParam(c, 'memberId', 'member ID');
-    const isDeleted = await membershipsService.removeMember(user.userId, collectiveId, memberId);
-
-    if (!isDeleted) {
-      throw new MembershipNotFoundError(memberId);
-    }
+    await membershipsService.removeMember(user.userId, collectiveId, memberId);
 
     return c.json({ success: true });
   });
@@ -274,7 +349,7 @@ export function createCollectivesRoutes(options: CollectivesRoutesOptions) {
       user.userId,
       collectiveId,
       memberId,
-      validated,
+      mapMembershipDeactivateInput(validated),
     );
 
     return c.json(member);

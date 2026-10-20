@@ -1,28 +1,24 @@
 import type {
   FacetedSearchOptions,
   FacetedSearchResponse,
-  FriendCreateInput,
   FriendListItemResponse,
   FriendListOptions,
   FriendListResponse,
   FriendResponse,
   FriendSearchResultResponse,
-  FriendUpdateInput,
   GlobalSearchResultResponse,
-  MetInfoInput,
   MetInfoResponse,
   NetworkGraphResponse,
   PaginatedSearchResponse,
-  RelationshipCreateInput,
   RelationshipResponse,
   RelationshipTypesGroupedResponse,
-  RelationshipUpdateInput,
   SearchOptions,
   UpcomingDateResponse,
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { FriendCreationError } from '../../errors/friend-creation.error.js';
+import { FriendNotFoundError } from '../../errors/friend-not-found.error.js';
 import {
   archiveFriend,
   createFriend,
@@ -57,16 +53,59 @@ import { parseSocialPlatform } from '../../utils/parse-social-platform.js';
 import { parseUrlType } from '../../utils/parse-url-type.js';
 import type { PhotoService } from '../photo.service.js';
 import type { NetworkGraphService } from './network-graph.service.js';
-import type { RelationshipService } from './relationship.service.js';
+import type {
+  RelationshipCreateData,
+  RelationshipService,
+  RelationshipUpdateData,
+} from './relationship.service.js';
 import type { SearchService } from './search.service.js';
-import type { AddressService } from './sub-resources/address.service.js';
-import type { DateService } from './sub-resources/date.service.js';
-import type { EmailService } from './sub-resources/email.service.js';
-import type { MetInfoService } from './sub-resources/met-info.service.js';
-import type { PhoneService } from './sub-resources/phone.service.js';
-import type { ProfessionalHistoryService } from './sub-resources/professional-history.service.js';
-import type { SocialProfileService } from './sub-resources/social-profile.service.js';
-import type { UrlService } from './sub-resources/url.service.js';
+import type { AddressData, AddressService } from './sub-resources/address.service.js';
+import type { DateData, DateService } from './sub-resources/date.service.js';
+import type { EmailData, EmailService } from './sub-resources/email.service.js';
+import type { MetInfoData, MetInfoService } from './sub-resources/met-info.service.js';
+import type { PhoneData, PhoneService } from './sub-resources/phone.service.js';
+import type {
+  ProfessionalHistoryData,
+  ProfessionalHistoryService,
+} from './sub-resources/professional-history.service.js';
+import type {
+  SocialProfileData,
+  SocialProfileService,
+} from './sub-resources/social-profile.service.js';
+import type { UrlData, UrlService } from './sub-resources/url.service.js';
+
+export interface FriendCreateData {
+  displayName: string;
+  nickname?: string;
+  namePrefix?: string;
+  nameFirst?: string;
+  nameMiddle?: string;
+  nameLast?: string;
+  nameSuffix?: string;
+  maidenName?: string;
+  interests?: string;
+  phones: PhoneData[];
+  emails: EmailData[];
+  addresses: AddressData[];
+  urls: UrlData[];
+  dates: DateData[];
+  socialProfiles: SocialProfileData[];
+  professionalHistory: ProfessionalHistoryData[];
+  metInfo?: MetInfoData;
+}
+
+/** An absent key leaves the column untouched; `null` clears it. */
+export interface FriendUpdateData {
+  displayName?: string;
+  nickname?: string | null;
+  namePrefix?: string | null;
+  nameFirst?: string | null;
+  nameMiddle?: string | null;
+  nameLast?: string | null;
+  nameSuffix?: string | null;
+  maidenName?: string | null;
+  interests?: string | null;
+}
 
 export interface FriendsServiceOptions {
   db: pg.Pool;
@@ -173,19 +212,26 @@ export class FriendsService {
   /**
    * Get a single friend by ID with all related data
    */
-  public async getFriendById(
-    userExternalId: string,
-    friendExternalId: string,
-  ): Promise<FriendResponse | null> {
+  public async findFriend(userExternalId: string, friendExternalId: string) {
     this.logger.debug({ userExternalId, friendExternalId }, 'Getting friend');
 
     const [friend] = await getFriendById.run({ userExternalId, friendExternalId }, this.db);
 
-    if (!friend) {
-      return null;
+    if (friend === undefined) {
+      return undefined;
     }
 
     return this.mapFriendWithEmbeddedRelations(friend);
+  }
+
+  public async getFriend(userExternalId: string, friendExternalId: string) {
+    const friend = await this.findFriend(userExternalId, friendExternalId);
+
+    if (friend === undefined) {
+      throw new FriendNotFoundError(friendExternalId);
+    }
+
+    return friend;
   }
 
   /**
@@ -193,7 +239,7 @@ export class FriendsService {
    */
   public async createFriend(
     userExternalId: string,
-    data: FriendCreateInput,
+    data: FriendCreateData,
   ): Promise<FriendResponse> {
     this.logger.info({ userExternalId }, 'Creating friend');
 
@@ -218,14 +264,14 @@ export class FriendsService {
       const [created] = await createFriend.run(
         {
           userExternalId,
-          displayName: data.display_name,
+          displayName: data.displayName,
           nickname: data.nickname ?? null,
-          namePrefix: data.name_prefix ?? null,
-          nameFirst: data.name_first ?? null,
-          nameMiddle: data.name_middle ?? null,
-          nameLast: data.name_last ?? null,
-          nameSuffix: data.name_suffix ?? null,
-          maidenName: data.maiden_name ?? null,
+          namePrefix: data.namePrefix ?? null,
+          nameFirst: data.nameFirst ?? null,
+          nameMiddle: data.nameMiddle ?? null,
+          nameLast: data.nameLast ?? null,
+          nameSuffix: data.nameSuffix ?? null,
+          maidenName: data.maidenName ?? null,
           interests: data.interests ?? null,
         },
         client,
@@ -265,24 +311,23 @@ export class FriendsService {
       socialProfiles = await this.socialProfileService.createMany(
         userExternalId,
         friendExternalId,
-        data.social_profiles,
+        data.socialProfiles,
         client,
       );
       professionalHistory = await this.professionalHistoryService.createMany(
         userExternalId,
         friendExternalId,
-        data.professional_history,
+        data.professionalHistory,
         client,
       );
 
-      if (data.met_info) {
-        metInfo =
-          (await this.metInfoService.set(
-            userExternalId,
-            friendExternalId,
-            data.met_info,
-            client,
-          )) ?? undefined;
+      if (data.metInfo !== undefined) {
+        metInfo = await this.metInfoService.set(
+          userExternalId,
+          friendExternalId,
+          data.metInfo,
+          client,
+        );
       }
 
       await client.query('COMMIT');
@@ -337,54 +382,54 @@ export class FriendsService {
   public async updateFriend(
     userExternalId: string,
     friendExternalId: string,
-    data: FriendUpdateInput,
-  ): Promise<FriendResponse | null> {
+    data: FriendUpdateData,
+  ): Promise<FriendResponse> {
     this.logger.info({ userExternalId, friendExternalId }, 'Updating friend');
 
     const [updated] = await updateFriend.run(
       {
         userExternalId,
         friendExternalId,
-        displayName: data.display_name ?? null,
+        displayName: data.displayName ?? null,
         updateNickname: 'nickname' in data,
         nickname: data.nickname ?? null,
-        updateNamePrefix: 'name_prefix' in data,
-        namePrefix: data.name_prefix ?? null,
-        updateNameFirst: 'name_first' in data,
-        nameFirst: data.name_first ?? null,
-        updateNameMiddle: 'name_middle' in data,
-        nameMiddle: data.name_middle ?? null,
-        updateNameLast: 'name_last' in data,
-        nameLast: data.name_last ?? null,
-        updateNameSuffix: 'name_suffix' in data,
-        nameSuffix: data.name_suffix ?? null,
-        updateMaidenName: 'maiden_name' in data,
-        maidenName: data.maiden_name ?? null,
+        updateNamePrefix: 'namePrefix' in data,
+        namePrefix: data.namePrefix ?? null,
+        updateNameFirst: 'nameFirst' in data,
+        nameFirst: data.nameFirst ?? null,
+        updateNameMiddle: 'nameMiddle' in data,
+        nameMiddle: data.nameMiddle ?? null,
+        updateNameLast: 'nameLast' in data,
+        nameLast: data.nameLast ?? null,
+        updateNameSuffix: 'nameSuffix' in data,
+        nameSuffix: data.nameSuffix ?? null,
+        updateMaidenName: 'maidenName' in data,
+        maidenName: data.maidenName ?? null,
         updateInterests: 'interests' in data,
         interests: data.interests ?? null,
       },
       this.db,
     );
 
-    if (!updated) {
-      return null;
+    if (updated === undefined) {
+      throw new FriendNotFoundError(friendExternalId);
     }
 
     this.logger.info({ friendExternalId }, 'Friend updated successfully');
 
-    return this.getFriendById(userExternalId, friendExternalId);
+    return this.getFriend(userExternalId, friendExternalId);
   }
 
   /**
    * Soft delete a friend
    */
-  public async deleteFriend(userExternalId: string, friendExternalId: string): Promise<boolean> {
+  public async deleteFriend(userExternalId: string, friendExternalId: string): Promise<void> {
     this.logger.info({ userExternalId, friendExternalId }, 'Deleting friend');
 
     const result = await softDeleteFriend.run({ userExternalId, friendExternalId }, this.db);
 
     if (result.length === 0) {
-      return false;
+      throw new FriendNotFoundError(friendExternalId);
     }
 
     // Remove photo files here rather than in the route, so every caller of
@@ -397,7 +442,6 @@ export class FriendsService {
     }
 
     this.logger.info({ friendExternalId }, 'Friend deleted successfully');
-    return true;
   }
 
   // ============================================================================
@@ -409,7 +453,7 @@ export class FriendsService {
     friendExternalId: string,
     photoUrl: string | null,
     photoThumbnailUrl: string | null,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.logger.debug({ friendExternalId }, 'Updating photo');
 
     const result = await updateFriendPhoto.run(
@@ -422,23 +466,22 @@ export class FriendsService {
       this.db,
     );
 
-    return result.length > 0;
+    if (result.length === 0) {
+      throw new FriendNotFoundError(friendExternalId);
+    }
   }
 
   // ============================================================================
   // Favorites & Archive Methods
   // ============================================================================
 
-  public async toggleFavorite(
-    userExternalId: string,
-    friendExternalId: string,
-  ): Promise<boolean | null> {
+  public async toggleFavorite(userExternalId: string, friendExternalId: string): Promise<boolean> {
     this.logger.debug({ friendExternalId }, 'Toggling favorite status');
 
     const [result] = await toggleFavorite.run({ userExternalId, friendExternalId }, this.db);
 
-    if (!result) {
-      return null;
+    if (result === undefined) {
+      throw new FriendNotFoundError(friendExternalId);
     }
 
     this.logger.info(
@@ -453,7 +496,7 @@ export class FriendsService {
     userExternalId: string,
     friendExternalId: string,
     reason?: string,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.logger.debug({ friendExternalId, reason }, 'Archiving friend');
 
     const [result] = await archiveFriend.run(
@@ -465,27 +508,23 @@ export class FriendsService {
       this.db,
     );
 
-    if (!result) {
-      return false;
+    if (result === undefined) {
+      throw new FriendNotFoundError(friendExternalId);
     }
 
     this.logger.info({ friendExternalId }, 'Friend archived');
-
-    return true;
   }
 
-  public async unarchiveFriend(userExternalId: string, friendExternalId: string): Promise<boolean> {
+  public async unarchiveFriend(userExternalId: string, friendExternalId: string): Promise<void> {
     this.logger.debug({ friendExternalId }, 'Unarchiving friend');
 
     const [result] = await unarchiveFriend.run({ userExternalId, friendExternalId }, this.db);
 
-    if (!result) {
-      return false;
+    if (result === undefined) {
+      throw new FriendNotFoundError(friendExternalId);
     }
 
     this.logger.info({ friendExternalId }, 'Friend unarchived');
-
-    return true;
   }
 
   public async getUpcomingDates(
@@ -499,15 +538,11 @@ export class FriendsService {
   // Met Info Methods (delegated)
   // ============================================================================
 
-  public async setMetInfo(
-    userExternalId: string,
-    friendExternalId: string,
-    data: MetInfoInput,
-  ): Promise<MetInfoResponse | null> {
+  public async setMetInfo(userExternalId: string, friendExternalId: string, data: MetInfoData) {
     return this.metInfoService.set(userExternalId, friendExternalId, data);
   }
 
-  public async deleteMetInfo(userExternalId: string, friendExternalId: string): Promise<boolean> {
+  public async deleteMetInfo(userExternalId: string, friendExternalId: string) {
     return this.metInfoService.delete(userExternalId, friendExternalId);
   }
 
@@ -522,8 +557,8 @@ export class FriendsService {
   public async addRelationship(
     userExternalId: string,
     friendExternalId: string,
-    data: RelationshipCreateInput,
-  ): Promise<RelationshipResponse | null> {
+    data: RelationshipCreateData,
+  ): Promise<RelationshipResponse> {
     return this.relationshipService.addRelationship(userExternalId, friendExternalId, data);
   }
 
@@ -531,8 +566,8 @@ export class FriendsService {
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
-    data: RelationshipUpdateInput,
-  ): Promise<RelationshipResponse | null> {
+    data: RelationshipUpdateData,
+  ): Promise<RelationshipResponse> {
     return this.relationshipService.updateRelationship(
       userExternalId,
       friendExternalId,
@@ -545,7 +580,7 @@ export class FriendsService {
     userExternalId: string,
     friendExternalId: string,
     relationshipExternalId: string,
-  ): Promise<boolean> {
+  ): Promise<void> {
     return this.relationshipService.deleteRelationship(
       userExternalId,
       friendExternalId,
@@ -608,7 +643,7 @@ export class FriendsService {
     return this.searchService.addRecentSearch(userExternalId, query);
   }
 
-  public async deleteRecentSearch(userExternalId: string, query: string): Promise<boolean> {
+  public async deleteRecentSearch(userExternalId: string, query: string): Promise<void> {
     return this.searchService.deleteRecentSearch(userExternalId, query);
   }
 

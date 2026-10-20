@@ -10,6 +10,7 @@ import type {
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { InvalidSearchParametersError } from '../../errors/invalid-search-parameters.error.js';
+import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
 import {
   getCircleFacetCounts,
   type IGetCircleFacetCountsResult,
@@ -271,12 +272,14 @@ export class SearchService {
   /**
    * Delete a specific recent search query
    */
-  public async deleteRecentSearch(userExternalId: string, query: string): Promise<boolean> {
+  public async deleteRecentSearch(userExternalId: string, query: string): Promise<void> {
     this.logger.debug({ query }, 'Deleting recent search');
 
     const result = await deleteRecentSearch.run({ userExternalId, query }, this.db);
 
-    return result.length > 0;
+    if (result.length === 0) {
+      throw new ResourceNotFoundError('Search query', query);
+    }
   }
 
   /**

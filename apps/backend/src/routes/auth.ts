@@ -1,9 +1,8 @@
 import { type PreferencesResponse, UserPreferencesSchema } from '@freundebuch/shared/index.js';
 import { Hono, type MiddlewareHandler } from 'hono';
 import { AuthenticationError } from '../errors/authentication.error.js';
-import { UserNotFoundError } from '../errors/user-not-found.error.js';
 import type { Auth } from '../lib/auth.js';
-import { getAuthSession, getAuthUser } from '../middleware/auth.js';
+import { getAuthUser } from '../middleware/auth.js';
 import type { OAuthClientsService } from '../services/oauth-clients.service.js';
 import type { UsersService } from '../services/users.service.js';
 import type { AppContext } from '../types/context.js';
@@ -62,21 +61,12 @@ export function createAuthRoutes(options: AuthRoutesOptions) {
    * GET /api/auth/me
    * Get the current authenticated user with preferences.
    *
-   * Uses the Better Auth session directly for user data (preferences, selfProfileId)
-   * rather than querying the legacy auth.users table, since Better Auth user IDs
-   * are not UUIDs and the legacy external_id column is UUID-typed.
+   * Reads the self-profile and preferences from the database rather than the
+   * Better Auth session, whose cookie cache can be stale (see
+   * UsersService.getMeWithPreferences).
    */
   app.get('/me', authMiddleware, async (c) => {
-    const authUser = getAuthUser(c);
-
-    // Use the session already resolved by authMiddleware (no second getSession() call)
-    const session = getAuthSession(c);
-
-    if (!session?.user) {
-      throw new UserNotFoundError(authUser.userId);
-    }
-
-    return c.json(await usersService.getMeWithPreferences(authUser));
+    return c.json(await usersService.getMeWithPreferences(getAuthUser(c)));
   });
 
   /**

@@ -12,7 +12,6 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono, type MiddlewareHandler } from 'hono';
-import { NotificationChannelNotFoundError } from '../errors/notification-channel-not-found.error.js';
 import { getAuthUser } from '../middleware/auth.js';
 import type { NotificationChannelsService } from '../services/notification-channels.service.js';
 import type { AppContext } from '../types/context.js';
@@ -187,11 +186,7 @@ export function createNotificationChannelsRoutes(options: NotificationChannelsRo
     const user = getAuthUser(c);
     const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
-    const isDeleted = await notificationChannelsService.deleteChannel(user.userId, channelId);
-
-    if (!isDeleted) {
-      throw new NotificationChannelNotFoundError(channelId);
-    }
+    await notificationChannelsService.deleteChannel(user.userId, channelId);
 
     return c.json({ success: true });
   });

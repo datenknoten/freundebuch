@@ -1,4 +1,5 @@
-import type { EmailInput, EmailResponse } from '@freundebuch/shared/index.js';
+import type { EmailResponse, EmailType } from '@freundebuch/shared/index.js';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
 import {
   clearPrimaryEmail,
   createEmail,
@@ -14,6 +15,13 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
+export interface EmailData {
+  emailAddress: string;
+  emailType: EmailType;
+  label?: string;
+  isPrimary: boolean;
+}
+
 const mapRow = (row: IGetEmailsByFriendIdResult): EmailResponse => ({
   id: row.external_id,
   emailAddress: row.email_address,
@@ -28,7 +36,7 @@ const mapRow = (row: IGetEmailsByFriendIdResult): EmailResponse => ({
  * Extends SubResourceService for common CRUD operations.
  */
 export class EmailService extends SubResourceService<
-  EmailInput,
+  EmailData,
   EmailResponse,
   IGetEmailsByFriendIdResult,
   IGetEmailsByFriendIdResult,
@@ -39,24 +47,26 @@ export class EmailService extends SubResourceService<
       ...options,
       definition: {
         resourceName: 'email',
+        resourceLabel: 'Email',
+        ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: true,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
+        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
           return createEmail.run(
             {
               userExternalId,
               friendExternalId,
-              emailAddress: input.email_address,
-              emailType: input.email_type,
-              label: input.label ?? null,
-              isPrimary: input.is_primary,
+              emailAddress: data.emailAddress,
+              emailType: data.emailType,
+              label: data.label ?? null,
+              isPrimary: data.isPrimary,
             },
             client,
           );
         },
 
         updateFn: async (
-          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
         ) => {
           return updateEmail.run(
@@ -64,10 +74,10 @@ export class EmailService extends SubResourceService<
               userExternalId,
               friendExternalId,
               emailExternalId: resourceExternalId,
-              emailAddress: input.email_address,
-              emailType: input.email_type,
-              label: input.label ?? null,
-              isPrimary: input.is_primary,
+              emailAddress: data.emailAddress,
+              emailType: data.emailType,
+              label: data.label ?? null,
+              isPrimary: data.isPrimary,
             },
             client,
           );
@@ -91,9 +101,9 @@ export class EmailService extends SubResourceService<
           return clearPrimaryEmail.run({ userExternalId, friendExternalId }, client);
         },
 
-        isPrimary: (input) => input.is_primary,
+        isPrimary: (data) => data.isPrimary,
 
-        setIsPrimary: (input, isPrimary) => ({ ...input, is_primary: isPrimary }),
+        setIsPrimary: (data, isPrimary) => ({ ...data, isPrimary }),
 
         listFn: async ({ userExternalId, ownerExternalId: friendExternalId }, client) => {
           return getEmailsByFriendId.run({ userExternalId, friendExternalId }, client);

@@ -1,7 +1,7 @@
-import { ConflictError } from '@datenknoten/kit';
+import { type AppError, ConflictError } from '@datenknoten/kit';
 import type pg from 'pg';
 import type { Logger } from 'pino';
-import { NoRowWrittenError } from '../../errors/no-row-written.error.js';
+import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
 import { rethrowUniqueViolation } from '../../utils/rethrow-unique-violation.js';
 import { withTransaction } from '../../utils/with-transaction.js';
 
@@ -27,7 +27,7 @@ const SINGLE_PRIMARY_INDEXES = [
  * query parameter (friendExternalId / collectiveExternalId).
  */
 export interface SubResourceConfig<
-  TInput,
+  TData,
   TOutput,
   TCreateResult,
   TUpdateResult,
@@ -37,12 +37,20 @@ export interface SubResourceConfig<
   /** Name of the resource for logging purposes */
   resourceName: string;
 
+  /** Resource name in the "<label> not found: <id>" error of `update` and `delete`. */
+  resourceLabel: string;
+
+  /** Raised with the owner id when `add` finds no owner of the user. */
+  ownerNotFound: new (
+    ownerId: string,
+  ) => AppError;
+
   /** Whether this resource supports a primary flag */
   hasPrimaryFlag: boolean;
 
   /** Function to create a new resource */
   createFn: (
-    params: { userExternalId: string; ownerExternalId: string; input: TInput },
+    params: { userExternalId: string; ownerExternalId: string; data: TData },
     client: pg.Pool | pg.PoolClient,
   ) => Promise<TCreateResult[]>;
 
@@ -52,7 +60,7 @@ export interface SubResourceConfig<
       userExternalId: string;
       ownerExternalId: string;
       resourceExternalId: string;
-      input: TInput;
+      data: TData;
     },
     client: pg.Pool | pg.PoolClient,
   ) => Promise<TUpdateResult[]>;
@@ -78,11 +86,11 @@ export interface SubResourceConfig<
   /** Function to map a list result to output type */
   mapListResult: (result: TListResult) => TOutput;
 
-  /** Function to check if input has primary flag set */
-  isPrimary?: (input: TInput) => boolean;
+  /** Function to check if the data has the primary flag set */
+  isPrimary?: (data: TData) => boolean;
 
-  /** Function to set the primary flag on an input (for auto-primary) */
-  setIsPrimary?: (input: TInput, isPrimary: boolean) => TInput;
+  /** Function to set the primary flag on the data (for auto-primary) */
+  setIsPrimary?: (data: TData, isPrimary: boolean) => TData;
 
   /** Function to map database result to output type */
   mapResult: (result: TCreateResult | TUpdateResult) => TOutput;
@@ -94,7 +102,7 @@ export interface SubResourceServiceOptions {
 }
 
 export interface SubResourceServiceBaseOptions<
-  TInput,
+  TData,
   TOutput,
   TCreateResult,
   TUpdateResult,
@@ -102,7 +110,7 @@ export interface SubResourceServiceBaseOptions<
   TListResult = TCreateResult,
 > extends SubResourceServiceOptions {
   definition: SubResourceConfig<
-    TInput,
+    TData,
     TOutput,
     TCreateResult,
     TUpdateResult,
@@ -118,7 +126,7 @@ export interface SubResourceServiceBaseOptions<
  * new one happen in a single transaction.
  */
 export abstract class SubResourceService<
-  TInput,
+  TData,
   TOutput,
   TCreateResult,
   TUpdateResult,
@@ -128,7 +136,7 @@ export abstract class SubResourceService<
   protected readonly db: pg.Pool;
   protected readonly logger: Logger;
   protected readonly config: SubResourceConfig<
-    TInput,
+    TData,
     TOutput,
     TCreateResult,
     TUpdateResult,
@@ -138,7 +146,7 @@ export abstract class SubResourceService<
 
   constructor(
     options: SubResourceServiceBaseOptions<
-      TInput,
+      TData,
       TOutput,
       TCreateResult,
       TUpdateResult,
@@ -169,63 +177,55 @@ export abstract class SubResourceService<
    * Always runs in its own transaction: clearing the previous primary and
    * writing the new row must either both happen or neither.
    */
-  public async add(
-    userExternalId: string,
-    ownerExternalId: string,
-    input: TInput,
-  ): Promise<TOutput | null> {
+  public async add(userExternalId: string, ownerExternalId: string, data: TData) {
     this.logger.debug(
       { ownerExternalId, resource: this.config.resourceName },
       'Adding sub-resource',
     );
 
-    try {
-      return await withTransaction(this.db, async (txClient) => {
-        const created = await this.addWithin(txClient, userExternalId, ownerExternalId, input);
-        if (created === null) {
-          throw new NoRowWrittenError();
-        }
-        return created;
-      });
-    } catch (error) {
-      if (error instanceof NoRowWrittenError) {
-        return null;
+    return withTransaction(this.db, async (txClient) => {
+      const created = await this.addWithin(txClient, userExternalId, ownerExternalId, data);
+      if (created === undefined) {
+        throw new this.config.ownerNotFound(ownerExternalId);
       }
-      throw error;
-    }
+      return created;
+    });
   }
 
   /**
    * Add a sub-resource on a caller-supplied client. The caller owns the
    * transaction (see `createMany`, used while a friend is being created), so
-   * this never begins or rolls back one and reports a missing row as `null`.
+   * this never begins or rolls back one and reports a missing owner as `undefined`.
    */
   protected async addWithin(
     client: pg.Pool | pg.PoolClient,
     userExternalId: string,
     ownerExternalId: string,
-    input: TInput,
-  ): Promise<TOutput | null> {
+    data: TData,
+  ): Promise<TOutput | undefined> {
     // Auto-set primary if this is the first entry.
     if (this.config.hasPrimaryFlag && this.config.setIsPrimary !== undefined) {
       const existing = await this.config.listFn({ userExternalId, ownerExternalId }, client);
       if (existing.length === 0) {
-        input = this.config.setIsPrimary(input, true);
+        data = this.config.setIsPrimary(data, true);
       }
     }
 
     if (
       this.config.hasPrimaryFlag &&
       this.config.clearPrimaryFn !== undefined &&
-      this.config.isPrimary?.(input) === true
+      this.config.isPrimary?.(data) === true
     ) {
       await this.config.clearPrimaryFn({ userExternalId, ownerExternalId }, client);
     }
 
     const result = await this.write(() =>
-      this.config.createFn({ userExternalId, ownerExternalId, input }, client),
+      this.config.createFn({ userExternalId, ownerExternalId, data }, client),
     );
-    return result === undefined ? null : this.config.mapResult(result);
+    if (result === undefined) {
+      return undefined;
+    }
+    return this.config.mapResult(result);
   }
 
   /**
@@ -238,62 +238,51 @@ export abstract class SubResourceService<
     userExternalId: string,
     ownerExternalId: string,
     resourceExternalId: string,
-    input: TInput,
-  ): Promise<TOutput | null> {
+    data: TData,
+  ): Promise<TOutput> {
     this.logger.debug(
       { ownerExternalId, resourceExternalId, resource: this.config.resourceName },
       'Updating sub-resource',
     );
 
-    try {
-      return await withTransaction(this.db, async (txClient) => {
-        if (
-          this.config.hasPrimaryFlag &&
-          this.config.clearPrimaryFn !== undefined &&
-          this.config.isPrimary?.(input) === true
-        ) {
-          await this.config.clearPrimaryFn({ userExternalId, ownerExternalId }, txClient);
-        }
-
-        const result = await this.write(() =>
-          this.config.updateFn(
-            { userExternalId, ownerExternalId, resourceExternalId, input },
-            txClient,
-          ),
-        );
-        if (result === undefined) {
-          throw new NoRowWrittenError();
-        }
-        return this.config.mapResult(result);
-      });
-    } catch (error) {
-      if (error instanceof NoRowWrittenError) {
-        return null;
+    return withTransaction(this.db, async (txClient) => {
+      if (
+        this.config.hasPrimaryFlag &&
+        this.config.clearPrimaryFn !== undefined &&
+        this.config.isPrimary?.(data) === true
+      ) {
+        await this.config.clearPrimaryFn({ userExternalId, ownerExternalId }, txClient);
       }
-      throw error;
-    }
+
+      const result = await this.write(() =>
+        this.config.updateFn(
+          { userExternalId, ownerExternalId, resourceExternalId, data },
+          txClient,
+        ),
+      );
+      if (result === undefined) {
+        throw new ResourceNotFoundError(this.config.resourceLabel, resourceExternalId);
+      }
+      return this.config.mapResult(result);
+    });
   }
 
   /**
    * Delete a sub-resource.
    */
-  public async delete(
-    userExternalId: string,
-    ownerExternalId: string,
-    resourceExternalId: string,
-    client?: pg.Pool | pg.PoolClient,
-  ): Promise<boolean> {
+  public async delete(userExternalId: string, ownerExternalId: string, resourceExternalId: string) {
     this.logger.debug(
       { ownerExternalId, resourceExternalId, resource: this.config.resourceName },
       'Deleting sub-resource',
     );
 
-    const dbClient = client ?? this.db;
-    const result = await this.config.deleteFn(
+    const deleted = await this.config.deleteFn(
       { userExternalId, ownerExternalId, resourceExternalId },
-      dbClient,
+      this.db,
     );
-    return result.length > 0;
+    if (deleted.length === 0) {
+      throw new ResourceNotFoundError(this.config.resourceLabel, resourceExternalId);
+    }
   }
 
   /**
@@ -333,13 +322,13 @@ export abstract class SubResourceService<
   public async createMany(
     userExternalId: string,
     ownerExternalId: string,
-    inputs: TInput[],
+    inputs: TData[],
     client: pg.Pool | pg.PoolClient,
   ): Promise<TOutput[]> {
     const results: TOutput[] = [];
-    for (const input of inputs) {
-      const created = await this.addWithin(client, userExternalId, ownerExternalId, input);
-      if (created !== null) {
+    for (const data of inputs) {
+      const created = await this.addWithin(client, userExternalId, ownerExternalId, data);
+      if (created !== undefined) {
         results.push(created);
       }
     }

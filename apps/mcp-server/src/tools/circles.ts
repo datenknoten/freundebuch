@@ -29,8 +29,8 @@ export function registerCirclesTools(
       }),
     },
     async ({ circleId }) => {
-      const circle = await services.circles.getCircleById(getUserId(), circleId);
-      if (!circle) {
+      const circle = await services.circles.findCircle(getUserId(), circleId);
+      if (circle === undefined) {
         return { content: [{ type: 'text' as const, text: 'Circle not found.' }] };
       }
       return { content: [{ type: 'text' as const, text: JSON.stringify(circle, null, 2) }] };

@@ -1,11 +1,13 @@
 import type {
-  DateInput,
+  DateType,
   FriendDateResponse,
   UpcomingDateResponse,
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { BirthdayAlreadyExistsError } from '../../../errors/birthday-already-exists.error.js';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
+import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import {
   countBirthdaysForFriend,
   createDate,
@@ -18,6 +20,13 @@ import {
 } from '../../../models/queries/friend-dates.queries.js';
 import { formatDateOnly } from '../../../utils/date.js';
 import { parseDateType } from '../../../utils/parse-date-type.js';
+
+export interface DateData {
+  dateValue: string;
+  yearKnown: boolean;
+  dateType: DateType;
+  label?: string;
+}
 
 export interface DateServiceOptions {
   db: pg.Pool;
@@ -54,44 +63,12 @@ export class DateService {
    * Add an important date to a friend.
    * Throws BirthdayAlreadyExistsError if trying to add a second birthday.
    */
-  public async add(
-    userExternalId: string,
-    friendExternalId: string,
-    data: DateInput,
-    client?: pg.Pool | pg.PoolClient,
-  ): Promise<FriendDateResponse | null> {
-    this.logger.debug({ friendExternalId }, 'Adding date');
-
-    const dbClient = client ?? this.db;
-
-    // Check birthday limit (only one birthday allowed per friend)
-    if (data.date_type === 'birthday') {
-      const [countResult] = await countBirthdaysForFriend.run(
-        { userExternalId, friendExternalId },
-        dbClient,
-      );
-      if (countResult && (countResult.count ?? 0) > 0) {
-        throw new BirthdayAlreadyExistsError();
-      }
+  public async add(userExternalId: string, friendExternalId: string, data: DateData) {
+    const created = await this.insert(this.db, userExternalId, friendExternalId, data);
+    if (created === undefined) {
+      throw new FriendNotFoundError(friendExternalId);
     }
-
-    const [date] = await createDate.run(
-      {
-        userExternalId,
-        friendExternalId,
-        dateValue: data.date_value,
-        yearKnown: data.year_known,
-        dateType: data.date_type,
-        label: data.label ?? null,
-      },
-      dbClient,
-    );
-
-    if (!date) {
-      return null;
-    }
-
-    return this.mapDate(date);
+    return created;
   }
 
   /**
@@ -101,68 +78,58 @@ export class DateService {
     userExternalId: string,
     friendExternalId: string,
     dateExternalId: string,
-    data: DateInput,
-    client?: pg.Pool | pg.PoolClient,
-  ): Promise<FriendDateResponse | null> {
+    data: DateData,
+  ) {
     this.logger.debug({ friendExternalId, dateExternalId }, 'Updating date');
-
-    const dbClient = client ?? this.db;
 
     const [date] = await updateDate.run(
       {
         userExternalId,
         friendExternalId,
         dateExternalId,
-        dateValue: data.date_value,
-        yearKnown: data.year_known,
-        dateType: data.date_type,
+        dateValue: data.dateValue,
+        yearKnown: data.yearKnown,
+        dateType: data.dateType,
         label: data.label ?? null,
       },
-      dbClient,
+      this.db,
     );
-
-    if (!date) {
-      return null;
+    if (date === undefined) {
+      throw new ResourceNotFoundError('Date', dateExternalId);
     }
-
     return this.mapDate(date);
   }
 
   /**
    * Delete a date
    */
-  public async delete(
-    userExternalId: string,
-    friendExternalId: string,
-    dateExternalId: string,
-    client?: pg.Pool | pg.PoolClient,
-  ): Promise<boolean> {
+  public async delete(userExternalId: string, friendExternalId: string, dateExternalId: string) {
     this.logger.debug({ friendExternalId, dateExternalId }, 'Deleting date');
 
-    const dbClient = client ?? this.db;
-
-    const result = await deleteDate.run(
+    const deleted = await deleteDate.run(
       { userExternalId, friendExternalId, dateExternalId },
-      dbClient,
+      this.db,
     );
-
-    return result.length > 0;
+    if (deleted.length === 0) {
+      throw new ResourceNotFoundError('Date', dateExternalId);
+    }
   }
 
   /**
-   * Create multiple dates for a friend
+   * Create multiple dates for a friend on the caller's transaction (friend
+   * creation writes the friend row and all its dates atomically).
    */
   public async createMany(
     userExternalId: string,
     friendExternalId: string,
-    dates: DateInput[],
+    dates: DateData[],
     client?: pg.Pool | pg.PoolClient,
   ): Promise<FriendDateResponse[]> {
     const results: FriendDateResponse[] = [];
 
     for (const date of dates) {
-      const created = await this.add(userExternalId, friendExternalId, date, client);
-      if (created) {
+      const created = await this.insert(client ?? this.db, userExternalId, friendExternalId, date);
+      if (created !== undefined) {
         results.push(created);
       }
     }
@@ -190,6 +157,43 @@ export class DateService {
     );
 
     return results.map((row) => this.mapUpcomingDate(row));
+  }
+
+  /** Insert a date; `undefined` when the friend is not the user's. */
+  private async insert(
+    client: pg.Pool | pg.PoolClient,
+    userExternalId: string,
+    friendExternalId: string,
+    data: DateData,
+  ) {
+    this.logger.debug({ friendExternalId }, 'Adding date');
+
+    // Only one birthday per friend.
+    if (data.dateType === 'birthday') {
+      const [countResult] = await countBirthdaysForFriend.run(
+        { userExternalId, friendExternalId },
+        client,
+      );
+      if (countResult !== undefined && (countResult.count ?? 0) > 0) {
+        throw new BirthdayAlreadyExistsError();
+      }
+    }
+
+    const [date] = await createDate.run(
+      {
+        userExternalId,
+        friendExternalId,
+        dateValue: data.dateValue,
+        yearKnown: data.yearKnown,
+        dateType: data.dateType,
+        label: data.label ?? null,
+      },
+      client,
+    );
+    if (date === undefined) {
+      return undefined;
+    }
+    return this.mapDate(date);
   }
 
   /**

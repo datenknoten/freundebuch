@@ -4,6 +4,7 @@ import { getAuthUser } from '../middleware/auth.js';
 import type { UsersService } from '../services/users.service.js';
 import type { AppContext } from '../types/context.js';
 import { parseBody } from '../utils/parse-body.js';
+import { mapFriendCreateInput } from './mappers/map-friend-create-input.js';
 
 export interface UsersRoutesOptions {
   usersService: UsersService;
@@ -56,7 +57,10 @@ export function createUsersRoutes(options: UsersRoutesOptions) {
    */
   app.post('/me/self-profile', async (c) => {
     const input = await parseBody(c, FriendCreateInputSchema);
-    const friend = await usersService.createSelfProfile(getAuthUser(c).userId, input);
+    const friend = await usersService.createSelfProfile(
+      getAuthUser(c).userId,
+      mapFriendCreateInput(input),
+    );
 
     return c.json(friend, 201);
   });

@@ -2,9 +2,6 @@ import type {
   CollectiveMemberContactResponse,
   CollectiveMemberResponse,
   CollectiveRoleResponse,
-  MembershipCreateInput,
-  MembershipDeactivateInput,
-  RelationshipPreviewInput,
   RelationshipPreviewItemResponse,
   RelationshipPreviewResponse,
 } from '@freundebuch/shared/index.js';
@@ -44,6 +41,24 @@ export interface MembershipsServiceOptions {
   db: Pool;
 }
 
+export interface MembershipCreateData {
+  friendId: string;
+  roleId: string;
+  joinedDate?: string | null;
+  notes?: string | null;
+  shouldSkipAutoRelationships?: boolean;
+}
+
+export interface MembershipDeactivateData {
+  reason?: string | null;
+  inactiveDate?: string | null;
+}
+
+export interface RelationshipPreviewData {
+  friendId: string;
+  roleId: string;
+}
+
 /**
  * Service for managing collective memberships and auto-relationships
  */
@@ -64,7 +79,7 @@ export class MembershipsService {
   public async addMember(
     userExternalId: string,
     collectiveExternalId: string,
-    input: MembershipCreateInput,
+    data: MembershipCreateData,
   ): Promise<CollectiveMemberResponse> {
     const client = await this.db.connect();
     try {
@@ -72,7 +87,7 @@ export class MembershipsService {
 
       // Check for duplicate active membership (inside transaction for consistency)
       const duplicateCheck = await checkDuplicateActiveMembership.run(
-        { userExternalId, collectiveExternalId, contactExternalId: input.friend_id },
+        { userExternalId, collectiveExternalId, contactExternalId: data.friendId },
         client,
       );
 
@@ -83,9 +98,9 @@ export class MembershipsService {
       // Get internal IDs
       const [collectiveResult, contactResult, roleResult] = await Promise.all([
         getCollectiveInternalId.run({ userExternalId, collectiveExternalId }, client),
-        getContactInternalId.run({ userExternalId, contactExternalId: input.friend_id }, client),
+        getContactInternalId.run({ userExternalId, contactExternalId: data.friendId }, client),
         getRoleInternalId.run(
-          { userExternalId, collectiveExternalId, roleExternalId: input.role_id },
+          { userExternalId, collectiveExternalId, roleExternalId: data.roleId },
           client,
         ),
       ]);
@@ -96,11 +111,11 @@ export class MembershipsService {
       }
       const [contact] = contactResult;
       if (contact === undefined) {
-        throw new FriendNotFoundError(input.friend_id);
+        throw new FriendNotFoundError(data.friendId);
       }
       const [role] = roleResult;
       if (role === undefined) {
-        throw new RoleNotFoundError(input.role_id);
+        throw new RoleNotFoundError(data.roleId);
       }
 
       const collectiveId = collective.id;
@@ -113,8 +128,8 @@ export class MembershipsService {
           collectiveId,
           contactId,
           roleId,
-          joinedDate: input.joined_date ?? null,
-          notes: input.notes ?? null,
+          joinedDate: data.joinedDate ?? null,
+          notes: data.notes ?? null,
         },
         client,
       );
@@ -128,7 +143,7 @@ export class MembershipsService {
       const membershipExternalId = createdMembership.external_id;
 
       // Create auto-relationships unless skipped
-      if (!input.skip_auto_relationships) {
+      if (data.shouldSkipAutoRelationships !== true) {
         await this.createAutoRelationships(client, collectiveId, contactId, roleId, membershipId);
       }
 
@@ -160,27 +175,6 @@ export class MembershipsService {
         // Prevent connection leak from masking the original error
       }
     }
-  }
-
-  /**
-   * Get a membership by ID
-   */
-  public async getMemberById(
-    userExternalId: string,
-    collectiveExternalId: string,
-    membershipExternalId: string,
-  ): Promise<CollectiveMemberResponse | null> {
-    const results = await getMembershipById.run(
-      { userExternalId, collectiveExternalId, membershipExternalId },
-      this.db,
-    );
-
-    const [row] = results;
-    if (row === undefined) {
-      return null;
-    }
-
-    return mapMember(row);
   }
 
   /**
@@ -236,15 +230,15 @@ export class MembershipsService {
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
-    input: MembershipDeactivateInput,
+    data: MembershipDeactivateData,
   ): Promise<CollectiveMemberResponse> {
     const results = await deactivateMembership.run(
       {
         userExternalId,
         collectiveExternalId,
         membershipExternalId,
-        inactiveReason: input.reason ?? null,
-        inactiveDate: input.inactive_date ?? null,
+        inactiveReason: data.reason ?? null,
+        inactiveDate: data.inactiveDate ?? null,
       },
       this.db,
     );
@@ -297,13 +291,13 @@ export class MembershipsService {
   }
 
   /**
-   * Remove a membership and its associated relationships
+   * Remove a membership and its associated relationships; throws when it does not exist
    */
   public async removeMember(
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
-  ): Promise<boolean> {
+  ) {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
@@ -316,8 +310,7 @@ export class MembershipsService {
 
       const [membershipRow] = membershipResult;
       if (membershipRow === undefined) {
-        await client.query('ROLLBACK');
-        return false;
+        throw new MembershipNotFoundError(membershipExternalId);
       }
 
       const membershipId = membershipRow.id;
@@ -331,8 +324,11 @@ export class MembershipsService {
         client,
       );
 
+      if (deleteResult.length === 0) {
+        throw new MembershipNotFoundError(membershipExternalId);
+      }
+
       await client.query('COMMIT');
-      return deleteResult.length > 0;
     } catch (error) {
       try {
         await client.query('ROLLBACK');
@@ -359,11 +355,11 @@ export class MembershipsService {
   public async previewRelationships(
     userExternalId: string,
     collectiveExternalId: string,
-    input: RelationshipPreviewInput,
+    data: RelationshipPreviewData,
   ): Promise<RelationshipPreviewResponse> {
     // Check if the contact is already an active member
     const duplicateCheck = await checkDuplicateActiveMembership.run(
-      { userExternalId, collectiveExternalId, contactExternalId: input.friend_id },
+      { userExternalId, collectiveExternalId, contactExternalId: data.friendId },
       this.db,
     );
 
@@ -373,13 +369,13 @@ export class MembershipsService {
 
     // Get contact info
     const contactResult = await getContactInfo.run(
-      { userExternalId, contactExternalId: input.friend_id },
+      { userExternalId, contactExternalId: data.friendId },
       this.db,
     );
 
     const [contact] = contactResult;
     if (contact === undefined) {
-      throw new FriendNotFoundError(input.friend_id);
+      throw new FriendNotFoundError(data.friendId);
     }
 
     const newContact: CollectiveMemberContactResponse = {
@@ -412,13 +408,13 @@ export class MembershipsService {
 
     // Get role info
     const roleResult = await getRoleInternalId.run(
-      { userExternalId, collectiveExternalId, roleExternalId: input.role_id },
+      { userExternalId, collectiveExternalId, roleExternalId: data.roleId },
       this.db,
     );
 
     const [role] = roleResult;
     if (role === undefined) {
-      throw new RoleNotFoundError(input.role_id);
+      throw new RoleNotFoundError(data.roleId);
     }
 
     const newMemberRoleId = role.id;
@@ -528,7 +524,7 @@ export class MembershipsService {
     }
 
     // We need to fetch role info - get from collective
-    const roleInfo = await this.getRoleInfo(userExternalId, collectiveExternalId, input.role_id);
+    const roleInfo = await this.getRoleInfo(userExternalId, collectiveExternalId, data.roleId);
 
     return {
       newContact,

@@ -1,6 +1,5 @@
 import type pg from 'pg';
 import type { Logger } from 'pino';
-import type { GeocodedLocation } from './nominatim.client.js';
 import type { HouseNumber, Street } from './overpass.client.js';
 
 // Collator for natural sorting of house numbers
@@ -179,7 +178,7 @@ export class PostGISAddressClient {
   }
 
   /**
-   * Geocode an address using stored OSM location data.
+   * Geocode an address using stored OSM location data; undefined when no row matches.
    * Returns coordinates from the geodata.addresses table.
    */
   public async geocodeAddress(
@@ -188,7 +187,7 @@ export class PostGISAddressClient {
     city: string,
     street: string,
     houseNumber?: string,
-  ): Promise<GeocodedLocation | null> {
+  ) {
     try {
       const result = await this.db.query<{ latitude: number; longitude: number }>(
         `SELECT ST_Y(location) as latitude, ST_X(location) as longitude
@@ -203,15 +202,16 @@ export class PostGISAddressClient {
         [countryCode.toUpperCase(), postalCode, city, street, houseNumber ?? null],
       );
 
-      if (result.rowCount === 0 || !result.rows[0]) {
+      const [row] = result.rows;
+      if (row === undefined) {
         this.logger.debug(
           { countryCode, postalCode, city, street, houseNumber },
           'PostGIS geocode returned no results',
         );
-        return null;
+        return undefined;
       }
 
-      const { latitude, longitude } = result.rows[0];
+      const { latitude, longitude } = row;
       this.logger.debug(
         { countryCode, postalCode, city, street, houseNumber, latitude, longitude },
         'PostGIS geocode succeeded',
@@ -223,7 +223,7 @@ export class PostGISAddressClient {
         { err: error, countryCode, postalCode, city, street },
         'PostGIS geocode query failed',
       );
-      return null;
+      return undefined;
     }
   }
 

@@ -42,8 +42,8 @@ export function registerCollectivesTools(
       }),
     },
     async ({ collectiveId }) => {
-      const collective = await services.collectives.getCollectiveById(getUserId(), collectiveId);
-      if (!collective) {
+      const collective = await services.collectives.findCollective(getUserId(), collectiveId);
+      if (collective === undefined) {
         return { content: [{ type: 'text' as const, text: 'Collective not found.' }] };
       }
       return {

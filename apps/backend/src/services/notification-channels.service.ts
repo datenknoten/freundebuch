@@ -30,6 +30,21 @@ export interface NotificationChannelsServiceOptions {
   credentialsKey: Buffer;
 }
 
+export interface NotificationChannelCreateData {
+  platform: string;
+  isEnabled?: boolean;
+  lookaheadDays?: number;
+  notifyTime?: string;
+  credentials: Record<string, string>;
+}
+
+export interface NotificationChannelUpdateData {
+  isEnabled?: boolean;
+  lookaheadDays?: number;
+  notifyTime?: string;
+  credentials?: Record<string, string>;
+}
+
 /**
  * Service for managing notification channels (messaging bot configurations)
  */
@@ -73,40 +88,34 @@ export class NotificationChannelsService {
    */
   public async createChannel(
     userExternalId: string,
-    input: {
-      platform: string;
-      isEnabled?: boolean;
-      lookaheadDays?: number;
-      notifyTime?: string;
-      credentials: Record<string, string>;
-    },
+    data: NotificationChannelCreateData,
   ): Promise<NotificationChannelResponse> {
     try {
       const results = await createChannel.run(
         {
           userExternalId,
-          platform: input.platform,
-          isEnabled: input.isEnabled ?? true,
+          platform: data.platform,
+          isEnabled: data.isEnabled ?? true,
           telegramBotToken: encryptOptional(
-            input.credentials.botToken,
+            data.credentials.botToken,
             credentialContext(userExternalId, 'telegram_bot_token'),
             this.credentialsKey,
           ),
-          telegramChatId: input.credentials.chatId ?? null,
-          matrixHomeserver: input.credentials.homeserver ?? null,
+          telegramChatId: data.credentials.chatId ?? null,
+          matrixHomeserver: data.credentials.homeserver ?? null,
           matrixAccessToken: encryptOptional(
-            input.credentials.accessToken,
+            data.credentials.accessToken,
             credentialContext(userExternalId, 'matrix_access_token'),
             this.credentialsKey,
           ),
-          matrixRoomId: input.credentials.roomId ?? null,
+          matrixRoomId: data.credentials.roomId ?? null,
           discordWebhookUrl: encryptOptional(
-            input.credentials.webhookUrl,
+            data.credentials.webhookUrl,
             credentialContext(userExternalId, 'discord_webhook_url'),
             this.credentialsKey,
           ),
-          lookaheadDays: input.lookaheadDays ?? null,
-          notifyTime: input.notifyTime ?? null,
+          lookaheadDays: data.lookaheadDays ?? null,
+          notifyTime: data.notifyTime ?? null,
         },
         this.db,
       );
@@ -120,7 +129,7 @@ export class NotificationChannelsService {
     } catch (error) {
       rethrowUniqueViolation(error, {
         uq_notification_channels_user_platform: () =>
-          new NotificationChannelAlreadyExistsError(input.platform),
+          new NotificationChannelAlreadyExistsError(data.platform),
       });
     }
   }
@@ -131,38 +140,33 @@ export class NotificationChannelsService {
   public async updateChannel(
     userExternalId: string,
     channelExternalId: string,
-    input: {
-      isEnabled?: boolean;
-      lookaheadDays?: number;
-      notifyTime?: string;
-      credentials?: Record<string, string>;
-    },
+    data: NotificationChannelUpdateData,
   ): Promise<NotificationChannelResponse> {
     const results = await updateChannel.run(
       {
         userExternalId,
         channelExternalId,
-        isEnabled: input.isEnabled ?? null,
+        isEnabled: data.isEnabled ?? null,
         telegramBotToken: encryptOptional(
-          input.credentials?.botToken,
+          data.credentials?.botToken,
           credentialContext(userExternalId, 'telegram_bot_token'),
           this.credentialsKey,
         ),
-        telegramChatId: input.credentials?.chatId ?? null,
-        matrixHomeserver: input.credentials?.homeserver ?? null,
+        telegramChatId: data.credentials?.chatId ?? null,
+        matrixHomeserver: data.credentials?.homeserver ?? null,
         matrixAccessToken: encryptOptional(
-          input.credentials?.accessToken,
+          data.credentials?.accessToken,
           credentialContext(userExternalId, 'matrix_access_token'),
           this.credentialsKey,
         ),
-        matrixRoomId: input.credentials?.roomId ?? null,
+        matrixRoomId: data.credentials?.roomId ?? null,
         discordWebhookUrl: encryptOptional(
-          input.credentials?.webhookUrl,
+          data.credentials?.webhookUrl,
           credentialContext(userExternalId, 'discord_webhook_url'),
           this.credentialsKey,
         ),
-        lookaheadDays: input.lookaheadDays ?? null,
-        notifyTime: input.notifyTime ?? null,
+        lookaheadDays: data.lookaheadDays ?? null,
+        notifyTime: data.notifyTime ?? null,
       },
       this.db,
     );
@@ -178,9 +182,11 @@ export class NotificationChannelsService {
   /**
    * Delete a notification channel
    */
-  public async deleteChannel(userExternalId: string, channelExternalId: string): Promise<boolean> {
+  public async deleteChannel(userExternalId: string, channelExternalId: string) {
     const results = await deleteChannel.run({ userExternalId, channelExternalId }, this.db);
-    return results.length > 0;
+    if (results.length === 0) {
+      throw new NotificationChannelNotFoundError(channelExternalId);
+    }
   }
 
   /**

@@ -23,7 +23,7 @@ export class OAuthClientsService {
   public async getClientDisplay(clientId: string): Promise<OAuthClientDisplay> {
     const [client] = await getOAuthClientByClientId.run({ clientId }, this.db);
 
-    if (!client) {
+    if (client === undefined) {
       throw new ResourceNotFoundError('OAuth client', clientId);
     }
 

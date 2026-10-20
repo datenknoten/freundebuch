@@ -1,4 +1,5 @@
-import type { UrlInput, UrlResponse } from '@freundebuch/shared/index.js';
+import type { UrlResponse, UrlType } from '@freundebuch/shared/index.js';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
 import {
   createUrl,
   deleteUrl,
@@ -12,6 +13,12 @@ import {
   SubResourceService,
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
+
+export interface UrlData {
+  url: string;
+  urlType: UrlType;
+  label?: string;
+}
 
 const mapRow = (row: IGetUrlsByFriendIdResult): UrlResponse => ({
   id: row.external_id,
@@ -27,7 +34,7 @@ const mapRow = (row: IGetUrlsByFriendIdResult): UrlResponse => ({
  * Note: URLs do not have a primary flag.
  */
 export class UrlService extends SubResourceService<
-  UrlInput,
+  UrlData,
   UrlResponse,
   IGetUrlsByFriendIdResult,
   IGetUrlsByFriendIdResult,
@@ -38,23 +45,25 @@ export class UrlService extends SubResourceService<
       ...options,
       definition: {
         resourceName: 'URL',
+        resourceLabel: 'Url',
+        ownerNotFound: FriendNotFoundError,
         hasPrimaryFlag: false,
 
-        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, input }, client) => {
+        createFn: async ({ userExternalId, ownerExternalId: friendExternalId, data }, client) => {
           return createUrl.run(
             {
               userExternalId,
               friendExternalId,
-              url: input.url,
-              urlType: input.url_type,
-              label: input.label ?? null,
+              url: data.url,
+              urlType: data.urlType,
+              label: data.label ?? null,
             },
             client,
           );
         },
 
         updateFn: async (
-          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, input },
+          { userExternalId, ownerExternalId: friendExternalId, resourceExternalId, data },
           client,
         ) => {
           return updateUrl.run(
@@ -62,9 +71,9 @@ export class UrlService extends SubResourceService<
               userExternalId,
               friendExternalId,
               urlExternalId: resourceExternalId,
-              url: input.url,
-              urlType: input.url_type,
-              label: input.label ?? null,
+              url: data.url,
+              urlType: data.urlType,
+              label: data.label ?? null,
             },
             client,
           );

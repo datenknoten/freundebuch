@@ -1,13 +1,25 @@
-import { FriendNoteInputSchema } from '@freundebuch/shared/index.js';
+import { type FriendNoteInput, FriendNoteInputSchema } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
-import type { FriendNotesService } from '../../../services/friends/sub-resources/friend-notes.service.js';
+import type {
+  FriendNoteData,
+  FriendNotesService,
+} from '../../../services/friends/sub-resources/friend-notes.service.js';
 import type { AppContext } from '../../../types/context.js';
 import { parseBody } from '../../../utils/parse-body.js';
 import { requireUuidParam } from '../../../utils/require-uuid-param.js';
 
 export interface NotesRoutesOptions {
   friendNotesService: FriendNotesService;
+}
+
+function mapFriendNoteInput(input: FriendNoteInput) {
+  return {
+    content: input.content,
+    encounterId: input.encounter_id,
+    sourceFriendId: input.source_friend_id,
+    supersedesNoteId: input.supersedes_note_id,
+  } satisfies FriendNoteData;
 }
 
 /**
@@ -43,9 +55,9 @@ export function createNotesRoutes(options: NotesRoutesOptions): Hono<AppContext>
   app.post('/', async (c) => {
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');
-    const validated = await parseBody(c, FriendNoteInputSchema);
+    const data = mapFriendNoteInput(await parseBody(c, FriendNoteInputSchema));
 
-    const note = await options.friendNotesService.create(user.userId, friendId, validated);
+    const note = await options.friendNotesService.create(user.userId, friendId, data);
 
     return c.json(note, 201);
   });
@@ -58,9 +70,9 @@ export function createNotesRoutes(options: NotesRoutesOptions): Hono<AppContext>
     const user = getAuthUser(c);
     const friendId = requireUuidParam(c, 'id', 'friend ID');
     const noteId = requireUuidParam(c, 'noteId', 'note ID');
-    const validated = await parseBody(c, FriendNoteInputSchema);
+    const data = mapFriendNoteInput(await parseBody(c, FriendNoteInputSchema));
 
-    const note = await options.friendNotesService.update(user.userId, friendId, noteId, validated);
+    const note = await options.friendNotesService.update(user.userId, friendId, noteId, data);
 
     return c.json(note);
   });

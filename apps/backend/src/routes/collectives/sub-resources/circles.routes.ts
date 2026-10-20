@@ -1,6 +1,4 @@
-import { ValidationError } from '@datenknoten/kit';
 import { Hono } from 'hono';
-import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../../middleware/auth.js';
 import type { CollectiveCircleService } from '../../../services/collectives/sub-resources/circle.service.js';
 import type { AppContext } from '../../../types/context.js';
@@ -49,11 +47,7 @@ export function createCollectiveCirclesRoutes(options: CollectiveCirclesRoutesOp
     const collectiveId = requireUuidParam(c, 'id');
     const circleId = requireUuidParam(c, 'circleId');
 
-    const isAdded = await collectiveCircleService.addToCircle(user.userId, collectiveId, circleId);
-
-    if (!isAdded) {
-      throw new ValidationError('Failed to add collective to circle');
-    }
+    await collectiveCircleService.addToCircle(user.userId, collectiveId, circleId);
 
     return c.json({ message: 'Collective added to circle successfully' }, 201);
   });
@@ -67,15 +61,7 @@ export function createCollectiveCirclesRoutes(options: CollectiveCirclesRoutesOp
     const collectiveId = requireUuidParam(c, 'id');
     const circleId = requireUuidParam(c, 'circleId');
 
-    const isRemoved = await collectiveCircleService.removeFromCircle(
-      user.userId,
-      collectiveId,
-      circleId,
-    );
-
-    if (!isRemoved) {
-      throw new ResourceNotFoundError('Circle membership', circleId);
-    }
+    await collectiveCircleService.removeFromCircle(user.userId, collectiveId, circleId);
 
     return c.json({ message: 'Collective removed from circle successfully' });
   });

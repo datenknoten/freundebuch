@@ -27,7 +27,6 @@ import { LegacyUserAllocationError } from '../../src/errors/legacy-user-allocati
 import { MaxAppPasswordsExceededError } from '../../src/errors/max-app-passwords-exceeded.error.js';
 import { MembershipCreationError } from '../../src/errors/membership-creation.error.js';
 import { MembershipNotFoundError } from '../../src/errors/membership-not-found.error.js';
-import { NoRowWrittenError } from '../../src/errors/no-row-written.error.js';
 import { NotificationChannelAlreadyExistsError } from '../../src/errors/notification-channel-already-exists.error.js';
 import { NotificationChannelNotFoundError } from '../../src/errors/notification-channel-not-found.error.js';
 import { NotificationDeliveryError } from '../../src/errors/notification-delivery.error.js';
@@ -140,7 +139,6 @@ const EXPECTED: Record<string, { error: AppError; status: number; code?: string 
     status: 500,
     code: 'CREDENTIAL_DECRYPT_FAILED',
   },
-  NoRowWrittenError: { error: new NoRowWrittenError(), status: 500 },
   UnknownValueError: { error: new UnknownValueError('thrown string'), status: 500 },
   ExternalServiceError: {
     error: new ExternalServiceError('Nominatim', 'Nominatim unavailable', 503),

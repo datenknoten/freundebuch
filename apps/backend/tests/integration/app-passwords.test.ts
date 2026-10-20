@@ -455,16 +455,16 @@ describe('App Passwords API - Integration Tests', { timeout: 30000 }, () => {
       // The formatted password authenticates even though only the hashed
       // prefix is stored, and the email is matched case-insensitively.
       const context = await service.verifyAppPassword(testEmail.toUpperCase(), created.password);
-      expect(context).not.toBeNull();
+      expect(context).toBeDefined();
       expect(context?.appPasswordId).toBe(created.externalId);
       expect(context?.email).toBe(testEmail);
 
       // A wrong password with the same prefix is rejected.
       const wrong = `${created.passwordPrefix.slice(0, 4)}-${created.passwordPrefix.slice(4, 8)}-0000-0000-0000-0000-0000-0000`;
-      expect(await service.verifyAppPassword(testEmail, wrong)).toBeNull();
+      expect(await service.verifyAppPassword(testEmail, wrong)).toBeUndefined();
 
       // Unknown email is rejected too (and still pays a bcrypt round).
-      expect(await service.verifyAppPassword('nobody@test.com', created.password)).toBeNull();
+      expect(await service.verifyAppPassword('nobody@test.com', created.password)).toBeUndefined();
     });
   });
 });
