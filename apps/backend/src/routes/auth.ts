@@ -4,6 +4,10 @@ import {
   type UserWithPreferencesResponse,
 } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
+import { AuthenticationError } from '../errors/authentication.error.js';
+import { ResourceNotFoundError } from '../errors/resource-not-found.error.js';
+import { SignupDisabledError } from '../errors/signup-disabled.error.js';
+import { UserNotFoundError } from '../errors/user-not-found.error.js';
 import { authMiddleware, getAuthSession, getAuthUser } from '../middleware/auth.js';
 import { passkeyListRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { getOAuthClientByClientId } from '../models/queries/oauth.queries.js';
@@ -13,12 +17,6 @@ import {
   updateUserPreferences,
 } from '../models/queries/users.queries.js';
 import type { AppContext } from '../types/context.js';
-import {
-  AuthenticationError,
-  ResourceNotFoundError,
-  SignupDisabledError,
-  UserNotFoundError,
-} from '../utils/errors.js';
 import { parseBody } from '../utils/http.js';
 import { parseUserPreferences, toJson } from '../utils/type-guards.js';
 
@@ -71,7 +69,7 @@ app.get('/me', authMiddleware, async (c) => {
   const session = getAuthSession(c);
 
   if (!session?.user) {
-    throw new UserNotFoundError();
+    throw new UserNotFoundError(authUser.userId);
   }
 
   // Look up the self-profile external_id and preferences from auth."user"
@@ -114,12 +112,12 @@ app.patch('/preferences', authMiddleware, async (c) => {
   const users = await getUserWithPreferences.run({ externalId: authUser.userId }, db);
 
   if (users.length === 0) {
-    throw new UserNotFoundError();
+    throw new UserNotFoundError(authUser.userId);
   }
 
   const user = users[0];
   if (!user) {
-    throw new UserNotFoundError();
+    throw new UserNotFoundError(authUser.userId);
   }
 
   // Merge with existing preferences
@@ -139,7 +137,7 @@ app.patch('/preferences', authMiddleware, async (c) => {
   );
 
   if (result.length === 0) {
-    throw new UserNotFoundError();
+    throw new UserNotFoundError(authUser.userId);
   }
 
   logger.info({ userId: authUser.userId }, 'User preferences updated');
@@ -193,7 +191,7 @@ app.get('/oauth2/client/:id', async (c) => {
   const [client] = await getOAuthClientByClientId.run({ clientId }, db);
 
   if (!client) {
-    throw new ResourceNotFoundError('OAuth client');
+    throw new ResourceNotFoundError('OAuth client', clientId);
   }
 
   return c.json({ clientId, name: client.name, icon: client.icon ?? null });

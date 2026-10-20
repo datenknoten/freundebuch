@@ -1,7 +1,7 @@
 // Generated from one config by createSubResourceRouter.
 import { UrlInputSchema } from '@freundebuch/shared/index.js';
+import { CollectiveNotFoundError } from '../../../errors/collective-not-found.error.js';
 import { CollectiveUrlService } from '../../../services/collectives/index.js';
-import { CollectiveNotFoundError } from '../../../utils/errors.js';
 import { createSubResourceRouter } from '../../base/sub-resource.router.js';
 
 export default createSubResourceRouter({
@@ -10,6 +10,6 @@ export default createSubResourceRouter({
   resourceParam: 'urlId',
   resourceLabel: 'Url',
   schema: UrlInputSchema,
-  ownerNotFound: () => new CollectiveNotFoundError(),
+  ownerNotFound: CollectiveNotFoundError,
   service: (c) => new CollectiveUrlService({ db: c.get('db'), logger: c.get('logger') }),
 });

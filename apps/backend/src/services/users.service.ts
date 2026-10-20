@@ -1,13 +1,15 @@
+import { ValidationError } from '@datenknoten/kit';
 import type { FriendCreateInput, FriendResponse, UserResponse } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { FriendNotFoundError } from '../errors/friend-not-found.error.js';
+import { UserNotFoundError } from '../errors/user-not-found.error.js';
 import {
   getUserSelfProfile,
   getUserWithSelfProfile,
   type IGetUserWithSelfProfileResult,
   setUserSelfProfile,
 } from '../models/queries/users.queries.js';
-import { UserNotFoundError, ValidationError } from '../utils/errors.js';
 import type { FriendsService } from './friends/index.js';
 
 export interface UsersServiceOptions {
@@ -37,7 +39,7 @@ export class UsersService {
     const [user] = await getUserWithSelfProfile.run({ userExternalId: userId }, this.db);
 
     if (!user) {
-      throw new UserNotFoundError();
+      throw new UserNotFoundError(userId);
     }
 
     return this.mapUser(user);
@@ -55,7 +57,7 @@ export class UsersService {
     );
 
     if (result.length === 0) {
-      throw new UserNotFoundError('Friend not found or does not belong to user');
+      throw new FriendNotFoundError(friendExternalId);
     }
 
     this.logger.info({ userId, friendId: friendExternalId }, 'Self-profile set successfully');
@@ -82,7 +84,7 @@ export class UsersService {
     if (setResult.length === 0) {
       // The friend exists but is not marked as the self-profile: the user would
       // be stuck in onboarding with a duplicate on retry.
-      throw new UserNotFoundError('Failed to set self-profile after creation');
+      throw new UserNotFoundError(userId);
     }
 
     this.logger.info({ userId, friendId: newFriend.id }, 'Self-profile created and set');

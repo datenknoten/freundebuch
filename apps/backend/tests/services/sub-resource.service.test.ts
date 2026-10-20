@@ -1,3 +1,4 @@
+import { ConflictError } from '@datenknoten/kit';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { describe, expect, it } from 'vitest';
@@ -5,7 +6,6 @@ import {
   type SubResourceConfig,
   SubResourceService,
 } from '../../src/services/base/sub-resource.service.js';
-import { ConflictError } from '../../src/utils/errors.js';
 
 /**
  * The single-primary indexes are partial unique indexes, so two writers that

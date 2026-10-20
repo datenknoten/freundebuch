@@ -1,8 +1,8 @@
 // Generated from one config by createSubResourceRouter.
 import { PhoneInputSchema } from '@freundebuch/shared/index.js';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
 import { AddressService, PhoneService } from '../../../services/friends/index.js';
 import { normalizePhoneBody } from '../../../services/phone-normalization.js';
-import { FriendNotFoundError } from '../../../utils/errors.js';
 import { createSubResourceRouter } from '../../base/sub-resource.router.js';
 
 /**
@@ -27,7 +27,7 @@ export default createSubResourceRouter({
   resourceParam: 'phoneId',
   resourceLabel: 'Phone',
   schema: PhoneInputSchema,
-  ownerNotFound: () => new FriendNotFoundError(),
+  ownerNotFound: FriendNotFoundError,
   service: (c) => new PhoneService({ db: c.get('db'), logger: c.get('logger') }),
   preprocess: normalizePhoneBody(friendPrimaryCountry),
 });

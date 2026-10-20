@@ -4,7 +4,7 @@ import { type Context, Hono } from 'hono';
 import type pg from 'pg';
 import { isMailConfigured } from '../services/mailer.js';
 import type { AppContext } from '../types/context.js';
-import { toError } from '../utils/errors.js';
+import { toError } from '../utils/to-error.js';
 
 const require = createRequire(import.meta.url);
 // biome-ignore lint/correctness/useImportExtensions: package.json is correct, not package.js

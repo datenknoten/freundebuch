@@ -1,11 +1,11 @@
 // Generated from one config by createSubResourceRouter.
 import { PhoneInputSchema } from '@freundebuch/shared/index.js';
+import { CollectiveNotFoundError } from '../../../errors/collective-not-found.error.js';
 import {
   CollectiveAddressService,
   CollectivePhoneService,
 } from '../../../services/collectives/index.js';
 import { normalizePhoneBody } from '../../../services/phone-normalization.js';
-import { CollectiveNotFoundError } from '../../../utils/errors.js';
 import { createSubResourceRouter } from '../../base/sub-resource.router.js';
 
 const collectivePrimaryCountry = async (
@@ -26,7 +26,7 @@ export default createSubResourceRouter({
   resourceParam: 'phoneId',
   resourceLabel: 'Phone',
   schema: PhoneInputSchema,
-  ownerNotFound: () => new CollectiveNotFoundError(),
+  ownerNotFound: CollectiveNotFoundError,
   service: (c) => new CollectivePhoneService({ db: c.get('db'), logger: c.get('logger') }),
   preprocess: normalizePhoneBody(collectivePrimaryCountry),
 });

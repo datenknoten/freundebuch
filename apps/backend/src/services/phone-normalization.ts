@@ -1,8 +1,8 @@
 import { countryNameToCode, normalizePhoneNumber } from '@freundebuch/shared/index.js';
 import type { Context } from 'hono';
+import { PhoneCountryUnknownError } from '../errors/phone-country-unknown.error.js';
 import type { AppContext } from '../types/context.js';
 import { localeToCountry } from '../utils/country.js';
-import { PhoneCountryUnknownError } from '../utils/errors.js';
 
 /**
  * Resolves the country to interpret a national-format number in, given the

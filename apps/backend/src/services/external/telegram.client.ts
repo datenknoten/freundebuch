@@ -1,4 +1,4 @@
-import { NotificationDeliveryError } from '../../utils/errors.js';
+import { NotificationDeliveryError } from '../../errors/notification-delivery.error.js';
 
 /**
  * Send a message via Telegram Bot API

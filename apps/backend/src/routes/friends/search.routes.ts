@@ -1,3 +1,4 @@
+import { ValidationError } from '@datenknoten/kit';
 import {
   FacetedSearchQuerySchema,
   parseFacetedSearchQuery,
@@ -7,11 +8,11 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
+import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../middleware/auth.js';
 import { FriendsService } from '../../services/friends/index.js';
 import { PhotoService } from '../../services/photo.service.js';
 import type { AppContext } from '../../types/context.js';
-import { ResourceNotFoundError, ValidationError } from '../../utils/errors.js';
 import { parseBody } from '../../utils/http.js';
 
 /** The `exclude` query parameter must be a friend external_id (UUID). */
@@ -239,7 +240,7 @@ app.delete('/recent/:query', async (c) => {
   const deleted = await friendsService.deleteRecentSearch(user.userId, query);
 
   if (!deleted) {
-    throw new ResourceNotFoundError('Search query');
+    throw new ResourceNotFoundError('Search query', query);
   }
 
   return c.json({ success: true });

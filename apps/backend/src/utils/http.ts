@@ -1,6 +1,6 @@
+import { ValidationError } from '@datenknoten/kit';
 import { type Type, type } from 'arktype';
 import type { Context } from 'hono';
-import { ValidationError } from './errors.js';
 import { isValidUuid } from './security.js';
 import { isRecord } from './type-guards.js';
 

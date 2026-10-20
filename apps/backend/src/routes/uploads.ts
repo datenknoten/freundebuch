@@ -3,13 +3,15 @@ import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
+import { ValidationError } from '@datenknoten/kit';
 import { Hono } from 'hono';
+import { FriendNotFoundError } from '../errors/friend-not-found.error.js';
+import { ResourceNotFoundError } from '../errors/resource-not-found.error.js';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { FriendsService } from '../services/friends/index.js';
 import { PhotoService } from '../services/photo.service.js';
 import type { AppContext } from '../types/context.js';
-import { FriendNotFoundError, ResourceNotFoundError, ValidationError } from '../utils/errors.js';
 import { requireUuidParam } from '../utils/http.js';
 import { isNodeError } from '../utils/type-guards.js';
 
@@ -56,7 +58,7 @@ app.get('/friends/:friendId/:filename', async (c) => {
   const friend = await friendsService.getFriendById(user.userId, friendId);
 
   if (!friend) {
-    throw new FriendNotFoundError();
+    throw new FriendNotFoundError(friendId);
   }
 
   // Validate filename to prevent directory traversal
@@ -96,14 +98,13 @@ app.get('/friends/:friendId/:filename', async (c) => {
     fileStat = await stat(filePath);
   } catch (error) {
     if (isNodeError(error) && error.code === 'ENOENT') {
-      throw new ResourceNotFoundError('Photo');
+      throw new ResourceNotFoundError('Photo', `${friendId}/${filename}`);
     }
-    logger.error({ err: error, friendId, filename }, 'Failed to serve photo');
     throw error;
   }
 
   if (!fileStat.isFile()) {
-    throw new ResourceNotFoundError('Photo');
+    throw new ResourceNotFoundError('Photo', `${friendId}/${filename}`);
   }
 
   // Photos are immutable per (friend, filename) until re-uploaded, and every

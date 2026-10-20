@@ -1,4 +1,5 @@
 import type { Logger } from 'pino';
+import { OverpassApiError } from '../../errors/overpass-api.error.js';
 import {
   type AddressCache,
   getHouseNumbersCache,
@@ -6,7 +7,6 @@ import {
   type HouseNumberCached,
   type StreetCached,
 } from '../../utils/cache.js';
-import { OverpassApiError } from '../../utils/errors.js';
 
 export type Street = StreetCached;
 

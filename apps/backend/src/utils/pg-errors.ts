@@ -1,4 +1,4 @@
-import type { AppError } from './errors.js';
+import type { AppError } from '@datenknoten/kit';
 
 /** Postgres `unique_violation`. */
 const UNIQUE_VIOLATION = '23505';

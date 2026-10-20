@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import bcrypt from 'bcrypt';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { AppPasswordCreationError } from '../errors/app-password-creation.error.js';
+import { MaxAppPasswordsExceededError } from '../errors/max-app-passwords-exceeded.error.js';
 import {
   createAppPassword,
   getAppPasswordsByUserExternalId,
@@ -10,7 +12,6 @@ import {
   revokeAppPassword,
   updateAppPasswordLastUsed,
 } from '../models/queries/app-passwords.queries.js';
-import { AppError, AppPasswordCreationError } from '../utils/errors.js';
 
 const SALT_ROUNDS = 10;
 const PASSWORD_LENGTH = 24; // 24 bytes = 32 chars in base64url
@@ -29,14 +30,6 @@ const DUMMY_HASH = bcrypt.hashSync('dummy', SALT_ROUNDS);
 // in sync.
 const FORMAT_CHUNK_SIZE = 4;
 const FORMAT_STRIDE = FORMAT_CHUNK_SIZE + 1; // chunk + one separator
-
-export class MaxAppPasswordsExceededError extends AppError {
-  readonly statusCode = 429;
-
-  constructor() {
-    super(`Maximum number of app passwords (${MAX_APP_PASSWORDS_PER_USER}) exceeded`);
-  }
-}
 
 /**
  * Lookup key stored in `auth.app_passwords.password_prefix`: the first 16 hex
@@ -156,7 +149,7 @@ export class AppPasswordsService {
         { userId: userExternalId, count: existingPasswords.length },
         'User has reached maximum app passwords limit',
       );
-      throw new MaxAppPasswordsExceededError();
+      throw new MaxAppPasswordsExceededError(MAX_APP_PASSWORDS_PER_USER);
     }
 
     // Generate a random password

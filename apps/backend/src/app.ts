@@ -1,12 +1,13 @@
-import { ValidationError as KitValidationError } from '@datenknoten/kit';
-import type { ErrorResponse } from '@freundebuch/shared/index.js';
+import { handleError } from '@datenknoten/kit/http';
 import * as Sentry from '@sentry/node';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { secureHeaders } from 'hono/secure-headers';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import type { Config } from './config.js';
+import { DatabaseConnectionError } from './errors/database-connection.error.js';
 import type { Auth } from './lib/auth.js';
 import { httpLoggerMiddleware } from './middleware/http-logger.js';
 import { sentryTracingMiddleware } from './middleware/sentry.js';
@@ -24,7 +25,7 @@ import uploadsRoutes from './routes/uploads.js';
 import usersRoutes from './routes/users.js';
 import type { AppContext } from './types/context.js';
 import { checkDatabaseConnection } from './utils/db.js';
-import { DatabaseConnectionError, isAppError, toError, ValidationError } from './utils/errors.js';
+import { toError } from './utils/to-error.js';
 
 export interface AppOptions {
   config: Config;
@@ -99,37 +100,21 @@ export async function createApp(options: AppOptions) {
   app.route('/api/notification-channels', notificationChannelsRoutes);
 
   // Error handling
-  app.onError((thrown, c) => {
-    // Shared parsers throw kit's ValidationError; answer it like the local one.
-    const err =
-      thrown instanceof KitValidationError
-        ? new ValidationError(thrown.message, thrown.details)
-        : thrown;
+  app.onError((err, c) => {
     // Fall back to the root logger: an error thrown before the context
     // middleware runs would leave c.get('logger') undefined.
-    const pinoLogger = c.get('logger') ?? logger;
+    const { status, body } = handleError(err, c.get('logger') ?? logger);
 
-    // Single Sentry capture point for the whole app: report unexpected errors
-    // and 5xx AppErrors, but not expected 4xx (validation, not-found, etc.).
-    if (isAppError(err)) {
-      pinoLogger[err.statusCode >= 500 ? 'error' : 'warn']({ err }, err.message);
-      if (err.statusCode >= 500) {
-        Sentry.captureException(err, {
-          extra: { path: c.req.path, method: c.req.method },
-        });
-      }
-      const body: ErrorResponse = { error: err.message };
-      if (err.code) body.code = err.code;
-      if (err.details !== undefined) body.details = err.details;
-      return c.json(body, err.statusCode);
+    // Single Sentry capture point for the whole app: expected 4xx (validation,
+    // not-found, etc.) are not reported.
+    if (status >= 500) {
+      Sentry.captureException(toError(err), {
+        extra: { path: c.req.path, method: c.req.method },
+      });
     }
-
-    const normalizedErr = toError(err);
-    pinoLogger.error({ err: normalizedErr }, 'Unhandled error');
-    Sentry.captureException(normalizedErr, {
-      extra: { path: c.req.path, method: c.req.method },
-    });
-    return c.json<ErrorResponse>({ error: 'Internal Server Error' }, 500);
+    // handleError only answers with the statusCode of an HttpError subclass or
+    // 400/404/500, all of which carry a body.
+    return c.json(body, status as ContentfulStatusCode);
   });
 
   // 404 handler

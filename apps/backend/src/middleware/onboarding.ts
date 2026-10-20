@@ -1,6 +1,7 @@
 import type { Context, Next } from 'hono';
+import { AuthenticationError } from '../errors/authentication.error.js';
+import { OnboardingRequiredError } from '../errors/onboarding-required.error.js';
 import { hasSelfProfile } from '../models/queries/users.queries.js';
-import { AuthenticationError, OnboardingRequiredError } from '../utils/errors.js';
 import { getAuthUser } from './auth.js';
 
 /**

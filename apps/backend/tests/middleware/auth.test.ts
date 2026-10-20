@@ -1,10 +1,12 @@
+import { handleError } from '@datenknoten/kit/http';
 import { Hono } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type pg from 'pg';
+import pino from 'pino';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Auth } from '../../src/lib/auth.js';
 import { authMiddleware, getAuthUser } from '../../src/middleware/auth.js';
 import type { AppContext } from '../../src/types/context.js';
-import { isAppError } from '../../src/utils/errors.js';
 
 // Untyped: the fixtures carry the full Better Auth session, wider than AuthSession.
 const mockGetSession = vi.fn();
@@ -39,10 +41,9 @@ describe('authMiddleware', () => {
 
     // Add error handler to match production behavior
     app.onError((err, c) => {
-      if (isAppError(err)) {
-        return c.json({ error: err.message }, err.statusCode);
-      }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      const { status, body } = handleError(err, pino({ level: 'silent' }));
+      // handleError only answers with statuses that carry a body.
+      return c.json(body, status as ContentfulStatusCode);
     });
   });
 
@@ -87,7 +88,7 @@ describe('authMiddleware', () => {
 
       expect(res.status).toBe(401);
       const body = await res.json();
-      expect(body).toEqual({ error: 'Unauthorized' });
+      expect(body).toEqual({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     });
 
     it('should return 401 when getSession returns null', async () => {
@@ -159,7 +160,7 @@ describe('authMiddleware', () => {
 
       expect(res.status).toBe(401);
       const body = (await res.json()) as { message: unknown };
-      expect(body).toEqual({ error: 'Unauthorized' });
+      expect(body).toEqual({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
       expect(body.message).toBeUndefined();
     });
   });

@@ -1,3 +1,4 @@
+import { ValidationError } from '@datenknoten/kit';
 import { type } from 'arktype';
 import { Hono } from 'hono';
 import { authMiddleware } from '../middleware/auth.js';
@@ -5,7 +6,6 @@ import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { addressLookupRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { getAddressLookupService } from '../services/address-lookup.registry.js';
 import type { AppContext } from '../types/context.js';
-import { ValidationError } from '../utils/errors.js';
 
 const app = new Hono<AppContext>();
 

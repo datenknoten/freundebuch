@@ -31,25 +31,20 @@ export class PostGISAddressClient {
     countryCode: string,
     postalCode: string,
   ): Promise<{ city: string }[]> {
-    try {
-      const result = await this.pool.query<{ city: string }>(
-        `SELECT city
-         FROM geodata.cities_by_postal
-         WHERE country_code = $1 AND postal_code = $2
-         ORDER BY city`,
-        [countryCode.toUpperCase(), postalCode],
-      );
+    const result = await this.pool.query<{ city: string }>(
+      `SELECT city
+       FROM geodata.cities_by_postal
+       WHERE country_code = $1 AND postal_code = $2
+       ORDER BY city`,
+      [countryCode.toUpperCase(), postalCode],
+    );
 
-      this.logger.debug(
-        { countryCode, postalCode, count: result.rowCount },
-        'PostGIS cities query completed',
-      );
+    this.logger.debug(
+      { countryCode, postalCode, count: result.rowCount },
+      'PostGIS cities query completed',
+    );
 
-      return result.rows.map((row) => ({ city: row.city }));
-    } catch (error) {
-      this.logger.error({ err: error, countryCode, postalCode }, 'PostGIS cities query failed');
-      throw error;
-    }
+    return result.rows.map((row) => ({ city: row.city }));
   }
 
   /**
@@ -65,26 +60,21 @@ export class PostGISAddressClient {
     prefix: string,
     limit = 20,
   ): Promise<{ postalCode: string; city: string }[]> {
-    try {
-      const result = await this.pool.query<{ postal_code: string; city: string }>(
-        `SELECT postal_code, city
-         FROM geodata.cities_by_postal
-         WHERE country_code = $1 AND postal_code LIKE $2 || '%'
-         ORDER BY postal_code, city
-         LIMIT $3`,
-        [countryCode.toUpperCase(), prefix, limit],
-      );
+    const result = await this.pool.query<{ postal_code: string; city: string }>(
+      `SELECT postal_code, city
+       FROM geodata.cities_by_postal
+       WHERE country_code = $1 AND postal_code LIKE $2 || '%'
+       ORDER BY postal_code, city
+       LIMIT $3`,
+      [countryCode.toUpperCase(), prefix, limit],
+    );
 
-      this.logger.debug(
-        { countryCode, prefix, count: result.rowCount },
-        'PostGIS postal code search completed',
-      );
+    this.logger.debug(
+      { countryCode, prefix, count: result.rowCount },
+      'PostGIS postal code search completed',
+    );
 
-      return result.rows.map((row) => ({ postalCode: row.postal_code, city: row.city }));
-    } catch (error) {
-      this.logger.error({ err: error, countryCode, prefix }, 'PostGIS postal code search failed');
-      throw error;
-    }
+    return result.rows.map((row) => ({ postalCode: row.postal_code, city: row.city }));
   }
 
   /**
@@ -92,25 +82,20 @@ export class PostGISAddressClient {
    * Uses the materialized view for fast distinct lookups.
    */
   async getStreets(countryCode: string, _city: string, postalCode: string): Promise<Street[]> {
-    try {
-      const result = await this.pool.query<{ street: string }>(
-        `SELECT street
-         FROM geodata.streets_by_postal
-         WHERE country_code = $1 AND postal_code = $2
-         ORDER BY street`,
-        [countryCode.toUpperCase(), postalCode],
-      );
+    const result = await this.pool.query<{ street: string }>(
+      `SELECT street
+       FROM geodata.streets_by_postal
+       WHERE country_code = $1 AND postal_code = $2
+       ORDER BY street`,
+      [countryCode.toUpperCase(), postalCode],
+    );
 
-      this.logger.debug(
-        { countryCode, postalCode, count: result.rowCount },
-        'PostGIS streets query completed',
-      );
+    this.logger.debug(
+      { countryCode, postalCode, count: result.rowCount },
+      'PostGIS streets query completed',
+    );
 
-      return result.rows.map((row) => ({ name: row.street }));
-    } catch (error) {
-      this.logger.error({ err: error, countryCode, postalCode }, 'PostGIS streets query failed');
-      throw error;
-    }
+    return result.rows.map((row) => ({ name: row.street }));
   }
 
   /**
@@ -123,31 +108,23 @@ export class PostGISAddressClient {
     postalCode: string,
     street: string,
   ): Promise<HouseNumber[]> {
-    try {
-      const result = await this.pool.query<{ house_number: string }>(
-        `SELECT house_number
-         FROM geodata.housenumbers_by_street
-         WHERE country_code = $1 AND postal_code = $2 AND street = $3`,
-        [countryCode.toUpperCase(), postalCode, street],
-      );
+    const result = await this.pool.query<{ house_number: string }>(
+      `SELECT house_number
+       FROM geodata.housenumbers_by_street
+       WHERE country_code = $1 AND postal_code = $2 AND street = $3`,
+      [countryCode.toUpperCase(), postalCode, street],
+    );
 
-      this.logger.debug(
-        { countryCode, postalCode, street, count: result.rowCount },
-        'PostGIS house numbers query completed',
-      );
+    this.logger.debug(
+      { countryCode, postalCode, street, count: result.rowCount },
+      'PostGIS house numbers query completed',
+    );
 
-      // Sort house numbers naturally (handles 1, 2, 10, 10a, 10/1, etc.)
-      const houseNumbers = result.rows.map((row) => ({ number: row.house_number }));
-      houseNumbers.sort((a, b) => naturalCollator.compare(a.number, b.number));
+    // Sort house numbers naturally (handles 1, 2, 10, 10a, 10/1, etc.)
+    const houseNumbers = result.rows.map((row) => ({ number: row.house_number }));
+    houseNumbers.sort((a, b) => naturalCollator.compare(a.number, b.number));
 
-      return houseNumbers;
-    } catch (error) {
-      this.logger.error(
-        { err: error, countryCode, postalCode, street },
-        'PostGIS house numbers query failed',
-      );
-      throw error;
-    }
+    return houseNumbers;
   }
 
   /**

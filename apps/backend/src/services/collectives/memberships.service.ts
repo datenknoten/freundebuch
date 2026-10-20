@@ -9,6 +9,12 @@ import type {
   RelationshipPreviewResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool, PoolClient } from 'pg';
+import { CollectiveNotFoundError } from '../../errors/collective-not-found.error.js';
+import { DuplicateMembershipError } from '../../errors/duplicate-membership.error.js';
+import { FriendNotFoundError } from '../../errors/friend-not-found.error.js';
+import { MembershipCreationError } from '../../errors/membership-creation.error.js';
+import { MembershipNotFoundError } from '../../errors/membership-not-found.error.js';
+import { RoleNotFoundError } from '../../errors/role-not-found.error.js';
 import { mapMember } from '../../models/mappers/collectives.mappers.js';
 import {
   addMembership,
@@ -32,14 +38,6 @@ import {
   removeMembership,
   updateMembershipRole,
 } from '../../models/queries/collectives.queries.js';
-import {
-  CollectiveNotFoundError,
-  DuplicateMembershipError,
-  FriendNotFoundError,
-  MembershipCreationError,
-  MembershipNotFoundError,
-  RoleNotFoundError,
-} from '../../utils/errors.js';
 import { parseRelationshipDirection } from '../../utils/type-guards.js';
 
 export interface MembershipsServiceOptions {
@@ -94,15 +92,15 @@ export class MembershipsService {
 
       const [collective] = collectiveResult;
       if (collective === undefined) {
-        throw new CollectiveNotFoundError();
+        throw new CollectiveNotFoundError(collectiveExternalId);
       }
       const [contact] = contactResult;
       if (contact === undefined) {
-        throw new FriendNotFoundError();
+        throw new FriendNotFoundError(input.friend_id);
       }
       const [role] = roleResult;
       if (role === undefined) {
-        throw new RoleNotFoundError();
+        throw new RoleNotFoundError(input.role_id);
       }
 
       const collectiveId = collective.id;
@@ -201,7 +199,7 @@ export class MembershipsService {
 
     const [role] = roleResult;
     if (role === undefined) {
-      throw new RoleNotFoundError();
+      throw new RoleNotFoundError(roleExternalId);
     }
 
     const results = await updateMembershipRole.run(
@@ -215,7 +213,7 @@ export class MembershipsService {
     );
 
     if (results.length === 0) {
-      throw new MembershipNotFoundError();
+      throw new MembershipNotFoundError(membershipExternalId);
     }
 
     const membership = await getMembershipById.run(
@@ -225,7 +223,7 @@ export class MembershipsService {
 
     const [membershipRow] = membership;
     if (membershipRow === undefined) {
-      throw new MembershipNotFoundError();
+      throw new MembershipNotFoundError(membershipExternalId);
     }
 
     return mapMember(membershipRow);
@@ -252,7 +250,7 @@ export class MembershipsService {
     );
 
     if (results.length === 0) {
-      throw new MembershipNotFoundError();
+      throw new MembershipNotFoundError(membershipExternalId);
     }
 
     const membership = await getMembershipById.run(
@@ -262,7 +260,7 @@ export class MembershipsService {
 
     const [membershipRow] = membership;
     if (membershipRow === undefined) {
-      throw new MembershipNotFoundError();
+      throw new MembershipNotFoundError(membershipExternalId);
     }
 
     return mapMember(membershipRow);
@@ -282,7 +280,7 @@ export class MembershipsService {
     );
 
     if (results.length === 0) {
-      throw new MembershipNotFoundError();
+      throw new MembershipNotFoundError(membershipExternalId);
     }
 
     const membership = await getMembershipById.run(
@@ -292,7 +290,7 @@ export class MembershipsService {
 
     const [membershipRow] = membership;
     if (membershipRow === undefined) {
-      throw new MembershipNotFoundError();
+      throw new MembershipNotFoundError(membershipExternalId);
     }
 
     return mapMember(membershipRow);
@@ -381,7 +379,7 @@ export class MembershipsService {
 
     const [contact] = contactResult;
     if (contact === undefined) {
-      throw new FriendNotFoundError();
+      throw new FriendNotFoundError(input.friend_id);
     }
 
     const newContact: CollectiveMemberContactResponse = {
@@ -398,7 +396,7 @@ export class MembershipsService {
 
     const [collective] = collectiveResult;
     if (collective === undefined) {
-      throw new CollectiveNotFoundError();
+      throw new CollectiveNotFoundError(collectiveExternalId);
     }
 
     const collectiveId = collective.id;
@@ -407,7 +405,7 @@ export class MembershipsService {
     const typeResult = await getCollectiveTypeIdForCollective.run({ collectiveId }, this.db);
     const [typeRow] = typeResult;
     if (typeRow === undefined) {
-      throw new CollectiveNotFoundError();
+      throw new CollectiveNotFoundError(collectiveExternalId);
     }
 
     const collectiveTypeId = typeRow.collective_type_id;
@@ -420,7 +418,7 @@ export class MembershipsService {
 
     const [role] = roleResult;
     if (role === undefined) {
-      throw new RoleNotFoundError();
+      throw new RoleNotFoundError(input.role_id);
     }
 
     const newMemberRoleId = role.id;
@@ -704,7 +702,7 @@ export class MembershipsService {
 
     const [role] = result;
     if (role === undefined) {
-      throw new RoleNotFoundError();
+      throw new RoleNotFoundError(roleExternalId);
     }
 
     return {

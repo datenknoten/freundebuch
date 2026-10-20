@@ -1,7 +1,8 @@
 import dns from 'node:dns';
+import { ValidationError } from '@datenknoten/kit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { NotificationDeliveryError } from '../../src/errors/notification-delivery.error.js';
 import { sendMatrixMessage } from '../../src/services/external/matrix.client.js';
-import { NotificationDeliveryError, ValidationError } from '../../src/utils/errors.js';
 
 /**
  * The SSRF guard has to survive a *public* hostname that resolves to a private

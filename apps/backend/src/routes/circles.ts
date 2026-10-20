@@ -1,3 +1,4 @@
+import { ValidationError } from '@datenknoten/kit';
 import {
   CircleInputSchema,
   CircleMergeInputSchema,
@@ -5,12 +6,13 @@ import {
 } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { etag } from 'hono/etag';
+import { CircleCreationError } from '../errors/circle-creation.error.js';
+import { CircleNotFoundError } from '../errors/circle-not-found.error.js';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { circlesRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { CirclesService } from '../services/circles.service.js';
 import type { AppContext } from '../types/context.js';
-import { CircleCreationError, CircleNotFoundError, ValidationError } from '../utils/errors.js';
 import { parseBody, requireUuidParam } from '../utils/http.js';
 
 const app = new Hono<AppContext>();
@@ -92,7 +94,7 @@ app.get('/:id', async (c) => {
   const circle = await circlesService.getCircleById(user.userId, circleId);
 
   if (!circle) {
-    throw new CircleNotFoundError();
+    throw new CircleNotFoundError(circleId);
   }
 
   return c.json(circle);
@@ -112,7 +114,7 @@ app.put('/:id', async (c) => {
   const circle = await circlesService.updateCircle(user.userId, circleId, validated);
 
   if (!circle) {
-    throw new CircleNotFoundError();
+    throw new CircleNotFoundError(circleId);
   }
 
   return c.json(circle);
@@ -131,7 +133,7 @@ app.delete('/:id', async (c) => {
   const deleted = await circlesService.deleteCircle(user.userId, circleId);
 
   if (!deleted) {
-    throw new CircleNotFoundError();
+    throw new CircleNotFoundError(circleId);
   }
 
   return c.json({ success: true });
@@ -159,7 +161,7 @@ app.post('/:id/merge', async (c) => {
   );
 
   if (!circle) {
-    throw new CircleNotFoundError();
+    throw new CircleNotFoundError(targetCircleId);
   }
 
   return c.json(circle);

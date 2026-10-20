@@ -1,3 +1,4 @@
+import { ValidationError } from '@datenknoten/kit';
 import {
   FriendCreateInputSchema,
   FriendListQuerySchema,
@@ -6,11 +7,11 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
+import { FriendNotFoundError } from '../../errors/friend-not-found.error.js';
 import { getAuthUser } from '../../middleware/auth.js';
 import { FriendsService } from '../../services/friends/index.js';
 import { PhotoService } from '../../services/photo.service.js';
 import type { AppContext } from '../../types/context.js';
-import { FriendNotFoundError, ValidationError } from '../../utils/errors.js';
 import { parseBody, requireUuidParam } from '../../utils/http.js';
 
 const app = new Hono<AppContext>();
@@ -60,7 +61,7 @@ app.get('/:id', async (c) => {
   const friend = await friendsService.getFriendById(user.userId, friendId);
 
   if (!friend) {
-    throw new FriendNotFoundError();
+    throw new FriendNotFoundError(friendId);
   }
 
   return c.json(friend);
@@ -106,7 +107,7 @@ app.put('/:id', async (c) => {
   const friend = await friendsService.updateFriend(user.userId, friendId, validated);
 
   if (!friend) {
-    throw new FriendNotFoundError();
+    throw new FriendNotFoundError(friendId);
   }
 
   return c.json(friend);
@@ -130,7 +131,7 @@ app.delete('/:id', async (c) => {
   const deleted = await friendsService.deleteFriend(user.userId, friendId);
 
   if (!deleted) {
-    throw new FriendNotFoundError();
+    throw new FriendNotFoundError(friendId);
   }
 
   // Photo cleanup now happens inside deleteFriend so all callers get it.

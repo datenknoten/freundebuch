@@ -1,8 +1,9 @@
+import { ValidationError } from '@datenknoten/kit';
 import { Hono } from 'hono';
+import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { CollectiveCircleService } from '../../../services/collectives/index.js';
 import type { AppContext } from '../../../types/context.js';
-import { ResourceNotFoundError, ValidationError } from '../../../utils/errors.js';
 import { requireUuidParam } from '../../../utils/http.js';
 
 const app = new Hono<AppContext>();
@@ -75,7 +76,7 @@ app.delete('/:circleId', async (c) => {
   const removed = await circleService.removeFromCircle(user.userId, collectiveId, circleId);
 
   if (!removed) {
-    throw new ResourceNotFoundError('Circle membership');
+    throw new ResourceNotFoundError('Circle membership', circleId);
   }
 
   return c.json({ message: 'Collective removed from circle successfully' });

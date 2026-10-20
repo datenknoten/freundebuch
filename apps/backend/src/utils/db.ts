@@ -1,7 +1,7 @@
 import pg from 'pg';
 import type { Logger } from 'pino';
 import type { Config } from '../config.js';
-import { toError } from './errors.js';
+import { toError } from './to-error.js';
 
 const { Pool } = pg;
 

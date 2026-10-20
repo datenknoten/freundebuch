@@ -1,11 +1,12 @@
+import { handleError } from '@datenknoten/kit/http';
 import { Hono } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { Pool } from 'pg';
 import pino from 'pino';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { loadConfig } from '../../src/config.js';
 import type { Auth } from '../../src/lib/auth.js';
 import type { AppContext } from '../../src/types/context.js';
-import { isAppError } from '../../src/utils/errors.js';
 import { TEST_ENV } from '../helpers/test-env.js';
 
 const { mockOAuthClientRun } = vi.hoisted(() => ({
@@ -56,10 +57,9 @@ describe('Auth Routes', () => {
     app.route('/api/auth', authRoutes);
 
     app.onError((err, c) => {
-      if (isAppError(err)) {
-        return c.json({ error: err.message }, err.statusCode);
-      }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      const { status, body } = handleError(err, logger);
+      // handleError only answers with statuses that carry a body.
+      return c.json(body, status as ContentfulStatusCode);
     });
   });
 
@@ -126,7 +126,7 @@ describe('Auth Routes', () => {
 
       expect(res.status).toBe(404);
       const data = await res.json();
-      expect(data).toHaveProperty('error', 'OAuth client not found');
+      expect(data).toEqual({ error: 'OAuth client not found: missing', code: 'NOT_FOUND' });
     });
   });
 

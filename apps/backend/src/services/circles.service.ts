@@ -4,6 +4,9 @@ import type {
   CircleSummaryResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
+import { CircleNameExistsError } from '../errors/circle-name-exists.error.js';
+import { CircleNotFoundError } from '../errors/circle-not-found.error.js';
+import { CircularReferenceError } from '../errors/circular-reference.error.js';
 import {
   createCircle,
   deleteCircle,
@@ -24,11 +27,6 @@ import {
   removeFriendFromCircle,
   setFriendCircles,
 } from '../models/queries/friend-circles.queries.js';
-import {
-  CircleNameExistsError,
-  CircleNotFoundError,
-  CircularReferenceError,
-} from '../utils/errors.js';
 import { rethrowUniqueViolation } from '../utils/pg-errors.js';
 
 export interface CirclesServiceOptions {
@@ -117,7 +115,7 @@ export class CirclesService {
     if (updateParent && input.parent_circle_id !== null && input.parent_circle_id !== undefined) {
       const parent = await this.getCircleById(userExternalId, input.parent_circle_id);
       if (!parent) {
-        throw new CircleNotFoundError(`Parent circle ${input.parent_circle_id} not found`);
+        throw new CircleNotFoundError(input.parent_circle_id);
       }
 
       // Check for circular reference: walk up the parent chain
@@ -258,7 +256,7 @@ export class CirclesService {
         client,
       );
       if (deleteResult.length === 0) {
-        throw new CircleNotFoundError(`Source circle ${sourceCircleExternalId} not found`);
+        throw new CircleNotFoundError(sourceCircleExternalId);
       }
 
       await client.query('COMMIT');

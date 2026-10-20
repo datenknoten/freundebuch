@@ -9,6 +9,7 @@ import type {
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { InvalidSearchParametersError } from '../../errors/invalid-search-parameters.error.js';
 import {
   getCircleFacetCounts,
   type IGetCircleFacetCountsResult,
@@ -31,7 +32,6 @@ import {
   paginatedFullTextSearch,
 } from '../../models/queries/search.queries.js';
 import { parseCirclesJson } from '../../utils/db-json-schemas.js';
-import { InvalidSearchParametersError } from '../../utils/errors.js';
 import { sanitizeSearchHeadline } from '../../utils/security.js';
 import { parseMatchSource } from '../../utils/type-guards.js';
 

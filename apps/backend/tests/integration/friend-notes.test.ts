@@ -112,7 +112,10 @@ describe('Friend Notes API - Integration', () => {
       encounter_id: '00000000-0000-4000-8000-000000000000',
     });
     expect(res.status).toBe(404);
-    expect(await res.json()).toMatchObject({ error: 'Encounter not found' });
+    expect(await res.json()).toMatchObject({
+      error: 'Encounter not found: 00000000-0000-4000-8000-000000000000',
+      code: 'NOT_FOUND',
+    });
   });
 
   it("returns 404 for another user's friend as the source", async () => {
@@ -126,7 +129,7 @@ describe('Friend Notes API - Integration', () => {
       source_friend_id: foreignFriendId,
     });
     expect(res.status).toBe(404);
-    expect(await res.json()).toMatchObject({ error: 'Source friend not found' });
+    expect(await res.json()).toMatchObject({ error: `Friend not found: ${foreignFriendId}` });
   });
 
   it('returns 404 when the superseded note belongs to another friend', async () => {
@@ -138,7 +141,9 @@ describe('Friend Notes API - Integration', () => {
       supersedes_note_id: otherFriendsNote.id,
     });
     expect(res.status).toBe(404);
-    expect(await res.json()).toMatchObject({ error: 'Superseded note not found' });
+    expect(await res.json()).toMatchObject({
+      error: `Superseded note not found: ${otherFriendsNote.id}`,
+    });
   });
 
   it('returns 409 when a note already has a newer version', async () => {

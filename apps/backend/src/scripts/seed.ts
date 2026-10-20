@@ -13,8 +13,8 @@ import pg from 'pg';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { type Config, loadConfig } from '../config.js';
+import { DataIntegrityError } from '../errors/data-integrity.error.js';
 import { formatDateOnly } from '../utils/date.js';
-import { DataIntegrityError } from '../utils/errors.js';
 
 const SALT_ROUNDS = 10;
 async function hashPassword(password: string): Promise<string> {

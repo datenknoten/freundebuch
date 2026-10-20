@@ -1,7 +1,8 @@
 import { PHOTO_VALIDATION_ERRORS } from '@freundebuch/shared/index.js';
 import pino from 'pino';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PhotoService, PhotoUploadError } from '../../src/services/photo.service.js';
+import { PhotoUploadError } from '../../src/errors/photo-upload.error.js';
+import { PhotoService } from '../../src/services/photo.service.js';
 
 // Valid UUID v4 for tests
 const VALID_FRIEND_ID = '550e8400-e29b-41d4-a716-446655440000';

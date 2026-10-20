@@ -5,9 +5,10 @@ import { mcp } from 'better-auth/plugins';
 import pg from 'pg';
 import type { Logger } from 'pino';
 import type { Config } from '../config.js';
+import { LegacyUserAllocationError } from '../errors/legacy-user-allocation.error.js';
 import { createMailer, isMailConfigured, type MailConfig } from '../services/mailer.js';
 import type { PoolOptions } from '../utils/db.js';
-import { toError } from '../utils/errors.js';
+import { toError } from '../utils/to-error.js';
 
 /** The config keys Better Auth reads; the MCP server supplies the same set. */
 export type AuthConfig = MailConfig &
@@ -379,7 +380,7 @@ export function createAuth(options: AuthOptions) {
               'INSERT INTO auth.users DEFAULT VALUES RETURNING external_id',
             );
             if (!row) {
-              throw new Error('Failed to allocate legacy user row');
+              throw new LegacyUserAllocationError();
             }
             return { data: { id: row.external_id } };
           },

@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from 'node:crypto';
 import type pg from 'pg';
 import type { Logger } from 'pino';
-import { ConfigurationError } from './errors.js';
+import { CredentialDecryptError } from '../errors/credential-decrypt.error.js';
 
 /**
  * Encryption of third-party credentials at rest.
@@ -86,9 +86,7 @@ export function decrypt(value: string, context: string, key: Buffer): string {
   const parts = value.slice(ENVELOPE_PREFIX_V2.length).split(':');
   const [iv, authTag, ciphertext] = parts;
   if (parts.length !== 3 || iv === undefined || authTag === undefined || ciphertext === undefined) {
-    throw new ConfigurationError('Malformed encrypted credential envelope', {
-      code: 'CREDENTIAL_DECRYPT_FAILED',
-    });
+    throw new CredentialDecryptError('Malformed encrypted credential envelope');
   }
 
   try {
@@ -105,9 +103,8 @@ export function decrypt(value: string, context: string, key: Buffer): string {
     ]);
     return plain.toString('utf8');
   } catch {
-    throw new ConfigurationError(
+    throw new CredentialDecryptError(
       'Stored credential could not be decrypted; re-enter the channel credentials',
-      { code: 'CREDENTIAL_DECRYPT_FAILED' },
     );
   }
 }

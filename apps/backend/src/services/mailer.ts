@@ -1,6 +1,6 @@
+import { ConfigurationError } from '@datenknoten/kit';
 import type { Logger } from 'pino';
 import type { Config } from '../config.js';
-import { ConfigurationError } from '../utils/errors.js';
 
 /**
  * Outbound mail over SMTP.

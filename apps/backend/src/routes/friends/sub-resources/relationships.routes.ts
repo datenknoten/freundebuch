@@ -1,17 +1,15 @@
+import { ValidationError } from '@datenknoten/kit';
 import {
   RelationshipCreateInputSchema,
   RelationshipUpdateInputSchema,
 } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
+import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import { PhotoService } from '../../../services/photo.service.js';
 import type { AppContext } from '../../../types/context.js';
-import {
-  FriendNotFoundError,
-  ResourceNotFoundError,
-  ValidationError,
-} from '../../../utils/errors.js';
 import { parseBody, requireUuidParam } from '../../../utils/http.js';
 
 const app = new Hono<AppContext>();
@@ -45,7 +43,7 @@ app.post('/', async (c) => {
   const relationship = await friendsService.addRelationship(user.userId, friendId, validated);
 
   if (!relationship) {
-    throw new FriendNotFoundError();
+    throw new FriendNotFoundError(friendId);
   }
 
   return c.json(relationship, 201);
@@ -75,7 +73,7 @@ app.put('/:relationshipId', async (c) => {
   );
 
   if (!relationship) {
-    throw new ResourceNotFoundError('Relationship');
+    throw new ResourceNotFoundError('Relationship', relationshipId);
   }
 
   return c.json(relationship);
@@ -99,7 +97,7 @@ app.delete('/:relationshipId', async (c) => {
   const deleted = await friendsService.deleteRelationship(user.userId, friendId, relationshipId);
 
   if (!deleted) {
-    throw new ResourceNotFoundError('Relationship');
+    throw new ResourceNotFoundError('Relationship', relationshipId);
   }
 
   return c.json({ message: 'Relationship deleted successfully' });

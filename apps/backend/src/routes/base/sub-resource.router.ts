@@ -1,9 +1,9 @@
+import type { AppError } from '@datenknoten/kit';
 import type { Type } from 'arktype';
 import { type Context, Hono } from 'hono';
+import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../middleware/auth.js';
 import type { AppContext } from '../../types/context.js';
-import type { AppError } from '../../utils/errors.js';
-import { ResourceNotFoundError } from '../../utils/errors.js';
 import { parseBody, parseRawObject, requireUuidParam, validate } from '../../utils/http.js';
 
 /**
@@ -41,8 +41,10 @@ export interface SubResourceRouterConfig<TSchema extends Type, TOutput> {
    * defaults work: the service receives the *validated* shape.
    */
   schema: TSchema;
-  /** Error to raise when the owner does not exist or is not the user's. */
-  ownerNotFound: () => AppError;
+  /** Error class raised with the owner id when the owner does not exist or is not the user's. */
+  ownerNotFound: new (
+    ownerId: string,
+  ) => AppError;
   service: (c: Context<AppContext>) => SubResourceOperations<TSchema['infer'], TOutput>;
   /**
    * Optional body rewrite before validation, for inputs the client cannot be
@@ -94,7 +96,7 @@ export function createSubResourceRouter<TSchema extends Type, TOutput>(
 
     const created = await config.service(c).add(user.userId, ownerId, input);
     if (created === null) {
-      throw config.ownerNotFound();
+      throw new config.ownerNotFound(ownerId);
     }
 
     return c.json(created, 201);
@@ -108,7 +110,7 @@ export function createSubResourceRouter<TSchema extends Type, TOutput>(
 
     const updated = await config.service(c).update(user.userId, ownerId, resourceId, input);
     if (updated === null) {
-      throw new ResourceNotFoundError(config.resourceLabel);
+      throw new ResourceNotFoundError(config.resourceLabel, resourceId);
     }
 
     return c.json(updated);
@@ -121,7 +123,7 @@ export function createSubResourceRouter<TSchema extends Type, TOutput>(
 
     const deleted = await config.service(c).delete(user.userId, ownerId, resourceId);
     if (deleted === null || deleted === false) {
-      throw new ResourceNotFoundError(config.resourceLabel);
+      throw new ResourceNotFoundError(config.resourceLabel, resourceId);
     }
 
     return c.json({ message: `${config.resourceLabel} deleted successfully` });

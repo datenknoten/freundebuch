@@ -1,10 +1,11 @@
 import { MetInfoInputSchema } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
+import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
 import { PhotoService } from '../../../services/photo.service.js';
 import type { AppContext } from '../../../types/context.js';
-import { FriendNotFoundError, ResourceNotFoundError } from '../../../utils/errors.js';
 import { parseBody, requireUuidParam } from '../../../utils/http.js';
 
 const app = new Hono<AppContext>();
@@ -27,7 +28,7 @@ app.put('/', async (c) => {
   const metInfo = await friendsService.setMetInfo(user.userId, friendId, validated);
 
   if (!metInfo) {
-    throw new FriendNotFoundError();
+    throw new FriendNotFoundError(friendId);
   }
 
   return c.json(metInfo);
@@ -50,7 +51,7 @@ app.delete('/', async (c) => {
   const deleted = await friendsService.deleteMetInfo(user.userId, friendId);
 
   if (!deleted) {
-    throw new ResourceNotFoundError('Met info');
+    throw new ResourceNotFoundError('Met info', friendId);
   }
 
   return c.json({ message: 'Met info deleted successfully' });

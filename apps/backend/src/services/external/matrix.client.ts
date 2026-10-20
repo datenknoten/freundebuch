@@ -1,5 +1,6 @@
 import dns from 'node:dns';
-import { NotificationDeliveryError, ValidationError } from '../../utils/errors.js';
+import { ValidationError } from '@datenknoten/kit';
+import { NotificationDeliveryError } from '../../errors/notification-delivery.error.js';
 import { isPrivateAddress } from '../../utils/security.js';
 
 /**

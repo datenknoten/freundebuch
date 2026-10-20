@@ -4,7 +4,8 @@ import path from 'node:path';
 import pino from 'pino';
 import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { PhotoService, PhotoUploadError } from '../../src/services/photo.service.js';
+import { PhotoUploadError } from '../../src/errors/photo-upload.error.js';
+import { PhotoService } from '../../src/services/photo.service.js';
 
 /**
  * Real sharp, real filesystem: the sibling suite mocks both, so it cannot see

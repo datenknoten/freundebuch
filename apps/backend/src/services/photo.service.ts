@@ -11,7 +11,7 @@ import { type } from 'arktype';
 import type { Logger } from 'pino';
 import sharp, { type Sharp } from 'sharp';
 import type { Config } from '../config.js';
-import { AppError } from '../utils/errors.js';
+import { PhotoUploadError } from '../errors/photo-upload.error.js';
 import { isPathWithinBase, isValidUuid } from '../utils/security.js';
 import { isNodeError } from '../utils/type-guards.js';
 
@@ -213,13 +213,5 @@ export class PhotoService {
       default:
         return 'jpeg';
     }
-  }
-}
-
-export class PhotoUploadError extends AppError {
-  readonly statusCode = 400;
-
-  constructor(message: string, errorCode: string) {
-    super(message, { code: errorCode });
   }
 }

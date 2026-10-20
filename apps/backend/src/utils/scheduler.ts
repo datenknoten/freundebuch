@@ -15,8 +15,8 @@ import {
 } from '../models/queries/notification-channels.queries.js';
 import { deleteOrphanLegacyUsers } from '../models/queries/users.queries.js';
 import { dispatchNotification } from '../services/external/notification-dispatcher.js';
-import { toError } from './errors.js';
 import { formatNotificationMessage } from './notification-messages.js';
+import { toError } from './to-error.js';
 
 /**
  * Setup scheduled cleanup tasks for expired tokens and sessions

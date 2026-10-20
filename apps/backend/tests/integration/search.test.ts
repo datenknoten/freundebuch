@@ -1177,6 +1177,7 @@ describe('Search API - Integration Tests', () => {
         expect(response.status).toBe(400);
         expect(await response.json()).toEqual({
           error: 'Invalid relationship_category: enemies',
+          code: 'VALIDATION_ERROR',
           details: { relationship_category: ['enemies'] },
         });
       });

@@ -1,7 +1,7 @@
 // Generated from one config by createSubResourceRouter.
 import { UrlInputSchema } from '@freundebuch/shared/index.js';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
 import { UrlService } from '../../../services/friends/index.js';
-import { FriendNotFoundError } from '../../../utils/errors.js';
 import { createSubResourceRouter } from '../../base/sub-resource.router.js';
 
 export default createSubResourceRouter({
@@ -10,6 +10,6 @@ export default createSubResourceRouter({
   resourceParam: 'urlId',
   resourceLabel: 'Url',
   schema: UrlInputSchema,
-  ownerNotFound: () => new FriendNotFoundError(),
+  ownerNotFound: FriendNotFoundError,
   service: (c) => new UrlService({ db: c.get('db'), logger: c.get('logger') }),
 });

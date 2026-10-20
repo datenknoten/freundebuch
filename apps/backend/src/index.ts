@@ -11,9 +11,9 @@ import {
   encryptLegacyNotificationCredentials,
 } from './utils/credentials-crypto.js';
 import { createPool, setupGracefulShutdown } from './utils/db.js';
-import { toError } from './utils/errors.js';
 import { LOG_REDACT_PATHS } from './utils/logger.js';
 import { setupCleanupScheduler, setupNotificationScheduler } from './utils/scheduler.js';
+import { toError } from './utils/to-error.js';
 
 const PRETTY_TRANSPORT = {
   target: 'pino-pretty',

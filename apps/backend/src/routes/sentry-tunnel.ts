@@ -1,10 +1,10 @@
-import * as Sentry from '@sentry/node';
+import { ValidationError } from '@datenknoten/kit';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { ExternalServiceError } from '../errors/external-service.error.js';
 import { sentryTunnelRateLimitMiddleware } from '../middleware/rate-limit.js';
 import type { AppContext } from '../types/context.js';
-import { toError } from '../utils/errors.js';
 
 const sentryTunnelRoutes = new Hono<AppContext>();
 
@@ -44,75 +44,65 @@ sentryTunnelRoutes.post(
   }),
   async (c) => {
     const logger = c.get('logger');
+    const envelope = await c.req.text();
+    const [headerLine = ''] = envelope.split('\n');
 
+    let header: { dsn?: string };
     try {
-      const envelope = await c.req.text();
+      header = JSON.parse(headerLine);
+    } catch {
+      throw new ValidationError('Invalid envelope header');
+    }
 
-      // Parse the envelope header to extract the DSN
-      const pieces = envelope.split('\n');
-      if (pieces.length === 0) {
-        return c.json({ error: 'Invalid envelope format' }, 400);
-      }
+    if (!header.dsn || typeof header.dsn !== 'string') {
+      throw new ValidationError('Missing or invalid DSN');
+    }
 
-      let header: { dsn?: string };
-      try {
-        header = JSON.parse(pieces[0] ?? '');
-      } catch {
-        return c.json({ error: 'Invalid envelope header' }, 400);
-      }
+    let dsn: URL;
+    try {
+      dsn = new URL(header.dsn);
+    } catch {
+      throw new ValidationError('Invalid DSN URL');
+    }
 
-      if (!header.dsn || typeof header.dsn !== 'string') {
-        return c.json({ error: 'Missing or invalid DSN' }, 400);
-      }
+    // SECURITY: Validate that the DSN host is an allowed Sentry domain
+    // This prevents SSRF attacks where an attacker could make the server
+    // send requests to arbitrary URLs
+    if (!isAllowedSentryHost(dsn.host)) {
+      logger.warn({ host: dsn.host }, 'Rejected Sentry tunnel request to non-allowed host');
+      throw new ValidationError('Invalid Sentry host');
+    }
 
-      let dsn: URL;
-      try {
-        dsn = new URL(header.dsn);
-      } catch {
-        return c.json({ error: 'Invalid DSN URL' }, 400);
-      }
+    const projectId = dsn.pathname.replace('/', '');
+    if (!projectId || !/^\d+$/.test(projectId)) {
+      throw new ValidationError('Invalid project ID');
+    }
 
-      // SECURITY: Validate that the DSN host is an allowed Sentry domain
-      // This prevents SSRF attacks where an attacker could make the server
-      // send requests to arbitrary URLs
-      if (!isAllowedSentryHost(dsn.host)) {
-        logger.warn({ host: dsn.host }, 'Rejected Sentry tunnel request to non-allowed host');
-        return c.json({ error: 'Invalid Sentry host' }, 400);
-      }
+    const sentryIngestUrl = `https://${dsn.host}/api/${projectId}/envelope/`;
 
-      // Construct the Sentry ingest URL
-      const projectId = dsn.pathname.replace('/', '');
-      if (!projectId || !/^\d+$/.test(projectId)) {
-        return c.json({ error: 'Invalid project ID' }, 400);
-      }
-
-      const sentryIngestUrl = `https://${dsn.host}/api/${projectId}/envelope/`;
-
-      // Forward the request to Sentry
-      const response = await fetch(sentryIngestUrl, {
+    let response: Response;
+    try {
+      response = await fetch(sentryIngestUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-sentry-envelope',
         },
         body: envelope,
       });
-
-      if (response.ok) {
-        return c.json({ success: true }, 200);
-      }
-
-      // Pass an upstream 4xx through as-is (preserving e.g. 429 rate limiting),
-      // and collapse upstream 5xx to 502 (a bad-gateway from our perspective).
-      logger.warn({ upstreamStatus: response.status }, 'Sentry upstream rejected envelope');
-      const status: ContentfulStatusCode =
-        response.status >= 500 ? 502 : (response.status as ContentfulStatusCode);
-      return c.json({ success: false, error: 'Sentry rejected the envelope' }, status);
-    } catch (error) {
-      const err = toError(error);
-      logger.error({ err }, 'Sentry tunnel error');
-      Sentry.captureException(err);
-      return c.json({ error: 'Failed to tunnel Sentry request' }, 500);
+    } catch {
+      throw new ExternalServiceError('Sentry', 'Failed to tunnel Sentry request');
     }
+
+    if (response.ok) {
+      return c.json({ success: true }, 200);
+    }
+
+    // Pass an upstream 4xx through as-is (preserving e.g. 429 rate limiting),
+    // and collapse upstream 5xx to 502 (a bad-gateway from our perspective).
+    logger.warn({ upstreamStatus: response.status }, 'Sentry upstream rejected envelope');
+    const status: ContentfulStatusCode =
+      response.status >= 500 ? 502 : (response.status as ContentfulStatusCode);
+    return c.json({ success: false, error: 'Sentry rejected the envelope' }, status);
   },
 );
 

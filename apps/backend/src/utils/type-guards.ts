@@ -20,8 +20,8 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import type { RateLimiterRes } from 'rate-limiter-flexible';
+import { DataIntegrityError } from '../errors/data-integrity.error.js';
 import type { Json } from '../models/queries/users.queries.js';
-import { DataIntegrityError } from './errors.js';
 
 // ============================================================================
 // Type Guards

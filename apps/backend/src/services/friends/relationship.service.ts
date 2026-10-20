@@ -1,3 +1,4 @@
+import { ConflictError } from '@datenknoten/kit';
 import type {
   FriendSearchResultResponse,
   RelationshipCreateInput,
@@ -20,7 +21,6 @@ import {
   updateRelationship,
 } from '../../models/queries/friend-relationships.queries.js';
 import { withTransaction } from '../../utils/db.js';
-import { ConflictError } from '../../utils/errors.js';
 import { rethrowUniqueViolation } from '../../utils/pg-errors.js';
 import { parseRelationshipCategory, parseRelationshipTypeId } from '../../utils/type-guards.js';
 import { createWildcardQuery } from './search.service.js';

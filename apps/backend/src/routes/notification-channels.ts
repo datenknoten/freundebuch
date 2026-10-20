@@ -1,3 +1,4 @@
+import { ValidationError } from '@datenknoten/kit';
 import {
   DiscordCredentialsSchema,
   DiscordCredentialsUpdateSchema,
@@ -11,6 +12,7 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
+import { NotificationChannelNotFoundError } from '../errors/notification-channel-not-found.error.js';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
 import {
@@ -20,7 +22,6 @@ import {
 import { NotificationChannelsService } from '../services/notification-channels.service.js';
 import type { AppContext } from '../types/context.js';
 import { deriveCredentialsKey } from '../utils/credentials-crypto.js';
-import { NotificationChannelNotFoundError, ValidationError } from '../utils/errors.js';
 import { parseBody, requireUuidParam } from '../utils/http.js';
 
 const app = new Hono<AppContext>();
@@ -207,7 +208,7 @@ app.delete('/:channelId', async (c) => {
   const deleted = await service.deleteChannel(user.userId, channelId);
 
   if (!deleted) {
-    throw new NotificationChannelNotFoundError();
+    throw new NotificationChannelNotFoundError(channelId);
   }
 
   return c.json({ success: true });

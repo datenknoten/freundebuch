@@ -1,3 +1,4 @@
+import { ValidationError } from '@datenknoten/kit';
 import {
   EncounterCreateInputSchema,
   EncounterListQuerySchema,
@@ -6,12 +7,12 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
+import { EncounterNotFoundError } from '../errors/encounter-not-found.error.js';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { encountersRateLimitMiddleware } from '../middleware/rate-limit.js';
 import { EncountersService } from '../services/encounters.service.js';
 import type { AppContext } from '../types/context.js';
-import { EncounterNotFoundError, ValidationError } from '../utils/errors.js';
 import { parseBody, requireUuidParam } from '../utils/http.js';
 
 const app = new Hono<AppContext>();
@@ -79,7 +80,7 @@ app.get('/:id', async (c) => {
   const encounter = await encountersService.getEncounterById(user.userId, encounterId);
 
   if (!encounter) {
-    throw new EncounterNotFoundError();
+    throw new EncounterNotFoundError(encounterId);
   }
 
   return c.json(encounter);
@@ -99,7 +100,7 @@ app.put('/:id', async (c) => {
   const encounter = await encountersService.updateEncounter(user.userId, encounterId, validated);
 
   if (!encounter) {
-    throw new EncounterNotFoundError();
+    throw new EncounterNotFoundError(encounterId);
   }
 
   return c.json(encounter);
@@ -118,7 +119,7 @@ app.delete('/:id', async (c) => {
   const deleted = await encountersService.deleteEncounter(user.userId, encounterId);
 
   if (!deleted) {
-    throw new EncounterNotFoundError();
+    throw new EncounterNotFoundError(encounterId);
   }
 
   return c.json({ success: true });

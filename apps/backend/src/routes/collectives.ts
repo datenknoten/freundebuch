@@ -1,3 +1,4 @@
+import { ValidationError } from '@datenknoten/kit';
 import {
   CollectiveCreateInputSchema,
   CollectiveListQuerySchema,
@@ -10,6 +11,9 @@ import {
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
+import { CollectiveNotFoundError } from '../errors/collective-not-found.error.js';
+import { MembershipNotFoundError } from '../errors/membership-not-found.error.js';
+import { ResourceNotFoundError } from '../errors/resource-not-found.error.js';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
 import { collectivesRateLimitMiddleware } from '../middleware/rate-limit.js';
@@ -19,12 +23,6 @@ import {
   MembershipsService,
 } from '../services/collectives/index.js';
 import type { AppContext } from '../types/context.js';
-import {
-  CollectiveNotFoundError,
-  MembershipNotFoundError,
-  ResourceNotFoundError,
-  ValidationError,
-} from '../utils/errors.js';
 import { parseBody, requireUuidParam } from '../utils/http.js';
 
 // Sub-resource routes
@@ -75,7 +73,7 @@ app.get('/types/:id', async (c) => {
   const collectiveType = await typesService.getTypeById(user.userId, typeId);
 
   if (!collectiveType) {
-    throw new ResourceNotFoundError('Collective type');
+    throw new ResourceNotFoundError('Collective type', typeId);
   }
 
   return c.json(collectiveType);
@@ -137,7 +135,7 @@ app.get('/:id', async (c) => {
   const collective = await collectivesService.getCollectiveById(user.userId, collectiveId);
 
   if (!collective) {
-    throw new CollectiveNotFoundError();
+    throw new CollectiveNotFoundError(collectiveId);
   }
 
   return c.json(collective);
@@ -176,7 +174,7 @@ app.delete('/:id', async (c) => {
   const deleted = await collectivesService.deleteCollective(user.userId, collectiveId);
 
   if (!deleted) {
-    throw new CollectiveNotFoundError();
+    throw new CollectiveNotFoundError(collectiveId);
   }
 
   return c.json({ success: true });
@@ -236,7 +234,7 @@ app.delete('/:id/members/:memberId', async (c) => {
   const deleted = await membershipsService.removeMember(user.userId, collectiveId, memberId);
 
   if (!deleted) {
-    throw new MembershipNotFoundError();
+    throw new MembershipNotFoundError(memberId);
   }
 
   return c.json({ success: true });

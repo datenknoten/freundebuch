@@ -11,6 +11,8 @@ import type {
   ContactCollectiveSummaryResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
+import { CollectiveCreationError } from '../../errors/collective-creation.error.js';
+import { CollectiveNotFoundError } from '../../errors/collective-not-found.error.js';
 import { mapMember, mapRole } from '../../models/mappers/collectives.mappers.js';
 import {
   countCollectivesByUserId,
@@ -30,7 +32,6 @@ import {
   type IGetRolesForTypeResult,
   updateCollective,
 } from '../../models/queries/collectives.queries.js';
-import { CollectiveCreationError, CollectiveNotFoundError } from '../../utils/errors.js';
 
 const PREVIEW_MEMBER_LIMIT = 3;
 
@@ -236,13 +237,13 @@ export class CollectivesService {
     );
 
     if (results.length === 0) {
-      throw new CollectiveNotFoundError();
+      throw new CollectiveNotFoundError(collectiveExternalId);
     }
 
     // Fetch the full collective
     const collective = await this.getCollectiveById(userExternalId, collectiveExternalId);
     if (!collective) {
-      throw new CollectiveNotFoundError();
+      throw new CollectiveNotFoundError(collectiveExternalId);
     }
 
     return collective;

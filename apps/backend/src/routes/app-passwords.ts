@@ -1,5 +1,6 @@
 import { AppPasswordCreateInputSchema } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
+import { AppPasswordNotFoundError } from '../errors/app-password-not-found.error.js';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
 import {
@@ -8,7 +9,6 @@ import {
   type AppPasswordWithSecret,
 } from '../services/app-passwords.service.js';
 import type { AppContext } from '../types/context.js';
-import { AppPasswordNotFoundError } from '../utils/errors.js';
 import { parseBody, requireUuidParam } from '../utils/http.js';
 
 const app = new Hono<AppContext>();
@@ -66,7 +66,7 @@ app.delete('/:id', async (c) => {
   const success = await service.revokeAppPassword(authUser.userId, appPasswordId);
 
   if (!success) {
-    throw new AppPasswordNotFoundError();
+    throw new AppPasswordNotFoundError(appPasswordId);
   }
 
   return c.json({ success: true });

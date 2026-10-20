@@ -1,3 +1,4 @@
+import { ConflictError, ValidationError } from '@datenknoten/kit';
 import type {
   EncounterType,
   FriendNoteInput,
@@ -5,6 +6,9 @@ import type {
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { EncounterNotFoundError } from '../../../errors/encounter-not-found.error.js';
+import { FriendNotFoundError } from '../../../errors/friend-not-found.error.js';
+import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import { getEncounterInternalId } from '../../../models/queries/encounters.queries.js';
 import {
   createFriendNote,
@@ -17,13 +21,6 @@ import {
 import { getFriendInternalId } from '../../../models/queries/friends.queries.js';
 import { formatDateOnly } from '../../../utils/date.js';
 import { withTransaction } from '../../../utils/db.js';
-import {
-  ConflictError,
-  EncounterNotFoundError,
-  FriendNotFoundError,
-  ResourceNotFoundError,
-  ValidationError,
-} from '../../../utils/errors.js';
 import { rethrowUniqueViolation } from '../../../utils/pg-errors.js';
 import type { SubResourceServiceOptions } from '../../base/sub-resource.service.js';
 
@@ -96,7 +93,7 @@ export class FriendNotesService {
       }
       const [createdNote] = created;
       if (createdNote === undefined) {
-        throw new FriendNotFoundError();
+        throw new FriendNotFoundError(friendExternalId);
       }
 
       return this.readNote(client, userExternalId, friendExternalId, createdNote.external_id);
@@ -121,7 +118,7 @@ export class FriendNotesService {
         client,
       );
       if (note === undefined) {
-        throw new ResourceNotFoundError('Note');
+        throw new ResourceNotFoundError('Note', noteExternalId);
       }
       const refs = await this.resolveRefs(client, userExternalId, friendExternalId, input, {
         externalId: noteExternalId,
@@ -138,7 +135,7 @@ export class FriendNotesService {
         this.rethrowSupersedeConflict(error);
       }
       if (updated.length === 0) {
-        throw new ResourceNotFoundError('Note');
+        throw new ResourceNotFoundError('Note', noteExternalId);
       }
 
       return this.readNote(client, userExternalId, friendExternalId, noteExternalId);
@@ -160,7 +157,7 @@ export class FriendNotesService {
       this.db,
     );
     if (deleted.length === 0) {
-      throw new ResourceNotFoundError('Note');
+      throw new ResourceNotFoundError('Note', noteExternalId);
     }
   }
 
@@ -168,11 +165,10 @@ export class FriendNotesService {
     client: pg.Pool | pg.PoolClient,
     userExternalId: string,
     friendExternalId: string,
-    notFound: () => Error = () => new FriendNotFoundError(),
   ): Promise<number> {
     const [friend] = await getFriendInternalId.run({ userExternalId, friendExternalId }, client);
     if (friend === undefined) {
-      throw notFound();
+      throw new FriendNotFoundError(friendExternalId);
     }
     return friend.id;
   }
@@ -197,7 +193,7 @@ export class FriendNotesService {
         client,
       );
       if (encounter === undefined) {
-        throw new EncounterNotFoundError();
+        throw new EncounterNotFoundError(input.encounter_id);
       }
       encounterId = encounter.id;
     }
@@ -207,12 +203,7 @@ export class FriendNotesService {
       if (input.source_friend_id === friendExternalId) {
         throw new ValidationError('A note cannot name its own friend as the source');
       }
-      sourceFriendId = await this.resolveFriendId(
-        client,
-        userExternalId,
-        input.source_friend_id,
-        () => new FriendNotFoundError('Source friend not found'),
-      );
+      sourceFriendId = await this.resolveFriendId(client, userExternalId, input.source_friend_id);
     }
 
     let supersedesNoteId: number | null = null;
@@ -225,7 +216,7 @@ export class FriendNotesService {
         client,
       );
       if (target === undefined) {
-        throw new ResourceNotFoundError('Superseded note');
+        throw new ResourceNotFoundError('Superseded note', input.supersedes_note_id);
       }
       if (current !== null && target.id > current.id) {
         throw new ValidationError('A note can only supersede an older note');
@@ -254,7 +245,7 @@ export class FriendNotesService {
       client,
     );
     if (row === undefined) {
-      throw new ResourceNotFoundError('Note');
+      throw new ResourceNotFoundError('Note', noteExternalId);
     }
     return this.mapRow(row);
   }

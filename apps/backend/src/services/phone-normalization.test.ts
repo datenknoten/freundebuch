@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 import { describe, expect, it } from 'vitest';
+import { PhoneCountryUnknownError } from '../errors/phone-country-unknown.error.js';
 import type { AppContext } from '../types/context.js';
-import { PhoneCountryUnknownError } from '../utils/errors.js';
 import { normalizePhoneBody } from './phone-normalization.js';
 
 function contextWithLanguage(acceptLanguage?: string): Context<AppContext> {

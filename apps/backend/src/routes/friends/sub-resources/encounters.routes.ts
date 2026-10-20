@@ -1,10 +1,11 @@
+import { ValidationError } from '@datenknoten/kit';
 import { EncounterListQuerySchema, parseEncounterListQuery } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
+import { ResourceNotFoundError } from '../../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { EncountersService } from '../../../services/encounters.service.js';
 import type { AppContext } from '../../../types/context.js';
-import { ResourceNotFoundError, ValidationError } from '../../../utils/errors.js';
 import { requireUuidParam } from '../../../utils/http.js';
 
 const app = new Hono<AppContext>();
@@ -47,7 +48,7 @@ app.get('/last', async (c) => {
   const lastEncounter = await encountersService.getLastEncounterForFriend(user.userId, friendId);
 
   if (!lastEncounter) {
-    throw new ResourceNotFoundError('Encounters');
+    throw new ResourceNotFoundError('Encounters', friendId);
   }
 
   return c.json(lastEncounter);

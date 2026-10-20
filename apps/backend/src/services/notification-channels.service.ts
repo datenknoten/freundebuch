@@ -1,5 +1,9 @@
 import type { NotificationChannelResponse } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
+import { NotificationChannelAlreadyExistsError } from '../errors/notification-channel-already-exists.error.js';
+import { NotificationChannelNotFoundError } from '../errors/notification-channel-not-found.error.js';
+import { NotificationDeliveryError } from '../errors/notification-delivery.error.js';
+import { UserNotFoundError } from '../errors/user-not-found.error.js';
 import {
   createChannel,
   deleteChannel,
@@ -16,11 +20,6 @@ import {
   encryptOptional,
   tryDecrypt,
 } from '../utils/credentials-crypto.js';
-import {
-  NotificationChannelAlreadyExistsError,
-  NotificationChannelNotFoundError,
-  NotificationDeliveryError,
-} from '../utils/errors.js';
 import { rethrowUniqueViolation } from '../utils/pg-errors.js';
 import { sendDiscordMessage } from './external/discord.client.js';
 import { sendMatrixMessage } from './external/matrix.client.js';
@@ -67,7 +66,7 @@ export class NotificationChannelsService {
     );
     const [row] = results;
     if (row === undefined) {
-      throw new NotificationChannelNotFoundError();
+      throw new NotificationChannelNotFoundError(channelExternalId);
     }
     return this.mapChannel(userExternalId, row);
   }
@@ -117,7 +116,7 @@ export class NotificationChannelsService {
 
       const [row] = results;
       if (row === undefined) {
-        throw new NotificationChannelNotFoundError('Failed to create notification channel');
+        throw new UserNotFoundError(userExternalId);
       }
 
       return this.mapChannel(userExternalId, row);
@@ -173,7 +172,7 @@ export class NotificationChannelsService {
 
     const [row] = results;
     if (row === undefined) {
-      throw new NotificationChannelNotFoundError();
+      throw new NotificationChannelNotFoundError(channelExternalId);
     }
 
     return this.mapChannel(userExternalId, row);
@@ -208,7 +207,7 @@ export class NotificationChannelsService {
     );
     const [channel] = results;
     if (channel === undefined) {
-      throw new NotificationChannelNotFoundError();
+      throw new NotificationChannelNotFoundError(channelExternalId);
     }
 
     const testMessage = 'Freundebuch - Test notification. Your channel is configured correctly!';

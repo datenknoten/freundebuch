@@ -22,6 +22,7 @@ import type {
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { FriendCreationError } from '../../errors/friend-creation.error.js';
 import {
   archiveFriend,
   createFriend,
@@ -48,7 +49,6 @@ import {
   parseSocialProfilesJson,
   parseUrlsJson,
 } from '../../utils/db-json-schemas.js';
-import { FriendCreationError } from '../../utils/errors.js';
 import {
   parseAddressType,
   parseDateType,

@@ -1,6 +1,6 @@
 import type { Context, Next } from 'hono';
+import { AuthenticationError } from '../errors/authentication.error.js';
 import type { AppContext } from '../types/context.js';
-import { AuthenticationError } from '../utils/errors.js';
 
 export interface AuthContext {
   /**

@@ -1,3 +1,4 @@
+import { ValidationError } from '@datenknoten/kit';
 import {
   ArchiveFriendInputSchema,
   MAX_FILE_SIZE,
@@ -6,12 +7,13 @@ import {
 } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import { FriendNotFoundError } from '../../errors/friend-not-found.error.js';
+import { ResourceNotFoundError } from '../../errors/resource-not-found.error.js';
 import { getAuthUser } from '../../middleware/auth.js';
 import { CirclesService } from '../../services/circles.service.js';
 import { FriendsService } from '../../services/friends/index.js';
 import { PhotoService } from '../../services/photo.service.js';
 import type { AppContext } from '../../types/context.js';
-import { FriendNotFoundError, ResourceNotFoundError, ValidationError } from '../../utils/errors.js';
 import { parseBody, requireUuidParam, validate } from '../../utils/http.js';
 
 const app = new Hono<AppContext>();
@@ -56,7 +58,7 @@ app.post(
     const friend = await friendsService.getFriendById(user.userId, friendId);
 
     if (!friend) {
-      throw new FriendNotFoundError();
+      throw new FriendNotFoundError(friendId);
     }
 
     // Upload photo
@@ -106,7 +108,7 @@ app.delete('/:id/photo', async (c) => {
   const friend = await friendsService.getFriendById(user.userId, friendId);
 
   if (!friend) {
-    throw new FriendNotFoundError();
+    throw new FriendNotFoundError(friendId);
   }
 
   // Delete photo files
@@ -172,7 +174,7 @@ app.post('/:id/circles/:circleId', async (c) => {
   const circle = await circlesService.addFriendToCircle(user.userId, friendId, circleId);
 
   if (!circle) {
-    throw new ResourceNotFoundError('Friend or circle');
+    throw new ResourceNotFoundError('Friend or circle', `${friendId}/${circleId}`);
   }
 
   return c.json(circle, 201);
@@ -192,7 +194,7 @@ app.delete('/:id/circles/:circleId', async (c) => {
   const removed = await circlesService.removeFriendFromCircle(user.userId, friendId, circleId);
 
   if (!removed) {
-    throw new ResourceNotFoundError('Friend-circle assignment');
+    throw new ResourceNotFoundError('Friend-circle assignment', `${friendId}/${circleId}`);
   }
 
   return c.json({ message: 'Friend removed from circle successfully' });
@@ -220,7 +222,7 @@ app.post('/:id/favorite', async (c) => {
   const isFavorite = await friendsService.toggleFavorite(user.userId, friendId);
 
   if (isFavorite === null) {
-    throw new FriendNotFoundError();
+    throw new FriendNotFoundError(friendId);
   }
 
   return c.json({ is_favorite: isFavorite });
@@ -258,7 +260,7 @@ app.post('/:id/archive', async (c) => {
   const archived = await friendsService.archiveFriend(user.userId, friendId, validated.reason);
 
   if (!archived) {
-    throw new FriendNotFoundError('Friend not found or already archived');
+    throw new FriendNotFoundError(friendId);
   }
 
   return c.json({ message: 'Friend archived successfully' });
@@ -282,7 +284,7 @@ app.post('/:id/unarchive', async (c) => {
   const unarchived = await friendsService.unarchiveFriend(user.userId, friendId);
 
   if (!unarchived) {
-    throw new FriendNotFoundError('Friend not found or not archived');
+    throw new FriendNotFoundError(friendId);
   }
 
   return c.json({ message: 'Friend unarchived successfully' });

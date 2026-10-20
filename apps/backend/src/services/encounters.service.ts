@@ -10,6 +10,7 @@ import type {
   LastEncounterSummaryResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
+import { EncounterCreationError } from '../errors/encounter-creation.error.js';
 import {
   clearEncounterFriends,
   type ISetEncounterFriendsResult,
@@ -30,7 +31,6 @@ import {
   updateEncounter,
 } from '../models/queries/encounters.queries.js';
 import { formatDateOnly } from '../utils/date.js';
-import { EncounterCreationError } from '../utils/errors.js';
 
 const PREVIEW_FRIEND_LIMIT = 3;
 

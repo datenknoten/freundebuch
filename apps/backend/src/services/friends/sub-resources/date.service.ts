@@ -5,6 +5,7 @@ import type {
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { BirthdayAlreadyExistsError } from '../../../errors/birthday-already-exists.error.js';
 import {
   countBirthdaysForFriend,
   createDate,
@@ -16,7 +17,6 @@ import {
   updateDate,
 } from '../../../models/queries/friend-dates.queries.js';
 import { formatDateOnly } from '../../../utils/date.js';
-import { BirthdayAlreadyExistsError } from '../../../utils/errors.js';
 import { parseDateType } from '../../../utils/type-guards.js';
 
 export interface DateServiceOptions {

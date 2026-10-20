@@ -1,7 +1,8 @@
+import { ConflictError } from '@datenknoten/kit';
 import type pg from 'pg';
 import type { Logger } from 'pino';
+import { NoRowWrittenError } from '../../errors/no-row-written.error.js';
 import { withTransaction } from '../../utils/db.js';
-import { ConflictError } from '../../utils/errors.js';
 import { rethrowUniqueViolation } from '../../utils/pg-errors.js';
 
 /**
@@ -17,14 +18,6 @@ const SINGLE_PRIMARY_INDEXES = [
   'idx_collective_emails_single_primary',
   'idx_collective_addresses_single_primary',
 ] as const;
-
-/**
- * Signals "the write matched no row" from inside a transaction so that the
- * transaction rolls back. Without it, the primary-flag clear for an unknown
- * owner or resource id gets committed and leaves the owner with zero primary
- * rows while the client still receives a 404.
- */
-class NoRowWrittenError extends Error {}
 
 /**
  * Configuration for a sub-resource service.

@@ -46,51 +46,45 @@ src/
 
 ## Error Handling
 
-**Always use custom error classes from `utils/errors.ts` instead of raw `Error`.**
+**Never throw a raw `Error`.** Every failure mode has a class that extends the
+`@datenknoten/kit` hierarchy (`AppError`, `ValidationError`, `NotFoundError`,
+`ConfigurationError`, and the HTTP ones `HttpError`, `UnauthorizedError`,
+`ForbiddenError`, `ConflictError`). Application classes live in `src/errors/`,
+one class per `<kebab-name>.error.ts` file, with no barrel: import the defining
+file.
 
-### Available Error Classes
+### Status mapping
 
-| Error Class | Status Code | Use Case |
-|-------------|-------------|----------|
-| `AuthenticationError` | 401 | Invalid credentials |
-| `UserNotFoundError` | 404 | User not found |
-| `FriendNotFoundError` | 404 | Friend not found |
-| `BirthdayAlreadyExistsError` | 409 | Duplicate birthday |
-| `FriendCreationError` | 500 | Friend creation failed |
-| `AppPasswordCreationError` | 500 | App password creation failed |
-| `DatabaseConnectionError` | 500 | No database connection |
-| `ConfigurationError` | 500 | Invalid configuration |
-| `OverpassApiError` | 502 | Overpass API errors |
+`handleError` from `@datenknoten/kit/http` derives the status from the class:
+
+| Base class | Status | Examples |
+|------------|--------|----------|
+| `ValidationError` | 400 | `PhoneCountryUnknownError`, `PhotoUploadError`, `InvalidSearchParametersError` |
+| `UnauthorizedError` | 401 | `AuthenticationError` |
+| `ForbiddenError` | 403 | `OnboardingRequiredError`, `SignupDisabledError` |
+| `NotFoundError` | 404 | `FriendNotFoundError(id)`, `ResourceNotFoundError(resource, id)` |
+| `ConflictError` | 409 | `CircleNameExistsError`, `DuplicateMembershipError` |
+| `HttpError` (own `statusCode`) | 429, 502 | `MaxAppPasswordsExceededError`, `ExternalServiceError`, `OverpassApiError` |
+| `AppError` | 500 | `FriendCreationError`, `DataIntegrityError`, `DatabaseConnectionError` |
 
 ### Usage Pattern
 
-Routes and services just **throw** the typed error — a single global
-`app.onError` handler in `src/index.ts` maps it to the right status and JSON
-body, logs it (warn for <500, error for >=500) and reports 5xx to Sentry.
-Don't write per-route `try/catch` + `isAppError` blocks; the only intentional
-try/catch in routes are for things like JSON parsing (use `parseBody` from
-`utils/http.ts`).
+Routes and services just **throw** the typed error — the global `app.onError`
+in `src/app.ts` calls `handleError`, which answers with the status and the flat
+JSON body and writes one log line (warn below 500, error from 500), and reports
+5xx to Sentry. Don't write per-route `try/catch`; a `try/catch` only converts a
+foreign failure (JSON parse, filesystem probe) into a typed error.
 
 ```typescript
-// In services or routes - just throw
-import { FriendNotFoundError } from '../utils/errors.js';
+import { FriendNotFoundError } from '../errors/friend-not-found.error.js';
 
 const friend = await friendsService.getFriendById(userId, friendId);
 if (!friend) {
-  throw new FriendNotFoundError();
+  throw new FriendNotFoundError(friendId);
 }
-// The global onError turns this into 404 { error: 'Friend not found' }.
+// The global onError turns this into
+// 404 { error: 'Friend not found: <friendId>', code: 'NOT_FOUND' }.
 ```
-
-`isAppError` still exists for the rare case you need to branch on it (e.g. the
-`onError` handler itself), but routes should not need it.
-
-### Why Custom Errors?
-
-- Type-safe error handling with `instanceof` checks
-- Consistent HTTP status codes via `statusCode` property
-- Better Sentry/logging integration
-- Improved debugging with proper stack traces
 
 ## Authentication
 
