@@ -1,7 +1,6 @@
 import { type } from 'arktype';
 import { EmailTypeSchema } from './email-type.js';
 
-/** Schema for creating/updating an email address */
 export const EmailInputSchema = type({
   email_address: 'string.email',
   email_type: EmailTypeSchema,

@@ -1,6 +1,6 @@
 import { type } from 'arktype';
 
-/** Friend search result for autocomplete */
+/** Autocomplete entry. */
 export const FriendSearchResultResponseSchema = type({
   id: 'string',
   displayName: 'string',

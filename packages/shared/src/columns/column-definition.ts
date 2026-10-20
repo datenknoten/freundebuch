@@ -22,7 +22,6 @@ export interface ColumnDefinition {
   id: ColumnId;
   /** English fallback label. UI should prefer i18n key `friends.columns.<id>` when available. */
   label: string;
-  /** i18n key for the column header */
   i18nKey: string;
   isSortable: boolean;
   defaultWidth?: string;
@@ -123,7 +122,10 @@ export const COLUMN_DEFINITIONS: Record<ColumnId, ColumnDefinition> = {
   },
 };
 
-/** Get ordered column definitions for the given column IDs */
-export function getColumnDefinitions(columnIds: ColumnId[]): ColumnDefinition[] {
-  return columnIds.map((id) => COLUMN_DEFINITIONS[id]);
+function toColumnDefinition(id: ColumnId) {
+  return COLUMN_DEFINITIONS[id];
+}
+
+export function getColumnDefinitions(columnIds: ColumnId[]) {
+  return columnIds.map(toColumnDefinition);
 }

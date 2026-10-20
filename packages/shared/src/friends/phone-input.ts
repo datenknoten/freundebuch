@@ -1,22 +1,21 @@
-import { type } from 'arktype';
+import { type Traversal, type } from 'arktype';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import { PhoneTypeSchema } from './phone-type.js';
 
+function checkPhoneNumber(value: string, ctx: Traversal) {
+  if (isValidPhoneNumber(value) === false) {
+    return ctx.mustBe('a valid phone number');
+  }
+  return true;
+}
+
 /**
- * A non-empty string that is a valid phone number.
- *
  * The validity check is narrowed onto the field itself (rather than the whole
  * object) so validation errors point at `phone_number` and quote only the
  * offending value instead of dumping the entire request body.
  */
-const PhoneNumberSchema = type('string > 0').narrow((value, ctx) => {
-  if (!isValidPhoneNumber(value)) {
-    return ctx.mustBe('a valid phone number');
-  }
-  return true;
-});
+const PhoneNumberSchema = type('string > 0').narrow(checkPhoneNumber);
 
-/** Schema for creating/updating a phone number */
 export const PhoneInputSchema = type({
   phone_number: PhoneNumberSchema,
   phone_type: PhoneTypeSchema,

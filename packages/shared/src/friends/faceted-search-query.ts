@@ -1,4 +1,4 @@
-import { ValidationError } from '@datenknoten/kit';
+import { isValue, ValidationError } from '@datenknoten/kit';
 import {
   type PaginationOptions,
   PaginationQuerySchema,
@@ -10,31 +10,31 @@ import type { FacetFilters } from './facet-filters.js';
 import { type RelationshipCategory, RelationshipCategorySchema } from './relationship-category.js';
 import { type SearchSortBy, SearchSortBySchema, searchSortOrderFor } from './search-sort-by.js';
 
-/** Schema for faceted search query parameters */
 export const FacetedSearchQuerySchema = PaginationQuerySchema.merge(
   sortQueryFields(SearchSortBySchema),
 ).merge({
-  'q?': 'string', // Optional - can search with query OR filter-only
-  // Facet filters (comma-separated values)
+  // Optional: a client may search by query, by filters only, or both.
+  'q?': 'string',
+  // Facet filters are comma-separated values.
   'country?': 'string',
   'city?': 'string',
   'organization?': 'string',
   'job_title?': 'string',
   'department?': 'string',
   'relationship_category?': 'string',
-  // Epic 4: Categorization & Organization filters
-  'circles?': 'string', // Comma-separated circle external_ids
-  'favorites?': 'string', // 'true' to filter favorites only
-  'archived?': 'string', // 'include', 'exclude' (default), or 'only'
-  // Whether to include facet counts in response
+  // Circle external_ids.
+  'circles?': 'string',
+  // 'true' keeps favorites only.
+  'favorites?': 'string',
+  // 'include', 'exclude' (the backend default) or 'only'.
+  'archived?': 'string',
   'include_facets?': 'string',
 });
 
 export type FacetedSearchQuery = typeof FacetedSearchQuerySchema.infer;
 
-/** Parsed faceted search options */
 export interface FacetedSearchOptions extends PaginationOptions, SortOptions<SearchSortBy> {
-  query?: string; // Optional - can search with query OR filter-only
+  query?: string;
   filters: FacetFilters;
   shouldIncludeFacets: boolean;
 }
@@ -43,9 +43,7 @@ function isRelationshipCategory(value: string): value is RelationshipCategory {
   return RelationshipCategorySchema.allows(value);
 }
 
-function parseRelationshipCategories(
-  values: string[] | undefined,
-): RelationshipCategory[] | undefined {
+function parseRelationshipCategories(values: string[] | undefined) {
   if (values === undefined) {
     return undefined;
   }
@@ -58,27 +56,31 @@ function parseRelationshipCategories(
   return values.filter(isRelationshipCategory);
 }
 
-export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearchOptions {
-  // Parse comma-separated filter values
-  const parseFilterArray = (value: string | undefined): string[] | undefined => {
-    if (!value) return undefined;
-    const values = value
-      .split(',')
-      .map((v) => v.trim())
-      .filter(Boolean);
-    return values.length > 0 ? values : undefined;
-  };
+function nonEmptyOrUndefined(value: string) {
+  return value === '' ? undefined : value;
+}
 
-  // Parse archived filter
-  const parseArchivedFilter = (value: string | undefined): FacetFilters['archived'] => {
-    if (value === 'include' || value === 'exclude' || value === 'only') {
-      return value;
-    }
-    return undefined; // Default to 'exclude' in the backend
-  };
+function parseFilterArray(value: string | undefined) {
+  if (value === undefined || value === '') {
+    return undefined;
+  }
+  const values = value
+    .split(',')
+    .map((v) => nonEmptyOrUndefined(v.trim()))
+    .filter(isValue);
+  return values.length > 0 ? values : undefined;
+}
 
-  return {
-    query: query.q?.trim(), // Optional query
+function parseArchivedFilter(value: string | undefined) {
+  if (value === 'include' || value === 'exclude' || value === 'only') {
+    return value;
+  }
+  return undefined;
+}
+
+export function parseFacetedSearchQuery(query: FacetedSearchQuery) {
+  const options: FacetedSearchOptions = {
+    query: query.q?.trim(),
     ...parsePaginationQuery(query, DEFAULT_FRIEND_PAGE_SIZE),
     ...parseSortQuery(query, {
       // Relevance only makes sense when there is a query to be relevant to;
@@ -95,11 +97,11 @@ export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearc
       relationship_category: parseRelationshipCategories(
         parseFilterArray(query.relationship_category),
       ),
-      // Epic 4: Categorization & Organization filters
       circles: parseFilterArray(query.circles),
       favorites: query.favorites === 'true' ? true : undefined,
       archived: parseArchivedFilter(query.archived),
     },
     shouldIncludeFacets: query.include_facets === 'true',
   };
+  return options;
 }

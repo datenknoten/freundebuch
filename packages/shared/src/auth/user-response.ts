@@ -11,7 +11,6 @@ export const UserResponseSchema = type({
   'selfProfileId?': 'string',
   /** Display name of the user's self-profile, absent until onboarding */
   'displayName?': 'string',
-  /** True once the user has a self-profile */
   hasCompletedOnboarding: 'boolean',
 });
 

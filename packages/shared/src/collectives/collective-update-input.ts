@@ -2,7 +2,6 @@ import { type } from 'arktype';
 import { CountryCodeSchema } from '../countries/country-code-schema.js';
 import { CollectiveNameSchema } from './collective-name-schema.js';
 
-/** Schema for updating a collective (all fields optional) */
 export const CollectiveUpdateInputSchema = type({
   'name?': CollectiveNameSchema,
   'notes?': 'string | null',

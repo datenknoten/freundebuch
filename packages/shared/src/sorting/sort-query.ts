@@ -62,13 +62,14 @@ export function parseSortQuery<SortBy extends string>(
     sortBy: SortBy;
     sortOrder: SortOrder | ((sortBy: SortBy) => SortOrder);
   },
-): SortOptions<SortBy> {
+) {
   const sortBy = query.sort_by ?? defaults.sortBy;
   const fallbackOrder =
     typeof defaults.sortOrder === 'function' ? defaults.sortOrder(sortBy) : defaults.sortOrder;
 
-  return {
+  const options: SortOptions<SortBy> = {
     sortBy,
     sortOrder: query.sort_order ?? fallbackOrder,
   };
+  return options;
 }

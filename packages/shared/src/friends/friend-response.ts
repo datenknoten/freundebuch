@@ -10,7 +10,6 @@ import { RelationshipResponseSchema } from './relationship-response.js';
 import { SocialProfileResponseSchema } from './social-profile-response.js';
 import { UrlResponseSchema } from './url-response.js';
 
-/** Full friend with all sub-resources */
 export const FriendResponseSchema = type({
   id: 'string',
   displayName: 'string',

@@ -1,6 +1,6 @@
 import { type Traversal, type } from 'arktype';
 
-function checkContent(content: string, ctx: Traversal): boolean {
+function checkContent(content: string, ctx: Traversal) {
   if (content.trim().length > 0) {
     return true;
   }
@@ -8,8 +8,6 @@ function checkContent(content: string, ctx: Traversal): boolean {
 }
 
 /**
- * Friend notes (Epic 15): timestamped free-text notes about a friend.
- *
  * POST and PUT share this schema. PUT replaces the whole note, so an omitted
  * link field means `null`.
  */

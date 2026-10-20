@@ -9,18 +9,17 @@ import { type EncounterType, EncounterTypeSchema } from './encounter-type.js';
 /** Rows per page when a client does not ask for a size. */
 const DEFAULT_ENCOUNTER_PAGE_SIZE = 20;
 
-/** Schema for encounter list query parameters */
 export const EncounterListQuerySchema = PaginationQuerySchema.merge({
-  'friend_id?': '"" | string.uuid', // Filter by specific friend
-  'from_date?': IsoDateFilterSchema, // Filter from date (YYYY-MM-DD)
-  'to_date?': IsoDateFilterSchema, // Filter to date (YYYY-MM-DD)
-  'search?': 'string', // Search in title/description
+  'friend_id?': '"" | string.uuid',
+  'from_date?': IsoDateFilterSchema,
+  'to_date?': IsoDateFilterSchema,
+  // Matches title and description.
+  'search?': 'string',
   'type?': EncounterTypeSchema,
 });
 
 export type EncounterListQuery = typeof EncounterListQuerySchema.infer;
 
-/** Parsed encounter list options */
 export interface EncounterListOptions extends PaginationOptions {
   friendId?: string;
   fromDate?: string;
@@ -29,16 +28,18 @@ export interface EncounterListOptions extends PaginationOptions {
   type?: EncounterType;
 }
 
-/**
- * Parse and validate encounter list query parameters
- */
-export function parseEncounterListQuery(query: EncounterListQuery): EncounterListOptions {
-  return {
+function emptyToUndefined<T extends string>(value: T | undefined) {
+  return value === '' ? undefined : value;
+}
+
+export function parseEncounterListQuery(query: EncounterListQuery) {
+  const options: EncounterListOptions = {
     ...parsePaginationQuery(query, DEFAULT_ENCOUNTER_PAGE_SIZE),
-    friendId: query.friend_id || undefined,
-    fromDate: query.from_date || undefined,
-    toDate: query.to_date || undefined,
-    search: query.search || undefined,
-    type: query.type || undefined,
+    friendId: emptyToUndefined(query.friend_id),
+    fromDate: emptyToUndefined(query.from_date),
+    toDate: emptyToUndefined(query.to_date),
+    search: emptyToUndefined(query.search),
+    type: query.type,
   };
+  return options;
 }

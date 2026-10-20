@@ -1,7 +1,7 @@
 import { type Traversal, type } from 'arktype';
 import { isValidTitle } from './is-valid-title.js';
 
-function checkTitle(title: string, ctx: Traversal): boolean {
+function checkTitle(title: string, ctx: Traversal) {
   if (isValidTitle(title) === true) {
     return true;
   }

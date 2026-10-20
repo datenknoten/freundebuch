@@ -1,7 +1,6 @@
 import { type } from 'arktype';
 import type { FacetFilters } from './facet-filters.js';
 
-/** Facet fields whose filter is a list of values */
 export const ARRAY_FACET_FIELDS = [
   'country',
   'city',

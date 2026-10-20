@@ -1,12 +1,14 @@
-import { type } from 'arktype';
+import { type Traversal, type } from 'arktype';
 
-/**
- * Request/Response types for authentication endpoints
- */
+function checkCharacterClasses(password: string, ctx: Traversal) {
+  if (
+    /[a-z]/.test(password) === true &&
+    /[A-Z]/.test(password) === true &&
+    /[0-9]/.test(password) === true
+  ) {
+    return true;
+  }
+  return ctx.mustBe('a password with a lowercase letter, an uppercase letter and a digit');
+}
 
-export const PasswordSchema = type('string >= 8').narrow((password): password is string => {
-  const hasLowercase = /[a-z]/.test(password);
-  const hasUppercase = /[A-Z]/.test(password);
-  const hasDigit = /[0-9]/.test(password);
-  return hasLowercase && hasUppercase && hasDigit;
-});
+export const PasswordSchema = type('string >= 8').narrow(checkCharacterClasses);

@@ -2,32 +2,38 @@ import { describe, expect, it } from 'vitest';
 import { CircleInputSchema } from './circle-input.js';
 
 describe('CircleInputSchema', () => {
-  it('accepts a valid name without color', () => {
-    const result = CircleInputSchema({ name: 'Family' });
-    expect(result).toEqual({ name: 'Family' });
+  describe('with valid input', () => {
+    it('accepts a valid name without color', () => {
+      const result = CircleInputSchema({ name: 'Family' });
+      expect(result).toEqual({ name: 'Family' });
+    });
+
+    it('accepts a valid name with a hex color', () => {
+      const result = CircleInputSchema({ name: 'Work', color: '#3B82F6' });
+      expect(result).toEqual({ name: 'Work', color: '#3B82F6' });
+    });
   });
 
-  it('accepts a valid name with a hex color', () => {
-    const result = CircleInputSchema({ name: 'Work', color: '#3B82F6' });
-    expect(result).toEqual({ name: 'Work', color: '#3B82F6' });
+  describe('with an invalid color', () => {
+    it('rejects an invalid hex color without hash', () => {
+      const result = CircleInputSchema({ name: 'Work', color: '3B82F6' });
+      expect(result.summary).toMatchInlineSnapshot(
+        `"color must be a valid hex color (e.g., #3B82F6) or "" (was "3B82F6")"`,
+      );
+    });
+
+    it('rejects an invalid hex color with wrong length', () => {
+      const result = CircleInputSchema({ name: 'Work', color: '#3B8' });
+      expect(result.summary).toMatchInlineSnapshot(
+        `"color must be a valid hex color (e.g., #3B82F6) or "" (was "#3B8")"`,
+      );
+    });
   });
 
-  it('rejects an invalid hex color without hash', () => {
-    const result = CircleInputSchema({ name: 'Work', color: '3B82F6' });
-    expect(result.summary).toMatchInlineSnapshot(
-      `"color must be a valid hex color (e.g., #3B82F6) or "" (was "3B82F6")"`,
-    );
-  });
-
-  it('rejects an invalid hex color with wrong length', () => {
-    const result = CircleInputSchema({ name: 'Work', color: '#3B8' });
-    expect(result.summary).toMatchInlineSnapshot(
-      `"color must be a valid hex color (e.g., #3B82F6) or "" (was "#3B8")"`,
-    );
-  });
-
-  it('rejects an empty name', () => {
-    const result = CircleInputSchema({ name: '' });
-    expect(result.summary).toMatchInlineSnapshot(`"name must be non-empty"`);
+  describe('with an empty name', () => {
+    it('rejects an empty name', () => {
+      const result = CircleInputSchema({ name: '' });
+      expect(result.summary).toMatchInlineSnapshot(`"name must be non-empty"`);
+    });
   });
 });

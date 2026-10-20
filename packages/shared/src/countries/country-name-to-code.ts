@@ -1,11 +1,15 @@
 import { isCountryCode } from './country-code.js';
 import { countries } from './registered-countries.js';
 
-/** Map a country code or an English/German name or alias to its alpha-2 code. */
-export function countryNameToCode(name: string): string | undefined {
+/** Accepts a code or an English/German name or alias. */
+export function countryNameToCode(name: string) {
   const trimmed = name.trim();
-  if (trimmed === '') return undefined;
+  if (trimmed === '') {
+    return undefined;
+  }
   const upper = trimmed.toUpperCase();
-  if (isCountryCode(upper)) return upper;
+  if (isCountryCode(upper) === true) {
+    return upper;
+  }
   return countries.getAlpha2Code(trimmed, 'en') ?? countries.getAlpha2Code(trimmed, 'de');
 }

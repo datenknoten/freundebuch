@@ -1,4 +1,4 @@
-import { type } from 'arktype';
+import { type Traversal, type } from 'arktype';
 import { AddressInputSchema } from './address-input.js';
 import { DateInputSchema } from './date-input.js';
 import { EmailInputSchema } from './email-input.js';
@@ -9,8 +9,7 @@ import { ProfessionalHistoryInputSchema } from './professional-history-input.js'
 import { SocialProfileInputSchema } from './social-profile-input.js';
 import { UrlInputSchema } from './url-input.js';
 
-/** Schema for creating a new friend */
-export const FriendCreateInputSchema = type({
+const FriendCreateFieldsSchema = type({
   display_name: 'string > 0',
   'nickname?': 'string',
   'name_prefix?': 'string',
@@ -19,7 +18,6 @@ export const FriendCreateInputSchema = type({
   'name_last?': 'string',
   'name_suffix?': 'string',
   'maiden_name?': 'string',
-  // Epic 1A sub-resources
   phones: PhoneInputSchema.array()
     .atMostLength(MAX_SUB_RESOURCES)
     .default(() => []),
@@ -36,9 +34,8 @@ export const FriendCreateInputSchema = type({
   professional_history: ProfessionalHistoryInputSchema.array()
     .atMostLength(MAX_SUB_RESOURCES)
     .default(() => []),
-  // Personal interests (not employment-related)
+  // Personal interests, not employment-related.
   'interests?': 'string',
-  // Epic 1B: Extended sub-resources
   dates: DateInputSchema.array()
     .atMostLength(MAX_SUB_RESOURCES)
     .default(() => []),
@@ -46,48 +43,35 @@ export const FriendCreateInputSchema = type({
   social_profiles: SocialProfileInputSchema.array()
     .atMostLength(MAX_SUB_RESOURCES)
     .default(() => []),
-}).narrow((data, ctx) => {
-  // Validate only one primary phone
-  if (data.phones) {
-    const primaryCount = data.phones.filter((p) => p.is_primary === true).length;
-    if (primaryCount > 1) {
-      ctx.mustBe('a friend with at most one primary phone');
-      return false;
-    }
+});
+
+function isPrimary(entry: { is_primary: boolean }) {
+  return entry.is_primary === true;
+}
+
+function isBirthday(entry: { date_type: string }) {
+  return entry.date_type === 'birthday';
+}
+
+function checkSingleFlags(data: typeof FriendCreateFieldsSchema.infer, ctx: Traversal) {
+  if (data.phones.filter(isPrimary).length > 1) {
+    return ctx.mustBe('a friend with at most one primary phone');
   }
-  // Validate only one primary email
-  if (data.emails) {
-    const primaryCount = data.emails.filter((e) => e.is_primary === true).length;
-    if (primaryCount > 1) {
-      ctx.mustBe('a friend with at most one primary email');
-      return false;
-    }
+  if (data.emails.filter(isPrimary).length > 1) {
+    return ctx.mustBe('a friend with at most one primary email');
   }
-  // Validate only one primary address
-  if (data.addresses) {
-    const primaryCount = data.addresses.filter((a) => a.is_primary === true).length;
-    if (primaryCount > 1) {
-      ctx.mustBe('a friend with at most one primary address');
-      return false;
-    }
+  if (data.addresses.filter(isPrimary).length > 1) {
+    return ctx.mustBe('a friend with at most one primary address');
   }
-  // Validate only one birthday date
-  if (data.dates) {
-    const birthdayCount = data.dates.filter((d) => d.date_type === 'birthday').length;
-    if (birthdayCount > 1) {
-      ctx.mustBe('a friend with at most one birthday');
-      return false;
-    }
+  if (data.dates.filter(isBirthday).length > 1) {
+    return ctx.mustBe('a friend with at most one birthday');
   }
-  // Validate only one primary professional history entry
-  if (data.professional_history) {
-    const primaryCount = data.professional_history.filter((p) => p.is_primary === true).length;
-    if (primaryCount > 1) {
-      ctx.mustBe('a friend with at most one primary professional history entry');
-      return false;
-    }
+  if (data.professional_history.filter(isPrimary).length > 1) {
+    return ctx.mustBe('a friend with at most one primary professional history entry');
   }
   return true;
-});
+}
+
+export const FriendCreateInputSchema = FriendCreateFieldsSchema.narrow(checkSingleFlags);
 
 export type FriendCreateInput = typeof FriendCreateInputSchema.infer;

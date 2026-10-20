@@ -1,8 +1,8 @@
 import { type } from 'arktype';
 
-/** Schema for setting friend circles (replaces all) */
+/** Replaces all of the friend's circles. */
 export const SetFriendCirclesInputSchema = type({
-  circle_ids: 'string.uuid[]', // Array of circle external_ids
+  circle_ids: 'string.uuid[]',
 });
 
 export type SetFriendCirclesInput = typeof SetFriendCirclesInputSchema.infer;

@@ -2,14 +2,13 @@ import type { CircleSummaryResponse } from '../circles/circle-summary-response.j
 import type { FriendListItemResponse } from './friend-list-item-response.js';
 import type { GlobalSearchResultResponse } from './global-search-result-response.js';
 
-/** Unified grid item that works for both normal listing and search results */
+/** One row shape for both the plain listing and search results. */
 export interface FriendGridItem {
   id: string;
   displayName: string;
   photoThumbnailUrl?: string;
   primaryEmail?: string;
   primaryPhone?: string;
-  // Extended fields for dynamic columns
   nickname?: string;
   maidenName?: string;
   organization?: string;
@@ -18,22 +17,19 @@ export interface FriendGridItem {
   primaryCity?: string;
   primaryCountry?: string;
   birthday?: string;
-  // Categorization
   circles: CircleSummaryResponse[];
   isFavorite?: boolean;
   archivedAt?: string;
-  // Timestamps
   createdAt?: string;
   updatedAt?: string;
-  // Search-specific fields (optional, only present for search results)
+  // Present only for search results.
   rank?: number;
   headline?: string;
   matchSource?: NonNullable<GlobalSearchResultResponse['matchSource']>;
 }
 
-/** Convert FriendListItem to FriendGridItem */
-export function toFriendGridItem(item: FriendListItemResponse): FriendGridItem {
-  return {
+export function toFriendGridItem(item: FriendListItemResponse) {
+  const gridItem: FriendGridItem = {
     id: item.id,
     displayName: item.displayName,
     photoThumbnailUrl: item.photoThumbnailUrl,
@@ -53,11 +49,11 @@ export function toFriendGridItem(item: FriendListItemResponse): FriendGridItem {
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   };
+  return gridItem;
 }
 
-/** Convert GlobalSearchResult to FriendGridItem */
-export function searchResultToFriendGridItem(result: GlobalSearchResultResponse): FriendGridItem {
-  return {
+export function searchResultToFriendGridItem(result: GlobalSearchResultResponse) {
+  const gridItem: FriendGridItem = {
     id: result.id,
     displayName: result.displayName,
     photoThumbnailUrl: result.photoThumbnailUrl,
@@ -70,4 +66,5 @@ export function searchResultToFriendGridItem(result: GlobalSearchResultResponse)
     headline: result.headline ?? undefined,
     matchSource: result.matchSource ?? undefined,
   };
+  return gridItem;
 }

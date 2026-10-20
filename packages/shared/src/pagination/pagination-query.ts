@@ -49,12 +49,12 @@ export interface PaginationOptions {
 }
 
 /** Read a positive integer from a query string value, or undefined. */
-function parsePositiveInt(value: string | undefined): number | undefined {
+function parsePositiveInt(value: string | undefined) {
   if (value === undefined || value === '') {
     return undefined;
   }
   const parsed = Number.parseInt(value, 10);
-  if (Number.isNaN(parsed) || parsed < 1) {
+  if (Number.isNaN(parsed) === true || parsed < 1) {
     return undefined;
   }
   return parsed;
@@ -71,12 +71,10 @@ function parsePositiveInt(value: string | undefined): number | undefined {
  * (25 for friends and search, 20 for collectives and encounters) and changing
  * them would change what every unparameterised client receives.
  */
-export function parsePaginationQuery(
-  query: PaginationQuery,
-  defaultPageSize: number,
-): PaginationOptions {
-  return {
+export function parsePaginationQuery(query: PaginationQuery, defaultPageSize: number) {
+  const options: PaginationOptions = {
     page: parsePositiveInt(query.page) ?? 1,
     pageSize: Math.min(MAX_PAGE_SIZE, parsePositiveInt(query.page_size) ?? defaultPageSize),
   };
+  return options;
 }

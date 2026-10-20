@@ -7,7 +7,6 @@ import { parseSortQuery, type SortOptions, sortQueryFields } from '../sorting/so
 import { DEFAULT_FRIEND_PAGE_SIZE } from './default-friend-page-size.js';
 import { type SearchSortBy, SearchSortBySchema, searchSortOrderFor } from './search-sort-by.js';
 
-/** Schema for search query parameters */
 export const SearchQuerySchema = PaginationQuerySchema.merge(
   sortQueryFields(SearchSortBySchema),
 ).merge({
@@ -16,18 +15,15 @@ export const SearchQuerySchema = PaginationQuerySchema.merge(
 
 export type SearchQuery = typeof SearchQuerySchema.infer;
 
-/** Parsed search options */
 export interface SearchOptions extends PaginationOptions, SortOptions<SearchSortBy> {
   query: string;
 }
 
-/**
- * Parse and validate search query parameters
- */
-export function parseSearchQuery(query: SearchQuery): SearchOptions {
-  return {
+export function parseSearchQuery(query: SearchQuery) {
+  const options: SearchOptions = {
     query: query.q.trim(),
     ...parsePaginationQuery(query, DEFAULT_FRIEND_PAGE_SIZE),
     ...parseSortQuery(query, { sortBy: 'relevance', sortOrder: searchSortOrderFor }),
   };
+  return options;
 }

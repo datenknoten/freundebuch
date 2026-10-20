@@ -1,6 +1,6 @@
 import { type Traversal, type } from 'arktype';
 
-function checkName(name: string, ctx: Traversal): boolean {
+function checkName(name: string, ctx: Traversal) {
   if (name.trim().length === 0) {
     return ctx.mustBe('a non-empty name');
   }

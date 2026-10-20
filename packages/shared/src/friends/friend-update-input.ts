@@ -1,6 +1,5 @@
 import { type } from 'arktype';
 
-/** Schema for updating an existing friend */
 export const FriendUpdateInputSchema = type({
   'display_name?': 'string > 0',
   'nickname?': 'string | null',
@@ -10,7 +9,7 @@ export const FriendUpdateInputSchema = type({
   'name_last?': 'string | null',
   'name_suffix?': 'string | null',
   'maiden_name?': 'string | null',
-  // Personal interests (not employment-related)
+  // Personal interests, not employment-related.
   'interests?': 'string | null',
 });
 

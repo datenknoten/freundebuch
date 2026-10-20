@@ -1,22 +1,19 @@
 import { type } from 'arktype';
 
-/** Schema for circle list query parameters */
 export const CircleListQuerySchema = type({
-  'hierarchy?': 'string', // 'true' to get hierarchical structure
+  // 'true' asks for the nested tree instead of a flat list.
+  'hierarchy?': 'string',
 });
 
 export type CircleListQuery = typeof CircleListQuerySchema.infer;
 
-/** Parsed circle list options */
 export interface CircleListOptions {
   isHierarchical: boolean;
 }
 
-/**
- * Parse and validate circle list query parameters
- */
-export function parseCircleListQuery(query: CircleListQuery): CircleListOptions {
-  return {
+export function parseCircleListQuery(query: CircleListQuery) {
+  const options: CircleListOptions = {
     isHierarchical: query.hierarchy === 'true',
   };
+  return options;
 }

@@ -3,20 +3,12 @@ import { CountryCodeSchema } from '../countries/country-code-schema.js';
 import { CollectiveNameSchema } from './collective-name-schema.js';
 
 /**
- * Collective types and validation schemas for Epic 12: Collectives
- *
- * Collectives are entities that group contacts together (families, companies, clubs)
- * with automatic relationship creation based on roles.
+ * Collectives group contacts (families, companies, clubs) and create
+ * relationships between members automatically based on their roles.
  */
-
-// ============================================================================
-// Input Schemas
-// ============================================================================
-
-/** Schema for creating a collective */
 export const CollectiveCreateInputSchema = type({
   name: CollectiveNameSchema,
-  collective_type_id: 'string.uuid', // External ID of the collective type
+  collective_type_id: 'string.uuid',
   'notes?': 'string | null',
   'photo_url?': 'string | null',
   'photo_thumbnail_url?': 'string | null',

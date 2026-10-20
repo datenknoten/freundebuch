@@ -1,8 +1,6 @@
 import { type } from 'arktype';
 
 /**
- * Matrix credentials for channel creation (all fields required).
- *
  * `homeserver` is https-only, matching `sendMatrixMessage`, which rejects any
  * other protocol as part of its SSRF guard. Accepting `http://` here let a
  * channel be created and persisted that could never deliver: nothing
@@ -15,7 +13,6 @@ export const MatrixCredentialsSchema = type({
   roomId: /^!.+:.+/,
 });
 
-/** Matrix credentials for channel updates */
 export const MatrixCredentialsUpdateSchema = type({
   'homeserver?': /^https:\/\/.+/,
   'accessToken?': 'string > 0',

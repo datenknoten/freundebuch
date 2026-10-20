@@ -1,12 +1,4 @@
-/**
- * Circle types and validation schemas for Epic 4: Categorization & Organization
- */
-
-// ============================================================================
-// Color Constants
-// ============================================================================
-
-/** Predefined color palette for circles (Tailwind-inspired) */
+/** Tailwind-inspired palette. */
 export const CIRCLE_COLORS = [
   '#EF4444', // red
   '#F97316', // orange
