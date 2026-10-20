@@ -56,10 +56,10 @@ async function handleSubmit(e: SubmitEvent) {
 
     // Redirect to login after 2 seconds
     setTimeout(() => {
-      goto('/auth/login');
+      void goto('/auth/login');
     }, 2000);
   } catch (err) {
-    error = (err as Error)?.message ?? $i18n.t('auth.resetPassword.error.generic');
+    error = err instanceof Error ? err.message : $i18n.t('auth.resetPassword.error.generic');
     isLoading = false;
   }
 }

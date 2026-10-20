@@ -94,7 +94,7 @@ function openSafeLink(url: string): void {
     // Same-origin link to a known app route (e.g. an `@`-mention target like
     // /friends/{id}) — navigate in-app so the user stays in the SPA.
     if (parsed.origin === window.location.origin && isAppRoute(parsed.pathname)) {
-      goto(parsed.pathname + parsed.search + parsed.hash);
+      void goto(parsed.pathname + parsed.search + parsed.hash);
       return;
     }
     if (!SAFE_LINK_SCHEMES.includes(parsed.protocol)) return;

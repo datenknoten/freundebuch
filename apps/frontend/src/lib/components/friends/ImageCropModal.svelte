@@ -3,6 +3,7 @@ import Cropper, { type CropArea, type OnCropCompleteEvent } from 'svelte-easy-cr
 import { getAppContext } from '$lib/app-context.js';
 import Button from '$lib/components/ui/Button.svelte';
 import Modal from '$lib/components/ui/Modal.svelte';
+import { InvariantError } from '$lib/errors/invariant.error.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 
 const i18n = createI18n();
@@ -46,8 +47,8 @@ async function getCroppedImg(imageSrc: string, pixelCrop: CropArea): Promise<Blo
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
 
-  if (!ctx) {
-    throw new Error('No 2d context');
+  if (ctx === null) {
+    throw new InvariantError('The canvas has no 2d context');
   }
 
   // Set canvas size to the cropped area size
@@ -71,10 +72,10 @@ async function getCroppedImg(imageSrc: string, pixelCrop: CropArea): Promise<Blo
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
-        if (blob) {
+        if (blob !== null) {
           resolve(blob);
         } else {
-          reject(new Error('Canvas is empty'));
+          reject(new InvariantError('Canvas is empty'));
         }
       },
       'image/jpeg',

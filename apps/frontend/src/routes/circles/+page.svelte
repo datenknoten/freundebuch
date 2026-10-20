@@ -47,7 +47,7 @@ let searchQuery = $state('');
 $effect(() => {
   if ($isAuthInitialized && !hasLoaded) {
     hasLoaded = true;
-    circles.loadCircles();
+    void circles.loadCircles();
   }
 });
 

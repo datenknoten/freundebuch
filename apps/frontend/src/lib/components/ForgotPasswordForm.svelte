@@ -34,7 +34,7 @@ async function handleSubmit(e: SubmitEvent) {
     success = true;
     isLoading = false;
   } catch (err) {
-    error = (err as Error)?.message ?? $i18n.t('auth.forgotPassword.error.generic');
+    error = err instanceof Error ? err.message : $i18n.t('auth.forgotPassword.error.generic');
     isLoading = false;
   }
 }

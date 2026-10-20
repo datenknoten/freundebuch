@@ -176,7 +176,7 @@ function activateInput() {
   if (disabled) return;
   query = '';
   showDropdown = true;
-  loadSuggestions();
+  void loadSuggestions();
   requestAnimationFrame(() => {
     inputElement?.focus();
   });
@@ -195,7 +195,9 @@ function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'ArrowDown' || e.key === 'Enter') {
       e.preventDefault();
       showDropdown = true;
-      if (!query.trim()) loadSuggestions();
+      if (!query.trim()) {
+        void loadSuggestions();
+      }
     }
     return;
   }
@@ -238,7 +240,9 @@ function handleBlur() {
 
 function handleFocus() {
   showDropdown = true;
-  if (!query.trim()) loadSuggestions();
+  if (!query.trim()) {
+    void loadSuggestions();
+  }
 }
 </script>
 

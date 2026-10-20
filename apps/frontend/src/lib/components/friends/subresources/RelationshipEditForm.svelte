@@ -6,6 +6,7 @@ import { createDirtyTracker } from '$lib/components/ui/dirty-tracker.svelte.js';
 import FormTextarea from '$lib/components/ui/FormTextarea.svelte';
 import { FORM_CLASSES } from '$lib/components/ui/form-classes.js';
 import Spinner from '$lib/components/ui/Spinner.svelte';
+import { InvariantError } from '$lib/errors/invariant.error.js';
 import { createI18n } from '$lib/i18n/i18n.js';
 import type {
   FriendSearchResultResponse,
@@ -77,7 +78,9 @@ function clearSelectedFriend() {
 
 export function getData() {
   if (selectedFriend === null) {
-    throw new Error('getData() called without a selected friend; guard with isValid() first');
+    throw new InvariantError(
+      'getData() called without a selected friend; guard with isValid() first',
+    );
   }
   return {
     relatedFriendId: selectedFriend.id,

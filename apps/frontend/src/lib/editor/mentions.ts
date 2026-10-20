@@ -120,12 +120,12 @@ function makeMentionSource(typeLabels: MentionTypeLabels, apis: MentionSearchApi
   // superseded queries, so a late resolve can't clobber a newer list.
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   function debouncedSearch(query: string): Promise<Mentionable[]> {
-    return new Promise((resolve, reject) => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        searchMentionables(apis, query).then(resolve, reject);
-      }, DEBOUNCE_MS);
-    });
+    const { promise, resolve } = Promise.withResolvers<Mentionable[]>();
+    clearTimeout(debounceTimer ?? undefined);
+    debounceTimer = setTimeout(() => {
+      resolve(searchMentionables(apis, query));
+    }, DEBOUNCE_MS);
+    return promise;
   }
 
   return async function mentionSource(

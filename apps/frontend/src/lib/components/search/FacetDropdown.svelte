@@ -124,31 +124,30 @@ let currentCategoryValues = $derived(
 // Auto-scroll to selected section when filter mode activates
 $effect(() => {
   if ($isFilterModeActive && $filterModeCategory) {
-    // Scroll to the selected category section after the modal renders
-    tick().then(() => {
-      const category = $filterModeCategory;
-      let targetRef: HTMLDivElement | null = null;
-
-      if (category === 'country' || category === 'city') {
-        targetRef = locationSectionRef;
-      } else if (
-        category === 'organization' ||
-        category === 'job_title' ||
-        category === 'department'
-      ) {
-        targetRef = professionalSectionRef;
-      } else if (category === 'relationship_category') {
-        targetRef = relationshipSectionRef;
-      } else if (category === 'circles') {
-        targetRef = circlesSectionRef;
-      }
-
-      if (targetRef && modalContentRef) {
-        targetRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
+    void scrollToSelectedCategory();
   }
 });
+
+// Waits for the modal to render before scrolling to the selected category section.
+async function scrollToSelectedCategory() {
+  await tick();
+  const category = $filterModeCategory;
+  let targetRef: HTMLDivElement | null = null;
+
+  if (category === 'country' || category === 'city') {
+    targetRef = locationSectionRef;
+  } else if (category === 'organization' || category === 'job_title' || category === 'department') {
+    targetRef = professionalSectionRef;
+  } else if (category === 'relationship_category') {
+    targetRef = relationshipSectionRef;
+  } else if (category === 'circles') {
+    targetRef = circlesSectionRef;
+  }
+
+  if (targetRef && modalContentRef) {
+    targetRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
 
 // Close keyboard filter mode
 function closeKeyboardFilterMode() {

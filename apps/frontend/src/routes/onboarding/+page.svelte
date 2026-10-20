@@ -17,7 +17,7 @@ let error = $state('');
 // Redirect if already onboarded
 $effect(() => {
   if ($auth.isInitialized && $auth.user?.hasCompletedOnboarding) {
-    goto('/friends');
+    void goto('/friends');
   }
 });
 
@@ -29,9 +29,9 @@ async function handleSubmit(data: FriendCreateData) {
     await api.auth.createSelfProfile(data);
     // Refresh user data to update onboarding status
     await auth.refreshUserData();
-    goto('/friends');
+    await goto('/friends');
   } catch (err) {
-    error = (err as Error)?.message ?? $i18n.t('onboarding.error.generic');
+    error = err instanceof Error ? err.message : $i18n.t('onboarding.error.generic');
     isLoading = false;
   }
 }

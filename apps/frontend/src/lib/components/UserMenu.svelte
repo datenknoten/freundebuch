@@ -34,7 +34,7 @@ async function handleLogout() {
   close();
   try {
     await auth.logout();
-    goto('/auth/login');
+    await goto('/auth/login');
   } catch (err) {
     logger.error({ err }, 'Logout failed');
   }

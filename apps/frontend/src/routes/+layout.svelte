@@ -89,7 +89,7 @@ $effect(() => {
 $effect(() => {
   const prefs = $userPreferences;
   if ($isLocaleInitialized && prefs?.language && prefs.language !== locale.getLanguage()) {
-    locale.setLanguage(prefs.language);
+    void locale.setLanguage(prefs.language);
   }
 });
 
@@ -111,7 +111,7 @@ $effect(() => {
     const currentPath = $page.url.pathname;
     const isExempt = onboardingExemptPaths.some((path) => currentPath.startsWith(path));
     if (!isExempt) {
-      goto('/onboarding');
+      void goto('/onboarding');
     }
   }
 });

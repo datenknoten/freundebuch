@@ -95,14 +95,14 @@ function updateUrl(query?: string, filters?: FacetFilters) {
   }
 
   // Update URL without navigation (replaceState)
-  goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
+  void goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
 }
 
 // Load friends when auth is ready
 $effect(() => {
   if ($isAuthInitialized && !hasLoaded) {
     hasLoaded = true;
-    friends.loadFriends({ pageSize: $friendsPageSize });
+    void friends.loadFriends({ pageSize: $friendsPageSize });
   }
 });
 

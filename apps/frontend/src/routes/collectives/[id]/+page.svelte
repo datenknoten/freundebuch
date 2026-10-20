@@ -29,7 +29,7 @@ let hasLoaded = $state(false);
 $effect(() => {
   if ($isAuthInitialized && collectiveId && !hasLoaded) {
     hasLoaded = true;
-    collectives.loadCollective(collectiveId);
+    void collectives.loadCollective(collectiveId);
   }
 });
 

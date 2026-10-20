@@ -20,7 +20,7 @@ const i18n = createI18n();
 $effect(() => {
   const id = $page.params.id;
   if ($isAuthInitialized && id) {
-    friends.loadFriend(id);
+    void friends.loadFriend(id);
   }
 });
 

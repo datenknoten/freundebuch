@@ -79,7 +79,7 @@ function formatAddress(c: CollectiveResponse, language: string): string | null {
 // reason; on success it closes itself and we navigate away.
 async function handleDelete() {
   await collectives.deleteCollective(collective.id);
-  goto('/collectives');
+  void goto('/collectives');
 }
 
 let address = $derived(formatAddress(collective, $currentLanguage));

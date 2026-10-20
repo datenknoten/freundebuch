@@ -60,12 +60,12 @@ $effect(() => {
 function openFirstResult() {
   const first = encounterItems[0];
   if (!first) return;
-  goto(`/encounters/${first.id}`);
+  void goto(`/encounters/${first.id}`);
 }
 
 // Load encounters on mount (not in $effect to avoid infinite loop)
 onMount(() => {
-  loadEncounters();
+  void loadEncounters();
 });
 
 async function loadEncounters(page = 1) {
@@ -101,12 +101,12 @@ function handleSearchInput(value: string) {
   }
 
   debounceTimer = setTimeout(() => {
-    loadEncounters();
+    void loadEncounters();
   }, 300);
 }
 
 function handleDateChange() {
-  loadEncounters();
+  void loadEncounters();
 }
 
 function clearFilters() {
@@ -114,11 +114,11 @@ function clearFilters() {
   fromDate = '';
   toDate = '';
   selectedType = '';
-  loadEncounters();
+  void loadEncounters();
 }
 
 function goToPage(page: number) {
-  loadEncounters(page);
+  void loadEncounters(page);
 }
 </script>
 

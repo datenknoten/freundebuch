@@ -60,7 +60,7 @@ let columns = $derived<ColumnDef[]>([
 ]);
 
 function handleRowClick(itemId: string) {
-  goto(`/collectives/${itemId}`);
+  void goto(`/collectives/${itemId}`);
 }
 
 function handleLinkClick(e: MouseEvent) {

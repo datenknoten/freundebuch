@@ -85,20 +85,20 @@ function handleSearchInput(value: string) {
   }
 
   debounceTimer = setTimeout(() => {
-    loadCollectives();
+    void loadCollectives();
   }, 300);
 }
 
 function handleTypeChange(e: Event) {
   const select = e.target as HTMLSelectElement;
   selectedTypeId = select.value;
-  loadCollectives();
+  void loadCollectives();
 }
 
 function clearFilters() {
   searchQuery = '';
   selectedTypeId = '';
-  loadCollectives();
+  void loadCollectives();
 }
 
 function handleSortChange(
@@ -115,20 +115,20 @@ function toggleSortOrder() {
 }
 
 function goToPage(page: number) {
-  loadCollectives(page);
+  void loadCollectives(page);
 }
 
 // Navigate to previous page (for keyboard shortcut)
 export function goToPreviousPage() {
   if (pagination.page > 1) {
-    loadCollectives(pagination.page - 1);
+    void loadCollectives(pagination.page - 1);
   }
 }
 
 // Navigate to next page (for keyboard shortcut)
 export function goToNextPage() {
   if (pagination.page < pagination.totalPages) {
-    loadCollectives(pagination.page + 1);
+    void loadCollectives(pagination.page + 1);
   }
 }
 
@@ -157,7 +157,7 @@ let sortedItems = $derived.by(() => {
 function openFirstResult() {
   const first = sortedItems[0];
   if (!first) return;
-  goto(`/collectives/${first.id}`);
+  void goto(`/collectives/${first.id}`);
 }
 </script>
 

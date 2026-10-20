@@ -45,7 +45,7 @@ let showFilters = $derived($hasActiveFilters);
 // store focuses the input itself, synchronously inside whatever opened it.
 $effect(() => {
   if ($isSearchOpen) {
-    search.loadRecentSearches();
+    void search.loadRecentSearches();
   }
 });
 
@@ -87,10 +87,10 @@ function handleKeydown(e: KeyboardEvent) {
       e.preventDefault();
       if (e.altKey) {
         // Alt/Option+Enter: Create new friend
-        navigateToNewFriend();
+        void navigateToNewFriend();
       } else if (e.metaKey || e.ctrlKey) {
         // Cmd/Ctrl+Enter: Navigate to friends list with search
-        navigateToFriendsList();
+        void navigateToFriendsList();
       } else {
         handleSelect();
       }
@@ -112,7 +112,7 @@ function handleSelect() {
   // Selecting from search results
   const friend = searchState.results[searchState.selectedIndex];
   if (friend !== undefined) {
-    navigateToFriend(friend.id);
+    void navigateToFriend(friend.id);
   }
 }
 
@@ -120,7 +120,7 @@ function handleSelect() {
 async function navigateToFriend(friendId: string) {
   // Save to recent searches
   if (searchState.query.trim().length >= 2) {
-    search.addRecentSearch(searchState.query.trim());
+    void search.addRecentSearch(searchState.query.trim());
   }
   search.close();
   await goto(`/friends/${friendId}`);
@@ -129,7 +129,7 @@ async function navigateToFriend(friendId: string) {
 // Navigate to friends list with search query
 async function navigateToFriendsList() {
   if (searchState.query.trim().length >= 2) {
-    search.addRecentSearch(searchState.query.trim());
+    void search.addRecentSearch(searchState.query.trim());
   }
   search.close();
   await goto(
@@ -156,7 +156,7 @@ function handleRecentSearchClick(query: string) {
 // Handle deleting a recent search
 function handleDeleteRecentSearch(e: MouseEvent, query: string) {
   e.stopPropagation();
-  search.deleteRecentSearch(query);
+  void search.deleteRecentSearch(query);
 }
 
 // Determine what to show in the list

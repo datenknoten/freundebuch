@@ -1,3 +1,5 @@
+import { InvariantError } from '../errors/invariant.error.js';
+
 /**
  * Thin re-exports over `@testing-library/svelte` so component tests have a
  * single import surface and don't each reach into the library directly.
@@ -17,13 +19,17 @@ export { tick } from 'svelte';
  */
 export function control(id: string): HTMLInputElement | HTMLSelectElement {
   const el = document.querySelector(`#${id}`);
-  if (el === null) throw new Error(`no control with id ${id}`);
+  if (el === null) {
+    throw new InvariantError(`no control with id ${id}`);
+  }
   return el as HTMLInputElement | HTMLSelectElement;
 }
 
 /** The text of the `<label for=id>` bound to {@link control}'s field. */
 export function labelFor(id: string): string {
   const el = document.querySelector(`label[for="${id}"]`);
-  if (el === null) throw new Error(`no label for ${id}`);
+  if (el === null) {
+    throw new InvariantError(`no label for ${id}`);
+  }
   return el.textContent ?? '';
 }

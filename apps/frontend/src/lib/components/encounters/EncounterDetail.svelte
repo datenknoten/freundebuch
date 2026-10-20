@@ -68,7 +68,7 @@ function formatTimestamp(isoStr: string): string {
 // reason; on success it closes itself and we navigate away.
 async function handleDelete() {
   await encounters.deleteEncounter(encounter.id);
-  goto('/encounters');
+  void goto('/encounters');
 }
 </script>
 

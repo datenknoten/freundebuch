@@ -36,7 +36,10 @@ async function loadPasswords() {
   try {
     passwords = await appPasswordsApi.listAppPasswords();
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('profile.appPasswords.failedToLoad');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('profile.appPasswords.failedToLoad');
   } finally {
     isLoading = false;
   }
@@ -53,7 +56,10 @@ async function handleCreate(event: SubmitEvent) {
     newPasswordName = '';
     await loadPasswords();
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('profile.appPasswords.failedToCreate');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('profile.appPasswords.failedToCreate');
   } finally {
     isCreating = false;
   }

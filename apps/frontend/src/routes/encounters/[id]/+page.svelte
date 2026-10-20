@@ -29,7 +29,7 @@ let hasLoaded = $state(false);
 $effect(() => {
   if ($isAuthInitialized && encounterId && !hasLoaded) {
     hasLoaded = true;
-    encounters.loadEncounter(encounterId);
+    void encounters.loadEncounter(encounterId);
   }
 });
 

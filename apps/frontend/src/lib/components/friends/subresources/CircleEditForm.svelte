@@ -27,7 +27,7 @@ let selectedCircleId = $state('');
 // Load circles on mount if not already loaded
 onMount(() => {
   if ($circles.circles.length === 0) {
-    circles.loadCircles();
+    void circles.loadCircles();
   }
 });
 

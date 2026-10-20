@@ -45,7 +45,7 @@ $effect(() => {
   if ($isAuthenticated) {
     if (dashboardLoaded) return;
     dashboardLoaded = true;
-    loadDashboard();
+    void loadDashboard();
   } else {
     // Reset so re-authentication in the same SPA session reloads the dashboard
     // instead of showing the previous (or empty) state.

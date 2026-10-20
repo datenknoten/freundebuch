@@ -9,6 +9,7 @@ import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 import EmptyState from '$lib/components/ui/EmptyState.svelte';
 import FormInput from '$lib/components/ui/FormInput.svelte';
 import Spinner from '$lib/components/ui/Spinner.svelte';
+import { PasskeyDeletionError } from '$lib/errors/passkey-deletion.error.js';
 import { createI18n, getCurrentLanguage } from '$lib/i18n/i18n.js';
 
 const authClient = getAppContext().authClient;
@@ -49,7 +50,10 @@ async function loadPasskeys() {
     const result = await authClient.passkey.listUserPasskeys();
     passkeys = (result?.data ?? []) as Passkey[];
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('profile.passkeys.failedToLoad');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('profile.passkeys.failedToLoad');
   } finally {
     isLoading = false;
   }
@@ -66,7 +70,10 @@ async function handleAdd() {
       await loadPasskeys();
     }
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('profile.passkeys.failedToRegister');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('profile.passkeys.failedToRegister');
   } finally {
     isAdding = false;
   }
@@ -92,7 +99,9 @@ async function handleDelete() {
   try {
     const result = await authClient.passkey.deletePasskey({ id });
     if (result?.error) {
-      throw new Error(result.error.message || $i18n.t('profile.passkeys.failedToDelete'));
+      throw new PasskeyDeletionError(
+        result.error.message || $i18n.t('profile.passkeys.failedToDelete'),
+      );
     }
     await loadPasskeys();
   } finally {
@@ -119,7 +128,10 @@ async function saveEdit(id: string) {
       await loadPasskeys();
     }
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('profile.passkeys.failedToRename');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('profile.passkeys.failedToRename');
   }
 }
 

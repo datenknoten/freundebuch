@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ApiError } from '$lib/api/api-error.js';
+import { InvariantError } from '$lib/errors/invariant.error.js';
 import { anAddress, anEmail, aPhone, aUrl } from '$lib/test/fixtures.js';
 import { createTestAppContext } from '$lib/test/test-app-context.js';
 import type { CollectiveCircleResponse } from '$shared';
@@ -15,7 +16,7 @@ const { contactDescriptors, circleDescriptor, addDetailOptions } = createCollect
 /** Every descriptor here drives the shared edit modal, never a custom add component. */
 function formDriven(descriptor: SubresourceDescriptor) {
   if ('AddComponent' in descriptor) {
-    throw new Error(`${descriptor.key} has no create/update`);
+    throw new InvariantError(`${descriptor.key} has no create/update`);
   }
   return descriptor;
 }
@@ -28,7 +29,7 @@ function t(key: string) {
 function contactDescriptor(key: string) {
   const descriptor = contactDescriptors.find((d) => d.key === key);
   if (descriptor === undefined) {
-    throw new Error(`no ${key} descriptor`);
+    throw new InvariantError(`no ${key} descriptor`);
   }
   return formDriven(descriptor);
 }

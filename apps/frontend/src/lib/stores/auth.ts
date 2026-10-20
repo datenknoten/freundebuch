@@ -3,6 +3,7 @@ import { derived, writable } from 'svelte/store';
 import type { UserPreferences, UserResponse, UserWithPreferencesResponse } from '$shared';
 import type { AuthApi } from '../api/auth.js';
 import type { AuthClient } from '../auth-client.js';
+import { AuthError } from '../errors/auth.error.js';
 import { retryWithBackoff } from '../utils/retry.js';
 import type { SessionStore } from './session.js';
 
@@ -109,7 +110,7 @@ export class AuthStore {
         name: email.split('@')[0] ?? '',
       });
       if (result.error !== null) {
-        throw new Error(result.error.message ?? 'Registration failed');
+        throw new AuthError(result.error.message ?? 'Registration failed');
       }
       return await this.signedIn();
     } catch (error) {
@@ -123,7 +124,7 @@ export class AuthStore {
     try {
       const result = await this.authClient.signIn.email({ email, password });
       if (result.error !== null) {
-        throw new Error(result.error.message ?? 'Login failed');
+        throw new AuthError(result.error.message ?? 'Login failed');
       }
       return await this.signedIn();
     } catch (error) {

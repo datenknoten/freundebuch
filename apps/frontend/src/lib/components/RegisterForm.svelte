@@ -37,9 +37,12 @@ async function handleSubmit(e: SubmitEvent) {
   try {
     await auth.register(email, password);
     // Redirect to home page after successful registration
-    goto('/');
+    await goto('/');
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('auth.register.error.generic');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('auth.register.error.generic');
     isLoading = false;
   }
 }

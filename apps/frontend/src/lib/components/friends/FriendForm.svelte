@@ -192,7 +192,10 @@ async function uploadPhoto() {
     photoPreview = null;
     photoFile = null;
   } catch (err) {
-    photoError = (err as Error)?.message || $i18n.t('friendForm.photo.uploadError');
+    photoError =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('friendForm.photo.uploadError');
   } finally {
     isUploadingPhoto = false;
   }
@@ -252,63 +255,69 @@ async function handleSubmit(e: Event) {
     }
 
     if (isEditing && friend) {
-      // Update existing friend - core fields only
-      // Subresources (phones, emails, professional history, etc.) are edited inline on the detail page
-      await friends.updateFriend(friend.id, {
-        displayName,
-        nickname: nickname || null,
-        namePrefix: namePrefix || null,
-        nameFirst: nameFirst || null,
-        nameMiddle: nameMiddle || null,
-        nameLast: nameLast || null,
-        nameSuffix: nameSuffix || null,
-        maidenName: maidenName || null,
-        interests: interests || null,
-      });
-
-      // Handle met info - set if any field is filled
-      if (metInfo) {
-        await friends.setMetInfo(friend.id, metInfo);
-      }
-
-      goto(`/friends/${friend.id}`);
-    } else {
-      // Create new friend - core fields only
-      // Subresources can be added inline on the detail page after creation
-      const newFriend = await friends.createFriend(friendData);
-
-      if (addToCollective) {
-        // Add the new friend to the collective, then return there
-        try {
-          let roleId = addToCollective.roleId;
-          if (!roleId) {
-            // Fall back to the collective type's default (first) role
-            const collective = await api.collectives.getCollective(addToCollective.id);
-            roleId = collective.type.roles.toSorted((a, b) => a.sortOrder - b.sortOrder)[0]?.id;
-          }
-          if (roleId) {
-            await api.collectiveMembers.addMember(addToCollective.id, {
-              friendId: newFriend.id,
-              roleId,
-            });
-            // Only return to the collective once the friend is actually a member
-            goto(`/collectives/${addToCollective.id}`);
-            return;
-          }
-          // No role could be resolved (e.g. collective has no roles); the friend
-          // was created but not added, so fall through to the friend detail page
-        } catch (err) {
-          // Friend was created; membership failed - land on the friend so nothing is lost
-          logger.error({ err }, 'Failed to add new friend to collective');
-        }
-      }
-
-      goto(`/friends/${newFriend.id}`);
+      await updateAndNavigate(friend.id, metInfo);
+      return;
     }
+    await createAndNavigate(friendData);
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('friendForm.saveError');
+    error =
+      err instanceof Error && err.message !== '' ? err.message : $i18n.t('friendForm.saveError');
     internalIsLoading = false;
   }
+}
+
+// Core fields only: sub-resources (phones, emails, professional history, …) are
+// edited inline on the detail page.
+async function updateAndNavigate(friendId: string, metInfo: FriendCreateData['metInfo']) {
+  await friends.updateFriend(friendId, {
+    displayName,
+    nickname: nickname || null,
+    namePrefix: namePrefix || null,
+    nameFirst: nameFirst || null,
+    nameMiddle: nameMiddle || null,
+    nameLast: nameLast || null,
+    nameSuffix: nameSuffix || null,
+    maidenName: maidenName || null,
+    interests: interests || null,
+  });
+  if (metInfo !== undefined) {
+    await friends.setMetInfo(friendId, metInfo);
+  }
+  await goto(`/friends/${friendId}`);
+}
+
+// Core fields only: sub-resources are added inline on the detail page after creation.
+async function createAndNavigate(friendData: FriendCreateData) {
+  const newFriend = await friends.createFriend(friendData);
+  if (addToCollective !== undefined && (await joinCollective(addToCollective, newFriend.id))) {
+    // Only return to the collective once the friend is actually a member
+    await goto(`/collectives/${addToCollective.id}`);
+    return;
+  }
+  await goto(`/friends/${newFriend.id}`);
+}
+
+// Resolves `false` when the friend could not join (no role resolvable, or the
+// request failed): the friend exists either way, so the caller lands on it and
+// nothing is lost.
+async function joinCollective(collective: { id: string; roleId?: string }, friendId: string) {
+  try {
+    const roleId = collective.roleId || (await findDefaultRoleId(collective.id));
+    if (!roleId) {
+      return false;
+    }
+    await api.collectiveMembers.addMember(collective.id, { friendId, roleId });
+    return true;
+  } catch (err) {
+    logger.error({ err }, 'Failed to add new friend to collective');
+    return false;
+  }
+}
+
+// The collective type's default role is its first one by sort order.
+async function findDefaultRoleId(collectiveId: string) {
+  const collective = await api.collectives.getCollective(collectiveId);
+  return collective.type.roles.toSorted((a, b) => a.sortOrder - b.sortOrder)[0]?.id;
 }
 </script>
 

@@ -25,7 +25,7 @@ let formError = $state('');
 let isSubmitting = $state(false);
 
 onMount(() => {
-  notificationChannels.loadChannels();
+  void notificationChannels.loadChannels();
 });
 
 function handleAddChannel() {
@@ -63,7 +63,8 @@ async function handleSubmitForm(
     showForm = false;
     editingChannel = undefined;
   } catch (err) {
-    formError = (err as Error)?.message ?? $i18n.t('profile.messagingReminders.saveError');
+    formError =
+      err instanceof Error ? err.message : $i18n.t('profile.messagingReminders.saveError');
   } finally {
     isSubmitting = false;
   }

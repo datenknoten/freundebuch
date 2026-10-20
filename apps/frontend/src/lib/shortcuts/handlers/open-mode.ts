@@ -45,10 +45,11 @@ export function handleOpenMode(e: KeyboardEvent, ctx: HandlerContext) {
   if (isDigitKey === true) {
     e.preventDefault();
     const index = keyNum - 1;
-    if (index < items.length) {
-      ctx.clearPending();
-      openItem(config, items, index);
+    if (index >= items.length) {
+      return true;
     }
+    ctx.clearPending();
+    openItem(config, items, index);
     return true;
   }
 

@@ -64,7 +64,7 @@ function handleSuccess() {
   }
 
   // Redirect to home page after successful login
-  goto('/');
+  void goto('/');
 }
 
 async function handleSubmit(e: SubmitEvent) {
@@ -76,7 +76,10 @@ async function handleSubmit(e: SubmitEvent) {
     await auth.login(email, password);
     handleSuccess();
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('auth.login.error.generic');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('auth.login.error.generic');
     isLoading = false;
   }
 }
@@ -96,7 +99,10 @@ async function handlePasskeySignIn() {
       handleSuccess();
     }
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('profile.passkeys.signInFailed');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('profile.passkeys.signInFailed');
     isPasskeyLoading = false;
   }
 }

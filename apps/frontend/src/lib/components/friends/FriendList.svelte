@@ -109,7 +109,7 @@ let currentColumns = $derived<ColumnId[]>(
 );
 
 function handleColumnsChange(newColumns: ColumnId[]) {
-  auth.updatePreferences({ friendsTableColumns: newColumns });
+  void auth.updatePreferences({ friendsTableColumns: newColumns });
 }
 
 // Debounce timer
@@ -201,7 +201,7 @@ function handleFilterChange(newFilters: FacetFilters) {
   activeFilters = newFilters;
   searchPage = 1;
   onFiltersChange?.(newFilters);
-  performSearch();
+  void performSearch();
 }
 
 function handleRemoveFilter(field: ArrayFacetField, value: string) {
@@ -220,9 +220,9 @@ function handleRemoveFilter(field: ArrayFacetField, value: string) {
     searchResults = [];
     searchTotal = 0;
     searchTotalPages = 0;
-    loadFacets();
+    void loadFacets();
   } else {
-    performSearch();
+    void performSearch();
   }
 }
 
@@ -236,9 +236,9 @@ function handleClearAllFilters() {
     searchResults = [];
     searchTotal = 0;
     searchTotalPages = 0;
-    loadFacets();
+    void loadFacets();
   } else {
-    performSearch();
+    void performSearch();
   }
 }
 
@@ -287,7 +287,7 @@ function toggleSortOrder() {
   } else {
     sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
   }
-  handleSortChange();
+  void handleSortChange();
 }
 
 // Handle sort changes from table header clicks
@@ -297,12 +297,12 @@ function handleTableSortChange(
 ) {
   sortBy = newSortBy;
   sortOrder = newSortOrder;
-  handleSortChange();
+  void handleSortChange();
 }
 
 async function handlePageSizeChange(newSize: PageSize) {
   // Update user preferences (optimistic update with retry)
-  auth.updatePreferences({ friendsPageSize: newSize });
+  void auth.updatePreferences({ friendsPageSize: newSize });
 
   // Reload with new page size, reset to page 1
   if (isSearchMode) {
@@ -322,7 +322,7 @@ async function handlePageSizeChange(newSize: PageSize) {
 export function goToPreviousPage() {
   const currentPage = isSearchMode ? searchPage : $friends.page;
   if (currentPage > 1) {
-    loadPage(currentPage - 1);
+    void loadPage(currentPage - 1);
   }
 }
 
@@ -331,7 +331,7 @@ export function goToNextPage() {
   const totalPages = isSearchMode ? searchTotalPages : $friends.totalPages;
   const currentPage = isSearchMode ? searchPage : $friends.page;
   if (currentPage < totalPages) {
-    loadPage(currentPage + 1);
+    void loadPage(currentPage + 1);
   }
 }
 
@@ -342,14 +342,14 @@ $effect(() => {
     handleSearchInput(initialQuery);
   } else if (hasInitialFilters) {
     // Filters without query - trigger filter-only search
-    performSearch();
+    void performSearch();
   }
 });
 
 // Load facets on mount (when auth is initialized)
 $effect(() => {
   if ($auth.isInitialized && !facets) {
-    loadFacets();
+    void loadFacets();
   }
 });
 
@@ -414,7 +414,7 @@ function openFirstResult() {
   const url = returnUrl
     ? `/friends/${first.id}?from=${encodeURIComponent(returnUrl)}`
     : `/friends/${first.id}`;
-  goto(url);
+  void goto(url);
 }
 </script>
 

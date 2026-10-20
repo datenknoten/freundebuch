@@ -58,41 +58,44 @@ async function handleSubmit(e: Event) {
   isSubmitting = true;
 
   try {
-    let result: CollectiveResponse;
-
-    if (isEditMode && collective) {
-      const input: CollectiveUpdateData = {
-        name: name.trim(),
-        notes: notes.trim() || null,
-      };
-      result = await collectives.updateCollective(collective.id, input);
-    } else {
-      const input: CollectiveCreateData = {
-        name: name.trim(),
-        collectiveTypeId: selectedTypeId,
-        notes: notes.trim() || undefined,
-      };
-      result = await collectives.createCollective(input);
-    }
-
+    const result = await saveCollective();
     if (onSuccess) {
       onSuccess(result);
-    } else {
-      goto(`/collectives/${result.id}`);
+      return;
     }
+    void goto(`/collectives/${result.id}`);
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('collectives.form.saveError');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('collectives.form.saveError');
   } finally {
     isSubmitting = false;
   }
 }
 
+function saveCollective() {
+  if (isEditMode && collective) {
+    const input: CollectiveUpdateData = {
+      name: name.trim(),
+      notes: notes.trim() || null,
+    };
+    return collectives.updateCollective(collective.id, input);
+  }
+  const input: CollectiveCreateData = {
+    name: name.trim(),
+    collectiveTypeId: selectedTypeId,
+    notes: notes.trim() || undefined,
+  };
+  return collectives.createCollective(input);
+}
+
 function handleCancel() {
   if (onCancel) {
     onCancel();
-  } else {
-    goto('/collectives');
+    return;
   }
+  void goto('/collectives');
 }
 </script>
 

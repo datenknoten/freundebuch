@@ -102,10 +102,13 @@ async function handleSubmit(e: Event) {
     if (onSuccess) {
       onSuccess(result);
     } else {
-      goto(`/encounters/${result.id}`);
+      void goto(`/encounters/${result.id}`);
     }
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('encounters.form.saveError');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('encounters.form.saveError');
   } finally {
     isSubmitting = false;
   }
@@ -115,7 +118,7 @@ function handleCancel() {
   if (onCancel) {
     onCancel();
   } else {
-    goto('/encounters');
+    void goto('/encounters');
   }
 }
 </script>

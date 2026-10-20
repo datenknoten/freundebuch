@@ -103,7 +103,7 @@ $effect(() => {
 // Load relationship preview when both collective and role are selected
 $effect(() => {
   if (selectedCollectiveId && selectedRoleId) {
-    loadPreview();
+    void loadPreview();
   } else {
     preview = null;
   }
@@ -149,7 +149,10 @@ async function handleSubmit() {
     onSuccess();
     onClose();
   } catch (err) {
-    error = (err as Error)?.message || $i18n.t('friendDetail.addToCollective.error');
+    error =
+      err instanceof Error && err.message !== ''
+        ? err.message
+        : $i18n.t('friendDetail.addToCollective.error');
   } finally {
     isSubmitting = false;
   }

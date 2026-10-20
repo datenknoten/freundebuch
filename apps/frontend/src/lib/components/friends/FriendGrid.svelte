@@ -73,7 +73,7 @@ function getFriendDetailUrl(itemId: string): string {
 }
 
 function handleRowClick(itemId: string) {
-  goto(getFriendDetailUrl(itemId));
+  void goto(getFriendDetailUrl(itemId));
 }
 
 function handleLinkClick(e: MouseEvent) {

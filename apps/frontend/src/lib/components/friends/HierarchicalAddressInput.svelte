@@ -106,21 +106,23 @@ let houseNumberAbortController: AbortController | null = null;
 // Element references for focus management
 let postalCodeInputRef: { focus: () => void } | undefined;
 
-// Preload other data if editing existing address
+// When editing an existing address, preload cities/streets/house numbers in background
 onMount(() => {
-  // If editing an existing address, preload cities/streets/house numbers in background
   if (selectedCountryCode && postalCode) {
-    loadCities().then(() => {
-      if (selectedCity) {
-        scheduleStreetLoad();
-        // Also schedule house numbers if we have a street
-        if (selectedStreet) {
-          scheduleHouseNumberLoad();
-        }
-      }
-    });
+    void preloadExistingAddress();
   }
 });
+
+async function preloadExistingAddress() {
+  await loadCities();
+  if (!selectedCity) {
+    return;
+  }
+  scheduleStreetLoad();
+  if (selectedStreet) {
+    scheduleHouseNumberLoad();
+  }
+}
 
 async function loadCities() {
   if (!selectedCountryCode || postalCode.length < 3) {
@@ -297,7 +299,7 @@ function handlePostalCodeChange(value: string) {
 
   if (value.length >= 3 && selectedCountryCode) {
     postalCodeDebounceTimer = setTimeout(() => {
-      loadCities();
+      void loadCities();
     }, 300);
   }
 
@@ -307,7 +309,7 @@ function handlePostalCodeChange(value: string) {
   }
   if (value.length >= 2 && selectedCountryCode) {
     postalSuggestDebounceTimer = setTimeout(() => {
-      loadPostalCodeSuggestions();
+      void loadPostalCodeSuggestions();
     }, 300);
   } else {
     postalCodeSuggestions = [];
@@ -322,7 +324,7 @@ function handlePostalCodeSuggestionSelect(code: string, city: string) {
   selectedCity = city;
   selectedState = '';
   // Populate the city list for this postal code and load downstream data
-  loadCities();
+  void loadCities();
   scheduleStreetLoad();
   emitChange();
 }

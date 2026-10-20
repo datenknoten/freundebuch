@@ -50,7 +50,7 @@ let collectives = $state<ContactCollectiveSummaryResponse[]>([]);
 // Load collectives on mount
 $effect(() => {
   if (friend.id) {
-    loadCollectives();
+    void loadCollectives();
   }
 });
 
@@ -159,7 +159,7 @@ let showFabCreateMenu = $state(false);
 // itself open and shows the reason.
 async function handleDelete() {
   await friends.deleteFriend(friend.id);
-  goto('/friends');
+  void goto('/friends');
 }
 
 // Dispatch the add event the chosen menu entry carries; each section (and the
@@ -171,7 +171,7 @@ function dispatchAddEvent(shortcutEvent: string) {
 // Keyboard shortcut event listeners
 onMount(() => {
   function handleLogEncounter() {
-    goto(
+    void goto(
       `/encounters/new?friendId=${friend.id}&friendName=${encodeURIComponent(friend.displayName)}`,
     );
   }
@@ -183,7 +183,7 @@ onMount(() => {
 
     switch (link.type) {
       case 'internal':
-        goto(link.url);
+        void goto(link.url);
         break;
       case 'external':
         window.open(link.url, '_blank', 'noopener,noreferrer');

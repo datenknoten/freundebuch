@@ -11,13 +11,13 @@ export type FabCreateChoice = 'friend' | 'encounter' | 'circle' | 'collective';
 export function navigateForCreateChoice(choice: FabCreateChoice) {
   switch (choice) {
     case 'friend':
-      goto('/friends/new');
+      void goto('/friends/new');
       break;
     case 'encounter':
-      goto('/encounters/new');
+      void goto('/encounters/new');
       break;
     case 'collective':
-      goto('/collectives/new');
+      void goto('/collectives/new');
       break;
     case 'circle':
       // Circles are created via a modal. Open it in place when already on /circles,
@@ -33,7 +33,7 @@ export function navigateForCreateChoice(choice: FabCreateChoice) {
         // cannot flush itself: it is also reachable from keyboard shortcuts.
         openWithKeyboard(() => window.dispatchEvent(new CustomEvent('shortcut:new-circle')));
       } else {
-        goto('/circles?new=1');
+        void goto('/circles?new=1');
       }
       break;
   }

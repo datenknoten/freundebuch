@@ -34,7 +34,7 @@ onMount(async () => {
   try {
     lastEncounter = await encountersApi.findLastEncounter(friendId);
   } catch (err) {
-    error = (err as Error)?.message || 'Failed to load';
+    error = err instanceof Error && err.message !== '' ? err.message : 'Failed to load';
   } finally {
     isLoading = false;
   }
