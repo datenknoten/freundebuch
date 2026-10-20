@@ -419,7 +419,7 @@ export class SearchService {
     }
 
     // Map field labels
-    const fieldLabels: Record<string, string> = {
+    const fieldLabels = {
       country: 'Country',
       city: 'City',
       organization: 'Organization',

@@ -47,7 +47,7 @@ async function startSink(): Promise<Sink> {
       }
 
       for (const line of text.split('\r\n').filter(Boolean)) {
-        commands.push(line.split(' ')[0].toUpperCase());
+        commands.push((line.split(' ')[0] ?? '').toUpperCase());
         if (line.startsWith('EHLO') || line.startsWith('HELO')) {
           socket.write('250-sink\r\n250 OK\r\n');
         } else if (line.startsWith('STARTTLS')) {

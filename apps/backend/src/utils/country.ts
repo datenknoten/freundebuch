@@ -29,7 +29,7 @@ export function localeToCountry(acceptLanguage: string | undefined): string | un
       const [tag, ...params] = part.trim().split(';');
       const q = params.map((p) => p.trim()).find((p) => p.startsWith('q='));
       const weight = q ? Number.parseFloat(q.slice(2)) : 1;
-      return { tag: tag.trim(), weight: Number.isNaN(weight) ? 0 : weight };
+      return { tag: (tag ?? '').trim(), weight: Number.isNaN(weight) ? 0 : weight };
     })
     .filter((entry) => entry.tag.length > 0)
     .sort((a, b) => b.weight - a.weight)
@@ -48,7 +48,7 @@ export function localeToCountry(acceptLanguage: string | undefined): string | un
   // Fallback: a language-only tag mapped to its primary country. Never return
   // the language code itself ("en" is not the country "EN").
   for (const tag of tags) {
-    const country = LANGUAGE_TO_COUNTRY[tag.split('-')[0].toLowerCase()];
+    const country = LANGUAGE_TO_COUNTRY[(tag.split('-')[0] ?? '').toLowerCase()];
     if (country) return country;
   }
 

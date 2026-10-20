@@ -118,7 +118,7 @@ describe('notification dispatch', () => {
   async function runOneTick(pool: pg.Pool): Promise<void> {
     setupNotificationScheduler(pool, silentLogger());
     expect(mocks.scheduled).toHaveLength(1);
-    await mocks.scheduled[0]();
+    await mocks.scheduled[0]?.();
   }
 
   it('claims the channel before sending, and sends when the claim wins', async () => {
@@ -161,9 +161,9 @@ describe('notification dispatch', () => {
     const logger = silentLogger();
 
     setupNotificationScheduler({ query } as unknown as pg.Pool, logger);
-    const first = mocks.scheduled[0]();
+    const first = mocks.scheduled[0]?.();
     // Second tick arrives while the first is blocked on the query.
-    await mocks.scheduled[0]();
+    await mocks.scheduled[0]?.();
 
     expect(logger.warn).toHaveBeenCalledWith(
       'Notification dispatch still running from a previous tick, skipping',
@@ -182,7 +182,7 @@ describe('notification dispatch', () => {
     setupNotificationScheduler({ query } as unknown as pg.Pool, logger);
     // A broken query must not throw out of the cron callback: an unhandled
     // rejection there would take the scheduler down for every later tick.
-    await expect(mocks.scheduled[0]()).resolves.toBeUndefined();
+    await expect(mocks.scheduled[0]?.()).resolves.toBeUndefined();
 
     expect(mocks.dispatchNotification).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalled();

@@ -152,7 +152,7 @@ export function extractSessionToken(cookieHeader: string | null): string | null 
     cookieHeader.match(/__Secure-better-auth\.session_token=([^;]+)/) ||
     // Legacy fallback
     cookieHeader.match(/session_token=([^;]+)/);
-  return match ? match[1] : null;
+  return match?.[1] ?? null;
 }
 
 /**

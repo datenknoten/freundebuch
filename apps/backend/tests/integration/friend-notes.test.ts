@@ -93,7 +93,7 @@ describe('Friend Notes API - Integration', () => {
 
     const notes = await listNotes(friendId);
     expect(notes.map((n) => n.id)).toEqual([newer.id, older.id]);
-    expect(notes[1].supersededByNoteId).toBe(newer.id);
+    expect(notes[1]?.supersededByNoteId).toBe(newer.id);
   });
 
   it('rejects the friend itself as the source', async () => {
@@ -175,13 +175,13 @@ describe('Friend Notes API - Integration', () => {
     const deleted = await req('DELETE', `/api/friends/${friendId}/notes/${newer.id}`);
     expect(deleted.status).toBe(200);
     let [remaining] = await listNotes(friendId);
-    expect(remaining.id).toBe(older.id);
-    expect(remaining.supersededByNoteId).toBeNull();
-    expect(remaining.encounter?.id).toBe(encounterId);
+    expect(remaining?.id).toBe(older.id);
+    expect(remaining?.supersededByNoteId).toBeNull();
+    expect(remaining?.encounter?.id).toBe(encounterId);
 
     expect((await req('DELETE', `/api/encounters/${encounterId}`)).status).toBe(200);
     [remaining] = await listNotes(friendId);
-    expect(remaining.encounter).toBeNull();
+    expect(remaining?.encounter).toBeNull();
   });
 
   it("returns 404 when listing notes of another user's friend", async () => {

@@ -65,10 +65,11 @@ export class CirclesService {
     circleExternalId: string,
   ): Promise<CircleResponse | null> {
     const results = await getCircleById.run({ userExternalId, circleExternalId }, this.db);
-    if (results.length === 0) {
+    const [row] = results;
+    if (row === undefined) {
       return null;
     }
-    return this.mapCircle(results[0]);
+    return this.mapCircle(row);
   }
 
   /**
@@ -87,12 +88,13 @@ export class CirclesService {
         this.db,
       );
 
-      if (results.length === 0) {
+      const [created] = results;
+      if (created === undefined) {
         return null;
       }
 
       // Fetch the full circle with friend count
-      return this.getCircleById(userExternalId, results[0].external_id);
+      return this.getCircleById(userExternalId, created.external_id);
     } catch (error) {
       rethrowUniqueViolation(error, {
         idx_circles_unique_name: () => new CircleNameExistsError(),
@@ -144,12 +146,13 @@ export class CirclesService {
         this.db,
       );
 
-      if (results.length === 0) {
+      const [updated] = results;
+      if (updated === undefined) {
         return null;
       }
 
       // Fetch the full circle with friend count
-      return this.getCircleById(userExternalId, results[0].external_id);
+      return this.getCircleById(userExternalId, updated.external_id);
     } catch (error) {
       rethrowUniqueViolation(error, {
         idx_circles_unique_name: () => new CircleNameExistsError(),
@@ -350,7 +353,8 @@ export class CirclesService {
       this.db,
     );
 
-    if (results.length === 0) {
+    const [added] = results;
+    if (added === undefined) {
       // Either already exists (conflict) or invalid IDs
       // Check if the friend is already in this circle
       const existing = await this.getCirclesForFriend(userExternalId, friendExternalId);
@@ -358,7 +362,7 @@ export class CirclesService {
       return found ?? null;
     }
 
-    return this.mapAddResult(results[0]);
+    return this.mapAddResult(added);
   }
 
   /**

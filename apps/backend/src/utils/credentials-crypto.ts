@@ -98,22 +98,23 @@ export function decrypt(value: string, context: string): string {
   }
 
   const parts = value.slice(ENVELOPE_PREFIX_V2.length).split(':');
-  if (parts.length !== 3) {
+  const [iv, authTag, ciphertext] = parts;
+  if (parts.length !== 3 || iv === undefined || authTag === undefined || ciphertext === undefined) {
     throw new ConfigurationError('Malformed encrypted credential envelope', {
       code: 'CREDENTIAL_DECRYPT_FAILED',
     });
   }
 
   try {
-    const decipher = createDecipheriv(ALGORITHM, getKey(), Buffer.from(parts[0], 'base64url'));
+    const decipher = createDecipheriv(ALGORITHM, getKey(), Buffer.from(iv, 'base64url'));
     // v1 was written without associated data; setting it there would fail the
     // tag check on every legacy row.
     if (isV2) {
       decipher.setAAD(Buffer.from(context, 'utf8'));
     }
-    decipher.setAuthTag(Buffer.from(parts[1], 'base64url'));
+    decipher.setAuthTag(Buffer.from(authTag, 'base64url'));
     const plain = Buffer.concat([
-      decipher.update(Buffer.from(parts[2], 'base64url')),
+      decipher.update(Buffer.from(ciphertext, 'base64url')),
       decipher.final(),
     ]);
     return plain.toString('utf8');

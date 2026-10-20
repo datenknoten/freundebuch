@@ -114,9 +114,10 @@ function getClientIdentifier(c: Context): string {
         .split(',')
         .map((part) => part.trim())
         .filter(Boolean);
-      if (hops.length > 0) {
-        const index = Math.max(0, hops.length - config.TRUSTED_PROXY_HOPS);
-        return hops[index];
+      const index = Math.max(0, hops.length - config.TRUSTED_PROXY_HOPS);
+      const hop = hops[index];
+      if (hop !== undefined) {
+        return hop;
       }
     }
     const realIp = c.req.header('X-Real-IP');

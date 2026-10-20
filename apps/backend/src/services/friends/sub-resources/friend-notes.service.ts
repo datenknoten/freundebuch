@@ -94,11 +94,12 @@ export class FriendNotesService {
       } catch (error) {
         this.rethrowSupersedeConflict(error);
       }
-      if (created.length === 0) {
+      const [createdNote] = created;
+      if (createdNote === undefined) {
         throw new FriendNotFoundError();
       }
 
-      return this.readNote(client, userExternalId, friendExternalId, created[0].external_id);
+      return this.readNote(client, userExternalId, friendExternalId, createdNote.external_id);
     });
   }
 

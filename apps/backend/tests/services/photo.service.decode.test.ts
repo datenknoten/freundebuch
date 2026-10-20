@@ -38,7 +38,7 @@ async function pngWithCorruptPixelData(): Promise<Uint8Array<ArrayBuffer>> {
     const type = corrupt.toString('ascii', offset + 4, offset + 8);
     if (type === 'IDAT') {
       for (let i = offset + 8; i < offset + 8 + Math.min(length, 8); i++) {
-        corrupt[i] ^= 0xff;
+        corrupt.writeUInt8(corrupt.readUInt8(i) ^ 0xff, i);
       }
     }
     offset += 12 + length;

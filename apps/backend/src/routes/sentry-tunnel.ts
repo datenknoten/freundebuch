@@ -56,7 +56,7 @@ sentryTunnelRoutes.post(
 
       let header: { dsn?: string };
       try {
-        header = JSON.parse(pieces[0]);
+        header = JSON.parse(pieces[0] ?? '');
       } catch {
         return c.json({ error: 'Invalid envelope header' }, 400);
       }

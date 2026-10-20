@@ -56,9 +56,9 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
 
       const streets = await client.getStreets('DE', 'Berlin', '10115');
 
-      expect(streets[0].name).toBe('Adlerstraße');
-      expect(streets[1].name).toBe('Mittelweg');
-      expect(streets[2].name).toBe('Zwingerstraße');
+      expect(streets[0]?.name).toBe('Adlerstraße');
+      expect(streets[1]?.name).toBe('Mittelweg');
+      expect(streets[2]?.name).toBe('Zwingerstraße');
     });
 
     it('should return empty array for non-existent postal code', async () => {
@@ -99,7 +99,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       const streets = await client.getStreets('DE', 'Berlin', '10115');
 
       expect(streets).toHaveLength(1);
-      expect(streets[0].name).toBe('Torstraße');
+      expect(streets[0]?.name).toBe('Torstraße');
     });
 
     it('should handle case-insensitive country codes', async () => {
@@ -128,10 +128,10 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       const austrianStreets = await client.getStreets('AT', 'Wien', '10115');
 
       expect(germanStreets).toHaveLength(1);
-      expect(germanStreets[0].name).toBe('Torstraße');
+      expect(germanStreets[0]?.name).toBe('Torstraße');
 
       expect(austrianStreets).toHaveLength(1);
-      expect(austrianStreets[0].name).toBe('Kärntner Straße');
+      expect(austrianStreets[0]?.name).toBe('Kärntner Straße');
     });
   });
 
@@ -239,8 +239,8 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       const results = await client.searchPostalCodes('DE', '55', 2);
 
       expect(results).toHaveLength(2);
-      expect(results[0].postalCode).toBe('55116');
-      expect(results[1].postalCode).toBe('55118');
+      expect(results[0]?.postalCode).toBe('55116');
+      expect(results[1]?.postalCode).toBe('55118');
     });
 
     it('should return empty array when nothing matches the prefix', async () => {
@@ -424,7 +424,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       const batchResult = await pool.query<{ external_id: string }>(
         `SELECT external_id FROM geodata.import_batches LIMIT 1`,
       );
-      const batchId = batchResult.rows[0].external_id;
+      const batchId = batchResult.rows[0]?.external_id;
 
       await pool.query(
         `INSERT INTO geodata.addresses (country_code, postal_code, city, street, house_number, import_batch_id)
@@ -438,7 +438,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
 
       // Should still return only 1 distinct house number
       expect(houseNumbers).toHaveLength(1);
-      expect(houseNumbers[0].number).toBe('1');
+      expect(houseNumbers[0]?.number).toBe('1');
     });
   });
 
@@ -600,7 +600,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       const batchResult = await pool.query<{ external_id: string }>(
         `SELECT external_id FROM geodata.import_batches WHERE country_code = 'AT' LIMIT 1`,
       );
-      const atBatchId = batchResult.rows[0].external_id;
+      const atBatchId = batchResult.rows[0]?.external_id;
 
       await pool.query(
         `INSERT INTO geodata.addresses (country_code, postal_code, city, street, import_batch_id)
@@ -610,8 +610,8 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
 
       const stats = await client.getStats();
 
-      expect(stats[0].countryCode).toBe('AT');
-      expect(stats[1].countryCode).toBe('DE');
+      expect(stats[0]?.countryCode).toBe('AT');
+      expect(stats[1]?.countryCode).toBe('DE');
     });
   });
 
@@ -624,7 +624,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       );
 
       expect(result.rows).toHaveLength(1);
-      expect(result.rows[0].extname).toBe('postgis');
+      expect(result.rows[0]?.extname).toBe('postgis');
     });
 
     it('should have location column with geometry type', async () => {
@@ -639,7 +639,7 @@ describe('PostGIS Address Client - Integration Tests', { timeout: 60000 }, () =>
       );
 
       expect(result.rows).toHaveLength(1);
-      expect(result.rows[0].udt_name).toBe('geometry');
+      expect(result.rows[0]?.udt_name).toBe('geometry');
     });
 
     it('should have spatial GIST index on location column', async () => {

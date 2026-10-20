@@ -124,7 +124,8 @@ export class NominatimClient {
 
       const results = (await response.json()) as NominatimResult[];
 
-      if (results.length === 0) {
+      const [result] = results;
+      if (result === undefined) {
         this.logger.debug(
           { countryCode, city, postalCode, street },
           'Nominatim returned no results',
@@ -132,7 +133,6 @@ export class NominatimClient {
         return null;
       }
 
-      const result = results[0];
       const latitude = Number.parseFloat(result.lat);
       const longitude = Number.parseFloat(result.lon);
 

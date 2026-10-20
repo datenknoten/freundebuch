@@ -110,7 +110,7 @@ describe('AppPasswordsService', () => {
       });
       // The stored prefix is a hash and never leaves the database.
       expect(result[0]).not.toHaveProperty('passwordPrefix');
-      expect(result[1].lastUsedAt).toBeNull();
+      expect(result[1]?.lastUsedAt).toBeNull();
     });
   });
 

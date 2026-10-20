@@ -1,6 +1,6 @@
 import pg from 'pg';
 import pino from 'pino';
-import { afterAll, beforeAll, vi } from 'vitest';
+import { afterAll, assert, beforeAll, vi } from 'vitest';
 import { PostGISAddressClient } from '../../src/services/external/postgis-address.client.js';
 import { resetConfig } from '../../src/utils/config.js';
 import { cloneTemplateDatabase, dropClonedDatabase } from './auth.helpers.js';
@@ -75,7 +75,9 @@ export async function insertTestAddresses(
     [addresses[0]?.countryCode || 'DE'],
   );
 
-  const batchId = batchResult.rows[0].external_id;
+  const [batch] = batchResult.rows;
+  assert.isDefined(batch, 'INSERT … RETURNING must return the import batch');
+  const batchId = batch.external_id;
 
   // Insert addresses
   for (const addr of addresses) {

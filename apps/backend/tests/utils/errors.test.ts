@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { assert, describe, expect, it } from 'vitest';
 import * as errors from '../../src/utils/errors.js';
 
 /**
@@ -92,6 +92,7 @@ describe('AppError hierarchy', () => {
 
   it.each(discovered)('%s carries its declared status and code', (name, Cls) => {
     const expected = EXPECTED[name];
+    assert.isDefined(expected, `${name} has no row in EXPECTED`);
     const instance = instantiate(Cls);
 
     expect(instance.statusCode).toBe(expected.status);

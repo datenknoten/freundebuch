@@ -22,7 +22,7 @@ function logOnce(payload: Record<string, unknown>): Record<string, unknown> {
   logger.info(payload);
 
   expect(lines).toHaveLength(1);
-  return JSON.parse(lines[0]) as Record<string, unknown>;
+  return JSON.parse(lines[0] ?? '') as Record<string, unknown>;
 }
 
 describe('LOG_REDACT_PATHS', () => {

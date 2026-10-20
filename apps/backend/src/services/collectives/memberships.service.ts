@@ -92,19 +92,22 @@ export class MembershipsService {
         ),
       ]);
 
-      if (collectiveResult.length === 0) {
+      const [collective] = collectiveResult;
+      if (collective === undefined) {
         throw new CollectiveNotFoundError();
       }
-      if (contactResult.length === 0) {
+      const [contact] = contactResult;
+      if (contact === undefined) {
         throw new FriendNotFoundError();
       }
-      if (roleResult.length === 0) {
+      const [role] = roleResult;
+      if (role === undefined) {
         throw new RoleNotFoundError();
       }
 
-      const collectiveId = collectiveResult[0].id;
-      const contactId = contactResult[0].id;
-      const roleId = roleResult[0].id;
+      const collectiveId = collective.id;
+      const contactId = contact.id;
+      const roleId = role.id;
 
       // Create the membership
       const membershipResult = await addMembership.run(
@@ -118,12 +121,13 @@ export class MembershipsService {
         client,
       );
 
-      if (membershipResult.length === 0) {
+      const [createdMembership] = membershipResult;
+      if (createdMembership === undefined) {
         throw new MembershipCreationError();
       }
 
-      const membershipId = membershipResult[0].id;
-      const membershipExternalId = membershipResult[0].external_id;
+      const membershipId = createdMembership.id;
+      const membershipExternalId = createdMembership.external_id;
 
       // Create auto-relationships unless skipped
       if (!input.skip_auto_relationships) {
@@ -138,11 +142,12 @@ export class MembershipsService {
         this.db,
       );
 
-      if (membership.length === 0) {
+      const [membershipRow] = membership;
+      if (membershipRow === undefined) {
         throw new MembershipCreationError('Failed to retrieve created membership');
       }
 
-      return mapMember(membership[0]);
+      return mapMember(membershipRow);
     } catch (error) {
       try {
         await client.query('ROLLBACK');
@@ -172,11 +177,12 @@ export class MembershipsService {
       this.db,
     );
 
-    if (results.length === 0) {
+    const [row] = results;
+    if (row === undefined) {
       return null;
     }
 
-    return mapMember(results[0]);
+    return mapMember(row);
   }
 
   /**
@@ -193,7 +199,8 @@ export class MembershipsService {
       this.db,
     );
 
-    if (roleResult.length === 0) {
+    const [role] = roleResult;
+    if (role === undefined) {
       throw new RoleNotFoundError();
     }
 
@@ -202,7 +209,7 @@ export class MembershipsService {
         userExternalId,
         collectiveExternalId,
         membershipExternalId,
-        roleId: roleResult[0].id,
+        roleId: role.id,
       },
       this.db,
     );
@@ -216,11 +223,12 @@ export class MembershipsService {
       this.db,
     );
 
-    if (membership.length === 0) {
+    const [membershipRow] = membership;
+    if (membershipRow === undefined) {
       throw new MembershipNotFoundError();
     }
 
-    return mapMember(membership[0]);
+    return mapMember(membershipRow);
   }
 
   /**
@@ -252,11 +260,12 @@ export class MembershipsService {
       this.db,
     );
 
-    if (membership.length === 0) {
+    const [membershipRow] = membership;
+    if (membershipRow === undefined) {
       throw new MembershipNotFoundError();
     }
 
-    return mapMember(membership[0]);
+    return mapMember(membershipRow);
   }
 
   /**
@@ -281,11 +290,12 @@ export class MembershipsService {
       this.db,
     );
 
-    if (membership.length === 0) {
+    const [membershipRow] = membership;
+    if (membershipRow === undefined) {
       throw new MembershipNotFoundError();
     }
 
-    return mapMember(membership[0]);
+    return mapMember(membershipRow);
   }
 
   /**
@@ -306,12 +316,13 @@ export class MembershipsService {
         client,
       );
 
-      if (membershipResult.length === 0) {
+      const [membershipRow] = membershipResult;
+      if (membershipRow === undefined) {
         await client.query('ROLLBACK');
         return false;
       }
 
-      const membershipId = membershipResult[0].id;
+      const membershipId = membershipRow.id;
 
       // Delete relationships created by this membership
       await deleteRelationshipsByMembershipId.run({ membershipId }, client);
@@ -368,14 +379,15 @@ export class MembershipsService {
       this.db,
     );
 
-    if (contactResult.length === 0) {
+    const [contact] = contactResult;
+    if (contact === undefined) {
       throw new FriendNotFoundError();
     }
 
     const newContact: CollectiveMemberContactResponse = {
-      id: contactResult[0].external_id,
-      displayName: contactResult[0].display_name ?? 'Unknown',
-      photoUrl: contactResult[0].photo_url,
+      id: contact.external_id,
+      displayName: contact.display_name ?? 'Unknown',
+      photoUrl: contact.photo_url,
     };
 
     // Get collective internal ID
@@ -384,19 +396,21 @@ export class MembershipsService {
       this.db,
     );
 
-    if (collectiveResult.length === 0) {
+    const [collective] = collectiveResult;
+    if (collective === undefined) {
       throw new CollectiveNotFoundError();
     }
 
-    const collectiveId = collectiveResult[0].id;
+    const collectiveId = collective.id;
 
     // Get collective type ID
     const typeResult = await getCollectiveTypeIdForCollective.run({ collectiveId }, this.db);
-    if (typeResult.length === 0) {
+    const [typeRow] = typeResult;
+    if (typeRow === undefined) {
       throw new CollectiveNotFoundError();
     }
 
-    const collectiveTypeId = typeResult[0].collective_type_id;
+    const collectiveTypeId = typeRow.collective_type_id;
 
     // Get role info
     const roleResult = await getRoleInternalId.run(
@@ -404,18 +418,19 @@ export class MembershipsService {
       this.db,
     );
 
-    if (roleResult.length === 0) {
+    const [role] = roleResult;
+    if (role === undefined) {
       throw new RoleNotFoundError();
     }
 
-    const newMemberRoleId = roleResult[0].id;
+    const newMemberRoleId = role.id;
 
     // Get rules for this collective type
     const rules = await getRulesForTypeInternal.run({ collectiveTypeId }, this.db);
 
     // Get other active members
     const otherMembers = await getOtherActiveMembers.run(
-      { collectiveId, excludeContactId: contactResult[0].id },
+      { collectiveId, excludeContactId: contact.id },
       this.db,
     );
 
@@ -432,10 +447,10 @@ export class MembershipsService {
       ),
     );
 
-    for (let i = 0; i < uniqueTypeIds.length; i++) {
-      const info = typeInfoResults[i];
-      if (info.length > 0) {
-        typeInfoMap.set(uniqueTypeIds[i], info[0]);
+    for (const [i, typeId] of uniqueTypeIds.entries()) {
+      const info = typeInfoResults[i]?.[0];
+      if (info !== undefined) {
+        typeInfoMap.set(typeId, info);
       }
     }
 
@@ -461,7 +476,7 @@ export class MembershipsService {
           rule.relationship_direction === 'both'
         ) {
           const exists = await this.checkRelationshipExists(
-            contactResult[0].id,
+            contact.id,
             existingMember.contact_id,
             rule.relationship_type_id,
           );
@@ -490,7 +505,7 @@ export class MembershipsService {
         ) {
           const exists = await this.checkRelationshipExists(
             existingMember.contact_id,
-            contactResult[0].id,
+            contact.id,
             rule.relationship_type_id,
           );
 
@@ -541,11 +556,12 @@ export class MembershipsService {
   ): Promise<void> {
     // Get collective type ID
     const typeResult = await getCollectiveTypeIdForCollective.run({ collectiveId }, client);
-    if (typeResult.length === 0) {
+    const [typeRow] = typeResult;
+    if (typeRow === undefined) {
       return;
     }
 
-    const collectiveTypeId = typeResult[0].collective_type_id;
+    const collectiveTypeId = typeRow.collective_type_id;
 
     // Get rules for this collective type
     const rules = await getRulesForTypeInternal.run({ collectiveTypeId }, client);
@@ -686,15 +702,16 @@ export class MembershipsService {
       this.db,
     );
 
-    if (result.length === 0) {
+    const [role] = result;
+    if (role === undefined) {
       throw new RoleNotFoundError();
     }
 
     return {
-      id: result[0].external_id,
-      roleKey: result[0].role_key,
-      label: result[0].label,
-      sortOrder: result[0].sort_order,
+      id: role.external_id,
+      roleKey: role.role_key,
+      label: role.label,
+      sortOrder: role.sort_order,
     };
   }
 

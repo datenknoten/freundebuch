@@ -54,6 +54,7 @@
     "sharp": "0.35.5"
   },
   "devDependencies": {
+    "@datenknoten/tsconfig": "1.1.0",
     "@pgtyped/cli": "2.4.3",
     "@testcontainers/postgresql": "11.10.0",
     "@types/bcrypt": "6.0.0",

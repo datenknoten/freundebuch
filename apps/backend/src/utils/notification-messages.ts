@@ -16,7 +16,7 @@ interface LocaleStrings {
   formatDate: (month: number, day: number) => string;
 }
 
-const locales: Record<string, LocaleStrings> = {
+const locales: { en: LocaleStrings } & Record<string, LocaleStrings> = {
   en: {
     header: 'Freundebuch - Upcoming dates',
     today: 'Today',

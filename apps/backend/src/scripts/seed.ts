@@ -11,6 +11,7 @@ import bcrypt from 'bcrypt';
 import pg from 'pg';
 import { getConfig } from '../utils/config.js';
 import { formatDateOnly } from '../utils/date.js';
+import { DataIntegrityError } from '../utils/errors.js';
 
 const SALT_ROUNDS = 10;
 async function hashPassword(password: string): Promise<string> {
@@ -108,7 +109,8 @@ async function seed() {
       [DEMO_USER.email],
     );
 
-    if (existingUser.rows.length > 0) {
+    const [existingRow] = existingUser.rows;
+    if (existingRow !== undefined) {
       if (!reset) {
         console.log(`Demo user (${DEMO_USER.email}) already exists. Skipping seed.`);
         console.log('\nRe-run with --reset to delete and re-seed it:');
@@ -120,7 +122,7 @@ async function seed() {
       // Mirrors the Better Auth delete hook: the Better Auth row cascades its
       // sessions/accounts, and the legacy anchor cascades every domain row
       // (ADR 0003) — dropping only one of the two would orphan the other.
-      const userExternalId = existingUser.rows[0].id;
+      const userExternalId = existingRow.id;
       await pool.query('DELETE FROM auth."user" WHERE id = $1', [userExternalId]);
       await pool.query('DELETE FROM auth.users WHERE external_id = $1::uuid', [userExternalId]);
     }
@@ -244,7 +246,7 @@ async function seed() {
         }
 
         const friendNames = encounter.friendIndices
-          .map((i) => DEMO_FRIENDS[i].displayName)
+          .map((i) => DEMO_FRIENDS[i]?.displayName)
           .join(', ');
         console.log(`  Created encounter: "${encounter.title}" (${dateStr}) with ${friendNames}`);
       }
@@ -278,9 +280,13 @@ async function seed() {
 
 async function assignFriendToCircle(
   client: pg.PoolClient,
-  friendExternalId: string,
-  circleExternalId: string,
+  friendExternalId: string | undefined,
+  circleExternalId: string | undefined,
 ) {
+  // The callers index the ids created from DEMO_FRIENDS/DEMO_CIRCLES, so a gap is a seed-data bug.
+  if (friendExternalId === undefined || circleExternalId === undefined) {
+    throw new DataIntegrityError('seed friend or circle index');
+  }
   await client.query(
     `INSERT INTO friends.friend_circles (friend_id, circle_id)
      SELECT f.id, c.id

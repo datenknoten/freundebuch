@@ -42,13 +42,13 @@ export function parseStreetLine(streetLine1?: string): { street?: string; houseN
   // Trailing-number form: "Hauptstraße 10", "Hauptstraße 10a", "Hauptstraße 10/3"
   const trailing = trimmed.match(/^(.+?)\s+(\d+\S*)$/);
   if (trailing) {
-    return { street: trailing[1].trim(), houseNumber: trailing[2].trim() };
+    return { street: trailing[1]?.trim(), houseNumber: trailing[2]?.trim() };
   }
 
   // Leading-number form: "10 Main St", "221B Baker St"
   const leading = trimmed.match(/^(\d+\S*)\s+(.+)$/);
   if (leading) {
-    return { street: leading[2].trim(), houseNumber: leading[1].trim() };
+    return { street: leading[2]?.trim(), houseNumber: leading[1]?.trim() };
   }
 
   return { street: trimmed };

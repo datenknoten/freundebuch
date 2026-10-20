@@ -60,7 +60,7 @@ describe('credentials-crypto', () => {
   });
 
   it('rejects a tampered ciphertext', () => {
-    const [prefix, version, iv, tag, ciphertext] = encrypt(TOKEN, CONTEXT).split(':');
+    const [prefix, version, iv, tag, ciphertext = ''] = encrypt(TOKEN, CONTEXT).split(':');
     const flipped = ciphertext.startsWith('A')
       ? `B${ciphertext.slice(1)}`
       : `A${ciphertext.slice(1)}`;

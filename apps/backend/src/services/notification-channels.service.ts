@@ -61,10 +61,11 @@ export class NotificationChannelsService {
       { userExternalId, channelExternalId },
       this.db,
     );
-    if (results.length === 0) {
+    const [row] = results;
+    if (row === undefined) {
       throw new NotificationChannelNotFoundError();
     }
-    return this.mapChannel(userExternalId, results[0]);
+    return this.mapChannel(userExternalId, row);
   }
 
   /**
@@ -107,11 +108,12 @@ export class NotificationChannelsService {
         this.db,
       );
 
-      if (results.length === 0) {
+      const [row] = results;
+      if (row === undefined) {
         throw new NotificationChannelNotFoundError('Failed to create notification channel');
       }
 
-      return this.mapChannel(userExternalId, results[0]);
+      return this.mapChannel(userExternalId, row);
     } catch (error) {
       rethrowUniqueViolation(error, {
         uq_notification_channels_user_platform: () =>
@@ -159,11 +161,12 @@ export class NotificationChannelsService {
       this.db,
     );
 
-    if (results.length === 0) {
+    const [row] = results;
+    if (row === undefined) {
       throw new NotificationChannelNotFoundError();
     }
 
-    return this.mapChannel(userExternalId, results[0]);
+    return this.mapChannel(userExternalId, row);
   }
 
   /**
@@ -193,11 +196,11 @@ export class NotificationChannelsService {
       { userExternalId, channelExternalId },
       this.db,
     );
-    if (results.length === 0) {
+    const [channel] = results;
+    if (channel === undefined) {
       throw new NotificationChannelNotFoundError();
     }
 
-    const channel = results[0];
     const testMessage = 'Freundebuch - Test notification. Your channel is configured correctly!';
     const testHtml =
       '<b>Freundebuch</b> - Test notification. Your channel is configured correctly!';

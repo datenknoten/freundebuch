@@ -140,11 +140,10 @@ export class CollectivesService {
   ): Promise<CollectiveResponse | null> {
     const results = await getCollectiveById.run({ userExternalId, collectiveExternalId }, this.db);
 
-    if (results.length === 0) {
+    const [collectiveRow] = results;
+    if (collectiveRow === undefined) {
       return null;
     }
-
-    const collectiveRow = results[0];
 
     // Fetch members and roles in parallel
     const [membersResult, rolesResult] = await Promise.all([
@@ -186,12 +185,13 @@ export class CollectivesService {
       this.db,
     );
 
-    if (results.length === 0) {
+    const [created] = results;
+    if (created === undefined) {
       throw new CollectiveCreationError('Failed to create collective');
     }
 
     // Fetch the full collective with type info
-    const collective = await this.getCollectiveById(userExternalId, results[0].external_id);
+    const collective = await this.getCollectiveById(userExternalId, created.external_id);
     if (!collective) {
       throw new CollectiveCreationError('Failed to retrieve created collective');
     }

@@ -62,11 +62,10 @@ export class CollectiveTypesService {
       this.db,
     );
 
-    if (typeResults.length === 0) {
+    const [typeRow] = typeResults;
+    if (typeRow === undefined) {
       return null;
     }
-
-    const typeRow = typeResults[0];
 
     // Fetch roles and rules in parallel
     const [rolesResult, rulesResult] = await Promise.all([

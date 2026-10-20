@@ -135,12 +135,13 @@ export class EncountersService {
     encounterExternalId: string,
   ): Promise<EncounterResponse | null> {
     const results = await getEncounterById.run({ userExternalId, encounterExternalId }, this.db);
-    if (results.length === 0) {
+    const [row] = results;
+    if (row === undefined) {
       return null;
     }
 
     const friends = await getEncounterFriends.run({ userExternalId, encounterExternalId }, this.db);
-    return this.mapEncounter(results[0], friends);
+    return this.mapEncounter(row, friends);
   }
 
   /**
@@ -167,11 +168,10 @@ export class EncountersService {
         client,
       );
 
-      if (encounterResults.length === 0) {
+      const [encounter] = encounterResults;
+      if (encounter === undefined) {
         throw new EncounterCreationError();
       }
-
-      const encounter = encounterResults[0];
 
       // Add friends to the encounter
       let friends: EncounterFriendSummaryResponse[] = [];
@@ -227,12 +227,11 @@ export class EncountersService {
         client,
       );
 
-      if (encounterResults.length === 0) {
+      const [encounter] = encounterResults;
+      if (encounter === undefined) {
         await client.query('ROLLBACK');
         return null;
       }
-
-      const encounter = encounterResults[0];
 
       // Update friends if provided
       let friends: EncounterFriendSummaryResponse[];
@@ -292,10 +291,10 @@ export class EncountersService {
       { userExternalId, friendExternalId },
       this.db,
     );
-    if (results.length === 0) {
+    const [row] = results;
+    if (row === undefined) {
       return null;
     }
-    const row = results[0];
     return {
       id: row.external_id,
       title: row.title,

@@ -298,8 +298,8 @@ describe('Search API - Integration Tests', () => {
 
         expect(response.status).toBe(200);
         expect(body).toHaveLength(1);
-        expect(body[0].displayName).toBe('Clara Note');
-        expect(body[0].matchSource).toBe('notes');
+        expect(body[0]?.displayName).toBe('Clara Note');
+        expect(body[0]?.matchSource).toBe('notes');
       });
 
       it('should search by met context', async () => {
@@ -369,8 +369,8 @@ describe('Search API - Integration Tests', () => {
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Anna Leser');
-        expect(body[0].matchSource).toBe('friend');
+        expect(body[0]?.displayName).toBe('Anna Leser');
+        expect(body[0]?.matchSource).toBe('friend');
       });
 
       it('should match a German verb regardless of conjugation', async () => {
@@ -389,7 +389,7 @@ describe('Search API - Integration Tests', () => {
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Anna Leser');
+        expect(body[0]?.displayName).toBe('Anna Leser');
       });
 
       it('should match a formatted phone number by its digits alone', async () => {
@@ -408,8 +408,8 @@ describe('Search API - Integration Tests', () => {
 
         expect(response.status).toBe(200);
         expect(body.length).toBe(1);
-        expect(body[0].displayName).toBe('Bernd Berlin');
-        expect(body[0].matchSource).toBe('phone');
+        expect(body[0]?.displayName).toBe('Bernd Berlin');
+        expect(body[0]?.matchSource).toBe('phone');
       });
     });
 

@@ -61,7 +61,7 @@ describe('scrubErrorEvent', () => {
       errorEvent({ breadcrumbs: [{ category: 'http', data: { url: TELEGRAM_URL } }] }),
     );
 
-    expect(event.breadcrumbs?.[0].data?.url).toBe(TELEGRAM_URL_REDACTED);
+    expect(event.breadcrumbs?.[0]?.data?.url).toBe(TELEGRAM_URL_REDACTED);
   });
 
   it('redacts the token in the inherited trace context', () => {
