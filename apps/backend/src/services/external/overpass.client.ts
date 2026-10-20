@@ -1,22 +1,16 @@
+import { type } from 'arktype';
 import type { Logger } from 'pino';
 import { OverpassApiError } from '../../errors/overpass-api.error.js';
 import type { AddressCache, HouseNumberCached, StreetCached } from '../../utils/cache.js';
+import { parseForeignResponse } from '../../utils/parse-foreign-response.js';
 
 export type Street = StreetCached;
 
 export type HouseNumber = HouseNumberCached;
 
-interface OverpassElement {
-  type: 'node' | 'way' | 'relation';
-  id: number;
-  tags?: Record<string, string>;
-}
-
-interface OverpassResponse {
-  version: number;
-  generator: string;
-  elements: OverpassElement[];
-}
+const OverpassResponseSchema = type({
+  elements: type({ 'tags?': 'Record<string, string>' }).array(),
+});
 
 // Collator for natural sorting of house numbers
 const naturalCollator = new Intl.Collator(undefined, {
@@ -183,7 +177,7 @@ out tags;
   /**
    * Execute an Overpass query with fallback
    */
-  private async executeQuery(query: string): Promise<OverpassResponse> {
+  private async executeQuery(query: string) {
     this.logger.debug({ query }, 'Executing Overpass query');
 
     // Try primary endpoint first
@@ -208,7 +202,7 @@ out tags;
   /**
    * Execute a fetch to an Overpass endpoint
    */
-  private async fetchOverpass(url: string, query: string): Promise<OverpassResponse> {
+  private async fetchOverpass(url: string, query: string) {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -225,7 +219,7 @@ out tags;
       );
     }
 
-    const data = (await response.json()) as OverpassResponse;
+    const data = parseForeignResponse('Overpass', OverpassResponseSchema, await response.json());
     this.logger.debug(
       { url, elementCount: data.elements.length, elements: data.elements },
       'Overpass API response',

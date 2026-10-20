@@ -1,10 +1,9 @@
+import { type } from 'arktype';
 import type { Logger } from 'pino';
+import { parseForeignResponse } from '../../utils/parse-foreign-response.js';
 
-interface NominatimResult {
-  lat: string;
-  lon: string;
-  display_name: string;
-}
+// Nominatim sends coordinates as decimal strings.
+const NominatimResultsSchema = type({ lat: 'string', lon: 'string' }).array();
 
 export interface NominatimClientOptions {
   logger: Logger;
@@ -126,7 +125,11 @@ export class NominatimClient {
         return undefined;
       }
 
-      const results = (await response.json()) as NominatimResult[];
+      const results = parseForeignResponse(
+        'Nominatim',
+        NominatimResultsSchema,
+        await response.json(),
+      );
 
       const [result] = results;
       if (result === undefined) {

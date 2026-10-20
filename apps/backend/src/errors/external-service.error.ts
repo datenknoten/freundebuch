@@ -5,8 +5,8 @@ export class ExternalServiceError extends HttpError {
   public readonly service: string;
   public readonly originalStatus?: number;
 
-  constructor(service: string, message: string, originalStatus?: number) {
-    super(message);
+  constructor(service: string, message: string, originalStatus?: number, details?: unknown) {
+    super(message, { details });
     this.service = service;
     if (originalStatus !== undefined) {
       this.originalStatus = originalStatus;

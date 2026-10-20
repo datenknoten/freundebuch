@@ -1,4 +1,6 @@
 import { ValidationError } from '@datenknoten/kit';
+import { parseJson } from '@datenknoten/kit/schema';
+import { type } from 'arktype';
 import { Hono, type MiddlewareHandler } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
@@ -7,6 +9,8 @@ import type { AppContext } from '../types/context.js';
 
 // Cap the forwarded envelope size — this endpoint is unauthenticated.
 const MAX_ENVELOPE_BYTES = 1_000_000; // 1 MB
+
+const EnvelopeHeaderSchema = type({ 'dsn?': 'string' });
 
 /**
  * Allowed Sentry ingest hosts to prevent SSRF attacks.
@@ -51,15 +55,9 @@ export function createSentryTunnelRoutes(options: SentryTunnelRoutesOptions) {
       const logger = c.get('logger');
       const envelope = await c.req.text();
       const [headerLine = ''] = envelope.split('\n');
+      const header = parseJson(EnvelopeHeaderSchema, headerLine);
 
-      let header: { dsn?: string };
-      try {
-        header = JSON.parse(headerLine);
-      } catch {
-        throw new ValidationError('Invalid envelope header');
-      }
-
-      if (!header.dsn || typeof header.dsn !== 'string') {
+      if (header.dsn === undefined || header.dsn === '') {
         throw new ValidationError('Missing or invalid DSN');
       }
 

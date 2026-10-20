@@ -1,4 +1,5 @@
 import { ValidationError } from '@datenknoten/kit';
+import { parseJson } from '@datenknoten/kit/schema';
 import {
   ArchiveFriendInputSchema,
   MAX_FILE_SIZE,
@@ -14,7 +15,6 @@ import type { PhotoService } from '../../services/photo.service.js';
 import type { AppContext } from '../../types/context.js';
 import { parseBody } from '../../utils/parse-body.js';
 import { requireUuidParam } from '../../utils/require-uuid-param.js';
-import { validate } from '../../utils/validate.js';
 
 export interface OrganizationRoutesOptions {
   friendsService: FriendsService;
@@ -195,17 +195,8 @@ export function createOrganizationRoutes(options: OrganizationRoutesOptions): Ho
 
     // The reason is optional, so an empty body is valid here — parseBody would
     // reject it as malformed JSON.
-    let body: unknown = {};
-    try {
-      const text = await c.req.text();
-      if (text) {
-        body = JSON.parse(text);
-      }
-    } catch {
-      throw new ValidationError('Invalid JSON');
-    }
-
-    const validated = validate(ArchiveFriendInputSchema, body);
+    const text = await c.req.text();
+    const validated = parseJson(ArchiveFriendInputSchema, text === '' ? '{}' : text);
 
     await options.friendsService.archiveFriend(user.userId, friendId, validated.reason);
 
