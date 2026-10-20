@@ -1,5 +1,10 @@
-import type { Paginated } from '../pagination/paginated.js';
-import type { GlobalSearchResult } from './global-search-result.js';
+import { type } from 'arktype';
+import { PaginationInfoSchema } from '../pagination/pagination-info.js';
+import { GlobalSearchResultResponseSchema } from './global-search-result-response.js';
 
-/** Paginated search response */
-export type PaginatedSearchResponse = Paginated<GlobalSearchResult>;
+export const PaginatedSearchResponseSchema = type({
+  data: GlobalSearchResultResponseSchema.array(),
+  pagination: PaginationInfoSchema,
+});
+
+export type PaginatedSearchResponse = typeof PaginatedSearchResponseSchema.infer;

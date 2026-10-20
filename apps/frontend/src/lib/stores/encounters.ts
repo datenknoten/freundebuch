@@ -1,10 +1,10 @@
 import { derived, writable } from 'svelte/store';
 import type {
-  Encounter,
-  EncounterInput,
-  EncounterListItem,
-  EncounterUpdate,
-  LastEncounterSummary,
+  EncounterCreateInput,
+  EncounterListItemResponse,
+  EncounterResponse,
+  EncounterUpdateInput,
+  LastEncounterSummaryResponse,
   PaginationInfo,
 } from '$shared';
 import type { EncounterListParams } from '../api/encounters.js';
@@ -19,8 +19,8 @@ interface FilterState {
 }
 
 interface EncountersState {
-  encounters: EncounterListItem[];
-  currentEncounter: Encounter | null;
+  encounters: EncounterListItemResponse[];
+  currentEncounter: EncounterResponse | null;
   pagination: PaginationInfo;
   filters: FilterState;
   isLoading: boolean;
@@ -73,7 +73,7 @@ function createEncountersStore() {
         () => ({ currentEncounter: null }),
       ),
 
-    createEncounter: (input: EncounterInput) =>
+    createEncounter: (input: EncounterCreateInput) =>
       storeAction(
         update,
         () => encountersApi.createEncounter(input),
@@ -100,7 +100,7 @@ function createEncountersStore() {
         'Failed to create encounter',
       ),
 
-    updateEncounter: (encounterId: string, input: EncounterUpdate) =>
+    updateEncounter: (encounterId: string, input: EncounterUpdateInput) =>
       storeAction(
         update,
         () => encountersApi.updateEncounter(encounterId, input),
@@ -181,6 +181,8 @@ export async function getFriendEncounters(
   return encountersApi.getFriendEncounters(friendId, params);
 }
 
-export async function getLastEncounter(friendId: string): Promise<LastEncounterSummary | null> {
+export async function getLastEncounter(
+  friendId: string,
+): Promise<LastEncounterSummaryResponse | null> {
   return encountersApi.getLastEncounter(friendId);
 }

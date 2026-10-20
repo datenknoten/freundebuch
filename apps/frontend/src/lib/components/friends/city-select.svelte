@@ -2,13 +2,13 @@
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import { formClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { CityInfo } from '$shared';
+import type { CityInfoResponse } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
   /** Available cities to select from */
-  cities: CityInfo[];
+  cities: CityInfoResponse[];
   /** Currently selected city */
   value: string;
   /** Whether free text mode is enabled (no city data available) */
@@ -16,7 +16,7 @@ interface Props {
   /** Whether the input is disabled */
   disabled?: boolean;
   /** Called when a city is selected */
-  onSelect?: (city: CityInfo) => void;
+  onSelect?: (city: CityInfoResponse) => void;
 }
 
 let { cities, value, freeTextMode = false, disabled = false, onSelect }: Props = $props();
@@ -53,7 +53,7 @@ function handleFreeTextKeydown(e: KeyboardEvent) {
 }
 
 // Format city display with state if available
-function formatCityDisplay(city: CityInfo): string {
+function formatCityDisplay(city: CityInfoResponse): string {
   if (city.state) {
     return `${city.city}, ${city.state}`;
   }

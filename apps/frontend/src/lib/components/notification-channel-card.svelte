@@ -1,15 +1,15 @@
 <script lang="ts">
 import { Button, ConfirmDialog } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { NotificationChannel } from '$shared';
+import type { NotificationChannelResponse } from '$shared';
 import TestMessageButton from './test-message-button.svelte';
 
 const i18n = createI18n();
 
 interface Props {
-  channel: NotificationChannel;
+  channel: NotificationChannelResponse;
   ontoggle: (channelId: string, isEnabled: boolean) => void;
-  onedit: (channel: NotificationChannel) => void;
+  onedit: (channel: NotificationChannelResponse) => void;
   ondelete: (channelId: string) => void;
 }
 

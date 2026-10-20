@@ -1,8 +1,11 @@
-import type { User } from './user.js';
-import type { UserPreferences } from './user-preferences.js';
+import { type } from 'arktype';
+import { UserPreferencesSchema } from './user-preferences.js';
+import { UserResponseSchema } from './user-response.js';
 
 /** Response from GET /api/auth/me */
-export interface UserWithPreferencesResponse {
-  user: User;
-  preferences: UserPreferences;
-}
+export const UserWithPreferencesResponseSchema = type({
+  user: UserResponseSchema,
+  preferences: UserPreferencesSchema,
+});
+
+export type UserWithPreferencesResponse = typeof UserWithPreferencesResponseSchema.infer;

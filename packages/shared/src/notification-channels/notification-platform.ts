@@ -1,9 +1,7 @@
-/**
- * Notification channel types for messaging bot configurations
- */
+import { type } from 'arktype';
 
-// ============================================================================
-// Platform Type
-// ============================================================================
+export const NOTIFICATION_PLATFORMS = ['telegram', 'matrix', 'discord'] as const;
 
-export type NotificationPlatform = 'telegram' | 'matrix' | 'discord';
+export const NotificationPlatformSchema = type.enumerated(...NOTIFICATION_PLATFORMS);
+
+export type NotificationPlatform = (typeof NOTIFICATION_PLATFORMS)[number];

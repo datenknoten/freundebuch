@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { filterModeCategory, filterModePrefix, isFilterModeActive } from '$lib/stores/ui';
 import { fireEvent, render, screen, tick, useLanguage, waitFor, within } from '$lib/test';
-import type { FacetGroups } from '$shared';
+import type { FacetGroupsResponse } from '$shared';
 import FacetDropdown from './facet-dropdown.svelte';
 
 // Hoisted above the mock factory so the test body and the mocked module share
@@ -34,7 +34,7 @@ async function useCountryLanguage(lang: 'en' | 'de') {
   language.set(lang);
 }
 
-function someFacets(overrides: Partial<FacetGroups> = {}): FacetGroups {
+function someFacets(overrides: Partial<FacetGroupsResponse> = {}): FacetGroupsResponse {
   return {
     location: [
       {
@@ -67,7 +67,12 @@ function someFacets(overrides: Partial<FacetGroups> = {}): FacetGroups {
   };
 }
 
-const NO_FACETS: FacetGroups = { location: [], professional: [], relationship: [], circles: [] };
+const NO_FACETS: FacetGroupsResponse = {
+  location: [],
+  professional: [],
+  relationship: [],
+  circles: [],
+};
 
 function renderDropdown(props: Partial<ComponentProps<typeof FacetDropdown>> = {}) {
   const onFilterChange = vi.fn();

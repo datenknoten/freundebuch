@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '$lib/test';
-import type { CircleSummary } from '$shared';
+import type { CircleSummaryResponse } from '$shared';
 import CircleChips from './circle-chips.svelte';
 
 // i18n echoes keys so the assertions target stable keys, not English text.
@@ -13,7 +13,7 @@ vi.mock('$lib/i18n/index.js', () => ({
   }),
 }));
 
-const circle = (id: string, name: string): CircleSummary => ({ id, name, color: null });
+const circle = (id: string, name: string): CircleSummaryResponse => ({ id, name, color: null });
 
 describe('CircleChips', () => {
   it('renders nothing when there are no circles', () => {

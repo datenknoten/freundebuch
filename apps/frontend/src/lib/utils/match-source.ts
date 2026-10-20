@@ -7,9 +7,9 @@
  * palette, and the label is a key so the badge speaks the user's language.
  */
 import { chipClasses } from '$lib/components/ui/styles';
-import type { GlobalSearchResult } from '$shared';
+import type { GlobalSearchResultResponse } from '$shared';
 
-export type MatchSource = GlobalSearchResult['matchSource'];
+export type MatchSource = GlobalSearchResultResponse['matchSource'];
 
 export interface MatchSourceBadge {
   /** Complete chip class string, ready for a `<span>`. */

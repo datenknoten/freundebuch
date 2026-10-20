@@ -1,40 +1,40 @@
 import type {
-  Address,
   AddressInput,
-  ContactCollectiveSummary,
-  DashboardData,
+  AddressResponse,
+  ContactCollectiveSummaryResponse,
+  DashboardResponse,
   DateInput,
-  Email,
   EmailInput,
+  EmailResponse,
   FacetedSearchResponse,
   FacetFilters,
-  Friend,
   FriendCreateInput,
-  FriendDate,
-  FriendNote,
+  FriendDateResponse,
+  FriendListResponse,
   FriendNoteInput,
-  FriendSearchResult,
+  FriendNoteResponse,
+  FriendResponse,
+  FriendSearchResultResponse,
   FriendUpdateInput,
-  GlobalSearchResult,
-  MetInfo,
+  GlobalSearchResultResponse,
   MetInfoInput,
-  NetworkGraphData,
-  PaginatedFriendList,
+  MetInfoResponse,
+  NetworkGraphResponse,
   PaginatedSearchResponse,
-  Phone,
   PhoneInput,
-  ProfessionalHistory,
+  PhoneResponse,
   ProfessionalHistoryInput,
-  Relationship,
-  RelationshipInput,
-  RelationshipTypesGrouped,
+  ProfessionalHistoryResponse,
+  RelationshipCreateInput,
+  RelationshipResponse,
+  RelationshipTypesGroupedResponse,
   RelationshipUpdateInput,
   SearchSortBy,
-  SocialProfile,
   SocialProfileInput,
-  UpcomingDate,
-  Url,
+  SocialProfileResponse,
+  UpcomingDateResponse,
   UrlInput,
+  UrlResponse,
 } from '$shared';
 import { apiRequest } from './client.js';
 
@@ -55,7 +55,7 @@ export interface FriendListParams {
 /**
  * Get paginated list of friends
  */
-export async function listFriends(params: FriendListParams = {}): Promise<PaginatedFriendList> {
+export async function listFriends(params: FriendListParams = {}): Promise<FriendListResponse> {
   const searchParams = new URLSearchParams();
 
   if (params.page) searchParams.set('page', params.page.toString());
@@ -70,21 +70,21 @@ export async function listFriends(params: FriendListParams = {}): Promise<Pagina
   const query = searchParams.toString();
   const endpoint = `/api/friends${query ? `?${query}` : ''}`;
 
-  return apiRequest<PaginatedFriendList>(endpoint);
+  return apiRequest<FriendListResponse>(endpoint);
 }
 
 /**
  * Get a single friend by ID
  */
-export async function getFriend(id: string): Promise<Friend> {
-  return apiRequest<Friend>(`/api/friends/${id}`);
+export async function getFriend(id: string): Promise<FriendResponse> {
+  return apiRequest<FriendResponse>(`/api/friends/${id}`);
 }
 
 /**
  * Create a new friend
  */
-export async function createFriend(data: FriendCreateInput): Promise<Friend> {
-  return apiRequest<Friend>('/api/friends', {
+export async function createFriend(data: FriendCreateInput): Promise<FriendResponse> {
+  return apiRequest<FriendResponse>('/api/friends', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -93,8 +93,8 @@ export async function createFriend(data: FriendCreateInput): Promise<Friend> {
 /**
  * Update an existing friend
  */
-export async function updateFriend(id: string, data: FriendUpdateInput): Promise<Friend> {
-  return apiRequest<Friend>(`/api/friends/${id}`, {
+export async function updateFriend(id: string, data: FriendUpdateInput): Promise<FriendResponse> {
+  return apiRequest<FriendResponse>(`/api/friends/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -116,8 +116,8 @@ export async function deleteFriend(id: string): Promise<{ message: string }> {
 /**
  * Add a phone number to a friend
  */
-export async function addPhone(friendId: string, data: PhoneInput): Promise<Phone> {
-  return apiRequest<Phone>(`/api/friends/${friendId}/phones`, {
+export async function addPhone(friendId: string, data: PhoneInput): Promise<PhoneResponse> {
+  return apiRequest<PhoneResponse>(`/api/friends/${friendId}/phones`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -130,8 +130,8 @@ export async function updatePhone(
   friendId: string,
   phoneId: string,
   data: Partial<PhoneInput>,
-): Promise<Phone> {
-  return apiRequest<Phone>(`/api/friends/${friendId}/phones/${phoneId}`, {
+): Promise<PhoneResponse> {
+  return apiRequest<PhoneResponse>(`/api/friends/${friendId}/phones/${phoneId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -153,8 +153,8 @@ export async function deletePhone(friendId: string, phoneId: string): Promise<{ 
 /**
  * Add an email to a friend
  */
-export async function addEmail(friendId: string, data: EmailInput): Promise<Email> {
-  return apiRequest<Email>(`/api/friends/${friendId}/emails`, {
+export async function addEmail(friendId: string, data: EmailInput): Promise<EmailResponse> {
+  return apiRequest<EmailResponse>(`/api/friends/${friendId}/emails`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -167,8 +167,8 @@ export async function updateEmail(
   friendId: string,
   emailId: string,
   data: Partial<EmailInput>,
-): Promise<Email> {
-  return apiRequest<Email>(`/api/friends/${friendId}/emails/${emailId}`, {
+): Promise<EmailResponse> {
+  return apiRequest<EmailResponse>(`/api/friends/${friendId}/emails/${emailId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -190,8 +190,8 @@ export async function deleteEmail(friendId: string, emailId: string): Promise<{ 
 /**
  * Add an address to a friend
  */
-export async function addAddress(friendId: string, data: AddressInput): Promise<Address> {
-  return apiRequest<Address>(`/api/friends/${friendId}/addresses`, {
+export async function addAddress(friendId: string, data: AddressInput): Promise<AddressResponse> {
+  return apiRequest<AddressResponse>(`/api/friends/${friendId}/addresses`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -204,8 +204,8 @@ export async function updateAddress(
   friendId: string,
   addressId: string,
   data: Partial<AddressInput>,
-): Promise<Address> {
-  return apiRequest<Address>(`/api/friends/${friendId}/addresses/${addressId}`, {
+): Promise<AddressResponse> {
+  return apiRequest<AddressResponse>(`/api/friends/${friendId}/addresses/${addressId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -230,8 +230,8 @@ export async function deleteAddress(
 /**
  * Add a URL to a friend
  */
-export async function addUrl(friendId: string, data: UrlInput): Promise<Url> {
-  return apiRequest<Url>(`/api/friends/${friendId}/urls`, {
+export async function addUrl(friendId: string, data: UrlInput): Promise<UrlResponse> {
+  return apiRequest<UrlResponse>(`/api/friends/${friendId}/urls`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -244,8 +244,8 @@ export async function updateUrl(
   friendId: string,
   urlId: string,
   data: Partial<UrlInput>,
-): Promise<Url> {
-  return apiRequest<Url>(`/api/friends/${friendId}/urls/${urlId}`, {
+): Promise<UrlResponse> {
+  return apiRequest<UrlResponse>(`/api/friends/${friendId}/urls/${urlId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -298,8 +298,8 @@ export async function deletePhoto(friendId: string): Promise<{ message: string }
 /**
  * Add an important date to a friend
  */
-export async function addDate(friendId: string, data: DateInput): Promise<FriendDate> {
-  return apiRequest<FriendDate>(`/api/friends/${friendId}/dates`, {
+export async function addDate(friendId: string, data: DateInput): Promise<FriendDateResponse> {
+  return apiRequest<FriendDateResponse>(`/api/friends/${friendId}/dates`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -312,8 +312,8 @@ export async function updateDate(
   friendId: string,
   dateId: string,
   data: DateInput,
-): Promise<FriendDate> {
-  return apiRequest<FriendDate>(`/api/friends/${friendId}/dates/${dateId}`, {
+): Promise<FriendDateResponse> {
+  return apiRequest<FriendDateResponse>(`/api/friends/${friendId}/dates/${dateId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -335,15 +335,18 @@ export async function deleteDate(friendId: string, dateId: string): Promise<{ me
 /**
  * List a friend's notes, newest first
  */
-export async function listNotes(friendId: string): Promise<FriendNote[]> {
-  return apiRequest<FriendNote[]>(`/api/friends/${friendId}/notes`);
+export async function listNotes(friendId: string): Promise<FriendNoteResponse[]> {
+  return apiRequest<FriendNoteResponse[]>(`/api/friends/${friendId}/notes`);
 }
 
 /**
  * Add a note to a friend
  */
-export async function addNote(friendId: string, data: FriendNoteInput): Promise<FriendNote> {
-  return apiRequest<FriendNote>(`/api/friends/${friendId}/notes`, {
+export async function addNote(
+  friendId: string,
+  data: FriendNoteInput,
+): Promise<FriendNoteResponse> {
+  return apiRequest<FriendNoteResponse>(`/api/friends/${friendId}/notes`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -356,8 +359,8 @@ export async function updateNote(
   friendId: string,
   noteId: string,
   data: FriendNoteInput,
-): Promise<FriendNote> {
-  return apiRequest<FriendNote>(`/api/friends/${friendId}/notes/${noteId}`, {
+): Promise<FriendNoteResponse> {
+  return apiRequest<FriendNoteResponse>(`/api/friends/${friendId}/notes/${noteId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -381,13 +384,15 @@ export interface UpcomingDatesOptions {
 /**
  * Get upcoming important dates across all friends
  */
-export async function getUpcomingDates(options?: UpcomingDatesOptions): Promise<UpcomingDate[]> {
+export async function getUpcomingDates(
+  options?: UpcomingDatesOptions,
+): Promise<UpcomingDateResponse[]> {
   const searchParams = new URLSearchParams();
   if (options?.days) searchParams.set('days', options.days.toString());
   if (options?.limit) searchParams.set('limit', options.limit.toString());
   const queryString = searchParams.toString();
   const endpoint = `/api/friends/dates/upcoming${queryString ? `?${queryString}` : ''}`;
-  return apiRequest<UpcomingDate[]>(endpoint);
+  return apiRequest<UpcomingDateResponse[]>(endpoint);
 }
 
 // ============================================================================
@@ -397,8 +402,8 @@ export async function getUpcomingDates(options?: UpcomingDatesOptions): Promise<
 /**
  * Set or update how/where met information (upsert)
  */
-export async function setMetInfo(friendId: string, data: MetInfoInput): Promise<MetInfo> {
-  return apiRequest<MetInfo>(`/api/friends/${friendId}/met-info`, {
+export async function setMetInfo(friendId: string, data: MetInfoInput): Promise<MetInfoResponse> {
+  return apiRequest<MetInfoResponse>(`/api/friends/${friendId}/met-info`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -423,8 +428,8 @@ export async function deleteMetInfo(friendId: string): Promise<{ message: string
 export async function addSocialProfile(
   friendId: string,
   data: SocialProfileInput,
-): Promise<SocialProfile> {
-  return apiRequest<SocialProfile>(`/api/friends/${friendId}/social-profiles`, {
+): Promise<SocialProfileResponse> {
+  return apiRequest<SocialProfileResponse>(`/api/friends/${friendId}/social-profiles`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -437,11 +442,14 @@ export async function updateSocialProfile(
   friendId: string,
   profileId: string,
   data: SocialProfileInput,
-): Promise<SocialProfile> {
-  return apiRequest<SocialProfile>(`/api/friends/${friendId}/social-profiles/${profileId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+): Promise<SocialProfileResponse> {
+  return apiRequest<SocialProfileResponse>(
+    `/api/friends/${friendId}/social-profiles/${profileId}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    },
+  );
 }
 
 /**
@@ -466,8 +474,8 @@ export async function deleteSocialProfile(
 export async function addProfessionalHistory(
   friendId: string,
   data: ProfessionalHistoryInput,
-): Promise<ProfessionalHistory> {
-  return apiRequest<ProfessionalHistory>(`/api/friends/${friendId}/professional-history`, {
+): Promise<ProfessionalHistoryResponse> {
+  return apiRequest<ProfessionalHistoryResponse>(`/api/friends/${friendId}/professional-history`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -480,8 +488,8 @@ export async function updateProfessionalHistory(
   friendId: string,
   historyId: string,
   data: ProfessionalHistoryInput,
-): Promise<ProfessionalHistory> {
-  return apiRequest<ProfessionalHistory>(
+): Promise<ProfessionalHistoryResponse> {
+  return apiRequest<ProfessionalHistoryResponse>(
     `/api/friends/${friendId}/professional-history/${historyId}`,
     {
       method: 'PUT',
@@ -509,8 +517,8 @@ export async function deleteProfessionalHistory(
 /**
  * Get all relationship types grouped by category
  */
-export async function getRelationshipTypes(): Promise<RelationshipTypesGrouped> {
-  return apiRequest<RelationshipTypesGrouped>('/api/friends/relationship-types');
+export async function getRelationshipTypes(): Promise<RelationshipTypesGroupedResponse> {
+  return apiRequest<RelationshipTypesGroupedResponse>('/api/friends/relationship-types');
 }
 
 /**
@@ -520,13 +528,13 @@ export async function searchFriends(
   query: string,
   exclude?: string,
   limit?: number,
-): Promise<FriendSearchResult[]> {
+): Promise<FriendSearchResultResponse[]> {
   const searchParams = new URLSearchParams();
   searchParams.set('q', query);
   if (exclude) searchParams.set('exclude', exclude);
   if (limit) searchParams.set('limit', limit.toString());
 
-  return apiRequest<FriendSearchResult[]>(`/api/friends/search?${searchParams.toString()}`);
+  return apiRequest<FriendSearchResultResponse[]>(`/api/friends/search?${searchParams.toString()}`);
 }
 
 /**
@@ -534,9 +542,9 @@ export async function searchFriends(
  */
 export async function addRelationship(
   friendId: string,
-  data: RelationshipInput,
-): Promise<Relationship> {
-  return apiRequest<Relationship>(`/api/friends/${friendId}/relationships`, {
+  data: RelationshipCreateInput,
+): Promise<RelationshipResponse> {
+  return apiRequest<RelationshipResponse>(`/api/friends/${friendId}/relationships`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -549,11 +557,14 @@ export async function updateRelationship(
   friendId: string,
   relationshipId: string,
   data: RelationshipUpdateInput,
-): Promise<Relationship> {
-  return apiRequest<Relationship>(`/api/friends/${friendId}/relationships/${relationshipId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+): Promise<RelationshipResponse> {
+  return apiRequest<RelationshipResponse>(
+    `/api/friends/${friendId}/relationships/${relationshipId}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    },
+  );
 }
 
 /**
@@ -577,12 +588,17 @@ export async function deleteRelationship(
  * Searches: names, organization, job title, work notes, emails, phones,
  * relationship notes, and met context
  */
-export async function fullTextSearch(query: string, limit?: number): Promise<GlobalSearchResult[]> {
+export async function fullTextSearch(
+  query: string,
+  limit?: number,
+): Promise<GlobalSearchResultResponse[]> {
   const searchParams = new URLSearchParams();
   searchParams.set('q', query);
   if (limit) searchParams.set('limit', limit.toString());
 
-  return apiRequest<GlobalSearchResult[]>(`/api/friends/search/full?${searchParams.toString()}`);
+  return apiRequest<GlobalSearchResultResponse[]>(
+    `/api/friends/search/full?${searchParams.toString()}`,
+  );
 }
 
 export interface PaginatedSearchParams {
@@ -719,21 +735,21 @@ export async function clearRecentSearches(): Promise<void> {
  * Get network graph data for visualization
  * Returns all non-archived friends as nodes and their relationships as links
  */
-export async function getNetworkGraphData(): Promise<NetworkGraphData> {
-  return apiRequest<NetworkGraphData>('/api/friends/network-graph');
+export async function getNetworkGraphData(): Promise<NetworkGraphResponse> {
+  return apiRequest<NetworkGraphResponse>('/api/friends/network-graph');
 }
 
 /**
  * Get the consolidated dashboard payload (upcoming dates + network graph)
  * in a single request. Used by the home page to avoid multiple round-trips.
  */
-export async function getDashboardData(options?: UpcomingDatesOptions): Promise<DashboardData> {
+export async function getDashboardData(options?: UpcomingDatesOptions): Promise<DashboardResponse> {
   const searchParams = new URLSearchParams();
   if (options?.days) searchParams.set('days', options.days.toString());
   if (options?.limit) searchParams.set('limit', options.limit.toString());
   const queryString = searchParams.toString();
   const endpoint = `/api/friends/dashboard${queryString ? `?${queryString}` : ''}`;
-  return apiRequest<DashboardData>(endpoint);
+  return apiRequest<DashboardResponse>(endpoint);
 }
 
 // ============================================================================
@@ -745,6 +761,6 @@ export async function getDashboardData(options?: UpcomingDatesOptions): Promise<
  */
 export async function getCollectivesForFriend(
   friendId: string,
-): Promise<ContactCollectiveSummary[]> {
-  return apiRequest<ContactCollectiveSummary[]>(`/api/friends/${friendId}/collectives`);
+): Promise<ContactCollectiveSummaryResponse[]> {
+  return apiRequest<ContactCollectiveSummaryResponse[]>(`/api/friends/${friendId}/collectives`);
 }

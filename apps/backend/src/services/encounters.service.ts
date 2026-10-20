@@ -1,13 +1,13 @@
 import type {
-  Encounter,
-  EncounterFriendSummary,
-  EncounterInput,
-  EncounterListItem,
+  EncounterCreateInput,
+  EncounterFriendSummaryResponse,
+  EncounterListItemResponse,
   EncounterListOptions,
   EncounterListResponse,
+  EncounterResponse,
   EncounterType,
-  EncounterUpdate,
-  LastEncounterSummary,
+  EncounterUpdateInput,
+  LastEncounterSummaryResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
 import {
@@ -112,7 +112,7 @@ export class EncountersService {
       }
     }
 
-    const data: EncounterListItem[] = encountersResult.map((row) =>
+    const data: EncounterListItemResponse[] = encountersResult.map((row) =>
       this.mapEncounterListItem(row, previewsByEncounter.get(row.external_id) ?? []),
     );
 
@@ -133,7 +133,7 @@ export class EncountersService {
   async getEncounterById(
     userExternalId: string,
     encounterExternalId: string,
-  ): Promise<Encounter | null> {
+  ): Promise<EncounterResponse | null> {
     const results = await getEncounterById.run({ userExternalId, encounterExternalId }, this.db);
     if (results.length === 0) {
       return null;
@@ -146,7 +146,10 @@ export class EncountersService {
   /**
    * Create a new encounter with friend assignments
    */
-  async createEncounter(userExternalId: string, input: EncounterInput): Promise<Encounter> {
+  async createEncounter(
+    userExternalId: string,
+    input: EncounterCreateInput,
+  ): Promise<EncounterResponse> {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
@@ -171,7 +174,7 @@ export class EncountersService {
       const encounter = encounterResults[0];
 
       // Add friends to the encounter
-      let friends: EncounterFriendSummary[] = [];
+      let friends: EncounterFriendSummaryResponse[] = [];
       if (input.friend_ids.length > 0) {
         const friendResults = await setEncounterFriends.run(
           {
@@ -201,8 +204,8 @@ export class EncountersService {
   async updateEncounter(
     userExternalId: string,
     encounterExternalId: string,
-    input: EncounterUpdate,
-  ): Promise<Encounter | null> {
+    input: EncounterUpdateInput,
+  ): Promise<EncounterResponse | null> {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
@@ -232,7 +235,7 @@ export class EncountersService {
       const encounter = encounterResults[0];
 
       // Update friends if provided
-      let friends: EncounterFriendSummary[];
+      let friends: EncounterFriendSummaryResponse[];
       if (input.friend_ids !== undefined) {
         // Clear existing friends and set new ones
         await clearEncounterFriends.run({ encounterExternalId, userExternalId }, client);
@@ -284,7 +287,7 @@ export class EncountersService {
   async getLastEncounterForFriend(
     userExternalId: string,
     friendExternalId: string,
-  ): Promise<LastEncounterSummary | null> {
+  ): Promise<LastEncounterSummaryResponse | null> {
     const results = await getLastEncounterForFriend.run(
       { userExternalId, friendExternalId },
       this.db,
@@ -307,8 +310,8 @@ export class EncountersService {
 
   private mapEncounter(
     row: IGetEncounterByIdResult,
-    friends: IGetEncounterFriendsResult[] | EncounterFriendSummary[],
-  ): Encounter {
+    friends: IGetEncounterFriendsResult[] | EncounterFriendSummaryResponse[],
+  ): EncounterResponse {
     return {
       id: row.external_id,
       title: row.title,
@@ -325,7 +328,7 @@ export class EncountersService {
   private mapEncounterListItem(
     row: IGetEncountersByUserIdResult,
     friends: IGetEncounterFriendsResult[],
-  ): EncounterListItem {
+  ): EncounterListItemResponse {
     return {
       id: row.external_id,
       title: row.title,
@@ -338,7 +341,7 @@ export class EncountersService {
     };
   }
 
-  private mapFriendSummary(row: IGetEncounterFriendsResult): EncounterFriendSummary {
+  private mapFriendSummary(row: IGetEncounterFriendsResult): EncounterFriendSummaryResponse {
     return {
       id: row.external_id,
       displayName: row.display_name ?? 'Unknown',
@@ -346,7 +349,9 @@ export class EncountersService {
     };
   }
 
-  private mapFriendResults(results: ISetEncounterFriendsResult[]): EncounterFriendSummary[] {
+  private mapFriendResults(
+    results: ISetEncounterFriendsResult[],
+  ): EncounterFriendSummaryResponse[] {
     return results.flatMap((r) =>
       r.friend_external_id !== null && r.friend_display_name !== null
         ? [

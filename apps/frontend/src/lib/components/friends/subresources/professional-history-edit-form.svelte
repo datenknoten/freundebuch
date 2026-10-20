@@ -7,12 +7,12 @@ import {
   formClasses,
 } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { ProfessionalHistory, ProfessionalHistoryInput } from '$shared';
+import type { ProfessionalHistoryInput, ProfessionalHistoryResponse } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
-  initialData?: ProfessionalHistory;
+  initialData?: ProfessionalHistoryResponse;
   defaultPrimary?: boolean;
   disabled?: boolean;
   onchange?: () => void;

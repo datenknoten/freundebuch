@@ -1,4 +1,7 @@
-import type { CollectiveMember, CollectiveRole } from '@freundebuch/shared/index.js';
+import type {
+  CollectiveMemberResponse,
+  CollectiveRoleResponse,
+} from '@freundebuch/shared/index.js';
 import { formatDateOnly } from '../../utils/date.js';
 
 /**
@@ -32,7 +35,7 @@ export interface RoleRow {
   sort_order: number;
 }
 
-export function mapMember(row: MemberRow): CollectiveMember {
+export function mapMember(row: MemberRow): CollectiveMemberResponse {
   return {
     id: row.membership_external_id,
     contact: {
@@ -56,7 +59,7 @@ export function mapMember(row: MemberRow): CollectiveMember {
   };
 }
 
-export function mapRole(row: RoleRow): CollectiveRole {
+export function mapRole(row: RoleRow): CollectiveRoleResponse {
   return {
     id: row.external_id,
     roleKey: row.role_key,

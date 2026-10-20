@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '$lib/test';
-import type { NotificationChannel } from '$shared';
+import type { NotificationChannelResponse } from '$shared';
 import NotificationChannelCard from './notification-channel-card.svelte';
 
 vi.mock('$lib/i18n/index.js', () => ({
@@ -17,7 +17,7 @@ const channel = {
   platform: 'telegram',
   isEnabled: true,
   credentials: { chatId: '4711' },
-} as unknown as NotificationChannel;
+} as unknown as NotificationChannelResponse;
 
 function renderCard() {
   const ondelete = vi.fn();

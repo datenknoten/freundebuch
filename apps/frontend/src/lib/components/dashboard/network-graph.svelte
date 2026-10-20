@@ -9,13 +9,17 @@ import {
   RELATIONSHIP_CATEGORIES,
   RELATIONSHIP_CATEGORY_STYLE,
 } from '$lib/utils/relationship-categories';
-import type { NetworkGraphData, NetworkGraphLink, NetworkGraphNode } from '$shared';
+import type {
+  NetworkGraphLinkResponse,
+  NetworkGraphNodeResponse,
+  NetworkGraphResponse,
+} from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
   /** Network graph data to render (fetched by the parent dashboard). */
-  graphData?: NetworkGraphData | null;
+  graphData?: NetworkGraphResponse | null;
   isLoading?: boolean;
   error?: string | null;
   /** Called when the user retries after an error. */
@@ -29,10 +33,10 @@ let svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 let simulation: d3.Simulation<SimulationNode, SimulationLink>;
 
 // Extended node type for D3 simulation (D3 adds x, y, fx, fy properties)
-type SimulationNode = NetworkGraphNode & d3.SimulationNodeDatum;
+type SimulationNode = NetworkGraphNodeResponse & d3.SimulationNodeDatum;
 
 // Extended link type for D3 simulation (D3 replaces source/target strings with node objects)
-type SimulationLink = Omit<NetworkGraphLink, 'source' | 'target'> & {
+type SimulationLink = Omit<NetworkGraphLinkResponse, 'source' | 'target'> & {
   source: SimulationNode | string;
   target: SimulationNode | string;
 };

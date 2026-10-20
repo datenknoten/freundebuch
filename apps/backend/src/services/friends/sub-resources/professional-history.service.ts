@@ -1,4 +1,7 @@
-import type { ProfessionalHistory, ProfessionalHistoryInput } from '@freundebuch/shared/index.js';
+import type {
+  ProfessionalHistoryInput,
+  ProfessionalHistoryResponse,
+} from '@freundebuch/shared/index.js';
 import {
   clearPrimaryProfessionalHistory,
   createProfessionalHistory,
@@ -13,7 +16,7 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
-const mapRow = (row: IGetProfessionalHistoryByFriendIdResult): ProfessionalHistory => ({
+const mapRow = (row: IGetProfessionalHistoryByFriendIdResult): ProfessionalHistoryResponse => ({
   id: row.external_id,
   jobTitle: row.job_title ?? undefined,
   organization: row.organization ?? undefined,
@@ -21,8 +24,8 @@ const mapRow = (row: IGetProfessionalHistoryByFriendIdResult): ProfessionalHisto
   notes: row.notes ?? undefined,
   fromMonth: row.from_month,
   fromYear: row.from_year,
-  toMonth: row.to_month ?? undefined,
-  toYear: row.to_year ?? undefined,
+  toMonth: row.to_month,
+  toYear: row.to_year,
   isPrimary: row.is_primary,
   createdAt: row.created_at.toISOString(),
 });
@@ -33,7 +36,7 @@ const mapRow = (row: IGetProfessionalHistoryByFriendIdResult): ProfessionalHisto
  */
 export class ProfessionalHistoryService extends SubResourceService<
   ProfessionalHistoryInput,
-  ProfessionalHistory,
+  ProfessionalHistoryResponse,
   IGetProfessionalHistoryByFriendIdResult,
   IGetProfessionalHistoryByFriendIdResult,
   IDeleteProfessionalHistoryResult

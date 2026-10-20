@@ -1,9 +1,9 @@
 import type {
-  FriendSearchResult,
-  Relationship,
-  RelationshipInput,
-  RelationshipType,
-  RelationshipTypesGrouped,
+  FriendSearchResultResponse,
+  RelationshipCreateInput,
+  RelationshipResponse,
+  RelationshipTypeResponse,
+  RelationshipTypesGroupedResponse,
   RelationshipUpdateInput,
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
@@ -46,19 +46,19 @@ export class RelationshipService {
   /**
    * Get all relationship types grouped by category
    */
-  async getRelationshipTypes(): Promise<RelationshipTypesGrouped> {
+  async getRelationshipTypes(): Promise<RelationshipTypesGroupedResponse> {
     this.logger.debug('Getting relationship types');
 
     const types = await getAllRelationshipTypes.run(undefined, this.db);
 
-    const grouped: RelationshipTypesGrouped = {
+    const grouped: RelationshipTypesGroupedResponse = {
       family: [],
       professional: [],
       social: [],
     };
 
     for (const t of types) {
-      const relationshipType: RelationshipType = {
+      const relationshipType: RelationshipTypeResponse = {
         id: parseRelationshipTypeId(t.id),
         category: parseRelationshipCategory(t.category),
         label: t.label,
@@ -83,8 +83,8 @@ export class RelationshipService {
   async addRelationship(
     userExternalId: string,
     friendExternalId: string,
-    data: RelationshipInput,
-  ): Promise<Relationship | null> {
+    data: RelationshipCreateInput,
+  ): Promise<RelationshipResponse | null> {
     this.logger.debug(
       { friendExternalId, relatedFriendExternalId: data.related_friend_id },
       'Adding relationship',
@@ -169,7 +169,7 @@ export class RelationshipService {
     friendExternalId: string,
     relationshipExternalId: string,
     data: RelationshipUpdateInput,
-  ): Promise<Relationship | null> {
+  ): Promise<RelationshipResponse | null> {
     this.logger.debug({ friendExternalId, relationshipExternalId }, 'Updating relationship');
 
     const [updated] = await updateRelationship.run(
@@ -266,7 +266,7 @@ export class RelationshipService {
     query: string,
     excludeFriendExternalId?: string,
     limit = 10,
-  ): Promise<FriendSearchResult[]> {
+  ): Promise<FriendSearchResultResponse[]> {
     this.logger.debug({ query, excludeFriendExternalId }, 'Searching friends');
 
     const searchPattern = createWildcardQuery(query);
@@ -291,7 +291,7 @@ export class RelationshipService {
   /**
    * Map a relationship row to the Relationship type
    */
-  mapRelationship(row: IGetRelationshipsByFriendIdResult): Relationship {
+  mapRelationship(row: IGetRelationshipsByFriendIdResult): RelationshipResponse {
     return {
       id: row.external_id,
       relatedFriendId: row.related_friend_external_id,

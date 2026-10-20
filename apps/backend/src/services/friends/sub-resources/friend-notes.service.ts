@@ -1,4 +1,8 @@
-import type { EncounterType, FriendNote, FriendNoteInput } from '@freundebuch/shared/index.js';
+import type {
+  EncounterType,
+  FriendNoteInput,
+  FriendNoteResponse,
+} from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { getEncounterInternalId } from '../../../models/queries/encounters.queries.js';
@@ -56,7 +60,7 @@ export class FriendNotesService {
   /**
    * List a friend's notes, newest first.
    */
-  async list(userExternalId: string, friendExternalId: string): Promise<FriendNote[]> {
+  async list(userExternalId: string, friendExternalId: string): Promise<FriendNoteResponse[]> {
     this.logger.debug({ friendExternalId }, 'Listing notes');
 
     await this.resolveFriendId(this.db, userExternalId, friendExternalId);
@@ -74,7 +78,7 @@ export class FriendNotesService {
     userExternalId: string,
     friendExternalId: string,
     input: FriendNoteInput,
-  ): Promise<FriendNote> {
+  ): Promise<FriendNoteResponse> {
     this.logger.debug({ friendExternalId }, 'Adding note');
 
     return withTransaction(this.db, async (client) => {
@@ -106,7 +110,7 @@ export class FriendNotesService {
     friendExternalId: string,
     noteExternalId: string,
     input: FriendNoteInput,
-  ): Promise<FriendNote> {
+  ): Promise<FriendNoteResponse> {
     this.logger.debug({ friendExternalId, noteExternalId }, 'Updating note');
 
     return withTransaction(this.db, async (client) => {
@@ -243,7 +247,7 @@ export class FriendNotesService {
     userExternalId: string,
     friendExternalId: string,
     noteExternalId: string,
-  ): Promise<FriendNote> {
+  ): Promise<FriendNoteResponse> {
     const [row] = await getFriendNotes.run(
       { userExternalId, friendExternalId, noteExternalId },
       client,
@@ -254,7 +258,7 @@ export class FriendNotesService {
     return this.mapRow(row);
   }
 
-  private mapRow(row: IGetFriendNotesResult): FriendNote {
+  private mapRow(row: IGetFriendNotesResult): FriendNoteResponse {
     return {
       id: row.external_id,
       content: row.content,

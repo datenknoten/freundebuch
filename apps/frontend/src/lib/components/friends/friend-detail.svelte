@@ -23,7 +23,7 @@ import {
 
 const i18n = createI18n();
 
-import type { ContactCollectiveSummary, Friend } from '$shared';
+import type { ContactCollectiveSummaryResponse, FriendResponse } from '$shared';
 import LastEncounterBadge from '../encounters/last-encounter-badge.svelte';
 import AddDetailDropdown from '../subresources/add-detail-dropdown.svelte';
 import AddDetailSheet from '../subresources/add-detail-sheet.svelte';
@@ -46,13 +46,13 @@ import {
 } from './subresource-descriptors';
 
 interface Props {
-  friend: Friend;
+  friend: FriendResponse;
 }
 
 let { friend }: Props = $props();
 
 // Collectives state (loaded separately from friend data)
-let collectives = $state<ContactCollectiveSummary[]>([]);
+let collectives = $state<ContactCollectiveSummaryResponse[]>([]);
 let collectivesLoading = $state(false);
 
 // Load collectives on mount

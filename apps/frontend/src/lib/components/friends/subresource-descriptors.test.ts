@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '$lib/api/client';
 import { friends } from '$lib/stores/friends';
-import type { SocialProfile } from '$shared';
+import type { SocialProfileResponse } from '$shared';
 import {
   addressDescriptor,
   friendAddDetailOptions,
@@ -19,7 +19,7 @@ vi.mock('$lib/stores/friends', () => ({
 // i18n stubbed as an echo so the mapped keys are observable.
 const t = (key: string) => key;
 
-const aSocialProfile = (overrides: Partial<SocialProfile> = {}): SocialProfile => ({
+const aSocialProfile = (overrides: Partial<SocialProfileResponse> = {}): SocialProfileResponse => ({
   id: 'social-1',
   platform: 'github',
   createdAt: '2026-01-01T00:00:00.000Z',

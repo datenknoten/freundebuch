@@ -4,13 +4,13 @@ import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { StreetInfo } from '$shared';
+import type { StreetInfoResponse } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
   /** Available streets to select from */
-  streets: StreetInfo[];
+  streets: StreetInfoResponse[];
   /** Currently selected street */
   value: string;
   /** Whether data is loading */
@@ -46,7 +46,7 @@ const filteredStreets = $derived(() => {
   return streets.filter((street) => street.name.toLowerCase().includes(q));
 });
 
-function selectStreet(street: StreetInfo) {
+function selectStreet(street: StreetInfoResponse) {
   query = '';
   showDropdown = false;
   highlightedIndex = -1;

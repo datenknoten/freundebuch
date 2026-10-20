@@ -1,10 +1,10 @@
 import type {
-  Encounter,
-  EncounterInput,
+  EncounterCreateInput,
   EncounterListResponse,
+  EncounterResponse,
   EncounterType,
-  EncounterUpdate,
-  LastEncounterSummary,
+  EncounterUpdateInput,
+  LastEncounterSummaryResponse,
 } from '$shared';
 import { ApiError, apiRequest } from './client.js';
 
@@ -68,15 +68,15 @@ export async function listEncounters(
 /**
  * Get a single encounter by ID
  */
-export async function getEncounter(encounterId: string): Promise<Encounter> {
-  return apiRequest<Encounter>(`/api/encounters/${encounterId}`);
+export async function getEncounter(encounterId: string): Promise<EncounterResponse> {
+  return apiRequest<EncounterResponse>(`/api/encounters/${encounterId}`);
 }
 
 /**
  * Create a new encounter
  */
-export async function createEncounter(input: EncounterInput): Promise<Encounter> {
-  return apiRequest<Encounter>('/api/encounters', {
+export async function createEncounter(input: EncounterCreateInput): Promise<EncounterResponse> {
+  return apiRequest<EncounterResponse>('/api/encounters', {
     method: 'POST',
     body: JSON.stringify(input),
   });
@@ -87,9 +87,9 @@ export async function createEncounter(input: EncounterInput): Promise<Encounter>
  */
 export async function updateEncounter(
   encounterId: string,
-  input: EncounterUpdate,
-): Promise<Encounter> {
-  return apiRequest<Encounter>(`/api/encounters/${encounterId}`, {
+  input: EncounterUpdateInput,
+): Promise<EncounterResponse> {
+  return apiRequest<EncounterResponse>(`/api/encounters/${encounterId}`, {
     method: 'PUT',
     body: JSON.stringify(input),
   });
@@ -122,9 +122,13 @@ export async function getFriendEncounters(
 /**
  * Get the most recent encounter with a specific friend
  */
-export async function getLastEncounter(friendId: string): Promise<LastEncounterSummary | null> {
+export async function getLastEncounter(
+  friendId: string,
+): Promise<LastEncounterSummaryResponse | null> {
   try {
-    return await apiRequest<LastEncounterSummary>(`/api/friends/${friendId}/encounters/last`);
+    return await apiRequest<LastEncounterSummaryResponse>(
+      `/api/friends/${friendId}/encounters/last`,
+    );
   } catch (error) {
     if (error instanceof ApiError && error.statusCode === 404) {
       return null;

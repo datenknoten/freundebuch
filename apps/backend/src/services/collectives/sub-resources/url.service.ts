@@ -1,4 +1,4 @@
-import type { Url, UrlInput } from '@freundebuch/shared/index.js';
+import type { UrlInput, UrlResponse } from '@freundebuch/shared/index.js';
 import {
   createUrl,
   deleteUrl,
@@ -13,7 +13,7 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
-const mapRow = (row: IGetUrlsByCollectiveIdResult): Url => ({
+const mapRow = (row: IGetUrlsByCollectiveIdResult): UrlResponse => ({
   id: row.external_id,
   url: row.url,
   urlType: parseUrlType(row.url_type),
@@ -27,7 +27,7 @@ const mapRow = (row: IGetUrlsByCollectiveIdResult): Url => ({
  */
 export class CollectiveUrlService extends SubResourceService<
   UrlInput,
-  Url,
+  UrlResponse,
   IGetUrlsByCollectiveIdResult,
   IGetUrlsByCollectiveIdResult,
   IDeleteUrlResult

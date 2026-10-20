@@ -1,5 +1,10 @@
 import { derived, get, writable } from 'svelte/store';
-import type { ArrayFacetField, FacetFilters, FacetGroups, GlobalSearchResult } from '$shared';
+import type {
+  ArrayFacetField,
+  FacetFilters,
+  FacetGroupsResponse,
+  GlobalSearchResultResponse,
+} from '$shared';
 import * as friendsApi from '../api/friends.js';
 
 /**
@@ -7,7 +12,7 @@ import * as friendsApi from '../api/friends.js';
  */
 interface SearchState {
   query: string;
-  results: GlobalSearchResult[];
+  results: GlobalSearchResultResponse[];
   recentSearches: string[];
   isSearching: boolean;
   isOpen: boolean;
@@ -15,7 +20,7 @@ interface SearchState {
   selectedIndex: number;
   // Faceted search state
   filters: FacetFilters;
-  facets: FacetGroups | null;
+  facets: FacetGroupsResponse | null;
   facetsLoading: boolean;
 }
 

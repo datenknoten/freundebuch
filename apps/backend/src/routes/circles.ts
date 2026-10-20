@@ -1,7 +1,7 @@
 import {
   CircleInputSchema,
-  CircleMergeSchema,
-  CircleReorderSchema,
+  CircleMergeInputSchema,
+  CircleReorderInputSchema,
 } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { etag } from 'hono/etag';
@@ -71,7 +71,7 @@ app.put('/reorder', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const validated = await parseBody(c, CircleReorderSchema);
+  const validated = await parseBody(c, CircleReorderInputSchema);
 
   const circlesService = new CirclesService({ db: db });
   await circlesService.reorderCircles(user.userId, validated.order);
@@ -145,7 +145,7 @@ app.post('/:id/merge', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const targetCircleId = requireUuidParam(c, 'id', 'target circle ID');
-  const validated = await parseBody(c, CircleMergeSchema);
+  const validated = await parseBody(c, CircleMergeInputSchema);
 
   if (targetCircleId === validated.source_circle_id) {
     throw new ValidationError('Cannot merge a circle into itself');

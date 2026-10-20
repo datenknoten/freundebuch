@@ -3,12 +3,12 @@ import { page } from '$app/stores';
 import EncounterForm from '$lib/components/encounters/encounter-form.svelte';
 import { PageShell } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { FriendSearchResult } from '$shared';
+import type { FriendSearchResultResponse } from '$shared';
 
 const i18n = createI18n();
 
 // Check if there's a pre-selected friend from URL params
-let preSelectedFriend = $derived.by<FriendSearchResult | undefined>(() => {
+let preSelectedFriend = $derived.by<FriendSearchResultResponse | undefined>(() => {
   const friendId = $page.url.searchParams.get('friendId');
   const friendName = $page.url.searchParams.get('friendName');
 

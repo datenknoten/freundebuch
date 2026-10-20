@@ -1,11 +1,11 @@
 import { derived, writable } from 'svelte/store';
 import type {
-  Friend,
   FriendCreateInput,
-  FriendListItem,
-  FriendSearchResult,
+  FriendListItemResponse,
+  FriendResponse,
+  FriendSearchResultResponse,
   FriendUpdateInput,
-  RelationshipTypesGrouped,
+  RelationshipTypesGroupedResponse,
 } from '$shared';
 import { ApiError } from '../api/auth.js';
 import * as friendsApi from '../api/friends.js';
@@ -23,13 +23,13 @@ export {
 } from './friend-list-filter.js';
 
 export interface FriendsState {
-  friends: FriendListItem[];
+  friends: FriendListItemResponse[];
   total: number;
   page: number;
   pageSize: number;
   totalPages: number;
-  currentFriend: Friend | null;
-  relationshipTypes: RelationshipTypesGrouped | null;
+  currentFriend: FriendResponse | null;
+  relationshipTypes: RelationshipTypesGroupedResponse | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -111,8 +111,8 @@ function createFriendsStore() {
     // Relationship Types & Search (non-standard patterns)
     // =========================================================================
 
-    loadRelationshipTypes: async (): Promise<RelationshipTypesGrouped> => {
-      let cachedTypes: RelationshipTypesGrouped | null = null;
+    loadRelationshipTypes: async (): Promise<RelationshipTypesGroupedResponse> => {
+      let cachedTypes: RelationshipTypesGroupedResponse | null = null;
       update((state) => {
         cachedTypes = state.relationshipTypes;
         return state;
@@ -148,7 +148,7 @@ function createFriendsStore() {
       query: string,
       exclude?: string,
       limit?: number,
-    ): Promise<FriendSearchResult[]> => {
+    ): Promise<FriendSearchResultResponse[]> => {
       try {
         return await friendsApi.searchFriends(query, exclude, limit);
       } catch (error) {

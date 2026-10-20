@@ -13,10 +13,10 @@ import {
 } from '$lib/stores/ui';
 import {
   type ArrayFacetField,
-  type CircleFacetValue,
+  type CircleFacetValueResponse,
   countryDisplayName,
   type FacetFilters,
-  type FacetGroups,
+  type FacetGroupsResponse,
   isArrayFacetField,
 } from '$shared';
 import CircleChip from '../circles/circle-chip.svelte';
@@ -24,7 +24,7 @@ import CircleChip from '../circles/circle-chip.svelte';
 const i18n = createI18n();
 
 interface Props {
-  facets: FacetGroups | null;
+  facets: FacetGroupsResponse | null;
   activeFilters: FacetFilters;
   onFilterChange: (filters: FacetFilters) => void;
   isLoading?: boolean;
@@ -33,7 +33,7 @@ interface Props {
 let { facets, activeFilters, onFilterChange, isLoading = false }: Props = $props();
 
 // Filter circles to only show those with members (count > 0)
-let circlesWithMembers = $derived<CircleFacetValue[]>(
+let circlesWithMembers = $derived<CircleFacetValueResponse[]>(
   facets?.circles.filter((c) => c.count > 0) ?? [],
 );
 let isOpen = $state(false);

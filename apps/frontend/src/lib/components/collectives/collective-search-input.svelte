@@ -5,14 +5,14 @@ import XMark from 'svelte-heros-v2/XMark.svelte';
 import { autoFocus } from '$lib/actions/auto-focus';
 import { formClasses, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { CollectiveListItem } from '$shared';
+import type { CollectiveListItemResponse } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
 
 const i18n = createI18n();
 
 interface Props {
   /** The collectives available for selection */
-  collectives: CollectiveListItem[];
+  collectives: CollectiveListItemResponse[];
   /** The currently selected collective ID (external id), or '' when none */
   value: string;
   /** Placeholder text for the search input */
@@ -58,7 +58,7 @@ const filteredCollectives = $derived.by(() => {
 // The currently selected collective object, if any.
 const selectedCollective = $derived(collectives.find((c) => c.id === value) ?? null);
 
-function selectCollective(collective: CollectiveListItem, viaKeyboard = false) {
+function selectCollective(collective: CollectiveListItemResponse, viaKeyboard = false) {
   query = '';
   showDropdown = false;
   highlightedIndex = -1;

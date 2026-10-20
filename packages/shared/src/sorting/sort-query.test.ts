@@ -96,8 +96,8 @@ describe('every sortable endpoint uses the same sort parameters', () => {
   });
 
   it('faceted search takes include_facets in snake_case', () => {
-    expect(parseFacetedSearchQuery({ include_facets: 'true' }).includeFacets).toBe(true);
-    expect(parseFacetedSearchQuery({}).includeFacets).toBe(false);
+    expect(parseFacetedSearchQuery({ include_facets: 'true' }).shouldIncludeFacets).toBe(true);
+    expect(parseFacetedSearchQuery({}).shouldIncludeFacets).toBe(false);
   });
 
   it.each([

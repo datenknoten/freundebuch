@@ -10,7 +10,7 @@ import { SocialProfileInputSchema } from './social-profile-input.js';
 import { UrlInputSchema } from './url-input.js';
 
 /** Schema for creating a new friend */
-export const FriendCreateSchema = type({
+export const FriendCreateInputSchema = type({
   display_name: 'string > 0',
   'nickname?': 'string',
   'name_prefix?': 'string',
@@ -76,4 +76,4 @@ export const FriendCreateSchema = type({
   return true;
 });
 
-export type FriendCreateInput = typeof FriendCreateSchema.infer;
+export type FriendCreateInput = typeof FriendCreateInputSchema.infer;

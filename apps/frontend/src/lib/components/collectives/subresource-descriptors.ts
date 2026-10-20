@@ -39,14 +39,14 @@ import {
   updateUrl,
 } from '$lib/api/collectives';
 import type {
-  Address,
   AddressInput,
-  Email,
+  AddressResponse,
   EmailInput,
-  Phone,
+  EmailResponse,
   PhoneInput,
-  Url,
+  PhoneResponse,
   UrlInput,
+  UrlResponse,
 } from '$shared';
 import {
   AddressEditForm,
@@ -81,7 +81,7 @@ export type {
   SubresourceItem,
 } from '../subresources/types';
 
-const phoneDescriptor = defineDescriptor<Phone, PhoneInput>({
+const phoneDescriptor = defineDescriptor<PhoneResponse, PhoneInput>({
   key: 'phone',
   shortcutEvent: 'shortcut:collective-add-phone',
   icon: PhoneIcon,
@@ -112,7 +112,7 @@ const phoneDescriptor = defineDescriptor<Phone, PhoneInput>({
   },
 });
 
-const emailDescriptor = defineDescriptor<Email, EmailInput>({
+const emailDescriptor = defineDescriptor<EmailResponse, EmailInput>({
   key: 'email',
   shortcutEvent: 'shortcut:collective-add-email',
   icon: Envelope,
@@ -135,7 +135,7 @@ const emailDescriptor = defineDescriptor<Email, EmailInput>({
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
 });
 
-const addressDescriptor = defineDescriptor<Address, AddressInput>({
+const addressDescriptor = defineDescriptor<AddressResponse, AddressInput>({
   key: 'address',
   shortcutEvent: 'shortcut:collective-add-address',
   icon: MapPin,
@@ -170,7 +170,7 @@ const addressDescriptor = defineDescriptor<Address, AddressInput>({
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteAddress',
 });
 
-const urlDescriptor = defineDescriptor<Url, UrlInput>({
+const urlDescriptor = defineDescriptor<UrlResponse, UrlInput>({
   key: 'url',
   shortcutEvent: 'shortcut:collective-add-url',
   icon: Link,

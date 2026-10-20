@@ -1,15 +1,15 @@
 import { derived, writable } from 'svelte/store';
 import type {
-  Collective,
-  CollectiveInput,
-  CollectiveListItem,
-  CollectiveType,
-  CollectiveUpdate,
-  MembershipDeactivate,
-  MembershipInput,
-  MembershipUpdate,
+  CollectiveCreateInput,
+  CollectiveListItemResponse,
+  CollectiveResponse,
+  CollectiveTypeResponse,
+  CollectiveUpdateInput,
+  MembershipCreateInput,
+  MembershipDeactivateInput,
+  MembershipUpdateInput,
   PaginationInfo,
-  RelationshipPreviewRequest,
+  RelationshipPreviewInput,
   RelationshipPreviewResponse,
 } from '$shared';
 import { ApiError } from '../api/auth.js';
@@ -24,9 +24,9 @@ interface FilterState {
 }
 
 interface CollectivesState {
-  collectives: CollectiveListItem[];
-  currentCollective: Collective | null;
-  collectiveTypes: CollectiveType[];
+  collectives: CollectiveListItemResponse[];
+  currentCollective: CollectiveResponse | null;
+  collectiveTypes: CollectiveTypeResponse[];
   pagination: PaginationInfo;
   filters: FilterState;
   isLoading: boolean;
@@ -110,7 +110,7 @@ function createCollectivesStore() {
         () => ({ currentCollective: null }),
       ),
 
-    createCollective: (input: CollectiveInput) =>
+    createCollective: (input: CollectiveCreateInput) =>
       storeAction(
         update,
         () => collectivesApi.createCollective(input),
@@ -142,7 +142,7 @@ function createCollectivesStore() {
         'Failed to create collective',
       ),
 
-    updateCollective: (collectiveId: string, input: CollectiveUpdate) =>
+    updateCollective: (collectiveId: string, input: CollectiveUpdateInput) =>
       storeAction(
         update,
         () => collectivesApi.updateCollective(collectiveId, input),
@@ -182,7 +182,7 @@ function createCollectivesStore() {
         'Failed to delete collective',
       ),
 
-    addMember: (collectiveId: string, input: MembershipInput) =>
+    addMember: (collectiveId: string, input: MembershipCreateInput) =>
       storeAction(
         update,
         () => collectivesApi.addMember(collectiveId, input),
@@ -222,7 +222,7 @@ function createCollectivesStore() {
         'Failed to remove member',
       ),
 
-    updateMemberRole: (collectiveId: string, memberId: string, input: MembershipUpdate) =>
+    updateMemberRole: (collectiveId: string, memberId: string, input: MembershipUpdateInput) =>
       storeAction(
         update,
         () => collectivesApi.updateMemberRole(collectiveId, memberId, input),
@@ -238,7 +238,11 @@ function createCollectivesStore() {
         'Failed to update member role',
       ),
 
-    deactivateMember: (collectiveId: string, memberId: string, input: MembershipDeactivate = {}) =>
+    deactivateMember: (
+      collectiveId: string,
+      memberId: string,
+      input: MembershipDeactivateInput = {},
+    ) =>
       storeAction(
         update,
         () => collectivesApi.deactivateMember(collectiveId, memberId, input),
@@ -319,7 +323,7 @@ export const inactiveMembers = derived(
 
 export async function previewMemberRelationships(
   collectiveId: string,
-  input: RelationshipPreviewRequest,
+  input: RelationshipPreviewInput,
   options?: { signal?: AbortSignal },
 ): Promise<RelationshipPreviewResponse> {
   return collectivesApi.previewMemberRelationships(collectiveId, input, options);

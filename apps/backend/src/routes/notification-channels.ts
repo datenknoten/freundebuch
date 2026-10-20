@@ -3,9 +3,9 @@ import {
   DiscordCredentialsUpdateSchema,
   MatrixCredentialsSchema,
   MatrixCredentialsUpdateSchema,
-  NotificationChannelCreateSchema,
-  NotificationChannelToggleSchema,
-  NotificationChannelUpdateSchema,
+  NotificationChannelCreateInputSchema,
+  NotificationChannelToggleInputSchema,
+  NotificationChannelUpdateInputSchema,
   TelegramCredentialsSchema,
   TelegramCredentialsUpdateSchema,
 } from '@freundebuch/shared/index.js';
@@ -112,7 +112,7 @@ app.post('/', async (c) => {
   const user = getAuthUser(c);
 
   // First pass: validate top-level shape
-  const validated = await parseBody(c, NotificationChannelCreateSchema);
+  const validated = await parseBody(c, NotificationChannelCreateInputSchema);
 
   // Second pass: validate platform-specific credentials
   const credentials = validateCredentials(validated.platform, validated.credentials);
@@ -154,7 +154,7 @@ app.put('/:channelId', async (c) => {
   const channelId = requireUuidParam(c, 'channelId', 'channel ID');
 
   // First pass: validate top-level shape
-  const validated = await parseBody(c, NotificationChannelUpdateSchema);
+  const validated = await parseBody(c, NotificationChannelUpdateInputSchema);
 
   // If credentials provided, fetch existing channel to know the platform
   let credentials: Record<string, string> | undefined;
@@ -217,7 +217,7 @@ app.patch('/:channelId/toggle', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const channelId = requireUuidParam(c, 'channelId', 'channel ID');
-  const validated = await parseBody(c, NotificationChannelToggleSchema);
+  const validated = await parseBody(c, NotificationChannelToggleInputSchema);
 
   const service = new NotificationChannelsService({ db: db });
   const result = await service.toggleChannel(user.userId, channelId, validated.isEnabled);

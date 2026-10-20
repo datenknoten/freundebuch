@@ -1,6 +1,6 @@
 import {
   type PreferencesResponse,
-  UpdatePreferencesRequestSchema,
+  UserPreferencesSchema,
   type UserWithPreferencesResponse,
 } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
@@ -110,7 +110,7 @@ app.patch('/preferences', authMiddleware, async (c) => {
   const db = c.get('db');
   const authUser = getAuthUser(c);
 
-  const validated = await parseBody(c, UpdatePreferencesRequestSchema);
+  const validated = await parseBody(c, UserPreferencesSchema);
 
   // Get current preferences
   const users = await getUserWithPreferences.run({ externalId: authUser.userId }, db);

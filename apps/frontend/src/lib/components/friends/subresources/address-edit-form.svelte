@@ -3,13 +3,13 @@ import { get } from 'svelte/store';
 import { createDirtyTracker, FormCheckbox, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { defaultCountry } from '$lib/stores/auth';
-import { type Address, type AddressInput, type AddressType, isCountryCode } from '$shared';
+import { type AddressInput, type AddressResponse, type AddressType, isCountryCode } from '$shared';
 import HierarchicalAddressInput from '../hierarchical-address-input.svelte';
 
 const i18n = createI18n();
 
 interface Props {
-  initialData?: Address;
+  initialData?: AddressResponse;
   defaultPrimary?: boolean;
   disabled?: boolean;
   onchange?: () => void;

@@ -1,12 +1,12 @@
 <script lang="ts">
 import { createDirtyTracker, FormCheckbox, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { DateInput, DateType, FriendDate } from '$shared';
+import type { DateInput, DateType, FriendDateResponse } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
-  initialData?: FriendDate;
+  initialData?: FriendDateResponse;
   disabled?: boolean;
   onchange?: () => void;
 }

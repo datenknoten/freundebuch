@@ -1,15 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
 import { render, screen, useLanguage, withDefaultLocale } from '$lib/test';
-import type { ProfessionalHistory } from '$shared';
+import type { ProfessionalHistoryResponse } from '$shared';
 import ProfessionalHistoryRow from './professional-history-row.svelte';
 
 const strings = en.subresources;
 
-const history = (overrides: Partial<ProfessionalHistory> = {}): ProfessionalHistory => ({
+const history = (
+  overrides: Partial<ProfessionalHistoryResponse> = {},
+): ProfessionalHistoryResponse => ({
   id: 'h-1',
   fromMonth: 1,
   fromYear: 2020,
+  toMonth: null,
+  toYear: null,
   isPrimary: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   ...overrides,

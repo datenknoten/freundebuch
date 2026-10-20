@@ -1,23 +1,22 @@
-/**
- * Column definitions for the friends table
- */
+export const COLUMN_IDS = [
+  'avatar',
+  'displayName',
+  'circles',
+  'primaryEmail',
+  'primaryPhone',
+  'organization',
+  'jobTitle',
+  'department',
+  'primaryCity',
+  'primaryCountry',
+  'birthday',
+  'nickname',
+  'isFavorite',
+  'createdAt',
+  'updatedAt',
+] as const;
 
-export type ColumnId =
-  | 'avatar'
-  | 'displayName'
-  | 'circles'
-  | 'primaryEmail'
-  | 'primaryPhone'
-  | 'organization'
-  | 'jobTitle'
-  | 'department'
-  | 'primaryCity'
-  | 'primaryCountry'
-  | 'birthday'
-  | 'nickname'
-  | 'isFavorite'
-  | 'createdAt'
-  | 'updatedAt';
+export type ColumnId = (typeof COLUMN_IDS)[number];
 
 export interface ColumnDefinition {
   id: ColumnId;
@@ -25,7 +24,7 @@ export interface ColumnDefinition {
   label: string;
   /** i18n key for the column header */
   i18nKey: string;
-  sortable: boolean;
+  isSortable: boolean;
   defaultWidth?: string;
 }
 
@@ -34,93 +33,93 @@ export const COLUMN_DEFINITIONS: Record<ColumnId, ColumnDefinition> = {
     id: 'avatar',
     label: '',
     i18nKey: 'friends.columns.avatar',
-    sortable: false,
+    isSortable: false,
     defaultWidth: '56px',
   },
   displayName: {
     id: 'displayName',
     label: 'Name',
     i18nKey: 'friends.columns.displayName',
-    sortable: true,
+    isSortable: true,
   },
   circles: {
     id: 'circles',
     label: 'Circles',
     i18nKey: 'friends.columns.circles',
-    sortable: false,
+    isSortable: false,
   },
   primaryEmail: {
     id: 'primaryEmail',
     label: 'Email',
     i18nKey: 'friends.columns.primaryEmail',
-    sortable: false,
+    isSortable: false,
   },
   primaryPhone: {
     id: 'primaryPhone',
     label: 'Phone',
     i18nKey: 'friends.columns.primaryPhone',
-    sortable: false,
+    isSortable: false,
   },
   organization: {
     id: 'organization',
     label: 'Organization',
     i18nKey: 'friends.columns.organization',
-    sortable: true,
+    isSortable: true,
   },
   jobTitle: {
     id: 'jobTitle',
     label: 'Job Title',
     i18nKey: 'friends.columns.jobTitle',
-    sortable: true,
+    isSortable: true,
   },
   department: {
     id: 'department',
     label: 'Department',
     i18nKey: 'friends.columns.department',
-    sortable: true,
+    isSortable: true,
   },
   primaryCity: {
     id: 'primaryCity',
     label: 'City',
     i18nKey: 'friends.columns.primaryCity',
-    sortable: true,
+    isSortable: true,
   },
   primaryCountry: {
     id: 'primaryCountry',
     label: 'Country',
     i18nKey: 'friends.columns.primaryCountry',
-    sortable: true,
+    isSortable: true,
   },
   birthday: {
     id: 'birthday',
     label: 'Birthday',
     i18nKey: 'friends.columns.birthday',
-    sortable: true,
+    isSortable: true,
   },
   nickname: {
     id: 'nickname',
     label: 'Nickname',
     i18nKey: 'friends.columns.nickname',
-    sortable: true,
+    isSortable: true,
   },
   isFavorite: {
     id: 'isFavorite',
     label: 'Favorite',
     i18nKey: 'friends.columns.isFavorite',
-    sortable: true,
+    isSortable: true,
     defaultWidth: '80px',
   },
   createdAt: {
     id: 'createdAt',
     label: 'Added',
     i18nKey: 'friends.columns.createdAt',
-    sortable: true,
+    isSortable: true,
   },
   updatedAt: {
     id: 'updatedAt',
     label: 'Updated',
     i18nKey: 'friends.columns.updatedAt',
-    sortable: true,
+    isSortable: true,
   },
 };
 

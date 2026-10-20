@@ -5,14 +5,14 @@ import Tag from 'svelte-heros-v2/Tag.svelte';
 import Trash from 'svelte-heros-v2/Trash.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { getKeyboardHint, isOpenMemberModeActive, openMemberModePrefix } from '$lib/stores/ui';
-import type { CollectiveMember } from '$shared';
+import type { CollectiveMemberResponse } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 
 const i18n = createI18n();
 
 interface Props {
-  members: CollectiveMember[];
+  members: CollectiveMemberResponse[];
   showInactive?: boolean;
   onDeactivate?: (memberId: string) => void;
   onReactivate?: (memberId: string) => void;

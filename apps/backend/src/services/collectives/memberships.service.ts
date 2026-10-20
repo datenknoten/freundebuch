@@ -1,11 +1,11 @@
 import type {
-  CollectiveMember,
-  CollectiveMemberContact,
-  CollectiveRole,
-  MembershipDeactivate,
-  MembershipInput,
-  RelationshipPreviewItem,
-  RelationshipPreviewRequest,
+  CollectiveMemberContactResponse,
+  CollectiveMemberResponse,
+  CollectiveRoleResponse,
+  MembershipCreateInput,
+  MembershipDeactivateInput,
+  RelationshipPreviewInput,
+  RelationshipPreviewItemResponse,
   RelationshipPreviewResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool, PoolClient } from 'pg';
@@ -66,8 +66,8 @@ export class MembershipsService {
   async addMember(
     userExternalId: string,
     collectiveExternalId: string,
-    input: MembershipInput,
-  ): Promise<CollectiveMember> {
+    input: MembershipCreateInput,
+  ): Promise<CollectiveMemberResponse> {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
@@ -166,7 +166,7 @@ export class MembershipsService {
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
-  ): Promise<CollectiveMember | null> {
+  ): Promise<CollectiveMemberResponse | null> {
     const results = await getMembershipById.run(
       { userExternalId, collectiveExternalId, membershipExternalId },
       this.db,
@@ -187,7 +187,7 @@ export class MembershipsService {
     collectiveExternalId: string,
     membershipExternalId: string,
     roleExternalId: string,
-  ): Promise<CollectiveMember> {
+  ): Promise<CollectiveMemberResponse> {
     const roleResult = await getRoleInternalId.run(
       { userExternalId, collectiveExternalId, roleExternalId },
       this.db,
@@ -230,8 +230,8 @@ export class MembershipsService {
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
-    input: MembershipDeactivate,
-  ): Promise<CollectiveMember> {
+    input: MembershipDeactivateInput,
+  ): Promise<CollectiveMemberResponse> {
     const results = await deactivateMembership.run(
       {
         userExternalId,
@@ -266,7 +266,7 @@ export class MembershipsService {
     userExternalId: string,
     collectiveExternalId: string,
     membershipExternalId: string,
-  ): Promise<CollectiveMember> {
+  ): Promise<CollectiveMemberResponse> {
     const results = await reactivateMembership.run(
       { userExternalId, collectiveExternalId, membershipExternalId },
       this.db,
@@ -350,7 +350,7 @@ export class MembershipsService {
   async previewRelationships(
     userExternalId: string,
     collectiveExternalId: string,
-    input: RelationshipPreviewRequest,
+    input: RelationshipPreviewInput,
   ): Promise<RelationshipPreviewResponse> {
     // Check if the contact is already an active member
     const duplicateCheck = await checkDuplicateActiveMembership.run(
@@ -372,7 +372,7 @@ export class MembershipsService {
       throw new FriendNotFoundError();
     }
 
-    const newContact: CollectiveMemberContact = {
+    const newContact: CollectiveMemberContactResponse = {
       id: contactResult[0].external_id,
       displayName: contactResult[0].display_name ?? 'Unknown',
       photoUrl: contactResult[0].photo_url,
@@ -440,7 +440,7 @@ export class MembershipsService {
     }
 
     // Calculate relationships that would be created
-    const relationships: RelationshipPreviewItem[] = [];
+    const relationships: RelationshipPreviewItemResponse[] = [];
     let existingRelationshipsSkipped = 0;
 
     for (const existingMember of otherMembers) {
@@ -680,7 +680,7 @@ export class MembershipsService {
     userExternalId: string,
     collectiveExternalId: string,
     roleExternalId: string,
-  ): Promise<CollectiveRole> {
+  ): Promise<CollectiveRoleResponse> {
     const result = await getRoleByExternalId.run(
       { userExternalId, collectiveExternalId, roleExternalId },
       this.db,

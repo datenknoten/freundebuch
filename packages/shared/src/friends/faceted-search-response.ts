@@ -1,8 +1,12 @@
-import type { Paginated } from '../pagination/paginated.js';
-import type { FacetGroups } from './facet-groups.js';
-import type { GlobalSearchResult } from './global-search-result.js';
+import { type } from 'arktype';
+import { PaginationInfoSchema } from '../pagination/pagination-info.js';
+import { FacetGroupsResponseSchema } from './facet-groups-response.js';
+import { GlobalSearchResultResponseSchema } from './global-search-result-response.js';
 
-/** Paginated search response with optional facet data */
-export type FacetedSearchResponse = Paginated<GlobalSearchResult> & {
-  facets?: FacetGroups;
-};
+export const FacetedSearchResponseSchema = type({
+  data: GlobalSearchResultResponseSchema.array(),
+  pagination: PaginationInfoSchema,
+  'facets?': FacetGroupsResponseSchema,
+});
+
+export type FacetedSearchResponse = typeof FacetedSearchResponseSchema.infer;

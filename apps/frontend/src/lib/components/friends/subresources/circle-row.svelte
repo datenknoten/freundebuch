@@ -1,11 +1,11 @@
 <script lang="ts">
 import CircleChip from '$lib/components/circles/circle-chip.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import type { CircleSummary } from '$shared';
+import type { CircleSummaryResponse } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
 interface Props {
-  circle: CircleSummary;
+  circle: CircleSummaryResponse;
   onDelete: () => void;
   isDeleting?: boolean;
 }

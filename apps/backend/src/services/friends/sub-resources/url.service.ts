@@ -1,4 +1,4 @@
-import type { Url, UrlInput } from '@freundebuch/shared/index.js';
+import type { UrlInput, UrlResponse } from '@freundebuch/shared/index.js';
 import {
   createUrl,
   deleteUrl,
@@ -13,7 +13,7 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
-const mapRow = (row: IGetUrlsByFriendIdResult): Url => ({
+const mapRow = (row: IGetUrlsByFriendIdResult): UrlResponse => ({
   id: row.external_id,
   url: row.url,
   urlType: parseUrlType(row.url_type),
@@ -28,7 +28,7 @@ const mapRow = (row: IGetUrlsByFriendIdResult): Url => ({
  */
 export class UrlService extends SubResourceService<
   UrlInput,
-  Url,
+  UrlResponse,
   IGetUrlsByFriendIdResult,
   IGetUrlsByFriendIdResult,
   IDeleteUrlResult

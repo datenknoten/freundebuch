@@ -1,4 +1,4 @@
-import type { NotificationChannel } from '@freundebuch/shared/index.js';
+import type { NotificationChannelResponse } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
 import {
   createChannel,
@@ -45,7 +45,7 @@ export class NotificationChannelsService {
   /**
    * List all channels for a user (credentials masked)
    */
-  async listChannels(userExternalId: string): Promise<NotificationChannel[]> {
+  async listChannels(userExternalId: string): Promise<NotificationChannelResponse[]> {
     const results = await getChannelsByUserId.run({ userExternalId }, this.db);
     return results.map((row) => this.mapChannel(userExternalId, row));
   }
@@ -56,7 +56,7 @@ export class NotificationChannelsService {
   async getChannel(
     userExternalId: string,
     channelExternalId: string,
-  ): Promise<NotificationChannel> {
+  ): Promise<NotificationChannelResponse> {
     const results = await getChannelByExternalId.run(
       { userExternalId, channelExternalId },
       this.db,
@@ -79,7 +79,7 @@ export class NotificationChannelsService {
       notifyTime?: string;
       credentials: Record<string, string>;
     },
-  ): Promise<NotificationChannel> {
+  ): Promise<NotificationChannelResponse> {
     try {
       const results = await createChannel.run(
         {
@@ -132,7 +132,7 @@ export class NotificationChannelsService {
       notifyTime?: string;
       credentials?: Record<string, string>;
     },
-  ): Promise<NotificationChannel> {
+  ): Promise<NotificationChannelResponse> {
     const results = await updateChannel.run(
       {
         userExternalId,
@@ -181,7 +181,7 @@ export class NotificationChannelsService {
     userExternalId: string,
     channelExternalId: string,
     isEnabled: boolean,
-  ): Promise<NotificationChannel> {
+  ): Promise<NotificationChannelResponse> {
     return this.updateChannel(userExternalId, channelExternalId, { isEnabled });
   }
 
@@ -243,8 +243,8 @@ export class NotificationChannelsService {
   // Private Helpers
   // ============================================================================
 
-  private mapChannel(userExternalId: string, row: ChannelRow): NotificationChannel {
-    const credentials: NotificationChannel['credentials'] = {};
+  private mapChannel(userExternalId: string, row: ChannelRow): NotificationChannelResponse {
+    const credentials: NotificationChannelResponse['credentials'] = {};
 
     switch (row.platform) {
       case 'telegram':
@@ -279,7 +279,7 @@ export class NotificationChannelsService {
 
     return {
       externalId: row.external_id,
-      platform: row.platform as NotificationChannel['platform'],
+      platform: row.platform as NotificationChannelResponse['platform'],
       isEnabled: row.is_enabled,
       lookaheadDays: row.lookahead_days,
       notifyTime,

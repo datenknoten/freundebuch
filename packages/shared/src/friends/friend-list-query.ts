@@ -21,7 +21,7 @@ export type FriendListQuery = typeof FriendListQuerySchema.infer;
 /** Parsed query options for list endpoint */
 export interface FriendListOptions extends PaginationOptions, SortOptions<FriendSortBy> {
   // Epic 4: Categorization & Organization filters
-  favorites?: boolean;
+  isFavoritesOnly?: boolean;
   archived?: boolean | 'only'; // true = include, 'only' = only archived, undefined/false = exclude
 }
 
@@ -41,7 +41,7 @@ export function parseFriendListQuery(query: FriendListQuery): FriendListOptions 
     ...parsePaginationQuery(query, DEFAULT_FRIEND_PAGE_SIZE),
     ...parseSortQuery(query, { sortBy: 'display_name', sortOrder: 'asc' }),
     // Epic 4: Categorization & Organization filters
-    favorites: query.favorites === 'true',
+    isFavoritesOnly: query.favorites === 'true',
     archived,
   };
 }

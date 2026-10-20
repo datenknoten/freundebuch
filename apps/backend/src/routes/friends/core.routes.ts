@@ -1,7 +1,7 @@
 import {
-  FriendCreateSchema,
+  FriendCreateInputSchema,
   FriendListQuerySchema,
-  FriendUpdateSchema,
+  FriendUpdateInputSchema,
   parseFriendListQuery,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
@@ -66,7 +66,7 @@ app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const validated = await parseBody(c, FriendCreateSchema);
+  const validated = await parseBody(c, FriendCreateInputSchema);
 
   const friendsService = new FriendsService({ db: db, logger: logger });
   const friend = await friendsService.createFriend(user.userId, validated);
@@ -83,7 +83,7 @@ app.put('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
-  const validated = await parseBody(c, FriendUpdateSchema);
+  const validated = await parseBody(c, FriendUpdateInputSchema);
 
   const friendsService = new FriendsService({ db: db, logger: logger });
   const friend = await friendsService.updateFriend(user.userId, friendId, validated);

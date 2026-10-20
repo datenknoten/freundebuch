@@ -7,7 +7,7 @@ import { listFriends } from '$lib/api/friends';
 import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
-import type { FriendSearchResult } from '$shared';
+import type { FriendSearchResultResponse } from '$shared';
 import FriendAvatar from './friend-avatar.svelte';
 
 const i18n = createI18n();
@@ -24,13 +24,13 @@ interface Props {
   /** Whether to autofocus the input on mount */
   autofocus?: boolean;
   /** Currently selected friend, shown inline as the combobox value */
-  selected?: FriendSearchResult | null;
+  selected?: FriendSearchResultResponse | null;
   /** Called when a friend is selected (viaKeyboard is true if Enter was used) */
-  onSelect?: (friend: FriendSearchResult, viaKeyboard: boolean) => void;
+  onSelect?: (friend: FriendSearchResultResponse, viaKeyboard: boolean) => void;
   /** Called when the current selection is cleared */
   onClear?: () => void;
   /** Returns a disabled label for a friend (e.g. "Already a member"), or null if enabled */
-  disabledCheck?: (friend: FriendSearchResult) => string | null;
+  disabledCheck?: (friend: FriendSearchResultResponse) => string | null;
   /** Override the "no results" text (defaults to i18n friendSearch.noResults) */
   noResultsText?: string;
   /** Unique ID prefix for ARIA attributes (defaults to 'friend-search') */
@@ -52,8 +52,8 @@ let {
 }: Props = $props();
 
 let query = $state('');
-let results = $state<FriendSearchResult[]>([]);
-let suggestions = $state<FriendSearchResult[]>([]);
+let results = $state<FriendSearchResultResponse[]>([]);
+let suggestions = $state<FriendSearchResultResponse[]>([]);
 let suggestionsLoaded = $state(false);
 let isSearching = $state(false);
 let isLoadingSuggestions = $state(false);
@@ -67,7 +67,7 @@ let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 let displayResults = $derived(query.trim() ? results : suggestions);
 let isLoading = $derived(query.trim() ? isSearching : isLoadingSuggestions);
 
-function isItemDisabled(friend: FriendSearchResult): string | null {
+function isItemDisabled(friend: FriendSearchResultResponse): string | null {
   return disabledCheck?.(friend) ?? null;
 }
 
@@ -148,7 +148,7 @@ async function performSearch() {
   }
 }
 
-function selectFriend(friend: FriendSearchResult, viaKeyboard = false) {
+function selectFriend(friend: FriendSearchResultResponse, viaKeyboard = false) {
   if (isItemDisabled(friend)) return;
   query = '';
   results = [];

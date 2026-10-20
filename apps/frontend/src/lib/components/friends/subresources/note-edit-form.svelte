@@ -5,18 +5,18 @@ import { encounterDisplayTitle } from '$lib/components/encounters/encounter-disp
 import { createDirtyTracker, FormSelect, formClasses } from '$lib/components/ui';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import type { FriendNote, FriendNoteInput, FriendSearchResult } from '$shared';
+import type { FriendNoteInput, FriendNoteResponse, FriendSearchResultResponse } from '$shared';
 import FriendSearchInput from '../friend-search-input.svelte';
 import { noteExcerpt } from './note-excerpt';
 
 const i18n = createI18n();
 
 interface Props {
-  initialData?: FriendNote;
+  initialData?: FriendNoteResponse;
   /** The friend the note is about (excluded from the source picker) */
   friendId: string;
   /** The friend's current notes, offered as supersede targets */
-  notes: FriendNote[];
+  notes: FriendNoteResponse[];
   disabled?: boolean;
   onchange?: () => void;
 }
@@ -31,7 +31,9 @@ interface Option {
 // Form state - initialize with functions to capture initial values
 let content = $state((() => initialData?.content ?? '')());
 let encounterId = $state((() => initialData?.encounter?.id ?? '')());
-let sourceFriend = $state<FriendSearchResult | null>((() => initialData?.sourceFriend ?? null)());
+let sourceFriend = $state<FriendSearchResultResponse | null>(
+  (() => initialData?.sourceFriend ?? null)(),
+);
 let supersedesNoteId = $state((() => initialData?.supersedesNoteId ?? '')());
 let encounterOptions = $state<Option[]>([]);
 
@@ -81,7 +83,7 @@ const encounterSelectOptions = $derived<Option[]>([
   ...encounterOptions,
 ]);
 
-function noteLabel(note: FriendNote): string {
+function noteLabel(note: FriendNoteResponse): string {
   return `${noteExcerpt(note.content)} · ${formatDate(note.createdAt)}`;
 }
 

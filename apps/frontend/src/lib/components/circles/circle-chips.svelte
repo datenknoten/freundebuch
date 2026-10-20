@@ -1,12 +1,12 @@
 <script lang="ts">
 import { createI18n } from '$lib/i18n/index.js';
-import type { CircleSummary } from '$shared';
+import type { CircleSummaryResponse } from '$shared';
 import CircleChip from './circle-chip.svelte';
 
 const i18n = createI18n();
 
 interface Props {
-  circles: CircleSummary[];
+  circles: CircleSummaryResponse[];
   /** Size variant for all chips */
   size?: 'sm' | 'md';
   /** Maximum number of chips to show before collapsing */

@@ -1,6 +1,6 @@
 import type {
-  NotificationChannel,
   NotificationChannelCreateInput,
+  NotificationChannelResponse,
   NotificationChannelUpdateInput,
 } from '$shared';
 import { apiRequest } from './client.js';
@@ -8,15 +8,15 @@ import { apiRequest } from './client.js';
 /**
  * List all notification channels for the authenticated user
  */
-export async function listChannels(): Promise<NotificationChannel[]> {
-  return apiRequest<NotificationChannel[]>('/api/notification-channels');
+export async function listChannels(): Promise<NotificationChannelResponse[]> {
+  return apiRequest<NotificationChannelResponse[]>('/api/notification-channels');
 }
 
 /**
  * Get a single notification channel by ID
  */
-export async function getChannel(channelId: string): Promise<NotificationChannel> {
-  return apiRequest<NotificationChannel>(`/api/notification-channels/${channelId}`);
+export async function getChannel(channelId: string): Promise<NotificationChannelResponse> {
+  return apiRequest<NotificationChannelResponse>(`/api/notification-channels/${channelId}`);
 }
 
 /**
@@ -24,8 +24,8 @@ export async function getChannel(channelId: string): Promise<NotificationChannel
  */
 export async function createChannel(
   input: NotificationChannelCreateInput,
-): Promise<NotificationChannel> {
-  return apiRequest<NotificationChannel>('/api/notification-channels', {
+): Promise<NotificationChannelResponse> {
+  return apiRequest<NotificationChannelResponse>('/api/notification-channels', {
     method: 'POST',
     body: JSON.stringify(input),
   });
@@ -37,8 +37,8 @@ export async function createChannel(
 export async function updateChannel(
   channelId: string,
   input: NotificationChannelUpdateInput,
-): Promise<NotificationChannel> {
-  return apiRequest<NotificationChannel>(`/api/notification-channels/${channelId}`, {
+): Promise<NotificationChannelResponse> {
+  return apiRequest<NotificationChannelResponse>(`/api/notification-channels/${channelId}`, {
     method: 'PUT',
     body: JSON.stringify(input),
   });
@@ -68,8 +68,8 @@ export async function testChannel(channelId: string): Promise<void> {
 export async function toggleChannel(
   channelId: string,
   isEnabled: boolean,
-): Promise<NotificationChannel> {
-  return apiRequest<NotificationChannel>(`/api/notification-channels/${channelId}/toggle`, {
+): Promise<NotificationChannelResponse> {
+  return apiRequest<NotificationChannelResponse>(`/api/notification-channels/${channelId}/toggle`, {
     method: 'PATCH',
     body: JSON.stringify({ isEnabled }),
   });

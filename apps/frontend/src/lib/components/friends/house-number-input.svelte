@@ -3,13 +3,13 @@ import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import PencilSquare from 'svelte-heros-v2/PencilSquare.svelte';
 import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { HouseNumberInfo } from '$shared';
+import type { HouseNumberInfoResponse } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
   /** Available house numbers to select from */
-  houseNumbers: HouseNumberInfo[];
+  houseNumbers: HouseNumberInfoResponse[];
   /** Currently selected house number */
   value: string;
   /** Whether data is loading */
@@ -45,7 +45,7 @@ const filteredNumbers = $derived(() => {
   return houseNumbers.filter((hn) => hn.number.toLowerCase().includes(q));
 });
 
-function selectNumber(hn: HouseNumberInfo) {
+function selectNumber(hn: HouseNumberInfoResponse) {
   query = '';
   showDropdown = false;
   highlightedIndex = -1;

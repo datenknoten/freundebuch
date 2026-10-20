@@ -1,11 +1,16 @@
 import { derived, get, writable } from 'svelte/store';
-import type { Circle, CircleInput, CircleSummary, CircleWithHierarchy } from '$shared';
+import type {
+  CircleInput,
+  CircleResponse,
+  CircleSummaryResponse,
+  CircleWithHierarchyResponse,
+} from '$shared';
 import { buildCircleHierarchy } from '$shared';
 import * as circlesApi from '../api/circles.js';
 import { storeAction } from './store-action.js';
 
 interface CirclesState {
-  circles: Circle[];
+  circles: CircleResponse[];
   isLoading: boolean;
   error: string | null;
   /** Whether circles have been successfully loaded at least once. */
@@ -24,7 +29,7 @@ function createCirclesStore() {
 
   // Tracks an in-flight load so concurrent callers share one request and all
   // await the same result rather than receiving stale/empty data.
-  let inFlight: Promise<Circle[]> | null = null;
+  let inFlight: Promise<CircleResponse[]> | null = null;
 
   return {
     subscribe,
@@ -36,7 +41,7 @@ function createCirclesStore() {
      * picker) share a single request. Pass `force` to bypass the cache and
      * refetch.
      */
-    loadCircles: (force = false): Promise<Circle[]> => {
+    loadCircles: (force = false): Promise<CircleResponse[]> => {
       const state = get({ subscribe });
       if (!force) {
         if (state.hasLoaded) return Promise.resolve(state.circles);
@@ -124,16 +129,16 @@ export const circlesList = derived(circles, ($circles) =>
   [...$circles.circles].sort((a, b) => a.sortOrder - b.sortOrder),
 );
 
-export const circleHierarchy = derived(circles, ($circles): CircleWithHierarchy[] =>
+export const circleHierarchy = derived(circles, ($circles): CircleWithHierarchyResponse[] =>
   buildCircleHierarchy($circles.circles),
 );
 
 export const circlesById = derived(
   circles,
-  ($circles) => new Map<string, Circle>($circles.circles.map((c) => [c.id, c])),
+  ($circles) => new Map<string, CircleResponse>($circles.circles.map((c) => [c.id, c])),
 );
 
-export function getCirclePath(circleId: string, circlesMap: Map<string, Circle>): string {
+export function getCirclePath(circleId: string, circlesMap: Map<string, CircleResponse>): string {
   const parts: string[] = [];
   let currentId: string | null = circleId;
 
@@ -154,14 +159,14 @@ export function getCirclePath(circleId: string, circlesMap: Map<string, Circle>)
 export async function setFriendCircles(
   friendId: string,
   circleIds: string[],
-): Promise<CircleSummary[]> {
+): Promise<CircleSummaryResponse[]> {
   return circlesApi.setFriendCircles(friendId, circleIds);
 }
 
 export async function addFriendToCircle(
   friendId: string,
   circleId: string,
-): Promise<CircleSummary> {
+): Promise<CircleSummaryResponse> {
   return circlesApi.addFriendToCircle(friendId, circleId);
 }
 

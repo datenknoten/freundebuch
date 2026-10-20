@@ -15,9 +15,9 @@ import {
   previewMemberRelationships,
 } from '$lib/stores/collectives';
 import type {
-  CollectiveListItem,
-  CollectiveRole,
-  CollectiveType,
+  CollectiveListItemResponse,
+  CollectiveRoleResponse,
+  CollectiveTypeResponse,
   RelationshipPreviewResponse,
 } from '$shared';
 import DetailEditModal from './detail-edit-modal.svelte';
@@ -35,8 +35,8 @@ interface Props {
 let { friendId, friendDisplayName, existingCollectiveIds, onSuccess, onClose }: Props = $props();
 
 // Data state
-let allCollectives = $state<CollectiveListItem[]>([]);
-let types = $state<CollectiveType[]>([]);
+let allCollectives = $state<CollectiveListItemResponse[]>([]);
+let types = $state<CollectiveTypeResponse[]>([]);
 let isLoadingData = $state(true);
 
 // Form state
@@ -60,7 +60,7 @@ let selectedCollective = $derived(
   availableCollectives.find((c) => c.id === selectedCollectiveId) ?? null,
 );
 let rolesForSelected = $derived.by(() => {
-  if (!selectedCollective) return [] as CollectiveRole[];
+  if (!selectedCollective) return [] as CollectiveRoleResponse[];
   const typeObj = types.find((t) => t.id === selectedCollective.type.id);
   return typeObj?.roles.toSorted((a, b) => a.sortOrder - b.sortOrder) ?? [];
 });

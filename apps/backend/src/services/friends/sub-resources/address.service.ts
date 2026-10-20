@@ -1,4 +1,4 @@
-import type { Address, AddressInput } from '@freundebuch/shared/index.js';
+import type { AddressInput, AddressResponse } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import {
   clearPrimaryAddress,
@@ -23,7 +23,7 @@ export interface AddressServiceOptions extends SubResourceServiceOptions {
   addressLookupService?: AddressLookupService;
 }
 
-const mapRow = (row: IGetAddressesByFriendIdResult): Address => ({
+const mapRow = (row: IGetAddressesByFriendIdResult): AddressResponse => ({
   id: row.external_id,
   streetLine1: row.street_line1 ?? undefined,
   streetLine2: row.street_line2 ?? undefined,
@@ -50,7 +50,7 @@ const mapRow = (row: IGetAddressesByFriendIdResult): Address => ({
  */
 export class AddressService extends SubResourceService<
   AddressInput,
-  Address,
+  AddressResponse,
   IGetAddressesByFriendIdResult,
   IGetAddressesByFriendIdResult,
   IDeleteAddressResult
@@ -151,7 +151,7 @@ export class AddressService extends SubResourceService<
     userExternalId: string,
     friendExternalId: string,
     input: AddressInput,
-  ): Promise<Address | null> {
+  ): Promise<AddressResponse | null> {
     const result = await super.addWithin(client, userExternalId, friendExternalId, input);
     if (result !== null) {
       this.scheduleBackgroundGeocode(userExternalId, result.id, input);
@@ -164,7 +164,7 @@ export class AddressService extends SubResourceService<
     friendExternalId: string,
     resourceExternalId: string,
     input: AddressInput,
-  ): Promise<Address | null> {
+  ): Promise<AddressResponse | null> {
     const [existing] = await getAddressById.run(
       { addressExternalId: resourceExternalId, friendExternalId, userExternalId },
       this.db,

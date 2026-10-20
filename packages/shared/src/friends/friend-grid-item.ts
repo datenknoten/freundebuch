@@ -1,6 +1,6 @@
-import type { CircleSummary } from '../circles/circle-summary.js';
-import type { FriendListItem } from './friend-list-item.js';
-import type { GlobalSearchResult } from './global-search-result.js';
+import type { CircleSummaryResponse } from '../circles/circle-summary-response.js';
+import type { FriendListItemResponse } from './friend-list-item-response.js';
+import type { GlobalSearchResultResponse } from './global-search-result-response.js';
 
 /** Unified grid item that works for both normal listing and search results */
 export interface FriendGridItem {
@@ -19,7 +19,7 @@ export interface FriendGridItem {
   primaryCountry?: string;
   birthday?: string;
   // Categorization
-  circles: CircleSummary[];
+  circles: CircleSummaryResponse[];
   isFavorite?: boolean;
   archivedAt?: string;
   // Timestamps
@@ -27,12 +27,12 @@ export interface FriendGridItem {
   updatedAt?: string;
   // Search-specific fields (optional, only present for search results)
   rank?: number;
-  headline?: string | null;
-  matchSource?: 'friend' | 'email' | 'phone' | 'notes' | null;
+  headline?: string;
+  matchSource?: NonNullable<GlobalSearchResultResponse['matchSource']>;
 }
 
 /** Convert FriendListItem to FriendGridItem */
-export function toFriendGridItem(item: FriendListItem): FriendGridItem {
+export function toFriendGridItem(item: FriendListItemResponse): FriendGridItem {
   return {
     id: item.id,
     displayName: item.displayName,
@@ -56,7 +56,7 @@ export function toFriendGridItem(item: FriendListItem): FriendGridItem {
 }
 
 /** Convert GlobalSearchResult to FriendGridItem */
-export function searchResultToFriendGridItem(result: GlobalSearchResult): FriendGridItem {
+export function searchResultToFriendGridItem(result: GlobalSearchResultResponse): FriendGridItem {
   return {
     id: result.id,
     displayName: result.displayName,
@@ -67,7 +67,7 @@ export function searchResultToFriendGridItem(result: GlobalSearchResult): Friend
     jobTitle: result.jobTitle,
     circles: result.circles,
     rank: result.rank,
-    headline: result.headline,
-    matchSource: result.matchSource,
+    headline: result.headline ?? undefined,
+    matchSource: result.matchSource ?? undefined,
   };
 }

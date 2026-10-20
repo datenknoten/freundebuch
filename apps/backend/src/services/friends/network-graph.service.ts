@@ -1,7 +1,7 @@
 import type {
-  NetworkGraphData,
-  NetworkGraphLink,
-  NetworkGraphNode,
+  NetworkGraphLinkResponse,
+  NetworkGraphNodeResponse,
+  NetworkGraphResponse,
 } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
@@ -33,7 +33,7 @@ export class NetworkGraphService {
    * Get network graph data for visualization
    * Returns all non-archived friends as nodes and their relationships as links
    */
-  async getNetworkGraphData(userExternalId: string): Promise<NetworkGraphData> {
+  async getNetworkGraphData(userExternalId: string): Promise<NetworkGraphResponse> {
     this.logger.debug({ userExternalId }, 'Fetching network graph data');
 
     // Fetch nodes and links in parallel using PgTyped queries
@@ -42,7 +42,7 @@ export class NetworkGraphService {
       getNetworkGraphLinks.run({ userExternalId }, this.db),
     ]);
 
-    const nodes: NetworkGraphNode[] = nodesResult.map((row) => ({
+    const nodes: NetworkGraphNodeResponse[] = nodesResult.map((row) => ({
       id: row.external_id,
       displayName: row.display_name,
       photoThumbnailUrl: row.photo_thumbnail_url ?? undefined,
@@ -52,7 +52,7 @@ export class NetworkGraphService {
     // Create a set of valid node IDs for filtering links
     const nodeIds = new Set(nodes.map((n) => n.id));
 
-    const links: NetworkGraphLink[] = linksResult
+    const links: NetworkGraphLinkResponse[] = linksResult
       .filter((row) => nodeIds.has(row.source_id) && nodeIds.has(row.target_id))
       .map((row) => ({
         source: row.source_id,

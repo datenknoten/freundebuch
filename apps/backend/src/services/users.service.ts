@@ -1,4 +1,4 @@
-import type { Friend, FriendCreateInput, User } from '@freundebuch/shared/index.js';
+import type { FriendCreateInput, FriendResponse, UserResponse } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
@@ -30,7 +30,7 @@ export class UsersService {
     this.logger = options.logger;
   }
 
-  async getMe(userId: string): Promise<User> {
+  async getMe(userId: string): Promise<UserResponse> {
     const [user] = await getUserWithSelfProfile.run({ userExternalId: userId }, this.db);
 
     if (!user) {
@@ -64,7 +64,7 @@ export class UsersService {
    * Onboarding: create a friend for the user themselves and point
    * `self_profile_id` at it.
    */
-  async createSelfProfile(userId: string, input: FriendCreateInput): Promise<Friend> {
+  async createSelfProfile(userId: string, input: FriendCreateInput): Promise<FriendResponse> {
     if ((await this.getSelfProfileId(userId)) !== null) {
       throw new ValidationError('Self-profile already exists');
     }
@@ -88,7 +88,7 @@ export class UsersService {
     return newFriend;
   }
 
-  private mapUser(row: IGetUserWithSelfProfileResult): User {
+  private mapUser(row: IGetUserWithSelfProfileResult): UserResponse {
     const selfProfileExternalId = row.self_profile_external_id;
 
     return {

@@ -13,7 +13,7 @@ import {
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives } from '$lib/stores/collectives';
 import { visibleMemberContactIds } from '$lib/stores/ui';
-import type { Collective, MembershipDeactivate } from '$shared';
+import type { CollectiveResponse, MembershipDeactivateInput } from '$shared';
 import { DetailEditModal } from '../friends/subresources';
 import AddMemberForm from './add-member-form.svelte';
 import MemberList from './member-list.svelte';
@@ -21,7 +21,7 @@ import MemberList from './member-list.svelte';
 const i18n = createI18n();
 
 interface Props {
-  collective: Collective;
+  collective: CollectiveResponse;
 }
 
 let { collective }: Props = $props();
@@ -87,7 +87,7 @@ function closeDeactivateModal() {
 async function handleDeactivateConfirm() {
   if (deactivatingMemberId === null) return;
   const trimmedReason = deactivateReason.trim();
-  const input: MembershipDeactivate = {
+  const input: MembershipDeactivateInput = {
     reason: trimmedReason.length > 0 ? trimmedReason : null,
     inactive_date: deactivateDate === '' ? null : deactivateDate,
   };

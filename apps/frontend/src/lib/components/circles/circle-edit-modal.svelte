@@ -4,14 +4,14 @@ import AlertBanner from '$lib/components/alert-banner.svelte';
 import { Button, FormInput, formClasses, headingClasses, Modal } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
-import type { Circle, CircleInput } from '$shared';
+import type { CircleInput, CircleResponse } from '$shared';
 import { CIRCLE_COLORS } from '$shared';
 import CircleChip from './circle-chip.svelte';
 
 const i18n = createI18n();
 
 interface Props {
-  circle?: Circle | null;
+  circle?: CircleResponse | null;
   onClose: () => void;
 }
 
@@ -48,7 +48,7 @@ $effect(() => {
 });
 
 // Get valid parent options (exclude the current circle and its children to prevent circular references)
-function getParentOptionsTree(): Array<{ circle: Circle; depth: number }> {
+function getParentOptionsTree(): Array<{ circle: CircleResponse; depth: number }> {
   const currentCircleId = circle?.id ?? null;
 
   function getDescendantIds(parentId: string): Set<string> {
@@ -71,8 +71,8 @@ function getParentOptionsTree(): Array<{ circle: Circle; depth: number }> {
   function buildTree(
     parentId: string | null,
     depth: number,
-  ): Array<{ circle: Circle; depth: number }> {
-    const result: Array<{ circle: Circle; depth: number }> = [];
+  ): Array<{ circle: CircleResponse; depth: number }> {
+    const result: Array<{ circle: CircleResponse; depth: number }> = [];
     const children = $circlesList.filter(
       (c) => c.parentCircleId === parentId && !excludeIds.has(c.id),
     );

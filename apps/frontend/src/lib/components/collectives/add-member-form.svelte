@@ -2,7 +2,11 @@
 import { Button, FormCheckbox, FormSelect, formClasses, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { previewMemberRelationships } from '$lib/stores/collectives';
-import type { CollectiveRole, FriendSearchResult, RelationshipPreviewResponse } from '$shared';
+import type {
+  CollectiveRoleResponse,
+  FriendSearchResultResponse,
+  RelationshipPreviewResponse,
+} from '$shared';
 import AlertBanner from '../alert-banner.svelte';
 import FriendSearchInput from '../friends/friend-search-input.svelte';
 import RelationshipPreview from './relationship-preview.svelte';
@@ -12,7 +16,7 @@ const i18n = createI18n();
 interface Props {
   collectiveId: string;
   collectiveName: string;
-  roles: CollectiveRole[];
+  roles: CollectiveRoleResponse[];
   /** Contact IDs of friends already in this collective (to mark them in results) */
   existingMemberContactIds?: string[];
   onAdd: (contactId: string, roleId: string, skipAutoRelationships?: boolean) => Promise<void>;
@@ -31,7 +35,7 @@ let {
 let existingMemberSet = $derived(new Set(existingMemberContactIds));
 
 // Form state
-let selectedFriend = $state<FriendSearchResult | null>(null);
+let selectedFriend = $state<FriendSearchResultResponse | null>(null);
 let selectedRoleId = $state(roles[0]?.id ?? '');
 let roleOptions = $derived(
   [...roles]
@@ -58,7 +62,7 @@ let createNewFriendHref = $derived.by(() => {
   return `/friends/new?${params.toString()}`;
 });
 
-function handleFriendSelect(friend: FriendSearchResult, _viaKeyboard: boolean) {
+function handleFriendSelect(friend: FriendSearchResultResponse, _viaKeyboard: boolean) {
   selectedFriend = friend;
 }
 
@@ -66,7 +70,7 @@ function clearSelection() {
   selectedFriend = null;
 }
 
-async function loadPreview(friend: FriendSearchResult, roleId: string) {
+async function loadPreview(friend: FriendSearchResultResponse, roleId: string) {
   previewAbortController?.abort();
   previewAbortController = new AbortController();
   const signal = previewAbortController.signal;

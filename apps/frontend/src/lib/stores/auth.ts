@@ -1,5 +1,5 @@
 import { derived, writable } from 'svelte/store';
-import type { User, UserPreferences } from '$shared';
+import type { UserPreferences, UserResponse } from '$shared';
 import * as authApi from '../api/auth.js';
 import { authClient } from '../auth-client.js';
 import { retryWithBackoff } from '../utils/retry.js';
@@ -14,7 +14,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
  * Auth state interface
  */
 interface AuthState {
-  user: User | null;
+  user: UserResponse | null;
   preferences: UserPreferences;
   isLoading: boolean;
   isInitialized: boolean;
@@ -42,7 +42,7 @@ function createAuthStore() {
    * Fetch user data from our custom /api/auth/me endpoint
    * which includes preferences and onboarding status
    */
-  async function fetchUserData(): Promise<User | null> {
+  async function fetchUserData(): Promise<UserResponse | null> {
     try {
       const result = await authApi.getUserWithPreferences();
       return {

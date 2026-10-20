@@ -35,7 +35,7 @@ export type FacetedSearchQuery = typeof FacetedSearchQuerySchema.infer;
 export interface FacetedSearchOptions extends PaginationOptions, SortOptions<SearchSortBy> {
   query?: string; // Optional - can search with query OR filter-only
   filters: FacetFilters;
-  includeFacets: boolean;
+  shouldIncludeFacets: boolean;
 }
 
 export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearchOptions {
@@ -50,9 +50,7 @@ export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearc
   };
 
   // Parse archived filter
-  const parseArchivedFilter = (
-    value: string | undefined,
-  ): 'include' | 'exclude' | 'only' | undefined => {
+  const parseArchivedFilter = (value: string | undefined): FacetFilters['archived'] => {
     if (value === 'include' || value === 'exclude' || value === 'only') {
       return value;
     }
@@ -82,6 +80,6 @@ export function parseFacetedSearchQuery(query: FacetedSearchQuery): FacetedSearc
       favorites: query.favorites === 'true' ? true : undefined,
       archived: parseArchivedFilter(query.archived),
     },
-    includeFacets: query.include_facets === 'true',
+    shouldIncludeFacets: query.include_facets === 'true',
   };
 }

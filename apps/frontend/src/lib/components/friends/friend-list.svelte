@@ -28,9 +28,9 @@ import {
   type ColumnId,
   DEFAULT_COLUMNS,
   type FacetFilters,
-  type FacetGroups,
+  type FacetGroupsResponse,
   type FriendGridItem,
-  type GlobalSearchResult,
+  type GlobalSearchResultResponse,
   type PageSize,
   type SearchSortBy,
   searchResultToFriendGridItem,
@@ -59,7 +59,7 @@ let sortOrder = $state<'asc' | 'desc'>('asc');
 
 // Search mode state
 let searchQuery = $state((() => initialQuery)());
-let searchResults = $state<GlobalSearchResult[]>([]);
+let searchResults = $state<GlobalSearchResultResponse[]>([]);
 let searchTotal = $state(0);
 let searchPage = $state(1);
 let searchTotalPages = $state(0);
@@ -71,7 +71,7 @@ let inputElement = $state<HTMLInputElement | null>(null);
 
 // Facet state
 let activeFilters = $state<FacetFilters>((() => ({ ...initialFilters }))());
-let facets = $state<FacetGroups | null>(null);
+let facets = $state<FacetGroupsResponse | null>(null);
 let isFacetsLoading = $state(false);
 
 // Derived state

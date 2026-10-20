@@ -31,14 +31,14 @@ import {
   visibleCircleIds,
 } from '$lib/stores/ui';
 import { DEFAULT_CIRCLE_COLOR } from '$lib/utils/circle-colors';
-import type { Circle } from '$shared';
+import type { CircleResponse } from '$shared';
 
 const i18n = createI18n();
 
 let hasLoaded = $state(false);
 let showEditModal = $state(false);
-let editingCircle = $state<Circle | null>(null);
-let deleteConfirmCircle = $state<Circle | null>(null);
+let editingCircle = $state<CircleResponse | null>(null);
+let deleteConfirmCircle = $state<CircleResponse | null>(null);
 let deletingCircleId = $state<string | null>(null);
 let searchQuery = $state('');
 
@@ -100,7 +100,7 @@ function openCreateModal() {
   showEditModal = true;
 }
 
-function openEditModal(circle: Circle) {
+function openEditModal(circle: CircleResponse) {
   editingCircle = circle;
   showEditModal = true;
 }
@@ -110,7 +110,7 @@ function closeEditModal() {
   editingCircle = null;
 }
 
-function openDeleteConfirm(circle: Circle) {
+function openDeleteConfirm(circle: CircleResponse) {
   deleteConfirmCircle = circle;
 }
 
@@ -130,14 +130,14 @@ async function handleDelete(): Promise<void> {
 }
 
 // Get child circles for a given circle
-function getChildCircles(parentId: string | null): Circle[] {
+function getChildCircles(parentId: string | null): CircleResponse[] {
   return $circlesList.filter((c) => c.parentCircleId === parentId);
 }
 
 // Render circles with hierarchy
-function renderCircleTree(parentId: string | null = null, depth: number = 0): Circle[] {
+function renderCircleTree(parentId: string | null = null, depth: number = 0): CircleResponse[] {
   const children = getChildCircles(parentId);
-  const result: Circle[] = [];
+  const result: CircleResponse[] = [];
   for (const child of children) {
     result.push({ ...child, sortOrder: depth }); // Using sortOrder to store depth temporarily
     result.push(...renderCircleTree(child.id, depth + 1));
@@ -171,7 +171,7 @@ let currentPrefix = $derived(
 );
 
 // Calculate actual depth for each circle
-function getActualDepth(circle: Circle): number {
+function getActualDepth(circle: CircleResponse): number {
   let d = 0;
   let current = circle;
   while (current.parentCircleId) {

@@ -2,9 +2,9 @@ import { mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
   MAX_FILE_SIZE,
+  PHOTO_VALIDATION_ERRORS,
   PhotoMimeTypeSchema,
-  type PhotoUploadResult,
-  PhotoValidationErrors,
+  type PhotoUploadResponse,
   THUMBNAIL_SIZE,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
@@ -41,7 +41,7 @@ export class PhotoService {
   /**
    * Validate and process an uploaded photo
    */
-  async uploadPhoto(friendExternalId: string, file: File): Promise<PhotoUploadResult> {
+  async uploadPhoto(friendExternalId: string, file: File): Promise<PhotoUploadResponse> {
     this.logger.debug({ friendExternalId, fileName: file.name }, 'Processing photo upload');
 
     // Defense-in-depth: Validate friendExternalId is a valid UUID
@@ -59,12 +59,12 @@ export class PhotoService {
     // Validate file type using ArkType schema
     const mimeTypeResult = PhotoMimeTypeSchema(file.type);
     if (mimeTypeResult instanceof type.errors) {
-      throw new PhotoUploadError(PhotoValidationErrors.INVALID_FILE_TYPE, 'INVALID_FILE_TYPE');
+      throw new PhotoUploadError(PHOTO_VALIDATION_ERRORS.INVALID_FILE_TYPE, 'INVALID_FILE_TYPE');
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      throw new PhotoUploadError(PhotoValidationErrors.FILE_TOO_LARGE, 'FILE_TOO_LARGE');
+      throw new PhotoUploadError(PHOTO_VALIDATION_ERRORS.FILE_TOO_LARGE, 'FILE_TOO_LARGE');
     }
 
     // Create directory for friend photos
@@ -85,7 +85,7 @@ export class PhotoService {
       image = sharp(buffer, { limitInputPixels: MAX_IMAGE_PIXELS, sequentialRead: true });
       await image.metadata();
     } catch {
-      throw new PhotoUploadError(PhotoValidationErrors.INVALID_IMAGE, 'INVALID_IMAGE');
+      throw new PhotoUploadError(PHOTO_VALIDATION_ERRORS.INVALID_IMAGE, 'INVALID_IMAGE');
     }
 
     // Generate filenames
@@ -131,7 +131,7 @@ export class PhotoService {
           .toBuffer(),
       ]);
     } catch {
-      throw new PhotoUploadError(PhotoValidationErrors.INVALID_IMAGE, 'INVALID_IMAGE');
+      throw new PhotoUploadError(PHOTO_VALIDATION_ERRORS.INVALID_IMAGE, 'INVALID_IMAGE');
     }
 
     // Filesystem errors propagate with their errno, so index.ts turns them

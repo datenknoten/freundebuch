@@ -9,18 +9,18 @@
  * IDs are deterministic (a monotonic counter) so snapshots stay stable.
  */
 import type {
-  Address,
-  Collective,
-  CollectiveMember,
-  CollectiveRole,
-  CollectiveType,
-  Email,
-  Friend,
-  FriendDate,
-  FriendListItem,
-  FriendNote,
-  Phone,
-  Url,
+  AddressResponse,
+  CollectiveMemberResponse,
+  CollectiveResponse,
+  CollectiveRoleResponse,
+  CollectiveTypeResponse,
+  EmailResponse,
+  FriendDateResponse,
+  FriendListItemResponse,
+  FriendNoteResponse,
+  FriendResponse,
+  PhoneResponse,
+  UrlResponse,
 } from '$shared';
 
 let counter = 0;
@@ -32,7 +32,7 @@ function nextId(prefix: string): string {
 
 const TIMESTAMP = '2026-01-01T00:00:00.000Z';
 
-export function aPhone(overrides: Partial<Phone> = {}): Phone {
+export function aPhone(overrides: Partial<PhoneResponse> = {}): PhoneResponse {
   return {
     id: nextId('phone'),
     phoneNumber: '+1 555 0100',
@@ -43,7 +43,7 @@ export function aPhone(overrides: Partial<Phone> = {}): Phone {
   };
 }
 
-export function anEmail(overrides: Partial<Email> = {}): Email {
+export function anEmail(overrides: Partial<EmailResponse> = {}): EmailResponse {
   return {
     id: nextId('email'),
     emailAddress: 'friend@example.com',
@@ -54,7 +54,7 @@ export function anEmail(overrides: Partial<Email> = {}): Email {
   };
 }
 
-export function anAddress(overrides: Partial<Address> = {}): Address {
+export function anAddress(overrides: Partial<AddressResponse> = {}): AddressResponse {
   return {
     id: nextId('address'),
     streetLine1: '1 Example St',
@@ -67,7 +67,7 @@ export function anAddress(overrides: Partial<Address> = {}): Address {
   };
 }
 
-export function aUrl(overrides: Partial<Url> = {}): Url {
+export function aUrl(overrides: Partial<UrlResponse> = {}): UrlResponse {
   return {
     id: nextId('url'),
     url: 'https://example.com',
@@ -77,7 +77,7 @@ export function aUrl(overrides: Partial<Url> = {}): Url {
   };
 }
 
-export function aFriendDate(overrides: Partial<FriendDate> = {}): FriendDate {
+export function aFriendDate(overrides: Partial<FriendDateResponse> = {}): FriendDateResponse {
   return {
     id: nextId('date'),
     dateValue: '1990-05-15',
@@ -88,7 +88,7 @@ export function aFriendDate(overrides: Partial<FriendDate> = {}): FriendDate {
   };
 }
 
-export function aFriendNote(overrides: Partial<FriendNote> = {}): FriendNote {
+export function aFriendNote(overrides: Partial<FriendNoteResponse> = {}): FriendNoteResponse {
   return {
     id: nextId('note'),
     content: 'Likes hiking',
@@ -102,7 +102,7 @@ export function aFriendNote(overrides: Partial<FriendNote> = {}): FriendNote {
   };
 }
 
-export function aFriend(overrides: Partial<Friend> = {}): Friend {
+export function aFriend(overrides: Partial<FriendResponse> = {}): FriendResponse {
   return {
     id: nextId('friend'),
     displayName: 'Test Friend',
@@ -119,7 +119,9 @@ export function aFriend(overrides: Partial<Friend> = {}): Friend {
   };
 }
 
-export function aFriendListItem(overrides: Partial<FriendListItem> = {}): FriendListItem {
+export function aFriendListItem(
+  overrides: Partial<FriendListItemResponse> = {},
+): FriendListItemResponse {
   return {
     id: nextId('friend'),
     displayName: 'Test Friend',
@@ -131,7 +133,9 @@ export function aFriendListItem(overrides: Partial<FriendListItem> = {}): Friend
   };
 }
 
-export function aCollectiveRole(overrides: Partial<CollectiveRole> = {}): CollectiveRole {
+export function aCollectiveRole(
+  overrides: Partial<CollectiveRoleResponse> = {},
+): CollectiveRoleResponse {
   return {
     id: nextId('role'),
     roleKey: 'member',
@@ -141,7 +145,9 @@ export function aCollectiveRole(overrides: Partial<CollectiveRole> = {}): Collec
   };
 }
 
-export function aCollectiveType(overrides: Partial<CollectiveType> = {}): CollectiveType {
+export function aCollectiveType(
+  overrides: Partial<CollectiveTypeResponse> = {},
+): CollectiveTypeResponse {
   return {
     id: nextId('collective-type'),
     name: 'Club',
@@ -154,7 +160,9 @@ export function aCollectiveType(overrides: Partial<CollectiveType> = {}): Collec
   };
 }
 
-export function aCollectiveMember(overrides: Partial<CollectiveMember> = {}): CollectiveMember {
+export function aCollectiveMember(
+  overrides: Partial<CollectiveMemberResponse> = {},
+): CollectiveMemberResponse {
   return {
     id: nextId('membership'),
     contact: { id: nextId('friend'), displayName: 'Test Friend', photoUrl: null },
@@ -170,7 +178,7 @@ export function aCollectiveMember(overrides: Partial<CollectiveMember> = {}): Co
   };
 }
 
-export function aCollective(overrides: Partial<Collective> = {}): Collective {
+export function aCollective(overrides: Partial<CollectiveResponse> = {}): CollectiveResponse {
   return {
     id: nextId('collective'),
     name: 'Test Collective',

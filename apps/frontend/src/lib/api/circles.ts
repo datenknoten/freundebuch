@@ -1,4 +1,4 @@
-import type { Circle, CircleInput, CircleSummary } from '$shared';
+import type { CircleInput, CircleResponse, CircleSummaryResponse } from '$shared';
 import { apiRequest } from './client.js';
 
 // ============================================================================
@@ -8,22 +8,22 @@ import { apiRequest } from './client.js';
 /**
  * Get all circles for the authenticated user
  */
-export async function listCircles(): Promise<Circle[]> {
-  return apiRequest<Circle[]>('/api/circles');
+export async function listCircles(): Promise<CircleResponse[]> {
+  return apiRequest<CircleResponse[]>('/api/circles');
 }
 
 /**
  * Get a single circle by ID
  */
-export async function getCircle(circleId: string): Promise<Circle> {
-  return apiRequest<Circle>(`/api/circles/${circleId}`);
+export async function getCircle(circleId: string): Promise<CircleResponse> {
+  return apiRequest<CircleResponse>(`/api/circles/${circleId}`);
 }
 
 /**
  * Create a new circle
  */
-export async function createCircle(input: CircleInput): Promise<Circle> {
-  return apiRequest<Circle>('/api/circles', {
+export async function createCircle(input: CircleInput): Promise<CircleResponse> {
+  return apiRequest<CircleResponse>('/api/circles', {
     method: 'POST',
     body: JSON.stringify(input),
   });
@@ -32,8 +32,11 @@ export async function createCircle(input: CircleInput): Promise<Circle> {
 /**
  * Update a circle
  */
-export async function updateCircle(circleId: string, input: Partial<CircleInput>): Promise<Circle> {
-  return apiRequest<Circle>(`/api/circles/${circleId}`, {
+export async function updateCircle(
+  circleId: string,
+  input: Partial<CircleInput>,
+): Promise<CircleResponse> {
+  return apiRequest<CircleResponse>(`/api/circles/${circleId}`, {
     method: 'PUT',
     body: JSON.stringify(input),
   });
@@ -67,8 +70,8 @@ export async function reorderCircles(
 export async function mergeCircles(
   targetCircleId: string,
   sourceCircleId: string,
-): Promise<Circle> {
-  return apiRequest<Circle>(`/api/circles/${targetCircleId}/merge`, {
+): Promise<CircleResponse> {
+  return apiRequest<CircleResponse>(`/api/circles/${targetCircleId}/merge`, {
     method: 'POST',
     body: JSON.stringify({ source_circle_id: sourceCircleId }),
   });
@@ -81,8 +84,8 @@ export async function mergeCircles(
 /**
  * Get all circles for a specific friend
  */
-export async function getFriendCircles(friendId: string): Promise<CircleSummary[]> {
-  return apiRequest<CircleSummary[]>(`/api/friends/${friendId}/circles`);
+export async function getFriendCircles(friendId: string): Promise<CircleSummaryResponse[]> {
+  return apiRequest<CircleSummaryResponse[]>(`/api/friends/${friendId}/circles`);
 }
 
 /**
@@ -91,8 +94,8 @@ export async function getFriendCircles(friendId: string): Promise<CircleSummary[
 export async function setFriendCircles(
   friendId: string,
   circleIds: string[],
-): Promise<CircleSummary[]> {
-  return apiRequest<CircleSummary[]>(`/api/friends/${friendId}/circles`, {
+): Promise<CircleSummaryResponse[]> {
+  return apiRequest<CircleSummaryResponse[]>(`/api/friends/${friendId}/circles`, {
     method: 'PUT',
     body: JSON.stringify({ circle_ids: circleIds }),
   });
@@ -104,8 +107,8 @@ export async function setFriendCircles(
 export async function addFriendToCircle(
   friendId: string,
   circleId: string,
-): Promise<CircleSummary> {
-  return apiRequest<CircleSummary>(`/api/friends/${friendId}/circles/${circleId}`, {
+): Promise<CircleSummaryResponse> {
+  return apiRequest<CircleSummaryResponse>(`/api/friends/${friendId}/circles/${circleId}`, {
     method: 'POST',
   });
 }

@@ -25,7 +25,7 @@ import {
   getTypeBadgeColor,
   getTypeIconComponent,
 } from '$lib/utils/collective-types';
-import { type Collective, countryDisplayName } from '$shared';
+import { type CollectiveResponse, countryDisplayName } from '$shared';
 import AddDetailDropdown from '../subresources/add-detail-dropdown.svelte';
 import AddDetailSheet from '../subresources/add-detail-sheet.svelte';
 import SubresourceSection from '../subresources/subresource-section.svelte';
@@ -39,7 +39,7 @@ import {
 const i18n = createI18n();
 
 interface Props {
-  collective: Collective;
+  collective: CollectiveResponse;
   onEdit?: () => void;
 }
 
@@ -59,7 +59,7 @@ function dispatchAddEvent(shortcutEvent: string) {
   window.dispatchEvent(new CustomEvent(shortcutEvent));
 }
 
-function formatAddress(c: Collective, language: string): string | null {
+function formatAddress(c: CollectiveResponse, language: string): string | null {
   const parts = [
     c.address.streetLine1,
     c.address.streetLine2,

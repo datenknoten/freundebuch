@@ -1,4 +1,8 @@
-import type { Circle, CircleInput, CircleSummary } from '@freundebuch/shared/index.js';
+import type {
+  CircleInput,
+  CircleResponse,
+  CircleSummaryResponse,
+} from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
 import {
   createCircle,
@@ -48,7 +52,7 @@ export class CirclesService {
   /**
    * List all circles for a user
    */
-  async listCircles(userExternalId: string): Promise<Circle[]> {
+  async listCircles(userExternalId: string): Promise<CircleResponse[]> {
     const results = await getCirclesByUserId.run({ userExternalId }, this.db);
     return results.map((row) => this.mapCircle(row));
   }
@@ -56,7 +60,10 @@ export class CirclesService {
   /**
    * Get a single circle by ID
    */
-  async getCircleById(userExternalId: string, circleExternalId: string): Promise<Circle | null> {
+  async getCircleById(
+    userExternalId: string,
+    circleExternalId: string,
+  ): Promise<CircleResponse | null> {
     const results = await getCircleById.run({ userExternalId, circleExternalId }, this.db);
     if (results.length === 0) {
       return null;
@@ -67,7 +74,7 @@ export class CirclesService {
   /**
    * Create a new circle
    */
-  async createCircle(userExternalId: string, input: CircleInput): Promise<Circle | null> {
+  async createCircle(userExternalId: string, input: CircleInput): Promise<CircleResponse | null> {
     try {
       const results = await createCircle.run(
         {
@@ -100,7 +107,7 @@ export class CirclesService {
     userExternalId: string,
     circleExternalId: string,
     input: Partial<CircleInput>,
-  ): Promise<Circle | null> {
+  ): Promise<CircleResponse | null> {
     // Check if parent_circle_id was explicitly provided (even if null to remove parent)
     const updateParent = 'parent_circle_id' in input;
 
@@ -227,7 +234,7 @@ export class CirclesService {
     userExternalId: string,
     targetCircleExternalId: string,
     sourceCircleExternalId: string,
-  ): Promise<Circle | null> {
+  ): Promise<CircleResponse | null> {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
@@ -273,7 +280,7 @@ export class CirclesService {
   async getCirclesForFriend(
     userExternalId: string,
     friendExternalId: string,
-  ): Promise<CircleSummary[]> {
+  ): Promise<CircleSummaryResponse[]> {
     const results = await getCirclesByFriendId.run({ userExternalId, friendExternalId }, this.db);
     return results.map((row) => this.mapCircleSummary(row));
   }
@@ -286,7 +293,7 @@ export class CirclesService {
     userExternalId: string,
     friendExternalId: string,
     circleIds: string[],
-  ): Promise<CircleSummary[]> {
+  ): Promise<CircleSummaryResponse[]> {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
@@ -295,7 +302,7 @@ export class CirclesService {
       await clearFriendCircles.run({ userExternalId, friendExternalId }, client);
 
       // Add new assignments if any, returns the inserted circles directly
-      let results: CircleSummary[] = [];
+      let results: CircleSummaryResponse[] = [];
       if (circleIds.length > 0) {
         const inserted = await setFriendCircles.run(
           {
@@ -337,7 +344,7 @@ export class CirclesService {
     userExternalId: string,
     friendExternalId: string,
     circleExternalId: string,
-  ): Promise<CircleSummary | null> {
+  ): Promise<CircleSummaryResponse | null> {
     const results = await addFriendToCircle.run(
       { userExternalId, friendExternalId, circleExternalId },
       this.db,
@@ -373,7 +380,7 @@ export class CirclesService {
   // Mappers
   // ============================================================================
 
-  private mapCircle(row: IGetCirclesByUserIdResult | IGetCircleByIdResult): Circle {
+  private mapCircle(row: IGetCirclesByUserIdResult | IGetCircleByIdResult): CircleResponse {
     return {
       id: row.external_id,
       name: row.name,
@@ -386,7 +393,7 @@ export class CirclesService {
     };
   }
 
-  private mapCircleSummary(row: IGetCirclesByFriendIdResult): CircleSummary {
+  private mapCircleSummary(row: IGetCirclesByFriendIdResult): CircleSummaryResponse {
     return {
       id: row.external_id,
       name: row.name,
@@ -394,7 +401,7 @@ export class CirclesService {
     };
   }
 
-  private mapAddResult(row: IAddFriendToCircleResult): CircleSummary | null {
+  private mapAddResult(row: IAddFriendToCircleResult): CircleSummaryResponse | null {
     if (!row.circle_external_id || !row.circle_name) {
       return null;
     }

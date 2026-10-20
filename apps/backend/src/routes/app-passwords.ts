@@ -1,4 +1,4 @@
-import { AppPasswordCreateSchema } from '@freundebuch/shared/index.js';
+import { AppPasswordCreateInputSchema } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { onboardingMiddleware } from '../middleware/onboarding.js';
@@ -43,7 +43,7 @@ app.post('/', async (c) => {
   const db = c.get('db');
 
   const authUser = getAuthUser(c);
-  const validated = await parseBody(c, AppPasswordCreateSchema);
+  const validated = await parseBody(c, AppPasswordCreateInputSchema);
 
   const service = new AppPasswordsService({ db: db, logger: logger });
   const result = await service.createAppPassword(authUser.userId, validated.name);

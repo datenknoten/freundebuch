@@ -16,7 +16,7 @@ import {
   RELATIONSHIP_CATEGORIES,
   RELATIONSHIP_CATEGORY_STYLE,
 } from '$lib/utils/relationship-categories';
-import type { Relationship, RelationshipCategory, RelationshipTypeId } from '$shared';
+import type { RelationshipCategory, RelationshipResponse, RelationshipTypeId } from '$shared';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 import FriendAvatar from './friend-avatar.svelte';
 import { DetailActions, DetailEditModal, RelationshipEditForm } from './subresources';
@@ -27,7 +27,7 @@ interface Props {
   /** Friend ID */
   friendId: string;
   /** Array of relationships */
-  relationships: Relationship[];
+  relationships: RelationshipResponse[];
   /** Starting link index for keyboard hint badges (undefined = no badges) */
   linkStartIndex?: number;
   /** IDs of friends already related (to visually indicate in add form) */
@@ -64,7 +64,7 @@ let relationshipFormRef = $state<{
 
 // Group relationships by category
 const groupedRelationships = $derived(() => {
-  const groups: Record<RelationshipCategory, Relationship[]> = {
+  const groups: Record<RelationshipCategory, RelationshipResponse[]> = {
     family: [],
     professional: [],
     social: [],
@@ -92,7 +92,7 @@ let relationshipBadgeIndex = $derived.by(() => {
   return map;
 });
 
-function startEditing(relationship: Relationship) {
+function startEditing(relationship: RelationshipResponse) {
   editingRelationshipId = relationship.id;
   editNotes = relationship.notes || '';
 }

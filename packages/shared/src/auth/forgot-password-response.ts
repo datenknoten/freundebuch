@@ -1,5 +1,9 @@
+import { type } from 'arktype';
+
 /** Response from POST /api/auth/forgot-password */
-export interface ForgotPasswordResponse {
-  message: string;
-  resetToken?: string;
-}
+export const ForgotPasswordResponseSchema = type({
+  message: 'string',
+  'resetToken?': 'string',
+});
+
+export type ForgotPasswordResponse = typeof ForgotPasswordResponseSchema.infer;

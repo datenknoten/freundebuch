@@ -4,7 +4,7 @@ import Calendar from 'svelte-heros-v2/Calendar.svelte';
 import Plus from 'svelte-heros-v2/Plus.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { getLastEncounter } from '$lib/stores/encounters';
-import type { LastEncounterSummary } from '$shared';
+import type { LastEncounterSummaryResponse } from '$shared';
 import { encounterDisplayTitle } from './encounter-display';
 
 const i18n = createI18n();
@@ -16,7 +16,7 @@ interface Props {
 
 let { friendId, friendName }: Props = $props();
 
-let lastEncounter = $state<LastEncounterSummary | null>(null);
+let lastEncounter = $state<LastEncounterSummaryResponse | null>(null);
 let isLoading = $state(true);
 let error = $state<string | null>(null);
 

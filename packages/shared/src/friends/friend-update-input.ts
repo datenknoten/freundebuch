@@ -1,7 +1,7 @@
 import { type } from 'arktype';
 
 /** Schema for updating an existing friend */
-export const FriendUpdateSchema = type({
+export const FriendUpdateInputSchema = type({
   'display_name?': 'string > 0',
   'nickname?': 'string | null',
   'name_prefix?': 'string | null',
@@ -14,4 +14,4 @@ export const FriendUpdateSchema = type({
   'interests?': 'string | null',
 });
 
-export type FriendUpdateInput = typeof FriendUpdateSchema.infer;
+export type FriendUpdateInput = typeof FriendUpdateInputSchema.infer;

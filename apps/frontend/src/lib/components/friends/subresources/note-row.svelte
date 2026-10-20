@@ -3,11 +3,11 @@ import { encounterDisplayTitle } from '$lib/components/encounters/encounter-disp
 import { chipClasses } from '$lib/components/ui';
 import MarkdownView from '$lib/editor/markdown-view.svelte';
 import { createI18n } from '$lib/i18n/index.js';
-import type { FriendNote } from '$shared';
+import type { FriendNoteResponse } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
 interface Props {
-  note: FriendNote;
+  note: FriendNoteResponse;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;

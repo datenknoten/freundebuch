@@ -1,10 +1,4 @@
-import type {
-  Friend,
-  FriendCreateInput,
-  UpdatePreferencesRequest,
-  User,
-  UserPreferences,
-} from '$shared';
+import type { FriendCreateInput, FriendResponse, UserPreferences, UserResponse } from '$shared';
 import { apiRequest } from './client.js';
 
 export { ApiError } from './client.js';
@@ -16,8 +10,8 @@ export { ApiError } from './client.js';
 /**
  * Get the current user's profile
  */
-export async function getCurrentUser(): Promise<User> {
-  return apiRequest<User>('/api/users/me', {
+export async function getCurrentUser(): Promise<UserResponse> {
+  return apiRequest<UserResponse>('/api/users/me', {
     method: 'GET',
   });
 }
@@ -26,7 +20,7 @@ export async function getCurrentUser(): Promise<User> {
  * Get the current user with preferences
  */
 export async function getUserWithPreferences(): Promise<{
-  user: User;
+  user: UserResponse;
   preferences: UserPreferences;
 }> {
   return apiRequest('/api/auth/me', {
@@ -38,7 +32,7 @@ export async function getUserWithPreferences(): Promise<{
  * Update user preferences
  */
 export async function updatePreferences(
-  data: UpdatePreferencesRequest,
+  data: UserPreferences,
 ): Promise<{ preferences: UserPreferences }> {
   return apiRequest('/api/auth/preferences', {
     method: 'PATCH',
@@ -73,8 +67,8 @@ export async function setSelfProfile(friendId: string): Promise<{ selfProfileId:
  * Create a new friend and set it as the user's self-profile
  * Used during onboarding
  */
-export async function createSelfProfile(data: FriendCreateInput): Promise<Friend> {
-  return apiRequest<Friend>('/api/users/me/self-profile', {
+export async function createSelfProfile(data: FriendCreateInput): Promise<FriendResponse> {
+  return apiRequest<FriendResponse>('/api/users/me/self-profile', {
     method: 'POST',
     body: JSON.stringify(data),
   });

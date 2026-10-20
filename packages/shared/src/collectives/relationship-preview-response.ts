@@ -1,11 +1,14 @@
-import type { CollectiveMemberContact } from './collective-member-contact.js';
-import type { CollectiveRole } from './collective-role.js';
-import type { RelationshipPreviewItem } from './relationship-preview-item.js';
+import { type } from 'arktype';
+import { CollectiveMemberContactResponseSchema } from './collective-member-contact-response.js';
+import { CollectiveRoleResponseSchema } from './collective-role-response.js';
+import { RelationshipPreviewItemResponseSchema } from './relationship-preview-item-response.js';
 
-/** Response for relationship preview endpoint */
-export interface RelationshipPreviewResponse {
-  newContact: CollectiveMemberContact;
-  role: CollectiveRole;
-  relationships: RelationshipPreviewItem[];
-  existingRelationshipsSkipped: number; // Count of relationships that already exist
-}
+export const RelationshipPreviewResponseSchema = type({
+  newContact: CollectiveMemberContactResponseSchema,
+  role: CollectiveRoleResponseSchema,
+  relationships: RelationshipPreviewItemResponseSchema.array(),
+  /** Number of relationships that already exist and are not created again */
+  existingRelationshipsSkipped: 'number',
+});
+
+export type RelationshipPreviewResponse = typeof RelationshipPreviewResponseSchema.infer;

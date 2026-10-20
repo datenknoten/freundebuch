@@ -1,7 +1,7 @@
 import {
-  EncounterInputSchema,
+  EncounterCreateInputSchema,
   EncounterListQuerySchema,
-  EncounterUpdateSchema,
+  EncounterUpdateInputSchema,
   parseEncounterListQuery,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
@@ -58,7 +58,7 @@ app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const validated = await parseBody(c, EncounterInputSchema);
+  const validated = await parseBody(c, EncounterCreateInputSchema);
 
   const encountersService = new EncountersService({ db: db });
   const encounter = await encountersService.createEncounter(user.userId, validated);
@@ -93,7 +93,7 @@ app.put('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const encounterId = requireUuidParam(c, 'id', 'encounter ID');
-  const validated = await parseBody(c, EncounterUpdateSchema);
+  const validated = await parseBody(c, EncounterUpdateInputSchema);
 
   const encountersService = new EncountersService({ db: db });
   const encounter = await encountersService.updateEncounter(user.userId, encounterId, validated);

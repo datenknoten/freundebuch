@@ -4,7 +4,7 @@ import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import { formClasses, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentLanguage } from '$lib/stores/locale';
-import { type CountryInfo, listCountries } from '$shared';
+import { type CountryInfoResponse, listCountries } from '$shared';
 
 const i18n = createI18n();
 
@@ -41,7 +41,7 @@ const selectedName = $derived(() => {
   return country?.name ?? '';
 });
 
-function selectCountry(country: CountryInfo, viaKeyboard: boolean = false) {
+function selectCountry(country: CountryInfoResponse, viaKeyboard: boolean = false) {
   query = '';
   showDropdown = false;
   highlightedIndex = -1;

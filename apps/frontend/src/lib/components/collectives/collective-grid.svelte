@@ -16,14 +16,14 @@ import {
   getTypeBadgeColor,
   getTypeIconComponent,
 } from '$lib/utils/collective-types';
-import type { CollectiveListItem } from '$shared';
+import type { CollectiveListItemResponse } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 
 const i18n = createI18n();
 
 interface Props {
-  items: CollectiveListItem[];
+  items: CollectiveListItemResponse[];
   sortBy: 'name' | 'created_at' | 'member_count';
   sortOrder: 'asc' | 'desc';
   onSortChange: (sortBy: 'name' | 'created_at' | 'member_count', sortOrder: 'asc' | 'desc') => void;

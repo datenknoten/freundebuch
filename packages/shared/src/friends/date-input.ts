@@ -1,5 +1,5 @@
 import { type } from 'arktype';
-import { IsoDateString } from '../dates/iso-date-string.js';
+import { IsoDateStringSchema } from '../dates/iso-date-string-schema.js';
 import { DateTypeSchema } from './date-type.js';
 
 // Epic 1B: Extended field input schemas
@@ -17,7 +17,7 @@ export const DateInputSchema = type({
   date_type: DateTypeSchema,
   'label?': 'string',
 }).narrow((data, ctx) => {
-  if (!IsoDateString.allows(data.date_value)) {
+  if (!IsoDateStringSchema.allows(data.date_value)) {
     ctx.mustBe('an important date with a valid date (YYYY-MM-DD format)');
     return false;
   }

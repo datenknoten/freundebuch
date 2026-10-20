@@ -10,16 +10,16 @@ import {
 } from '$lib/utils/relationship-categories';
 import type {
   RelationshipCategory,
-  RelationshipType,
   RelationshipTypeId,
-  RelationshipTypesGrouped,
+  RelationshipTypeResponse,
+  RelationshipTypesGroupedResponse,
 } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
   /** The relationship types grouped by category */
-  relationshipTypes: RelationshipTypesGrouped;
+  relationshipTypes: RelationshipTypesGroupedResponse;
   /** The currently selected type ID */
   value: RelationshipTypeId;
   /** Whether the input is disabled */
@@ -40,7 +40,7 @@ let inputElement = $state<HTMLInputElement | undefined>(undefined);
 // Flatten all types for filtering; the category comes from the grouped shape,
 // so it is always one of the three known categories.
 const allTypes = $derived(() => {
-  const types: Array<RelationshipType & { category: RelationshipCategory }> = [];
+  const types: Array<RelationshipTypeResponse & { category: RelationshipCategory }> = [];
   for (const category of RELATIONSHIP_CATEGORIES) {
     for (const type of relationshipTypes[category]) {
       types.push({ ...type, category });
@@ -86,7 +86,7 @@ onMount(() => {
   return () => parent?.removeEventListener('activate', handleActivate);
 });
 
-function selectType(type: RelationshipType & { category: string }, viaKeyboard = false) {
+function selectType(type: RelationshipTypeResponse & { category: string }, viaKeyboard = false) {
   query = '';
   showDropdown = false;
   highlightedIndex = -1;

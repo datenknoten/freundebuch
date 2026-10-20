@@ -1,24 +1,24 @@
 import type {
-  Address,
   AddressInput,
-  CircleSummary,
+  AddressResponse,
+  CircleSummaryResponse,
   DateInput,
-  Email,
   EmailInput,
-  FriendDate,
-  MetInfo,
+  EmailResponse,
+  FriendDateResponse,
   MetInfoInput,
-  Phone,
+  MetInfoResponse,
   PhoneInput,
-  ProfessionalHistory,
+  PhoneResponse,
   ProfessionalHistoryInput,
-  Relationship,
-  RelationshipInput,
+  ProfessionalHistoryResponse,
+  RelationshipCreateInput,
+  RelationshipResponse,
   RelationshipUpdateInput,
-  SocialProfile,
   SocialProfileInput,
-  Url,
+  SocialProfileResponse,
   UrlInput,
+  UrlResponse,
 } from '$shared';
 import * as circlesApi from '../api/circles.js';
 import * as friendsApi from '../api/friends.js';
@@ -37,7 +37,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Phone Operations
     // =========================================================================
 
-    addPhone: (friendId: string, data: PhoneInput): Promise<Phone> =>
+    addPhone: (friendId: string, data: PhoneInput): Promise<PhoneResponse> =>
       storeAction(
         update,
         () => friendsApi.addPhone(friendId, data),
@@ -49,7 +49,11 @@ export function createSubresourceOps(update: FriendsUpdate) {
         'Failed to add phone',
       ),
 
-    updatePhone: (friendId: string, phoneId: string, data: Partial<PhoneInput>): Promise<Phone> =>
+    updatePhone: (
+      friendId: string,
+      phoneId: string,
+      data: Partial<PhoneInput>,
+    ): Promise<PhoneResponse> =>
       storeAction(
         update,
         () => friendsApi.updatePhone(friendId, phoneId, data),
@@ -83,7 +87,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Email Operations
     // =========================================================================
 
-    addEmail: (friendId: string, data: EmailInput): Promise<Email> =>
+    addEmail: (friendId: string, data: EmailInput): Promise<EmailResponse> =>
       storeAction(
         update,
         () => friendsApi.addEmail(friendId, data),
@@ -95,7 +99,11 @@ export function createSubresourceOps(update: FriendsUpdate) {
         'Failed to add email',
       ),
 
-    updateEmail: (friendId: string, emailId: string, data: Partial<EmailInput>): Promise<Email> =>
+    updateEmail: (
+      friendId: string,
+      emailId: string,
+      data: Partial<EmailInput>,
+    ): Promise<EmailResponse> =>
       storeAction(
         update,
         () => friendsApi.updateEmail(friendId, emailId, data),
@@ -129,7 +137,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Address Operations
     // =========================================================================
 
-    addAddress: (friendId: string, data: AddressInput): Promise<Address> =>
+    addAddress: (friendId: string, data: AddressInput): Promise<AddressResponse> =>
       storeAction(
         update,
         () => friendsApi.addAddress(friendId, data),
@@ -145,7 +153,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
       friendId: string,
       addressId: string,
       data: Partial<AddressInput>,
-    ): Promise<Address> =>
+    ): Promise<AddressResponse> =>
       storeAction(
         update,
         () => friendsApi.updateAddress(friendId, addressId, data),
@@ -181,7 +189,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // URL Operations
     // =========================================================================
 
-    addUrl: (friendId: string, data: UrlInput): Promise<Url> =>
+    addUrl: (friendId: string, data: UrlInput): Promise<UrlResponse> =>
       storeAction(
         update,
         () => friendsApi.addUrl(friendId, data),
@@ -193,7 +201,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
         'Failed to add URL',
       ),
 
-    updateUrl: (friendId: string, urlId: string, data: Partial<UrlInput>): Promise<Url> =>
+    updateUrl: (friendId: string, urlId: string, data: Partial<UrlInput>): Promise<UrlResponse> =>
       storeAction(
         update,
         () => friendsApi.updateUrl(friendId, urlId, data),
@@ -263,7 +271,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Date Operations
     // =========================================================================
 
-    addDate: (friendId: string, data: DateInput): Promise<FriendDate> =>
+    addDate: (friendId: string, data: DateInput): Promise<FriendDateResponse> =>
       storeAction(
         update,
         () => friendsApi.addDate(friendId, data),
@@ -275,7 +283,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
         'Failed to add date',
       ),
 
-    updateDate: (friendId: string, dateId: string, data: DateInput): Promise<FriendDate> =>
+    updateDate: (friendId: string, dateId: string, data: DateInput): Promise<FriendDateResponse> =>
       storeAction(
         update,
         () => friendsApi.updateDate(friendId, dateId, data),
@@ -309,7 +317,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Met Info Operations
     // =========================================================================
 
-    setMetInfo: (friendId: string, data: MetInfoInput): Promise<MetInfo> =>
+    setMetInfo: (friendId: string, data: MetInfoInput): Promise<MetInfoResponse> =>
       storeAction(
         update,
         () => friendsApi.setMetInfo(friendId, data),
@@ -335,7 +343,10 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Social Profile Operations
     // =========================================================================
 
-    addSocialProfile: (friendId: string, data: SocialProfileInput): Promise<SocialProfile> =>
+    addSocialProfile: (
+      friendId: string,
+      data: SocialProfileInput,
+    ): Promise<SocialProfileResponse> =>
       storeAction(
         update,
         () => friendsApi.addSocialProfile(friendId, data),
@@ -354,7 +365,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
       friendId: string,
       profileId: string,
       data: SocialProfileInput,
-    ): Promise<SocialProfile> =>
+    ): Promise<SocialProfileResponse> =>
       storeAction(
         update,
         () => friendsApi.updateSocialProfile(friendId, profileId, data),
@@ -395,7 +406,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     addProfessionalHistory: (
       friendId: string,
       data: ProfessionalHistoryInput,
-    ): Promise<ProfessionalHistory> =>
+    ): Promise<ProfessionalHistoryResponse> =>
       storeAction(
         update,
         () => friendsApi.addProfessionalHistory(friendId, data),
@@ -414,7 +425,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
       friendId: string,
       historyId: string,
       data: ProfessionalHistoryInput,
-    ): Promise<ProfessionalHistory> =>
+    ): Promise<ProfessionalHistoryResponse> =>
       storeAction(
         update,
         () => friendsApi.updateProfessionalHistory(friendId, historyId, data),
@@ -452,7 +463,10 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Relationship CRUD Operations
     // =========================================================================
 
-    addRelationship: (friendId: string, data: RelationshipInput): Promise<Relationship> =>
+    addRelationship: (
+      friendId: string,
+      data: RelationshipCreateInput,
+    ): Promise<RelationshipResponse> =>
       storeAction(
         update,
         () => friendsApi.addRelationship(friendId, data),
@@ -471,7 +485,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
       friendId: string,
       relationshipId: string,
       data: RelationshipUpdateInput,
-    ): Promise<Relationship> =>
+    ): Promise<RelationshipResponse> =>
       storeAction(
         update,
         () => friendsApi.updateRelationship(friendId, relationshipId, data),
@@ -509,7 +523,7 @@ export function createSubresourceOps(update: FriendsUpdate) {
     // Circle Operations
     // =========================================================================
 
-    addCircle: (friendId: string, circleId: string): Promise<CircleSummary> =>
+    addCircle: (friendId: string, circleId: string): Promise<CircleSummaryResponse> =>
       storeAction(
         update,
         () => circlesApi.addFriendToCircle(friendId, circleId),

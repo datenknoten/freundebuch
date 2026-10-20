@@ -14,7 +14,7 @@ import {
   openEncounterFriendModePrefix,
   visibleEncounterFriendIds,
 } from '$lib/stores/ui';
-import type { Encounter } from '$shared';
+import type { EncounterResponse } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display';
@@ -23,7 +23,7 @@ import EncounterTypeIcon from './encounter-type-icon.svelte';
 const i18n = createI18n();
 
 interface Props {
-  encounter: Encounter;
+  encounter: EncounterResponse;
   onEdit?: () => void;
 }
 

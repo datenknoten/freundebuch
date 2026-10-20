@@ -1,9 +1,9 @@
 import type {
   FacetedSearchOptions,
   FacetedSearchResponse,
-  FacetGroups,
-  FacetValue,
-  GlobalSearchResult,
+  FacetGroupsResponse,
+  FacetValueResponse,
+  GlobalSearchResultResponse,
   PaginatedSearchResponse,
   SearchOptions,
 } from '@freundebuch/shared/index.js';
@@ -78,7 +78,7 @@ export class SearchService {
     userExternalId: string,
     query: string,
     limit = 10,
-  ): Promise<GlobalSearchResult[]> {
+  ): Promise<GlobalSearchResultResponse[]> {
     this.logger.debug({ query, limit }, 'Full-text searching friends');
 
     const results = await fullTextSearchFriends.run(
@@ -141,7 +141,7 @@ export class SearchService {
     userExternalId: string,
     options: FacetedSearchOptions,
   ): Promise<FacetedSearchResponse> {
-    const { query, page, pageSize, sortBy, sortOrder, filters, includeFacets } = options;
+    const { query, page, pageSize, sortBy, sortOrder, filters, shouldIncludeFacets } = options;
 
     // This method requires a query - use filterOnlyList for filter-only searches
     if (!query) {
@@ -154,7 +154,7 @@ export class SearchService {
     const wildcardQuery = createWildcardQuery(query);
 
     this.logger.debug(
-      { query, page, pageSize, sortBy, sortOrder, filters, includeFacets },
+      { query, page, pageSize, sortBy, sortOrder, filters, shouldIncludeFacets },
       'Faceted search',
     );
 
@@ -192,7 +192,7 @@ export class SearchService {
     };
 
     // Fetch facet counts if requested
-    if (includeFacets) {
+    if (shouldIncludeFacets) {
       const [facetRows, circleRows] = await Promise.all([
         getFacetCounts.run({ userExternalId, query, wildcardQuery }, this.db),
         getCircleFacetCounts.run({ userExternalId }, this.db),
@@ -211,11 +211,11 @@ export class SearchService {
     userExternalId: string,
     options: FacetedSearchOptions,
   ): Promise<FacetedSearchResponse> {
-    const { page, pageSize, sortBy, sortOrder, filters, includeFacets } = options;
+    const { page, pageSize, sortBy, sortOrder, filters, shouldIncludeFacets } = options;
     const offset = (page - 1) * pageSize;
 
     this.logger.debug(
-      { page, pageSize, sortBy, sortOrder, filters, includeFacets },
+      { page, pageSize, sortBy, sortOrder, filters, shouldIncludeFacets },
       'Filter-only list',
     );
 
@@ -251,7 +251,7 @@ export class SearchService {
     };
 
     // Fetch facet counts if requested (uses all friends, not search-filtered)
-    if (includeFacets) {
+    if (shouldIncludeFacets) {
       const [facetRows, circleRows] = await Promise.all([
         getAllFacetCounts.run({ userExternalId }, this.db),
         getCircleFacetCounts.run({ userExternalId }, this.db),
@@ -307,7 +307,7 @@ export class SearchService {
   // Private Helper Methods
   // ============================================================================
 
-  private mapGlobalSearchResult(row: IFullTextSearchFriendsResult): GlobalSearchResult {
+  private mapGlobalSearchResult(row: IFullTextSearchFriendsResult): GlobalSearchResultResponse {
     return {
       id: row.external_id,
       displayName: row.display_name,
@@ -324,7 +324,9 @@ export class SearchService {
     };
   }
 
-  private mapPaginatedSearchResult(row: IPaginatedFullTextSearchResult): GlobalSearchResult {
+  private mapPaginatedSearchResult(
+    row: IPaginatedFullTextSearchResult,
+  ): GlobalSearchResultResponse {
     return {
       id: row.external_id,
       displayName: row.display_name,
@@ -341,7 +343,7 @@ export class SearchService {
     };
   }
 
-  private mapFacetedSearchResult(row: IFacetedSearchResult): GlobalSearchResult {
+  private mapFacetedSearchResult(row: IFacetedSearchResult): GlobalSearchResultResponse {
     // Parse circles from JSON
     const circlesRaw = parseCirclesJson(row.circles, this.logger);
 
@@ -365,7 +367,7 @@ export class SearchService {
     };
   }
 
-  private mapFilterOnlyResult(row: IFilterOnlyListResult): GlobalSearchResult {
+  private mapFilterOnlyResult(row: IFilterOnlyListResult): GlobalSearchResultResponse {
     // Parse circles from JSON
     const circlesRaw = parseCirclesJson(row.circles, this.logger);
 
@@ -394,8 +396,8 @@ export class SearchService {
   private aggregateFacets(
     rows: IGetFacetCountsResult[],
     circleRows: IGetCircleFacetCountsResult[] = [],
-  ): FacetGroups {
-    const facets: FacetGroups = {
+  ): FacetGroupsResponse {
+    const facets: FacetGroupsResponse = {
       location: [],
       professional: [],
       relationship: [],
@@ -403,7 +405,7 @@ export class SearchService {
     };
 
     // Group rows by facet_field
-    const groupedByField = new Map<string, FacetValue[]>();
+    const groupedByField = new Map<string, FacetValueResponse[]>();
 
     for (const row of rows) {
       if (!row.facet_field || !row.facet_value || row.count === null) continue;

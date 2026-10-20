@@ -1,4 +1,7 @@
-import { RelationshipInputSchema, RelationshipUpdateSchema } from '@freundebuch/shared/index.js';
+import {
+  RelationshipCreateInputSchema,
+  RelationshipUpdateInputSchema,
+} from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { getAuthUser } from '../../../middleware/auth.js';
 import { FriendsService } from '../../../services/friends/index.js';
@@ -24,7 +27,7 @@ app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
-  const validated = await parseBody(c, RelationshipInputSchema);
+  const validated = await parseBody(c, RelationshipCreateInputSchema);
 
   // Prevent self-relationships
   if (validated.related_friend_id === friendId) {
@@ -52,7 +55,7 @@ app.put('/:relationshipId', async (c) => {
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id');
   const relationshipId = requireUuidParam(c, 'relationshipId');
-  const validated = await parseBody(c, RelationshipUpdateSchema);
+  const validated = await parseBody(c, RelationshipUpdateInputSchema);
 
   const friendsService = new FriendsService({ db: db, logger: c.get('logger') });
   const relationship = await friendsService.updateRelationship(

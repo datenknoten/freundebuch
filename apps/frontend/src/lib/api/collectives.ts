@@ -1,24 +1,24 @@
 import type {
-  Address,
   AddressInput,
-  Collective,
-  CollectiveInput,
+  AddressResponse,
+  CollectiveCreateInput,
   CollectiveListResponse,
-  CollectiveMember,
-  CollectiveType,
+  CollectiveMemberResponse,
+  CollectiveResponse,
   CollectiveTypeListResponse,
-  CollectiveUpdate,
-  Email,
+  CollectiveTypeResponse,
+  CollectiveUpdateInput,
   EmailInput,
-  MembershipDeactivate,
-  MembershipInput,
-  MembershipUpdate,
-  Phone,
+  EmailResponse,
+  MembershipCreateInput,
+  MembershipDeactivateInput,
+  MembershipUpdateInput,
   PhoneInput,
-  RelationshipPreviewRequest,
+  PhoneResponse,
+  RelationshipPreviewInput,
   RelationshipPreviewResponse,
-  Url,
   UrlInput,
+  UrlResponse,
 } from '$shared';
 import { apiRequest } from './client.js';
 
@@ -71,8 +71,8 @@ export async function listCollectiveTypes(): Promise<CollectiveTypeListResponse>
 /**
  * Get a single collective type with roles and rules
  */
-export async function getCollectiveType(typeId: string): Promise<CollectiveType> {
-  return apiRequest<CollectiveType>(`/api/collectives/types/${typeId}`);
+export async function getCollectiveType(typeId: string): Promise<CollectiveTypeResponse> {
+  return apiRequest<CollectiveTypeResponse>(`/api/collectives/types/${typeId}`);
 }
 
 // ============================================================================
@@ -92,15 +92,15 @@ export async function listCollectives(
 /**
  * Get a single collective by ID
  */
-export async function getCollective(collectiveId: string): Promise<Collective> {
-  return apiRequest<Collective>(`/api/collectives/${collectiveId}`);
+export async function getCollective(collectiveId: string): Promise<CollectiveResponse> {
+  return apiRequest<CollectiveResponse>(`/api/collectives/${collectiveId}`);
 }
 
 /**
  * Create a new collective
  */
-export async function createCollective(input: CollectiveInput): Promise<Collective> {
-  return apiRequest<Collective>('/api/collectives', {
+export async function createCollective(input: CollectiveCreateInput): Promise<CollectiveResponse> {
+  return apiRequest<CollectiveResponse>('/api/collectives', {
     method: 'POST',
     body: JSON.stringify(input),
   });
@@ -111,9 +111,9 @@ export async function createCollective(input: CollectiveInput): Promise<Collecti
  */
 export async function updateCollective(
   collectiveId: string,
-  input: CollectiveUpdate,
-): Promise<Collective> {
-  return apiRequest<Collective>(`/api/collectives/${collectiveId}`, {
+  input: CollectiveUpdateInput,
+): Promise<CollectiveResponse> {
+  return apiRequest<CollectiveResponse>(`/api/collectives/${collectiveId}`, {
     method: 'PUT',
     body: JSON.stringify(input),
   });
@@ -137,7 +137,7 @@ export async function deleteCollective(collectiveId: string): Promise<void> {
  */
 export async function previewMemberRelationships(
   collectiveId: string,
-  input: RelationshipPreviewRequest,
+  input: RelationshipPreviewInput,
   options?: { signal?: AbortSignal },
 ): Promise<RelationshipPreviewResponse> {
   return apiRequest<RelationshipPreviewResponse>(
@@ -155,9 +155,9 @@ export async function previewMemberRelationships(
  */
 export async function addMember(
   collectiveId: string,
-  input: MembershipInput,
-): Promise<CollectiveMember> {
-  return apiRequest<CollectiveMember>(`/api/collectives/${collectiveId}/members`, {
+  input: MembershipCreateInput,
+): Promise<CollectiveMemberResponse> {
+  return apiRequest<CollectiveMemberResponse>(`/api/collectives/${collectiveId}/members`, {
     method: 'POST',
     body: JSON.stringify(input),
   });
@@ -178,12 +178,15 @@ export async function removeMember(collectiveId: string, memberId: string): Prom
 export async function updateMemberRole(
   collectiveId: string,
   memberId: string,
-  input: MembershipUpdate,
-): Promise<CollectiveMember> {
-  return apiRequest<CollectiveMember>(`/api/collectives/${collectiveId}/members/${memberId}/role`, {
-    method: 'PUT',
-    body: JSON.stringify(input),
-  });
+  input: MembershipUpdateInput,
+): Promise<CollectiveMemberResponse> {
+  return apiRequest<CollectiveMemberResponse>(
+    `/api/collectives/${collectiveId}/members/${memberId}/role`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 /**
@@ -192,9 +195,9 @@ export async function updateMemberRole(
 export async function deactivateMember(
   collectiveId: string,
   memberId: string,
-  input: MembershipDeactivate = {},
-): Promise<CollectiveMember> {
-  return apiRequest<CollectiveMember>(
+  input: MembershipDeactivateInput = {},
+): Promise<CollectiveMemberResponse> {
+  return apiRequest<CollectiveMemberResponse>(
     `/api/collectives/${collectiveId}/members/${memberId}/deactivate`,
     {
       method: 'POST',
@@ -209,8 +212,8 @@ export async function deactivateMember(
 export async function reactivateMember(
   collectiveId: string,
   memberId: string,
-): Promise<CollectiveMember> {
-  return apiRequest<CollectiveMember>(
+): Promise<CollectiveMemberResponse> {
+  return apiRequest<CollectiveMemberResponse>(
     `/api/collectives/${collectiveId}/members/${memberId}/reactivate`,
     {
       method: 'POST',
@@ -223,12 +226,12 @@ export async function reactivateMember(
 // Phone Operations
 // ============================================================================
 
-export async function listPhones(collectiveId: string): Promise<Phone[]> {
-  return apiRequest<Phone[]>(`/api/collectives/${collectiveId}/phones`);
+export async function listPhones(collectiveId: string): Promise<PhoneResponse[]> {
+  return apiRequest<PhoneResponse[]>(`/api/collectives/${collectiveId}/phones`);
 }
 
-export async function addPhone(collectiveId: string, data: PhoneInput): Promise<Phone> {
-  return apiRequest<Phone>(`/api/collectives/${collectiveId}/phones`, {
+export async function addPhone(collectiveId: string, data: PhoneInput): Promise<PhoneResponse> {
+  return apiRequest<PhoneResponse>(`/api/collectives/${collectiveId}/phones`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -238,8 +241,8 @@ export async function updatePhone(
   collectiveId: string,
   phoneId: string,
   data: Partial<PhoneInput>,
-): Promise<Phone> {
-  return apiRequest<Phone>(`/api/collectives/${collectiveId}/phones/${phoneId}`, {
+): Promise<PhoneResponse> {
+  return apiRequest<PhoneResponse>(`/api/collectives/${collectiveId}/phones/${phoneId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -258,12 +261,12 @@ export async function deletePhone(
 // Email Operations
 // ============================================================================
 
-export async function listEmails(collectiveId: string): Promise<Email[]> {
-  return apiRequest<Email[]>(`/api/collectives/${collectiveId}/emails`);
+export async function listEmails(collectiveId: string): Promise<EmailResponse[]> {
+  return apiRequest<EmailResponse[]>(`/api/collectives/${collectiveId}/emails`);
 }
 
-export async function addEmail(collectiveId: string, data: EmailInput): Promise<Email> {
-  return apiRequest<Email>(`/api/collectives/${collectiveId}/emails`, {
+export async function addEmail(collectiveId: string, data: EmailInput): Promise<EmailResponse> {
+  return apiRequest<EmailResponse>(`/api/collectives/${collectiveId}/emails`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -273,8 +276,8 @@ export async function updateEmail(
   collectiveId: string,
   emailId: string,
   data: Partial<EmailInput>,
-): Promise<Email> {
-  return apiRequest<Email>(`/api/collectives/${collectiveId}/emails/${emailId}`, {
+): Promise<EmailResponse> {
+  return apiRequest<EmailResponse>(`/api/collectives/${collectiveId}/emails/${emailId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -293,12 +296,15 @@ export async function deleteEmail(
 // Address Operations
 // ============================================================================
 
-export async function listAddresses(collectiveId: string): Promise<Address[]> {
-  return apiRequest<Address[]>(`/api/collectives/${collectiveId}/addresses`);
+export async function listAddresses(collectiveId: string): Promise<AddressResponse[]> {
+  return apiRequest<AddressResponse[]>(`/api/collectives/${collectiveId}/addresses`);
 }
 
-export async function addAddress(collectiveId: string, data: AddressInput): Promise<Address> {
-  return apiRequest<Address>(`/api/collectives/${collectiveId}/addresses`, {
+export async function addAddress(
+  collectiveId: string,
+  data: AddressInput,
+): Promise<AddressResponse> {
+  return apiRequest<AddressResponse>(`/api/collectives/${collectiveId}/addresses`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -308,8 +314,8 @@ export async function updateAddress(
   collectiveId: string,
   addressId: string,
   data: Partial<AddressInput>,
-): Promise<Address> {
-  return apiRequest<Address>(`/api/collectives/${collectiveId}/addresses/${addressId}`, {
+): Promise<AddressResponse> {
+  return apiRequest<AddressResponse>(`/api/collectives/${collectiveId}/addresses/${addressId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -328,12 +334,12 @@ export async function deleteAddress(
 // URL Operations
 // ============================================================================
 
-export async function listUrls(collectiveId: string): Promise<Url[]> {
-  return apiRequest<Url[]>(`/api/collectives/${collectiveId}/urls`);
+export async function listUrls(collectiveId: string): Promise<UrlResponse[]> {
+  return apiRequest<UrlResponse[]>(`/api/collectives/${collectiveId}/urls`);
 }
 
-export async function addUrl(collectiveId: string, data: UrlInput): Promise<Url> {
-  return apiRequest<Url>(`/api/collectives/${collectiveId}/urls`, {
+export async function addUrl(collectiveId: string, data: UrlInput): Promise<UrlResponse> {
+  return apiRequest<UrlResponse>(`/api/collectives/${collectiveId}/urls`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -343,8 +349,8 @@ export async function updateUrl(
   collectiveId: string,
   urlId: string,
   data: Partial<UrlInput>,
-): Promise<Url> {
-  return apiRequest<Url>(`/api/collectives/${collectiveId}/urls/${urlId}`, {
+): Promise<UrlResponse> {
+  return apiRequest<UrlResponse>(`/api/collectives/${collectiveId}/urls/${urlId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });

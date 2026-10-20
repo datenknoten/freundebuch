@@ -1,14 +1,14 @@
 import { writable } from 'svelte/store';
 import type {
-  NotificationChannel,
   NotificationChannelCreateInput,
+  NotificationChannelResponse,
   NotificationChannelUpdateInput,
 } from '$shared';
 import * as channelsApi from '../api/notification-channels.js';
 import { storeAction } from './store-action.js';
 
 interface NotificationChannelsState {
-  channels: NotificationChannel[];
+  channels: NotificationChannelResponse[];
   isLoading: boolean;
   error: string | null;
 }

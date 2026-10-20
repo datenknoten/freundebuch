@@ -1,8 +1,8 @@
 import {
-  ArchiveFriendSchema,
+  ArchiveFriendInputSchema,
   MAX_FILE_SIZE,
-  PhotoValidationErrors,
-  SetFriendCirclesSchema,
+  PHOTO_VALIDATION_ERRORS,
+  SetFriendCirclesInputSchema,
 } from '@freundebuch/shared/index.js';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -31,7 +31,7 @@ app.post(
   // multipart envelope around a MAX_FILE_SIZE payload.
   bodyLimit({
     maxSize: MAX_FILE_SIZE + 64 * 1024,
-    onError: (c) => c.json({ error: PhotoValidationErrors.FILE_TOO_LARGE }, 413),
+    onError: (c) => c.json({ error: PHOTO_VALIDATION_ERRORS.FILE_TOO_LARGE }, 413),
   }),
   async (c) => {
     const logger = c.get('logger');
@@ -44,7 +44,7 @@ app.post(
     const file = formData.get('photo');
 
     if (!file || !(file instanceof File)) {
-      throw new ValidationError(PhotoValidationErrors.NO_FILE_PROVIDED);
+      throw new ValidationError(PHOTO_VALIDATION_ERRORS.NO_FILE_PROVIDED);
     }
 
     // Verify friend exists and belongs to user
@@ -138,7 +138,7 @@ app.put('/:id/circles', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const friendId = requireUuidParam(c, 'id', 'friend ID');
-  const validated = await parseBody(c, SetFriendCirclesSchema);
+  const validated = await parseBody(c, SetFriendCirclesInputSchema);
 
   const circlesService = new CirclesService({ db: db });
   const circles = await circlesService.setFriendCircles(
@@ -236,7 +236,7 @@ app.post('/:id/archive', async (c) => {
     throw new ValidationError('Invalid JSON');
   }
 
-  const validated = validate(ArchiveFriendSchema, body);
+  const validated = validate(ArchiveFriendInputSchema, body);
 
   const friendsService = new FriendsService({ db: db, logger: logger });
   const archived = await friendsService.archiveFriend(user.userId, friendId, validated.reason);

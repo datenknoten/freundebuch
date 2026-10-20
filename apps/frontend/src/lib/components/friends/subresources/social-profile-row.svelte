@@ -1,10 +1,10 @@
 <script lang="ts">
 import { createI18n } from '$lib/i18n/index.js';
-import type { SocialPlatform, SocialProfile } from '$shared';
+import type { SocialPlatform, SocialProfileResponse } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
 interface Props {
-  profile: SocialProfile;
+  profile: SocialProfileResponse;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;

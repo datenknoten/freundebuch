@@ -7,11 +7,11 @@ import { createI18n } from '$lib/i18n/index.js';
 import { encounters } from '$lib/stores/encounters';
 import {
   ENCOUNTER_TYPES,
-  type Encounter,
-  type EncounterInput,
+  type EncounterCreateInput,
+  type EncounterResponse,
   type EncounterType,
-  type EncounterUpdate,
-  type FriendSearchResult,
+  type EncounterUpdateInput,
+  type FriendSearchResultResponse,
 } from '$shared';
 import { encounterTypeLabel } from './encounter-display';
 import EncounterTypeIcon from './encounter-type-icon.svelte';
@@ -21,11 +21,11 @@ const i18n = createI18n();
 
 interface Props {
   /** Existing encounter for edit mode */
-  encounter?: Encounter;
+  encounter?: EncounterResponse;
   /** Pre-selected friend for new encounter */
-  preSelectedFriend?: FriendSearchResult;
+  preSelectedFriend?: FriendSearchResultResponse;
   /** Called on successful save */
-  onSuccess?: (encounter: Encounter) => void;
+  onSuccess?: (encounter: EncounterResponse) => void;
   /** Called when form is cancelled */
   onCancel?: () => void;
 }
@@ -40,7 +40,7 @@ let encounterType = $state<EncounterType>(encounter?.encounterType ?? 'in_person
 let encounterDate = $state(encounter?.encounterDate ?? new Date().toISOString().split('T')[0]);
 let locationText = $state(encounter?.locationText ?? '');
 let description = $state(encounter?.description ?? '');
-let selectedFriends = $state<FriendSearchResult[]>(
+let selectedFriends = $state<FriendSearchResultResponse[]>(
   encounter?.friends.map((f) => ({
     id: f.id,
     displayName: f.displayName,
@@ -57,7 +57,7 @@ let showLocation = $derived(encounterType === 'in_person');
 // Validation — title is optional (a label is derived for calls/messages)
 let isValid = $derived(encounterDate.length > 0 && selectedFriends.length > 0);
 
-function handleFriendsChange(friends: FriendSearchResult[]) {
+function handleFriendsChange(friends: FriendSearchResultResponse[]) {
   selectedFriends = friends;
 }
 
@@ -73,10 +73,10 @@ async function handleSubmit(e: Event) {
   isSubmitting = true;
 
   try {
-    let result: Encounter;
+    let result: EncounterResponse;
 
     if (isEditMode && encounter) {
-      const input: EncounterUpdate = {
+      const input: EncounterUpdateInput = {
         title: title.trim() || null,
         encounter_type: encounterType,
         encounter_date: encounterDate,
@@ -86,7 +86,7 @@ async function handleSubmit(e: Event) {
       };
       result = await encounters.updateEncounter(encounter.id, input);
     } else {
-      const input: EncounterInput = {
+      const input: EncounterCreateInput = {
         title: title.trim() || undefined,
         encounter_type: encounterType,
         encounter_date: encounterDate,

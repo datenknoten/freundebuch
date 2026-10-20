@@ -9,7 +9,7 @@ export type CircleListQuery = typeof CircleListQuerySchema.infer;
 
 /** Parsed circle list options */
 export interface CircleListOptions {
-  hierarchy: boolean;
+  isHierarchical: boolean;
 }
 
 /**
@@ -17,6 +17,6 @@ export interface CircleListOptions {
  */
 export function parseCircleListQuery(query: CircleListQuery): CircleListOptions {
   return {
-    hierarchy: query.hierarchy === 'true',
+    isHierarchical: query.hierarchy === 'true',
   };
 }

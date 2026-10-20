@@ -5,11 +5,11 @@ import { formClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import {
   type AddressType,
-  type CityInfo,
-  type HouseNumberInfo,
+  type CityInfoResponse,
+  type HouseNumberInfoResponse,
   isCountryCode,
-  type PostalCodeInfo,
-  type StreetInfo,
+  type PostalCodeInfoResponse,
+  type StreetInfoResponse,
 } from '$shared';
 import CitySelect from './city-select.svelte';
 import CountrySelect from './country-select.svelte';
@@ -77,10 +77,10 @@ let houseNumber = $state((() => initialHouseNumber)());
 let streetLine2 = $state((() => initialStreetLine2)());
 
 // Data from APIs
-let postalCodeSuggestions = $state<PostalCodeInfo[]>([]);
-let cities = $state<CityInfo[]>([]);
-let streets = $state<StreetInfo[]>([]);
-let houseNumbers = $state<HouseNumberInfo[]>([]);
+let postalCodeSuggestions = $state<PostalCodeInfoResponse[]>([]);
+let cities = $state<CityInfoResponse[]>([]);
+let streets = $state<StreetInfoResponse[]>([]);
+let houseNumbers = $state<HouseNumberInfoResponse[]>([]);
 
 // Loading states
 let isLoadingCities = $state(false);
@@ -320,7 +320,7 @@ function handlePostalCodeSuggestionSelect(code: string, city: string) {
   emitChange();
 }
 
-function handleCitySelect(city: CityInfo) {
+function handleCitySelect(city: CityInfoResponse) {
   selectedCity = city.city;
   selectedState = city.state || '';
   // Cancel pending street/house number loads when city changes

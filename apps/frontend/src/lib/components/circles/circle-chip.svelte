@@ -4,12 +4,12 @@ import { chipClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { circlesById } from '$lib/stores/circles';
 import { DEFAULT_CIRCLE_COLOR } from '$lib/utils/circle-colors';
-import type { Circle, CircleSummary } from '$shared';
+import type { CircleResponse, CircleSummaryResponse } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
-  circle: CircleSummary;
+  circle: CircleSummaryResponse;
   /** Size variant */
   size?: 'sm' | 'md';
   /** Optional click handler - if provided, makes the chip clickable */
@@ -25,7 +25,7 @@ let { circle, size = 'sm', onclick, removable = false, onremove }: Props = $prop
 // Get the path parts for this circle (ancestors + current name)
 function getCirclePathParts(
   circleId: string,
-  circlesMap: Map<string, Circle>,
+  circlesMap: Map<string, CircleResponse>,
 ): { ancestors: string[]; name: string } {
   const parts: string[] = [];
   let currentId: string | null = circleId;

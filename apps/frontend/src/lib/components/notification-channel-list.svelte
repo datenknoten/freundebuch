@@ -8,8 +8,8 @@ import Spinner from '$lib/components/ui/spinner.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { notificationChannels } from '$lib/stores/notification-channels';
 import type {
-  NotificationChannel,
   NotificationChannelCreateInput,
+  NotificationChannelResponse,
   NotificationChannelUpdateInput,
 } from '$shared';
 import NotificationChannelCard from './notification-channel-card.svelte';
@@ -18,7 +18,7 @@ import NotificationChannelForm from './notification-channel-form.svelte';
 const i18n = createI18n();
 
 let showForm = $state(false);
-let editingChannel = $state<NotificationChannel | undefined>(undefined);
+let editingChannel = $state<NotificationChannelResponse | undefined>(undefined);
 let formError = $state('');
 let isSubmitting = $state(false);
 
@@ -32,7 +32,7 @@ function handleAddChannel() {
   showForm = true;
 }
 
-function handleEditChannel(channel: NotificationChannel) {
+function handleEditChannel(channel: NotificationChannelResponse) {
   editingChannel = channel;
   formError = '';
   showForm = true;

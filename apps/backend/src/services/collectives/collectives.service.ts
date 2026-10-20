@@ -1,14 +1,14 @@
 import type {
-  Collective,
-  CollectiveAddress,
-  CollectiveInput,
-  CollectiveListItem,
+  CollectiveAddressResponse,
+  CollectiveCreateInput,
+  CollectiveListItemResponse,
   CollectiveListOptions,
   CollectiveListResponse,
-  CollectiveMemberContact,
-  CollectiveType,
-  CollectiveUpdate,
-  ContactCollectiveSummary,
+  CollectiveMemberContactResponse,
+  CollectiveResponse,
+  CollectiveTypeResponse,
+  CollectiveUpdateInput,
+  ContactCollectiveSummaryResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
 import { mapMember, mapRole } from '../../models/mappers/collectives.mappers.js';
@@ -72,7 +72,7 @@ export class CollectivesService {
       getCollectivesByUserId.run(
         {
           userExternalId,
-          includeDeleted: options.includeDeleted ?? false,
+          includeDeleted: options.shouldIncludeDeleted ?? false,
           typeExternalId: options.typeId ?? null,
           search: escapedSearch,
           pageSize: options.pageSize,
@@ -83,7 +83,7 @@ export class CollectivesService {
       countCollectivesByUserId.run(
         {
           userExternalId,
-          includeDeleted: options.includeDeleted ?? false,
+          includeDeleted: options.shouldIncludeDeleted ?? false,
           typeExternalId: options.typeId ?? null,
           search: escapedSearch,
         },
@@ -115,7 +115,7 @@ export class CollectivesService {
       previewsByCollective.set(preview.collective_external_id, existing);
     }
 
-    const data: CollectiveListItem[] = collectivesResult.map((row) => {
+    const data: CollectiveListItemResponse[] = collectivesResult.map((row) => {
       const members = previewsByCollective.get(row.external_id) ?? [];
       return this.mapCollectiveListItem(row, members);
     });
@@ -137,7 +137,7 @@ export class CollectivesService {
   async getCollectiveById(
     userExternalId: string,
     collectiveExternalId: string,
-  ): Promise<Collective | null> {
+  ): Promise<CollectiveResponse | null> {
     const results = await getCollectiveById.run({ userExternalId, collectiveExternalId }, this.db);
 
     if (results.length === 0) {
@@ -164,7 +164,10 @@ export class CollectivesService {
   /**
    * Create a new collective
    */
-  async createCollective(userExternalId: string, input: CollectiveInput): Promise<Collective> {
+  async createCollective(
+    userExternalId: string,
+    input: CollectiveCreateInput,
+  ): Promise<CollectiveResponse> {
     const results = await createCollective.run(
       {
         userExternalId,
@@ -202,8 +205,8 @@ export class CollectivesService {
   async updateCollective(
     userExternalId: string,
     collectiveExternalId: string,
-    input: CollectiveUpdate,
-  ): Promise<Collective> {
+    input: CollectiveUpdateInput,
+  ): Promise<CollectiveResponse> {
     const results = await updateCollective.run(
       {
         userExternalId,
@@ -259,7 +262,7 @@ export class CollectivesService {
   async getCollectivesForContact(
     userExternalId: string,
     contactExternalId: string,
-  ): Promise<ContactCollectiveSummary[]> {
+  ): Promise<ContactCollectiveSummaryResponse[]> {
     const results = await getCollectivesForContact.run(
       { userExternalId, contactExternalId },
       this.db,
@@ -276,8 +279,8 @@ export class CollectivesService {
     row: IGetCollectiveByIdResult,
     members: IGetMembersByCollectiveIdResult[],
     roles: IGetRolesForTypeResult[],
-  ): Collective {
-    const type: CollectiveType = {
+  ): CollectiveResponse {
+    const type: CollectiveTypeResponse = {
       id: row.type_external_id,
       name: row.type_name,
       description: row.type_description,
@@ -287,7 +290,7 @@ export class CollectivesService {
       updatedAt: row.updated_at.toISOString(),
     };
 
-    const address: CollectiveAddress = {
+    const address: CollectiveAddressResponse = {
       streetLine1: row.address_street_line1,
       streetLine2: row.address_street_line2,
       city: row.address_city,
@@ -316,7 +319,7 @@ export class CollectivesService {
   private mapCollectiveListItem(
     row: IGetCollectivesByUserIdResult,
     memberPreview: IGetMemberPreviewBatchResult[],
-  ): CollectiveListItem {
+  ): CollectiveListItemResponse {
     return {
       id: row.external_id,
       name: row.name,
@@ -334,7 +337,7 @@ export class CollectivesService {
     };
   }
 
-  private mapMemberContact(row: IGetMemberPreviewBatchResult): CollectiveMemberContact {
+  private mapMemberContact(row: IGetMemberPreviewBatchResult): CollectiveMemberContactResponse {
     return {
       id: row.external_id,
       displayName: row.display_name ?? 'Unknown',
@@ -344,7 +347,7 @@ export class CollectivesService {
 
   private mapContactCollectiveSummary(
     row: IGetCollectivesForContactResult,
-  ): ContactCollectiveSummary {
+  ): ContactCollectiveSummaryResponse {
     return {
       id: row.collective_external_id,
       name: row.collective_name,

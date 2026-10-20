@@ -1,13 +1,13 @@
 <script lang="ts">
 import { chipClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { ContactCollectiveSummary } from '$shared';
+import type { ContactCollectiveSummaryResponse } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
 const i18n = createI18n();
 
 interface Props {
-  collective: ContactCollectiveSummary;
+  collective: ContactCollectiveSummaryResponse;
   onDelete: () => void;
   isDeleting?: boolean;
   /** Keyboard chord that opens this link (e.g. "o 3"), shown as a hint on click */

@@ -1,4 +1,4 @@
-import type { MetInfo, MetInfoInput } from '@freundebuch/shared/index.js';
+import type { MetInfoInput, MetInfoResponse } from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
@@ -35,7 +35,7 @@ export class MetInfoService {
     friendExternalId: string,
     data: MetInfoInput,
     client?: pg.Pool | pg.PoolClient,
-  ): Promise<MetInfo | null> {
+  ): Promise<MetInfoResponse | null> {
     this.logger.debug({ friendExternalId }, 'Setting met info');
 
     const dbClient = client ?? this.db;
@@ -78,7 +78,7 @@ export class MetInfoService {
   /**
    * Map a met info row to the MetInfo type
    */
-  mapMetInfo(row: IGetMetInfoByFriendIdResult): MetInfo {
+  mapMetInfo(row: IGetMetInfoByFriendIdResult): MetInfoResponse {
     const metDate = formatDateOnly(row.met_date);
     return {
       id: row.external_id,

@@ -1,12 +1,12 @@
 <script lang="ts">
 import { createDirtyTracker, FormCheckbox, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { Email, EmailInput, EmailType } from '$shared';
+import type { EmailInput, EmailResponse, EmailType } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
-  initialData?: Email;
+  initialData?: EmailResponse;
   defaultPrimary?: boolean;
   disabled?: boolean;
   onchange?: () => void;

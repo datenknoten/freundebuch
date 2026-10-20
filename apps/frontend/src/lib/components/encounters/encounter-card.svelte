@@ -9,7 +9,7 @@ import {
   isOpenEncounterModeActive,
   openEncounterModePrefix,
 } from '$lib/stores/ui';
-import type { EncounterListItem } from '$shared';
+import type { EncounterListItemResponse } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
 import KeyboardHintBadge from '../keyboard-hint-badge.svelte';
 import { encounterDisplayTitle, encounterTypeLabel } from './encounter-display';
@@ -18,7 +18,7 @@ import EncounterTypeIcon from './encounter-type-icon.svelte';
 const i18n = createI18n();
 
 interface Props {
-  encounter: EncounterListItem;
+  encounter: EncounterListItemResponse;
   href?: string;
   /** Index in the list (for keyboard hints) */
   index?: number;

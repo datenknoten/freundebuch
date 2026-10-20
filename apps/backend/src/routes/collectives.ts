@@ -1,12 +1,12 @@
 import {
-  CollectiveInputSchema,
+  CollectiveCreateInputSchema,
   CollectiveListQuerySchema,
-  CollectiveUpdateSchema,
-  MembershipDeactivateSchema,
-  MembershipInputSchema,
-  MembershipUpdateSchema,
+  CollectiveUpdateInputSchema,
+  MembershipCreateInputSchema,
+  MembershipDeactivateInputSchema,
+  MembershipUpdateInputSchema,
   parseCollectiveListQuery,
-  RelationshipPreviewRequestSchema,
+  RelationshipPreviewInputSchema,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { Hono } from 'hono';
@@ -116,7 +116,7 @@ app.post('/', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
 
-  const validated = await parseBody(c, CollectiveInputSchema);
+  const validated = await parseBody(c, CollectiveCreateInputSchema);
 
   const collectivesService = new CollectivesService({ db: db });
   const collective = await collectivesService.createCollective(user.userId, validated);
@@ -151,7 +151,7 @@ app.put('/:id', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
-  const validated = await parseBody(c, CollectiveUpdateSchema);
+  const validated = await parseBody(c, CollectiveUpdateInputSchema);
 
   const collectivesService = new CollectivesService({ db: db });
   const collective = await collectivesService.updateCollective(
@@ -194,7 +194,7 @@ app.post('/:id/members/preview', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
-  const validated = await parseBody(c, RelationshipPreviewRequestSchema);
+  const validated = await parseBody(c, RelationshipPreviewInputSchema);
 
   const membershipsService = new MembershipsService({ db: db });
   const preview = await membershipsService.previewRelationships(
@@ -214,7 +214,7 @@ app.post('/:id/members', async (c) => {
   const db = c.get('db');
   const user = getAuthUser(c);
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
-  const validated = await parseBody(c, MembershipInputSchema);
+  const validated = await parseBody(c, MembershipCreateInputSchema);
 
   const membershipsService = new MembershipsService({ db: db });
   const member = await membershipsService.addMember(user.userId, collectiveId, validated);
@@ -251,7 +251,7 @@ app.put('/:id/members/:memberId/role', async (c) => {
   const user = getAuthUser(c);
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
   const memberId = requireUuidParam(c, 'memberId', 'member ID');
-  const validated = await parseBody(c, MembershipUpdateSchema);
+  const validated = await parseBody(c, MembershipUpdateInputSchema);
 
   if (!validated.role_id) {
     throw new ValidationError('role_id is required');
@@ -277,7 +277,7 @@ app.post('/:id/members/:memberId/deactivate', async (c) => {
   const user = getAuthUser(c);
   const collectiveId = requireUuidParam(c, 'id', 'collective ID');
   const memberId = requireUuidParam(c, 'memberId', 'member ID');
-  const validated = await parseBody(c, MembershipDeactivateSchema);
+  const validated = await parseBody(c, MembershipDeactivateInputSchema);
 
   const membershipsService = new MembershipsService({ db: db });
   const member = await membershipsService.deactivateMember(

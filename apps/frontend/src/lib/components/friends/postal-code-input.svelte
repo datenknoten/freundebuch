@@ -2,7 +2,7 @@
 import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
 import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { PostalCodeInfo } from '$shared';
+import type { PostalCodeInfoResponse } from '$shared';
 
 const i18n = createI18n();
 
@@ -14,7 +14,7 @@ interface Props {
   /** Whether the input is disabled */
   disabled?: boolean;
   /** Postal-code suggestions for the current prefix */
-  suggestions?: PostalCodeInfo[];
+  suggestions?: PostalCodeInfoResponse[];
   /** Called when the postal code changes */
   onChange?: (value: string) => void;
   /** Called when a suggestion is picked */
@@ -42,7 +42,7 @@ function handleInput(e: Event) {
   onChange?.(target.value);
 }
 
-function selectSuggestion(suggestion: PostalCodeInfo) {
+function selectSuggestion(suggestion: PostalCodeInfoResponse) {
   value = suggestion.postalCode;
   showDropdown = false;
   highlightedIndex = -1;

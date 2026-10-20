@@ -1,4 +1,4 @@
-import type { SocialProfile, SocialProfileInput } from '@freundebuch/shared/index.js';
+import type { SocialProfileInput, SocialProfileResponse } from '@freundebuch/shared/index.js';
 import {
   createSocialProfile,
   deleteSocialProfile,
@@ -13,7 +13,7 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
-const mapRow = (row: IGetSocialProfilesByFriendIdResult): SocialProfile => ({
+const mapRow = (row: IGetSocialProfilesByFriendIdResult): SocialProfileResponse => ({
   id: row.external_id,
   platform: parseSocialPlatform(row.platform),
   profileUrl: row.profile_url ?? undefined,
@@ -28,7 +28,7 @@ const mapRow = (row: IGetSocialProfilesByFriendIdResult): SocialProfile => ({
  */
 export class SocialProfileService extends SubResourceService<
   SocialProfileInput,
-  SocialProfile,
+  SocialProfileResponse,
   IGetSocialProfilesByFriendIdResult,
   IGetSocialProfilesByFriendIdResult,
   IDeleteSocialProfileResult

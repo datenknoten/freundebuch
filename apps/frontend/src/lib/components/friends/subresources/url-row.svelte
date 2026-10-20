@@ -1,10 +1,10 @@
 <script lang="ts">
 import { createI18n } from '$lib/i18n/index.js';
-import type { Url, UrlType } from '$shared';
+import type { UrlResponse, UrlType } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
 interface Props {
-  url: Url;
+  url: UrlResponse;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;

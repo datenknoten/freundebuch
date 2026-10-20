@@ -1,4 +1,8 @@
-import type { DateInput, FriendDate, UpcomingDate } from '@freundebuch/shared/index.js';
+import type {
+  DateInput,
+  FriendDateResponse,
+  UpcomingDateResponse,
+} from '@freundebuch/shared/index.js';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import {
@@ -37,7 +41,7 @@ export class DateService {
   /**
    * List a friend's important dates.
    */
-  async list(userExternalId: string, friendExternalId: string): Promise<FriendDate[]> {
+  async list(userExternalId: string, friendExternalId: string): Promise<FriendDateResponse[]> {
     this.logger.debug({ friendExternalId }, 'Listing dates');
     const rows = await getDatesByFriendId.run({ userExternalId, friendExternalId }, this.db);
     return rows.map((row) => this.mapDate(row));
@@ -52,7 +56,7 @@ export class DateService {
     friendExternalId: string,
     data: DateInput,
     client?: pg.Pool | pg.PoolClient,
-  ): Promise<FriendDate | null> {
+  ): Promise<FriendDateResponse | null> {
     this.logger.debug({ friendExternalId }, 'Adding date');
 
     const dbClient = client ?? this.db;
@@ -96,7 +100,7 @@ export class DateService {
     dateExternalId: string,
     data: DateInput,
     client?: pg.Pool | pg.PoolClient,
-  ): Promise<FriendDate | null> {
+  ): Promise<FriendDateResponse | null> {
     this.logger.debug({ friendExternalId, dateExternalId }, 'Updating date');
 
     const dbClient = client ?? this.db;
@@ -150,8 +154,8 @@ export class DateService {
     friendExternalId: string,
     dates: DateInput[],
     client?: pg.Pool | pg.PoolClient,
-  ): Promise<FriendDate[]> {
-    const results: FriendDate[] = [];
+  ): Promise<FriendDateResponse[]> {
+    const results: FriendDateResponse[] = [];
 
     for (const date of dates) {
       const created = await this.add(userExternalId, friendExternalId, date, client);
@@ -169,7 +173,7 @@ export class DateService {
   async getUpcomingDates(
     userExternalId: string,
     options: { days?: number; limit?: number } = {},
-  ): Promise<UpcomingDate[]> {
+  ): Promise<UpcomingDateResponse[]> {
     const { days = 30, limit = 10 } = options;
     this.logger.debug({ days, limit }, 'Getting upcoming dates');
 
@@ -188,7 +192,7 @@ export class DateService {
   /**
    * Map a date row to the FriendDate type
    */
-  mapDate(row: IGetDatesByFriendIdResult): FriendDate {
+  mapDate(row: IGetDatesByFriendIdResult): FriendDateResponse {
     const dateValue = formatDateOnly(row.date_value);
     return {
       id: row.external_id,
@@ -203,7 +207,7 @@ export class DateService {
   /**
    * Map an upcoming date row to the UpcomingDate type
    */
-  private mapUpcomingDate(row: IGetUpcomingDatesResult): UpcomingDate {
+  private mapUpcomingDate(row: IGetUpcomingDatesResult): UpcomingDateResponse {
     const dateValue = formatDateOnly(row.date_value);
     return {
       id: row.date_external_id,

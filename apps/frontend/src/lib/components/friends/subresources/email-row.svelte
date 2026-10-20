@@ -1,11 +1,11 @@
 <script lang="ts">
 import { chipClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { Email, EmailType } from '$shared';
+import type { EmailResponse, EmailType } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
 interface Props {
-  email: Email;
+  email: EmailResponse;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;

@@ -4,14 +4,14 @@ import XMark from 'svelte-heros-v2/XMark.svelte';
 import { formClasses, Spinner, surfaceClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
-import type { FriendSearchResult } from '$shared';
+import type { FriendSearchResultResponse } from '$shared';
 import FriendAvatar from '../friends/friend-avatar.svelte';
 
 const i18n = createI18n();
 
 interface Props {
   /** Selected friend IDs */
-  selectedFriends: FriendSearchResult[];
+  selectedFriends: FriendSearchResultResponse[];
   /** Placeholder text for the input */
   placeholder?: string;
   /** Maximum number of search results to show */
@@ -19,7 +19,7 @@ interface Props {
   /** Whether the input is disabled */
   disabled?: boolean;
   /** Called when selection changes */
-  onChange?: (friends: FriendSearchResult[]) => void;
+  onChange?: (friends: FriendSearchResultResponse[]) => void;
 }
 
 let {
@@ -31,7 +31,7 @@ let {
 }: Props = $props();
 
 let query = $state('');
-let results = $state<FriendSearchResult[]>([]);
+let results = $state<FriendSearchResultResponse[]>([]);
 let isSearching = $state(false);
 let showDropdown = $state(false);
 let highlightedIndex = $state(-1);
@@ -77,7 +77,7 @@ async function performSearch() {
   }
 }
 
-function addFriend(friend: FriendSearchResult) {
+function addFriend(friend: FriendSearchResultResponse) {
   const newSelection = [...selectedFriends, friend];
   onChange?.(newSelection);
   query = '';

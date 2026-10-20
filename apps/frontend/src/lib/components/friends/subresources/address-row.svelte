@@ -4,12 +4,12 @@ import { chipClasses } from '$lib/components/ui';
 import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentLanguage } from '$lib/stores/locale';
-import { type Address, type AddressType, countryDisplayName } from '$shared';
+import { type AddressResponse, type AddressType, countryDisplayName } from '$shared';
 import AddressMapModal from './address-map-modal.svelte';
 import SubresourceRow from './subresource-row.svelte';
 
 interface Props {
-  address: Address;
+  address: AddressResponse;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
@@ -26,7 +26,7 @@ function addressTypeLabel(type: AddressType): string {
   return $i18n.t(`subresources.address.types.${type}`);
 }
 
-function formatAddress(addr: Address, language: string): string[] {
+function formatAddress(addr: AddressResponse, language: string): string[] {
   const lines: string[] = [];
   if (addr.streetLine1) lines.push(addr.streetLine1);
   if (addr.streetLine2) lines.push(addr.streetLine2);
@@ -37,7 +37,7 @@ function formatAddress(addr: Address, language: string): string[] {
   return lines;
 }
 
-function formatAddressLabel(addr: Address, language: string): string {
+function formatAddressLabel(addr: AddressResponse, language: string): string {
   return formatAddress(addr, language).join(', ');
 }
 

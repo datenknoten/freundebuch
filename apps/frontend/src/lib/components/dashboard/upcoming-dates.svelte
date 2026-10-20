@@ -10,13 +10,13 @@ import {
   surfaceClasses,
 } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { DateType, UpcomingDate } from '$shared';
+import type { DateType, UpcomingDateResponse } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
   /** Upcoming dates to display (fetched by the parent dashboard). */
-  upcomingDates?: UpcomingDate[];
+  upcomingDates?: UpcomingDateResponse[];
   isLoading?: boolean;
   error?: string | null;
   /** Called when the user retries after an error. */

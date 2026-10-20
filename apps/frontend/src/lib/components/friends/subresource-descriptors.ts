@@ -27,24 +27,24 @@ import { removeMember } from '$lib/api/collectives';
 import { addNote, deleteNote, listNotes, updateNote } from '$lib/api/friends';
 import { friends } from '$lib/stores/friends';
 import type {
-  Address,
   AddressInput,
-  CircleSummary,
-  ContactCollectiveSummary,
+  AddressResponse,
+  CircleSummaryResponse,
+  ContactCollectiveSummaryResponse,
   DateInput,
-  Email,
   EmailInput,
-  FriendDate,
-  FriendNote,
+  EmailResponse,
+  FriendDateResponse,
   FriendNoteInput,
-  Phone,
+  FriendNoteResponse,
   PhoneInput,
-  ProfessionalHistory,
+  PhoneResponse,
   ProfessionalHistoryInput,
-  SocialProfile,
+  ProfessionalHistoryResponse,
   SocialProfileInput,
-  Url,
+  SocialProfileResponse,
   UrlInput,
+  UrlResponse,
 } from '$shared';
 import {
   type AddDetailOption,
@@ -79,7 +79,7 @@ import {
   UrlRow,
 } from './subresources';
 
-export const phoneDescriptor = defineDescriptor<Phone, PhoneInput>({
+export const phoneDescriptor = defineDescriptor<PhoneResponse, PhoneInput>({
   key: 'phone',
   shortcutEvent: 'shortcut:add-phone',
   icon: PhoneIcon,
@@ -110,7 +110,7 @@ export const phoneDescriptor = defineDescriptor<Phone, PhoneInput>({
   },
 });
 
-export const emailDescriptor = defineDescriptor<Email, EmailInput>({
+export const emailDescriptor = defineDescriptor<EmailResponse, EmailInput>({
   key: 'email',
   shortcutEvent: 'shortcut:add-email',
   icon: Envelope,
@@ -133,7 +133,7 @@ export const emailDescriptor = defineDescriptor<Email, EmailInput>({
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmail',
 });
 
-export const addressDescriptor = defineDescriptor<Address, AddressInput>({
+export const addressDescriptor = defineDescriptor<AddressResponse, AddressInput>({
   key: 'address',
   shortcutEvent: 'shortcut:add-address',
   icon: MapPin,
@@ -169,7 +169,7 @@ export const addressDescriptor = defineDescriptor<Address, AddressInput>({
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteAddress',
 });
 
-export const urlDescriptor = defineDescriptor<Url, UrlInput>({
+export const urlDescriptor = defineDescriptor<UrlResponse, UrlInput>({
   key: 'url',
   shortcutEvent: 'shortcut:add-url',
   icon: Link,
@@ -197,11 +197,11 @@ export const urlDescriptor = defineDescriptor<Url, UrlInput>({
  * `friend-detail.svelte`, which builds the "o" link list from the same rule.
  */
 export const hasProfileUrl = (
-  profile: SocialProfile,
-): profile is SocialProfile & { profileUrl: string } =>
+  profile: SocialProfileResponse,
+): profile is SocialProfileResponse & { profileUrl: string } =>
   profile.profileUrl !== null && profile.profileUrl !== undefined && profile.profileUrl.length > 0;
 
-export const socialProfileDescriptor = defineDescriptor<SocialProfile, SocialProfileInput>({
+export const socialProfileDescriptor = defineDescriptor<SocialProfileResponse, SocialProfileInput>({
   key: 'social',
   shortcutEvent: 'shortcut:add-social',
   icon: Share,
@@ -228,7 +228,7 @@ export const socialProfileDescriptor = defineDescriptor<SocialProfile, SocialPro
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteSocial',
 });
 
-export const dateDescriptor = defineDescriptor<FriendDate, DateInput>({
+export const dateDescriptor = defineDescriptor<FriendDateResponse, DateInput>({
   key: 'date',
   shortcutEvent: 'shortcut:add-date',
   icon: Calendar,
@@ -252,7 +252,7 @@ export const dateDescriptor = defineDescriptor<FriendDate, DateInput>({
 });
 
 export const professionalHistoryDescriptor = defineDescriptor<
-  ProfessionalHistory,
+  ProfessionalHistoryResponse,
   ProfessionalHistoryInput
 >({
   key: 'professional',
@@ -280,7 +280,7 @@ export const professionalHistoryDescriptor = defineDescriptor<
   deleteDescriptionKey: 'friendDetail.modal.confirmDeleteEmployment',
 });
 
-export const circleDescriptor = defineDescriptor<CircleSummary, { circleId: string }>({
+export const circleDescriptor = defineDescriptor<CircleSummaryResponse, { circleId: string }>({
   key: 'circle',
   shortcutEvent: 'shortcut:add-circle',
   icon: Users,
@@ -310,7 +310,7 @@ export const circleDescriptor = defineDescriptor<CircleSummary, { circleId: stri
  * `remove` reads `membershipId` off the row's item.
  */
 export function createCollectiveDescriptor(onChanged: () => void): SubresourceDescriptor {
-  return defineDescriptor<ContactCollectiveSummary, never>({
+  return defineDescriptor<ContactCollectiveSummaryResponse, never>({
     key: 'collective',
     shortcutEvent: 'shortcut:add-collective',
     icon: BuildingOffice,
@@ -349,7 +349,7 @@ export function createCollectiveDescriptor(onChanged: () => void): SubresourceDe
  * Notes are not part of the friend payload, so this section loads its own
  * items instead of reading them from the friends store.
  */
-export const noteDescriptor = defineDescriptor<FriendNote, FriendNoteInput>({
+export const noteDescriptor = defineDescriptor<FriendNoteResponse, FriendNoteInput>({
   key: 'note',
   shortcutEvent: 'shortcut:add-note',
   icon: DocumentText,

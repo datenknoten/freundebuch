@@ -1,8 +1,8 @@
 import {
   ENCOUNTER_TITLE_MAX_LENGTH,
   ENCOUNTER_TYPES,
-  type EncounterUpdate,
-  IsoDateString,
+  type EncounterUpdateInput,
+  IsoDateStringSchema,
 } from '@freundebuch/shared/index.js';
 import type { McpServer } from '@modelcontextprotocol/server';
 import { type } from 'arktype';
@@ -80,7 +80,7 @@ export function registerEncountersTools(
       description:
         'Create a new encounter (meeting, event, or interaction) and associate it with one or more friends. Requires a date and at least one friend. Returns the created encounter with its ID and associated friends.',
       inputSchema: type({
-        encounterDate: IsoDateString.describe(
+        encounterDate: IsoDateStringSchema.describe(
           'Date the encounter took place (ISO 8601 date, e.g. "2024-06-15")',
           'self',
         ),
@@ -131,7 +131,7 @@ export function registerEncountersTools(
         'Update an existing encounter. Only the fields you pass are changed; omitted fields keep their current value. Pass null for title, locationText, or description to clear them. Passing friendIds replaces the full list of associated friends. Returns the updated encounter.',
       inputSchema: type({
         encounterId: type('string.uuid').describe('The encounter ID (UUID) to update', 'self'),
-        'encounterDate?': IsoDateString.describe(
+        'encounterDate?': IsoDateStringSchema.describe(
           'New date the encounter took place (ISO 8601 date, e.g. "2024-06-15")',
           'self',
         ),
@@ -167,7 +167,7 @@ export function registerEncountersTools(
     }) => {
       // Only forward the fields that were actually supplied: the service uses
       // `'field' in input` to tell "leave untouched" apart from "clear to null".
-      const update: EncounterUpdate = {};
+      const update: EncounterUpdateInput = {};
       if (encounterDate !== undefined) {
         update.encounter_date = encounterDate;
       }

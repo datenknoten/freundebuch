@@ -15,7 +15,7 @@
  * single place that erasure happens.
  */
 import type { Component } from 'svelte';
-import type { Address } from '$shared';
+import type { AddressResponse } from '$shared';
 
 /** Translation function (`$i18n.t`), passed in so descriptors stay UI-framework agnostic. */
 export type Translate = (key: string, params?: Record<string, unknown>) => string;
@@ -81,7 +81,7 @@ export function primaryAwareFormProps<TItem extends SubresourceItem>(
  * An address has no single naming field, so the delete dialog falls back
  * through street, city and finally a generic phrase.
  */
-export function addressDeleteName(address: Address, t: Translate): string {
+export function addressDeleteName(address: AddressResponse, t: Translate): string {
   if (address.streetLine1 !== undefined && address.streetLine1.length > 0) {
     return address.streetLine1;
   }

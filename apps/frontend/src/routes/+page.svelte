@@ -13,7 +13,7 @@ import Button from '$lib/components/ui/button.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { currentUser, isAuthenticated, isAuthInitialized } from '$lib/stores/auth';
 import { signupEnabled } from '$lib/stores/instance';
-import type { NetworkGraphData, UpcomingDate } from '$shared';
+import type { NetworkGraphResponse, UpcomingDateResponse } from '$shared';
 
 const i18n = createI18n();
 
@@ -26,8 +26,8 @@ let userDisplayName = $derived($currentUser?.displayName || $currentUser?.email 
 const UPCOMING_DAYS = 30;
 const UPCOMING_LIMIT = 10;
 
-let upcomingDates = $state<UpcomingDate[]>([]);
-let networkGraph = $state<NetworkGraphData | null>(null);
+let upcomingDates = $state<UpcomingDateResponse[]>([]);
+let networkGraph = $state<NetworkGraphResponse | null>(null);
 let isDashboardLoading = $state(true);
 let dashboardError = $state<string | null>(null);
 let dashboardLoaded = false;

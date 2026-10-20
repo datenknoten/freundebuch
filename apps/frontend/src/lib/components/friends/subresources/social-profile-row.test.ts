@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
 import { render, screen, useLanguage } from '$lib/test';
-import type { SocialProfile } from '$shared';
+import type { SocialProfileResponse } from '$shared';
 import SocialProfileRow from './social-profile-row.svelte';
 
 const strings = en.subresources;
 
-const profile = (overrides: Partial<SocialProfile> = {}): SocialProfile => ({
+const profile = (overrides: Partial<SocialProfileResponse> = {}): SocialProfileResponse => ({
   id: 'sp-1',
   platform: 'github',
   createdAt: '2026-01-01T00:00:00.000Z',

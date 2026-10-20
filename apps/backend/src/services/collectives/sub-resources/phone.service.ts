@@ -1,4 +1,4 @@
-import type { Phone, PhoneInput } from '@freundebuch/shared/index.js';
+import type { PhoneInput, PhoneResponse } from '@freundebuch/shared/index.js';
 import {
   clearPrimaryPhone,
   createPhone,
@@ -14,7 +14,7 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
-const mapRow = (row: IGetPhonesByCollectiveIdResult): Phone => ({
+const mapRow = (row: IGetPhonesByCollectiveIdResult): PhoneResponse => ({
   id: row.external_id,
   phoneNumber: row.phone_number,
   phoneType: parsePhoneType(row.phone_type),
@@ -29,7 +29,7 @@ const mapRow = (row: IGetPhonesByCollectiveIdResult): Phone => ({
  */
 export class CollectivePhoneService extends SubResourceService<
   PhoneInput,
-  Phone,
+  PhoneResponse,
   IGetPhonesByCollectiveIdResult,
   IGetPhonesByCollectiveIdResult,
   IDeletePhoneResult

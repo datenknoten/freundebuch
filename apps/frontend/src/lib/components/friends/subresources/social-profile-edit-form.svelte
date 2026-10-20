@@ -1,12 +1,12 @@
 <script lang="ts">
 import { createDirtyTracker, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { SocialPlatform, SocialProfile, SocialProfileInput } from '$shared';
+import type { SocialPlatform, SocialProfileInput, SocialProfileResponse } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
-  initialData?: SocialProfile;
+  initialData?: SocialProfileResponse;
   disabled?: boolean;
   onchange?: () => void;
 }

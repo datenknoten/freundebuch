@@ -1,0 +1,9 @@
+import { type } from 'arktype';
+import { EmailSchema } from './email-schema.js';
+
+// Forgot password request schema
+export const ForgotPasswordInputSchema = type({
+  email: EmailSchema,
+});
+
+export type ForgotPasswordInput = typeof ForgotPasswordInputSchema.infer;

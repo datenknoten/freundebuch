@@ -8,7 +8,7 @@ import { Button, EmptyState, PageShell, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { collectives } from '$lib/stores/collectives';
-import type { Collective } from '$shared';
+import type { CollectiveResponse } from '$shared';
 
 const i18n = createI18n();
 
@@ -40,7 +40,7 @@ function handleEdit() {
   isEditing = true;
 }
 
-function handleEditSuccess(_updatedCollective: Collective) {
+function handleEditSuccess(_updatedCollective: CollectiveResponse) {
   isEditing = false;
 }
 

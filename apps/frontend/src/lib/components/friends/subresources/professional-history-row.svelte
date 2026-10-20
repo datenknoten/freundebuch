@@ -1,11 +1,11 @@
 <script lang="ts">
 import { chipClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { ProfessionalHistory } from '$shared';
+import type { ProfessionalHistoryResponse } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
 interface Props {
-  history: ProfessionalHistory;
+  history: ProfessionalHistoryResponse;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;

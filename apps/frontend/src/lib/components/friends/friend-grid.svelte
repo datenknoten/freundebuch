@@ -76,7 +76,7 @@ function handleLinkClick(e: MouseEvent) {
 function handleSort(column: ColumnId) {
   // Only allow sorting on sortable columns
   const definition = COLUMN_DEFINITIONS[column];
-  if (!definition.sortable) return;
+  if (!definition.isSortable) return;
 
   // Map column ID to sort field
   const sortField = mapColumnToSortBy(column);
@@ -188,7 +188,7 @@ function getCellValue(item: FriendGridItem, columnId: ColumnId): string | undefi
         {#each columns as columnId}
           {@const definition = COLUMN_DEFINITIONS[columnId]}
           {@const sortField = mapColumnToSortBy(columnId)}
-          {@const isSortable = definition.sortable && sortField !== null}
+          {@const isSortable = definition.isSortable && sortField !== null}
           {@const isCurrentSort = sortBy === sortField}
           <th
             class="py-3 px-3 text-left"

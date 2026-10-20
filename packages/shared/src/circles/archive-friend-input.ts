@@ -1,8 +1,8 @@
 import { type } from 'arktype';
 
 /** Schema for archiving a friend */
-export const ArchiveFriendSchema = type({
+export const ArchiveFriendInputSchema = type({
   'reason?': 'string',
 });
 
-export type ArchiveFriendInput = typeof ArchiveFriendSchema.infer;
+export type ArchiveFriendInput = typeof ArchiveFriendInputSchema.infer;

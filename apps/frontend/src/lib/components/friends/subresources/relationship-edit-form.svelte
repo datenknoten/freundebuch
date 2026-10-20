@@ -3,7 +3,11 @@ import { onMount } from 'svelte';
 import { createDirtyTracker, FormTextarea, formClasses, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
-import type { FriendSearchResult, RelationshipTypeId, RelationshipTypesGrouped } from '$shared';
+import type {
+  FriendSearchResultResponse,
+  RelationshipTypeId,
+  RelationshipTypesGroupedResponse,
+} from '$shared';
 import FriendSearchInput from '../friend-search-input.svelte';
 import RelationshipTypeInput from '../relationship-type-input.svelte';
 
@@ -20,10 +24,10 @@ interface Props {
 
 let { friendId, existingRelationshipFriendIds = [], disabled = false, onchange }: Props = $props();
 
-let selectedFriend = $state<FriendSearchResult | null>(null);
+let selectedFriend = $state<FriendSearchResultResponse | null>(null);
 let relationshipTypeId = $state<RelationshipTypeId>('friend');
 let notes = $state('');
-let relationshipTypes = $state<RelationshipTypesGrouped | null>(null);
+let relationshipTypes = $state<RelationshipTypesGroupedResponse | null>(null);
 let loadError = $state('');
 let relationshipTypeContainer: HTMLDivElement;
 
@@ -44,7 +48,7 @@ createDirtyTracker(
   () => onchange,
 );
 
-function handleFriendSelect(friend: FriendSearchResult, viaKeyboard: boolean) {
+function handleFriendSelect(friend: FriendSearchResultResponse, viaKeyboard: boolean) {
   selectedFriend = friend;
   if (viaKeyboard) {
     requestAnimationFrame(() => {

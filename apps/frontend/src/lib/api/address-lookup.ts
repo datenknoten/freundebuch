@@ -1,4 +1,9 @@
-import type { CityInfo, HouseNumberInfo, PostalCodeInfo, StreetInfo } from '$shared';
+import type {
+  CityInfoResponse,
+  HouseNumberInfoResponse,
+  PostalCodeInfoResponse,
+  StreetInfoResponse,
+} from '$shared';
 import { apiRequest } from './client.js';
 
 /**
@@ -7,7 +12,7 @@ import { apiRequest } from './client.js';
 export async function getPostalCodes(
   countryCode: string,
   prefix: string,
-): Promise<PostalCodeInfo[]> {
+): Promise<PostalCodeInfoResponse[]> {
   const params = new URLSearchParams({
     country: countryCode,
     prefix,
@@ -18,7 +23,10 @@ export async function getPostalCodes(
 /**
  * Get cities for a postal code in a country
  */
-export async function getCities(countryCode: string, postalCode: string): Promise<CityInfo[]> {
+export async function getCities(
+  countryCode: string,
+  postalCode: string,
+): Promise<CityInfoResponse[]> {
   const params = new URLSearchParams({
     country: countryCode,
     postal_code: postalCode,
@@ -33,7 +41,7 @@ export async function getStreets(
   countryCode: string,
   city: string,
   postalCode: string,
-): Promise<StreetInfo[]> {
+): Promise<StreetInfoResponse[]> {
   const params = new URLSearchParams({
     country: countryCode,
     city,
@@ -50,7 +58,7 @@ export async function getHouseNumbers(
   city: string,
   postalCode: string,
   street: string,
-): Promise<HouseNumberInfo[]> {
+): Promise<HouseNumberInfoResponse[]> {
   const params = new URLSearchParams({
     country: countryCode,
     city,

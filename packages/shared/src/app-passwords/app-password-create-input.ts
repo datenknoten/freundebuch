@@ -9,8 +9,8 @@ import { type } from 'arktype';
 // ============================================================================
 
 /** Schema for creating an app password */
-export const AppPasswordCreateSchema = type({
+export const AppPasswordCreateInputSchema = type({
   name: 'string >= 1 & string <= 100',
 });
 
-export type AppPasswordCreateInput = typeof AppPasswordCreateSchema.infer;
+export type AppPasswordCreateInput = typeof AppPasswordCreateInputSchema.infer;

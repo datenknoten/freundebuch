@@ -4,8 +4,8 @@ import FormInput from '$lib/components/ui/form-input.svelte';
 import FormSelect from '$lib/components/ui/form-select.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import type {
-  NotificationChannel,
   NotificationChannelCreateInput,
+  NotificationChannelResponse,
   NotificationChannelUpdateInput,
   NotificationPlatform,
 } from '$shared';
@@ -13,7 +13,7 @@ import type {
 const i18n = createI18n();
 
 interface Props {
-  channel?: NotificationChannel;
+  channel?: NotificationChannelResponse;
   onsubmit: (input: NotificationChannelCreateInput | NotificationChannelUpdateInput) => void;
   oncancel: () => void;
   isLoading?: boolean;

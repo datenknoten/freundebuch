@@ -1,4 +1,4 @@
-import { PhotoValidationErrors } from '@freundebuch/shared/index.js';
+import { PHOTO_VALIDATION_ERRORS } from '@freundebuch/shared/index.js';
 import pino from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PhotoService, PhotoUploadError } from '../../src/services/photo.service.js';
@@ -66,7 +66,7 @@ describe('PhotoService', () => {
 
       await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toMatchObject({
         code: 'INVALID_FILE_TYPE',
-        message: PhotoValidationErrors.INVALID_FILE_TYPE,
+        message: PHOTO_VALIDATION_ERRORS.INVALID_FILE_TYPE,
       });
     });
 
@@ -93,7 +93,7 @@ describe('PhotoService', () => {
 
       await expect(photoService.uploadPhoto(VALID_FRIEND_ID, mockFile)).rejects.toMatchObject({
         code: 'FILE_TOO_LARGE',
-        message: PhotoValidationErrors.FILE_TOO_LARGE,
+        message: PHOTO_VALIDATION_ERRORS.FILE_TOO_LARGE,
       });
     });
 

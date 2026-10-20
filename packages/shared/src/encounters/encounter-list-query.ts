@@ -1,11 +1,10 @@
-import { IsoDateFilter } from '../dates/iso-date-filter.js';
+import { IsoDateFilterSchema } from '../dates/iso-date-filter-schema.js';
 import {
   type PaginationOptions,
   PaginationQuerySchema,
   parsePaginationQuery,
 } from '../pagination/pagination-query.js';
-import type { EncounterType } from './encounter-type.js';
-import { encounterTypeDef } from './encounter-type-def.js';
+import { type EncounterType, EncounterTypeSchema } from './encounter-type.js';
 
 /** Rows per page when a client does not ask for a size. */
 const DEFAULT_ENCOUNTER_PAGE_SIZE = 20;
@@ -13,10 +12,10 @@ const DEFAULT_ENCOUNTER_PAGE_SIZE = 20;
 /** Schema for encounter list query parameters */
 export const EncounterListQuerySchema = PaginationQuerySchema.merge({
   'friend_id?': '"" | string.uuid', // Filter by specific friend
-  'from_date?': IsoDateFilter, // Filter from date (YYYY-MM-DD)
-  'to_date?': IsoDateFilter, // Filter to date (YYYY-MM-DD)
+  'from_date?': IsoDateFilterSchema, // Filter from date (YYYY-MM-DD)
+  'to_date?': IsoDateFilterSchema, // Filter to date (YYYY-MM-DD)
   'search?': 'string', // Search in title/description
-  'type?': encounterTypeDef, // Filter by interaction type
+  'type?': EncounterTypeSchema,
 });
 
 export type EncounterListQuery = typeof EncounterListQuerySchema.infer;

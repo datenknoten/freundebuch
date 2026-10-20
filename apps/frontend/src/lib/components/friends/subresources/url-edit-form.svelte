@@ -1,12 +1,12 @@
 <script lang="ts">
 import { createDirtyTracker, FormInput, FormSelect } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { Url, UrlInput, UrlType } from '$shared';
+import type { UrlInput, UrlResponse, UrlType } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
-  initialData?: Url;
+  initialData?: UrlResponse;
   disabled?: boolean;
   onchange?: () => void;
 }

@@ -2,12 +2,12 @@
 import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
 import { formClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { ArrayFacetField, FacetFilters, FacetGroups } from '$shared';
+import type { ArrayFacetField, FacetFilters, FacetGroupsResponse } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
-  facets: FacetGroups | null;
+  facets: FacetGroupsResponse | null;
   activeFilters: FacetFilters;
   onFilterChange: (filters: FacetFilters) => void;
   isLoading?: boolean;

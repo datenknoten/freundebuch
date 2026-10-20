@@ -16,7 +16,7 @@ import MarkdownEditor from '$lib/editor/markdown-editor.svelte';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { friends } from '$lib/stores/friends';
-import type { Friend, FriendCreateInput } from '$shared';
+import type { FriendCreateInput, FriendResponse } from '$shared';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '$shared';
 import FriendAvatar from './friend-avatar.svelte';
 import ImageCropModal from './image-crop-modal.svelte';
@@ -27,7 +27,7 @@ const i18n = createI18n();
 const interestsLabelId = $props.id();
 
 interface Props {
-  friend?: Friend;
+  friend?: FriendResponse;
   /** Onboarding mode - for creating the user's self-friend */
   isOnboarding?: boolean;
   /** Custom submit handler (used in onboarding mode) */

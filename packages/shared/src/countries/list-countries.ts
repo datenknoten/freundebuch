@@ -1,8 +1,8 @@
-import type { CountryInfo } from '../address-lookup/country-info.js';
+import type { CountryInfoResponse } from '../address-lookup/country-info-response.js';
 import { countries } from './registered-countries.js';
 
 /** All countries with names in `language`, sorted for that language. */
-export function listCountries(language: string): CountryInfo[] {
+export function listCountries(language: string): CountryInfoResponse[] {
   const names = countries.getNames(language);
   const source = Object.keys(names).length > 0 ? names : countries.getNames('en');
   const collator = new Intl.Collator(language);

@@ -1,11 +1,11 @@
 <script lang="ts">
 import { chipClasses } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
-import type { Phone, PhoneType } from '$shared';
+import type { PhoneResponse, PhoneType } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
 interface Props {
-  phone: Phone;
+  phone: PhoneResponse;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;

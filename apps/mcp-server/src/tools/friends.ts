@@ -35,7 +35,7 @@ export function registerFriendsTools(
         pageSize,
         sortBy,
         sortOrder,
-        favorites,
+        isFavoritesOnly: favorites,
         archived,
       });
       return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
@@ -128,7 +128,7 @@ export function registerFriendsTools(
         sortBy,
         sortOrder,
         filters,
-        includeFacets,
+        shouldIncludeFacets: includeFacets,
       };
 
       const results = query

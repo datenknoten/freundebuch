@@ -4,13 +4,13 @@ import CircleChip from '$lib/components/circles/circle-chip.svelte';
 import { createDirtyTracker, FormSelect, Spinner } from '$lib/components/ui';
 import { createI18n } from '$lib/i18n/index.js';
 import { circles, circlesList } from '$lib/stores/circles';
-import type { Circle, CircleSummary } from '$shared';
+import type { CircleResponse, CircleSummaryResponse } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
   /** Circles the owner (friend or collective) already belongs to. */
-  existingCircles?: CircleSummary[];
+  existingCircles?: CircleSummaryResponse[];
   disabled?: boolean;
   onchange?: () => void;
 }
@@ -36,8 +36,8 @@ let availableCirclesTree = $derived.by(() => {
   function buildTree(
     parentId: string | null,
     depth: number,
-  ): Array<{ circle: Circle; depth: number }> {
-    const result: Array<{ circle: Circle; depth: number }> = [];
+  ): Array<{ circle: CircleResponse; depth: number }> {
+    const result: Array<{ circle: CircleResponse; depth: number }> = [];
     const children = availableCircles.filter((c) => c.parentCircleId === parentId);
 
     for (const child of children) {
@@ -74,7 +74,7 @@ export function isValid(): boolean {
   return selectedCircleId.length > 0;
 }
 
-export function getSelectedCircle(): Circle | undefined {
+export function getSelectedCircle(): CircleResponse | undefined {
   return availableCircles.find((c) => c.id === selectedCircleId);
 }
 </script>

@@ -1,7 +1,7 @@
 import type {
-  CollectiveRelationshipRule,
-  CollectiveType,
+  CollectiveRelationshipRuleResponse,
   CollectiveTypeListResponse,
+  CollectiveTypeResponse,
 } from '@freundebuch/shared/index.js';
 import type { Pool } from 'pg';
 import { mapRole } from '../../models/mappers/collectives.mappers.js';
@@ -56,7 +56,7 @@ export class CollectiveTypesService {
   async getTypeById(
     userExternalId: string,
     typeExternalId: string,
-  ): Promise<CollectiveType | null> {
+  ): Promise<CollectiveTypeResponse | null> {
     const typeResults = await getCollectiveTypeById.run(
       { userExternalId, typeExternalId },
       this.db,
@@ -84,7 +84,7 @@ export class CollectiveTypesService {
   private mapCollectiveType(
     row: IGetCollectiveTypesResult,
     roles: IGetRolesForTypeResult[],
-  ): CollectiveType {
+  ): CollectiveTypeResponse {
     return {
       id: row.external_id,
       name: row.name,
@@ -100,7 +100,7 @@ export class CollectiveTypesService {
     row: IGetCollectiveTypesResult,
     roles: IGetRolesForTypeResult[],
     rules: IGetRulesForTypeResult[],
-  ): CollectiveType {
+  ): CollectiveTypeResponse {
     return {
       id: row.external_id,
       name: row.name,
@@ -113,7 +113,7 @@ export class CollectiveTypesService {
     };
   }
 
-  private mapRule(row: IGetRulesForTypeResult): CollectiveRelationshipRule {
+  private mapRule(row: IGetRulesForTypeResult): CollectiveRelationshipRuleResponse {
     return {
       newMemberRoleId: row.new_member_role_id,
       newMemberRoleKey: row.new_member_role_key,

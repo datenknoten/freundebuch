@@ -1,4 +1,4 @@
-import { FriendCreateSchema, SetSelfProfileSchema } from '@freundebuch/shared/index.js';
+import { FriendCreateInputSchema, SelfProfileSetInputSchema } from '@freundebuch/shared/index.js';
 import { type Context, Hono } from 'hono';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { UsersService } from '../services/users.service.js';
@@ -39,7 +39,7 @@ app.get('/me/self-profile', async (c) => {
  * Set an existing friend as the user's self-profile
  */
 app.put('/me/self-profile', async (c) => {
-  const { friendId } = await parseBody(c, SetSelfProfileSchema);
+  const { friendId } = await parseBody(c, SelfProfileSetInputSchema);
   const selfProfileId = await usersService(c).setSelfProfile(getAuthUser(c).userId, friendId);
 
   return c.json({ selfProfileId });
@@ -51,7 +51,7 @@ app.put('/me/self-profile', async (c) => {
  * Used during onboarding
  */
 app.post('/me/self-profile', async (c) => {
-  const input = await parseBody(c, FriendCreateSchema);
+  const input = await parseBody(c, FriendCreateInputSchema);
   const friend = await usersService(c).createSelfProfile(getAuthUser(c).userId, input);
 
   return c.json(friend, 201);

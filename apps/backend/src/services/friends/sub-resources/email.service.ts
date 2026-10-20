@@ -1,4 +1,4 @@
-import type { Email, EmailInput } from '@freundebuch/shared/index.js';
+import type { EmailInput, EmailResponse } from '@freundebuch/shared/index.js';
 import {
   clearPrimaryEmail,
   createEmail,
@@ -14,7 +14,7 @@ import {
   type SubResourceServiceOptions,
 } from '../../base/sub-resource.service.js';
 
-const mapRow = (row: IGetEmailsByFriendIdResult): Email => ({
+const mapRow = (row: IGetEmailsByFriendIdResult): EmailResponse => ({
   id: row.external_id,
   emailAddress: row.email_address,
   emailType: parseEmailType(row.email_type),
@@ -29,7 +29,7 @@ const mapRow = (row: IGetEmailsByFriendIdResult): Email => ({
  */
 export class EmailService extends SubResourceService<
   EmailInput,
-  Email,
+  EmailResponse,
   IGetEmailsByFriendIdResult,
   IGetEmailsByFriendIdResult,
   IDeleteEmailResult

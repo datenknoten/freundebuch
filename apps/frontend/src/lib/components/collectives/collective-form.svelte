@@ -6,15 +6,15 @@ import { Button, FormInput, FormSelect } from '$lib/components/ui';
 import MarkdownField from '$lib/editor/markdown-field.svelte';
 import { createI18n } from '$lib/i18n/index.js';
 import { collectives, collectiveTypes } from '$lib/stores/collectives';
-import type { Collective, CollectiveInput, CollectiveUpdate } from '$shared';
+import type { CollectiveCreateInput, CollectiveResponse, CollectiveUpdateInput } from '$shared';
 
 const i18n = createI18n();
 
 interface Props {
   /** Existing collective for edit mode */
-  collective?: Collective;
+  collective?: CollectiveResponse;
   /** Called on successful save */
-  onSuccess?: (collective: Collective) => void;
+  onSuccess?: (collective: CollectiveResponse) => void;
   /** Called when form is cancelled */
   onCancel?: () => void;
 }
@@ -57,16 +57,16 @@ async function handleSubmit(e: Event) {
   isSubmitting = true;
 
   try {
-    let result: Collective;
+    let result: CollectiveResponse;
 
     if (isEditMode && collective) {
-      const input: CollectiveUpdate = {
+      const input: CollectiveUpdateInput = {
         name: name.trim(),
         notes: notes.trim() || null,
       };
       result = await collectives.updateCollective(collective.id, input);
     } else {
-      const input: CollectiveInput = {
+      const input: CollectiveCreateInput = {
         name: name.trim(),
         collective_type_id: selectedTypeId,
         notes: notes.trim() || undefined,

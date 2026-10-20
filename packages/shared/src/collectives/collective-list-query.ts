@@ -20,7 +20,7 @@ export type CollectiveListQuery = typeof CollectiveListQuerySchema.infer;
 export interface CollectiveListOptions extends PaginationOptions {
   typeId?: string;
   search?: string;
-  includeDeleted?: boolean;
+  shouldIncludeDeleted?: boolean;
 }
 
 /**
@@ -31,6 +31,6 @@ export function parseCollectiveListQuery(query: CollectiveListQuery): Collective
     ...parsePaginationQuery(query, DEFAULT_COLLECTIVE_PAGE_SIZE),
     typeId: query.type_id || undefined,
     search: query.search || undefined,
-    includeDeleted: query.include_deleted === 'true',
+    shouldIncludeDeleted: query.include_deleted === 'true',
   };
 }

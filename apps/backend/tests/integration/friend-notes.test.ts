@@ -1,4 +1,4 @@
-import type { FriendNote } from '@freundebuch/shared/index.js';
+import type { FriendNoteResponse } from '@freundebuch/shared/index.js';
 import { describe, expect, it } from 'vitest';
 import {
   authHeaders,
@@ -26,16 +26,19 @@ describe('Friend Notes API - Integration', () => {
     return getContext().app.fetch(new Request(`http://localhost${path}`, init));
   }
 
-  async function createNote(friendId: string, body: Record<string, unknown>): Promise<FriendNote> {
+  async function createNote(
+    friendId: string,
+    body: Record<string, unknown>,
+  ): Promise<FriendNoteResponse> {
     const res = await req('POST', `/api/friends/${friendId}/notes`, body);
     expect(res.status).toBe(201);
-    return (await res.json()) as FriendNote;
+    return (await res.json()) as FriendNoteResponse;
   }
 
-  async function listNotes(friendId: string): Promise<FriendNote[]> {
+  async function listNotes(friendId: string): Promise<FriendNoteResponse[]> {
     const res = await req('GET', `/api/friends/${friendId}/notes`);
     expect(res.status).toBe(200);
-    return (await res.json()) as FriendNote[];
+    return (await res.json()) as FriendNoteResponse[];
   }
 
   async function createEncounter(friendId: string): Promise<string> {

@@ -1,10 +1,10 @@
 <script lang="ts">
 import { createI18n } from '$lib/i18n/index.js';
-import type { DateType, FriendDate } from '$shared';
+import type { DateType, FriendDateResponse } from '$shared';
 import SubresourceRow from './subresource-row.svelte';
 
 interface Props {
-  date: FriendDate;
+  date: FriendDateResponse;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;

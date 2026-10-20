@@ -1,5 +1,5 @@
 import { type } from 'arktype';
-import { IsoDateString } from '../dates/iso-date-string.js';
+import { IsoDateStringSchema } from '../dates/iso-date-string-schema.js';
 
 /** Schema for creating/updating met information */
 export const MetInfoInputSchema = type({
@@ -8,7 +8,7 @@ export const MetInfoInputSchema = type({
   'met_context?': 'string | null',
 }).narrow((data, ctx) => {
   // `null` clears the date; `''` is not a date and must not reach the `date` column.
-  if (typeof data.met_date === 'string' && !IsoDateString.allows(data.met_date)) {
+  if (typeof data.met_date === 'string' && !IsoDateStringSchema.allows(data.met_date)) {
     ctx.mustBe('met information with a valid date (YYYY-MM-DD format)');
     return false;
   }

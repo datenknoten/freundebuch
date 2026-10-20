@@ -1,6 +1,8 @@
-import type { CollectiveType } from './collective-type.js';
+import { type } from 'arktype';
+import { CollectiveTypeResponseSchema } from './collective-type-response.js';
 
-/** Collective type list response (for type selector) */
-export interface CollectiveTypeListResponse {
-  types: CollectiveType[];
-}
+export const CollectiveTypeListResponseSchema = type({
+  types: CollectiveTypeResponseSchema.array(),
+});
+
+export type CollectiveTypeListResponse = typeof CollectiveTypeListResponseSchema.infer;
