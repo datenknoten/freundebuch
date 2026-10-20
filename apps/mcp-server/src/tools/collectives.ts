@@ -1,5 +1,5 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/server';
+import { type } from 'arktype';
 import type { Services } from '../utils/service-factory.js';
 
 export function registerCollectivesTools(
@@ -7,20 +7,19 @@ export function registerCollectivesTools(
   services: Services,
   getUserId: () => string,
 ) {
-  server.tool(
+  server.registerTool(
     'list_collectives',
-    'List all collectives (families, companies, clubs, friend groups) with pagination. Each collective includes a member preview showing the first few members.',
     {
-      page: z.number().int().min(1).default(1).describe('Page number (1-based)'),
-      pageSize: z
-        .number()
-        .int()
-        .min(1)
-        .max(100)
-        .default(20)
-        .describe('Number of collectives per page'),
-      typeId: z.string().uuid().optional().describe('Filter by collective type ID (UUID)'),
-      search: z.string().optional().describe('Search by collective name'),
+      description:
+        'List all collectives (families, companies, clubs, friend groups) with pagination. Each collective includes a member preview showing the first few members.',
+      inputSchema: type({
+        page: type('number.integer >= 1').describe('Page number (1-based)', 'self').default(1),
+        pageSize: type('1 <= number.integer <= 100')
+          .describe('Number of collectives per page', 'self')
+          .default(20),
+        'typeId?': type('string.uuid').describe('Filter by collective type ID (UUID)', 'self'),
+        'search?': type('string').describe('Search by collective name', 'self'),
+      }),
     },
     async ({ page, pageSize, typeId, search }) => {
       const result = await services.collectives.listCollectives(getUserId(), {
@@ -33,11 +32,14 @@ export function registerCollectivesTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     'get_collective',
-    'Get complete details for a single collective including all members with their roles, addresses, phones, emails, URLs, and circle memberships.',
     {
-      collectiveId: z.string().uuid().describe('The collective ID (UUID)'),
+      description:
+        'Get complete details for a single collective including all members with their roles, addresses, phones, emails, URLs, and circle memberships.',
+      inputSchema: type({
+        collectiveId: type('string.uuid').describe('The collective ID (UUID)', 'self'),
+      }),
     },
     async ({ collectiveId }) => {
       const collective = await services.collectives.getCollectiveById(getUserId(), collectiveId);

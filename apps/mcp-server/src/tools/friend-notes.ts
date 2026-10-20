@@ -1,5 +1,5 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/server';
+import { type } from 'arktype';
 import type { Services } from '../utils/service-factory.js';
 
 /**
@@ -12,11 +12,14 @@ export function registerFriendNotesTools(
   services: Services,
   getUserId: () => string,
 ) {
-  server.tool(
+  server.registerTool(
     'list_friend_notes',
-    'List all notes about a friend, newest first. Each note has its Markdown text, creation time, the encounter where it was learned, the friend who told it, and supersede links (supersedesNoteId / supersededByNoteId; a superseded note is outdated).',
     {
-      friendId: z.string().uuid().describe('The friend ID (UUID)'),
+      description:
+        'List all notes about a friend, newest first. Each note has its Markdown text, creation time, the encounter where it was learned, the friend who told it, and supersede links (supersedesNoteId / supersededByNoteId; a superseded note is outdated).',
+      inputSchema: type({
+        friendId: type('string.uuid').describe('The friend ID (UUID)', 'self'),
+      }),
     },
     async ({ friendId }) => {
       const notes = await services.friendNotes.list(getUserId(), friendId);
@@ -24,33 +27,36 @@ export function registerFriendNotesTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     'create_friend_note',
-    'Add a note about a friend: a fact or detail the user learned. Optionally link the encounter where it was learned, the friend who told it, and an older note of the same friend that this note replaces. Returns the created note.',
     {
-      friendId: z.string().uuid().describe('The friend ID (UUID) that the note is about'),
-      content: z
-        .string()
-        .trim()
-        .min(1)
-        .describe(
-          'The note text as Markdown. Mention a friend, collective or encounter with a link such as [Anna](/friends/{id}), [Club](/collectives/{id}) or [Lunch](/encounters/{id}).',
+      description:
+        'Add a note about a friend: a fact or detail the user learned. Optionally link the encounter where it was learned, the friend who told it, and an older note of the same friend that this note replaces. Returns the created note.',
+      inputSchema: type({
+        friendId: type('string.uuid').describe(
+          'The friend ID (UUID) that the note is about',
+          'self',
         ),
-      encounterId: z
-        .string()
-        .uuid()
-        .nullish()
-        .describe('The encounter ID (UUID) where the user learned this'),
-      sourceFriendId: z
-        .string()
-        .uuid()
-        .nullish()
-        .describe('The friend ID (UUID) of the friend who told the user this'),
-      supersedesNoteId: z
-        .string()
-        .uuid()
-        .nullish()
-        .describe('The ID (UUID) of an older note of the same friend that this note replaces'),
+        // Plain describe(): a 'self' description does not survive into the
+        // JSON Schema of a morph's input side.
+        content: type('string.trim')
+          .to('string > 0')
+          .describe(
+            'The note text as Markdown. Mention a friend, collective or encounter with a link such as [Anna](/friends/{id}), [Club](/collectives/{id}) or [Lunch](/encounters/{id}).',
+          ),
+        'encounterId?': type('string.uuid | null').describe(
+          'The encounter ID (UUID) where the user learned this',
+          'self',
+        ),
+        'sourceFriendId?': type('string.uuid | null').describe(
+          'The friend ID (UUID) of the friend who told the user this',
+          'self',
+        ),
+        'supersedesNoteId?': type('string.uuid | null').describe(
+          'The ID (UUID) of an older note of the same friend that this note replaces',
+          'self',
+        ),
+      }),
     },
     async ({ friendId, content, encounterId, sourceFriendId, supersedesNoteId }) => {
       const note = await services.friendNotes.create(getUserId(), friendId, {

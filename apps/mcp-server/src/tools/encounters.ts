@@ -2,9 +2,10 @@ import {
   ENCOUNTER_TITLE_MAX_LENGTH,
   ENCOUNTER_TYPES,
   type EncounterUpdate,
+  IsoDateString,
 } from '@freundebuch/shared/index.js';
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/server';
+import { type } from 'arktype';
 import type { Services } from '../utils/service-factory.js';
 
 export function registerEncountersTools(
@@ -12,32 +13,33 @@ export function registerEncountersTools(
   services: Services,
   getUserId: () => string,
 ) {
-  server.tool(
+  server.registerTool(
     'list_encounters',
-    'List encounters (meetings, events, interactions) with pagination and filtering. Can filter by friend, date range, or search text. Each encounter shows the title, date, location, and a preview of associated friends.',
     {
-      page: z.number().int().min(1).default(1).describe('Page number (1-based)'),
-      pageSize: z
-        .number()
-        .int()
-        .min(1)
-        .max(100)
-        .default(20)
-        .describe('Number of encounters per page'),
-      friendId: z
-        .string()
-        .uuid()
-        .optional()
-        .describe('Filter to encounters with a specific friend'),
-      fromDate: z
-        .string()
-        .optional()
-        .describe('Filter encounters from this date (ISO 8601 format, e.g. "2024-01-01")'),
-      toDate: z
-        .string()
-        .optional()
-        .describe('Filter encounters up to this date (ISO 8601 format, e.g. "2024-12-31")'),
-      search: z.string().optional().describe('Search by encounter title, description, or location'),
+      description:
+        'List encounters (meetings, events, interactions) with pagination and filtering. Can filter by friend, date range, or search text. Each encounter shows the title, date, location, and a preview of associated friends.',
+      inputSchema: type({
+        page: type('number.integer >= 1').describe('Page number (1-based)', 'self').default(1),
+        pageSize: type('1 <= number.integer <= 100')
+          .describe('Number of encounters per page', 'self')
+          .default(20),
+        'friendId?': type('string.uuid').describe(
+          'Filter to encounters with a specific friend',
+          'self',
+        ),
+        'fromDate?': type('string').describe(
+          'Filter encounters from this date (ISO 8601 format, e.g. "2024-01-01")',
+          'self',
+        ),
+        'toDate?': type('string').describe(
+          'Filter encounters up to this date (ISO 8601 format, e.g. "2024-12-31")',
+          'self',
+        ),
+        'search?': type('string').describe(
+          'Search by encounter title, description, or location',
+          'self',
+        ),
+      }),
     },
     async ({ page, pageSize, friendId, fromDate, toDate, search }) => {
       const result = await services.encounters.listEncounters(getUserId(), {
@@ -52,11 +54,14 @@ export function registerEncountersTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     'get_encounter',
-    'Get complete details for a single encounter including its title, date, location, description, and all associated friends.',
     {
-      encounterId: z.string().uuid().describe('The encounter ID (UUID)'),
+      description:
+        'Get complete details for a single encounter including its title, date, location, description, and all associated friends.',
+      inputSchema: type({
+        encounterId: type('string.uuid').describe('The encounter ID (UUID)', 'self'),
+      }),
     },
     async ({ encounterId }) => {
       const encounter = await services.encounters.getEncounterById(getUserId(), encounterId);
@@ -69,34 +74,39 @@ export function registerEncountersTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     'create_encounter',
-    'Create a new encounter (meeting, event, or interaction) and associate it with one or more friends. Requires a date and at least one friend. Returns the created encounter with its ID and associated friends.',
     {
-      encounterDate: z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-        .describe('Date the encounter took place (ISO 8601 date, e.g. "2024-06-15")'),
-      friendIds: z
-        .array(z.string().uuid())
-        .min(1)
-        .describe('IDs (UUIDs) of the friends involved in the encounter; at least one is required'),
-      encounterType: z
-        .enum(ENCOUNTER_TYPES)
-        .default('in_person')
-        .describe('Kind of contact: in_person, phone_call, video_call, or message'),
-      title: z
-        .string()
-        .trim()
-        .min(1)
-        .max(ENCOUNTER_TITLE_MAX_LENGTH)
-        .nullish()
-        .describe('Optional title; if omitted the UI derives a label for calls/messages'),
-      locationText: z
-        .string()
-        .nullish()
-        .describe('Optional free-text location where the encounter took place'),
-      description: z.string().nullish().describe('Optional notes or description of what happened'),
+      description:
+        'Create a new encounter (meeting, event, or interaction) and associate it with one or more friends. Requires a date and at least one friend. Returns the created encounter with its ID and associated friends.',
+      inputSchema: type({
+        encounterDate: IsoDateString.describe(
+          'Date the encounter took place (ISO 8601 date, e.g. "2024-06-15")',
+          'self',
+        ),
+        friendIds: type('string.uuid[] > 0').describe(
+          'IDs (UUIDs) of the friends involved in the encounter; at least one is required',
+          'self',
+        ),
+        encounterType: type
+          .enumerated(...ENCOUNTER_TYPES)
+          .describe('Kind of contact: in_person, phone_call, video_call, or message', 'self')
+          .default('in_person'),
+        // Plain describe() on the trimmed fields: a 'self' description does not
+        // survive into the JSON Schema of a morph's input side.
+        'title?': type('string.trim')
+          .to(`0 < string <= ${ENCOUNTER_TITLE_MAX_LENGTH}`)
+          .or('null')
+          .describe('Optional title; if omitted the UI derives a label for calls/messages'),
+        'locationText?': type('string | null').describe(
+          'Optional free-text location where the encounter took place',
+          'self',
+        ),
+        'description?': type('string | null').describe(
+          'Optional notes or description of what happened',
+          'self',
+        ),
+      }),
     },
     async ({ encounterDate, friendIds, encounterType, title, locationText, description }) => {
       const encounter = await services.encounters.createEncounter(getUserId(), {
@@ -114,36 +124,37 @@ export function registerEncountersTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     'edit_encounter',
-    'Update an existing encounter. Only the fields you pass are changed; omitted fields keep their current value. Pass null for title, locationText, or description to clear them. Passing friendIds replaces the full list of associated friends. Returns the updated encounter.',
     {
-      encounterId: z.string().uuid().describe('The encounter ID (UUID) to update'),
-      encounterDate: z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-        .optional()
-        .describe('New date the encounter took place (ISO 8601 date, e.g. "2024-06-15")'),
-      friendIds: z
-        .array(z.string().uuid())
-        .min(1)
-        .optional()
-        .describe(
-          'Replacement list of friend IDs (UUIDs); replaces all current friends, so include everyone who was involved',
+      description:
+        'Update an existing encounter. Only the fields you pass are changed; omitted fields keep their current value. Pass null for title, locationText, or description to clear them. Passing friendIds replaces the full list of associated friends. Returns the updated encounter.',
+      inputSchema: type({
+        encounterId: type('string.uuid').describe('The encounter ID (UUID) to update', 'self'),
+        'encounterDate?': IsoDateString.describe(
+          'New date the encounter took place (ISO 8601 date, e.g. "2024-06-15")',
+          'self',
         ),
-      encounterType: z
-        .enum(ENCOUNTER_TYPES)
-        .optional()
-        .describe('New kind of contact: in_person, phone_call, video_call, or message'),
-      title: z
-        .string()
-        .trim()
-        .min(1)
-        .max(ENCOUNTER_TITLE_MAX_LENGTH)
-        .nullish()
-        .describe('New title; pass null to clear it'),
-      locationText: z.string().nullish().describe('New free-text location; pass null to clear it'),
-      description: z.string().nullish().describe('New notes or description; pass null to clear it'),
+        'friendIds?': type('string.uuid[] > 0').describe(
+          'Replacement list of friend IDs (UUIDs); replaces all current friends, so include everyone who was involved',
+          'self',
+        ),
+        'encounterType?': type
+          .enumerated(...ENCOUNTER_TYPES)
+          .describe('New kind of contact: in_person, phone_call, video_call, or message', 'self'),
+        'title?': type('string.trim')
+          .to(`0 < string <= ${ENCOUNTER_TITLE_MAX_LENGTH}`)
+          .or('null')
+          .describe('New title; pass null to clear it'),
+        'locationText?': type('string | null').describe(
+          'New free-text location; pass null to clear it',
+          'self',
+        ),
+        'description?': type('string | null').describe(
+          'New notes or description; pass null to clear it',
+          'self',
+        ),
+      }),
     },
     async ({
       encounterId,

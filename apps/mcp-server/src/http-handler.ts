@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { NodeStreamableHTTPServerTransport } from '@modelcontextprotocol/node';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { createMcpServer } from './server.js';
@@ -14,7 +14,7 @@ import type { Services } from './utils/service-factory.js';
 // are still logged via `logger.warn` so infrastructure alerting can trigger.
 
 export interface Session {
-  transport: StreamableHTTPServerTransport;
+  transport: NodeStreamableHTTPServerTransport;
   userId: string;
 }
 
@@ -322,7 +322,7 @@ export function createMcpRequestHandler(
 
       // New session
       const newSessionId = randomUUID();
-      const transport = new StreamableHTTPServerTransport({
+      const transport = new NodeStreamableHTTPServerTransport({
         sessionIdGenerator: () => newSessionId,
       });
 

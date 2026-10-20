@@ -14,7 +14,7 @@ This is a personal relationship tool, not a business/sales CRM.
 | Backend | Node.js + Hono | Lightweight RESTful API |
 | Auth | Better Auth (+ passkey plugin) | Sessions, passkeys/WebAuthn, app passwords for DAV |
 | CalDAV/CardDAV | PHP + SabreDAV | Device sync via open protocols |
-| MCP | Node.js + @modelcontextprotocol/sdk | AI assistant access over Streamable HTTP |
+| MCP | Node.js + @modelcontextprotocol/server | AI assistant access over Streamable HTTP |
 | Database | PostgreSQL + PostGIS + PgTyped | Type-safe spatial queries |
 | Shared | TypeScript + ArkType | Cross-app types and runtime validation |
 | Package Manager | aube (pnpm-compatible workspaces) | Monorepo management |

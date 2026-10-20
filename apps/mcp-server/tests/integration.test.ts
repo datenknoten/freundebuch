@@ -455,6 +455,50 @@ describe('MCP Server', { timeout: 60000 }, () => {
       expect(toolNames).toContain('create_friend_note');
     });
 
+    it('tools/list advertises arktype-derived input schemas', async () => {
+      const { baseUrl, sessionId, email, password } = await getSessionAndAuth();
+      const { body } = await mcpRequest(
+        baseUrl,
+        { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} },
+        { email, password, sessionId },
+      );
+
+      const result = body as {
+        result?: {
+          tools?: Array<{
+            name: string;
+            inputSchema: {
+              type?: string;
+              required?: string[];
+              properties?: Record<string, { description?: string }>;
+            };
+          }>;
+        };
+      };
+      const getCircle = result.result?.tools?.find((t) => t.name === 'get_circle');
+      expect(getCircle?.inputSchema.type).toBe('object');
+      expect(getCircle?.inputSchema.required).toEqual(['circleId']);
+      expect(getCircle?.inputSchema.properties?.circleId?.description).toBe('The circle ID (UUID)');
+    });
+
+    it('rejects arguments that fail the schema before the handler runs', async () => {
+      const { baseUrl, sessionId, email, password } = await getSessionAndAuth();
+      const { body } = await callTool(
+        baseUrl,
+        'get_circle',
+        { circleId: 'not-a-uuid' },
+        { email, password, sessionId },
+      );
+
+      const result = body as {
+        result?: { isError?: boolean; content?: Array<{ text?: string }> };
+      };
+      expect(result.result?.isError).toBe(true);
+      const text = result.result?.content?.[0]?.text ?? '';
+      expect(text).toContain('Invalid arguments for tool get_circle');
+      expect(text).toContain('circleId must be a UUID');
+    });
+
     async function insertFriend(displayName: string): Promise<string> {
       const { pool, testUser } = getContext();
       const friendResult = await pool.query(

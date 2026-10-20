@@ -1,5 +1,5 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/server';
+import { type } from 'arktype';
 import type { Services } from '../utils/service-factory.js';
 
 export function registerFriendsTools(
@@ -7,22 +7,27 @@ export function registerFriendsTools(
   services: Services,
   getUserId: () => string,
 ) {
-  server.tool(
+  server.registerTool(
     'list_friends',
-    'List friends with pagination, sorting, and filtering. Returns a paginated list of friend summaries with basic info like name, primary email/phone, city, and circle memberships.',
     {
-      page: z.number().int().min(1).default(1).describe('Page number (1-based)'),
-      pageSize: z.number().int().min(1).max(100).default(25).describe('Number of friends per page'),
-      sortBy: z
-        .enum(['display_name', 'created_at', 'updated_at'])
-        .default('display_name')
-        .describe('Field to sort by'),
-      sortOrder: z.enum(['asc', 'desc']).default('asc').describe('Sort direction'),
-      favorites: z.boolean().optional().describe('Filter to only favorites'),
-      archived: z
-        .union([z.boolean(), z.literal('only')])
-        .optional()
-        .describe('true = include archived, "only" = only archived, omit = exclude archived'),
+      description:
+        'List friends with pagination, sorting, and filtering. Returns a paginated list of friend summaries with basic info like name, primary email/phone, city, and circle memberships.',
+      inputSchema: type({
+        page: type('number.integer >= 1').describe('Page number (1-based)', 'self').default(1),
+        pageSize: type('1 <= number.integer <= 100')
+          .describe('Number of friends per page', 'self')
+          .default(25),
+        sortBy: type
+          .enumerated('display_name', 'created_at', 'updated_at')
+          .describe('Field to sort by', 'self')
+          .default('display_name'),
+        sortOrder: type.enumerated('asc', 'desc').describe('Sort direction', 'self').default('asc'),
+        'favorites?': type('boolean').describe('Filter to only favorites', 'self'),
+        'archived?': type('boolean | "only"').describe(
+          'true = include archived, "only" = only archived, omit = exclude archived',
+          'self',
+        ),
+      }),
     },
     async ({ page, pageSize, sortBy, sortOrder, favorites, archived }) => {
       const result = await services.friends.listFriends(getUserId(), {
@@ -37,11 +42,14 @@ export function registerFriendsTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     'get_friend',
-    'Get complete details for a single friend including all sub-resources: phones, emails, addresses, URLs, dates, relationships, professional history, social profiles, met info, and circle memberships.',
     {
-      friendId: z.string().uuid().describe('The friend ID (UUID)'),
+      description:
+        'Get complete details for a single friend including all sub-resources: phones, emails, addresses, URLs, dates, relationships, professional history, social profiles, met info, and circle memberships.',
+      inputSchema: type({
+        friendId: type('string.uuid').describe('The friend ID (UUID)', 'self'),
+      }),
     },
     async ({ friendId }) => {
       const friend = await services.friends.getFriendById(getUserId(), friendId);
@@ -52,12 +60,17 @@ export function registerFriendsTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     'search_friends',
-    'Full-text search across all friend data. Searches names, nicknames, organization, job title, emails, phones, notes, addresses, and met context. Returns results ranked by relevance with highlighted matches.',
     {
-      query: z.string().min(1).describe('Search query text'),
-      limit: z.number().int().min(1).max(50).default(10).describe('Maximum number of results'),
+      description:
+        'Full-text search across all friend data. Searches names, nicknames, organization, job title, emails, phones, notes, addresses, and met context. Returns results ranked by relevance with highlighted matches.',
+      inputSchema: type({
+        query: type('string > 0').describe('Search query text', 'self'),
+        limit: type('1 <= number.integer <= 50')
+          .describe('Maximum number of results', 'self')
+          .default(10),
+      }),
     },
     async ({ query, limit }) => {
       const results = await services.friends.fullTextSearch(getUserId(), query, limit);
@@ -65,49 +78,54 @@ export function registerFriendsTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     'faceted_search',
-    'Advanced search with filtering by location, profession, relationship category, and circles. Optionally includes facet counts for understanding data distribution.',
     {
-      query: z.string().optional().describe('Optional search query text'),
-      page: z.number().int().min(1).default(1).describe('Page number'),
-      pageSize: z.number().int().min(1).max(100).default(25).describe('Number of results per page'),
-      sortBy: z
-        .enum(['relevance', 'display_name', 'created_at', 'updated_at'])
-        .default('display_name')
-        .describe('Sort field (relevance only works with a query)'),
-      sortOrder: z.enum(['asc', 'desc']).default('asc').describe('Sort direction'),
-      filters: z
-        .object({
-          country: z
-            .array(z.string())
-            .optional()
-            .describe('Filter by ISO 3166-1 alpha-2 country codes, e.g. "DE"'),
-          city: z.array(z.string()).optional().describe('Filter by city names'),
-          organization: z.array(z.string()).optional().describe('Filter by organization names'),
-          job_title: z.array(z.string()).optional().describe('Filter by job titles'),
-          department: z.array(z.string()).optional().describe('Filter by departments'),
-          relationship_category: z
-            .array(z.enum(['family', 'professional', 'social']))
-            .optional()
-            .describe('Filter by relationship categories: family, professional, or social'),
-          circles: z.array(z.string().uuid()).optional().describe('Filter by circle IDs'),
-          favorites: z.boolean().optional().describe('Filter to favorites only'),
-          archived: z.enum(['include', 'exclude', 'only']).optional().describe('Archived filter'),
+      description:
+        'Advanced search with filtering by location, profession, relationship category, and circles. Optionally includes facet counts for understanding data distribution.',
+      inputSchema: type({
+        'query?': type('string').describe('Optional search query text', 'self'),
+        page: type('number.integer >= 1').describe('Page number', 'self').default(1),
+        pageSize: type('1 <= number.integer <= 100')
+          .describe('Number of results per page', 'self')
+          .default(25),
+        sortBy: type
+          .enumerated('relevance', 'display_name', 'created_at', 'updated_at')
+          .describe('Sort field (relevance only works with a query)', 'self')
+          .default('display_name'),
+        sortOrder: type.enumerated('asc', 'desc').describe('Sort direction', 'self').default('asc'),
+        filters: type({
+          'country?': type('string[]').describe(
+            'Filter by ISO 3166-1 alpha-2 country codes, e.g. "DE"',
+            'self',
+          ),
+          'city?': type('string[]').describe('Filter by city names', 'self'),
+          'organization?': type('string[]').describe('Filter by organization names', 'self'),
+          'job_title?': type('string[]').describe('Filter by job titles', 'self'),
+          'department?': type('string[]').describe('Filter by departments', 'self'),
+          'relationship_category?': type('("family" | "professional" | "social")[]').describe(
+            'Filter by relationship categories: family, professional, or social',
+            'self',
+          ),
+          'circles?': type('string.uuid[]').describe('Filter by circle IDs', 'self'),
+          'favorites?': type('boolean').describe('Filter to favorites only', 'self'),
+          'archived?': type
+            .enumerated('include', 'exclude', 'only')
+            .describe('Archived filter', 'self'),
         })
-        .default({})
-        .describe('Filter criteria'),
-      includeFacets: z
-        .boolean()
-        .default(false)
-        .describe('Include facet counts in response for understanding data distribution'),
+          .describe('Filter criteria', 'self')
+          .default(() => ({})),
+        includeFacets: type('boolean')
+          .describe('Include facet counts in response for understanding data distribution', 'self')
+          .default(false),
+      }),
     },
     async ({ query, page, pageSize, sortBy, sortOrder, filters, includeFacets }) => {
       const options = {
         query,
         page,
         pageSize,
-        sortBy: sortBy as 'relevance' | 'display_name' | 'created_at' | 'updated_at',
+        sortBy,
         sortOrder,
         filters,
         includeFacets,
@@ -120,12 +138,19 @@ export function registerFriendsTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     'get_upcoming_dates',
-    'Get upcoming birthdays, anniversaries, and other important dates across all friends. Useful for reminders and planning.',
     {
-      days: z.number().int().min(1).max(365).default(30).describe('Number of days ahead to look'),
-      limit: z.number().int().min(1).max(100).default(20).describe('Maximum number of dates'),
+      description:
+        'Get upcoming birthdays, anniversaries, and other important dates across all friends. Useful for reminders and planning.',
+      inputSchema: type({
+        days: type('1 <= number.integer <= 365')
+          .describe('Number of days ahead to look', 'self')
+          .default(30),
+        limit: type('1 <= number.integer <= 100')
+          .describe('Maximum number of dates', 'self')
+          .default(20),
+      }),
     },
     async ({ days, limit }) => {
       const dates = await services.friends.getUpcomingDates(getUserId(), { days, limit });
@@ -133,10 +158,12 @@ export function registerFriendsTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     'get_network_graph',
-    'Get the relationship network graph showing how friends are connected to each other. Returns nodes (friends) and links (relationships between them). Useful for understanding social connections.',
-    {},
+    {
+      description:
+        'Get the relationship network graph showing how friends are connected to each other. Returns nodes (friends) and links (relationships between them). Useful for understanding social connections.',
+    },
     async () => {
       const data = await services.friends.getNetworkGraphData(getUserId());
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] };

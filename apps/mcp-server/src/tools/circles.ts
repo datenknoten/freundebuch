@@ -1,5 +1,5 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/server';
+import { type } from 'arktype';
 import type { Services } from '../utils/service-factory.js';
 
 export function registerCirclesTools(
@@ -7,21 +7,26 @@ export function registerCirclesTools(
   services: Services,
   getUserId: () => string,
 ) {
-  server.tool(
+  server.registerTool(
     'list_circles',
-    'List all circles (categorization groups) for the user. Each circle has a name, color, and friend count. Circles are used to organize friends into groups.',
-    {},
+    {
+      description:
+        'List all circles (categorization groups) for the user. Each circle has a name, color, and friend count. Circles are used to organize friends into groups.',
+    },
     async () => {
       const circles = await services.circles.listCircles(getUserId());
       return { content: [{ type: 'text' as const, text: JSON.stringify(circles, null, 2) }] };
     },
   );
 
-  server.tool(
+  server.registerTool(
     'get_circle',
-    'Get details for a single circle including its name, color, description, and friend count.',
     {
-      circleId: z.string().uuid().describe('The circle ID (UUID)'),
+      description:
+        'Get details for a single circle including its name, color, description, and friend count.',
+      inputSchema: type({
+        circleId: type('string.uuid').describe('The circle ID (UUID)', 'self'),
+      }),
     },
     async ({ circleId }) => {
       const circle = await services.circles.getCircleById(getUserId(), circleId);

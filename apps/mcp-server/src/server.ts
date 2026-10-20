@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/server';
 import { registerCirclesTools } from './tools/circles.js';
 import { registerCollectivesTools } from './tools/collectives.js';
 import { registerEncountersTools } from './tools/encounters.js';
