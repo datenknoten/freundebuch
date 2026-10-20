@@ -23,7 +23,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "arktype": "2.1.29",
+    "arktype": "2.2.8",
     "i18n-iso-countries": "7.14.0",
     "libphonenumber-js": "1.12.33"
   },

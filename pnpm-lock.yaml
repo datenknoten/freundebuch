@@ -9,8 +9,8 @@ time:
   '@alloc/quick-lru@5.2.0': 2021-04-06T00:28:18.669Z
   '@apm-js-collab/code-transformer@0.8.2': 2025-09-26T12:23:24.222Z
   '@apm-js-collab/tracing-hooks@0.3.1': 2025-09-26T12:22:33.302Z
-  '@ark/schema@0.56.0': 2025-12-03T06:29:48.188Z
-  '@ark/util@0.56.0': 2025-12-03T06:30:07.868Z
+  '@ark/schema@0.56.7': 2026-10-07T22:29:18.744Z
+  '@ark/util@0.56.7': 2026-10-07T22:30:05.352Z
   '@asamuzakjp/css-color@4.1.2': 2026-02-05T13:42:15.026Z
   '@asamuzakjp/dom-selector@6.8.1': 2026-02-14T16:09:21.337Z
   '@asamuzakjp/nwsapi@2.3.9': 2025-03-28T13:43:07.844Z
@@ -422,8 +422,8 @@ time:
   argv-formatter@1.0.0: 2014-11-23T18:16:21.898Z
   aria-query@5.3.0: 2023-06-24T20:48:55.075Z
   aria-query@5.3.1: 2024-09-12T21:47:50.403Z
-  arkregex@0.0.5: 2025-12-13T04:38:01.831Z
-  arktype@2.1.29: 2025-12-13T04:38:13.061Z
+  arkregex@0.0.13: 2026-10-07T22:29:03.411Z
+  arktype@2.2.8: 2026-10-07T22:53:53.585Z
   array-ify@1.0.0: 2015-06-14T23:27:57.755Z
   asap@2.0.6: 2017-07-10T15:21:36.791Z
   asn1@0.2.6: 2021-11-04T00:46:28.017Z
@@ -1402,8 +1402,8 @@ importers:
         specifier: ^8
         version: 8.16.0
       arktype:
-        specifier: 2.1.29
-        version: 2.1.29
+        specifier: 2.2.8
+        version: 2.2.8
       bare-events:
         specifier: '*'
         version: 2.8.3
@@ -1619,8 +1619,8 @@ importers:
         specifier: ^8.9.0
         version: 8.16.0
       arktype:
-        specifier: 2.1.29
-        version: 2.1.29
+        specifier: 2.2.8
+        version: 2.2.8
       better-auth:
         specifier: 1.6.22
         version: 1.6.22(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.55.7)(vite@7.3.0(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.55.7)(typescript@5.9.3)(vite@7.3.0(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.9.0)))(mongodb@7.2.0)(pg@8.16.3)(svelte@5.55.7)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@25.0.3)(@vitest/coverage-v8@4.1.11)(jsdom@27.3.0)(vite@7.3.0(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.9.0)))
@@ -1791,8 +1791,8 @@ importers:
         specifier: ^8.0.0
         version: 8.20.0
       arktype:
-        specifier: 2.1.29
-        version: 2.1.29
+        specifier: 2.2.8
+        version: 2.2.8
       bare-events:
         specifier: '*'
         version: 2.8.3
@@ -1919,8 +1919,8 @@ importers:
         specifier: 4.1.11
         version: 4.0.16(vitest@4.0.16(@opentelemetry/api@1.9.1)(@types/node@25.0.3)(jsdom@27.3.0))
       arktype:
-        specifier: 2.1.29
-        version: 2.1.29
+        specifier: 2.2.8
+        version: 2.2.8
       css-tree:
         specifier: ^3.2.1
         version: 3.2.1
@@ -1974,11 +1974,11 @@ packages:
   '@apm-js-collab/tracing-hooks@0.3.1':
     resolution: {integrity: sha512-Vu1CbmPURlN5fTboVuKMoJjbO5qcq9fA5YXpskx3dXe/zTBvjODFoerw+69rVBlRLrJpwPqSDqEuJDEKIrTldw==}
 
-  '@ark/schema@0.56.0':
-    resolution: {integrity: sha512-ECg3hox/6Z/nLajxXqNhgPtNdHWC9zNsDyskwO28WinoFEnWow4IsERNz9AnXRhTZJnYIlAJ4uGn3nlLk65vZA==}
+  '@ark/schema@0.56.7':
+    resolution: {integrity: sha512-jmoOJlYIc4k1uv8oYBDNOFnAsKk2a2D9t/D6npF2JUfW4ecPB0v6ce6lruKg7lkBxIBA8Z7UtxfmvephYbhUGQ==}
 
-  '@ark/util@0.56.0':
-    resolution: {integrity: sha512-BghfRC8b9pNs3vBoDJhcta0/c1J1rsoS1+HgVUreMFPdhz/CRAKReAu57YEllNaSy98rWAdY1gE+gFup7OXpgA==}
+  '@ark/util@0.56.7':
+    resolution: {integrity: sha512-z8pVnrPk/x9GC18yOp5wCe8rR2+Z6us4CTSg7dvxdsDLuA2xXYq+QETD1fO6f3fMuXe+PCjpvtCnhTW9RHLgEw==}
 
   '@asamuzakjp/css-color@4.1.2':
     resolution: {integrity: sha512-NfBUvBaYgKIuq6E/RBLY1m0IohzNHAYyaJGuTK79Z23uNwmz2jl1mPsC5ZxCCxylinKhT1Amn5oNTlx1wN8cQg==}
@@ -3971,11 +3971,11 @@ packages:
     resolution: {integrity: sha512-Z/ZeOgVl7bcSYZ/u/rh0fOpvEpq//LZmdbkXyc7syVzjPAhfOa9ebsdTSjEBDU4vs5nC98Kfduj1uFo0qyET3g==}
     engines: {node: '>= 0.4'}
 
-  arkregex@0.0.5:
-    resolution: {integrity: sha512-ncYjBdLlh5/QnVsAA8De16Tc9EqmYM7y/WU9j+236KcyYNUXogpz3sC4ATIZYzzLxwI+0sEOaQLEmLmRleaEXw==}
+  arkregex@0.0.13:
+    resolution: {integrity: sha512-c17sqCqiiZauxyoU1KZ2zbzCgeghGmc8dR2CrdQnlEtpq3bLhRLoLrxTL52M/8yQD8e/i1/IBRpRCNAuqJa7xQ==}
 
-  arktype@2.1.29:
-    resolution: {integrity: sha512-jyfKk4xIOzvYNayqnD8ZJQqOwcrTOUbIU4293yrzAjA3O1dWh61j71ArMQ6tS/u4pD7vabSPe7nG3RCyoXW6RQ==}
+  arktype@2.2.8:
+    resolution: {integrity: sha512-tZyLza7kO2vN8BXBKcj4t43IVMe8/ZyqlITH0chZv7FfEw+edLovpY922tqcK4mCjTpf4oNo2xV6np7tquP1ww==}
 
   array-ify@1.0.0:
     resolution: {integrity: sha512-c5AMf34bKdvPhQ7tBGhqkgKNUzMr4WUs+WDtC2ZUGOUncbxKMTvqxYctiseW3+L4bA8ec+GcZ6/A/FW4m8ukng==}
@@ -7505,11 +7505,11 @@ snapshots:
       debug: 4.4.3
       module-details-from-path: 1.0.4
 
-  '@ark/schema@0.56.0':
+  '@ark/schema@0.56.7':
     dependencies:
-      '@ark/util': 0.56.0
+      '@ark/util': 0.56.7
 
-  '@ark/util@0.56.0': {}
+  '@ark/util@0.56.7': {}
 
   '@asamuzakjp/css-color@4.1.2':
     dependencies:
@@ -9615,15 +9615,15 @@ snapshots:
 
   aria-query@5.3.1: {}
 
-  arkregex@0.0.5:
+  arkregex@0.0.13:
     dependencies:
-      '@ark/util': 0.56.0
+      '@ark/util': 0.56.7
 
-  arktype@2.1.29:
+  arktype@2.2.8:
     dependencies:
-      '@ark/schema': 0.56.0
-      '@ark/util': 0.56.0
-      arkregex: 0.0.5
+      '@ark/schema': 0.56.7
+      '@ark/util': 0.56.7
+      arkregex: 0.0.13
 
   array-ify@1.0.0: {}
 
