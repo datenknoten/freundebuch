@@ -1,11 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { handleError } from '@datenknoten/kit/http';
 import type { Auth } from '@freundebuch/backend/lib/auth.js';
 import { NodeStreamableHTTPServerTransport } from '@modelcontextprotocol/node';
 import type pg from 'pg';
 import type { Logger } from 'pino';
 import { createMcpServer } from './server.js';
-import { getPublicBaseUrl, verifyBearerToken } from './utils/bearer-auth.js';
+import type { Session } from './session.js';
+import {
+  type BearerAuthContext,
+  getPublicBaseUrl,
+  verifyBearerToken,
+} from './utils/bearer-auth.js';
+import { getClientIp } from './utils/client-ip.js';
 import type { Services } from './utils/service-factory.js';
 
 // Brute-force / rate limiting is handled at the infrastructure layer — see
@@ -14,12 +21,7 @@ import type { Services } from './utils/service-factory.js';
 // limiter would not survive restarts or span replicas. Failed auth attempts
 // are still logged via `logger.warn` so infrastructure alerting can trigger.
 
-export interface Session {
-  transport: NodeStreamableHTTPServerTransport;
-  userId: string;
-}
-
-interface HandlerDeps {
+export interface McpRequestHandlerOptions {
   services: Services;
   logger: Logger;
   /** Validates OAuth bearer tokens against the co-located authorization server. */
@@ -32,31 +34,15 @@ interface HandlerDeps {
   maxBodyBytes?: number;
 }
 
-const DEFAULT_MAX_BODY_BYTES = 1_048_576; // 1 MiB; MCP JSON-RPC bodies are small.
+type AuthScheme = 'Bearer' | 'Basic';
 
-export function getClientIp(req: IncomingMessage): string {
-  // Trust order matters: nginx sets `X-Real-IP` to `$remote_addr` (the trusted
-  // upstream hop), and `X-Forwarded-For` via `$proxy_add_x_forwarded_for` which
-  // *appends* the trusted source to whatever the client sent. So the first XFF
-  // entry is client-supplied and spoofable; the trustworthy hop is the last one.
-  const realIp = req.headers['x-real-ip'];
-  if (typeof realIp === 'string') {
-    const trimmed = realIp.trim();
-    if (trimmed.length > 0) return trimmed;
-  }
-
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') {
-    const hops = forwarded
-      .split(',')
-      .map((value) => value.trim())
-      .filter((value) => value.length > 0);
-    const lastHop = hops.at(-1);
-    if (lastHop !== undefined) return lastHop;
-  }
-
-  return req.socket.remoteAddress ?? 'unknown';
+/** `user` is absent when the request is not authenticated; `scheme` picks the 401 challenge. */
+interface Authentication {
+  scheme: AuthScheme;
+  user?: BearerAuthContext;
 }
+
+const DEFAULT_MAX_BODY_BYTES = 1_048_576; // 1 MiB; MCP JSON-RPC bodies are small.
 
 function sendJson(
   res: ServerResponse,
@@ -106,22 +92,73 @@ function sendBasicUnauthorized(res: ServerResponse) {
 /**
  * 401 whose challenge scheme matches the credentials the client presented — a
  * Bearer challenge for OAuth clients (so they can restart RFC 9728 discovery /
- * reauth), a Basic challenge for app-password clients. Used for requests that
- * authenticated successfully but are still rejected, e.g. a session id owned by
- * a different user: re-challenging in the wrong scheme would push an OAuth
- * client into Basic and break its reauth flow.
+ * reauth), a Basic challenge for app-password clients. Also used for requests
+ * that authenticated successfully but are still rejected, e.g. a session id
+ * owned by a different user: re-challenging in the wrong scheme would push an
+ * OAuth client into Basic and break its reauth flow.
  */
-function sendUnauthorizedForScheme(
+function sendUnauthorized(
   res: ServerResponse,
   req: IncomingMessage,
-  authHeader: string | undefined,
+  scheme: AuthScheme,
   betterAuthUrl?: string,
 ) {
-  if (authHeader?.startsWith('Bearer ')) {
+  if (scheme === 'Bearer') {
     sendBearerUnauthorized(res, req, betterAuthUrl);
-  } else {
-    sendBasicUnauthorized(res);
+    return;
   }
+  sendBasicUnauthorized(res);
+}
+
+/**
+ * Two schemes are accepted: Bearer (OAuth access tokens issued by the Better
+ * Auth authorization server, used by claude.ai and other remote MCP clients)
+ * and Basic (app passwords, used by existing CLI/desktop clients). A request
+ * without credentials or with an unsupported scheme is challenged with Bearer,
+ * so MCP clients begin OAuth discovery; app-password clients send Basic
+ * proactively.
+ */
+async function authenticate(req: IncomingMessage, options: McpRequestHandlerOptions) {
+  const { auth, pool, services, logger } = options;
+  const authHeader = req.headers.authorization;
+
+  if (authHeader?.startsWith('Bearer ') === true) {
+    const user = await verifyBearerToken(req, { auth, pool, logger });
+    if (user === undefined) {
+      logger.warn(
+        { ip: getClientIp(req) },
+        'MCP bearer-auth failure (infrastructure rate limiting should throttle repeats)',
+      );
+      return { scheme: 'Bearer' } satisfies Authentication;
+    }
+    return { scheme: 'Bearer', user } satisfies Authentication;
+  }
+
+  if (authHeader?.startsWith('Basic ') !== true) {
+    return { scheme: 'Bearer' } satisfies Authentication;
+  }
+
+  const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf-8');
+  const colonIndex = decoded.indexOf(':');
+  if (colonIndex === -1) {
+    return { scheme: 'Basic' } satisfies Authentication;
+  }
+
+  const email = decoded.slice(0, colonIndex);
+  const password = decoded.slice(colonIndex + 1);
+  const appPassword = await services.appPasswords.verifyAppPassword(email, password);
+  if (appPassword === undefined) {
+    logger.warn(
+      { ip: getClientIp(req), email },
+      'MCP basic-auth failure (infrastructure rate limiting should throttle repeats)',
+    );
+    return { scheme: 'Basic' } satisfies Authentication;
+  }
+
+  return {
+    scheme: 'Basic',
+    user: { userId: appPassword.userId, email: appPassword.email },
+  } satisfies Authentication;
 }
 
 type ReadResult = { ok: true; body: string } | { ok: false; reason: 'too-large' | 'stream-error' };
@@ -216,17 +253,31 @@ function readSessionIdHeader(
   return { ok: true, sessionId: value };
 }
 
-export function createMcpRequestHandler(
-  deps: HandlerDeps,
-): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
-  const { services, logger, sessions, pool, auth, betterAuthUrl } = deps;
-  const maxBodyBytes = deps.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
+export function createMcpRequestHandler(options: McpRequestHandlerOptions) {
+  const { services, logger, sessions, betterAuthUrl } = options;
+  const maxBodyBytes = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
 
-  return async function handleRequest(req, res) {
+  return async function handleRequest(req: IncomingMessage, res: ServerResponse) {
+    try {
+      await routeRequest(req, res);
+    } catch (error) {
+      const { status, body } = handleError(error, logger);
+      // The MCP transport may have started streaming before it failed; the
+      // status line is gone then, so only close the response.
+      if (res.headersSent === true) {
+        res.end();
+        return;
+      }
+      res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify(body));
+    }
+  };
+
+  async function routeRequest(req: IncomingMessage, res: ServerResponse) {
     // `Host` is optional in HTTP/1.0 and can be missing behind some proxies, so
     // use a fixed base — we only care about pathname here, not the host.
     const url = new URL(req.url ?? '/', 'http://localhost');
-    const pathname = url.pathname.replace(/\/+$/, '') || '/';
+    const trimmedPathname = url.pathname.replace(/\/+$/, '');
+    const pathname = trimmedPathname === '' ? '/' : trimmedPathname;
 
     if (pathname === '/health') {
       sendJson(res, 200, { status: 'ok' });
@@ -237,72 +288,27 @@ export function createMcpRequestHandler(
       return;
     }
 
-    // Authenticate every request. Two schemes are accepted:
-    //  - Bearer: OAuth access tokens issued by the Better Auth authorization
-    //    server (used by claude.ai and other remote MCP clients).
-    //  - Basic: app passwords (used by existing CLI/desktop clients).
-    // Both resolve to the same `{ userId (legacy external_id), email }` shape.
-    const authHeader = req.headers.authorization;
-    let authResult: { userId: string; email: string } | undefined;
-
-    if (authHeader?.startsWith('Bearer ')) {
-      authResult = await verifyBearerToken(req, { auth, pool, logger });
-      if (authResult === undefined) {
-        logger.warn(
-          { ip: getClientIp(req) },
-          'MCP bearer-auth failure (infrastructure rate limiting should throttle repeats)',
-        );
-        sendBearerUnauthorized(res, req, betterAuthUrl);
-        return;
-      }
-    } else if (authHeader?.startsWith('Basic ')) {
-      const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf-8');
-      const colonIndex = decoded.indexOf(':');
-      if (colonIndex === -1) {
-        sendBasicUnauthorized(res);
-        return;
-      }
-
-      const email = decoded.slice(0, colonIndex);
-      const password = decoded.slice(colonIndex + 1);
-
-      const basicResult = await services.appPasswords.verifyAppPassword(email, password);
-      if (basicResult === undefined) {
-        logger.warn(
-          { ip: getClientIp(req), email },
-          'MCP basic-auth failure (infrastructure rate limiting should throttle repeats)',
-        );
-        sendBasicUnauthorized(res);
-        return;
-      }
-      authResult = { userId: basicResult.userId, email: basicResult.email };
-    } else {
-      // No credentials (or an unsupported scheme): advertise the OAuth flow so
-      // MCP clients begin discovery. App-password clients send Basic
-      // proactively and never reach this branch.
-      sendBearerUnauthorized(res, req, betterAuthUrl);
-      return;
-    }
-
-    // Every non-returning branch above assigns authResult; this guard also
-    // narrows the type for the rest of the handler.
-    if (authResult === undefined) {
-      sendBearerUnauthorized(res, req, betterAuthUrl);
+    const { scheme, user } = await authenticate(req, options);
+    if (user === undefined) {
+      sendUnauthorized(res, req, scheme, betterAuthUrl);
       return;
     }
 
     const sessionHeader = readSessionIdHeader(req, res);
-    if (!sessionHeader.ok) return;
+    if (sessionHeader.ok === false) {
+      return;
+    }
     const sessionId = sessionHeader.sessionId;
+    const session = sessionId === undefined ? undefined : sessions.get(sessionId);
 
     if (req.method === 'POST') {
       const read = await readBody(req, maxBodyBytes);
-      if (!read.ok) {
+      if (read.ok === false) {
         if (read.reason === 'too-large') {
           sendJson(res, 413, { error: 'Payload Too Large', maxBytes: maxBodyBytes });
-        } else {
-          sendJson(res, 400, { error: 'Request stream error' });
+          return;
         }
+        sendJson(res, 400, { error: 'Request stream error' });
         return;
       }
 
@@ -314,70 +320,63 @@ export function createMcpRequestHandler(
         return;
       }
 
-      const existingSession = sessionId ? sessions.get(sessionId) : undefined;
-      if (existingSession) {
-        if (existingSession.userId !== authResult.userId) {
-          sendUnauthorizedForScheme(res, req, authHeader, betterAuthUrl);
+      if (session !== undefined) {
+        if (session.userId !== user.userId) {
+          sendUnauthorized(res, req, scheme, betterAuthUrl);
           return;
         }
-        await existingSession.transport.handleRequest(req, res, parsedBody);
+        await session.transport.handleRequest(req, res, parsedBody);
         return;
       }
 
-      // New session
       const newSessionId = randomUUID();
       const transport = new NodeStreamableHTTPServerTransport({
         sessionIdGenerator: () => newSessionId,
       });
 
-      const userId = authResult.userId;
+      const userId = user.userId;
       const server = createMcpServer(services, () => userId);
       sessions.set(newSessionId, { transport, userId });
 
-      transport.onclose = () => {
+      transport.onclose = function onSessionClose() {
         sessions.delete(newSessionId);
         logger.debug({ sessionId: newSessionId }, 'MCP session closed');
       };
 
       await server.connect(transport);
-      logger.info(
-        { sessionId: newSessionId, email: authResult.email },
-        'New MCP session established',
-      );
+      logger.info({ sessionId: newSessionId, email: user.email }, 'New MCP session established');
       await transport.handleRequest(req, res, parsedBody);
       return;
     }
 
     if (req.method === 'GET') {
-      const getSession = sessionId ? sessions.get(sessionId) : undefined;
-      if (!getSession) {
+      if (session === undefined) {
         sendJson(res, 400, { error: 'Missing or invalid session ID' });
         return;
       }
-      if (getSession.userId !== authResult.userId) {
-        sendUnauthorizedForScheme(res, req, authHeader, betterAuthUrl);
+      if (session.userId !== user.userId) {
+        sendUnauthorized(res, req, scheme, betterAuthUrl);
         return;
       }
-      await getSession.transport.handleRequest(req, res);
+      await session.transport.handleRequest(req, res);
       return;
     }
 
     if (req.method === 'DELETE') {
-      const deleteSession = sessionId ? sessions.get(sessionId) : undefined;
-      if (!deleteSession) {
+      if (sessionId === undefined || session === undefined) {
         sendJson(res, 404, { error: 'Session not found' });
         return;
       }
-      if (deleteSession.userId !== authResult.userId) {
-        sendUnauthorizedForScheme(res, req, authHeader, betterAuthUrl);
+      if (session.userId !== user.userId) {
+        sendUnauthorized(res, req, scheme, betterAuthUrl);
         return;
       }
-      await deleteSession.transport.handleRequest(req, res);
-      sessions.delete(sessionId as string);
+      await session.transport.handleRequest(req, res);
+      sessions.delete(sessionId);
       logger.info({ sessionId }, 'MCP session terminated');
       return;
     }
 
     sendJson(res, 405, { error: 'Method not allowed' });
-  };
+  }
 }

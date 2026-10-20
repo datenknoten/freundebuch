@@ -1,6 +1,6 @@
 import type { IncomingMessage } from 'node:http';
 import { describe, expect, it } from 'vitest';
-import { getClientIp } from '../src/http-handler.js';
+import { getClientIp } from '../src/utils/client-ip.js';
 
 function makeReq(opts: {
   headers?: Record<string, string | string[]>;

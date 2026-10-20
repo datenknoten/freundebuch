@@ -8,7 +8,7 @@ import {
   restoreAppPasswordsForUser,
   revokeAppPasswordsForUser,
   setupMcpTestSuite,
-} from './helpers.js';
+} from './helpers/mcp-test-suite.js';
 
 describe('MCP Server', { timeout: 60000 }, () => {
   const { getContext } = setupMcpTestSuite();

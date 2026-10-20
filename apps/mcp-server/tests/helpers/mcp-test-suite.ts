@@ -7,21 +7,11 @@ import pg from 'pg';
 import type { Logger } from 'pino';
 import pino from 'pino';
 import { afterAll, beforeAll, inject } from 'vitest';
-import { createMcpRequestHandler, type Session } from '../src/http-handler.js';
-import { createServices, type Services } from '../src/utils/service-factory.js';
-
-/** The auth and photo settings the MCP server's backend collaborators read. */
-const TEST_CONFIG = {
-  BETTER_AUTH_SECRET: 'test-better-auth-secret-test-better-auth-secret-1',
-  DISABLE_SIGNUP: false,
-  ENV: 'test',
-  FRONTEND_URL: 'http://localhost:5173',
-  LOG_LEVEL: 'silent',
-  RATE_LIMIT_ENABLED: false,
-  SMTP_SECURE: false,
-  BACKEND_URL: 'http://localhost:3000',
-  UPLOAD_DIR: '/tmp/mcp-test-uploads',
-} as const;
+import { loadConfig } from '../../src/config.js';
+import { createMcpRequestHandler } from '../../src/http-handler.js';
+import type { Session } from '../../src/session.js';
+import { createServices, type Services } from '../../src/utils/service-factory.js';
+import { TEST_ENV } from './test-env.js';
 
 /**
  * Suite hooks only clone a database and boot an in-process HTTP server now, but
@@ -355,20 +345,11 @@ export function setupMcpTestSuite() {
       poolLogger.error({ err }, 'pg pool error during MCP integration test');
     });
 
+    const config = loadConfig({ ...TEST_ENV, DATABASE_URL: databaseUri });
     const logger: Logger = pino({ level: 'silent' });
-    const services = createServices({ db: pool, logger, photoConfig: TEST_CONFIG });
-    const authPool = createAuthPool({
-      config: {
-        DATABASE_URL: databaseUri,
-        DATABASE_POOL_MIN: 1,
-        DATABASE_POOL_MAX: 2,
-        DATABASE_CONNECTION_TIMEOUT_MS: 5000,
-        DATABASE_IDLE_TIMEOUT_MS: 30000,
-        DATABASE_STATEMENT_TIMEOUT_MS: 30000,
-      },
-      logger,
-    });
-    const auth = createAuth({ config: TEST_CONFIG, pool: authPool, logger });
+    const services = createServices({ db: pool, logger, photoConfig: config });
+    const authPool = createAuthPool({ config, logger });
+    const auth = createAuth({ config, pool: authPool, logger });
 
     const testUser = await createTestUserWithAppPassword(pool, 'mcp-test@example.com');
     const otherUser = await createTestUserWithAppPassword(pool, 'mcp-other@example.com');

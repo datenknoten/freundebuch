@@ -39,7 +39,7 @@ export async function verifyBearerToken(req: IncomingMessage, options: BearerAut
   try {
     session = await auth.api.getMcpSession({ headers });
   } catch (err) {
-    logger.error({ err }, 'Error validating MCP bearer token');
+    logger.warn({ err }, 'MCP bearer token verification failed');
     return undefined;
   }
 

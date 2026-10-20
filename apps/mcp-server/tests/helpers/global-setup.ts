@@ -88,7 +88,7 @@ export default async function setup({ provide }: GlobalSetupContext): Promise<()
     await runner({
       dbClient: client,
       migrationsTable: 'pgmigrations',
-      dir: path.resolve(__dirname, '../../../database/migrations'),
+      dir: path.resolve(__dirname, '../../../../database/migrations'),
       direction: 'up',
       count: Number.POSITIVE_INFINITY,
       decamelize: true,

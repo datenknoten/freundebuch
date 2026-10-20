@@ -8,8 +8,8 @@ export default defineConfig({
     environment: 'node',
     fileParallelism: false,
     // One shared PostGIS server for the whole run; each suite clones a fresh
-    // database from the migrated template (see tests/global-setup.ts).
-    globalSetup: ['./tests/global-setup.ts'],
+    // database from the migrated template (see tests/helpers/global-setup.ts).
+    globalSetup: ['./tests/helpers/global-setup.ts'],
     exclude: ['node_modules', 'dist', '.git', '.cache'],
   },
 });

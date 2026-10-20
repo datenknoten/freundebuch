@@ -37,29 +37,36 @@ export interface Services {
 
 export function createServices(options: ServicesOptions) {
   const { db, logger, photoConfig } = options;
+  const friendsLogger = logger.child({ module: 'friends' });
 
   return {
     // No address lookup here: the MCP tools never geocode new addresses.
     friends: new FriendsService({
       db,
-      logger,
-      photoService: new PhotoService({ logger, config: photoConfig }),
-      searchService: new SearchService({ db, logger }),
-      relationshipService: new RelationshipService({ db, logger }),
-      networkGraphService: new NetworkGraphService({ db, logger }),
-      phoneService: new PhoneService({ db, logger }),
-      emailService: new EmailService({ db, logger }),
-      addressService: new AddressService({ db, logger }),
-      urlService: new UrlService({ db, logger }),
-      dateService: new DateService({ db, logger }),
-      socialProfileService: new SocialProfileService({ db, logger }),
-      professionalHistoryService: new ProfessionalHistoryService({ db, logger }),
-      metInfoService: new MetInfoService({ db, logger }),
+      logger: friendsLogger,
+      photoService: new PhotoService({
+        logger: logger.child({ module: 'photos' }),
+        config: photoConfig,
+      }),
+      searchService: new SearchService({ db, logger: friendsLogger }),
+      relationshipService: new RelationshipService({ db, logger: friendsLogger }),
+      networkGraphService: new NetworkGraphService({ db, logger: friendsLogger }),
+      phoneService: new PhoneService({ db, logger: friendsLogger }),
+      emailService: new EmailService({ db, logger: friendsLogger }),
+      addressService: new AddressService({ db, logger: friendsLogger }),
+      urlService: new UrlService({ db, logger: friendsLogger }),
+      dateService: new DateService({ db, logger: friendsLogger }),
+      socialProfileService: new SocialProfileService({ db, logger: friendsLogger }),
+      professionalHistoryService: new ProfessionalHistoryService({ db, logger: friendsLogger }),
+      metInfoService: new MetInfoService({ db, logger: friendsLogger }),
     }),
     circles: new CirclesService({ db }),
     collectives: new CollectivesService({ db }),
     encounters: new EncountersService({ db }),
-    friendNotes: new FriendNotesService({ db, logger }),
-    appPasswords: new AppPasswordsService({ db, logger }),
+    friendNotes: new FriendNotesService({ db, logger: friendsLogger }),
+    appPasswords: new AppPasswordsService({
+      db,
+      logger: logger.child({ module: 'app-passwords' }),
+    }),
   } satisfies Services;
 }
