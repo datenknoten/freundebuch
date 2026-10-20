@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, useLanguage } from '$lib/test';
-import FacetChips from './facet-chips.svelte';
+import { useLanguage } from '$lib/test/locale.js';
+import { fireEvent, render, screen } from '$lib/test/render.js';
+import FacetChips from './FacetChips.svelte';
 
 // Hoisted above the mock factory so the test body and the mocked module share
 // the same store. Hand-rolled rather than `writable`, because `vi.hoisted`

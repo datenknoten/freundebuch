@@ -1,0 +1,142 @@
+<script lang="ts">
+import ViewColumns from 'svelte-heros-v2/ViewColumns.svelte';
+import Button from '$lib/components/ui/Button.svelte';
+import { surfaceClasses } from '$lib/components/ui/styles.js';
+import { createI18n } from '$lib/i18n/i18n.js';
+import { COLUMN_DEFINITIONS, type ColumnId, DEFAULT_COLUMNS, REQUIRED_COLUMNS } from '$shared';
+
+const i18n = createI18n();
+
+interface Props {
+  columns: ColumnId[];
+  onColumnsChange: (columns: ColumnId[]) => void;
+}
+
+let { columns, onColumnsChange }: Props = $props();
+let isOpen = $state(false);
+
+// All available columns (in display order)
+const availableColumns: ColumnId[] = [
+  'avatar',
+  'displayName',
+  'circles',
+  'primaryEmail',
+  'primaryPhone',
+  'nickname',
+  'organization',
+  'jobTitle',
+  'department',
+  'primaryCity',
+  'primaryCountry',
+  'birthday',
+  'isFavorite',
+  'createdAt',
+  'updatedAt',
+];
+
+function isColumnVisible(columnId: ColumnId): boolean {
+  return columns.includes(columnId);
+}
+
+function isColumnRequired(columnId: ColumnId): boolean {
+  return REQUIRED_COLUMNS.includes(columnId);
+}
+
+function toggleColumn(columnId: ColumnId) {
+  if (isColumnRequired(columnId)) return;
+
+  const newColumns = isColumnVisible(columnId)
+    ? columns.filter((c) => c !== columnId)
+    : [...columns, columnId];
+
+  // Maintain a consistent order based on availableColumns
+  const orderedColumns = availableColumns.filter((c) => newColumns.includes(c));
+  onColumnsChange(orderedColumns);
+}
+
+function resetToDefaults() {
+  onColumnsChange([...DEFAULT_COLUMNS]);
+}
+
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.column-chooser')) {
+    isOpen = false;
+  }
+}
+
+$effect(() => {
+  if (!isOpen) return undefined;
+  document.addEventListener('click', handleClickOutside);
+  return () => document.removeEventListener('click', handleClickOutside);
+});
+</script>
+
+<div class="relative column-chooser">
+  <Button
+    variant="secondary"
+    size="sm"
+    onclick={(e) => {
+      e.stopPropagation();
+      isOpen = !isOpen;
+    }}
+    title={$i18n.t('aria.chooseColumns')}
+    aria-label={$i18n.t('aria.chooseColumns')}
+    aria-expanded={isOpen}
+  >
+    <ViewColumns class="w-4 h-4" strokeWidth="2" />
+    <span>{$i18n.t('common.columns')}</span>
+  </Button>
+
+  {#if isOpen}
+    <div
+      class="absolute right-0 top-full mt-2 w-56 {surfaceClasses.popover} z-(--z-popover)"
+    >
+      <div class="px-3 pb-2 border-b border-gray-100">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            {$i18n.t('common.visibleColumns')}
+          </span>
+          <button
+            type="button"
+            onclick={resetToDefaults}
+            class="text-xs text-forest hover:text-forest-light transition-colors"
+          >
+            {$i18n.t('common.reset')}
+          </button>
+        </div>
+      </div>
+
+      <div class="max-h-64 overflow-y-auto py-1">
+        {#each availableColumns as columnId}
+          {@const definition = COLUMN_DEFINITIONS[columnId]}
+          {@const isRequired = isColumnRequired(columnId)}
+          {@const isVisible = isColumnVisible(columnId)}
+          <label
+            class="flex items-center gap-3 px-3 py-1.5 cursor-pointer hover:bg-gray-50 transition-colors"
+            class:opacity-60={isRequired}
+            class:cursor-not-allowed={isRequired}
+          >
+            <input
+              type="checkbox"
+              checked={isVisible}
+              disabled={isRequired}
+              onchange={() => toggleColumn(columnId)}
+              class="rounded border-gray-300 text-forest focus-visible:ring-forest disabled:opacity-50"
+            />
+            <span class="flex-1 text-sm text-gray-700">
+              {#if columnId === 'avatar'}
+                {$i18n.t('friends.columns.avatarPickerLabel')}
+              {:else}
+                {$i18n.t(definition.i18nKey, { defaultValue: definition.label }) || columnId}
+              {/if}
+            </span>
+            {#if isRequired}
+              <span class="text-xs text-gray-400">{$i18n.t('common.required')}</span>
+            {/if}
+          </label>
+        {/each}
+      </div>
+    </div>
+  {/if}
+</div>

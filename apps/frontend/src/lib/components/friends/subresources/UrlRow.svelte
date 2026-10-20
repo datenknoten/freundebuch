@@ -1,0 +1,56 @@
+<script lang="ts">
+import { createI18n } from '$lib/i18n/i18n.js';
+import type { UrlResponse, UrlType } from '$shared';
+import SubresourceRow from './SubresourceRow.svelte';
+
+interface Props {
+  url: UrlResponse;
+  onEdit: () => void;
+  onDelete: () => void;
+  isDeleting?: boolean;
+  /** Keyboard chord that opens this link (e.g. "o 3"), shown as a hint on click */
+  shortcutHint?: string;
+}
+
+let { url, onEdit, onDelete, isDeleting = false, shortcutHint }: Props = $props();
+
+const i18n = createI18n();
+
+function urlTypeLabel(type: UrlType): string {
+  return $i18n.t(`subresources.url.types.${type}`);
+}
+
+function formatUrl(rawUrl: string): string {
+  try {
+    const parsed = new URL(rawUrl);
+    return parsed.hostname + (parsed.pathname !== '/' ? parsed.pathname : '');
+  } catch {
+    return rawUrl;
+  }
+}
+</script>
+
+<SubresourceRow
+  {onEdit}
+  {onDelete}
+  {isDeleting}
+  editLabel={$i18n.t('subresources.url.editAria')}
+  deleteLabel={$i18n.t('subresources.url.deleteAria')}
+>
+  <div class="flex-1 min-w-0">
+    <a
+      href={url.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-forest font-body font-semibold hover:text-forest-light truncate block"
+      data-shortcut={shortcutHint}
+      data-shortcut-label={shortcutHint ? 'shortcuts.panels.openLink' : undefined}
+    >
+      {formatUrl(url.url)}
+    </a>
+    <span class="text-sm text-gray-500 block sm:inline sm:ml-2">
+      {urlTypeLabel(url.urlType)}
+      {#if url.label} - {url.label}{/if}
+    </span>
+  </div>
+</SubresourceRow>

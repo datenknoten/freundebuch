@@ -1,7 +1,7 @@
 <script lang="ts">
 import ChevronLeft from 'svelte-heros-v2/ChevronLeft.svelte';
-import { PageShell } from '$lib/components/ui';
-import { createI18n } from '$lib/i18n/index.js';
+import PageShell from '$lib/components/ui/PageShell.svelte';
+import { createI18n } from '$lib/i18n/i18n.js';
 import { currentLanguage } from '$lib/stores/locale';
 
 const i18n = createI18n();

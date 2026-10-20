@@ -1,10 +1,10 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { page } from '$app/stores';
-import AlertBanner from '$lib/components/alert-banner.svelte';
-import { PageShell } from '$lib/components/ui';
-import Button from '$lib/components/ui/button.svelte';
-import { createI18n } from '$lib/i18n/index.js';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
+import Button from '$lib/components/ui/Button.svelte';
+import PageShell from '$lib/components/ui/PageShell.svelte';
+import { createI18n } from '$lib/i18n/i18n.js';
 
 const i18n = createI18n();
 

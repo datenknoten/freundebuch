@@ -1,15 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import {
-  aFriendDate,
-  fireEvent,
-  itemAt,
-  render,
-  screen,
-  useLanguage,
-  withDefaultLocale,
-} from '$lib/test';
-import DateRow from './date-row.svelte';
+import { aFriendDate } from '$lib/test/fixtures.js';
+import { itemAt } from '$lib/test/item-at.js';
+import { useLanguage, withDefaultLocale } from '$lib/test/locale.js';
+import { fireEvent, render, screen } from '$lib/test/render.js';
+import DateRow from './DateRow.svelte';
 
 const strings = en.subresources;
 

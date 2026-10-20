@@ -1,7 +1,7 @@
 import { createRawSnippet } from 'svelte';
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '$lib/test';
-import AlertBanner from './alert-banner.svelte';
+import { render, screen } from '$lib/test/render.js';
+import AlertBanner from './AlertBanner.svelte';
 
 const message = (text: string) =>
   createRawSnippet(() => ({ render: () => `<span>${text}</span>` }));

@@ -1,6 +1,7 @@
 import { readable } from 'svelte/store';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { control, render, useLanguage } from '$lib/test';
+import { useLanguage } from '$lib/test/locale.js';
+import { control, render } from '$lib/test/render.js';
 import AccountPage from './+page.svelte';
 
 vi.mock('$lib/stores/auth', () => ({

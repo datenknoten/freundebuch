@@ -1,19 +1,12 @@
 import { get } from 'svelte/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isModalOpen, resetOpenOverlays } from '$lib/stores/ui';
-import {
-  aCollective,
-  aCollectiveMember,
-  fireEvent,
-  itemAt,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '$lib/test';
-import MemberSection from './member-section.svelte';
+import { aCollective, aCollectiveMember } from '$lib/test/fixtures.js';
+import { itemAt } from '$lib/test/item-at.js';
+import { fireEvent, render, screen, waitFor, within } from '$lib/test/render.js';
+import MemberSection from './MemberSection.svelte';
 
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });

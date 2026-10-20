@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '$lib/test';
+import { fireEvent, render, screen } from '$lib/test/render.js';
 import type { CircleSummaryResponse } from '$shared';
-import CircleChips from './circle-chips.svelte';
+import CircleChips from './CircleChips.svelte';
 
 // i18n echoes keys so the assertions target stable keys, not English text.
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });

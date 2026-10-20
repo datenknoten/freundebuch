@@ -1,0 +1,258 @@
+<script lang="ts">
+import { onMount } from 'svelte';
+import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
+import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
+import { chipClasses, formClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { createI18n } from '$lib/i18n/i18n.js';
+import {
+  RELATIONSHIP_CATEGORIES,
+  RELATIONSHIP_CATEGORY_STYLE,
+} from '$lib/utils/relationship-categories';
+import type {
+  RelationshipCategory,
+  RelationshipTypeId,
+  RelationshipTypeResponse,
+  RelationshipTypesGroupedResponse,
+} from '$shared';
+
+const i18n = createI18n();
+
+interface Props {
+  /** The relationship types grouped by category */
+  relationshipTypes: RelationshipTypesGroupedResponse;
+  /** The currently selected type ID */
+  value: RelationshipTypeId;
+  /** Whether the input is disabled */
+  disabled?: boolean;
+  /** Whether to autofocus the input on mount */
+  autofocus?: boolean;
+  /** Called when a type is selected (viaKeyboard is true if Enter was used) */
+  onSelect?: (typeId: RelationshipTypeId, viaKeyboard: boolean) => void;
+}
+
+let { relationshipTypes, value, disabled = false, autofocus = false, onSelect }: Props = $props();
+
+let query = $state('');
+let showDropdown = $state(false);
+let highlightedIndex = $state(-1);
+let inputElement = $state<HTMLInputElement | undefined>(undefined);
+
+// Flatten all types for filtering; the category comes from the grouped shape,
+// so it is always one of the three known categories.
+const allTypes = $derived(() => {
+  const types: Array<RelationshipTypeResponse & { category: RelationshipCategory }> = [];
+  for (const category of RELATIONSHIP_CATEGORIES) {
+    for (const type of relationshipTypes[category]) {
+      types.push({ ...type, category });
+    }
+  }
+  return types;
+});
+
+// Filter types based on query
+const filteredTypes = $derived(() => {
+  const q = query.toLowerCase().trim();
+  if (!q) return allTypes();
+  return allTypes().filter(
+    (type) =>
+      type.label.toLowerCase().includes(q) ||
+      type.id.toLowerCase().includes(q) ||
+      type.category.toLowerCase().includes(q),
+  );
+});
+
+let containerElement: HTMLDivElement;
+
+onMount(() => {
+  if (autofocus && inputElement) {
+    requestAnimationFrame(() => {
+      inputElement?.focus();
+    });
+  }
+
+  // Listen for activate event from parent
+  function handleActivate() {
+    activateInput();
+  }
+
+  const parent = containerElement?.parentElement;
+  parent?.addEventListener('activate', handleActivate);
+  return () => parent?.removeEventListener('activate', handleActivate);
+});
+
+function selectType(type: RelationshipTypeResponse & { category: string }, viaKeyboard = false) {
+  query = '';
+  showDropdown = false;
+  highlightedIndex = -1;
+  onSelect?.(type.id as RelationshipTypeId, viaKeyboard);
+}
+
+function handleInput() {
+  showDropdown = true;
+  highlightedIndex = -1;
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if (!showDropdown) {
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      showDropdown = true;
+    }
+    return;
+  }
+
+  const types = filteredTypes();
+
+  switch (e.key) {
+    case 'ArrowDown':
+      e.preventDefault();
+      highlightedIndex = Math.min(highlightedIndex + 1, types.length - 1);
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      highlightedIndex = Math.max(highlightedIndex - 1, -1);
+      break;
+    case 'Enter': {
+      e.preventDefault();
+      const highlighted = types[highlightedIndex];
+      const topMatch = types[0];
+      if (highlighted !== undefined) {
+        selectType(highlighted, true);
+      } else if (query.trim() && topMatch !== undefined) {
+        // No explicit highlight, but the user searched and there are matches:
+        // select the top match so Enter confirms the visible result.
+        selectType(topMatch, true);
+      }
+      break;
+    }
+    case 'Escape':
+      showDropdown = false;
+      highlightedIndex = -1;
+      query = '';
+      break;
+    case 'Tab':
+      showDropdown = false;
+      highlightedIndex = -1;
+      query = '';
+      break;
+  }
+}
+
+function handleBlur() {
+  setTimeout(() => {
+    showDropdown = false;
+    highlightedIndex = -1;
+    query = '';
+  }, 200);
+}
+
+function handleFocus() {
+  showDropdown = true;
+}
+
+function activateInput() {
+  if (disabled) return;
+  query = '';
+  showDropdown = true;
+  // Use requestAnimationFrame to ensure the input is rendered before focusing
+  requestAnimationFrame(() => {
+    inputElement?.focus();
+  });
+}
+
+function handleButtonKeydown(e: KeyboardEvent) {
+  // Activate input on Enter, Space, or ArrowDown - let Tab pass through naturally
+  if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    activateInput();
+  }
+}
+</script>
+
+<div class="relative" bind:this={containerElement}>
+  <div class="relative">
+    {#if value && !showDropdown}
+      <!-- Show selected value as a focusable button -->
+      <button
+        type="button"
+        onclick={activateInput}
+        onkeydown={handleButtonKeydown}
+        {disabled}
+        class="{formClasses.inputSm} flex items-center justify-between text-left {disabled
+          ? 'opacity-50 cursor-not-allowed bg-gray-50'
+          : 'bg-white cursor-pointer hover:border-gray-400'}"
+      >
+        <div class="flex items-center gap-2">
+          {#each allTypes().filter((t) => t.id === value) as type}
+            <span
+              class="{chipClasses.base} {RELATIONSHIP_CATEGORY_STYLE[type.category]
+                .bgColor} {RELATIONSHIP_CATEGORY_STYLE[type.category].textColor}"
+            >
+              {$i18n.t(RELATIONSHIP_CATEGORY_STYLE[type.category].labelKey)}
+            </span>
+            <span class="text-gray-900">{type.label}</span>
+          {/each}
+        </div>
+        <ChevronDown class="w-4 h-4 text-gray-400" strokeWidth="2" />
+      </button>
+    {:else}
+      <!-- Show search input -->
+      <input
+        type="text"
+        bind:this={inputElement}
+        bind:value={query}
+        oninput={handleInput}
+        onkeydown={handleKeydown}
+        onblur={handleBlur}
+        onfocus={handleFocus}
+        placeholder={$i18n.t('address.relationshipTypePlaceholder')}
+        {disabled}
+        class="{formClasses.inputSm} pr-10"
+        autocomplete="off"
+        role="combobox"
+        aria-expanded={showDropdown}
+        aria-controls="relationship-type-listbox"
+        aria-haspopup="listbox"
+        aria-autocomplete="list"
+      />
+
+      <MagnifyingGlass class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth="2" />
+    {/if}
+  </div>
+
+  {#if showDropdown}
+    <ul
+      id="relationship-type-listbox"
+      class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
+      role="listbox"
+    >
+      {#each filteredTypes() as type, index}
+        <li
+          role="option"
+          aria-selected={highlightedIndex === index}
+          class="cursor-pointer"
+        >
+          <button
+            type="button"
+            onclick={() => selectType(type)}
+            class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors {highlightedIndex === index ? 'bg-gray-100' : ''}"
+          >
+            <span
+              class="{chipClasses.base} {RELATIONSHIP_CATEGORY_STYLE[type.category]
+                .bgColor} {RELATIONSHIP_CATEGORY_STYLE[type.category].textColor}"
+            >
+              {$i18n.t(RELATIONSHIP_CATEGORY_STYLE[type.category].labelKey)}
+            </span>
+            <span class="font-body text-sm text-gray-900">{type.label}</span>
+          </button>
+        </li>
+      {/each}
+
+      {#if filteredTypes().length === 0}
+        <li class="px-3 py-2 text-sm text-gray-500 font-body">
+          {$i18n.t('address.noMatchingTypes')}
+        </li>
+      {/if}
+    </ul>
+  {/if}
+</div>

@@ -5,7 +5,7 @@
  * A descriptor captures everything that varies between sub-resource types —
  * icon, i18n keys, API calls, row/form components and the per-type quirks
  * (address geocoding refetch, circle being add-only) — so
- * `subresource-section.svelte` can drive all of them with one implementation.
+ * `SubresourceSection.svelte` can drive all of them with one implementation.
  *
  * Descriptors are written through {@link defineDescriptor}, which type-checks
  * each one against its own item and input types — a phone descriptor's form

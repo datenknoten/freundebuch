@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '$lib/test';
-import FormSelect from './form-select.svelte';
+import { render, screen } from '$lib/test/render.js';
+import FormSelect from './FormSelect.svelte';
 
 describe('FormSelect', () => {
   it('renders the options and selects the current value', () => {

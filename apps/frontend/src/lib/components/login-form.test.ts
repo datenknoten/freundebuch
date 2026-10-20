@@ -1,15 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import {
-  control,
-  jsonResponse,
-  labelFor,
-  render,
-  restoreFetch,
-  screen,
-  stubFetch,
-  useLanguage,
-} from '$lib/test';
-import LoginForm from './login-form.svelte';
+import { jsonResponse, restoreFetch, stubFetch } from '$lib/test/fetch-mock.js';
+import { useLanguage } from '$lib/test/locale.js';
+import { control, labelFor, render, screen } from '$lib/test/render.js';
+import LoginForm from './LoginForm.svelte';
 
 describe('LoginForm', () => {
   beforeAll(async () => {

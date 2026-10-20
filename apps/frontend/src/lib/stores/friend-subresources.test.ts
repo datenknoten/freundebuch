@@ -31,7 +31,8 @@ vi.mock('../api/friends.js', () => h.friendsApi);
 vi.mock('../api/circles.js', () => h.circlesApi);
 vi.mock('../api/auth.js', () => ({ ApiError: h.ApiError }));
 
-import { aFriend, aPhone, createUpdateRecorder } from '$lib/test';
+import { aFriend, aPhone } from '$lib/test/fixtures.js';
+import { createUpdateRecorder } from '$lib/test/store-harness.js';
 import { createSubresourceOps } from './friend-subresources.js';
 import type { FriendsState } from './friends.js';
 

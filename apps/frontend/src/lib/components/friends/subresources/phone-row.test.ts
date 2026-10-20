@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import { aPhone, fireEvent, itemAt, render, screen, useLanguage } from '$lib/test';
-import PhoneRow from './phone-row.svelte';
+import { aPhone } from '$lib/test/fixtures.js';
+import { itemAt } from '$lib/test/item-at.js';
+import { useLanguage } from '$lib/test/locale.js';
+import { fireEvent, render, screen } from '$lib/test/render.js';
+import PhoneRow from './PhoneRow.svelte';
 
 const strings = en.subresources;
 

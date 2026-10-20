@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '$lib/test';
-import FormInput from './form-input.svelte';
+import { render, screen } from '$lib/test/render.js';
+import FormInput from './FormInput.svelte';
 
 describe('FormInput', () => {
   it('associates the label with the input and reflects value/type', () => {

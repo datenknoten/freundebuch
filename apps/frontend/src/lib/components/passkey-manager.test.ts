@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '$lib/test';
-import PasskeyManager from './passkey-manager.svelte';
+import { fireEvent, render, screen, waitFor, within } from '$lib/test/render.js';
+import PasskeyManager from './PasskeyManager.svelte';
 
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });

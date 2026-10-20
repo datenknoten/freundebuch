@@ -25,7 +25,7 @@ import instead:
 
 A friend's or collective's CRUD sections are data-driven: add a descriptor in
 `friends/subresource-descriptors.ts` or `collectives/subresource-descriptors.ts`
-and render `subresources/subresource-section.svelte`. Do not write a new
+and render `subresources/SubresourceSection.svelte`. Do not write a new
 section component.
 
 ### Colors
@@ -83,13 +83,13 @@ src/
 
 ### Data-Driven Sections
 
-Detail pages that repeat the same CRUD shape across sub-resource types are driven by descriptors, not by an `editingType` discriminator with parallel if/else chains. `components/collectives/subresource-descriptors.ts` is the reference: one descriptor per type (phone, email, address, URL, circle) carrying its icon, i18n keys, API calls, Row/Form components, and per-type quirks. `subresource-section.svelte` renders any of them and owns its own CRUD, modal, and shortcut state; the only branch it keeps is the one for a type whose add flow needs a component of its own (friend → collective).
+Detail pages that repeat the same CRUD shape across sub-resource types are driven by descriptors, not by an `editingType` discriminator with parallel if/else chains. `components/collectives/subresource-descriptors.ts` is the reference: one descriptor per type (phone, email, address, URL, circle) carrying its icon, i18n keys, API calls, Row/Form components, and per-type quirks. `SubresourceSection.svelte` renders any of them and owns its own CRUD, modal, and shortcut state; the only branch it keeps is the one for a type whose add flow needs a component of its own (friend → collective).
 
 A section instance is reused when the page switches to another entity without unmounting, so it must drop stale in-flight loads and reset its items and modals when the entity changes.
 
 ## Testing
 
-Component and store tests share the helpers in `src/lib/test/` — one import surface, `$lib/test`:
+Component and store tests share the helpers in `src/lib/test/`; import each from its defining file (`$lib/test/render.js`, `$lib/test/fetch-mock.js`, …):
 
 | Helper | Exports | Use for |
 |--------|---------|---------|
@@ -106,12 +106,12 @@ Anything rendered through `toLocaleDateString` and friends depends on the machin
 
 There are two i18n strategies, and the assertion decides which:
 
-- **Wiring, roles, structure** → mock `$lib/i18n/index.js` so `t` echoes the
+- **Wiring, roles, structure** → mock `$lib/i18n/i18n.js` so `t` echoes the
   key. Assertions then target stable key paths rather than copy, and no test
   breaks when a sentence is reworded:
 
 ```ts
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });
@@ -135,7 +135,7 @@ Coverage is reported per MR at an 80% threshold — see [docs/development.md](..
 ### Using Translations
 ```svelte
 <script>
-import { createI18n } from '$lib/i18n/index.js';
+import { createI18n } from '$lib/i18n/i18n.js';
 const i18n = createI18n();
 </script>
 

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Mock i18n so $i18n.t(key) echoes the key — lets tests assert on labels without
 // depending on translation content. (vi.mock factory is hoisted, so the store is
 // built inline here.)
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });
@@ -12,8 +12,10 @@ vi.mock('$lib/i18n/index.js', () => ({
   }),
 }));
 
-import { aFriendNote, jsonResponse, render, restoreFetch, screen, stubFetch } from '$lib/test';
-import NoteEditForm from './note-edit-form.svelte';
+import { jsonResponse, restoreFetch, stubFetch } from '$lib/test/fetch-mock.js';
+import { aFriendNote } from '$lib/test/fixtures.js';
+import { render, screen } from '$lib/test/render.js';
+import NoteEditForm from './NoteEditForm.svelte';
 
 function supersedeValues(): string[] {
   const select = screen.getByLabelText(/subresources\.note\.supersedes/) as HTMLSelectElement;

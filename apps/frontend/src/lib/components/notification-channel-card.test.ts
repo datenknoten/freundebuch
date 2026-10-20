@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '$lib/test';
+import { fireEvent, render, screen, waitFor, within } from '$lib/test/render.js';
 import type { NotificationChannelResponse } from '$shared';
-import NotificationChannelCard from './notification-channel-card.svelte';
+import NotificationChannelCard from './NotificationChannelCard.svelte';
 
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });

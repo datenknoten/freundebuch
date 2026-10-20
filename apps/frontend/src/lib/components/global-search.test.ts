@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, itemAt, render, screen, waitFor } from '$lib/test';
-import GlobalSearch from './global-search.svelte';
+import { itemAt } from '$lib/test/item-at.js';
+import { cleanup, fireEvent, render, screen, waitFor } from '$lib/test/render.js';
+import GlobalSearch from './GlobalSearch.svelte';
 
 // i18n returns the key so assertions can target stable label keys.
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });

@@ -1,6 +1,7 @@
 import { readable } from 'svelte/store';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { control, fireEvent, render, screen, tick, useLanguage, waitFor } from '$lib/test';
+import { useLanguage } from '$lib/test/locale.js';
+import { control, fireEvent, render, screen, tick, waitFor } from '$lib/test/render.js';
 import DisplayPage from './+page.svelte';
 
 const updatePreferences = vi.fn().mockResolvedValue(undefined);

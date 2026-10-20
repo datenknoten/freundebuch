@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import { itemAt, render, screen, useLanguage } from '$lib/test';
+import { itemAt } from '$lib/test/item-at.js';
+import { useLanguage } from '$lib/test/locale.js';
+import { render, screen } from '$lib/test/render.js';
 import type { SocialProfileResponse } from '$shared';
-import SocialProfileRow from './social-profile-row.svelte';
+import SocialProfileRow from './SocialProfileRow.svelte';
 
 const strings = en.subresources;
 

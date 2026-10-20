@@ -1,4 +1,4 @@
-import { getCurrentLanguage } from '$lib/i18n/index.js';
+import { getCurrentLanguage } from '$lib/i18n/i18n.js';
 import type { EncounterType } from '$shared';
 
 /** Minimal shape needed to render an encounter's title/type, shared by card/detail/badge. */

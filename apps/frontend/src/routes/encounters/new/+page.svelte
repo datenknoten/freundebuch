@@ -1,8 +1,8 @@
 <script lang="ts">
 import { page } from '$app/stores';
-import EncounterForm from '$lib/components/encounters/encounter-form.svelte';
-import { PageShell } from '$lib/components/ui';
-import { createI18n } from '$lib/i18n/index.js';
+import EncounterForm from '$lib/components/encounters/EncounterForm.svelte';
+import PageShell from '$lib/components/ui/PageShell.svelte';
+import { createI18n } from '$lib/i18n/i18n.js';
 import type { FriendSearchResultResponse } from '$shared';
 
 const i18n = createI18n();

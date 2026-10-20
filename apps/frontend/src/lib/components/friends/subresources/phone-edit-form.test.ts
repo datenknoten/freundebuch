@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 // Mock i18n so $i18n.t(key) echoes the key — lets tests assert on labels without
 // depending on translation content. (vi.mock factory is hoisted, so the store is
 // built inline here.)
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });
@@ -12,8 +12,9 @@ vi.mock('$lib/i18n/index.js', () => ({
   }),
 }));
 
-import { aPhone, render, screen } from '$lib/test';
-import PhoneEditForm from './phone-edit-form.svelte';
+import { aPhone } from '$lib/test/fixtures.js';
+import { render, screen } from '$lib/test/render.js';
+import PhoneEditForm from './PhoneEditForm.svelte';
 
 describe('PhoneEditForm', () => {
   // Required fields append a " *" to the label, so match labels as substrings.

@@ -1,14 +1,18 @@
 import PhoneIcon from 'svelte-heros-v2/Phone.svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { addMember } from '$lib/api/collectives';
-import { aPhone, fireEvent, itemAt, render, screen, waitFor, within } from '$lib/test';
+import { aPhone } from '$lib/test/fixtures.js';
+import { itemAt } from '$lib/test/item-at.js';
+import { fireEvent, render, screen, waitFor, within } from '$lib/test/render.js';
 import { createCollectiveDescriptor } from '../friends/subresource-descriptors';
-import { CircleRow, PhoneEditForm, PhoneRow } from '../friends/subresources';
-import SubresourceSection from './subresource-section.svelte';
+import CircleRow from '../friends/subresources/CircleRow.svelte';
+import PhoneEditForm from '../friends/subresources/PhoneEditForm.svelte';
+import PhoneRow from '../friends/subresources/PhoneRow.svelte';
+import SubresourceSection from './SubresourceSection.svelte';
 import type { AuthoredDescriptor, SubresourceDescriptor, SubresourceItem } from './types';
 
 // Echo i18n keys so titles/labels are assertable without translation files.
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });

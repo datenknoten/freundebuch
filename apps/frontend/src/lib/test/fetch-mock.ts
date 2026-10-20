@@ -5,7 +5,7 @@
  *
  * Typical usage:
  *
- *   import { stubFetch, jsonResponse, restoreFetch } from '$lib/test';
+ *   import { stubFetch, jsonResponse, restoreFetch } from '$lib/test/fetch-mock.js';
  *
  *   afterEach(restoreFetch);
  *

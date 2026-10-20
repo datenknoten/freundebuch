@@ -9,15 +9,15 @@ import { page } from '$app/stores';
 import FabCreateMenu, {
   type FabCreateChoice,
   navigateForCreateChoice,
-} from '$lib/components/fab-create-menu.svelte';
-import Footer from '$lib/components/footer.svelte';
-import GlobalSearch from '$lib/components/global-search.svelte';
-import NavBar from '$lib/components/nav-bar.svelte';
-import SessionExpiredModal from '$lib/components/session-expired-modal.svelte';
-import { Fab } from '$lib/components/ui';
-import type { SupportedLanguage } from '$lib/i18n/index.js';
-import { createI18n } from '$lib/i18n/index.js';
-import { KeyboardShortcuts } from '$lib/shortcuts';
+} from '$lib/components/FabCreateMenu.svelte';
+import Footer from '$lib/components/Footer.svelte';
+import GlobalSearch from '$lib/components/GlobalSearch.svelte';
+import NavBar from '$lib/components/NavBar.svelte';
+import SessionExpiredModal from '$lib/components/SessionExpiredModal.svelte';
+import Fab from '$lib/components/ui/Fab.svelte';
+import type { SupportedLanguage } from '$lib/i18n/i18n.js';
+import { createI18n } from '$lib/i18n/i18n.js';
+import KeyboardShortcuts from '$lib/shortcuts/KeyboardShortcuts.svelte';
 import {
   auth,
   isAuthenticated,

@@ -1,8 +1,10 @@
 import type { ComponentProps } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, itemAt, render, screen, useLanguage, within } from '$lib/test';
+import { itemAt } from '$lib/test/item-at.js';
+import { useLanguage } from '$lib/test/locale.js';
+import { fireEvent, render, screen, within } from '$lib/test/render.js';
 import type { ColumnId, FriendGridItem } from '$shared';
-import FriendGrid from './friend-grid.svelte';
+import FriendGrid from './FriendGrid.svelte';
 
 const navigation = vi.hoisted(() => ({ goto: vi.fn() }));
 vi.mock('$app/navigation', () => navigation);

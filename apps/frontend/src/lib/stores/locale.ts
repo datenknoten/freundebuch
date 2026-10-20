@@ -5,7 +5,7 @@ import {
   initI18n,
   type SupportedLanguage,
   supportedLanguages,
-} from '$lib/i18n/index.js';
+} from '$lib/i18n/i18n.js';
 import { auth } from './auth.js';
 
 interface LocaleState {

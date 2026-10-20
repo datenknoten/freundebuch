@@ -1,7 +1,7 @@
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { describe, expect, it } from 'vitest';
-import MarkdownEditor from './markdown-editor.svelte';
+import MarkdownEditor from './MarkdownEditor.svelte';
 
 // CM6 mounts a real DOM, so these run under jsdom. We assert on the editor's
 // text content (the raw markdown is always present as DOM text — that's the

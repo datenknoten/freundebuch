@@ -26,7 +26,7 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   initI18n: mocks.initI18n,
   changeLanguage: mocks.changeLanguage,
   getCurrentLanguage: mocks.getCurrentLanguage,

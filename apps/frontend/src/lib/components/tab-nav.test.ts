@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '$lib/test';
-import TabNav from './tab-nav.svelte';
+import { fireEvent, render, screen } from '$lib/test/render.js';
+import TabNav from './TabNav.svelte';
 
 const tabs = [
   { id: 'ios', label: 'iOS' },

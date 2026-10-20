@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import { render, screen, useLanguage, withDefaultLocale } from '$lib/test';
+import { useLanguage, withDefaultLocale } from '$lib/test/locale.js';
+import { render, screen } from '$lib/test/render.js';
 import type { ProfessionalHistoryResponse } from '$shared';
-import ProfessionalHistoryRow from './professional-history-row.svelte';
+import ProfessionalHistoryRow from './ProfessionalHistoryRow.svelte';
 
 const strings = en.subresources;
 

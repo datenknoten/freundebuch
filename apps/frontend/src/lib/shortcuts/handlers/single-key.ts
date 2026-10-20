@@ -23,7 +23,7 @@ export function handleSingleKey(e: KeyboardEvent): boolean {
       // Edit current encounter if on encounter detail page. Exclude
       // `/encounters/new` so pressing `e` on the creation route doesn't get
       // silently swallowed (matches the `isOnEncounterDetailPage` guard in
-      // keyboard-shortcuts.svelte).
+      // KeyboardShortcuts.svelte).
       if (pathname.match(/^\/encounters\/[^/]+$/) && !pathname.endsWith('/new')) {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('shortcut:edit-encounter'));

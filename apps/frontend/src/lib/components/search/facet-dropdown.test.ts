@@ -2,9 +2,10 @@ import type { ComponentProps } from 'svelte';
 import { get } from 'svelte/store';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { filterModeCategory, filterModePrefix, isFilterModeActive } from '$lib/stores/ui';
-import { fireEvent, render, screen, tick, useLanguage, waitFor, within } from '$lib/test';
+import { useLanguage } from '$lib/test/locale.js';
+import { fireEvent, render, screen, tick, waitFor, within } from '$lib/test/render.js';
 import type { FacetGroupsResponse } from '$shared';
-import FacetDropdown from './facet-dropdown.svelte';
+import FacetDropdown from './FacetDropdown.svelte';
 
 // Hoisted above the mock factory so the test body and the mocked module share
 // the same store. Hand-rolled rather than `writable`, because `vi.hoisted`

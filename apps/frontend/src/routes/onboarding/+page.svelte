@@ -1,10 +1,10 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import * as authApi from '$lib/api/auth';
-import AlertBanner from '$lib/components/alert-banner.svelte';
-import FriendForm from '$lib/components/friends/friend-form.svelte';
-import { PageShell } from '$lib/components/ui';
-import { createI18n } from '$lib/i18n/index.js';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
+import FriendForm from '$lib/components/friends/FriendForm.svelte';
+import PageShell from '$lib/components/ui/PageShell.svelte';
+import { createI18n } from '$lib/i18n/i18n.js';
 import { auth, refreshUserData } from '$lib/stores/auth';
 import type { FriendCreateInputSchema } from '$shared';
 

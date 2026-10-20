@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '$lib/test';
-import DetailActions from './detail-actions.svelte';
+import { fireEvent, render, screen } from '$lib/test/render.js';
+import DetailActions from './DetailActions.svelte';
 
 describe('DetailActions', () => {
   it('renders edit and delete buttons with the given labels', () => {

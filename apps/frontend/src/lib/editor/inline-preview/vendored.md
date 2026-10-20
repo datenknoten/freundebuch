@@ -37,7 +37,7 @@ All local edits are marked with `FB:` comments. Currently:
 - `atomic-theme.ts`: flipped `{ dark: true }` → `{ dark: false }` (app is light-only).
 
 Theming is done entirely through `--atomic-editor-*` CSS variables, set on the
-editor host by `../markdown-editor.svelte` — the vendored files are otherwise
+editor host by `../MarkdownEditor.svelte` — the vendored files are otherwise
 verbatim.
 
 ## Re-syncing

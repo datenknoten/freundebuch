@@ -1,4 +1,4 @@
-import { changeLanguage, initI18n, type SupportedLanguage } from '$lib/i18n/index.js';
+import { changeLanguage, initI18n, type SupportedLanguage } from '$lib/i18n/i18n.js';
 
 /**
  * Load the real locale bundles and switch to `lang`.

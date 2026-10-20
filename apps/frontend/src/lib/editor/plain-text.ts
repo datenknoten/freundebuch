@@ -1,6 +1,6 @@
 import MarkdownIt from 'markdown-it';
 
-// Same parser options as markdown-view.svelte, so that the plain text matches
+// Same parser options as MarkdownView.svelte, so that the plain text matches
 // what the reader sees: raw HTML stays text, and image markers stay inert.
 const md = new MarkdownIt({ html: false, linkify: true });
 md.disable('image');

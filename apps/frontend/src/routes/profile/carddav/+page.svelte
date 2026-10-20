@@ -1,7 +1,7 @@
 <script lang="ts">
-import CardDAVSetupGuide from '$lib/components/card-dav-setup-guide.svelte';
-import { PageShell } from '$lib/components/ui';
-import { createI18n } from '$lib/i18n/index.js';
+import CardDAVSetupGuide from '$lib/components/CardDavSetupGuide.svelte';
+import PageShell from '$lib/components/ui/PageShell.svelte';
+import { createI18n } from '$lib/i18n/i18n.js';
 
 const i18n = createI18n();
 </script>

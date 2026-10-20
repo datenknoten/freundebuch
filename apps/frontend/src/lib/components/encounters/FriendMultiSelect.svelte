@@ -1,0 +1,234 @@
+<script lang="ts">
+import MagnifyingGlass from 'svelte-heros-v2/MagnifyingGlass.svelte';
+import XMark from 'svelte-heros-v2/XMark.svelte';
+import Spinner from '$lib/components/ui/Spinner.svelte';
+import { formClasses, surfaceClasses } from '$lib/components/ui/styles.js';
+import { createI18n } from '$lib/i18n/i18n.js';
+import { friends } from '$lib/stores/friends';
+import type { FriendSearchResultResponse } from '$shared';
+import FriendAvatar from '../friends/FriendAvatar.svelte';
+
+const i18n = createI18n();
+
+interface Props {
+  /** Selected friend IDs */
+  selectedFriends: FriendSearchResultResponse[];
+  /** Placeholder text for the input */
+  placeholder?: string;
+  /** Maximum number of search results to show */
+  limit?: number;
+  /** Whether the input is disabled */
+  disabled?: boolean;
+  /** Called when selection changes */
+  onChange?: (friends: FriendSearchResultResponse[]) => void;
+}
+
+let {
+  selectedFriends = [],
+  placeholder = 'Search and add friends...',
+  limit = 10,
+  disabled = false,
+  onChange,
+}: Props = $props();
+
+let query = $state('');
+let results = $state<FriendSearchResultResponse[]>([]);
+let isSearching = $state(false);
+let showDropdown = $state(false);
+let highlightedIndex = $state(-1);
+let inputElement: HTMLInputElement;
+let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+
+// Filter out already selected friends from results
+let filteredResults = $derived(results.filter((r) => !selectedFriends.some((s) => s.id === r.id)));
+
+function handleInput() {
+  if (debounceTimeout) {
+    clearTimeout(debounceTimeout);
+  }
+
+  if (!query.trim()) {
+    results = [];
+    showDropdown = false;
+    return;
+  }
+
+  debounceTimeout = setTimeout(async () => {
+    await performSearch();
+  }, 300);
+}
+
+async function performSearch() {
+  if (!query.trim()) {
+    results = [];
+    showDropdown = false;
+    return;
+  }
+
+  isSearching = true;
+  try {
+    results = await friends.searchFriends(query, undefined, limit);
+    showDropdown = filteredResults.length > 0;
+    highlightedIndex = -1;
+  } catch {
+    results = [];
+    showDropdown = false;
+  } finally {
+    isSearching = false;
+  }
+}
+
+function addFriend(friend: FriendSearchResultResponse) {
+  const newSelection = [...selectedFriends, friend];
+  onChange?.(newSelection);
+  query = '';
+  results = [];
+  showDropdown = false;
+  highlightedIndex = -1;
+  inputElement?.focus();
+}
+
+function removeFriend(friendId: string) {
+  const newSelection = selectedFriends.filter((f) => f.id !== friendId);
+  onChange?.(newSelection);
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if (!showDropdown) return;
+
+  switch (e.key) {
+    case 'ArrowDown':
+      e.preventDefault();
+      highlightedIndex = Math.min(highlightedIndex + 1, filteredResults.length - 1);
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      highlightedIndex = Math.max(highlightedIndex - 1, -1);
+      break;
+    case 'Enter': {
+      e.preventDefault();
+      const highlighted = filteredResults[highlightedIndex];
+      const topMatch = filteredResults[0];
+      if (highlighted !== undefined) {
+        addFriend(highlighted);
+      } else if (query.trim() && topMatch !== undefined) {
+        // No explicit highlight, but the user searched and there are matches:
+        // add the top match so Enter confirms the visible result.
+        addFriend(topMatch);
+      }
+      break;
+    }
+    case 'Escape':
+      showDropdown = false;
+      highlightedIndex = -1;
+      break;
+  }
+}
+
+function handleBlur() {
+  setTimeout(() => {
+    showDropdown = false;
+    highlightedIndex = -1;
+  }, 200);
+}
+
+function handleFocus() {
+  if (filteredResults.length > 0) {
+    showDropdown = true;
+  }
+}
+</script>
+
+<div class="space-y-2">
+  <!-- Selected friends chips -->
+  {#if selectedFriends.length > 0}
+    <div class="flex flex-wrap gap-2">
+      {#each selectedFriends as friend (friend.id)}
+        <div class="inline-flex items-center gap-2 bg-forest/10 text-forest px-3 py-1.5 rounded-full">
+          <FriendAvatar
+            displayName={friend.displayName}
+            photoUrl={friend.photoThumbnailUrl}
+            size="sm"
+          />
+          <span class="text-sm font-body">{friend.displayName}</span>
+          <button
+            type="button"
+            onclick={() => removeFriend(friend.id)}
+            {disabled}
+            class="text-forest hover:text-forest-dark transition-colors disabled:opacity-50"
+            aria-label={$i18n.t('aria.removeItem', { name: friend.displayName })}
+          >
+            <XMark class="w-4 h-4" strokeWidth="2" />
+          </button>
+        </div>
+      {/each}
+    </div>
+  {/if}
+
+  <!-- Search input -->
+  <div class="relative">
+    <div class="relative">
+      <input
+        type="text"
+        bind:this={inputElement}
+        bind:value={query}
+        oninput={handleInput}
+        onkeydown={handleKeydown}
+        onblur={handleBlur}
+        onfocus={handleFocus}
+        {placeholder}
+        {disabled}
+        class="{formClasses.inputSm} pr-10"
+        autocomplete="off"
+        role="combobox"
+        aria-expanded={showDropdown}
+        aria-controls="friend-multi-select-listbox"
+        aria-haspopup="listbox"
+        aria-autocomplete="list"
+      />
+
+      {#if isSearching}
+        <div class="absolute right-3 top-1/2 -translate-y-1/2">
+          <Spinner size="sm" />
+        </div>
+      {:else}
+        <MagnifyingGlass class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth="2" />
+      {/if}
+    </div>
+
+    {#if showDropdown}
+      <ul
+        id="friend-multi-select-listbox"
+        class="absolute z-(--z-popover) w-full mt-1 {surfaceClasses.listbox}"
+        role="listbox"
+      >
+        {#each filteredResults as friend, index (friend.id)}
+          <li
+            role="option"
+            aria-selected={highlightedIndex === index}
+            class="cursor-pointer"
+          >
+            <button
+              type="button"
+              onclick={() => addFriend(friend)}
+              class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors {highlightedIndex === index ? 'bg-gray-100' : ''}"
+            >
+              <FriendAvatar
+                displayName={friend.displayName}
+                photoUrl={friend.photoThumbnailUrl}
+                size="sm"
+              />
+              <span class="font-body text-sm text-gray-900">{friend.displayName}</span>
+            </button>
+          </li>
+        {/each}
+
+        {#if filteredResults.length === 0 && query.trim() && !isSearching}
+          <li class="px-3 py-2 text-sm text-gray-500 font-body">
+            {$i18n.t('friendSearch.noResults')}
+          </li>
+        {/if}
+      </ul>
+    {/if}
+  </div>
+</div>

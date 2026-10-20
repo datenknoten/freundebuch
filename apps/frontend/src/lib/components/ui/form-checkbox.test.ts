@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '$lib/test';
-import FormCheckbox from './form-checkbox.svelte';
+import { render, screen } from '$lib/test/render.js';
+import FormCheckbox from './FormCheckbox.svelte';
 
 describe('FormCheckbox', () => {
   it('renders a labelled checkbox reflecting the checked state', () => {

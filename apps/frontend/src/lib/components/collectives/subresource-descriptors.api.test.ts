@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as api from '$lib/api/collectives';
-import { aPhone, aUrl } from '$lib/test';
+import { aPhone, aUrl } from '$lib/test/fixtures.js';
 import type { SubresourceDescriptor } from '../subresources/types';
 import { circleDescriptor, contactDescriptors } from './subresource-descriptors';
 

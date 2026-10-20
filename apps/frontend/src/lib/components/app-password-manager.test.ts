@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { changeLanguage, initI18n } from '$lib/i18n/index.js';
+import { changeLanguage, initI18n } from '$lib/i18n/i18n.js';
 import de from '$lib/i18n/locales/de.json';
 import en from '$lib/i18n/locales/en.json';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '$lib/test';
-import AppPasswordManager from './app-password-manager.svelte';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '$lib/test/render.js';
+import AppPasswordManager from './AppPasswordManager.svelte';
 
 const listAppPasswords = vi.fn();
 const revokeAppPassword = vi.fn();

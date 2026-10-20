@@ -1,7 +1,8 @@
 import { readable } from 'svelte/store';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { control, labelFor, render, useLanguage } from '$lib/test';
-import CollectiveForm from './collective-form.svelte';
+import { useLanguage } from '$lib/test/locale.js';
+import { control, labelFor, render } from '$lib/test/render.js';
+import CollectiveForm from './CollectiveForm.svelte';
 
 const loadTypes = vi.fn().mockResolvedValue(undefined);
 

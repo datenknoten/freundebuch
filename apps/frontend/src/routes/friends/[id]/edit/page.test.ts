@@ -1,6 +1,7 @@
 import { readable } from 'svelte/store';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { render, screen, tick, useLanguage } from '$lib/test';
+import { useLanguage } from '$lib/test/locale.js';
+import { render, screen, tick } from '$lib/test/render.js';
 import EditPage from './+page.svelte';
 
 // Hoisted above the mock factory so the test body and the mocked module share

@@ -1,7 +1,9 @@
 <script lang="ts">
-import AlertBanner from '$lib/components/alert-banner.svelte';
-import { FormCheckbox, FormSelect, PageShell } from '$lib/components/ui';
-import { createI18n, languageNames } from '$lib/i18n/index.js';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
+import FormCheckbox from '$lib/components/ui/FormCheckbox.svelte';
+import FormSelect from '$lib/components/ui/FormSelect.svelte';
+import PageShell from '$lib/components/ui/PageShell.svelte';
+import { createI18n, languageNames } from '$lib/i18n/i18n.js';
 import { auth, birthdayFormat, defaultCountry, showShortcutHints } from '$lib/stores/auth';
 import {
   currentLanguage,

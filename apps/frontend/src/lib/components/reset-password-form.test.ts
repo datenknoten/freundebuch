@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { control, labelFor, render, screen, useLanguage } from '$lib/test';
-import ResetPasswordForm from './reset-password-form.svelte';
+import { useLanguage } from '$lib/test/locale.js';
+import { control, labelFor, render, screen } from '$lib/test/render.js';
+import ResetPasswordForm from './ResetPasswordForm.svelte';
 
 describe('ResetPasswordForm', () => {
   beforeAll(async () => {

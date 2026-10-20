@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '$lib/i18n/locales/en.json';
-import { aUrl, itemAt, render, screen, useLanguage } from '$lib/test';
-import UrlRow from './url-row.svelte';
+import { aUrl } from '$lib/test/fixtures.js';
+import { itemAt } from '$lib/test/item-at.js';
+import { useLanguage } from '$lib/test/locale.js';
+import { render, screen } from '$lib/test/render.js';
+import UrlRow from './UrlRow.svelte';
 
 const strings = en.subresources;
 

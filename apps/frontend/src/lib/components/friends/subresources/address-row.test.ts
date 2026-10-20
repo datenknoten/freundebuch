@@ -1,15 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  anAddress,
-  fireEvent,
-  itemAt,
-  render,
-  screen,
-  useLanguage,
-  waitFor,
-  within,
-} from '$lib/test';
-import AddressRow from './address-row.svelte';
+import { anAddress } from '$lib/test/fixtures.js';
+import { itemAt } from '$lib/test/item-at.js';
+import { useLanguage } from '$lib/test/locale.js';
+import { fireEvent, render, screen, waitFor, within } from '$lib/test/render.js';
+import AddressRow from './AddressRow.svelte';
 
 // Hoisted above the mock factory so the test body and the mocked module share
 // the same store. Hand-rolled rather than `writable`, because `vi.hoisted`

@@ -5,21 +5,19 @@ import Users from 'svelte-heros-v2/Users.svelte';
 import { replaceState } from '$app/navigation';
 import { page } from '$app/stores';
 import { openWithKeyboard } from '$lib/actions/auto-focus';
-import AlertBanner from '$lib/components/alert-banner.svelte';
-import CircleEditModal from '$lib/components/circles/circle-edit-modal.svelte';
-import DetailActions from '$lib/components/friends/subresources/detail-actions.svelte';
-import SwipeableRow from '$lib/components/friends/subresources/swipeable-row.svelte';
-import KeyboardHintBadge from '$lib/components/keyboard-hint-badge.svelte';
-import {
-  Button,
-  chipClasses,
-  EmptyState,
-  PageShell,
-  SearchInput,
-  Spinner,
-} from '$lib/components/ui';
-import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
-import { createI18n } from '$lib/i18n/index.js';
+import AlertBanner from '$lib/components/AlertBanner.svelte';
+import CircleEditModal from '$lib/components/circles/CircleEditModal.svelte';
+import DetailActions from '$lib/components/friends/subresources/DetailActions.svelte';
+import SwipeableRow from '$lib/components/friends/subresources/SwipeableRow.svelte';
+import KeyboardHintBadge from '$lib/components/KeyboardHintBadge.svelte';
+import Button from '$lib/components/ui/Button.svelte';
+import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
+import EmptyState from '$lib/components/ui/EmptyState.svelte';
+import PageShell from '$lib/components/ui/PageShell.svelte';
+import SearchInput from '$lib/components/ui/SearchInput.svelte';
+import Spinner from '$lib/components/ui/Spinner.svelte';
+import { chipClasses } from '$lib/components/ui/styles.js';
+import { createI18n } from '$lib/i18n/i18n.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { circles, circlesList } from '$lib/stores/circles';
 import {

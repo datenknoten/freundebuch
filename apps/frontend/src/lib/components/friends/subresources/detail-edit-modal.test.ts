@@ -1,9 +1,9 @@
 import { createRawSnippet } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '$lib/test';
-import DetailEditModal from './detail-edit-modal.svelte';
+import { fireEvent, render, screen } from '$lib/test/render.js';
+import DetailEditModal from './DetailEditModal.svelte';
 
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });

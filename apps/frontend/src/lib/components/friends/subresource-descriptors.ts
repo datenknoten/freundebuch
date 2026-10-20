@@ -4,7 +4,7 @@
  *
  * Each descriptor captures everything that varies between the types — icon,
  * i18n keys, store calls, row/form components and the per-type quirks — so
- * `subresources/subresource-section.svelte` drives all of them with one
+ * `subresources/SubresourceSection.svelte` drives all of them with one
  * implementation instead of nine near-identical section components.
  *
  * Unlike the collectives descriptors these never `load`: the friend detail
@@ -55,29 +55,27 @@ import {
   primaryAwareFormProps,
   type SubresourceDescriptor,
 } from '../subresources/types';
-import {
-  AddressEditForm,
-  AddressRow,
-  AddToCollectiveModal,
-  CircleEditForm,
-  CircleRow,
-  CollectiveRow,
-  DateEditForm,
-  DateRow,
-  EmailEditForm,
-  EmailRow,
-  NoteEditForm,
-  NoteRow,
-  noteExcerpt,
-  PhoneEditForm,
-  PhoneRow,
-  ProfessionalHistoryEditForm,
-  ProfessionalHistoryRow,
-  SocialProfileEditForm,
-  SocialProfileRow,
-  UrlEditForm,
-  UrlRow,
-} from './subresources';
+import AddressEditForm from './subresources/AddressEditForm.svelte';
+import AddressRow from './subresources/AddressRow.svelte';
+import AddToCollectiveModal from './subresources/AddToCollectiveModal.svelte';
+import CircleEditForm from './subresources/CircleEditForm.svelte';
+import CircleRow from './subresources/CircleRow.svelte';
+import CollectiveRow from './subresources/CollectiveRow.svelte';
+import DateEditForm from './subresources/DateEditForm.svelte';
+import DateRow from './subresources/DateRow.svelte';
+import EmailEditForm from './subresources/EmailEditForm.svelte';
+import EmailRow from './subresources/EmailRow.svelte';
+import NoteEditForm from './subresources/NoteEditForm.svelte';
+import NoteRow from './subresources/NoteRow.svelte';
+import { noteExcerpt } from './subresources/note-excerpt.js';
+import PhoneEditForm from './subresources/PhoneEditForm.svelte';
+import PhoneRow from './subresources/PhoneRow.svelte';
+import ProfessionalHistoryEditForm from './subresources/ProfessionalHistoryEditForm.svelte';
+import ProfessionalHistoryRow from './subresources/ProfessionalHistoryRow.svelte';
+import SocialProfileEditForm from './subresources/SocialProfileEditForm.svelte';
+import SocialProfileRow from './subresources/SocialProfileRow.svelte';
+import UrlEditForm from './subresources/UrlEditForm.svelte';
+import UrlRow from './subresources/UrlRow.svelte';
 
 export const phoneDescriptor = defineDescriptor<PhoneResponse, typeof PhoneInputSchema.inferIn>({
   key: 'phone',
@@ -200,7 +198,7 @@ export const urlDescriptor = defineDescriptor<UrlResponse, UrlInput>({
 
 /**
  * A social profile is only openable when it carries a URL. Shared with
- * `friend-detail.svelte`, which builds the "o" link list from the same rule.
+ * `FriendDetail.svelte`, which builds the "o" link list from the same rule.
  */
 export const hasProfileUrl = (
   profile: SocialProfileResponse,

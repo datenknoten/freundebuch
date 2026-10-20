@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { control, labelFor, render, screen, useLanguage } from '$lib/test';
-import RegisterForm from './register-form.svelte';
+import { useLanguage } from '$lib/test/locale.js';
+import { control, labelFor, render, screen } from '$lib/test/render.js';
+import RegisterForm from './RegisterForm.svelte';
 
 describe('RegisterForm', () => {
   beforeAll(async () => {

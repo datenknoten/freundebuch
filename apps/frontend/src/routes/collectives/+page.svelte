@@ -1,8 +1,9 @@
 <script lang="ts">
 import Plus from 'svelte-heros-v2/Plus.svelte';
-import CollectiveList from '$lib/components/collectives/collective-list.svelte';
-import { Button, PageShell } from '$lib/components/ui';
-import { createI18n } from '$lib/i18n/index.js';
+import CollectiveList from '$lib/components/collectives/CollectiveList.svelte';
+import Button from '$lib/components/ui/Button.svelte';
+import PageShell from '$lib/components/ui/PageShell.svelte';
+import { createI18n } from '$lib/i18n/i18n.js';
 
 const i18n = createI18n();
 </script>

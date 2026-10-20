@@ -1,9 +1,9 @@
 <script lang="ts">
 import { page } from '$app/stores';
-import ResetPasswordForm from '$lib/components/reset-password-form.svelte';
-import { PageShell } from '$lib/components/ui';
-import Button from '$lib/components/ui/button.svelte';
-import { createI18n } from '$lib/i18n/index.js';
+import ResetPasswordForm from '$lib/components/ResetPasswordForm.svelte';
+import Button from '$lib/components/ui/Button.svelte';
+import PageShell from '$lib/components/ui/PageShell.svelte';
+import { createI18n } from '$lib/i18n/i18n.js';
 
 const i18n = createI18n();
 

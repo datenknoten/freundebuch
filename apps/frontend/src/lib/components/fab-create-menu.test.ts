@@ -1,11 +1,11 @@
 import { get } from 'svelte/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isModalOpen, resetOpenOverlays } from '$lib/stores/ui';
-import { fireEvent, render, screen } from '$lib/test';
-import FabCreateMenu, { navigateForCreateChoice } from './fab-create-menu.svelte';
+import { fireEvent, render, screen } from '$lib/test/render.js';
+import FabCreateMenu, { navigateForCreateChoice } from './FabCreateMenu.svelte';
 
 // i18n returns the key so assertions can target stable label keys.
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string) => string }) => void) => {
       run({ t: (k: string) => k });

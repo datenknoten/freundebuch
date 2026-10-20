@@ -1,10 +1,10 @@
 import { readable } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '$lib/test';
-import CircleChip from './circle-chip.svelte';
+import { render, screen } from '$lib/test/render.js';
+import CircleChip from './CircleChip.svelte';
 
 // i18n echoes the key plus the interpolated name so assertions can target both.
-vi.mock('$lib/i18n/index.js', () => ({
+vi.mock('$lib/i18n/i18n.js', () => ({
   createI18n: () => ({
     subscribe: (run: (v: { t: (k: string, p?: { name?: string }) => string }) => void) => {
       run({ t: (k, p) => (p?.name === undefined ? k : `${k}:${p.name}`) });

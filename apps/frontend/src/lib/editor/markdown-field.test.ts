@@ -1,7 +1,7 @@
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { describe, expect, it } from 'vitest';
-import MarkdownField from './markdown-field.svelte';
+import MarkdownField from './MarkdownField.svelte';
 
 describe('MarkdownField', () => {
   it('labels the editor content via aria-labelledby', async () => {

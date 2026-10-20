@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '$lib/test';
-import FriendAvatar from './friend-avatar.svelte';
+import { render, screen } from '$lib/test/render.js';
+import FriendAvatar from './FriendAvatar.svelte';
 
 describe('FriendAvatar', () => {
   it('renders two-letter initials from a single name', () => {

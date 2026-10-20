@@ -135,7 +135,7 @@ const buttonSizes: Record<ButtonSize, string> = {
 /**
  * The button recipe as a plain string, for the rare element that must not be a
  * `<button>` or `<a>` (a `<label>` styled as a file picker, for example).
- * Everything else uses `ui/button.svelte`.
+ * Everything else uses `ui/Button.svelte`.
  */
 export function buttonClasses(variant: ButtonVariant = 'primary', size: ButtonSize = 'md'): string {
   return `${buttonBase} ${buttonVariants[variant]} ${buttonSizes[size]}`;

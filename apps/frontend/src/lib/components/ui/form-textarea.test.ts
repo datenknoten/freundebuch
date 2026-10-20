@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '$lib/test';
-import FormTextarea from './form-textarea.svelte';
+import { render, screen } from '$lib/test/render.js';
+import FormTextarea from './FormTextarea.svelte';
 
 describe('FormTextarea', () => {
   it('renders a labelled textarea with the given value and rows', () => {

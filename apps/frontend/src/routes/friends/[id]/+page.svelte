@@ -1,10 +1,12 @@
 <script lang="ts">
 import ExclamationTriangle from 'svelte-heros-v2/ExclamationTriangle.svelte';
 import { page } from '$app/stores';
-import FriendDetail from '$lib/components/friends/friend-detail.svelte';
-import { Button, EmptyState, PageShell } from '$lib/components/ui';
-import Spinner from '$lib/components/ui/spinner.svelte';
-import { createI18n } from '$lib/i18n/index.js';
+import FriendDetail from '$lib/components/friends/FriendDetail.svelte';
+import Button from '$lib/components/ui/Button.svelte';
+import EmptyState from '$lib/components/ui/EmptyState.svelte';
+import PageShell from '$lib/components/ui/PageShell.svelte';
+import Spinner from '$lib/components/ui/Spinner.svelte';
+import { createI18n } from '$lib/i18n/i18n.js';
 import { isAuthInitialized } from '$lib/stores/auth';
 import { currentFriend, friends, isFriendsLoading } from '$lib/stores/friends';
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { jsonResponse, restoreFetch, stubFetch } from '$lib/test';
+import { jsonResponse, restoreFetch, stubFetch } from '$lib/test/fetch-mock.js';
 import { createAppPassword, listAppPasswords, revokeAppPassword } from './app-passwords.js';
 
 describe('app-passwords API', () => {

@@ -1,0 +1,265 @@
+<script lang="ts">
+import ChevronDown from 'svelte-heros-v2/ChevronDown.svelte';
+import ChevronRight from 'svelte-heros-v2/ChevronRight.svelte';
+import ChevronUp from 'svelte-heros-v2/ChevronUp.svelte';
+import Users from 'svelte-heros-v2/Users.svelte';
+import { goto } from '$app/navigation';
+import { chipClasses, focusRing, surfaceClasses } from '$lib/components/ui/styles.js';
+import { createI18n } from '$lib/i18n/i18n.js';
+import {
+  getKeyboardHint,
+  isOpenCollectiveModeActive,
+  openCollectiveModePrefix,
+} from '$lib/stores/ui';
+import {
+  collectiveTypeI18nKey,
+  getTypeBadgeColor,
+  getTypeIconComponent,
+} from '$lib/utils/collective-types';
+import type { CollectiveListItemResponse } from '$shared';
+import FriendAvatar from '../friends/FriendAvatar.svelte';
+import KeyboardHintBadge from '../KeyboardHintBadge.svelte';
+
+const i18n = createI18n();
+
+interface Props {
+  items: CollectiveListItemResponse[];
+  sortBy: 'name' | 'created_at' | 'member_count';
+  sortOrder: 'asc' | 'desc';
+  onSortChange: (sortBy: 'name' | 'created_at' | 'member_count', sortOrder: 'asc' | 'desc') => void;
+}
+
+let { items, sortBy, sortOrder, onSortChange }: Props = $props();
+
+type ColumnDef = {
+  id: string;
+  label: string;
+  sortField?: 'name' | 'created_at' | 'member_count';
+  width?: string;
+};
+
+let columns = $derived<ColumnDef[]>([
+  { id: 'name', label: $i18n.t('collectives.columnName'), sortField: 'name' },
+  { id: 'type', label: $i18n.t('collectives.columnType') },
+  {
+    id: 'members',
+    label: $i18n.t('collectives.columnMembers'),
+    sortField: 'member_count',
+    width: '140px',
+  },
+  { id: 'memberPreview', label: '', width: '120px' },
+  {
+    id: 'createdAt',
+    label: $i18n.t('collectives.columnCreated'),
+    sortField: 'created_at',
+    width: '140px',
+  },
+]);
+
+function handleRowClick(itemId: string) {
+  goto(`/collectives/${itemId}`);
+}
+
+function handleLinkClick(e: MouseEvent) {
+  // The cell's own link navigates; stop the row handler from doing it twice.
+  e.stopPropagation();
+}
+
+function handleSort(column: ColumnDef) {
+  if (!column.sortField) return;
+
+  if (sortBy === column.sortField) {
+    onSortChange(column.sortField, sortOrder === 'asc' ? 'desc' : 'asc');
+  } else {
+    onSortChange(column.sortField, 'asc');
+  }
+}
+
+function formatDate(dateString: string | undefined): string {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+</script>
+
+<!-- Desktop: Table view -->
+<div class="hidden md:block overflow-x-auto pl-6">
+  <table class="w-full">
+    <thead>
+      <tr class="border-b border-gray-200">
+        {#each columns as column}
+          <th
+            class="py-3 px-3 text-left"
+            style={column.width ? `width: ${column.width}` : undefined}
+          >
+            {#if column.sortField}
+              <button
+                type="button"
+                onclick={() => handleSort(column)}
+                class="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-forest transition-colors font-body"
+              >
+                {column.label}
+                {#if sortBy === column.sortField}
+                  {#if sortOrder === 'asc'}
+                    <ChevronUp class="w-4 h-4" strokeWidth="2" />
+                  {:else}
+                    <ChevronDown class="w-4 h-4" strokeWidth="2" />
+                  {/if}
+                {/if}
+              </button>
+            {:else if column.label}
+              <span class="text-sm font-semibold text-gray-700 font-body">{column.label}</span>
+            {/if}
+          </th>
+        {/each}
+      </tr>
+    </thead>
+    <tbody>
+      {#each items as item, index (item.id)}
+        {@const TypeIcon = getTypeIconComponent(item.type.name)}
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
+        <!-- The row is a mouse convenience; the name cell holds the real link,
+             so keyboard users get a focusable anchor instead of a fake one. -->
+        <tr
+          onclick={() => handleRowClick(item.id)}
+          class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+          class:opacity-60={item.deletedAt}
+        >
+          <!-- Name -->
+          <td class="py-2 px-3 relative">
+            <KeyboardHintBadge {index} isActive={$isOpenCollectiveModeActive} prefix={$openCollectiveModePrefix} variant="table-row" />
+            <a
+              href="/collectives/{item.id}"
+              onclick={handleLinkClick}
+              class="font-body text-gray-900 font-medium hover:text-forest hover:underline rounded {focusRing}"
+              data-sveltekit-preload-data="tap"
+              data-shortcut="o {getKeyboardHint(index)}"
+              data-shortcut-label="shortcuts.panels.openCollective"
+            >
+              {item.name}
+            </a>
+          </td>
+
+          <!-- Type -->
+          <td class="py-2 px-3">
+            <span class="{chipClasses.base} {getTypeBadgeColor(item.type.name)}">
+              <TypeIcon class="w-3 h-3" strokeWidth="2" />
+              {$i18n.t(collectiveTypeI18nKey(item.type.name), { defaultValue: item.type.name })}
+            </span>
+          </td>
+
+          <!-- Member count -->
+          <td class="py-2 px-3">
+            <span class="font-body text-gray-600 text-sm">
+              {item.activeMemberCount}
+              {#if item.memberCount !== item.activeMemberCount}
+                <span class="text-gray-400">/ {item.memberCount}</span>
+              {/if}
+            </span>
+          </td>
+
+          <!-- Member preview -->
+          <td class="py-2 px-3">
+            {#if item.memberPreview.length > 0}
+              <div class="flex -space-x-2">
+                {#each item.memberPreview.slice(0, 3) as member (member.id)}
+                  <div class="ring-2 ring-white rounded-full">
+                    <FriendAvatar
+                      displayName={member.displayName}
+                      photoUrl={member.photoUrl}
+                      size="sm"
+                    />
+                  </div>
+                {/each}
+                {#if item.memberCount > 3}
+                  <div class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 ring-2 ring-white text-xs text-gray-500 font-body">
+                    +{item.memberCount - 3}
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </td>
+
+          <!-- Created -->
+          <td class="py-2 px-3">
+            <span class="font-body text-gray-600 text-sm">{formatDate(item.createdAt)}</span>
+          </td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
+</div>
+
+<!-- Mobile: Card view -->
+<ul class="md:hidden space-y-2">
+  {#each items as item, index (item.id)}
+    {@const TypeIcon = getTypeIconComponent(item.type.name)}
+    <li>
+    <a
+      href="/collectives/{item.id}"
+      class="flex items-start gap-4 {surfaceClasses.cardInteractive} relative {focusRing}"
+      class:opacity-60={item.deletedAt}
+      data-sveltekit-preload-data="tap"
+      data-shortcut="o {getKeyboardHint(index)}"
+      data-shortcut-label="shortcuts.panels.openCollective"
+    >
+      <KeyboardHintBadge {index} isActive={$isOpenCollectiveModeActive} prefix={$openCollectiveModePrefix} variant="card" />
+
+      <!-- Type icon as avatar stand-in -->
+      <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center {getTypeBadgeColor(item.type.name)}">
+        <TypeIcon class="w-5 h-5" strokeWidth="2" />
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <div class="flex items-start justify-between gap-2">
+          <h3 class="font-heading text-lg text-gray-900 truncate">
+            {item.name}
+          </h3>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="{chipClasses.base} {getTypeBadgeColor(item.type.name)}">
+              {$i18n.t(collectiveTypeI18nKey(item.type.name), { defaultValue: item.type.name })}
+            </span>
+            {#if item.deletedAt}
+              <span class="{chipClasses.base} {chipClasses.neutral}">{$i18n.t('collectives.deleted')}</span>
+            {/if}
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 mt-1 text-sm text-gray-500 font-body">
+          <span class="flex items-center gap-1">
+            <Users class="w-4 h-4" strokeWidth="2" />
+            {$i18n.t('collectives.memberCount', { count: item.activeMemberCount })}
+          </span>
+        </div>
+
+        {#if item.memberPreview.length > 0}
+          <div class="mt-2 flex items-center gap-1">
+            <div class="flex -space-x-2">
+              {#each item.memberPreview.slice(0, 3) as member (member.id)}
+                <div class="ring-2 ring-white rounded-full">
+                  <FriendAvatar
+                    displayName={member.displayName}
+                    photoUrl={member.photoUrl}
+                    size="sm"
+                  />
+                </div>
+              {/each}
+            </div>
+            {#if item.memberCount > 3}
+              <span class="ml-2 text-xs text-gray-500 font-body">
+                {$i18n.t('collectives.memberCountMore', { count: item.memberCount - 3 })}
+              </span>
+            {/if}
+          </div>
+        {/if}
+      </div>
+
+      <ChevronRight class="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" strokeWidth="2" />
+    </a>
+    </li>
+  {/each}
+</ul>

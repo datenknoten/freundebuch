@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CollectiveCircleInfo } from '$lib/api/collectives';
-import { anAddress, anEmail, aPhone, aUrl } from '$lib/test';
+import { anAddress, anEmail, aPhone, aUrl } from '$lib/test/fixtures.js';
 import type { SubresourceDescriptor } from '../subresources/types';
 import { circleDescriptor, contactDescriptors } from './subresource-descriptors';
 

@@ -6,7 +6,7 @@
  * Each descriptor captures everything that varies between the five types — the
  * icon, i18n keys, API calls, row/form components, and the per-type quirks
  * (address geocoding refetch, circle being add-only) — so that
- * `subresource-section.svelte` can drive all of them with a single, branch-free
+ * `SubresourceSection.svelte` can drive all of them with a single, branch-free
  * implementation. This replaces the former central `editingType` discriminator
  * with its parallel `if/else` save chain and `switch` delete chain.
  */
@@ -48,18 +48,16 @@ import type {
   UrlInput,
   UrlResponse,
 } from '$shared';
-import {
-  AddressEditForm,
-  AddressRow,
-  CircleEditForm,
-  CircleRow,
-  EmailEditForm,
-  EmailRow,
-  PhoneEditForm,
-  PhoneRow,
-  UrlEditForm,
-  UrlRow,
-} from '../friends/subresources';
+import AddressEditForm from '../friends/subresources/AddressEditForm.svelte';
+import AddressRow from '../friends/subresources/AddressRow.svelte';
+import CircleEditForm from '../friends/subresources/CircleEditForm.svelte';
+import CircleRow from '../friends/subresources/CircleRow.svelte';
+import EmailEditForm from '../friends/subresources/EmailEditForm.svelte';
+import EmailRow from '../friends/subresources/EmailRow.svelte';
+import PhoneEditForm from '../friends/subresources/PhoneEditForm.svelte';
+import PhoneRow from '../friends/subresources/PhoneRow.svelte';
+import UrlEditForm from '../friends/subresources/UrlEditForm.svelte';
+import UrlRow from '../friends/subresources/UrlRow.svelte';
 import {
   type AddDetailOption,
   addDetailOption,

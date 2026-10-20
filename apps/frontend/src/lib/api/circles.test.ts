@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$shared', () => ({}));
 
-import { jsonResponse, restoreFetch, stubFetch } from '$lib/test';
+import { jsonResponse, restoreFetch, stubFetch } from '$lib/test/fetch-mock.js';
 import {
   addFriendToCircle,
   archiveFriend,

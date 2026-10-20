@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { control, labelFor, render, useLanguage } from '$lib/test';
-import NotificationChannelForm from './notification-channel-form.svelte';
+import { useLanguage } from '$lib/test/locale.js';
+import { control, labelFor, render } from '$lib/test/render.js';
+import NotificationChannelForm from './NotificationChannelForm.svelte';
 
 describe('NotificationChannelForm', () => {
   beforeAll(async () => {

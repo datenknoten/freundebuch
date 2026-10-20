@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useLanguage } from '$lib/test/locale.js';
 import {
   control,
   fireEvent,
@@ -6,11 +7,10 @@ import {
   render,
   screen,
   tick,
-  useLanguage,
   waitFor,
   within,
-} from '$lib/test';
-import FriendForm from './friend-form.svelte';
+} from '$lib/test/render.js';
+import FriendForm from './FriendForm.svelte';
 
 const deletePhoto = vi.fn().mockResolvedValue(undefined);
 vi.mock('$lib/stores/friends', () => ({
