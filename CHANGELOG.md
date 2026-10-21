@@ -1,3 +1,10 @@
+## <small>3.3.2 (2026-10-21)</small>
+
+* fix(backend): Run the pgtyped CLI entry file instead of the bin shim ([5739bca](https://gitlab.com/datenknoten/freundebuch/commit/5739bca))
+* build(deps): Bump arktype to 2.2.8 ([5e46bbe](https://gitlab.com/datenknoten/freundebuch/commit/5e46bbe))
+* build(deps): Upgrade aube to 2.7.2 and switch to aube's own lockfile ([784081a](https://gitlab.com/datenknoten/freundebuch/commit/784081a))
+* refactor(mcp-server): Migrate to MCP SDK v2 with ArkType tool schemas ([3b20790](https://gitlab.com/datenknoten/freundebuch/commit/3b20790))
+
 ## <small>3.3.1 (2026-10-21)</small>
 
 * fix(deps): Pin the SabreDAV PHP image to 8.4.27 ([447cb0f](https://gitlab.com/datenknoten/freundebuch/commit/447cb0f))
